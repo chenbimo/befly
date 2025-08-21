@@ -101,7 +101,30 @@ function updateVersion(currentVersion, type) {
 }
 
 /**
- * 执行命令
+ * 执行 Git 命令（必须成功）
+ */
+function executeGitCommand(command, description) {
+    try {
+        console.log(`正在执行: ${description}`);
+        console.log(`命令: ${command}`);
+
+        const result = execSync(command, {
+            encoding: 'utf8',
+            stdio: 'inherit',
+            cwd: __dirname
+        });
+
+        console.log(`✓ ${description} 完成`);
+        return result;
+    } catch (error) {
+        console.error(`错误: ${description} 失败:`, error.message);
+        console.error('Git 操作失败，发布已取消！');
+        process.exit(1);
+    }
+}
+
+/**
+ * 执行命令（必须成功）
  */
 function executeCommand(command, description) {
     try {
@@ -111,7 +134,7 @@ function executeCommand(command, description) {
         const result = execSync(command, {
             encoding: 'utf8',
             stdio: 'inherit',
-            cwd: join(__dirname, '..')
+            cwd: __dirname
         });
 
         console.log(`✓ ${description} 完成`);
@@ -129,21 +152,49 @@ function checkGitStatus() {
     try {
         const status = execSync('git status --porcelain', {
             encoding: 'utf8',
-            cwd: join(__dirname, '..')
+            cwd: __dirname
         });
 
         if (status.trim()) {
-            console.warn('警告: 工作目录有未提交的更改');
+            console.error('错误: 工作目录有未提交的更改');
             console.log('未提交的文件:');
             console.log(status);
-            console.log('\n请先提交更改或使用 git stash 保存更改后再发布');
+            console.log('\n请先提交所有更改后再发布！');
             return false;
         }
         return true;
     } catch (error) {
-        console.warn('警告: 无法检查 Git 状态:', error.message);
-        return true;
+        console.error('错误: 无法检查 Git 状态:', error.message);
+        console.error('请确保当前目录是一个有效的 Git 仓库！');
+        return false;
     }
+}
+
+/**
+ * 检查必要文件是否存在
+ */
+function checkRequiredFiles() {
+    const requiredFiles = ['main.js', 'system.js', 'package.json', 'README.md', 'LICENSE'];
+
+    const missingFiles = [];
+
+    for (const file of requiredFiles) {
+        try {
+            const filePath = join(__dirname, file);
+            readFileSync(filePath);
+        } catch (error) {
+            missingFiles.push(file);
+        }
+    }
+
+    if (missingFiles.length > 0) {
+        console.error('错误: 以下必要文件缺失:');
+        missingFiles.forEach((file) => console.error(`  - ${file}`));
+        return false;
+    }
+
+    console.log('✓ 所有必要文件检查通过');
+    return true;
 }
 
 /**
@@ -156,7 +207,15 @@ function main() {
     console.log('🚀 开始发布流程...\n');
     console.log(`版本类型: ${versionType}`);
 
+    // 检查必要文件
+    console.log('\n--- 检查必要文件 ---');
+    if (!checkRequiredFiles()) {
+        console.log('\n发布已取消');
+        process.exit(1);
+    }
+
     // 检查 Git 状态
+    console.log('\n--- 检查 Git 状态 ---');
     if (!checkGitStatus()) {
         console.log('\n发布已取消');
         process.exit(1);
@@ -176,24 +235,19 @@ function main() {
     writePackageJson(packageData);
 
     // 提交版本更新
-    try {
-        executeCommand('git add package.json', '添加 package.json 到 Git');
-        executeCommand(`git commit -m "chore: bump version to ${newVersion}"`, '提交版本更新');
-        executeCommand(`git tag v${newVersion}`, '创建版本标签');
-    } catch (error) {
-        console.warn('Git 操作失败，继续发布到 npm...');
-    }
+    console.log('\n--- Git 操作 ---');
+    executeGitCommand('git add package.json', '添加 package.json 到 Git');
+    executeGitCommand(`git commit -m "chore: bump version to ${newVersion}"`, '提交版本更新');
+    executeGitCommand(`git tag v${newVersion}`, '创建版本标签');
 
     // 发布到 npm
+    console.log('\n--- NPM 发布 ---');
     executeCommand('bun publish --registry=https://registry.npmjs.org --access=public', '发布到 npm');
 
     // 推送到远程仓库
-    try {
-        executeCommand('git push', '推送代码到远程仓库');
-        executeCommand('git push --tags', '推送标签到远程仓库');
-    } catch (error) {
-        console.warn('推送到远程仓库失败:', error.message);
-    }
+    console.log('\n--- 推送到远程仓库 ---');
+    executeGitCommand('git push', '推送代码到远程仓库');
+    executeGitCommand('git push --tags', '推送标签到远程仓库');
 
     console.log(`\n🎉 版本 ${newVersion} 发布成功！`);
     console.log(`📦 包名: ${packageData.name}`);
