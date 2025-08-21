@@ -1,6 +1,6 @@
 {
     "name": "befly",
-    "version": "2.0.13",
+    "version": "2.0.14",
     "description": "Buma - 为 Bun 专属打造的 API 接口框架核心引擎",
     "type": "module",
     "private": false,
