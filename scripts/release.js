@@ -23,9 +23,9 @@ function parseArguments() {
   bun run scripts/release.js -h    显示帮助信息
 
 或者使用快捷命令:
-  bun run release:major            发布大版本
-  bun run release:minor            发布次要版本
-  bun run release:patch            发布补丁版本
+  bun run ra                       发布大版本
+  bun run rb                       发布次要版本
+  bun run rc                       发布补丁版本
         `);
         process.exit(0);
     }
