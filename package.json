@@ -1,0 +1,74 @@
+{
+    "name": "befly",
+    "version": "2.0.12",
+    "description": "Buma - 为 Bun 专属打造的 API 接口框架核心引擎",
+    "type": "module",
+    "private": false,
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    },
+    "main": "main.js",
+    "bin": {
+        "befly": "./bin/befly.js"
+    },
+    "exports": {
+        ".": "./main.js"
+    },
+    "scripts": {
+        "r": "bun publish --registry=https://registry.npmjs.org --access=public",
+        "test": "bun test",
+        "test:jwt": "bun test tests/jwt.test.js"
+    },
+    "keywords": [
+        "bun",
+        "api",
+        "framework",
+        "core",
+        "javascript",
+        "backend",
+        "rest",
+        "http"
+    ],
+    "author": "chensuiyi <bimostyle@qq.com>",
+    "homepage": "https://chensuiyi.me",
+    "license": "Apache-2.0",
+    "files": [
+        "apis/",
+        "bin/",
+        "checks/",
+        "config/",
+        "libs/",
+        "plugins/",
+        "scripts/",
+        "tables/",
+        "utils/",
+        ".gitignore",
+        ".npmignore",
+        ".bunignore",
+        ".editorconfig",
+        ".npmrc",
+        ".prettierignore",
+        ".prettierrc",
+        "LICENSE",
+        "main.js",
+        "package.json",
+        "README.md",
+        "vitest.config.js"
+    ],
+    "gitHead": "1dc5f118a723969456559e758e2ba889f4601224",
+    "dependencies": {
+        "mariadb": "^3.4.5"
+    },
+    "simple-git-hooks": {
+        "pre-commit": "bunx --bun lint-staged"
+    },
+    "lint-staged": {
+        "*.{js,css,scss,less,ts,jsx,vue,html,json,md,yaml}": "bunx --bun prettier --write --cache --ignore-unknown"
+    },
+    "devDependencies": {
+        "lint-staged": "^16.1.5",
+        "prettier": "^3.6.2",
+        "simple-git-hooks": "^2.13.1"
+    }
+}
