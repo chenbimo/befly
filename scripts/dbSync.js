@@ -55,28 +55,6 @@ const getColumnDefinition = (fieldName, rule) => {
     }
 
     return columnDef;
-}; // 创建数据库连接
-const createConnection = async () => {
-    if (Env.MYSQL_ENABLE !== 1) {
-        throw new Error('MySQL 未启用，请在环境变量中设置 MYSQL_ENABLE=1');
-    }
-
-    const mariadb = await import('mariadb');
-    return await mariadb.createConnection({
-        host: Env.MYSQL_HOST || '127.0.0.1',
-        port: Env.MYSQL_PORT || 3306,
-        database: Env.MYSQL_DB || 'test',
-        user: Env.MYSQL_USER || 'root',
-        password: Env.MYSQL_PASSWORD || 'root',
-        charset: 'utf8mb4',
-        timezone: Env.TIMEZONE || 'local'
-    });
-};
-
-// 检查表是否存在
-const tableExists = async (conn, tableName) => {
-    const result = await conn.query('SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.MYSQL_DB || 'test', tableName]);
-    return result[0].count > 0;
 };
 
 // 获取表的现有列信息
@@ -132,9 +110,21 @@ const manageIndex = async (conn, tableName, indexName, fieldName, action) => {
 
 // 创建表
 const createTable = async (conn, tableName, fields) => {
-    const columns = ['`id` BIGINT PRIMARY KEY COMMENT "主键ID"', '`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"', '`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"', '`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"', '`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"'];
+    const columns = [
+        //
+        '`id` BIGINT PRIMARY KEY COMMENT "主键ID"',
+        '`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"',
+        '`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"',
+        '`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"',
+        '`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"'
+    ];
 
-    const indexes = ['INDEX `idx_created_at` (`created_at`)', 'INDEX `idx_updated_at` (`updated_at`)', 'INDEX `idx_state` (`state`)'];
+    const indexes = [
+        //
+        'INDEX `idx_created_at` (`created_at`)',
+        'INDEX `idx_updated_at` (`updated_at`)',
+        'INDEX `idx_state` (`state`)'
+    ];
 
     // 添加自定义字段和索引
     for (const [fieldName, rule] of Object.entries(fields)) {
@@ -143,7 +133,7 @@ const createTable = async (conn, tableName, fields) => {
         // 使用第6个属性判断是否设置索引
         const ruleParts = parseFieldRule(rule);
         const fieldHasIndex = ruleParts[5]; // 第6个属性
-        if (fieldHasIndex && fieldHasIndex !== 'null' && fieldHasIndex !== '0' && fieldHasIndex.toLowerCase() !== 'false') {
+        if (fieldHasIndex === '1') {
             indexes.push(`INDEX \`idx_${fieldName}\` (\`${fieldName}\`)`);
         }
     }
@@ -203,24 +193,6 @@ const generateDDL = (tableName, fieldName, rule, isAdd = false) => {
     return `ALTER TABLE \`${tableName}\` ${operation} ${columnDef}, ALGORITHM=INSTANT, LOCK=NONE`;
 };
 
-// 检查MySQL版本
-const checkMySQLVersion = async (conn) => {
-    const result = await conn.query('SELECT VERSION() AS version');
-    const version = result[0].version;
-
-    if (version.toLowerCase().includes('mariadb')) {
-        throw new Error('此脚本仅支持 MySQL 8.0+，不支持 MariaDB');
-    }
-
-    const majorVersion = parseInt(version.split('.')[0]);
-    if (majorVersion < 8) {
-        throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
-    }
-
-    Logger.info(`MySQL 版本检查通过: ${version}`);
-    return { version };
-};
-
 // 安全执行DDL语句
 const executeDDLSafely = async (conn, sql) => {
     try {
@@ -272,30 +244,13 @@ const syncTable = async (conn, tableName, fields) => {
         const ruleParts = parseFieldRule(rule);
         const fieldHasIndex = ruleParts[5]; // 使用第6个属性判断是否设置索引
         const indexName = `idx_${fieldName}`;
-        const needsIndex = fieldHasIndex && fieldHasIndex !== 'null' && fieldHasIndex !== '0' && fieldHasIndex.toLowerCase() !== 'false';
 
-        if (needsIndex && !existingIndexes[indexName]) {
+        if (fieldHasIndex === '1' && !existingIndexes[indexName]) {
             await manageIndex(conn, tableName, indexName, fieldName, 'create');
-        } else if (!needsIndex && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
+        } else if (fieldHasIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             await manageIndex(conn, tableName, indexName, fieldName, 'drop');
         }
     }
-};
-
-// 处理单个表文件
-const processTableFile = async (conn, filePath) => {
-    const tableName = path.basename(filePath, '.json');
-    const tableDefinition = await Bun.file(filePath).json();
-    const exists = await tableExists(conn, tableName);
-
-    if (exists) {
-        await syncTable(conn, tableName, tableDefinition);
-    } else {
-        await createTable(conn, tableName, tableDefinition);
-    }
-
-    Logger.info(`表 ${tableName} 处理完成`);
-    return exists;
 };
 
 // 主同步函数
@@ -312,20 +267,52 @@ const syncDatabase = async () => {
         }
 
         // 建立数据库连接并检查版本
-        conn = await createConnection();
-        await checkMySQLVersion(conn);
+        const mariadb = await import('mariadb');
+        conn = mariadb.createConnection({
+            host: Env.MYSQL_HOST || '127.0.0.1',
+            port: Env.MYSQL_PORT || 3306,
+            database: Env.MYSQL_DB || 'test',
+            user: Env.MYSQL_USER || 'root',
+            password: Env.MYSQL_PASSWORD || 'root',
+            charset: 'utf8mb4',
+            timezone: Env.TIMEZONE || 'local'
+        });
+        const result = await conn.query('SELECT VERSION() AS version');
+        const version = result[0].version;
+
+        if (version.toLowerCase().includes('mariadb')) {
+            throw new Error('此脚本仅支持 MySQL 8.0+，不支持 MariaDB');
+        }
+
+        const majorVersion = parseInt(version.split('.')[0]);
+        if (majorVersion < 8) {
+            throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
+        }
+
+        Logger.info(`MySQL 版本检查通过: ${version}`);
 
         // 扫描并处理表文件
         const tablesGlob = new Bun.Glob('*.json');
         const directories = [__dirtables, getProjectDir('tables')];
-        let processedCount = 0,
-            createdTables = 0,
-            modifiedTables = 0;
+        let processedCount = 0;
+        let createdTables = 0;
+        let modifiedTables = 0;
 
         for (const dir of directories) {
             try {
                 for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
-                    const exists = await processTableFile(conn, file);
+                    const tableName = path.basename(filePath, '.json');
+                    const tableDefinition = await Bun.file(filePath).json();
+                    const result = await conn.query('SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.MYSQL_DB || 'test', tableName]);
+                    const exists = result[0].count > 0;
+
+                    if (exists) {
+                        await syncTable(conn, tableName, tableDefinition);
+                    } else {
+                        await createTable(conn, tableName, tableDefinition);
+                    }
+
+                    Logger.info(`表 ${tableName} 处理完成`);
                     exists ? modifiedTables++ : createdTables++;
                     processedCount++;
                 }
