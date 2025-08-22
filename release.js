@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
 import { join } from 'path';
-import { __filename, __dirname } from '../system.js';
+import { __filename, __dirname } from './system.js';
 
 // 获取 package.json 路径
 const packagePath = join(__dirname, 'package.json');

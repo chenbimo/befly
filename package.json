@@ -16,10 +16,9 @@
         ".": "./main.js"
     },
     "scripts": {
-        "r": "bun publish --registry=https://registry.npmjs.org --access=public",
-        "ra": "bun run scripts/release.js -a",
-        "rb": "bun run scripts/release.js -b",
-        "rc": "bun run scripts/release.js -c",
+        "ra": "bun run release.js -a",
+        "rb": "bun run release.js -b",
+        "rc": "bun run release.js -c",
         "test": "bun test",
         "test:jwt": "bun test tests/jwt.test.js",
         "dev": "bun run project/main.js",
