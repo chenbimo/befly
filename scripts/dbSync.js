@@ -18,40 +18,44 @@ const typeMapping = {
 
 // 获取字段的SQL定义
 const getColumnDefinition = (fieldName, rule) => {
-    const [displayName, type, minStr, maxStr, defaultValue] = parseFieldRule(rule);
+    const ruleParts = parseFieldRule(rule);
+    const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue, fieldHasIndex] = ruleParts;
 
-    let sqlType = typeMapping[type];
-    if (!sqlType) throw new Error(`不支持的数据类型: ${type}`);
+    let sqlType = typeMapping[fieldType];
+    if (!sqlType) throw new Error(`不支持的数据类型: ${fieldType}`);
 
-    if (type === 'string') {
-        sqlType = `VARCHAR(${maxStr === 'null' ? 255 : parseInt(maxStr)})`;
-    } else if (type === 'array') {
-        sqlType = `VARCHAR(${maxStr === 'null' ? 1000 : parseInt(maxStr)})`;
+    // 根据字段类型设置SQL类型和长度
+    if (fieldType === 'string') {
+        const maxLength = fieldMaxLength === 'null' ? 255 : parseInt(fieldMaxLength);
+        sqlType = `VARCHAR(${maxLength})`;
+    } else if (fieldType === 'array') {
+        const maxLength = fieldMaxLength === 'null' ? 1000 : parseInt(fieldMaxLength);
+        sqlType = `VARCHAR(${maxLength})`;
     }
 
     let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
 
-    // 添加默认值
-    if (defaultValue && defaultValue !== 'null') {
-        if (type === 'number') {
-            columnDef += ` DEFAULT ${defaultValue}`;
-        } else if (type !== 'text') {
-            columnDef += ` DEFAULT "${defaultValue.replace(/"/g, '\\"')}"`;
+    // 设置默认值：如果第5个属性为null或字段类型为text，则不设置默认值
+    if (fieldDefaultValue && fieldDefaultValue !== 'null' && fieldType !== 'text') {
+        if (fieldType === 'number') {
+            columnDef += ` DEFAULT ${fieldDefaultValue}`;
+        } else {
+            columnDef += ` DEFAULT "${fieldDefaultValue.replace(/"/g, '\\"')}"`;
         }
-    } else if (type === 'string' || type === 'array') {
+    } else if (fieldType === 'string' || fieldType === 'array') {
         columnDef += ` DEFAULT ""`;
-    } else if (type === 'number') {
+    } else if (fieldType === 'number') {
         columnDef += ` DEFAULT 0`;
     }
+    // text类型不设置默认值
 
-    if (displayName && displayName !== 'null') {
-        columnDef += ` COMMENT "${displayName.replace(/"/g, '\\"')}"`;
+    // 添加字段注释（使用第1个属性作为字段显示名称）
+    if (fieldDisplayName && fieldDisplayName !== 'null') {
+        columnDef += ` COMMENT "${fieldDisplayName.replace(/"/g, '\\"')}"`;
     }
 
     return columnDef;
-};
-
-// 创建数据库连接
+}; // 创建数据库连接
 const createConnection = async () => {
     if (Env.MYSQL_ENABLE !== 1) {
         throw new Error('MySQL 未启用，请在环境变量中设置 MYSQL_ENABLE=1');
@@ -136,9 +140,10 @@ const createTable = async (conn, tableName, fields) => {
     for (const [fieldName, rule] of Object.entries(fields)) {
         columns.push(getColumnDefinition(fieldName, rule));
 
+        // 使用第6个属性判断是否设置索引
         const ruleParts = parseFieldRule(rule);
-        const hasIndex = ruleParts[5];
-        if (hasIndex && hasIndex !== 'null' && hasIndex !== '0' && hasIndex.toLowerCase() !== 'false') {
+        const fieldHasIndex = ruleParts[5]; // 第6个属性
+        if (fieldHasIndex && fieldHasIndex !== 'null' && fieldHasIndex !== '0' && fieldHasIndex.toLowerCase() !== 'false') {
             indexes.push(`INDEX \`idx_${fieldName}\` (\`${fieldName}\`)`);
         }
     }
@@ -156,22 +161,23 @@ const createTable = async (conn, tableName, fields) => {
 
 // 比较字段定义变化
 const compareFieldDefinition = (existingColumn, newRule) => {
-    const [displayName, type, minStr, maxStr, defaultValue] = parseFieldRule(newRule);
+    const ruleParts = parseFieldRule(newRule);
+    const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue] = ruleParts;
     const changes = [];
 
-    // 检查长度变化（string类型）
-    if (type === 'string') {
-        const newMaxLength = maxStr === 'null' ? 255 : parseInt(maxStr);
+    // 检查长度变化（string和array类型）
+    if (fieldType === 'string' || fieldType === 'array') {
+        const newMaxLength = fieldMaxLength === 'null' ? (fieldType === 'string' ? 255 : 1000) : parseInt(fieldMaxLength);
         if (existingColumn.length !== newMaxLength) {
             changes.push({ type: 'length', current: existingColumn.length, new: newMaxLength });
         }
     }
 
-    // 检查注释变化
-    if (displayName && displayName !== 'null') {
+    // 检查注释变化（使用第1个属性作为字段显示名称）
+    if (fieldDisplayName && fieldDisplayName !== 'null') {
         const currentComment = existingColumn.comment || '';
-        if (currentComment !== displayName) {
-            changes.push({ type: 'comment', current: currentComment, new: displayName });
+        if (currentComment !== fieldDisplayName) {
+            changes.push({ type: 'comment', current: currentComment, new: fieldDisplayName });
         }
     }
 
@@ -181,7 +187,7 @@ const compareFieldDefinition = (existingColumn, newRule) => {
         string: 'varchar',
         text: 'mediumtext',
         array: 'varchar'
-    }[type];
+    }[fieldType];
 
     if (existingColumn.type.toLowerCase() !== expectedDbType) {
         changes.push({ type: 'datatype', current: existingColumn.type, new: expectedDbType });
@@ -264,9 +270,9 @@ const syncTable = async (conn, tableName, fields) => {
     // 同步索引
     for (const [fieldName, rule] of Object.entries(fields)) {
         const ruleParts = parseFieldRule(rule);
-        const hasIndex = ruleParts[5];
+        const fieldHasIndex = ruleParts[5]; // 使用第6个属性判断是否设置索引
         const indexName = `idx_${fieldName}`;
-        const needsIndex = hasIndex && hasIndex !== 'null' && hasIndex !== '0' && hasIndex.toLowerCase() !== 'false';
+        const needsIndex = fieldHasIndex && fieldHasIndex !== 'null' && fieldHasIndex !== '0' && fieldHasIndex.toLowerCase() !== 'false';
 
         if (needsIndex && !existingIndexes[indexName]) {
             await manageIndex(conn, tableName, indexName, fieldName, 'create');
