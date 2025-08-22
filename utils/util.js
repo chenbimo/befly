@@ -1,5 +1,19 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { Env } from '../config/env.js';
+
+export const setCorsOptions = (req) => {
+    return {
+        headers: {
+            'Access-Control-Allow-Origin': Env.ALLOWED_ORIGIN || req.headers.get('origin') || '*',
+            'Access-Control-Allow-Methods': Env.ALLOWED_METHODS || 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': Env.ALLOWED_HEADERS || 'Content-Type, Authorization, authorization, token',
+            'Access-Control-Expose-Headers': Env.EXPOSE_HEADERS || 'Content-Range, X-Content-Range, Authorization, authorization, token',
+            'Access-Control-Max-Age': Env.MAX_AGE || 86400,
+            'Access-Control-Allow-Credentials': Env.ALLOW_CREDENTIALS || 'true'
+        }
+    };
+};
 
 export const sortPlugins = (plugins) => {
     const result = [];

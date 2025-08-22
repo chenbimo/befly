@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { Env } from './config/env.js';
+import { __dirchecks, __dirplugins, __dirapis, getProjectDir } from './system.js';
 
 // 工具函数
 import { Api } from './utils/api.js';
@@ -8,20 +9,7 @@ import { Jwt } from './utils/jwt.js';
 import { validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
 import { Xml } from './libs/xml.js';
-import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filename2, dirname2, filterLogFields } from './utils/util.js';
-
-const setCorsOptions = (req) => {
-    return {
-        headers: {
-            'Access-Control-Allow-Origin': Env.ALLOWED_ORIGIN || req.headers.get('origin') || '*',
-            'Access-Control-Allow-Methods': Env.ALLOWED_METHODS || 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': Env.ALLOWED_HEADERS || 'Content-Type, Authorization, authorization, token',
-            'Access-Control-Expose-Headers': Env.EXPOSE_HEADERS || 'Content-Range, X-Content-Range, Authorization, authorization, token',
-            'Access-Control-Max-Age': Env.MAX_AGE || 86400,
-            'Access-Control-Allow-Credentials': Env.ALLOW_CREDENTIALS || 'true'
-        }
-    };
-};
+import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions } from './utils/util.js';
 
 class Befly {
     constructor(options = {}) {
@@ -34,9 +22,7 @@ class Befly {
     async initCheck() {
         try {
             const checkStartTime = Bun.nanoseconds();
-            Logger.info('开始执行系统检查...');
 
-            const checksDir = path.join(dirname2(import.meta.url), 'checks');
             const glob = new Bun.Glob('*.js');
 
             // 统计信息
@@ -46,7 +32,7 @@ class Befly {
 
             // 扫描并执行检查函数
             for await (const file of glob.scan({
-                cwd: checksDir,
+                cwd: __dirchecks,
                 onlyFiles: true,
                 absolute: true
             })) {
@@ -122,7 +108,7 @@ class Befly {
             // 扫描核心插件目录
             const corePluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: path.join(dirname2(import.meta.url), 'plugins'),
+                cwd: __dirplugins,
                 onlyFiles: true,
                 absolute: true
             })) {
@@ -165,7 +151,7 @@ class Befly {
             // 扫描用户插件目录
             const userPluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: path.join(process.cwd(), 'plugins'),
+                cwd: getProjectDir('plugins'),
                 onlyFiles: true,
                 absolute: true
             })) {
@@ -228,10 +214,8 @@ class Befly {
             const loadStartTime = Bun.nanoseconds();
             const dirDisplayName = dirName === 'core' ? '核心' : '用户';
 
-            const coreApisDir = path.join(dirname2(import.meta.url), 'apis');
-            const userApisDir = path.join(process.cwd(), 'apis');
             const glob = new Bun.Glob('**/*.js');
-            const apiDir = dirName === 'core' ? coreApisDir : userApisDir;
+            const apiDir = dirName === 'core' ? __dirapis : getProjectDir('apis');
 
             let totalApis = 0;
             let loadedApis = 0;
@@ -511,7 +495,7 @@ class Befly {
                     }
 
                     const url = new URL(req.url);
-                    const filePath = path.join(process.cwd(), 'public', url.pathname);
+                    const filePath = path.join(getProjectDir('public'), url.pathname);
 
                     try {
                         const file = await Bun.file(filePath);
