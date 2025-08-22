@@ -192,27 +192,94 @@ export const filterLogFields = (body, excludeFields = '') => {
     return filtered;
 };
 
+// 验证字段名称是否为中文、数字、字母
+const validateFieldName = (name) => {
+    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9]+$/;
+    return nameRegex.test(name);
+};
+
+// 验证字段类型是否为指定的四种类型之一
+const validateFieldType = (type) => {
+    const validTypes = ['string', 'number', 'text', 'array'];
+    return validTypes.includes(type);
+};
+
+// 验证最小值/最大值是否为null或数字
+const validateMinMax = (value) => {
+    return value === 'null' || (!isNaN(parseFloat(value)) && isFinite(parseFloat(value)));
+};
+
+// 验证默认值是否为null、字符串或数字
+const validateDefaultValue = (value) => {
+    if (value === 'null') return true;
+    // 检查是否为数字
+    if (!isNaN(parseFloat(value)) && isFinite(parseFloat(value))) return true;
+    // 其他情况视为字符串，都是有效的
+    return true;
+};
+
+// 验证索引标识是否为0或1
+const validateIndex = (value) => {
+    return value === '0' || value === '1';
+};
+
+// 验证正则表达式是否有效
+const validateRegex = (value) => {
+    if (value === 'null') return true;
+    try {
+        new RegExp(value);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
 // 专门用于处理⚡分隔的字段规则
 export const parseFieldRule = (rule) => {
     const allParts = rule.split('⚡');
 
-    // 现在支持7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
-    if (allParts.length <= 7) {
-        // 如果少于7个部分，补齐缺失的部分为 null
-        while (allParts.length < 7) {
-            allParts.push('null');
-        }
-        return allParts;
+    // 必须包含7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
+    if (allParts.length !== 7) {
+        throw new Error(`字段规则格式错误，必须包含7个部分，当前包含${allParts.length}个部分`);
     }
 
-    // 如果超过7个部分，保留前6个，剩余的合并为最后的正则约束部分
-    return [
-        allParts[0], // 显示名
-        allParts[1], // 类型
-        allParts[2], // 最小值
-        allParts[3], // 最大值
-        allParts[4], // 默认值
-        allParts[5], // 是否索引
-        allParts.slice(6).join('⚡') // 正则约束（可能包含⚡符号）
-    ];
+    // 验证各个部分的格式
+    const [name, type, minValue, maxValue, defaultValue, isIndex, regexConstraint] = allParts;
+
+    // 第1个值：名称必须为中文、数字、字母
+    if (!validateFieldName(name)) {
+        throw new Error(`字段名称 "${name}" 格式错误，必须为中文、数字、字母`);
+    }
+
+    // 第2个值：字段类型必须为string,number,text,array之一
+    if (!validateFieldType(type)) {
+        throw new Error(`字段类型 "${type}" 格式错误，必须为string、number、text、array之一`);
+    }
+
+    // 第3个值：最小值必须为null或数字
+    if (!validateMinMax(minValue)) {
+        throw new Error(`最小值 "${minValue}" 格式错误，必须为null或数字`);
+    }
+
+    // 第4个值：最大值必须为null或数字
+    if (!validateMinMax(maxValue)) {
+        throw new Error(`最大值 "${maxValue}" 格式错误，必须为null或数字`);
+    }
+
+    // 第5个值：默认值必须为null、字符串或数字
+    if (!validateDefaultValue(defaultValue)) {
+        throw new Error(`默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
+    }
+
+    // 第6个值：是否创建索引必须为0或1
+    if (!validateIndex(isIndex)) {
+        throw new Error(`索引标识 "${isIndex}" 格式错误，必须为0或1`);
+    }
+
+    // 第7个值：必须为null或正则表达式
+    if (!validateRegex(regexConstraint)) {
+        throw new Error(`正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
+    }
+
+    return allParts;
 };

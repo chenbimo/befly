@@ -3,6 +3,48 @@ import { Logger } from '../utils/logger.js';
 import { parseFieldRule } from '../utils/util.js';
 import { __dirtables, getProjectDir } from '../system.js';
 
+// 验证字段名称是否为中文、数字、字母
+const validateFieldName = (name) => {
+    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9]+$/;
+    return nameRegex.test(name);
+};
+
+// 验证字段类型是否为指定的四种类型之一
+const validateFieldType = (type) => {
+    const validTypes = ['string', 'number', 'text', 'array'];
+    return validTypes.includes(type);
+};
+
+// 验证最小值/最大值是否为null或数字
+const validateMinMax = (value) => {
+    return value === 'null' || (!isNaN(parseFloat(value)) && isFinite(parseFloat(value)));
+};
+
+// 验证默认值是否为null、字符串或数字
+const validateDefaultValue = (value) => {
+    if (value === 'null') return true;
+    // 检查是否为数字
+    if (!isNaN(parseFloat(value)) && isFinite(parseFloat(value))) return true;
+    // 其他情况视为字符串，都是有效的
+    return true;
+};
+
+// 验证索引标识是否为0或1
+const validateIndex = (value) => {
+    return value === '0' || value === '1';
+};
+
+// 验证正则表达式是否有效
+const validateRegex = (value) => {
+    if (value === 'null') return true;
+    try {
+        new RegExp(value);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
 export default async () => {
     try {
         const tablesGlob = new Bun.Glob('*.json');
@@ -40,53 +82,70 @@ export default async () => {
                     }
 
                     // 验证规则格式
-                    const ruleParts = parseFieldRule(rule);
+                    try {
+                        const ruleParts = parseFieldRule(rule);
 
-                    if (ruleParts.length !== 7) {
-                        Logger.warn(`${fileName} 文件 ${fieldName} 验证规则错误，应包含 7 个部分，但包含 ${ruleParts.length} 个部分`);
-                        fileValid = false;
-                        continue;
-                    }
-
-                    const [name, type, minStr, maxStr, defaultValue, isIndexStr, regexConstraint] = ruleParts;
-
-                    // 验证类型（必须严格使用小写类型名称）
-                    const validTypes = ['number', 'string', 'text', 'array'];
-                    if (!validTypes.includes(type)) {
-                        Logger.warn(`${fileName} 文件 ${fieldName} 类型 ${type} 不支持，应为小写的 number、string、text 或 array`);
-                        fileValid = false;
-                        continue;
-                    }
-
-                    // 验证最小值/最大值
-                    if (minStr !== 'null' && isNaN(parseInt(minStr))) {
-                        Logger.warn(`${fileName} 文件 ${fieldName} 最小值 ${minStr} 应为数字或 null`);
-                        fileValid = false;
-                        continue;
-                    }
-
-                    if (maxStr !== 'null' && isNaN(parseInt(maxStr))) {
-                        Logger.warn(`${fileName} 文件 ${fieldName} 最大值 ${maxStr} 应为数字或 null`);
-                        fileValid = false;
-                        continue;
-                    }
-
-                    // 验证索引字段
-                    if (isIndexStr !== 'null' && !['0', '1'].includes(isIndexStr)) {
-                        Logger.warn(`${fileName} 文件 ${fieldName} 索引标识 ${isIndexStr} 应为 0、1 或 null`);
-                        fileValid = false;
-                        continue;
-                    }
-
-                    // 验证正则约束 - 必须为null或有效的正则表达式
-                    if (regexConstraint !== 'null') {
-                        try {
-                            new RegExp(regexConstraint);
-                        } catch (e) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 正则表达式 ${regexConstraint} 无效: ${e.message}`);
+                        if (ruleParts.length !== 7) {
+                            Logger.warn(`${fileName} 文件 ${fieldName} 验证规则错误，应包含 7 个部分，但包含 ${ruleParts.length} 个部分`);
                             fileValid = false;
                             continue;
                         }
+
+                        const [name, type, minStr, maxStr, defaultValue, isIndexStr, regexConstraint] = ruleParts;
+
+                        // 使用新的验证函数进行严格验证
+                        // 第1个值：名称必须为中文、数字、字母
+                        if (!validateFieldName(name)) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 名称 "${name}" 格式错误，必须为中文、数字、字母`);
+                            fileValid = false;
+                            continue;
+                        }
+
+                        // 第2个值：字段类型必须为string,number,text,array之一
+                        if (!validateFieldType(type)) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 类型 "${type}" 格式错误，必须为string、number、text、array之一`);
+                            fileValid = false;
+                            continue;
+                        }
+
+                        // 第3个值：最小值必须为null或数字
+                        if (!validateMinMax(minStr)) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 最小值 "${minStr}" 格式错误，必须为null或数字`);
+                            fileValid = false;
+                            continue;
+                        }
+
+                        // 第4个值：最大值必须为null或数字
+                        if (!validateMinMax(maxStr)) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 最大值 "${maxStr}" 格式错误，必须为null或数字`);
+                            fileValid = false;
+                            continue;
+                        }
+
+                        // 第5个值：默认值必须为null、字符串或数字
+                        if (!validateDefaultValue(defaultValue)) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
+                            fileValid = false;
+                            continue;
+                        }
+
+                        // 第6个值：是否创建索引必须为0或1
+                        if (!validateIndex(isIndexStr)) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 索引标识 "${isIndexStr}" 格式错误，必须为0或1`);
+                            fileValid = false;
+                            continue;
+                        }
+
+                        // 第7个值：必须为null或正则表达式
+                        if (!validateRegex(regexConstraint)) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
+                            fileValid = false;
+                            continue;
+                        }
+                    } catch (error) {
+                        Logger.error(`${fileName} 文件 ${fieldName} 验证规则解析失败: ${error.message}`);
+                        fileValid = false;
+                        continue;
                     }
                 }
 
