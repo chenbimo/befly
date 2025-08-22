@@ -48,8 +48,6 @@ const validateRegex = (value) => {
 export default async () => {
     try {
         const tablesGlob = new Bun.Glob('*.json');
-        const coreTablesDir = __dirtables;
-        const userTablesDir = getProjectDir('tables');
 
         // 统计信息
         let totalFiles = 0;
@@ -161,7 +159,7 @@ export default async () => {
         };
 
         for await (const file of tablesGlob.scan({
-            cwd: coreTablesDir,
+            cwd: __dirtables,
             absolute: true,
             onlyFiles: true
         })) {
@@ -169,7 +167,7 @@ export default async () => {
         }
 
         for await (const file of tablesGlob.scan({
-            cwd: userTablesDir,
+            cwd: getProjectDir('tables'),
             absolute: true,
             onlyFiles: true
         })) {
