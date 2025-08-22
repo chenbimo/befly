@@ -12,10 +12,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { __dirroot, __dirscript } from '../system.js';
 
-// 使用 system.js 中定义的路径变量
-const BEFLY_ROOT = __dirroot;
-const SCRIPTS_DIR = __dirscript;
-
 // 显示帮助信息
 const showHelp = async () => {
     console.log(`
@@ -28,9 +24,9 @@ Befly CLI 工具 v2.0.12
 `);
 
     // 列出所有可用的脚本
-    if (existsSync(SCRIPTS_DIR)) {
+    if (existsSync(__dirscript)) {
         try {
-            const fileList = await readdir(SCRIPTS_DIR);
+            const fileList = await readdir(__dirscript);
             const scripts = fileList
                 .filter((file) => file.endsWith('.js'))
                 .map((file) => file.replace('.js', ''))
@@ -62,7 +58,7 @@ Befly CLI 工具 v2.0.12
 // 显示版本信息
 const showVersion = () => {
     try {
-        const packageJsonPath = join(BEFLY_ROOT, 'package.json');
+        const packageJsonPath = join(__dirroot, 'package.json');
         if (existsSync(packageJsonPath)) {
             const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
             console.log(`befly v${packageJson.version}`);
@@ -77,7 +73,7 @@ const showVersion = () => {
 // 执行脚本
 const runScript = (scriptName, args = []) => {
     // 检查脚本文件是否存在
-    const scriptPath = join(SCRIPTS_DIR, `${scriptName}.js`);
+    const scriptPath = join(__dirscript, `${scriptName}.js`);
 
     if (!existsSync(scriptPath)) {
         console.error(`❌ 错误: 脚本 '${scriptName}' 不存在`);
