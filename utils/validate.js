@@ -165,14 +165,21 @@ export class Validator {
                 if (this.isEnumSpec(spec)) {
                     return this.validateEnum(value, spec, name, fieldName, 'number');
                 } else {
-                    // 原有的表达式验证逻辑
-                    return this.validateNumberExpression(value, name, spec, fieldName);
+                    // 正则表达式验证
+                    try {
+                        const regExp = new RegExp(spec);
+                        if (!regExp.test(String(value))) {
+                            return `${name}(${fieldName})格式不正确`;
+                        }
+                    } catch (error) {
+                        return `${name}(${fieldName})的正则表达式格式错误`;
+                    }
                 }
             }
 
             return null;
         } catch (error) {
-            return `${name}(${fieldName})的计算规则格式错误: ${error.message}`;
+            return `${name}(${fieldName})验证出错: ${error.message}`;
         }
     }
 
@@ -217,41 +224,6 @@ export class Validator {
     }
 
     /**
-     * 验证数字表达式
-     */
-    validateNumberExpression(value, name, spec, fieldName) {
-        const parts = spec.split('=');
-        if (parts.length !== 2) {
-            return `${name}(${fieldName})的计算规则必须包含等号`;
-        }
-
-        const leftExpression = parts[0].trim();
-        const rightValue = parseFloat(parts[1].trim());
-
-        if (isNaN(rightValue)) {
-            return `${name}(${fieldName})的计算规则右边必须是数字`;
-        }
-
-        const safePattern = /^[x\d\+\-\*\/\(\)\.\s]+$/;
-        if (!safePattern.test(leftExpression)) {
-            return `${name}(${fieldName})的表达式包含不安全的字符`;
-        }
-
-        let processedExpression = leftExpression.replace(/x/g, value.toString());
-        const leftResult = new Function('return ' + processedExpression)();
-
-        if (typeof leftResult !== 'number' || !isFinite(leftResult)) {
-            return `${name}(${fieldName})的表达式计算结果不是有效数字`;
-        }
-
-        if (Math.abs(leftResult - rightValue) > Number.EPSILON) {
-            return `${name}(${fieldName})不满足计算条件 ${spec}`;
-        }
-
-        return null;
-    }
-
-    /**
      * 验证字符串类型
      */
     validateString(value, name, min, max, spec, fieldName) {
@@ -273,17 +245,21 @@ export class Validator {
                 if (this.isEnumSpec(spec)) {
                     return this.validateEnum(value, spec, name, fieldName, 'string');
                 } else {
-                    // 原有的正则表达式验证逻辑
-                    const regExp = new RegExp(spec);
-                    if (!regExp.test(value)) {
-                        return `${name}(${fieldName})格式不正确`;
+                    // 正则表达式验证
+                    try {
+                        const regExp = new RegExp(spec);
+                        if (!regExp.test(value)) {
+                            return `${name}(${fieldName})格式不正确`;
+                        }
+                    } catch (error) {
+                        return `${name}(${fieldName})的正则表达式格式错误`;
                     }
                 }
             }
 
             return null;
         } catch (error) {
-            return `${name}(${fieldName})的正则表达式格式错误`;
+            return `${name}(${fieldName})验证出错: ${error.message}`;
         }
     }
 
@@ -309,19 +285,23 @@ export class Validator {
                 if (this.isEnumSpec(spec)) {
                     return this.validateEnum(value, spec, name, fieldName, 'array');
                 } else {
-                    // 原有的正则表达式验证逻辑
-                    const regExp = new RegExp(spec);
-                    for (const item of value) {
-                        if (!regExp.test(String(item))) {
-                            return `${name}(${fieldName})中的元素"${item}"格式不正确`;
+                    // 正则表达式验证
+                    try {
+                        const regExp = new RegExp(spec);
+                        for (const item of value) {
+                            if (!regExp.test(String(item))) {
+                                return `${name}(${fieldName})中的元素"${item}"格式不正确`;
+                            }
                         }
+                    } catch (error) {
+                        return `${name}(${fieldName})的正则表达式格式错误`;
                     }
                 }
             }
 
             return null;
         } catch (error) {
-            return `${name}(${fieldName})的正则表达式格式错误: ${error.message}`;
+            return `${name}(${fieldName})验证出错: ${error.message}`;
         }
     }
 }
