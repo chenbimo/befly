@@ -254,7 +254,7 @@ const syncTable = async (conn, tableName, fields) => {
 };
 
 // 主同步函数
-const syncDatabase = async () => {
+const syncDb = async () => {
     let conn = null;
 
     try {
@@ -268,7 +268,7 @@ const syncDatabase = async () => {
 
         // 建立数据库连接并检查版本
         const mariadb = await import('mariadb');
-        conn = mariadb.createConnection({
+        conn = await mariadb.createConnection({
             host: Env.MYSQL_HOST || '127.0.0.1',
             port: Env.MYSQL_PORT || 3306,
             database: Env.MYSQL_DB || 'test',
@@ -301,8 +301,8 @@ const syncDatabase = async () => {
         for (const dir of directories) {
             try {
                 for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
-                    const tableName = path.basename(filePath, '.json');
-                    const tableDefinition = await Bun.file(filePath).json();
+                    const tableName = path.basename(file, '.json');
+                    const tableDefinition = await Bun.file(file).json();
                     const result = await conn.query('SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.MYSQL_DB || 'test', tableName]);
                     const exists = result[0].count > 0;
 
@@ -328,7 +328,14 @@ const syncDatabase = async () => {
             Logger.warn('没有找到任何表定义文件');
         }
     } catch (error) {
-        Logger.error('数据库同步失败:', error);
+        Logger.error(`数据库同步失败: ${error.message}`);
+        Logger.error(`错误详情: ${error.stack}`);
+        if (error.code) {
+            Logger.error(`错误代码: ${error.code}`);
+        }
+        if (error.errno) {
+            Logger.error(`错误编号: ${error.errno}`);
+        }
         process.exit(1);
     } finally {
         if (conn) {
@@ -343,10 +350,10 @@ const syncDatabase = async () => {
 
 // 如果直接运行此脚本
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('dbSync.js')) {
-    syncDatabase().catch((error) => {
+    syncDb().catch((error) => {
         console.error('❌ 数据库同步失败:', error);
         process.exit(1);
     });
 }
 
-export { syncDatabase };
+export { syncDb };
