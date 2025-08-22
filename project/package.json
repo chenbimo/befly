@@ -1,0 +1,20 @@
+{
+    "name": "befly-template",
+    "version": "1.0.39",
+    "main": "index.js",
+    "description": "易接口",
+    "private": false,
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    },
+    "scripts": {
+        "dev": "bun run main.js",
+        "server": "bunx --bun pm2 start pm2.config.cjs -a",
+        "syncDb": "bun run syncDb.js"
+    },
+    "type": "module",
+    "dependencies": {
+        "befly": ".."
+    }
+}

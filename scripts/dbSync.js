@@ -1,39 +1,9 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { existsSync, readFileSync } from 'node:fs';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { parseFieldRule } from '../utils/util.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import tableCheck from '../checks/table.js';
-
-// 自动加载环境配置文件
-const loadEnvFile = () => {
-    const envFiles = [path.join(process.cwd(), '.env.development'), path.join(process.cwd(), '.env.local'), path.join(process.cwd(), '.env')];
-
-    for (const envFile of envFiles) {
-        if (existsSync(envFile)) {
-            console.log(`📄 加载环境配置文件: ${envFile}`);
-            const envContent = readFileSync(envFile, 'utf8');
-            const lines = envContent.split('\n');
-
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed && !trimmed.startsWith('#')) {
-                    const [key, ...valueParts] = trimmed.split('=');
-                    if (key && valueParts.length > 0) {
-                        const value = valueParts.join('=').replace(/^["']|["']$/g, '');
-                        process.env[key] = value;
-                    }
-                }
-            }
-            break;
-        }
-    }
-};
-
-// 初始化时加载环境配置
-loadEnvFile();
 
 // 数据类型映射到数据库字段类型
 const typeMapping = {
@@ -99,11 +69,11 @@ const getColumnDefinition = (fieldName, rule, withoutIndex = false) => {
 // 创建数据库连接
 const createConnection = async () => {
     console.log(`🔍 检查 MySQL 配置...`);
-    console.log(`MYSQL_ENABLE: ${process.env.MYSQL_ENABLE}`);
-    console.log(`MYSQL_HOST: ${process.env.MYSQL_HOST}`);
-    console.log(`MYSQL_PORT: ${process.env.MYSQL_PORT}`);
-    console.log(`MYSQL_DB: ${process.env.MYSQL_DB}`);
-    console.log(`MYSQL_USER: ${process.env.MYSQL_USER}`);
+    console.log(`MYSQL_ENABLE: ${Env.MYSQL_ENABLE}`);
+    console.log(`MYSQL_HOST: ${Env.MYSQL_HOST}`);
+    console.log(`MYSQL_PORT: ${Env.MYSQL_PORT}`);
+    console.log(`MYSQL_DB: ${Env.MYSQL_DB}`);
+    console.log(`MYSQL_USER: ${Env.MYSQL_USER}`);
 
     if (Env.MYSQL_ENABLE !== 1) {
         throw new Error('MySQL 未启用，请在环境变量中设置 MYSQL_ENABLE=1');
