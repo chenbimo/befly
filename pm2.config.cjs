@@ -3,7 +3,7 @@ module.exports = {
         {
             name: 'yiapi',
             instances: 4,
-            script: './main.js',
+            script: './project/main.js',
             exec_mode: 'cluster',
             watch: false,
             autorestart: true,
