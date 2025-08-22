@@ -1,3 +1,16 @@
+/**
+ * 数据库表结构同步脚本
+ *
+ * 注意：此脚本仅支持 MySQL 8.0 及以上版本
+ * 不支持 MariaDB 或旧版本的 MySQL
+ *
+ * 功能：
+ * - 自动创建不存在的表
+ * - 同步表字段结构变化
+ * - 管理表索引
+ * - 使用 MySQL 8.0+ 的 Online DDL 特性
+ */
+
 import path from 'node:path';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
@@ -10,13 +23,12 @@ const typeMapping = {
     number: 'BIGINT',
     string: 'VARCHAR',
     text: 'MEDIUMTEXT',
-    array: 'VARCHAR' // 使用管道符连接元素存储
+    array: 'VARCHAR'
 };
 
 // 获取字段的SQL定义
 const getColumnDefinition = (fieldName, rule, withoutIndex = false) => {
-    const ruleParts = parseFieldRule(rule);
-    const [displayName, type, minStr, maxStr, defaultValue, hasIndex, spec] = ruleParts;
+    const [displayName, type, minStr, maxStr, defaultValue, hasIndex, spec] = parseFieldRule(rule);
 
     let sqlType = typeMapping[type];
     if (!sqlType) {
@@ -80,6 +92,7 @@ const createConnection = async () => {
     }
 
     console.log(`📦 导入 mariadb 驱动...`);
+    // 注意：虽然使用 mariadb 驱动，但此脚本仅支持 MySQL 8.0 及以上版本
     const mariadb = await import('mariadb');
 
     const config = {
@@ -323,69 +336,95 @@ const compareFieldDefinition = (existingColumn, newRule) => {
     };
 };
 
-// 生成ALTER语句来修改字段（使用MySQL 8 Online DDL）
+// 生成ALTER语句来修改字段（使用MySQL 8.0 Online DDL）
 const generateAlterStatement = (tableName, fieldName, rule, changes) => {
     const columnDef = getColumnDefinition(fieldName, rule);
 
-    // 使用 MySQL 8 的 Online DDL 语法
-    // ALGORITHM=INSTANT: 立即执行，不复制数据
-    // ALGORITHM=INPLACE: 就地执行，不阻塞DML操作
+    // MySQL 8.0+ 完全支持 Online DDL
+    // ALGORITHM=INSTANT: 立即执行，不复制数据（MySQL 8.0+支持更多INSTANT操作）
     // LOCK=NONE: 不锁定表，允许并发读写
-    return `ALTER TABLE \`${tableName}\` MODIFY COLUMN ${columnDef}, ALGORITHM=INPLACE, LOCK=NONE`;
+    return `ALTER TABLE \`${tableName}\` MODIFY COLUMN ${columnDef}, ALGORITHM=INSTANT, LOCK=NONE`;
 };
 
-// 生成添加字段的ALTER语句（使用MySQL 8 Online DDL）
+// 生成添加字段的ALTER语句（使用MySQL 8.0 Online DDL）
 const generateAddColumnStatement = (tableName, fieldName, rule) => {
     const columnDef = getColumnDefinition(fieldName, rule);
 
-    // 使用 Online DDL 添加字段
+    // MySQL 8.0+ 的 INSTANT ADD COLUMN 支持更好
     return `ALTER TABLE \`${tableName}\` ADD COLUMN ${columnDef}, ALGORITHM=INSTANT, LOCK=NONE`;
 };
 
-// 检查MySQL版本和Online DDL支持
+// 检查MySQL版本（仅支持MySQL 8.0+）
 const checkMySQLVersion = async (conn) => {
     try {
         const result = await conn.query('SELECT VERSION() AS version');
         const version = result[0].version;
-        Logger.info(`MySQL/MariaDB 版本: ${version}`);
+        Logger.info(`MySQL 版本: ${version}`);
 
-        // 检查是否支持 Online DDL
+        // 检查是否为MariaDB，如果是则拒绝
+        const isMariaDB = version.toLowerCase().includes('mariadb');
+        if (isMariaDB) {
+            throw new Error('此脚本仅支持 MySQL 8.0 及以上版本，不支持 MariaDB');
+        }
+
+        // 检查MySQL版本
         const versionParts = version.split('.');
         const majorVersion = parseInt(versionParts[0]);
         const minorVersion = parseInt(versionParts[1]);
 
-        const isMySQL = version.toLowerCase().includes('mysql') || !version.toLowerCase().includes('mariadb');
-        const isMariaDB = version.toLowerCase().includes('mariadb');
+        // 只支持MySQL 8.0及以上版本
+        const isMySQL8Plus = majorVersion >= 8;
 
-        // MySQL 5.6+ 支持 Online DDL，MySQL 8.0+ 支持更完善的 Online DDL
-        const isMySQL56Plus = isMySQL && (majorVersion > 5 || (majorVersion === 5 && minorVersion >= 6));
-        // MariaDB 10.0+ 支持 Online DDL
-        const isMariaDB10Plus = isMariaDB && majorVersion >= 10;
-
-        const supportsOnlineDDL = isMySQL56Plus || isMariaDB10Plus;
-        Logger.info(`Online DDL 支持: ${supportsOnlineDDL ? '是' : '否'}`);
-
-        if (supportsOnlineDDL) {
-            Logger.info(`数据库类型: ${isMySQL ? 'MySQL' : 'MariaDB'} ${majorVersion}.${minorVersion}`);
+        if (!isMySQL8Plus) {
+            throw new Error(`此脚本仅支持 MySQL 8.0 及以上版本，当前版本: ${majorVersion}.${minorVersion}`);
         }
 
-        return { version, supportsOnlineDDL };
+        Logger.info(`✅ MySQL 版本检查通过: ${majorVersion}.${minorVersion}`);
+        Logger.info(`✅ Online DDL 支持: 完全支持`);
+
+        return { version, supportsOnlineDDL: true, majorVersion, minorVersion };
     } catch (error) {
-        Logger.warn('无法检测数据库版本，使用默认设置');
-        return { version: 'unknown', supportsOnlineDDL: false };
+        Logger.error('MySQL版本检查失败:', error.message);
+        throw error;
     }
 };
 
-// 安全执行DDL语句
+// 安全执行DDL语句（MySQL 8.0+优化）
 const executeDDLSafely = async (conn, sql, fallbackSql = null) => {
     try {
         Logger.info(`执行SQL: ${sql}`);
         await conn.query(sql);
         return true;
     } catch (error) {
-        Logger.warn(`Online DDL 执行失败: ${error.message}`);
+        Logger.warn(`INSTANT DDL 执行失败: ${error.message}`);
 
-        if (fallbackSql) {
+        // 如果INSTANT失败，尝试使用INPLACE
+        if (sql.includes('ALGORITHM=INSTANT')) {
+            const inplaceSql = sql.replace('ALGORITHM=INSTANT', 'ALGORITHM=INPLACE');
+            Logger.info(`尝试 INPLACE DDL: ${inplaceSql}`);
+            try {
+                await conn.query(inplaceSql);
+                Logger.info('INPLACE DDL执行成功');
+                return true;
+            } catch (inplaceError) {
+                Logger.warn(`INPLACE DDL 也执行失败: ${inplaceError.message}`);
+
+                // 如果还有fallback，尝试执行
+                if (fallbackSql) {
+                    Logger.info(`尝试传统DDL: ${fallbackSql}`);
+                    try {
+                        await conn.query(fallbackSql);
+                        Logger.info('传统DDL执行成功');
+                        return true;
+                    } catch (fallbackError) {
+                        Logger.error(`传统DDL也执行失败: ${fallbackError.message}`);
+                        throw fallbackError;
+                    }
+                } else {
+                    throw inplaceError;
+                }
+            }
+        } else if (fallbackSql) {
             Logger.info(`尝试回退SQL: ${fallbackSql}`);
             try {
                 await conn.query(fallbackSql);
@@ -425,7 +464,7 @@ const syncTableFields = async (conn, tableName, fields, dbInfo) => {
                 const onlineSQL = generateAlterStatement(tableName, fieldName, rule, comparison.changes);
                 const fallbackSQL = `ALTER TABLE \`${tableName}\` MODIFY COLUMN ${getColumnDefinition(fieldName, rule)}`;
 
-                // 安全执行DDL（总是提供回退方案）
+                // 安全执行DDL（MySQL 8.0+支持更好的Online DDL）
                 await executeDDLSafely(conn, onlineSQL, fallbackSQL);
                 Logger.info(`表 ${tableName} 字段 ${fieldName} 更新成功`);
             } else {
@@ -438,7 +477,7 @@ const syncTableFields = async (conn, tableName, fields, dbInfo) => {
             const onlineSQL = generateAddColumnStatement(tableName, fieldName, rule);
             const fallbackSQL = `ALTER TABLE \`${tableName}\` ADD COLUMN ${getColumnDefinition(fieldName, rule)}`;
 
-            // 安全执行DDL（总是提供回退方案）
+            // 安全执行DDL（MySQL 8.0+支持更好的Online DDL）
             await executeDDLSafely(conn, onlineSQL, fallbackSQL);
             Logger.info(`表 ${tableName} 添加字段 ${fieldName} 成功`);
 
@@ -568,10 +607,10 @@ const syncDatabase = async () => {
         conn = await createConnection();
         Logger.info('数据库连接成功');
 
-        // 检查数据库版本和 Online DDL 支持
+        // 检查数据库版本（仅支持MySQL 8.0+）
         const dbInfo = await checkMySQLVersion(conn);
-        Logger.info(`数据库信息: ${dbInfo.version}`);
-        Logger.info(`Online DDL 支持: ${dbInfo.supportsOnlineDDL ? '是' : '否'}`);
+        Logger.info(`MySQL 版本: ${dbInfo.version}`);
+        Logger.info(`Online DDL 支持: 完全支持 (MySQL 8.0+)`);
 
         // 扫描tables目录
         Logger.info('步骤 3/3: 同步数据库表结构...');
@@ -650,8 +689,8 @@ const syncDatabase = async () => {
         Logger.info(`总处理表数: ${processedCount}`);
         Logger.info(`新创建表数: ${createdTables}`);
         Logger.info(`修改表数: ${modifiedTables}`);
-        Logger.info(`使用的DDL模式: ${dbInfo.supportsOnlineDDL ? 'Online DDL (无锁)' : '传统DDL'}`);
-        Logger.info(`数据库版本: ${dbInfo.version}`);
+        Logger.info(`DDL模式: Online DDL (MySQL 8.0+ 优化)`);
+        Logger.info(`MySQL 版本: ${dbInfo.version}`);
         Logger.info('='.repeat(50));
 
         if (processedCount === 0) {
