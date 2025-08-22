@@ -1,14 +1,5 @@
 /**
- * 数据库表结构同步脚本
- *
- * 注意：此脚本仅支持 MySQL 8.0 及以上版本
- * 不支持 MariaDB 或旧版本的 MySQL
- *
- * 功能：
- * - 自动创建不存在的表
- * - 同步表字段结构变化
- * - 管理表索引
- * - 使用 MySQL 8.0+ 的 Online DDL 特性
+ * 数据库表结构同步脚本 - 仅支持 MySQL 8.0+
  */
 
 import path from 'node:path';
@@ -18,7 +9,6 @@ import { parseFieldRule } from '../utils/util.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import tableCheck from '../checks/table.js';
 
-// 数据类型映射到数据库字段类型
 const typeMapping = {
     number: 'BIGINT',
     string: 'VARCHAR',
@@ -27,50 +17,33 @@ const typeMapping = {
 };
 
 // 获取字段的SQL定义
-const getColumnDefinition = (fieldName, rule, withoutIndex = false) => {
-    const [displayName, type, minStr, maxStr, defaultValue, hasIndex, spec] = parseFieldRule(rule);
+const getColumnDefinition = (fieldName, rule) => {
+    const [displayName, type, minStr, maxStr, defaultValue] = parseFieldRule(rule);
 
     let sqlType = typeMapping[type];
-    if (!sqlType) {
-        throw new Error(`不支持的数据类型: ${type}`);
-    }
+    if (!sqlType) throw new Error(`不支持的数据类型: ${type}`);
 
-    // 处理字符串类型的长度
     if (type === 'string') {
-        const maxLength = maxStr === 'null' ? 255 : parseInt(maxStr);
-        sqlType = `VARCHAR(${maxLength})`;
+        sqlType = `VARCHAR(${maxStr === 'null' ? 255 : parseInt(maxStr)})`;
+    } else if (type === 'array') {
+        sqlType = `VARCHAR(${maxStr === 'null' ? 1000 : parseInt(maxStr)})`;
     }
 
-    // 处理数组类型的长度
-    if (type === 'array') {
-        const maxLength = maxStr === 'null' ? 1000 : parseInt(maxStr);
-        sqlType = `VARCHAR(${maxLength})`;
-    }
-
-    // 构建完整的列定义
     let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
 
     // 添加默认值
     if (defaultValue && defaultValue !== 'null') {
-        if (type === 'string') {
-            columnDef += ` DEFAULT "${defaultValue.replace(/"/g, '\\"')}"`;
-        } else if (type === 'number') {
+        if (type === 'number') {
             columnDef += ` DEFAULT ${defaultValue}`;
-        } else if (type === 'array') {
+        } else if (type !== 'text') {
             columnDef += ` DEFAULT "${defaultValue.replace(/"/g, '\\"')}"`;
         }
-        // text 类型不添加默认值，因为MySQL不支持TEXT类型的默认值
-    } else {
-        // 根据字段类型设置合适的默认值，所有字段都不允许为NULL
-        if (type === 'string' || type === 'array') {
-            columnDef += ` DEFAULT ""`;
-        } else if (type === 'number') {
-            columnDef += ` DEFAULT 0`;
-        }
-        // text 类型不添加默认值，因为MySQL不支持TEXT类型的默认值
+    } else if (type === 'string' || type === 'array') {
+        columnDef += ` DEFAULT ""`;
+    } else if (type === 'number') {
+        columnDef += ` DEFAULT 0`;
     }
 
-    // 添加注释
     if (displayName && displayName !== 'null') {
         columnDef += ` COMMENT "${displayName.replace(/"/g, '\\"')}"`;
     }
@@ -80,22 +53,12 @@ const getColumnDefinition = (fieldName, rule, withoutIndex = false) => {
 
 // 创建数据库连接
 const createConnection = async () => {
-    console.log(`🔍 检查 MySQL 配置...`);
-    console.log(`MYSQL_ENABLE: ${Env.MYSQL_ENABLE}`);
-    console.log(`MYSQL_HOST: ${Env.MYSQL_HOST}`);
-    console.log(`MYSQL_PORT: ${Env.MYSQL_PORT}`);
-    console.log(`MYSQL_DB: ${Env.MYSQL_DB}`);
-    console.log(`MYSQL_USER: ${Env.MYSQL_USER}`);
-
     if (Env.MYSQL_ENABLE !== 1) {
         throw new Error('MySQL 未启用，请在环境变量中设置 MYSQL_ENABLE=1');
     }
 
-    console.log(`📦 导入 mariadb 驱动...`);
-    // 注意：虽然使用 mariadb 驱动，但此脚本仅支持 MySQL 8.0 及以上版本
     const mariadb = await import('mariadb');
-
-    const config = {
+    return await mariadb.createConnection({
         host: Env.MYSQL_HOST || '127.0.0.1',
         port: Env.MYSQL_PORT || 3306,
         database: Env.MYSQL_DB || 'test',
@@ -103,12 +66,7 @@ const createConnection = async () => {
         password: Env.MYSQL_PASSWORD || 'root',
         charset: 'utf8mb4',
         timezone: Env.TIMEZONE || 'local'
-    };
-
-    console.log(`🔌 尝试连接数据库...`);
-    console.log(`连接配置: ${config.user}@${config.host}:${config.port}/${config.database}`);
-
-    return await mariadb.createConnection(config);
+    });
 };
 
 // 检查表是否存在
@@ -120,19 +78,8 @@ const tableExists = async (conn, tableName) => {
 // 获取表的现有列信息
 const getTableColumns = async (conn, tableName) => {
     const result = await conn.query(
-        `SELECT
-            COLUMN_NAME,
-            DATA_TYPE,
-            CHARACTER_MAXIMUM_LENGTH,
-            NUMERIC_PRECISION,
-            NUMERIC_SCALE,
-            IS_NULLABLE,
-            COLUMN_DEFAULT,
-            COLUMN_COMMENT,
-            COLUMN_TYPE
-        FROM information_schema.COLUMNS
-        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-        ORDER BY ORDINAL_POSITION`,
+        `SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
+         FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`,
         [Env.MYSQL_DB || 'test', tableName]
     );
 
@@ -140,10 +87,8 @@ const getTableColumns = async (conn, tableName) => {
     result.forEach((row) => {
         columns[row.COLUMN_NAME] = {
             type: row.DATA_TYPE,
-            columnType: row.COLUMN_TYPE, // 完整的类型定义，如 varchar(255)
+            columnType: row.COLUMN_TYPE,
             length: row.CHARACTER_MAXIMUM_LENGTH,
-            precision: row.NUMERIC_PRECISION,
-            scale: row.NUMERIC_SCALE,
             nullable: row.IS_NULLABLE === 'YES',
             defaultValue: row.COLUMN_DEFAULT,
             comment: row.COLUMN_COMMENT
@@ -155,79 +100,46 @@ const getTableColumns = async (conn, tableName) => {
 // 获取表的现有索引信息
 const getTableIndexes = async (conn, tableName) => {
     const result = await conn.query(
-        `SELECT INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX
-         FROM information_schema.STATISTICS
-         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY'
-         ORDER BY INDEX_NAME, SEQ_IN_INDEX`,
+        `SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
+         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME`,
         [Env.MYSQL_DB || 'test', tableName]
     );
 
     const indexes = {};
     result.forEach((row) => {
-        if (!indexes[row.INDEX_NAME]) {
-            indexes[row.INDEX_NAME] = [];
-        }
+        if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
         indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
     });
     return indexes;
 };
 
-// 创建索引
-const createIndex = async (conn, tableName, fieldName, dbInfo) => {
-    const indexName = `idx_${fieldName}`;
-    const createIndexSQL = `CREATE INDEX \`${indexName}\` ON \`${tableName}\` (\`${fieldName}\`)`;
+// 管理索引
+const manageIndex = async (conn, tableName, indexName, fieldName, action) => {
+    const sql = action === 'create' ? `CREATE INDEX \`${indexName}\` ON \`${tableName}\` (\`${fieldName}\`)` : `DROP INDEX \`${indexName}\` ON \`${tableName}\``;
 
     try {
-        await conn.query(createIndexSQL);
-        Logger.info(`表 ${tableName} 字段 ${fieldName} 索引创建成功`);
+        await conn.query(sql);
+        Logger.info(`表 ${tableName} 索引 ${indexName} ${action === 'create' ? '创建' : '删除'}成功`);
     } catch (error) {
-        Logger.error(`创建索引失败: ${error.message}`);
-        throw error;
-    }
-};
-
-// 删除索引
-const dropIndex = async (conn, tableName, indexName) => {
-    const dropIndexSQL = `DROP INDEX \`${indexName}\` ON \`${tableName}\``;
-
-    try {
-        await conn.query(dropIndexSQL);
-        Logger.info(`表 ${tableName} 索引 ${indexName} 删除成功`);
-    } catch (error) {
-        Logger.error(`删除索引失败: ${error.message}`);
+        Logger.error(`${action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
         throw error;
     }
 };
 
 // 创建表
 const createTable = async (conn, tableName, fields) => {
-    const columns = [];
-    const indexes = [];
+    const columns = ['`id` BIGINT PRIMARY KEY COMMENT "主键ID"', '`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"', '`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"', '`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"', '`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"'];
 
-    // 添加系统默认字段
-    columns.push('`id` BIGINT PRIMARY KEY COMMENT "主键ID"');
-    columns.push('`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"');
-    columns.push('`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"');
-    columns.push('`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"');
-    columns.push('`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"');
+    const indexes = ['INDEX `idx_created_at` (`created_at`)', 'INDEX `idx_updated_at` (`updated_at`)', 'INDEX `idx_state` (`state`)'];
 
-    // 添加系统字段的索引
-    indexes.push('INDEX `idx_created_at` (`created_at`)');
-    indexes.push('INDEX `idx_updated_at` (`updated_at`)');
-    indexes.push('INDEX `idx_state` (`state`)');
-
-    // 添加自定义字段
+    // 添加自定义字段和索引
     for (const [fieldName, rule] of Object.entries(fields)) {
-        const columnDef = getColumnDefinition(fieldName, rule);
-        columns.push(columnDef);
+        columns.push(getColumnDefinition(fieldName, rule));
 
-        // 检查是否需要创建索引
         const ruleParts = parseFieldRule(rule);
-        const hasIndex = ruleParts[5]; // 第6个参数是索引设置
-
+        const hasIndex = ruleParts[5];
         if (hasIndex && hasIndex !== 'null' && hasIndex !== '0' && hasIndex.toLowerCase() !== 'false') {
             indexes.push(`INDEX \`idx_${fieldName}\` (\`${fieldName}\`)`);
-            console.log(`📊 为字段 ${tableName}.${fieldName} 创建索引`);
         }
     }
 
@@ -235,34 +147,23 @@ const createTable = async (conn, tableName, fields) => {
         CREATE TABLE \`${tableName}\` (
             ${columns.join(',\n            ')},
             ${indexes.join(',\n            ')}
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT="${tableName} 表"
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `;
 
     await conn.query(createTableSQL);
     Logger.info(`表 ${tableName} 创建成功`);
 };
 
-// 比较字段定义是否有变化
+// 比较字段定义变化
 const compareFieldDefinition = (existingColumn, newRule) => {
-    const ruleParts = parseFieldRule(newRule);
-    const [displayName, type, minStr, maxStr, defaultValue, hasIndex, spec] = ruleParts;
+    const [displayName, type, minStr, maxStr, defaultValue] = parseFieldRule(newRule);
     const changes = [];
 
-    // 检查数据类型变化
-    const expectedType = typeMapping[type];
-
-    // 对于 string 类型，检查长度变化
+    // 检查长度变化（string类型）
     if (type === 'string') {
         const newMaxLength = maxStr === 'null' ? 255 : parseInt(maxStr);
-        const currentLength = existingColumn.length;
-
-        if (currentLength !== newMaxLength) {
-            changes.push({
-                type: 'length',
-                current: currentLength,
-                new: newMaxLength,
-                field: 'CHARACTER_MAXIMUM_LENGTH'
-            });
+        if (existingColumn.length !== newMaxLength) {
+            changes.push({ type: 'length', current: existingColumn.length, new: newMaxLength });
         }
     }
 
@@ -270,169 +171,67 @@ const compareFieldDefinition = (existingColumn, newRule) => {
     if (displayName && displayName !== 'null') {
         const currentComment = existingColumn.comment || '';
         if (currentComment !== displayName) {
-            changes.push({
-                type: 'comment',
-                current: currentComment,
-                new: displayName,
-                field: 'COLUMN_COMMENT'
-            });
+            changes.push({ type: 'comment', current: currentComment, new: displayName });
         }
     }
 
-    // 检查默认值变化
-    if (defaultValue && defaultValue !== 'null') {
-        const currentDefault = existingColumn.defaultValue;
-        let expectedDefault = defaultValue;
+    // 检查数据类型变化
+    const expectedDbType = {
+        number: 'bigint',
+        string: 'varchar',
+        text: 'mediumtext',
+        array: 'varchar'
+    }[type];
 
-        // 根据类型格式化期望的默认值
-        if (type === 'string' || type === 'text' || type === 'array') {
-            expectedDefault = defaultValue;
-        } else if (type === 'number') {
-            expectedDefault = parseInt(defaultValue);
-        }
-
-        if (currentDefault !== expectedDefault) {
-            changes.push({
-                type: 'default',
-                current: currentDefault,
-                new: expectedDefault,
-                field: 'COLUMN_DEFAULT'
-            });
-        }
+    if (existingColumn.type.toLowerCase() !== expectedDbType) {
+        changes.push({ type: 'datatype', current: existingColumn.type, new: expectedDbType });
     }
 
-    // 检查基础数据类型变化
-    const currentType = existingColumn.type.toLowerCase();
-    let expectedDbType = '';
-
-    switch (type) {
-        case 'number':
-            expectedDbType = 'bigint';
-            break;
-        case 'string':
-            expectedDbType = 'varchar';
-            break;
-        case 'text':
-            expectedDbType = 'mediumtext';
-            break;
-        case 'array':
-            expectedDbType = 'varchar';
-            break;
-    }
-
-    if (currentType !== expectedDbType) {
-        changes.push({
-            type: 'datatype',
-            current: currentType,
-            new: expectedDbType,
-            field: 'DATA_TYPE'
-        });
-    }
-
-    return {
-        hasChanges: changes.length > 0,
-        changes: changes,
-        reason: changes.length > 0 ? `发现 ${changes.length} 个变化` : '无变化'
-    };
+    return { hasChanges: changes.length > 0, changes };
 };
 
-// 生成ALTER语句来修改字段（使用MySQL 8.0 Online DDL）
-const generateAlterStatement = (tableName, fieldName, rule, changes) => {
+// 生成DDL语句
+const generateDDL = (tableName, fieldName, rule, isAdd = false) => {
     const columnDef = getColumnDefinition(fieldName, rule);
-
-    // MySQL 8.0+ 完全支持 Online DDL
-    // ALGORITHM=INSTANT: 立即执行，不复制数据（MySQL 8.0+支持更多INSTANT操作）
-    // LOCK=NONE: 不锁定表，允许并发读写
-    return `ALTER TABLE \`${tableName}\` MODIFY COLUMN ${columnDef}, ALGORITHM=INSTANT, LOCK=NONE`;
+    const operation = isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN';
+    return `ALTER TABLE \`${tableName}\` ${operation} ${columnDef}, ALGORITHM=INSTANT, LOCK=NONE`;
 };
 
-// 生成添加字段的ALTER语句（使用MySQL 8.0 Online DDL）
-const generateAddColumnStatement = (tableName, fieldName, rule) => {
-    const columnDef = getColumnDefinition(fieldName, rule);
-
-    // MySQL 8.0+ 的 INSTANT ADD COLUMN 支持更好
-    return `ALTER TABLE \`${tableName}\` ADD COLUMN ${columnDef}, ALGORITHM=INSTANT, LOCK=NONE`;
-};
-
-// 检查MySQL版本（仅支持MySQL 8.0+）
+// 检查MySQL版本
 const checkMySQLVersion = async (conn) => {
-    try {
-        const result = await conn.query('SELECT VERSION() AS version');
-        const version = result[0].version;
-        Logger.info(`MySQL 版本: ${version}`);
+    const result = await conn.query('SELECT VERSION() AS version');
+    const version = result[0].version;
 
-        // 检查是否为MariaDB，如果是则拒绝
-        const isMariaDB = version.toLowerCase().includes('mariadb');
-        if (isMariaDB) {
-            throw new Error('此脚本仅支持 MySQL 8.0 及以上版本，不支持 MariaDB');
-        }
-
-        // 检查MySQL版本
-        const versionParts = version.split('.');
-        const majorVersion = parseInt(versionParts[0]);
-        const minorVersion = parseInt(versionParts[1]);
-
-        // 只支持MySQL 8.0及以上版本
-        const isMySQL8Plus = majorVersion >= 8;
-
-        if (!isMySQL8Plus) {
-            throw new Error(`此脚本仅支持 MySQL 8.0 及以上版本，当前版本: ${majorVersion}.${minorVersion}`);
-        }
-
-        Logger.info(`✅ MySQL 版本检查通过: ${majorVersion}.${minorVersion}`);
-        Logger.info(`✅ Online DDL 支持: 完全支持`);
-
-        return { version, supportsOnlineDDL: true, majorVersion, minorVersion };
-    } catch (error) {
-        Logger.error('MySQL版本检查失败:', error.message);
-        throw error;
+    if (version.toLowerCase().includes('mariadb')) {
+        throw new Error('此脚本仅支持 MySQL 8.0+，不支持 MariaDB');
     }
+
+    const majorVersion = parseInt(version.split('.')[0]);
+    if (majorVersion < 8) {
+        throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
+    }
+
+    Logger.info(`MySQL 版本检查通过: ${version}`);
+    return { version };
 };
 
-// 安全执行DDL语句（MySQL 8.0+优化）
-const executeDDLSafely = async (conn, sql, fallbackSql = null) => {
+// 安全执行DDL语句
+const executeDDLSafely = async (conn, sql) => {
     try {
-        Logger.info(`执行SQL: ${sql}`);
         await conn.query(sql);
         return true;
     } catch (error) {
-        Logger.warn(`INSTANT DDL 执行失败: ${error.message}`);
-
-        // 如果INSTANT失败，尝试使用INPLACE
+        // INSTANT失败时尝试INPLACE
         if (sql.includes('ALGORITHM=INSTANT')) {
             const inplaceSql = sql.replace('ALGORITHM=INSTANT', 'ALGORITHM=INPLACE');
-            Logger.info(`尝试 INPLACE DDL: ${inplaceSql}`);
             try {
                 await conn.query(inplaceSql);
-                Logger.info('INPLACE DDL执行成功');
                 return true;
             } catch (inplaceError) {
-                Logger.warn(`INPLACE DDL 也执行失败: ${inplaceError.message}`);
-
-                // 如果还有fallback，尝试执行
-                if (fallbackSql) {
-                    Logger.info(`尝试传统DDL: ${fallbackSql}`);
-                    try {
-                        await conn.query(fallbackSql);
-                        Logger.info('传统DDL执行成功');
-                        return true;
-                    } catch (fallbackError) {
-                        Logger.error(`传统DDL也执行失败: ${fallbackError.message}`);
-                        throw fallbackError;
-                    }
-                } else {
-                    throw inplaceError;
-                }
-            }
-        } else if (fallbackSql) {
-            Logger.info(`尝试回退SQL: ${fallbackSql}`);
-            try {
-                await conn.query(fallbackSql);
-                Logger.info('回退SQL执行成功');
+                // 最后尝试传统DDL
+                const traditionSql = sql.split(',')[0]; // 移除ALGORITHM和LOCK参数
+                await conn.query(traditionSql);
                 return true;
-            } catch (fallbackError) {
-                Logger.error(`回退SQL也执行失败: ${fallbackError.message}`);
-                throw fallbackError;
             }
         } else {
             throw error;
@@ -440,149 +239,57 @@ const executeDDLSafely = async (conn, sql, fallbackSql = null) => {
     }
 };
 
-// 同步表字段
-const syncTableFields = async (conn, tableName, fields, dbInfo) => {
+// 同步表结构
+const syncTable = async (conn, tableName, fields) => {
     const existingColumns = await getTableColumns(conn, tableName);
+    const existingIndexes = await getTableIndexes(conn, tableName);
     const systemFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'];
 
-    Logger.info(`开始同步表 ${tableName} 的字段...`);
-    Logger.info(`现有字段数量: ${Object.keys(existingColumns).length}`);
-    Logger.info(`新定义字段数量: ${Object.keys(fields).length}`);
-
+    // 同步字段
     for (const [fieldName, rule] of Object.entries(fields)) {
         if (existingColumns[fieldName]) {
-            // 字段已存在，检查是否需要修改
             const comparison = compareFieldDefinition(existingColumns[fieldName], rule);
-
             if (comparison.hasChanges) {
-                Logger.info(`字段 ${tableName}.${fieldName} 需要更新:`);
-                comparison.changes.forEach((change) => {
-                    Logger.info(`  - ${change.type}: ${change.current} → ${change.new}`);
-                });
-
-                // 生成Online DDL语句
-                const onlineSQL = generateAlterStatement(tableName, fieldName, rule, comparison.changes);
-                const fallbackSQL = `ALTER TABLE \`${tableName}\` MODIFY COLUMN ${getColumnDefinition(fieldName, rule)}`;
-
-                // 安全执行DDL（MySQL 8.0+支持更好的Online DDL）
-                await executeDDLSafely(conn, onlineSQL, fallbackSQL);
-                Logger.info(`表 ${tableName} 字段 ${fieldName} 更新成功`);
-            } else {
-                Logger.info(`字段 ${tableName}.${fieldName} 无变化，跳过`);
+                const sql = generateDDL(tableName, fieldName, rule);
+                await executeDDLSafely(conn, sql);
+                Logger.info(`字段 ${tableName}.${fieldName} 更新成功`);
             }
         } else {
-            // 添加新字段
-            Logger.info(`字段 ${tableName}.${fieldName} 不存在，需要添加`);
-
-            const onlineSQL = generateAddColumnStatement(tableName, fieldName, rule);
-            const fallbackSQL = `ALTER TABLE \`${tableName}\` ADD COLUMN ${getColumnDefinition(fieldName, rule)}`;
-
-            // 安全执行DDL（MySQL 8.0+支持更好的Online DDL）
-            await executeDDLSafely(conn, onlineSQL, fallbackSQL);
-            Logger.info(`表 ${tableName} 添加字段 ${fieldName} 成功`);
-
-            // 检查新字段是否需要创建索引
-            const ruleParts = parseFieldRule(rule);
-            const hasIndex = ruleParts[5]; // 第6个参数是索引设置
-
-            if (hasIndex && hasIndex !== 'null' && hasIndex !== '0' && hasIndex.toLowerCase() !== 'false') {
-                await createIndex(conn, tableName, fieldName, dbInfo);
-            }
+            const sql = generateDDL(tableName, fieldName, rule, true);
+            await executeDDLSafely(conn, sql);
+            Logger.info(`字段 ${tableName}.${fieldName} 添加成功`);
         }
     }
 
     // 同步索引
-    Logger.info(`开始同步表 ${tableName} 的索引...`);
-    await syncTableIndexes(conn, tableName, fields, dbInfo);
-
-    Logger.info(`表 ${tableName} 字段和索引同步完成`);
-};
-
-// 同步表索引
-const syncTableIndexes = async (conn, tableName, fields, dbInfo) => {
-    // 获取现有索引
-    const existingIndexes = await getTableIndexes(conn, tableName);
-
-    // 系统字段索引（这些索引在表创建时已经建立）
-    const systemIndexes = ['idx_created_at', 'idx_updated_at', 'idx_state'];
-
-    // 收集需要创建的索引
-    const requiredIndexes = [];
-
     for (const [fieldName, rule] of Object.entries(fields)) {
         const ruleParts = parseFieldRule(rule);
-        const hasIndex = ruleParts[5]; // 第6个参数是索引设置
+        const hasIndex = ruleParts[5];
+        const indexName = `idx_${fieldName}`;
+        const needsIndex = hasIndex && hasIndex !== 'null' && hasIndex !== '0' && hasIndex.toLowerCase() !== 'false';
 
-        if (hasIndex && hasIndex !== 'null' && hasIndex !== '0' && hasIndex.toLowerCase() !== 'false') {
-            const indexName = `idx_${fieldName}`;
-            requiredIndexes.push({ fieldName, indexName });
+        if (needsIndex && !existingIndexes[indexName]) {
+            await manageIndex(conn, tableName, indexName, fieldName, 'create');
+        } else if (!needsIndex && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
+            await manageIndex(conn, tableName, indexName, fieldName, 'drop');
         }
     }
-
-    // 检查需要创建的索引
-    for (const { fieldName, indexName } of requiredIndexes) {
-        if (!existingIndexes[indexName]) {
-            Logger.info(`字段 ${tableName}.${fieldName} 需要创建索引`);
-            await createIndex(conn, tableName, fieldName, dbInfo);
-        } else {
-            Logger.info(`字段 ${tableName}.${fieldName} 索引已存在，跳过`);
-        }
-    }
-
-    // 检查需要删除的索引（字段定义中不再需要索引的字段）
-    for (const [indexName, columns] of Object.entries(existingIndexes)) {
-        // 跳过系统索引
-        if (systemIndexes.includes(indexName)) {
-            continue;
-        }
-
-        // 检查是否为单字段索引且该字段在当前定义中不需要索引
-        if (columns.length === 1) {
-            const fieldName = columns[0];
-
-            // 检查该字段是否在当前表定义中
-            if (fields[fieldName]) {
-                const ruleParts = parseFieldRule(fields[fieldName]);
-                const hasIndex = ruleParts[5];
-
-                // 如果字段定义中不需要索引，则删除现有索引
-                if (!hasIndex || hasIndex === 'null' || hasIndex === '0' || hasIndex.toLowerCase() === 'false') {
-                    Logger.info(`字段 ${tableName}.${fieldName} 不再需要索引，删除索引 ${indexName}`);
-                    await dropIndex(conn, tableName, indexName);
-                }
-            } else {
-                // 字段已被删除，但我们不处理字段删除，只记录
-                Logger.info(`字段 ${tableName}.${fieldName} 不在当前定义中，保留索引 ${indexName}`);
-            }
-        }
-    }
-
-    Logger.info(`表 ${tableName} 索引同步完成`);
 };
 
 // 处理单个表文件
-const processTableFile = async (conn, filePath, dbInfo) => {
-    const fileName = path.basename(filePath, '.json');
-    const tableName = fileName;
-
-    Logger.info(`处理表定义文件: ${fileName}`);
-
-    // 读取表定义
+const processTableFile = async (conn, filePath) => {
+    const tableName = path.basename(filePath, '.json');
     const tableDefinition = await Bun.file(filePath).json();
-
-    // 检查表是否存在
     const exists = await tableExists(conn, tableName);
-    Logger.info(`表 ${tableName} 存在状态: ${exists}`);
 
     if (exists) {
-        Logger.info(`表 ${tableName} 已存在，检查字段变化并同步...`);
-        await syncTableFields(conn, tableName, tableDefinition, dbInfo);
+        await syncTable(conn, tableName, tableDefinition);
     } else {
-        Logger.info(`表 ${tableName} 不存在，创建新表...`);
         await createTable(conn, tableName, tableDefinition);
     }
 
     Logger.info(`表 ${tableName} 处理完成`);
+    return exists;
 };
 
 // 主同步函数
@@ -592,109 +299,40 @@ const syncDatabase = async () => {
     try {
         Logger.info('开始数据库表结构同步...');
 
-        // 首先执行表定义验证
-        Logger.info('步骤 1/3: 验证表定义文件...');
+        // 验证表定义文件
         const tableValidationResult = await tableCheck();
-
         if (!tableValidationResult) {
-            throw new Error('表定义验证失败，请检查表定义文件格式。同步操作已取消。');
+            throw new Error('表定义验证失败');
         }
 
-        Logger.info('✅ 表定义验证通过，继续执行数据库同步...');
-
-        // 创建数据库连接
-        Logger.info('步骤 2/3: 建立数据库连接...');
+        // 建立数据库连接并检查版本
         conn = await createConnection();
-        Logger.info('数据库连接成功');
+        await checkMySQLVersion(conn);
 
-        // 检查数据库版本（仅支持MySQL 8.0+）
-        const dbInfo = await checkMySQLVersion(conn);
-        Logger.info(`MySQL 版本: ${dbInfo.version}`);
-        Logger.info(`Online DDL 支持: 完全支持 (MySQL 8.0+)`);
-
-        // 扫描tables目录
-        Logger.info('步骤 3/3: 同步数据库表结构...');
+        // 扫描并处理表文件
         const tablesGlob = new Bun.Glob('*.json');
-        const coreTablesDir = __dirtables;
-        const userTablesDir = getProjectDir('tables');
+        const directories = [__dirtables, getProjectDir('tables')];
+        let processedCount = 0,
+            createdTables = 0,
+            modifiedTables = 0;
 
-        let processedCount = 0;
-        let createdTables = 0;
-        let modifiedTables = 0;
-
-        Logger.info('开始处理表定义文件...');
-
-        // 处理核心表定义
-        Logger.info(`扫描核心表目录: ${coreTablesDir}`);
-        try {
-            for await (const file of tablesGlob.scan({
-                cwd: coreTablesDir,
-                absolute: true,
-                onlyFiles: true
-            })) {
-                const tableName = path.basename(file, '.json');
-                const exists = await tableExists(conn, tableName);
-
-                try {
-                    await processTableFile(conn, file, dbInfo);
-                    if (exists) {
-                        modifiedTables++;
-                    } else {
-                        createdTables++;
-                    }
+        for (const dir of directories) {
+            try {
+                for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
+                    const exists = await processTableFile(conn, file);
+                    exists ? modifiedTables++ : createdTables++;
                     processedCount++;
-                } catch (error) {
-                    Logger.error(`处理表文件 ${file} 时出错:`, error.message);
-                    console.error(`错误详情:`, error);
-                    throw error;
                 }
+            } catch (error) {
+                Logger.warn(`扫描目录 ${dir} 出错: ${error.message}`);
             }
-        } catch (error) {
-            Logger.warn('核心表目录扫描出错:', error.message);
         }
 
-        // 处理用户表定义
-        Logger.info(`扫描用户表目录: ${userTablesDir}`);
-        try {
-            for await (const file of tablesGlob.scan({
-                cwd: userTablesDir,
-                absolute: true,
-                onlyFiles: true
-            })) {
-                const tableName = path.basename(file, '.json');
-                const exists = await tableExists(conn, tableName);
-
-                try {
-                    await processTableFile(conn, file, dbInfo);
-                    if (exists) {
-                        modifiedTables++;
-                    } else {
-                        createdTables++;
-                    }
-                    processedCount++;
-                } catch (error) {
-                    Logger.error(`处理表文件 ${file} 时出错:`, error.message);
-                    console.error(`错误详情:`, error);
-                    throw error;
-                }
-            }
-        } catch (error) {
-            Logger.warn('用户表目录扫描出错:', error.message);
-        }
-
-        // 显示同步统计信息
-        Logger.info('='.repeat(50));
-        Logger.info('数据库表结构同步完成');
-        Logger.info('='.repeat(50));
-        Logger.info(`总处理表数: ${processedCount}`);
-        Logger.info(`新创建表数: ${createdTables}`);
-        Logger.info(`修改表数: ${modifiedTables}`);
-        Logger.info(`DDL模式: Online DDL (MySQL 8.0+ 优化)`);
-        Logger.info(`MySQL 版本: ${dbInfo.version}`);
-        Logger.info('='.repeat(50));
+        // 显示统计信息
+        Logger.info(`同步完成 - 总计: ${processedCount}, 新建: ${createdTables}, 修改: ${modifiedTables}`);
 
         if (processedCount === 0) {
-            Logger.warn('没有找到任何表定义文件，请检查 tables/ 目录');
+            Logger.warn('没有找到任何表定义文件');
         }
     } catch (error) {
         Logger.error('数据库同步失败:', error);
@@ -703,7 +341,6 @@ const syncDatabase = async () => {
         if (conn) {
             try {
                 await conn.end();
-                Logger.info('数据库连接已关闭');
             } catch (error) {
                 Logger.warn('关闭数据库连接时出错:', error.message);
             }
@@ -711,9 +348,8 @@ const syncDatabase = async () => {
     }
 };
 
-// 如果直接运行此脚本或通过 CLI 调用
+// 如果直接运行此脚本
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('dbSync.js')) {
-    console.log(`🚀 开始执行数据库同步脚本...`);
     syncDatabase().catch((error) => {
         console.error('❌ 数据库同步失败:', error);
         process.exit(1);
