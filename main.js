@@ -383,7 +383,7 @@ class Befly {
                                 } else if (contentType.indexOf('form-data') !== -1) {
                                     ctx.body = await req.formData();
                                 } else if (contentType.indexOf('x-www-form-urlencoded') !== -1) {
-                                    const text = await clonedReq.text();
+                                    const text = await req.text();
                                     const formData = new URLSearchParams(text);
                                     ctx.body = Object.fromEntries(formData);
                                 } else {
