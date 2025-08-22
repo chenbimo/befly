@@ -57,6 +57,7 @@ export default async () => {
 
         // 收集所有表文件
         const allTableFiles = [];
+        const coreTableNames = new Set(); // 存储内核表文件名
 
         // 收集内核表字段定义文件
         for await (const file of tablesGlob.scan({
@@ -64,15 +65,27 @@ export default async () => {
             absolute: true,
             onlyFiles: true
         })) {
+            const fileName = path.basename(file, '.json');
+            coreTableNames.add(fileName);
             allTableFiles.push({ file, type: 'core' });
         }
 
-        // 收集项目表字段定义文件
+        // 收集项目表字段定义文件，并检查是否与内核表同名
         for await (const file of tablesGlob.scan({
             cwd: getProjectDir('tables'),
             absolute: true,
             onlyFiles: true
         })) {
+            const fileName = path.basename(file, '.json');
+
+            // 检查项目表是否与内核表同名
+            if (coreTableNames.has(fileName)) {
+                Logger.error(`项目表 ${fileName}.json 与内核表同名，项目表不能与内核表定义文件同名`);
+                invalidFiles++;
+                totalFiles++;
+                continue;
+            }
+
             allTableFiles.push({ file, type: 'project' });
         }
 
