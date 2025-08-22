@@ -55,17 +55,41 @@ export default async () => {
         let validFiles = 0;
         let invalidFiles = 0;
 
-        const validateFile = async (file) => {
+        // 收集所有表文件
+        const allTableFiles = [];
+
+        // 收集内核表字段定义文件
+        for await (const file of tablesGlob.scan({
+            cwd: __dirtables,
+            absolute: true,
+            onlyFiles: true
+        })) {
+            allTableFiles.push({ file, type: 'core' });
+        }
+
+        // 收集项目表字段定义文件
+        for await (const file of tablesGlob.scan({
+            cwd: getProjectDir('tables'),
+            absolute: true,
+            onlyFiles: true
+        })) {
+            allTableFiles.push({ file, type: 'project' });
+        }
+
+        // 保留字段列表
+        const reservedFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'];
+
+        // 合并进行验证逻辑
+        for (const { file, type } of allTableFiles) {
             totalFiles++;
             const fileName = path.basename(file);
+            const fileType = type === 'core' ? '内核' : '项目';
+
             try {
                 // 读取并解析 JSON 文件
                 const table = await Bun.file(file).json();
                 let fileValid = true;
                 let fileRules = 0;
-
-                // 保留字段列表
-                const reservedFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'];
 
                 // 检查 table 中的每个验证规则
                 for (const [fieldName, rule] of Object.entries(table)) {
@@ -74,7 +98,7 @@ export default async () => {
 
                     // 检查是否使用了保留字段
                     if (reservedFields.includes(fieldName)) {
-                        Logger.error(`${fileName} 文件包含保留字段 ${fieldName}，不能在表定义中使用以下字段: ${reservedFields.join(', ')}`);
+                        Logger.error(`${fileType}表 ${fileName} 文件包含保留字段 ${fieldName}，不能在表定义中使用以下字段: ${reservedFields.join(', ')}`);
                         fileValid = false;
                         continue;
                     }
@@ -84,7 +108,7 @@ export default async () => {
                         const ruleParts = parseFieldRule(rule);
 
                         if (ruleParts.length !== 7) {
-                            Logger.warn(`${fileName} 文件 ${fieldName} 验证规则错误，应包含 7 个部分，但包含 ${ruleParts.length} 个部分`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${fieldName} 验证规则错误，应包含 7 个部分，但包含 ${ruleParts.length} 个部分`);
                             fileValid = false;
                             continue;
                         }
@@ -94,54 +118,54 @@ export default async () => {
                         // 使用新的验证函数进行严格验证
                         // 第1个值：名称必须为中文、数字、字母
                         if (!validateFieldName(name)) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 名称 "${name}" 格式错误，必须为中文、数字、字母`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 名称 "${name}" 格式错误，必须为中文、数字、字母`);
                             fileValid = false;
                             continue;
                         }
 
                         // 第2个值：字段类型必须为string,number,text,array之一
                         if (!validateFieldType(type)) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 类型 "${type}" 格式错误，必须为string、number、text、array之一`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 类型 "${type}" 格式错误，必须为string、number、text、array之一`);
                             fileValid = false;
                             continue;
                         }
 
                         // 第3个值：最小值必须为null或数字
                         if (!validateMinMax(minStr)) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 最小值 "${minStr}" 格式错误，必须为null或数字`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最小值 "${minStr}" 格式错误，必须为null或数字`);
                             fileValid = false;
                             continue;
                         }
 
                         // 第4个值：最大值必须为null或数字
                         if (!validateMinMax(maxStr)) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 最大值 "${maxStr}" 格式错误，必须为null或数字`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大值 "${maxStr}" 格式错误，必须为null或数字`);
                             fileValid = false;
                             continue;
                         }
 
                         // 第5个值：默认值必须为null、字符串或数字
                         if (!validateDefaultValue(defaultValue)) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
                             fileValid = false;
                             continue;
                         }
 
                         // 第6个值：是否创建索引必须为0或1
                         if (!validateIndex(isIndexStr)) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 索引标识 "${isIndexStr}" 格式错误，必须为0或1`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 索引标识 "${isIndexStr}" 格式错误，必须为0或1`);
                             fileValid = false;
                             continue;
                         }
 
                         // 第7个值：必须为null或正则表达式
                         if (!validateRegex(regexConstraint)) {
-                            Logger.error(`${fileName} 文件 ${fieldName} 正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
                             fileValid = false;
                             continue;
                         }
                     } catch (error) {
-                        Logger.error(`${fileName} 文件 ${fieldName} 验证规则解析失败: ${error.message}`);
+                        Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 验证规则解析失败: ${error.message}`);
                         fileValid = false;
                         continue;
                     }
@@ -153,25 +177,9 @@ export default async () => {
                     invalidFiles++;
                 }
             } catch (error) {
-                Logger.error(`Table ${fileName} 解析失败: ${error.message}`);
+                Logger.error(`${fileType}表 ${fileName} 解析失败: ${error.message}`);
                 invalidFiles++;
             }
-        };
-
-        for await (const file of tablesGlob.scan({
-            cwd: __dirtables,
-            absolute: true,
-            onlyFiles: true
-        })) {
-            await validateFile(file);
-        }
-
-        for await (const file of tablesGlob.scan({
-            cwd: getProjectDir('tables'),
-            absolute: true,
-            onlyFiles: true
-        })) {
-            await validateFile(file);
         }
 
         if (invalidFiles > 0) {
