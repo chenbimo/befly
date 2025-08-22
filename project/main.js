@@ -1,4 +1,4 @@
-import { Befly, Logger } from 'befly';
+import { Befly, Logger } from '../main.js';
 
 // 配置服务器
 const app = new Befly({

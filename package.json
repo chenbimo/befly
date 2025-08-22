@@ -21,7 +21,10 @@
         "rb": "bun run scripts/release.js -b",
         "rc": "bun run scripts/release.js -c",
         "test": "bun test",
-        "test:jwt": "bun test tests/jwt.test.js"
+        "test:jwt": "bun test tests/jwt.test.js",
+        "dev": "bun run project/main.js",
+        "server": "bunx --bun pm2 start project/pm2.config.cjs -a",
+        "syncDb": "bun run scripts/syncDb.js"
     },
     "keywords": [
         "bun",
