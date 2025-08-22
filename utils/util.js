@@ -68,13 +68,20 @@ export const formatDate = (date = new Date(), format = 'YYYY-MM-DD HH:mm:ss') =>
 };
 
 /**
- * 计算时间差（毫秒）
+ * 计算时间差并返回带单位的字符串
  * @param {number} startTime - 开始时间（Bun.nanoseconds()返回值）
  * @param {number} endTime - 结束时间（可选，默认为当前时间）
- * @returns {number} 时间差（毫秒）
+ * @returns {string} 时间差（如果小于1秒返回"xx 毫秒"，否则返回"xx 秒"）
  */
 export const calculateElapsedTime = (startTime, endTime = Bun.nanoseconds()) => {
-    return (endTime - startTime) / 1_000_000;
+    const elapsedMs = (endTime - startTime) / 1_000_000;
+
+    if (elapsedMs < 1000) {
+        return `${elapsedMs.toFixed(2)} 毫秒`;
+    } else {
+        const elapsedSeconds = elapsedMs / 1000;
+        return `${elapsedSeconds.toFixed(2)} 秒`;
+    }
 };
 
 // 类型判断

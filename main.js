@@ -53,20 +53,20 @@ class Befly {
 
                         if (checkResult === true) {
                             passedChecks++;
-                            Logger.info(`检查 ${fileName} 通过，耗时: ${singleCheckTime.toFixed(2)}ms`);
+                            Logger.info(`检查 ${fileName} 通过，耗时: ${singleCheckTime}`);
                         } else {
-                            Logger.error(`检查未通过: ${fileName}，耗时: ${singleCheckTime.toFixed(2)}ms`);
+                            Logger.error(`检查未通过: ${fileName}，耗时: ${singleCheckTime}`);
                             failedChecks++;
                         }
                     } else {
                         const singleCheckTime = calculateElapsedTime(singleCheckStart);
-                        Logger.warn(`文件 ${fileName} 未导出默认函数，耗时: ${singleCheckTime.toFixed(2)}ms`);
+                        Logger.warn(`文件 ${fileName} 未导出默认函数，耗时: ${singleCheckTime}`);
                         failedChecks++;
                     }
                 } catch (error) {
                     const singleCheckTime = calculateElapsedTime(singleCheckStart);
                     Logger.error({
-                        msg: `检查失败 ${fileName}，耗时: ${singleCheckTime.toFixed(2)}ms`,
+                        msg: `检查失败 ${fileName}，耗时: ${singleCheckTime}`,
                         error: error.message,
                         stack: error.stack
                     });
@@ -77,7 +77,7 @@ class Befly {
             const totalCheckTime = calculateElapsedTime(checkStartTime);
 
             // 输出检查结果统计
-            Logger.info(`系统检查完成! 总耗时: ${totalCheckTime.toFixed(2)}ms，总检查数: ${totalChecks}, 通过: ${passedChecks}, 失败: ${failedChecks}`);
+            Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${totalChecks}, 通过: ${passedChecks}, 失败: ${failedChecks}`);
 
             if (failedChecks > 0) {
                 process.exit();
@@ -124,10 +124,10 @@ class Befly {
                 corePlugins.push(pluginInstance);
                 loadedPluginNames.add(fileName); // 记录已加载的核心插件名称
 
-                Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime.toFixed(2)}ms`);
+                Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
             }
             const corePluginsScanTime = calculateElapsedTime(corePluginsScanStart);
-            Logger.info(`核心插件扫描完成，耗时: ${corePluginsScanTime.toFixed(2)}ms，共找到 ${corePlugins.length} 个插件`);
+            Logger.info(`核心插件扫描完成，耗时: ${corePluginsScanTime}，共找到 ${corePlugins.length} 个插件`);
 
             const sortedCorePlugins = sortPlugins(corePlugins);
             if (sortedCorePlugins === false) {
@@ -146,7 +146,7 @@ class Befly {
                 }
             }
             const corePluginsInitTime = calculateElapsedTime(corePluginsInitStart);
-            Logger.info(`核心插件初始化完成，耗时: ${corePluginsInitTime.toFixed(2)}ms`);
+            Logger.info(`核心插件初始化完成，耗时: ${corePluginsInitTime}`);
 
             // 扫描用户插件目录
             const userPluginsScanStart = Bun.nanoseconds();
@@ -172,10 +172,10 @@ class Befly {
                 pluginInstance.pluginName = fileName;
                 userPlugins.push(pluginInstance);
 
-                Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime.toFixed(2)}ms`);
+                Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
             }
             const userPluginsScanTime = calculateElapsedTime(userPluginsScanStart);
-            Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime.toFixed(2)}ms，共找到 ${userPlugins.length} 个插件`);
+            Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime}，共找到 ${userPlugins.length} 个插件`);
 
             const sortedUserPlugins = sortPlugins(userPlugins);
             if (sortedUserPlugins === false) {
@@ -195,12 +195,12 @@ class Befly {
                     }
                 }
                 const userPluginsInitTime = calculateElapsedTime(userPluginsInitStart);
-                Logger.info(`用户插件初始化完成，耗时: ${userPluginsInitTime.toFixed(2)}ms`);
+                Logger.info(`用户插件初始化完成，耗时: ${userPluginsInitTime}`);
             }
 
             const totalLoadTime = calculateElapsedTime(loadStartTime);
             const totalPluginCount = sortedCorePlugins.length + sortedUserPlugins.length;
-            Logger.info(`插件加载完成! 总耗时: ${totalLoadTime.toFixed(2)}ms，共加载 ${totalPluginCount} 个插件`);
+            Logger.info(`插件加载完成! 总耗时: ${totalLoadTime}，共加载 ${totalPluginCount} 个插件`);
         } catch (error) {
             Logger.error({
                 msg: '加载插件时发生错误',
@@ -260,12 +260,12 @@ class Befly {
 
                     const singleApiTime = calculateElapsedTime(singleApiStart);
                     loadedApis++;
-                    // Logger.info(`${dirDisplayName}接口 ${apiPath} 加载成功，耗时: ${singleApiTime.toFixed(2)}ms`);
+                    // Logger.info(`${dirDisplayName}接口 ${apiPath} 加载成功，耗时: ${singleApiTime}`);
                 } catch (error) {
                     const singleApiTime = calculateElapsedTime(singleApiStart);
                     failedApis++;
                     Logger.error({
-                        msg: `${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime.toFixed(2)}ms`,
+                        msg: `${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime}`,
                         error: error.message,
                         stack: error.stack
                     });
@@ -273,7 +273,7 @@ class Befly {
             }
 
             const totalLoadTime = calculateElapsedTime(loadStartTime);
-            Logger.info(`${dirDisplayName}接口加载完成! 总耗时: ${totalLoadTime.toFixed(2)}ms，总数: ${totalApis}, 成功: ${loadedApis}, 失败: ${failedApis}`);
+            Logger.info(`${dirDisplayName}接口加载完成! 总耗时: ${totalLoadTime}，总数: ${totalApis}, 成功: ${loadedApis}, 失败: ${failedApis}`);
         } catch (error) {
             Logger.error({
                 msg: '加载接口时发生错误',
@@ -296,7 +296,7 @@ class Befly {
         await this.loadApis('app');
 
         const totalStartupTime = calculateElapsedTime(serverStartTime);
-        Logger.info(`服务器启动准备完成，总耗时: ${totalStartupTime.toFixed(2)}ms`);
+        Logger.info(`服务器启动准备完成，总耗时: ${totalStartupTime}`);
 
         const server = Bun.serve({
             port: Env.APP_PORT,
@@ -530,7 +530,7 @@ class Befly {
         });
 
         const finalStartupTime = calculateElapsedTime(serverStartTime);
-        Logger.info(`Befly 服务器启动成功! 完整启动耗时: ${finalStartupTime.toFixed(2)}ms`);
+        Logger.info(`Befly 服务器启动成功! 完整启动耗时: ${finalStartupTime}`);
         Logger.info(`服务器监听地址: http://${Env.APP_HOST}:${Env.APP_PORT}`);
 
         if (callback && typeof callback === 'function') {
