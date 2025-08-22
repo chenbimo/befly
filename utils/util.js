@@ -67,6 +67,16 @@ export const formatDate = (date = new Date(), format = 'YYYY-MM-DD HH:mm:ss') =>
     return format.replace('YYYY', year).replace('MM', month).replace('DD', day).replace('HH', hour).replace('mm', minute).replace('ss', second);
 };
 
+/**
+ * 计算时间差（毫秒）
+ * @param {number} startTime - 开始时间（Bun.nanoseconds()返回值）
+ * @param {number} endTime - 结束时间（可选，默认为当前时间）
+ * @returns {number} 时间差（毫秒）
+ */
+export const calculateElapsedTime = (startTime, endTime = Bun.nanoseconds()) => {
+    return (endTime - startTime) / 1_000_000;
+};
+
 // 类型判断
 export const isType = (value, type) => {
     const actualType = Object.prototype.toString.call(value).slice(8, -1).toLowerCase();

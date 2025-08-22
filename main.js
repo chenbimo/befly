@@ -9,7 +9,7 @@ import { Jwt } from './utils/jwt.js';
 import { validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
 import { Xml } from './libs/xml.js';
-import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions } from './utils/util.js';
+import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions, calculateElapsedTime } from './utils/util.js';
 
 class Befly {
     constructor(options = {}) {
@@ -49,7 +49,7 @@ class Befly {
                     // 执行默认导出的函数
                     if (typeof check.default === 'function') {
                         const checkResult = await check.default(this.appContext);
-                        const singleCheckTime = (Bun.nanoseconds() - singleCheckStart) / 1_000_000;
+                        const singleCheckTime = calculateElapsedTime(singleCheckStart);
 
                         if (checkResult === true) {
                             passedChecks++;
@@ -59,12 +59,12 @@ class Befly {
                             failedChecks++;
                         }
                     } else {
-                        const singleCheckTime = (Bun.nanoseconds() - singleCheckStart) / 1_000_000;
+                        const singleCheckTime = calculateElapsedTime(singleCheckStart);
                         Logger.warn(`文件 ${fileName} 未导出默认函数，耗时: ${singleCheckTime.toFixed(2)}ms`);
                         failedChecks++;
                     }
                 } catch (error) {
-                    const singleCheckTime = (Bun.nanoseconds() - singleCheckStart) / 1_000_000;
+                    const singleCheckTime = calculateElapsedTime(singleCheckStart);
                     Logger.error({
                         msg: `检查失败 ${fileName}，耗时: ${singleCheckTime.toFixed(2)}ms`,
                         error: error.message,
@@ -74,7 +74,7 @@ class Befly {
                 }
             }
 
-            const totalCheckTime = (Bun.nanoseconds() - checkStartTime) / 1_000_000;
+            const totalCheckTime = calculateElapsedTime(checkStartTime);
 
             // 输出检查结果统计
             Logger.info(`系统检查完成! 总耗时: ${totalCheckTime.toFixed(2)}ms，总检查数: ${totalChecks}, 通过: ${passedChecks}, 失败: ${failedChecks}`);
@@ -117,7 +117,7 @@ class Befly {
 
                 const importStart = Bun.nanoseconds();
                 const plugin = await import(file);
-                const importTime = (Bun.nanoseconds() - importStart) / 1_000_000; // 转换为毫秒
+                const importTime = calculateElapsedTime(importStart);
 
                 const pluginInstance = plugin.default;
                 pluginInstance.pluginName = fileName;
@@ -126,7 +126,7 @@ class Befly {
 
                 Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime.toFixed(2)}ms`);
             }
-            const corePluginsScanTime = (Bun.nanoseconds() - corePluginsScanStart) / 1_000_000;
+            const corePluginsScanTime = calculateElapsedTime(corePluginsScanStart);
             Logger.info(`核心插件扫描完成，耗时: ${corePluginsScanTime.toFixed(2)}ms，共找到 ${corePlugins.length} 个插件`);
 
             const sortedCorePlugins = sortPlugins(corePlugins);
@@ -145,7 +145,7 @@ class Befly {
                     Logger.warn(`插件 ${plugin.pluginName} 初始化失败:`, error.message);
                 }
             }
-            const corePluginsInitTime = (Bun.nanoseconds() - corePluginsInitStart) / 1_000_000;
+            const corePluginsInitTime = calculateElapsedTime(corePluginsInitStart);
             Logger.info(`核心插件初始化完成，耗时: ${corePluginsInitTime.toFixed(2)}ms`);
 
             // 扫描用户插件目录
@@ -166,7 +166,7 @@ class Befly {
 
                 const importStart = Bun.nanoseconds();
                 const plugin = await import(file);
-                const importTime = (Bun.nanoseconds() - importStart) / 1_000_000; // 转换为毫秒
+                const importTime = calculateElapsedTime(importStart);
 
                 const pluginInstance = plugin.default;
                 pluginInstance.pluginName = fileName;
@@ -174,7 +174,7 @@ class Befly {
 
                 Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime.toFixed(2)}ms`);
             }
-            const userPluginsScanTime = (Bun.nanoseconds() - userPluginsScanStart) / 1_000_000;
+            const userPluginsScanTime = calculateElapsedTime(userPluginsScanStart);
             Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime.toFixed(2)}ms，共找到 ${userPlugins.length} 个插件`);
 
             const sortedUserPlugins = sortPlugins(userPlugins);
@@ -194,11 +194,11 @@ class Befly {
                         Logger.warn(`插件 ${plugin.pluginName} 初始化失败:`, error.message);
                     }
                 }
-                const userPluginsInitTime = (Bun.nanoseconds() - userPluginsInitStart) / 1_000_000;
+                const userPluginsInitTime = calculateElapsedTime(userPluginsInitStart);
                 Logger.info(`用户插件初始化完成，耗时: ${userPluginsInitTime.toFixed(2)}ms`);
             }
 
-            const totalLoadTime = (Bun.nanoseconds() - loadStartTime) / 1_000_000;
+            const totalLoadTime = calculateElapsedTime(loadStartTime);
             const totalPluginCount = sortedCorePlugins.length + sortedUserPlugins.length;
             Logger.info(`插件加载完成! 总耗时: ${totalLoadTime.toFixed(2)}ms，共加载 ${totalPluginCount} 个插件`);
         } catch (error) {
@@ -258,11 +258,11 @@ class Befly {
                     api.route = `${api.method.toUpperCase()}/api/${dirName}/${apiPath}`;
                     this.apiRoutes.set(api.route, api);
 
-                    const singleApiTime = (Bun.nanoseconds() - singleApiStart) / 1_000_000;
+                    const singleApiTime = calculateElapsedTime(singleApiStart);
                     loadedApis++;
                     // Logger.info(`${dirDisplayName}接口 ${apiPath} 加载成功，耗时: ${singleApiTime.toFixed(2)}ms`);
                 } catch (error) {
-                    const singleApiTime = (Bun.nanoseconds() - singleApiStart) / 1_000_000;
+                    const singleApiTime = calculateElapsedTime(singleApiStart);
                     failedApis++;
                     Logger.error({
                         msg: `${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime.toFixed(2)}ms`,
@@ -272,7 +272,7 @@ class Befly {
                 }
             }
 
-            const totalLoadTime = (Bun.nanoseconds() - loadStartTime) / 1_000_000;
+            const totalLoadTime = calculateElapsedTime(loadStartTime);
             Logger.info(`${dirDisplayName}接口加载完成! 总耗时: ${totalLoadTime.toFixed(2)}ms，总数: ${totalApis}, 成功: ${loadedApis}, 失败: ${failedApis}`);
         } catch (error) {
             Logger.error({
@@ -295,7 +295,7 @@ class Befly {
         await this.loadApis('core');
         await this.loadApis('app');
 
-        const totalStartupTime = (Bun.nanoseconds() - serverStartTime) / 1_000_000;
+        const totalStartupTime = calculateElapsedTime(serverStartTime);
         Logger.info(`服务器启动准备完成，总耗时: ${totalStartupTime.toFixed(2)}ms`);
 
         const server = Bun.serve({
@@ -529,7 +529,7 @@ class Befly {
             }
         });
 
-        const finalStartupTime = (Bun.nanoseconds() - serverStartTime) / 1_000_000;
+        const finalStartupTime = calculateElapsedTime(serverStartTime);
         Logger.info(`Befly 服务器启动成功! 完整启动耗时: ${finalStartupTime.toFixed(2)}ms`);
         Logger.info(`服务器监听地址: http://${Env.APP_HOST}:${Env.APP_PORT}`);
 
