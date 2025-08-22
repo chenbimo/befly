@@ -192,11 +192,11 @@ export const filterLogFields = (body, excludeFields = '') => {
     return filtered;
 };
 
-// 专门用于处理管道符分隔的字段规则
+// 专门用于处理⚡分隔的字段规则
 export const parseFieldRule = (rule) => {
-    const allParts = rule.split('|');
+    const allParts = rule.split('⚡');
 
-    // 现在支持7个部分：显示名|类型|最小值|最大值|默认值|是否索引|正则约束
+    // 现在支持7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
     if (allParts.length <= 7) {
         // 如果少于7个部分，补齐缺失的部分为 null
         while (allParts.length < 7) {
@@ -213,6 +213,6 @@ export const parseFieldRule = (rule) => {
         allParts[3], // 最大值
         allParts[4], // 默认值
         allParts[5], // 是否索引
-        allParts.slice(6).join('|') // 正则约束（可能包含管道符）
+        allParts.slice(6).join('⚡') // 正则约束（可能包含⚡符号）
     ];
 };

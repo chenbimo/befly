@@ -11,9 +11,9 @@ import { writeFile, mkdir, rm } from 'node:fs/promises';
 
 // 从 dbSync.js 导入解析函数进行测试
 const parseFieldRule = (rule) => {
-    const allParts = rule.split('|');
+    const allParts = rule.split('⚡');
 
-    // 现在支持7个部分：显示名|类型|最小值|最大值|默认值|是否索引|正则约束
+    // 现在支持7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
     if (allParts.length <= 7) {
         // 如果少于7个部分，补齐缺失的部分为 null
         while (allParts.length < 7) {
@@ -22,8 +22,8 @@ const parseFieldRule = (rule) => {
         return allParts;
     }
 
-    // 如果超过7个部分，把第7个部分之后的内容合并为第7个部分（正则表达式可能包含管道符）
-    const mergedRule = allParts.slice(6).join('|'); // 合并最后的正则部分
+    // 如果超过7个部分，把第7个部分之后的内容合并为第7个部分（正则表达式可能包含⚡符号）
+    const mergedRule = allParts.slice(6).join('⚡'); // 合并最后的正则部分
     return [
         allParts[0], // 显示名
         allParts[1], // 类型
@@ -31,24 +31,24 @@ const parseFieldRule = (rule) => {
         allParts[3], // 最大值
         allParts[4], // 默认值
         allParts[5], // 是否索引
-        mergedRule // 正则约束（可能包含管道符）
+        mergedRule // 正则约束（可能包含⚡符号）
     ];
 };
 
 // 测试用的临时表定义
 const testTableDefinitions = {
     'test_users.json': {
-        name: '用户名|string|2|50|null|1|null',
-        email: '邮箱|string|5|100|null|1|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-        age: '年龄|number|1|150|18|0|null',
-        bio: '个人简介|text|0|5000|null|0|null',
-        tags: '标签|array|0|10|null|0|null'
+        name: '用户名⚡string⚡2⚡50⚡null⚡1⚡null',
+        email: '邮箱⚡string⚡5⚡100⚡null⚡1⚡^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+        age: '年龄⚡number⚡1⚡150⚡18⚡0⚡null',
+        bio: '个人简介⚡text⚡0⚡5000⚡null⚡0⚡null',
+        tags: '标签⚡array⚡0⚡10⚡null⚡0⚡null'
     },
     'test_products.json': {
-        name: '产品名称|string|1|200|null|1|null',
-        price: '价格|number|0|999999999|0|1|x>0',
-        description: '产品描述|text|0|10000|null|0|null',
-        category: '分类|string|1|50|default|1|null'
+        name: '产品名称⚡string⚡1⚡200⚡null⚡1⚡null',
+        price: '价格⚡number⚡0⚡999999999⚡0⚡1⚡x>0',
+        description: '产品描述⚡text⚡0⚡10000⚡null⚡0⚡null',
+        category: '分类⚡string⚡1⚡50⚡default⚡1⚡null'
     }
 };
 
@@ -82,7 +82,7 @@ describe('数据库同步功能测试', () => {
 
     describe('规则解析测试', () => {
         test('正确解析基本字段规则', () => {
-            const rule = '用户名|string|2|50|null|0|null';
+            const rule = '用户名⚡string⚡2⚡50⚡null⚡0⚡null';
             const parts = parseFieldRule(rule);
 
             expect(parts).toHaveLength(7);
@@ -96,7 +96,7 @@ describe('数据库同步功能测试', () => {
         });
 
         test('正确解析包含正则表达式的规则', () => {
-            const rule = '邮箱|string|5|100|null|1|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$';
+            const rule = '邮箱⚡string⚡5⚡100⚡null⚡1⚡^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$';
             const parts = parseFieldRule(rule);
 
             expect(parts).toHaveLength(7);
@@ -110,7 +110,7 @@ describe('数据库同步功能测试', () => {
         });
 
         test('正确解析包含计算表达式的规则', () => {
-            const rule = '价格|number|0|999999999|x>0|0|1';
+            const rule = '价格⚡number⚡0⚡999999999⚡x>0⚡0⚡1';
             const parts = parseFieldRule(rule);
 
             expect(parts).toHaveLength(7);
@@ -124,7 +124,7 @@ describe('数据库同步功能测试', () => {
         });
 
         test('正确解析包含管道符的复杂正则规则', () => {
-            const rule = '状态|string|1|20|active|1|^(active|inactive|pending)$';
+            const rule = '状态⚡string⚡1⚡20⚡active⚡1⚡^(active|inactive|pending)$';
             const parts = parseFieldRule(rule);
 
             expect(parts).toHaveLength(7);

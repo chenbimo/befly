@@ -1,10 +1,10 @@
 import { isType } from './util.js';
 
-// 专门用于处理管道符分隔的字段规则
+// 专门用于处理⚡分隔的字段规则
 const parseFieldRule = (rule) => {
-    const allParts = rule.split('|');
+    const allParts = rule.split('⚡');
 
-    // 现在支持7个部分：显示名|类型|最小值|最大值|默认值|是否索引|正则约束
+    // 现在支持7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
     if (allParts.length <= 7) {
         // 如果少于7个部分，补齐缺失的部分为 null
         while (allParts.length < 7) {
@@ -21,7 +21,7 @@ const parseFieldRule = (rule) => {
         allParts[3], // 最大值
         allParts[4], // 默认值
         allParts[5], // 是否索引
-        allParts.slice(6).join('|') // 正则约束（可能包含管道符）
+        allParts.slice(6).join('⚡') // 正则约束（可能包含⚡符号）
     ];
 };
 
@@ -161,19 +161,13 @@ export class Validator {
             }
 
             if (spec && spec.trim() !== '') {
-                // 检查是否为枚举格式
-                if (this.isEnumSpec(spec)) {
-                    return this.validateEnum(value, spec, name, fieldName, 'number');
-                } else {
-                    // 正则表达式验证
-                    try {
-                        const regExp = new RegExp(spec);
-                        if (!regExp.test(String(value))) {
-                            return `${name}(${fieldName})格式不正确`;
-                        }
-                    } catch (error) {
-                        return `${name}(${fieldName})的正则表达式格式错误`;
+                try {
+                    const regExp = new RegExp(spec);
+                    if (!regExp.test(String(value))) {
+                        return `${name}(${fieldName})格式不正确`;
                     }
+                } catch (error) {
+                    return `${name}(${fieldName})的正则表达式格式错误`;
                 }
             }
 
@@ -181,46 +175,6 @@ export class Validator {
         } catch (error) {
             return `${name}(${fieldName})验证出错: ${error.message}`;
         }
-    }
-
-    /**
-     * 判断是否为枚举格式
-     */
-    isEnumSpec(spec) {
-        return spec && spec.startsWith('enum#');
-    }
-
-    /**
-     * 验证枚举值
-     */
-    validateEnum(value, spec, name, fieldName, type) {
-        // 解析枚举值 "enum#1,2,3" -> ["1", "2", "3"]
-        const enumValues = spec
-            .substring(5)
-            .split(',')
-            .map((v) => v.trim());
-
-        if (type === 'number') {
-            // 数字类型：转换枚举值为数字进行比较
-            const numericEnumValues = enumValues.map((v) => parseFloat(v));
-            if (!numericEnumValues.includes(value)) {
-                return `${name}(${fieldName})必须是以下值之一: ${enumValues.join(', ')}`;
-            }
-        } else if (type === 'string') {
-            // 字符串类型：直接比较
-            if (!enumValues.includes(value)) {
-                return `${name}(${fieldName})必须是以下值之一: ${enumValues.join(', ')}`;
-            }
-        } else if (type === 'array') {
-            // 数组类型：检查每个元素是否在枚举值中
-            for (const item of value) {
-                if (!enumValues.includes(String(item))) {
-                    return `${name}(${fieldName})中的元素"${item}"必须是以下值之一: ${enumValues.join(', ')}`;
-                }
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -241,19 +195,13 @@ export class Validator {
             }
 
             if (spec && spec.trim() !== '') {
-                // 检查是否为枚举格式
-                if (this.isEnumSpec(spec)) {
-                    return this.validateEnum(value, spec, name, fieldName, 'string');
-                } else {
-                    // 正则表达式验证
-                    try {
-                        const regExp = new RegExp(spec);
-                        if (!regExp.test(value)) {
-                            return `${name}(${fieldName})格式不正确`;
-                        }
-                    } catch (error) {
-                        return `${name}(${fieldName})的正则表达式格式错误`;
+                try {
+                    const regExp = new RegExp(spec);
+                    if (!regExp.test(value)) {
+                        return `${name}(${fieldName})格式不正确`;
                     }
+                } catch (error) {
+                    return `${name}(${fieldName})的正则表达式格式错误`;
                 }
             }
 
@@ -281,21 +229,15 @@ export class Validator {
             }
 
             if (spec && spec.trim() !== '') {
-                // 检查是否为枚举格式
-                if (this.isEnumSpec(spec)) {
-                    return this.validateEnum(value, spec, name, fieldName, 'array');
-                } else {
-                    // 正则表达式验证
-                    try {
-                        const regExp = new RegExp(spec);
-                        for (const item of value) {
-                            if (!regExp.test(String(item))) {
-                                return `${name}(${fieldName})中的元素"${item}"格式不正确`;
-                            }
+                try {
+                    const regExp = new RegExp(spec);
+                    for (const item of value) {
+                        if (!regExp.test(String(item))) {
+                            return `${name}(${fieldName})中的元素"${item}"格式不正确`;
                         }
-                    } catch (error) {
-                        return `${name}(${fieldName})的正则表达式格式错误`;
                     }
+                } catch (error) {
+                    return `${name}(${fieldName})的正则表达式格式错误`;
                 }
             }
 

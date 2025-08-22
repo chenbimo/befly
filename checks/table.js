@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { Logger } from '../utils/Logger.js';
+import { Logger } from '../utils/logger.js';
 import { parseFieldRule } from '../utils/util.js';
 import { __dirtables, getProjectDir } from '../system.js';
 
@@ -78,35 +78,14 @@ export default async () => {
                         continue;
                     }
 
-                    // 验证正则约束
+                    // 验证正则约束 - 必须为null或有效的正则表达式
                     if (regexConstraint !== 'null') {
-                        if (type === 'number' && regexConstraint.includes('=')) {
-                            // 数字计算表达式应包含安全字符
-                            const safePattern = /^[x\d\+\-\*\/\(\)\.\s\%]+$/;
-                            const expressionPart = regexConstraint.split('=')[0].trim();
-
-                            if (!safePattern.test(expressionPart)) {
-                                Logger.warn(`${fileName} 文件 ${fieldName} 表达式 ${expressionPart} 包含不安全的字符`);
-                                fileValid = false;
-                                continue;
-                            }
-
-                            // 验证等号右侧是否为数字
-                            const rightPart = regexConstraint.split('=')[1].trim();
-                            if (isNaN(parseFloat(rightPart))) {
-                                Logger.error(`${fileName} 文件 ${fieldName} 计算规则右边必须是数字，而不是 ${rightPart}`);
-                                fileValid = false;
-                                continue;
-                            }
-                        } else if (type === 'string' || type === 'array' || type === 'text') {
-                            // 尝试编译正则表达式以检查是否有效
-                            try {
-                                new RegExp(regexConstraint);
-                            } catch (e) {
-                                Logger.error(`${fileName} 文件 ${fieldName} 正则表达式 ${regexConstraint} 无效: ${e.message}`);
-                                fileValid = false;
-                                continue;
-                            }
+                        try {
+                            new RegExp(regexConstraint);
+                        } catch (e) {
+                            Logger.error(`${fileName} 文件 ${fieldName} 正则表达式 ${regexConstraint} 无效: ${e.message}`);
+                            fileValid = false;
+                            continue;
                         }
                     }
                 }
