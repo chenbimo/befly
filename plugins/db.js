@@ -11,11 +11,13 @@ export default {
         try {
             if (Env.MYSQL_ENABLE === 1) {
                 // 生成连接 URL
-                const url = `mysql://${encodeURIComponent(Env.MYSQL_USER || 'root')}:${encodeURIComponent(Env.MYSQL_PASSWORD || 'root')}@${Env.MYSQL_HOST || '127.0.0.1'}:${Env.MYSQL_PORT || 3306}/${Env.MYSQL_DB || 'test'}`;
+                // const url = `mysql://${Env.MYSQL_USER || 'root'}:${Env.MYSQL_PASSWORD || 'root'}@${Env.MYSQL_HOST || 'localhost'}:${Env.MYSQL_PORT || 3306}`;
+                const url = `mysql://root:root@localhost:3306`;
+                console.log('🔥[ url ]-15', url);
 
                 // 创建 Bun SQL 客户端（内置连接池）
                 sql = new SQL({
-                    url,
+                    url: url,
                     max: Env.MYSQL_POOL_MAX || 10,
                     bigint: true,
                     // 兼容 Bun 的选项命名（根据文档，以下键名有效）
@@ -23,14 +25,14 @@ export default {
                     connection_timeout: 60, // 建连超时，秒
                     max_lifetime: 0,
                     onconnect: () => {
-                        if (Env.MYSQL_DEBUG === 1) Logger.debug('数据库连接已建立');
+                        Logger.debug('数据库连接已建立');
                     },
-                    onclose: (err) => {
-                        if (err) {
-                            Logger.warn('数据库连接关闭（含错误）:', err.message || err);
-                        } else if (Env.MYSQL_DEBUG === 1) {
-                            Logger.debug('数据库连接已关闭');
-                        }
+                    onclose: (error) => {
+                        Logger.error({
+                            msg: `数据库连接已关闭`,
+                            error: error.message,
+                            stack: error.stack
+                        });
                     }
                 });
 
