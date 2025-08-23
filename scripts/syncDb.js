@@ -254,7 +254,7 @@ const syncTable = async (conn, tableName, fields) => {
 };
 
 // 主同步函数
-const syncDb = async () => {
+const SyncDb = async () => {
     let conn = null;
 
     try {
@@ -350,10 +350,10 @@ const syncDb = async () => {
 
 // 如果直接运行此脚本
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('dbSync.js')) {
-    syncDb().catch((error) => {
+    SyncDb().catch((error) => {
         console.error('❌ 数据库同步失败:', error);
         process.exit(1);
     });
 }
 
-export { syncDb };
+export { SyncDb };
