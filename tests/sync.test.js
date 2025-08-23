@@ -4,12 +4,12 @@
  */
 
 import { test, expect, describe, beforeAll, afterAll, beforeEach } from 'bun:test';
-import { syncDatabase } from '../scripts/dbSync.js';
+import { SyncDb as syncDatabase } from '../scripts/syncDb.js';
 import { ruleSplit } from '../utils/util.js';
 import path from 'node:path';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 
-// 从 dbSync.js 导入解析函数进行测试
+// 从 syncDb.js 导入解析函数进行测试（此处测试内自带的 parse，仅用于规则解析模拟）
 const parseFieldRule = (rule) => {
     const allParts = rule.split('⚡');
 
