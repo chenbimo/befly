@@ -19,8 +19,7 @@ const typeMapping = {
 
 // 获取字段的SQL定义
 const getColumnDefinition = (fieldName, rule) => {
-    const ruleParts = parseFieldRule(rule);
-    const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue, fieldHasIndex] = ruleParts;
+    const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue, fieldHasIndex] = parseFieldRule(rule);
 
     let sqlType = typeMapping[fieldType];
     if (!sqlType) throw new Error(`不支持的数据类型: ${fieldType}`);
