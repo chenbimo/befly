@@ -3,7 +3,7 @@
  */
 
 import path from 'node:path';
-import mariadb from 'mariadb';
+import { SQL } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { parseFieldRule } from '../utils/util.js';
@@ -54,9 +54,24 @@ const getColumnDefinition = (fieldName, rule) => {
     return columnDef;
 };
 
+// 通用执行器：将 '?' 占位符转换为 Bun SQL 的 $1, $2 并执行
+const toDollarParams = (query, params) => {
+    if (!params || params.length === 0) return query;
+    let i = 0;
+    return query.replace(/\?/g, () => `$${++i}`);
+};
+
+const exec = async (client, query, params = []) => {
+    if (params.length > 0) {
+        return await client.unsafe(toDollarParams(query, params), params);
+    }
+    return await client.unsafe(query);
+};
+
 // 获取表的现有列信息
-const getTableColumns = async (conn, tableName) => {
-    const result = await conn.query(
+const getTableColumns = async (client, tableName) => {
+    const result = await exec(
+        client,
         `SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
          FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`,
         [Env.MYSQL_DB || 'test', tableName]
@@ -77,8 +92,9 @@ const getTableColumns = async (conn, tableName) => {
 };
 
 // 获取表的现有索引信息
-const getTableIndexes = async (conn, tableName) => {
-    const result = await conn.query(
+const getTableIndexes = async (client, tableName) => {
+    const result = await exec(
+        client,
         `SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
          WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME`,
         [Env.MYSQL_DB || 'test', tableName]
@@ -93,11 +109,11 @@ const getTableIndexes = async (conn, tableName) => {
 };
 
 // 管理索引
-const manageIndex = async (conn, tableName, indexName, fieldName, action) => {
+const manageIndex = async (client, tableName, indexName, fieldName, action) => {
     const sql = action === 'create' ? `CREATE INDEX \`${indexName}\` ON \`${tableName}\` (\`${fieldName}\`)` : `DROP INDEX \`${indexName}\` ON \`${tableName}\``;
 
     try {
-        await conn.query(sql);
+        await exec(client, sql);
         Logger.info(`表 ${tableName} 索引 ${indexName} ${action === 'create' ? '创建' : '删除'}成功`);
     } catch (error) {
         Logger.error(`${action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
@@ -106,7 +122,7 @@ const manageIndex = async (conn, tableName, indexName, fieldName, action) => {
 };
 
 // 创建表
-const createTable = async (conn, tableName, fields) => {
+const createTable = async (client, tableName, fields) => {
     const columns = [
         //
         '`id` BIGINT PRIMARY KEY COMMENT "主键ID"',
@@ -142,7 +158,7 @@ const createTable = async (conn, tableName, fields) => {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `;
 
-    await conn.query(createTableSQL);
+    await exec(client, createTableSQL);
     Logger.info(`表 ${tableName} 创建成功`);
 };
 
@@ -194,21 +210,21 @@ const generateDDL = (tableName, fieldName, rule, isAdd = false) => {
 };
 
 // 安全执行DDL语句
-const executeDDLSafely = async (conn, sql) => {
+const executeDDLSafely = async (client, sql) => {
     try {
-        await conn.query(sql);
+        await exec(client, sql);
         return true;
     } catch (error) {
         // INSTANT失败时尝试INPLACE
         if (sql.includes('ALGORITHM=INSTANT')) {
             const inplaceSql = sql.replace('ALGORITHM=INSTANT', 'ALGORITHM=INPLACE');
             try {
-                await conn.query(inplaceSql);
+                await exec(client, inplaceSql);
                 return true;
             } catch (inplaceError) {
                 // 最后尝试传统DDL
                 const traditionSql = sql.split(',')[0]; // 移除ALGORITHM和LOCK参数
-                await conn.query(traditionSql);
+                await exec(client, traditionSql);
                 return true;
             }
         } else {
@@ -218,9 +234,9 @@ const executeDDLSafely = async (conn, sql) => {
 };
 
 // 同步表结构
-const syncTable = async (conn, tableName, fields) => {
-    const existingColumns = await getTableColumns(conn, tableName);
-    const existingIndexes = await getTableIndexes(conn, tableName);
+const syncTable = async (client, tableName, fields) => {
+    const existingColumns = await getTableColumns(client, tableName);
+    const existingIndexes = await getTableIndexes(client, tableName);
     const systemFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'];
 
     // 同步字段
@@ -229,12 +245,12 @@ const syncTable = async (conn, tableName, fields) => {
             const comparison = compareFieldDefinition(existingColumns[fieldName], rule, fieldName);
             if (comparison.hasChanges) {
                 const sql = generateDDL(tableName, fieldName, rule);
-                await executeDDLSafely(conn, sql);
+                await executeDDLSafely(client, sql);
                 Logger.info(`字段 ${tableName}.${fieldName} 更新成功`);
             }
         } else {
             const sql = generateDDL(tableName, fieldName, rule, true);
-            await executeDDLSafely(conn, sql);
+            await executeDDLSafely(client, sql);
             Logger.info(`字段 ${tableName}.${fieldName} 添加成功`);
         }
     }
@@ -246,16 +262,16 @@ const syncTable = async (conn, tableName, fields) => {
         const indexName = `idx_${fieldName}`;
 
         if (fieldHasIndex === '1' && !existingIndexes[indexName]) {
-            await manageIndex(conn, tableName, indexName, fieldName, 'create');
+            await manageIndex(client, tableName, indexName, fieldName, 'create');
         } else if (fieldHasIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
-            await manageIndex(conn, tableName, indexName, fieldName, 'drop');
+            await manageIndex(client, tableName, indexName, fieldName, 'drop');
         }
     }
 };
 
 // 主同步函数
 const SyncDb = async () => {
-    let conn = null;
+    let client = null;
 
     try {
         Logger.info('开始数据库表结构同步...');
@@ -266,17 +282,10 @@ const SyncDb = async () => {
             throw new Error('表定义验证失败');
         }
 
-        // 建立数据库连接并检查版本
-        conn = await mariadb.createConnection({
-            host: Env.MYSQL_HOST || '127.0.0.1',
-            port: Env.MYSQL_PORT || 3306,
-            database: Env.MYSQL_DB || 'test',
-            user: Env.MYSQL_USER || 'root',
-            password: Env.MYSQL_PASSWORD || 'root',
-            charset: 'utf8mb4',
-            timezone: Env.TIMEZONE || 'local'
-        });
-        const result = await conn.query('SELECT VERSION() AS version');
+        // 建立数据库连接并检查版本（Bun SQL）
+        const url = `mysql://${encodeURIComponent(Env.MYSQL_USER || 'root')}:${encodeURIComponent(Env.MYSQL_PASSWORD || 'root')}@${Env.MYSQL_HOST || '127.0.0.1'}:${Env.MYSQL_PORT || 3306}/${Env.MYSQL_DB || 'test'}`;
+        client = new SQL({ url, max: 1, bigint: true });
+        const result = await client`SELECT VERSION() AS version`;
         const version = result[0].version;
 
         if (version.toLowerCase().includes('mariadb')) {
@@ -302,13 +311,13 @@ const SyncDb = async () => {
                 for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
                     const tableName = path.basename(file, '.json');
                     const tableDefinition = await Bun.file(file).json();
-                    const result = await conn.query('SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.MYSQL_DB || 'test', tableName]);
+                    const result = await exec(client, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.MYSQL_DB || 'test', tableName]);
                     const exists = result[0].count > 0;
 
                     if (exists) {
-                        await syncTable(conn, tableName, tableDefinition);
+                        await syncTable(client, tableName, tableDefinition);
                     } else {
-                        await createTable(conn, tableName, tableDefinition);
+                        await createTable(client, tableName, tableDefinition);
                     }
 
                     Logger.info(`表 ${tableName} 处理完成`);
@@ -337,9 +346,9 @@ const SyncDb = async () => {
         }
         process.exit(1);
     } finally {
-        if (conn) {
+        if (client) {
             try {
-                await conn.end();
+                await client.close();
             } catch (error) {
                 Logger.warn('关闭数据库连接时出错:', error.message);
             }

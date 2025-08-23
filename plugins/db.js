@@ -1,4 +1,4 @@
-import mariadb from 'mariadb';
+import { SQL } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createQueryBuilder } from '../utils/curd.js';
@@ -6,69 +6,62 @@ import { createQueryBuilder } from '../utils/curd.js';
 export default {
     after: ['_redis'],
     async onInit(befly) {
-        let pool = null;
+        let sql = null;
 
         try {
             if (Env.MYSQL_ENABLE === 1) {
-                // 创建 MariaDB 连接池配置
-                const config = {
-                    host: Env.MYSQL_HOST || '127.0.0.1',
-                    port: Env.MYSQL_PORT || 3306,
-                    database: Env.MYSQL_DB || 'test',
-                    user: Env.MYSQL_USER || 'root',
-                    password: Env.MYSQL_PASSWORD || 'root',
-                    connectionLimit: Env.MYSQL_POOL_MAX || 10,
-                    charset: 'utf8mb4',
-                    timezone: Env.TIMEZONE || 'local',
-                    debug: Env.MYSQL_DEBUG === 1,
-                    acquireTimeout: 60000,
-                    timeout: 60000,
-                    // 连接保活设置
-                    idleTimeout: 1800000, // 30分钟
-                    minimumIdle: 2,
-                    // 重连设置
-                    reconnect: true,
-                    // 避免连接超时
-                    keepAliveDelay: 30000,
-                    insertIdAsNumber: true,
-                    decimalAsNumber: true,
-                    bigIntAsNumber: true
-                };
+                // 生成连接 URL
+                const url = `mysql://${encodeURIComponent(Env.MYSQL_USER || 'root')}:${encodeURIComponent(Env.MYSQL_PASSWORD || 'root')}@${Env.MYSQL_HOST || '127.0.0.1'}:${Env.MYSQL_PORT || 3306}/${Env.MYSQL_DB || 'test'}`;
 
-                // 创建连接池
-                pool = mariadb.createPool(config);
+                // 创建 Bun SQL 客户端（内置连接池）
+                sql = new SQL({
+                    url,
+                    max: Env.MYSQL_POOL_MAX || 10,
+                    bigint: true,
+                    // 兼容 Bun 的选项命名（根据文档，以下键名有效）
+                    idle_timeout: 1800, // 秒，等价于 30 分钟
+                    connection_timeout: 60, // 建连超时，秒
+                    max_lifetime: 0,
+                    onconnect: () => {
+                        if (Env.MYSQL_DEBUG === 1) Logger.debug('数据库连接已建立');
+                    },
+                    onclose: (err) => {
+                        if (err) {
+                            Logger.warn('数据库连接关闭（含错误）:', err.message || err);
+                        } else if (Env.MYSQL_DEBUG === 1) {
+                            Logger.debug('数据库连接已关闭');
+                        }
+                    }
+                });
 
                 // 测试数据库连接
-                let conn;
                 try {
-                    conn = await pool.getConnection();
-                    const result = await conn.query('SELECT VERSION() AS version');
-                    Logger.info(`数据库连接成功，MariaDB 版本: ${result[0].version}`);
+                    const result = await sql`SELECT VERSION() AS version`;
+                    Logger.info(`数据库连接成功，MySQL 版本: ${result?.[0]?.version}`);
                 } catch (error) {
                     Logger.error('数据库连接测试失败:', error);
                     throw error;
-                } finally {
-                    if (conn) {
-                        try {
-                            conn.release();
-                        } catch (releaseError) {
-                            Logger.warn('连接释放警告:', releaseError.message);
-                        }
-                    }
                 }
 
                 // 数据库管理类
                 class DatabaseManager {
                     // 私有属性
-                    #pool;
+                    #sql;
 
-                    constructor(pool) {
-                        this.#pool = pool;
+                    constructor(client) {
+                        this.#sql = client;
                     }
 
                     // 原始连接池访问
                     get pool() {
-                        return this.#pool;
+                        // 兼容旧接口，返回占位对象
+                        return {
+                            // 这些方法在 Bun SQL 中不可用，这里提供空实现以避免调用错误
+                            activeConnections: () => 0,
+                            totalConnections: () => 0,
+                            idleConnections: () => 0,
+                            taskQueueSize: () => 0
+                        };
                     }
 
                     // 创建查询构造器
@@ -114,40 +107,64 @@ export default {
                         return where;
                     }
 
-                    // 私有方法：执行 SQL（支持传入连接对象）
-                    async #executeWithConn(sql, params = [], conn = null) {
-                        if (!sql || typeof sql !== 'string') {
+                    // 将 '?' 占位符转换为 Bun SQL 使用的 $1, $2 ...
+                    #toDollarParams(query, params) {
+                        if (!params || params.length === 0) return query;
+                        let i = 0;
+                        return query.replace(/\?/g, () => `$${++i}`);
+                    }
+
+                    // 私有方法：执行 SQL（支持传入事务连接对象）
+                    async #executeWithConn(query, params = [], conn = null) {
+                        if (!query || typeof query !== 'string') {
                             throw new Error('SQL 语句是必需的');
                         }
 
-                        let providedConn = conn;
-                        let shouldRelease = false;
-
+                        const isSelectLike = /^\s*(with|select|show|desc|explain)\b/i.test(query);
+                        const isWriteLike = /^\s*(insert|update|delete|replace)\b/i.test(query);
+                        const client = conn || this.#sql;
                         try {
-                            // 如果没有提供连接，从池中获取
-                            if (!providedConn) {
-                                providedConn = await this.#pool.getConnection();
-                                shouldRelease = true;
-                            }
-
                             if (Env.MYSQL_DEBUG === 1) {
-                                Logger.debug('执行SQL:', { sql, params });
+                                Logger.debug('执行SQL:', { sql: query, params });
                             }
-
-                            const result = await providedConn.query(sql, params);
-                            return result;
-                        } catch (error) {
-                            Logger.error('SQL 执行失败:', { sql, params, error: error.message });
-                            throw error;
-                        } finally {
-                            // 只有当连接是我们获取的时候才释放
-                            if (shouldRelease && providedConn) {
-                                try {
-                                    providedConn.release();
-                                } catch (releaseError) {
-                                    Logger.warn('连接释放警告:', releaseError.message);
+                            // 读查询，直接返回行
+                            if (isSelectLike) {
+                                if (params && params.length > 0) {
+                                    const q = this.#toDollarParams(query, params);
+                                    return await client.unsafe(q, params);
+                                } else {
+                                    return await client.unsafe(query);
                                 }
                             }
+
+                            // 写查询需要返回受影响行数/插入ID，必须保证同连接
+                            if (isWriteLike) {
+                                const runOn = conn ? client : await this.#sql.reserve();
+                                try {
+                                    if (params && params.length > 0) {
+                                        const q = this.#toDollarParams(query, params);
+                                        await runOn.unsafe(q, params);
+                                    } else {
+                                        await runOn.unsafe(query);
+                                    }
+                                    const [{ affectedRows }] = await runOn`SELECT ROW_COUNT() AS affectedRows`;
+                                    const [{ insertId }] = await runOn`SELECT LAST_INSERT_ID() AS insertId`;
+                                    return { affectedRows: Number(affectedRows) || 0, insertId: Number(insertId) || 0 };
+                                } finally {
+                                    if (!conn && runOn && typeof runOn.release === 'function') runOn.release();
+                                }
+                            }
+
+                            // 其他（DDL等），直接执行并返回空数组以与旧行为尽可能兼容
+                            if (params && params.length > 0) {
+                                const q = this.#toDollarParams(query, params);
+                                return await client.unsafe(q, params);
+                            } else {
+                                return await client.unsafe(query);
+                            }
+                        } catch (error) {
+                            Logger.error('SQL 执行失败:', { sql: query, params, error: error.message });
+                            throw error;
                         }
                     }
 
@@ -176,8 +193,8 @@ export default {
                                 }
                             });
 
-                            const { sql, params } = builder.toSelectSql();
-                            const result = await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toSelectSql();
+                            const result = await this.#executeWithConn(q, params, conn);
                             return result[0] || null;
                         } catch (error) {
                             Logger.error('getDetail 执行失败:', error);
@@ -232,8 +249,8 @@ export default {
                                 builder.limit(numPageSize, offset);
                             }
 
-                            const { sql, params } = builder.toSelectSql();
-                            const rows = await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toSelectSql();
+                            const rows = await this.#executeWithConn(q, params, conn);
 
                             // 获取总数（如果需要分页）
                             let total = 0;
@@ -298,8 +315,8 @@ export default {
                                 builder.orderBy(orderBy);
                             }
 
-                            const { sql, params } = builder.toSelectSql();
-                            const result = await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toSelectSql();
+                            const result = await this.#executeWithConn(q, params, conn);
                             return Array.isArray(result) ? result : [];
                         } catch (error) {
                             Logger.error('getAll 执行失败:', error);
@@ -320,8 +337,8 @@ export default {
                         try {
                             const processedData = await this.#processDataForInsert(data);
                             const builder = createQueryBuilder();
-                            const { sql, params } = builder.toInsertSql(table, processedData);
-                            return await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toInsertSql(table, processedData);
+                            return await this.#executeWithConn(q, params, conn);
                         } catch (error) {
                             Logger.error('insData 执行失败:', error);
                             throw error;
@@ -353,8 +370,8 @@ export default {
                             };
 
                             const builder = createQueryBuilder().where(where);
-                            const { sql, params } = builder.toUpdateSql(table, updateData);
-                            return await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toUpdateSql(table, updateData);
+                            return await this.#executeWithConn(q, params, conn);
                         } catch (error) {
                             Logger.error('updData 执行失败:', error);
                             throw error;
@@ -373,8 +390,8 @@ export default {
 
                         try {
                             const builder = createQueryBuilder().where(where);
-                            const { sql, params } = builder.toDeleteSql(table);
-                            return await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toDeleteSql(table);
+                            return await this.#executeWithConn(q, params, conn);
                         } catch (error) {
                             Logger.error('delData 执行失败:', error);
                             throw error;
@@ -399,8 +416,8 @@ export default {
                             };
 
                             const builder = createQueryBuilder().where(where);
-                            const { sql, params } = builder.toUpdateSql(table, updateData);
-                            return await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toUpdateSql(table, updateData);
+                            return await this.#executeWithConn(q, params, conn);
                         } catch (error) {
                             Logger.error('delData2 执行失败:', error);
                             throw error;
@@ -420,8 +437,8 @@ export default {
                         try {
                             const processedDataArray = await this.#processDataForInsert(dataArray);
                             const builder = createQueryBuilder();
-                            const { sql, params } = builder.toInsertSql(table, processedDataArray);
-                            return await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toInsertSql(table, processedDataArray);
+                            return await this.#executeWithConn(q, params, conn);
                         } catch (error) {
                             Logger.error('insBatch 执行失败:', error);
                             throw error;
@@ -453,8 +470,8 @@ export default {
                                 }
                             });
 
-                            const { sql, params } = builder.toCountSql();
-                            const result = await this.#executeWithConn(sql, params, conn);
+                            const { sql: q, params } = builder.toCountSql();
+                            const result = await this.#executeWithConn(q, params, conn);
                             return result[0]?.total || 0;
                         } catch (error) {
                             Logger.error('getCount 执行失败:', error);
@@ -518,102 +535,54 @@ export default {
                             throw new Error('事务回调函数是必需的');
                         }
 
-                        let conn;
                         try {
-                            conn = await this.#pool.getConnection();
-                            await conn.beginTransaction();
+                            const result = await this.#sql.begin(async (tx) => {
+                                // 为回调函数提供连接对象和高级方法（基于事务连接）
+                                const txMethods = {
+                                    // 原始SQL执行方法
+                                    query: async (query, params = []) => this.#executeWithConn(query, params, tx),
+                                    execute: async (query, params = []) => this.#executeWithConn(query, params, tx),
 
-                            // 为回调函数提供连接对象和高级方法
-                            const txMethods = {
-                                // 原始SQL执行方法
-                                query: async (sql, params = []) => {
-                                    return await conn.query(sql, params);
-                                },
-                                execute: async (sql, params = []) => {
-                                    return await conn.query(sql, params);
-                                },
+                                    // 高级数据操作方法 - 直接调用私有方法，传入事务连接
+                                    getDetail: async (table, options = {}) => this.#getDetailWithConn(table, options, tx),
+                                    getList: async (table, options = {}) => this.#getListWithConn(table, options, tx),
+                                    getAll: async (table, options = {}) => this.#getAllWithConn(table, options, tx),
+                                    insData: async (table, data) => this.#insDataWithConn(table, data, tx),
+                                    updData: async (table, data, where) => this.#updDataWithConn(table, data, where, tx),
+                                    delData: async (table, where) => this.#delDataWithConn(table, where, tx),
+                                    delData2: async (table, where) => this.#delData2WithConn(table, where, tx),
+                                    getCount: async (table, options = {}) => this.#getCountWithConn(table, options, tx),
+                                    insBatch: async (table, dataArray) => this.#insBatchWithConn(table, dataArray, tx)
+                                };
 
-                                // 高级数据操作方法 - 直接调用私有方法，传入事务连接
-                                getDetail: async (table, options = {}) => {
-                                    return await this.#getDetailWithConn(table, options, conn);
-                                },
-
-                                getList: async (table, options = {}) => {
-                                    return await this.#getListWithConn(table, options, conn);
-                                },
-
-                                getAll: async (table, options = {}) => {
-                                    return await this.#getAllWithConn(table, options, conn);
-                                },
-
-                                insData: async (table, data) => {
-                                    return await this.#insDataWithConn(table, data, conn);
-                                },
-
-                                updData: async (table, data, where) => {
-                                    return await this.#updDataWithConn(table, data, where, conn);
-                                },
-
-                                delData: async (table, where) => {
-                                    return await this.#delDataWithConn(table, where, conn);
-                                },
-
-                                delData2: async (table, where) => {
-                                    return await this.#delData2WithConn(table, where, conn);
-                                },
-
-                                getCount: async (table, options = {}) => {
-                                    return await this.#getCountWithConn(table, options, conn);
-                                },
-
-                                insBatch: async (table, dataArray) => {
-                                    return await this.#insBatchWithConn(table, dataArray, conn);
-                                }
-                            };
-
-                            const result = await callback(txMethods);
-
-                            await conn.commit();
+                                return await callback(txMethods);
+                            });
                             return result;
                         } catch (error) {
-                            if (conn) {
-                                try {
-                                    await conn.rollback();
-                                    Logger.info('事务已回滚');
-                                } catch (rollbackError) {
-                                    Logger.error('事务回滚失败:', rollbackError);
-                                }
-                            }
+                            // Bun SQL 会自动回滚
+                            Logger.info('事务已回滚');
                             throw error;
-                        } finally {
-                            if (conn) {
-                                try {
-                                    conn.release();
-                                } catch (releaseError) {
-                                    Logger.warn('连接释放警告:', releaseError.message);
-                                }
-                            }
                         }
                     }
 
                     // 获取连接池状态
                     getPoolStatus() {
                         return {
-                            activeConnections: this.#pool.activeConnections(),
-                            totalConnections: this.#pool.totalConnections(),
-                            idleConnections: this.#pool.idleConnections(),
-                            taskQueueSize: this.#pool.taskQueueSize()
+                            activeConnections: 0,
+                            totalConnections: 0,
+                            idleConnections: 0,
+                            taskQueueSize: 0
                         };
                     }
 
                     // 关闭连接池
                     async close() {
-                        if (this.#pool) {
+                        if (this.#sql) {
                             try {
-                                await this.#pool.end();
-                                Logger.info('数据库连接池已关闭');
+                                await this.#sql.close();
+                                Logger.info('数据库连接已关闭');
                             } catch (error) {
-                                Logger.error('关闭数据库连接池失败:', error);
+                                Logger.error('关闭数据库连接失败:', error);
                                 throw error;
                             }
                         }
@@ -621,7 +590,7 @@ export default {
                 }
 
                 // 创建数据库管理器实例
-                const dbManager = new DatabaseManager(pool);
+                const dbManager = new DatabaseManager(sql);
 
                 // 监听进程退出事件，确保连接池正确关闭
                 const gracefulShutdown = async (signal) => {
@@ -651,9 +620,9 @@ export default {
             });
 
             // 清理资源
-            if (pool) {
+            if (sql) {
                 try {
-                    await pool.end();
+                    await sql.close();
                 } catch (cleanupError) {
                     Logger.error('清理连接池失败:', cleanupError);
                 }

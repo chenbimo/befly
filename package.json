@@ -60,9 +60,7 @@
         "vitest.config.js"
     ],
     "gitHead": "1dc5f118a723969456559e758e2ba889f4601224",
-    "dependencies": {
-        "mariadb": "^3.4.5"
-    },
+    "dependencies": {},
     "simple-git-hooks": {
         "pre-commit": "bunx --bun lint-staged"
     },
