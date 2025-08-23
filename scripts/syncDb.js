@@ -26,13 +26,7 @@ const getColumnDefinition = (fieldName, rule) => {
 
     // 根据字段类型设置SQL类型和长度
     if (fieldType === 'string' || fieldType === 'array') {
-        if (fieldMaxLength === 'null') {
-            throw new Error(`字段 ${fieldName} 的最大长度未设置，string/array 类型必须指定最大长度`);
-        }
         const maxLength = parseInt(fieldMaxLength);
-        if (isNaN(maxLength) || !isFinite(maxLength)) {
-            throw new Error(`字段 ${fieldName} 的最大长度无效: ${fieldMaxLength}`);
-        }
         sqlType = `VARCHAR(${maxLength})`;
     }
 
