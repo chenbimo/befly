@@ -3,6 +3,57 @@ import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createQueryBuilder } from '../utils/curd.js';
 
+// 使用 Promise 封装 SQL 客户端的创建与连通性校验（内部读取 Env 并构建 URL/参数）
+async function createSqlClient() {
+    return new Promise((resolve, reject) => {
+        // 构建连接 URL 与选项
+        const url = `mysql://${Env.MYSQL_USER || 'root'}:${Env.MYSQL_PASSWORD || 'root'}@${Env.MYSQL_HOST || 'localhost'}:${Env.MYSQL_PORT || 3306}`;
+        const options = {
+            max: Env.MYSQL_POOL_MAX || 10,
+            bigint: true,
+            idle_timeout: 1800, // 秒，等价于 30 分钟
+            connection_timeout: 60, // 建连超时，秒
+            max_lifetime: 0
+        };
+
+        const client = new SQL({
+            ...options,
+            url,
+            onconnect: () => {
+                try {
+                    Logger.debug('数据库连接已建立');
+                } catch {}
+            },
+            onclose: (error) => {
+                try {
+                    Logger.error({
+                        msg: `数据库连接已关闭`,
+                        error: error?.message,
+                        stack: error?.stack
+                    });
+                } catch {}
+            }
+        });
+
+        // 触发一次简单查询来确保连接可用
+        (async () => {
+            try {
+                const result = await client`SELECT VERSION() AS version`;
+                Logger.info(`数据库连接成功，MySQL 版本: ${result?.[0]?.version}`);
+                resolve(client);
+            } catch (error) {
+                Logger.error('数据库连接测试失败:', error);
+                try {
+                    await client.close();
+                } catch (e) {
+                    Logger.error('关闭失败（创建阶段）:', e);
+                }
+                reject(error);
+            }
+        })();
+    });
+}
+
 export default {
     after: ['_redis'],
     async onInit(befly) {
@@ -10,40 +61,8 @@ export default {
 
         try {
             if (Env.MYSQL_ENABLE === 1) {
-                // 生成连接 URL
-                // const url = `mysql://${Env.MYSQL_USER || 'root'}:${Env.MYSQL_PASSWORD || 'root'}@${Env.MYSQL_HOST || 'localhost'}:${Env.MYSQL_PORT || 3306}`;
-                const url = `mysql://root:root@localhost:3306`;
-                console.log('🔥[ url ]-15', url);
-
-                // 创建 Bun SQL 客户端（内置连接池）
-                sql = new SQL({
-                    url: url,
-                    max: Env.MYSQL_POOL_MAX || 10,
-                    bigint: true,
-                    // 兼容 Bun 的选项命名（根据文档，以下键名有效）
-                    idle_timeout: 1800, // 秒，等价于 30 分钟
-                    connection_timeout: 60, // 建连超时，秒
-                    max_lifetime: 0,
-                    onconnect: () => {
-                        Logger.debug('数据库连接已建立');
-                    },
-                    onclose: (error) => {
-                        Logger.error({
-                            msg: `数据库连接已关闭`,
-                            error: error.message,
-                            stack: error.stack
-                        });
-                    }
-                });
-
-                // 测试数据库连接
-                try {
-                    const result = await sql`SELECT VERSION() AS version`;
-                    Logger.info(`数据库连接成功，MySQL 版本: ${result?.[0]?.version}`);
-                } catch (error) {
-                    Logger.error('数据库连接测试失败:', error);
-                    throw error;
-                }
+                // 创建 Bun SQL 客户端（内置连接池），并确保连接验证成功后再继续
+                sql = await createSqlClient();
 
                 // 数据库管理类
                 class DatabaseManager {
