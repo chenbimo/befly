@@ -1,3 +1,4 @@
+import mariadb from 'mariadb';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createQueryBuilder } from '../utils/curd.js';
@@ -9,9 +10,6 @@ export default {
 
         try {
             if (Env.MYSQL_ENABLE === 1) {
-                // 动态导入 MariaDB 连接器
-                const mariadb = await import('mariadb');
-
                 // 创建 MariaDB 连接池配置
                 const config = {
                     host: Env.MYSQL_HOST || '127.0.0.1',

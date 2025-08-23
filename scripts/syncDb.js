@@ -3,6 +3,7 @@
  */
 
 import path from 'node:path';
+import mariadb from 'mariadb';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { parseFieldRule } from '../utils/util.js';
@@ -267,7 +268,6 @@ const SyncDb = async () => {
         }
 
         // 建立数据库连接并检查版本
-        const mariadb = await import('mariadb');
         conn = await mariadb.createConnection({
             host: Env.MYSQL_HOST || '127.0.0.1',
             port: Env.MYSQL_PORT || 3306,
