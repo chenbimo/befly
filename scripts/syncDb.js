@@ -25,11 +25,14 @@ const getColumnDefinition = (fieldName, rule) => {
     if (!sqlType) throw new Error(`不支持的数据类型: ${fieldType}`);
 
     // 根据字段类型设置SQL类型和长度
-    if (fieldType === 'string') {
-        const maxLength = fieldMaxLength === 'null' ? 255 : parseInt(fieldMaxLength);
-        sqlType = `VARCHAR(${maxLength})`;
-    } else if (fieldType === 'array') {
-        const maxLength = fieldMaxLength === 'null' ? 1000 : parseInt(fieldMaxLength);
+    if (fieldType === 'string' || fieldType === 'array') {
+        if (fieldMaxLength === 'null') {
+            throw new Error(`字段 ${fieldName} 的最大长度未设置，string/array 类型必须指定最大长度`);
+        }
+        const maxLength = parseInt(fieldMaxLength);
+        if (isNaN(maxLength) || !isFinite(maxLength)) {
+            throw new Error(`字段 ${fieldName} 的最大长度无效: ${fieldMaxLength}`);
+        }
         sqlType = `VARCHAR(${maxLength})`;
     }
 
@@ -150,14 +153,17 @@ const createTable = async (conn, tableName, fields) => {
 };
 
 // 比较字段定义变化
-const compareFieldDefinition = (existingColumn, newRule) => {
+const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
     const ruleParts = parseFieldRule(newRule);
     const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue] = ruleParts;
     const changes = [];
 
     // 检查长度变化（string和array类型）
     if (fieldType === 'string' || fieldType === 'array') {
-        const newMaxLength = fieldMaxLength === 'null' ? (fieldType === 'string' ? 255 : 1000) : parseInt(fieldMaxLength);
+        if (fieldMaxLength === 'null') {
+            throw new Error(`string/array 类型字段的最大长度未设置，必须指定最大长度`);
+        }
+        const newMaxLength = parseInt(fieldMaxLength);
         if (existingColumn.length !== newMaxLength) {
             changes.push({ type: 'length', current: existingColumn.length, new: newMaxLength });
         }
@@ -226,7 +232,7 @@ const syncTable = async (conn, tableName, fields) => {
     // 同步字段
     for (const [fieldName, rule] of Object.entries(fields)) {
         if (existingColumns[fieldName]) {
-            const comparison = compareFieldDefinition(existingColumns[fieldName], rule);
+            const comparison = compareFieldDefinition(existingColumns[fieldName], rule, fieldName);
             if (comparison.hasChanges) {
                 const sql = generateDDL(tableName, fieldName, rule);
                 await executeDDLSafely(conn, sql);

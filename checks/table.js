@@ -150,11 +150,19 @@ export default async () => {
                             continue;
                         }
 
-                        // 第4个值：最大值必须为null或数字
-                        if (!validateMinMax(maxStr)) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大值 "${maxStr}" 格式错误，必须为null或数字`);
-                            fileValid = false;
-                            continue;
+                        // 第4个值：当类型为 string/array 时，最大长度必须为数字且不可为 null；其他类型允许为 null 或数字
+                        if (type === 'string' || type === 'array') {
+                            if (maxStr === 'null' || !validateMinMax(maxStr)) {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大长度 "${maxStr}" 格式错误，string/array 类型必须为具体数字`);
+                                fileValid = false;
+                                continue;
+                            }
+                        } else {
+                            if (!validateMinMax(maxStr)) {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大值 "${maxStr}" 格式错误，必须为null或数字`);
+                                fileValid = false;
+                                continue;
+                            }
                         }
 
                         // 第5个值：默认值必须为null、字符串或数字
