@@ -5,52 +5,23 @@ import { createQueryBuilder } from '../utils/curd.js';
 
 // 使用 Promise 封装 SQL 客户端的创建与连通性校验（内部读取 Env 并构建 URL/参数）
 async function createSqlClient() {
-    return new Promise((resolve, reject) => {
-        // 构建连接 URL 与选项
-        const url = `mysql://${Env.MYSQL_USER || 'root'}:${Env.MYSQL_PASSWORD || 'root'}@${Env.MYSQL_HOST || 'localhost'}:${Env.MYSQL_PORT || 3306}`;
-        const options = {
-            max: Env.MYSQL_POOL_MAX || 10,
-            bigint: true,
-            idle_timeout: 1800, // 秒，等价于 30 分钟
-            connection_timeout: 60, // 建连超时，秒
-            max_lifetime: 0
-        };
+    return new Promise(async (resolve, reject) => {
+        const sql = new SQL(Env.MYSQL_URL);
 
-        const client = new SQL({
-            ...options,
-            url,
-            onconnect: () => {
-                try {
-                    Logger.debug('数据库连接已建立');
-                } catch {}
-            },
-            onclose: (error) => {
-                try {
-                    Logger.error({
-                        msg: `数据库连接已关闭`,
-                        error: error?.message,
-                        stack: error?.stack
-                    });
-                } catch {}
-            }
-        });
-
-        // 触发一次简单查询来确保连接可用
-        (async () => {
+        // 触发一次简单查询来确保连接可用;
+        try {
+            const result = await sql`SELECT VERSION() AS version`;
+            Logger.info(`数据库连接成功，MySQL 版本: ${result?.[0]?.version}`);
+            resolve(sql);
+        } catch (error) {
+            Logger.error('数据库连接测试失败:', error);
             try {
-                const result = await client`SELECT VERSION() AS version`;
-                Logger.info(`数据库连接成功，MySQL 版本: ${result?.[0]?.version}`);
-                resolve(client);
-            } catch (error) {
-                Logger.error('数据库连接测试失败:', error);
-                try {
-                    await client.close();
-                } catch (e) {
-                    Logger.error('关闭失败（创建阶段）:', e);
-                }
-                reject(error);
+                await client.close();
+            } catch (e) {
+                Logger.error('关闭失败（创建阶段）:', e);
             }
-        })();
+            reject(error);
+        }
     });
 }
 

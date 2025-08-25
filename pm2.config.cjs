@@ -41,6 +41,7 @@ module.exports = {
                 ALLOW_CREDENTIALS: 'true',
                 // mysql 配置,
                 MYSQL_ENABLE: 0,
+                MYSQL_URL: 'mysql://root:root@127.0.0.1:3306/test',
                 MYSQL_HOST: '127.0.0.1',
                 MYSQL_PORT: 3306,
                 MYSQL_DB: '',

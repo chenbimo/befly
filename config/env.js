@@ -25,6 +25,7 @@ export const Env = {
     TZ: process.env.TZ,
     // 数据库配置
     MYSQL_ENABLE: Number(process.env.MYSQL_ENABLE),
+    MYSQL_URL: process.env.MYSQL_URL,
     MYSQL_HOST: process.env.MYSQL_HOST,
     MYSQL_PORT: Number(process.env.MYSQL_PORT),
     MYSQL_DB: process.env.MYSQL_DB,
