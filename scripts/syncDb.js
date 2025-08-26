@@ -283,8 +283,12 @@ const SyncDb = async () => {
         }
 
         // 建立数据库连接并检查版本（Bun SQL）
-        const url = `mysql://${encodeURIComponent(Env.MYSQL_USER || 'root')}:${encodeURIComponent(Env.MYSQL_PASSWORD || 'root')}@${Env.MYSQL_HOST || '127.0.0.1'}:${Env.MYSQL_PORT || 3306}/${Env.MYSQL_DB || 'test'}`;
-        client = new SQL({ url, max: 1, bigint: true });
+        const url = `mysql://${encodeURIComponent(Env.MYSQL_USER)}:${encodeURIComponent(Env.MYSQL_PASSWORD)}@${Env.MYSQL_HOST}:${Env.MYSQL_PORT}/${Env.MYSQL_DB}`;
+        client = new SQL({
+            url: Env.MYSQL_URL ? Env.MYSQL_URL : url,
+            max: 1,
+            bigint: true
+        });
         const result = await client`SELECT VERSION() AS version`;
         const version = result[0].version;
 
