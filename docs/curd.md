@@ -77,9 +77,7 @@ MYSQL_POOL_MAX=10
 MYSQL_DEBUG=0
 
 # 时区配置
-TIMEZONE// 电商订单处理事务
-const processOrder = async (orderData) => {
-    const result = await db.trans(async (tx) => {cal
+TZ=Asia/Shanghai
 ```
 
 ## 基本用法
@@ -261,7 +259,7 @@ const result = await db.getList('users', {
 
 // 返回结果结构
 {
-    list: [...],      // 数据列表
+    rows: [...],      // 数据列表
     total: 100,       // 总记录数
     page: 1,          // 当前页
     pageSize: 10      // 每页大小
@@ -396,7 +394,7 @@ const result = await db.delData('users', {
 });
 ```
 
-#### batchInsert - 批量插入
+#### insBatch - 批量插入
 
 ```javascript
 // 批量插入
@@ -406,7 +404,7 @@ const users = [
     { name: 'User3', email: 'user3@example.com' }
 ];
 
-const result = await db.batchInsert('users', users);
+const result = await db.insBatch('users', users);
 ```
 
 ## 高级查询条件
