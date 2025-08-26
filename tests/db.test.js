@@ -4,7 +4,7 @@
  */
 
 import { test, expect, describe, beforeEach } from 'bun:test';
-import { createQueryBuilder, SqlBuilder } from '../utils/curd.js';
+import { createQueryBuilder, SqlBuilder } from '../utils/sqlBuilder.js';
 
 describe('字段转义功能测试', () => {
     let builder;

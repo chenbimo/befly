@@ -84,7 +84,7 @@ bun test tests/jwt.test.js  # 运行特定测试
 
 ### 数据库操作
 
-- **查询构造器**: `utils/curd.js` 的 `SqlBuilder` 类
+- **查询构造器**: `utils/sqlBuilder.js` 的 `SqlBuilder` 类
 - **字段转义**: 自动处理 MySQL 字段名转义（反引号）
 - **连接管理**: 插件系统管理连接池生命周期
 

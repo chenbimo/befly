@@ -4,7 +4,7 @@
  */
 
 import { test, expect, describe, beforeAll, afterAll, beforeEach } from 'bun:test';
-import { createQueryBuilder, SqlBuilder } from '../utils/curd.js';
+import { createQueryBuilder, SqlBuilder } from '../utils/sqlBuilder.js';
 
 describe('SqlBuilder 基础功能测试', () => {
     let builder;

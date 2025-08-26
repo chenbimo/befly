@@ -1,7 +1,7 @@
 import { SQL } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { createQueryBuilder } from '../utils/curd.js';
+import { createQueryBuilder } from '../utils/sqlBuilder.js';
 import { createSqlClient } from '../utils/util.js';
 
 // 统一使用 utils/util.js 提供的 createSqlClient
