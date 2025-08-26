@@ -3,10 +3,9 @@
  */
 
 import path from 'node:path';
-import { SQL } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { parseFieldRule } from '../utils/util.js';
+import { parseFieldRule, createSqlClient } from '../utils/util.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import tableCheck from '../checks/table.js';
 
@@ -54,16 +53,10 @@ const getColumnDefinition = (fieldName, rule) => {
     return columnDef;
 };
 
-// 通用执行器：将 '?' 占位符转换为 Bun SQL 的 $1, $2 并执行
-const toDollarParams = (query, params) => {
-    if (!params || params.length === 0) return query;
-    let i = 0;
-    return query.replace(/\?/g, () => `$${++i}`);
-};
-
+// 通用执行器：直接使用 Bun SQL 参数化（MySQL 使用 '?' 占位符）
 const exec = async (client, query, params = []) => {
-    if (params.length > 0) {
-        return await client.unsafe(toDollarParams(query, params), params);
+    if (params && params.length > 0) {
+        return await client.unsafe(query, params);
     }
     return await client.unsafe(query);
 };
@@ -282,13 +275,8 @@ const SyncDb = async () => {
             throw new Error('表定义验证失败');
         }
 
-        // 建立数据库连接并检查版本（Bun SQL）
-        const url = `mysql://${encodeURIComponent(Env.MYSQL_USER)}:${encodeURIComponent(Env.MYSQL_PASSWORD)}@${Env.MYSQL_HOST}:${Env.MYSQL_PORT}/${Env.MYSQL_DB}`;
-        client = new SQL({
-            url: Env.MYSQL_URL ? Env.MYSQL_URL : url,
-            max: 1,
-            bigint: true
-        });
+        // 建立数据库连接并检查版本（统一工具函数）
+        client = await createSqlClient({ max: 1 });
         const result = await client`SELECT VERSION() AS version`;
         const version = result[0].version;
 

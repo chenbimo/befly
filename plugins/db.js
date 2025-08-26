@@ -2,28 +2,9 @@ import { SQL } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createQueryBuilder } from '../utils/curd.js';
+import { createSqlClient } from '../utils/util.js';
 
-// 使用 Promise 封装 SQL 客户端的创建与连通性校验（内部读取 Env 并构建 URL/参数）
-async function createSqlClient() {
-    return new Promise(async (resolve, reject) => {
-        const sql = new SQL(Env.MYSQL_URL);
-
-        // 触发一次简单查询来确保连接可用;
-        try {
-            const result = await sql`SELECT VERSION() AS version`;
-            Logger.info(`数据库连接成功，MySQL 版本: ${result?.[0]?.version}`);
-            resolve(sql);
-        } catch (error) {
-            Logger.error('数据库连接测试失败:', error);
-            try {
-                await client.close();
-            } catch (e) {
-                Logger.error('关闭失败（创建阶段）:', e);
-            }
-            reject(error);
-        }
-    });
-}
+// 统一使用 utils/util.js 提供的 createSqlClient
 
 export default {
     after: ['_redis'],
@@ -99,13 +80,6 @@ export default {
                         return where;
                     }
 
-                    // 将 '?' 占位符转换为 Bun SQL 使用的 $1, $2 ...
-                    #toDollarParams(query, params) {
-                        if (!params || params.length === 0) return query;
-                        let i = 0;
-                        return query.replace(/\?/g, () => `$${++i}`);
-                    }
-
                     // 私有方法：执行 SQL（支持传入事务连接对象）
                     async #executeWithConn(query, params = [], conn = null) {
                         if (!query || typeof query !== 'string') {
@@ -122,8 +96,7 @@ export default {
                             // 读查询，直接返回行
                             if (isSelectLike) {
                                 if (params && params.length > 0) {
-                                    const q = this.#toDollarParams(query, params);
-                                    return await client.unsafe(q, params);
+                                    return await client.unsafe(query, params);
                                 } else {
                                     return await client.unsafe(query);
                                 }
@@ -134,8 +107,7 @@ export default {
                                 const runOn = conn ? client : await this.#sql.reserve();
                                 try {
                                     if (params && params.length > 0) {
-                                        const q = this.#toDollarParams(query, params);
-                                        await runOn.unsafe(q, params);
+                                        await runOn.unsafe(query, params);
                                     } else {
                                         await runOn.unsafe(query);
                                     }
@@ -149,8 +121,7 @@ export default {
 
                             // 其他（DDL等），直接执行并返回空数组以与旧行为尽可能兼容
                             if (params && params.length > 0) {
-                                const q = this.#toDollarParams(query, params);
-                                return await client.unsafe(q, params);
+                                return await client.unsafe(query, params);
                             } else {
                                 return await client.unsafe(query);
                             }

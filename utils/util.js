@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { SQL } from 'bun';
 import { Env } from '../config/env.js';
+import { Logger } from './logger.js';
 
 export const setCorsOptions = (req) => {
     return {
@@ -314,3 +316,28 @@ export const parseFieldRule = (rule) => {
 
     return allParts;
 };
+
+/**
+ * 创建并校验 Bun SQL 客户端
+ * - 优先使用 Env.MYSQL_URL
+ * - 否则按 scripts/syncDb.js 的方式拼接 URL
+ * - 连接成功后返回 SQL 实例，失败会自动 close 并抛出
+ * @param {object} options 传给 new SQL 的参数（如 { max: 1, bigint: true }）
+ */
+export async function createSqlClient(options = {}) {
+    const url = Env.MYSQL_URL ? Env.MYSQL_URL : `mysql://${encodeURIComponent(Env.MYSQL_USER)}:${encodeURIComponent(Env.MYSQL_PASSWORD)}@${Env.MYSQL_HOST}:${Env.MYSQL_PORT}/${Env.MYSQL_DB}`;
+
+    const sql = new SQL({ url, max: options.max ?? 1, bigint: options.bigint ?? true, ...options });
+    try {
+        const ver = await sql`SELECT VERSION() AS version`;
+        const version = ver?.[0]?.version;
+        Logger.info(`数据库连接成功，MySQL 版本: ${version}`);
+        return sql;
+    } catch (error) {
+        Logger.error('数据库连接测试失败:', error);
+        try {
+            await sql.close();
+        } catch {}
+        throw error;
+    }
+}
