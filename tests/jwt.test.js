@@ -2,7 +2,7 @@
 // 测试JWT的可用性、可靠性、准确性
 import { describe, test, expect } from 'bun:test';
 import { Jwt } from '../utils/jwt.js';
-import { Jwt as JwtBase } from '../libs/jwt.js';
+import { Jwt as JwtBase } from '../utils/jwt.js';
 
 const SECRET = 'test-secret-key-for-jwt-at-least-32-characters-long';
 

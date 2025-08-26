@@ -5,7 +5,7 @@ import { Logger } from './utils/logger.js';
 import { Jwt } from './utils/jwt.js';
 import { validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
-import { Xml } from './libs/xml.js';
+import { Xml } from './utils/xml.js';
 import { SyncDb } from './scripts/syncDb.js';
 import { __dirchecks, __dirplugins, __dirapis, getProjectDir } from './system.js';
 import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions, calculateElapsedTime } from './utils/util.js';

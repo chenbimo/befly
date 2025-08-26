@@ -1,4 +1,4 @@
-import { Jwt as JwtBase } from '../libs/jwt.js';
+import { createHmac } from 'crypto';
 import { Env } from '../config/env.js';
 
 /**
@@ -6,6 +6,54 @@ import { Env } from '../config/env.js';
  * 提供JWT token的签名、验证和解码功能以及应用层的便捷接口
  */
 export class Jwt {
+    // 原基础工具：算法映射
+    static ALGORITHMS = {
+        HS256: 'sha256',
+        HS384: 'sha384',
+        HS512: 'sha512'
+    };
+
+    // 原基础工具：Base64 URL 编解码
+    static base64UrlEncode(input) {
+        const base64 = Buffer.isBuffer(input) ? input.toString('base64') : Buffer.from(input, 'utf8').toString('base64');
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+    static base64UrlDecode(str) {
+        const padding = 4 - (str.length % 4);
+        if (padding !== 4) str += '='.repeat(padding);
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        return Buffer.from(str, 'base64').toString('utf8');
+    }
+
+    // 原基础工具：过期时间解析与签名/比较
+    static parseExpiration(expiresIn) {
+        if (typeof expiresIn === 'number') return expiresIn;
+        if (typeof expiresIn !== 'string') throw new Error('过期时间格式无效');
+        const numericValue = parseInt(expiresIn);
+        if (!isNaN(numericValue) && numericValue.toString() === expiresIn) return numericValue;
+        const match = expiresIn.match(/^(\d+)(ms|[smhdwy])$/);
+        if (!match) throw new Error('过期时间格式无效');
+        const value = parseInt(match[1]);
+        const unit = match[2];
+        if (unit === 'ms') return Math.floor(value / 1000);
+        const multipliers = { s: 1, m: 60, h: 3600, d: 86400, w: 604800, y: 31536000 };
+        return value * multipliers[unit];
+    }
+    static createSignature(algorithm, secret, data) {
+        const hashAlgorithm = this.ALGORITHMS[algorithm];
+        if (!hashAlgorithm) throw new Error(`不支持的算法: ${algorithm}`);
+        const hmac = createHmac(hashAlgorithm, secret);
+        hmac.update(data);
+        return this.base64UrlEncode(hmac.digest());
+    }
+    static constantTimeCompare(a, b) {
+        if (a.length !== b.length) return false;
+        let result = 0;
+        for (let i = 0; i < a.length; i++) {
+            result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+        }
+        return result === 0;
+    }
     /**
      * 签名JWT token
      * @param {object} payload - JWT载荷数据
@@ -26,7 +74,7 @@ export class Jwt {
         const now = Math.floor(Date.now() / 1000);
 
         // 创建header
-        const header = JwtBase.base64UrlEncode(
+        const header = Jwt.base64UrlEncode(
             JSON.stringify({
                 alg: algorithm,
                 typ: 'JWT'
@@ -37,22 +85,22 @@ export class Jwt {
         const jwtPayload = { ...payload, iat: now };
 
         if (options.expiresIn || Env.JWT_EXPIRES_IN) {
-            const expSeconds = JwtBase.parseExpiration(options.expiresIn || Env.JWT_EXPIRES_IN);
+            const expSeconds = Jwt.parseExpiration(options.expiresIn || Env.JWT_EXPIRES_IN);
             jwtPayload.exp = now + expSeconds;
         }
         if (options.issuer) jwtPayload.iss = options.issuer;
         if (options.audience) jwtPayload.aud = options.audience;
         if (options.subject) jwtPayload.sub = options.subject;
         if (options.notBefore) {
-            jwtPayload.nbf = typeof options.notBefore === 'number' ? options.notBefore : now + JwtBase.parseExpiration(options.notBefore);
+            jwtPayload.nbf = typeof options.notBefore === 'number' ? options.notBefore : now + Jwt.parseExpiration(options.notBefore);
         }
         if (options.jwtId) jwtPayload.jti = options.jwtId;
 
-        const encodedPayload = JwtBase.base64UrlEncode(JSON.stringify(jwtPayload));
+        const encodedPayload = Jwt.base64UrlEncode(JSON.stringify(jwtPayload));
 
         // 创建签名
         const data = `${header}.${encodedPayload}`;
-        const signature = JwtBase.createSignature(algorithm, secret, data);
+        const signature = Jwt.createSignature(algorithm, secret, data);
 
         return `${data}.${signature}`;
     }
@@ -80,20 +128,20 @@ export class Jwt {
 
         try {
             // 解析header和payload
-            const header = JSON.parse(JwtBase.base64UrlDecode(parts[0]));
-            const payload = JSON.parse(JwtBase.base64UrlDecode(parts[1]));
+            const header = JSON.parse(Jwt.base64UrlDecode(parts[0]));
+            const payload = JSON.parse(Jwt.base64UrlDecode(parts[1]));
             const signature = parts[2];
 
             // 验证算法
-            if (!JwtBase.ALGORITHMS[header.alg]) {
+            if (!Jwt.ALGORITHMS[header.alg]) {
                 throw new Error(`不支持的算法: ${header.alg}`);
             }
 
             // 验证签名
             const data = `${parts[0]}.${parts[1]}`;
-            const expectedSignature = JwtBase.createSignature(header.alg, secret, data);
+            const expectedSignature = Jwt.createSignature(header.alg, secret, data);
 
-            if (!JwtBase.constantTimeCompare(signature, expectedSignature)) {
+            if (!Jwt.constantTimeCompare(signature, expectedSignature)) {
                 throw new Error('Token签名无效');
             }
 
@@ -147,8 +195,8 @@ export class Jwt {
         }
 
         try {
-            const header = JSON.parse(JwtBase.base64UrlDecode(parts[0]));
-            const payload = JSON.parse(JwtBase.base64UrlDecode(parts[1]));
+            const header = JSON.parse(Jwt.base64UrlDecode(parts[0]));
+            const payload = JSON.parse(Jwt.base64UrlDecode(parts[1]));
 
             return complete ? { header, payload, signature: parts[2] } : payload;
         } catch (error) {
@@ -335,3 +383,5 @@ export class Jwt {
         return timeToExpiry > 0 && timeToExpiry <= thresholdSeconds;
     }
 }
+
+// 已使用 `export class Jwt` 具名导出

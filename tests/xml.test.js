@@ -1,6 +1,6 @@
 // XML 解析器测试套件
 import { describe, test, expect } from 'bun:test';
-import { Xml } from '../libs/xml.js';
+import { Xml } from '../utils/xml.js';
 
 describe('XML 解析器测试', () => {
     // === 1. 基础解析功能测试 ===
