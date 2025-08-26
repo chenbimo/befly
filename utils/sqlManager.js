@@ -2,8 +2,8 @@ import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
 import { createQueryBuilder } from './sqlBuilder.js';
 
-// 数据库管理类（从 plugins/db.js 提取）
-export class DatabaseManager {
+// 数据库管理器（从 plugins/db.js 提取）
+export class SqlManager {
     // 私有属性
     #sql;
     #befly;
@@ -468,4 +468,4 @@ export class DatabaseManager {
     }
 }
 
-export default DatabaseManager;
+export default SqlManager;

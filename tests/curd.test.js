@@ -1,6 +1,6 @@
 /**
  * CURD 数据库操作测试套件
- * 测试 SqlBuilder 类和 DatabaseManager 类的所有功能
+ * 测试 SqlBuilder 类和 SqlManager 类的所有功能
  */
 
 import { test, expect, describe, beforeAll, afterAll, beforeEach } from 'bun:test';

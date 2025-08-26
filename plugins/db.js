@@ -1,7 +1,7 @@
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient } from '../utils/util.js';
-import { DatabaseManager } from '../utils/sqlManager.js';
+import { SqlManager } from '../utils/sqlManager.js';
 
 // 统一使用 utils/util.js 提供的 createSqlClient
 
@@ -16,7 +16,7 @@ export default {
                 sql = await createSqlClient();
 
                 // 创建数据库管理器实例（迁移到 utils/sqlManager.js）
-                const dbManager = new DatabaseManager(sql, befly);
+                const dbManager = new SqlManager(sql, befly);
 
                 // 监听进程退出事件，确保连接池正确关闭
                 const gracefulShutdown = async (signal) => {
