@@ -2,6 +2,8 @@
 
 基于 MariaDB 的自定义数据库操作库，提供链式 SQL 构造器和便捷的 CRUD 操作方法。
 
+注意：自 v3 起，数据库管理类 DatabaseManager 已从插件内联实现迁移到 `utils/sqlManager.js`，由插件 `plugins/db.js` 在初始化时创建实例并挂载到 `befly.db`。
+
 ## 特性
 
 - ✅ 基于 MariaDB 原生 Promise API
@@ -87,8 +89,7 @@ const processOrder = async (orderData) => {
 ```javascript
 export default async function userApi(befly) {
     const { db } = befly;
-
-    // 数据库实例现在可用
+    // db 为 DatabaseManager 实例（来源：utils/sqlManager.js）
 }
 ```
 
@@ -572,7 +573,7 @@ const usersWithLatestPost = await db.getAll('users u', {
 ### 基础链式调用
 
 ```javascript
-// 获取查询构造器
+// 获取查询构造器（来自 utils/sqlManager.js 暴露的 db.query()）
 const builder = db.query();
 
 // 链式构建查询
