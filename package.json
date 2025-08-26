@@ -16,10 +16,7 @@
         "ra": "bun run release.js -a",
         "rb": "bun run release.js -b",
         "rc": "bun run release.js -c",
-        "test": "bun test",
-        "dev": "bun run project/main.js",
-        "serve": "bunx --bun pm2 start pm2.config.cjs -a",
-        "syncDb": "bun run scripts/syncDb.js"
+        "test": "bun test"
     },
     "keywords": [
         "bun",
