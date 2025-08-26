@@ -15,17 +15,15 @@ describe('字段属性验证规则测试', () => {
         expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
     });
 
-    test('第1个值：名称必须为中文、数字、字母', () => {
+    test('第1个值：名称可包含中文、数字、字母、空格、下划线、短横线', () => {
         // 有效的名称
         expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
         expect(() => parseFieldRule('username⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名123⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('user123⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
+        expect(() => parseFieldRule('用户名 123⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
+        expect(() => parseFieldRule('user_name⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
+        expect(() => parseFieldRule('user-name⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
 
         // 无效的名称
-        expect(() => parseFieldRule('user-name⚡string⚡null⚡null⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('user_name⚡string⚡null⚡null⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户 名⚡string⚡null⚡null⚡null⚡0⚡null')).toThrow();
         expect(() => parseFieldRule('user@name⚡string⚡null⚡null⚡null⚡0⚡null')).toThrow();
     });
 

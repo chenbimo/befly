@@ -223,9 +223,9 @@ export const filterLogFields = (body, excludeFields = '') => {
     return filtered;
 };
 
-// 验证字段名称是否为中文、数字、字母
+// 验证字段名称：中文、数字、字母、空格、下划线、短横线
 const validateFieldName = (name) => {
-    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9]+$/;
+    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
     return nameRegex.test(name);
 };
 
