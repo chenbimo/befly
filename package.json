@@ -17,6 +17,7 @@
         "rb": "bun run release.js -b",
         "rc": "bun run release.js -c",
         "test": "bun test",
+        "test:unit": "bun test tests",
         "test:jwt": "bun test tests/jwt.test.js",
         "dev": "bun run project/main.js",
         "server": "bunx --bun pm2 start pm2.config.cjs -a",

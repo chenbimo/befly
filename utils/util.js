@@ -224,24 +224,24 @@ export const filterLogFields = (body, excludeFields = '') => {
 };
 
 // 验证字段名称：中文、数字、字母、空格、下划线、短横线
-const validateFieldName = (name) => {
+export const validateFieldName = (name) => {
     const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
     return nameRegex.test(name);
 };
 
 // 验证字段类型是否为指定的四种类型之一
-const validateFieldType = (type) => {
+export const validateFieldType = (type) => {
     const validTypes = ['string', 'number', 'text', 'array'];
     return validTypes.includes(type);
 };
 
 // 验证最小值/最大值是否为null或数字
-const validateMinMax = (value) => {
+export const validateMinMax = (value) => {
     return value === 'null' || (!isNaN(parseFloat(value)) && isFinite(parseFloat(value)));
 };
 
 // 验证默认值是否为null、字符串或数字
-const validateDefaultValue = (value) => {
+export const validateDefaultValue = (value) => {
     if (value === 'null') return true;
     // 检查是否为数字
     if (!isNaN(parseFloat(value)) && isFinite(parseFloat(value))) return true;
@@ -250,12 +250,12 @@ const validateDefaultValue = (value) => {
 };
 
 // 验证索引标识是否为0或1
-const validateIndex = (value) => {
+export const validateIndex = (value) => {
     return value === '0' || value === '1';
 };
 
 // 验证正则表达式是否有效
-const validateRegex = (value) => {
+export const validateRegex = (value) => {
     if (value === 'null') return true;
     try {
         new RegExp(value);
