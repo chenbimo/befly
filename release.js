@@ -1,9 +1,8 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { execSync } from 'child_process';
 import { join } from 'path';
-import { __filename, __dirname as __coreDir } from './core/system.js';
+import { $ } from 'bun';
 
 // 以“执行发布命令的目录”为目标目录（兼容 core 与 tpl）
 const runDir = process.cwd();
@@ -11,61 +10,15 @@ const runDir = process.cwd();
 const packagePath = join(runDir, 'package.json');
 
 /**
- * 解析命令行参数
+ * 解析命令行参数（仅支持 --major | --minor | --patch）
  */
 function parseArguments() {
     const args = process.argv.slice(2);
-
-    if (args.includes('-h') || args.includes('--help')) {
-        console.log(`
-发布脚本使用说明:
-  bun run scripts/release.js -a    发布大版本 (major)
-  bun run scripts/release.js -b    发布次要版本 (minor)
-  bun run scripts/release.js -c    发布补丁版本 (patch)
-  bun run scripts/release.js -h    显示帮助信息
-
-或者使用快捷命令:
-  bun run ra                       发布大版本
-  bun run rb                       发布次要版本
-  bun run rc                       发布补丁版本
-        `);
-        process.exit(0);
-    }
-
-    if (args.includes('-a')) return 'major';
-    if (args.includes('-b')) return 'minor';
-    if (args.includes('-c')) return 'patch';
-
-    console.error('错误: 请指定版本类型参数');
-    console.log('使用 -h 或 --help 查看帮助信息');
+    if (args.includes('--major')) return 'major';
+    if (args.includes('--minor')) return 'minor';
+    if (args.includes('--patch')) return 'patch';
+    console.error('错误: 缺少版本类型参数 (--major | --minor | --patch)');
     process.exit(1);
-}
-
-/**
- * 读取 package.json
- */
-function readPackageJson() {
-    try {
-        const content = readFileSync(packagePath, 'utf8');
-        return JSON.parse(content);
-    } catch (error) {
-        console.error('错误: 无法读取 package.json:', error.message);
-        process.exit(1);
-    }
-}
-
-/**
- * 写入 package.json
- */
-function writePackageJson(packageData) {
-    try {
-        const content = JSON.stringify(packageData, null, 4);
-        writeFileSync(packagePath, content, 'utf8');
-        console.log('✓ package.json 已更新');
-    } catch (error) {
-        console.error('错误: 无法写入 package.json:', error.message);
-        process.exit(1);
-    }
 }
 
 /**
@@ -102,73 +55,35 @@ function updateVersion(currentVersion, type) {
     return `${major}.${minor}.${patch}`;
 }
 
+// 统一设置命令工作目录
+$.cwd = runDir;
+
+// 不进行任何 Git 操作
+
 /**
- * 执行 Git 命令（必须成功）
+ * 读取 package.json
  */
-function executeGitCommand(command, description) {
+function readPackageJson() {
     try {
-        console.log(`正在执行: ${description}`);
-        console.log(`命令: ${command}`);
-
-        const result = execSync(command, {
-            encoding: 'utf8',
-            stdio: 'inherit',
-            cwd: runDir
-        });
-
-        console.log(`✓ ${description} 完成`);
-        return result;
+        const content = readFileSync(packagePath, 'utf8');
+        return JSON.parse(content);
     } catch (error) {
-        console.error(`错误: ${description} 失败:`, error.message);
-        console.error('Git 操作失败，发布已取消！');
+        console.error('错误: 无法读取 package.json:', error.message);
         process.exit(1);
     }
 }
 
 /**
- * 执行命令（必须成功）
+ * 写入 package.json
  */
-function executeCommand(command, description) {
+function writePackageJson(packageData) {
     try {
-        console.log(`正在执行: ${description}`);
-        console.log(`命令: ${command}`);
-
-        const result = execSync(command, {
-            encoding: 'utf8',
-            stdio: 'inherit',
-            cwd: runDir
-        });
-
-        console.log(`✓ ${description} 完成`);
-        return result;
+        const content = JSON.stringify(packageData, null, 4);
+        writeFileSync(packagePath, content, 'utf8');
+        console.log('✓ package.json 已更新');
     } catch (error) {
-        console.error(`错误: ${description} 失败:`, error.message);
+        console.error('错误: 无法写入 package.json:', error.message);
         process.exit(1);
-    }
-}
-
-/**
- * 检查 Git 状态
- */
-function checkGitStatus() {
-    try {
-        const status = execSync('git status --porcelain', {
-            encoding: 'utf8',
-            cwd: runDir
-        });
-
-        if (status.trim()) {
-            console.error('错误: 工作目录有未提交的更改');
-            console.log('未提交的文件:');
-            console.log(status);
-            console.log('\n请先提交所有更改后再发布！');
-            return false;
-        }
-        return true;
-    } catch (error) {
-        console.error('错误: 无法检查 Git 状态:', error.message);
-        console.error('请确保当前目录是一个有效的 Git 仓库！');
-        return false;
     }
 }
 
@@ -210,7 +125,7 @@ function checkRequiredFiles() {
 /**
  * 主函数
  */
-function main() {
+async function main() {
     // 解析参数（如果是帮助命令会直接退出）
     const versionType = parseArguments();
 
@@ -230,13 +145,6 @@ function main() {
         process.exit(1);
     }
 
-    // 检查 Git 状态
-    console.log('\n--- 检查 Git 状态 ---');
-    if (!checkGitStatus()) {
-        console.log('\n发布已取消');
-        process.exit(1);
-    }
-
     // 读取当前版本
     const packageData = readPackageJson();
     const currentVersion = packageData.version;
@@ -250,19 +158,15 @@ function main() {
     packageData.version = newVersion;
     writePackageJson(packageData);
 
-    // 提交版本更新
-    console.log('\n--- Git 操作 ---');
-    executeGitCommand('git add package.json', '添加 package.json 到 Git');
-    executeGitCommand(`git commit -m "chore: bump version to ${newVersion}"`, '提交版本更新');
-    executeGitCommand(`git tag v${newVersion}`, '创建版本标签');
-
     // 发布到 npm
     console.log('\n--- NPM 发布 ---');
-    executeCommand('bun publish --registry=https://registry.npmjs.org --access=public', '发布到 npm');
-
-    // 推送到远程仓库（已禁用）
-    console.log('\n--- 推送到远程仓库 ---');
-    console.log('已跳过 git push 与 push --tags（按要求不执行远程推送）。');
+    try {
+        await $`bun publish --registry=https://registry.npmjs.org --access=public`;
+        console.log('✓ 发布到 npm 完成');
+    } catch (error) {
+        console.error('错误: 发布到 npm 失败：', error?.message || error);
+        process.exit(1);
+    }
 
     console.log(`\n🎉 版本 ${newVersion} 发布成功！`);
     console.log(`📦 包名: ${packageData.name}`);
@@ -270,4 +174,7 @@ function main() {
 }
 
 // 启动主函数
-main();
+main().catch((e) => {
+    console.error('发布流程发生未捕获错误：', e?.message || e);
+    process.exit(1);
+});

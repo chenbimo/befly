@@ -13,9 +13,9 @@
         ".": "./main.js"
     },
     "scripts": {
-        "ra": "bun run release.js -a",
-        "rb": "bun run release.js -b",
-        "rc": "bun run release.js -c"
+        "ra": "bun run ../release.js --major",
+        "rb": "bun run ../release.js --minor",
+        "rc": "bun run ../release.js --patch"
     },
     "keywords": [
         "bun",
