@@ -5,7 +5,7 @@ import { __dirtables, getProjectDir } from '../system.js';
 
 // 所有校验函数均复用 utils/index.js 导出的实现
 
-export default async () => {
+export const checkTable = async () => {
     try {
         const tablesGlob = new Bun.Glob('*.json');
 

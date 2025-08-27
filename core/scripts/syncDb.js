@@ -7,7 +7,7 @@ import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { parseFieldRule, createSqlClient } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
-import tableCheck from '../checks/table.js';
+import { checkTable } from '../checks/table.js';
 
 const typeMapping = {
     number: 'BIGINT',
@@ -270,7 +270,7 @@ const SyncDb = async () => {
         Logger.info('开始数据库表结构同步...');
 
         // 验证表定义文件
-        const tableValidationResult = await tableCheck();
+        const tableValidationResult = await checkTable();
         if (!tableValidationResult) {
             throw new Error('表定义验证失败');
         }
