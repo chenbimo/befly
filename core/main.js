@@ -8,7 +8,7 @@ import { Crypto2 } from './utils/crypto.js';
 import { Xml } from './utils/xml.js';
 import { SyncDb } from './scripts/syncDb.js';
 import { __dirchecks, __dirplugins, __dirapis, getProjectDir } from './system.js';
-import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions, calculateElapsedTime } from './utils/util.js';
+import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions, calcPerfTime } from './utils/util.js';
 
 class Befly {
     constructor(options = {}) {
@@ -48,7 +48,7 @@ class Befly {
                     // 执行默认导出的函数
                     if (typeof check.default === 'function') {
                         const checkResult = await check.default(this.appContext);
-                        const singleCheckTime = calculateElapsedTime(singleCheckStart);
+                        const singleCheckTime = calcPerfTime(singleCheckStart);
 
                         if (checkResult === true) {
                             passedChecks++;
@@ -58,12 +58,12 @@ class Befly {
                             failedChecks++;
                         }
                     } else {
-                        const singleCheckTime = calculateElapsedTime(singleCheckStart);
+                        const singleCheckTime = calcPerfTime(singleCheckStart);
                         Logger.warn(`文件 ${fileName} 未导出默认函数，耗时: ${singleCheckTime}`);
                         failedChecks++;
                     }
                 } catch (error) {
-                    const singleCheckTime = calculateElapsedTime(singleCheckStart);
+                    const singleCheckTime = calcPerfTime(singleCheckStart);
                     Logger.error({
                         msg: `检查失败 ${fileName}，耗时: ${singleCheckTime}`,
                         error: error.message,
@@ -73,7 +73,7 @@ class Befly {
                 }
             }
 
-            const totalCheckTime = calculateElapsedTime(checkStartTime);
+            const totalCheckTime = calcPerfTime(checkStartTime);
 
             // 输出检查结果统计
             Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${totalChecks}, 通过: ${passedChecks}, 失败: ${failedChecks}`);
@@ -116,7 +116,7 @@ class Befly {
 
                 const importStart = Bun.nanoseconds();
                 const plugin = await import(file);
-                const importTime = calculateElapsedTime(importStart);
+                const importTime = calcPerfTime(importStart);
 
                 const pluginInstance = plugin.default;
                 pluginInstance.pluginName = fileName;
@@ -125,7 +125,7 @@ class Befly {
 
                 Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
             }
-            const corePluginsScanTime = calculateElapsedTime(corePluginsScanStart);
+            const corePluginsScanTime = calcPerfTime(corePluginsScanStart);
             Logger.info(`核心插件扫描完成，耗时: ${corePluginsScanTime}，共找到 ${corePlugins.length} 个插件`);
 
             const sortedCorePlugins = sortPlugins(corePlugins);
@@ -144,7 +144,7 @@ class Befly {
                     Logger.warn(`插件 ${plugin.pluginName} 初始化失败:`, error.message);
                 }
             }
-            const corePluginsInitTime = calculateElapsedTime(corePluginsInitStart);
+            const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
             Logger.info(`核心插件初始化完成，耗时: ${corePluginsInitTime}`);
 
             // 扫描用户插件目录
@@ -165,7 +165,7 @@ class Befly {
 
                 const importStart = Bun.nanoseconds();
                 const plugin = await import(file);
-                const importTime = calculateElapsedTime(importStart);
+                const importTime = calcPerfTime(importStart);
 
                 const pluginInstance = plugin.default;
                 pluginInstance.pluginName = fileName;
@@ -173,7 +173,7 @@ class Befly {
 
                 Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
             }
-            const userPluginsScanTime = calculateElapsedTime(userPluginsScanStart);
+            const userPluginsScanTime = calcPerfTime(userPluginsScanStart);
             Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime}，共找到 ${userPlugins.length} 个插件`);
 
             const sortedUserPlugins = sortPlugins(userPlugins);
@@ -193,11 +193,11 @@ class Befly {
                         Logger.warn(`插件 ${plugin.pluginName} 初始化失败:`, error.message);
                     }
                 }
-                const userPluginsInitTime = calculateElapsedTime(userPluginsInitStart);
+                const userPluginsInitTime = calcPerfTime(userPluginsInitStart);
                 Logger.info(`用户插件初始化完成，耗时: ${userPluginsInitTime}`);
             }
 
-            const totalLoadTime = calculateElapsedTime(loadStartTime);
+            const totalLoadTime = calcPerfTime(loadStartTime);
             const totalPluginCount = sortedCorePlugins.length + sortedUserPlugins.length;
             Logger.info(`插件加载完成! 总耗时: ${totalLoadTime}，共加载 ${totalPluginCount} 个插件`);
         } catch (error) {
@@ -257,11 +257,11 @@ class Befly {
                     api.route = `${api.method.toUpperCase()}/api/${dirName}/${apiPath}`;
                     this.apiRoutes.set(api.route, api);
 
-                    const singleApiTime = calculateElapsedTime(singleApiStart);
+                    const singleApiTime = calcPerfTime(singleApiStart);
                     loadedApis++;
                     // Logger.info(`${dirDisplayName}接口 ${apiPath} 加载成功，耗时: ${singleApiTime}`);
                 } catch (error) {
-                    const singleApiTime = calculateElapsedTime(singleApiStart);
+                    const singleApiTime = calcPerfTime(singleApiStart);
                     failedApis++;
                     Logger.error({
                         msg: `${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime}`,
@@ -271,7 +271,7 @@ class Befly {
                 }
             }
 
-            const totalLoadTime = calculateElapsedTime(loadStartTime);
+            const totalLoadTime = calcPerfTime(loadStartTime);
             Logger.info(`${dirDisplayName}接口加载完成! 总耗时: ${totalLoadTime}，总数: ${totalApis}, 成功: ${loadedApis}, 失败: ${failedApis}`);
         } catch (error) {
             Logger.error({
@@ -294,7 +294,7 @@ class Befly {
         await this.loadApis('core');
         await this.loadApis('app');
 
-        const totalStartupTime = calculateElapsedTime(serverStartTime);
+        const totalStartupTime = calcPerfTime(serverStartTime);
         Logger.info(`服务器启动准备完成，总耗时: ${totalStartupTime}`);
 
         const server = Bun.serve({
@@ -528,7 +528,7 @@ class Befly {
             }
         });
 
-        const finalStartupTime = calculateElapsedTime(serverStartTime);
+        const finalStartupTime = calcPerfTime(serverStartTime);
         Logger.info(`Befly 服务器启动成功! 完整启动耗时: ${finalStartupTime}`);
         Logger.info(`服务器监听地址: http://${Env.APP_HOST}:${Env.APP_PORT}`);
 

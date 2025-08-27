@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test';
-import { ruleSplit, formatDate, calculateElapsedTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, parseFieldRule } from '../utils/util.js';
+import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, parseFieldRule } from '../utils/util.js';
 
 test('ruleSplit 合并第5段之后的内容', () => {
     expect(ruleSplit('a,b,c,d,e,f,g')).toEqual(['a', 'b', 'c', 'd', 'e,f,g']);
@@ -11,11 +11,11 @@ test('formatDate 固定时间输出', () => {
     expect(formatDate(date, 'YYYY-MM-DD')).toBe('2025-08-27');
 });
 
-test('calculateElapsedTime 小于1秒与大于1秒', () => {
+test('calcPerfTime 小于1秒与大于1秒', () => {
     const start = 0n;
     const endMs = 500; // 0.5s
     const end = BigInt(endMs) * 1000000n;
-    const s1 = calculateElapsedTime(Number(start), Number(end));
+    const s1 = calcPerfTime(Number(start), Number(end));
     expect(s1.includes('毫秒') || s1.includes('秒')).toBe(true);
 });
 

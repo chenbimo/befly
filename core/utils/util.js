@@ -75,7 +75,7 @@ export const formatDate = (date = new Date(), format = 'YYYY-MM-DD HH:mm:ss') =>
  * @param {number} endTime - 结束时间（可选，默认为当前时间）
  * @returns {string} 时间差（如果小于1秒返回"xx 毫秒"，否则返回"xx 秒"）
  */
-export const calculateElapsedTime = (startTime, endTime = Bun.nanoseconds()) => {
+export const calcPerfTime = (startTime, endTime = Bun.nanoseconds()) => {
     const elapsedMs = (endTime - startTime) / 1_000_000;
 
     if (elapsedMs < 1000) {
