@@ -16,6 +16,23 @@ const typeMapping = {
     array: 'VARCHAR'
 };
 
+// 计算期望的默认值（与 information_schema 返回的值对齐）
+const getExpectedDefault = (fieldType, fieldDefaultValue) => {
+    // text 类型不设置默认值
+    if (fieldType === 'text') return null;
+
+    if (fieldDefaultValue && fieldDefaultValue !== 'null') {
+        // number 使用数值/字符串均可，比较时做统一归一
+        return fieldDefaultValue;
+    }
+    // 未显式设置默认值时，根据类型给默认值
+    if (fieldType === 'string' || fieldType === 'array') return '';
+    if (fieldType === 'number') return 0;
+    return null;
+};
+
+const normalizeDefault = (val) => (val === null || val === undefined ? null : String(val));
+
 // 获取字段的SQL定义
 const getColumnDefinition = (fieldName, rule) => {
     const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue, fieldHasIndex] = parseFieldRule(rule);
@@ -107,7 +124,11 @@ const manageIndex = async (client, tableName, indexName, fieldName, action) => {
 
     try {
         await exec(client, sql);
-        Logger.info(`表 ${tableName} 索引 ${indexName} ${action === 'create' ? '创建' : '删除'}成功`);
+        if (action === 'create') {
+            Logger.info(`[索引变化] 新建索引 ${tableName}.${indexName} (${fieldName})`);
+        } else {
+            Logger.info(`[索引变化] 删除索引 ${tableName}.${indexName} (${fieldName})`);
+        }
     } catch (error) {
         Logger.error(`${action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
         throw error;
@@ -152,7 +173,7 @@ const createTable = async (client, tableName, fields) => {
     `;
 
     await exec(client, createTableSQL);
-    Logger.info(`表 ${tableName} 创建成功`);
+    Logger.info(`[新建表] ${tableName}`);
 };
 
 // 比较字段定义变化
@@ -190,6 +211,14 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
 
     if (existingColumn.type.toLowerCase() !== expectedDbType) {
         changes.push({ type: 'datatype', current: existingColumn.type, new: expectedDbType });
+    }
+
+    // 检查默认值变化（按照生成规则推导期望默认值）
+    const expectedDefault = getExpectedDefault(fieldType, fieldDefaultValue);
+    const currDef = normalizeDefault(existingColumn.defaultValue);
+    const newDef = normalizeDefault(expectedDefault);
+    if (currDef !== newDef) {
+        changes.push({ type: 'default', current: existingColumn.defaultValue, new: expectedDefault });
     }
 
     return { hasChanges: changes.length > 0, changes };
@@ -231,20 +260,31 @@ const syncTable = async (client, tableName, fields) => {
     const existingColumns = await getTableColumns(client, tableName);
     const existingIndexes = await getTableIndexes(client, tableName);
     const systemFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'];
+    let changed = false;
 
     // 同步字段
     for (const [fieldName, rule] of Object.entries(fields)) {
         if (existingColumns[fieldName]) {
             const comparison = compareFieldDefinition(existingColumns[fieldName], rule, fieldName);
             if (comparison.hasChanges) {
+                // 打印具体变动项
+                for (const c of comparison.changes) {
+                    const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
+                    Logger.info(`[字段变更] ${tableName}.${fieldName} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
+                }
                 const sql = generateDDL(tableName, fieldName, rule);
                 await executeDDLSafely(client, sql);
-                Logger.info(`字段 ${tableName}.${fieldName} 更新成功`);
+                changed = true;
             }
         } else {
+            // 新增字段日志
+            const [disp, fType, fMin, fMax, fDef, fIdx] = parseFieldRule(rule);
+            const lenPart = fType === 'string' || fType === 'array' ? ` 长度:${parseInt(fMax)}` : '';
+            const expectedDefault = getExpectedDefault(fType, fDef);
+            Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
             const sql = generateDDL(tableName, fieldName, rule, true);
             await executeDDLSafely(client, sql);
-            Logger.info(`字段 ${tableName}.${fieldName} 添加成功`);
+            changed = true;
         }
     }
 
@@ -256,10 +296,13 @@ const syncTable = async (client, tableName, fields) => {
 
         if (fieldHasIndex === '1' && !existingIndexes[indexName]) {
             await manageIndex(client, tableName, indexName, fieldName, 'create');
+            changed = true;
         } else if (fieldHasIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             await manageIndex(client, tableName, indexName, fieldName, 'drop');
+            changed = true;
         }
     }
+    return changed;
 };
 
 // 主同步函数
@@ -307,13 +350,15 @@ const SyncDb = async () => {
                     const exists = result[0].count > 0;
 
                     if (exists) {
-                        await syncTable(client, tableName, tableDefinition);
+                        const tableChanged = await syncTable(client, tableName, tableDefinition);
+                        if (tableChanged) modifiedTables++;
                     } else {
                         await createTable(client, tableName, tableDefinition);
+                        createdTables++;
+                        // 新建表已算作变更
+                        modifiedTables += 0;
                     }
 
-                    Logger.info(`表 ${tableName} 处理完成`);
-                    exists ? modifiedTables++ : createdTables++;
                     processedCount++;
                 }
             } catch (error) {
