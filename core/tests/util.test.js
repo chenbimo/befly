@@ -33,9 +33,38 @@ test('isType 多类型判断', () => {
 test('pickFields/omitFields 与空判断', () => {
     const obj = { a: 1, b: 2 };
     expect(pickFields(obj, ['a'])).toEqual({ a: 1 });
+    // 仅按键排除
     expect(omitFields(obj, ['a'])).toEqual({ b: 2 });
     expect(isEmptyObject({})).toBe(true);
     expect(isEmptyArray([])).toBe(true);
+});
+
+test('omitFields 对象：排除键与 undefined/null 值', () => {
+    const obj = { a: 1, b: undefined, c: null, d: 0, e: '', f: false };
+    // 排除键 a，且排除值 undefined
+    expect(omitFields(obj, ['a'], [undefined])).toEqual({ c: null, d: 0, e: '', f: false });
+    // 排除值 null
+    expect(omitFields(obj, [], [null])).toEqual({ a: 1, b: undefined, d: 0, e: '', f: false });
+    // 同时排除 undefined 与 null
+    expect(omitFields(obj, [], [undefined, null])).toEqual({ a: 1, d: 0, e: '', f: false });
+    // keys 为数组
+    expect(omitFields(obj, ['a', 'd'], [undefined, null])).toEqual({ e: '', f: false });
+});
+
+test('omitFields 数组：元素为对象时清洗字段与值', () => {
+    const arr = [{ a: 1, b: undefined, c: null }, { a: 2, c: 3 }, { b: null }];
+    const ret = omitFields(arr, ['a'], [undefined, null]);
+    expect(ret).toEqual([
+        {}, // a 移除，b/c 因值在排除列表中被移除
+        { c: 3 }, // a 被移除
+        {} // b:null 被移除
+    ]);
+});
+
+test('omitFields 数组：元素为原始值时按值过滤', () => {
+    const arr = [1, 0, null, undefined, 'x'];
+    expect(omitFields(arr, [], [null, undefined])).toEqual([1, 0, 'x']);
+    expect(omitFields(arr, [], [0])).toEqual([1, null, undefined, 'x']);
 });
 
 test('filterLogFields 过滤敏感字段', () => {
