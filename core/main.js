@@ -8,7 +8,7 @@ import { Crypto2 } from './utils/crypto.js';
 import { Xml } from './utils/xml.js';
 import { SyncDb } from './scripts/syncDb.js';
 import { __dirchecks, __dirplugins, __dirapis, getProjectDir } from './system.js';
-import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions, calcPerfTime } from './utils/util.js';
+import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions, calcPerfTime } from './utils/index.js';
 
 class Befly {
     constructor(options = {}) {

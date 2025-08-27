@@ -5,7 +5,7 @@
 import path from 'node:path';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { parseFieldRule, createSqlClient } from '../utils/util.js';
+import { parseFieldRule, createSqlClient } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import tableCheck from '../checks/table.js';
 

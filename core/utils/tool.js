@@ -1,4 +1,4 @@
-import { omitFields } from './util.js';
+import { omitFields } from './index.js';
 
 // 工具类：通过构造函数注入 befly
 export class Tool {

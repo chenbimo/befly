@@ -1,9 +1,9 @@
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { createSqlClient } from '../utils/util.js';
+import { createSqlClient } from '../utils/index.js';
 import { SqlManager } from '../utils/sqlManager.js';
 
-// 统一使用 utils/util.js 提供的 createSqlClient
+// 统一使用 utils/index.js 提供的 createSqlClient
 
 export default {
     after: ['_redis'],

@@ -5,7 +5,7 @@
 
 import { test, expect, describe, beforeAll, afterAll, beforeEach } from 'bun:test';
 import { SyncDb as syncDatabase } from '../scripts/syncDb.js';
-import { ruleSplit } from '../utils/util.js';
+import { ruleSplit } from '../utils/index.js';
 import path from 'node:path';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 

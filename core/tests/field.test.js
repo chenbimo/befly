@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { parseFieldRule } from '../utils/util.js';
+import { parseFieldRule } from '../utils/index.js';
 
 describe('字段属性验证规则测试', () => {
     test('字段规则必须包含7个部分', () => {

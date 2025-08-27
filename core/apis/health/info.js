@@ -1,6 +1,6 @@
 import { Env } from '../../config/env.js';
 import { Api } from '../../utils/api.js';
-import { RYes, RNo } from '../../utils/util.js';
+import { RYes, RNo } from '../../utils/index.js';
 
 export default Api.POST(
     //

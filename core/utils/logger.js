@@ -1,6 +1,6 @@
 import path from 'path';
 import { appendFile, stat } from 'node:fs/promises';
-import { formatDate } from './util.js';
+import { formatDate } from './index.js';
 import { Env } from '../config/env.js';
 
 export class Logger {

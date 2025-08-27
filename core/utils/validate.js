@@ -1,6 +1,6 @@
-import { isType, parseFieldRule } from './util.js';
+import { isType, parseFieldRule } from './index.js';
 
-// 移除本文件重复实现，统一复用 util.js 导出的校验函数与 parseFieldRule
+// 移除本文件重复实现，统一复用 index.js 导出的校验函数与 parseFieldRule
 
 /**
  * 验证器类

@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test';
-import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, parseFieldRule } from '../utils/util.js';
+import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, parseFieldRule } from '../utils/index.js';
 
 test('ruleSplit 合并第5段之后的内容', () => {
     expect(ruleSplit('a,b,c,d,e,f,g')).toEqual(['a', 'b', 'c', 'd', 'e,f,g']);

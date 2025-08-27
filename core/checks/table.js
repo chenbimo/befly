@@ -1,9 +1,9 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
-import { parseFieldRule, validateFieldName, validateFieldType, validateMinMax, validateDefaultValue, validateIndex, validateRegex } from '../utils/util.js';
+import { parseFieldRule, validateFieldName, validateFieldType, validateMinMax, validateDefaultValue, validateIndex, validateRegex } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 
-// 所有校验函数均复用 utils/util.js 导出的实现
+// 所有校验函数均复用 utils/index.js 导出的实现
 
 export default async () => {
     try {
