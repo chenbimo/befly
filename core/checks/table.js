@@ -110,14 +110,41 @@ export const checkTable = async () => {
                             continue;
                         }
 
-                        // 第4个值：当类型为 string/array 时，最大长度必须为数字且不可为 null；其他类型允许为 null 或数字
-                        if (type === 'string' || type === 'array') {
+                        // 第4个值与类型联动校验
+                        if (type === 'text') {
+                            // text 类型：不允许设置最小/最大长度与默认值（均需为 null）
+                            if (minStr !== 'null') {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 的 text 类型最小值必须为 null，当前为 "${minStr}"`);
+                                fileValid = false;
+                                continue;
+                            }
+                            if (maxStr !== 'null') {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 的 text 类型最大长度必须为 null，当前为 "${maxStr}"`);
+                                fileValid = false;
+                                continue;
+                            }
+                        } else if (type === 'string') {
+                            // string：最大长度必为具体数字，且 1..65535
                             if (maxStr === 'null' || !validateMinMax(maxStr)) {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大长度 "${maxStr}" 格式错误，string/array 类型必须为具体数字`);
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大长度 "${maxStr}" 格式错误，string 类型必须为具体数字`);
+                                fileValid = false;
+                                continue;
+                            }
+                            const maxVal = parseInt(maxStr, 10);
+                            if (!(maxVal > 0 && maxVal <= 65535)) {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大长度 ${maxStr} 越界，string 类型长度必须在 1..65535 范围内`);
+                                fileValid = false;
+                                continue;
+                            }
+                        } else if (type === 'array') {
+                            // array：最大长度必为数字（用于JSON字符串长度限制）
+                            if (maxStr === 'null' || !validateMinMax(maxStr)) {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大长度 "${maxStr}" 格式错误，array 类型必须为具体数字`);
                                 fileValid = false;
                                 continue;
                             }
                         } else {
+                            // number 等其他：允许 null 或数字
                             if (!validateMinMax(maxStr)) {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大值 "${maxStr}" 格式错误，必须为null或数字`);
                                 fileValid = false;
@@ -125,11 +152,20 @@ export const checkTable = async () => {
                             }
                         }
 
-                        // 第5个值：默认值必须为null、字符串或数字
-                        if (!validateDefaultValue(defaultValue)) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
-                            fileValid = false;
-                            continue;
+                        // 第5个值：默认值校验
+                        if (type === 'text') {
+                            // text 不允许默认值
+                            if (defaultValue !== 'null') {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 为 text 类型，默认值必须为 null，当前为 "${defaultValue}"`);
+                                fileValid = false;
+                                continue;
+                            }
+                        } else {
+                            if (!validateDefaultValue(defaultValue)) {
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
+                                fileValid = false;
+                                continue;
+                            }
                         }
 
                         // 第6个值：是否创建索引必须为0或1
