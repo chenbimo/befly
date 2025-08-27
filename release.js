@@ -77,7 +77,6 @@ async function main() {
         console.log('\n发布已取消');
         process.exit(1);
     }
-    console.log('✓ package.json 存在');
 
     // 读取当前版本（直接读取文件）
     let packageData;
@@ -100,7 +99,6 @@ async function main() {
     try {
         const content = JSON.stringify(packageData, null, 4);
         await Bun.write(packagePath, content);
-        console.log('✓ package.json 已更新');
     } catch (error) {
         console.error('错误: 无法写入 package.json:', error?.message || error);
         process.exit(1);
