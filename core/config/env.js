@@ -25,14 +25,12 @@ export const Env = {
     TZ: process.env.TZ,
     // 数据库配置
     MYSQL_ENABLE: Number(process.env.MYSQL_ENABLE),
-    MYSQL_URL: process.env.MYSQL_URL,
     MYSQL_HOST: process.env.MYSQL_HOST,
     MYSQL_PORT: Number(process.env.MYSQL_PORT),
     MYSQL_DB: process.env.MYSQL_DB,
     MYSQL_USER: process.env.MYSQL_USER,
     MYSQL_PASSWORD: process.env.MYSQL_PASSWORD,
     MYSQL_DEBUG: Number(process.env.MYSQL_DEBUG),
-    MYSQL_POOL_TIMEOUT: Number(process.env.MYSQL_POOL_TIMEOUT),
     MYSQL_POOL_MAX: Number(process.env.MYSQL_POOL_MAX),
     // Redis配置
     REDIS_URL: process.env.REDIS_URL,
