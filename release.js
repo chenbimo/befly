@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import { join } from 'path';
-import { __filename, __dirname } from '../system.js';
+import { __filename, __dirname as __coreDir } from './core/system.js';
 
-// 获取 package.json 路径
-const packagePath = join(__dirname, 'package.json');
+// 以“执行发布命令的目录”为目标目录（兼容 core 与 tpl）
+const runDir = process.cwd();
+// 获取 package.json 路径（必须存在，否则判定为无效包目录）
+const packagePath = join(runDir, 'package.json');
 
 /**
  * 解析命令行参数
@@ -111,7 +113,7 @@ function executeGitCommand(command, description) {
         const result = execSync(command, {
             encoding: 'utf8',
             stdio: 'inherit',
-            cwd: __dirname
+            cwd: runDir
         });
 
         console.log(`✓ ${description} 完成`);
@@ -134,7 +136,7 @@ function executeCommand(command, description) {
         const result = execSync(command, {
             encoding: 'utf8',
             stdio: 'inherit',
-            cwd: __dirname
+            cwd: runDir
         });
 
         console.log(`✓ ${description} 完成`);
@@ -152,7 +154,7 @@ function checkGitStatus() {
     try {
         const status = execSync('git status --porcelain', {
             encoding: 'utf8',
-            cwd: __dirname
+            cwd: runDir
         });
 
         if (status.trim()) {
@@ -174,13 +176,21 @@ function checkGitStatus() {
  * 检查必要文件是否存在
  */
 function checkRequiredFiles() {
-    const requiredFiles = ['main.js', 'system.js', 'package.json', 'README.md', 'LICENSE'];
+    // 核心校验：当前执行目录必须包含 package.json
+    if (!existsSync(packagePath)) {
+        console.error('错误: 当前目录不是有效的 npm 包目录（缺少 package.json）');
+        return false;
+    }
+
+    // 自适应文件校验：core 需要 system.js；tpl 不需要
+    const isCoreStyle = existsSync(join(runDir, 'system.js'));
+    const requiredFiles = isCoreStyle ? ['main.js', 'system.js', 'package.json', 'README.md', 'LICENSE'] : ['main.js', 'package.json', 'README.md', 'LICENSE'];
 
     const missingFiles = [];
 
     for (const file of requiredFiles) {
         try {
-            const filePath = join(__dirname, file);
+            const filePath = join(runDir, file);
             readFileSync(filePath);
         } catch (error) {
             missingFiles.push(file);
@@ -206,6 +216,12 @@ function main() {
 
     console.log('🚀 开始发布流程...\n');
     console.log(`版本类型: ${versionType}`);
+
+    // 关键校验：必须在目标包目录下执行（存在 package.json）
+    if (!existsSync(packagePath)) {
+        console.error('错误: 当前目录缺少 package.json，无法发布。请切换到包含 package.json 的包目录后再执行。');
+        process.exit(1);
+    }
 
     // 检查必要文件
     console.log('\n--- 检查必要文件 ---');
@@ -244,10 +260,9 @@ function main() {
     console.log('\n--- NPM 发布 ---');
     executeCommand('bun publish --registry=https://registry.npmjs.org --access=public', '发布到 npm');
 
-    // 推送到远程仓库
+    // 推送到远程仓库（已禁用）
     console.log('\n--- 推送到远程仓库 ---');
-    executeGitCommand('git push', '推送代码到远程仓库');
-    executeGitCommand('git push --tags', '推送标签到远程仓库');
+    console.log('已跳过 git push 与 push --tags（按要求不执行远程推送）。');
 
     console.log(`\n🎉 版本 ${newVersion} 发布成功！`);
     console.log(`📦 包名: ${packageData.name}`);
