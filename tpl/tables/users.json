@@ -1,0 +1,10 @@
+{
+    "username": "用户名⚡string⚡3⚡50⚡user⚡1⚡^[a-zA-Z0-9_]+$",
+    "email": "邮箱⚡string⚡5⚡100⚡null⚡1⚡^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+    "phone": "手机号⚡string⚡11⚡11⚡null⚡0⚡^1[3-9]\\d{9}$",
+    "nickname": "昵称⚡string⚡1⚡50⚡null⚡0⚡null",
+    "avatar": "头像⚡string⚡0⚡500⚡null⚡0⚡null",
+    "bio": "个人简介⚡text⚡0⚡1000⚡null⚡0⚡null",
+    "age": "年龄⚡number⚡0⚡150⚡0⚡0⚡null",
+    "tags": "标签⚡array⚡0⚡10⚡[]⚡0⚡null"
+}

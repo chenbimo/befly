@@ -1,0 +1,7 @@
+{
+    "name": "姓名⚡string⚡2⚡50⚡张三⚡1⚡^[\\u4e00-\\u9fa5a-zA-Z]+$",
+    "age": "年龄⚡number⚡0⚡150⚡18⚡0⚡null",
+    "email": "邮箱⚡string⚡5⚡100⚡test@example.com⚡1⚡^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+    "status": "状态⚡string⚡1⚡20⚡active⚡1⚡^(active|inactive|pending)$",
+    "description": "描述⚡text⚡0⚡1000⚡默认描述信息⚡0⚡null"
+}
