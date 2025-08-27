@@ -103,6 +103,7 @@ class Befly {
             const corePlugins = [];
             const userPlugins = [];
             const loadedPluginNames = new Set(); // 用于跟踪已加载的插件名称
+            let hadPluginError = false; // 统一记录插件阶段是否有错误
 
             // 扫描核心插件目录
             const corePluginsScanStart = Bun.nanoseconds();
@@ -114,16 +115,25 @@ class Befly {
                 const fileName = path.basename(file, '.js');
                 if (fileName.startsWith('_')) continue;
 
-                const importStart = Bun.nanoseconds();
-                const plugin = await import(file);
-                const importTime = calcPerfTime(importStart);
+                try {
+                    const importStart = Bun.nanoseconds();
+                    const plugin = await import(file);
+                    const importTime = calcPerfTime(importStart);
 
-                const pluginInstance = plugin.default;
-                pluginInstance.pluginName = fileName;
-                corePlugins.push(pluginInstance);
-                loadedPluginNames.add(fileName); // 记录已加载的核心插件名称
+                    const pluginInstance = plugin.default;
+                    pluginInstance.pluginName = fileName;
+                    corePlugins.push(pluginInstance);
+                    loadedPluginNames.add(fileName); // 记录已加载的核心插件名称
 
-                Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
+                    Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
+                } catch (err) {
+                    hadPluginError = true;
+                    Logger.error({
+                        msg: `核心插件 ${fileName} 导入失败`,
+                        error: err.message,
+                        stack: err.stack
+                    });
+                }
             }
             const corePluginsScanTime = calcPerfTime(corePluginsScanStart);
             Logger.info(`核心插件扫描完成，耗时: ${corePluginsScanTime}，共找到 ${corePlugins.length} 个插件`);
@@ -141,7 +151,8 @@ class Befly {
                     this.pluginLists.push(plugin);
                     this.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(this.appContext) : {};
                 } catch (error) {
-                    Logger.warn(`插件 ${plugin.pluginName} 初始化失败:`, error.message);
+                    hadPluginError = true;
+                    Logger.warn(`插件 ${plugin.pluginName} 初始化失败: ${error.message}`);
                 }
             }
             const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
@@ -163,15 +174,24 @@ class Befly {
                     continue;
                 }
 
-                const importStart = Bun.nanoseconds();
-                const plugin = await import(file);
-                const importTime = calcPerfTime(importStart);
+                try {
+                    const importStart = Bun.nanoseconds();
+                    const plugin = await import(file);
+                    const importTime = calcPerfTime(importStart);
 
-                const pluginInstance = plugin.default;
-                pluginInstance.pluginName = fileName;
-                userPlugins.push(pluginInstance);
+                    const pluginInstance = plugin.default;
+                    pluginInstance.pluginName = fileName;
+                    userPlugins.push(pluginInstance);
 
-                Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
+                    Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
+                } catch (err) {
+                    hadPluginError = true;
+                    Logger.error({
+                        msg: `用户插件 ${fileName} 导入失败`,
+                        error: err.message,
+                        stack: err.stack
+                    });
+                }
             }
             const userPluginsScanTime = calcPerfTime(userPluginsScanStart);
             Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime}，共找到 ${userPlugins.length} 个插件`);
@@ -190,7 +210,8 @@ class Befly {
                         this.pluginLists.push(plugin);
                         this.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(this.appContext) : {};
                     } catch (error) {
-                        Logger.warn(`插件 ${plugin.pluginName} 初始化失败:`, error.message);
+                        hadPluginError = true;
+                        Logger.warn(`插件 ${plugin.pluginName} 初始化失败: ${error.message}`);
                     }
                 }
                 const userPluginsInitTime = calcPerfTime(userPluginsInitStart);
@@ -200,12 +221,20 @@ class Befly {
             const totalLoadTime = calcPerfTime(loadStartTime);
             const totalPluginCount = sortedCorePlugins.length + sortedUserPlugins.length;
             Logger.info(`插件加载完成! 总耗时: ${totalLoadTime}，共加载 ${totalPluginCount} 个插件`);
+
+            // 如果任意插件导入或初始化失败，统一退出进程
+            if (hadPluginError) {
+                Logger.error('检测到插件导入或初始化失败，进程即将退出');
+                process.exit(1);
+            }
         } catch (error) {
             Logger.error({
                 msg: '加载插件时发生错误',
                 error: error.message,
                 stack: error.stack
             });
+            // 兜底退出，避免服务在插件阶段异常后继续运行
+            process.exit(1);
         }
     }
     async loadApis(dirName) {

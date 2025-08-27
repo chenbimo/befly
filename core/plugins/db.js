@@ -18,21 +18,6 @@ export default {
                 // 创建数据库管理器实例（迁移到 utils/sqlManager.js）
                 const dbManager = new SqlManager(sql, befly);
 
-                // 监听进程退出事件，确保连接池正确关闭
-                const gracefulShutdown = async (signal) => {
-                    Logger.info(`收到 ${signal} 信号，正在关闭数据库连接池...`);
-                    try {
-                        await dbManager.close();
-                    } catch (error) {
-                        Logger.error('优雅关闭数据库失败:', error);
-                    }
-                    process.exit(0);
-                };
-
-                process.on('SIGINT', gracefulShutdown);
-                process.on('SIGTERM', gracefulShutdown);
-                process.on('SIGUSR2', gracefulShutdown); // nodemon 重启
-
                 return dbManager;
             } else {
                 Logger.warn(`MySQL 未启用，跳过初始化`);
@@ -54,7 +39,8 @@ export default {
                 }
             }
 
-            process.exit(1);
+            // 插件内禁止直接退出进程，抛出异常交由主流程统一处理
+            throw error;
         }
     }
 };

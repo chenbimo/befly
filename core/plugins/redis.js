@@ -83,7 +83,8 @@ export default {
                 message: err.message,
                 stack: err.stack
             });
-            process.exit();
+            // 插件内禁止直接退出进程，抛出异常交由主流程统一处理
+            throw err;
         }
     }
 };
