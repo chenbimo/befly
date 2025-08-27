@@ -1,12 +1,12 @@
 # CURD 数据库操作文档
 
-基于 MariaDB 的自定义数据库操作库，提供链式 SQL 构造器和便捷的 CRUD 操作方法。
+基于 Bun 内置 SQL 客户端（Bun.SQL）的数据库操作库，提供链式 SQL 构造器和便捷的 CRUD 操作方法。
 
 注意：自 v3 起，数据库管理类名称统一为 SqlManager，并从插件内联实现迁移到 `utils/sqlManager.js`，由插件 `plugins/db.js` 在初始化时创建实例并挂载到 `befly.db`。
 
 ## 特性
 
-- ✅ 基于 MariaDB 原生 Promise API
+- ✅ 基于 Bun SQL 原生 Promise API
 - ✅ 支持链式 SQL 构造器
 - ✅ 防 SQL 注入（参数化查询）
 - ✅ **字段和表名自动转义（反引号保护）**
@@ -18,11 +18,11 @@
 - ✅ 完善的错误处理
 - ✅ 状态字段自动管理（软删除）
 - ✅ **严格的数据库约束（NOT NULL + 默认值）**
-- ✅ **优化的字段类型（BIGINT状态字段，管道分隔数组）**
+- ✅ **优化的字段类型（BIGINT 状态字段，管道分隔数组）**
 
 ## 数据库字段约束
 
-### 字段定义格式（7个属性）
+### 字段定义格式（7 个属性）
 
 所有自定义字段使用标准格式：`名称|类型|最小值|最大值|默认值|是否索引|正则约束`
 
@@ -36,11 +36,11 @@
 - **系统字段约束**:
     - **所有系统字段**: `NOT NULL DEFAULT 0`（统一约束）
     - `created_at/updated_at`: 创建和更新时间戳
-    - `deleted_at`: 删除时间戳（0表示未删除，时间戳表示删除时间）
-    - `state`: 状态字段（0表示正常状态）### 字段类型优化
+    - `deleted_at`: 删除时间戳（0 表示未删除，时间戳表示删除时间）
+    - `state`: 状态字段（0 表示正常状态）### 字段类型优化
 
 - **状态字段**: 使用 `BIGINT` 类型（支持大数值状态）
-- **数组存储**: 使用管道分隔格式 `value1|value2|value3`（替代JSON）
+- **数组存储**: 使用管道分隔格式 `value1|value2|value3`（替代 JSON）
 - **长度处理**: 直接使用 `max` 值作为字段长度
 
 ### 示例字段定义
@@ -95,7 +95,7 @@ export default async function userApi(befly) {
 
 ### 安全性保障
 
-本库自动为所有字段名和表名添加反引号（`）转义，防止SQL注入和关键字冲突：
+本库自动为所有字段名和表名添加反引号（`）转义，防止 SQL 注入和关键字冲突：
 
 ```javascript
 // 用户输入
@@ -618,7 +618,7 @@ const result = await db.trans(async (tx) => {
 });
 ```
 
-### 高级事务 - 支持所有CURD方法
+### 高级事务 - 支持所有 CURD 方法
 
 事务中支持所有高级数据操作方法：`getDetail`、`getList`、`getAll`、`insData`、`updData`、`delData`、`delData2`、`getCount`、`insBatch`
 
@@ -681,28 +681,28 @@ const result = await processOrder(orderData);
 
 ### 事务中支持的方法
 
-| 方法                          | 描述                  | 用法示例                                                                     |
-| ----------------------------- | --------------------- | ---------------------------------------------------------------------------- |
-| `execute(sql, params)`        | 执行原始SQL           | `await tx.execute('SELECT * FROM users WHERE id = ?', [1])`                  |
-| `query(sql, params)`          | 执行查询（同execute） | `await tx.query('INSERT INTO users (name) VALUES (?)', ['John'])`            |
-| `getDetail(table, options)`   | 获取单条记录          | `await tx.getDetail('users', { id: 1 })`                                     |
-| `getList(table, options)`     | 获取列表（支持分页）  | `await tx.getList('users', { where: { status: 1 }, page: 1, pageSize: 10 })` |
-| `getAll(table, options)`      | 获取所有记录          | `await tx.getAll('users', { where: { status: 1 } })`                         |
-| `insData(table, data)`        | 插入单条记录          | `await tx.insData('users', { name: 'John', email: 'john@example.com' })`     |
-| `updData(table, data, where)` | 更新记录              | `await tx.updData('users', { status: 1 }, { id: 1 })`                        |
-| `delData(table, where)`       | 删除记录              | `await tx.delData('users', { id: 1 })`                                       |
-| `delData2(table, where)`      | 软删除记录            | `await tx.delData2('users', { id: 1 })`                                      |
-| `getCount(table, options)`    | 获取记录总数          | `await tx.getCount('users', { where: { status: 1 } })`                       |
-| `insBatch(table, dataArray)`  | 批量插入              | `await tx.insBatch('users', [{ name: 'John' }, { name: 'Jane' }])`           |
+| 方法                          | 描述                   | 用法示例                                                                     |
+| ----------------------------- | ---------------------- | ---------------------------------------------------------------------------- |
+| `execute(sql, params)`        | 执行原始 SQL           | `await tx.execute('SELECT * FROM users WHERE id = ?', [1])`                  |
+| `query(sql, params)`          | 执行查询（同 execute） | `await tx.query('INSERT INTO users (name) VALUES (?)', ['John'])`            |
+| `getDetail(table, options)`   | 获取单条记录           | `await tx.getDetail('users', { id: 1 })`                                     |
+| `getList(table, options)`     | 获取列表（支持分页）   | `await tx.getList('users', { where: { status: 1 }, page: 1, pageSize: 10 })` |
+| `getAll(table, options)`      | 获取所有记录           | `await tx.getAll('users', { where: { status: 1 } })`                         |
+| `insData(table, data)`        | 插入单条记录           | `await tx.insData('users', { name: 'John', email: 'john@example.com' })`     |
+| `updData(table, data, where)` | 更新记录               | `await tx.updData('users', { status: 1 }, { id: 1 })`                        |
+| `delData(table, where)`       | 删除记录               | `await tx.delData('users', { id: 1 })`                                       |
+| `delData2(table, where)`      | 软删除记录             | `await tx.delData2('users', { id: 1 })`                                      |
+| `getCount(table, options)`    | 获取记录总数           | `await tx.getCount('users', { where: { status: 1 } })`                       |
+| `insBatch(table, dataArray)`  | 批量插入               | `await tx.insBatch('users', [{ name: 'John' }, { name: 'Jane' }])`           |
 
 ### 事务特性
 
 - ✅ **自动回滚**：任何错误都会自动回滚事务
-- ✅ **完整CURD支持**：支持所有高级数据库操作方法
-- ✅ **一级属性where条件**：事务中的方法完全支持新的where条件格式
-- ✅ **自动ID和时间戳**：`insData` 和 `insBatch` 自动添加ID和时间戳
-- ✅ **安全的更新删除**：`updData`、`delData` 和 `delData2` 必须提供where条件
-- ✅ **JOIN查询支持**：`getDetail`、`getList`、`getAll` 支持leftJoin
+- ✅ **完整 CURD 支持**：支持所有高级数据库操作方法
+- ✅ **一级属性 where 条件**：事务中的方法完全支持新的 where 条件格式
+- ✅ **自动 ID 和时间戳**：`insData` 和 `insBatch` 自动添加 ID 和时间戳
+- ✅ **安全的更新删除**：`updData`、`delData` 和 `delData2` 必须提供 where 条件
+- ✅ **JOIN 查询支持**：`getDetail`、`getList`、`getAll` 支持 leftJoin
 - ✅ **状态字段和软删除**：自动添加状态字段，智能过滤已删除记录
 
 ## 状态字段和软删除功能

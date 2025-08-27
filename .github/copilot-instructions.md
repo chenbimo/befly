@@ -112,9 +112,9 @@ bun test tests/jwt.test.js  # 运行特定测试
 
 ### 数据库连接
 
--   **MariaDB**: 使用 `mariadb` 包，动态导入避免启动依赖
--   **连接池**: 配置重连、超时、保活等生产级参数
--   **测试连接**: 启动时验证数据库连接状态
+-   **Bun SQL**: 使用 Bun 内置 SQL 客户端（`import { SQL } from 'bun'`），无需额外 `mariadb` 依赖
+-   **连接池**: 通过 `new SQL({ url, max, bigint, ... })` 配置池大小、数值类型等
+-   **测试连接**: 启动时验证数据库连接状态（例如 `SELECT VERSION()`）
 
 ### Redis 缓存
 
