@@ -89,16 +89,12 @@ export const calcPerfTime = (startTime, endTime = Bun.nanoseconds()) => {
 // 类型判断
 export const isType = (value, type) => {
     const actualType = Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
-    const expectedType = type.toLowerCase();
+    const expectedType = String(type).toLowerCase();
 
-    // 特殊类型处理
+    // 语义类型单独处理，其余走 actualType === expectedType
     switch (expectedType) {
-        case 'null':
-            return value === null;
-        case 'undefined':
-            return value === undefined;
         case 'nan':
-            return Number.isNaN(value);
+            return typeof value === 'number' && Number.isNaN(value);
         case 'empty':
             return value === '' || value === null || value === undefined;
         case 'integer':
@@ -119,8 +115,6 @@ export const isType = (value, type) => {
             return value !== Object(value);
         case 'reference':
             return value === Object(value);
-        case 'function':
-            return typeof value === 'function';
         default:
             return actualType === expectedType;
     }
