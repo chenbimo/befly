@@ -93,6 +93,9 @@ export const isType = (value, type) => {
 
     // 语义类型单独处理，其余走 actualType === expectedType
     switch (expectedType) {
+        case 'function':
+            // 统一将普通函数、异步函数、生成器函数等都识别为函数
+            return typeof value === 'function';
         case 'nan':
             return typeof value === 'number' && Number.isNaN(value);
         case 'empty':

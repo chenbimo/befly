@@ -30,6 +30,13 @@ test('isType 多类型判断', () => {
     expect(isType(() => {}, 'function')).toBe(true);
 });
 
+test('isType 函数类型判断扩展（异步/生成器）', () => {
+    const asyncFn = async () => {};
+    function* genFn() {}
+    expect(isType(asyncFn, 'function')).toBe(true);
+    expect(isType(genFn, 'function')).toBe(true);
+});
+
 test('pickFields/omitFields 与空判断', () => {
     const obj = { a: 1, b: 2 };
     expect(pickFields(obj, ['a'])).toEqual({ a: 1 });

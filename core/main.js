@@ -43,11 +43,20 @@ class Befly {
                     const singleCheckStart = Bun.nanoseconds();
 
                     // 导入检查模块
-                    const check = await import(file);
+                    const checkModule = await import(file);
 
-                    // 执行默认导出的函数
-                    if (typeof check.default === 'function') {
-                        const checkResult = await check.default(this.appContext);
+                    // 仅允许具名导出（以 check 开头）的检查函数
+                    let checkFn = null;
+                    for (const [exportName, exportValue] of Object.entries(checkModule)) {
+                        if (typeof exportValue === 'function' && /^check/i.test(exportName)) {
+                            checkFn = exportValue;
+                            break;
+                        }
+                    }
+
+                    // 执行检查函数
+                    if (typeof checkFn === 'function') {
+                        const checkResult = await checkFn(this.appContext);
                         const singleCheckTime = calcPerfTime(singleCheckStart);
 
                         if (checkResult === true) {
@@ -59,7 +68,7 @@ class Befly {
                         }
                     } else {
                         const singleCheckTime = calcPerfTime(singleCheckStart);
-                        Logger.warn(`文件 ${fileName} 未导出默认函数，耗时: ${singleCheckTime}`);
+                        Logger.warn(`文件 ${fileName} 未找到可执行的检查函数（必须具名导出以 check 开头的函数），耗时: ${singleCheckTime}`);
                         failedChecks++;
                     }
                 } catch (error) {
