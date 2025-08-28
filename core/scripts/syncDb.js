@@ -34,13 +34,23 @@ const FLAGS = {
 };
 
 // 计算期望的默认值（与 information_schema 返回的值对齐）
-// 规则：当默认值为 'null' 时不设置 DEFAULT（所有类型一致，text 永不设置默认值）
+// 规则：当默认值为 'null' 时按类型提供默认值：number→0，string→""，array→"[]"；text 永不设置默认值
 const getExpectedDefault = (fieldType, fieldDefaultValue) => {
-    if (fieldType === 'text') return null;
+    if (fieldType === 'text') return null; // TEXT 不设置默认
     if (fieldDefaultValue !== undefined && fieldDefaultValue !== null && fieldDefaultValue !== 'null') {
         return fieldDefaultValue; // 保留显式默认值（数字或字符串，包含空字符串）
     }
-    return null; // 未显式设置或为 'null' => 不设置默认值
+    // 规则为 'null' 时的内置默认
+    switch (fieldType) {
+        case 'number':
+            return 0;
+        case 'string':
+            return '';
+        case 'array':
+            return '[]';
+        default:
+            return null;
+    }
 };
 
 const normalizeDefault = (val) => (val === null || val === undefined ? null : String(val));
@@ -58,18 +68,19 @@ const getColumnDefinition = (fieldName, rule) => {
         sqlType = `VARCHAR(${maxLength})`;
     }
 
-    // 不主动设置 NOT NULL，保持可空性由已有定义或表默认规则决定
-    let columnDef = `\`${fieldName}\` ${sqlType}`;
+    // 统一强制 NOT NULL
+    let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
 
-    // 设置默认值：仅当显式提供且不为 'null'，且类型非 text 时设置默认值
-    if (fieldDefaultValue !== undefined && fieldDefaultValue !== null && fieldDefaultValue !== 'null' && fieldType !== 'text') {
+    // 设置默认值：类型非 text 时总是设置（显式默认或内置默认）
+    const expectedDefault = getExpectedDefault(fieldType, fieldDefaultValue);
+    if (fieldType !== 'text' && expectedDefault !== null) {
         if (fieldType === 'number') {
-            columnDef += ` DEFAULT ${fieldDefaultValue}`;
+            columnDef += ` DEFAULT ${expectedDefault}`;
         } else {
-            columnDef += ` DEFAULT "${fieldDefaultValue.replace(/"/g, '\\"')}"`;
+            columnDef += ` DEFAULT \"${String(expectedDefault).replace(/\"/g, '\\"')}\"`;
         }
     }
-    // text类型不设置默认值
+    // text 类型不设置默认值
 
     // 添加字段注释（使用第1个属性作为字段显示名称）
     if (fieldDisplayName && fieldDisplayName !== 'null') {
@@ -147,10 +158,10 @@ const createTable = async (client, tableName, fields) => {
     const columns = [
         //
         '`id` BIGINT PRIMARY KEY COMMENT "主键ID"',
-        '`created_at` BIGINT DEFAULT 0 COMMENT "创建时间"',
-        '`updated_at` BIGINT DEFAULT 0 COMMENT "更新时间"',
-        '`deleted_at` BIGINT DEFAULT 0 COMMENT "删除时间"',
-        '`state` BIGINT DEFAULT 0 COMMENT "状态字段"'
+        '`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"',
+        '`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"',
+        '`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"',
+        '`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"'
     ];
 
     const indexes = [
@@ -230,6 +241,13 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
     const newDef = normalizeDefault(expectedDefault);
     if (currDef !== newDef) {
         changes.push({ type: 'default', current: existingColumn.defaultValue, new: expectedDefault });
+    }
+
+    // 检查可空性变化（统一期望 NOT NULL）
+    const expectedNullable = false;
+    if (existingColumn.nullable !== !expectedNullable) {
+        // existingColumn.nullable 为 true 表示可空；我们期望 false
+        changes.push({ type: 'nullability', current: existingColumn.nullable ? 'NULL' : 'NOT NULL', new: 'NOT NULL' });
     }
 
     return { hasChanges: changes.length > 0, changes };
