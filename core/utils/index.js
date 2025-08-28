@@ -297,6 +297,16 @@ export const validateRegex = (value) => {
     }
 };
 
+// 将 lowerCamelCase 或单词形式转换为下划线风格（snake_case）
+// 例如：userTable -> user_table, testNewFormat -> test_new_format, users -> users, orderV2 -> order_v2
+export const toSnakeTableName = (name) => {
+    if (!name) return name;
+    return String(name)
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/([A-Z]+)([A-Z][a-z0-9]+)/g, '$1_$2')
+        .toLowerCase();
+};
+
 // 专门用于处理⚡分隔的字段规则
 export const parseFieldRule = (rule) => {
     const allParts = rule.split('⚡');

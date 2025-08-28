@@ -5,7 +5,7 @@
 import path from 'node:path';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { parseFieldRule, createSqlClient } from '../utils/index.js';
+import { parseFieldRule, createSqlClient, toSnakeTableName } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
 
@@ -15,6 +15,8 @@ const typeMapping = {
     text: 'MEDIUMTEXT',
     array: 'VARCHAR'
 };
+
+// 表名转换函数已移动至 utils/index.js 的 toSnakeTableName
 
 // 环境开关读取（支持未在 Env 显式声明的变量，默认值兜底）
 const getFlag = (val, def = 0) => {
@@ -466,7 +468,8 @@ const SyncDb = async () => {
         for (const dir of directories) {
             try {
                 for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
-                    const tableName = path.basename(file, '.json');
+                    const fileBaseName = path.basename(file, '.json');
+                    const tableName = toSnakeTableName(fileBaseName);
                     const tableDefinition = await Bun.file(file).json();
                     const result = await exec(client, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.MYSQL_DB || 'test', tableName]);
                     const exists = result[0].count > 0;

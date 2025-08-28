@@ -18,6 +18,13 @@
     - 项目：`<project-root>/tables/`
 2. 同名限制：项目目录中不可与内核同名（检查器会报错并中止）
 3. 校验器：`checks/table.js`（具名导出 `checkTable`）在同步前执行；规则包含 7 段（`显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束`），详见 `docs/table.md`
+4. 表名生成规则：表名由“文件名（不含扩展名）的小驼峰形式”自动转换为“下划线形式（snake_case）”
+    - 转换示例：
+        - `users.json` → `users`
+        - `testProducts.json` → `test_products`
+        - `blogPosts.json` → `blog_posts`
+        - `orderV2.json` → `order_v2`
+    - 注意：同步脚本不会重命名已存在的数据库表；若历史表名不符合该规则，请先手工迁移或在同步前统一命名
 
 ## 连接与执行
 

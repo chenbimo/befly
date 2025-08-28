@@ -1,5 +1,5 @@
-import { test, expect } from 'bun:test';
-import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, parseFieldRule } from '../utils/index.js';
+import { test, expect, describe } from 'bun:test';
+import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, parseFieldRule, toSnakeTableName } from '../utils/index.js';
 
 test('ruleSplit 合并第5段之后的内容', () => {
     expect(ruleSplit('a,b,c,d,e,f,g')).toEqual(['a', 'b', 'c', 'd', 'e,f,g']);
@@ -83,4 +83,26 @@ test('filterLogFields 过滤敏感字段', () => {
 test('parseFieldRule 正确解析与校验 7 段规则', () => {
     const rule = '用户名⚡string⚡0⚡50⚡默认⚡1⚡^.+$';
     expect(parseFieldRule(rule)).toEqual(['用户名', 'string', '0', '50', '默认', '1', '^.+$']);
+});
+
+describe('toSnakeTableName 表名转换', () => {
+    test('基础与小驼峰转换', () => {
+        expect(toSnakeTableName('users')).toBe('users');
+        expect(toSnakeTableName('userTable')).toBe('user_table');
+        expect(toSnakeTableName('testProducts')).toBe('test_products');
+        expect(toSnakeTableName('blogPosts')).toBe('blog_posts');
+    });
+
+    test('版本后缀与连续大写', () => {
+        expect(toSnakeTableName('orderV2')).toBe('order_v2');
+        expect(toSnakeTableName('HTTPServerLog')).toBe('http_server_log');
+        expect(toSnakeTableName('XMLHttpRequest')).toBe('xml_http_request');
+    });
+
+    test('边界与非字符串', () => {
+        expect(toSnakeTableName('')).toBe('');
+        expect(toSnakeTableName(null)).toBe(null);
+        expect(toSnakeTableName(undefined)).toBe(undefined);
+        expect(toSnakeTableName(123)).toBe('123');
+    });
 });

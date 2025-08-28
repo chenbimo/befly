@@ -13,7 +13,7 @@ import { writeFile, mkdir, rm } from 'node:fs/promises';
 const parseFieldRule = (rule) => {
     const allParts = rule.split('⚡');
 
-    // 现在支持7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
+    // 现在支持7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡ 是否索引⚡正则约束
     if (allParts.length <= 7) {
         // 如果少于7个部分，补齐缺失的部分为 null
         while (allParts.length < 7) {
@@ -199,16 +199,24 @@ describe('数据库同步功能测试', () => {
     });
 
     describe('表名生成测试', () => {
-        test('应该从文件名正确生成表名', () => {
+        test('应该从文件名正确生成表名（转为下划线 snake_case）', () => {
             const testCases = [
                 { fileName: 'users.json', expectedTableName: 'users' },
-                { fileName: 'test_products.json', expectedTableName: 'test_products' },
-                { fileName: 'blog_posts.json', expectedTableName: 'blog_posts' },
-                { fileName: 'user_profiles.json', expectedTableName: 'user_profiles' }
+                { fileName: 'testProducts.json', expectedTableName: 'test_products' },
+                { fileName: 'blogPosts.json', expectedTableName: 'blog_posts' },
+                { fileName: 'userProfiles.json', expectedTableName: 'user_profiles' },
+                { fileName: 'orderV2.json', expectedTableName: 'order_v2' }
             ];
 
             testCases.forEach(({ fileName, expectedTableName }) => {
-                const tableName = path.basename(fileName, '.json');
+                const base = path.basename(fileName, '.json');
+                // 与脚本保持一致的转换规则
+                const toSnake = (name) =>
+                    name
+                        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+                        .replace(/([A-Z]+)([A-Z][a-z0-9]+)/g, '$1_$2')
+                        .toLowerCase();
+                const tableName = toSnake(base);
                 expect(tableName).toBe(expectedTableName);
             });
         });
