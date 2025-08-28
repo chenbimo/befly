@@ -16,6 +16,23 @@ const typeMapping = {
     array: 'VARCHAR'
 };
 
+// 环境开关读取（支持未在 Env 显式声明的变量，默认值兜底）
+const getFlag = (val, def = 0) => {
+    if (val === undefined || val === null || val === '') return !!def;
+    const n = Number(val);
+    if (!Number.isNaN(n)) return n !== 0;
+    const s = String(val).toLowerCase();
+    return s === 'true' || s === 'on' || s === 'yes';
+};
+
+const FLAGS = {
+    DRY_RUN: getFlag(Env.SYNC_DRY_RUN, 0), // 仅打印计划，不执行
+    MERGE_ALTER: getFlag(Env.SYNC_MERGE_ALTER, 1), // 合并每表多项 DDL
+    ONLINE_INDEX: getFlag(Env.SYNC_ONLINE_INDEX, 1), // 索引操作使用在线算法
+    DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩
+    ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0) // 允许类型变更
+};
+
 // 计算期望的默认值（与 information_schema 返回的值对齐）
 // 规则：当默认值为 'null' 时不设置 DEFAULT（所有类型一致，text 永不设置默认值）
 const getExpectedDefault = (fieldType, fieldDefaultValue) => {
@@ -41,7 +58,8 @@ const getColumnDefinition = (fieldName, rule) => {
         sqlType = `VARCHAR(${maxLength})`;
     }
 
-    let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
+    // 不主动设置 NOT NULL，保持可空性由已有定义或表默认规则决定
+    let columnDef = `\`${fieldName}\` ${sqlType}`;
 
     // 设置默认值：仅当显式提供且不为 'null'，且类型非 text 时设置默认值
     if (fieldDefaultValue !== undefined && fieldDefaultValue !== null && fieldDefaultValue !== 'null' && fieldType !== 'text') {
@@ -109,21 +127,19 @@ const getTableIndexes = async (client, tableName) => {
     return indexes;
 };
 
-// 管理索引
-const manageIndex = async (client, tableName, indexName, fieldName, action) => {
-    const sql = action === 'create' ? `CREATE INDEX \`${indexName}\` ON \`${tableName}\` (\`${fieldName}\`)` : `DROP INDEX \`${indexName}\` ON \`${tableName}\``;
-
-    try {
-        await exec(client, sql);
-        if (action === 'create') {
-            Logger.info(`[索引变化] 新建索引 ${tableName}.${indexName} (${fieldName})`);
-        } else {
-            Logger.info(`[索引变化] 删除索引 ${tableName}.${indexName} (${fieldName})`);
-        }
-    } catch (error) {
-        Logger.error(`${action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
-        throw error;
+// 构建索引操作 SQL（统一使用 ALTER TABLE 并尽量在线）
+const buildIndexSQL = (tableName, indexName, fieldName, action) => {
+    const parts = [];
+    if (action === 'create') {
+        parts.push(`ADD INDEX \`${indexName}\` (\`${fieldName}\`)`);
+    } else {
+        parts.push(`DROP INDEX \`${indexName}\``);
     }
+    if (FLAGS.ONLINE_INDEX) {
+        parts.push('ALGORITHM=INPLACE');
+        parts.push('LOCK=NONE');
+    }
+    return `ALTER TABLE \`${tableName}\` ${parts.join(', ')}`;
 };
 
 // 创建表
@@ -160,11 +176,15 @@ const createTable = async (client, tableName, fields) => {
         CREATE TABLE \`${tableName}\` (
             ${columns.join(',\n            ')},
             ${indexes.join(',\n            ')}
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs
     `;
 
-    await exec(client, createTableSQL);
-    Logger.info(`[新建表] ${tableName}`);
+    if (FLAGS.DRY_RUN) {
+        Logger.info(`[计划] ${createTableSQL.replace(/\n+/g, ' ')}`);
+    } else {
+        await exec(client, createTableSQL);
+        Logger.info(`[新建表] ${tableName}`);
+    }
 };
 
 // 比较字段定义变化
@@ -215,11 +235,11 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
     return { hasChanges: changes.length > 0, changes };
 };
 
-// 生成DDL语句
-const generateDDL = (tableName, fieldName, rule, isAdd = false) => {
+// 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
+const generateDDLClause = (fieldName, rule, isAdd = false) => {
     const columnDef = getColumnDefinition(fieldName, rule);
     const operation = isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN';
-    return `ALTER TABLE \`${tableName}\` ${operation} ${columnDef}, ALGORITHM=INSTANT, LOCK=NONE`;
+    return `${operation} ${columnDef}`;
 };
 
 // 安全执行DDL语句
@@ -230,13 +250,16 @@ const executeDDLSafely = async (client, sql) => {
     } catch (error) {
         // INSTANT失败时尝试INPLACE
         if (sql.includes('ALGORITHM=INSTANT')) {
-            const inplaceSql = sql.replace('ALGORITHM=INSTANT', 'ALGORITHM=INPLACE');
+            const inplaceSql = sql.replace(/ALGORITHM=INSTANT/g, 'ALGORITHM=INPLACE');
             try {
                 await exec(client, inplaceSql);
                 return true;
             } catch (inplaceError) {
-                // 最后尝试传统DDL
-                const traditionSql = sql.split(',')[0]; // 移除ALGORITHM和LOCK参数
+                // 最后尝试传统DDL：移除 ALGORITHM/LOCK 附加子句后执行
+                const traditionSql = sql
+                    .replace(/,\s*ALGORITHM=INPLACE/g, '')
+                    .replace(/,\s*ALGORITHM=INSTANT/g, '')
+                    .replace(/,\s*LOCK=(NONE|SHARED|EXCLUSIVE)/g, '');
                 await exec(client, traditionSql);
                 return true;
             }
@@ -253,6 +276,11 @@ const syncTable = async (client, tableName, fields) => {
     const systemFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'];
     let changed = false;
 
+    const addClauses = [];
+    const modifyClauses = [];
+    const defaultClauses = [];
+    const indexActions = [];
+
     // 同步字段
     for (const [fieldName, rule] of Object.entries(fields)) {
         if (existingColumns[fieldName]) {
@@ -263,8 +291,57 @@ const syncTable = async (client, tableName, fields) => {
                     const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
                     Logger.info(`[字段变更] ${tableName}.${fieldName} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
                 }
-                const sql = generateDDL(tableName, fieldName, rule);
-                await executeDDLSafely(client, sql);
+                // 风险护栏：长度收缩/类型变更
+                const ruleParts = parseFieldRule(rule);
+                const [, fType, , fMax, fDef] = ruleParts;
+                if ((fType === 'string' || fType === 'array') && existingColumns[fieldName].length && fMax !== 'null') {
+                    const newLen = parseInt(fMax);
+                    if (existingColumns[fieldName].length > newLen && FLAGS.DISALLOW_SHRINK) {
+                        Logger.warn(`[跳过危险变更] ${tableName}.${fieldName} 长度收缩 ${existingColumns[fieldName].length} -> ${newLen} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
+                        // 如果仅有 shrink 一个变化，仍可能还有默认/注释变化要处理
+                    }
+                }
+                const expectedDbType = {
+                    number: 'bigint',
+                    string: 'varchar',
+                    text: 'mediumtext',
+                    array: 'varchar'
+                }[parseFieldRule(rule)[1]];
+                if (existingColumns[fieldName].type.toLowerCase() !== expectedDbType && !FLAGS.ALLOW_TYPE_CHANGE) {
+                    Logger.warn(`[跳过危险变更] ${tableName}.${fieldName} 类型变更 ${existingColumns[fieldName].type} -> ${expectedDbType} 已被跳过（设置 SYNC_ALLOW_TYPE_CHANGE=1 可放开）`);
+                    // 继续处理默认值/注释等非类型变更
+                }
+
+                // 判断是否“仅默认值变化”
+                const onlyDefaultChanged = comparison.changes.every((c) => c.type === 'default');
+                if (onlyDefaultChanged) {
+                    const expectedDefault = getExpectedDefault(parseFieldRule(rule)[1], parseFieldRule(rule)[4]);
+                    if (expectedDefault === null) {
+                        defaultClauses.push(`ALTER COLUMN \`${fieldName}\` DROP DEFAULT`);
+                    } else {
+                        const isNumber = parseFieldRule(rule)[1] === 'number';
+                        const v = isNumber ? expectedDefault : `"${String(expectedDefault).replace(/"/g, '\\"')}"`;
+                        defaultClauses.push(`ALTER COLUMN \`${fieldName}\` SET DEFAULT ${v}`);
+                    }
+                } else {
+                    // 判断是否需要跳过 MODIFY：包含收缩或类型变更时跳过
+                    let skipModify = false;
+                    const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
+                    if (hasLengthChange && (fType === 'string' || fType === 'array') && existingColumns[fieldName].length && fMax !== 'null') {
+                        const newLen = parseInt(fMax);
+                        if (existingColumns[fieldName].length > newLen && FLAGS.DISALLOW_SHRINK) {
+                            skipModify = true;
+                        }
+                    }
+                    const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
+                    if (hasTypeChange && !FLAGS.ALLOW_TYPE_CHANGE) {
+                        skipModify = true;
+                    }
+                    if (!skipModify) {
+                        // 合并到 MODIFY COLUMN 子句
+                        modifyClauses.push(generateDDLClause(fieldName, rule, false));
+                    }
+                }
                 changed = true;
             }
         } else {
@@ -273,8 +350,7 @@ const syncTable = async (client, tableName, fields) => {
             const lenPart = fType === 'string' || fType === 'array' ? ` 长度:${parseInt(fMax)}` : '';
             const expectedDefault = getExpectedDefault(fType, fDef);
             Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
-            const sql = generateDDL(tableName, fieldName, rule, true);
-            await executeDDLSafely(client, sql);
+            addClauses.push(generateDDLClause(fieldName, rule, true));
             changed = true;
         }
     }
@@ -286,14 +362,14 @@ const syncTable = async (client, tableName, fields) => {
         const indexName = `idx_${fieldName}`;
 
         if (fieldHasIndex === '1' && !existingIndexes[indexName]) {
-            await manageIndex(client, tableName, indexName, fieldName, 'create');
+            indexActions.push({ action: 'create', indexName, fieldName });
             changed = true;
         } else if (fieldHasIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
-            await manageIndex(client, tableName, indexName, fieldName, 'drop');
+            indexActions.push({ action: 'drop', indexName, fieldName });
             changed = true;
         }
     }
-    return changed;
+    return { changed, addClauses, modifyClauses, defaultClauses, indexActions };
 };
 
 // 主同步函数
@@ -341,8 +417,62 @@ const SyncDb = async () => {
                     const exists = result[0].count > 0;
 
                     if (exists) {
-                        const tableChanged = await syncTable(client, tableName, tableDefinition);
-                        if (tableChanged) modifiedTables++;
+                        const plan = await syncTable(client, tableName, tableDefinition);
+                        if (plan.changed) {
+                            // 合并执行 ALTER TABLE 子句
+                            if (FLAGS.MERGE_ALTER) {
+                                const clauses = [...plan.addClauses, ...plan.modifyClauses];
+                                if (clauses.length > 0) {
+                                    const sql = `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}, ALGORITHM=INSTANT, LOCK=NONE`;
+                                    if (FLAGS.DRY_RUN) {
+                                        Logger.info(`[计划] ${sql}`);
+                                    } else {
+                                        await executeDDLSafely(client, sql);
+                                    }
+                                }
+                            } else {
+                                // 分别执行
+                                for (const c of plan.addClauses) {
+                                    const sql = `ALTER TABLE \`${tableName}\` ${c}, ALGORITHM=INSTANT, LOCK=NONE`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                    else await executeDDLSafely(client, sql);
+                                }
+                                for (const c of plan.modifyClauses) {
+                                    const sql = `ALTER TABLE \`${tableName}\` ${c}, ALGORITHM=INSTANT, LOCK=NONE`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                    else await executeDDLSafely(client, sql);
+                                }
+                            }
+
+                            // 默认值专用 ALTER
+                            if (plan.defaultClauses.length > 0) {
+                                const sql = `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}, ALGORITHM=INSTANT, LOCK=NONE`;
+                                if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                else await executeDDLSafely(client, sql);
+                            }
+
+                            // 索引操作
+                            for (const act of plan.indexActions) {
+                                const sql = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
+                                if (FLAGS.DRY_RUN) {
+                                    Logger.info(`[计划] ${sql}`);
+                                } else {
+                                    try {
+                                        await exec(client, sql);
+                                        if (act.action === 'create') {
+                                            Logger.info(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+                                        } else {
+                                            Logger.info(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+                                        }
+                                    } catch (error) {
+                                        Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
+                                        throw error;
+                                    }
+                                }
+                            }
+
+                            modifiedTables++;
+                        }
                     } else {
                         await createTable(client, tableName, tableDefinition);
                         createdTables++;
