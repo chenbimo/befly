@@ -309,16 +309,28 @@ const syncTable = async (client, tableName, fields) => {
     const modifyClauses = [];
     const defaultClauses = [];
     const indexActions = [];
+    // 变更统计（按字段粒度）
+    const changeStats = {
+        addFields: 0,
+        datatype: 0,
+        length: 0,
+        default: 0,
+        comment: 0,
+        nullability: 0,
+        indexCreate: 0,
+        indexDrop: 0
+    };
 
     // 同步字段
     for (const [fieldName, rule] of Object.entries(fields)) {
         if (existingColumns[fieldName]) {
             const comparison = compareFieldDefinition(existingColumns[fieldName], rule, fieldName);
             if (comparison.hasChanges) {
-                // 打印具体变动项
+                // 打印具体变动项并统计
                 for (const c of comparison.changes) {
                     const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
                     Logger.info(`[字段变更] ${tableName}.${fieldName} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
+                    if (c.type in changeStats) changeStats[c.type]++;
                 }
                 // 风险护栏：长度收缩/类型变更
                 const ruleParts = parseFieldRule(rule);
@@ -381,6 +393,7 @@ const syncTable = async (client, tableName, fields) => {
             Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
             addClauses.push(generateDDLClause(fieldName, rule, true));
             changed = true;
+            changeStats.addFields++;
         }
     }
 
@@ -393,12 +406,14 @@ const syncTable = async (client, tableName, fields) => {
         if (fieldHasIndex === '1' && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName });
             changed = true;
+            changeStats.indexCreate++;
         } else if (fieldHasIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             indexActions.push({ action: 'drop', indexName, fieldName });
             changed = true;
+            changeStats.indexDrop++;
         }
     }
-    return { changed, addClauses, modifyClauses, defaultClauses, indexActions };
+    return { changed, addClauses, modifyClauses, defaultClauses, indexActions, metrics: changeStats };
 };
 
 // 主同步函数
@@ -436,6 +451,17 @@ const SyncDb = async () => {
         let processedCount = 0;
         let createdTables = 0;
         let modifiedTables = 0;
+        // 全局统计
+        const overall = {
+            addFields: 0,
+            typeChanges: 0,
+            maxChanges: 0, // 映射为长度变化
+            minChanges: 0, // 最小值不参与 DDL，比对保留为0
+            defaultChanges: 0,
+            nameChanges: 0, // 字段显示名（注释）变更
+            indexCreate: 0,
+            indexDrop: 0
+        };
 
         for (const dir of directories) {
             try {
@@ -448,6 +474,16 @@ const SyncDb = async () => {
                     if (exists) {
                         const plan = await syncTable(client, tableName, tableDefinition);
                         if (plan.changed) {
+                            // 汇总统计
+                            if (plan.metrics) {
+                                overall.addFields += plan.metrics.addFields;
+                                overall.typeChanges += plan.metrics.datatype;
+                                overall.maxChanges += plan.metrics.length;
+                                overall.defaultChanges += plan.metrics.default;
+                                overall.indexCreate += plan.metrics.indexCreate;
+                                overall.indexDrop += plan.metrics.indexDrop;
+                                overall.nameChanges += plan.metrics.comment;
+                            }
                             // 合并执行 ALTER TABLE 子句
                             if (FLAGS.MERGE_ALTER) {
                                 const clauses = [...plan.addClauses, ...plan.modifyClauses];
@@ -507,6 +543,7 @@ const SyncDb = async () => {
                         createdTables++;
                         // 新建表已算作变更
                         modifiedTables += 0;
+                        // 创建表统计：按需求仅汇总创建表数量
                     }
 
                     processedCount++;
@@ -516,8 +553,17 @@ const SyncDb = async () => {
             }
         }
 
-        // 显示统计信息
-        Logger.info(`同步完成 - 总计: ${processedCount}, 新建: ${createdTables}, 修改: ${modifiedTables}`);
+        // 显示统计信息（扩展维度）
+        Logger.info(`统计 - 创建表: ${createdTables}`);
+        Logger.info(`统计 - 字段新增: ${overall.addFields}`);
+        Logger.info(`统计 - 字段名称变更: ${overall.nameChanges}`);
+        Logger.info(`统计 - 字段类型变更: ${overall.typeChanges}`);
+        Logger.info(`统计 - 字段最小值变更: ${overall.minChanges}`);
+        Logger.info(`统计 - 字段最大值变更: ${overall.maxChanges}`);
+        Logger.info(`统计 - 字段默认值变更: ${overall.defaultChanges}`);
+        // 索引新增/删除分别打印
+        Logger.info(`统计 - 索引新增: ${overall.indexCreate}`);
+        Logger.info(`统计 - 索引删除: ${overall.indexDrop}`);
 
         if (processedCount === 0) {
             Logger.warn('没有找到任何表定义文件');
