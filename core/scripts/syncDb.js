@@ -17,18 +17,13 @@ const typeMapping = {
 };
 
 // 计算期望的默认值（与 information_schema 返回的值对齐）
+// 规则：当默认值为 'null' 时不设置 DEFAULT（所有类型一致，text 永不设置默认值）
 const getExpectedDefault = (fieldType, fieldDefaultValue) => {
-    // text 类型不设置默认值
     if (fieldType === 'text') return null;
-
-    if (fieldDefaultValue && fieldDefaultValue !== 'null') {
-        // number 使用数值/字符串均可，比较时做统一归一
-        return fieldDefaultValue;
+    if (fieldDefaultValue !== undefined && fieldDefaultValue !== null && fieldDefaultValue !== 'null') {
+        return fieldDefaultValue; // 保留显式默认值（数字或字符串，包含空字符串）
     }
-    // 未显式设置默认值时，根据类型给默认值
-    if (fieldType === 'string' || fieldType === 'array') return '';
-    if (fieldType === 'number') return 0;
-    return null;
+    return null; // 未显式设置或为 'null' => 不设置默认值
 };
 
 const normalizeDefault = (val) => (val === null || val === undefined ? null : String(val));
@@ -48,17 +43,13 @@ const getColumnDefinition = (fieldName, rule) => {
 
     let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
 
-    // 设置默认值：如果第5个属性为null或字段类型为text，则不设置默认值
-    if (fieldDefaultValue && fieldDefaultValue !== 'null' && fieldType !== 'text') {
+    // 设置默认值：仅当显式提供且不为 'null'，且类型非 text 时设置默认值
+    if (fieldDefaultValue !== undefined && fieldDefaultValue !== null && fieldDefaultValue !== 'null' && fieldType !== 'text') {
         if (fieldType === 'number') {
             columnDef += ` DEFAULT ${fieldDefaultValue}`;
         } else {
             columnDef += ` DEFAULT "${fieldDefaultValue.replace(/"/g, '\\"')}"`;
         }
-    } else if (fieldType === 'string' || fieldType === 'array') {
-        columnDef += ` DEFAULT ""`;
-    } else if (fieldType === 'number') {
-        columnDef += ` DEFAULT 0`;
     }
     // text类型不设置默认值
 
