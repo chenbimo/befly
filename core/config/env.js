@@ -55,7 +55,6 @@ export const Env = {
     MAIL_SENDER: process.env.MAIL_SENDER,
     MAIL_ADDRESS: process.env.MAIL_ADDRESS,
     // 同步脚本开关（用于 core/scripts/syncDb.js）
-    SYNC_DRY_RUN: process.env.SYNC_DRY_RUN,
     SYNC_MERGE_ALTER: process.env.SYNC_MERGE_ALTER,
     SYNC_ONLINE_INDEX: process.env.SYNC_ONLINE_INDEX,
     SYNC_DISALLOW_SHRINK: process.env.SYNC_DISALLOW_SHRINK,

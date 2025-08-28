@@ -75,7 +75,6 @@ module.exports = {
                 // 微信配置,
                 PAY_NOTIFY_URL: '',
                 // --- 同步脚本开关（用于表结构同步） ---
-                SYNC_DRY_RUN: 0,
                 SYNC_MERGE_ALTER: 1,
                 SYNC_ONLINE_INDEX: 1,
                 SYNC_DISALLOW_SHRINK: 1,

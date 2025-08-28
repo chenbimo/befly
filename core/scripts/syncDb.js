@@ -25,8 +25,15 @@ const getFlag = (val, def = 0) => {
     return s === 'true' || s === 'on' || s === 'yes';
 };
 
+// 命令行参数
+const ARGV = Array.isArray(process.argv) ? process.argv : [];
+const CLI = {
+    DRY_RUN: ARGV.includes('--dry-run')
+};
+
 const FLAGS = {
-    DRY_RUN: getFlag(Env.SYNC_DRY_RUN, 0), // 仅打印计划，不执行
+    // DRY-RUN 改为命令行参数控制，忽略环境变量
+    DRY_RUN: CLI.DRY_RUN, // 仅打印计划，不执行
     MERGE_ALTER: getFlag(Env.SYNC_MERGE_ALTER, 1), // 合并每表多项 DDL
     ONLINE_INDEX: getFlag(Env.SYNC_ONLINE_INDEX, 1), // 索引操作使用在线算法
     DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩

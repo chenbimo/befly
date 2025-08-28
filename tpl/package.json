@@ -12,6 +12,7 @@
         "dev": "bun run main.js",
         "serve": "bunx --bun pm2 start pm2.config.cjs -a",
         "syncDb": "bun run syncDb.js",
+        "syncDb2": "bun run syncDb.js --dry-run",
         "ra": "bun run ../release.js --major",
         "rb": "bun run ../release.js --minor",
         "rc": "bun run ../release.js --patch"

@@ -1,5 +1,7 @@
 # 表结构同步脚本（scripts/syncDb.js）
 
+> 重要变更：从现在起，dry-run 通过命令行参数 `--dry-run` 控制，不再使用环境变量 `SYNC_DRY_RUN`。
+
 ## 概述
 
 本脚本用于将 `tables/*.json` 中定义的字段规则同步为数据库表结构（仅支持 MySQL 8.0+）。
@@ -105,6 +107,15 @@
 
 ```bash
 bun run scripts/syncDb.js
+
+仅打印计划（dry-run）：
+
+```
+
+bun run scripts/syncDb.js --dry-run
+
+```
+
 ```
 
 - 仅检查规则：
@@ -124,7 +135,7 @@ bun run checks/table.js
 
 ## 行为开关（环境变量）
 
-- SYNC_DRY_RUN：仅打印计划，不执行（默认 0）
+- （已废弃）SYNC_DRY_RUN：请使用命令行参数 `--dry-run`
 - SYNC_MERGE_ALTER：是否合并每表多项 DDL（默认 1）
 - SYNC_ONLINE_INDEX：索引 ADD/DROP 使用 INPLACE + LOCK=NONE（默认 1）
 - SYNC_DISALLOW_SHRINK：禁止长度收缩（默认 1）
