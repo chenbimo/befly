@@ -56,9 +56,19 @@ export const checkTable = async () => {
         for (const { file, type } of allTableFiles) {
             totalFiles++;
             const fileName = path.basename(file);
+            const fileBaseName = path.basename(file, '.json');
             const fileType = type === 'core' ? '内核' : '项目';
 
             try {
+                // 1) 文件名小驼峰校验：必须以小写字母开头，后续可包含小写/数字，或多个 [大写+小写/数字] 片段
+                //    示例：userTable、testCustomers、common
+                const lowerCamelCaseRegex = /^[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)*$/;
+                if (!lowerCamelCaseRegex.test(fileBaseName)) {
+                    Logger.error(`${fileType}表 ${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
+                    // 命名不合规，直接标记为无效文件
+                    throw new Error('文件命名不符合小驼峰规范');
+                }
+
                 // 读取并解析 JSON 文件
                 const table = await Bun.file(file).json();
                 let fileValid = true;
