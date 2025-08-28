@@ -43,7 +43,7 @@
     - text → MEDIUMTEXT
     - array → VARCHAR(n)
 - 长度：string/array 必须提供最大长度（第 4 段），用于 `VARCHAR(n)`
-- 非空：用户定义字段不再统一 `NOT NULL`（保持可空），系统字段仍为 NOT NULL
+- 非空：不对任何字段设置 `NOT NULL`（包括系统字段）；保持列可空
 - 默认值：
     - 文档规则第 5 段为 `null`：不设置 DEFAULT（所有类型一致，text 永不设置默认值）
     - 非 `null`：
@@ -89,7 +89,7 @@
 
 - 系统字段：
     - id BIGINT PRIMARY KEY（含注释）
-    - created_at / updated_at / deleted_at / state：BIGINT NOT NULL DEFAULT 0（含注释）
+    - created_at / updated_at / deleted_at / state：BIGINT DEFAULT 0（含注释）
 - 自定义字段：对每个规则生成列定义，并根据第 6 段是否创建 `idx_字段名`
 - 引擎与字符集：`ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs`
 

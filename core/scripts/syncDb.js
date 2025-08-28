@@ -147,10 +147,10 @@ const createTable = async (client, tableName, fields) => {
     const columns = [
         //
         '`id` BIGINT PRIMARY KEY COMMENT "主键ID"',
-        '`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"',
-        '`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"',
-        '`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"',
-        '`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"'
+        '`created_at` BIGINT DEFAULT 0 COMMENT "创建时间"',
+        '`updated_at` BIGINT DEFAULT 0 COMMENT "更新时间"',
+        '`deleted_at` BIGINT DEFAULT 0 COMMENT "删除时间"',
+        '`state` BIGINT DEFAULT 0 COMMENT "状态字段"'
     ];
 
     const indexes = [
