@@ -244,10 +244,14 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
     }
 
     // 检查可空性变化（统一期望 NOT NULL）
-    const expectedNullable = false;
-    if (existingColumn.nullable !== !expectedNullable) {
-        // existingColumn.nullable 为 true 表示可空；我们期望 false
-        changes.push({ type: 'nullability', current: existingColumn.nullable ? 'NULL' : 'NOT NULL', new: 'NOT NULL' });
+    const expectedNullable = false; // 期望 NOT NULL
+    if (existingColumn.nullable !== expectedNullable) {
+        // existingColumn.nullable 为 true 表示可空
+        changes.push({
+            type: 'nullability',
+            current: existingColumn.nullable ? 'NULL' : 'NOT NULL',
+            new: expectedNullable ? 'NULL' : 'NOT NULL'
+        });
     }
 
     return { hasChanges: changes.length > 0, changes };
