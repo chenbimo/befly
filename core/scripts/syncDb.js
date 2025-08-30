@@ -571,6 +571,8 @@ const SyncDb = async () => {
         if (processedCount === 0) {
             Logger.warn('没有找到任何表定义文件');
         }
+
+        // 保持单一职责：此处不再触发开发管理员同步
     } catch (error) {
         Logger.error(`数据库同步失败: ${error.message}`);
         Logger.error(`错误详情: ${error.stack}`);

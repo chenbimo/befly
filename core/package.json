@@ -12,6 +12,9 @@
     "exports": {
         ".": "./main.js"
     },
+    "bin": {
+        "befly": "./bin/befly.js"
+    },
     "scripts": {
         "ra": "bun run ../release.js --major",
         "rb": "bun run ../release.js --minor",
@@ -31,6 +34,7 @@
     "homepage": "https://chensuiyi.me",
     "license": "Apache-2.0",
     "files": [
+        "bin/",
         "apis/",
         "checks/",
         "config/",
