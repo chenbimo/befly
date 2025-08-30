@@ -594,8 +594,8 @@ const SyncDb = async () => {
     }
 };
 
-// 如果直接运行此脚本
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('dbSync.js')) {
+// 如果直接运行此脚本（Bun 支持 import.meta.main）
+if (import.meta.main) {
     SyncDb().catch((error) => {
         console.error('❌ 数据库同步失败:', error);
         process.exit(1);
