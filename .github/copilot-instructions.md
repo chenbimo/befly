@@ -59,9 +59,10 @@ Befly 是专为 Bun 运行时设计的 API 框架，采用插件化架构，提�
 -   **优先级**: 检测 Bun 环境，回退到 Node.js
 -   **脚本位置**: `scripts/` 目录
 -   **在 tpl 中使用**: 进入 `tpl/` 目录使用 `bunx befly`
-    -   无参数：打印所有可用脚本（等价于 `--list`）
+    -   无参数：打印所有可用脚本
     -   执行：`bunx befly syncDb`
     -   dry-run：`bunx befly syncDev --dry-run`
+    -   参数透传：脚本名后的参数会原样传递给目标脚本（例如 `bunx befly syncDb --dry-run`）
 
 ### 版本发布
 
