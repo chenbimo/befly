@@ -6,9 +6,9 @@ import { Glob } from 'bun';
 
 // 解析目录
 const coreDir = path.resolve(import.meta.dir, '..');
-const repoRoot = path.resolve(coreDir, '..');
 const coreScriptsDir = path.resolve(coreDir, 'scripts');
-const tplScriptsDir = path.resolve(repoRoot, 'tpl', 'scripts');
+// 用户项目（如 tpl）的脚本目录：始终基于当前工作目录
+const tplScriptsDir = path.resolve(process.cwd(), 'scripts');
 
 function safeList(dir) {
     try {
@@ -51,13 +51,16 @@ function printAllScripts() {
 }
 
 async function resolveScriptPath(name) {
-    const filename = name.endsWith('.js') ? name : `${name}.js`;
+    const base = name.endsWith('.js') ? name.slice(0, -3) : name;
+    const filename = `${base}.js`;
     const corePath = path.resolve(coreScriptsDir, filename);
     const tplPath = path.resolve(tplScriptsDir, filename);
-    // 执行时 core > tpl 优先级
     if (await Bun.file(corePath).exists()) return corePath;
     if (await Bun.file(tplPath).exists()) return tplPath;
-    return null;
+    // 回退到列表匹配（防止极端路径或大小写差异）
+    const items = buildScriptItems();
+    const hit = items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'core') || items.find((it) => it.name.toLowerCase() === base.toLowerCase());
+    return hit ? hit.path : null;
 }
 
 async function runScriptAtPath(targetPath, label, args = []) {
