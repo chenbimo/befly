@@ -1,26 +1,21 @@
 #!/usr/bin/env -S bun run
 // Befly CLI (Bun): 列出并执行 core/scripts 与 tpl/scripts 下的脚本
 
-import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { Glob } from 'bun';
 
 // 解析目录
-const coreDir = path.resolve(__dirname, '..');
+const coreDir = path.resolve(import.meta.dir, '..');
 const repoRoot = path.resolve(coreDir, '..');
 const coreScriptsDir = path.resolve(coreDir, 'scripts');
 const tplScriptsDir = path.resolve(repoRoot, 'tpl', 'scripts');
 
 function safeList(dir) {
     try {
-        return fs
-            .readdirSync(dir, { withFileTypes: true })
-            .filter((d) => d.isFile() && d.name.endsWith('.js'))
-            .map((d) => path.basename(d.name, '.js'))
-            .sort();
+        // 使用 Bun.Glob 查找当前目录下的所有 .js 文件（不递归）
+        const glob = new Glob('*.js');
+        const files = Array.from(glob.scanSync({ cwd: dir, absolute: false, onlyFiles: true, dot: false }));
+        return files.map((f) => path.basename(f, '.js')).sort();
     } catch {
         return [];
     }
@@ -50,18 +45,18 @@ function printAllScripts() {
         return;
     }
     for (const it of items) {
-        if (it.source === 'tpl' && it.duplicate) console.log(`  • ${it.name}（重复 脚本）`);
+        if (it.source === 'tpl' && it.duplicate) console.log(`  • ${it.name}（重复）`);
         else console.log(`  • ${it.name}`);
     }
 }
 
-function resolveScriptPath(name) {
+async function resolveScriptPath(name) {
     const filename = name.endsWith('.js') ? name : `${name}.js`;
     const corePath = path.resolve(coreScriptsDir, filename);
     const tplPath = path.resolve(tplScriptsDir, filename);
     // 执行时 core > tpl 优先级
-    if (fs.existsSync(corePath)) return corePath;
-    if (fs.existsSync(tplPath)) return tplPath;
+    if (await Bun.file(corePath).exists()) return corePath;
+    if (await Bun.file(tplPath).exists()) return tplPath;
     return null;
 }
 
@@ -81,7 +76,7 @@ async function main() {
         process.exit(0);
     }
     // 按名称执行（将剩余参数透传给脚本）
-    const target = resolveScriptPath(cmd);
+    const target = await resolveScriptPath(cmd);
     if (!target) {
         console.error(`未找到脚本: ${cmd}`);
         printAllScripts();
