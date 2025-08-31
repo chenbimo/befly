@@ -363,8 +363,21 @@ export const parseFieldRule = (rule) => {
  * - 连接成功后返回 SQL 实例，失败会自动 close 并抛出
  * @param {object} options 传给 new SQL 的参数（如 { max: 1, bigint: true }）
  */
+export const getMysqlSchemaFromEnv = () => {
+    try {
+        const url = String(Env.MYSQL_URL || '').trim();
+        if (!url) throw new Error('MYSQL_URL 未配置');
+        // URL may not be fully standard; use WHATWG URL for mysql scheme
+        const u = new URL(url);
+        return (u.pathname || '').replace(/^\//, '') || 'test';
+    } catch {
+        throw new Error('无法从 MYSQL_URL 解析数据库名，请确保格式为 mysql://user:pass@host:port/db');
+    }
+};
+
 export async function createSqlClient(options = {}) {
-    const url = `mysql://${encodeURIComponent(Env.MYSQL_USER)}:${encodeURIComponent(Env.MYSQL_PASSWORD)}@${Env.MYSQL_HOST}:${Env.MYSQL_PORT}/${Env.MYSQL_DB}`;
+    const url = String(Env.MYSQL_URL || '').trim();
+    if (!url) throw new Error('MYSQL_URL 未配置');
 
     const sql = new SQL({
         url: url,

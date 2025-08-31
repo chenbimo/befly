@@ -7,7 +7,7 @@
 
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { createSqlClient } from '../utils/index.js';
+import { createSqlClient, getMysqlSchemaFromEnv } from '../utils/index.js';
 import { Crypto2 } from '../utils/crypto.js';
 
 // 命令行参数（保持与 syncDb.js 一致的 dry-run 行为）
@@ -43,7 +43,7 @@ export async function SyncDev(client = null) {
         }
 
         // 检查 admin 表是否存在
-        const [exist] = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.MYSQL_DB || 'test', 'admin']);
+        const [exist] = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [getMysqlSchemaFromEnv(), 'admin']);
         if (!exist || Number(exist.cnt) === 0) {
             Logger.warn('跳过开发管理员初始化：未检测到 admin 表');
             return false;

@@ -67,12 +67,8 @@
 # 启用 MySQL
 MYSQL_ENABLE=1
 
-# 数据库连接配置
-MYSQL_HOST=127.0.0.1
-MYSQL_PORT=3306
-MYSQL_DB=test
-MYSQL_USER=root
-MYSQL_PASSWORD=root
+# 数据库连接配置（统一使用 MYSQL_URL）
+MYSQL_URL=mysql://root:root@127.0.0.1:3306/test
 MYSQL_POOL_MAX=10
 MYSQL_DEBUG=0
 

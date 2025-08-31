@@ -5,7 +5,7 @@
 import path from 'node:path';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { parseFieldRule, createSqlClient, toSnakeTableName } from '../utils/index.js';
+import { parseFieldRule, createSqlClient, toSnakeTableName, getMysqlSchemaFromEnv } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
 
@@ -113,7 +113,7 @@ const getTableColumns = async (client, tableName) => {
         client,
         `SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
          FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`,
-        [Env.MYSQL_DB || 'test', tableName]
+        [getMysqlSchemaFromEnv(), tableName]
     );
 
     const columns = {};
@@ -136,7 +136,7 @@ const getTableIndexes = async (client, tableName) => {
         client,
         `SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
          WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME`,
-        [Env.MYSQL_DB || 'test', tableName]
+        [getMysqlSchemaFromEnv(), tableName]
     );
 
     const indexes = {};
@@ -471,7 +471,7 @@ const SyncDb = async () => {
                     const fileBaseName = path.basename(file, '.json');
                     const tableName = toSnakeTableName(fileBaseName);
                     const tableDefinition = await Bun.file(file).json();
-                    const result = await exec(client, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.MYSQL_DB || 'test', tableName]);
+                    const result = await exec(client, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [getMysqlSchemaFromEnv(), tableName]);
                     const exists = result[0].count > 0;
 
                     if (exists) {
