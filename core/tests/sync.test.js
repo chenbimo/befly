@@ -294,10 +294,10 @@ describe('数据库同步功能测试', () => {
     // 这里我们只测试不需要数据库连接的逻辑部分
     describe('环境配置测试', () => {
         test('应该有必要的环境变量配置项', () => {
-            const requiredEnvVars = ['MYSQL_ENABLE', 'MYSQL_URL'];
+            const requiredEnvVars = ['MYSQL_ENABLE', 'DB_TYPE', 'DB_NAME'];
             requiredEnvVars.forEach((envVar) => {
                 expect(typeof envVar).toBe('string');
-                expect(envVar.startsWith('MYSQL_') || envVar === 'MYSQL_ENABLE').toBe(true);
+                expect(envVar.startsWith('DB_') || envVar.startsWith('MYSQL_')).toBe(true);
             });
         });
     });

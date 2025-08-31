@@ -155,3 +155,84 @@ bun test core/tests/jwt.test.js       # 运行特定测试
 -   功能模块通过环境变量控制启用/禁用
 -   支持开发和生产环境差异化配置
 -   动态功能加载避免不必要的依赖
+
+## 变更说明与迁移指南（DB\_\* 环境变量）
+
+更新时间：2025-08-31
+
+本项目的数据库环境变量已统一为 DB\_\* 方案，替代历史上的 MYSQL_URL/MYSQL_DB 形式，以同时支持 sqlite、mysql、postgresql。变更属于向前演进的配置统一，不影响框架 API 使用。
+
+### 新配置（DB\_\*）
+
+-   DB_TYPE：数据库类型（sqlite | mysql | postgresql）
+-   DB_HOST：主机（sqlite 可忽略）
+-   DB_PORT：端口（sqlite 可忽略）
+-   DB_USER：用户名（sqlite 可忽略）
+-   DB_PASS：密码（sqlite 可忽略）
+-   DB_NAME：数据库名称（sqlite 为文件路径或 :memory:）
+-   MYSQL_ENABLE：是否启用数据库（开关，保留）
+-   MYSQL_POOL_MAX：连接池最大连接数（保留）
+-   MYSQL_DEBUG：SQL 调试开关（保留）
+
+### 废弃与兼容
+
+-   废弃：MYSQL_URL、MYSQL_DB（不再读取）。
+-   历史粒度变量（MYSQL_HOST/PORT/USER/PASSWORD/DB）已移除，不再使用。
+-   代码层已全部改为从 Env.DB\_\* 读取，并通过 buildDatabaseUrl() 组合最终连接串。
+
+### URL 组装规范（内部行为说明）
+
+-   sqlite：sqlite:<DB_NAME>（文件路径或 :memory:）
+-   postgresql：postgres://[user:pass@]host:port/DB_NAME
+-   mysql：mysql://[user:pass@]host:port/DB_NAME
+
+并在首次连接时执行类型化的健康检查：
+
+-   sqlite：SELECT sqlite_version()
+-   postgresql：SELECT version()
+-   mysql：SELECT VERSION()
+
+### 影响面与已知限制
+
+-   插件与工具：createSqlClient/buildDatabaseUrl/getMysqlSchemaFromEnv 已适配 DB\_\*。
+-   同步脚本：core/scripts/syncDb.js 与 syncDev.js 仍基于 MySQL information_schema，暂不支持多数据库差异。DB_NAME 仍用于指示目标 schema。
+-   文档：面向用户的配置章节展示当前 DB\_\* 最终形态；变更记录集中在本文件，不写入 README。
+
+### 迁移步骤（tpl/.env.development 与 tpl/pm2.config.cjs）
+
+1. 删除 MYSQL*URL、MYSQL_DB（以及历史粒度 MYSQL*\*）
+2. 添加以下键值（示例为 MySQL）：
+    - DB_TYPE=mysql
+    - DB_HOST=127.0.0.1
+    - DB_PORT=3306
+    - DB_USER=root
+    - DB_PASS=root
+    - DB_NAME=demo
+3. 保留或按需调整：
+    - MYSQL_ENABLE=1
+    - MYSQL_POOL_MAX=10
+    - MYSQL_DEBUG=0
+
+SQLite 示例：
+
+-   DB_TYPE=sqlite
+-   DB_NAME=/absolute/path/to/demo.sqlite（或 :memory:）
+
+PostgreSQL 示例：
+
+-   DB_TYPE=postgresql
+-   DB_HOST=127.0.0.1
+-   DB_PORT=5432
+-   DB_USER=user
+-   DB_PASS=pass
+-   DB_NAME=demo
+
+### 校验与回归
+
+-   在仓库根目录运行：bun test（需 Bun）
+-   core/tests 已更新断言到 DB\_\* 命名；当前全量用例通过
+
+### 问答
+
+-   是否还能使用 MYSQL*URL/MYSQL_DB？不支持，已废弃；请切换到 DB*\*。
+-   生产灰度如何做？建议先在 pm2 的 env 中引入 DB\_\*，保留 MYSQL_ENABLE/POOL/DEBUG，然后在测试通过后切换。

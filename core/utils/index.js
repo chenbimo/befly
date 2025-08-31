@@ -364,31 +364,70 @@ export const parseFieldRule = (rule) => {
  * @param {object} options 传给 new SQL 的参数（如 { max: 1, bigint: true }）
  */
 export const getMysqlSchemaFromEnv = () => {
-    try {
-        const url = String(Env.MYSQL_URL || '').trim();
-        if (!url) throw new Error('MYSQL_URL 未配置');
-        // URL may not be fully standard; use WHATWG URL for mysql scheme
-        const u = new URL(url);
-        return (u.pathname || '').replace(/^\//, '') || 'test';
-    } catch {
-        throw new Error('无法从 MYSQL_URL 解析数据库名，请确保格式为 mysql://user:pass@host:port/db');
+    const db = String(Env.DB_NAME || '').trim();
+    if (!db) throw new Error('DB_NAME 未配置');
+    return db;
+};
+
+// 组合最终数据库连接串：
+// - 基于 DB_* 环境变量构建（DB_TYPE/DB_HOST/DB_PORT/DB_USER/DB_PASS/DB_NAME）
+// - sqlite: sqlite:<DB_NAME>（文件路径或 :memory:）
+// - postgresql: postgres://[user:pass@]host:port/DB_NAME
+// - mysql: mysql://[user:pass@]host:port/DB_NAME
+export const buildDatabaseUrl = () => {
+    const type = String(Env.DB_TYPE || '').trim();
+    const host = String(Env.DB_HOST || '').trim();
+    const port = Env.DB_PORT;
+    const user = encodeURIComponent(String(Env.DB_USER || ''));
+    const pass = encodeURIComponent(String(Env.DB_PASS || ''));
+    const name = String(Env.DB_NAME || '').trim();
+
+    if (!type) throw new Error('DB_TYPE 未配置');
+    if (!name && type !== 'sqlite') throw new Error('DB_NAME 未配置');
+
+    if (type === 'sqlite') {
+        if (!name) throw new Error('DB_NAME 未配置');
+        return `sqlite:${name}`;
     }
+
+    if (type === 'postgresql' || type === 'postgres') {
+        if (!host || !port) throw new Error('DB_HOST/DB_PORT 未配置');
+        const auth = user || pass ? `${user}:${pass}@` : '';
+        return `postgres://${auth}${host}:${port}/${encodeURIComponent(name)}`;
+    }
+
+    if (type === 'mysql') {
+        if (!host || !port) throw new Error('DB_HOST/DB_PORT 未配置');
+        const auth = user || pass ? `${user}:${pass}@` : '';
+        return `mysql://${auth}${host}:${port}/${encodeURIComponent(name)}`;
+    }
+
+    throw new Error(`不支持的 DB_TYPE: ${type}`);
 };
 
 export async function createSqlClient(options = {}) {
-    const url = String(Env.MYSQL_URL || '').trim();
-    if (!url) throw new Error('MYSQL_URL 未配置');
+    const finalUrl = buildDatabaseUrl();
 
     const sql = new SQL({
-        url: url,
+        url: finalUrl,
         max: options.max ?? 1,
         bigint: options.bigint ?? true,
         ...options
     });
     try {
-        const ver = await sql`SELECT VERSION() AS version`;
-        const version = ver?.[0]?.version;
-        Logger.info(`数据库连接成功，MySQL 版本: ${version}`);
+        // 连接健康检查：按协议选择
+        let version = '';
+        if (Env.DB_TYPE === 'sqlite') {
+            const v = await sql`SELECT sqlite_version() AS version`;
+            version = v?.[0]?.version;
+        } else if (Env.DB_TYPE === 'postgresql' || Env.DB_TYPE === 'postgres') {
+            const v = await sql`SELECT version() AS version`;
+            version = v?.[0]?.version;
+        } else {
+            const v = await sql`SELECT VERSION() AS version`;
+            version = v?.[0]?.version;
+        }
+        Logger.info(`数据库连接成功，version: ${version}`);
         return sql;
     } catch (error) {
         Logger.error('数据库连接测试失败:', error);

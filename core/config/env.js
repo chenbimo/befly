@@ -25,8 +25,13 @@ export const Env = {
     TZ: process.env.TZ,
     // 数据库配置
     MYSQL_ENABLE: Number(process.env.MYSQL_ENABLE),
-    // 优先使用统一的连接串
-    MYSQL_URL: process.env.MYSQL_URL,
+    // 通用数据库连接参数
+    DB_TYPE: process.env.DB_TYPE, // sqlite | mysql | postgresql
+    DB_HOST: process.env.DB_HOST,
+    DB_PORT: Number(process.env.DB_PORT),
+    DB_USER: process.env.DB_USER,
+    DB_PASS: process.env.DB_PASS,
+    DB_NAME: process.env.DB_NAME,
     MYSQL_DEBUG: Number(process.env.MYSQL_DEBUG),
     MYSQL_POOL_MAX: Number(process.env.MYSQL_POOL_MAX),
     // Redis配置

@@ -61,14 +61,21 @@
 
 ## 环境配置
 
-在 `.env` 文件中配置数据库连接信息：
+在 `.env` 文件中配置数据库连接信息（统一 DB\_\* 方案）：
 
 ```bash
-# 启用 MySQL
+# 启用数据库（开关）
 MYSQL_ENABLE=1
 
-# 数据库连接配置（统一使用 MYSQL_URL）
-MYSQL_URL=mysql://root:root@127.0.0.1:3306/test
+# 通用数据库参数
+DB_TYPE=mysql            # 支持 sqlite | mysql | postgresql
+DB_HOST=127.0.0.1        # sqlite 可忽略
+DB_PORT=3306             # sqlite 可忽略
+DB_USER=root             # sqlite 可忽略
+DB_PASS=root             # sqlite 可忽略
+DB_NAME=demo             # sqlite 为文件路径或 :memory:
+
+# 连接池与调试
 MYSQL_POOL_MAX=10
 MYSQL_DEBUG=0
 
