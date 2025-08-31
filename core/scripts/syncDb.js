@@ -1,5 +1,6 @@
 /**
- * 数据库表结构同步脚本 - 仅支持 MySQL 8.0+
+ * 数据库表结构同步脚本 - 支持 sqlite / mysql / postgresql
+ * 注意：MySQL 提供更完整的在线 ALTER 能力；SQLite/PG 的修改能力有差异，部分操作将跳过或分解。
  */
 
 import path from 'node:path';
@@ -9,11 +10,27 @@ import { parseFieldRule, createSqlClient, toSnakeTableName } from '../utils/inde
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
 
+// 方言与类型映射
+const DB = (Env.DB_TYPE || 'mysql').toLowerCase();
+const IS_MYSQL = DB === 'mysql';
+const IS_PG = DB === 'postgresql' || DB === 'postgres';
+const IS_SQLITE = DB === 'sqlite';
+
+// 统一标识符与字面量转义
+const qi = (name) => (IS_MYSQL ? `\`${name}\`` : `"${name}"`);
+const ql = (val) => {
+    if (val === null || val === undefined) return 'NULL';
+    if (typeof val === 'number') return String(val);
+    const escaped = String(val).replace(/'/g, "''");
+    return `'${escaped}'`;
+};
+
+// 字段类型映射（按方言）
 const typeMapping = {
-    number: 'BIGINT',
-    string: 'VARCHAR',
-    text: 'MEDIUMTEXT',
-    array: 'VARCHAR'
+    number: IS_SQLITE ? 'INTEGER' : 'BIGINT',
+    string: IS_SQLITE ? 'TEXT' : 'VARCHAR',
+    text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT',
+    array: IS_SQLITE ? 'TEXT' : 'VARCHAR'
 };
 
 // 表名转换函数已移动至 utils/index.js 的 toSnakeTableName
@@ -39,7 +56,10 @@ const FLAGS = {
     MERGE_ALTER: getFlag(Env.SYNC_MERGE_ALTER, 1), // 合并每表多项 DDL
     ONLINE_INDEX: getFlag(Env.SYNC_ONLINE_INDEX, 1), // 索引操作使用在线算法
     DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩
-    ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0) // 允许类型变更
+    ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0), // 允许类型变更
+    SQLITE_REBUILD: getFlag(Env.SYNC_SQLITE_REBUILD, 0), // SQLite 遇到不支持的修改时是否重建表
+    PG_SAFE_ADD_DEFAULT: getFlag(Env.SYNC_PG_SAFE_ADD_DEFAULT, 1), // PG: 新增列含默认值时走安全多步以避免重写
+    PG_ALLOW_COMPATIBLE_TYPE: getFlag(Env.SYNC_PG_ALLOW_COMPATIBLE_TYPE, 1) // PG: 允许兼容类型变更（varchar->text 等）
 };
 
 // 计算期望的默认值（与 information_schema 返回的值对齐）
@@ -63,6 +83,16 @@ const getExpectedDefault = (fieldType, fieldDefaultValue) => {
 };
 
 const normalizeDefault = (val) => (val === null || val === undefined ? null : String(val));
+
+// PG 兼容类型变更识别：无需数据重写的宽化型变更
+const isPgCompatibleTypeChange = (currentType, newType) => {
+    const c = String(currentType || '').toLowerCase();
+    const n = String(newType || '').toLowerCase();
+    // varchar -> text 视为宽化
+    if (c === 'character varying' && n === 'text') return true;
+    // text -> character varying 非宽化（可能截断），不兼容
+    return false;
+};
 
 // 获取字段的SQL定义
 const getColumnDefinition = (fieldName, rule) => {
@@ -107,103 +137,217 @@ const exec = async (client, query, params = []) => {
     return await client.unsafe(query);
 };
 
-// 获取表的现有列信息
+// 获取表的现有列信息（按方言）
 const getTableColumns = async (client, tableName) => {
-    const result = await exec(
-        client,
-        `SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
-         FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`,
-        [String(Env.MYSQL_NAME || Env.DB_NAME || '').trim(), tableName]
-    );
-
     const columns = {};
-    result.forEach((row) => {
-        columns[row.COLUMN_NAME] = {
-            type: row.DATA_TYPE,
-            columnType: row.COLUMN_TYPE,
-            length: row.CHARACTER_MAXIMUM_LENGTH,
-            nullable: row.IS_NULLABLE === 'YES',
-            defaultValue: row.COLUMN_DEFAULT,
-            comment: row.COLUMN_COMMENT
-        };
-    });
+    if (IS_MYSQL) {
+        const result = await exec(
+            client,
+            `SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
+             FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`,
+            [Env.DB_NAME, tableName]
+        );
+        result.forEach((row) => {
+            columns[row.COLUMN_NAME] = {
+                type: row.DATA_TYPE,
+                columnType: row.COLUMN_TYPE,
+                length: row.CHARACTER_MAXIMUM_LENGTH,
+                nullable: row.IS_NULLABLE === 'YES',
+                defaultValue: row.COLUMN_DEFAULT,
+                comment: row.COLUMN_COMMENT
+            };
+        });
+    } else if (IS_PG) {
+        const result = await client`SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public' AND table_name = ${tableName}
+                        ORDER BY ordinal_position`;
+        // 获取列注释
+        const comments = await client`SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment
+                          FROM pg_class c
+                          JOIN pg_attribute a ON a.attrelid = c.oid
+                          JOIN pg_namespace n ON n.oid = c.relnamespace
+                          WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relname = ${tableName} AND a.attnum > 0`;
+        const commentMap = {};
+        for (const r of comments) commentMap[r.column_name] = r.column_comment;
+        for (const row of result) {
+            columns[row.column_name] = {
+                type: row.data_type,
+                columnType: row.data_type,
+                length: row.character_maximum_length,
+                nullable: String(row.is_nullable).toUpperCase() === 'YES',
+                defaultValue: row.column_default,
+                comment: commentMap[row.column_name] ?? null
+            };
+        }
+    } else if (IS_SQLITE) {
+        const rs = await client.unsafe(`PRAGMA table_info(${qi(tableName)})`);
+        for (const row of rs) {
+            let baseType = String(row.type || '').toUpperCase();
+            let length = null;
+            const m = /^(\w+)\s*\((\d+)\)/.exec(baseType);
+            if (m) {
+                baseType = m[1];
+                length = Number(m[2]);
+            }
+            columns[row.name] = {
+                type: baseType.toLowerCase(),
+                columnType: baseType.toLowerCase(),
+                length: length,
+                nullable: row.notnull === 0,
+                defaultValue: row.dflt_value,
+                comment: null
+            };
+        }
+    }
     return columns;
 };
 
-// 获取表的现有索引信息
+// 获取表的现有索引信息（单列索引）
 const getTableIndexes = async (client, tableName) => {
-    const result = await exec(
-        client,
-        `SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
-         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME`,
-        [String(Env.MYSQL_NAME || Env.DB_NAME || '').trim(), tableName]
-    );
-
     const indexes = {};
-    result.forEach((row) => {
-        if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
-        indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
-    });
+    if (IS_MYSQL) {
+        const result = await exec(
+            client,
+            `SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME`,
+            [Env.DB_NAME, tableName]
+        );
+        result.forEach((row) => {
+            if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
+            indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
+        });
+    } else if (IS_PG) {
+        const result = await client`SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ${tableName}`;
+        for (const row of result) {
+            const m = /\(([^)]+)\)/.exec(row.indexdef);
+            if (m) {
+                const col = m[1].replace(/\"/g, '').replace(/"/g, '').trim();
+                indexes[row.indexname] = [col];
+            }
+        }
+    } else if (IS_SQLITE) {
+        const list = await client.unsafe(`PRAGMA index_list(${qi(tableName)})`);
+        for (const idx of list) {
+            const info = await client.unsafe(`PRAGMA index_info(${qi(idx.name)})`);
+            const cols = info.map((r) => r.name);
+            if (cols.length === 1) indexes[idx.name] = cols;
+        }
+    }
     return indexes;
 };
 
 // 构建索引操作 SQL（统一使用 ALTER TABLE 并尽量在线）
 const buildIndexSQL = (tableName, indexName, fieldName, action) => {
-    const parts = [];
-    if (action === 'create') {
-        parts.push(`ADD INDEX \`${indexName}\` (\`${fieldName}\`)`);
-    } else {
-        parts.push(`DROP INDEX \`${indexName}\``);
+    if (IS_MYSQL) {
+        const parts = [];
+        if (action === 'create') parts.push(`ADD INDEX ${qi(indexName)} (${qi(fieldName)})`);
+        else parts.push(`DROP INDEX ${qi(indexName)}`);
+        if (FLAGS.ONLINE_INDEX) {
+            parts.push('ALGORITHM=INPLACE');
+            parts.push('LOCK=NONE');
+        }
+        return `ALTER TABLE ${qi(tableName)} ${parts.join(', ')}`;
     }
-    if (FLAGS.ONLINE_INDEX) {
-        parts.push('ALGORITHM=INPLACE');
-        parts.push('LOCK=NONE');
+    if (IS_PG) {
+        if (action === 'create') {
+            const concurrently = FLAGS.ONLINE_INDEX ? ' CONCURRENTLY' : '';
+            return `CREATE INDEX${concurrently} IF NOT EXISTS ${qi(indexName)} ON ${qi(tableName)}(${qi(fieldName)})`;
+        }
+        const concurrently = FLAGS.ONLINE_INDEX ? ' CONCURRENTLY' : '';
+        return `DROP INDEX${concurrently} IF EXISTS ${qi(indexName)}`;
     }
-    return `ALTER TABLE \`${tableName}\` ${parts.join(', ')}`;
+    // SQLite
+    if (action === 'create') return `CREATE INDEX IF NOT EXISTS ${qi(indexName)} ON ${qi(tableName)}(${qi(fieldName)})`;
+    return `DROP INDEX IF EXISTS ${qi(indexName)}`;
 };
 
-// 创建表
+// 创建表（方言化）
 const createTable = async (client, tableName, fields) => {
-    const columns = [
-        //
-        '`id` BIGINT PRIMARY KEY COMMENT "主键ID"',
-        '`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"',
-        '`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"',
-        '`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"',
-        '`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"'
-    ];
+    const idType = typeMapping.number;
+    const colDefs = [];
+    if (IS_MYSQL) {
+        colDefs.push(`${qi('id')} ${idType} PRIMARY KEY COMMENT "主键ID"`);
+        colDefs.push(`${qi('created_at')} ${idType} NOT NULL DEFAULT 0 COMMENT "创建时间"`);
+        colDefs.push(`${qi('updated_at')} ${idType} NOT NULL DEFAULT 0 COMMENT "更新时间"`);
+        colDefs.push(`${qi('deleted_at')} ${idType} NOT NULL DEFAULT 0 COMMENT "删除时间"`);
+        colDefs.push(`${qi('state')} ${idType} NOT NULL DEFAULT 0 COMMENT "状态字段"`);
+    } else {
+        colDefs.push(`${qi('id')} ${idType} PRIMARY KEY`);
+        colDefs.push(`${qi('created_at')} ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`${qi('updated_at')} ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`${qi('deleted_at')} ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`${qi('state')} ${idType} NOT NULL DEFAULT 0`);
+    }
 
-    const indexes = [
-        //
-        'INDEX `idx_created_at` (`created_at`)',
-        'INDEX `idx_updated_at` (`updated_at`)',
-        'INDEX `idx_state` (`state`)'
-    ];
-
-    // 添加自定义字段和索引
     for (const [fieldName, rule] of Object.entries(fields)) {
-        columns.push(getColumnDefinition(fieldName, rule));
+        const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
+        let sqlType = typeMapping[fType];
+        if (!sqlType) throw new Error(`不支持的数据类型: ${fType}`);
+        if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
+            const maxLength = parseInt(fMax);
+            sqlType = `${typeMapping[fType]}(${maxLength})`;
+        }
+        let columnDef = `${qi(fieldName)} ${sqlType} NOT NULL`;
+        const expectedDefault = getExpectedDefault(fType, fDef);
+        if (fType !== 'text' && expectedDefault !== null) {
+            columnDef += ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}`;
+        }
+        if (IS_MYSQL && disp && disp !== 'null') {
+            columnDef += ` COMMENT "${disp.replace(/"/g, '\\"')}"`;
+        }
+        colDefs.push(columnDef);
+    }
 
-        // 使用第6个属性判断是否设置索引
-        const ruleParts = parseFieldRule(rule);
-        const fieldHasIndex = ruleParts[5]; // 第6个属性
-        if (fieldHasIndex === '1') {
-            indexes.push(`INDEX \`idx_${fieldName}\` (\`${fieldName}\`)`);
+    let createSQL = '';
+    if (IS_MYSQL) {
+        createSQL = `CREATE TABLE ${qi(tableName)} (\n            ${colDefs.join(',\n            ')}\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs`;
+    } else {
+        createSQL = `CREATE TABLE ${qi(tableName)} (\n            ${colDefs.join(',\n            ')}\n        )`;
+    }
+    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
+    else {
+        await exec(client, createSQL);
+        Logger.info(`[新建表] ${tableName}`);
+    }
+
+    // PostgreSQL: 添加列注释（用显示名）
+    if (IS_PG) {
+        const comments = [];
+        const pushComment = (col, disp) => {
+            if (disp && disp !== 'null') comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi(col)} IS ${ql(String(disp))}`);
+        };
+        pushComment('id', '主键ID');
+        pushComment('created_at', '创建时间');
+        pushComment('updated_at', '更新时间');
+        pushComment('deleted_at', '删除时间');
+        pushComment('state', '状态字段');
+        for (const [fieldName, rule] of Object.entries(fields)) {
+            const [disp] = parseFieldRule(rule);
+            pushComment(fieldName, disp);
+        }
+        for (const sql of comments) {
+            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+            else await exec(client, sql);
         }
     }
 
-    const createTableSQL = `
-        CREATE TABLE \`${tableName}\` (
-            ${columns.join(',\n            ')},
-            ${indexes.join(',\n            ')}
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs
-    `;
+    // 统一创建索引
+    // 系统字段默认索引
+    for (const sysField of ['created_at', 'updated_at', 'state']) {
+        const sql = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
+        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+        else await exec(client, sql);
+    }
 
-    if (FLAGS.DRY_RUN) {
-        Logger.info(`[计划] ${createTableSQL.replace(/\n+/g, ' ')}`);
-    } else {
-        await exec(client, createTableSQL);
-        Logger.info(`[新建表] ${tableName}`);
+    // 自定义字段索引
+    for (const [fieldName, rule] of Object.entries(fields)) {
+        const hasIndex = parseFieldRule(rule)[5] === '1';
+        if (hasIndex) {
+            const sql = buildIndexSQL(tableName, `idx_${fieldName}`, fieldName, 'create');
+            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+            else await exec(client, sql);
+        }
     }
 };
 
@@ -213,8 +357,8 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
     const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue] = ruleParts;
     const changes = [];
 
-    // 检查长度变化（string和array类型）
-    if (fieldType === 'string' || fieldType === 'array') {
+    // 检查长度变化（string和array类型） - SQLite 不比较长度
+    if (!IS_SQLITE && (fieldType === 'string' || fieldType === 'array')) {
         if (fieldMaxLength === 'null') {
             throw new Error(`string/array 类型字段的最大长度未设置，必须指定最大长度`);
         }
@@ -224,21 +368,16 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
         }
     }
 
-    // 检查注释变化（使用第1个属性作为字段显示名称）
-    if (fieldDisplayName && fieldDisplayName !== 'null') {
+    // 检查注释变化（MySQL/PG 支持列注释）
+    if ((IS_MYSQL || IS_PG) && fieldDisplayName && fieldDisplayName !== 'null') {
         const currentComment = existingColumn.comment || '';
         if (currentComment !== fieldDisplayName) {
             changes.push({ type: 'comment', current: currentComment, new: fieldDisplayName });
         }
     }
 
-    // 检查数据类型变化
-    const expectedDbType = {
-        number: 'bigint',
-        string: 'varchar',
-        text: 'mediumtext',
-        array: 'varchar'
-    }[fieldType];
+    // 检查数据类型变化（按方言）
+    const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fieldType] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fieldType] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fieldType];
 
     if (existingColumn.type.toLowerCase() !== expectedDbType) {
         changes.push({ type: 'datatype', current: existingColumn.type, new: expectedDbType });
@@ -268,9 +407,28 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
 
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
 const generateDDLClause = (fieldName, rule, isAdd = false) => {
-    const columnDef = getColumnDefinition(fieldName, rule);
-    const operation = isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN';
-    return `${operation} ${columnDef}`;
+    const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
+    let sqlType = typeMapping[fType];
+    if (!sqlType) throw new Error(`不支持的数据类型: ${fType}`);
+    if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
+        const maxLength = parseInt(fMax);
+        sqlType = `${typeMapping[fType]}(${maxLength})`;
+    }
+    const expectedDefault = getExpectedDefault(fType, fDef);
+    const defaultSql = fType !== 'text' && expectedDefault !== null ? ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}` : '';
+    if (IS_MYSQL) {
+        let col = `${qi(fieldName)} ${sqlType} NOT NULL${defaultSql}`;
+        if (disp && disp !== 'null') col += ` COMMENT "${disp.replace(/"/g, '\\"')}"`;
+        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} ${col}`;
+    }
+    if (IS_PG) {
+        if (isAdd) return `ADD COLUMN ${qi(fieldName)} ${sqlType} NOT NULL${defaultSql}`;
+        // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
+        return `ALTER COLUMN ${qi(fieldName)} TYPE ${sqlType}`;
+    }
+    // SQLite 仅支持 ADD COLUMN
+    if (isAdd) return `ADD COLUMN ${qi(fieldName)} ${sqlType} NOT NULL${defaultSql}`;
+    return '';
 };
 
 // 安全执行DDL语句
@@ -279,7 +437,7 @@ const executeDDLSafely = async (client, sql) => {
         await exec(client, sql);
         return true;
     } catch (error) {
-        // INSTANT失败时尝试INPLACE
+        // MySQL 专用降级路径
         if (sql.includes('ALGORITHM=INSTANT')) {
             const inplaceSql = sql.replace(/ALGORITHM=INSTANT/g, 'ALGORITHM=INPLACE');
             try {
@@ -300,6 +458,29 @@ const executeDDLSafely = async (client, sql) => {
     }
 };
 
+// SQLite 重建表迁移（简化版：仅处理新增/修改字段，不处理复杂约束与复合索引）
+const rebuildSqliteTable = async (client, tableName, fields) => {
+    // 1. 读取现有列顺序
+    const info = await client.unsafe(`PRAGMA table_info(${qi(tableName)})`);
+    const existingCols = info.map((r) => r.name);
+    const targetCols = ['id', 'created_at', 'updated_at', 'deleted_at', 'state', ...Object.keys(fields)];
+    const tmpTable = `${tableName}__tmp__${Date.now()}`;
+
+    // 2. 创建新表（使用当前定义）
+    await createTable(client, tmpTable, fields);
+
+    // 3. 拷贝数据（按交集列）
+    const commonCols = targetCols.filter((c) => existingCols.includes(c));
+    if (commonCols.length > 0) {
+        const colsSql = commonCols.map((c) => qi(c)).join(', ');
+        await exec(client, `INSERT INTO ${qi(tmpTable)} (${colsSql}) SELECT ${colsSql} FROM ${qi(tableName)}`);
+    }
+
+    // 4. 删除旧表并重命名
+    await exec(client, `DROP TABLE ${qi(tableName)}`);
+    await exec(client, `ALTER TABLE ${qi(tmpTable)} RENAME TO ${qi(tableName)}`);
+};
+
 // 同步表结构
 const syncTable = async (client, tableName, fields) => {
     const existingColumns = await getTableColumns(client, tableName);
@@ -311,6 +492,7 @@ const syncTable = async (client, tableName, fields) => {
     const modifyClauses = [];
     const defaultClauses = [];
     const indexActions = [];
+    const pgSafeAdds = [];
     // 变更统计（按字段粒度）
     const changeStats = {
         addFields: 0,
@@ -344,12 +526,8 @@ const syncTable = async (client, tableName, fields) => {
                         // 如果仅有 shrink 一个变化，仍可能还有默认/注释变化要处理
                     }
                 }
-                const expectedDbType = {
-                    number: 'bigint',
-                    string: 'varchar',
-                    text: 'mediumtext',
-                    array: 'varchar'
-                }[parseFieldRule(rule)[1]];
+                const fType2 = parseFieldRule(rule)[1];
+                const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fType2] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fType2] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fType2];
                 if (existingColumns[fieldName].type.toLowerCase() !== expectedDbType && !FLAGS.ALLOW_TYPE_CHANGE) {
                     Logger.warn(`[跳过危险变更] ${tableName}.${fieldName} 类型变更 ${existingColumns[fieldName].type} -> ${expectedDbType} 已被跳过（设置 SYNC_ALLOW_TYPE_CHANGE=1 可放开）`);
                     // 继续处理默认值/注释等非类型变更
@@ -360,11 +538,10 @@ const syncTable = async (client, tableName, fields) => {
                 if (onlyDefaultChanged) {
                     const expectedDefault = getExpectedDefault(parseFieldRule(rule)[1], parseFieldRule(rule)[4]);
                     if (expectedDefault === null) {
-                        defaultClauses.push(`ALTER COLUMN \`${fieldName}\` DROP DEFAULT`);
+                        defaultClauses.push(`ALTER COLUMN ${qi(fieldName)} DROP DEFAULT`);
                     } else {
-                        const isNumber = parseFieldRule(rule)[1] === 'number';
-                        const v = isNumber ? expectedDefault : `"${String(expectedDefault).replace(/"/g, '\\"')}"`;
-                        defaultClauses.push(`ALTER COLUMN \`${fieldName}\` SET DEFAULT ${v}`);
+                        const v = parseFieldRule(rule)[1] === 'number' ? expectedDefault : ql(String(expectedDefault));
+                        defaultClauses.push(`ALTER COLUMN ${qi(fieldName)} SET DEFAULT ${v}`);
                     }
                 } else {
                     // 判断是否需要跳过 MODIFY：包含收缩或类型变更时跳过
@@ -372,16 +549,23 @@ const syncTable = async (client, tableName, fields) => {
                     const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
                     if (hasLengthChange && (fType === 'string' || fType === 'array') && existingColumns[fieldName].length && fMax !== 'null') {
                         const newLen = parseInt(fMax);
-                        if (existingColumns[fieldName].length > newLen && FLAGS.DISALLOW_SHRINK) {
+                        const oldLen = existingColumns[fieldName].length;
+                        const isShrink = oldLen > newLen;
+                        if (isShrink && FLAGS.DISALLOW_SHRINK) {
+                            skipModify = true;
+                        }
+                        // 对 PG 来说，扩列（oldLen < newLen）是安全宽化，允许
+                    }
+                    const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
+                    if (hasTypeChange) {
+                        if (IS_PG && FLAGS.PG_ALLOW_COMPATIBLE_TYPE && isPgCompatibleTypeChange(existingColumns[fieldName].type, expectedDbType)) {
+                            Logger.info(`[PG兼容类型变更] ${tableName}.${fieldName} ${existingColumns[fieldName].type} -> ${expectedDbType} 允许执行`);
+                        } else if (!FLAGS.ALLOW_TYPE_CHANGE) {
                             skipModify = true;
                         }
                     }
-                    const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
-                    if (hasTypeChange && !FLAGS.ALLOW_TYPE_CHANGE) {
-                        skipModify = true;
-                    }
                     if (!skipModify) {
-                        // 合并到 MODIFY COLUMN 子句
+                        // 合并到 MODIFY/ALTER COLUMN 子句
                         modifyClauses.push(generateDDLClause(fieldName, rule, false));
                     }
                 }
@@ -393,13 +577,39 @@ const syncTable = async (client, tableName, fields) => {
             const lenPart = fType === 'string' || fType === 'array' ? ` 长度:${parseInt(fMax)}` : '';
             const expectedDefault = getExpectedDefault(fType, fDef);
             Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
-            addClauses.push(generateDDLClause(fieldName, rule, true));
+            if (IS_PG && FLAGS.PG_SAFE_ADD_DEFAULT) {
+                // 生成安全新增列计划（NULL -> UPDATE -> SET DEFAULT? -> SET NOT NULL）
+                let sqlType = typeMapping[fType];
+                if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
+                    const maxLength = parseInt(fMax);
+                    sqlType = `${typeMapping[fType]}(${maxLength})`;
+                }
+                const backfill = expectedDefault !== null ? expectedDefault : '';
+                pgSafeAdds.push({
+                    column: fieldName,
+                    sqlType,
+                    backfill,
+                    setDefault: expectedDefault !== null
+                });
+            } else {
+                addClauses.push(generateDDLClause(fieldName, rule, true));
+            }
             changed = true;
             changeStats.addFields++;
         }
     }
 
     // 同步索引
+    // 系统索引：created_at / updated_at / state
+    for (const sysField of ['created_at', 'updated_at', 'state']) {
+        const idxName = `idx_${sysField}`;
+        if (!existingIndexes[idxName]) {
+            indexActions.push({ action: 'create', indexName: idxName, fieldName: sysField });
+            changed = true;
+            changeStats.indexCreate++;
+        }
+    }
+
     for (const [fieldName, rule] of Object.entries(fields)) {
         const ruleParts = parseFieldRule(rule);
         const fieldHasIndex = ruleParts[5]; // 使用第6个属性判断是否设置索引
@@ -415,7 +625,24 @@ const syncTable = async (client, tableName, fields) => {
             changeStats.indexDrop++;
         }
     }
-    return { changed, addClauses, modifyClauses, defaultClauses, indexActions, metrics: changeStats };
+
+    // PG 注释单独处理（MySQL 的 COMMENT 已包含在 MODIFY COLUMN/ADD COLUMN 中）
+    const commentActions = [];
+    if (IS_PG) {
+        for (const [fieldName, rule] of Object.entries(fields)) {
+            if (existingColumns[fieldName]) {
+                const [disp] = parseFieldRule(rule);
+                const curr = existingColumns[fieldName].comment || '';
+                const want = disp && disp !== 'null' ? String(disp) : '';
+                if (want !== curr) {
+                    commentActions.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi(fieldName)} IS ${want ? ql(want) : 'NULL'}`);
+                    changed = true;
+                    changeStats.comment++;
+                }
+            }
+        }
+    }
+    return { changed, addClauses, modifyClauses, defaultClauses, indexActions, commentActions, pgSafeAdds, metrics: changeStats };
 };
 
 // 主同步函数
@@ -431,21 +658,26 @@ const SyncDb = async () => {
             throw new Error('表定义验证失败');
         }
 
-        // 建立数据库连接并检查版本（统一工具函数）
+        // 建立数据库连接并检查版本（按方言）
         client = await createSqlClient({ max: 1 });
-        const result = await client`SELECT VERSION() AS version`;
-        const version = result[0].version;
-
-        if (version.toLowerCase().includes('mariadb')) {
-            throw new Error('此脚本仅支持 MySQL 8.0+，不支持 MariaDB');
+        if (IS_MYSQL) {
+            const r = await client`SELECT VERSION() AS version`;
+            const version = r[0].version;
+            if (version.toLowerCase().includes('mariadb')) {
+                throw new Error('此脚本仅支持 MySQL 8.0+，不支持 MariaDB');
+            }
+            const majorVersion = parseInt(version.split('.')[0]);
+            if (majorVersion < 8) {
+                throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
+            }
+            Logger.info(`MySQL 版本: ${version}`);
+        } else if (IS_PG) {
+            const r = await client`SELECT version() AS version`;
+            Logger.info(`PostgreSQL 版本: ${r[0].version}`);
+        } else if (IS_SQLITE) {
+            const r = await client`SELECT sqlite_version() AS version`;
+            Logger.info(`SQLite 版本: ${r[0].version}`);
         }
-
-        const majorVersion = parseInt(version.split('.')[0]);
-        if (majorVersion < 8) {
-            throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
-        }
-
-        Logger.info(`MySQL 版本检查通过: ${version}`);
 
         // 扫描并处理表文件
         const tablesGlob = new Bun.Glob('*.json');
@@ -471,8 +703,17 @@ const SyncDb = async () => {
                     const fileBaseName = path.basename(file, '.json');
                     const tableName = toSnakeTableName(fileBaseName);
                     const tableDefinition = await Bun.file(file).json();
-                    const result = await exec(client, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [String(Env.MYSQL_NAME || Env.DB_NAME || '').trim(), tableName]);
-                    const exists = result[0].count > 0;
+                    let exists = false;
+                    if (IS_MYSQL) {
+                        const res = await exec(client, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.DB_NAME, tableName]);
+                        exists = res[0].count > 0;
+                    } else if (IS_PG) {
+                        const res = await client`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
+                        exists = (res[0]?.count || 0) > 0;
+                    } else if (IS_SQLITE) {
+                        const res = await client.unsafe(`SELECT name FROM sqlite_master WHERE type='table' AND name=${ql(tableName)}`);
+                        exists = res.length > 0;
+                    }
 
                     if (exists) {
                         const plan = await syncTable(client, tableName, tableDefinition);
@@ -488,35 +729,98 @@ const SyncDb = async () => {
                                 overall.nameChanges += plan.metrics.comment;
                             }
                             // 合并执行 ALTER TABLE 子句
-                            if (FLAGS.MERGE_ALTER) {
+                            if (IS_SQLITE) {
+                                // SQLite: 仅支持 ADD COLUMN；如需修改/默认值设置，可选择重建表
+                                if ((plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) && FLAGS.SQLITE_REBUILD) {
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
+                                    else await rebuildSqliteTable(client, tableName, tableDefinition);
+                                } else {
+                                    for (const c of plan.addClauses) {
+                                        const sql = `ALTER TABLE ${qi(tableName)} ${c}`;
+                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                        else await exec(client, sql);
+                                    }
+                                }
+                            } else if (IS_PG && plan.pgSafeAdds && plan.pgSafeAdds.length > 0) {
+                                // PostgreSQL 安全新增列（避免重写）：
+                                for (const add of plan.pgSafeAdds) {
+                                    // 1) ADD COLUMN NULL 无默认
+                                    const addSql = `ALTER TABLE ${qi(tableName)} ADD COLUMN ${qi(add.column)} ${add.sqlType}`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${addSql}`);
+                                    else await exec(client, addSql);
+                                    // 2) 分批回填（这里简单一次性回填；生产可按批次）
+                                    if (add.setDefault) {
+                                        const updSql = `UPDATE ${qi(tableName)} SET ${qi(add.column)} = ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))} WHERE ${qi(add.column)} IS NULL`;
+                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${updSql}`);
+                                        else await exec(client, updSql);
+                                        // 3) 设置 DEFAULT
+                                        const defSql = `ALTER TABLE ${qi(tableName)} ALTER COLUMN ${qi(add.column)} SET DEFAULT ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))}`;
+                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${defSql}`);
+                                        else await exec(client, defSql);
+                                    }
+                                    // 4) 置为 NOT NULL
+                                    const notNullSql = `ALTER TABLE ${qi(tableName)} ALTER COLUMN ${qi(add.column)} SET NOT NULL`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${notNullSql}`);
+                                    else await exec(client, notNullSql);
+                                }
+                                // 其他普通 ADD/MODIFY 照常执行
+                                if (FLAGS.MERGE_ALTER) {
+                                    const clauses = [...plan.addClauses, ...plan.modifyClauses];
+                                    if (clauses.length > 0) {
+                                        const sql = `ALTER TABLE ${qi(tableName)} ${clauses.join(', ')}`;
+                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                        else await exec(client, sql);
+                                    }
+                                } else {
+                                    for (const c of plan.addClauses) {
+                                        const sql = `ALTER TABLE ${qi(tableName)} ${c}`;
+                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                        else await exec(client, sql);
+                                    }
+                                    for (const c of plan.modifyClauses) {
+                                        const sql = `ALTER TABLE ${qi(tableName)} ${c}`;
+                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                        else await exec(client, sql);
+                                    }
+                                }
+                            } else if (FLAGS.MERGE_ALTER) {
                                 const clauses = [...plan.addClauses, ...plan.modifyClauses];
                                 if (clauses.length > 0) {
-                                    const sql = `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}, ALGORITHM=INSTANT, LOCK=NONE`;
-                                    if (FLAGS.DRY_RUN) {
-                                        Logger.info(`[计划] ${sql}`);
-                                    } else {
-                                        await executeDDLSafely(client, sql);
-                                    }
+                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                    const sql = `ALTER TABLE ${qi(tableName)} ${clauses.join(', ')}${suffix}`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
+                                    else await exec(client, sql);
                                 }
                             } else {
                                 // 分别执行
                                 for (const c of plan.addClauses) {
-                                    const sql = `ALTER TABLE \`${tableName}\` ${c}, ALGORITHM=INSTANT, LOCK=NONE`;
+                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                    const sql = `ALTER TABLE ${qi(tableName)} ${c}${suffix}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                    else await executeDDLSafely(client, sql);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
+                                    else await exec(client, sql);
                                 }
                                 for (const c of plan.modifyClauses) {
-                                    const sql = `ALTER TABLE \`${tableName}\` ${c}, ALGORITHM=INSTANT, LOCK=NONE`;
+                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                    const sql = `ALTER TABLE ${qi(tableName)} ${c}${suffix}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                    else await executeDDLSafely(client, sql);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
+                                    else await exec(client, sql);
                                 }
                             }
 
                             // 默认值专用 ALTER
                             if (plan.defaultClauses.length > 0) {
-                                const sql = `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}, ALGORITHM=INSTANT, LOCK=NONE`;
-                                if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                else await executeDDLSafely(client, sql);
+                                if (IS_SQLITE) {
+                                    Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
+                                } else {
+                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                    const sql = `ALTER TABLE ${qi(tableName)} ${plan.defaultClauses.join(', ')}${suffix}`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
+                                    else await exec(client, sql);
+                                }
                             }
 
                             // 索引操作
@@ -536,6 +840,14 @@ const SyncDb = async () => {
                                         Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
                                         throw error;
                                     }
+                                }
+                            }
+
+                            // PG 列注释
+                            if (IS_PG && plan.commentActions && plan.commentActions.length > 0) {
+                                for (const sql of plan.commentActions) {
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
+                                    else await exec(client, sql);
                                 }
                             }
 

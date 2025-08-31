@@ -32,8 +32,6 @@ export const Env = {
     DB_USER: process.env.DB_USER,
     DB_PASS: process.env.DB_PASS,
     DB_NAME: process.env.DB_NAME,
-    // 为向后/特殊脚本兼容提供的 schema 名称（优先于 DB_NAME 用于信息_schema 查询）
-    MYSQL_NAME: process.env.MYSQL_NAME,
     MYSQL_DEBUG: Number(process.env.MYSQL_DEBUG),
     MYSQL_POOL_MAX: Number(process.env.MYSQL_POOL_MAX),
     // Redis配置

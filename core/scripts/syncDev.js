@@ -43,7 +43,7 @@ export async function SyncDev(client = null) {
         }
 
         // 检查 admin 表是否存在
-        const [exist] = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [String(Env.MYSQL_NAME || Env.DB_NAME || '').trim(), 'admin']);
+        const [exist] = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'admin']);
         if (!exist || Number(exist.cnt) === 0) {
             Logger.warn('跳过开发管理员初始化：未检测到 admin 表');
             return false;

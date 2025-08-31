@@ -236,3 +236,94 @@ PostgreSQL 示例：
 
 -   是否还能使用 MYSQL*URL/MYSQL_DB？不支持，已废弃；请切换到 DB*\*。
 -   生产灰度如何做？建议先在 pm2 的 env 中引入 DB\_\*，保留 MYSQL_ENABLE/POOL/DEBUG，然后在测试通过后切换。
+
+## PostgreSQL 专项说明（PG Online 策略与限制）
+
+本节总结当前在 PostgreSQL 场景下由 `core/scripts/syncDb.js` 实现的能力、策略与限制，帮助你“尽可能对齐 MySQL”的同时，遵守 PG 的约束以降低锁表与停机风险。
+
+### 已实现能力
+
+-   在线并发索引（可选）
+
+    -   受 `SYNC_ONLINE_INDEX=1` 控制；创建/删除索引时使用 `CONCURRENTLY`（`CREATE INDEX CONCURRENTLY` / `DROP INDEX CONCURRENTLY`）。
+    -   适用于普通与系统索引（如 `created_at`、`updated_at`、`state`）。
+    -   注意：并发索引在 PG 中要求非事务上下文，脚本会按语句拆分执行。
+
+-   列注释同步
+
+    -   自动发现与比对列注释差异，通过 `COMMENT ON COLUMN` 应用变更。
+    -   新建表会基于表定义中的“显示名”写入列注释。
+
+-   安全的“带默认值新增列”多步路径
+
+    -   受 `SYNC_PG_SAFE_ADD_DEFAULT=1` 控制，流程：
+        1. `ADD COLUMN ... NULL`（不立刻加默认/非空约束）
+        2. `UPDATE ...` 回填历史数据默认值（避免重写整表导致长锁）
+        3. `ALTER TABLE ... ALTER COLUMN ... SET DEFAULT ...`
+        4. 如需非空：`ALTER TABLE ... ALTER COLUMN ... SET NOT NULL`
+
+-   兼容性类型/长度的“无锁”识别与最小化变更
+    -   受 `SYNC_PG_ALLOW_COMPATIBLE_TYPE=1` 控制，当前支持：
+        -   `varchar(n)` 扩容为更大的 `varchar(m)`（m >= n）
+        -   `varchar(n)` 迁移为 `text`
+    -   这两类变更按“兼容/可扩展”处理，生成最小化 `ALTER TABLE ... ALTER COLUMN ... TYPE ...`，尽量避免重写整表。
+
+### 重要限制与注意事项
+
+-   收缩/不兼容变更默认禁止
+
+    -   若目标类型更小或不兼容（例如 `text -> varchar(100)` 或 缩短 `varchar` 长度），会被策略拒绝。可通过 `SYNC_DISALLOW_SHRINK` 控制（默认禁止）。
+    -   完全不兼容的类型变更（需要数据转换、可能重写整表）未内置自动迁移路径，建议使用“影子列 + 回填 + 切换”人工方案。
+
+-   事务边界与并发索引
+
+    -   `CREATE/DROP INDEX CONCURRENTLY` 不允许在事务内执行；脚本会分离执行。但在 CI/CD 或外层自定义事务中需确保不包装这些语句。
+
+-   约束、唯一/复合索引
+
+    -   目前仅覆盖普通/单列索引的同步；唯一索引与复合索引的全量同步仍待增强（计划：识别差异、`CREATE UNIQUE INDEX [CONCURRENTLY]`）。
+
+-   SET NOT NULL 渐进式校验（计划项）
+    -   进一步优化路线（如 `CHECK NOT VALID` -> `VALIDATE CONSTRAINT` -> `SET NOT NULL`）尚未内置，将作为后续增强以减少长事务窗口。
+
+### 常用环境开关（与 PG 相关）
+
+-   `SYNC_ONLINE_INDEX=1`：启用并发索引创建/删除（生成 CONCURRENTLY）。
+-   `SYNC_PG_SAFE_ADD_DEFAULT=1`：启用新增列带默认值的 4 步安全路径。
+-   `SYNC_PG_ALLOW_COMPATIBLE_TYPE=1`：允许“兼容/扩展”类型变更（如 varchar 扩容、varchar->text）。
+-   `SYNC_DISALLOW_SHRINK=1`：禁止收缩类变更（推荐开启）。
+
+这些开关由 `core/config/env.js` 暴露，默认值以当前代码为准，可在运行 `bunx befly syncDb` 时通过进程环境注入覆盖。
+
+### Schema 与命名约定
+
+-   数据库：使用 `DB_NAME` 指定；Schema 默认使用 `public`。无需另设 `MYSQL_NAME`。
+-   标识符引用：内部使用双引号 `"name"` 进行引用，避免大小写/关键字冲突。
+
+### 示例：新增非空列并设默认值
+
+表定义新增字段（示例）
+
+```
+"status": "状态⚡varchar⚡0⚡32⚡active"
+```
+
+在 `SYNC_PG_SAFE_ADD_DEFAULT=1` 下生成执行序列：
+
+1. `ALTER TABLE "table" ADD COLUMN "status" character varying(32) NULL;`
+2. `UPDATE "table" SET "status" = 'active' WHERE "status" IS NULL;`
+3. `ALTER TABLE "table" ALTER COLUMN "status" SET DEFAULT 'active';`
+4. `ALTER TABLE "table" ALTER COLUMN "status" SET NOT NULL;`
+
+### 示例：兼容扩容与类型放宽
+
+-   `varchar(64)` -> `varchar(128)`：识别为扩容，生成 `ALTER COLUMN ... TYPE character varying(128)`。
+-   `varchar(64)` -> `text`：识别为放宽，生成 `ALTER COLUMN ... TYPE text`。
+
+若为不兼容/收缩变更（如 `text` -> `varchar(64)` 或 `varchar(128)` -> `varchar(64)`），默认拒绝，避免大范围重写与风险。
+
+### 故障处理建议（PG）
+
+-   报错涉及事务与 CONCURRENTLY：确保外层未包裹成单一事务；或临时关闭 `SYNC_ONLINE_INDEX` 后再试。
+-   锁等待时间过长：在业务低峰执行；或分批次对大表应用变更。
+-   需要复杂的类型转换：采用“影子列 + 回填数据 + 读写切换 + 清理旧列”的迁移蓝图。

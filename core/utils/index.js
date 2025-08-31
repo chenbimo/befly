@@ -369,12 +369,12 @@ export const parseFieldRule = (rule) => {
 // - postgresql: postgres://[user:pass@]host:port/DB_NAME
 // - mysql: mysql://[user:pass@]host:port/DB_NAME
 export const buildDatabaseUrl = () => {
-    const type = String(Env.DB_TYPE || '').trim();
-    const host = String(Env.DB_HOST || '').trim();
+    const type = Env.DB_TYPE || '';
+    const host = Env.DB_HOST || '';
     const port = Env.DB_PORT;
-    const user = encodeURIComponent(String(Env.DB_USER || ''));
-    const pass = encodeURIComponent(String(Env.DB_PASS || ''));
-    const name = String(Env.DB_NAME || '').trim();
+    const user = encodeURIComponent(Env.DB_USER || '');
+    const pass = encodeURIComponent(Env.DB_PASS || '');
+    const name = Env.DB_NAME || '';
 
     if (!type) throw new Error('DB_TYPE 未配置');
     if (!name && type !== 'sqlite') throw new Error('DB_NAME 未配置');
