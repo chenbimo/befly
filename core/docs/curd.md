@@ -65,7 +65,7 @@
 
 ```bash
 # 启用数据库（开关）
-MYSQL_ENABLE=1
+DB_ENABLE=1
 
 # 通用数据库参数
 DB_TYPE=mysql            # 支持 sqlite | mysql | postgresql
@@ -76,8 +76,8 @@ DB_PASS=root             # sqlite 可忽略
 DB_NAME=demo             # sqlite 为文件路径或 :memory:
 
 # 连接池与调试
-MYSQL_POOL_MAX=10
-MYSQL_DEBUG=0
+DB_POOL_MAX=10
+DB_DEBUG=0
 
 # 时区配置
 TZ=Asia/Shanghai

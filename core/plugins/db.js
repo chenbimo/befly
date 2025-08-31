@@ -11,7 +11,7 @@ export default {
         let sql = null;
 
         try {
-            if (Env.MYSQL_ENABLE === 1) {
+            if (Env.DB_ENABLE === 1) {
                 // 创建 Bun SQL 客户端（内置连接池），并确保连接验证成功后再继续
                 sql = await createSqlClient();
 
@@ -20,7 +20,7 @@ export default {
 
                 return dbManager;
             } else {
-                Logger.warn(`MySQL 未启用，跳过初始化`);
+                Logger.warn(`数据库未启用（DB_ENABLE≠1），跳过初始化`);
                 return {};
             }
         } catch (error) {

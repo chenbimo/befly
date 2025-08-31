@@ -109,7 +109,7 @@ bun test core/tests/jwt.test.js       # 运行特定测试
 
 -   **配置中心**: `config/env.js` 统一管理环境变量
 -   **类型转换**: 自动处理数字类型配置项
--   **功能开关**: `MYSQL_ENABLE`, `REDIS_ENABLE` 等开关配置
+-   **功能开关**: `DB_ENABLE`, `REDIS_ENABLE` 等开关配置
 
 ### 日志记录
 
@@ -170,9 +170,9 @@ bun test core/tests/jwt.test.js       # 运行特定测试
 -   DB_USER：用户名（sqlite 可忽略）
 -   DB_PASS：密码（sqlite 可忽略）
 -   DB_NAME：数据库名称（sqlite 为文件路径或 :memory:）
--   MYSQL_ENABLE：是否启用数据库（开关，保留）
--   MYSQL_POOL_MAX：连接池最大连接数（保留）
--   MYSQL_DEBUG：SQL 调试开关（保留）
+-   DB_ENABLE：是否启用数据库（开关）
+-   DB_POOL_MAX：连接池最大连接数
+-   DB_DEBUG：SQL 调试开关
 
 ### 废弃与兼容
 
@@ -209,9 +209,9 @@ bun test core/tests/jwt.test.js       # 运行特定测试
     - DB_PASS=root
     - DB_NAME=demo
 3. 保留或按需调整：
-    - MYSQL_ENABLE=1
-    - MYSQL_POOL_MAX=10
-    - MYSQL_DEBUG=0
+    - DB_ENABLE=1
+    - DB_POOL_MAX=10
+    - DB_DEBUG=0
 
 SQLite 示例：
 
@@ -235,7 +235,7 @@ PostgreSQL 示例：
 ### 问答
 
 -   是否还能使用 MYSQL*URL/MYSQL_DB？不支持，已废弃；请切换到 DB*\*。
--   生产灰度如何做？建议先在 pm2 的 env 中引入 DB\_\*，保留 MYSQL_ENABLE/POOL/DEBUG，然后在测试通过后切换。
+-   生产灰度如何做？建议在 pm2 的 env 中统一使用 DB\_\*，包括 DB_ENABLE/DB_POOL_MAX/DB_DEBUG。
 
 ## PostgreSQL 专项说明（PG Online 策略与限制）
 

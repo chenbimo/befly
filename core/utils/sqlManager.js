@@ -71,7 +71,7 @@ export class SqlManager {
         const isWriteLike = /^\s*(insert|update|delete|replace)\b/i.test(query);
         const client = conn || this.#sql;
         try {
-            if (Env.MYSQL_DEBUG === 1) {
+            if (Env.DB_DEBUG === 1) {
                 Logger.debug('执行SQL:', { sql: query, params });
             }
             // 读查询
