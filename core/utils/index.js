@@ -359,15 +359,9 @@ export const parseFieldRule = (rule) => {
 
 /**
  * 创建并校验 Bun SQL 客户端
- * - 否则按 scripts/syncDb.js 的方式拼接 URL
  * - 连接成功后返回 SQL 实例，失败会自动 close 并抛出
  * @param {object} options 传给 new SQL 的参数（如 { max: 1, bigint: true }）
  */
-export const getMysqlSchemaFromEnv = () => {
-    const db = String(Env.DB_NAME || '').trim();
-    if (!db) throw new Error('DB_NAME 未配置');
-    return db;
-};
 
 // 组合最终数据库连接串：
 // - 基于 DB_* 环境变量构建（DB_TYPE/DB_HOST/DB_PORT/DB_USER/DB_PASS/DB_NAME）
