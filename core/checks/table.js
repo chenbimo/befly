@@ -129,12 +129,8 @@ export const checkTable = async () => {
                         }
 
                         // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
-                        const minIsNum = fieldMin !== 'null' && !Number.isNaN(Number(fieldMin));
-                        const maxIsNum = fieldMax !== 'null' && !Number.isNaN(Number(fieldMax));
-                        if (minIsNum && maxIsNum) {
-                            const minNum = Number(fieldMin);
-                            const maxNum = Number(fieldMax);
-                            if (minNum > maxNum) {
+                        if (fieldMin !== 'null' && fieldMax !== 'null') {
+                            if (Number(fieldMin) > Number(fieldMax)) {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
                                 fileValid = false;
                                 continue;
@@ -149,7 +145,7 @@ export const checkTable = async () => {
                         }
 
                         // 第6个值：是否创建索引必须为0或1
-                        if (!(fieldIndex === 0 || fieldIndex === 1 || fieldIndex === '0' || fieldIndex === '1')) {
+                        if (fieldIndex !== 0 && fieldIndex !== 1) {
                             Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为0或1`);
                             fileValid = false;
                             continue;
