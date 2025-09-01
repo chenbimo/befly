@@ -412,14 +412,18 @@ export const buildDatabaseUrl = () => {
 
 export async function createSqlClient(options = {}) {
     const finalUrl = buildDatabaseUrl();
-    console.log('🔥[ finalUrl ]-415', finalUrl);
+    let sql = null;
+    if (Env.DB_TYPE === 'sqlite') {
+        sql = new SQL(finalUrl);
+    } else {
+        sql = new SQL({
+            url: finalUrl,
+            max: options.max ?? 1,
+            bigint: options.bigint ?? true,
+            ...options
+        });
+    }
 
-    const sql = new SQL({
-        url: finalUrl,
-        max: options.max ?? 1,
-        bigint: options.bigint ?? true,
-        ...options
-    });
     try {
         // 连接健康检查：按协议选择
         let version = '';
