@@ -64,7 +64,6 @@ const FLAGS = {
     // DRY-RUN 改为命令行参数控制，忽略环境变量
     DRY_RUN: CLI.DRY_RUN, // 仅打印计划，不执行
     MERGE_ALTER: getFlag(Env.SYNC_MERGE_ALTER, 1), // 合并每表多项 DDL
-    ONLINE_INDEX: getFlag(Env.SYNC_ONLINE_INDEX, 1), // 索引操作使用在线算法
     DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩
     ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0), // 允许类型变更
     SQLITE_REBUILD: getFlag(Env.SYNC_SQLITE_REBUILD, 0), // SQLite 遇到不支持的修改时是否重建表
@@ -249,24 +248,22 @@ const getTableIndexes = async (tableName) => {
     return indexes;
 };
 
-// 构建索引操作 SQL（统一使用 ALTER TABLE 并尽量在线）
+// 构建索引操作 SQL（统一使用在线策略）
 const buildIndexSQL = (tableName, indexName, fieldName, action) => {
     if (IS_MYSQL) {
         const parts = [];
         action === 'create' ? parts.push(`ADD INDEX \`${indexName}\` (\`${fieldName}\`)`) : parts.push(`DROP INDEX \`${indexName}\``);
-        if (FLAGS.ONLINE_INDEX) {
-            parts.push('ALGORITHM=INPLACE');
-            parts.push('LOCK=NONE');
-        }
+        // 始终使用在线算法
+        parts.push('ALGORITHM=INPLACE');
+        parts.push('LOCK=NONE');
         return `ALTER TABLE \`${tableName}\` ${parts.join(', ')}`;
     }
     if (IS_PG) {
         if (action === 'create') {
-            const concurrently = FLAGS.ONLINE_INDEX ? ' CONCURRENTLY' : '';
-            return `CREATE INDEX${concurrently} IF NOT EXISTS "${indexName}" ON "${tableName}"("${fieldName}")`;
+            // 始终使用 CONCURRENTLY
+            return `CREATE INDEX CONCURRENTLY IF NOT EXISTS "${indexName}" ON "${tableName}"("${fieldName}")`;
         }
-        const concurrently = FLAGS.ONLINE_INDEX ? ' CONCURRENTLY' : '';
-        return `DROP INDEX${concurrently} IF EXISTS "${indexName}"`;
+        return `DROP INDEX CONCURRENTLY IF EXISTS "${indexName}"`;
     }
     // SQLite
     if (action === 'create') return `CREATE INDEX IF NOT EXISTS "${indexName}" ON "${tableName}"("${fieldName}")`;

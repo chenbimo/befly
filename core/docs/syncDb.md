@@ -160,10 +160,17 @@ bun run checks/table.js
 
 - （已废弃）SYNC_DRY_RUN：请使用命令行参数 `--dry-run`
 - SYNC_MERGE_ALTER：是否合并每表多项 DDL（默认 1）
-- SYNC_ONLINE_INDEX：索引 ADD/DROP 使用 INPLACE + LOCK=NONE（默认 1）
 - SYNC_DISALLOW_SHRINK：禁止长度收缩（默认 1）
 - SYNC_ALLOW_TYPE_CHANGE：允许类型变更（默认 0）
 - SYNC_PG_ALLOW_COMPATIBLE_TYPE：PostgreSQL 允许“兼容/扩展”类型变更（如 varchar 扩容、varchar→text）（默认 1）
+
+说明（索引在线化）：
+
+- 现在索引 ADD/DROP 始终使用“在线策略”，无需也不再支持 `SYNC_ONLINE_INDEX` 开关。
+    - MySQL：`ALTER TABLE ... ADD/DROP INDEX ... ALGORITHM=INPLACE, LOCK=NONE`
+    - PostgreSQL：`CREATE/DROP INDEX CONCURRENTLY`
+    - SQLite：不支持并发/在线索引，按常规 `CREATE/DROP INDEX` 执行
+    - 注意：PG 的 CONCURRENTLY 需在非事务上下文执行，脚本已按语句逐条执行。
 
 ## 统计输出
 

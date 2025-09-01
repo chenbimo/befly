@@ -210,9 +210,10 @@ PostgreSQL 示例：
 
 ### 已实现能力
 
--   在线并发索引（可选）
+-   在线并发索引（默认启用）
 
-    -   受 `SYNC_ONLINE_INDEX=1` 控制；创建/删除索引时使用 `CONCURRENTLY`（`CREATE INDEX CONCURRENTLY` / `DROP INDEX CONCURRENTLY`）。
+    -   创建/删除索引时在 PostgreSQL 使用 `CONCURRENTLY`（`CREATE INDEX CONCURRENTLY` / `DROP INDEX CONCURRENTLY`）。
+    -   MySQL 使用 `ALGORITHM=INPLACE, LOCK=NONE` 以尽量减少锁表影响。
     -   适用于普通与系统索引（如 `created_at`、`updated_at`、`state`）。
     -   注意：并发索引在 PG 中要求非事务上下文，脚本会按语句拆分执行。
 
@@ -249,7 +250,6 @@ PostgreSQL 示例：
 
 ### 常用环境开关（与 PG 相关）
 
--   `SYNC_ONLINE_INDEX=1`：启用并发索引创建/删除（生成 CONCURRENTLY）。
 -   `SYNC_PG_ALLOW_COMPATIBLE_TYPE=1`：允许“兼容/扩展”类型变更（如 varchar 扩容、varchar->text）。
 -   `SYNC_DISALLOW_SHRINK=1`：禁止收缩类变更（推荐开启）。
 
@@ -283,7 +283,7 @@ PostgreSQL 示例：
 
 ### 故障处理建议（PG）
 
--   报错涉及事务与 CONCURRENTLY：确保外层未包裹成单一事务；或临时关闭 `SYNC_ONLINE_INDEX` 后再试。
+-   报错涉及事务与 CONCURRENTLY：确保外层未包裹成单一事务。
 -   锁等待时间过长：在业务低峰执行；或分批次对大表应用变更。
 -   需要复杂的类型转换：采用“影子列 + 回填数据 + 读写切换 + 清理旧列”的迁移蓝图。
 ```
