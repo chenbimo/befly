@@ -44,6 +44,44 @@ export const sortPlugins = (plugins) => {
     return isPass ? result : false;
 };
 
+/**
+ * 解析字段规则字符串（以 ⚡ 分隔），并进行最小类型转换：
+ * - 返回顺序：显示名, 类型, 最小值, 最大值, 默认值, 是否索引, 正则
+ * - 最小值/最大值/是否索引：当不为字面量字符串 'null' 时转为数字；否则保留原值
+ * - 默认值：当类型为 number 且默认值不为 'null' 时转为数字；否则保留原值
+ * - 不做正确性校验（由 checks/table.js 负责）
+ * - 保留额外段位（>7）以便上层可检测异常长度
+ *
+ * @param {string} rule
+ * @returns {any[]} 一个数组，至少包含前7段（若原始段位不足则按原样长度返回），多余段位将原样附加
+ */
+export const parseRule = (rule) => {
+    const parts = String(rule).split('⚡');
+    // 直接映射前7段，保留剩余段
+    const name = parts[0];
+    const type = parts[1];
+    const minRaw = parts[2];
+    const maxRaw = parts[3];
+    const defRaw = parts[4];
+    const idxRaw = parts[5];
+    const regx = parts[6];
+
+    // 转换：min / max / index（非 'null' 则转数字）
+    const toNumIfNotNull = (v) => (v === 'null' ? v : Number(v));
+    const min = minRaw === undefined ? undefined : toNumIfNotNull(minRaw);
+    const max = maxRaw === undefined ? undefined : toNumIfNotNull(maxRaw);
+    const idx = idxRaw === undefined ? undefined : toNumIfNotNull(idxRaw);
+
+    // 默认值：仅当类型为 number 且 defRaw 不为 'null' 时转数字
+    const defVal = type === 'number' && defRaw !== undefined && defRaw !== 'null' ? Number(defRaw) : defRaw;
+
+    // 组装结果（保留多余段，供上层长度校验）
+    const head = [name, type, min, max, defVal, idx, regx];
+    if (parts.length > 7) return head.concat(parts.slice(7));
+    // 若原始不足7段，则按原样长度返回（保持长度用于校验）
+    return head.slice(0, parts.length);
+};
+
 // 规则分割
 export const ruleSplit = (rule) => {
     const allParts = rule.split(',');

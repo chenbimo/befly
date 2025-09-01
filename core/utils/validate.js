@@ -1,4 +1,4 @@
-import { isType } from './index.js';
+import { isType, parseRule } from './index.js';
 
 /**
  * 验证器类
@@ -63,8 +63,8 @@ export class Validator {
         for (const fieldName of required) {
             if (!(fieldName in data) || data[fieldName] === undefined || data[fieldName] === null || data[fieldName] === '') {
                 result.code = 1;
-                const ruleParts = (rules[fieldName] || '').split('⚡');
-                const fieldLabel = ruleParts[0] || fieldName;
+                const ruleParts = parseRule(rules[fieldName] || '');
+                const fieldLabel = (ruleParts && ruleParts[0]) || fieldName;
                 result.fields[fieldName] = `${fieldLabel}(${fieldName})为必填项`;
             }
         }
@@ -99,10 +99,10 @@ export class Validator {
      * 验证单个字段的值
      */
     validateFieldValue(value, rule, fieldName) {
-        const [name, type, minStr, maxStr, defaultValue, isIndexStr, regexConstraint] = rule.split('⚡');
-        const min = minStr === 'null' ? null : parseInt(minStr) || 0;
-        const max = maxStr === 'null' ? null : parseInt(maxStr) || 0;
-        const spec = regexConstraint === 'null' ? null : regexConstraint.trim();
+        const [name, type, minRaw, maxRaw, defaultValue, isIndexRaw, regexConstraint] = parseRule(rule);
+        const min = minRaw === 'null' ? null : /** @type {number} */ (typeof minRaw === 'number' ? minRaw : Number(minRaw));
+        const max = maxRaw === 'null' ? null : /** @type {number} */ (typeof maxRaw === 'number' ? maxRaw : Number(maxRaw));
+        const spec = regexConstraint === 'null' ? null : String(regexConstraint).trim();
 
         switch (type.toLowerCase()) {
             case 'number':

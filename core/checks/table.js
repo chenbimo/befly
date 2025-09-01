@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
+import { parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 
 // 所有校验函数均复用 utils/index.js 导出的实现
@@ -88,7 +89,7 @@ export const checkTable = async () => {
                             continue;
                         }
 
-                        const allParts = rule.split('⚡');
+                        const allParts = parseRule(rule);
 
                         // 必须包含7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
                         if (allParts.length !== 7) {
@@ -149,7 +150,7 @@ export const checkTable = async () => {
                         }
 
                         // 第6个值：是否创建索引必须为0或1
-                        if (!(isIndex === '0' || isIndex === '1')) {
+                        if (!(isIndex === 0 || isIndex === 1 || isIndex === '0' || isIndex === '1')) {
                             Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 索引标识 "${isIndex}" 格式错误，必须为0或1`);
                             fileValid = false;
                             continue;

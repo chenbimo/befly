@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { createSqlClient, toSnakeTableName, isType } from '../utils/index.js';
+import { createSqlClient, toSnakeTableName, isType, parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
 
@@ -290,7 +290,7 @@ const createTable = async (tableName, fields) => {
 
     // 2) 业务字段
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
+        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
         const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
         const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
         const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(defaultVal, 'number') ? ` DEFAULT ${defaultVal}` : ` DEFAULT '${defaultVal}'`) : '';
@@ -335,7 +335,7 @@ const createTable = async (tableName, fields) => {
             }
         }
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-            const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
+            const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
             if (fieldName && fieldName !== 'null') {
                 const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS '${fieldName}'`;
                 if (IS_PLAN) {
@@ -357,8 +357,8 @@ const createTable = async (tableName, fields) => {
         }
     }
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
-        if (fieldIndex === '1') {
+        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+        if (fieldIndex === 1 || fieldIndex === '1') {
             const stmt = buildIndexSQL(tableName, `idx_${fieldKey}`, fieldKey, 'create');
             if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
@@ -371,7 +371,7 @@ const createTable = async (tableName, fields) => {
 
 // 比较字段定义变化
 const compareFieldDefinition = (existingColumn, newRule, colName) => {
-    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = newRule.split('⚡');
+    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(newRule);
     const changes = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
@@ -424,7 +424,7 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
 
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
 const generateDDLClause = (fieldKey, fieldRule, isAdd = false) => {
-    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
+    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
     const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
     const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
     const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(defaultVal, 'number') ? ` DEFAULT ${defaultVal}` : ` DEFAULT '${defaultVal}'`) : '';
@@ -515,8 +515,8 @@ const modifyTable = async (tableName, fields) => {
                     else if (c.type === 'default') globalCount.defaultChanges++;
                     else if (c.type === 'comment') globalCount.nameChanges++;
                 }
-                const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
-                if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length && fieldMax !== 'null') {
+                const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+                if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length && fieldMax !== 'null' && fieldMax !== undefined) {
                     const newLen = parseInt(fieldMax);
                     if (existingColumns[fieldKey].length > newLen && FLAGS.DISALLOW_SHRINK) {
                         Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${newLen} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
@@ -555,7 +555,7 @@ const modifyTable = async (tableName, fields) => {
                 changed = true;
             }
         } else {
-            const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
+            const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
             const lenPart = fieldType === 'string' || fieldType === 'array' ? ` 长度:${parseInt(fieldMax)}` : '';
             const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
             Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${defaultVal ?? 'NULL'}`);
@@ -574,13 +574,13 @@ const modifyTable = async (tableName, fields) => {
         }
     }
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
+        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
         const indexName = `idx_${fieldKey}`;
-        if (fieldIndex === '1' && !existingIndexes[indexName]) {
+        if ((fieldIndex === 1 || fieldIndex === '1') && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName: fieldKey });
             changed = true;
             globalCount.indexCreate++;
-        } else if (fieldIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
+        } else if (!(fieldIndex === 1 || fieldIndex === '1') && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             indexActions.push({ action: 'drop', indexName, fieldName: fieldKey });
             changed = true;
             globalCount.indexDrop++;
@@ -591,7 +591,7 @@ const modifyTable = async (tableName, fields) => {
     if (IS_PG) {
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
             if (existingColumns[fieldKey]) {
-                const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = fieldRule.split('⚡');
+                const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
                 const curr = existingColumns[fieldKey].comment || '';
                 const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
                 if (want !== curr) {
