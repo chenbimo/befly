@@ -56,43 +56,14 @@ export const sortPlugins = (plugins) => {
  * @returns {any[]} 一个数组，至少包含前7段（若原始段位不足则按原样长度返回），多余段位将原样附加
  */
 export const parseRule = (rule) => {
-    const parts = String(rule).split('⚡');
-    // 直接映射前7段，保留剩余段
-    const name = parts[0];
-    const type = parts[1];
-    const minRaw = parts[2];
-    const maxRaw = parts[3];
-    const defRaw = parts[4];
-    const idxRaw = parts[5];
-    const regx = parts[6];
+    let [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = rule.split('⚡');
 
-    // 转换：min / max / index（非 'null' 则转数字）
-    const toNumIfNotNull = (v) => (v === 'null' ? v : Number(v));
-    const min = minRaw === undefined ? undefined : toNumIfNotNull(minRaw);
-    const max = maxRaw === undefined ? undefined : toNumIfNotNull(maxRaw);
-    const idx = idxRaw === undefined ? undefined : toNumIfNotNull(idxRaw);
+    fieldIndex = Number(fieldIndex);
+    if (fieldMin === 'null') fieldMin = Number(fieldMin);
+    if (fieldMax === 'null') fieldMax = Number(fieldMax);
+    if (fieldType === 'number') fieldDefault = Number(fieldDefault);
 
-    // 默认值：仅当类型为 number 且 defRaw 不为 'null' 时转数字
-    const defVal = type === 'number' && defRaw !== undefined && defRaw !== 'null' ? Number(defRaw) : defRaw;
-
-    // 组装结果（保留多余段，供上层长度校验）
-    const head = [name, type, min, max, defVal, idx, regx];
-    if (parts.length > 7) return head.concat(parts.slice(7));
-    // 若原始不足7段，则按原样长度返回（保持长度用于校验）
-    return head.slice(0, parts.length);
-};
-
-// 规则分割
-export const ruleSplit = (rule) => {
-    const allParts = rule.split(',');
-
-    // 如果部分数量小于等于5，直接返回
-    if (allParts.length <= 5) {
-        return allParts;
-    }
-
-    // 只取前4个部分，剩余的都合并为第5个部分
-    return [allParts[0], allParts[1], allParts[2], allParts[3], allParts.slice(4).join(',')];
+    return [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx];
 };
 
 export const formatDate = (date = new Date(), format = 'YYYY-MM-DD HH:mm:ss') => {

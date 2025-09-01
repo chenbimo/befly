@@ -1,10 +1,10 @@
 {
     "name": "商品名称⚡string⚡1⚡200⚡产品⚡1⚡null",
-    "description": "商品描述⚡text⚡null⚡null⚡null⚡0⚡null",
+    "description": "商品描述⚡text⚡null⚡null⚡''⚡0⚡null",
     "price": "价格⚡number⚡0⚡999999⚡0⚡1⚡null",
     "category": "分类⚡string⚡1⚡50⚡默认分类⚡1⚡null",
     "tags": "标签⚡array⚡0⚡202⚡[]⚡0⚡null",
     "images": "图片⚡array⚡0⚡100⚡[]⚡0⚡null",
     "stock": "库存⚡number⚡0⚡999999⚡0⚡0⚡null",
-    "sku": "商品编码2⚡string⚡1⚡100⚡null⚡1⚡null"
+    "sku": "商品编码2⚡string⚡1⚡100⚡''⚡1⚡null"
 }
