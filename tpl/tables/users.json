@@ -6,5 +6,5 @@
     "avatar": "头像⚡string⚡0⚡500⚡''⚡0⚡null",
     "bio": "个人简介⚡text⚡null⚡null⚡''⚡0⚡null",
     "age": "年龄⚡number⚡0⚡150⚡10⚡0⚡null",
-    "tags": "标签⚡array⚡0⚡10⚡[]⚡0⚡null"
+    "tags": "标签⚡array⚡0⚡10⚡''⚡0⚡null"
 }

@@ -12,5 +12,5 @@
     "datetime": "日期时间⚡string⚡19⚡25⚡''⚡0⚡^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}",
     "filename": "文件名⚡string⚡1⚡255⚡''⚡0⚡null",
     "url": "网址⚡string⚡5⚡500⚡''⚡0⚡^https?://",
-    "tag": "标签⚡array⚡0⚡10⚡[]⚡0⚡null"
+    "tag": "标签⚡array⚡0⚡10⚡''⚡0⚡null"
 }
