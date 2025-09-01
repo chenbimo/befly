@@ -228,98 +228,120 @@ const buildIndexSQL = (tableName, indexName, fieldName, action) => {
     return `DROP INDEX IF EXISTS "${indexName}"`;
 };
 
-// 创建表（方言化）
+// 创建表（尽量精简但保持既有行为）
 const createTable = async (tableName, fields) => {
+    // 统一列定义数组：包含系统字段与业务字段
     const colDefs = [];
+
+    // 系统字段
     if (IS_MYSQL) {
-        colDefs.push(`\`id\` BIGINT PRIMARY KEY COMMENT "主键ID"`);
-        colDefs.push(`\`created_at\` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"`);
-        colDefs.push(`\`updated_at\` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"`);
-        colDefs.push(`\`deleted_at\` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"`);
-        colDefs.push(`\`state\` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"`);
+        colDefs.push('`id` BIGINT PRIMARY KEY COMMENT "主键ID"');
+        colDefs.push('`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"');
+        colDefs.push('`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"');
+        colDefs.push('`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"');
+        colDefs.push('`state` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"');
     } else {
-        colDefs.push(`"id" INTEGER PRIMARY KEY`);
-        colDefs.push(`"created_at" INTEGER NOT NULL DEFAULT 0`);
-        colDefs.push(`"updated_at" INTEGER NOT NULL DEFAULT 0`);
-        colDefs.push(`"deleted_at" INTEGER NOT NULL DEFAULT 0`);
-        colDefs.push(`"state" INTEGER NOT NULL DEFAULT 0`);
+        colDefs.push('"id" INTEGER PRIMARY KEY');
+        colDefs.push('"created_at" INTEGER NOT NULL DEFAULT 0');
+        colDefs.push('"updated_at" INTEGER NOT NULL DEFAULT 0');
+        colDefs.push('"deleted_at" INTEGER NOT NULL DEFAULT 0');
+        colDefs.push('"state" INTEGER NOT NULL DEFAULT 0');
     }
 
-    for (const [fieldName, rule] of Object.entries(fields)) {
+    // 业务字段
+    for (const [name, rule] of Object.entries(fields)) {
         const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
-        // 类型映射：checkTable 已保证字段类型合法且可映射
         let sqlType = typeMapping[fType];
         if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
-            const maxLength = parseInt(fMax);
-            sqlType = `${typeMapping[fType]}(${maxLength})`;
+            const maxLen = parseInt(fMax);
+            sqlType = `${typeMapping[fType]}(${maxLen})`;
         }
-        const expectedDefault = getExpectedDefault(fType, fDef);
+        const defVal = getExpectedDefault(fType, fDef);
+        let defSQL = '';
+        if (fType !== 'text' && defVal !== null) {
+            let lit;
+            if (typeof defVal === 'number') {
+                lit = defVal;
+            } else {
+                lit = ql(String(defVal));
+            }
+            defSQL = ` DEFAULT ${lit}`;
+        }
         if (IS_MYSQL) {
-            let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
-            if (fType !== 'text' && expectedDefault !== null) {
-                columnDef += ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}`;
-            }
+            let col = `\`${name}\` ${sqlType} NOT NULL${defSQL}`;
             if (disp && disp !== 'null') {
-                columnDef += ` COMMENT "${disp.replace(/"/g, '\\"')}"`;
+                col += ` COMMENT "${String(disp).replace(/"/g, '\\"')}"`;
             }
-            colDefs.push(columnDef);
+            colDefs.push(col);
         } else {
-            let columnDef = `"${fieldName}" ${sqlType} NOT NULL`;
-            if (fType !== 'text' && expectedDefault !== null) {
-                columnDef += ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}`;
-            }
-            // 非 MySQL 不在此处添加注释（PG 后续单独 COMMENT，SQLite 不支持列注释）
-            colDefs.push(columnDef);
+            colDefs.push(`"${name}" ${sqlType} NOT NULL${defSQL}`);
         }
     }
 
-    let createSQL = '';
+    // 3) CREATE TABLE 语句
+    const cols = colDefs.join(',\n            ');
+    let createSQL;
     if (IS_MYSQL) {
-        createSQL = `CREATE TABLE \`${tableName}\` (\n            ${colDefs.join(',\n            ')}\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs`;
+        createSQL = `CREATE TABLE \`${tableName}\` (\n            ${cols}\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs`;
     } else {
-        createSQL = `CREATE TABLE "${tableName}" (\n            ${colDefs.join(',\n            ')}\n        )`;
+        createSQL = `CREATE TABLE "${tableName}" (\n            ${cols}\n        )`;
     }
-    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
-    else {
+
+    if (FLAGS.DRY_RUN) {
+        Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
+    } else {
         await sql`${sql(createSQL)}`;
         Logger.info(`[新建表] ${tableName}`);
     }
 
-    // PostgreSQL: 添加列注释（用显示名）
+    // 4) PG: 列注释（SQLite 不支持；MySQL 已在列定义中）
     if (IS_PG) {
-        const comments = [];
-        comments.push(`COMMENT ON COLUMN "${tableName}"."id" IS ${ql('主键ID')}`);
-        comments.push(`COMMENT ON COLUMN "${tableName}"."created_at" IS ${ql('创建时间')}`);
-        comments.push(`COMMENT ON COLUMN "${tableName}"."updated_at" IS ${ql('更新时间')}`);
-        comments.push(`COMMENT ON COLUMN "${tableName}"."deleted_at" IS ${ql('删除时间')}`);
-        comments.push(`COMMENT ON COLUMN "${tableName}"."state" IS ${ql('状态字段')}`);
-        for (const [fieldName, rule] of Object.entries(fields)) {
-            const [disp] = parseFieldRule(rule);
-            if (disp && disp !== 'null') {
-                comments.push(`COMMENT ON COLUMN "${tableName}"."${fieldName}" IS ${ql(String(disp))}`);
+        const commentPairs = [
+            ['id', '主键ID'],
+            ['created_at', '创建时间'],
+            ['updated_at', '更新时间'],
+            ['deleted_at', '删除时间'],
+            ['state', '状态字段']
+        ];
+        for (const [name, cmt] of commentPairs) {
+            const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS ${ql(cmt)}`;
+            if (FLAGS.DRY_RUN) {
+                Logger.info(`[计划] ${stmt}`);
+            } else {
+                await sql`${sql(stmt)}`;
             }
         }
-        for (const stmt of comments) {
-            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-            else await sql`${sql(stmt)}`;
+        for (const [name, rule] of Object.entries(fields)) {
+            const [disp] = parseFieldRule(rule);
+            if (disp && disp !== 'null') {
+                const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS ${ql(String(disp))}`;
+                if (FLAGS.DRY_RUN) {
+                    Logger.info(`[计划] ${stmt}`);
+                } else {
+                    await sql`${sql(stmt)}`;
+                }
+            }
         }
     }
 
-    // 统一创建索引
-    // 系统字段默认索引
+    // 5) 索引：系统字段 + 业务字段（按规则）
     for (const sysField of ['created_at', 'updated_at', 'state']) {
         const stmt = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
-        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-        else await sql`${sql(stmt)}`;
+        if (FLAGS.DRY_RUN) {
+            Logger.info(`[计划] ${stmt}`);
+        } else {
+            await sql`${sql(stmt)}`;
+        }
     }
-
-    // 自定义字段索引
-    for (const [fieldName, rule] of Object.entries(fields)) {
-        const hasIndex = parseFieldRule(rule)[5] === '1';
-        if (hasIndex) {
-            const stmt = buildIndexSQL(tableName, `idx_${fieldName}`, fieldName, 'create');
-            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-            else await sql`${sql(stmt)}`;
+    for (const [name, rule] of Object.entries(fields)) {
+        const parts = parseFieldRule(rule);
+        if (parts[5] === '1') {
+            const stmt = buildIndexSQL(tableName, `idx_${name}`, name, 'create');
+            if (FLAGS.DRY_RUN) {
+                Logger.info(`[计划] ${stmt}`);
+            } else {
+                await sql`${sql(stmt)}`;
+            }
         }
     }
 };
