@@ -35,6 +35,14 @@ const typeMapping = {
     array: IS_SQLITE ? 'TEXT' : 'VARCHAR'
 };
 
+// 默认值映射
+const defaultMapping = {
+    number: 0,
+    string: '',
+    array: '[]',
+    text: null
+};
+
 // 表名转换函数已移动至 utils/index.js 的 toSnakeTableName
 
 // 环境开关读取（支持未在 Env 显式声明的变量，默认值兜底）
@@ -61,26 +69,6 @@ const FLAGS = {
     ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0), // 允许类型变更
     SQLITE_REBUILD: getFlag(Env.SYNC_SQLITE_REBUILD, 0), // SQLite 遇到不支持的修改时是否重建表
     PG_ALLOW_COMPATIBLE_TYPE: getFlag(Env.SYNC_PG_ALLOW_COMPATIBLE_TYPE, 1) // PG: 允许兼容类型变更（varchar->text 等）
-};
-
-// 计算期望的默认值（与 information_schema 返回的值对齐）
-// 规则：当默认值为 'null' 时按类型提供默认值：number→0，string→""，array→"[]"；text 永不设置默认值
-const getExpectedDefault = (fieldType, fieldDefaultValue) => {
-    if (fieldType === 'text') return null; // TEXT 不设置默认
-    if (fieldDefaultValue !== undefined && fieldDefaultValue !== null && fieldDefaultValue !== 'null') {
-        return fieldDefaultValue; // 保留显式默认值（数字或字符串，包含空字符串）
-    }
-    // 规则为 'null' 时的内置默认
-    switch (fieldType) {
-        case 'number':
-            return 0;
-        case 'string':
-            return '';
-        case 'array':
-            return '[]';
-        default:
-            return null;
-    }
 };
 
 const normalizeDefault = (val) => (val === null || val === undefined ? null : String(val));
@@ -249,14 +237,14 @@ const createTable = async (tableName, fields) => {
     }
 
     // 业务字段
-    for (const [name, rule] of Object.entries(fields)) {
-        const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
+    for (const [field, rule] of Object.entries(fields)) {
+        const [fName, fType, , fMax, fDef] = parseFieldRule(rule);
         let sqlType = typeMapping[fType];
         if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
             const maxLen = parseInt(fMax);
             sqlType = `${typeMapping[fType]}(${maxLen})`;
         }
-        const defVal = getExpectedDefault(fType, fDef);
+        const defVal = fDef === 'null' ? defaultMapping[fType] : fDef;
         let defSQL = '';
         if (fType !== 'text' && defVal !== null) {
             let lit;
@@ -268,13 +256,13 @@ const createTable = async (tableName, fields) => {
             defSQL = ` DEFAULT ${lit}`;
         }
         if (IS_MYSQL) {
-            let col = `\`${name}\` ${sqlType} NOT NULL${defSQL}`;
-            if (disp && disp !== 'null') {
-                col += ` COMMENT "${String(disp).replace(/"/g, '\\"')}"`;
+            let col = `\`${field}\` ${sqlType} NOT NULL${defSQL}`;
+            if (fName && fName !== 'null') {
+                col += ` COMMENT "${String(fName).replace(/"/g, '\\"')}"`;
             }
             colDefs.push(col);
         } else {
-            colDefs.push(`"${name}" ${sqlType} NOT NULL${defSQL}`);
+            colDefs.push(`"${field}" ${sqlType} NOT NULL${defSQL}`);
         }
     }
 
@@ -312,9 +300,9 @@ const createTable = async (tableName, fields) => {
             }
         }
         for (const [name, rule] of Object.entries(fields)) {
-            const [disp] = parseFieldRule(rule);
-            if (disp && disp !== 'null') {
-                const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS ${ql(String(disp))}`;
+            const [fName] = parseFieldRule(rule);
+            if (fName && fName !== 'null') {
+                const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS ${ql(String(fName))}`;
                 if (FLAGS.DRY_RUN) {
                     Logger.info(`[计划] ${stmt}`);
                 } else {
@@ -379,7 +367,7 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
     }
 
     // 检查默认值变化（按照生成规则推导期望默认值）
-    const expectedDefault = getExpectedDefault(fieldType, fieldDefaultValue);
+    const expectedDefault = fieldDefaultValue === 'null' ? defaultMapping[fieldType] : fieldDefaultValue;
     const currDef = normalizeDefault(existingColumn.defaultValue);
     const newDef = normalizeDefault(expectedDefault);
     if (currDef !== newDef) {
@@ -402,18 +390,18 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
 
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
 const generateDDLClause = (fieldName, rule, isAdd = false) => {
-    const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
+    const [fName, fType, , fMax, fDef] = parseFieldRule(rule);
     // 类型映射：checkTable 已保证字段类型合法且可映射
     let sqlType = typeMapping[fType];
     if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
         const maxLength = parseInt(fMax);
         sqlType = `${typeMapping[fType]}(${maxLength})`;
     }
-    const expectedDefault = getExpectedDefault(fType, fDef);
+    const expectedDefault = fDef === 'null' ? defaultMapping[fType] : fDef;
     const defaultSql = fType !== 'text' && expectedDefault !== null ? ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}` : '';
     if (IS_MYSQL) {
         let col = `\`${fieldName}\` ${sqlType} NOT NULL${defaultSql}`;
-        if (disp && disp !== 'null') col += ` COMMENT "${disp.replace(/"/g, '\\"')}"`;
+        if (fName && fName !== 'null') col += ` COMMENT "${fName.replace(/"/g, '\\"')}"`;
         return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} ${col}`;
     }
     if (IS_PG) {
@@ -547,7 +535,7 @@ const syncTable = async (tableName, fields) => {
                 changed = true;
             }
         } else {
-            const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
+            const [fName, fType, , fMax, fDef] = parseFieldRule(rule);
             const lenPart = fType === 'string' || fType === 'array' ? ` 长度:${parseInt(fMax)}` : '';
             const expectedDefault = getExpectedDefault(fType, fDef);
             Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
@@ -584,9 +572,9 @@ const syncTable = async (tableName, fields) => {
     if (IS_PG) {
         for (const [fieldName, rule] of Object.entries(fields)) {
             if (existingColumns[fieldName]) {
-                const [disp] = parseFieldRule(rule);
+                const [fName] = parseFieldRule(rule);
                 const curr = existingColumns[fieldName].comment || '';
-                const want = disp && disp !== 'null' ? String(disp) : '';
+                const want = fName && fName !== 'null' ? String(fName) : '';
                 if (want !== curr) {
                     commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldName}" IS ${want ? ql(want) : 'NULL'}`);
                     changed = true;
