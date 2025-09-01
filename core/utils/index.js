@@ -149,27 +149,6 @@ export const pickFields = (obj, keys) => {
     return result;
 };
 
-/**
- * 从对象或数组数据中按“字段名”和“字段值”进行排除过滤。
- * - 支持对象：移除指定字段名，以及值在排除值列表中的字段。
- * - 支持数组：
- *   - 如果元素为对象，按同样规则清洗（移除字段名/字段值命中项）。
- *   - 如果元素为原始值（数字/字符串等），当元素值命中排除值则从数组中移除该元素。
- *
- * 约定：excludeKeys 与 excludeValues 均为数组类型。
- *
- * 示例：
- *   omitFields({ a:1, b:undefined, c:null }, ['a'], [undefined]) -> { c:null }
- *   omitFields([{ a:1, b:null }, null, 0], ['a'], [null]) -> [{}, 0]
- *
- * 注意：仅当第一个参数为对象或数组时执行过滤，否则原样返回。
- *
- * @template T
- * @param {Record<string, any> | Array<any>} data - 原始数据（对象或数组）
- * @param {string[]} [excludeKeys=[]] - 要排除的字段名（对象属性名）数组
- * @param {any[]} [excludeValues=[]] - 要排除的字段值数组；当包含 undefined/null 等时，将移除这些值对应的字段或数组元素
- * @returns {T} 过滤后的数据，类型与入参保持一致
- */
 export const omitFields = (data, excludeKeys = [], excludeValues = []) => {
     const shouldDropValue = (v) => excludeValues.some((x) => x === v);
 
@@ -185,15 +164,15 @@ export const omitFields = (data, excludeKeys = [], excludeValues = []) => {
     };
 
     if (isType(data, 'array')) {
-        return /** @type {any} */ (data.filter((item) => !shouldDropValue(item)).map((item) => (isType(item, 'object') ? cleanObject(item) : item)));
+        return data.filter((item) => !shouldDropValue(item)).map((item) => (isType(item, 'object') ? cleanObject(item) : item));
     }
 
     if (isType(data, 'object')) {
-        return /** @type {any} */ (cleanObject(data));
+        return cleanObject(data);
     }
 
     // 非对象/数组则原样返回（不处理）
-    return /** @type {any} */ (data);
+    return data;
 };
 
 export const isEmptyObject = (obj) => {

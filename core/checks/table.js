@@ -89,7 +89,7 @@ export const checkTable = async () => {
                             continue;
                         }
 
-                        const allParts = parseRule(rule);
+                        const allParts = rule.split('⚡');
 
                         // 必须包含7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
                         if (allParts.length !== 7) {
@@ -99,7 +99,7 @@ export const checkTable = async () => {
                         }
 
                         // 验证各个部分的格式
-                        const [name, type, minValue, maxValue, defaultValue, isIndex, regexConstraint] = allParts;
+                        const [name, type, minValue, maxValue, defaultValue, isIndex, regexConstraint] = parseRule(rule);
 
                         // 第1个值：名称必须为中文、数字、字母
                         const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
