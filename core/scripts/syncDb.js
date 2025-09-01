@@ -45,6 +45,18 @@ const defaultMapping = {
     text: null
 };
 
+// 全局统计
+const globalCount = {
+    addFields: 0,
+    typeChanges: 0,
+    maxChanges: 0, // 映射为长度变化
+    minChanges: 0, // 最小值不参与 DDL，比对保留为0
+    defaultChanges: 0,
+    nameChanges: 0, // 字段显示名（注释）变更
+    indexCreate: 0,
+    indexDrop: 0
+};
+
 // 表名转换函数已移动至 utils/index.js 的 toSnakeTableName
 
 // 环境开关读取（支持未在 Env 显式声明的变量，默认值兜底）
@@ -185,8 +197,8 @@ const getTableColumns = async (tableName) => {
             };
         }
     } else if (IS_SQLITE) {
-        const rs = await sql`PRAGMA table_info(${sql(tableName)})`;
-        for (const row of rs) {
+        const result = await sql`PRAGMA table_info(${sql(tableName)})`;
+        for (const row of result) {
             let baseType = String(row.type || '').toUpperCase();
             let length = null;
             const m = /^(\w+)\s*\((\d+)\)/.exec(baseType);
@@ -567,8 +579,8 @@ const modifyTable = async (tableName, fields) => {
         } else {
             const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
             const lenPart = fieldType === 'string' || fieldType === 'array' ? ` 长度:${parseInt(fieldMax)}` : '';
-            const expectedDefault = getExpectedDefault(fieldType, fieldDefault);
-            Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
+            const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
+            Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${defaultVal ?? 'NULL'}`);
             addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
             changed = true;
             changeStats.addFields++;
@@ -636,17 +648,6 @@ const SyncDb = async () => {
         let processedCount = 0;
         let createdTables = 0;
         let modifiedTables = 0;
-        // 全局统计
-        const overall = {
-            addFields: 0,
-            typeChanges: 0,
-            maxChanges: 0, // 映射为长度变化
-            minChanges: 0, // 最小值不参与 DDL，比对保留为0
-            defaultChanges: 0,
-            nameChanges: 0, // 字段显示名（注释）变更
-            indexCreate: 0,
-            indexDrop: 0
-        };
 
         for (const dir of directories) {
             for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
@@ -659,13 +660,13 @@ const SyncDb = async () => {
                     if (plan.changed) {
                         // 汇总统计
                         if (plan.metrics) {
-                            overall.addFields += plan.metrics.addFields;
-                            overall.typeChanges += plan.metrics.datatype;
-                            overall.maxChanges += plan.metrics.length;
-                            overall.defaultChanges += plan.metrics.default;
-                            overall.indexCreate += plan.metrics.indexCreate;
-                            overall.indexDrop += plan.metrics.indexDrop;
-                            overall.nameChanges += plan.metrics.comment;
+                            globalCount.addFields += plan.metrics.addFields;
+                            globalCount.typeChanges += plan.metrics.datatype;
+                            globalCount.maxChanges += plan.metrics.length;
+                            globalCount.defaultChanges += plan.metrics.default;
+                            globalCount.indexCreate += plan.metrics.indexCreate;
+                            globalCount.indexDrop += plan.metrics.indexDrop;
+                            globalCount.nameChanges += plan.metrics.comment;
                         }
                         // 合并执行 ALTER TABLE 子句
                         if (IS_SQLITE) {
@@ -761,15 +762,15 @@ const SyncDb = async () => {
 
         // 显示统计信息（扩展维度）
         Logger.info(`统计 - 创建表: ${createdTables}`);
-        Logger.info(`统计 - 字段新增: ${overall.addFields}`);
-        Logger.info(`统计 - 字段名称变更: ${overall.nameChanges}`);
-        Logger.info(`统计 - 字段类型变更: ${overall.typeChanges}`);
-        Logger.info(`统计 - 字段最小值变更: ${overall.minChanges}`);
-        Logger.info(`统计 - 字段最大值变更: ${overall.maxChanges}`);
-        Logger.info(`统计 - 字段默认值变更: ${overall.defaultChanges}`);
+        Logger.info(`统计 - 字段新增: ${globalCount.addFields}`);
+        Logger.info(`统计 - 字段名称变更: ${globalCount.nameChanges}`);
+        Logger.info(`统计 - 字段类型变更: ${globalCount.typeChanges}`);
+        Logger.info(`统计 - 字段最小值变更: ${globalCount.minChanges}`);
+        Logger.info(`统计 - 字段最大值变更: ${globalCount.maxChanges}`);
+        Logger.info(`统计 - 字段默认值变更: ${globalCount.defaultChanges}`);
         // 索引新增/删除分别打印
-        Logger.info(`统计 - 索引新增: ${overall.indexCreate}`);
-        Logger.info(`统计 - 索引删除: ${overall.indexDrop}`);
+        Logger.info(`统计 - 索引新增: ${globalCount.indexCreate}`);
+        Logger.info(`统计 - 索引删除: ${globalCount.indexDrop}`);
 
         if (processedCount === 0) {
             Logger.warn('没有找到任何表定义文件');
