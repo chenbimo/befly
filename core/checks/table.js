@@ -75,18 +75,18 @@ export const checkTable = async () => {
 
                 // 检查 table 中的每个验证规则
                 for (const [fieldName, rule] of Object.entries(table)) {
-                    fileRules++;
-                    totalRules++;
-
-                    // 检查是否使用了保留字段
-                    if (reservedFields.includes(fieldName)) {
-                        Logger.error(`${fileType}表 ${fileName} 文件包含保留字段 ${fieldName}，不能在表定义中使用以下字段: ${reservedFields.join(', ')}`);
-                        fileValid = false;
-                        continue;
-                    }
-
                     // 验证规则格式
                     try {
+                        fileRules++;
+                        totalRules++;
+
+                        // 检查是否使用了保留字段
+                        if (reservedFields.includes(fieldName)) {
+                            Logger.error(`${fileType}表 ${fileName} 文件包含保留字段 ${fieldName}，不能在表定义中使用以下字段: ${reservedFields.join(', ')}`);
+                            fileValid = false;
+                            continue;
+                        }
+
                         const allParts = rule.split('⚡');
 
                         // 必须包含7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
