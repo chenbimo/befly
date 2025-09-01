@@ -302,25 +302,25 @@ const createTable = async (tableName, fields) => {
             const maxLen = parseInt(fieldMax);
             sqlType = `${typeMapping[fieldType]}(${maxLen})`;
         }
-        const defVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
-        let defSQL = '';
-        if (fieldType !== 'text' && defVal !== null) {
+        const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
+        let defaultSql = '';
+        if (fieldType !== 'text' && defaultVal !== null) {
             let lit;
-            if (typeof defVal === 'number') {
-                lit = defVal;
+            if (typeof defaultVal === 'number') {
+                lit = defaultVal;
             } else {
-                lit = ql(String(defVal));
+                lit = ql(String(defaultVal));
             }
-            defSQL = ` DEFAULT ${lit}`;
+            defaultSql = ` DEFAULT ${lit}`;
         }
         if (IS_MYSQL) {
-            let col = `\`${fieldKey}\` ${sqlType} NOT NULL${defSQL}`;
+            let col = `\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql}`;
             if (fieldName && fieldName !== 'null') {
                 col += ` COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`;
             }
             colDefs.push(col);
         } else {
-            colDefs.push(`"${fieldKey}" ${sqlType} NOT NULL${defSQL}`);
+            colDefs.push(`"${fieldKey}" ${sqlType} NOT NULL${defaultSql}`);
         }
     }
 
