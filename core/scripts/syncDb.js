@@ -89,6 +89,46 @@ const isPgCompatibleTypeChange = (currentType, newType) => {
 // - 有参数：sql`... ${param}`
 // - 无参数但动态整条 SQL：sql`${sql(sqlText)}`
 
+// 数据库版本检查（按方言）
+const ensureDbVersion = async () => {
+    if (!sql) throw new Error('SQL 客户端未初始化');
+    if (IS_MYSQL) {
+        const r = await sql`SELECT VERSION() AS version`;
+        const version = r[0].version;
+        const majorVersion = parseInt(String(version).split('.')[0], 10);
+        if (!Number.isFinite(majorVersion) || majorVersion < 8) {
+            throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
+        }
+        Logger.info(`MySQL 版本: ${version}`);
+        return;
+    }
+    if (IS_PG) {
+        const r = await sql`SELECT version() AS version`;
+        const versionText = r[0].version;
+        Logger.info(`PostgreSQL 版本: ${versionText}`);
+        const m = /PostgreSQL\s+(\d+)/i.exec(versionText);
+        const major = m ? parseInt(m[1], 10) : NaN;
+        if (!Number.isFinite(major) || major < 17) {
+            throw new Error(`此脚本要求 PostgreSQL >= 17，当前: ${versionText}`);
+        }
+        return;
+    }
+    if (IS_SQLITE) {
+        const r = await sql`SELECT sqlite_version() AS version`;
+        const version = r[0].version;
+        Logger.info(`SQLite 版本: ${version}`);
+        // 强制最低版本：SQLite ≥ 3.50.0
+        const [maj, min, patch] = String(version)
+            .split('.')
+            .map((v) => parseInt(v, 10) || 0);
+        const vnum = maj * 10000 + min * 100 + patch; // 3.50.0 -> 35000
+        if (!Number.isFinite(vnum) || vnum < 35000) {
+            throw new Error(`此脚本要求 SQLite >= 3.50.0，当前: ${version}`);
+        }
+        return;
+    }
+};
+
 // 获取表的现有列信息（按方言）
 const getTableColumns = async (tableName) => {
     const columns = {};
@@ -599,37 +639,7 @@ const SyncDb = async () => {
         // 建立数据库连接并检查版本（按方言）
         // 在顶层也保留 sql 引用，便于未来需要跨函数访问
         sql = await createSqlClient({ max: 1 });
-        if (IS_MYSQL) {
-            const r = await sql`SELECT VERSION() AS version`;
-            const version = r[0].version;
-            const majorVersion = parseInt(version.split('.')[0]);
-            if (majorVersion < 8) {
-                throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
-            }
-            Logger.info(`MySQL 版本: ${version}`);
-        } else if (IS_PG) {
-            const r = await sql`SELECT version() AS version`;
-            const versionText = r[0].version;
-            Logger.info(`PostgreSQL 版本: ${versionText}`);
-            // 提取主版本号（假设格式如 'PostgreSQL 17.1 ...'）
-            const m = /PostgreSQL\s+(\d+)/i.exec(versionText);
-            const major = m ? parseInt(m[1], 10) : NaN;
-            if (!Number.isFinite(major) || major < 17) {
-                throw new Error(`此脚本要求 PostgreSQL >= 17，当前: ${versionText}`);
-            }
-        } else if (IS_SQLITE) {
-            const r = await sql`SELECT sqlite_version() AS version`;
-            const version = r[0].version;
-            Logger.info(`SQLite 版本: ${version}`);
-            // 强制最低版本：SQLite ≥ 3.50.0
-            const [maj, min, patch] = String(version)
-                .split('.')
-                .map((v) => parseInt(v, 10) || 0);
-            const vnum = maj * 10000 + min * 100 + patch; // 3.50.0 -> 35000
-            if (!Number.isFinite(vnum) || vnum < 35000) {
-                throw new Error(`此脚本要求 SQLite >= 3.50.0，当前: ${version}`);
-            }
-        }
+        await ensureDbVersion();
 
         // 扫描并处理表文件
         const tablesGlob = new Bun.Glob('*.json');
