@@ -255,47 +255,7 @@ export const filterLogFields = (body, excludeFields = '') => {
     return filtered;
 };
 
-// 验证字段名称：中文、数字、字母、空格、下划线、短横线
-export const validateFieldName = (name) => {
-    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
-    return nameRegex.test(name);
-};
-
-// 验证字段类型是否为指定的四种类型之一
-export const validateFieldType = (type) => {
-    const validTypes = ['string', 'number', 'text', 'array'];
-    return validTypes.includes(type);
-};
-
-// 验证最小值/最大值是否为null或数字
-export const validateMinMax = (value) => {
-    return value === 'null' || (!isNaN(parseFloat(value)) && isFinite(parseFloat(value)));
-};
-
-// 验证默认值是否为null、字符串或数字
-export const validateDefaultValue = (value) => {
-    if (value === 'null') return true;
-    // 检查是否为数字
-    if (!isNaN(parseFloat(value)) && isFinite(parseFloat(value))) return true;
-    // 其他情况视为字符串，都是有效的
-    return true;
-};
-
-// 验证索引标识是否为0或1
-export const validateIndex = (value) => {
-    return value === '0' || value === '1';
-};
-
-// 验证正则表达式是否有效
-export const validateRegex = (value) => {
-    if (value === 'null') return true;
-    try {
-        new RegExp(value);
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
+// 原 validate* 系列函数已移除：请在使用处直接进行内联判断（parseFieldRule 已内联全部校验）
 
 // 将 lowerCamelCase 或单词形式转换为下划线风格（snake_case）
 // 例如：userTable -> user_table, testNewFormat -> test_new_format, users -> users, orderV2 -> order_v2
@@ -320,22 +280,23 @@ export const parseFieldRule = (rule) => {
     const [name, type, minValue, maxValue, defaultValue, isIndex, regexConstraint] = allParts;
 
     // 第1个值：名称必须为中文、数字、字母
-    if (!validateFieldName(name)) {
+    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
+    if (!nameRegex.test(name)) {
         throw new Error(`字段名称 "${name}" 格式错误，必须为中文、数字、字母`);
     }
 
     // 第2个值：字段类型必须为string,number,text,array之一
-    if (!validateFieldType(type)) {
+    const validTypes = ['string', 'number', 'text', 'array'];
+    if (!validTypes.includes(type)) {
         throw new Error(`字段类型 "${type}" 格式错误，必须为string、number、text、array之一`);
     }
 
-    // 第3个值：最小值必须为null或数字
-    if (!validateMinMax(minValue)) {
+    // 第3/4个值：需要是 null 或 数字
+    const isValidMinMax = (value) => value === 'null' || (!isNaN(parseFloat(value)) && isFinite(parseFloat(value)));
+    if (!isValidMinMax(minValue)) {
         throw new Error(`最小值 "${minValue}" 格式错误，必须为null或数字`);
     }
-
-    // 第4个值：最大值必须为null或数字
-    if (!validateMinMax(maxValue)) {
+    if (!isValidMinMax(maxValue)) {
         throw new Error(`最大值 "${maxValue}" 格式错误，必须为null或数字`);
     }
 
@@ -351,17 +312,31 @@ export const parseFieldRule = (rule) => {
     }
 
     // 第5个值：默认值必须为null、字符串或数字
-    if (!validateDefaultValue(defaultValue)) {
+    const isValidDefault = (value) => {
+        if (value === 'null') return true;
+        if (!isNaN(parseFloat(value)) && isFinite(parseFloat(value))) return true;
+        return true; // 其他情况视为字符串，都是有效的
+    };
+    if (!isValidDefault(defaultValue)) {
         throw new Error(`默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
     }
 
     // 第6个值：是否创建索引必须为0或1
-    if (!validateIndex(isIndex)) {
+    if (!(isIndex === '0' || isIndex === '1')) {
         throw new Error(`索引标识 "${isIndex}" 格式错误，必须为0或1`);
     }
 
     // 第7个值：必须为null或正则表达式
-    if (!validateRegex(regexConstraint)) {
+    const isValidRegex = (value) => {
+        if (value === 'null') return true;
+        try {
+            new RegExp(value);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+    if (!isValidRegex(regexConstraint)) {
         throw new Error(`正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
     }
 
