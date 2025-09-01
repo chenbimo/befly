@@ -21,14 +21,6 @@ const IS_SQLITE = DB === 'sqlite'; // 命令行参数
 const ARGV = Array.isArray(process.argv) ? process.argv : [];
 const IS_PLAN = ARGV.includes('--plan');
 
-// 字面量转义（标识符引号按方言在各分支内直接写死）
-const ql = (val) => {
-    if (val === null || val === undefined) return 'NULL';
-    if (typeof val === 'number') return String(val);
-    const escaped = String(val).replace(/'/g, "''");
-    return `'${escaped}'`;
-};
-
 // 字段类型映射（按方言）
 const typeMapping = {
     number: IS_SQLITE ? 'INTEGER' : 'BIGINT',
@@ -93,12 +85,6 @@ const isPgCompatibleTypeChange = (currentType, newType) => {
     // text -> character varying 非宽化（可能截断），不兼容
     return false;
 };
-
-// （已移除）getColumnDefinition：不再保留未使用的函数，减少函数数量
-
-// 移除 exec 辅助函数，所有 SQL 执行统一使用模板或片段：
-// - 有参数：sql`... ${param}`
-// - 无参数但动态整条 SQL：sql`${sql(sqlText)}`
 
 // 数据库版本检查（按方言）
 const ensureDbVersion = async () => {
@@ -546,7 +532,7 @@ const modifyTable = async (tableName, fields) => {
                     if (expectedDefault === null) {
                         defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` DROP DEFAULT` : `ALTER COLUMN "${fieldKey}" DROP DEFAULT`);
                     } else {
-                        const v = fieldType === 'number' ? expectedDefault : ql(String(expectedDefault));
+                        const v = fieldType === 'number' ? expectedDefault : `"${expectedDefault}"`;
                         defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
                     }
                 } else {
@@ -609,7 +595,7 @@ const modifyTable = async (tableName, fields) => {
                 const curr = existingColumns[fieldKey].comment || '';
                 const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
                 if (want !== curr) {
-                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? ql(want) : 'NULL'}`);
+                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? `"${want}"` : 'NULL'}`);
                     changed = true;
                     globalCount.nameChanges++;
                 }

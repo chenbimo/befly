@@ -64,8 +64,9 @@ export const checkTable = async () => {
                 const lowerCamelCaseRegex = /^[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)*$/;
                 if (!lowerCamelCaseRegex.test(fileBaseName)) {
                     Logger.error(`${fileType}表 ${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
-                    // 命名不合规，直接标记为无效文件
-                    throw new Error('文件命名不符合小驼峰规范');
+                    // 命名不合规，按保留字段处理模式：记录错误并计为无效文件，继续下一个文件
+                    invalidFiles++;
+                    continue;
                 }
 
                 // 读取并解析 JSON 文件
@@ -91,7 +92,9 @@ export const checkTable = async () => {
 
                         // 必须包含7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
                         if (allParts.length !== 7) {
-                            throw new Error(`字段规则格式错误，必须包含7个部分，当前包含${allParts.length}个部分`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 字段规则格式错误，必须包含7个部分，当前包含${allParts.length}个部分`);
+                            fileValid = false;
+                            continue;
                         }
 
                         // 验证各个部分的格式
@@ -100,21 +103,29 @@ export const checkTable = async () => {
                         // 第1个值：名称必须为中文、数字、字母
                         const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
                         if (!nameRegex.test(name)) {
-                            throw new Error(`字段名称 "${name}" 格式错误，必须为中文、数字、字母`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 字段名称 "${name}" 格式错误，必须为中文、数字、字母`);
+                            fileValid = false;
+                            continue;
                         }
 
                         // 第2个值：字段类型必须为string,number,text,array之一
                         const validTypes = ['string', 'number', 'text', 'array'];
                         if (!validTypes.includes(type)) {
-                            throw new Error(`字段类型 "${type}" 格式错误，必须为string、number、text、array之一`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 字段类型 "${type}" 格式错误，必须为string、number、text、array之一`);
+                            fileValid = false;
+                            continue;
                         }
 
                         // 第3/4个值：需要是 null 或 数字
                         if (!(minValue === 'null' || (!Number.isNaN(Number(minValue)) && isFinite(Number(minValue))))) {
-                            throw new Error(`最小值 "${minValue}" 格式错误，必须为null或数字`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最小值 "${minValue}" 格式错误，必须为null或数字`);
+                            fileValid = false;
+                            continue;
                         }
                         if (!(maxValue === 'null' || (!Number.isNaN(Number(maxValue)) && isFinite(Number(maxValue))))) {
-                            throw new Error(`最大值 "${maxValue}" 格式错误，必须为null或数字`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最大值 "${maxValue}" 格式错误，必须为null或数字`);
+                            fileValid = false;
+                            continue;
                         }
 
                         // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
@@ -124,18 +135,24 @@ export const checkTable = async () => {
                             const minNum = Number(minValue);
                             const maxNum = Number(maxValue);
                             if (minNum > maxNum) {
-                                throw new Error(`最小值 "${minValue}" 不能大于最大值 "${maxValue}"`);
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 最小值 "${minValue}" 不能大于最大值 "${maxValue}"`);
+                                fileValid = false;
+                                continue;
                             }
                         }
 
                         // 第5个值：默认值必须为null、字符串或数字（内联判断；字符串默认视为有效）
                         if (!(defaultValue === 'null' || !Number.isNaN(Number(defaultValue)) || typeof defaultValue === 'string')) {
-                            throw new Error(`默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
+                            fileValid = false;
+                            continue;
                         }
 
                         // 第6个值：是否创建索引必须为0或1
                         if (!(isIndex === '0' || isIndex === '1')) {
-                            throw new Error(`索引标识 "${isIndex}" 格式错误，必须为0或1`);
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 索引标识 "${isIndex}" 格式错误，必须为0或1`);
+                            fileValid = false;
+                            continue;
                         }
 
                         // 第7个值：必须为null或正则表达式（内联判断）
@@ -145,7 +162,9 @@ export const checkTable = async () => {
                                 // eslint-disable-next-line no-new
                                 new RegExp(regexConstraint);
                             } catch (_) {
-                                throw new Error(`正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
+                                Logger.error(`${fileType}表 ${fileName} 文件 ${fieldName} 正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
+                                fileValid = false;
+                                continue;
                             }
                         }
 
