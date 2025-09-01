@@ -680,8 +680,7 @@ const SyncDb = async () => {
         for (const dir of directories) {
             try {
                 for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
-                    const fileBaseName = path.basename(file, '.json');
-                    const tableName = toSnakeTableName(fileBaseName);
+                    const tableName = toSnakeTableName(path.basename(file, '.json'));
                     const tableDefinition = await Bun.file(file).json();
                     const existsTable = await tableExists(tableName);
 
