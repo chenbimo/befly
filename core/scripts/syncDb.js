@@ -310,7 +310,7 @@ const createTable = async (tableName, fields) => {
     if (IS_PLAN) {
         Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
     } else {
-        await sql`${sql(createSQL)}`;
+        await sql.unsafe(createSQL);
         Logger.info(`[新建表] ${tableName}`);
     }
 
@@ -328,7 +328,7 @@ const createTable = async (tableName, fields) => {
             if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
             } else {
-                await sql`${sql(stmt)}`;
+                await sql.unsafe(stmt);
             }
         }
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
@@ -338,7 +338,7 @@ const createTable = async (tableName, fields) => {
                 if (IS_PLAN) {
                     Logger.info(`[计划] ${stmt}`);
                 } else {
-                    await sql`${sql(stmt)}`;
+                    await sql.unsafe(stmt);
                 }
             }
         }
@@ -350,7 +350,7 @@ const createTable = async (tableName, fields) => {
         if (IS_PLAN) {
             Logger.info(`[计划] ${stmt}`);
         } else {
-            await sql`${sql(stmt)}`;
+            await sql.unsafe(stmt);
         }
     }
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
@@ -360,7 +360,7 @@ const createTable = async (tableName, fields) => {
             if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
             } else {
-                await sql`${sql(stmt)}`;
+                await sql.unsafe(stmt);
             }
         }
     }
@@ -448,14 +448,14 @@ const generateDDLClause = (colName, rule, isAdd = false) => {
 // 安全执行DDL语句
 const executeDDLSafely = async (stmt) => {
     try {
-        await sql`${sql(stmt)}`;
+        await sql.unsafe(stmt);
         return true;
     } catch (error) {
         // MySQL 专用降级路径
         if (stmt.includes('ALGORITHM=INSTANT')) {
             const inplaceSql = stmt.replace(/ALGORITHM=INSTANT/g, 'ALGORITHM=INPLACE');
             try {
-                await sql`${sql(inplaceSql)}`;
+                await sql.unsafe(inplaceSql);
                 return true;
             } catch (inplaceError) {
                 // 最后尝试传统DDL：移除 ALGORITHM/LOCK 附加子句后执行
@@ -463,7 +463,7 @@ const executeDDLSafely = async (stmt) => {
                     .replace(/,\s*ALGORITHM=INPLACE/g, '')
                     .replace(/,\s*ALGORITHM=INSTANT/g, '')
                     .replace(/,\s*LOCK=(NONE|SHARED|EXCLUSIVE)/g, '');
-                await sql`${sql(traditionSql)}`;
+                await sql.unsafe(traditionSql);
                 return true;
             }
         } else {
@@ -487,12 +487,12 @@ const rebuildSqliteTable = async (tableName, fields) => {
     const commonCols = targetCols.filter((c) => existingCols.includes(c));
     if (commonCols.length > 0) {
         const colsSql = commonCols.map((c) => `"${c}"`).join(', ');
-        await sql`${sql(`INSERT INTO "${tmpTable}" (${colsSql}) SELECT ${colsSql} FROM "${tableName}"`)}`;
+        await sql.unsafe(`INSERT INTO "${tmpTable}" (${colsSql}) SELECT ${colsSql} FROM "${tableName}"`);
     }
 
     // 4. 删除旧表并重命名
-    await sql`${sql(`DROP TABLE "${tableName}"`)}`;
-    await sql`${sql(`ALTER TABLE "${tmpTable}" RENAME TO "${tableName}"`)}`;
+    await sql.unsafe(`DROP TABLE "${tableName}"`);
+    await sql.unsafe(`ALTER TABLE "${tmpTable}" RENAME TO "${tableName}"`);
 };
 
 // 同步表结构
@@ -677,7 +677,7 @@ const SyncDb = async () => {
                                 for (const c of plan.addClauses) {
                                     const stmt = `ALTER TABLE "${tableName}" ${c}`;
                                     if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
-                                    else await sql`${sql(stmt)}`;
+                                    else await sql.unsafe(stmt);
                                 }
                             }
                         } else if (FLAGS.MERGE_ALTER) {
@@ -687,7 +687,7 @@ const SyncDb = async () => {
                                 const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
                                 if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
                                 else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                else await sql`${sql(stmt)}`;
+                                else await sql.unsafe(stmt);
                             }
                         } else {
                             // 分别执行
@@ -696,14 +696,14 @@ const SyncDb = async () => {
                                 const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
                                 if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
                                 else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                else await sql`${sql(stmt)}`;
+                                else await sql.unsafe(stmt);
                             }
                             for (const c of plan.modifyClauses) {
                                 const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
                                 const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
                                 if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
                                 else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                else await sql`${sql(stmt)}`;
+                                else await sql.unsafe(stmt);
                             }
                         }
 
@@ -716,7 +716,7 @@ const SyncDb = async () => {
                                 const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
                                 if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
                                 else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                else await sql`${sql(stmt)}`;
+                                else await sql.unsafe(stmt);
                             }
                         }
 
@@ -727,7 +727,7 @@ const SyncDb = async () => {
                                 Logger.info(`[计划] ${stmt}`);
                             } else {
                                 try {
-                                    await sql`${sql(stmt)}`;
+                                    await sql.unsafe(stmt);
                                     if (act.action === 'create') {
                                         Logger.info(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
                                     } else {
@@ -744,7 +744,7 @@ const SyncDb = async () => {
                         if (IS_PG && plan.commentActions && plan.commentActions.length > 0) {
                             for (const stmt of plan.commentActions) {
                                 if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
-                                else await sql`${sql(stmt)}`;
+                                else await sql.unsafe(stmt);
                             }
                         }
 

@@ -392,7 +392,7 @@ export const buildDatabaseUrl = () => {
 
     if (type === 'sqlite') {
         if (!name) throw new Error('DB_NAME 未配置');
-        return `sqlite:${name}`;
+        return `sqlite://${name}`;
     }
 
     if (type === 'postgresql' || type === 'postgres') {
@@ -412,6 +412,7 @@ export const buildDatabaseUrl = () => {
 
 export async function createSqlClient(options = {}) {
     const finalUrl = buildDatabaseUrl();
+    console.log('🔥[ finalUrl ]-415', finalUrl);
 
     const sql = new SQL({
         url: finalUrl,
