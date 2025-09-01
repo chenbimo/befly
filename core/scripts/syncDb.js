@@ -17,7 +17,9 @@ let sql = null;
 const DB = (Env.DB_TYPE || 'mysql').toLowerCase();
 const IS_MYSQL = DB === 'mysql';
 const IS_PG = DB === 'postgresql' || DB === 'postgres';
-const IS_SQLITE = DB === 'sqlite';
+const IS_SQLITE = DB === 'sqlite'; // 命令行参数
+const ARGV = Array.isArray(process.argv) ? process.argv : [];
+const IS_PLAN = ARGV.includes('--plan');
 
 // 字面量转义（标识符引号按方言在各分支内直接写死）
 const ql = (val) => {
@@ -54,15 +56,8 @@ const getFlag = (val, def = 0) => {
     return s === 'true' || s === 'on' || s === 'yes';
 };
 
-// 命令行参数
-const ARGV = Array.isArray(process.argv) ? process.argv : [];
-const CLI = {
-    DRY_RUN: ARGV.includes('--plan')
-};
-
 const FLAGS = {
     // PLAN 模式通过命令行参数控制，忽略环境变量
-    DRY_RUN: CLI.DRY_RUN, // 仅打印计划，不执行
     MERGE_ALTER: getFlag(Env.SYNC_MERGE_ALTER, 1), // 合并每表多项 DDL
     DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩
     ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0), // 允许类型变更
@@ -312,7 +307,7 @@ const createTable = async (tableName, fields) => {
         createSQL = `CREATE TABLE "${tableName}" (\n            ${cols}\n        )`;
     }
 
-    if (FLAGS.DRY_RUN) {
+    if (IS_PLAN) {
         Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
     } else {
         await sql`${sql(createSQL)}`;
@@ -330,7 +325,7 @@ const createTable = async (tableName, fields) => {
         ];
         for (const [name, cmt] of commentPairs) {
             const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${cmt}'`;
-            if (FLAGS.DRY_RUN) {
+            if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
             } else {
                 await sql`${sql(stmt)}`;
@@ -340,7 +335,7 @@ const createTable = async (tableName, fields) => {
             const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
             if (fieldName && fieldName !== 'null') {
                 const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS '${fieldName}'`;
-                if (FLAGS.DRY_RUN) {
+                if (IS_PLAN) {
                     Logger.info(`[计划] ${stmt}`);
                 } else {
                     await sql`${sql(stmt)}`;
@@ -352,7 +347,7 @@ const createTable = async (tableName, fields) => {
     // 5) 索引：系统字段 + 业务字段（按规则）
     for (const sysField of ['created_at', 'updated_at', 'state']) {
         const stmt = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
-        if (FLAGS.DRY_RUN) {
+        if (IS_PLAN) {
             Logger.info(`[计划] ${stmt}`);
         } else {
             await sql`${sql(stmt)}`;
@@ -362,7 +357,7 @@ const createTable = async (tableName, fields) => {
         const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
         if (fieldIndex === '1') {
             const stmt = buildIndexSQL(tableName, `idx_${fieldKey}`, fieldKey, 'create');
-            if (FLAGS.DRY_RUN) {
+            if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
             } else {
                 await sql`${sql(stmt)}`;
@@ -654,117 +649,113 @@ const SyncDb = async () => {
         };
 
         for (const dir of directories) {
-            try {
-                for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
-                    const tableName = toSnakeTableName(path.basename(file, '.json'));
-                    const tableDefinition = await Bun.file(file).json();
-                    const existsTable = await tableExists(tableName);
+            for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
+                const tableName = toSnakeTableName(path.basename(file, '.json'));
+                const tableDefinition = await Bun.file(file).json();
+                const existsTable = await tableExists(tableName);
 
-                    if (existsTable) {
-                        const plan = await modifyTable(tableName, tableDefinition);
-                        if (plan.changed) {
-                            // 汇总统计
-                            if (plan.metrics) {
-                                overall.addFields += plan.metrics.addFields;
-                                overall.typeChanges += plan.metrics.datatype;
-                                overall.maxChanges += plan.metrics.length;
-                                overall.defaultChanges += plan.metrics.default;
-                                overall.indexCreate += plan.metrics.indexCreate;
-                                overall.indexDrop += plan.metrics.indexDrop;
-                                overall.nameChanges += plan.metrics.comment;
-                            }
-                            // 合并执行 ALTER TABLE 子句
-                            if (IS_SQLITE) {
-                                // SQLite: 仅支持 ADD COLUMN；如需修改/默认值设置，可选择重建表
-                                if ((plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) && FLAGS.SQLITE_REBUILD) {
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
-                                    else await rebuildSqliteTable(tableName, tableDefinition);
-                                } else {
-                                    for (const c of plan.addClauses) {
-                                        const stmt = `ALTER TABLE "${tableName}" ${c}`;
-                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                        else await sql`${sql(stmt)}`;
-                                    }
-                                }
-                            } else if (FLAGS.MERGE_ALTER) {
-                                const clauses = [...plan.addClauses, ...plan.modifyClauses];
-                                if (clauses.length > 0) {
-                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                    else await sql`${sql(stmt)}`;
-                                }
-                            } else {
-                                // 分别执行
-                                for (const c of plan.addClauses) {
-                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                    else await sql`${sql(stmt)}`;
-                                }
-                                for (const c of plan.modifyClauses) {
-                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                    else await sql`${sql(stmt)}`;
-                                }
-                            }
-
-                            // 默认值专用 ALTER
-                            if (plan.defaultClauses.length > 0) {
-                                if (IS_SQLITE) {
-                                    Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
-                                } else {
-                                    const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
-                                    else await sql`${sql(stmt)}`;
-                                }
-                            }
-
-                            // 索引操作
-                            for (const act of plan.indexActions) {
-                                const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
-                                if (FLAGS.DRY_RUN) {
-                                    Logger.info(`[计划] ${stmt}`);
-                                } else {
-                                    try {
-                                        await sql`${sql(stmt)}`;
-                                        if (act.action === 'create') {
-                                            Logger.info(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
-                                        } else {
-                                            Logger.info(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
-                                        }
-                                    } catch (error) {
-                                        Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
-                                        throw error;
-                                    }
-                                }
-                            }
-
-                            // PG 列注释
-                            if (IS_PG && plan.commentActions && plan.commentActions.length > 0) {
-                                for (const stmt of plan.commentActions) {
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else await sql`${sql(stmt)}`;
-                                }
-                            }
-
-                            modifiedTables++;
+                if (existsTable) {
+                    const plan = await modifyTable(tableName, tableDefinition);
+                    if (plan.changed) {
+                        // 汇总统计
+                        if (plan.metrics) {
+                            overall.addFields += plan.metrics.addFields;
+                            overall.typeChanges += plan.metrics.datatype;
+                            overall.maxChanges += plan.metrics.length;
+                            overall.defaultChanges += plan.metrics.default;
+                            overall.indexCreate += plan.metrics.indexCreate;
+                            overall.indexDrop += plan.metrics.indexDrop;
+                            overall.nameChanges += plan.metrics.comment;
                         }
-                    } else {
-                        await createTable(tableName, tableDefinition);
-                        createdTables++;
-                    }
+                        // 合并执行 ALTER TABLE 子句
+                        if (IS_SQLITE) {
+                            // SQLite: 仅支持 ADD COLUMN；如需修改/默认值设置，可选择重建表
+                            if ((plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) && FLAGS.SQLITE_REBUILD) {
+                                if (IS_PLAN) Logger.info(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
+                                else await rebuildSqliteTable(tableName, tableDefinition);
+                            } else {
+                                for (const c of plan.addClauses) {
+                                    const stmt = `ALTER TABLE "${tableName}" ${c}`;
+                                    if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+                                    else await sql`${sql(stmt)}`;
+                                }
+                            }
+                        } else if (FLAGS.MERGE_ALTER) {
+                            const clauses = [...plan.addClauses, ...plan.modifyClauses];
+                            if (clauses.length > 0) {
+                                const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
+                                if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+                                else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                else await sql`${sql(stmt)}`;
+                            }
+                        } else {
+                            // 分别执行
+                            for (const c of plan.addClauses) {
+                                const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
+                                if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+                                else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                else await sql`${sql(stmt)}`;
+                            }
+                            for (const c of plan.modifyClauses) {
+                                const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
+                                if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+                                else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                else await sql`${sql(stmt)}`;
+                            }
+                        }
 
-                    processedCount++;
+                        // 默认值专用 ALTER
+                        if (plan.defaultClauses.length > 0) {
+                            if (IS_SQLITE) {
+                                Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
+                            } else {
+                                const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
+                                const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
+                                if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+                                else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                else await sql`${sql(stmt)}`;
+                            }
+                        }
+
+                        // 索引操作
+                        for (const act of plan.indexActions) {
+                            const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
+                            if (IS_PLAN) {
+                                Logger.info(`[计划] ${stmt}`);
+                            } else {
+                                try {
+                                    await sql`${sql(stmt)}`;
+                                    if (act.action === 'create') {
+                                        Logger.info(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+                                    } else {
+                                        Logger.info(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+                                    }
+                                } catch (error) {
+                                    Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
+                                    throw error;
+                                }
+                            }
+                        }
+
+                        // PG 列注释
+                        if (IS_PG && plan.commentActions && plan.commentActions.length > 0) {
+                            for (const stmt of plan.commentActions) {
+                                if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+                                else await sql`${sql(stmt)}`;
+                            }
+                        }
+
+                        modifiedTables++;
+                    }
+                } else {
+                    await createTable(tableName, tableDefinition);
+                    createdTables++;
                 }
-            } catch (error) {
-                Logger.warn(`扫描目录 ${dir} 出错: ${error.message}`);
+
+                processedCount++;
             }
         }
 

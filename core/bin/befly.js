@@ -75,7 +75,6 @@ async function resolveScriptPath(name) {
 
 async function runScriptAtPath(targetPath, label, args = []) {
     const bunExe = process.execPath || 'bun';
-    console.log(`运行脚本: ${label} -> ${targetPath} (${bunExe})`);
     const child = Bun.spawn({
         cmd: [bunExe, targetPath, ...args],
         stdio: ['inherit', 'inherit', 'inherit'],
