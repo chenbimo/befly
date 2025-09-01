@@ -16,8 +16,7 @@ const IS_MYSQL = DB === 'mysql';
 const IS_PG = DB === 'postgresql' || DB === 'postgres';
 const IS_SQLITE = DB === 'sqlite';
 
-// 统一标识符与字面量转义
-const qi = (name) => (IS_MYSQL ? `\`${name}\`` : `"${name}"`);
+// 字面量转义（标识符引号按方言在各分支内直接写死）
 const ql = (val) => {
     if (val === null || val === undefined) return 'NULL';
     if (typeof val === 'number') return String(val);
@@ -148,7 +147,7 @@ const getTableColumns = async (client, tableName) => {
             };
         }
     } else if (IS_SQLITE) {
-        const rs = await client.unsafe(`PRAGMA table_info(${qi(tableName)})`);
+        const rs = await client.unsafe(`PRAGMA table_info("${tableName}")`);
         for (const row of rs) {
             let baseType = String(row.type || '').toUpperCase();
             let length = null;
@@ -194,9 +193,9 @@ const getTableIndexes = async (client, tableName) => {
             }
         }
     } else if (IS_SQLITE) {
-        const list = await client.unsafe(`PRAGMA index_list(${qi(tableName)})`);
+        const list = await client.unsafe(`PRAGMA index_list("${tableName}")`);
         for (const idx of list) {
-            const info = await client.unsafe(`PRAGMA index_info(${qi(idx.name)})`);
+            const info = await client.unsafe(`PRAGMA index_info("${idx.name}")`);
             const cols = info.map((r) => r.name);
             if (cols.length === 1) indexes[idx.name] = cols;
         }
@@ -208,25 +207,25 @@ const getTableIndexes = async (client, tableName) => {
 const buildIndexSQL = (tableName, indexName, fieldName, action) => {
     if (IS_MYSQL) {
         const parts = [];
-        if (action === 'create') parts.push(`ADD INDEX ${qi(indexName)} (${qi(fieldName)})`);
-        else parts.push(`DROP INDEX ${qi(indexName)}`);
+        if (action === 'create') parts.push(`ADD INDEX \`${indexName}\` (\`${fieldName}\`)`);
+        else parts.push(`DROP INDEX \`${indexName}\``);
         if (FLAGS.ONLINE_INDEX) {
             parts.push('ALGORITHM=INPLACE');
             parts.push('LOCK=NONE');
         }
-        return `ALTER TABLE ${qi(tableName)} ${parts.join(', ')}`;
+        return `ALTER TABLE \`${tableName}\` ${parts.join(', ')}`;
     }
     if (IS_PG) {
         if (action === 'create') {
             const concurrently = FLAGS.ONLINE_INDEX ? ' CONCURRENTLY' : '';
-            return `CREATE INDEX${concurrently} IF NOT EXISTS ${qi(indexName)} ON ${qi(tableName)}(${qi(fieldName)})`;
+            return `CREATE INDEX${concurrently} IF NOT EXISTS "${indexName}" ON "${tableName}"("${fieldName}")`;
         }
         const concurrently = FLAGS.ONLINE_INDEX ? ' CONCURRENTLY' : '';
-        return `DROP INDEX${concurrently} IF EXISTS ${qi(indexName)}`;
+        return `DROP INDEX${concurrently} IF EXISTS "${indexName}"`;
     }
     // SQLite
-    if (action === 'create') return `CREATE INDEX IF NOT EXISTS ${qi(indexName)} ON ${qi(tableName)}(${qi(fieldName)})`;
-    return `DROP INDEX IF EXISTS ${qi(indexName)}`;
+    if (action === 'create') return `CREATE INDEX IF NOT EXISTS "${indexName}" ON "${tableName}"("${fieldName}")`;
+    return `DROP INDEX IF EXISTS "${indexName}"`;
 };
 
 // 创建表（方言化）
@@ -234,17 +233,17 @@ const createTable = async (client, tableName, fields) => {
     const idType = typeMapping.number;
     const colDefs = [];
     if (IS_MYSQL) {
-        colDefs.push(`${qi('id')} ${idType} PRIMARY KEY COMMENT "主键ID"`);
-        colDefs.push(`${qi('created_at')} ${idType} NOT NULL DEFAULT 0 COMMENT "创建时间"`);
-        colDefs.push(`${qi('updated_at')} ${idType} NOT NULL DEFAULT 0 COMMENT "更新时间"`);
-        colDefs.push(`${qi('deleted_at')} ${idType} NOT NULL DEFAULT 0 COMMENT "删除时间"`);
-        colDefs.push(`${qi('state')} ${idType} NOT NULL DEFAULT 0 COMMENT "状态字段"`);
+        colDefs.push(`\`id\` ${idType} PRIMARY KEY COMMENT "主键ID"`);
+        colDefs.push(`\`created_at\` ${idType} NOT NULL DEFAULT 0 COMMENT "创建时间"`);
+        colDefs.push(`\`updated_at\` ${idType} NOT NULL DEFAULT 0 COMMENT "更新时间"`);
+        colDefs.push(`\`deleted_at\` ${idType} NOT NULL DEFAULT 0 COMMENT "删除时间"`);
+        colDefs.push(`\`state\` ${idType} NOT NULL DEFAULT 0 COMMENT "状态字段"`);
     } else {
-        colDefs.push(`${qi('id')} ${idType} PRIMARY KEY`);
-        colDefs.push(`${qi('created_at')} ${idType} NOT NULL DEFAULT 0`);
-        colDefs.push(`${qi('updated_at')} ${idType} NOT NULL DEFAULT 0`);
-        colDefs.push(`${qi('deleted_at')} ${idType} NOT NULL DEFAULT 0`);
-        colDefs.push(`${qi('state')} ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`"id" ${idType} PRIMARY KEY`);
+        colDefs.push(`"created_at" ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`"updated_at" ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`"deleted_at" ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`"state" ${idType} NOT NULL DEFAULT 0`);
     }
 
     for (const [fieldName, rule] of Object.entries(fields)) {
@@ -255,22 +254,31 @@ const createTable = async (client, tableName, fields) => {
             const maxLength = parseInt(fMax);
             sqlType = `${typeMapping[fType]}(${maxLength})`;
         }
-        let columnDef = `${qi(fieldName)} ${sqlType} NOT NULL`;
         const expectedDefault = getExpectedDefault(fType, fDef);
-        if (fType !== 'text' && expectedDefault !== null) {
-            columnDef += ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}`;
+        if (IS_MYSQL) {
+            let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
+            if (fType !== 'text' && expectedDefault !== null) {
+                columnDef += ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}`;
+            }
+            if (disp && disp !== 'null') {
+                columnDef += ` COMMENT "${disp.replace(/"/g, '\\"')}"`;
+            }
+            colDefs.push(columnDef);
+        } else {
+            let columnDef = `"${fieldName}" ${sqlType} NOT NULL`;
+            if (fType !== 'text' && expectedDefault !== null) {
+                columnDef += ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}`;
+            }
+            // 非 MySQL 不在此处添加注释（PG 后续单独 COMMENT，SQLite 不支持列注释）
+            colDefs.push(columnDef);
         }
-        if (IS_MYSQL && disp && disp !== 'null') {
-            columnDef += ` COMMENT "${disp.replace(/"/g, '\\"')}"`;
-        }
-        colDefs.push(columnDef);
     }
 
     let createSQL = '';
     if (IS_MYSQL) {
-        createSQL = `CREATE TABLE ${qi(tableName)} (\n            ${colDefs.join(',\n            ')}\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs`;
+        createSQL = `CREATE TABLE \`${tableName}\` (\n            ${colDefs.join(',\n            ')}\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs`;
     } else {
-        createSQL = `CREATE TABLE ${qi(tableName)} (\n            ${colDefs.join(',\n            ')}\n        )`;
+        createSQL = `CREATE TABLE "${tableName}" (\n            ${colDefs.join(',\n            ')}\n        )`;
     }
     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
     else {
@@ -281,15 +289,15 @@ const createTable = async (client, tableName, fields) => {
     // PostgreSQL: 添加列注释（用显示名）
     if (IS_PG) {
         const comments = [];
-        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('id')} IS ${ql('主键ID')}`);
-        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('created_at')} IS ${ql('创建时间')}`);
-        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('updated_at')} IS ${ql('更新时间')}`);
-        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('deleted_at')} IS ${ql('删除时间')}`);
-        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('state')} IS ${ql('状态字段')}`);
+        comments.push(`COMMENT ON COLUMN "${tableName}"."id" IS ${ql('主键ID')}`);
+        comments.push(`COMMENT ON COLUMN "${tableName}"."created_at" IS ${ql('创建时间')}`);
+        comments.push(`COMMENT ON COLUMN "${tableName}"."updated_at" IS ${ql('更新时间')}`);
+        comments.push(`COMMENT ON COLUMN "${tableName}"."deleted_at" IS ${ql('删除时间')}`);
+        comments.push(`COMMENT ON COLUMN "${tableName}"."state" IS ${ql('状态字段')}`);
         for (const [fieldName, rule] of Object.entries(fields)) {
             const [disp] = parseFieldRule(rule);
             if (disp && disp !== 'null') {
-                comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi(fieldName)} IS ${ql(String(disp))}`);
+                comments.push(`COMMENT ON COLUMN "${tableName}"."${fieldName}" IS ${ql(String(disp))}`);
             }
         }
         for (const sql of comments) {
@@ -383,17 +391,17 @@ const generateDDLClause = (fieldName, rule, isAdd = false) => {
     const expectedDefault = getExpectedDefault(fType, fDef);
     const defaultSql = fType !== 'text' && expectedDefault !== null ? ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}` : '';
     if (IS_MYSQL) {
-        let col = `${qi(fieldName)} ${sqlType} NOT NULL${defaultSql}`;
+        let col = `\`${fieldName}\` ${sqlType} NOT NULL${defaultSql}`;
         if (disp && disp !== 'null') col += ` COMMENT "${disp.replace(/"/g, '\\"')}"`;
         return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} ${col}`;
     }
     if (IS_PG) {
-        if (isAdd) return `ADD COLUMN ${qi(fieldName)} ${sqlType} NOT NULL${defaultSql}`;
+        if (isAdd) return `ADD COLUMN "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
         // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
-        return `ALTER COLUMN ${qi(fieldName)} TYPE ${sqlType}`;
+        return `ALTER COLUMN "${fieldName}" TYPE ${sqlType}`;
     }
     // SQLite 仅支持 ADD COLUMN
-    if (isAdd) return `ADD COLUMN ${qi(fieldName)} ${sqlType} NOT NULL${defaultSql}`;
+    if (isAdd) return `ADD COLUMN "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
     return '';
 };
 
@@ -427,7 +435,7 @@ const executeDDLSafely = async (client, sql) => {
 // SQLite 重建表迁移（简化版：仅处理新增/修改字段，不处理复杂约束与复合索引）
 const rebuildSqliteTable = async (client, tableName, fields) => {
     // 1. 读取现有列顺序
-    const info = await client.unsafe(`PRAGMA table_info(${qi(tableName)})`);
+    const info = await client.unsafe(`PRAGMA table_info("${tableName}")`);
     const existingCols = info.map((r) => r.name);
     const targetCols = ['id', 'created_at', 'updated_at', 'deleted_at', 'state', ...Object.keys(fields)];
     const tmpTable = `${tableName}__tmp__${Date.now()}`;
@@ -438,13 +446,13 @@ const rebuildSqliteTable = async (client, tableName, fields) => {
     // 3. 拷贝数据（按交集列）
     const commonCols = targetCols.filter((c) => existingCols.includes(c));
     if (commonCols.length > 0) {
-        const colsSql = commonCols.map((c) => qi(c)).join(', ');
-        await exec(client, `INSERT INTO ${qi(tmpTable)} (${colsSql}) SELECT ${colsSql} FROM ${qi(tableName)}`);
+        const colsSql = commonCols.map((c) => `"${c}"`).join(', ');
+        await exec(client, `INSERT INTO "${tmpTable}" (${colsSql}) SELECT ${colsSql} FROM "${tableName}"`);
     }
 
     // 4. 删除旧表并重命名
-    await exec(client, `DROP TABLE ${qi(tableName)}`);
-    await exec(client, `ALTER TABLE ${qi(tmpTable)} RENAME TO ${qi(tableName)}`);
+    await exec(client, `DROP TABLE "${tableName}"`);
+    await exec(client, `ALTER TABLE "${tmpTable}" RENAME TO "${tableName}"`);
 };
 
 // 同步表结构
@@ -504,10 +512,10 @@ const syncTable = async (client, tableName, fields) => {
                 if (onlyDefaultChanged) {
                     const expectedDefault = getExpectedDefault(parseFieldRule(rule)[1], parseFieldRule(rule)[4]);
                     if (expectedDefault === null) {
-                        defaultClauses.push(`ALTER COLUMN ${qi(fieldName)} DROP DEFAULT`);
+                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldName}\` DROP DEFAULT` : `ALTER COLUMN "${fieldName}" DROP DEFAULT`);
                     } else {
                         const v = parseFieldRule(rule)[1] === 'number' ? expectedDefault : ql(String(expectedDefault));
-                        defaultClauses.push(`ALTER COLUMN ${qi(fieldName)} SET DEFAULT ${v}`);
+                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldName}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldName}" SET DEFAULT ${v}`);
                     }
                 } else {
                     // 判断是否需要跳过 MODIFY：包含收缩或类型变更时跳过
@@ -601,7 +609,7 @@ const syncTable = async (client, tableName, fields) => {
                 const curr = existingColumns[fieldName].comment || '';
                 const want = disp && disp !== 'null' ? String(disp) : '';
                 if (want !== curr) {
-                    commentActions.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi(fieldName)} IS ${want ? ql(want) : 'NULL'}`);
+                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldName}" IS ${want ? ql(want) : 'NULL'}`);
                     changed = true;
                     changeStats.comment++;
                 }
@@ -698,7 +706,7 @@ const SyncDb = async () => {
                                     else await rebuildSqliteTable(client, tableName, tableDefinition);
                                 } else {
                                     for (const c of plan.addClauses) {
-                                        const sql = `ALTER TABLE ${qi(tableName)} ${c}`;
+                                        const sql = `ALTER TABLE "${tableName}" ${c}`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                         else await exec(client, sql);
                                     }
@@ -707,21 +715,21 @@ const SyncDb = async () => {
                                 // PostgreSQL 安全新增列（避免重写）：
                                 for (const add of plan.pgSafeAdds) {
                                     // 1) ADD COLUMN NULL 无默认
-                                    const addSql = `ALTER TABLE ${qi(tableName)} ADD COLUMN ${qi(add.column)} ${add.sqlType}`;
+                                    const addSql = `ALTER TABLE "${tableName}" ADD COLUMN "${add.column}" ${add.sqlType}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${addSql}`);
                                     else await exec(client, addSql);
                                     // 2) 分批回填（这里简单一次性回填；生产可按批次）
                                     if (add.setDefault) {
-                                        const updSql = `UPDATE ${qi(tableName)} SET ${qi(add.column)} = ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))} WHERE ${qi(add.column)} IS NULL`;
+                                        const updSql = `UPDATE "${tableName}" SET "${add.column}" = ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))} WHERE "${add.column}" IS NULL`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${updSql}`);
                                         else await exec(client, updSql);
                                         // 3) 设置 DEFAULT
-                                        const defSql = `ALTER TABLE ${qi(tableName)} ALTER COLUMN ${qi(add.column)} SET DEFAULT ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))}`;
+                                        const defSql = `ALTER TABLE "${tableName}" ALTER COLUMN "${add.column}" SET DEFAULT ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))}`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${defSql}`);
                                         else await exec(client, defSql);
                                     }
                                     // 4) 置为 NOT NULL
-                                    const notNullSql = `ALTER TABLE ${qi(tableName)} ALTER COLUMN ${qi(add.column)} SET NOT NULL`;
+                                    const notNullSql = `ALTER TABLE "${tableName}" ALTER COLUMN "${add.column}" SET NOT NULL`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${notNullSql}`);
                                     else await exec(client, notNullSql);
                                 }
@@ -729,18 +737,18 @@ const SyncDb = async () => {
                                 if (FLAGS.MERGE_ALTER) {
                                     const clauses = [...plan.addClauses, ...plan.modifyClauses];
                                     if (clauses.length > 0) {
-                                        const sql = `ALTER TABLE ${qi(tableName)} ${clauses.join(', ')}`;
+                                        const sql = `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                         else await exec(client, sql);
                                     }
                                 } else {
                                     for (const c of plan.addClauses) {
-                                        const sql = `ALTER TABLE ${qi(tableName)} ${c}`;
+                                        const sql = `ALTER TABLE "${tableName}" ${c}`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                         else await exec(client, sql);
                                     }
                                     for (const c of plan.modifyClauses) {
-                                        const sql = `ALTER TABLE ${qi(tableName)} ${c}`;
+                                        const sql = `ALTER TABLE "${tableName}" ${c}`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                         else await exec(client, sql);
                                     }
@@ -749,7 +757,7 @@ const SyncDb = async () => {
                                 const clauses = [...plan.addClauses, ...plan.modifyClauses];
                                 if (clauses.length > 0) {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = `ALTER TABLE ${qi(tableName)} ${clauses.join(', ')}${suffix}`;
+                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                     else if (IS_MYSQL) await executeDDLSafely(client, sql);
                                     else await exec(client, sql);
@@ -758,14 +766,14 @@ const SyncDb = async () => {
                                 // 分别执行
                                 for (const c of plan.addClauses) {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = `ALTER TABLE ${qi(tableName)} ${c}${suffix}`;
+                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                     else if (IS_MYSQL) await executeDDLSafely(client, sql);
                                     else await exec(client, sql);
                                 }
                                 for (const c of plan.modifyClauses) {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = `ALTER TABLE ${qi(tableName)} ${c}${suffix}`;
+                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                     else if (IS_MYSQL) await executeDDLSafely(client, sql);
                                     else await exec(client, sql);
@@ -778,7 +786,7 @@ const SyncDb = async () => {
                                     Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
                                 } else {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = `ALTER TABLE ${qi(tableName)} ${plan.defaultClauses.join(', ')}${suffix}`;
+                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                     else if (IS_MYSQL) await executeDDLSafely(client, sql);
                                     else await exec(client, sql);
