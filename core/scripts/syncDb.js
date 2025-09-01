@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { parseFieldRule, createSqlClient, toSnakeTableName } from '../utils/index.js';
+import { parseFieldRule, createSqlClient, toSnakeTableName, isType } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
 
@@ -253,8 +253,7 @@ const getTableIndexes = async (tableName) => {
 const buildIndexSQL = (tableName, indexName, fieldName, action) => {
     if (IS_MYSQL) {
         const parts = [];
-        if (action === 'create') parts.push(`ADD INDEX \`${indexName}\` (\`${fieldName}\`)`);
-        else parts.push(`DROP INDEX \`${indexName}\``);
+        action === 'create' ? parts.push(`ADD INDEX \`${indexName}\` (\`${fieldName}\`)`) : parts.push(`DROP INDEX \`${indexName}\``);
         if (FLAGS.ONLINE_INDEX) {
             parts.push('ALGORITHM=INPLACE');
             parts.push('LOCK=NONE');
@@ -279,7 +278,7 @@ const createTable = async (tableName, fields) => {
     // 统一列定义数组：包含系统字段与业务字段
     const colDefs = [];
 
-    // 系统字段
+    // 1) 固定字段
     if (IS_MYSQL) {
         colDefs.push('`id` BIGINT PRIMARY KEY COMMENT "主键ID"');
         colDefs.push('`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"');
@@ -294,31 +293,14 @@ const createTable = async (tableName, fields) => {
         colDefs.push('"state" INTEGER NOT NULL DEFAULT 0');
     }
 
-    // 业务字段
+    // 2) 业务字段
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
-        let sqlType = typeMapping[fieldType];
-        if ((fieldType === 'string' || fieldType === 'array') && (IS_MYSQL || IS_PG)) {
-            const maxLen = parseInt(fieldMax);
-            sqlType = `${typeMapping[fieldType]}(${maxLen})`;
-        }
+        const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${maxLen})` : typeMapping[fieldType];
         const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
-        let defaultSql = '';
-        if (fieldType !== 'text' && defaultVal !== null) {
-            let lit;
-            if (typeof defaultVal === 'number') {
-                lit = defaultVal;
-            } else {
-                lit = ql(String(defaultVal));
-            }
-            defaultSql = ` DEFAULT ${lit}`;
-        }
+        const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(defaultVal, 'number') ? ` DEFAULT ${defaultVal}` : ` DEFAULT '${defaultVal}'`) : '';
         if (IS_MYSQL) {
-            let col = `\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql}`;
-            if (fieldName && fieldName !== 'null') {
-                col += ` COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`;
-            }
-            colDefs.push(col);
+            colDefs.push(`\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`);
         } else {
             colDefs.push(`"${fieldKey}" ${sqlType} NOT NULL${defaultSql}`);
         }
@@ -350,7 +332,7 @@ const createTable = async (tableName, fields) => {
             ['state', '状态字段']
         ];
         for (const [name, cmt] of commentPairs) {
-            const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS ${ql(cmt)}`;
+            const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${cmt}'`;
             if (FLAGS.DRY_RUN) {
                 Logger.info(`[计划] ${stmt}`);
             } else {
@@ -360,7 +342,7 @@ const createTable = async (tableName, fields) => {
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
             const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
             if (fieldName && fieldName !== 'null') {
-                const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${ql(String(fieldName))}`;
+                const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS '${fieldName}'`;
                 if (FLAGS.DRY_RUN) {
                     Logger.info(`[计划] ${stmt}`);
                 } else {
