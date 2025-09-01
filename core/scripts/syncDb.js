@@ -129,6 +129,24 @@ const ensureDbVersion = async () => {
     }
 };
 
+// 判断表是否存在（返回布尔值）
+const tableExists = async (tableName) => {
+    if (!sql) throw new Error('SQL 客户端未初始化');
+    if (IS_MYSQL) {
+        const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}`;
+        return (res[0]?.count || 0) > 0;
+    }
+    if (IS_PG) {
+        const res = await sql`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
+        return (res[0]?.count || 0) > 0;
+    }
+    if (IS_SQLITE) {
+        const res = await sql`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
+        return res.length > 0;
+    }
+    return false;
+};
+
 // 获取表的现有列信息（按方言）
 const getTableColumns = async (tableName) => {
     const columns = {};
@@ -665,17 +683,7 @@ const SyncDb = async () => {
                     const fileBaseName = path.basename(file, '.json');
                     const tableName = toSnakeTableName(fileBaseName);
                     const tableDefinition = await Bun.file(file).json();
-                    let existsTable = false;
-                    if (IS_MYSQL) {
-                        const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}`;
-                        existsTable = res[0]?.count > 0;
-                    } else if (IS_PG) {
-                        const res = await sql`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
-                        existsTable = (res[0]?.count || 0) > 0;
-                    } else if (IS_SQLITE) {
-                        const res = await sql`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
-                        existsTable = res.length > 0;
-                    }
+                    const existsTable = await tableExists(tableName);
 
                     if (existsTable) {
                         const plan = await syncTable(tableName, tableDefinition);
