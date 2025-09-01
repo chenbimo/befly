@@ -10,6 +10,9 @@ import { parseFieldRule, createSqlClient, toSnakeTableName } from '../utils/inde
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
 
+// 顶部管理数据库客户端（按需求使用 Bun SQL 模板，不使用 exec 辅助）
+let sql = null;
+
 // 方言与类型映射
 const DB = (Env.DB_TYPE || 'mysql').toLowerCase();
 const IS_MYSQL = DB === 'mysql';
@@ -94,24 +97,20 @@ const isPgCompatibleTypeChange = (currentType, newType) => {
 
 // （已移除）getColumnDefinition：不再保留未使用的函数，减少函数数量
 
-// 通用执行器：直接使用 Bun SQL 参数化（MySQL 使用 '?' 占位符）
-const exec = async (client, query, params = []) => {
-    if (params && params.length > 0) {
-        return await client.unsafe(query, params);
-    }
-    return await client.unsafe(query);
-};
+// 移除 exec 辅助函数，所有 SQL 执行统一使用模板或片段：
+// - 有参数：sql`... ${param}`
+// - 无参数但动态整条 SQL：sql`${sql(sqlText)}`
 
 // 获取表的现有列信息（按方言）
 const getTableColumns = async (client, tableName) => {
     const columns = {};
     if (IS_MYSQL) {
-        const result = await exec(
-            client,
-            `SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
-             FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`,
-            [Env.DB_NAME, tableName]
-        );
+        const result = await client`
+            SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}
+            ORDER BY ORDINAL_POSITION
+        `;
         for (const row of result) {
             columns[row.COLUMN_NAME] = {
                 type: row.DATA_TYPE,
@@ -146,7 +145,7 @@ const getTableColumns = async (client, tableName) => {
             };
         }
     } else if (IS_SQLITE) {
-        const rs = await client.unsafe(`PRAGMA table_info("${tableName}")`);
+        const rs = await client`PRAGMA table_info(${client(tableName)})`;
         for (const row of rs) {
             let baseType = String(row.type || '').toUpperCase();
             let length = null;
@@ -172,12 +171,14 @@ const getTableColumns = async (client, tableName) => {
 const getTableIndexes = async (client, tableName) => {
     const indexes = {};
     if (IS_MYSQL) {
-        const result = await exec(
-            client,
-            `SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
-             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME`,
-            [Env.DB_NAME, tableName]
-        );
+        const result = await client`
+                        SELECT INDEX_NAME, COLUMN_NAME
+                        FROM information_schema.STATISTICS
+                        WHERE TABLE_SCHEMA = ${Env.DB_NAME}
+                            AND TABLE_NAME = ${tableName}
+                            AND INDEX_NAME != 'PRIMARY'
+                        ORDER BY INDEX_NAME
+                `;
         for (const row of result) {
             if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
             indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
@@ -192,9 +193,9 @@ const getTableIndexes = async (client, tableName) => {
             }
         }
     } else if (IS_SQLITE) {
-        const list = await client.unsafe(`PRAGMA index_list("${tableName}")`);
+        const list = await client`PRAGMA index_list(${client(tableName)})`;
         for (const idx of list) {
-            const info = await client.unsafe(`PRAGMA index_info("${idx.name}")`);
+            const info = await client`PRAGMA index_info(${client(idx.name)})`;
             const cols = info.map((r) => r.name);
             if (cols.length === 1) indexes[idx.name] = cols;
         }
@@ -281,7 +282,7 @@ const createTable = async (client, tableName, fields) => {
     }
     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
     else {
-        await exec(client, createSQL);
+        await client`${client(createSQL)}`;
         Logger.info(`[新建表] ${tableName}`);
     }
 
@@ -301,7 +302,7 @@ const createTable = async (client, tableName, fields) => {
         }
         for (const sql of comments) {
             if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-            else await exec(client, sql);
+            else await client`${client(sql)}`;
         }
     }
 
@@ -310,7 +311,7 @@ const createTable = async (client, tableName, fields) => {
     for (const sysField of ['created_at', 'updated_at', 'state']) {
         const sql = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-        else await exec(client, sql);
+        else await client`${client(sql)}`;
     }
 
     // 自定义字段索引
@@ -319,7 +320,7 @@ const createTable = async (client, tableName, fields) => {
         if (hasIndex) {
             const sql = buildIndexSQL(tableName, `idx_${fieldName}`, fieldName, 'create');
             if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-            else await exec(client, sql);
+            else await client`${client(sql)}`;
         }
     }
 };
@@ -407,14 +408,14 @@ const generateDDLClause = (fieldName, rule, isAdd = false) => {
 // 安全执行DDL语句
 const executeDDLSafely = async (client, sql) => {
     try {
-        await exec(client, sql);
+        await client`${client(sql)}`;
         return true;
     } catch (error) {
         // MySQL 专用降级路径
         if (sql.includes('ALGORITHM=INSTANT')) {
             const inplaceSql = sql.replace(/ALGORITHM=INSTANT/g, 'ALGORITHM=INPLACE');
             try {
-                await exec(client, inplaceSql);
+                await client`${client(inplaceSql)}`;
                 return true;
             } catch (inplaceError) {
                 // 最后尝试传统DDL：移除 ALGORITHM/LOCK 附加子句后执行
@@ -422,7 +423,7 @@ const executeDDLSafely = async (client, sql) => {
                     .replace(/,\s*ALGORITHM=INPLACE/g, '')
                     .replace(/,\s*ALGORITHM=INSTANT/g, '')
                     .replace(/,\s*LOCK=(NONE|SHARED|EXCLUSIVE)/g, '');
-                await exec(client, traditionSql);
+                await client`${client(traditionSql)}`;
                 return true;
             }
         } else {
@@ -434,7 +435,7 @@ const executeDDLSafely = async (client, sql) => {
 // SQLite 重建表迁移（简化版：仅处理新增/修改字段，不处理复杂约束与复合索引）
 const rebuildSqliteTable = async (client, tableName, fields) => {
     // 1. 读取现有列顺序
-    const info = await client.unsafe(`PRAGMA table_info("${tableName}")`);
+    const info = await client`PRAGMA table_info(${client(tableName)})`;
     const existingCols = info.map((r) => r.name);
     const targetCols = ['id', 'created_at', 'updated_at', 'deleted_at', 'state', ...Object.keys(fields)];
     const tmpTable = `${tableName}__tmp__${Date.now()}`;
@@ -446,12 +447,12 @@ const rebuildSqliteTable = async (client, tableName, fields) => {
     const commonCols = targetCols.filter((c) => existingCols.includes(c));
     if (commonCols.length > 0) {
         const colsSql = commonCols.map((c) => `"${c}"`).join(', ');
-        await exec(client, `INSERT INTO "${tmpTable}" (${colsSql}) SELECT ${colsSql} FROM "${tableName}"`);
+        await client`${client(`INSERT INTO "${tmpTable}" (${colsSql}) SELECT ${colsSql} FROM "${tableName}"`)}`;
     }
 
     // 4. 删除旧表并重命名
-    await exec(client, `DROP TABLE "${tableName}"`);
-    await exec(client, `ALTER TABLE "${tmpTable}" RENAME TO "${tableName}"`);
+    await client`${client(`DROP TABLE "${tableName}"`)}`;
+    await client`${client(`ALTER TABLE "${tmpTable}" RENAME TO "${tableName}"`)}`;
 };
 
 // 同步表结构
@@ -615,7 +616,9 @@ const SyncDb = async () => {
         }
 
         // 建立数据库连接并检查版本（按方言）
+        // 在顶层也保留 sql 引用，便于未来需要跨函数访问
         client = await createSqlClient({ max: 1 });
+        sql = client;
         if (IS_MYSQL) {
             const r = await client`SELECT VERSION() AS version`;
             const version = r[0].version;
@@ -674,13 +677,13 @@ const SyncDb = async () => {
                     const tableDefinition = await Bun.file(file).json();
                     let exists = false;
                     if (IS_MYSQL) {
-                        const res = await exec(client, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Env.DB_NAME, tableName]);
-                        exists = res[0].count > 0;
+                        const res = await client`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}`;
+                        exists = res[0]?.count > 0;
                     } else if (IS_PG) {
                         const res = await client`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
                         exists = (res[0]?.count || 0) > 0;
                     } else if (IS_SQLITE) {
-                        const res = await client.unsafe(`SELECT name FROM sqlite_master WHERE type='table' AND name=${ql(tableName)}`);
+                        const res = await client`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
                         exists = res.length > 0;
                     }
 
@@ -705,35 +708,35 @@ const SyncDb = async () => {
                                     else await rebuildSqliteTable(client, tableName, tableDefinition);
                                 } else {
                                     for (const c of plan.addClauses) {
-                                        const sql = `ALTER TABLE "${tableName}" ${c}`;
-                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                        else await exec(client, sql);
+                                        const stmt = `ALTER TABLE "${tableName}" ${c}`;
+                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+                                        else await client`${client(stmt)}`;
                                     }
                                 }
                             } else if (FLAGS.MERGE_ALTER) {
                                 const clauses = [...plan.addClauses, ...plan.modifyClauses];
                                 if (clauses.length > 0) {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
-                                    else await exec(client, sql);
+                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
+                                    else await client`${client(stmt)}`;
                                 }
                             } else {
                                 // 分别执行
                                 for (const c of plan.addClauses) {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
-                                    else await exec(client, sql);
+                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
+                                    else await client`${client(stmt)}`;
                                 }
                                 for (const c of plan.modifyClauses) {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
-                                    else await exec(client, sql);
+                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
+                                    else await client`${client(stmt)}`;
                                 }
                             }
 
@@ -743,10 +746,10 @@ const SyncDb = async () => {
                                     Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
                                 } else {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-                                    const sql = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, sql);
-                                    else await exec(client, sql);
+                                    const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
+                                    else await client`${client(stmt)}`;
                                 }
                             }
 
@@ -757,7 +760,7 @@ const SyncDb = async () => {
                                     Logger.info(`[计划] ${sql}`);
                                 } else {
                                     try {
-                                        await exec(client, sql);
+                                        await client`${client(sql)}`;
                                         if (act.action === 'create') {
                                             Logger.info(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
                                         } else {
@@ -772,9 +775,9 @@ const SyncDb = async () => {
 
                             // PG 列注释
                             if (IS_PG && plan.commentActions && plan.commentActions.length > 0) {
-                                for (const sql of plan.commentActions) {
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                    else await exec(client, sql);
+                                for (const stmt of plan.commentActions) {
+                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+                                    else await client`${client(stmt)}`;
                                 }
                             }
 
