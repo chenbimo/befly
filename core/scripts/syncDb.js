@@ -47,6 +47,11 @@ const defaultMapping = {
 
 // 全局统计
 const globalCount = {
+    // 表级
+    processedTables: 0,
+    createdTables: 0,
+    modifiedTables: 0,
+    // 字段与索引级
     addFields: 0,
     typeChanges: 0,
     maxChanges: 0, // 映射为长度变化
@@ -432,28 +437,21 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
 };
 
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
-const generateDDLClause = (colName, rule, isAdd = false) => {
-    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(rule);
-    // 类型映射：checkTable 已保证字段类型合法且可映射
-    let sqlType = typeMapping[fieldType];
-    if ((fieldType === 'string' || fieldType === 'array') && (IS_MYSQL || IS_PG)) {
-        const maxLength = parseInt(fieldMax);
-        sqlType = `${typeMapping[fieldType]}(${maxLength})`;
-    }
-    const expectedDefault = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
-    const defaultSql = fieldType !== 'text' && expectedDefault !== null ? ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}` : '';
+const generateDDLClause = (fieldKey, fieldRule, isAdd = false) => {
+    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+    const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
+    const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
+    const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(defaultVal, 'number') ? ` DEFAULT ${defaultVal}` : ` DEFAULT '${defaultVal}'`) : '';
     if (IS_MYSQL) {
-        let col = `\`${colName}\` ${sqlType} NOT NULL${defaultSql}`;
-        if (fieldName && fieldName !== 'null') col += ` COMMENT "${fieldName.replace(/"/g, '\\"')}"`;
-        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} ${col}`;
+        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`;
     }
     if (IS_PG) {
-        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${colName}" ${sqlType} NOT NULL${defaultSql}`;
+        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldKey}" ${sqlType} NOT NULL${defaultSql}`;
         // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
-        return `ALTER COLUMN "${colName}" TYPE ${sqlType}`;
+        return `ALTER COLUMN "${fieldKey}" TYPE ${sqlType}`;
     }
     // SQLite 仅支持 ADD COLUMN（>=3.50.0：支持 IF NOT EXISTS）
-    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${colName}" ${sqlType} NOT NULL${defaultSql}`;
+    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldKey}" ${sqlType} NOT NULL${defaultSql}`;
     return '';
 };
 
@@ -517,16 +515,6 @@ const modifyTable = async (tableName, fields) => {
     const modifyClauses = [];
     const defaultClauses = [];
     const indexActions = [];
-    const changeStats = {
-        addFields: 0,
-        datatype: 0,
-        length: 0,
-        default: 0,
-        comment: 0,
-        nullability: 0,
-        indexCreate: 0,
-        indexDrop: 0
-    };
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         if (existingColumns[fieldKey]) {
@@ -535,7 +523,11 @@ const modifyTable = async (tableName, fields) => {
                 for (const c of comparison.changes) {
                     const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
                     Logger.info(`[字段变更] ${tableName}.${fieldKey} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
-                    if (c.type in changeStats) changeStats[c.type]++;
+                    // 全量计数：全局累加
+                    if (c.type === 'datatype') globalCount.typeChanges++;
+                    else if (c.type === 'length') globalCount.maxChanges++;
+                    else if (c.type === 'default') globalCount.defaultChanges++;
+                    else if (c.type === 'comment') globalCount.nameChanges++;
                 }
                 const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
                 if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length && fieldMax !== 'null') {
@@ -583,7 +575,7 @@ const modifyTable = async (tableName, fields) => {
             Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${defaultVal ?? 'NULL'}`);
             addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
             changed = true;
-            changeStats.addFields++;
+            globalCount.addFields++;
         }
     }
 
@@ -592,7 +584,7 @@ const modifyTable = async (tableName, fields) => {
         if (!existingIndexes[idxName]) {
             indexActions.push({ action: 'create', indexName: idxName, fieldName: sysField });
             changed = true;
-            changeStats.indexCreate++;
+            globalCount.indexCreate++;
         }
     }
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
@@ -601,11 +593,11 @@ const modifyTable = async (tableName, fields) => {
         if (fieldIndex === '1' && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName: fieldKey });
             changed = true;
-            changeStats.indexCreate++;
+            globalCount.indexCreate++;
         } else if (fieldIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             indexActions.push({ action: 'drop', indexName, fieldName: fieldKey });
             changed = true;
-            changeStats.indexDrop++;
+            globalCount.indexDrop++;
         }
     }
 
@@ -619,18 +611,22 @@ const modifyTable = async (tableName, fields) => {
                 if (want !== curr) {
                     commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? ql(want) : 'NULL'}`);
                     changed = true;
-                    changeStats.comment++;
+                    globalCount.nameChanges++;
                 }
             }
         }
     }
-    return { changed, addClauses, modifyClauses, defaultClauses, indexActions, commentActions, metrics: changeStats };
+    return { changed, addClauses, modifyClauses, defaultClauses, indexActions, commentActions };
 };
 
 // 主同步函数
 const SyncDb = async () => {
     try {
         Logger.info('开始数据库表结构同步...');
+        // 重置全局统计，避免多次调用累加
+        for (const k of Object.keys(globalCount)) {
+            if (typeof globalCount[k] === 'number') globalCount[k] = 0;
+        }
 
         // 验证表定义文件
         if (!(await checkTable())) {
@@ -645,9 +641,7 @@ const SyncDb = async () => {
         // 扫描并处理表文件
         const tablesGlob = new Bun.Glob('*.json');
         const directories = [__dirtables, getProjectDir('tables')];
-        let processedCount = 0;
-        let createdTables = 0;
-        let modifiedTables = 0;
+        // 统计使用全局 globalCount
 
         for (const dir of directories) {
             for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
@@ -658,16 +652,6 @@ const SyncDb = async () => {
                 if (existsTable) {
                     const plan = await modifyTable(tableName, tableDefinition);
                     if (plan.changed) {
-                        // 汇总统计
-                        if (plan.metrics) {
-                            globalCount.addFields += plan.metrics.addFields;
-                            globalCount.typeChanges += plan.metrics.datatype;
-                            globalCount.maxChanges += plan.metrics.length;
-                            globalCount.defaultChanges += plan.metrics.default;
-                            globalCount.indexCreate += plan.metrics.indexCreate;
-                            globalCount.indexDrop += plan.metrics.indexDrop;
-                            globalCount.nameChanges += plan.metrics.comment;
-                        }
                         // 合并执行 ALTER TABLE 子句
                         if (IS_SQLITE) {
                             // SQLite: 仅支持 ADD COLUMN；如需修改/默认值设置，可选择重建表
@@ -748,20 +732,20 @@ const SyncDb = async () => {
                                 else await sql.unsafe(stmt);
                             }
                         }
-
-                        modifiedTables++;
+                        globalCount.modifiedTables++;
                     }
                 } else {
                     await createTable(tableName, tableDefinition);
-                    createdTables++;
+                    globalCount.createdTables++;
                 }
-
-                processedCount++;
+                globalCount.processedTables++;
             }
         }
 
         // 显示统计信息（扩展维度）
-        Logger.info(`统计 - 创建表: ${createdTables}`);
+        Logger.info(`统计 - 处理表总数: ${globalCount.processedTables}`);
+        Logger.info(`统计 - 创建表: ${globalCount.createdTables}`);
+        Logger.info(`统计 - 修改表: ${globalCount.modifiedTables}`);
         Logger.info(`统计 - 字段新增: ${globalCount.addFields}`);
         Logger.info(`统计 - 字段名称变更: ${globalCount.nameChanges}`);
         Logger.info(`统计 - 字段类型变更: ${globalCount.typeChanges}`);
@@ -772,7 +756,7 @@ const SyncDb = async () => {
         Logger.info(`统计 - 索引新增: ${globalCount.indexCreate}`);
         Logger.info(`统计 - 索引删除: ${globalCount.indexDrop}`);
 
-        if (processedCount === 0) {
+        if (globalCount.processedTables === 0) {
             Logger.warn('没有找到任何表定义文件');
         }
 
