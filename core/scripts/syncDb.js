@@ -57,11 +57,11 @@ const getFlag = (val, def = 0) => {
 // 命令行参数
 const ARGV = Array.isArray(process.argv) ? process.argv : [];
 const CLI = {
-    DRY_RUN: ARGV.includes('--dry-run')
+    DRY_RUN: ARGV.includes('--plan')
 };
 
 const FLAGS = {
-    // DRY-RUN 改为命令行参数控制，忽略环境变量
+    // PLAN 模式通过命令行参数控制，忽略环境变量
     DRY_RUN: CLI.DRY_RUN, // 仅打印计划，不执行
     MERGE_ALTER: getFlag(Env.SYNC_MERGE_ALTER, 1), // 合并每表多项 DDL
     DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩

@@ -10,9 +10,9 @@ import { Logger } from '../utils/logger.js';
 import { createSqlClient } from '../utils/index.js';
 import { Crypto2 } from '../utils/crypto.js';
 
-// 命令行参数（保持与 syncDb.js 一致的 dry-run 行为）
+// 命令行参数（保持与 syncDb.js 一致的 plan 行为）
 const ARGV = Array.isArray(process.argv) ? process.argv : [];
-const CLI = { DRY_RUN: ARGV.includes('--dry-run') };
+const CLI = { DRY_RUN: ARGV.includes('--plan') };
 
 // 执行器封装
 const exec = async (client, query, params = []) => {
@@ -28,7 +28,7 @@ export async function SyncDev(client = null) {
     let ownClient = false;
     try {
         if (CLI.DRY_RUN) {
-            Logger.info('[计划] 同步完成后将初始化/更新 admin.dev 账号（dry-run 不执行）');
+            Logger.info('[计划] 同步完成后将初始化/更新 admin.dev 账号（plan 模式不执行）');
             return true;
         }
 

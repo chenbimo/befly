@@ -1,6 +1,6 @@
 # 表结构同步脚本（scripts/syncDb.js）
 
-> 重要变更：从现在起，dry-run 通过命令行参数 `--dry-run` 控制，不再使用环境变量 `SYNC_DRY_RUN`。
+> 重要变更：从现在起，计划预览通过命令行参数 `--plan` 控制，不再使用环境变量 `SYNC_DRY_RUN`。
 
 ## 概述
 
@@ -135,7 +135,7 @@ bun run scripts/syncDb.js
 
 ```
 
-bun run scripts/syncDb.js --dry-run
+bun run scripts/syncDb.js --plan
 
 ```
 
@@ -158,7 +158,7 @@ bun run checks/table.js
 
 ## 行为开关（环境变量）
 
-- （已废弃）SYNC_DRY_RUN：请使用命令行参数 `--dry-run`
+- （已废弃）SYNC_DRY_RUN：请使用命令行参数 `--plan`
 - SYNC_MERGE_ALTER：是否合并每表多项 DDL（默认 1）
 - SYNC_DISALLOW_SHRINK：禁止长度收缩（默认 1）
 - SYNC_ALLOW_TYPE_CHANGE：允许类型变更（默认 0）
