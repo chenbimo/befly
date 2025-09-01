@@ -68,6 +68,21 @@ describe('字段属性验证规则测试', () => {
         expect(() => parseFieldRule('用户名⚡string⚡null⚡⚡null⚡0⚡null')).toThrow();
     });
 
+    test('最小值必须小于或等于最大值（当二者均为数字时）', () => {
+        // 最小值 > 最大值 应抛错
+        expect(() => parseFieldRule('长度⚡string⚡10⚡5⚡null⚡0⚡null')).toThrow();
+
+        // 最小值 < 最大值 合法
+        expect(() => parseFieldRule('长度⚡string⚡5⚡10⚡null⚡0⚡null')).not.toThrow();
+
+        // 最小值 == 最大值 合法
+        expect(() => parseFieldRule('长度⚡string⚡5⚡5⚡null⚡0⚡null')).not.toThrow();
+
+        // 只提供一侧为数字，另一侧为 null 时不比较
+        expect(() => parseFieldRule('长度⚡string⚡5⚡null⚡null⚡0⚡null')).not.toThrow();
+        expect(() => parseFieldRule('长度⚡string⚡null⚡5⚡null⚡0⚡null')).not.toThrow();
+    });
+
     test('第5个值：默认值必须为null、字符串或数字', () => {
         // 有效的默认值
         expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();

@@ -339,6 +339,17 @@ export const parseFieldRule = (rule) => {
         throw new Error(`最大值 "${maxValue}" 格式错误，必须为null或数字`);
     }
 
+    // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
+    const minIsNum = minValue !== 'null' && !Number.isNaN(Number(minValue));
+    const maxIsNum = maxValue !== 'null' && !Number.isNaN(Number(maxValue));
+    if (minIsNum && maxIsNum) {
+        const minNum = Number(minValue);
+        const maxNum = Number(maxValue);
+        if (minNum > maxNum) {
+            throw new Error(`最小值 "${minValue}" 不能大于最大值 "${maxValue}"`);
+        }
+    }
+
     // 第5个值：默认值必须为null、字符串或数字
     if (!validateDefaultValue(defaultValue)) {
         throw new Error(`默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
