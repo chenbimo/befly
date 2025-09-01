@@ -102,10 +102,10 @@ const isPgCompatibleTypeChange = (currentType, newType) => {
 // - 无参数但动态整条 SQL：sql`${sql(sqlText)}`
 
 // 获取表的现有列信息（按方言）
-const getTableColumns = async (client, tableName) => {
+const getTableColumns = async (tableName) => {
     const columns = {};
     if (IS_MYSQL) {
-        const result = await client`
+        const result = await sql`
             SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
             FROM information_schema.COLUMNS
             WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}
@@ -122,12 +122,12 @@ const getTableColumns = async (client, tableName) => {
             };
         }
     } else if (IS_PG) {
-        const result = await client`SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
+        const result = await sql`SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                         FROM information_schema.columns
                         WHERE table_schema = 'public' AND table_name = ${tableName}
                         ORDER BY ordinal_position`;
         // 获取列注释
-        const comments = await client`SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment
+        const comments = await sql`SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment
                           FROM pg_class c
                           JOIN pg_attribute a ON a.attrelid = c.oid
                           JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -145,7 +145,7 @@ const getTableColumns = async (client, tableName) => {
             };
         }
     } else if (IS_SQLITE) {
-        const rs = await client`PRAGMA table_info(${client(tableName)})`;
+        const rs = await sql`PRAGMA table_info(${sql(tableName)})`;
         for (const row of rs) {
             let baseType = String(row.type || '').toUpperCase();
             let length = null;
@@ -168,10 +168,10 @@ const getTableColumns = async (client, tableName) => {
 };
 
 // 获取表的现有索引信息（单列索引）
-const getTableIndexes = async (client, tableName) => {
+const getTableIndexes = async (tableName) => {
     const indexes = {};
     if (IS_MYSQL) {
-        const result = await client`
+        const result = await sql`
                         SELECT INDEX_NAME, COLUMN_NAME
                         FROM information_schema.STATISTICS
                         WHERE TABLE_SCHEMA = ${Env.DB_NAME}
@@ -184,7 +184,7 @@ const getTableIndexes = async (client, tableName) => {
             indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
         }
     } else if (IS_PG) {
-        const result = await client`SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ${tableName}`;
+        const result = await sql`SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ${tableName}`;
         for (const row of result) {
             const m = /\(([^)]+)\)/.exec(row.indexdef);
             if (m) {
@@ -193,9 +193,9 @@ const getTableIndexes = async (client, tableName) => {
             }
         }
     } else if (IS_SQLITE) {
-        const list = await client`PRAGMA index_list(${client(tableName)})`;
+        const list = await sql`PRAGMA index_list(${sql(tableName)})`;
         for (const idx of list) {
-            const info = await client`PRAGMA index_info(${client(idx.name)})`;
+            const info = await sql`PRAGMA index_info(${sql(idx.name)})`;
             const cols = info.map((r) => r.name);
             if (cols.length === 1) indexes[idx.name] = cols;
         }
@@ -229,7 +229,7 @@ const buildIndexSQL = (tableName, indexName, fieldName, action) => {
 };
 
 // 创建表（方言化）
-const createTable = async (client, tableName, fields) => {
+const createTable = async (tableName, fields) => {
     const idType = typeMapping.number;
     const colDefs = [];
     if (IS_MYSQL) {
@@ -282,7 +282,7 @@ const createTable = async (client, tableName, fields) => {
     }
     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
     else {
-        await client`${client(createSQL)}`;
+        await sql`${sql(createSQL)}`;
         Logger.info(`[新建表] ${tableName}`);
     }
 
@@ -300,27 +300,27 @@ const createTable = async (client, tableName, fields) => {
                 comments.push(`COMMENT ON COLUMN "${tableName}"."${fieldName}" IS ${ql(String(disp))}`);
             }
         }
-        for (const sql of comments) {
-            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-            else await client`${client(sql)}`;
+        for (const stmt of comments) {
+            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+            else await sql`${sql(stmt)}`;
         }
     }
 
     // 统一创建索引
     // 系统字段默认索引
     for (const sysField of ['created_at', 'updated_at', 'state']) {
-        const sql = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
-        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-        else await client`${client(sql)}`;
+        const stmt = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
+        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+        else await sql`${sql(stmt)}`;
     }
 
     // 自定义字段索引
     for (const [fieldName, rule] of Object.entries(fields)) {
         const hasIndex = parseFieldRule(rule)[5] === '1';
         if (hasIndex) {
-            const sql = buildIndexSQL(tableName, `idx_${fieldName}`, fieldName, 'create');
-            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-            else await client`${client(sql)}`;
+            const stmt = buildIndexSQL(tableName, `idx_${fieldName}`, fieldName, 'create');
+            if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
+            else await sql`${sql(stmt)}`;
         }
     }
 };
@@ -406,24 +406,24 @@ const generateDDLClause = (fieldName, rule, isAdd = false) => {
 };
 
 // 安全执行DDL语句
-const executeDDLSafely = async (client, sql) => {
+const executeDDLSafely = async (stmt) => {
     try {
-        await client`${client(sql)}`;
+        await sql`${sql(stmt)}`;
         return true;
     } catch (error) {
         // MySQL 专用降级路径
-        if (sql.includes('ALGORITHM=INSTANT')) {
-            const inplaceSql = sql.replace(/ALGORITHM=INSTANT/g, 'ALGORITHM=INPLACE');
+        if (stmt.includes('ALGORITHM=INSTANT')) {
+            const inplaceSql = stmt.replace(/ALGORITHM=INSTANT/g, 'ALGORITHM=INPLACE');
             try {
-                await client`${client(inplaceSql)}`;
+                await sql`${sql(inplaceSql)}`;
                 return true;
             } catch (inplaceError) {
                 // 最后尝试传统DDL：移除 ALGORITHM/LOCK 附加子句后执行
-                const traditionSql = sql
+                const traditionSql = stmt
                     .replace(/,\s*ALGORITHM=INPLACE/g, '')
                     .replace(/,\s*ALGORITHM=INSTANT/g, '')
                     .replace(/,\s*LOCK=(NONE|SHARED|EXCLUSIVE)/g, '');
-                await client`${client(traditionSql)}`;
+                await sql`${sql(traditionSql)}`;
                 return true;
             }
         } else {
@@ -433,41 +433,38 @@ const executeDDLSafely = async (client, sql) => {
 };
 
 // SQLite 重建表迁移（简化版：仅处理新增/修改字段，不处理复杂约束与复合索引）
-const rebuildSqliteTable = async (client, tableName, fields) => {
+const rebuildSqliteTable = async (tableName, fields) => {
     // 1. 读取现有列顺序
-    const info = await client`PRAGMA table_info(${client(tableName)})`;
+    const info = await sql`PRAGMA table_info(${sql(tableName)})`;
     const existingCols = info.map((r) => r.name);
     const targetCols = ['id', 'created_at', 'updated_at', 'deleted_at', 'state', ...Object.keys(fields)];
     const tmpTable = `${tableName}__tmp__${Date.now()}`;
 
     // 2. 创建新表（使用当前定义）
-    await createTable(client, tmpTable, fields);
+    await createTable(tmpTable, fields);
 
     // 3. 拷贝数据（按交集列）
     const commonCols = targetCols.filter((c) => existingCols.includes(c));
     if (commonCols.length > 0) {
         const colsSql = commonCols.map((c) => `"${c}"`).join(', ');
-        await client`${client(`INSERT INTO "${tmpTable}" (${colsSql}) SELECT ${colsSql} FROM "${tableName}"`)}`;
+        await sql`${sql(`INSERT INTO "${tmpTable}" (${colsSql}) SELECT ${colsSql} FROM "${tableName}"`)}`;
     }
 
     // 4. 删除旧表并重命名
-    await client`${client(`DROP TABLE "${tableName}"`)}`;
-    await client`${client(`ALTER TABLE "${tmpTable}" RENAME TO "${tableName}"`)}`;
+    await sql`${sql(`DROP TABLE "${tableName}"`)}`;
+    await sql`${sql(`ALTER TABLE "${tmpTable}" RENAME TO "${tableName}"`)}`;
 };
 
 // 同步表结构
-const syncTable = async (client, tableName, fields) => {
-    const existingColumns = await getTableColumns(client, tableName);
-    const existingIndexes = await getTableIndexes(client, tableName);
-    const systemFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'];
+const syncTable = async (tableName, fields) => {
+    const existingColumns = await getTableColumns(tableName);
+    const existingIndexes = await getTableIndexes(tableName);
     let changed = false;
 
     const addClauses = [];
     const modifyClauses = [];
     const defaultClauses = [];
     const indexActions = [];
-    // PG v17+: 直接使用单条 ADD COLUMN 带 DEFAULT/NOT NULL（无需多步路径）
-    // 变更统计（按字段粒度）
     const changeStats = {
         addFields: 0,
         datatype: 0,
@@ -479,36 +476,28 @@ const syncTable = async (client, tableName, fields) => {
         indexDrop: 0
     };
 
-    // 同步字段
     for (const [fieldName, rule] of Object.entries(fields)) {
         if (existingColumns[fieldName]) {
             const comparison = compareFieldDefinition(existingColumns[fieldName], rule, fieldName);
             if (comparison.hasChanges) {
-                // 打印具体变动项并统计
                 for (const c of comparison.changes) {
                     const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
                     Logger.info(`[字段变更] ${tableName}.${fieldName} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
                     if (c.type in changeStats) changeStats[c.type]++;
                 }
-                // 风险护栏：长度收缩/类型变更
-                const ruleParts = parseFieldRule(rule);
-                const [, fType, , fMax, fDef] = ruleParts;
+                const [, fType, , fMax] = parseFieldRule(rule);
                 if ((fType === 'string' || fType === 'array') && existingColumns[fieldName].length && fMax !== 'null') {
                     const newLen = parseInt(fMax);
                     if (existingColumns[fieldName].length > newLen && FLAGS.DISALLOW_SHRINK) {
                         Logger.warn(`[跳过危险变更] ${tableName}.${fieldName} 长度收缩 ${existingColumns[fieldName].length} -> ${newLen} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
-                        // 如果仅有 shrink 一个变化，仍可能还有默认/注释变化要处理
                     }
                 }
                 const fType2 = parseFieldRule(rule)[1];
                 const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fType2] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fType2] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fType2];
-                if (existingColumns[fieldName].type.toLowerCase() !== expectedDbType && !FLAGS.ALLOW_TYPE_CHANGE) {
-                    Logger.warn(`[跳过危险变更] ${tableName}.${fieldName} 类型变更 ${existingColumns[fieldName].type} -> ${expectedDbType} 已被跳过（设置 SYNC_ALLOW_TYPE_CHANGE=1 可放开）`);
-                    // 继续处理默认值/注释等非类型变更
-                }
-
-                // 判断是否“仅默认值变化”
+                const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
+                const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
                 const onlyDefaultChanged = comparison.changes.every((c) => c.type === 'default');
+
                 if (onlyDefaultChanged) {
                     const expectedDefault = getExpectedDefault(parseFieldRule(rule)[1], parseFieldRule(rule)[4]);
                     if (expectedDefault === null) {
@@ -518,19 +507,13 @@ const syncTable = async (client, tableName, fields) => {
                         defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldName}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldName}" SET DEFAULT ${v}`);
                     }
                 } else {
-                    // 判断是否需要跳过 MODIFY：包含收缩或类型变更时跳过
                     let skipModify = false;
-                    const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
-                    if (hasLengthChange && (fType === 'string' || fType === 'array') && existingColumns[fieldName].length && fMax !== 'null') {
-                        const newLen = parseInt(fMax);
+                    if (hasLengthChange && (fType2 === 'string' || fType2 === 'array') && existingColumns[fieldName].length && parseInt(parseFieldRule(rule)[3]) !== NaN) {
+                        const newLen = parseInt(parseFieldRule(rule)[3]);
                         const oldLen = existingColumns[fieldName].length;
                         const isShrink = oldLen > newLen;
-                        if (isShrink && FLAGS.DISALLOW_SHRINK) {
-                            skipModify = true;
-                        }
-                        // 对 PG 来说，扩列（oldLen < newLen）是安全宽化，允许
+                        if (isShrink && FLAGS.DISALLOW_SHRINK) skipModify = true;
                     }
-                    const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
                     if (hasTypeChange) {
                         if (IS_PG && FLAGS.PG_ALLOW_COMPATIBLE_TYPE && isPgCompatibleTypeChange(existingColumns[fieldName].type, expectedDbType)) {
                             Logger.info(`[PG兼容类型变更] ${tableName}.${fieldName} ${existingColumns[fieldName].type} -> ${expectedDbType} 允许执行`);
@@ -538,16 +521,12 @@ const syncTable = async (client, tableName, fields) => {
                             skipModify = true;
                         }
                     }
-                    if (!skipModify) {
-                        // 合并到 MODIFY/ALTER COLUMN 子句
-                        modifyClauses.push(generateDDLClause(fieldName, rule, false));
-                    }
+                    if (!skipModify) modifyClauses.push(generateDDLClause(fieldName, rule, false));
                 }
                 changed = true;
             }
         } else {
-            // 新增字段日志
-            const [disp, fType, fMin, fMax, fDef, fIdx] = parseFieldRule(rule);
+            const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
             const lenPart = fType === 'string' || fType === 'array' ? ` 长度:${parseInt(fMax)}` : '';
             const expectedDefault = getExpectedDefault(fType, fDef);
             Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
@@ -557,8 +536,6 @@ const syncTable = async (client, tableName, fields) => {
         }
     }
 
-    // 同步索引
-    // 系统索引：created_at / updated_at / state
     for (const sysField of ['created_at', 'updated_at', 'state']) {
         const idxName = `idx_${sysField}`;
         if (!existingIndexes[idxName]) {
@@ -567,12 +544,10 @@ const syncTable = async (client, tableName, fields) => {
             changeStats.indexCreate++;
         }
     }
-
     for (const [fieldName, rule] of Object.entries(fields)) {
         const ruleParts = parseFieldRule(rule);
-        const fieldHasIndex = ruleParts[5]; // 使用第6个属性判断是否设置索引
+        const fieldHasIndex = ruleParts[5];
         const indexName = `idx_${fieldName}`;
-
         if (fieldHasIndex === '1' && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName });
             changed = true;
@@ -584,7 +559,6 @@ const syncTable = async (client, tableName, fields) => {
         }
     }
 
-    // PG 注释单独处理（MySQL 的 COMMENT 已包含在 MODIFY COLUMN/ADD COLUMN 中）
     const commentActions = [];
     if (IS_PG) {
         for (const [fieldName, rule] of Object.entries(fields)) {
@@ -605,8 +579,6 @@ const syncTable = async (client, tableName, fields) => {
 
 // 主同步函数
 const SyncDb = async () => {
-    let client = null;
-
     try {
         Logger.info('开始数据库表结构同步...');
 
@@ -617,10 +589,9 @@ const SyncDb = async () => {
 
         // 建立数据库连接并检查版本（按方言）
         // 在顶层也保留 sql 引用，便于未来需要跨函数访问
-        client = await createSqlClient({ max: 1 });
-        sql = client;
+        sql = await createSqlClient({ max: 1 });
         if (IS_MYSQL) {
-            const r = await client`SELECT VERSION() AS version`;
+            const r = await sql`SELECT VERSION() AS version`;
             const version = r[0].version;
             const majorVersion = parseInt(version.split('.')[0]);
             if (majorVersion < 8) {
@@ -628,7 +599,7 @@ const SyncDb = async () => {
             }
             Logger.info(`MySQL 版本: ${version}`);
         } else if (IS_PG) {
-            const r = await client`SELECT version() AS version`;
+            const r = await sql`SELECT version() AS version`;
             const versionText = r[0].version;
             Logger.info(`PostgreSQL 版本: ${versionText}`);
             // 提取主版本号（假设格式如 'PostgreSQL 17.1 ...'）
@@ -638,7 +609,7 @@ const SyncDb = async () => {
                 throw new Error(`此脚本要求 PostgreSQL >= 17，当前: ${versionText}`);
             }
         } else if (IS_SQLITE) {
-            const r = await client`SELECT sqlite_version() AS version`;
+            const r = await sql`SELECT sqlite_version() AS version`;
             const version = r[0].version;
             Logger.info(`SQLite 版本: ${version}`);
             // 强制最低版本：SQLite ≥ 3.50.0
@@ -677,18 +648,18 @@ const SyncDb = async () => {
                     const tableDefinition = await Bun.file(file).json();
                     let exists = false;
                     if (IS_MYSQL) {
-                        const res = await client`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}`;
+                        const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}`;
                         exists = res[0]?.count > 0;
                     } else if (IS_PG) {
-                        const res = await client`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
+                        const res = await sql`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
                         exists = (res[0]?.count || 0) > 0;
                     } else if (IS_SQLITE) {
-                        const res = await client`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
+                        const res = await sql`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
                         exists = res.length > 0;
                     }
 
                     if (exists) {
-                        const plan = await syncTable(client, tableName, tableDefinition);
+                        const plan = await syncTable(tableName, tableDefinition);
                         if (plan.changed) {
                             // 汇总统计
                             if (plan.metrics) {
@@ -705,12 +676,12 @@ const SyncDb = async () => {
                                 // SQLite: 仅支持 ADD COLUMN；如需修改/默认值设置，可选择重建表
                                 if ((plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) && FLAGS.SQLITE_REBUILD) {
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
-                                    else await rebuildSqliteTable(client, tableName, tableDefinition);
+                                    else await rebuildSqliteTable(tableName, tableDefinition);
                                 } else {
                                     for (const c of plan.addClauses) {
                                         const stmt = `ALTER TABLE "${tableName}" ${c}`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                        else await client`${client(stmt)}`;
+                                        else await sql`${sql(stmt)}`;
                                     }
                                 }
                             } else if (FLAGS.MERGE_ALTER) {
@@ -719,8 +690,8 @@ const SyncDb = async () => {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
                                     const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
-                                    else await client`${client(stmt)}`;
+                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                    else await sql`${sql(stmt)}`;
                                 }
                             } else {
                                 // 分别执行
@@ -728,15 +699,15 @@ const SyncDb = async () => {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
                                     const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
-                                    else await client`${client(stmt)}`;
+                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                    else await sql`${sql(stmt)}`;
                                 }
                                 for (const c of plan.modifyClauses) {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
                                     const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
-                                    else await client`${client(stmt)}`;
+                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                    else await sql`${sql(stmt)}`;
                                 }
                             }
 
@@ -748,19 +719,19 @@ const SyncDb = async () => {
                                     const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
                                     const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else if (IS_MYSQL) await executeDDLSafely(client, stmt);
-                                    else await client`${client(stmt)}`;
+                                    else if (IS_MYSQL) await executeDDLSafely(stmt);
+                                    else await sql`${sql(stmt)}`;
                                 }
                             }
 
                             // 索引操作
                             for (const act of plan.indexActions) {
-                                const sql = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
+                                const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
                                 if (FLAGS.DRY_RUN) {
-                                    Logger.info(`[计划] ${sql}`);
+                                    Logger.info(`[计划] ${stmt}`);
                                 } else {
                                     try {
-                                        await client`${client(sql)}`;
+                                        await sql`${sql(stmt)}`;
                                         if (act.action === 'create') {
                                             Logger.info(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
                                         } else {
@@ -777,14 +748,14 @@ const SyncDb = async () => {
                             if (IS_PG && plan.commentActions && plan.commentActions.length > 0) {
                                 for (const stmt of plan.commentActions) {
                                     if (FLAGS.DRY_RUN) Logger.info(`[计划] ${stmt}`);
-                                    else await client`${client(stmt)}`;
+                                    else await sql`${sql(stmt)}`;
                                 }
                             }
 
                             modifiedTables++;
                         }
                     } else {
-                        await createTable(client, tableName, tableDefinition);
+                        await createTable(tableName, tableDefinition);
                         createdTables++;
                         // 新建表已算作变更
                         modifiedTables += 0;
@@ -826,9 +797,9 @@ const SyncDb = async () => {
         }
         process.exit(1);
     } finally {
-        if (client) {
+        if (sql) {
             try {
-                await client.close();
+                await sql.close();
             } catch (error) {
                 Logger.warn('关闭数据库连接时出错:', error.message);
             }
