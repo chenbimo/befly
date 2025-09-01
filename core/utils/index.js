@@ -292,11 +292,10 @@ export const parseFieldRule = (rule) => {
     }
 
     // 第3/4个值：需要是 null 或 数字
-    const isValidMinMax = (value) => value === 'null' || (!isNaN(parseFloat(value)) && isFinite(parseFloat(value)));
-    if (!isValidMinMax(minValue)) {
+    if (!(minValue === 'null' || (!Number.isNaN(Number(minValue)) && isFinite(Number(minValue))))) {
         throw new Error(`最小值 "${minValue}" 格式错误，必须为null或数字`);
     }
-    if (!isValidMinMax(maxValue)) {
+    if (!(maxValue === 'null' || (!Number.isNaN(Number(maxValue)) && isFinite(Number(maxValue))))) {
         throw new Error(`最大值 "${maxValue}" 格式错误，必须为null或数字`);
     }
 
@@ -311,13 +310,8 @@ export const parseFieldRule = (rule) => {
         }
     }
 
-    // 第5个值：默认值必须为null、字符串或数字
-    const isValidDefault = (value) => {
-        if (value === 'null') return true;
-        if (!isNaN(parseFloat(value)) && isFinite(parseFloat(value))) return true;
-        return true; // 其他情况视为字符串，都是有效的
-    };
-    if (!isValidDefault(defaultValue)) {
+    // 第5个值：默认值必须为null、字符串或数字（内联判断；字符串默认视为有效）
+    if (!(defaultValue === 'null' || !Number.isNaN(Number(defaultValue)) || typeof defaultValue === 'string')) {
         throw new Error(`默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
     }
 
@@ -326,18 +320,15 @@ export const parseFieldRule = (rule) => {
         throw new Error(`索引标识 "${isIndex}" 格式错误，必须为0或1`);
     }
 
-    // 第7个值：必须为null或正则表达式
-    const isValidRegex = (value) => {
-        if (value === 'null') return true;
+    // 第7个值：必须为null或正则表达式（内联判断）
+    if (regexConstraint !== 'null') {
         try {
-            new RegExp(value);
-            return true;
-        } catch (e) {
-            return false;
+            // 仅尝试构造以校验有效性
+            // eslint-disable-next-line no-new
+            new RegExp(regexConstraint);
+        } catch (_) {
+            throw new Error(`正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
         }
-    };
-    if (!isValidRegex(regexConstraint)) {
-        throw new Error(`正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
     }
 
     return allParts;
