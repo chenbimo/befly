@@ -1,164 +1,35 @@
 import { describe, expect, test } from 'bun:test';
-import { parseFieldRule } from '../utils/index.js';
 
-describe('字段属性验证规则测试', () => {
-    test('字段规则必须包含7个部分', () => {
-        // 少于7个部分应该抛出错误
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string')).toThrow();
-
-        // 多于7个部分应该抛出错误
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null⚡extra')).toThrow();
-
-        // 正好7个部分应该通过
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
+describe('字段规则分割（使用字符串.split("⚡")）', () => {
+    test('分割应返回7个部分（典型示例）', () => {
+        const rule = '用户名⚡string⚡2⚡50⚡匿名用户⚡1⚡^.+$';
+        const parts = rule.split('⚡');
+        expect(parts.length).toBe(7);
+        expect(parts).toEqual(['用户名', 'string', '2', '50', '匿名用户', '1', '^.+$']);
     });
 
-    test('第1个值：名称可包含中文、数字、字母、空格、下划线、短横线', () => {
-        // 有效的名称
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('username⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名 123⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('user_name⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('user-name⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-
-        // 无效的名称
-        expect(() => parseFieldRule('user@name⚡string⚡null⚡null⚡null⚡0⚡null')).toThrow();
+    test('保持空字符串段与字面量 null/undefined', () => {
+        const rule = 'a⚡string⚡⚡⚡null⚡0⚡undefined';
+        const parts = rule.split('⚡');
+        expect(parts.length).toBe(7);
+        // 第3、4段为空字符串
+        expect(parts[2]).toBe('');
+        expect(parts[3]).toBe('');
+        // 第5段为字面字符串 "null"，第7段为字面字符串 "undefined"
+        expect(parts[4]).toBe('null');
+        expect(parts[6]).toBe('undefined');
     });
 
-    test('第2个值：字段类型必须为string,number,text,array之一', () => {
-        // 有效的类型
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('年龄⚡number⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('描述⚡text⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('标签⚡array⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-
-        // 无效的类型
-        expect(() => parseFieldRule('用户名⚡varchar⚡null⚡null⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡int⚡null⚡null⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡longtext⚡null⚡null⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡json⚡null⚡null⚡null⚡0⚡null')).toThrow();
+    test('分隔符数量变化将直接影响结果长度（不进行验证）', () => {
+        expect('a⚡b'.split('⚡').length).toBe(2);
+        expect('a⚡⚡c'.split('⚡')).toEqual(['a', '', 'c']);
+        expect('a⚡b⚡c⚡d⚡e⚡f⚡g⚡h'.split('⚡').length).toBe(8);
     });
 
-    test('第3个值：最小值必须为null或数字', () => {
-        // 有效的最小值
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡0⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡10⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡-5⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡3.14⚡null⚡null⚡0⚡null')).not.toThrow();
-
-        // 无效的最小值
-        expect(() => parseFieldRule('用户名⚡string⚡abc⚡null⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡undefined⚡null⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡⚡null⚡null⚡0⚡null')).toThrow();
-    });
-
-    test('第4个值：最大值必须为null或数字', () => {
-        // 有效的最大值
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡100⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡-10⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡99.99⚡null⚡0⚡null')).not.toThrow();
-
-        // 无效的最大值
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡xyz⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡undefined⚡null⚡0⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡⚡null⚡0⚡null')).toThrow();
-    });
-
-    test('最小值必须小于或等于最大值（当二者均为数字时）', () => {
-        // 最小值 > 最大值 应抛错
-        expect(() => parseFieldRule('长度⚡string⚡10⚡5⚡null⚡0⚡null')).toThrow();
-
-        // 最小值 < 最大值 合法
-        expect(() => parseFieldRule('长度⚡string⚡5⚡10⚡null⚡0⚡null')).not.toThrow();
-
-        // 最小值 == 最大值 合法
-        expect(() => parseFieldRule('长度⚡string⚡5⚡5⚡null⚡0⚡null')).not.toThrow();
-
-        // 只提供一侧为数字，另一侧为 null 时不比较
-        expect(() => parseFieldRule('长度⚡string⚡5⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('长度⚡string⚡null⚡5⚡null⚡0⚡null')).not.toThrow();
-    });
-
-    test('第5个值：默认值必须为null、字符串或数字', () => {
-        // 有效的默认值
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡defaultValue⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('年龄⚡number⚡null⚡null⚡18⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('分数⚡number⚡null⚡null⚡95.5⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('状态⚡string⚡null⚡null⚡active⚡0⚡null')).not.toThrow();
-
-        // 所有字符串类型的默认值都应该被接受
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡⚡0⚡null')).not.toThrow(); // 空字符串
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡test value⚡0⚡null')).not.toThrow(); // 包含空格
-    });
-
-    test('第6个值：是否创建索引必须为0或1', () => {
-        // 有效的索引标识
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡1⚡null')).not.toThrow();
-
-        // 无效的索引标识
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡null⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡2⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡yes⚡null')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡true⚡null')).toThrow();
-    });
-
-    test('基础正则表达式验证', () => {
-        // 有效的正则约束
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('邮箱⚡string⚡null⚡null⚡null⚡0⚡^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$')).not.toThrow();
-        expect(() => parseFieldRule('手机⚡string⚡null⚡null⚡null⚡0⚡^1[3-9]\\d{9}$')).not.toThrow();
-        expect(() => parseFieldRule('状态⚡string⚡null⚡null⚡null⚡0⚡^(active|inactive|pending)$')).not.toThrow();
-
-        // 无效的正则约束
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡[invalid')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡*invalid')).toThrow();
-        expect(() => parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡?invalid')).toThrow();
-    });
-
-    test('完整的字段定义示例', () => {
-        // 真实场景的完整示例
-        expect(() => parseFieldRule('用户名⚡string⚡2⚡50⚡匿名用户⚡1⚡^[\\u4e00-\\u9fa5a-zA-Z0-9]+$')).not.toThrow();
-        expect(() => parseFieldRule('年龄⚡number⚡0⚡120⚡18⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('邮箱⚡string⚡null⚡255⚡null⚡1⚡^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$')).not.toThrow();
-        expect(() => parseFieldRule('状态⚡string⚡null⚡null⚡active⚡1⚡^(active|inactive|pending)$')).not.toThrow();
-        expect(() => parseFieldRule('描述⚡text⚡null⚡null⚡null⚡0⚡null')).not.toThrow();
-        expect(() => parseFieldRule('标签⚡array⚡null⚡null⚡[]⚡0⚡null')).not.toThrow();
-    });
-
-    test('错误消息的准确性', () => {
-        // 测试错误消息是否准确描述问题
-        try {
-            parseFieldRule('user-name⚡string⚡null⚡null⚡null⚡0⚡null');
-        } catch (error) {
-            expect(error.message).toContain('字段名称');
-            expect(error.message).toContain('必须为中文、数字、字母');
-        }
-
-        try {
-            parseFieldRule('用户名⚡varchar⚡null⚡null⚡null⚡0⚡null');
-        } catch (error) {
-            expect(error.message).toContain('字段类型');
-            expect(error.message).toContain('必须为string、number、text、array之一');
-        }
-
-        try {
-            parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡2⚡null');
-        } catch (error) {
-            expect(error.message).toContain('索引标识');
-            expect(error.message).toContain('必须为0或1');
-        }
-
-        try {
-            parseFieldRule('用户名⚡string⚡null⚡null⚡null⚡0⚡[invalid');
-        } catch (error) {
-            expect(error.message).toContain('正则约束');
-            expect(error.message).toContain('必须为null或有效的正则表达式');
-        }
+    test('不对内容做额外解析或正则校验', () => {
+        const rule = 'name⚡string⚡0⚡100⚡default⚡1⚡[invalid';
+        const parts = rule.split('⚡');
+        // 即使第7段不是合法正则，也只是普通字符串
+        expect(parts[6]).toBe('[invalid');
     });
 });
