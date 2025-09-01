@@ -3,12 +3,12 @@
 
 import path from 'node:path';
 import { Glob } from 'bun';
+import { __dirscript as coreScriptsDir, getProjectDir } from '../system.js';
 
-// 解析目录
-const coreDir = path.resolve(import.meta.dir, '..');
-const coreScriptsDir = path.resolve(coreDir, 'scripts');
+// 解析目录（来自 system.js）
+// 核心脚本目录：core/scripts
 // 用户项目（如 tpl）的脚本目录：始终基于当前工作目录
-const tplScriptsDir = path.resolve(process.cwd(), 'scripts');
+const tplScriptsDir = getProjectDir('scripts');
 
 function safeList(dir) {
     try {
@@ -28,10 +28,20 @@ function buildScriptItems() {
 
     const items = [];
     for (const name of coreList) {
-        items.push({ name, source: 'core', duplicate: tplList.includes(name), path: path.resolve(coreScriptsDir, `${name}.js`) });
+        items.push({
+            name: name,
+            source: 'core',
+            duplicate: tplList.includes(name),
+            path: path.resolve(coreScriptsDir, `${name}.js`)
+        });
     }
     for (const name of tplList) {
-        items.push({ name, source: 'tpl', duplicate: coreSet.has(name), path: path.resolve(tplScriptsDir, `${name}.js`) });
+        items.push({
+            name: name,
+            source: 'tpl',
+            duplicate: coreSet.has(name),
+            path: path.resolve(tplScriptsDir, `${name}.js`)
+        });
     }
     // 排序：名称字典序，core 在前
     items.sort((a, b) => (a.name === b.name ? (a.source === b.source ? 0 : a.source === 'core' ? -1 : 1) : a.name.localeCompare(b.name)));
