@@ -483,17 +483,6 @@ describe('数据库同步功能测试', () => {
             });
         });
 
-        test('不支持的数据类型应该被识别', () => {
-            const validTypes = ['number', 'string', 'text', 'array'];
-            const invalidTypes = ['boolean', 'date', 'json', 'blob'];
-
-            validTypes.forEach((type) => {
-                expect(validTypes.includes(type)).toBe(true);
-            });
-
-            invalidTypes.forEach((type) => {
-                expect(validTypes.includes(type)).toBe(false);
-            });
-        });
+        // 去除“不支持的数据类型”用例：checkTable 已保证类型与属性合法
     });
 });

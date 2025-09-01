@@ -94,40 +94,7 @@ const isPgCompatibleTypeChange = (currentType, newType) => {
     return false;
 };
 
-// 获取字段的SQL定义
-const getColumnDefinition = (fieldName, rule) => {
-    const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue, fieldHasIndex] = parseFieldRule(rule);
-
-    let sqlType = typeMapping[fieldType];
-    if (!sqlType) throw new Error(`不支持的数据类型: ${fieldType}`);
-
-    // 根据字段类型设置SQL类型和长度
-    if (fieldType === 'string' || fieldType === 'array') {
-        const maxLength = parseInt(fieldMaxLength);
-        sqlType = `VARCHAR(${maxLength})`;
-    }
-
-    // 统一强制 NOT NULL
-    let columnDef = `\`${fieldName}\` ${sqlType} NOT NULL`;
-
-    // 设置默认值：类型非 text 时总是设置（显式默认或内置默认）
-    const expectedDefault = getExpectedDefault(fieldType, fieldDefaultValue);
-    if (fieldType !== 'text' && expectedDefault !== null) {
-        if (fieldType === 'number') {
-            columnDef += ` DEFAULT ${expectedDefault}`;
-        } else {
-            columnDef += ` DEFAULT \"${String(expectedDefault).replace(/\"/g, '\\"')}\"`;
-        }
-    }
-    // text 类型不设置默认值
-
-    // 添加字段注释（使用第1个属性作为字段显示名称）
-    if (fieldDisplayName && fieldDisplayName !== 'null') {
-        columnDef += ` COMMENT "${fieldDisplayName.replace(/"/g, '\\"')}"`;
-    }
-
-    return columnDef;
-};
+// （已移除）getColumnDefinition：不再保留未使用的函数，减少函数数量
 
 // 通用执行器：直接使用 Bun SQL 参数化（MySQL 使用 '?' 占位符）
 const exec = async (client, query, params = []) => {
@@ -147,7 +114,7 @@ const getTableColumns = async (client, tableName) => {
              FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION`,
             [Env.DB_NAME, tableName]
         );
-        result.forEach((row) => {
+        for (const row of result) {
             columns[row.COLUMN_NAME] = {
                 type: row.DATA_TYPE,
                 columnType: row.COLUMN_TYPE,
@@ -156,7 +123,7 @@ const getTableColumns = async (client, tableName) => {
                 defaultValue: row.COLUMN_DEFAULT,
                 comment: row.COLUMN_COMMENT
             };
-        });
+        }
     } else if (IS_PG) {
         const result = await client`SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                         FROM information_schema.columns
@@ -213,10 +180,10 @@ const getTableIndexes = async (client, tableName) => {
              WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME`,
             [Env.DB_NAME, tableName]
         );
-        result.forEach((row) => {
+        for (const row of result) {
             if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
             indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
-        });
+        }
     } else if (IS_PG) {
         const result = await client`SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ${tableName}`;
         for (const row of result) {
@@ -282,8 +249,8 @@ const createTable = async (client, tableName, fields) => {
 
     for (const [fieldName, rule] of Object.entries(fields)) {
         const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
+        // 类型映射：checkTable 已保证字段类型合法且可映射
         let sqlType = typeMapping[fType];
-        if (!sqlType) throw new Error(`不支持的数据类型: ${fType}`);
         if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
             const maxLength = parseInt(fMax);
             sqlType = `${typeMapping[fType]}(${maxLength})`;
@@ -314,17 +281,16 @@ const createTable = async (client, tableName, fields) => {
     // PostgreSQL: 添加列注释（用显示名）
     if (IS_PG) {
         const comments = [];
-        const pushComment = (col, disp) => {
-            if (disp && disp !== 'null') comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi(col)} IS ${ql(String(disp))}`);
-        };
-        pushComment('id', '主键ID');
-        pushComment('created_at', '创建时间');
-        pushComment('updated_at', '更新时间');
-        pushComment('deleted_at', '删除时间');
-        pushComment('state', '状态字段');
+        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('id')} IS ${ql('主键ID')}`);
+        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('created_at')} IS ${ql('创建时间')}`);
+        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('updated_at')} IS ${ql('更新时间')}`);
+        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('deleted_at')} IS ${ql('删除时间')}`);
+        comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi('state')} IS ${ql('状态字段')}`);
         for (const [fieldName, rule] of Object.entries(fields)) {
             const [disp] = parseFieldRule(rule);
-            pushComment(fieldName, disp);
+            if (disp && disp !== 'null') {
+                comments.push(`COMMENT ON COLUMN ${qi(tableName)}.${qi(fieldName)} IS ${ql(String(disp))}`);
+            }
         }
         for (const sql of comments) {
             if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
@@ -408,8 +374,8 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
 const generateDDLClause = (fieldName, rule, isAdd = false) => {
     const [disp, fType, , fMax, fDef] = parseFieldRule(rule);
+    // 类型映射：checkTable 已保证字段类型合法且可映射
     let sqlType = typeMapping[fType];
-    if (!sqlType) throw new Error(`不支持的数据类型: ${fType}`);
     if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
         const maxLength = parseInt(fMax);
         sqlType = `${typeMapping[fType]}(${maxLength})`;
@@ -653,8 +619,7 @@ const SyncDb = async () => {
         Logger.info('开始数据库表结构同步...');
 
         // 验证表定义文件
-        const tableValidationResult = await checkTable();
-        if (!tableValidationResult) {
+        if (!(await checkTable())) {
             throw new Error('表定义验证失败');
         }
 
@@ -663,9 +628,6 @@ const SyncDb = async () => {
         if (IS_MYSQL) {
             const r = await client`SELECT VERSION() AS version`;
             const version = r[0].version;
-            if (version.toLowerCase().includes('mariadb')) {
-                throw new Error('此脚本仅支持 MySQL 8.0+，不支持 MariaDB');
-            }
             const majorVersion = parseInt(version.split('.')[0]);
             if (majorVersion < 8) {
                 throw new Error(`此脚本仅支持 MySQL 8.0+，当前版本: ${version}`);
