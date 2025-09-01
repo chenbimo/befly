@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'bun:test';
-import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, parseFieldRule, toSnakeTableName } from '../utils/index.js';
+import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, toSnakeTableName } from '../utils/index.js';
 
 test('ruleSplit 合并第5段之后的内容', () => {
     expect(ruleSplit('a,b,c,d,e,f,g')).toEqual(['a', 'b', 'c', 'd', 'e,f,g']);
@@ -78,11 +78,6 @@ test('filterLogFields 过滤敏感字段', () => {
     const body = { a: 1, password: 'x', token: 'y' };
     const filtered = filterLogFields(body, 'password, token');
     expect(filtered).toEqual({ a: 1 });
-});
-
-test('parseFieldRule 正确解析与校验 7 段规则', () => {
-    const rule = '用户名⚡string⚡0⚡50⚡默认⚡1⚡^.+$';
-    expect(parseFieldRule(rule)).toEqual(['用户名', 'string', '0', '50', '默认', '1', '^.+$']);
 });
 
 describe('toSnakeTableName 表名转换', () => {

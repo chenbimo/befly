@@ -9,32 +9,6 @@ import { ruleSplit } from '../utils/index.js';
 import path from 'node:path';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 
-// 从 syncDb.js 导入解析函数进行测试（此处测试内自带的 parse，仅用于规则解析模拟）
-const parseFieldRule = (rule) => {
-    const allParts = rule.split('⚡');
-
-    // 现在支持7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡ 是否索引⚡正则约束
-    if (allParts.length <= 7) {
-        // 如果少于7个部分，补齐缺失的部分为 null
-        while (allParts.length < 7) {
-            allParts.push('null');
-        }
-        return allParts;
-    }
-
-    // 如果超过7个部分，把第7个部分之后的内容合并为第7个部分（正则表达式可能包含⚡符号）
-    const mergedRule = allParts.slice(6).join('⚡'); // 合并最后的正则部分
-    return [
-        allParts[0], // 显示名
-        allParts[1], // 类型
-        allParts[2], // 最小值
-        allParts[3], // 最大值
-        allParts[4], // 默认值
-        allParts[5], // 是否索引
-        mergedRule // 正则约束（可能包含⚡符号）
-    ];
-};
-
 // 测试用的临时表定义
 const testTableDefinitions = {
     'test_users.json': {
@@ -78,64 +52,6 @@ describe('数据库同步功能测试', () => {
         } catch (error) {
             console.warn('清理测试文件时出错:', error.message);
         }
-    });
-
-    describe('规则解析测试', () => {
-        test('正确解析基本字段规则', () => {
-            const rule = '用户名⚡string⚡2⚡50⚡null⚡0⚡null';
-            const parts = parseFieldRule(rule);
-
-            expect(parts).toHaveLength(7);
-            expect(parts[0]).toBe('用户名');
-            expect(parts[1]).toBe('string');
-            expect(parts[2]).toBe('2');
-            expect(parts[3]).toBe('50');
-            expect(parts[4]).toBe('null'); // 默认值
-            expect(parts[5]).toBe('0'); // 索引
-            expect(parts[6]).toBe('null'); // 正则约束
-        });
-
-        test('正确解析包含正则表达式的规则', () => {
-            const rule = '邮箱⚡string⚡5⚡100⚡null⚡1⚡^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$';
-            const parts = parseFieldRule(rule);
-
-            expect(parts).toHaveLength(7);
-            expect(parts[0]).toBe('邮箱');
-            expect(parts[1]).toBe('string');
-            expect(parts[2]).toBe('5');
-            expect(parts[3]).toBe('100');
-            expect(parts[4]).toBe('null');
-            expect(parts[5]).toBe('1');
-            expect(parts[6]).toBe('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
-        });
-
-        test('正确解析包含计算表达式的规则', () => {
-            const rule = '价格⚡number⚡0⚡999999999⚡x>0⚡0⚡1';
-            const parts = parseFieldRule(rule);
-
-            expect(parts).toHaveLength(7);
-            expect(parts[0]).toBe('价格');
-            expect(parts[1]).toBe('number');
-            expect(parts[2]).toBe('0');
-            expect(parts[3]).toBe('999999999');
-            expect(parts[4]).toBe('x>0');
-            expect(parts[5]).toBe('0');
-            expect(parts[6]).toBe('1');
-        });
-
-        test('正确解析包含管道符的复杂正则规则', () => {
-            const rule = '状态⚡string⚡1⚡20⚡active⚡1⚡^(active|inactive|pending)$';
-            const parts = parseFieldRule(rule);
-
-            expect(parts).toHaveLength(7);
-            expect(parts[0]).toBe('状态');
-            expect(parts[1]).toBe('string');
-            expect(parts[2]).toBe('1');
-            expect(parts[3]).toBe('20');
-            expect(parts[4]).toBe('active');
-            expect(parts[5]).toBe('1');
-            expect(parts[6]).toBe('^(active|inactive|pending)$');
-        });
     });
 
     describe('数据类型映射测试', () => {

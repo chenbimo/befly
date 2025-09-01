@@ -1,6 +1,4 @@
-import { isType, parseFieldRule } from './index.js';
-
-// 移除本文件重复实现，统一复用 index.js 导出的校验函数与 parseFieldRule
+import { isType } from './index.js';
 
 /**
  * 验证器类
@@ -65,7 +63,7 @@ export class Validator {
         for (const fieldName of required) {
             if (!(fieldName in data) || data[fieldName] === undefined || data[fieldName] === null || data[fieldName] === '') {
                 result.code = 1;
-                const ruleParts = parseFieldRule(rules[fieldName] || '');
+                const ruleParts = (rules[fieldName] || '').split('⚡');
                 const fieldLabel = ruleParts[0] || fieldName;
                 result.fields[fieldName] = `${fieldLabel}(${fieldName})为必填项`;
             }
@@ -101,7 +99,7 @@ export class Validator {
      * 验证单个字段的值
      */
     validateFieldValue(value, rule, fieldName) {
-        const [name, type, minStr, maxStr, defaultValue, isIndexStr, regexConstraint] = parseFieldRule(rule);
+        const [name, type, minStr, maxStr, defaultValue, isIndexStr, regexConstraint] = rule.split('⚡');
         const min = minStr === 'null' ? null : parseInt(minStr) || 0;
         const max = maxStr === 'null' ? null : parseInt(maxStr) || 0;
         const spec = regexConstraint === 'null' ? null : regexConstraint.trim();

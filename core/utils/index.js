@@ -255,8 +255,6 @@ export const filterLogFields = (body, excludeFields = '') => {
     return filtered;
 };
 
-// 原 validate* 系列函数已移除：请在使用处直接进行内联判断（parseFieldRule 已内联全部校验）
-
 // 将 lowerCamelCase 或单词形式转换为下划线风格（snake_case）
 // 例如：userTable -> user_table, testNewFormat -> test_new_format, users -> users, orderV2 -> order_v2
 export const toSnakeTableName = (name) => {
@@ -265,73 +263,6 @@ export const toSnakeTableName = (name) => {
         .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
         .replace(/([A-Z]+)([A-Z][a-z0-9]+)/g, '$1_$2')
         .toLowerCase();
-};
-
-// 专门用于处理⚡分隔的字段规则
-export const parseFieldRule = (rule) => {
-    const allParts = rule.split('⚡');
-
-    // 必须包含7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
-    if (allParts.length !== 7) {
-        throw new Error(`字段规则格式错误，必须包含7个部分，当前包含${allParts.length}个部分`);
-    }
-
-    // 验证各个部分的格式
-    const [name, type, minValue, maxValue, defaultValue, isIndex, regexConstraint] = allParts;
-
-    // 第1个值：名称必须为中文、数字、字母
-    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
-    if (!nameRegex.test(name)) {
-        throw new Error(`字段名称 "${name}" 格式错误，必须为中文、数字、字母`);
-    }
-
-    // 第2个值：字段类型必须为string,number,text,array之一
-    const validTypes = ['string', 'number', 'text', 'array'];
-    if (!validTypes.includes(type)) {
-        throw new Error(`字段类型 "${type}" 格式错误，必须为string、number、text、array之一`);
-    }
-
-    // 第3/4个值：需要是 null 或 数字
-    if (!(minValue === 'null' || (!Number.isNaN(Number(minValue)) && isFinite(Number(minValue))))) {
-        throw new Error(`最小值 "${minValue}" 格式错误，必须为null或数字`);
-    }
-    if (!(maxValue === 'null' || (!Number.isNaN(Number(maxValue)) && isFinite(Number(maxValue))))) {
-        throw new Error(`最大值 "${maxValue}" 格式错误，必须为null或数字`);
-    }
-
-    // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
-    const minIsNum = minValue !== 'null' && !Number.isNaN(Number(minValue));
-    const maxIsNum = maxValue !== 'null' && !Number.isNaN(Number(maxValue));
-    if (minIsNum && maxIsNum) {
-        const minNum = Number(minValue);
-        const maxNum = Number(maxValue);
-        if (minNum > maxNum) {
-            throw new Error(`最小值 "${minValue}" 不能大于最大值 "${maxValue}"`);
-        }
-    }
-
-    // 第5个值：默认值必须为null、字符串或数字（内联判断；字符串默认视为有效）
-    if (!(defaultValue === 'null' || !Number.isNaN(Number(defaultValue)) || typeof defaultValue === 'string')) {
-        throw new Error(`默认值 "${defaultValue}" 格式错误，必须为null、字符串或数字`);
-    }
-
-    // 第6个值：是否创建索引必须为0或1
-    if (!(isIndex === '0' || isIndex === '1')) {
-        throw new Error(`索引标识 "${isIndex}" 格式错误，必须为0或1`);
-    }
-
-    // 第7个值：必须为null或正则表达式（内联判断）
-    if (regexConstraint !== 'null') {
-        try {
-            // 仅尝试构造以校验有效性
-            // eslint-disable-next-line no-new
-            new RegExp(regexConstraint);
-        } catch (_) {
-            throw new Error(`正则约束 "${regexConstraint}" 格式错误，必须为null或有效的正则表达式`);
-        }
-    }
-
-    return allParts;
 };
 
 /**
