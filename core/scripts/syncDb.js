@@ -230,20 +230,19 @@ const buildIndexSQL = (tableName, indexName, fieldName, action) => {
 
 // 创建表（方言化）
 const createTable = async (tableName, fields) => {
-    const idType = typeMapping.number;
     const colDefs = [];
     if (IS_MYSQL) {
-        colDefs.push(`\`id\` ${idType} PRIMARY KEY COMMENT "主键ID"`);
-        colDefs.push(`\`created_at\` ${idType} NOT NULL DEFAULT 0 COMMENT "创建时间"`);
-        colDefs.push(`\`updated_at\` ${idType} NOT NULL DEFAULT 0 COMMENT "更新时间"`);
-        colDefs.push(`\`deleted_at\` ${idType} NOT NULL DEFAULT 0 COMMENT "删除时间"`);
-        colDefs.push(`\`state\` ${idType} NOT NULL DEFAULT 0 COMMENT "状态字段"`);
+        colDefs.push(`\`id\` BIGINT PRIMARY KEY COMMENT "主键ID"`);
+        colDefs.push(`\`created_at\` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"`);
+        colDefs.push(`\`updated_at\` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"`);
+        colDefs.push(`\`deleted_at\` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"`);
+        colDefs.push(`\`state\` BIGINT NOT NULL DEFAULT 0 COMMENT "状态字段"`);
     } else {
-        colDefs.push(`"id" ${idType} PRIMARY KEY`);
-        colDefs.push(`"created_at" ${idType} NOT NULL DEFAULT 0`);
-        colDefs.push(`"updated_at" ${idType} NOT NULL DEFAULT 0`);
-        colDefs.push(`"deleted_at" ${idType} NOT NULL DEFAULT 0`);
-        colDefs.push(`"state" ${idType} NOT NULL DEFAULT 0`);
+        colDefs.push(`"id" INTEGER PRIMARY KEY`);
+        colDefs.push(`"created_at" INTEGER NOT NULL DEFAULT 0`);
+        colDefs.push(`"updated_at" INTEGER NOT NULL DEFAULT 0`);
+        colDefs.push(`"deleted_at" INTEGER NOT NULL DEFAULT 0`);
+        colDefs.push(`"state" INTEGER NOT NULL DEFAULT 0`);
     }
 
     for (const [fieldName, rule] of Object.entries(fields)) {
@@ -646,19 +645,19 @@ const SyncDb = async () => {
                     const fileBaseName = path.basename(file, '.json');
                     const tableName = toSnakeTableName(fileBaseName);
                     const tableDefinition = await Bun.file(file).json();
-                    let exists = false;
+                    let existsTable = false;
                     if (IS_MYSQL) {
                         const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}`;
-                        exists = res[0]?.count > 0;
+                        existsTable = res[0]?.count > 0;
                     } else if (IS_PG) {
                         const res = await sql`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
-                        exists = (res[0]?.count || 0) > 0;
+                        existsTable = (res[0]?.count || 0) > 0;
                     } else if (IS_SQLITE) {
                         const res = await sql`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
-                        exists = res.length > 0;
+                        existsTable = res.length > 0;
                     }
 
-                    if (exists) {
+                    if (existsTable) {
                         const plan = await syncTable(tableName, tableDefinition);
                         if (plan.changed) {
                             // 汇总统计
@@ -757,9 +756,6 @@ const SyncDb = async () => {
                     } else {
                         await createTable(tableName, tableDefinition);
                         createdTables++;
-                        // 新建表已算作变更
-                        modifiedTables += 0;
-                        // 创建表统计：按需求仅汇总创建表数量
                     }
 
                     processedCount++;
