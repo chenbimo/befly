@@ -293,7 +293,7 @@ const createTable = async (tableName, fields) => {
     // 2) 业务字段
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
-        const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${maxLen})` : typeMapping[fieldType];
+        const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
         const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
         const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(defaultVal, 'number') ? ` DEFAULT ${defaultVal}` : ` DEFAULT '${defaultVal}'`) : '';
         if (IS_MYSQL) {
