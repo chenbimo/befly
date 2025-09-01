@@ -4,12 +4,15 @@
 
 ## 概述
 
-本脚本用于将 `tables/*.json` 中定义的字段规则同步为数据库表结构（仅支持 MySQL 8.0+）。
+本脚本用于将 `tables/*.json` 中定义的字段规则同步为数据库表结构（支持 sqlite / mysql / postgresql）。
 它会在执行前统一校验规则文件、按需创建/修改表字段与索引，并对不同变更类型生成相应的 DDL 语句，确保增量、安全地更新结构。支持每表合并 DDL、默认值专用 ALTER、在线索引、Dry-Run 与风险护栏。
 
 - 依赖：Bun 运行时与 Bun 内置 SQL 客户端（`import { SQL } from 'bun'`）
 - 支持：表新建、字段长度/类型/注释/默认值更新、索引增删、每表合并 DDL
-- 版本要求：MySQL 8.0+（检测到 MariaDB 或低于 8.0 将直接中止）
+- 版本要求：
+    - MySQL ≥ 8.0（检测到 MariaDB 或低于 8.0 将直接中止）
+    - PostgreSQL ≥ 17（检测到低于 17 将直接中止）
+    - SQLite ≥ 3.50.0（检测到低于 3.50.0 将直接中止；部分 ALTER 能力受方言限制，不支持的修改将跳过或走重建）
 
 ## 表定义来源与校验
 
@@ -31,7 +34,10 @@
 
 - 连接创建：使用 `utils/index.js` 的 `createSqlClient({ max })`，内部基于 `new SQL({ url, max, bigint, ... })`
 - 参数化执行：统一使用 `exec(client, sql, params)`；有参时 `client.unsafe(sql, params)`，无参时 `client.unsafe(sql)`
-- 版本检查：`SELECT VERSION()`，拒绝 MariaDB；主版本 < 8 也会中止
+- 版本检查：
+    - MySQL：`SELECT VERSION()`，拒绝 MariaDB；主版本 < 8 中止
+    - PostgreSQL：`SELECT version()`，解析主版本号；主版本 < 17 中止
+    - SQLite：`SELECT sqlite_version()`；解析为数字并在 < 3.50.0 时中止
 
 ## 同步流程
 
@@ -103,15 +109,24 @@
 - 自定义字段：对每个规则生成列定义，并根据第 6 段是否创建 `idx_字段名`
 - 引擎与字符集：`ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs`
 
-## 元数据来源
+## 元数据来源（按方言）
 
-- 列信息：`information_schema.COLUMNS`（字段名、类型、长度、是否可空、默认值、注释、完整类型）
-- 索引信息：`information_schema.STATISTICS`（排除主键）
-- 表存在性：`information_schema.TABLES`
+- MySQL：
+    - 列信息：`information_schema.COLUMNS`（字段名、类型、长度、是否可空、默认值、注释、完整类型）
+    - 索引信息：`information_schema.STATISTICS`（排除主键）
+    - 表存在性：`information_schema.TABLES`
+- PostgreSQL：
+    - 列信息：`information_schema.columns` + `col_description()` 获取列注释
+    - 索引信息：`pg_indexes`（解析 `indexdef`）
+    - 表存在性：`information_schema.tables`
+- SQLite：
+    - 列信息：`PRAGMA table_info("table")`
+    - 索引信息：`PRAGMA index_list("table")` + `PRAGMA index_info("index")`
+    - 表存在性：`sqlite_master`
 
 ## 运行方式
 
-- 同步（仅支持 MySQL 8.0+）：
+- 同步：
 
 ```bash
 bun run scripts/syncDb.js
@@ -148,6 +163,7 @@ bun run checks/table.js
 - SYNC_ONLINE_INDEX：索引 ADD/DROP 使用 INPLACE + LOCK=NONE（默认 1）
 - SYNC_DISALLOW_SHRINK：禁止长度收缩（默认 1）
 - SYNC_ALLOW_TYPE_CHANGE：允许类型变更（默认 0）
+- SYNC_PG_ALLOW_COMPATIBLE_TYPE：PostgreSQL 允许“兼容/扩展”类型变更（如 varchar 扩容、varchar→text）（默认 1）
 
 ## 统计输出
 

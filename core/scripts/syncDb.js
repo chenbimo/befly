@@ -57,7 +57,6 @@ const FLAGS = {
     DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩
     ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0), // 允许类型变更
     SQLITE_REBUILD: getFlag(Env.SYNC_SQLITE_REBUILD, 0), // SQLite 遇到不支持的修改时是否重建表
-    PG_SAFE_ADD_DEFAULT: getFlag(Env.SYNC_PG_SAFE_ADD_DEFAULT, 1), // PG: 新增列含默认值时走安全多步以避免重写
     PG_ALLOW_COMPATIBLE_TYPE: getFlag(Env.SYNC_PG_ALLOW_COMPATIBLE_TYPE, 1) // PG: 允许兼容类型变更（varchar->text 等）
 };
 
@@ -396,12 +395,12 @@ const generateDDLClause = (fieldName, rule, isAdd = false) => {
         return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} ${col}`;
     }
     if (IS_PG) {
-        if (isAdd) return `ADD COLUMN "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
+        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
         // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
         return `ALTER COLUMN "${fieldName}" TYPE ${sqlType}`;
     }
-    // SQLite 仅支持 ADD COLUMN
-    if (isAdd) return `ADD COLUMN "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
+    // SQLite 仅支持 ADD COLUMN（>=3.50.0：支持 IF NOT EXISTS）
+    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
     return '';
 };
 
@@ -466,7 +465,7 @@ const syncTable = async (client, tableName, fields) => {
     const modifyClauses = [];
     const defaultClauses = [];
     const indexActions = [];
-    const pgSafeAdds = [];
+    // PG v17+: 直接使用单条 ADD COLUMN 带 DEFAULT/NOT NULL（无需多步路径）
     // 变更统计（按字段粒度）
     const changeStats = {
         addFields: 0,
@@ -551,23 +550,7 @@ const syncTable = async (client, tableName, fields) => {
             const lenPart = fType === 'string' || fType === 'array' ? ` 长度:${parseInt(fMax)}` : '';
             const expectedDefault = getExpectedDefault(fType, fDef);
             Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
-            if (IS_PG && FLAGS.PG_SAFE_ADD_DEFAULT) {
-                // 生成安全新增列计划（NULL -> UPDATE -> SET DEFAULT? -> SET NOT NULL）
-                let sqlType = typeMapping[fType];
-                if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
-                    const maxLength = parseInt(fMax);
-                    sqlType = `${typeMapping[fType]}(${maxLength})`;
-                }
-                const backfill = expectedDefault !== null ? expectedDefault : '';
-                pgSafeAdds.push({
-                    column: fieldName,
-                    sqlType,
-                    backfill,
-                    setDefault: expectedDefault !== null
-                });
-            } else {
-                addClauses.push(generateDDLClause(fieldName, rule, true));
-            }
+            addClauses.push(generateDDLClause(fieldName, rule, true));
             changed = true;
             changeStats.addFields++;
         }
@@ -616,7 +599,7 @@ const syncTable = async (client, tableName, fields) => {
             }
         }
     }
-    return { changed, addClauses, modifyClauses, defaultClauses, indexActions, commentActions, pgSafeAdds, metrics: changeStats };
+    return { changed, addClauses, modifyClauses, defaultClauses, indexActions, commentActions, metrics: changeStats };
 };
 
 // 主同步函数
@@ -643,10 +626,26 @@ const SyncDb = async () => {
             Logger.info(`MySQL 版本: ${version}`);
         } else if (IS_PG) {
             const r = await client`SELECT version() AS version`;
-            Logger.info(`PostgreSQL 版本: ${r[0].version}`);
+            const versionText = r[0].version;
+            Logger.info(`PostgreSQL 版本: ${versionText}`);
+            // 提取主版本号（假设格式如 'PostgreSQL 17.1 ...'）
+            const m = /PostgreSQL\s+(\d+)/i.exec(versionText);
+            const major = m ? parseInt(m[1], 10) : NaN;
+            if (!Number.isFinite(major) || major < 17) {
+                throw new Error(`此脚本要求 PostgreSQL >= 17，当前: ${versionText}`);
+            }
         } else if (IS_SQLITE) {
             const r = await client`SELECT sqlite_version() AS version`;
-            Logger.info(`SQLite 版本: ${r[0].version}`);
+            const version = r[0].version;
+            Logger.info(`SQLite 版本: ${version}`);
+            // 强制最低版本：SQLite ≥ 3.50.0
+            const [maj, min, patch] = String(version)
+                .split('.')
+                .map((v) => parseInt(v, 10) || 0);
+            const vnum = maj * 10000 + min * 100 + patch; // 3.50.0 -> 35000
+            if (!Number.isFinite(vnum) || vnum < 35000) {
+                throw new Error(`此脚本要求 SQLite >= 3.50.0，当前: ${version}`);
+            }
         }
 
         // 扫描并处理表文件
@@ -706,48 +705,6 @@ const SyncDb = async () => {
                                     else await rebuildSqliteTable(client, tableName, tableDefinition);
                                 } else {
                                     for (const c of plan.addClauses) {
-                                        const sql = `ALTER TABLE "${tableName}" ${c}`;
-                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                        else await exec(client, sql);
-                                    }
-                                }
-                            } else if (IS_PG && plan.pgSafeAdds && plan.pgSafeAdds.length > 0) {
-                                // PostgreSQL 安全新增列（避免重写）：
-                                for (const add of plan.pgSafeAdds) {
-                                    // 1) ADD COLUMN NULL 无默认
-                                    const addSql = `ALTER TABLE "${tableName}" ADD COLUMN "${add.column}" ${add.sqlType}`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${addSql}`);
-                                    else await exec(client, addSql);
-                                    // 2) 分批回填（这里简单一次性回填；生产可按批次）
-                                    if (add.setDefault) {
-                                        const updSql = `UPDATE "${tableName}" SET "${add.column}" = ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))} WHERE "${add.column}" IS NULL`;
-                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${updSql}`);
-                                        else await exec(client, updSql);
-                                        // 3) 设置 DEFAULT
-                                        const defSql = `ALTER TABLE "${tableName}" ALTER COLUMN "${add.column}" SET DEFAULT ${typeof add.backfill === 'number' ? add.backfill : ql(String(add.backfill))}`;
-                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${defSql}`);
-                                        else await exec(client, defSql);
-                                    }
-                                    // 4) 置为 NOT NULL
-                                    const notNullSql = `ALTER TABLE "${tableName}" ALTER COLUMN "${add.column}" SET NOT NULL`;
-                                    if (FLAGS.DRY_RUN) Logger.info(`[计划] ${notNullSql}`);
-                                    else await exec(client, notNullSql);
-                                }
-                                // 其他普通 ADD/MODIFY 照常执行
-                                if (FLAGS.MERGE_ALTER) {
-                                    const clauses = [...plan.addClauses, ...plan.modifyClauses];
-                                    if (clauses.length > 0) {
-                                        const sql = `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
-                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                        else await exec(client, sql);
-                                    }
-                                } else {
-                                    for (const c of plan.addClauses) {
-                                        const sql = `ALTER TABLE "${tableName}" ${c}`;
-                                        if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
-                                        else await exec(client, sql);
-                                    }
-                                    for (const c of plan.modifyClauses) {
                                         const sql = `ALTER TABLE "${tableName}" ${c}`;
                                         if (FLAGS.DRY_RUN) Logger.info(`[计划] ${sql}`);
                                         else await exec(client, sql);

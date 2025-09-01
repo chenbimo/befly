@@ -18,39 +18,19 @@ Befly 是专为 Bun 运行时设计的 API 框架，采用插件化架构，提�
 -   **结构**: 包含 APIs、表定义、配置文件等用户项目代码
 -   **运行**: 在 `tpl/` 目录中执行 `bun run dev` 启动项目
 
-## 核心架构模式
-
-### 插件系统
-
--   **插件位置**: `plugins/` 目录包含核心插件，用户项目可扩展
--   **插件依赖**: 使用 `after: ['plugin_name']` 定义加载顺序
--   **插件结构**: 导出包含 `onInit()` 方法的对象，接收 `befly` 实例
--   **示例**: `plugins/db.js` 管理数据库连接池和查询构造器
-
 ### API 路由定义
 
 -   **位置**: `apis/` 目录按功能模块组织
--   **格式**: 使用 `Api.GET()` 或 `Api.POST()` 定义路由
--   **参数**: `(name, auth, fields, required, handler)`
--   **示例**: `apis/health/info.js` 展示健康检查接口
 
 ### 数据验证系统
 
--   **规则定义**: `tables/*.json` 文件定义字段验证规则
--   **格式**: `"字段名": "显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束"`
--   **分隔符**: 使用 `⚡` 作为属性分隔符，避免与正则表达式中的管道符 `|` 冲突
 -   **保留字段**: 避免使用 `id`, `created_at`, `updated_at`, `deleted_at`, `state`
 -   **验证器**: `utils/validate.js` 处理参数验证逻辑
 -   **枚举支持**: 使用正则表达式实现枚举，如 `^(active|inactive|pending)$`
 
-## 开发工作流
-
 ### 运行时要求
 
 -   **使用 Bun**: 优先使用 `bun` 进行安装、测试等操作，避免使用 `node`/`npm`/`npx`
--   **测试执行位置**: 所有测试必须在仓库根目录（`befly/`）下执行 `bun test`，不要在 `tpl/` 目录运行测试
--   **测试文件管理**: 所有测试文件必须放在 `core/tests/` 目录下，且只能包含 `.test.js` 后缀的文件
--   **测试目录纯净**: `core/tests/` 目录中不允许存在非 `.test.js` 的文件，包括临时文件、辅助文件等
 -   **临时文件清理**: 临时测试文件测试完毕后必须立即删除
 -   **代码复用**: 尽可能复用现有代码，保持逻辑高效且简洁
 
@@ -69,27 +49,16 @@ Befly 是专为 Bun 运行时设计的 API 框架，采用插件化架构，提�
 
 ```bash
 bun run ra  # 主版本 (major)
-bun run rb  # 次版本 (minor)
-bun run rc  # 补丁版本 (patch)
 ```
 
 ### 测试运行
 
-在仓库根目录（`befly/`）运行：
-
-```bash
-bun test                              # 运行 core/tests 下全部测试
-bun test core/tests/jwt.test.js       # 运行特定测试
 ```
 
 ### 测试约束（重要）
-
--   测试代码中禁止直接导入 `config/env.js` 的 `Env` 对象（会与运行环境/并发测试产生耦合）。
 -   测试中不使用任何环境变量读取（包括 `process.env`）。如需配置，请：
     -   在测试中写死常量（仅用于测试场景），或
     -   通过依赖注入/桩（mock）将配置传入被测单元。
--   仅在 `core/tests/` 目录下编写 `.test.js` 文件，不创建其他目录（例如 `other/`）。
--   不要在 `tpl/` 目录运行任何测试命令。
 
 ## 项目特定约定
 
@@ -97,20 +66,17 @@ bun test core/tests/jwt.test.js       # 运行特定测试
 
 -   **系统路径**: `system.js` 定义框架和项目路径常量
 -   **使用模式**: 导入 `__dirroot`, `__dirscript` 等预定义路径
--   **项目区分**: 框架路径 vs 用户项目路径分离（框架位于 `core/`，示例/项目位于 `tpl/`）
 
 ### 数据库操作
 
 -   **查询构造器**: `utils/sqlBuilder.js` 的 `SqlBuilder` 类
 -   **字段转义**: 自动处理 MySQL 字段名转义（反引号）
--   **连接管理**: 插件系统管理连接池生命周期
 
 ### 环境配置
 
 -   **配置中心**: `config/env.js` 统一管理环境变量
 -   **类型转换**: 自动处理数字类型配置项
 -   **功能开关**: `DB_ENABLE`, `REDIS_ENABLE` 等开关配置
-
 ### 日志记录
 
 -   **工具类**: `utils/logger.js` 提供结构化日志
@@ -118,33 +84,24 @@ bun test core/tests/jwt.test.js       # 运行特定测试
 -   **多输出**: 控制台和文件双重输出
 
 ## 关键集成点
-
 ### 数据库连接
 
 -   **Bun SQL**: 使用 Bun 内置 SQL 客户端（`import { SQL } from 'bun'`），无需额外 `mariadb` 依赖
 -   **连接池**: 通过 `new SQL({ url, max, bigint, ... })` 配置池大小、数值类型等
--   **测试连接**: 启动时验证数据库连接状态（例如 `SELECT VERSION()`）
 
 ### Redis 缓存
 
--   **可选组件**: 通过 `REDIS_ENABLE` 控制启用状态
 -   **健康检查**: `apis/health/info.js` 包含连接状态检测
 
 ### 系统检查
-
 -   **启动检查**: `checks/` 目录包含系统自检脚本
 -   **表定义检查**: 验证表结构定义合规性
 -   **性能监控**: 记录检查执行时间
 
-## 常见模式
-
-### 错误处理
 
 -   使用 `RYes(message, data)` 返回成功响应
 -   使用 `RNo(message, error)` 返回失败响应
 -   统一错误日志记录格式
-
-### 中间件模式
 
 -   插件通过 `onInit` 钩子注册功能
 -   支持异步初始化和依赖注入
@@ -162,16 +119,26 @@ bun test core/tests/jwt.test.js       # 运行特定测试
 
 本项目的数据库环境变量已统一为 DB\_\* 方案，替代历史上的 MYSQL_URL/MYSQL_DB 形式，以同时支持 sqlite、mysql、postgresql。变更属于向前演进的配置统一，不影响框架 API 使用。
 
-### 新配置（DB\_\*）
-
 -   DB_TYPE：数据库类型（sqlite | mysql | postgresql）
 -   DB_HOST：主机（sqlite 可忽略）
 -   DB_PORT：端口（sqlite 可忽略）
 -   DB_USER：用户名（sqlite 可忽略）
--   DB_PASS：密码（sqlite 可忽略）
--   DB_NAME：数据库名称（sqlite 为文件路径或 :memory:）
--   DB_ENABLE：是否启用数据库（开关）
 -   DB_POOL_MAX：连接池最大连接数
+## SQLite 专项说明（≥ 3.50.0）
+
+最低版本要求为 3.50.0；脚本启动时通过 `SELECT sqlite_version()` 检查，低于该版本将中止。
+
+已实现能力与策略：
+
+- 新增列：使用 `ALTER TABLE "t" ADD COLUMN IF NOT EXISTS "col" TYPE NOT NULL [DEFAULT ...]`
+- 默认值：仅在新增列时设置；SQLite 不支持修改列默认值，若变更默认值且启用 `SYNC_SQLITE_REBUILD=1`，将采用重建表策略。
+- 修改列/类型/长度：SQLite 原生不支持在线修改列定义；若检测到变更且开启重建，将执行“创建临时表 -> 拷贝公共列数据 -> 删除旧表 -> 重命名”的迁移流程。
+- 索引：使用 `CREATE INDEX IF NOT EXISTS` / `DROP INDEX IF EXISTS`。
+
+限制：
+
+- 不支持列注释（会在 MySQL/PG 同步，SQLite 跳过）。
+- 复杂约束、唯一/复合索引的全量差异同步尚未覆盖，需要人工处理或在后续增强。
 -   DB_DEBUG：SQL 调试开关
 
 ### 废弃与兼容
@@ -237,9 +204,9 @@ PostgreSQL 示例：
 -   是否还能使用 MYSQL*URL/MYSQL_DB？不支持，已废弃；请切换到 DB*\*。
 -   生产灰度如何做？建议在 pm2 的 env 中统一使用 DB\_\*，包括 DB_ENABLE/DB_POOL_MAX/DB_DEBUG。
 
-## PostgreSQL 专项说明（PG Online 策略与限制）
+## PostgreSQL 专项说明（v17+ Online 策略与限制）
 
-本节总结当前在 PostgreSQL 场景下由 `core/scripts/syncDb.js` 实现的能力、策略与限制，帮助你“尽可能对齐 MySQL”的同时，遵守 PG 的约束以降低锁表与停机风险。
+本节总结 PostgreSQL（最低 v17）场景下由 `core/scripts/syncDb.js` 实现的能力、策略与限制，帮助你“尽可能对齐 MySQL”的同时，遵守 PG 的约束以降低锁表与停机风险。
 
 ### 已实现能力
 
@@ -254,13 +221,7 @@ PostgreSQL 示例：
     -   自动发现与比对列注释差异，通过 `COMMENT ON COLUMN` 应用变更。
     -   新建表会基于表定义中的“显示名”写入列注释。
 
--   安全的“带默认值新增列”多步路径
-
-    -   受 `SYNC_PG_SAFE_ADD_DEFAULT=1` 控制，流程：
-        1. `ADD COLUMN ... NULL`（不立刻加默认/非空约束）
-        2. `UPDATE ...` 回填历史数据默认值（避免重写整表导致长锁）
-        3. `ALTER TABLE ... ALTER COLUMN ... SET DEFAULT ...`
-        4. 如需非空：`ALTER TABLE ... ALTER COLUMN ... SET NOT NULL`
+    -   新增列（默认值/非空）：直接使用单条 `ADD COLUMN IF NOT EXISTS ... DEFAULT ... NOT NULL`，依赖 v11+ 快速默认值，v17 下更稳；不再走多步回填路径。
 
 -   兼容性类型/长度的“无锁”识别与最小化变更
     -   受 `SYNC_PG_ALLOW_COMPATIBLE_TYPE=1` 控制，当前支持：
@@ -289,7 +250,6 @@ PostgreSQL 示例：
 ### 常用环境开关（与 PG 相关）
 
 -   `SYNC_ONLINE_INDEX=1`：启用并发索引创建/删除（生成 CONCURRENTLY）。
--   `SYNC_PG_SAFE_ADD_DEFAULT=1`：启用新增列带默认值的 4 步安全路径。
 -   `SYNC_PG_ALLOW_COMPATIBLE_TYPE=1`：允许“兼容/扩展”类型变更（如 varchar 扩容、varchar->text）。
 -   `SYNC_DISALLOW_SHRINK=1`：禁止收缩类变更（推荐开启）。
 
@@ -305,15 +265,14 @@ PostgreSQL 示例：
 表定义新增字段（示例）
 
 ```
-"status": "状态⚡varchar⚡0⚡32⚡active"
+
+"status": "状态 ⚡varchar⚡0⚡32⚡active"
+
 ```
 
-在 `SYNC_PG_SAFE_ADD_DEFAULT=1` 下生成执行序列：
+生成执行语句（单条）：
 
-1. `ALTER TABLE "table" ADD COLUMN "status" character varying(32) NULL;`
-2. `UPDATE "table" SET "status" = 'active' WHERE "status" IS NULL;`
-3. `ALTER TABLE "table" ALTER COLUMN "status" SET DEFAULT 'active';`
-4. `ALTER TABLE "table" ALTER COLUMN "status" SET NOT NULL;`
+`ALTER TABLE "table" ADD COLUMN IF NOT EXISTS "status" character varying(32) NOT NULL DEFAULT 'active';`
 
 ### 示例：兼容扩容与类型放宽
 
@@ -327,3 +286,4 @@ PostgreSQL 示例：
 -   报错涉及事务与 CONCURRENTLY：确保外层未包裹成单一事务；或临时关闭 `SYNC_ONLINE_INDEX` 后再试。
 -   锁等待时间过长：在业务低峰执行；或分批次对大表应用变更。
 -   需要复杂的类型转换：采用“影子列 + 回填数据 + 读写切换 + 清理旧列”的迁移蓝图。
+```
