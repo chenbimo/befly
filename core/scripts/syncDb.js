@@ -295,16 +295,16 @@ const createTable = async (tableName, fields) => {
     }
 
     // 业务字段
-    for (const [field, rule] of Object.entries(fields)) {
-        const [fName, fType, , fMax, fDef] = parseFieldRule(rule);
-        let sqlType = typeMapping[fType];
-        if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
-            const maxLen = parseInt(fMax);
-            sqlType = `${typeMapping[fType]}(${maxLen})`;
+    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+        const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+        let sqlType = typeMapping[fieldType];
+        if ((fieldType === 'string' || fieldType === 'array') && (IS_MYSQL || IS_PG)) {
+            const maxLen = parseInt(fieldMax);
+            sqlType = `${typeMapping[fieldType]}(${maxLen})`;
         }
-        const defVal = fDef === 'null' ? defaultMapping[fType] : fDef;
+        const defVal = fiendDefault === 'null' ? defaultMapping[fieldType] : fiendDefault;
         let defSQL = '';
-        if (fType !== 'text' && defVal !== null) {
+        if (fieldType !== 'text' && defVal !== null) {
             let lit;
             if (typeof defVal === 'number') {
                 lit = defVal;
@@ -314,13 +314,13 @@ const createTable = async (tableName, fields) => {
             defSQL = ` DEFAULT ${lit}`;
         }
         if (IS_MYSQL) {
-            let col = `\`${field}\` ${sqlType} NOT NULL${defSQL}`;
-            if (fName && fName !== 'null') {
-                col += ` COMMENT "${String(fName).replace(/"/g, '\\"')}"`;
+            let col = `\`${fieldKey}\` ${sqlType} NOT NULL${defSQL}`;
+            if (fieldName && fieldName !== 'null') {
+                col += ` COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`;
             }
             colDefs.push(col);
         } else {
-            colDefs.push(`"${field}" ${sqlType} NOT NULL${defSQL}`);
+            colDefs.push(`"${fieldKey}" ${sqlType} NOT NULL${defSQL}`);
         }
     }
 
@@ -357,10 +357,10 @@ const createTable = async (tableName, fields) => {
                 await sql`${sql(stmt)}`;
             }
         }
-        for (const [name, rule] of Object.entries(fields)) {
-            const [fName] = parseFieldRule(rule);
-            if (fName && fName !== 'null') {
-                const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS ${ql(String(fName))}`;
+        for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+            const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+            if (fieldName && fieldName !== 'null') {
+                const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${ql(String(fieldName))}`;
                 if (FLAGS.DRY_RUN) {
                     Logger.info(`[计划] ${stmt}`);
                 } else {
@@ -379,10 +379,10 @@ const createTable = async (tableName, fields) => {
             await sql`${sql(stmt)}`;
         }
     }
-    for (const [name, rule] of Object.entries(fields)) {
-        const parts = parseFieldRule(rule);
-        if (parts[5] === '1') {
-            const stmt = buildIndexSQL(tableName, `idx_${name}`, name, 'create');
+    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+        const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+        if (fieldIndex === '1') {
+            const stmt = buildIndexSQL(tableName, `idx_${fieldKey}`, fieldKey, 'create');
             if (FLAGS.DRY_RUN) {
                 Logger.info(`[计划] ${stmt}`);
             } else {
@@ -393,27 +393,26 @@ const createTable = async (tableName, fields) => {
 };
 
 // 比较字段定义变化
-const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
-    const ruleParts = parseFieldRule(newRule);
-    const [fieldDisplayName, fieldType, fieldMin, fieldMaxLength, fieldDefaultValue] = ruleParts;
+const compareFieldDefinition = (existingColumn, newRule, colName) => {
+    const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(newRule);
     const changes = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
     if (!IS_SQLITE && (fieldType === 'string' || fieldType === 'array')) {
-        if (fieldMaxLength === 'null') {
+        if (fieldMax === 'null') {
             throw new Error(`string/array 类型字段的最大长度未设置，必须指定最大长度`);
         }
-        const newMaxLength = parseInt(fieldMaxLength);
+        const newMaxLength = parseInt(fieldMax);
         if (existingColumn.length !== newMaxLength) {
             changes.push({ type: 'length', current: existingColumn.length, new: newMaxLength });
         }
     }
 
     // 检查注释变化（MySQL/PG 支持列注释）
-    if ((IS_MYSQL || IS_PG) && fieldDisplayName && fieldDisplayName !== 'null') {
+    if ((IS_MYSQL || IS_PG) && fieldName && fieldName !== 'null') {
         const currentComment = existingColumn.comment || '';
-        if (currentComment !== fieldDisplayName) {
-            changes.push({ type: 'comment', current: currentComment, new: fieldDisplayName });
+        if (currentComment !== fieldName) {
+            changes.push({ type: 'comment', current: currentComment, new: fieldName });
         }
     }
 
@@ -425,7 +424,7 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
     }
 
     // 检查默认值变化（按照生成规则推导期望默认值）
-    const expectedDefault = fieldDefaultValue === 'null' ? defaultMapping[fieldType] : fieldDefaultValue;
+    const expectedDefault = fiendDefault === 'null' ? defaultMapping[fieldType] : fiendDefault;
     const currDef = normalizeDefault(existingColumn.defaultValue);
     const newDef = normalizeDefault(expectedDefault);
     if (currDef !== newDef) {
@@ -447,28 +446,28 @@ const compareFieldDefinition = (existingColumn, newRule, fieldName) => {
 };
 
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
-const generateDDLClause = (fieldName, rule, isAdd = false) => {
-    const [fName, fType, , fMax, fDef] = parseFieldRule(rule);
+const generateDDLClause = (colName, rule, isAdd = false) => {
+    const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(rule);
     // 类型映射：checkTable 已保证字段类型合法且可映射
-    let sqlType = typeMapping[fType];
-    if ((fType === 'string' || fType === 'array') && (IS_MYSQL || IS_PG)) {
-        const maxLength = parseInt(fMax);
-        sqlType = `${typeMapping[fType]}(${maxLength})`;
+    let sqlType = typeMapping[fieldType];
+    if ((fieldType === 'string' || fieldType === 'array') && (IS_MYSQL || IS_PG)) {
+        const maxLength = parseInt(fieldMax);
+        sqlType = `${typeMapping[fieldType]}(${maxLength})`;
     }
-    const expectedDefault = fDef === 'null' ? defaultMapping[fType] : fDef;
-    const defaultSql = fType !== 'text' && expectedDefault !== null ? ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}` : '';
+    const expectedDefault = fiendDefault === 'null' ? defaultMapping[fieldType] : fiendDefault;
+    const defaultSql = fieldType !== 'text' && expectedDefault !== null ? ` DEFAULT ${typeof expectedDefault === 'number' ? expectedDefault : ql(String(expectedDefault))}` : '';
     if (IS_MYSQL) {
-        let col = `\`${fieldName}\` ${sqlType} NOT NULL${defaultSql}`;
-        if (fName && fName !== 'null') col += ` COMMENT "${fName.replace(/"/g, '\\"')}"`;
+        let col = `\`${colName}\` ${sqlType} NOT NULL${defaultSql}`;
+        if (fieldName && fieldName !== 'null') col += ` COMMENT "${fieldName.replace(/"/g, '\\"')}"`;
         return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} ${col}`;
     }
     if (IS_PG) {
-        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
+        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${colName}" ${sqlType} NOT NULL${defaultSql}`;
         // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
-        return `ALTER COLUMN "${fieldName}" TYPE ${sqlType}`;
+        return `ALTER COLUMN "${colName}" TYPE ${sqlType}`;
     }
     // SQLite 仅支持 ADD COLUMN（>=3.50.0：支持 IF NOT EXISTS）
-    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldName}" ${sqlType} NOT NULL${defaultSql}`;
+    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${colName}" ${sqlType} NOT NULL${defaultSql}`;
     return '';
 };
 
@@ -543,61 +542,60 @@ const syncTable = async (tableName, fields) => {
         indexDrop: 0
     };
 
-    for (const [fieldName, rule] of Object.entries(fields)) {
-        if (existingColumns[fieldName]) {
-            const comparison = compareFieldDefinition(existingColumns[fieldName], rule, fieldName);
+    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+        if (existingColumns[fieldKey]) {
+            const comparison = compareFieldDefinition(existingColumns[fieldKey], fieldRule, fieldKey);
             if (comparison.hasChanges) {
                 for (const c of comparison.changes) {
                     const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
-                    Logger.info(`[字段变更] ${tableName}.${fieldName} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
+                    Logger.info(`[字段变更] ${tableName}.${fieldKey} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
                     if (c.type in changeStats) changeStats[c.type]++;
                 }
-                const [, fType, , fMax] = parseFieldRule(rule);
-                if ((fType === 'string' || fType === 'array') && existingColumns[fieldName].length && fMax !== 'null') {
-                    const newLen = parseInt(fMax);
-                    if (existingColumns[fieldName].length > newLen && FLAGS.DISALLOW_SHRINK) {
-                        Logger.warn(`[跳过危险变更] ${tableName}.${fieldName} 长度收缩 ${existingColumns[fieldName].length} -> ${newLen} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
+                const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+                if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length && fieldMax !== 'null') {
+                    const newLen = parseInt(fieldMax);
+                    if (existingColumns[fieldKey].length > newLen && FLAGS.DISALLOW_SHRINK) {
+                        Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${newLen} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
                     }
                 }
-                const fType2 = parseFieldRule(rule)[1];
-                const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fType2] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fType2] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fType2];
+                const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fieldType] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fieldType] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fieldType];
                 const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
                 const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
                 const onlyDefaultChanged = comparison.changes.every((c) => c.type === 'default');
 
                 if (onlyDefaultChanged) {
-                    const expectedDefault = getExpectedDefault(parseFieldRule(rule)[1], parseFieldRule(rule)[4]);
+                    const expectedDefault = getExpectedDefault(fieldType, fiendDefault);
                     if (expectedDefault === null) {
-                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldName}\` DROP DEFAULT` : `ALTER COLUMN "${fieldName}" DROP DEFAULT`);
+                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` DROP DEFAULT` : `ALTER COLUMN "${fieldKey}" DROP DEFAULT`);
                     } else {
-                        const v = parseFieldRule(rule)[1] === 'number' ? expectedDefault : ql(String(expectedDefault));
-                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldName}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldName}" SET DEFAULT ${v}`);
+                        const v = fieldType === 'number' ? expectedDefault : ql(String(expectedDefault));
+                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
                     }
                 } else {
                     let skipModify = false;
-                    if (hasLengthChange && (fType2 === 'string' || fType2 === 'array') && existingColumns[fieldName].length && parseInt(parseFieldRule(rule)[3]) !== NaN) {
-                        const newLen = parseInt(parseFieldRule(rule)[3]);
-                        const oldLen = existingColumns[fieldName].length;
+                    if (hasLengthChange && (fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length && !Number.isNaN(parseInt(fieldMax))) {
+                        const newLen = parseInt(fieldMax);
+                        const oldLen = existingColumns[fieldKey].length;
                         const isShrink = oldLen > newLen;
                         if (isShrink && FLAGS.DISALLOW_SHRINK) skipModify = true;
                     }
                     if (hasTypeChange) {
-                        if (IS_PG && FLAGS.PG_ALLOW_COMPATIBLE_TYPE && isPgCompatibleTypeChange(existingColumns[fieldName].type, expectedDbType)) {
-                            Logger.info(`[PG兼容类型变更] ${tableName}.${fieldName} ${existingColumns[fieldName].type} -> ${expectedDbType} 允许执行`);
+                        if (IS_PG && FLAGS.PG_ALLOW_COMPATIBLE_TYPE && isPgCompatibleTypeChange(existingColumns[fieldKey].type, expectedDbType)) {
+                            Logger.info(`[PG兼容类型变更] ${tableName}.${fieldKey} ${existingColumns[fieldKey].type} -> ${expectedDbType} 允许执行`);
                         } else if (!FLAGS.ALLOW_TYPE_CHANGE) {
                             skipModify = true;
                         }
                     }
-                    if (!skipModify) modifyClauses.push(generateDDLClause(fieldName, rule, false));
+                    if (!skipModify) modifyClauses.push(generateDDLClause(fieldKey, fieldRule, false));
                 }
                 changed = true;
             }
         } else {
-            const [fName, fType, , fMax, fDef] = parseFieldRule(rule);
-            const lenPart = fType === 'string' || fType === 'array' ? ` 长度:${parseInt(fMax)}` : '';
-            const expectedDefault = getExpectedDefault(fType, fDef);
-            Logger.info(`[新增字段] ${tableName}.${fieldName} 类型:${fType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
-            addClauses.push(generateDDLClause(fieldName, rule, true));
+            const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+            const lenPart = fieldType === 'string' || fieldType === 'array' ? ` 长度:${parseInt(fieldMax)}` : '';
+            const expectedDefault = getExpectedDefault(fieldType, fiendDefault);
+            Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${expectedDefault ?? 'NULL'}`);
+            addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
             changed = true;
             changeStats.addFields++;
         }
@@ -611,16 +609,15 @@ const syncTable = async (tableName, fields) => {
             changeStats.indexCreate++;
         }
     }
-    for (const [fieldName, rule] of Object.entries(fields)) {
-        const ruleParts = parseFieldRule(rule);
-        const fieldHasIndex = ruleParts[5];
-        const indexName = `idx_${fieldName}`;
-        if (fieldHasIndex === '1' && !existingIndexes[indexName]) {
-            indexActions.push({ action: 'create', indexName, fieldName });
+    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+        const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+        const indexName = `idx_${fieldKey}`;
+        if (fieldIndex === '1' && !existingIndexes[indexName]) {
+            indexActions.push({ action: 'create', indexName, fieldName: fieldKey });
             changed = true;
             changeStats.indexCreate++;
-        } else if (fieldHasIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
-            indexActions.push({ action: 'drop', indexName, fieldName });
+        } else if (fieldIndex !== '1' && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
+            indexActions.push({ action: 'drop', indexName, fieldName: fieldKey });
             changed = true;
             changeStats.indexDrop++;
         }
@@ -628,13 +625,13 @@ const syncTable = async (tableName, fields) => {
 
     const commentActions = [];
     if (IS_PG) {
-        for (const [fieldName, rule] of Object.entries(fields)) {
-            if (existingColumns[fieldName]) {
-                const [fName] = parseFieldRule(rule);
-                const curr = existingColumns[fieldName].comment || '';
-                const want = fName && fName !== 'null' ? String(fName) : '';
+        for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+            if (existingColumns[fieldKey]) {
+                const [fieldName, fieldType, fieldMin, fieldMax, fiendDefault, fieldIndex, fieldRegx] = parseFieldRule(fieldRule);
+                const curr = existingColumns[fieldKey].comment || '';
+                const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
                 if (want !== curr) {
-                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldName}" IS ${want ? ql(want) : 'NULL'}`);
+                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? ql(want) : 'NULL'}`);
                     changed = true;
                     changeStats.comment++;
                 }
