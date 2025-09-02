@@ -560,6 +560,15 @@ const modifyTable = async (tableName, fields) => {
                 const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
                 const onlyDefaultChanged = comparison.changes.every((c) => c.type === 'default');
 
+                // 严格限制：除 string/array 互转外，禁止任何字段类型变更；一旦发现，立即终止同步
+                // 说明：string 与 array 在各方言下映射同为 VARCHAR/character varying/TEXT，compare 不会将其视为类型变更
+                if (hasTypeChange) {
+                    const currentSqlType = String(existingColumns[fieldKey].type || '').toLowerCase();
+                    const newSqlType = String(typeMapping[fieldType] || '').toLowerCase();
+                    // 明确抛错，阻止后续任何 DDL 应用
+                    throw new Error(`禁止字段类型变更: ${tableName}.${fieldKey} ${currentSqlType} -> ${newSqlType}。仅允许 string<->array 互相切换`);
+                }
+
                 if (onlyDefaultChanged) {
                     const v = fieldType === 'number' ? fieldDefault : `"${fieldDefault}"`;
                     defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
