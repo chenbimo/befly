@@ -576,7 +576,10 @@ const modifyTable = async (tableName, fields) => {
                     if (IS_PG) {
                         defaultClauses.push(`ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
                     } else if (IS_MYSQL && onlyDefaultChanged) {
-                        defaultClauses.push(`ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}`);
+                        // MySQL 的 TEXT/BLOB 不允许 DEFAULT，跳过 text 类型
+                        if (fieldType !== 'text') {
+                            defaultClauses.push(`ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}`);
+                        }
                     }
                 }
 
