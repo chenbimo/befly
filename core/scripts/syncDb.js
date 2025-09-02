@@ -375,7 +375,7 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
     }
 
     // 检查默认值变化（按照生成规则推导期望默认值）
-    if (existingColumn.defaultValue !== fieldDefault) {
+    if (existingColumn.defaultValue !== String(fieldDefault)) {
         changes.push({
             type: 'default',
             current: existingColumn.defaultValue,
@@ -542,7 +542,13 @@ const modifyTable = async (tableName, fields) => {
             const comparison = compareFieldDefinition(existingColumns[fieldKey], fieldRule, fieldKey);
             if (comparison.length > 0) {
                 for (const c of comparison) {
-                    const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
+                    const label =
+                        {
+                            length: '长度',
+                            datatype: '类型',
+                            comment: '注释',
+                            default: '默认值'
+                        }[c.type] || c.type;
                     Logger.info(`[字段变更] ${tableName}.${fieldKey} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
                     // 全量计数：全局累加
                     if (c.type === 'datatype') globalCount.typeChanges++;

@@ -59,9 +59,9 @@ export const parseRule = (rule) => {
     let [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = rule.split('⚡');
 
     fieldIndex = Number(fieldIndex);
-    if (fieldMin === 'null') fieldMin = Number(fieldMin);
-    if (fieldMax === 'null') fieldMax = Number(fieldMax);
-    if (fieldType === 'number') fieldDefault = Number(fieldDefault);
+    if (fieldMin !== 'null') fieldMin = Number(fieldMin);
+    if (fieldMax !== 'null') fieldMax = Number(fieldMax);
+    if (fieldType !== 'number') fieldDefault = Number(fieldDefault);
 
     return [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx];
 };
