@@ -639,7 +639,6 @@ const modifyTable = async (tableName, fields) => {
                 if (want !== curr) {
                     commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? `'${want}'` : 'NULL'}`);
                     changed = true;
-                    globalCount.nameChanges++;
                 }
             }
         }
