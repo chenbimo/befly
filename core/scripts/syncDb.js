@@ -559,6 +559,7 @@ const modifyTable = async (tableName, fields) => {
                 const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
                 const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
                 const onlyDefaultChanged = comparison.changes.every((c) => c.type === 'default');
+                const defaultChanged = comparison.changes.some((c) => c.type === 'default');
 
                 // 严格限制：除 string/array 互转外，禁止任何字段类型变更；一旦发现，立即终止同步
                 // 说明：string 与 array 在各方言下映射同为 VARCHAR/character varying/TEXT，compare 不会将其视为类型变更
@@ -569,10 +570,18 @@ const modifyTable = async (tableName, fields) => {
                     throw new Error(`禁止字段类型变更: ${tableName}.${fieldKey} ${currentSqlType} -> ${newSqlType}。仅允许 string<->array 互相切换`);
                 }
 
-                if (onlyDefaultChanged) {
+                // 默认值变化处理：
+                if (defaultChanged) {
                     const v = fieldType === 'number' ? fieldDefault : `'${fieldDefault}'`;
-                    defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
-                } else {
+                    if (IS_PG) {
+                        defaultClauses.push(`ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
+                    } else if (IS_MYSQL && onlyDefaultChanged) {
+                        defaultClauses.push(`ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}`);
+                    }
+                }
+
+                // 若不仅仅是默认值变化，继续生成修改子句
+                if (!onlyDefaultChanged) {
                     let skipModify = false;
                     if (hasLengthChange && (fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length) {
                         const oldLen = existingColumns[fieldKey].length;
