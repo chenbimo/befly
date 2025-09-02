@@ -540,8 +540,8 @@ const modifyTable = async (tableName, fields) => {
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         if (existingColumns[fieldKey]) {
             const comparison = compareFieldDefinition(existingColumns[fieldKey], fieldRule, fieldKey);
-            if (comparison.changes.length > 0) {
-                for (const c of comparison.changes) {
+            if (comparison.length > 0) {
+                for (const c of comparison) {
                     const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
                     Logger.info(`[字段变更] ${tableName}.${fieldKey} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
                     // 全量计数：全局累加
@@ -556,10 +556,10 @@ const modifyTable = async (tableName, fields) => {
                         Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${fieldMax} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
                     }
                 }
-                const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
-                const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
-                const onlyDefaultChanged = comparison.changes.every((c) => c.type === 'default');
-                const defaultChanged = comparison.changes.some((c) => c.type === 'default');
+                const hasTypeChange = comparison.some((c) => c.type === 'datatype');
+                const hasLengthChange = comparison.some((c) => c.type === 'length');
+                const onlyDefaultChanged = comparison.every((c) => c.type === 'default');
+                const defaultChanged = comparison.some((c) => c.type === 'default');
 
                 // 严格限制：除 string/array 互转外，禁止任何字段类型变更；一旦发现，立即终止同步
                 // 说明：string 与 array 在各方言下映射同为 VARCHAR/character varying/TEXT，compare 不会将其视为类型变更

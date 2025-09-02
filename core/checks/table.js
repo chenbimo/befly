@@ -171,11 +171,6 @@ export const checkTable = async () => {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，string,array 类型长度必须在 1..65535 范围内`);
                                 fileValid = false;
                             }
-                            // 默认值校验：不能为 'null'，且不能是数字
-                            if (Number.isNaN(Number(fieldDefault))) {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 为 string,array 类型，默认值必须为字符串（非数字、非null），当前为 "${fieldDefault}"`);
-                                fileValid = false;
-                            }
                         } else if (fieldType === 'number') {
                             if (Number.isNaN(Number(fieldDefault))) {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，默认值必须为数字，当前为 "${fieldDefault}"`);
