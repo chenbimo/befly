@@ -29,14 +29,6 @@ const typeMapping = {
     array: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR'
 };
 
-// 默认值映射
-const defaultMapping = {
-    number: 0,
-    string: '',
-    array: '[]',
-    text: null
-};
-
 // 全局统计
 const globalCount = {
     // 表级
@@ -53,28 +45,6 @@ const globalCount = {
     indexCreate: 0,
     indexDrop: 0
 };
-
-// 表名转换函数已移动至 utils/index.js 的 toSnakeTableName
-
-// 环境开关读取（支持未在 Env 显式声明的变量，默认值兜底）
-const getFlag = (val, def = 0) => {
-    if (val === undefined || val === null || val === '') return !!def;
-    const n = Number(val);
-    if (!Number.isNaN(n)) return n !== 0;
-    const s = String(val).toLowerCase();
-    return s === 'true' || s === 'on' || s === 'yes';
-};
-
-const FLAGS = {
-    // PLAN 模式通过命令行参数控制，忽略环境变量
-    MERGE_ALTER: getFlag(Env.SYNC_MERGE_ALTER, 1), // 合并每表多项 DDL
-    DISALLOW_SHRINK: getFlag(Env.SYNC_DISALLOW_SHRINK, 1), // 禁止长度收缩
-    ALLOW_TYPE_CHANGE: getFlag(Env.SYNC_ALLOW_TYPE_CHANGE, 0), // 允许类型变更
-    SQLITE_REBUILD: getFlag(Env.SYNC_SQLITE_REBUILD, 0), // SQLite 遇到不支持的修改时是否重建表
-    PG_ALLOW_COMPATIBLE_TYPE: getFlag(Env.SYNC_PG_ALLOW_COMPATIBLE_TYPE, 1) // PG: 允许兼容类型变更（varchar->text 等）
-};
-
-const normalizeDefault = (val) => (val === null || val === undefined ? null : String(val));
 
 // PG 兼容类型变更识别：无需数据重写的宽化型变更
 const isPgCompatibleTypeChange = (currentType, newType) => {
@@ -292,8 +262,7 @@ const createTable = async (tableName, fields) => {
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
         const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
-        const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
-        const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(defaultVal, 'number') ? ` DEFAULT ${defaultVal}` : ` DEFAULT '${defaultVal}'`) : '';
+        const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(fieldDefault, 'number') ? ` DEFAULT ${fieldDefault}` : ` DEFAULT '${fieldDefault}'`) : '';
         if (IS_MYSQL) {
             colDefs.push(`\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`);
         } else {
@@ -336,13 +305,11 @@ const createTable = async (tableName, fields) => {
         }
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
             const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
-            if (fieldName && fieldName !== 'null') {
-                const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS '${fieldName}'`;
-                if (IS_PLAN) {
-                    Logger.info(`[计划] ${stmt}`);
-                } else {
-                    await sql.unsafe(stmt);
-                }
+            const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS '${fieldName}'`;
+            if (IS_PLAN) {
+                Logger.info(`[计划] ${stmt}`);
+            } else {
+                await sql.unsafe(stmt);
             }
         }
     }
@@ -358,7 +325,7 @@ const createTable = async (tableName, fields) => {
     }
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
-        if (fieldIndex === 1 || fieldIndex === '1') {
+        if (fieldIndex === 1) {
             const stmt = buildIndexSQL(tableName, `idx_${fieldKey}`, fieldKey, 'create');
             if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
@@ -398,18 +365,17 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
     }
 
     // 检查数据类型变化（按方言）
-    const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fieldType] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fieldType] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fieldType];
 
-    if (existingColumn.type.toLowerCase() !== expectedDbType) {
+    if (existingColumn.type.toLowerCase() !== typeMapping[fieldType].toLowerCase()) {
         changes.push({
             type: 'datatype',
             current: existingColumn.type,
-            new: expectedDbType
+            new: typeMapping[fieldType].toLowerCase()
         });
     }
 
     // 检查默认值变化（按照生成规则推导期望默认值）
-    if (normalizeDefault(existingColumn.defaultValue) !== normalizeDefault(fieldDefault)) {
+    if (existingColumn.defaultValue !== fieldDefault) {
         changes.push({
             type: 'default',
             current: existingColumn.defaultValue,
@@ -424,8 +390,7 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
 const generateDDLClause = (fieldKey, fieldRule, isAdd = false) => {
     const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
     const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
-    const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
-    const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(defaultVal, 'number') ? ` DEFAULT ${defaultVal}` : ` DEFAULT '${defaultVal}'`) : '';
+    const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(fieldDefault, 'number') ? ` DEFAULT ${fieldDefault}` : ` DEFAULT '${fieldDefault}'`) : '';
     if (IS_MYSQL) {
         return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`;
     }
@@ -495,7 +460,7 @@ const applyTablePlan = async (tableName, fields, plan) => {
 
     // SQLite: 仅支持部分 ALTER；需要时走重建
     if (IS_SQLITE) {
-        if ((plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) && FLAGS.SQLITE_REBUILD) {
+        if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
             if (IS_PLAN) Logger.info(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
             else await rebuildSqliteTable(tableName, fields);
         } else {
@@ -505,27 +470,11 @@ const applyTablePlan = async (tableName, fields, plan) => {
                 else await sql.unsafe(stmt);
             }
         }
-    } else if (FLAGS.MERGE_ALTER) {
+    } else {
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
             const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
             const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
-            if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
-            else if (IS_MYSQL) await executeDDLSafely(stmt);
-            else await sql.unsafe(stmt);
-        }
-    } else {
-        // 分别执行
-        for (const c of plan.addClauses) {
-            const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-            const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
-            if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
-            else if (IS_MYSQL) await executeDDLSafely(stmt);
-            else await sql.unsafe(stmt);
-        }
-        for (const c of plan.modifyClauses) {
-            const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-            const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${c}${suffix}` : `ALTER TABLE "${tableName}" ${c}`;
             if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
             else if (IS_MYSQL) await executeDDLSafely(stmt);
             else await sql.unsafe(stmt);
@@ -602,38 +551,28 @@ const modifyTable = async (tableName, fields) => {
                     else if (c.type === 'comment') globalCount.nameChanges++;
                 }
                 const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
-                if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length && fieldMax !== 'null' && fieldMax !== undefined) {
-                    const newLen = parseInt(fieldMax);
-                    if (existingColumns[fieldKey].length > newLen && FLAGS.DISALLOW_SHRINK) {
-                        Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${newLen} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
+                if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length) {
+                    if (existingColumns[fieldKey].length > fieldMax) {
+                        Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${fieldMax} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
                     }
                 }
-                const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fieldType] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fieldType] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fieldType];
                 const hasTypeChange = comparison.changes.some((c) => c.type === 'datatype');
                 const hasLengthChange = comparison.changes.some((c) => c.type === 'length');
                 const onlyDefaultChanged = comparison.changes.every((c) => c.type === 'default');
 
                 if (onlyDefaultChanged) {
-                    const expectedDefault = getExpectedDefault(fieldType, fieldDefault);
-                    if (expectedDefault === null) {
-                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` DROP DEFAULT` : `ALTER COLUMN "${fieldKey}" DROP DEFAULT`);
-                    } else {
-                        const v = fieldType === 'number' ? expectedDefault : `"${expectedDefault}"`;
-                        defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
-                    }
+                    const v = fieldType === 'number' ? fieldDefault : `"${fieldDefault}"`;
+                    defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
                 } else {
                     let skipModify = false;
-                    if (hasLengthChange && (fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length && !Number.isNaN(parseInt(fieldMax))) {
-                        const newLen = parseInt(fieldMax);
+                    if (hasLengthChange && (fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length) {
                         const oldLen = existingColumns[fieldKey].length;
-                        const isShrink = oldLen > newLen;
-                        if (isShrink && FLAGS.DISALLOW_SHRINK) skipModify = true;
+                        const isShrink = oldLen > fieldMax;
+                        if (isShrink) skipModify = true;
                     }
                     if (hasTypeChange) {
-                        if (IS_PG && FLAGS.PG_ALLOW_COMPATIBLE_TYPE && isPgCompatibleTypeChange(existingColumns[fieldKey].type, expectedDbType)) {
-                            Logger.info(`[PG兼容类型变更] ${tableName}.${fieldKey} ${existingColumns[fieldKey].type} -> ${expectedDbType} 允许执行`);
-                        } else if (!FLAGS.ALLOW_TYPE_CHANGE) {
-                            skipModify = true;
+                        if (IS_PG && isPgCompatibleTypeChange(existingColumns[fieldKey].type, typeMapping[fieldType].toLowerCase())) {
+                            Logger.info(`[PG兼容类型变更] ${tableName}.${fieldKey} ${existingColumns[fieldKey].type} -> ${typeMapping[fieldType].toLowerCase()} 允许执行`);
                         }
                     }
                     if (!skipModify) modifyClauses.push(generateDDLClause(fieldKey, fieldRule, false));
@@ -643,8 +582,7 @@ const modifyTable = async (tableName, fields) => {
         } else {
             const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
             const lenPart = fieldType === 'string' || fieldType === 'array' ? ` 长度:${parseInt(fieldMax)}` : '';
-            const defaultVal = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
-            Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${defaultVal ?? 'NULL'}`);
+            Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${fieldDefault ?? 'NULL'}`);
             addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
             changed = true;
             globalCount.addFields++;
