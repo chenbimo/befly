@@ -365,7 +365,6 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
     }
 
     // 检查数据类型变化（按方言）
-
     if (existingColumn.type.toLowerCase() !== typeMapping[fieldType].toLowerCase()) {
         changes.push({
             type: 'datatype',
@@ -375,7 +374,7 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
     }
 
     // 检查默认值变化（按照生成规则推导期望默认值）
-    if (existingColumn.defaultValue !== String(fieldDefault)) {
+    if (String(existingColumn.defaultValue) !== String(fieldDefault)) {
         changes.push({
             type: 'default',
             current: existingColumn.defaultValue,
