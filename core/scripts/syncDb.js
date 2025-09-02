@@ -621,11 +621,11 @@ const modifyTable = async (tableName, fields) => {
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
         const indexName = `idx_${fieldKey}`;
-        if ((fieldIndex === 1 || fieldIndex === '1') && !existingIndexes[indexName]) {
+        if (fieldIndex === 1 && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName: fieldKey });
             changed = true;
             globalCount.indexCreate++;
-        } else if (!(fieldIndex === 1 || fieldIndex === '1') && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
+        } else if (!(fieldIndex === 1) && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             indexActions.push({ action: 'drop', indexName, fieldName: fieldKey });
             changed = true;
             globalCount.indexDrop++;
