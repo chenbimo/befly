@@ -643,6 +643,8 @@ const modifyTable = async (tableName, fields) => {
             }
         }
     }
+    // 仅当存在实际动作时才认为有变更（避免仅日志的收缩跳过被计为修改）
+    changed = addClauses.length > 0 || modifyClauses.length > 0 || defaultClauses.length > 0 || indexActions.length > 0 || commentActions.length > 0;
     const plan = { changed, addClauses, modifyClauses, defaultClauses, indexActions, commentActions };
     // 将计划应用（包含 --plan 情况下仅输出）
     if (plan.changed) {
