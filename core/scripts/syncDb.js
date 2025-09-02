@@ -24,9 +24,9 @@ const IS_PLAN = ARGV.includes('--plan');
 // 字段类型映射（按方言）
 const typeMapping = {
     number: IS_SQLITE ? 'INTEGER' : 'BIGINT',
-    string: IS_SQLITE ? 'TEXT' : 'VARCHAR',
+    string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
     text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT',
-    array: IS_SQLITE ? 'TEXT' : 'VARCHAR'
+    array: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR'
 };
 
 // 默认值映射
@@ -377,7 +377,11 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
     // 检查长度变化（string和array类型） - SQLite 不比较长度
     if (!IS_SQLITE && (fieldType === 'string' || fieldType === 'array')) {
         if (existingColumn.length !== fieldMax) {
-            changes.push({ type: 'length', current: existingColumn.length, new: newMaxLength });
+            changes.push({
+                type: 'length',
+                current: existingColumn.length,
+                new: fieldMax
+            });
         }
     }
 
@@ -385,7 +389,11 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
     if (!IS_SQLITE) {
         const currentComment = existingColumn.comment || '';
         if (currentComment !== fieldName) {
-            changes.push({ type: 'comment', current: currentComment, new: fieldName });
+            changes.push({
+                type: 'comment',
+                current: currentComment,
+                new: fieldName
+            });
         }
     }
 
@@ -393,29 +401,23 @@ const compareFieldDefinition = (existingColumn, newRule, colName) => {
     const expectedDbType = IS_MYSQL ? { number: 'bigint', string: 'varchar', text: 'mediumtext', array: 'varchar' }[fieldType] : IS_PG ? { number: 'bigint', string: 'character varying', text: 'text', array: 'character varying' }[fieldType] : { number: 'integer', string: 'text', text: 'text', array: 'text' }[fieldType];
 
     if (existingColumn.type.toLowerCase() !== expectedDbType) {
-        changes.push({ type: 'datatype', current: existingColumn.type, new: expectedDbType });
-    }
-
-    // 检查默认值变化（按照生成规则推导期望默认值）
-    const expectedDefault = fieldDefault === 'null' ? defaultMapping[fieldType] : fieldDefault;
-    const currDef = normalizeDefault(existingColumn.defaultValue);
-    const newDef = normalizeDefault(expectedDefault);
-    if (currDef !== newDef) {
-        changes.push({ type: 'default', current: existingColumn.defaultValue, new: expectedDefault });
-    }
-
-    // 检查可空性变化（统一期望 NOT NULL）
-    const expectedNullable = false; // 期望 NOT NULL
-    if (existingColumn.nullable !== expectedNullable) {
-        // existingColumn.nullable 为 true 表示可空
         changes.push({
-            type: 'nullability',
-            current: existingColumn.nullable ? 'NULL' : 'NOT NULL',
-            new: expectedNullable ? 'NULL' : 'NOT NULL'
+            type: 'datatype',
+            current: existingColumn.type,
+            new: expectedDbType
         });
     }
 
-    return { hasChanges: changes.length > 0, changes };
+    // 检查默认值变化（按照生成规则推导期望默认值）
+    if (normalizeDefault(existingColumn.defaultValue) !== normalizeDefault(fieldDefault)) {
+        changes.push({
+            type: 'default',
+            current: existingColumn.defaultValue,
+            new: fieldDefault
+        });
+    }
+
+    return changes;
 };
 
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
@@ -589,7 +591,7 @@ const modifyTable = async (tableName, fields) => {
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         if (existingColumns[fieldKey]) {
             const comparison = compareFieldDefinition(existingColumns[fieldKey], fieldRule, fieldKey);
-            if (comparison.hasChanges) {
+            if (comparison.changes.length > 0) {
                 for (const c of comparison.changes) {
                     const label = { length: '长度', datatype: '类型', comment: '注释', default: '默认值' }[c.type] || c.type;
                     Logger.info(`[字段变更] ${tableName}.${fieldKey} ${label}: ${c.current ?? 'NULL'} -> ${c.new ?? 'NULL'}`);
