@@ -570,7 +570,7 @@ const modifyTable = async (tableName, fields) => {
                 }
 
                 if (onlyDefaultChanged) {
-                    const v = fieldType === 'number' ? fieldDefault : `"${fieldDefault}"`;
+                    const v = fieldType === 'number' ? fieldDefault : `'${fieldDefault}'`;
                     defaultClauses.push(IS_MYSQL ? `ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}` : `ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
                 } else {
                     let skipModify = false;
@@ -628,7 +628,7 @@ const modifyTable = async (tableName, fields) => {
                 const curr = existingColumns[fieldKey].comment || '';
                 const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
                 if (want !== curr) {
-                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? `"${want}"` : 'NULL'}`);
+                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? `'${want}'` : 'NULL'}`);
                     changed = true;
                     globalCount.nameChanges++;
                 }
