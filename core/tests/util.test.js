@@ -1,9 +1,18 @@
 import { test, expect, describe } from 'bun:test';
-import { ruleSplit, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, toSnakeTableName } from '../utils/index.js';
+import { parseRule, formatDate, calcPerfTime, isType, pickFields, omitFields, isEmptyObject, isEmptyArray, filterLogFields, toSnakeTableName } from '../utils/index.js';
 
-test('ruleSplit 合并第5段之后的内容', () => {
-    expect(ruleSplit('a,b,c,d,e,f,g')).toEqual(['a', 'b', 'c', 'd', 'e,f,g']);
-    expect(ruleSplit('a,b,c,d')).toEqual(['a', 'b', 'c', 'd']);
+test('parseRule 使用 ⚡ 分割并进行有限数值化', () => {
+    const parts = parseRule('名称⚡number⚡1⚡10⚡5⚡1⚡^x$');
+    expect(parts[0]).toBe('名称');
+    expect(parts[1]).toBe('number');
+    // 最小/最大值保持原始字符串（仅当等于 "null" 时才数值化）
+    expect(parts[2]).toBe('1');
+    expect(parts[3]).toBe('10');
+    // number 类型的默认值会被转为数字
+    expect(parts[4]).toBe(5);
+    // 索引字段被数值化
+    expect(parts[5]).toBe(1);
+    expect(parts[6]).toBe('^x$');
 });
 
 test('formatDate 固定时间输出', () => {

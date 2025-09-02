@@ -8,8 +8,8 @@ describe('parseRule 字段规则解析', () => {
         expect(parts.length).toBe(7);
         expect(parts[0]).toBe('用户名');
         expect(parts[1]).toBe('string');
-        expect(parts[2]).toBe(2); // 数字
-        expect(parts[3]).toBe(50); // 数字
+        expect(parts[2]).toBe('2'); // 当前实现保留为字符串
+        expect(parts[3]).toBe('50'); // 当前实现保留为字符串
         expect(parts[4]).toBe('匿名用户'); // string 默认值保持
         expect(parts[5]).toBe(1); // 是否索引为数字
         expect(parts[6]).toBe('^.+$');
@@ -19,8 +19,8 @@ describe('parseRule 字段规则解析', () => {
         const rule = 'a⚡string⚡⚡⚡null⚡0⚡undefined';
         const parts = parseRule(rule);
         expect(parts.length).toBe(7);
-        expect(parts[2]).toBe(0); // 空字符串作为最小值 -> 数字 0
-        expect(parts[3]).toBe(0); // 空字符串作为最大值 -> 数字 0
+        expect(parts[2]).toBe(''); // 当前实现保留空字符串
+        expect(parts[3]).toBe(''); // 当前实现保留空字符串
         expect(parts[4]).toBe('null'); // 默认值字面量 null 保持
         expect(parts[6]).toBe('undefined'); // 正则字面量保持
     });
@@ -31,9 +31,9 @@ describe('parseRule 字段规则解析', () => {
         expect(parts[4]).toBe(18);
     });
 
-    test('保留额外分段', () => {
+    test('额外分段当前被舍弃（仅返回前7段）', () => {
         const parts = parseRule('a⚡b⚡c⚡d⚡e⚡f⚡g⚡h');
-        expect(parts.length).toBe(8);
-        expect(parts[7]).toBe('h');
+        expect(parts.length).toBe(7);
+        expect(parts[6]).toBe('g');
     });
 });

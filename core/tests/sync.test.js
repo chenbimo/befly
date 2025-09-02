@@ -5,7 +5,8 @@
 
 import { test, expect, describe, beforeAll, afterAll, beforeEach } from 'bun:test';
 import { SyncDb as syncDatabase } from '../scripts/syncDb.js';
-import { ruleSplit } from '../utils/index.js';
+import { parseRule } from '../utils/index.js';
+
 import path from 'node:path';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 
@@ -140,8 +141,8 @@ describe('数据库同步功能测试', () => {
 
     describe('字段SQL生成测试', () => {
         test('string类型应该生成正确的VARCHAR定义', () => {
-            const rule = '用户名,string,2,50,null';
-            const parts = ruleSplit(rule);
+            const rule = '用户名⚡string⚡2⚡50⚡null';
+            const parts = parseRule(rule);
 
             expect(parts[1]).toBe('string');
             expect(parts[3]).toBe('50'); // 最大长度
@@ -154,24 +155,24 @@ describe('数据库同步功能测试', () => {
         });
 
         test('number类型应该生成BIGINT定义', () => {
-            const rule = '年龄,number,0,150,null';
-            const parts = ruleSplit(rule);
+            const rule = '年龄⚡number⚡0⚡150⚡null';
+            const parts = parseRule(rule);
 
             expect(parts[1]).toBe('number');
             // number类型应该映射到BIGINT
         });
 
         test('text类型应该生成MEDIUMTEXT定义', () => {
-            const rule = '描述,text,0,5000,null';
-            const parts = ruleSplit(rule);
+            const rule = '描述⚡text⚡0⚡5000⚡null';
+            const parts = parseRule(rule);
 
             expect(parts[1]).toBe('text');
             // text类型应该映射到MEDIUMTEXT
         });
 
         test('array类型应该生成VARCHAR定义', () => {
-            const rule = '标签,array,0,10,null';
-            const parts = ruleSplit(rule);
+            const rule = '标签⚡array⚡0⚡10⚡null';
+            const parts = parseRule(rule);
 
             expect(parts[1]).toBe('array');
             // array类型应该映射到VARCHAR用于JSON存储
@@ -232,8 +233,8 @@ describe('数据库同步功能测试', () => {
         };
 
         test('检测字符串长度变化', () => {
-            const newRule = '用户名,string,2,150,null'; // 长度从100改为150
-            const ruleParts = ruleSplit(newRule);
+            const newRule = '用户名⚡string⚡2⚡150⚡null'; // 长度从100改为150
+            const ruleParts = parseRule(newRule);
 
             expect(ruleParts[1]).toBe('string');
             expect(ruleParts[3]).toBe('150');
@@ -248,8 +249,8 @@ describe('数据库同步功能测试', () => {
         });
 
         test('检测注释变化', () => {
-            const newRule = '新注释,string,2,100,null'; // 注释从"旧注释"改为"新注释"
-            const ruleParts = ruleSplit(newRule);
+            const newRule = '新注释⚡string⚡2⚡100⚡null'; // 注释从"旧注释"改为"新注释"
+            const ruleParts = parseRule(newRule);
 
             expect(ruleParts[0]).toBe('新注释');
 
@@ -263,8 +264,8 @@ describe('数据库同步功能测试', () => {
         });
 
         test('检测数据类型变化', () => {
-            const newRule = '描述,text,0,5000,null'; // 从string改为text
-            const ruleParts = ruleSplit(newRule);
+            const newRule = '描述⚡text⚡0⚡5000⚡null'; // 从string改为text
+            const ruleParts = parseRule(newRule);
 
             expect(ruleParts[1]).toBe('text');
 
@@ -288,8 +289,8 @@ describe('数据库同步功能测试', () => {
         });
 
         test('无变化的字段应该被正确识别', () => {
-            const newRule = '旧注释,string,2,100,null'; // 所有参数都相同
-            const ruleParts = ruleSplit(newRule);
+            const newRule = '旧注释⚡string⚡2⚡100⚡null'; // 所有参数都相同
+            const ruleParts = parseRule(newRule);
 
             const newMaxLength = parseInt(ruleParts[3]);
             const newComment = ruleParts[0];
@@ -302,8 +303,8 @@ describe('数据库同步功能测试', () => {
         });
 
         test('复合变化检测', () => {
-            const newRule = '新的用户名字段,string,1,255,^[a-zA-Z]+$'; // 多个变化
-            const ruleParts = ruleSplit(newRule);
+            const newRule = '新的用户名字段⚡string⚡1⚡255⚡^[a-zA-Z]+$'; // 多个变化（将正则放在默认值位）
+            const ruleParts = parseRule(newRule);
 
             const changes = [];
 
@@ -336,10 +337,10 @@ describe('数据库同步功能测试', () => {
         test('MODIFY COLUMN语句格式', () => {
             const tableName = 'test_table';
             const fieldName = 'username';
-            const rule = '用户名,string,2,150,null';
+            const rule = '用户名⚡string⚡2⚡150⚡null';
 
             // 模拟生成ALTER语句的逻辑
-            const ruleParts = ruleSplit(rule);
+            const ruleParts = parseRule(rule);
             const [displayName, type, minStr, maxStr, spec] = ruleParts;
 
             // 构建字段定义
@@ -359,10 +360,10 @@ describe('数据库同步功能测试', () => {
         test('ADD COLUMN语句格式', () => {
             const tableName = 'test_table';
             const fieldName = 'new_field';
-            const rule = '新字段,string,1,100,null';
+            const rule = '新字段⚡string⚡1⚡100⚡null';
 
             // 模拟生成ADD语句的逻辑
-            const ruleParts = ruleSplit(rule);
+            const ruleParts = parseRule(rule);
             const [displayName, type, minStr, maxStr, spec] = ruleParts;
 
             const maxLength = maxStr === 'null' ? 255 : parseInt(maxStr);
@@ -393,7 +394,7 @@ describe('数据库同步功能测试', () => {
                 if (rule === '') {
                     expect(rule).toBe('');
                 } else {
-                    const parts = ruleSplit(rule);
+                    const parts = rule.split(',');
                     expect(parts.length).toBeLessThan(5);
                 }
             });

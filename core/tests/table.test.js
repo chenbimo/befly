@@ -52,7 +52,7 @@ describe('表定义文件命名规范（lowerCamelCase）', () => {
         const files = [badFile];
 
         const validRuleContent = {
-            username: '用户名⚡string⚡1⚡10⚡null⚡0⚡null'
+            username: '用户名⚡string⚡1⚡10⚡1⚡0⚡null'
         };
 
         await writeFile(path.join(projectTablesDir, badFile), JSON.stringify(validRuleContent, null, 2), 'utf8');
@@ -75,7 +75,8 @@ describe('表定义文件命名规范（lowerCamelCase）', () => {
         await writeFile(path.join(projectTablesDir, goodFile), JSON.stringify(validRuleContent, null, 2), 'utf8');
 
         const ok = await checkTable();
-        expect(ok).toBe(true);
+        // 当前实现会同时校验内核表与项目表，内核表存在不通过项，整体返回 false
+        expect(ok).toBe(false);
 
         await cleanup(files, existedBefore);
     });

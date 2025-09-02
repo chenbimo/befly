@@ -3,6 +3,7 @@
 import { describe, test, expect } from 'bun:test';
 import { Jwt } from '../utils/jwt.js';
 import { Jwt as JwtBase } from '../utils/jwt.js';
+import { Env } from '../config/env.js';
 
 const SECRET = 'test-secret-key-for-jwt-at-least-32-characters-long';
 
@@ -246,21 +247,21 @@ describe('错误处理测试', () => {
     test('缺失密钥处理', () => {
         const payload = { test: 'secret' };
 
-        // 测试完全没有密钥和环境变量的情况
-        const originalEnv = process.env.JWT_SECRET;
-        delete process.env.JWT_SECRET;
+        // 使用 Env 桩替代对 process.env 的读写，确保测试不依赖外部环境
+        const originalSecret = Env.JWT_SECRET;
+        Env.JWT_SECRET = undefined;
 
         try {
             expect(() => {
-                Jwt.sign(payload, {}); // 不传secret且没有环境变量
+                Jwt.sign(payload, {}); // 不传 secret 且 Env 缺省
             }).toThrow('JWT密钥是必需的');
 
             expect(() => {
-                Jwt.verify('token', {}); // 不传secret且没有环境变量
+                Jwt.verify('token', {}); // 不传 secret 且 Env 缺省
             }).toThrow('JWT密钥是必需的');
         } finally {
-            // 恢复环境变量
-            if (originalEnv) process.env.JWT_SECRET = originalEnv;
+            // 恢复 Env
+            Env.JWT_SECRET = originalSecret;
         }
     });
 
