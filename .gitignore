@@ -24,6 +24,7 @@ addons2
 pnpm-lock.yaml
 bun.lock
 other
+AGENTS.md
 
 # Editor directories and files
 .vscode/*
