@@ -26,3 +26,22 @@ bunx befly syncDb --plan
 -   SQLite 不支持改默认值与多数列变更；必要时启用“重建”策略（后续章节详述）。
 
 详细策略与输出示例请参考：`core/docs/syncDb.md`、`core/docs/table.md`。
+
+## 示例
+
+-   新增一张表定义（`tpl/tables/userProfile.json`）：
+
+```json
+{
+    "nickname": "昵称 ⚡string⚡1⚡32⚡null⚡1⚡^[a-zA-Z0-9_]+$",
+    "age": "年龄 ⚡number⚡0⚡150⚡0⚡0⚡null"
+}
+```
+
+-   预览与执行：
+
+```
+cd tpl
+bunx befly syncDb --plan
+bunx befly syncDb
+```

@@ -6,3 +6,19 @@
 -   `['roleA','roleB']`：要求 `ctx.user.role` 在其一。
 
 在 `core/main.js` 的 `/api/*` 路由中有相应判断逻辑，按需使用。
+
+## 示例
+
+```js
+// 1) 需要登录
+export default Api.GET('用户信息', true, {}, [], async (befly, ctx)=> RYes('ok', { user: ctx.user }));
+
+// 2) 公共接口
+export default Api.GET('公告', false, {}, [], async ()=> RYes('ok', { list: [] }));
+
+// 3) 单角色
+export default Api.POST('管理员操作', 'admin', {}, [], async ()=> RYes('ok'));
+
+// 4) 多角色
+export default Api.POST('运营与财务', ['op','fin'], {}, [], async ()=> RYes('ok'));
+```

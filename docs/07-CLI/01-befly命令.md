@@ -38,3 +38,26 @@ bunx befly syncDev --plan
 
 -   优先使用 Bun 运行；若缺失会回退到 Node（内部已处理）。
 -   同步脚本期望 MySQL ≥ 8 / PostgreSQL ≥ 17 / SQLite ≥ 3.50（详见数据库章节）。
+
+## 示例
+
+-   仅预览变更计划：
+
+```
+cd tpl
+bunx befly syncDb --plan
+```
+
+-   实际执行同步（请先备份）：
+
+```
+cd tpl
+bunx befly syncDb
+```
+
+-   传参示例（将参数透传给目标脚本）：
+
+```
+cd tpl
+bunx befly syncDb --plan --verbose
+```
