@@ -1,7 +1,7 @@
 {
     "name": "befly",
     "version": "2.3.2",
-    "description": "Buma - 为 Bun 专属打造的 API 接口框架核心引擎",
+    "description": "Befly - 为 Bun 专属打造的 API 接口框架核心引擎",
     "type": "module",
     "private": false,
     "publishConfig": {
@@ -16,9 +16,6 @@
         "befly": "./bin/befly.js"
     },
     "scripts": {
-        "ra": "bun run ../release.js --major",
-        "rb": "bun run ../release.js --minor",
-        "rc": "bun run ../release.js --patch"
     },
     "keywords": [
         "bun",
@@ -55,12 +52,5 @@
         "system.js",
         "package.json",
         "README.md"
-    ],
-    "simple-git-hooks": {
-        "pre-commit": "bunx --bun lint-staged"
-    },
-    "lint-staged": {
-        "*.{js,css,scss,less,ts,jsx,vue,html,json,md,yaml}": "bunx --bun prettier --write --cache --ignore-unknown"
-    },
-    "gitHead": "1dc5f118a723969456559e758e2ba889f4601224"
+    ]
 }

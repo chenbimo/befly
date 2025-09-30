@@ -11,18 +11,9 @@
     "scripts": {
         "dev": "bun run main.js",
         "serve": "bunx --bun pm2 start pm2.config.cjs -a",
-        "ra": "bun run ../release.js --major",
-        "rb": "bun run ../release.js --minor",
-        "rc": "bun run ../release.js --patch"
     },
     "type": "module",
     "dependencies": {
         "befly": "../core"
-    },
-    "simple-git-hooks": {
-        "pre-commit": "bunx --bun lint-staged"
-    },
-    "lint-staged": {
-        "*.{js,css,scss,less,ts,jsx,vue,html,json,md,yaml}": "bunx --bun prettier --write --cache --ignore-unknown"
     }
 }
