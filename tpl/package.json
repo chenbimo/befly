@@ -1,6 +1,6 @@
 {
     "name": "befly-template",
-    "version": "1.0.41",
+    "version": "1.0.42",
     "main": "index.js",
     "description": "易接口",
     "private": false,
@@ -10,7 +10,7 @@
     },
     "scripts": {
         "dev": "bun run main.js",
-        "serve": "bunx --bun pm2 start pm2.config.cjs -a",
+        "serve": "bunx --bun pm2 start pm2.config.cjs -a"
     },
     "type": "module",
     "dependencies": {

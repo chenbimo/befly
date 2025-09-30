@@ -4,6 +4,7 @@ import { join } from 'path';
 import { $ } from 'bun';
 
 const pkgPath = join(process.cwd(), 'package.json');
+console.log('🔥[ pkgPath ]-7', pkgPath)
 $.cwd = process.cwd();
 
 const VERSION_MAP = { '-x': 'major', '-y': 'minor', '-z': 'patch' };
