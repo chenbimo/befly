@@ -1,19 +1,27 @@
 {
     "name": "befly-template",
-    "version": "1.0.42",
-    "main": "index.js",
-    "description": "易接口",
+    "version": "3.0.0",
+    "main": "main.ts",
+    "types": "main.ts",
+    "description": "Befly 3.0 TypeScript Template",
     "private": false,
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
     "scripts": {
-        "dev": "bun run main.js",
-        "serve": "bunx --bun pm2 start pm2.config.cjs -a"
+        "dev": "bun run main.ts",
+        "serve": "bunx --bun pm2 start pm2.config.cjs -a",
+        "test": "bun test"
     },
     "type": "module",
     "dependencies": {
         "befly": "../core"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "engines": {
+        "bun": ">=1.0.0"
     }
 }

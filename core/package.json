@@ -1,16 +1,40 @@
 {
     "name": "befly",
-    "version": "2.3.3",
-    "description": "Befly - 为 Bun 专属打造的 API 接口框架核心引擎",
+    "version": "3.0.0",
+    "description": "Befly - 为 Bun 专属打造的 TypeScript API 接口框架核心引擎",
     "type": "module",
     "private": false,
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
-    "main": "main.js",
+    "main": "main.ts",
+    "types": "main.ts",
     "exports": {
-        ".": "./main.js"
+        ".": {
+            "types": "./main.ts",
+            "default": "./main.ts"
+        },
+        "./types": {
+            "types": "./types/index.ts",
+            "default": "./types/index.ts"
+        },
+        "./types/*": {
+            "types": "./types/*.ts",
+            "default": "./types/*.ts"
+        },
+        "./utils": {
+            "types": "./utils/index.ts",
+            "default": "./utils/index.ts"
+        },
+        "./utils/*": {
+            "types": "./utils/*.ts",
+            "default": "./utils/*.ts"
+        },
+        "./config": {
+            "types": "./config/env.ts",
+            "default": "./config/env.ts"
+        }
     },
     "bin": {
         "befly": "./bin/befly.js"
@@ -21,10 +45,12 @@
         "api",
         "framework",
         "core",
+        "typescript",
         "javascript",
         "backend",
         "rest",
-        "http"
+        "http",
+        "type-safe"
     ],
     "author": "chensuiyi <bimostyle@qq.com>",
     "homepage": "https://chensuiyi.me",
@@ -37,6 +63,7 @@
         "plugins/",
         "scripts/",
         "tables/",
+        "types/",
         "utils/",
         ".gitignore",
         ".npmignore",
@@ -46,10 +73,19 @@
         ".prettierignore",
         ".prettierrc",
         "bunfig.toml",
+        "tsconfig.json",
         "LICENSE",
+        "main.ts",
         "main.js",
+        "system.ts",
         "system.js",
         "package.json",
         "README.md"
-    ]
+    ],
+    "engines": {
+        "bun": ">=1.0.0"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    }
 }

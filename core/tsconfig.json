@@ -1,0 +1,58 @@
+{
+    "compilerOptions": {
+        // 基础配置
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": ["ESNext"],
+        "moduleResolution": "bundler",
+
+        // 类型检查
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "noImplicitThis": true,
+        "alwaysStrict": true,
+
+        // 额外检查
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": false,
+        "noImplicitOverride": true,
+        "noPropertyAccessFromIndexSignature": false,
+
+        // 模块
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+
+        // 输出
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "removeComments": false,
+        "importHelpers": false,
+
+        // 高级
+        "skipLibCheck": true,
+        "allowJs": true,
+        "checkJs": false,
+
+        // Bun 特定
+        "types": ["bun-types"],
+
+        // 路径
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./*"]
+        }
+    },
+    "include": ["**/*.ts", "**/*.js"],
+    "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.js"]
+}

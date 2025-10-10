@@ -1,0 +1,189 @@
+/**
+ * Befly API 类型定义
+ */
+
+import type { Befly } from './befly.js';
+import type { KeyValue } from './common.js';
+
+/**
+ * HTTP 方法类型
+ */
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+
+/**
+ * 请求上下文类型
+ */
+export interface RequestContext<T = any> {
+    /** 请求对象 */
+    request: Request;
+
+    /** 请求参数 */
+    params: T;
+
+    /** URL 参数 */
+    query: KeyValue<string>;
+
+    /** 路径参数 */
+    pathParams: KeyValue<string>;
+
+    /** 请求头 */
+    headers: Headers;
+
+    /** 用户信息（认证后） */
+    user?: UserInfo;
+
+    /** 客户端 IP */
+    ip?: string;
+
+    /** User-Agent */
+    userAgent?: string;
+
+    /** 请求 ID */
+    requestId?: string;
+
+    /** 开始时间 */
+    startTime: number;
+}
+
+/**
+ * 用户信息类型
+ */
+export interface UserInfo {
+    id: number;
+    username?: string;
+    email?: string;
+    role?: string;
+    [key: string]: any;
+}
+
+/**
+ * 认证类型
+ * - false: 不需要认证
+ * - true: 需要认证（验证 token）
+ * - 'admin': 需要管理员权限
+ * - 'user': 需要普通用户权限
+ * - string[]: 需要特定角色
+ */
+export type AuthType = boolean | 'admin' | 'user' | string[];
+
+/**
+ * API 处理器函数类型
+ */
+export type ApiHandler<T = any, R = any> = (befly: Befly, ctx: RequestContext<T>) => Promise<Response | R>;
+
+/**
+ * API 路由配置
+ */
+export interface ApiRoute<T = any, R = any> {
+    /** HTTP 方法 */
+    method: HttpMethod;
+
+    /** 路由路径 */
+    path: string;
+
+    /** 路由描述 */
+    description: string;
+
+    /** 认证类型 */
+    auth: AuthType;
+
+    /** 验证规则 */
+    rules: KeyValue<string>;
+
+    /** 必填字段 */
+    required: string[];
+
+    /** 处理器函数 */
+    handler: ApiHandler<T, R>;
+
+    /** 是否记录日志 */
+    logging?: boolean;
+
+    /** 自定义中间件 */
+    middleware?: ApiMiddleware[];
+}
+
+/**
+ * API 中间件类型
+ */
+export type ApiMiddleware = (befly: Befly, ctx: RequestContext, next: () => Promise<any>) => Promise<any>;
+
+/**
+ * API 构建器接口
+ */
+export interface ApiBuilder {
+    /** 设置 HTTP 方法 */
+    method(method: HttpMethod): this;
+
+    /** 设置路径 */
+    path(path: string): this;
+
+    /** 设置描述 */
+    description(desc: string): this;
+
+    /** 设置认证 */
+    auth(auth: AuthType): this;
+
+    /** 设置验证规则 */
+    rules(rules: KeyValue<string>): this;
+
+    /** 设置必填字段 */
+    required(fields: string[]): this;
+
+    /** 设置处理器 */
+    handler(handler: ApiHandler): this;
+
+    /** 构建路由 */
+    build(): ApiRoute;
+}
+
+/**
+ * API 响应辅助函数
+ */
+export interface ApiResponse {
+    /** 成功响应 */
+    success<T = any>(message: string, data?: T): Response;
+
+    /** 失败响应 */
+    error(message: string, error?: any): Response;
+
+    /** JSON 响应 */
+    json<T = any>(data: T, status?: number): Response;
+
+    /** 文本响应 */
+    text(text: string, status?: number): Response;
+
+    /** HTML 响应 */
+    html(html: string, status?: number): Response;
+
+    /** 重定向 */
+    redirect(url: string, status?: number): Response;
+}
+
+/**
+ * 路由匹配结果
+ */
+export interface RouteMatch {
+    /** 路由配置 */
+    route: ApiRoute;
+
+    /** 路径参数 */
+    params: KeyValue<string>;
+}
+
+/**
+ * 路由器接口
+ */
+export interface Router {
+    /** 添加路由 */
+    add(route: ApiRoute): void;
+
+    /** 匹配路由 */
+    match(method: HttpMethod, path: string): RouteMatch | null;
+
+    /** 获取所有路由 */
+    getRoutes(): ApiRoute[];
+
+    /** 删除路由 */
+    remove(method: HttpMethod, path: string): boolean;
+}
