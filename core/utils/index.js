@@ -196,7 +196,7 @@ export const isEmptyArray = (arr) => {
 };
 
 // 返回结果
-export const RYes = (msg = '', data = {}, other = {}) => {
+export const Yes = (msg = '', data = {}, other = {}) => {
     return {
         ...other,
         code: 0,
@@ -205,7 +205,7 @@ export const RYes = (msg = '', data = {}, other = {}) => {
     };
 };
 
-export const RNo = (msg = '', data = {}, other = {}) => {
+export const No = (msg = '', data = {}, other = {}) => {
     return {
         ...other,
         code: 1,

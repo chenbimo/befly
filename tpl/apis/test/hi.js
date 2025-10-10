@@ -1,4 +1,4 @@
-import { Api, RYes, RNo } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 export default Api.POST(
     //
@@ -9,10 +9,10 @@ export default Api.POST(
     async (befly, ctx) => {
         try {
             // 返回成功信息
-            return RYes('测试成功');
+            return Yes('测试成功');
         } catch (error) {
             befly.logger.error(`文件处理错误: ${error.message}`);
-            return RNo('测试失败');
+            return No('测试失败');
         }
     }
 );

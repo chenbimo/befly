@@ -6,13 +6,13 @@
 ## 签发
 
 ```js
-import { Jwt, RYes } from 'befly';
+import { Jwt, Yes } from 'befly';
 
 export default Api.POST('登录', false, { username: '', password: '' }, ['username', 'password'], async (befly, ctx) => {
     // 1. 校验账号密码...
     const payload = { id: 123, role: 'admin', role_type: 'admin' };
     const token = await Jwt.sign(payload);
-    return RYes('登录成功', { token });
+    return Yes('登录成功', { token });
 });
 ```
 

@@ -8,7 +8,7 @@ import { Crypto2 } from './utils/crypto.js';
 import { Xml } from './utils/xml.js';
 import { SyncDb } from './scripts/syncDb.js';
 import { __dirchecks, __dirplugins, __dirapis, getProjectDir } from './system.js';
-import { isEmptyObject, isType, pickFields, sortPlugins, RYes, RNo, filterLogFields, setCorsOptions, calcPerfTime } from './utils/index.js';
+import { isEmptyObject, isType, pickFields, sortPlugins, Yes, No, filterLogFields, setCorsOptions, calcPerfTime } from './utils/index.js';
 
 class Befly {
     constructor(options = {}) {
@@ -381,7 +381,7 @@ class Befly {
 
                         // 接口不存在
                         if (!api) {
-                            return Response.json(RNo('接口不存在'), {
+                            return Response.json(No('接口不存在'), {
                                 headers: corsOptions.headers
                             });
                         }
@@ -440,7 +440,7 @@ class Befly {
                                     stack: err.stack
                                 });
 
-                                return Response.json(RNo('无效的请求参数格式'), {
+                                return Response.json(No('无效的请求参数格式'), {
                                     headers: corsOptions.headers
                                 });
                             }
@@ -472,21 +472,21 @@ class Befly {
 
                         // 登录验证 auth 有3种值 分别为 true、false、['admin', 'user']
                         if (api.auth === true && !ctx.user.id) {
-                            return Response.json(RNo('未登录', {}, { login: 'no' }), {
+                            return Response.json(No('未登录', {}, { login: 'no' }), {
                                 headers: corsOptions.headers
                             });
                         }
 
                         // 如果为字符串，则判断是否等于角色类型
                         if (isType(api.auth, 'string') && api.auth !== ctx.user?.role_type) {
-                            return Response.json(RNo('没有权限'), {
+                            return Response.json(No('没有权限'), {
                                 headers: corsOptions.headers
                             });
                         }
 
                         // 如果为数组，则判断角色是否在数组中
                         if (isType(api.auth, 'array') && !api.auth.includes(ctx.user?.role)) {
-                            return Response.json(RNo('没有权限'), {
+                            return Response.json(No('没有权限'), {
                                 headers: corsOptions.headers
                             });
                         }
@@ -494,7 +494,7 @@ class Befly {
                         // 参数验证
                         const validate = validator.validate(ctx.body, api.fields, api.required);
                         if (validate.code !== 0) {
-                            return Response.json(RNo('无效的请求参数格式', validate.fields), {
+                            return Response.json(No('无效的请求参数格式', validate.fields), {
                                 headers: corsOptions.headers
                             });
                         }
@@ -519,7 +519,7 @@ class Befly {
                             stack: error.stack,
                             url: req.url
                         });
-                        return Response.json(RNo('内部服务器错误'), {
+                        return Response.json(No('内部服务器错误'), {
                             headers: corsOptions.headers
                         });
                     }
@@ -548,12 +548,12 @@ class Befly {
                                 }
                             });
                         } else {
-                            return Response.json(RNo('文件未找到'), {
+                            return Response.json(No('文件未找到'), {
                                 headers: corsOptions.headers
                             });
                         }
                     } catch (error) {
-                        return Response.json(RNo('文件读取失败'), {
+                        return Response.json(No('文件读取失败'), {
                             headers: corsOptions.headers
                         });
                     }
@@ -566,7 +566,7 @@ class Befly {
                     error: error.message,
                     stack: error.stack
                 });
-                return Response.json(RNo('内部服务器错误'));
+                return Response.json(No('内部服务器错误'));
             }
         });
 
@@ -580,4 +580,4 @@ class Befly {
     }
 }
 
-export { Befly, Env, Api, Jwt, Crypto2, Logger, RYes, RNo, SyncDb };
+export { Befly, Env, Api, Jwt, Crypto2, Logger, Yes, No, SyncDb };

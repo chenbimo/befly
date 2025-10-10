@@ -1,9 +1,9 @@
-# 响应格式与 RYes/RNo
+# 响应格式与 Yes/No
 
 统一响应结构便于前后端协作与可观测性：
 
--   成功：`RYes(message, data)` → `{ code:0, msg: message, data }`
--   失败：`RNo(message, error?)` → `{ code:-1, msg: message, error? }`
+-   成功：`Yes(message, data)` → `{ code:0, msg: message, data }`
+-   失败：`No(message, error?)` → `{ code:-1, msg: message, error? }`
 
 建议：
 

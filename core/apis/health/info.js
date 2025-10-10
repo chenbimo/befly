@@ -1,6 +1,6 @@
 import { Env } from '../../config/env.js';
 import { Api } from '../../utils/api.js';
-import { RYes, RNo } from '../../utils/index.js';
+import { Yes, No } from '../../utils/index.js';
 
 export default Api.POST(
     //
@@ -36,14 +36,14 @@ export default Api.POST(
             } else {
                 info.redis = '禁用';
             }
-            return RYes('健康检查成功', info);
+            return Yes('健康检查成功', info);
         } catch (error) {
             befly.logger.error({
                 msg: '健康检查失败',
                 error: error.message,
                 stack: error.stack
             });
-            return RNo('健康检查失败');
+            return No('健康检查失败');
         }
     }
 );
