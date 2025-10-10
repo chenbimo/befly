@@ -74,7 +74,7 @@ export async function SyncDev(client: any = null): Promise<boolean> {
         if (!affected || affected === 0) {
             // 插入新账号
             const id = nowTs;
-            await exec(client, 'INSERT INTO `admin` (`id`, `created_at`, `updated_at`, `deleted_at`, `state`, `account`, `password`) VALUES (?, ?, ?, 0, 1, ?, ?)', [id, nowTs, nowTs, 'dev', hashed]);
+            await exec(client, 'INSERT INTO `admin` (`id`, `created_at`, `updated_at`, `deleted_at`, `state`, `account`, `password`) VALUES (?, ?, ?, 0, 0, ?, ?)', [id, nowTs, nowTs, 'dev', hashed]);
             Logger.info('开发管理员已初始化：account=dev');
         } else {
             Logger.info('开发管理员已更新密码并刷新更新时间：account=dev');

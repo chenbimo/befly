@@ -37,7 +37,7 @@
         }
     },
     "bin": {
-        "befly": "./bin/befly.js"
+        "befly": "./bin/befly.ts"
     },
     "scripts": {},
     "keywords": [
