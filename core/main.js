@@ -386,6 +386,7 @@ class Befly {
                             });
                         }
 
+                        // 用户认证
                         const authHeader = req.headers.get('authorization');
                         if (authHeader && authHeader.startsWith('Bearer ')) {
                             const token = authHeader.substring(7);
@@ -399,7 +400,8 @@ class Befly {
                         } else {
                             ctx.user = {};
                         }
-                        // 配置参数
+
+                        // GET请求
                         if (req.method === 'GET') {
                             if (isEmptyObject(api.fields) === false) {
                                 ctx.body = pickFields(Object.fromEntries(url.searchParams), Object.keys(api.fields));
@@ -407,6 +409,8 @@ class Befly {
                                 ctx.body = Object.fromEntries(url.searchParams);
                             }
                         }
+
+                        // POST请求
                         if (req.method === 'POST') {
                             try {
                                 const contentType = req.headers.get('content-type') || '';
