@@ -2,6 +2,8 @@
  * 终端颜色工具 - TypeScript 版本
  */
 
+import type { Formatter, Colors as ColorsInterface } from '../types/colors';
+
 interface Process {
     argv?: string[];
     env?: Record<string, string | undefined>;
@@ -14,8 +16,6 @@ const argv = p.argv || [];
 const env = p.env || {};
 
 const isColorSupported = !(!!env.NO_COLOR || argv.includes('--no-color')) && (!!env.FORCE_COLOR || argv.includes('--color') || p.platform === 'win32' || ((p.stdout || {}).isTTY && env.TERM !== 'dumb') || !!env.CI);
-
-type Formatter = (input: string | number) => string;
 
 const formatter =
     (open: string, close: string, replace: string = open): Formatter =>
@@ -36,18 +36,7 @@ const replaceClose = (string: string, close: string, replace: string, index: num
     return result + string.substring(cursor);
 };
 
-export interface Colors {
-    isColorSupported: boolean;
-    reset: Formatter;
-    bold: Formatter;
-    dim: Formatter;
-    italic: Formatter;
-    underline: Formatter;
-    inverse: Formatter;
-    hidden: Formatter;
-    strikethrough: Formatter;
-    black: Formatter;
-    red: Formatter;
+export const Colors: ColorsInterface = {
     green: Formatter;
     yellow: Formatter;
     blue: Formatter;

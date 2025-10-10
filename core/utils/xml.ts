@@ -3,28 +3,10 @@
  * 将 XML 字符串解析为 JSON 对象
  */
 
-/**
- * XML 解析选项
- */
-export interface XmlParseOptions {
-    /** 是否忽略属性 */
-    ignoreAttributes?: boolean;
-    /** 属性前缀 */
-    attributePrefix?: string;
-    /** 文本内容的键名 */
-    textKey?: string;
-    /** 是否去除首尾空格 */
-    trimValues?: boolean;
-    /** 是否解析布尔值 */
-    parseBooleans?: boolean;
-    /** 是否解析数字 */
-    parseNumbers?: boolean;
-    /** 是否使用自定义解析器 */
-    customParser?: boolean;
-}
+import type { XmlParseOptions } from '../types/xml';
 
 /**
- * 解析结果接口
+ * 解析结果接口（内部使用）
  */
 interface ParseResult {
     value: Record<string, any>;

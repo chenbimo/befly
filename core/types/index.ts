@@ -4,11 +4,29 @@
  * 这个文件导出所有 Befly 框架的类型定义
  */
 
+// 导出基础类型
+export * from './common';
+export * from './api';
+export * from './befly';
+export * from './plugin';
+
 // 导出数据模型类型
 export * from './models';
 
 // 导出工具类型
 export * from './utils';
+
+// 导出功能模块类型
+export * from './database';
+export * from './crypto';
+export * from './jwt';
+export * from './validator';
+export * from './redis';
+export * from './logger';
+export * from './tool';
+export * from './colors';
+export * from './apiUtils';
+export * from './xml';
 
 /**
  * API 请求上下文

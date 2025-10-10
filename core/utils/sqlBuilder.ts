@@ -4,38 +4,7 @@
  */
 
 import type { OrderDirection, SqlValue } from '../types/common.js';
-
-/**
- * SQL 查询结果
- */
-export interface SqlQuery {
-    sql: string;
-    params: SqlValue[];
-}
-
-/**
- * WHERE 条件操作符
- */
-export type WhereOperator = '$ne' | '$not' | '$in' | '$nin' | '$notIn' | '$like' | '$notLike' | '$gt' | '$gte' | '$lt' | '$lte' | '$between' | '$notBetween' | '$null' | '$notNull';
-
-/**
- * WHERE 条件对象
- */
-export interface WhereConditions {
-    $and?: WhereConditions[];
-    $or?: WhereConditions[];
-    [key: string]: any;
-}
-
-/**
- * 插入数据类型
- */
-export type InsertData = Record<string, SqlValue> | Record<string, SqlValue>[];
-
-/**
- * 更新数据类型
- */
-export type UpdateData = Record<string, SqlValue>;
+import type { SqlQuery, WhereOperator, WhereConditions, InsertData, UpdateData } from '../types/database';
 
 /**
  * SQL 构建器类

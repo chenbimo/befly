@@ -4,7 +4,8 @@
  */
 
 import { isType, parseRule } from './index.js';
-import type { ValidationResult, ParsedFieldRule, TableDefinition, FieldRule } from '../types/common.js';
+import type { TableDefinition, FieldRule } from '../types/common.js';
+import type { ValidationResult, ParsedFieldRule } from '../types/validator';
 
 /**
  * 字段验证错误信息

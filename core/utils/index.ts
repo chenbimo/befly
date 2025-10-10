@@ -9,6 +9,7 @@ import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ParsedFieldRule, KeyValue } from '../types/common.js';
+import type { SqlClientOptions } from '../types/database';
 
 /**
  * 设置 CORS 选项
@@ -328,12 +329,6 @@ export const buildDatabaseUrl = (): string => {
 /**
  * 创建 SQL 客户端
  */
-export interface SqlClientOptions {
-    max?: number;
-    bigint?: boolean;
-    [key: string]: any;
-}
-
 export async function createSqlClient(options: SqlClientOptions = {}): Promise<any> {
     const finalUrl = buildDatabaseUrl();
     let sql: any = null;

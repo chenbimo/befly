@@ -5,11 +5,7 @@
 
 import type { ApiRoute, ApiHandler } from '../types/api.js';
 import type { WhereConditions } from '../types/common.js';
-
-/**
- * 字段规则定义
- */
-export type FieldRules = Record<string, string>;
+import type { FieldRules } from '../types/apiUtils';
 
 /**
  * API 工具类
