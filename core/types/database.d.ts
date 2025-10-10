@@ -193,3 +193,101 @@ export interface SqlClientOptions {
     /** 其他自定义选项 */
     [key: string]: any;
 }
+
+// ========== 数据库同步相关类型 ==========
+
+/**
+ * 列信息接口（用于数据库同步）
+ */
+export interface ColumnInfo {
+    /** 字段类型（如 string, number 等） */
+    type: string;
+    /** 数据库列类型（如 VARCHAR, INT 等） */
+    columnType: string;
+    /** 字段长度 */
+    length: number | null;
+    /** 是否可空 */
+    nullable: boolean;
+    /** 默认值 */
+    defaultValue: any;
+    /** 字段注释 */
+    comment: string | null;
+}
+
+/**
+ * 索引信息接口
+ */
+export interface IndexInfo {
+    /** 索引名称到字段数组的映射 */
+    [indexName: string]: string[];
+}
+
+/**
+ * 字段变更类型
+ */
+export interface FieldChange {
+    /** 变更类型 */
+    type: 'length' | 'comment' | 'datatype' | 'default';
+    /** 当前值 */
+    current: any;
+    /** 新值 */
+    new: any;
+}
+
+/**
+ * 索引操作接口
+ */
+export interface IndexAction {
+    /** 操作类型：create（创建）或 drop（删除） */
+    action: 'create' | 'drop';
+    /** 索引名称 */
+    indexName: string;
+    /** 字段名称 */
+    fieldName: string;
+}
+
+/**
+ * 表同步计划接口
+ */
+export interface TablePlan {
+    /** 是否有变更 */
+    changed: boolean;
+    /** 添加字段的 SQL 子句 */
+    addClauses: string[];
+    /** 修改字段的 SQL 子句 */
+    modifyClauses: string[];
+    /** 默认值变更的 SQL 子句 */
+    defaultClauses: string[];
+    /** 索引操作列表 */
+    indexActions: IndexAction[];
+    /** 注释变更的 SQL 子句（可选） */
+    commentActions?: string[];
+}
+
+/**
+ * 全局统计计数接口
+ */
+export interface GlobalCount {
+    /** 已处理表数量 */
+    processedTables: number;
+    /** 创建表数量 */
+    createdTables: number;
+    /** 修改表数量 */
+    modifiedTables: number;
+    /** 新增字段数量 */
+    addFields: number;
+    /** 类型变更数量 */
+    typeChanges: number;
+    /** 最大值变更数量 */
+    maxChanges: number;
+    /** 最小值变更数量 */
+    minChanges: number;
+    /** 默认值变更数量 */
+    defaultChanges: number;
+    /** 名称变更数量 */
+    nameChanges: number;
+    /** 索引创建数量 */
+    indexCreate: number;
+    /** 索引删除数量 */
+    indexDrop: number;
+}

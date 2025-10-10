@@ -7,14 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
-
-/**
- * 表文件信息
- */
-interface TableFileInfo {
-    file: string;
-    type: 'core' | 'project';
-}
+import type { TableFileInfo } from '../types/cli.js';
 
 /**
  * 保留字段列表

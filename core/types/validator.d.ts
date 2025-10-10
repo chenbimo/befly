@@ -3,6 +3,11 @@
  */
 
 /**
+ * 字段验证错误信息
+ */
+export type ValidationError = string | null;
+
+/**
  * 字段类型
  */
 export type FieldType = 'string' | 'number' | 'text' | 'array';

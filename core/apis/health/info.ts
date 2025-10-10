@@ -7,24 +7,7 @@ import { Env } from '../../config/env.js';
 import { Api } from '../../utils/api.js';
 import { Yes, No } from '../../utils/index.js';
 import type { BeflyContext } from '../../types/befly.js';
-
-/**
- * 健康信息接口
- */
-interface HealthInfo {
-    status: string;
-    timestamp: string;
-    uptime: number;
-    memory: NodeJS.MemoryUsage;
-    runtime: string;
-    version: string;
-    platform: string;
-    arch: string;
-    redis?: string;
-    redisError?: string;
-    database?: string;
-    databaseError?: string;
-}
+import type { HealthInfo } from '../../types/api.js';
 
 export default Api.POST('健康检查', false, {}, [], async (befly: BeflyContext, ctx: any) => {
     try {

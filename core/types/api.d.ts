@@ -187,3 +187,47 @@ export interface Router {
     /** 删除路由 */
     remove(method: HttpMethod, path: string): boolean;
 }
+
+// ========== API 响应数据类型 ==========
+
+/**
+ * 令牌检测响应数据
+ */
+export interface TokenCheckData {
+    /** 令牌是否有效 */
+    valid: boolean;
+    /** JWT 载荷（有效时返回） */
+    payload?: any;
+    /** 过期时间（秒） */
+    expiresIn?: number;
+}
+
+/**
+ * 健康检查响应数据
+ */
+export interface HealthInfo {
+    /** 服务状态 */
+    status: string;
+    /** 时间戳 */
+    timestamp: string;
+    /** 运行时长（秒） */
+    uptime: number;
+    /** 内存使用情况 */
+    memory: NodeJS.MemoryUsage;
+    /** 运行时名称 */
+    runtime: string;
+    /** 版本号 */
+    version: string;
+    /** 平台 */
+    platform: string;
+    /** 架构 */
+    arch: string;
+    /** Redis 状态 */
+    redis?: string;
+    /** Redis 错误信息 */
+    redisError?: string;
+    /** 数据库状态 */
+    database?: string;
+    /** 数据库错误信息 */
+    databaseError?: string;
+}

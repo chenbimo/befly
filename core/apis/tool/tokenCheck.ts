@@ -9,15 +9,7 @@ import { Yes, No } from '../../utils/index.js';
 import { Jwt } from '../../utils/jwt.js';
 import type { BeflyContext } from '../../types/befly.js';
 import type { JwtPayload } from '../../utils/jwt.js';
-
-/**
- * 令牌检测响应数据
- */
-interface TokenCheckData {
-    valid: boolean;
-    payload?: JwtPayload;
-    expiresIn?: number;
-}
+import type { TokenCheckData } from '../../types/api.js';
 
 export default Api.POST('令牌检测', false, {}, [], async (befly: BeflyContext, ctx: any) => {
     try {

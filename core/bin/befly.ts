@@ -7,20 +7,7 @@
 import path from 'node:path';
 import { Glob } from 'bun';
 import { __dirscript as coreScriptsDir, getProjectDir } from '../system.js';
-
-/**
- * 脚本项接口
- */
-interface ScriptItem {
-    /** 脚本名称 */
-    name: string;
-    /** 脚本来源 (core 或 tpl) */
-    source: 'core' | 'tpl';
-    /** 是否与另一来源的脚本重名 */
-    duplicate: boolean;
-    /** 脚本完整路径 */
-    path: string;
-}
+import type { ScriptItem } from '../types/cli.js';
 
 // 解析目录（来自 system.js）
 // 核心脚本目录：core/scripts

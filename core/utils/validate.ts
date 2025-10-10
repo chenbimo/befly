@@ -5,12 +5,7 @@
 
 import { isType, parseRule } from './index.js';
 import type { TableDefinition, FieldRule } from '../types/common.js';
-import type { ValidationResult, ParsedFieldRule } from '../types/validator';
-
-/**
- * 字段验证错误信息
- */
-type ValidationError = string | null;
+import type { ValidationResult, ParsedFieldRule, ValidationError } from '../types/validator';
 
 /**
  * 验证器类

@@ -9,13 +9,7 @@ import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient } from '../utils/index.js';
 import { Crypto } from '../utils/crypto.js';
-
-/**
- * 命令行参数
- */
-interface CliArgs {
-    DRY_RUN: boolean;
-}
+import type { CliArgs } from '../types/cli.js';
 
 // 解析命令行参数
 const ARGV = Array.isArray(process.argv) ? process.argv : [];

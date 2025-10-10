@@ -11,55 +11,7 @@ import { Logger } from '../utils/logger.js';
 import { createSqlClient, toSnakeTableName, isType, parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
-
-// 类型定义
-interface ColumnInfo {
-    type: string;
-    columnType: string;
-    length: number | null;
-    nullable: boolean;
-    defaultValue: any;
-    comment: string | null;
-}
-
-interface IndexInfo {
-    [indexName: string]: string[];
-}
-
-interface FieldChange {
-    type: 'length' | 'comment' | 'datatype' | 'default';
-    current: any;
-    new: any;
-}
-
-interface IndexAction {
-    action: 'create' | 'drop';
-    indexName: string;
-    fieldName: string;
-}
-
-interface TablePlan {
-    changed: boolean;
-    addClauses: string[];
-    modifyClauses: string[];
-    defaultClauses: string[];
-    indexActions: IndexAction[];
-    commentActions?: string[];
-}
-
-interface GlobalCount {
-    processedTables: number;
-    createdTables: number;
-    modifiedTables: number;
-    addFields: number;
-    typeChanges: number;
-    maxChanges: number;
-    minChanges: number;
-    defaultChanges: number;
-    nameChanges: number;
-    indexCreate: number;
-    indexDrop: number;
-}
+import type { ColumnInfo, IndexInfo, FieldChange, IndexAction, TablePlan, GlobalCount } from '../types/database.js';
 
 // 顶部管理数据库客户端（按需求使用 Bun SQL 模板，不使用 exec 辅助）
 let sql: SQL | null = null;

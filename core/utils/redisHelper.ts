@@ -6,11 +6,7 @@
 import { redis as bunRedis } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
-
-/**
- * Redis 客户端类型
- */
-type RedisClient = typeof bunRedis;
+import type { RedisClient } from '../types/redis.js';
 
 /**
  * Redis 键前缀

@@ -2,6 +2,13 @@
  * Redis 相关类型定义
  */
 
+import { redis as bunRedis } from 'bun';
+
+/**
+ * Redis 客户端类型
+ */
+export type RedisClient = typeof bunRedis;
+
 /**
  * Redis 键前缀
  */
