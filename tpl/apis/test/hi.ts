@@ -1,4 +1,5 @@
 import { Api, Yes, No } from 'befly';
+import type { BeflyContext, BeflyInstance } from 'befly';
 
 export default Api.POST(
     //
@@ -6,12 +7,13 @@ export default Api.POST(
     true,
     {},
     [],
-    async (befly, ctx) => {
+    async (befly: BeflyInstance, ctx: BeflyContext) => {
         try {
             // 返回成功信息
             return Yes('测试成功');
         } catch (error) {
-            befly.logger.error(`文件处理错误: ${error.message}`);
+            const err = error as Error;
+            befly.logger.error(`文件处理错误: ${err.message}`);
             return No('测试失败');
         }
     }
