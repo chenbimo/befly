@@ -1,0 +1,7 @@
+{
+    "title": "标题|string|1|100|''|1|null",
+    "content": "内容|string|0|1000|''|0|null",
+    "completed": "是否完成|number|0|1|0|1|null",
+    "priority": "优先级|string|1|10|medium|1|^(low|medium|high)$",
+    "createdAt": "创建时间|number|0|9999999999999|0|1|null"
+}

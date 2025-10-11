@@ -11,6 +11,7 @@ import { Jwt } from './utils/jwt.js';
 import { Validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
 import { calcPerfTime } from './utils/index.js';
+import { scanAddons, hasAddonDir } from './utils/addonHelper.js';
 import { Checker } from './lifecycle/checker.js';
 import { Loader } from './lifecycle/loader.js';
 import { Bootstrap } from './lifecycle/bootstrap.js';
@@ -61,8 +62,8 @@ export class Befly {
     /**
      * 加载API路由（已提取到 lifecycle/loader.ts）
      */
-    async loadApis(dirName: string): Promise<void> {
-        await Loader.loadApis(dirName, this.apiRoutes);
+    async loadApis(dirName: string, options?: { isAddon?: boolean; addonName?: string }): Promise<void> {
+        await Loader.loadApis(dirName, this.apiRoutes, options);
     }
 
     /**
@@ -76,6 +77,15 @@ export class Befly {
         await this.initCheck();
         await this.loadPlugins();
         await this.loadApis('core');
+
+        // 加载 addon APIs
+        const addons = scanAddons();
+        for (const addon of addons) {
+            if (hasAddonDir(addon, 'apis')) {
+                await this.loadApis(addon, { isAddon: true, addonName: addon });
+            }
+        }
+
         await this.loadApis('app');
 
         const totalStartupTime = calcPerfTime(serverStartTime);

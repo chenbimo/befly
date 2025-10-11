@@ -9,6 +9,7 @@ import { calcPerfTime } from '../utils/datetime.js';
 import { sortPlugins } from '../utils/pluginHelper.js';
 import { isType } from '../utils/typeHelper.js';
 import { __dirplugins, __dirapis, getProjectDir } from '../system.js';
+import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
@@ -28,9 +29,11 @@ export class Loader {
 
             const glob = new Bun.Glob('*.ts');
             const corePlugins: Plugin[] = [];
+            const addonPlugins: Plugin[] = [];
             const userPlugins: Plugin[] = [];
             const loadedPluginNames = new Set<string>(); // 用于跟踪已加载的插件名称
             let hadCorePluginError = false; // 核心插件错误（关键）
+            let hadAddonPluginError = false; // Addon 插件错误（警告）
             let hadUserPluginError = false; // 用户插件错误（警告）
 
             // 扫描核心插件目录
@@ -80,6 +83,70 @@ export class Loader {
             }
             const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
             Logger.info(`核心插件初始化完成，耗时: ${corePluginsInitTime}`);
+
+            // 扫描 addon 插件目录
+            const addons = scanAddons();
+            if (addons.length > 0) {
+                const addonPluginsScanStart = Bun.nanoseconds();
+                for (const addon of addons) {
+                    if (!hasAddonDir(addon, 'plugins')) continue;
+
+                    const addonPluginsDir = getAddonDir(addon, 'plugins');
+                    for await (const file of glob.scan({
+                        cwd: addonPluginsDir,
+                        onlyFiles: true,
+                        absolute: true
+                    })) {
+                        const fileName = path.basename(file).replace(/\.(js|ts)$/, '');
+                        if (fileName.startsWith('_')) continue;
+
+                        const pluginFullName = `${addon}.${fileName}`;
+
+                        // 检查是否已经加载了同名插件
+                        if (loadedPluginNames.has(pluginFullName)) {
+                            Logger.info(`跳过组件插件 ${pluginFullName}，因为同名插件已存在`);
+                            continue;
+                        }
+
+                        try {
+                            const importStart = Bun.nanoseconds();
+                            const plugin = await import(file);
+                            const importTime = calcPerfTime(importStart);
+
+                            const pluginInstance = plugin.default;
+                            pluginInstance.pluginName = pluginFullName;
+                            addonPlugins.push(pluginInstance);
+                            loadedPluginNames.add(pluginFullName);
+
+                            Logger.info(`组件[${addon}]插件 ${fileName} 导入耗时: ${importTime}`);
+                        } catch (err: any) {
+                            hadAddonPluginError = true;
+                            ErrorHandler.warning(`组件[${addon}]插件 ${fileName} 导入失败`, err);
+                        }
+                    }
+                }
+                const addonPluginsScanTime = calcPerfTime(addonPluginsScanStart);
+                Logger.info(`Addon 插件扫描完成，耗时: ${addonPluginsScanTime}，共找到 ${addonPlugins.length} 个插件`);
+
+                const sortedAddonPlugins = sortPlugins(addonPlugins);
+                if (sortedAddonPlugins === false) {
+                    ErrorHandler.warning('Addon 插件依赖关系错误，请检查插件的 after 属性');
+                } else {
+                    // 初始化 addon 插件
+                    const addonPluginsInitStart = Bun.nanoseconds();
+                    for (const plugin of sortedAddonPlugins) {
+                        try {
+                            befly.pluginLists.push(plugin);
+                            befly.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(befly.appContext) : {};
+                        } catch (error: any) {
+                            hadAddonPluginError = true;
+                            ErrorHandler.warning(`Addon 插件 ${plugin.pluginName} 初始化失败`, error);
+                        }
+                    }
+                    const addonPluginsInitTime = calcPerfTime(addonPluginsInitStart);
+                    Logger.info(`Addon 插件初始化完成，耗时: ${addonPluginsInitTime}`);
+                }
+            }
 
             // 扫描用户插件目录
             const userPluginsScanStart = Bun.nanoseconds();
@@ -139,7 +206,7 @@ export class Loader {
             }
 
             const totalLoadTime = calcPerfTime(loadStartTime);
-            const totalPluginCount = sortedCorePlugins.length + sortedUserPlugins.length;
+            const totalPluginCount = sortedCorePlugins.length + addonPlugins.length + sortedUserPlugins.length;
             Logger.info(`插件加载完成! 总耗时: ${totalLoadTime}，共加载 ${totalPluginCount} 个插件`);
 
             // 核心插件失败 → 关键错误，必须退出
@@ -147,6 +214,13 @@ export class Loader {
                 ErrorHandler.critical('核心插件加载失败，无法继续启动', undefined, {
                     corePluginCount: sortedCorePlugins.length,
                     totalPluginCount
+                });
+            }
+
+            // Addon 插件失败 → 警告，可以继续运行
+            if (hadAddonPluginError) {
+                ErrorHandler.info('部分 Addon 插件加载失败，但不影响核心功能', {
+                    addonPluginCount: addonPlugins.length
                 });
             }
 
@@ -163,16 +237,19 @@ export class Loader {
 
     /**
      * 加载API路由
-     * @param dirName - 目录名称 ('core' 或 'app')
+     * @param dirName - 目录名称 ('core' | 'app' | addon名称)
      * @param apiRoutes - API路由映射表
+     * @param options - 可选配置（用于 addon）
      */
-    static async loadApis(dirName: string, apiRoutes: Map<string, ApiRoute>): Promise<void> {
+    static async loadApis(dirName: string, apiRoutes: Map<string, ApiRoute>, options?: { isAddon?: boolean; addonName?: string }): Promise<void> {
         try {
             const loadStartTime = Bun.nanoseconds();
-            const dirDisplayName = dirName === 'core' ? '核心' : '用户';
+            const isAddon = options?.isAddon || false;
+            const addonName = options?.addonName || '';
+            const dirDisplayName = dirName === 'core' ? '核心' : isAddon ? `组件[${addonName}]` : '用户';
 
             const glob = new Bun.Glob('**/*.ts');
-            const apiDir = dirName === 'core' ? __dirapis : getProjectDir('apis');
+            const apiDir = dirName === 'core' ? __dirapis : isAddon ? getAddonDir(addonName, 'apis') : getProjectDir('apis');
 
             let totalApis = 0;
             let loadedApis = 0;
@@ -215,8 +292,12 @@ export class Loader {
                     if (isType(api.handler, 'function') === false) {
                         throw new Error(`接口 ${apiPath} 的 handler 属性必须是函数`);
                     }
-                    // 构建路由：去掉 core/app 目录部分，直接使用 /api/{apiPath}
-                    api.route = `${api.method.toUpperCase()}/api/${apiPath}`;
+                    // 构建路由：addon 接口添加前缀 /api/{addonName}/{apiPath}
+                    if (isAddon) {
+                        api.route = `${api.method.toUpperCase()}/api/${addonName}/${apiPath}`;
+                    } else {
+                        api.route = `${api.method.toUpperCase()}/api/${apiPath}`;
+                    }
                     apiRoutes.set(api.route, api);
 
                     const singleApiTime = calcPerfTime(singleApiStart);

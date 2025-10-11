@@ -9,6 +9,7 @@ import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient, toSnakeTableName, isType, parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
+import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
 import checkTable from '../checks/table.js';
 
 import type { SQL } from 'bun';
@@ -695,13 +696,29 @@ export const SyncDb = async (): Promise<void> => {
 
         // 扫描并处理表文件
         const tablesGlob = new Bun.Glob('*.json');
-        const directories = [
+        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [
             { path: __dirtables, isCore: true },
             { path: getProjectDir('tables'), isCore: false }
         ];
+
+        // 添加所有 addon 的 tables 目录
+        const addons = scanAddons();
+        for (const addon of addons) {
+            if (hasAddonDir(addon, 'tables')) {
+                directories.push({
+                    path: getAddonDir(addon, 'tables'),
+                    isCore: false,
+                    addonName: addon
+                });
+            }
+        }
+
         // 统计使用全局 globalCount
 
-        for (const { path: dir, isCore } of directories) {
+        for (const dirConfig of directories) {
+            const { path: dir, isCore, addonName } = dirConfig;
+            const dirType = isCore ? '内核' : addonName ? `组件[${addonName}]` : '项目';
+
             for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
                 const fileName = path.basename(file, '.json');
 
@@ -711,10 +728,15 @@ export const SyncDb = async (): Promise<void> => {
                     continue;
                 }
 
-                // 核心表添加 sys_ 前缀，项目表不添加前缀
+                // 确定表名前缀：
+                // - 核心表：sys_ 前缀
+                // - addon 表：{addonName}_ 前缀
+                // - 项目表：无前缀
                 let tableName = toSnakeTableName(fileName);
                 if (isCore) {
                     tableName = `sys_${tableName}`;
+                } else if (addonName) {
+                    tableName = `${addonName}_${tableName}`;
                 }
 
                 const tableDefinition = await Bun.file(file).json();

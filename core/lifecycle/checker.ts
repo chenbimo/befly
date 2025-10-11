@@ -7,6 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
 import { __dirchecks, getProjectDir } from '../system.js';
+import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 
 /**
@@ -29,15 +30,29 @@ export class Checker {
                 failedChecks: 0
             };
 
-            // 检查目录列表：先核心，后项目
+            // 检查目录列表：先核心，后项目，最后 addons
             const checkDirs = [
                 { path: __dirchecks, type: 'core' as const },
                 { path: getProjectDir('checks'), type: 'project' as const }
             ];
 
+            // 添加所有 addon 的 checks 目录
+            const addons = scanAddons();
+            for (const addon of addons) {
+                if (hasAddonDir(addon, 'checks')) {
+                    checkDirs.push({
+                        path: getAddonDir(addon, 'checks'),
+                        type: 'addon' as const,
+                        addonName: addon
+                    });
+                }
+            }
+
             // 按顺序扫描并执行检查函数
-            for (const { path: checkDir, type } of checkDirs) {
-                const checkTypeLabel = type === 'core' ? '核心' : '项目';
+            for (const checkConfig of checkDirs) {
+                const { path: checkDir, type } = checkConfig;
+                const addonName = 'addonName' in checkConfig ? checkConfig.addonName : undefined;
+                const checkTypeLabel = type === 'core' ? '核心' : type === 'project' ? '项目' : `组件[${addonName}]`;
                 Logger.info(`开始执行${checkTypeLabel}检查，目录: ${checkDir}`);
 
                 for await (const file of glob.scan({
