@@ -10,7 +10,6 @@ import { Logger } from './utils/logger.js';
 import { Jwt } from './utils/jwt.js';
 import { Validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
-import { SyncDb } from './scripts/syncDb.js';
 import { calcPerfTime } from './utils/index.js';
 import { Checker } from './lifecycle/checker.js';
 import { Loader } from './lifecycle/loader.js';
@@ -88,4 +87,4 @@ export class Befly {
 }
 
 // 核心类已通过 export class 导出
-export { Env, Api, Jwt, Validator, Crypto2, Logger, Yes, No, SyncDb };
+export { Env, Api, Jwt, Validator, Crypto2, Logger, Yes, No };
