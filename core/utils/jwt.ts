@@ -38,8 +38,8 @@ export class Jwt {
 
     /**
      * 解析过期时间
-     * @param expiresIn - 过期时间（数字秒数或字符串如 "1h", "7d"）
-     * @returns 秒数
+     * @param expiresIn - 过期时间（数字秒数或字符串如 "1h", "7d", "-1s"）
+     * @returns 秒数（可以是负数）
      */
     static parseExpiration(expiresIn: string | number): number {
         if (typeof expiresIn === 'number') return expiresIn;
@@ -48,10 +48,11 @@ export class Jwt {
         const numericValue = parseInt(expiresIn);
         if (!isNaN(numericValue) && numericValue.toString() === expiresIn) return numericValue;
 
-        const match = expiresIn.match(/^(\d+)(ms|[smhdwy])$/);
+        // 支持负数时间（用于测试过期token）
+        const match = expiresIn.match(/^(-?\d+)(ms|[smhdwy])$/);
         if (!match) throw new Error('过期时间格式无效');
 
-        const value = parseInt(match[1]);
+        const value = parseInt(match[1]); // 包含正负号
         const unit = match[2];
 
         if (unit === 'ms') return Math.floor(value / 1000);
@@ -98,9 +99,24 @@ export class Jwt {
      * @param options - 签名选项
      * @returns JWT token字符串
      */
-    static sign(payload: JwtPayload, options: JwtSignOptions = {}): string {
+    static sign(payload: JwtPayload, options: JwtSignOptions): string;
+    static sign(payload: JwtPayload, secret: string, expiresIn: string | number): string;
+    static sign(payload: JwtPayload, optionsOrSecret: JwtSignOptions | string = {}, expiresIn?: string | number): string {
         if (!payload || typeof payload !== 'object') {
             throw new Error('载荷必须是非空对象');
+        }
+
+        // 支持两种调用方式
+        let options: JwtSignOptions;
+        if (typeof optionsOrSecret === 'string') {
+            // sign(payload, secret, expiresIn) 形式
+            options = {
+                secret: optionsOrSecret,
+                expiresIn: expiresIn
+            };
+        } else {
+            // sign(payload, options) 形式
+            options = optionsOrSecret;
         }
 
         const secret = options.secret || Env.JWT_SECRET;
@@ -150,9 +166,21 @@ export class Jwt {
      * @param options - 验证选项
      * @returns 解码后的载荷数据
      */
-    static verify(token: string, options: JwtVerifyOptions = {}): JwtPayload {
+    static verify(token: string, options: JwtVerifyOptions): JwtPayload;
+    static verify(token: string, secret: string): JwtPayload;
+    static verify(token: string, optionsOrSecret: JwtVerifyOptions | string = {}): JwtPayload {
         if (!token || typeof token !== 'string') {
             throw new Error('Token必须是非空字符串');
+        }
+
+        // 支持两种调用方式
+        let options: JwtVerifyOptions;
+        if (typeof optionsOrSecret === 'string') {
+            // verify(token, secret) 形式
+            options = { secret: optionsOrSecret };
+        } else {
+            // verify(token, options) 形式
+            options = optionsOrSecret;
         }
 
         const secret = options.secret || Env.JWT_SECRET;
@@ -188,7 +216,7 @@ export class Jwt {
             const now = Math.floor(Date.now() / 1000);
 
             if (!options.ignoreExpiration && payload.exp && payload.exp < now) {
-                throw new Error('Token已过期');
+                throw new Error('Token已过期 (expired)');
             }
             if (!options.ignoreNotBefore && payload.nbf && payload.nbf > now) {
                 throw new Error('Token尚未生效');
@@ -386,5 +414,80 @@ export class Jwt {
     static isNearExpiry(token: string, thresholdSeconds: number = 300): boolean {
         const timeToExpiry = this.getTimeToExpiry(token);
         return timeToExpiry > 0 && timeToExpiry <= thresholdSeconds;
+    }
+
+    // ==================== 便捷静态方法 ====================
+
+    /**
+     * 创建 token（使用默认配置）
+     * @param payload - 载荷数据
+     * @returns JWT token字符串
+     */
+    static create(payload: JwtPayload): string {
+        return this.sign(payload, Env.JWT_SECRET, Env.JWT_EXPIRES_IN || '7d');
+    }
+
+    /**
+     * 验证 token（使用默认配置）
+     * @param token - JWT token字符串
+     * @returns 解码后的载荷数据
+     */
+    static check(token: string): JwtPayload {
+        return this.verify(token, { secret: Env.JWT_SECRET });
+    }
+
+    /**
+     * 解析 token（不验证签名，使用 decode）
+     * @param token - JWT token字符串
+     * @returns 解码后的载荷数据
+     */
+    static parse(token: string): JwtPayload {
+        return this.decode(token);
+    }
+
+    /**
+     * 检查载荷是否包含特定角色
+     * @param payload - JWT载荷
+     * @param role - 要检查的角色
+     * @returns 是否包含该角色
+     */
+    static hasRole(payload: JwtPayload, role: string): boolean {
+        if (!payload) return false;
+        if (payload.role === role) return true;
+        if (Array.isArray(payload.roles) && payload.roles.includes(role)) return true;
+        return false;
+    }
+
+    /**
+     * 检查载荷是否包含任意一个角色
+     * @param payload - JWT载荷
+     * @param roles - 要检查的角色列表
+     * @returns 是否包含任意一个角色
+     */
+    static hasAnyRole(payload: JwtPayload, roles: string[]): boolean {
+        if (!payload) return false;
+        return roles.some((role) => this.hasRole(payload, role));
+    }
+
+    /**
+     * 检查载荷是否包含特定权限
+     * @param payload - JWT载荷
+     * @param permission - 要检查的权限
+     * @returns 是否包含该权限
+     */
+    static hasPermission(payload: JwtPayload, permission: string): boolean {
+        if (!payload || !payload.permissions) return false;
+        return Array.isArray(payload.permissions) && payload.permissions.includes(permission);
+    }
+
+    /**
+     * 检查载荷是否包含所有权限
+     * @param payload - JWT载荷
+     * @param permissions - 要检查的权限列表
+     * @returns 是否包含所有权限
+     */
+    static hasAllPermissions(payload: JwtPayload, permissions: string[]): boolean {
+        if (!payload || !payload.permissions) return false;
+        return permissions.every((permission) => this.hasPermission(payload, permission));
     }
 }

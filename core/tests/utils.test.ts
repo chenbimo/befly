@@ -88,12 +88,12 @@ describe('规则解析', () => {
         const rule = '用户名⚡string⚡3⚡50⚡null⚡1⚡^[a-zA-Z0-9_]+$';
         const result = parseRule(rule);
 
-        expect(result.name).toBe('用户名');
+        expect(result.label).toBe('用户名');
         expect(result.type).toBe('string');
-        expect(result.min).toBe('3');
-        expect(result.max).toBe('50');
+        expect(result.min).toBe(3);
+        expect(result.max).toBe(50);
         expect(result.default).toBe('null');
-        expect(result.index).toBe('1');
+        expect(result.index).toBe(1);
         expect(result.regex).toBe('^[a-zA-Z0-9_]+$');
     });
 
@@ -102,6 +102,6 @@ describe('规则解析', () => {
         const result = parseRule(rule);
 
         expect(result.type).toBe('number');
-        expect(result.default).toBe('0');
+        expect(result.default).toBe(0);
     });
 });

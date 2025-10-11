@@ -235,8 +235,148 @@ export class Validator {
      * @param required - 必填字段
      * @returns 验证结果
      */
-    static validate(data: Record<string, any>, rules: TableDefinition, required: string[] = []): ValidationResult {
-        return validator.validate(data, rules, required);
+    static validate(data: Record<string, any>, rules: TableDefinition, required?: string[]): ValidationResult;
+    static validate(value: any, rule: string): { valid: boolean; value: any; errors: string[] };
+    static validate(dataOrValue: any, rulesOrRule: any, required: string[] = []): any {
+        // 如果第二个参数是字符串，则是单值验证
+        if (typeof rulesOrRule === 'string') {
+            return Validator.validateSingleValue(dataOrValue, rulesOrRule);
+        }
+        // 否则是对象验证
+        return validator.validate(dataOrValue, rulesOrRule, required);
+    }
+
+    /**
+     * 验证单个值（静态方法）
+     * @param value - 要验证的值
+     * @param rule - 验证规则字符串
+     * @returns 验证结果 { valid: boolean, value: any, errors: string[] }
+     */
+    static validateSingleValue(value: any, rule: string): { valid: boolean; value: any; errors: string[] } {
+        const parsed = parseRule(rule);
+        const { label, type, min, max, regex, default: defaultValue } = parsed;
+
+        // 处理 undefined/null 值，使用默认值
+        if (value === undefined || value === null) {
+            if (defaultValue !== 'null' && defaultValue !== null) {
+                // 特殊处理数组类型的默认值字符串
+                if (type === 'array' && typeof defaultValue === 'string') {
+                    if (defaultValue === '[]') {
+                        return { valid: true, value: [], errors: [] };
+                    }
+                    // 尝试解析 JSON 格式的数组字符串
+                    try {
+                        const parsedArray = JSON.parse(defaultValue);
+                        if (Array.isArray(parsedArray)) {
+                            return { valid: true, value: parsedArray, errors: [] };
+                        }
+                    } catch {
+                        // 解析失败，使用空数组
+                        return { valid: true, value: [], errors: [] };
+                    }
+                }
+                return { valid: true, value: defaultValue, errors: [] };
+            }
+            // 如果没有默认值，根据类型返回默认值
+            if (type === 'number') {
+                return { valid: true, value: 0, errors: [] };
+            } else if (type === 'array') {
+                return { valid: true, value: [], errors: [] };
+            } else if (type === 'string' || type === 'text') {
+                return { valid: true, value: '', errors: [] };
+            }
+        }
+
+        const errors: string[] = [];
+
+        // 类型转换
+        let convertedValue = value;
+        if (type === 'number' && typeof value === 'string') {
+            convertedValue = Number(value);
+            if (isNaN(convertedValue)) {
+                errors.push(`${label || '值'}必须是有效的数字`);
+                return { valid: false, value: null, errors };
+            }
+        }
+
+        // 类型验证
+        switch (type.toLowerCase()) {
+            case 'number':
+                if (!isType(convertedValue, 'number')) {
+                    errors.push(`${label || '值'}必须是数字`);
+                }
+                if (min !== null && convertedValue < min) {
+                    errors.push(`${label || '值'}不能小于${min}`);
+                }
+                if (max !== null && max > 0 && convertedValue > max) {
+                    errors.push(`${label || '值'}不能大于${max}`);
+                }
+                if (regex && regex.trim() !== '' && regex !== 'null') {
+                    try {
+                        const regExp = new RegExp(regex);
+                        if (!regExp.test(String(convertedValue))) {
+                            errors.push(`${label || '值'}格式不正确`);
+                        }
+                    } catch {
+                        errors.push(`${label || '值'}的正则表达式格式错误`);
+                    }
+                }
+                break;
+
+            case 'string':
+            case 'text':
+                if (!isType(convertedValue, 'string')) {
+                    errors.push(`${label || '值'}必须是字符串`);
+                }
+                if (min !== null && convertedValue.length < min) {
+                    errors.push(`${label || '值'}长度不能少于${min}个字符`);
+                }
+                if (max !== null && max > 0 && convertedValue.length > max) {
+                    errors.push(`${label || '值'}长度不能超过${max}个字符`);
+                }
+                if (regex && regex.trim() !== '' && regex !== 'null') {
+                    try {
+                        const regExp = new RegExp(regex);
+                        if (!regExp.test(convertedValue)) {
+                            errors.push(`${label || '值'}格式不正确`);
+                        }
+                    } catch {
+                        errors.push(`${label || '值'}的正则表达式格式错误`);
+                    }
+                }
+                break;
+
+            case 'array':
+                if (!Array.isArray(convertedValue)) {
+                    errors.push(`${label || '值'}必须是数组`);
+                }
+                if (min !== null && convertedValue.length < min) {
+                    errors.push(`${label || '值'}元素数量不能少于${min}个`);
+                }
+                if (max !== null && max > 0 && convertedValue.length > max) {
+                    errors.push(`${label || '值'}元素数量不能超过${max}个`);
+                }
+                if (regex && regex.trim() !== '' && regex !== 'null') {
+                    try {
+                        const regExp = new RegExp(regex);
+                        for (const item of convertedValue) {
+                            if (!regExp.test(String(item))) {
+                                errors.push(`${label || '值'}的元素格式不正确`);
+                                break;
+                            }
+                        }
+                    } catch {
+                        errors.push(`${label || '值'}的正则表达式格式错误`);
+                    }
+                }
+                break;
+        }
+
+        return {
+            valid: errors.length === 0,
+            value: errors.length === 0 ? convertedValue : null,
+            errors
+        };
     }
 
     /**
@@ -244,7 +384,11 @@ export class Validator {
      * @param result - 验证结果
      * @returns 是否通过
      */
-    static isPassed(result: ValidationResult): boolean {
+    static isPassed(result: ValidationResult | { valid: boolean; value: any; errors: string[] }): boolean {
+        // 支持两种结果格式
+        if ('valid' in result) {
+            return result.valid === true;
+        }
         return result.code === 0;
     }
 
@@ -262,8 +406,14 @@ export class Validator {
      * @param result - 验证结果
      * @returns 错误信息
      */
-    static getFirstError(result: ValidationResult): string | null {
+    static getFirstError(result: ValidationResult | { valid: boolean; value: any; errors: string[] }): string | null {
+        // 单值验证结果
+        if ('valid' in result) {
+            return result.errors.length > 0 ? result.errors[0] : null;
+        }
+        // 对象验证结果
         if (result.code === 0) return null;
+        if (!result.fields) return null;
         const errors = Object.values(result.fields);
         return errors.length > 0 ? errors[0] : null;
     }
@@ -273,8 +423,15 @@ export class Validator {
      * @param result - 验证结果
      * @returns 错误信息数组
      */
-    static getAllErrors(result: ValidationResult): string[] {
-        return result.code === 0 ? [] : Object.values(result.fields);
+    static getAllErrors(result: ValidationResult | { valid: boolean; value: any; errors: string[] }): string[] {
+        // 单值验证结果
+        if ('valid' in result) {
+            return result.errors;
+        }
+        // 对象验证结果
+        if (result.code === 0) return [];
+        if (!result.fields) return [];
+        return Object.values(result.fields);
     }
 
     /**

@@ -194,7 +194,12 @@ export class Crypto2 {
      * @returns 哈希后的密码
      */
     static async hashPassword(password: string, options: PasswordHashOptions = {}): Promise<string> {
-        return await Bun.password.hash(password, options);
+        // 设置默认算法为 bcrypt
+        const finalOptions = {
+            algorithm: 'bcrypt',
+            ...options
+        } as any;
+        return await Bun.password.hash(password, finalOptions);
     }
 
     /**
@@ -205,6 +210,39 @@ export class Crypto2 {
      */
     static async verifyPassword(password: string, hash: string): Promise<boolean> {
         return await Bun.password.verify(password, hash);
+    }
+
+    /**
+     * Base64 编码
+     * @param data - 要编码的数据
+     * @returns Base64 编码的字符串
+     */
+    static base64Encode(data: string): string {
+        return Buffer.from(data, 'utf8').toString('base64');
+    }
+
+    /**
+     * Base64 解码
+     * @param data - Base64 编码的字符串
+     * @returns 解码后的字符串
+     */
+    static base64Decode(data: string): string {
+        return Buffer.from(data, 'base64').toString('utf8');
+    }
+
+    /**
+     * 生成随机十六进制字符串
+     * @param length - 字符串长度
+     * @returns 随机十六进制字符串
+     */
+    static randomString(length: number): string {
+        const bytes = Math.ceil(length / 2);
+        const randomBytes = crypto.getRandomValues(new Uint8Array(bytes));
+        let result = '';
+        for (let i = 0; i < randomBytes.length; i++) {
+            result += randomBytes[i].toString(16).padStart(2, '0');
+        }
+        return result.slice(0, length);
     }
 
     /**
