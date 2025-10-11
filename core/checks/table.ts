@@ -30,10 +30,11 @@ const FIELD_TYPES = ['string', 'number', 'text', 'array'] as const;
 
 /**
  * 小驼峰命名正则
+ * 可选：以下划线开头（用于特殊文件如 _common.json）
  * 必须以小写字母开头，后续可包含小写/数字，或多个 [大写+小写/数字] 片段
- * 示例：userTable、testCustomers、common
+ * 示例：userTable、testCustomers、common、_common
  */
-const LOWER_CAMEL_CASE_REGEX = /^[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)*$/;
+const LOWER_CAMEL_CASE_REGEX = /^_?[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)*$/;
 
 /**
  * 字段名称正则
@@ -144,7 +145,7 @@ export default async function (): Promise<boolean> {
                             continue;
                         }
 
-                        const { label: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
+                        const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
 
                         // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
                         if (!FIELD_NAME_REGEX.test(fieldName)) {

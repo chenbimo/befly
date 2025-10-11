@@ -9,7 +9,7 @@ import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient, toSnakeTableName, isType, parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
-import { checkTable } from '../checks/table.js';
+import checkTable from '../checks/table.js';
 
 import type { SQL } from 'bun';
 import type { ColumnInfo, IndexInfo, FieldChange, IndexAction, TablePlan, GlobalCount } from '../types/database.js';
@@ -264,7 +264,8 @@ const createTable = async (tableName: string, fields: Record<string, string>): P
 
     // 2) 业务字段
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+        const parsed = parseRule(fieldRule);
+        const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
         const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
         const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(fieldDefault, 'number') ? ` DEFAULT ${fieldDefault}` : ` DEFAULT '${fieldDefault}'`) : '';
         if (IS_MYSQL) {
@@ -308,7 +309,8 @@ const createTable = async (tableName: string, fields: Record<string, string>): P
             }
         }
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-            const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+            const parsed = parseRule(fieldRule);
+            const { name: fieldName } = parsed;
             const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS '${fieldName}'`;
             if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
@@ -328,7 +330,8 @@ const createTable = async (tableName: string, fields: Record<string, string>): P
         }
     }
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+        const parsed = parseRule(fieldRule);
+        const { index: fieldIndex } = parsed;
         if (fieldIndex === 1) {
             const stmt = buildIndexSQL(tableName, `idx_${fieldKey}`, fieldKey, 'create');
             if (IS_PLAN) {
@@ -342,7 +345,8 @@ const createTable = async (tableName: string, fields: Record<string, string>): P
 
 // 比较字段定义变化
 const compareFieldDefinition = (existingColumn: ColumnInfo, newRule: string, colName: string): FieldChange[] => {
-    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(newRule);
+    const parsed = parseRule(newRule);
+    const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
     const changes: FieldChange[] = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
@@ -391,7 +395,8 @@ const compareFieldDefinition = (existingColumn: ColumnInfo, newRule: string, col
 
 // 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
 const generateDDLClause = (fieldKey: string, fieldRule: string, isAdd: boolean = false): string => {
-    const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+    const parsed = parseRule(fieldRule);
+    const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
     const sqlType = ['string', 'array'].includes(fieldType) ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
     const defaultSql = ['number', 'string', 'array'].includes(fieldType) ? (isType(fieldDefault, 'number') ? ` DEFAULT ${fieldDefault}` : ` DEFAULT '${fieldDefault}'`) : '';
     if (IS_MYSQL) {
@@ -559,7 +564,8 @@ const modifyTable = async (tableName: string, fields: Record<string, string>): P
                     else if (c.type === 'default') globalCount.defaultChanges++;
                     else if (c.type === 'comment') globalCount.nameChanges++;
                 }
-                const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+                const parsed = parseRule(fieldRule);
+                const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
                 if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length) {
                     if (existingColumns[fieldKey].length > fieldMax) {
                         Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${fieldMax} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
@@ -610,7 +616,8 @@ const modifyTable = async (tableName: string, fields: Record<string, string>): P
                 changed = true;
             }
         } else {
-            const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+            const parsed = parseRule(fieldRule);
+            const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
             const lenPart = fieldType === 'string' || fieldType === 'array' ? ` 长度:${parseInt(fieldMax)}` : '';
             Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${fieldDefault ?? 'NULL'}`);
             addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
@@ -628,7 +635,8 @@ const modifyTable = async (tableName: string, fields: Record<string, string>): P
         }
     }
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+        const parsed = parseRule(fieldRule);
+        const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
         const indexName = `idx_${fieldKey}`;
         if (fieldIndex === 1 && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName: fieldKey });
@@ -645,7 +653,8 @@ const modifyTable = async (tableName: string, fields: Record<string, string>): P
     if (IS_PG) {
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
             if (existingColumns[fieldKey]) {
-                const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = parseRule(fieldRule);
+                const parsed = parseRule(fieldRule);
+                const { name: fieldName } = parsed;
                 const curr = existingColumns[fieldKey].comment || '';
                 const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
                 if (want !== curr) {
@@ -691,7 +700,15 @@ export const SyncDb = async (): Promise<void> => {
 
         for (const dir of directories) {
             for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
-                const tableName = toSnakeTableName(path.basename(file, '.json'));
+                const fileName = path.basename(file, '.json');
+
+                // 跳过以下划线开头的文件（这些是公共字段规则，不是表定义）
+                if (fileName.startsWith('_')) {
+                    Logger.info(`跳过非表定义文件: ${fileName}.json`);
+                    continue;
+                }
+
+                const tableName = toSnakeTableName(fileName);
                 const tableDefinition = await Bun.file(file).json();
                 const existsTable = await tableExists(tableName);
 

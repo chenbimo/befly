@@ -1,0 +1,11 @@
+{
+    "title": "标题|string|1|200|''|1|null",
+    "content": "内容|text|null|null|null|0|null",
+    "summary": "摘要|string|0|500|''|0|null",
+    "coverImage": "封面图|string|0|500|''|0|null",
+    "authorId": "作者ID|number|1|9999999|0|1|null",
+    "categoryId": "分类ID|number|1|9999999|0|1|null",
+    "tags": "标签|array|0|10|[]|0|null",
+    "viewCount": "浏览数|number|0|9999999|0|0|null",
+    "published": "是否发布|number|0|1|0|1|^(0|1)$"
+}
