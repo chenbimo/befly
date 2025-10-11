@@ -30,7 +30,46 @@ export class Checker {
                 failedChecks: 0
             };
 
-            // 检查目录列表：先核心，后项目，最后 addons
+            // 1. 优先执行资源冲突检测（如果存在）
+            try {
+                const conflictCheckPath = path.join(__dirchecks, 'conflict.ts');
+                const conflictCheckFile = Bun.file(conflictCheckPath);
+
+                if (await conflictCheckFile.exists()) {
+                    stats.totalChecks++;
+                    const conflictCheckStart = Bun.nanoseconds();
+
+                    const conflictModule = await import(conflictCheckPath);
+                    const conflictCheckFn = conflictModule.default;
+
+                    if (typeof conflictCheckFn === 'function') {
+                        const conflictResult = await conflictCheckFn();
+                        const conflictCheckTime = calcPerfTime(conflictCheckStart);
+
+                        if (typeof conflictResult !== 'boolean') {
+                            Logger.error(`核心检查 conflict.ts 返回值必须为 true 或 false，当前为 ${typeof conflictResult}，耗时: ${conflictCheckTime}`);
+                            stats.failedChecks++;
+                        } else if (conflictResult === true) {
+                            stats.passedChecks++;
+                            Logger.info(`核心检查 conflict.ts 通过，耗时: ${conflictCheckTime}`);
+                        } else {
+                            Logger.error(`核心检查未通过: conflict.ts，耗时: ${conflictCheckTime}`);
+                            stats.failedChecks++;
+                            // 资源冲突检测失败，立即终止
+                            ErrorHandler.critical('资源冲突检测失败，无法继续启动', undefined, {
+                                totalChecks: stats.totalChecks,
+                                passedChecks: stats.passedChecks,
+                                failedChecks: stats.failedChecks
+                            });
+                        }
+                    }
+                }
+            } catch (error: any) {
+                Logger.error('执行资源冲突检测时出错:', error);
+                stats.failedChecks++;
+            }
+
+            // 2. 检查目录列表：先核心，后项目，最后 addons
             const checkDirs = [
                 { path: __dirchecks, type: 'core' as const },
                 { path: getProjectDir('checks'), type: 'project' as const }
@@ -62,6 +101,9 @@ export class Checker {
                 })) {
                     const fileName = path.basename(file);
                     if (fileName.startsWith('_')) continue; // 跳过以下划线开头的文件
+
+                    // 跳过已经执行过的 conflict.ts
+                    if (type === 'core' && fileName === 'conflict.ts') continue;
 
                     try {
                         stats.totalChecks++;
