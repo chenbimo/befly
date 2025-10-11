@@ -215,12 +215,13 @@ export class Loader {
                     if (isType(api.handler, 'function') === false) {
                         throw new Error(`接口 ${apiPath} 的 handler 属性必须是函数`);
                     }
-                    api.route = `${api.method.toUpperCase()}/api/${dirName}/${apiPath}`;
+                    // 构建路由：去掉 core/app 目录部分，直接使用 /api/{apiPath}
+                    api.route = `${api.method.toUpperCase()}/api/${apiPath}`;
                     apiRoutes.set(api.route, api);
 
                     const singleApiTime = calcPerfTime(singleApiStart);
                     loadedApis++;
-                    // Logger.info(`${dirDisplayName}接口 ${apiPath} 加载成功，耗时: ${singleApiTime}`);
+                    Logger.info(`${dirDisplayName}接口 ${api.name} 路由: ${api.route}，耗时: ${singleApiTime}`);
                 } catch (error: any) {
                     const singleApiTime = calcPerfTime(singleApiStart);
                     failedApis++;
