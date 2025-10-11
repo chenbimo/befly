@@ -11,7 +11,7 @@ export default Api('创建待办事项', {
     auth: false,
     fields: {
         title: '标题|string|1|100|null|0|null',
-        content: '内容|string|0|500|''|0|null',
+        content: '内容|string|0|500||0|null',
         priority: '优先级|string|1|10|medium|0|^(low|medium|high)$'
     },
     required: ['title'],
