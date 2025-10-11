@@ -145,7 +145,5 @@ const system: SystemConfig = {
     }
 };
 
-export default system;
-
-// 重新导出基础路径变量
-export { __filename, __dirname };
+// 重新导出基础路径变量和 system 对象
+export { __filename, __dirname, system };
