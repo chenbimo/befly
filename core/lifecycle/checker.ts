@@ -20,7 +20,7 @@ export class Checker {
         try {
             const checkStartTime = Bun.nanoseconds();
 
-            const glob = new Bun.Glob('*.{js,ts}');
+            const glob = new Bun.Glob('*.{ts}');
 
             // 统计信息
             const stats = {

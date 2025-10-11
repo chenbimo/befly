@@ -255,7 +255,7 @@ export default async function (): Promise<boolean> {
             return true;
         }
     } catch (error: any) {
-        Logger.error('Tables 检查过程中出错:', error);
+        Logger.error('数据表定义检查过程中出错:', error);
         return false;
     }
 }
