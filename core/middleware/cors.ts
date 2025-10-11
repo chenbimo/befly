@@ -3,17 +3,8 @@
  * 处理跨域请求
  */
 
-import { setCorsOptions } from '../utils/index.js';
-
 export interface CorsResult {
     headers: Record<string, string>;
-}
-
-/**
- * 处理CORS
- */
-export function handleCors(req: Request): CorsResult {
-    return setCorsOptions(req);
 }
 
 /**

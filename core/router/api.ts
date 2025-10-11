@@ -4,8 +4,8 @@
  */
 
 import { Logger } from '../utils/logger.js';
-import { No } from '../utils/index.js';
-import { handleCors, handleOptionsRequest } from '../middleware/cors.js';
+import { No, setCorsOptions } from '../utils/index.js';
+import { handleOptionsRequest } from '../middleware/cors.js';
 import { authenticate } from '../middleware/auth.js';
 import { parseGetParams, parsePostParams } from '../middleware/parser.js';
 import { checkPermission } from '../middleware/permission.js';
@@ -27,7 +27,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
     return async (req: Request): Promise<Response> => {
         try {
             // 1. CORS处理
-            const corsOptions = handleCors(req);
+            const corsOptions = setCorsOptions(req);
 
             // OPTIONS预检请求
             if (req.method === 'OPTIONS') {
@@ -99,7 +99,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
                 });
             }
         } catch (error: any) {
-            const corsOptions = handleCors(req);
+            const corsOptions = setCorsOptions(req);
             Logger.error({
                 msg: '处理接口请求时发生错误',
                 error: error.message,
