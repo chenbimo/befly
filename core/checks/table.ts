@@ -214,6 +214,9 @@ export default async function (): Promise<boolean> {
                                 fileValid = false;
                             }
                         }
+                    } catch (error: any) {
+                        // 单个字段规则解析失败已在上面处理
+                    }
                 }
 
                 if (fileValid) {
