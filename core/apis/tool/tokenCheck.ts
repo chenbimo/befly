@@ -12,15 +12,15 @@ import type { JwtPayload } from '../../utils/jwt.js';
 import type { TokenCheckData } from '../../types/api.js';
 
 export default Api.POST('令牌检测', false, {}, [], async (befly: BeflyContext, ctx: any) => {
+    // 从 Authorization 头获取 token
+    const authHeader = ctx.req?.headers?.get('authorization') || '';
+    const token = authHeader.split(' ')[1] || '';
+
+    if (!token) {
+        return No('令牌不能为空');
+    }
+
     try {
-        // 从 Authorization 头获取 token
-        const authHeader = ctx.req?.headers?.get('authorization') || '';
-        const token = authHeader.split(' ')[1] || '';
-
-        if (!token) {
-            return No('令牌不能为空');
-        }
-
         // 验证令牌
         const jwtData = await Jwt.verify(token);
 
@@ -35,19 +35,13 @@ export default Api.POST('令牌检测', false, {}, [], async (befly: BeflyContex
 
         return Yes('令牌有效', data);
     } catch (error: any) {
-        befly.logger.error({
-            msg: '令牌检测失败',
-            error: error.message,
-            stack: error.stack
-        });
-
-        // 根据错误类型返回不同信息
+        // 针对预期的令牌错误，返回友好提示（非致命错误）
         if (error.message.includes('expired')) {
             return No('令牌已过期', { expired: true });
         } else if (error.message.includes('invalid')) {
             return No('令牌无效', { invalid: true });
-        } else {
-            return No('令牌检测失败', { error: error.message });
         }
+        // 其他未知错误向上抛出，由路由层统一处理
+        throw error;
     }
 });

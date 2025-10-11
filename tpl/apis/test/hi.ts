@@ -8,13 +8,7 @@ export default Api.POST(
     {},
     [],
     async (befly: BeflyInstance, ctx: BeflyContext) => {
-        try {
-            // 返回成功信息
-            return Yes('测试成功');
-        } catch (error) {
-            const err = error as Error;
-            befly.logger.error(`文件处理错误: ${err.message}`);
-            return No('测试失败');
-        }
+        // 返回成功信息
+        return Yes('测试成功');
     }
 );

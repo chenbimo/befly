@@ -100,12 +100,22 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             }
         } catch (error: any) {
             const corsOptions = setCorsOptions(req);
+
+            // 获取接口信息用于日志
+            const url = new URL(req.url);
+            const apiPath = `${req.method}${url.pathname}`;
+            const api = apiRoutes.get(apiPath);
+
             Logger.error({
-                msg: '处理接口请求时发生错误',
-                error: error.message,
-                stack: error.stack,
-                url: req.url
+                msg: api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误',
+                接口名称: api?.name || '未知',
+                接口路径: apiPath,
+                请求方法: req.method,
+                请求URL: req.url,
+                错误信息: error.message,
+                错误堆栈: error.stack
             });
+
             return Response.json(No('内部服务器错误'), {
                 headers: corsOptions.headers
             });

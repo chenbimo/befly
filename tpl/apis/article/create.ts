@@ -19,32 +19,24 @@ export default Api.POST(
     },
     ['title', 'content', 'categoryId'],
     async (befly: BeflyContext, ctx: RequestContext) => {
-        try {
-            const data = ctx.body as CreateArticleRequest;
-            const userId = ctx.jwt?.userId;
+        const data = ctx.body as CreateArticleRequest;
+        const userId = ctx.jwt?.userId;
 
-            if (!userId) {
-                return No('用户未登录');
-            }
-
-            // 插入文章
-            const articleId = await befly.db.insData({
-                table: 'article',
-                data: {
-                    ...data,
-                    authorId: parseInt(userId),
-                    viewCount: 0,
-                    published: false
-                }
-            });
-
-            return Yes('创建成功', { articleId });
-        } catch (error: any) {
-            befly.logger.error({
-                msg: '创建文章失败',
-                error: error.message
-            });
-            return No('创建失败');
+        if (!userId) {
+            return No('用户未登录');
         }
+
+        // 插入文章
+        const articleId = await befly.db.insData({
+            table: 'article',
+            data: {
+                ...data,
+                authorId: parseInt(userId),
+                viewCount: 0,
+                published: false
+            }
+        });
+
+        return Yes('创建成功', { articleId });
     }
 );

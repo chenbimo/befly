@@ -18,35 +18,27 @@ export default Api.POST(
     },
     [],
     async (befly: BeflyContext, ctx: RequestContext) => {
-        try {
-            const params = ctx.body as GetUsersRequest;
+        const params = ctx.body as GetUsersRequest;
 
-            // 构建查询条件
-            const where: any = {};
-            if (params.role) {
-                where.role = params.role;
-            }
-            if (params.keyword) {
-                where.username = { $like: `%${params.keyword}%` };
-            }
-
-            // 查询用户列表（不返回密码字段）
-            const result = await befly.db.getList<User>({
-                table: 'user',
-                fields: ['id', 'username', 'email', 'role', 'avatar', 'nickname', 'created_at', 'updated_at'],
-                where,
-                page: params.page || 1,
-                limit: params.limit || 10,
-                orderBy: 'created_at DESC'
-            });
-
-            return Yes<GetUsersResponse>('查询成功', result);
-        } catch (error: any) {
-            befly.logger.error({
-                msg: '查询用户列表失败',
-                error: error.message
-            });
-            return No('查询失败');
+        // 构建查询条件
+        const where: any = {};
+        if (params.role) {
+            where.role = params.role;
         }
+        if (params.keyword) {
+            where.username = { $like: `%${params.keyword}%` };
+        }
+
+        // 查询用户列表（不返回密码字段）
+        const result = await befly.db.getList<User>({
+            table: 'user',
+            fields: ['id', 'username', 'email', 'role', 'avatar', 'nickname', 'created_at', 'updated_at'],
+            where,
+            page: params.page || 1,
+            limit: params.limit || 10,
+            orderBy: 'created_at DESC'
+        });
+
+        return Yes<GetUsersResponse>('查询成功', result);
     }
 );

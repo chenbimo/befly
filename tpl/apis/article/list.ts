@@ -20,40 +20,32 @@ export default Api.POST(
     },
     [],
     async (befly: BeflyContext, ctx: RequestContext) => {
-        try {
-            const params = ctx.body as GetArticlesRequest;
+        const params = ctx.body as GetArticlesRequest;
 
-            // 构建查询条件
-            const where: any = {};
-            if (params.categoryId) {
-                where.categoryId = params.categoryId;
-            }
-            if (params.authorId) {
-                where.authorId = params.authorId;
-            }
-            if (params.keyword) {
-                where.title = { $like: `%${params.keyword}%` };
-            }
-            if (typeof params.published !== 'undefined') {
-                where.published = params.published;
-            }
-
-            // 查询文章列表
-            const result = await befly.db.getList<Article>({
-                table: 'article',
-                where,
-                page: params.page || 1,
-                limit: params.limit || 10,
-                orderBy: 'created_at DESC'
-            });
-
-            return Yes<GetArticlesResponse>('查询成功', result);
-        } catch (error: any) {
-            befly.logger.error({
-                msg: '查询文章列表失败',
-                error: error.message
-            });
-            return No('查询失败');
+        // 构建查询条件
+        const where: any = {};
+        if (params.categoryId) {
+            where.categoryId = params.categoryId;
         }
+        if (params.authorId) {
+            where.authorId = params.authorId;
+        }
+        if (params.keyword) {
+            where.title = { $like: `%${params.keyword}%` };
+        }
+        if (typeof params.published !== 'undefined') {
+            where.published = params.published;
+        }
+
+        // 查询文章列表
+        const result = await befly.db.getList<Article>({
+            table: 'article',
+            where,
+            page: params.page || 1,
+            limit: params.limit || 10,
+            orderBy: 'created_at DESC'
+        });
+
+        return Yes<GetArticlesResponse>('查询成功', result);
     }
 );
