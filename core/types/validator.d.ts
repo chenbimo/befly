@@ -26,7 +26,7 @@ export interface ValidationResult {
  * 字段规则
  */
 export interface FieldRule {
-    /** 显示名 */
+    /** 字段名 */
     name: string;
     /** 字段类型 */
     type: FieldType;
@@ -42,22 +42,4 @@ export interface FieldRule {
     regex: string | null;
 }
 
-/**
- * 解析后的字段规则
- */
-export interface ParsedFieldRule {
-    /** 显示名 */
-    name: string;
-    /** 字段类型 */
-    type: FieldType;
-    /** 最小值 */
-    min: string;
-    /** 最大值 */
-    max: string;
-    /** 默认值 */
-    default: string;
-    /** 是否索引 */
-    index: string;
-    /** 正则约束 */
-    regex: string;
-}
+export type FieldType = 'string' | 'number' | 'text' | 'array';

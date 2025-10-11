@@ -5,8 +5,8 @@
 
 import { isType } from './typeHelper.js';
 import { parseRule } from './tableHelper.js';
-import type { TableDefinition, FieldRule } from '../types/common.js';
-import type { ValidationResult, ParsedFieldRule, ValidationError } from '../types/validator';
+import type { TableDefinition, FieldRule, ParsedFieldRule } from '../types/common.js';
+import type { ValidationResult, ValidationError } from '../types/validator';
 
 /**
  * 验证器类

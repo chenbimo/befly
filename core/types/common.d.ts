@@ -21,8 +21,12 @@ export interface ValidationResult {
 }
 
 /**
- * 字段规则类型 - 7段式定义
- * 格式: "显示名|类型|最小值|最大值|默认值|是否索引|正则约束"
+ * 字段规则字符串
+ * 格式: "字段名|类型|最小值|最大值|默认值|是否索引|正则约束"
+ *
+ * @example
+ * "用户名|string|2|50|null|1|^[a-zA-Z0-9_]+$"
+ * "年龄|number|0|150|18|0|null"
  */
 export type FieldRule = string;
 
