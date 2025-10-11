@@ -53,11 +53,11 @@ export async function SyncDev(client: any = null): Promise<boolean> {
             ownClient = true;
         }
 
-        // 检查 admin 表是否存在
-        const exist = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'admin']);
+        // 检查 sys_admin 表是否存在（核心表带 sys_ 前缀）
+        const exist = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'sys_admin']);
 
         if (!exist || !exist[0] || Number(exist[0].cnt) === 0) {
-            Logger.warn('跳过开发管理员初始化：未检测到 admin 表');
+            Logger.warn('跳过开发管理员初始化：未检测到 sys_admin 表');
             return false;
         }
 
@@ -66,14 +66,14 @@ export async function SyncDev(client: any = null): Promise<boolean> {
         const hashed = Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
 
         // 更新存在的 dev 账号
-        const updateRes = await exec(client, 'UPDATE `admin` SET `password` = ?, `updated_at` = ? WHERE `account` = ? LIMIT 1', [hashed, nowTs, 'dev']);
+        const updateRes = await exec(client, 'UPDATE `sys_admin` SET `password` = ?, `updated_at` = ? WHERE `account` = ? LIMIT 1', [hashed, nowTs, 'dev']);
 
         const affected = updateRes?.affectedRows ?? updateRes?.rowsAffected ?? 0;
 
         if (!affected || affected === 0) {
             // 插入新账号
             const id = nowTs;
-            await exec(client, 'INSERT INTO `admin` (`id`, `created_at`, `updated_at`, `deleted_at`, `state`, `account`, `password`) VALUES (?, ?, ?, 0, 0, ?, ?)', [id, nowTs, nowTs, 'dev', hashed]);
+            await exec(client, 'INSERT INTO `sys_admin` (`id`, `created_at`, `updated_at`, `deleted_at`, `state`, `account`, `password`) VALUES (?, ?, ?, 0, 0, ?, ?)', [id, nowTs, nowTs, 'dev', hashed]);
             Logger.info('开发管理员已初始化：account=dev');
         } else {
             Logger.info('开发管理员已更新密码并刷新更新时间：account=dev');

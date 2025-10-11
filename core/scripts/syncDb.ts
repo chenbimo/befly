@@ -695,10 +695,13 @@ export const SyncDb = async (): Promise<void> => {
 
         // 扫描并处理表文件
         const tablesGlob = new Bun.Glob('*.json');
-        const directories = [__dirtables, getProjectDir('tables')];
+        const directories = [
+            { path: __dirtables, isCore: true },
+            { path: getProjectDir('tables'), isCore: false }
+        ];
         // 统计使用全局 globalCount
 
-        for (const dir of directories) {
+        for (const { path: dir, isCore } of directories) {
             for await (const file of tablesGlob.scan({ cwd: dir, absolute: true, onlyFiles: true })) {
                 const fileName = path.basename(file, '.json');
 
@@ -708,7 +711,12 @@ export const SyncDb = async (): Promise<void> => {
                     continue;
                 }
 
-                const tableName = toSnakeTableName(fileName);
+                // 核心表添加 sys_ 前缀，项目表不添加前缀
+                let tableName = toSnakeTableName(fileName);
+                if (isCore) {
+                    tableName = `sys_${tableName}`;
+                }
+
                 const tableDefinition = await Bun.file(file).json();
                 const existsTable = await tableExists(tableName);
 
