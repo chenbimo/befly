@@ -13,8 +13,8 @@ export default Api('用户登录', {
     method: 'POST',
     auth: false, // 公开接口
     fields: {
-        username: '用户名⚡string⚡3⚡50⚡null⚡0⚡^[a-zA-Z0-9_]+$',
-        password: '密码⚡string⚡6⚡100⚡null⚡0⚡null'
+        username: '用户名|string|3|50|null|0|^[a-zA-Z0-9_]+$',
+        password: '密码|string|6|100|null|0|null'
     },
     required: ['username', 'password'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {

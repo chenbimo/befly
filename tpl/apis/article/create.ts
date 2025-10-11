@@ -10,12 +10,12 @@ export default Api('创建文章', {
     method: 'POST',
     auth: true, // 需要登录
     fields: {
-        title: '标题⚡string⚡1⚡200⚡null⚡0⚡null',
-        content: '内容⚡text⚡1⚡100000⚡null⚡0⚡null',
-        categoryId: '分类ID⚡number⚡1⚡999999⚡null⚡0⚡null',
-        tags: '标签⚡array⚡0⚡10⚡[]⚡0⚡null',
-        summary: '摘要⚡string⚡0⚡500⚡null⚡0⚡null',
-        coverImage: '封面图⚡string⚡0⚡500⚡null⚡0⚡null'
+        title: '标题|string|1|200|null|0|null',
+        content: '内容|text|1|100000|null|0|null',
+        categoryId: '分类ID|number|1|999999|null|0|null',
+        tags: '标签|array|0|10|[]|0|null',
+        summary: '摘要|string|0|500|null|0|null',
+        coverImage: '封面图|string|0|500|null|0|null'
     },
     required: ['title', 'content', 'categoryId'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {

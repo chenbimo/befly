@@ -11,10 +11,10 @@ export default Api('获取用户列表', {
     method: 'POST',
     auth: ['admin'], // 仅管理员可访问
     fields: {
-        page: '页码⚡number⚡1⚡9999⚡1⚡0⚡null',
-        limit: '每页数量⚡number⚡1⚡100⚡10⚡0⚡null',
-        role: '角色⚡string⚡0⚡20⚡null⚡0⚡^(admin|user|guest)$',
-        keyword: '关键词⚡string⚡0⚡50⚡null⚡0⚡null'
+        page: '页码|number|1|9999|1|0|null',
+        limit: '每页数量|number|1|100|10|0|null',
+        role: '角色|string|0|20|null|0|^(admin|user|guest)$',
+        keyword: '关键词|string|0|50|null|0|null'
     },
     required: [],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {

@@ -85,7 +85,7 @@ describe('表名转换', () => {
 
 describe('规则解析', () => {
     test('parseRule 应该正确解析字段规则', () => {
-        const rule = '用户名⚡string⚡3⚡50⚡null⚡1⚡^[a-zA-Z0-9_]+$';
+        const rule = '用户名|string|3|50|null|1|^[a-zA-Z0-9_]+$';
         const result = parseRule(rule);
 
         expect(result.label).toBe('用户名');
@@ -98,7 +98,7 @@ describe('规则解析', () => {
     });
 
     test('parseRule 应该处理数字类型', () => {
-        const rule = '年龄⚡number⚡0⚡150⚡0⚡0⚡null';
+        const rule = '年龄|number|0|150|0|0|null';
         const result = parseRule(rule);
 
         expect(result.type).toBe('number');

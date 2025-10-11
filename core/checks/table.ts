@@ -134,16 +134,17 @@ export default async function (): Promise<boolean> {
                             fileValid = false;
                         }
 
-                        const allParts = rule.split('⚡');
-
-                        // 必须包含7个部分：显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束
-                        if (allParts.length !== 7) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 字段规则格式错误，` + `必须包含7个部分，当前包含${allParts.length}个部分`);
+                        // 使用 parseRule 解析字段规则
+                        let parsed;
+                        try {
+                            parsed = parseRule(rule);
+                        } catch (error: any) {
+                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 字段规则解析失败：${error.message}`);
                             fileValid = false;
                             continue;
                         }
 
-                        const [fieldName, fieldType, fieldMin, fieldMax, fieldDefault, fieldIndex, fieldRegx] = allParts;
+                        const { label: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
 
                         // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
                         if (!FIELD_NAME_REGEX.test(fieldName)) {
@@ -158,47 +159,40 @@ export default async function (): Promise<boolean> {
                         }
 
                         // 第3/4个值：需要是 null 或 数字
-                        if (!(fieldMin === 'null' || !Number.isNaN(Number(fieldMin)))) {
+                        if (!(fieldMin === null || typeof fieldMin === 'number')) {
                             Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
                             fileValid = false;
                         }
-                        if (!(fieldMax === 'null' || !Number.isNaN(Number(fieldMax)))) {
+                        if (!(fieldMax === null || typeof fieldMax === 'number')) {
                             Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
                             fileValid = false;
                         }
 
                         // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
-                        if (fieldMin !== 'null' && fieldMax !== 'null') {
-                            if (Number(fieldMin) > Number(fieldMax)) {
+                        if (fieldMin !== null && fieldMax !== null) {
+                            if (fieldMin > fieldMax) {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
                                 fileValid = false;
                             }
                         }
 
                         // 第6个值：是否创建索引必须为0或1
-                        if (fieldIndex !== '0' && fieldIndex !== '1') {
+                        if (fieldIndex !== 0 && fieldIndex !== 1) {
                             Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为0或1`);
                             fileValid = false;
                         }
 
-                        // 第7个值：必须为null或正则表达式
-                        if (fieldRegx !== 'null') {
-                            try {
-                                new RegExp(fieldRegx);
-                            } catch {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 正则约束 "${fieldRegx}" 格式错误，` + `必须为null或有效的正则表达式`);
-                                fileValid = false;
-                            }
-                        }
+                        // 第7个值：必须为null或正则表达式（parseRule已经验证过了）
+                        // parseRule 已经将正则字符串转换为 RegExp 或 null，这里不需要再验证
 
                         // 第4个值与类型联动校验 + 默认值规则
                         if (fieldType === 'text') {
                             // text：min/max 必须为 null，默认值必须为 'null'
-                            if (fieldMin !== 'null') {
+                            if (fieldMin !== null) {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
                                 fileValid = false;
                             }
-                            if (fieldMax !== 'null') {
+                            if (fieldMax !== null) {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
                                 fileValid = false;
                             }
@@ -207,25 +201,19 @@ export default async function (): Promise<boolean> {
                                 fileValid = false;
                             }
                         } else if (fieldType === 'string' || fieldType === 'array') {
-                            if (Number.isNaN(Number(fieldMax))) {
+                            if (fieldMax === null || typeof fieldMax !== 'number') {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
                                 fileValid = false;
-                            }
-                            const maxVal = parseInt(fieldMax, 10);
-                            if (maxVal > MAX_VARCHAR_LENGTH) {
+                            } else if (fieldMax > MAX_VARCHAR_LENGTH) {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                                 fileValid = false;
                             }
                         } else if (fieldType === 'number') {
-                            if (fieldDefault !== 'null' && Number.isNaN(Number(fieldDefault))) {
+                            if (fieldDefault !== 'null' && typeof fieldDefault !== 'number') {
                                 Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或null，当前为 "${fieldDefault}"`);
                                 fileValid = false;
                             }
                         }
-                    } catch (error: any) {
-                        Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 验证规则解析失败: ${error.message}`);
-                        fileValid = false;
-                    }
                 }
 
                 if (fileValid) {

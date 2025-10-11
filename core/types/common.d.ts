@@ -22,7 +22,7 @@ export interface ValidationResult {
 
 /**
  * 字段规则类型 - 7段式定义
- * 格式: "显示名⚡类型⚡最小值⚡最大值⚡默认值⚡是否索引⚡正则约束"
+ * 格式: "显示名|类型|最小值|最大值|默认值|是否索引|正则约束"
  */
 export type FieldRule = string;
 

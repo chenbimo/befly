@@ -1,6 +1,6 @@
 {
-    "filename": "文件名⚡string⚡1⚡255⚡''⚡1⚡null",
-    "content": "内容⚡string⚡0⚡100⚡''⚡0⚡null",
-    "type": "类型⚡string⚡0⚡50⚡file⚡1⚡^(file|folder|link)$",
-    "path": "路径⚡string⚡1⚡500⚡''⚡0⚡null"
+    "filename": "文件名|string|1|255|''|1|null",
+    "content": "内容|string|0|100|''|0|null",
+    "type": "类型|string|0|50|file|1|^(file|folder|link)$",
+    "path": "路径|string|1|500|''|0|null"
 }
