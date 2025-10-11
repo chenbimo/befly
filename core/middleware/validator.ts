@@ -5,17 +5,14 @@
 
 import { Validator } from '../utils/validate.js';
 import type { ApiRoute } from '../types/api.js';
+import type { RequestContext } from '../types/context.js';
 
 // 创建全局validator实例
 const validator = new Validator();
 
-export interface ValidateContext {
-    body: any;
-}
-
 /**
  * 验证请求参数
  */
-export function validateParams(api: ApiRoute, ctx: ValidateContext) {
-    return validator.validate(ctx.body, api.fields, api.required);
+export function validateParams(api: ApiRoute, ctx: RequestContext) {
+    return validator.validate(ctx.params, api.fields, api.required);
 }

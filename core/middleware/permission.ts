@@ -5,10 +5,7 @@
 
 import { isType } from '../utils/index.js';
 import type { ApiRoute } from '../types/api.js';
-
-export interface PermissionContext {
-    user: any;
-}
+import type { RequestContext } from '../types/context.js';
 
 export interface PermissionResult {
     allowed: boolean;
@@ -23,7 +20,7 @@ export interface PermissionResult {
  * - string: 需要特定角色类型
  * - array: 需要在角色列表中
  */
-export function checkPermission(api: ApiRoute, ctx: PermissionContext): PermissionResult {
+export function checkPermission(api: ApiRoute, ctx: RequestContext): PermissionResult {
     // 登录验证
     if (api.auth === true && !ctx.user.id) {
         return {

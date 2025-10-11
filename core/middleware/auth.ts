@@ -4,16 +4,13 @@
  */
 
 import { Jwt } from '../utils/jwt.js';
-
-export interface AuthContext {
-    user: any;
-}
+import type { RequestContext } from '../types/context.js';
 
 /**
  * 从请求头中提取并验证JWT token
  */
-export async function authenticate(req: Request, ctx: AuthContext): Promise<void> {
-    const authHeader = req.headers.get('authorization');
+export async function authenticate(ctx: RequestContext): Promise<void> {
+    const authHeader = ctx.header('authorization');
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);

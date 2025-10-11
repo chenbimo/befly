@@ -3,6 +3,7 @@
  */
 
 import type { BeflyContext } from './befly.js';
+import type { RequestContext } from './context.js';
 
 /**
  * 插件初始化函数类型
@@ -12,7 +13,7 @@ export type PluginInitFunction = (befly: BeflyContext) => Promise<any> | any;
 /**
  * 插件请求处理钩子函数类型
  */
-export type PluginGetHook = (befly: BeflyContext, ctx: any, req: Request) => Promise<void> | void;
+export type PluginGetHook = (befly: BeflyContext, ctx: RequestContext, req: Request) => Promise<void> | void;
 
 /**
  * 插件配置类型

@@ -12,6 +12,7 @@ import { checkPermission } from '../middleware/permission.js';
 import { validateParams } from '../middleware/validator.js';
 import { executePluginHooks } from '../middleware/plugin-hooks.js';
 import { logRequest } from '../middleware/request-logger.js';
+import { RequestContext } from '../types/context.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -33,12 +34,8 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
                 return handleOptionsRequest(corsOptions);
             }
 
-            // 2. 初始化请求上下文
-            const ctx = {
-                headers: Object.fromEntries(req.headers.entries()),
-                body: {},
-                user: {}
-            };
+            // 2. 创建请求上下文
+            const ctx = new RequestContext(req);
 
             // 3. 获取API路由
             const url = new URL(req.url);
@@ -52,13 +49,13 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             }
 
             // 4. 用户认证
-            await authenticate(req, ctx);
+            await authenticate(ctx);
 
             // 5. 参数解析
             if (req.method === 'GET') {
-                parseGetParams(req, api, ctx);
+                parseGetParams(api, ctx);
             } else if (req.method === 'POST') {
-                const parseSuccess = await parsePostParams(req, api, ctx);
+                const parseSuccess = await parsePostParams(api, ctx);
                 if (!parseSuccess) {
                     return Response.json(No('无效的请求参数格式'), {
                         headers: corsOptions.headers
@@ -67,10 +64,10 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             }
 
             // 6. 执行插件钩子
-            await executePluginHooks(pluginLists, appContext, ctx, req);
+            await executePluginHooks(pluginLists, appContext, ctx);
 
             // 7. 记录请求日志
-            logRequest(apiPath, req.method, ctx);
+            logRequest(apiPath, ctx);
 
             // 8. 权限验证
             const permissionResult = checkPermission(api, ctx);

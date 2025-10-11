@@ -6,21 +6,16 @@
 import { Logger } from '../utils/logger.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
-
-export interface HookContext {
-    headers: Record<string, string>;
-    body: any;
-    user: any;
-}
+import type { RequestContext } from '../types/context.js';
 
 /**
  * 执行所有插件的onGet钩子
  */
-export async function executePluginHooks(pluginLists: Plugin[], appContext: BeflyContext, ctx: HookContext, req: Request): Promise<void> {
+export async function executePluginHooks(pluginLists: Plugin[], appContext: BeflyContext, ctx: RequestContext): Promise<void> {
     for await (const plugin of pluginLists) {
         try {
             if (typeof plugin?.onGet === 'function') {
-                await plugin?.onGet(appContext, ctx, req);
+                await plugin?.onGet(appContext, ctx, ctx.request);
             }
         } catch (error: any) {
             Logger.error({

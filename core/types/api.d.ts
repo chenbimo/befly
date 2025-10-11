@@ -4,6 +4,7 @@
 
 import type { BeflyContext } from './befly.js';
 import type { KeyValue, TableDefinition } from './common.js';
+import type { RequestContext } from './context.js';
 
 /**
  * HTTP 方法类型
@@ -11,7 +12,8 @@ import type { KeyValue, TableDefinition } from './common.js';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
 
 /**
- * 请求上下文类型
+ * 请求上下文类型（已废弃，使用 RequestContext 类）
+ * @deprecated 使用 RequestContext 类替代
  */
 export interface RequestContext<T = any> {
     /** 请求对象 */
@@ -69,7 +71,7 @@ export type AuthType = boolean | 'admin' | 'user' | string[];
 /**
  * API 处理器函数类型
  */
-export type ApiHandler<T = any, R = any> = (befly: BeflyContext, ctx: any, req?: Request) => Promise<Response | R> | Response | R;
+export type ApiHandler<T = any, R = any> = (befly: BeflyContext, ctx: RequestContext, req?: Request) => Promise<Response | R> | Response | R;
 
 /**
  * API 路由配置
