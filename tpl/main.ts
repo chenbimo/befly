@@ -1,16 +1,11 @@
 /**
- * Befly 3.0 - TypeScript 示例项目入口
- *
- * 这是一个完整的 TypeScript 项目示例，展示如何使用 Befly 3.0 的所有特性
+ * Befly 项目入口文件
  */
 
-import { Server } from 'befly';
+import { Befly } from 'befly';
 
-// 启动服务器
-await Server({
-    name: 'Befly TypeScript Demo',
-    port: 3000
-});
+const app = new Befly();
 
-console.log('🚀 Befly TypeScript 示例服务已启动！');
+await app.listen();
+
 console.log('📖 访问 http://localhost:3000 查看接口列表');

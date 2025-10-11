@@ -1,0 +1,105 @@
+/**
+ * 系统检查管理器
+ * 负责在框架启动前执行系统检查
+ */
+
+import path from 'node:path';
+import { Logger } from '../utils/logger.js';
+import { calcPerfTime } from '../utils/index.js';
+import { __dirchecks } from '../system.js';
+import type { BeflyContext } from '../types/befly.js';
+
+/**
+ * 系统检查器类
+ */
+export class Checker {
+    /**
+     * 执行所有系统检查
+     * @param appContext - 应用上下文
+     */
+    static async run(appContext: BeflyContext): Promise<void> {
+        try {
+            const checkStartTime = Bun.nanoseconds();
+
+            const glob = new Bun.Glob('*.{js,ts}');
+
+            // 统计信息
+            let totalChecks = 0;
+            let passedChecks = 0;
+            let failedChecks = 0;
+
+            // 扫描并执行检查函数
+            for await (const file of glob.scan({
+                cwd: __dirchecks,
+                onlyFiles: true,
+                absolute: true
+            })) {
+                const fileName = path.basename(file);
+                if (fileName.startsWith('_')) continue; // 跳过以下划线开头的文件
+
+                try {
+                    totalChecks++;
+                    const singleCheckStart = Bun.nanoseconds();
+
+                    // 导入检查模块
+                    const checkModule = await import(file);
+
+                    // 仅允许具名导出（以 check 开头）的检查函数
+                    let checkFn = null;
+                    for (const [exportName, exportValue] of Object.entries(checkModule)) {
+                        if (typeof exportValue === 'function' && /^check/i.test(exportName)) {
+                            checkFn = exportValue;
+                            break;
+                        }
+                    }
+
+                    // 执行检查函数
+                    if (typeof checkFn === 'function') {
+                        const checkResult = await checkFn(appContext);
+                        const singleCheckTime = calcPerfTime(singleCheckStart);
+
+                        if (checkResult === true) {
+                            passedChecks++;
+                            Logger.info(`检查 ${fileName} 通过，耗时: ${singleCheckTime}`);
+                        } else {
+                            Logger.error(`检查未通过: ${fileName}，耗时: ${singleCheckTime}`);
+                            failedChecks++;
+                        }
+                    } else {
+                        const singleCheckTime = calcPerfTime(singleCheckStart);
+                        Logger.warn(`文件 ${fileName} 未找到可执行的检查函数（必须具名导出以 check 开头的函数），耗时: ${singleCheckTime}`);
+                        failedChecks++;
+                    }
+                } catch (error: any) {
+                    const singleCheckTime = calcPerfTime(singleCheckStart);
+                    Logger.error({
+                        msg: `检查失败 ${fileName}，耗时: ${singleCheckTime}`,
+                        error: error.message,
+                        stack: error.stack
+                    });
+                    failedChecks++;
+                }
+            }
+
+            const totalCheckTime = calcPerfTime(checkStartTime);
+
+            // 输出检查结果统计
+            Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${totalChecks}, 通过: ${passedChecks}, 失败: ${failedChecks}`);
+
+            if (failedChecks > 0) {
+                process.exit();
+            } else if (totalChecks > 0) {
+                Logger.info(`所有系统检查通过!`);
+            } else {
+                Logger.info(`未执行任何检查`);
+            }
+        } catch (error: any) {
+            Logger.error({
+                msg: '执行系统检查时发生错误',
+                error: error.message,
+                stack: error.stack
+            });
+            process.exit();
+        }
+    }
+}

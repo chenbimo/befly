@@ -8,7 +8,7 @@
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient } from '../utils/index.js';
-import { Crypto } from '../utils/crypto.js';
+import { Crypto2 as Crypto } from '../utils/crypto.js';
 import type { CliArgs } from '../types/cli.js';
 
 // 解析命令行参数

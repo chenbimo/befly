@@ -36,45 +36,7 @@ const replaceClose = (string: string, close: string, replace: string, index: num
     return result + string.substring(cursor);
 };
 
-export const Colors: ColorsInterface = {
-    green: Formatter;
-    yellow: Formatter;
-    blue: Formatter;
-    magenta: Formatter;
-    cyan: Formatter;
-    white: Formatter;
-    gray: Formatter;
-    bgBlack: Formatter;
-    bgRed: Formatter;
-    bgGreen: Formatter;
-    bgYellow: Formatter;
-    bgBlue: Formatter;
-    bgMagenta: Formatter;
-    bgCyan: Formatter;
-    bgWhite: Formatter;
-    blackBright: Formatter;
-    redBright: Formatter;
-    greenBright: Formatter;
-    yellowBright: Formatter;
-    blueBright: Formatter;
-    magentaBright: Formatter;
-    cyanBright: Formatter;
-    whiteBright: Formatter;
-    bgBlackBright: Formatter;
-    bgRedBright: Formatter;
-    bgGreenBright: Formatter;
-    bgYellowBright: Formatter;
-    bgBlueBright: Formatter;
-    bgMagentaBright: Formatter;
-    bgCyanBright: Formatter;
-    bgWhiteBright: Formatter;
-    info: string;
-    success: string;
-    warn: string;
-    error: string;
-}
-
-const createColors = (enabled: boolean = isColorSupported): Colors => {
+const createColors = (enabled: boolean = isColorSupported): ColorsInterface => {
     const f = enabled ? formatter : (): Formatter => String as Formatter;
 
     const baseColors = {
@@ -141,3 +103,4 @@ const createColors = (enabled: boolean = isColorSupported): Colors => {
 };
 
 export const colors = createColors();
+export { colors as Colors }; // 别名导出，保持向后兼容
