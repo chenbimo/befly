@@ -119,18 +119,7 @@ export interface ApiRoute<T = any, R = any> {
 
     /** 处理器函数 */
     handler: ApiHandler<T, R>;
-
-    /** 是否记录日志 */
-    logging?: boolean;
-
-    /** 自定义中间件 */
-    middleware?: ApiMiddleware[];
 }
-
-/**
- * API 中间件类型
- */
-export type ApiMiddleware = (befly: Befly, ctx: RequestContext, next: () => Promise<any>) => Promise<any>;
 
 /**
  * API 构建器接口
