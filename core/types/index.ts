@@ -9,13 +9,7 @@ export * from './common';
 export * from './api';
 export * from './befly';
 export * from './plugin';
-export * from './context'; // 新增：导出 RequestContext 类
-
-// 导出数据模型类型
-export * from './models';
-
-// 导出工具类型
-export * from './utils';
+export * from './context';
 
 // 导出功能模块类型
 export * from './database';
@@ -25,9 +19,6 @@ export * from './validator';
 export * from './redis';
 export * from './logger';
 export * from './tool';
-export * from './colors';
-export * from './apiUtils';
-export * from './xml';
 
 /**
  * API 请求上下文

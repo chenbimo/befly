@@ -7,7 +7,16 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
-import type { TableFileInfo } from '../types/cli.js';
+
+/**
+ * 表文件信息接口
+ */
+interface TableFileInfo {
+    /** 表文件路径 */
+    file: string;
+    /** 文件类型：core（核心）或 project（项目） */
+    type: 'core' | 'project';
+}
 
 /**
  * 保留字段列表
