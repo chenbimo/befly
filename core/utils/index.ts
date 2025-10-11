@@ -33,7 +33,7 @@ export { Validator } from './validate.js';
 export { SqlBuilder } from './sqlBuilder.js';
 export { SqlManager } from './sqlManager.js';
 export type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from './sqlManager.js';
-export { RedisHelper, setRedisClient, getRedisClient } from './redisHelper.js';
+export { RedisHelper, initRedisClient, getRedisClient, closeRedisClient } from './redisHelper.js';
 export { Jwt } from './jwt.js';
 export type { JwtPayload } from './jwt.js';
 export { Crypto2 } from './crypto.js';

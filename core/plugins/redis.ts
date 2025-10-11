@@ -3,10 +3,9 @@
  * 初始化 Redis 连接和助手工具
  */
 
-import { redis } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { RedisHelper, getRedisClient } from '../utils/redisHelper.js';
+import { RedisHelper, initRedisClient, getRedisClient } from '../utils/redisHelper.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
@@ -20,14 +19,22 @@ const redisPlugin: Plugin = {
     async onInit(befly: BeflyContext): Promise<typeof RedisHelper | Record<string, never>> {
         try {
             if (Env.REDIS_ENABLE === 1) {
-                const client = getRedisClient();
+                // 初始化 Redis 客户端
+                const client = initRedisClient();
+
+                // 测试连接
                 const pingResult = await client.ping();
 
                 if (pingResult !== 'PONG') {
                     throw new Error('Redis 连接失败：ping 响应异常');
                 }
 
-                Logger.info('Redis 插件初始化成功');
+                Logger.info('Redis 插件初始化成功', {
+                    host: Env.REDIS_HOST,
+                    port: Env.REDIS_PORT,
+                    db: Env.REDIS_DB
+                });
+
                 // 返回工具对象，向下游以相同 API 暴露
                 return RedisHelper;
             } else {

@@ -62,8 +62,6 @@ export interface EnvConfig {
     DB_POOL_MAX: number;
 
     // ========== Redis 配置 ==========
-    /** Redis 连接 URL */
-    REDIS_URL: string;
     /** 是否启用 Redis：0 | 1 */
     REDIS_ENABLE: number;
     /** Redis 主机 */
@@ -181,7 +179,6 @@ export const Env: EnvConfig = {
     DB_POOL_MAX: getEnvNumber('DB_POOL_MAX', 10),
 
     // ========== Redis 配置 ==========
-    REDIS_URL: getEnv('REDIS_URL', ''),
     REDIS_ENABLE: getEnvNumber('REDIS_ENABLE', 1),
     REDIS_HOST: getEnv('REDIS_HOST', 'localhost'),
     REDIS_PORT: getEnvNumber('REDIS_PORT', 6379),

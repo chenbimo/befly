@@ -3,10 +3,9 @@
  * 提供 Redis 操作的便捷方法
  */
 
-import { redis as bunRedis } from 'bun';
+import { RedisClient } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
-import type { RedisClient } from '../types/redis.js';
 
 /**
  * Redis 键前缀
@@ -14,23 +13,76 @@ import type { RedisClient } from '../types/redis.js';
 const prefix = Env.REDIS_KEY_PREFIX ? `${Env.REDIS_KEY_PREFIX}:` : '';
 
 /**
- * Redis 客户端实例
+ * 构建 Redis 连接 URL
+ * @returns Redis 连接 URL
  */
-let redisClient: RedisClient = bunRedis;
+function buildRedisUrl(): string {
+    const { REDIS_HOST, REDIS_PORT, REDIS_USERNAME, REDIS_PASSWORD, REDIS_DB } = Env;
+
+    // 构建认证部分
+    let auth = '';
+    if (REDIS_USERNAME && REDIS_PASSWORD) {
+        auth = `${REDIS_USERNAME}:${REDIS_PASSWORD}@`;
+    } else if (REDIS_PASSWORD) {
+        auth = `:${REDIS_PASSWORD}@`;
+    }
+
+    // 构建完整 URL
+    const url = `redis://${auth}${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}`;
+
+    return url;
+}
 
 /**
- * 设置 Redis 客户端
- * @param client - Redis 客户端实例
+ * Redis 客户端实例
  */
-export const setRedisClient = (client: RedisClient | null): void => {
-    redisClient = client || bunRedis;
+let redisClient: RedisClient | null = null;
+
+/**
+ * 初始化 Redis 客户端
+ * @returns Redis 客户端实例
+ */
+export const initRedisClient = (): RedisClient => {
+    if (!redisClient) {
+        const url = buildRedisUrl();
+        redisClient = new RedisClient(url, {
+            // 连接超时（毫秒）
+            connectionTimeout: 10000,
+            // 空闲超时（毫秒），0 表示无超时
+            idleTimeout: 30000,
+            // 断开连接时自动重连
+            autoReconnect: true,
+            // 最大重连次数
+            maxRetries: 10,
+            // 断开连接时缓存命令
+            enableOfflineQueue: true,
+            // 自动管道化命令
+            enableAutoPipelining: true
+        });
+    }
+    return redisClient;
 };
 
 /**
  * 获取 Redis 客户端
  * @returns Redis 客户端实例
  */
-export const getRedisClient = (): RedisClient => redisClient;
+export const getRedisClient = (): RedisClient => {
+    if (!redisClient) {
+        return initRedisClient();
+    }
+    return redisClient;
+};
+
+/**
+ * 关闭 Redis 连接
+ */
+export const closeRedisClient = (): void => {
+    if (redisClient) {
+        redisClient.close();
+        redisClient = null;
+    }
+};
 
 /**
  * Redis 助手对象
