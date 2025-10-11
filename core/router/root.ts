@@ -4,7 +4,7 @@
  */
 
 import { Env } from '../config/env.js';
-import { setCorsOptions } from '../utils/index.js';
+import { setCorsOptions } from '../middleware/cors.js';
 
 /**
  * 根路径处理器

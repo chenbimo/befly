@@ -5,7 +5,9 @@
 
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
-import { calcPerfTime, sortPlugins, isType } from '../utils/index.js';
+import { calcPerfTime } from '../utils/datetime.js';
+import { sortPlugins } from '../utils/pluginHelper.js';
+import { isType } from '../utils/typeHelper.js';
 import { __dirplugins, __dirapis, getProjectDir } from '../system.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';

@@ -5,7 +5,8 @@
 
 import path from 'node:path';
 import { getProjectDir } from '../system.js';
-import { setCorsOptions, No } from '../utils/index.js';
+import { No } from '../utils/index.js';
+import { setCorsOptions } from '../middleware/cors.js';
 
 /**
  * 静态文件处理器

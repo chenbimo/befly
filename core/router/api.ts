@@ -4,8 +4,8 @@
  */
 
 import { Logger } from '../utils/logger.js';
-import { No, setCorsOptions } from '../utils/index.js';
-import { handleOptionsRequest } from '../middleware/cors.js';
+import { No } from '../utils/index.js';
+import { setCorsOptions, handleOptionsRequest } from '../middleware/cors.js';
 import { authenticate } from '../middleware/auth.js';
 import { parseGetParams, parsePostParams } from '../middleware/parser.js';
 import { checkPermission } from '../middleware/permission.js';

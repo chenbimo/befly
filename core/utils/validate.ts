@@ -3,7 +3,8 @@
  * 提供类型安全的字段验证功能
  */
 
-import { isType, parseRule } from './index.js';
+import { isType } from './typeHelper.js';
+import { parseRule } from './tableHelper.js';
 import type { TableDefinition, FieldRule } from '../types/common.js';
 import type { ValidationResult, ParsedFieldRule, ValidationError } from '../types/validator';
 
