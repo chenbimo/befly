@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
-import { __dirchecks } from '../system.js';
+import { __dirchecks, getProjectDir } from '../system.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 
 /**
@@ -23,73 +23,86 @@ export class Checker {
             const glob = new Bun.Glob('*.{js,ts}');
 
             // 统计信息
-            let totalChecks = 0;
-            let passedChecks = 0;
-            let failedChecks = 0;
+            const stats = {
+                totalChecks: 0,
+                passedChecks: 0,
+                failedChecks: 0
+            };
 
-            // 扫描并执行检查函数
-            for await (const file of glob.scan({
-                cwd: __dirchecks,
-                onlyFiles: true,
-                absolute: true
-            })) {
-                const fileName = path.basename(file);
-                if (fileName.startsWith('_')) continue; // 跳过以下划线开头的文件
+            // 检查目录列表：先核心，后项目
+            const checkDirs = [
+                { path: __dirchecks, type: 'core' as const },
+                { path: getProjectDir('checks'), type: 'project' as const }
+            ];
 
-                try {
-                    totalChecks++;
-                    const singleCheckStart = Bun.nanoseconds();
+            // 按顺序扫描并执行检查函数
+            for (const { path: checkDir, type } of checkDirs) {
+                const checkTypeLabel = type === 'core' ? '核心' : '项目';
+                Logger.info(`开始执行${checkTypeLabel}检查，目录: ${checkDir}`);
 
-                    // 导入检查模块
-                    const checkModule = await import(file);
+                for await (const file of glob.scan({
+                    cwd: checkDir,
+                    onlyFiles: true,
+                    absolute: true
+                })) {
+                    const fileName = path.basename(file);
+                    if (fileName.startsWith('_')) continue; // 跳过以下划线开头的文件
 
-                    // 获取 default 导出的检查函数
-                    const checkFn = checkModule.default;
+                    try {
+                        stats.totalChecks++;
+                        const singleCheckStart = Bun.nanoseconds();
 
-                    // 执行检查函数
-                    if (typeof checkFn === 'function') {
-                        const checkResult = await checkFn();
-                        const singleCheckTime = calcPerfTime(singleCheckStart);
+                        // 导入检查模块
+                        const checkModule = await import(file);
 
-                        // 检查返回值是否为 boolean
-                        if (typeof checkResult !== 'boolean') {
-                            Logger.error(`检查 ${fileName} 返回值必须为 true 或 false，当前为 ${typeof checkResult}，耗时: ${singleCheckTime}`);
-                            failedChecks++;
-                        } else if (checkResult === true) {
-                            passedChecks++;
-                            Logger.info(`检查 ${fileName} 通过，耗时: ${singleCheckTime}`);
+                        // 获取 default 导出的检查函数
+                        const checkFn = checkModule.default;
+
+                        // 执行检查函数
+                        if (typeof checkFn === 'function') {
+                            const checkResult = await checkFn();
+                            const singleCheckTime = calcPerfTime(singleCheckStart);
+
+                            // 检查返回值是否为 boolean
+                            if (typeof checkResult !== 'boolean') {
+                                Logger.error(`${checkTypeLabel}检查 ${fileName} 返回值必须为 true 或 false，当前为 ${typeof checkResult}，耗时: ${singleCheckTime}`);
+                                stats.failedChecks++;
+                            } else if (checkResult === true) {
+                                stats.passedChecks++;
+                                Logger.info(`${checkTypeLabel}检查 ${fileName} 通过，耗时: ${singleCheckTime}`);
+                            } else {
+                                Logger.error(`${checkTypeLabel}检查未通过: ${fileName}，耗时: ${singleCheckTime}`);
+                                stats.failedChecks++;
+                            }
                         } else {
-                            Logger.error(`检查未通过: ${fileName}，耗时: ${singleCheckTime}`);
-                            failedChecks++;
+                            const singleCheckTime = calcPerfTime(singleCheckStart);
+                            Logger.error(`${checkTypeLabel}检查文件 ${fileName} 未找到 default 导出的检查函数，耗时: ${singleCheckTime}`);
+                            stats.failedChecks++;
                         }
-                    } else {
-                        const singleCheckTime = calcPerfTime(singleCheckStart);
-                        Logger.error(`文件 ${fileName} 未找到 default 导出的检查函数，耗时: ${singleCheckTime}`);
-                        failedChecks++;
+                    } catch (error: any) {
+                        const singleCheckTime = calcPerfTime(Bun.nanoseconds());
+                        Logger.error({
+                            msg: `${checkTypeLabel}检查失败 ${fileName}，耗时: ${singleCheckTime}`,
+                            error: error.message,
+                            stack: error.stack
+                        });
+                        stats.failedChecks++;
                     }
-                } catch (error: any) {
-                    const singleCheckTime = calcPerfTime(singleCheckStart);
-                    Logger.error({
-                        msg: `检查失败 ${fileName}，耗时: ${singleCheckTime}`,
-                        error: error.message,
-                        stack: error.stack
-                    });
-                    failedChecks++;
                 }
             }
 
             const totalCheckTime = calcPerfTime(checkStartTime);
 
             // 输出检查结果统计
-            Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${totalChecks}, 通过: ${passedChecks}, 失败: ${failedChecks}`);
+            Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${stats.totalChecks}, 通过: ${stats.passedChecks}, 失败: ${stats.failedChecks}`);
 
-            if (failedChecks > 0) {
+            if (stats.failedChecks > 0) {
                 ErrorHandler.critical('系统检查失败，无法继续启动', undefined, {
-                    totalChecks,
-                    passedChecks,
-                    failedChecks
+                    totalChecks: stats.totalChecks,
+                    passedChecks: stats.passedChecks,
+                    failedChecks: stats.failedChecks
                 });
-            } else if (totalChecks > 0) {
+            } else if (stats.totalChecks > 0) {
                 Logger.info(`所有系统检查通过!`);
             } else {
                 Logger.info(`未执行任何检查`);
