@@ -1,15 +1,13 @@
 /**
- * 同步开发管理员账号脚本 - TypeScript 版本
- * - 账号: dev
- * - 密码: Crypto.hmacMd5(Crypto.md5(Env.DEV_PASSWORD), Env.MD5_SALT)
- * - 行为: 若存在则更新密码与 updated_at；不存在则插入新记录
+ * 同步开发者用户到数据库
+ * - 用户名: Env.DEV_USERNAME (默认 dev)
+ * - 密码: Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT)
  */
 
+import { DB } from '../plugins/db.js';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { createSqlClient } from '../utils/index.js';
-import { Crypto2 as Crypto } from '../utils/crypto.js';
-import type { CliArgs } from '../types/cli.js';
+import { Crypto2 } from '../utils/crypto.js';
 
 // 解析命令行参数
 const ARGV = Array.isArray(process.argv) ? process.argv : [];
@@ -58,7 +56,10 @@ export async function SyncDev(client: any = null): Promise<boolean> {
         }
 
         const nowTs = Date.now();
-        const hashed = Crypto.hmacMd5(Crypto.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
+        // 对密码进行双重加密
+        const hashed = Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
+
+        const [existingUsers] = await DB.query(
 
         // 更新存在的 dev 账号
         const updateRes = await exec(client, 'UPDATE `admin` SET `password` = ?, `updated_at` = ? WHERE `account` = ? LIMIT 1', [hashed, nowTs, 'dev']);

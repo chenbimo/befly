@@ -268,6 +268,3 @@ export class StreamHasher {
         return newHasher;
     }
 }
-
-// 别名导出，保持向后兼容
-export { Crypto2 as Crypto };

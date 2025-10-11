@@ -6,7 +6,7 @@ import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 import type { LoginRequest, LoginResponse } from '../../../types/api';
 import type { User } from '../../../types/models';
-import { Crypto } from 'befly/utils/crypto';
+import { Crypto2 } from 'befly/utils/crypto';
 import { Jwt } from 'befly/utils/jwt';
 
 export default Api.POST(
@@ -32,7 +32,7 @@ export default Api.POST(
             }
 
             // 验证密码
-            const isValid = await Crypto.verifyPassword(password, user.password);
+            const isValid = await Crypto2.verifyPassword(password, user.password);
             if (!isValid) {
                 return No('用户名或密码错误');
             }

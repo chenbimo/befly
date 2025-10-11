@@ -378,7 +378,7 @@ export type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListRes
 export { RedisHelper, setRedisClient, getRedisClient } from './redisHelper.js';
 export { Jwt } from './jwt.js';
 export type { JwtPayload } from './jwt.js';
-export { Crypto } from './crypto.js';
+export { Crypto2 } from './crypto.js';
 export type { EncodingType, HashAlgorithm } from './crypto.js';
 export { Xml } from './xml.js';
 export type { XmlParseOptions } from './xml.js';
