@@ -73,7 +73,7 @@ export class Validator {
             if (!(fieldName in data) || value === undefined || value === null || value === '') {
                 result.code = 1;
                 const ruleParts = parseRule(rules[fieldName] || '');
-                const fieldLabel = ruleParts.label || fieldName;
+                const fieldLabel = ruleParts.name || fieldName;
                 result.fields[fieldName] = `${fieldLabel}(${fieldName})为必填项`;
             }
         }
@@ -109,15 +109,15 @@ export class Validator {
      */
     private validateFieldValue(value: any, rule: FieldRule, fieldName: string): ValidationError {
         const parsed = parseRule(rule);
-        const { label, type, min, max, regex } = parsed;
+        const { name, type, min, max, regex } = parsed;
 
         switch (type.toLowerCase()) {
             case 'number':
-                return this.validateNumber(value, label, min, max, regex, fieldName);
+                return this.validateNumber(value, name, min, max, regex, fieldName);
             case 'string':
-                return this.validateString(value, label, min, max, regex, fieldName);
+                return this.validateString(value, name, min, max, regex, fieldName);
             case 'text':
-                return this.validateString(value, label, min, max, regex, fieldName);
+                return this.validateString(value, name, min, max, regex, fieldName);
             case 'array':
                 return this.validateArray(value, label, min, max, regex, fieldName);
             default:
@@ -255,7 +255,7 @@ export class Validator {
      */
     static validateSingleValue(value: any, rule: string): { valid: boolean; value: any; errors: string[] } {
         const parsed = parseRule(rule);
-        const { label, type, min, max, regex, default: defaultValue } = parsed;
+        const { name, type, min, max, regex, default: defaultValue } = parsed;
 
         // 处理 undefined/null 值，使用默认值
         if (value === undefined || value === null) {
@@ -295,7 +295,7 @@ export class Validator {
         if (type === 'number' && typeof value === 'string') {
             convertedValue = Number(value);
             if (isNaN(convertedValue)) {
-                errors.push(`${label || '值'}必须是有效的数字`);
+                errors.push(`${name || '值'}必须是有效的数字`);
                 return { valid: false, value: null, errors };
             }
         }
@@ -304,22 +304,22 @@ export class Validator {
         switch (type.toLowerCase()) {
             case 'number':
                 if (!isType(convertedValue, 'number')) {
-                    errors.push(`${label || '值'}必须是数字`);
+                    errors.push(`${name || '值'}必须是数字`);
                 }
                 if (min !== null && convertedValue < min) {
-                    errors.push(`${label || '值'}不能小于${min}`);
+                    errors.push(`${name || '值'}不能小于${min}`);
                 }
                 if (max !== null && max > 0 && convertedValue > max) {
-                    errors.push(`${label || '值'}不能大于${max}`);
+                    errors.push(`${name || '值'}不能大于${max}`);
                 }
                 if (regex && regex.trim() !== '' && regex !== 'null') {
                     try {
                         const regExp = new RegExp(regex);
                         if (!regExp.test(String(convertedValue))) {
-                            errors.push(`${label || '值'}格式不正确`);
+                            errors.push(`${name || '值'}格式不正确`);
                         }
                     } catch {
-                        errors.push(`${label || '值'}的正则表达式格式错误`);
+                        errors.push(`${name || '值'}的正则表达式格式错误`);
                     }
                 }
                 break;
@@ -327,47 +327,47 @@ export class Validator {
             case 'string':
             case 'text':
                 if (!isType(convertedValue, 'string')) {
-                    errors.push(`${label || '值'}必须是字符串`);
+                    errors.push(`${name || '值'}必须是字符串`);
                 }
                 if (min !== null && convertedValue.length < min) {
-                    errors.push(`${label || '值'}长度不能少于${min}个字符`);
+                    errors.push(`${name || '值'}长度不能少于${min}个字符`);
                 }
                 if (max !== null && max > 0 && convertedValue.length > max) {
-                    errors.push(`${label || '值'}长度不能超过${max}个字符`);
+                    errors.push(`${name || '值'}长度不能超过${max}个字符`);
                 }
                 if (regex && regex.trim() !== '' && regex !== 'null') {
                     try {
                         const regExp = new RegExp(regex);
                         if (!regExp.test(convertedValue)) {
-                            errors.push(`${label || '值'}格式不正确`);
+                            errors.push(`${name || '值'}格式不正确`);
                         }
                     } catch {
-                        errors.push(`${label || '值'}的正则表达式格式错误`);
+                        errors.push(`${name || '值'}的正则表达式格式错误`);
                     }
                 }
                 break;
 
             case 'array':
                 if (!Array.isArray(convertedValue)) {
-                    errors.push(`${label || '值'}必须是数组`);
+                    errors.push(`${name || '值'}必须是数组`);
                 }
                 if (min !== null && convertedValue.length < min) {
-                    errors.push(`${label || '值'}元素数量不能少于${min}个`);
+                    errors.push(`${name || '值'}元素数量不能少于${min}个`);
                 }
                 if (max !== null && max > 0 && convertedValue.length > max) {
-                    errors.push(`${label || '值'}元素数量不能超过${max}个`);
+                    errors.push(`${name || '值'}元素数量不能超过${max}个`);
                 }
                 if (regex && regex.trim() !== '' && regex !== 'null') {
                     try {
                         const regExp = new RegExp(regex);
                         for (const item of convertedValue) {
                             if (!regExp.test(String(item))) {
-                                errors.push(`${label || '值'}的元素格式不正确`);
+                                errors.push(`${name || '值'}的元素格式不正确`);
                                 break;
                             }
                         }
                     } catch {
-                        errors.push(`${label || '值'}的正则表达式格式错误`);
+                        errors.push(`${name || '值'}的正则表达式格式错误`);
                     }
                 }
                 break;

@@ -18,7 +18,7 @@ import type { ParsedFieldRule } from '../types/common.js';
  * @example
  * parseRule('用户名|string|2|50|null|1|null')
  * // {
- * //   label: '用户名',
+ * //   name: '用户名',
  * //   type: 'string',
  * //   min: 2,
  * //   max: 50,
@@ -29,7 +29,7 @@ import type { ParsedFieldRule } from '../types/common.js';
  *
  * parseRule('年龄|number|0|150|18|0|null')
  * // {
- * //   label: '年龄',
+ * //   name: '年龄',
  * //   type: 'number',
  * //   min: 0,
  * //   max: 150,
@@ -72,7 +72,7 @@ export const parseRule = (rule: string): ParsedFieldRule => {
     }
 
     return {
-        label: fieldName,
+        name: fieldName,
         type: fieldType as 'string' | 'number' | 'text' | 'array',
         min: fieldMin,
         max: fieldMax,

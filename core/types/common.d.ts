@@ -35,7 +35,7 @@ export type TableDefinition = Record<string, FieldRule>;
  * 解析后的字段规则
  */
 export interface ParsedFieldRule {
-    label: string; // 显示名
+    name: string; // 字段名称
     type: 'string' | 'number' | 'text' | 'array';
     min: number | null; // 最小值
     max: number | null; // 最大值

@@ -88,7 +88,7 @@ describe('规则解析', () => {
         const rule = '用户名|string|3|50|null|1|^[a-zA-Z0-9_]+$';
         const result = parseRule(rule);
 
-        expect(result.label).toBe('用户名');
+        expect(result.name).toBe('用户名');
         expect(result.type).toBe('string');
         expect(result.min).toBe(3);
         expect(result.max).toBe(50);
