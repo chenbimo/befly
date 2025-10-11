@@ -3,7 +3,6 @@
  * 负责组装和启动Bun HTTP服务器
  */
 
-import type { Server } from 'bun';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
 import { Env } from '../config/env.js';
@@ -11,6 +10,8 @@ import { rootHandler } from '../router/root.js';
 import { apiHandler } from '../router/api.js';
 import { staticHandler } from '../router/static.js';
 import { errorHandler } from '../router/error.js';
+
+import type { Server } from 'bun';
 import type { BeflyContext } from '../types/befly.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';

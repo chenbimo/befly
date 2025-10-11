@@ -3,7 +3,6 @@
  * 提供完整的框架功能：检查系统、加载插件、加载 API、启动 HTTP 服务器
  */
 
-import type { Server } from 'bun';
 import { Env } from './config/env.js';
 import { Api } from './utils/api.js';
 import { Yes, No } from './utils/index.js';
@@ -17,6 +16,7 @@ import { Checker } from './lifecycle/checker.js';
 import { Loader } from './lifecycle/loader.js';
 import { Bootstrap } from './lifecycle/bootstrap.js';
 
+import type { Server } from 'bun';
 import type { Plugin } from './types/plugin.js';
 import type { ApiRoute, ApiHandler } from './types/api.js';
 import type { BeflyContext, BeflyOptions, RequestContext } from './types/befly.js';

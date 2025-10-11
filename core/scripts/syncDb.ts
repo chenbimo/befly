@@ -5,12 +5,13 @@
  */
 
 import path from 'node:path';
-import type { SQL } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient, toSnakeTableName, isType, parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
 import { checkTable } from '../checks/table.js';
+
+import type { SQL } from 'bun';
 import type { ColumnInfo, IndexInfo, FieldChange, IndexAction, TablePlan, GlobalCount } from '../types/database.js';
 
 // 顶部管理数据库客户端（按需求使用 Bun SQL 模板，不使用 exec 辅助）
