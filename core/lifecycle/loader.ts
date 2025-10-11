@@ -24,7 +24,7 @@ export class Loader {
         try {
             const loadStartTime = Bun.nanoseconds();
 
-            const glob = new Bun.Glob('*.{js,ts}');
+            const glob = new Bun.Glob('*.ts');
             const corePlugins: Plugin[] = [];
             const userPlugins: Plugin[] = [];
             const loadedPluginNames = new Set<string>(); // 用于跟踪已加载的插件名称
@@ -169,7 +169,7 @@ export class Loader {
             const loadStartTime = Bun.nanoseconds();
             const dirDisplayName = dirName === 'core' ? '核心' : '用户';
 
-            const glob = new Bun.Glob('**/*.{js,ts}');
+            const glob = new Bun.Glob('**/*.ts');
             const apiDir = dirName === 'core' ? __dirapis : getProjectDir('apis');
 
             let totalApis = 0;
