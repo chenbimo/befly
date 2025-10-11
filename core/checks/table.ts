@@ -50,7 +50,7 @@ const MAX_VARCHAR_LENGTH = 65535;
  * 检查表定义文件
  * @returns 检查是否通过
  */
-export const checkTable = async (): Promise<boolean> => {
+export default async function (): Promise<boolean> {
     try {
         const tablesGlob = new Bun.Glob('*.json');
 
@@ -258,4 +258,4 @@ export const checkTable = async (): Promise<boolean> => {
         Logger.error('Tables 检查过程中出错:', error);
         return false;
     }
-};
+}

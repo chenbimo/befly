@@ -43,21 +43,19 @@ export class Checker {
                     // 导入检查模块
                     const checkModule = await import(file);
 
-                    // 仅允许具名导出（以 check 开头）的检查函数
-                    let checkFn = null;
-                    for (const [exportName, exportValue] of Object.entries(checkModule)) {
-                        if (typeof exportValue === 'function' && /^check/i.test(exportName)) {
-                            checkFn = exportValue;
-                            break;
-                        }
-                    }
+                    // 获取 default 导出的检查函数
+                    const checkFn = checkModule.default;
 
                     // 执行检查函数
                     if (typeof checkFn === 'function') {
                         const checkResult = await checkFn();
                         const singleCheckTime = calcPerfTime(singleCheckStart);
 
-                        if (checkResult === true) {
+                        // 检查返回值是否为 boolean
+                        if (typeof checkResult !== 'boolean') {
+                            Logger.error(`检查 ${fileName} 返回值必须为 true 或 false，当前为 ${typeof checkResult}，耗时: ${singleCheckTime}`);
+                            failedChecks++;
+                        } else if (checkResult === true) {
                             passedChecks++;
                             Logger.info(`检查 ${fileName} 通过，耗时: ${singleCheckTime}`);
                         } else {
@@ -66,7 +64,7 @@ export class Checker {
                         }
                     } else {
                         const singleCheckTime = calcPerfTime(singleCheckStart);
-                        Logger.warn(`文件 ${fileName} 未找到可执行的检查函数（必须具名导出以 check 开头的函数），耗时: ${singleCheckTime}`);
+                        Logger.error(`文件 ${fileName} 未找到 default 导出的检查函数，耗时: ${singleCheckTime}`);
                         failedChecks++;
                     }
                 } catch (error: any) {
