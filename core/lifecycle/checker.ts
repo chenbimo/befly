@@ -7,7 +7,6 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
 import { __dirchecks } from '../system.js';
-import type { BeflyContext } from '../types/befly.js';
 
 /**
  * 系统检查器类
@@ -15,9 +14,8 @@ import type { BeflyContext } from '../types/befly.js';
 export class Checker {
     /**
      * 执行所有系统检查
-     * @param appContext - 应用上下文
      */
-    static async run(appContext: BeflyContext): Promise<void> {
+    static async run(): Promise<void> {
         try {
             const checkStartTime = Bun.nanoseconds();
 
@@ -55,7 +53,7 @@ export class Checker {
 
                     // 执行检查函数
                     if (typeof checkFn === 'function') {
-                        const checkResult = await checkFn(appContext);
+                        const checkResult = await checkFn();
                         const singleCheckTime = calcPerfTime(singleCheckStart);
 
                         if (checkResult === true) {

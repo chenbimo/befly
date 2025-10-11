@@ -2,12 +2,17 @@
  * Befly 插件系统类型定义
  */
 
-import type { Befly } from './befly.js';
+import type { BeflyContext } from './befly.js';
 
 /**
- * 插件注册函数类型
+ * 插件初始化函数类型
  */
-export type PluginRegisterFunction = (befly: Befly) => Promise<void> | void;
+export type PluginInitFunction = (befly: BeflyContext) => Promise<any> | any;
+
+/**
+ * 插件请求处理钩子函数类型
+ */
+export type PluginGetHook = (befly: BeflyContext, ctx: any, req: Request) => Promise<void> | void;
 
 /**
  * 插件配置类型
@@ -16,11 +21,17 @@ export interface Plugin {
     /** 插件名称 */
     name: string;
 
-    /** 插件执行顺序（数字越小越先执行） */
-    order: number;
+    /** 插件名称（运行时动态添加，与 name 相同） */
+    pluginName?: string;
 
-    /** 插件注册函数 */
-    register: PluginRegisterFunction;
+    /** 依赖的插件列表（在这些插件之后执行） */
+    after?: string[];
+
+    /** 插件初始化函数 */
+    onInit?: PluginInitFunction;
+
+    /** 请求处理钩子（在每个 API 请求时执行） */
+    onGet?: PluginGetHook;
 
     /** 插件描述 */
     description?: string;
@@ -30,9 +41,6 @@ export interface Plugin {
 
     /** 插件作者 */
     author?: string;
-
-    /** 插件依赖 */
-    dependencies?: string[];
 }
 
 /**
@@ -90,7 +98,7 @@ export interface PluginManager {
     loadPlugins(options: PluginLoadOptions): Promise<void>;
 
     /** 执行所有插件 */
-    executeAll(befly: Befly): Promise<void>;
+    executeAll(befly: BeflyContext): Promise<void>;
 
     /** 获取插件 */
     getPlugin(name: string): Plugin | undefined;

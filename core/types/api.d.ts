@@ -2,8 +2,8 @@
  * Befly API 类型定义
  */
 
-import type { Befly } from './befly.js';
-import type { KeyValue } from './common.js';
+import type { BeflyContext } from './befly.js';
+import type { KeyValue, TableDefinition } from './common.js';
 
 /**
  * HTTP 方法类型
@@ -69,7 +69,7 @@ export type AuthType = boolean | 'admin' | 'user' | string[];
 /**
  * API 处理器函数类型
  */
-export type ApiHandler<T = any, R = any> = (befly: Befly, ctx: RequestContext<T>) => Promise<Response | R>;
+export type ApiHandler<T = any, R = any> = (befly: BeflyContext, ctx: any, req?: Request) => Promise<Response | R> | Response | R;
 
 /**
  * API 路由配置
@@ -78,17 +78,17 @@ export interface ApiRoute<T = any, R = any> {
     /** HTTP 方法 */
     method: HttpMethod;
 
-    /** 路由路径 */
-    path: string;
+    /** 接口名称 */
+    name: string;
 
-    /** 路由描述 */
-    description: string;
+    /** 路由路径（运行时生成） */
+    route?: string;
 
     /** 认证类型 */
-    auth: AuthType;
+    auth: boolean | string | string[];
 
-    /** 验证规则 */
-    rules: KeyValue<string>;
+    /** 字段定义（验证规则） */
+    fields: TableDefinition;
 
     /** 必填字段 */
     required: string[];
