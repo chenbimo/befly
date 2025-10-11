@@ -8,6 +8,12 @@ import { DB } from '../plugins/db.js';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { Crypto2 } from '../utils/crypto.js';
+import { createSqlClient } from '../utils/dbHelper.js';
+
+// CLI 参数类型
+interface CliArgs {
+    DRY_RUN: boolean;
+}
 
 // 解析命令行参数
 const ARGV = Array.isArray(process.argv) ? process.argv : [];
@@ -58,8 +64,6 @@ export async function SyncDev(client: any = null): Promise<boolean> {
         const nowTs = Date.now();
         // 对密码进行双重加密
         const hashed = Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
-
-        const [existingUsers] = await DB.query(
 
         // 更新存在的 dev 账号
         const updateRes = await exec(client, 'UPDATE `admin` SET `password` = ?, `updated_at` = ? WHERE `account` = ? LIMIT 1', [hashed, nowTs, 'dev']);
