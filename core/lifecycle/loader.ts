@@ -7,6 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime, sortPlugins, isType } from '../utils/index.js';
 import { __dirplugins, __dirapis, getProjectDir } from '../system.js';
+import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -27,7 +28,8 @@ export class Loader {
             const corePlugins: Plugin[] = [];
             const userPlugins: Plugin[] = [];
             const loadedPluginNames = new Set<string>(); // 用于跟踪已加载的插件名称
-            let hadPluginError = false; // 统一记录插件阶段是否有错误
+            let hadCorePluginError = false; // 核心插件错误（关键）
+            let hadUserPluginError = false; // 用户插件错误（警告）
 
             // 扫描核心插件目录
             const corePluginsScanStart = Bun.nanoseconds();
@@ -51,12 +53,8 @@ export class Loader {
 
                     Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
                 } catch (err: any) {
-                    hadPluginError = true;
-                    Logger.error({
-                        msg: `核心插件 ${fileName} 导入失败`,
-                        error: err.message,
-                        stack: err.stack
-                    });
+                    hadCorePluginError = true;
+                    ErrorHandler.warning(`核心插件 ${fileName} 导入失败`, err);
                 }
             }
             const corePluginsScanTime = calcPerfTime(corePluginsScanStart);
@@ -64,8 +62,7 @@ export class Loader {
 
             const sortedCorePlugins = sortPlugins(corePlugins);
             if (sortedCorePlugins === false) {
-                Logger.error(`插件依赖关系错误，请检查插件的 after 属性`);
-                process.exit();
+                ErrorHandler.critical('核心插件依赖关系错误，请检查插件的 after 属性');
             }
 
             // 初始化核心插件
@@ -75,8 +72,8 @@ export class Loader {
                     befly.pluginLists.push(plugin);
                     befly.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(befly.appContext) : {};
                 } catch (error: any) {
-                    hadPluginError = true;
-                    Logger.warn(`插件 ${plugin.pluginName} 初始化失败: ${error.message}`);
+                    hadCorePluginError = true;
+                    ErrorHandler.warning(`核心插件 ${plugin.pluginName} 初始化失败`, error);
                 }
             }
             const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
@@ -109,12 +106,8 @@ export class Loader {
 
                     Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
                 } catch (err: any) {
-                    hadPluginError = true;
-                    Logger.error({
-                        msg: `用户插件 ${fileName} 导入失败`,
-                        error: err.message,
-                        stack: err.stack
-                    });
+                    hadUserPluginError = true;
+                    ErrorHandler.warning(`用户插件 ${fileName} 导入失败`, err);
                 }
             }
             const userPluginsScanTime = calcPerfTime(userPluginsScanStart);
@@ -122,8 +115,9 @@ export class Loader {
 
             const sortedUserPlugins = sortPlugins(userPlugins);
             if (sortedUserPlugins === false) {
-                Logger.error(`插件依赖关系错误，请检查插件的 after 属性`);
-                process.exit();
+                ErrorHandler.warning('用户插件依赖关系错误，请检查插件的 after 属性');
+                // 用户插件错误不退出，只是跳过这些插件
+                return;
             }
 
             // 初始化用户插件
@@ -134,8 +128,8 @@ export class Loader {
                         befly.pluginLists.push(plugin);
                         befly.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(befly.appContext) : {};
                     } catch (error: any) {
-                        hadPluginError = true;
-                        Logger.warn(`插件 ${plugin.pluginName} 初始化失败: ${error.message}`);
+                        hadUserPluginError = true;
+                        ErrorHandler.warning(`用户插件 ${plugin.pluginName} 初始化失败`, error);
                     }
                 }
                 const userPluginsInitTime = calcPerfTime(userPluginsInitStart);
@@ -146,19 +140,22 @@ export class Loader {
             const totalPluginCount = sortedCorePlugins.length + sortedUserPlugins.length;
             Logger.info(`插件加载完成! 总耗时: ${totalLoadTime}，共加载 ${totalPluginCount} 个插件`);
 
-            // 如果任意插件导入或初始化失败，统一退出进程
-            if (hadPluginError) {
-                Logger.error('检测到插件导入或初始化失败，进程即将退出');
-                process.exit(1);
+            // 核心插件失败 → 关键错误，必须退出
+            if (hadCorePluginError) {
+                ErrorHandler.critical('核心插件加载失败，无法继续启动', undefined, {
+                    corePluginCount: sortedCorePlugins.length,
+                    totalPluginCount
+                });
+            }
+
+            // 用户插件失败 → 警告，可以继续运行
+            if (hadUserPluginError) {
+                ErrorHandler.info('部分用户插件加载失败，但不影响核心功能', {
+                    userPluginCount: sortedUserPlugins.length
+                });
             }
         } catch (error: any) {
-            Logger.error({
-                msg: '加载插件时发生错误',
-                error: error.message,
-                stack: error.stack
-            });
-            // 兜底退出，避免服务在插件阶段异常后继续运行
-            process.exit(1);
+            ErrorHandler.critical('加载插件时发生错误', error);
         }
     }
 
@@ -225,22 +222,23 @@ export class Loader {
                 } catch (error: any) {
                     const singleApiTime = calcPerfTime(singleApiStart);
                     failedApis++;
-                    Logger.error({
-                        msg: `${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime}`,
-                        error: error.message,
-                        stack: error.stack
-                    });
+                    ErrorHandler.warning(`${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime}`, error);
                 }
             }
 
             const totalLoadTime = calcPerfTime(loadStartTime);
             Logger.info(`${dirDisplayName}接口加载完成! 总耗时: ${totalLoadTime}，总数: ${totalApis}, 成功: ${loadedApis}, 失败: ${failedApis}`);
+
+            // API 加载失败只是警告，不影响服务启动
+            if (failedApis > 0) {
+                ErrorHandler.info(`${failedApis} 个${dirDisplayName}接口加载失败`, {
+                    dirName,
+                    totalApis,
+                    failedApis
+                });
+            }
         } catch (error: any) {
-            Logger.error({
-                msg: '加载接口时发生错误',
-                error: error.message,
-                stack: error.stack
-            });
+            ErrorHandler.critical(`加载${dirDisplayName}接口时发生错误`, error);
         }
     }
 }

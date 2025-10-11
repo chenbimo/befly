@@ -7,6 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
 import { __dirchecks } from '../system.js';
+import { ErrorHandler } from '../utils/errorHandler.js';
 
 /**
  * 系统检查器类
@@ -85,19 +86,18 @@ export class Checker {
             Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${totalChecks}, 通过: ${passedChecks}, 失败: ${failedChecks}`);
 
             if (failedChecks > 0) {
-                process.exit();
+                ErrorHandler.critical('系统检查失败，无法继续启动', undefined, {
+                    totalChecks,
+                    passedChecks,
+                    failedChecks
+                });
             } else if (totalChecks > 0) {
                 Logger.info(`所有系统检查通过!`);
             } else {
                 Logger.info(`未执行任何检查`);
             }
         } catch (error: any) {
-            Logger.error({
-                msg: '执行系统检查时发生错误',
-                error: error.message,
-                stack: error.stack
-            });
-            process.exit();
+            ErrorHandler.critical('执行系统检查时发生错误', error);
         }
     }
 }
