@@ -74,6 +74,28 @@ export type AuthType = boolean | 'admin' | 'user' | string[];
 export type ApiHandler<T = any, R = any> = (befly: BeflyContext, ctx: RequestContext, req?: Request) => Promise<Response | R> | Response | R;
 
 /**
+ * 字段规则定义
+ * 键为字段名，值为字段规则字符串
+ */
+export type FieldRules = Record<string, string>;
+
+/**
+ * API 配置选项
+ */
+export interface ApiOptions {
+    /** HTTP 方法 */
+    method: HttpMethod;
+    /** 是否需要认证（true/false/角色数组） */
+    auth?: boolean | string[];
+    /** 字段规则 */
+    fields?: FieldRules;
+    /** 必填字段 */
+    required?: string[];
+    /** 处理函数 */
+    handler: ApiHandler;
+}
+
+/**
  * API 路由配置
  */
 export interface ApiRoute<T = any, R = any> {

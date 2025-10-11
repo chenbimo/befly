@@ -88,3 +88,4 @@ export class Befly {
 
 // 核心类已通过 export class 导出
 export { Env, Api, Jwt, Validator, Crypto2, Logger, Yes, No };
+export type { ApiOptions, FieldRules } from './types/api.js';

@@ -9,15 +9,15 @@ import type { User } from '../../../types/models';
 import { Crypto2 } from 'befly/utils/crypto';
 import { Jwt } from 'befly/utils/jwt';
 
-export default Api.POST(
-    '用户登录',
-    false, // 公开接口
-    {
+export default Api('用户登录', {
+    method: 'POST',
+    auth: false, // 公开接口
+    fields: {
         username: '用户名⚡string⚡3⚡50⚡null⚡0⚡^[a-zA-Z0-9_]+$',
         password: '密码⚡string⚡6⚡100⚡null⚡0⚡null'
     },
-    ['username', 'password'],
-    async (befly: BeflyContext, ctx: RequestContext) => {
+    required: ['username', 'password'],
+    handler: async (befly: BeflyContext, ctx: RequestContext) => {
         const { username, password } = ctx.body as LoginRequest;
 
         // 查询用户
@@ -58,4 +58,4 @@ export default Api.POST(
 
         return Yes<LoginResponse>('登录成功', response);
     }
-);
+});

@@ -40,6 +40,5 @@ export { Crypto2 } from './crypto.js';
 export type { EncodingType, HashAlgorithm } from './crypto.js';
 export { Xml } from './xml.js';
 export type { XmlParseOptions } from './xml.js';
-export { Api, GET, POST, PUT, DELETE, PATCH, OPTIONS } from './api.js';
-export type { FieldRules } from './api.js';
+export { Api } from './api.js';
 export { Tool } from './tool.js';

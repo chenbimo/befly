@@ -7,10 +7,10 @@ import type { BeflyContext, RequestContext } from 'befly/types';
 import type { GetArticlesRequest, GetArticlesResponse } from '../../../types/api';
 import type { Article } from '../../../types/models';
 
-export default Api.POST(
-    '获取文章列表',
-    false, // 公开接口
-    {
+export default Api('获取文章列表', {
+    method: 'POST',
+    auth: false, // 公开接口
+    fields: {
         page: '页码⚡number⚡1⚡9999⚡1⚡0⚡null',
         limit: '每页数量⚡number⚡1⚡100⚡10⚡0⚡null',
         categoryId: '分类ID⚡number⚡0⚡999999⚡null⚡0⚡null',
@@ -18,8 +18,8 @@ export default Api.POST(
         keyword: '关键词⚡string⚡0⚡50⚡null⚡0⚡null',
         published: '是否发布⚡number⚡0⚡1⚡null⚡0⚡^(0|1)$'
     },
-    [],
-    async (befly: BeflyContext, ctx: RequestContext) => {
+    required: [],
+    handler: async (befly: BeflyContext, ctx: RequestContext) => {
         const params = ctx.body as GetArticlesRequest;
 
         // 构建查询条件
@@ -48,4 +48,4 @@ export default Api.POST(
 
         return Yes<GetArticlesResponse>('查询成功', result);
     }
-);
+});
