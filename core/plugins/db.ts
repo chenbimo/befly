@@ -29,12 +29,8 @@ const dbPlugin: Plugin = {
                 const connection = {
                     query: async (sqlStr: string, params?: any[]) => {
                         if (params && params.length > 0) {
-                            // 将带 ? 占位符的 SQL 转换为 Bun SQL 模板格式
-                            // 将 SQL 按 ? 分割成字符串数组
-                            const sqlParts = sqlStr.split('?');
-
-                            // 使用 Bun SQL 的模板标签语法
-                            return await sql(sqlParts, ...params);
+                            // 使用 Bun SQL 的 unsafe 方法,传递参数数组
+                            return await sql.unsafe(sqlStr, params);
                         } else {
                             return await sql.unsafe(sqlStr);
                         }
