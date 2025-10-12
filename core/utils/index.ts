@@ -31,7 +31,7 @@ export { Colors } from './colors.js';
 export { Logger } from './logger.js';
 export { Validator } from './validate.js';
 export { SqlBuilder } from './sqlBuilder.js';
-export { SqlManager } from './sqlManager.js';
+export { SqlManager } from './sqlHelper.js';
 export { RedisHelper, initRedisClient, getRedisClient, closeRedisClient } from './redisHelper.js';
 export { Jwt } from './jwt.js';
 export { Crypto2 } from './crypto.js';
@@ -40,7 +40,7 @@ export { Api } from './api.js';
 export { Tool } from './tool.js';
 
 // 类型导出
-export type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from './sqlManager.js';
+export type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from './sqlHelper.js';
 export type { JwtPayload } from './jwt.js';
 export type { EncodingType, HashAlgorithm } from './crypto.js';
 export type { XmlParseOptions } from './xml.js';

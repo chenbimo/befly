@@ -6,7 +6,7 @@
 import { SqlBuilder } from './sqlBuilder.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
-import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback, DatabaseConnection } from '../types/database';
+import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback, DatabaseConnection } from '../types/database.js';
 
 /**
  * SQL 管理器类
