@@ -7,6 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { parseRule } from '../utils/index.js';
 import { __dirtables, getProjectDir } from '../system.js';
+import { scanAddons, getAddonDir } from '../utils/addonHelper.js';
 
 /**
  * 表文件信息接口
@@ -14,8 +15,10 @@ import { __dirtables, getProjectDir } from '../system.js';
 interface TableFileInfo {
     /** 表文件路径 */
     file: string;
-    /** 文件类型：core（核心）或 project（项目） */
-    type: 'core' | 'project';
+    /** 文件类型：core（核心）、project（项目）或 addon（组件） */
+    type: 'core' | 'project' | 'addon';
+    /** 如果是 addon 类型，记录 addon 名称 */
+    addonName?: string;
 }
 
 /**
@@ -95,12 +98,40 @@ export default async function (): Promise<boolean> {
             allTableFiles.push({ file, type: 'project' });
         }
 
+        // 收集 addon 表字段定义文件，并检查是否与内核表同名
+        const addons = scanAddons();
+        for (const addonName of addons) {
+            const addonTablesDir = getAddonDir(addonName, 'tables');
+
+            try {
+                for await (const file of tablesGlob.scan({
+                    cwd: addonTablesDir,
+                    absolute: true,
+                    onlyFiles: true
+                })) {
+                    const fileName = path.basename(file, '.json');
+
+                    // 检查 addon 表是否与内核表同名
+                    if (coreTableNames.has(fileName)) {
+                        Logger.error(`组件${addonName}表 ${fileName}.json 与内核表同名，addon 表不能与内核表定义文件同名`);
+                        invalidFiles++;
+                        totalFiles++;
+                        continue;
+                    }
+
+                    allTableFiles.push({ file, type: 'addon', addonName });
+                }
+            } catch (error) {
+                // addon 的 tables 目录可能不存在，跳过
+            }
+        }
+
         // 合并进行验证逻辑
-        for (const { file, type } of allTableFiles) {
+        for (const { file, type, addonName } of allTableFiles) {
             totalFiles++;
             const fileName = path.basename(file);
             const fileBaseName = path.basename(file, '.json');
-            const fileType = type === 'core' ? '内核' : '项目';
+            const fileType = type === 'core' ? '内核' : type === 'project' ? '项目' : `组件${addonName}`;
 
             try {
                 // 1) 文件名小驼峰校验
