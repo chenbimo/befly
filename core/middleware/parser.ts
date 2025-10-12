@@ -16,9 +16,9 @@ export function parseGetParams(api: ApiRoute, ctx: RequestContext): void {
     const url = new URL(ctx.url);
 
     if (isEmptyObject(api.fields) === false) {
-        ctx.params = pickFields(Object.fromEntries(url.searchParams), Object.keys(api.fields));
+        ctx.body = pickFields(Object.fromEntries(url.searchParams), Object.keys(api.fields));
     } else {
-        ctx.params = Object.fromEntries(url.searchParams);
+        ctx.body = Object.fromEntries(url.searchParams);
     }
 }
 
@@ -30,23 +30,23 @@ export async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promi
         const contentType = ctx.contentType || '';
 
         if (contentType.indexOf('json') !== -1) {
-            ctx.params = await ctx.request.json();
+            ctx.body = await ctx.request.json();
         } else if (contentType.indexOf('xml') !== -1) {
             const textData = await ctx.request.text();
             const xmlData = Xml.parse(textData);
-            ctx.params = xmlData?.xml ? xmlData.xml : xmlData;
+            ctx.body = xmlData?.xml ? xmlData.xml : xmlData;
         } else if (contentType.indexOf('form-data') !== -1) {
-            ctx.params = await ctx.request.formData();
+            ctx.body = await ctx.request.formData();
         } else if (contentType.indexOf('x-www-form-urlencoded') !== -1) {
             const text = await ctx.request.text();
             const formData = new URLSearchParams(text);
-            ctx.params = Object.fromEntries(formData);
+            ctx.body = Object.fromEntries(formData);
         } else {
-            ctx.params = {};
+            ctx.body = {};
         }
 
         if (isEmptyObject(api.fields) === false) {
-            ctx.params = pickFields(ctx.params, Object.keys(api.fields));
+            ctx.body = pickFields(ctx.body, Object.keys(api.fields));
         }
 
         return true;

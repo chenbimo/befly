@@ -14,5 +14,5 @@ const validator = new Validator();
  * 验证请求参数
  */
 export function validateParams(api: ApiRoute, ctx: RequestContext) {
-    return validator.validate(ctx.params, api.fields, api.required);
+    return validator.validate(ctx.body, api.fields, api.required);
 }

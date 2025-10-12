@@ -250,7 +250,7 @@ const createTable = async (tableName: string, fields: Record<string, string>): P
 
     // 1) 固定字段
     if (IS_MYSQL) {
-        colDefs.push('`id` BIGINT PRIMARY KEY COMMENT "主键ID"');
+        colDefs.push('`id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT "主键ID"');
         colDefs.push('`created_at` BIGINT NOT NULL DEFAULT 0 COMMENT "创建时间"');
         colDefs.push('`updated_at` BIGINT NOT NULL DEFAULT 0 COMMENT "更新时间"');
         colDefs.push('`deleted_at` BIGINT NOT NULL DEFAULT 0 COMMENT "删除时间"');

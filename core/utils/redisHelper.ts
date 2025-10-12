@@ -89,6 +89,14 @@ export const closeRedisClient = (): void => {
  */
 export const RedisHelper = {
     /**
+     * 获取 Redis 客户端实例
+     * @returns Redis 客户端
+     */
+    getRedisClient(): RedisClient {
+        return getRedisClient();
+    },
+
+    /**
      * 设置对象到 Redis
      * @param key - 键名
      * @param obj - 对象

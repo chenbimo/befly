@@ -13,8 +13,8 @@ export class RequestContext {
     /** 请求开始时间（毫秒） */
     public readonly startTime: number;
 
-    /** 请求参数 (GET/POST 解析后的数据) */
-    public params: Record<string, any> = {};
+    /** 请求体参数 (GET/POST 解析后的数据) */
+    public body: Record<string, any> = {};
 
     /** 用户信息 (认证后填充) */
     public user: Record<string, any> = {};
@@ -89,7 +89,7 @@ export class RequestContext {
      * @param key - 参数键名
      */
     get(key: string): any {
-        return this.params[key];
+        return this.body[key];
     }
 
     /**
@@ -98,7 +98,7 @@ export class RequestContext {
      * @param value - 参数值
      */
     set(key: string, value: any): void {
-        this.params[key] = value;
+        this.body[key] = value;
     }
 
     /**

@@ -61,7 +61,12 @@ export class Tool {
             );
         } else {
             const cleaned = omitFields(data ?? {}, [], [undefined]);
-            return { ...cleaned, id: await genId(), created_at: now, updated_at: now };
+            return {
+                ...cleaned,
+                id: await genId(),
+                created_at: now,
+                updated_at: now
+            };
         }
     }
 

@@ -38,7 +38,7 @@ const redisPlugin: Plugin = {
                 // 返回工具对象，向下游以相同 API 暴露
                 return RedisHelper;
             } else {
-                Logger.warn('Redis 未启用（REDIS_ENABLE≠1），跳过初始化');
+                Logger.warn('Redis 未启用，跳过初始化');
                 return {};
             }
         } catch (error: any) {

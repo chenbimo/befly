@@ -30,38 +30,32 @@ export default Api('查询待办列表', {
                 where.priority = ctx.body.priority;
             }
 
-            // 查询数据
-            const todos = await befly.db.getData({
+            // 查询数据（使用 getList 方法，带分页）
+            const result = await befly.db.getList({
                 table: 'demo_todo',
                 where,
                 page,
-                pageSize,
-                orderBy: { createdAt: 'desc' }
+                limit: pageSize,
+                orderBy: 'created_at DESC',
+                includeDeleted: true // 暂时包含所有数据进行测试
             });
 
-            // 统计总数
-            const total = await befly.db.getData({
-                table: 'demo_todo',
-                where,
-                selectFields: ['count(*) as total']
-            });
-
-            // 使用插件格式化数据
-            const demoTool = befly['demo.tool'];
-            const formattedTodos = todos.map((todo: any) => demoTool.formatTodo(todo));
+            // 暂时不使用插件格式化，直接返回原始数据
+            // const demoTool = befly['demo.tool'];
+            // const formattedTodos = result.list.map((todo: any) => demoTool.formatTodo(todo));
 
             return Yes('查询成功', {
-                list: formattedTodos,
+                list: result.list,
                 pagination: {
-                    page,
-                    pageSize,
-                    total: total[0]?.total || 0,
-                    totalPages: Math.ceil((total[0]?.total || 0) / pageSize)
+                    page: result.page,
+                    pageSize: result.limit,
+                    total: result.total,
+                    totalPages: result.pages
                 }
             });
         } catch (error: any) {
-            befly.logger.error('查询待办列表失败:', error);
-            return No('查询失败');
+            befly.logger.error('查询待办列表失败:', error.message, error.stack);
+            return No('查询失败: ' + error.message);
         }
     }
 });

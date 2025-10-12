@@ -79,10 +79,10 @@ export class SqlManager {
      * 执行 SQL（带连接处理）
      */
     private async executeWithConn(sql: string, params?: any[]): Promise<any> {
-        if (this.connection) {
-            return await this.connection.query(sql, params);
+        if (!this.connection) {
+            throw new Error('数据库连接未初始化');
         }
-        return await this.befly.db.query(sql, params);
+        return await this.connection.query(sql, params);
     }
 
     /**
@@ -161,8 +161,8 @@ export class SqlManager {
         });
 
         // 构建 SQL
-        const builder = new SqlBuilder().from(table);
-        const { sql, params } = builder.toInsertSql(processed);
+        const builder = new SqlBuilder();
+        const { sql, params } = builder.toInsertSql(table, processed);
 
         // 执行
         const result = await this.executeWithConn(sql, params);
@@ -197,8 +197,8 @@ export class SqlManager {
 
         // 构建 SQL
         const whereFiltered = this.addDefaultStateFilter(where, includeDeleted);
-        const builder = new SqlBuilder().from(table).where(whereFiltered);
-        const { sql, params } = builder.toUpdateSql(processed);
+        const builder = new SqlBuilder().where(whereFiltered);
+        const { sql, params } = builder.toUpdateSql(table, processed);
 
         // 执行
         const result = await this.executeWithConn(sql, params);
@@ -213,8 +213,8 @@ export class SqlManager {
 
         if (hard) {
             // 物理删除
-            const builder = new SqlBuilder().from(table).where(where);
-            const { sql, params } = builder.toDeleteSql();
+            const builder = new SqlBuilder().where(where);
+            const { sql, params } = builder.toDeleteSql(table);
 
             const result = await this.executeWithConn(sql, params);
             return result?.changes || 0;

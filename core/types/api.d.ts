@@ -19,8 +19,8 @@ export interface RequestContext<T = any> {
     /** 请求对象 */
     request: Request;
 
-    /** 请求参数 */
-    params: T;
+    /** 请求体参数 */
+    body: T;
 
     /** URL 参数 */
     query: KeyValue<string>;

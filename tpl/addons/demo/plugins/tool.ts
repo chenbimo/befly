@@ -43,8 +43,8 @@ export default {
                             high: '高'
                         }[todo.priority] || '未知',
                     statusLabel: todo.completed ? '已完成' : '未完成',
-                    createdAt: todo.createdAt,
-                    createdAtFormatted: new Date(Number(todo.createdAt)).toLocaleString('zh-CN')
+                    createdAt: todo.created_at,
+                    createdAtFormatted: new Date(Number(todo.created_at)).toLocaleString('zh-CN')
                 };
             },
 

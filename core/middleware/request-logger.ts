@@ -41,7 +41,7 @@ export function logRequest(apiPath: string, ctx: RequestContext): void {
         请求路径: apiPath,
         请求方法: ctx.method,
         用户信息: ctx.user,
-        请求参数: filterLogFields(ctx.params, Env.LOG_EXCLUDE_FIELDS),
+        请求参数: filterLogFields(ctx.body, Env.LOG_EXCLUDE_FIELDS),
         耗时: ctx.getElapsedTime() + 'ms'
     });
 }
