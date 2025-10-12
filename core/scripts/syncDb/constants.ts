@@ -46,6 +46,15 @@ export const CHANGE_TYPE_LABELS = {
     default: '默认值'
 } as const;
 
+/**
+ * MySQL 表配置（支持环境变量自定义）
+ */
+export const MYSQL_TABLE_CONFIG = {
+    ENGINE: Env.MYSQL_ENGINE || 'InnoDB',
+    CHARSET: Env.MYSQL_CHARSET || 'utf8mb4',
+    COLLATE: Env.MYSQL_COLLATE || 'utf8mb4_0900_as_cs'
+} as const;
+
 // 数据库类型判断
 export const DB = (Env.DB_TYPE || 'mysql').toLowerCase();
 export const IS_MYSQL = DB === 'mysql';

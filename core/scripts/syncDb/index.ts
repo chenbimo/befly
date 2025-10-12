@@ -7,7 +7,6 @@
  * - 提供统计信息和错误处理
  */
 
-import type { SQL } from 'bun';
 import path from 'node:path';
 import { Logger } from '../../utils/logger.js';
 import { Env } from '../../config/env.js';
@@ -21,6 +20,7 @@ import { ensureDbVersion } from './version.js';
 import { tableExists } from './schema.js';
 import { createTable, modifyTable } from './table.js';
 import { PerformanceTracker, ProgressLogger } from './state.js';
+import type { SQL } from 'bun';
 
 // 全局 SQL 客户端实例
 let sql: SQL | null = null;

@@ -6,58 +6,17 @@
  * - 应用表结构变更计划
  */
 
-import type { SQL } from 'bun';
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, typeMapping, CHANGE_TYPE_LABELS } from './constants.js';
 import { logFieldChange } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
 import { rebuildSqliteTable } from './sqlite.js';
+import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from './types.js';
+import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）
 const IS_PLAN = process.argv.includes('--plan');
-
-/**
- * 字段变更类型
- */
-export interface FieldChange {
-    type: 'length' | 'datatype' | 'comment' | 'default';
-    current: any;
-    new: any;
-}
-
-/**
- * 索引操作
- */
-export interface IndexAction {
-    action: 'create' | 'drop';
-    indexName: string;
-    fieldName: string;
-}
-
-/**
- * 表结构变更计划
- */
-export interface TablePlan {
-    changed: boolean;
-    addClauses: string[];
-    modifyClauses: string[];
-    defaultClauses: string[];
-    indexActions: IndexAction[];
-    commentActions?: string[];
-}
-
-/**
- * 列信息接口（必须与 schema.ts 中的定义一致）
- */
-interface ColumnInfo {
-    type: string;
-    columnType: string;
-    length: number | null;
-    nullable: boolean;
-    defaultValue: any;
-    comment: string | null;
-}
 
 /**
  * 比较字段定义变化
@@ -84,7 +43,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: stri
             changes.push({
                 type: 'length',
                 current: existingColumn.length,
-                new: fieldMax
+                expected: fieldMax
             });
         }
     }
@@ -96,7 +55,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: stri
             changes.push({
                 type: 'comment',
                 current: currentComment,
-                new: fieldName
+                expected: fieldName
             });
         }
     }
@@ -106,7 +65,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: stri
         changes.push({
             type: 'datatype',
             current: existingColumn.type,
-            new: typeMapping[fieldType].toLowerCase()
+            expected: typeMapping[fieldType].toLowerCase()
         });
     }
 
@@ -115,7 +74,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: stri
         changes.push({
             type: 'default',
             current: existingColumn.defaultValue,
-            new: fieldDefault
+            expected: fieldDefault
         });
     }
 

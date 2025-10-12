@@ -5,9 +5,9 @@
  * - SQLite 重建表迁移（处理列修改等不支持的操作）
  */
 
-import type { SQL } from 'bun';
 import { Logger } from '../../utils/logger.js';
-import { createTable } from './table.js';
+import { createTable } from './tableCreate.js';
+import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）
 const IS_PLAN = process.argv.includes('--plan');

@@ -2,130 +2,28 @@
  * syncDb 表操作模块
  *
  * 包含：
- * - 创建表
- * - 创建索引
- * - 添加 PostgreSQL 注释
  * - 修改表结构
+ * - 对比字段变化
+ * - 应用变更计划
  */
 
-import type { SQL } from 'bun';
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
 import { isType } from '../../utils/typeHelper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange } from './helpers.js';
-import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
+import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
 import { getTableColumns, getTableIndexes, type ColumnInfo } from './schema.js';
-import { compareFieldDefinition, applyTablePlan, type TablePlan } from './apply.js';
+import { compareFieldDefinition, applyTablePlan } from './apply.js';
+import { createTable } from './tableCreate.js';
+import type { TablePlan } from './types.js';
+import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）
 const IS_PLAN = process.argv.includes('--plan');
 
-/**
- * 为 PostgreSQL 表添加列注释
- *
- * @param sql - SQL 客户端实例
- * @param tableName - 表名
- * @param fields - 字段定义对象
- */
-export async function addPostgresComments(sql: SQL, tableName: string, fields: Record<string, string>): Promise<void> {
-    // 系统字段注释
-    const systemComments = [
-        ['id', '主键ID'],
-        ['created_at', '创建时间'],
-        ['updated_at', '更新时间'],
-        ['deleted_at', '删除时间'],
-        ['state', '状态字段']
-    ];
-
-    for (const [name, comment] of systemComments) {
-        const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${comment}'`;
-        if (IS_PLAN) {
-            Logger.info(`[计划] ${stmt}`);
-        } else {
-            await sql.unsafe(stmt);
-        }
-    }
-
-    // 业务字段注释
-    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const parsed = parseRule(fieldRule);
-        const { name: fieldName } = parsed;
-        const stmt = `COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS '${fieldName}'`;
-        if (IS_PLAN) {
-            Logger.info(`[计划] ${stmt}`);
-        } else {
-            await sql.unsafe(stmt);
-        }
-    }
-}
-
-/**
- * 创建表的索引
- *
- * @param sql - SQL 客户端实例
- * @param tableName - 表名
- * @param fields - 字段定义对象
- */
-export async function createTableIndexes(sql: SQL, tableName: string, fields: Record<string, string>): Promise<void> {
-    // 系统字段索引
-    for (const sysField of SYSTEM_INDEX_FIELDS) {
-        const stmt = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
-        if (IS_PLAN) {
-            Logger.info(`[计划] ${stmt}`);
-        } else {
-            await sql.unsafe(stmt);
-        }
-    }
-
-    // 业务字段索引
-    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        const parsed = parseRule(fieldRule);
-        if (parsed.index === 1) {
-            const stmt = buildIndexSQL(tableName, `idx_${fieldKey}`, fieldKey, 'create');
-            if (IS_PLAN) {
-                Logger.info(`[计划] ${stmt}`);
-            } else {
-                await sql.unsafe(stmt);
-            }
-        }
-    }
-}
-
-/**
- * 创建表（包含系统字段和业务字段）
- *
- * @param sql - SQL 客户端实例
- * @param tableName - 表名
- * @param fields - 字段定义对象
- */
-export async function createTable(sql: SQL, tableName: string, fields: Record<string, string>): Promise<void> {
-    // 构建列定义
-    const colDefs = [...buildSystemColumnDefs(), ...buildBusinessColumnDefs(fields)];
-
-    // 生成 CREATE TABLE 语句
-    const cols = colDefs.join(',\n            ');
-    const tableQuoted = quoteIdentifier(tableName);
-    const createSQL = IS_MYSQL ? `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs` : `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        )`;
-
-    if (IS_PLAN) {
-        Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
-    } else {
-        await sql.unsafe(createSQL);
-        Logger.info(`[新建表] ${tableName}`);
-    }
-
-    // PostgreSQL: 添加列注释
-    if (IS_PG && !IS_PLAN) {
-        await addPostgresComments(sql, tableName, fields);
-    } else if (IS_PG && IS_PLAN) {
-        // 计划模式也要输出注释语句
-        await addPostgresComments(sql, tableName, fields);
-    }
-
-    // 创建索引
-    await createTableIndexes(sql, tableName, fields);
-}
+// 导出 createTable 供其他模块使用
+export { createTable };
 
 /**
  * 同步表结构（对比和应用变更）
@@ -165,7 +63,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 for (const c of comparison) {
                     // 使用统一的日志格式函数
                     const changeLabel = c.type === 'length' ? '长度' : c.type === 'datatype' ? '类型' : c.type === 'comment' ? '注释' : '默认值';
-                    logFieldChange(tableName, fieldKey, c.type, c.current, c.new, changeLabel);
+                    logFieldChange(tableName, fieldKey, c.type, c.current, c.expected, changeLabel);
 
                     // 全量计数：全局累加
                     if (c.type === 'datatype') globalCount.typeChanges++;

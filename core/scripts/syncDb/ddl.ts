@@ -8,12 +8,12 @@
  * - 构建系统列和业务列定义
  */
 
-import type { SQL } from 'bun';
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
 import { isType } from '../../utils/typeHelper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, typeMapping, SYSTEM_INDEX_FIELDS } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
+import type { SQL } from 'bun';
 
 /**
  * 构建索引操作 SQL（统一使用在线策略）

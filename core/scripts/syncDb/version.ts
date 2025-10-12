@@ -5,10 +5,10 @@
  * - 数据库版本验证（MySQL/PostgreSQL/SQLite）
  */
 
-import type { SQL } from 'bun';
 import { Logger } from '../../utils/logger.js';
 import { Env } from '../../config/env.js';
 import { DB_VERSION_REQUIREMENTS, IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
+import type { SQL } from 'bun';
 
 /**
  * 数据库版本检查（按方言）
