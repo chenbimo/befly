@@ -56,7 +56,8 @@ export class Tool {
                     ...omitFields(item ?? {}, [], [undefined]),
                     id: await genId(),
                     created_at: now,
-                    updated_at: now
+                    updated_at: now,
+                    state: 0
                 }))
             );
         } else {
@@ -65,7 +66,8 @@ export class Tool {
                 ...cleaned,
                 id: await genId(),
                 created_at: now,
-                updated_at: now
+                updated_at: now,
+                state: 0
             };
         }
     }
@@ -81,7 +83,7 @@ export class Tool {
         return {
             deleted_at: now,
             updated_at: now,
-            state: 0
+            state: 1
         };
     }
 
