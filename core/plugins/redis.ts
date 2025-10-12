@@ -19,15 +19,8 @@ const redisPlugin: Plugin = {
     async onInit(befly: BeflyContext): Promise<typeof RedisHelper | Record<string, never>> {
         try {
             if (Env.REDIS_ENABLE === 1) {
-                // 初始化 Redis 客户端
-                const client = initRedisClient();
-
-                // 测试连接
-                const pingResult = await client.ping();
-
-                if (pingResult !== 'PONG') {
-                    throw new Error('Redis 连接失败：ping 响应异常');
-                }
+                // 初始化 Redis 客户端（带连接测试）
+                await initRedisClient();
 
                 Logger.info('Redis 插件初始化成功', {
                     host: Env.REDIS_HOST,
@@ -45,6 +38,7 @@ const redisPlugin: Plugin = {
             Logger.error({
                 msg: 'Redis 初始化失败',
                 message: error.message,
+                code: error.code,
                 stack: error.stack
             });
 

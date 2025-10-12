@@ -41,24 +41,40 @@ let redisClient: RedisClient | null = null;
 /**
  * 初始化 Redis 客户端
  * @returns Redis 客户端实例
+ * @throws 如果连接失败
  */
-export const initRedisClient = (): RedisClient => {
+export const initRedisClient = async (): Promise<RedisClient> => {
     if (!redisClient) {
-        const url = buildRedisUrl();
-        redisClient = new RedisClient(url, {
-            // 连接超时（毫秒）
-            connectionTimeout: 10000,
-            // 空闲超时（毫秒），0 表示无超时
-            idleTimeout: 30000,
-            // 断开连接时自动重连
-            autoReconnect: true,
-            // 最大重连次数
-            maxRetries: 10,
-            // 断开连接时缓存命令
-            enableOfflineQueue: true,
-            // 自动管道化命令
-            enableAutoPipelining: true
-        });
+        try {
+            const url = buildRedisUrl();
+            redisClient = new RedisClient(url, {
+                // 连接超时（毫秒）
+                connectionTimeout: 10000,
+                // 空闲超时（毫秒），0 表示无超时
+                idleTimeout: 30000,
+                // 断开连接时自动重连
+                autoReconnect: true,
+                // 最大重连次数
+                maxRetries: 10,
+                // 断开连接时缓存命令
+                enableOfflineQueue: true,
+                // 自动管道化命令
+                enableAutoPipelining: true
+            });
+
+            // 测试连接是否成功
+            await redisClient.ping();
+            Logger.info('Redis 连接成功');
+        } catch (error: any) {
+            redisClient = null;
+            Logger.error({
+                msg: 'Redis 连接失败',
+                message: error.message,
+                code: error.code,
+                stack: error.stack
+            });
+            throw new Error(`Redis 连接失败: ${error.message}`);
+        }
     }
     return redisClient;
 };
@@ -66,10 +82,11 @@ export const initRedisClient = (): RedisClient => {
 /**
  * 获取 Redis 客户端
  * @returns Redis 客户端实例
+ * @throws 如果连接失败
  */
-export const getRedisClient = (): RedisClient => {
+export const getRedisClient = async (): Promise<RedisClient> => {
     if (!redisClient) {
-        return initRedisClient();
+        return await initRedisClient();
     }
     return redisClient;
 };
@@ -91,9 +108,10 @@ export const RedisHelper = {
     /**
      * 获取 Redis 客户端实例
      * @returns Redis 客户端
+     * @throws 如果连接失败
      */
-    getRedisClient(): RedisClient {
-        return getRedisClient();
+    async getRedisClient(): Promise<RedisClient> {
+        return await getRedisClient();
     },
 
     /**
