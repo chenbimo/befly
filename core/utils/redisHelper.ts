@@ -50,12 +50,12 @@ export const initRedisClient = async (): Promise<RedisClient> => {
             redisClient = new RedisClient(url, {
                 // 连接超时（毫秒）
                 connectionTimeout: 10000,
-                // 空闲超时（毫秒），0 表示无超时
-                idleTimeout: 30000,
+                // 空闲超时设为 0，表示永不超时
+                idleTimeout: 0,
                 // 断开连接时自动重连
                 autoReconnect: true,
-                // 最大重连次数
-                maxRetries: 10,
+                // 最大重连次数，0 表示无限重连
+                maxRetries: 0,
                 // 断开连接时缓存命令
                 enableOfflineQueue: true,
                 // 自动管道化命令
@@ -123,13 +123,14 @@ export const RedisHelper = {
      */
     async setObject<T = any>(key: string, obj: T, ttl: number | null = null): Promise<string | null> {
         try {
+            const client = await getRedisClient();
             const data = JSON.stringify(obj);
             const pkey = `${prefix}${key}`;
 
             if (ttl) {
-                return await redisClient.setEx(pkey, ttl, data);
+                return await client.setEx(pkey, ttl, data);
             }
-            return await redisClient.set(pkey, data);
+            return await client.set(pkey, data);
         } catch (error: any) {
             Logger.error({
                 msg: 'Redis setObject 错误',
@@ -147,8 +148,9 @@ export const RedisHelper = {
      */
     async getObject<T = any>(key: string): Promise<T | null> {
         try {
+            const client = await getRedisClient();
             const pkey = `${prefix}${key}`;
-            const data = await redisClient.get(pkey);
+            const data = await client.get(pkey);
             return data ? JSON.parse(data) : null;
         } catch (error: any) {
             Logger.error({
@@ -166,8 +168,9 @@ export const RedisHelper = {
      */
     async delObject(key: string): Promise<void> {
         try {
+            const client = await getRedisClient();
             const pkey = `${prefix}${key}`;
-            await redisClient.del(pkey);
+            await client.del(pkey);
         } catch (error: any) {
             Logger.error({
                 msg: 'Redis delObject 错误',
@@ -182,11 +185,12 @@ export const RedisHelper = {
      * @returns 唯一 ID
      */
     async genTimeID(): Promise<number> {
+        const client = await getRedisClient();
         const timestamp = Math.floor(Date.now() / 1000);
         const key = `${prefix}time_id_counter:${timestamp}`;
 
-        const counter = await redisClient.incr(key);
-        await redisClient.expire(key, 2);
+        const counter = await client.incr(key);
+        await client.expire(key, 2);
 
         const counterPrefix = (counter % 1000).toString().padStart(3, '0');
         const randomSuffix = Math.floor(Math.random() * 1000)
@@ -205,11 +209,12 @@ export const RedisHelper = {
      */
     async setString(key: string, value: string, ttl: number | null = null): Promise<string | null> {
         try {
+            const client = await getRedisClient();
             const pkey = `${prefix}${key}`;
             if (ttl) {
-                return await redisClient.setEx(pkey, ttl, value);
+                return await client.setEx(pkey, ttl, value);
             }
-            return await redisClient.set(pkey, value);
+            return await client.set(pkey, value);
         } catch (error: any) {
             Logger.error({
                 msg: 'Redis setString 错误',
@@ -226,8 +231,9 @@ export const RedisHelper = {
      */
     async getString(key: string): Promise<string | null> {
         try {
+            const client = await getRedisClient();
             const pkey = `${prefix}${key}`;
-            return await redisClient.get(pkey);
+            return await client.get(pkey);
         } catch (error: any) {
             Logger.error({
                 msg: 'Redis getString 错误',
@@ -244,8 +250,9 @@ export const RedisHelper = {
      */
     async exists(key: string): Promise<number> {
         try {
+            const client = await getRedisClient();
             const pkey = `${prefix}${key}`;
-            return await redisClient.exists(pkey);
+            return await client.exists(pkey);
         } catch (error: any) {
             Logger.error({
                 msg: 'Redis exists 错误',
@@ -263,8 +270,9 @@ export const RedisHelper = {
      */
     async expire(key: string, seconds: number): Promise<number> {
         try {
+            const client = await getRedisClient();
             const pkey = `${prefix}${key}`;
-            return await redisClient.expire(pkey, seconds);
+            return await client.expire(pkey, seconds);
         } catch (error: any) {
             Logger.error({
                 msg: 'Redis expire 错误',
@@ -281,8 +289,9 @@ export const RedisHelper = {
      */
     async ttl(key: string): Promise<number> {
         try {
+            const client = await getRedisClient();
             const pkey = `${prefix}${key}`;
-            return await redisClient.ttl(pkey);
+            return await client.ttl(pkey);
         } catch (error: any) {
             Logger.error({
                 msg: 'Redis ttl 错误',

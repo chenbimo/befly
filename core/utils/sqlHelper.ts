@@ -40,7 +40,7 @@ export class SqlHelper {
 
         // 添加时间戳
         if (options.autoTimestamp !== false) {
-            const now = new Date();
+            const now = Date.now();
             if (!processed.created_at) {
                 processed.created_at = now;
             }
@@ -195,7 +195,7 @@ export class SqlHelper {
         // 添加更新时间
         const processed = { ...data };
         if (autoTimestamp && !processed.updated_at) {
-            processed.updated_at = new Date();
+            processed.updated_at = Date.now();
         }
 
         // 构建 SQL
@@ -225,7 +225,7 @@ export class SqlHelper {
             // 软删除（更新 state）
             const data: Record<string, any> = { state: 0 };
             if (autoTimestamp) {
-                data.updated_at = new Date();
+                data.updated_at = Date.now();
             }
 
             return await this.updData({

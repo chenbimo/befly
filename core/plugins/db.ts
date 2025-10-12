@@ -29,29 +29,12 @@ const dbPlugin: Plugin = {
                 const connection = {
                     query: async (sqlStr: string, params?: any[]) => {
                         if (params && params.length > 0) {
-                            // 手动将参数转义并替换到 SQL 中
-                            // 这不是最优方案，但对于 Bun SQL 当前的 API 来说是必要的
-                            let finalSql = sqlStr;
-                            for (const param of params) {
-                                // 简单的参数转义（实际应该更严格）
-                                let escaped: string;
-                                if (param === null) {
-                                    escaped = 'NULL';
-                                } else if (typeof param === 'string') {
-                                    // 转义单引号
-                                    escaped = `'${param.replace(/'/g, "''")}'`;
-                                } else if (typeof param === 'number') {
-                                    escaped = String(param);
-                                } else if (typeof param === 'boolean') {
-                                    escaped = param ? '1' : '0';
-                                } else {
-                                    escaped = `'${String(param)}'`;
-                                }
-                                // 替换第一个 ?
-                                finalSql = finalSql.replace('?', escaped);
-                            }
-                            // 使用 unsafe 执行替换后的 SQL
-                            return await sql.unsafe(finalSql);
+                            // 将带 ? 占位符的 SQL 转换为 Bun SQL 模板格式
+                            // 将 SQL 按 ? 分割成字符串数组
+                            const sqlParts = sqlStr.split('?');
+
+                            // 使用 Bun SQL 的模板标签语法
+                            return await sql(sqlParts, ...params);
                         } else {
                             return await sql.unsafe(sqlStr);
                         }
