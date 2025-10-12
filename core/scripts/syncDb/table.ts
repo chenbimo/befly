@@ -9,8 +9,8 @@
 
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
-import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, typeMapping } from './constants.js';
-import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql } from './helpers.js';
+import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
+import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
 import { getTableColumns, getTableIndexes, type ColumnInfo } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
@@ -60,8 +60,8 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             const comparison = compareFieldDefinition(existingColumns[fieldKey], fieldRule, fieldKey);
             if (comparison.length > 0) {
                 for (const c of comparison) {
-                    // 使用统一的日志格式函数
-                    const changeLabel = c.type === 'length' ? '长度' : c.type === 'datatype' ? '类型' : c.type === 'comment' ? '注释' : '默认值';
+                    // 使用统一的日志格式函数和常量标签
+                    const changeLabel = CHANGE_TYPE_LABELS[c.type] || '未知';
                     logFieldChange(tableName, fieldKey, c.type, c.current, c.expected, changeLabel);
 
                     // 全量计数：全局累加
@@ -74,7 +74,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 const parsed = parseRule(fieldRule);
                 const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
 
-                if ((fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length) {
+                if (isStringOrArrayType(fieldType) && existingColumns[fieldKey].length) {
                     if (existingColumns[fieldKey].length! > fieldMax) {
                         Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${fieldMax} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
                     }
@@ -121,7 +121,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 // 若不仅仅是默认值变化，继续生成修改子句
                 if (!onlyDefaultChanged) {
                     let skipModify = false;
-                    if (hasLengthChange && (fieldType === 'string' || fieldType === 'array') && existingColumns[fieldKey].length) {
+                    if (hasLengthChange && isStringOrArrayType(fieldType) && existingColumns[fieldKey].length) {
                         const oldLen = existingColumns[fieldKey].length!;
                         const isShrink = oldLen > fieldMax;
                         if (isShrink) skipModify = true;
@@ -140,7 +140,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         } else {
             const parsed = parseRule(fieldRule);
             const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
-            const lenPart = fieldType === 'string' || fieldType === 'array' ? ` 长度:${parseInt(String(fieldMax))}` : '';
+            const lenPart = isStringOrArrayType(fieldType) ? ` 长度:${parseInt(String(fieldMax))}` : '';
             Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${fieldDefault ?? 'NULL'}`);
             addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
             changed = true;

@@ -8,7 +8,7 @@
  * - 默认值处理
  */
 
-import { IS_MYSQL, IS_PG } from './constants.js';
+import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { isType } from '../../utils/typeHelper.js';
 
 /**
@@ -95,6 +95,56 @@ export function generateDefaultSql(actualDefault: any, fieldType: 'number' | 'st
     }
 
     return '';
+}
+
+/**
+ * 判断是否为字符串或数组类型（需要长度限制的类型）
+ *
+ * @param fieldType - 字段类型
+ * @returns 是否为 string 或 array
+ *
+ * @example
+ * isStringOrArrayType('string') // => true
+ * isStringOrArrayType('array') // => true
+ * isStringOrArrayType('number') // => false
+ * isStringOrArrayType('text') // => false
+ */
+export function isStringOrArrayType(fieldType: string): boolean {
+    return fieldType === 'string' || fieldType === 'array';
+}
+
+/**
+ * 获取 SQL 数据类型
+ *
+ * @param fieldType - 字段类型（number/string/text/array）
+ * @param fieldMax - 最大长度（string/array 类型需要）
+ * @returns SQL 类型字符串
+ *
+ * @example
+ * getSqlType('string', 100) // => 'VARCHAR(100)'
+ * getSqlType('number', null) // => 'BIGINT'
+ * getSqlType('text', null) // => 'TEXT'
+ * getSqlType('array', 500) // => 'VARCHAR(500)'
+ */
+export function getSqlType(fieldType: string, fieldMax: number | null): string {
+    if (isStringOrArrayType(fieldType)) {
+        return `${typeMapping[fieldType]}(${fieldMax})`;
+    }
+    return typeMapping[fieldType];
+}
+
+/**
+ * 转义 SQL 注释中的双引号
+ *
+ * @param str - 注释字符串
+ * @returns 转义后的字符串
+ *
+ * @example
+ * escapeComment('用户名称') // => '用户名称'
+ * escapeComment('用户"昵称"') // => '用户\\"昵称\\"'
+ */
+export function escapeComment(str: string): string {
+    return String(str).replace(/"/g, '\\"');
 }
 
 /**

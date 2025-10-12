@@ -8,8 +8,8 @@
 
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
-import { IS_MYSQL, IS_PG, IS_SQLITE, typeMapping, CHANGE_TYPE_LABELS } from './constants.js';
-import { logFieldChange, resolveDefaultValue } from './helpers.js';
+import { IS_MYSQL, IS_PG, IS_SQLITE, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
+import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
 import { rebuildSqliteTable } from './sqlite.js';
 import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from './types.js';
@@ -38,7 +38,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: stri
     const changes: FieldChange[] = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
-    if (!IS_SQLITE && (fieldType === 'string' || fieldType === 'array')) {
+    if (!IS_SQLITE && isStringOrArrayType(fieldType)) {
         if (existingColumn.length !== fieldMax) {
             changes.push({
                 type: 'length',

@@ -10,8 +10,8 @@
 
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
-import { IS_MYSQL, IS_PG, IS_SQLITE, typeMapping, SYSTEM_INDEX_FIELDS } from './constants.js';
-import { quoteIdentifier, resolveDefaultValue, generateDefaultSql } from './helpers.js';
+import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, typeMapping } from './constants.js';
+import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
 import type { SQL } from 'bun';
 
 /**
@@ -80,14 +80,14 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         const parsed = parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
-        const sqlType = fieldType === 'string' || fieldType === 'array' ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
+        const sqlType = getSqlType(fieldType, fieldMax);
 
         // 使用公共函数处理默认值
         const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
         const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
         if (IS_MYSQL) {
-            colDefs.push(`\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`);
+            colDefs.push(`\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`);
         } else {
             colDefs.push(`"${fieldKey}" ${sqlType} NOT NULL${defaultSql}`);
         }
@@ -107,14 +107,14 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
 export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: boolean = false): string {
     const parsed = parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
-    const sqlType = fieldType === 'string' || fieldType === 'array' ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
+    const sqlType = getSqlType(fieldType, fieldMax);
 
     // 使用公共函数处理默认值
     const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
     const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
     if (IS_MYSQL) {
-        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`;
+        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`;
     }
     if (IS_PG) {
         if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldKey}" ${sqlType} NOT NULL${defaultSql}`;
