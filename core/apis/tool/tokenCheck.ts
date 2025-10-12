@@ -12,8 +12,6 @@ import type { JwtPayload } from '../../utils/jwt.js';
 import type { TokenCheckData } from '../../types/api.js';
 
 export default Api('令牌检测', {
-    method: 'POST',
-    auth: false,
     fields: {},
     required: [],
     handler: async (befly: BeflyContext, ctx: any) => {

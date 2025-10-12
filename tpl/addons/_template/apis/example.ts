@@ -7,7 +7,6 @@ import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 
 export default Api('示例接口', {
-    method: 'POST',
     auth: false, // 不需要认证
     fields: {
         name: '名称|string|1|50|null|0|null',

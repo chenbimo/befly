@@ -7,8 +7,6 @@ import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 
 export default Api('创建待办事项', {
-    method: 'POST',
-    auth: false,
     fields: {
         title: '标题|string|1|100|null|0|null',
         content: '内容|string|0|500||0|null',

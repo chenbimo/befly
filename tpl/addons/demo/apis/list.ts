@@ -7,8 +7,6 @@ import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 
 export default Api('查询待办列表', {
-    method: 'GET',
-    auth: false,
     fields: {
         completed: '是否完成|number|0|1|null|0|null',
         priority: '优先级|string|1|10|null|0|^(low|medium|high)$',

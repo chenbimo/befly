@@ -10,8 +10,6 @@ import type { BeflyContext } from '../../types/befly.js';
 import type { HealthInfo } from '../../types/api.js';
 
 export default Api('健康检查', {
-    method: 'POST',
-    auth: false,
     fields: {},
     required: [],
     handler: async (befly: BeflyContext, ctx: any) => {
