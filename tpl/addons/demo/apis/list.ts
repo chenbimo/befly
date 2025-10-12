@@ -17,45 +17,40 @@ export default Api('查询待办列表', {
     },
     required: [],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        try {
-            const page = ctx.body.page || 1;
-            const pageSize = ctx.body.pageSize || 10;
+        const page = ctx.body.page || 1;
+        const pageSize = ctx.body.pageSize || 10;
 
-            // 构建查询条件
-            const where: any = {};
-            if (ctx.body.completed !== undefined && ctx.body.completed !== null) {
-                where.completed = ctx.body.completed;
-            }
-            if (ctx.body.priority) {
-                where.priority = ctx.body.priority;
-            }
-
-            // 查询数据（使用 getList 方法，带分页）
-            const result = await befly.db.getList({
-                table: 'demo_todo',
-                where,
-                page,
-                limit: pageSize,
-                orderBy: 'created_at DESC',
-                includeDeleted: true // 暂时包含所有数据进行测试
-            });
-
-            // 暂时不使用插件格式化，直接返回原始数据
-            // const demoTool = befly['demo.tool'];
-            // const formattedTodos = result.list.map((todo: any) => demoTool.formatTodo(todo));
-
-            return Yes('查询成功', {
-                list: result.list,
-                pagination: {
-                    page: result.page,
-                    pageSize: result.limit,
-                    total: result.total,
-                    totalPages: result.pages
-                }
-            });
-        } catch (error: any) {
-            befly.logger.error('查询待办列表失败:', error.message, error.stack);
-            return No('查询失败: ' + error.message);
+        // 构建查询条件
+        const where: any = {};
+        if (ctx.body.completed !== undefined && ctx.body.completed !== null) {
+            where.completed = ctx.body.completed;
         }
+        if (ctx.body.priority) {
+            where.priority = ctx.body.priority;
+        }
+
+        // 查询数据（使用 getList 方法，带分页）
+        const result = await befly.db.getList({
+            table: 'demo_todo',
+            where,
+            page,
+            limit: pageSize,
+            orderBy: 'created_at DESC',
+            includeDeleted: true // 暂时包含所有数据进行测试
+        });
+
+        // 暂时不使用插件格式化，直接返回原始数据
+        // const demoTool = befly['demo.tool'];
+        // const formattedTodos = result.list.map((todo: any) => demoTool.formatTodo(todo));
+
+        return Yes('查询成功', {
+            list: result.list,
+            pagination: {
+                page: result.page,
+                pageSize: result.limit,
+                total: result.total,
+                totalPages: result.pages
+            }
+        });
     }
 });

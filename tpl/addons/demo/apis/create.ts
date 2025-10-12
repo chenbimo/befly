@@ -16,30 +16,22 @@ export default Api('创建待办事项', {
     },
     required: ['title'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        try {
-            // 插入数据到 demo_todo 表
-            const result = await befly.db.insData({
-                table: 'demo_todo',
-                data: {
-                    title: ctx.body.title,
-                    content: ctx.body.content || '',
-                    priority: ctx.body.priority || 'medium',
-                    completed: 0
-                },
-                autoId: false, // 不使用框架自动 ID，使用数据库 AUTO_INCREMENT
-                autoTimestamp: true, // 使用自动时间戳
-                autoState: true // 使用自动状态
-            });
-
-            return Yes('待办创建成功', {
-                id: result,
+        // 插入数据到 demo_todo 表
+        const result = await befly.db.insData({
+            table: 'demo_todo',
+            data: {
                 title: ctx.body.title,
                 content: ctx.body.content || '',
-                priority: ctx.body.priority || 'medium'
-            });
-        } catch (error: any) {
-            befly.logger.error('创建待办失败:', error.message, error.stack);
-            return No('创建待办失败: ' + error.message);
-        }
+                priority: ctx.body.priority || 'medium',
+                completed: 0
+            }
+        });
+
+        return Yes('待办创建成功', {
+            id: result,
+            title: ctx.body.title,
+            content: ctx.body.content || '',
+            priority: ctx.body.priority || 'medium'
+        });
     }
 });
