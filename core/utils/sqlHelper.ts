@@ -82,7 +82,10 @@ export class SqlHelper {
         if (!this.connection) {
             throw new Error('数据库连接未初始化');
         }
-        return await this.connection.query(sql, params);
+        // 确保 params 始终是数组
+        const safeParams = params || [];
+
+        return await this.connection.query(sql, safeParams);
     }
 
     /**
@@ -103,7 +106,7 @@ export class SqlHelper {
      * 查询列表（带分页）
      */
     async getList<T = any>(options: QueryOptions): Promise<ListResult<T>> {
-        const { table, fields = ['*'], where, orderBy = 'id DESC', page = 1, limit = 10, includeDeleted = false, customState } = options;
+        const { table, fields = ['*'], where, orderBy = ['id#DESC'], page = 1, limit = 10, includeDeleted = false, customState } = options;
 
         // 构建查询
         const whereFiltered = this.addDefaultStateFilter(where, includeDeleted, customState);

@@ -12,8 +12,7 @@
     "scripts": {
         "dev": "bun run main.ts",
         "serve": "bunx --bun pm2 start pm2.config.cjs -a",
-        "test": "bun test",
-        "syncDb": "bun ../core/bin/befly.ts syncDb"
+        "test": "bun test"
     },
     "type": "module",
     "dependencies": {

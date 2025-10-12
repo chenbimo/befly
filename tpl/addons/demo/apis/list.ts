@@ -33,7 +33,7 @@ export default Api('查询待办列表', {
             where,
             page,
             limit: pageSize,
-            orderBy: 'created_at DESC',
+            orderBy: ['created_at#DESC'],
             includeDeleted: true // 暂时包含所有数据进行测试
         });
 

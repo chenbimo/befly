@@ -6,6 +6,7 @@
 import { Logger } from '../utils/logger.js';
 import { No } from '../utils/index.js';
 import { setCorsOptions, handleOptionsRequest } from '../middleware/cors.js';
+import { Env } from '../config/env.js';
 import { authenticate } from '../middleware/auth.js';
 import { parseGetParams, parsePostParams } from '../middleware/parser.js';
 import { checkPermission } from '../middleware/permission.js';
@@ -90,8 +91,13 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
 
             // 11. 返回响应
             if (result && typeof result === 'object' && 'code' in result) {
-                return Response.json(result, {
-                    headers: corsOptions.headers
+                // 处理 BigInt 序列化问题
+                const jsonString = JSON.stringify(result, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
+                return new Response(jsonString, {
+                    headers: {
+                        ...corsOptions.headers,
+                        'Content-Type': 'application/json'
+                    }
                 });
             } else {
                 return new Response(result, {
@@ -116,7 +122,16 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
                 错误堆栈: error.stack
             });
 
-            return Response.json(No('内部服务器错误'), {
+            // 开发环境返回详细错误信息
+            const errorDetail =
+                Env.NODE_ENV === 'development'
+                    ? {
+                          message: error.message,
+                          stack: error.stack
+                      }
+                    : {};
+
+            return Response.json(No('内部服务器错误', errorDetail), {
                 headers: corsOptions.headers
             });
         }

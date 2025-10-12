@@ -36,7 +36,7 @@ export default Api('获取用户列表', {
             where,
             page: params.page || 1,
             limit: params.limit || 10,
-            orderBy: 'created_at DESC'
+            orderBy: ['created_at#DESC']
         });
 
         return Yes<GetUsersResponse>('查询成功', result);

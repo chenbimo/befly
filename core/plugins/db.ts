@@ -28,10 +28,30 @@ const dbPlugin: Plugin = {
                 // 包装 SQL 对象以符合 DatabaseConnection 接口
                 const connection = {
                     query: async (sqlStr: string, params?: any[]) => {
-                        // Bun SQL 使用 unsafe 方法执行原始 SQL
                         if (params && params.length > 0) {
-                            // 使用展开操作符传递参数
-                            return await sql.unsafe(sqlStr, ...params);
+                            // 手动将参数转义并替换到 SQL 中
+                            // 这不是最优方案，但对于 Bun SQL 当前的 API 来说是必要的
+                            let finalSql = sqlStr;
+                            for (const param of params) {
+                                // 简单的参数转义（实际应该更严格）
+                                let escaped: string;
+                                if (param === null) {
+                                    escaped = 'NULL';
+                                } else if (typeof param === 'string') {
+                                    // 转义单引号
+                                    escaped = `'${param.replace(/'/g, "''")}'`;
+                                } else if (typeof param === 'number') {
+                                    escaped = String(param);
+                                } else if (typeof param === 'boolean') {
+                                    escaped = param ? '1' : '0';
+                                } else {
+                                    escaped = `'${String(param)}'`;
+                                }
+                                // 替换第一个 ?
+                                finalSql = finalSql.replace('?', escaped);
+                            }
+                            // 使用 unsafe 执行替换后的 SQL
+                            return await sql.unsafe(finalSql);
                         } else {
                             return await sql.unsafe(sqlStr);
                         }

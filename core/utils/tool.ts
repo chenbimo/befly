@@ -30,10 +30,10 @@ export class Tool {
      * - 移除 id、created_at、deleted_at 字段
      * - 添加 updated_at 时间戳
      * @param data - 原始数据
-     * @param now - 当前时间戳（可选）
      * @returns 处理后的数据
      */
-    async updData(data: DataObject, now: number = Date.now()): Promise<DataObject> {
+    async updData(data: DataObject): Promise<DataObject> {
+        const now = Date.now();
         const cleaned = omitFields(data ?? {}, ['id', 'created_at', 'deleted_at'], [undefined]);
         return { ...cleaned, updated_at: now };
     }
@@ -44,10 +44,10 @@ export class Tool {
      * - 添加 created_at 和 updated_at 时间戳
      * - 移除 undefined 字段
      * @param data - 原始数据（支持单个对象或数组）
-     * @param now - 当前时间戳（可选）
      * @returns 处理后的数据
      */
-    async insData(data: DataObject | DataObject[], now: number = Date.now()): Promise<DataObject | DataObject[]> {
+    async insData(data: DataObject | DataObject[]): Promise<DataObject | DataObject[]> {
+        const now = Date.now();
         const genId = async (): Promise<number> => await this.befly.redis.genTimeID();
 
         if (Array.isArray(data)) {
@@ -76,10 +76,10 @@ export class Tool {
      * 处理删除数据（软删除）
      * - 设置 deleted_at 时间戳
      * - 添加 updated_at 时间戳
-     * @param now - 当前时间戳（可选）
      * @returns 处理后的数据
      */
-    async delData(now: number = Date.now()): Promise<DataObject> {
+    async delData(): Promise<DataObject> {
+        const now = Date.now();
         return {
             deleted_at: now,
             updated_at: now,

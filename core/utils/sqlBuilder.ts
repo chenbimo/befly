@@ -161,11 +161,10 @@ export class SqlBuilder {
                 const escapedFieldName = this._escapeField(fieldName);
                 const operator = ('$' + key.substring(lastDollarIndex + 1)) as WhereOperator;
 
-                this._validateParam(value);
-
                 switch (operator) {
                     case '$ne':
                     case '$not':
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} != ?`);
                         this._params.push(value);
                         break;
@@ -185,26 +184,32 @@ export class SqlBuilder {
                         }
                         break;
                     case '$like':
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} LIKE ?`);
                         this._params.push(value);
                         break;
                     case '$notLike':
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} NOT LIKE ?`);
                         this._params.push(value);
                         break;
                     case '$gt':
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} > ?`);
                         this._params.push(value);
                         break;
                     case '$gte':
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} >= ?`);
                         this._params.push(value);
                         break;
                     case '$lt':
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} < ?`);
                         this._params.push(value);
                         break;
                     case '$lte':
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} <= ?`);
                         this._params.push(value);
                         break;
@@ -231,15 +236,89 @@ export class SqlBuilder {
                         }
                         break;
                     default:
+                        this._validateParam(value);
                         this._where.push(`${escapedFieldName} = ?`);
                         this._params.push(value);
                 }
             } else {
-                // 简单的等于条件
-                this._validateParam(value);
-                const escapedKey = this._escapeField(key);
-                this._where.push(`${escapedKey} = ?`);
-                this._params.push(value);
+                // 检查值是否为对象（嵌套条件）
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    // 嵌套条件：如 { age: { $gt: 18 } }
+                    const escapedKey = this._escapeField(key);
+                    for (const [op, val] of Object.entries(value)) {
+                        switch (op as WhereOperator) {
+                            case '$ne':
+                            case '$not':
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} != ?`);
+                                this._params.push(val);
+                                break;
+                            case '$gt':
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} > ?`);
+                                this._params.push(val);
+                                break;
+                            case '$gte':
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} >= ?`);
+                                this._params.push(val);
+                                break;
+                            case '$lt':
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} < ?`);
+                                this._params.push(val);
+                                break;
+                            case '$lte':
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} <= ?`);
+                                this._params.push(val);
+                                break;
+                            case '$like':
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} LIKE ?`);
+                                this._params.push(val);
+                                break;
+                            case '$notLike':
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} NOT LIKE ?`);
+                                this._params.push(val);
+                                break;
+                            case '$in':
+                                if (Array.isArray(val) && val.length > 0) {
+                                    const placeholders = val.map(() => '?').join(',');
+                                    this._where.push(`${escapedKey} IN (${placeholders})`);
+                                    this._params.push(...val);
+                                }
+                                break;
+                            case '$nin':
+                            case '$notIn':
+                                if (Array.isArray(val) && val.length > 0) {
+                                    const placeholders = val.map(() => '?').join(',');
+                                    this._where.push(`${escapedKey} NOT IN (${placeholders})`);
+                                    this._params.push(...val);
+                                }
+                                break;
+                            case '$null':
+                                if (val) {
+                                    this._where.push(`${escapedKey} IS NULL`);
+                                } else {
+                                    this._where.push(`${escapedKey} IS NOT NULL`);
+                                }
+                                break;
+                            default:
+                                // 未知操作符，按等于处理
+                                this._validateParam(val);
+                                this._where.push(`${escapedKey} = ?`);
+                                this._params.push(val);
+                        }
+                    }
+                } else {
+                    // 简单的等于条件
+                    this._validateParam(value);
+                    const escapedKey = this._escapeField(key);
+                    this._where.push(`${escapedKey} = ?`);
+                    this._params.push(value);
+                }
             }
         });
     }

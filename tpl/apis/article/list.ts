@@ -43,7 +43,7 @@ export default Api('获取文章列表', {
             where,
             page: params.page || 1,
             limit: params.limit || 10,
-            orderBy: 'created_at DESC'
+            orderBy: ['created_at#DESC']
         });
 
         return Yes<GetArticlesResponse>('查询成功', result);
