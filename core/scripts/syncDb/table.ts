@@ -9,9 +9,8 @@
 
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
-import { isType } from '../../utils/typeHelper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, typeMapping } from './constants.js';
-import { quoteIdentifier, logFieldChange } from './helpers.js';
+import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
 import { getTableColumns, getTableIndexes, type ColumnInfo } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
@@ -94,15 +93,27 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     throw new Error(errorMsg);
                 }
 
-                // 默认值变化处理：
+                // 默认值变化处理
                 if (defaultChanged) {
-                    const v = fieldType === 'number' ? fieldDefault : `'${fieldDefault}'`;
-                    if (IS_PG) {
-                        defaultClauses.push(`ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
-                    } else if (IS_MYSQL && onlyDefaultChanged) {
-                        // MySQL 的 TEXT/BLOB 不允许 DEFAULT，跳过 text 类型
-                        if (fieldType !== 'text') {
-                            defaultClauses.push(`ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}`);
+                    // 使用公共函数处理默认值
+                    const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
+
+                    // 生成 SQL DEFAULT 值（不包含前导空格，因为要用于 ALTER COLUMN）
+                    let v: string | null = null;
+                    if (actualDefault !== 'null') {
+                        const defaultSql = generateDefaultSql(actualDefault, fieldType);
+                        // 移除前导空格 ' DEFAULT ' -> 'DEFAULT '
+                        v = defaultSql.trim().replace(/^DEFAULT\s+/, '');
+                    }
+
+                    if (v !== null && v !== '') {
+                        if (IS_PG) {
+                            defaultClauses.push(`ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
+                        } else if (IS_MYSQL && onlyDefaultChanged) {
+                            // MySQL 的 TEXT/BLOB 不允许 DEFAULT，跳过 text 类型
+                            if (fieldType !== 'text') {
+                                defaultClauses.push(`ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}`);
+                            }
                         }
                     }
                 }

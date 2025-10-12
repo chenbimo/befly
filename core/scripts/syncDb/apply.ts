@@ -9,7 +9,7 @@
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, typeMapping, CHANGE_TYPE_LABELS } from './constants.js';
-import { logFieldChange } from './helpers.js';
+import { logFieldChange, resolveDefaultValue } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
 import { rebuildSqliteTable } from './sqlite.js';
 import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from './types.js';
@@ -69,12 +69,15 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: stri
         });
     }
 
-    // 检查默认值变化（按照生成规则推导期望默认值）
-    if (String(existingColumn.defaultValue) !== String(fieldDefault)) {
+    // 使用公共函数处理默认值
+    const expectedDefault = resolveDefaultValue(fieldDefault, fieldType);
+
+    // 检查默认值变化
+    if (String(existingColumn.defaultValue) !== String(expectedDefault)) {
         changes.push({
             type: 'default',
             current: existingColumn.defaultValue,
-            expected: fieldDefault
+            expected: expectedDefault
         });
     }
 

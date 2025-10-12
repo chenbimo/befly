@@ -1,7 +1,7 @@
 {
-    "name": "名称|string|1|100|''|1|null",
+    "name": "名称|string|1|100|null|1|null",
     "age": "年龄|number|1|150|18|0|null",
-    "email": "邮箱|string|5|100|''|1|^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$",
+    "email": "邮箱|string|5|100|null|1|^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$",
     "status": "状态|string|1|20|active|1|^(active|inactive|pending)$",
     "createdAt": "创建时间|number|0|9999999999999|0|1|null"
 }

@@ -10,9 +10,8 @@
 
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
-import { isType } from '../../utils/typeHelper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, typeMapping, SYSTEM_INDEX_FIELDS } from './constants.js';
-import { quoteIdentifier } from './helpers.js';
+import { quoteIdentifier, resolveDefaultValue, generateDefaultSql } from './helpers.js';
 import type { SQL } from 'bun';
 
 /**
@@ -82,7 +81,10 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
         const parsed = parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
         const sqlType = fieldType === 'string' || fieldType === 'array' ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
-        const defaultSql = fieldType === 'number' || fieldType === 'string' || fieldType === 'array' ? (isType(fieldDefault, 'number') ? ` DEFAULT ${fieldDefault}` : ` DEFAULT '${fieldDefault}'`) : '';
+
+        // 使用公共函数处理默认值
+        const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
+        const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
         if (IS_MYSQL) {
             colDefs.push(`\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`);
@@ -106,7 +108,10 @@ export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: bo
     const parsed = parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
     const sqlType = fieldType === 'string' || fieldType === 'array' ? `${typeMapping[fieldType]}(${fieldMax})` : typeMapping[fieldType];
-    const defaultSql = fieldType === 'number' || fieldType === 'string' || fieldType === 'array' ? (isType(fieldDefault, 'number') ? ` DEFAULT ${fieldDefault}` : ` DEFAULT '${fieldDefault}'`) : '';
+
+    // 使用公共函数处理默认值
+    const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
+    const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
     if (IS_MYSQL) {
         return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${String(fieldName).replace(/"/g, '\\"')}"`;

@@ -5,9 +5,11 @@
  * - SQL 标识符引用
  * - 日志格式化
  * - 类型判断工具
+ * - 默认值处理
  */
 
 import { IS_MYSQL, IS_PG } from './constants.js';
+import { isType } from '../../utils/typeHelper.js';
 
 /**
  * 根据数据库类型引用标识符
@@ -25,6 +27,74 @@ export function quoteIdentifier(identifier: string): string {
     if (IS_MYSQL) return `\`${identifier}\``;
     if (IS_PG) return `"${identifier}"`;
     return identifier; // SQLite 无需引用
+}
+
+/**
+ * 处理默认值：将 'null' 字符串转换为对应类型的默认值
+ *
+ * @param fieldDefault - 字段默认值（可能是 'null' 字符串）
+ * @param fieldType - 字段类型（number/string/text/array）
+ * @returns 实际默认值
+ *
+ * @example
+ * resolveDefaultValue('null', 'string') // => ''
+ * resolveDefaultValue('null', 'number') // => 0
+ * resolveDefaultValue('null', 'array') // => '[]'
+ * resolveDefaultValue('null', 'text') // => 'null'
+ * resolveDefaultValue('admin', 'string') // => 'admin'
+ */
+export function resolveDefaultValue(fieldDefault: any, fieldType: 'number' | 'string' | 'text' | 'array'): any {
+    if (fieldDefault !== 'null') {
+        return fieldDefault;
+    }
+
+    // null 表示使用类型默认值
+    switch (fieldType) {
+        case 'number':
+            return 0;
+        case 'string':
+            return '';
+        case 'array':
+            return '[]';
+        case 'text':
+            // text 类型不设置默认值，保持 'null'
+            return 'null';
+        default:
+            return fieldDefault;
+    }
+}
+
+/**
+ * 生成 SQL DEFAULT 子句
+ *
+ * @param actualDefault - 实际默认值（已经过 resolveDefaultValue 处理）
+ * @param fieldType - 字段类型
+ * @returns SQL DEFAULT 子句字符串（包含前导空格），如果不需要则返回空字符串
+ *
+ * @example
+ * generateDefaultSql(0, 'number') // => ' DEFAULT 0'
+ * generateDefaultSql('admin', 'string') // => " DEFAULT 'admin'"
+ * generateDefaultSql('', 'string') // => " DEFAULT ''"
+ * generateDefaultSql('null', 'text') // => ''
+ */
+export function generateDefaultSql(actualDefault: any, fieldType: 'number' | 'string' | 'text' | 'array'): string {
+    // text 类型不设置默认值
+    if (fieldType === 'text' || actualDefault === 'null') {
+        return '';
+    }
+
+    // 仅 number/string/array 类型设置默认值
+    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array') {
+        if (isType(actualDefault, 'number')) {
+            return ` DEFAULT ${actualDefault}`;
+        } else {
+            // 字符串需要转义单引号：' -> ''
+            const escaped = String(actualDefault).replace(/'/g, "''");
+            return ` DEFAULT '${escaped}'`;
+        }
+    }
+
+    return '';
 }
 
 /**

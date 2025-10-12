@@ -74,12 +74,20 @@ export async function getTableColumns(sql: SQL, tableName: string): Promise<{ [k
                 ORDER BY ORDINAL_POSITION
             `;
             for (const row of result) {
+                // MySQL 的 COLUMN_DEFAULT 已经是解析后的实际值，无需处理：
+                // - 空字符串 DEFAULT '': 返回 '' (空字符串)
+                // - 字符串 DEFAULT 'admin': 返回 admin (无引号)
+                // - 单引号 DEFAULT '''': 返回 ' (单引号字符)
+                // - 数字 DEFAULT 0: 返回 0
+                // - NULL: 返回 null
+                const defaultValue = row.COLUMN_DEFAULT;
+
                 columns[row.COLUMN_NAME] = {
                     type: row.DATA_TYPE,
                     columnType: row.COLUMN_TYPE,
                     length: row.CHARACTER_MAXIMUM_LENGTH,
                     nullable: row.IS_NULLABLE === 'YES',
-                    defaultValue: row.COLUMN_DEFAULT,
+                    defaultValue: defaultValue,
                     comment: row.COLUMN_COMMENT
                 };
             }
