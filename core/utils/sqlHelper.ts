@@ -1,5 +1,5 @@
 /**
- * SQL 管理器 - TypeScript 版本
+ * SQL 助手 - TypeScript 版本
  * 提供数据库 CRUD 操作的封装
  */
 
@@ -9,7 +9,7 @@ import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback, DatabaseConnection } from '../types/database.js';
 
 /**
- * SQL 管理器类
+ * SQL 助手类
  */
 export class SqlHelper {
     private befly: BeflyContext;
