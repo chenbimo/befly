@@ -35,8 +35,13 @@ export const toSnakeTableName = (name: string): string => {
  * @throws 如果配置不完整或数据库类型不支持
  *
  * @example
- * // SQLite
+ * // SQLite 内存数据库
+ * buildDatabaseUrl() // 'sqlite://:memory:' (当 DB_NAME 为空或 ':memory:')
+ *
+ * // SQLite 文件数据库
  * buildDatabaseUrl() // 'sqlite://database.db'
+ * buildDatabaseUrl() // 'sqlite://./data/app.db'
+ * buildDatabaseUrl() // 'sqlite:///absolute/path/db.sqlite'
  *
  * // PostgreSQL
  * buildDatabaseUrl() // 'postgres://user:pass@localhost:5432/dbname'
@@ -56,7 +61,15 @@ export const buildDatabaseUrl = (): string => {
     if (!name && type !== 'sqlite') throw new Error('DB_NAME 未配置');
 
     if (type === 'sqlite') {
-        if (!name) throw new Error('DB_NAME 未配置');
+        // 支持内存数据库
+        if (!name || name === ':memory:') {
+            return 'sqlite://:memory:';
+        }
+        // 支持绝对路径（以 / 或盘符开头，如 /path 或 C:\path）
+        if (name.startsWith('/') || /^[a-zA-Z]:/.test(name)) {
+            return `sqlite://${name}`;
+        }
+        // 相对路径和普通文件名
         return `sqlite://${name}`;
     }
 
