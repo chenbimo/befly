@@ -8,7 +8,7 @@ import type { KeyValue } from './common.js';
 import type { Logger } from '../utils/logger.js';
 import type { Jwt } from '../utils/jwt.js';
 import type { Validator } from '../utils/validate.js';
-import type { SqlManager } from '../utils/sqlHelper.js';
+import type { SqlHelper } from '../utils/sqlHelper.js';
 import type { Crypto2 } from '../utils/crypto.js';
 import type { Tool } from '../utils/tool.js';
 
@@ -79,7 +79,7 @@ export interface Befly {
     validator: Validator;
 
     /** SQL 管理器 */
-    sql: SqlManager;
+    sql: SqlHelper;
 
     /** 加密工具 */
     crypto: Crypto2;

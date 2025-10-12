@@ -65,7 +65,7 @@ import type { BeflyContext } from 'befly/types';
 // BeflyContext 包含所有插件提供的功能
 interface BeflyContext {
     // 数据库管理器
-    db: SqlManager;
+    db: SqlHelper;
 
     // Redis 助手
     redis: typeof RedisHelper;
@@ -99,10 +99,10 @@ interface ApiRoute {
 type ApiHandler = (befly: BeflyContext, ctx: RequestContext, req: Request) => Promise<ApiResponse>;
 ```
 
-### SqlManager（数据库管理器）
+### SqlHelper（数据库管理器）
 
 ```typescript
-import type { SqlManager, QueryOptions, ListResult } from 'befly/utils';
+import type { SqlHelper, QueryOptions, ListResult } from 'befly/utils';
 
 // 查询选项
 interface QueryOptions {

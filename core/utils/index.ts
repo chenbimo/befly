@@ -31,7 +31,7 @@ export { Colors } from './colors.js';
 export { Logger } from './logger.js';
 export { Validator } from './validate.js';
 export { SqlBuilder } from './sqlBuilder.js';
-export { SqlManager } from './sqlHelper.js';
+export { SqlHelper } from './sqlHelper.js';
 export { RedisHelper, initRedisClient, getRedisClient, closeRedisClient } from './redisHelper.js';
 export { Jwt } from './jwt.js';
 export { Crypto2 } from './crypto.js';

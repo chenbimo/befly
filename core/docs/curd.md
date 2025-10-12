@@ -2,7 +2,7 @@
 
 基于 Bun 内置 SQL 客户端（Bun.SQL）的数据库操作库，提供链式 SQL 构造器和便捷的 CRUD 操作方法。
 
-注意：自 v3 起，数据库管理类名称统一为 SqlManager，并从插件内联实现迁移到 `utils/sqlManager.js`，由插件 `plugins/db.js` 在初始化时创建实例并挂载到 `befly.db`。
+注意：自 v3 起，数据库管理类名称统一为 SqlHelper，并从插件内联实现迁移到 `utils/sqlHelper.js`，由插件 `plugins/db.js` 在初始化时创建实例并挂载到 `befly.db`。
 
 ## 特性
 
@@ -91,7 +91,7 @@ TZ=Asia/Shanghai
 ```javascript
 export default async function userApi(befly) {
     const { db } = befly;
-    // db 为 SqlManager 实例（来源：utils/sqlManager.js）
+    // db 为 SqlHelper 实例（来源：utils/sqlHelper.js）
 }
 ```
 
@@ -575,7 +575,7 @@ const usersWithLatestPost = await db.getAll('users u', {
 ### 基础链式调用
 
 ```javascript
-// 获取查询构造器（来自 utils/sqlManager.js 暴露的 db.query()）
+// 获取查询构造器（来自 utils/sqlHelper.js 暴露的 db.query()）
 const builder = db.query();
 
 // 链式构建查询

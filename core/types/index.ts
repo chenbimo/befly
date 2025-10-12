@@ -135,7 +135,7 @@ export interface JwtSignOptions {
  */
 export interface BeflyContext {
     /** 数据库管理器 */
-    db: SqlManager;
+    db: SqlHelper;
     /** Redis 助手 */
     redis: typeof RedisHelper;
     /** 日志记录器 */
@@ -294,7 +294,7 @@ export interface ListResult<T = any> {
 /**
  * 事务回调函数
  */
-export type TransactionCallback<T = any> = (trans: SqlManager) => Promise<T>;
+export type TransactionCallback<T = any> = (trans: SqlHelper) => Promise<T>;
 
 /**
  * SQL 查询对象
@@ -309,7 +309,7 @@ export interface SqlQuery {
 /**
  * SQL 管理器接口
  */
-export interface SqlManager {
+export interface SqlHelper {
     /** 查询单条数据 */
     getDetail<T = any>(options: QueryOptions): Promise<T | null>;
     /** 查询列表（带分页） */

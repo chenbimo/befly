@@ -91,7 +91,7 @@ export interface ListResult<T = any> {
 /**
  * 事务回调函数
  */
-export type TransactionCallback<T = any> = (trans: SqlManager) => Promise<T>;
+export type TransactionCallback<T = any> = (trans: SqlHelper) => Promise<T>;
 
 /**
  * SQL 查询结果
@@ -161,7 +161,7 @@ export interface SyncStats {
 }
 
 /**
- * 数据库连接接口（占位符，实际类型由 SqlManager 定义）
+ * 数据库连接接口（占位符，实际类型由 SqlHelper 定义）
  */
 export interface DatabaseConnection {
     query(sql: string, params?: any[]): Promise<any>;
@@ -169,9 +169,9 @@ export interface DatabaseConnection {
 }
 
 /**
- * SqlManager 接口（前向声明）
+ * SqlHelper 接口（前向声明）
  */
-export interface SqlManager {
+export interface SqlHelper {
     getDetail<T = any>(options: QueryOptions): Promise<T | null>;
     getList<T = any>(options: QueryOptions): Promise<ListResult<T>>;
     getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]>;

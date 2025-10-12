@@ -30,7 +30,7 @@
 -   06-数据库
     -   01-DB 配置.md
     -   02-syncDb 与 syncDev.md
-    -   03-SQLBuilder 与 SQLManager.md
+    -   03-SQLBuilder 与 SQLHelper.md
     -   04-SQLite 与 PostgreSQL 注意事项.md
 -   07-可观测性
     -   01-logger 与字段过滤.md

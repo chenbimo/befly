@@ -11,7 +11,7 @@ import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListRes
 /**
  * SQL 管理器类
  */
-export class SqlManager {
+export class SqlHelper {
     private befly: BeflyContext;
     private connection: DatabaseConnection | null = null;
     private isTransaction: boolean = false;
@@ -247,7 +247,7 @@ export class SqlManager {
         const conn = await this.befly.db.transaction();
 
         try {
-            const trans = new SqlManager(this.befly, conn);
+            const trans = new SqlHelper(this.befly, conn);
             const result = await callback(trans);
             await conn.query('COMMIT');
             return result;
