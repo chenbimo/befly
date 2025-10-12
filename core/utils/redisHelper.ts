@@ -182,23 +182,21 @@ export const RedisHelper = {
 
     /**
      * 生成基于时间的唯一 ID
-     * @returns 唯一 ID
+     * 格式: Date.now()(13位) + 3位自增 = 16位纯数字
+     * 容量: 1000/毫秒 = 1,000,000/秒
+     * @returns 唯一 ID (16位纯数字)
      */
     async genTimeID(): Promise<number> {
         const client = await getRedisClient();
-        const timestamp = Math.floor(Date.now() / 1000);
+        const timestamp = Date.now();
         const key = `${prefix}time_id_counter:${timestamp}`;
 
         const counter = await client.incr(key);
-        await client.expire(key, 2);
+        await client.expire(key, 1);
 
-        const counterPrefix = (counter % 1000).toString().padStart(3, '0');
-        const randomSuffix = Math.floor(Math.random() * 1000)
-            .toString()
-            .padStart(3, '0');
-        const suffix = `${counterPrefix}${randomSuffix}`;
+        const counterSuffix = (counter % 1000).toString().padStart(3, '0');
 
-        return Number(`${timestamp}${suffix}`);
+        return Number(`${timestamp}${counterSuffix}`);
     },
 
     /**
