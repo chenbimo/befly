@@ -47,9 +47,10 @@ export const RouterPlugin: Plugin = {
 ```
 
 **命名规范：**
-- ✅ 导出名称使用 PascalCase
-- ✅ 以 `Plugin` 结尾（如 `RouterPlugin`）
-- ✅ 使用 `export const` 导出
+
+-   ✅ 导出名称使用 PascalCase
+-   ✅ 以 `Plugin` 结尾（如 `RouterPlugin`）
+-   ✅ 使用 `export const` 导出
 
 ### 3. 使用方式
 
@@ -187,7 +188,7 @@ export const ApiPlugin: Plugin = {
         });
 
         // 请求拦截器
-        api.interceptors.request.use(config => {
+        api.interceptors.request.use((config) => {
             const token = localStorage.getItem('token');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
@@ -197,8 +198,8 @@ export const ApiPlugin: Plugin = {
 
         // 响应拦截器
         api.interceptors.response.use(
-            response => response.data,
-            error => {
+            (response) => response.data,
+            (error) => {
                 if (error.response?.status === 401) {
                     // 未授权，跳转登录
                     window.location.href = '/login';
@@ -323,18 +324,18 @@ app.use(DirectivesPlugin);
 ```typescript
 // src/types/auto-imports.d.ts
 declare global {
-  const RouterPlugin: typeof import('../plugins/router')['RouterPlugin']
-  const PermissionPlugin: typeof import('../plugins/permission')['PermissionPlugin']
-  const DirectivesPlugin: typeof import('../plugins/directives')['DirectivesPlugin']
+    const RouterPlugin: typeof import('../plugins/router')['RouterPlugin'];
+    const PermissionPlugin: typeof import('../plugins/permission')['PermissionPlugin'];
+    const DirectivesPlugin: typeof import('../plugins/directives')['DirectivesPlugin'];
 }
 ```
 
 ### 3. 统一规范
 
-- ✅ 所有插件遵循 Vue Plugin 标准
-- ✅ 统一使用 `app.use()` 安装
-- ✅ 清晰的命名约定
-- ✅ 易于理解和维护
+-   ✅ 所有插件遵循 Vue Plugin 标准
+-   ✅ 统一使用 `app.use()` 安装
+-   ✅ 清晰的命名约定
+-   ✅ 易于理解和维护
 
 ### 4. 灵活扩展
 
@@ -371,13 +372,13 @@ packages/admin/
     <div>
         <!-- 使用权限指令 -->
         <t-button v-permission="'user:delete'">删除</t-button>
-        
+
         <!-- 使用防抖指令 -->
         <t-button v-debounce="handleClick">搜索</t-button>
-        
+
         <!-- 使用 Loading 指令 -->
         <div v-loading="isLoading">内容区域</div>
-        
+
         <!-- 使用自动聚焦 -->
         <t-input v-focus />
     </div>
@@ -405,35 +406,35 @@ const hasPermission = instance?.appContext.config.globalProperties.$hasPermissio
 
 ```typescript
 // src/types/auto-imports.d.ts (自动生成)
-export {}
+export {};
 declare global {
-  // Vue
-  const computed: typeof import('vue')['computed']
-  const ref: typeof import('vue')['ref']
-  const reactive: typeof import('vue')['reactive']
-  const watch: typeof import('vue')['watch']
-  const onMounted: typeof import('vue')['onMounted']
-  const getCurrentInstance: typeof import('vue')['getCurrentInstance']
-  
-  // Vue Router
-  const useRouter: typeof import('vue-router')['useRouter']
-  const useRoute: typeof import('vue-router')['useRoute']
-  
-  // Pinia
-  const defineStore: typeof import('pinia')['defineStore']
-  const storeToRefs: typeof import('pinia')['storeToRefs']
-  
-  // TDesign
-  const MessagePlugin: typeof import('tdesign-vue-next')['MessagePlugin']
-  const DialogPlugin: typeof import('tdesign-vue-next')['DialogPlugin']
-  const NotifyPlugin: typeof import('tdesign-vue-next')['NotifyPlugin']
-  const LoadingPlugin: typeof import('tdesign-vue-next')['LoadingPlugin']
-  
-  // Custom Plugins
-  const RouterPlugin: typeof import('../plugins/router')['RouterPlugin']
-  const PermissionPlugin: typeof import('../plugins/permission')['PermissionPlugin']
-  const DirectivesPlugin: typeof import('../plugins/directives')['DirectivesPlugin']
-  const ApiPlugin: typeof import('../plugins/api')['ApiPlugin']
+    // Vue
+    const computed: typeof import('vue')['computed'];
+    const ref: typeof import('vue')['ref'];
+    const reactive: typeof import('vue')['reactive'];
+    const watch: typeof import('vue')['watch'];
+    const onMounted: typeof import('vue')['onMounted'];
+    const getCurrentInstance: typeof import('vue')['getCurrentInstance'];
+
+    // Vue Router
+    const useRouter: typeof import('vue-router')['useRouter'];
+    const useRoute: typeof import('vue-router')['useRoute'];
+
+    // Pinia
+    const defineStore: typeof import('pinia')['defineStore'];
+    const storeToRefs: typeof import('pinia')['storeToRefs'];
+
+    // TDesign
+    const MessagePlugin: typeof import('tdesign-vue-next')['MessagePlugin'];
+    const DialogPlugin: typeof import('tdesign-vue-next')['DialogPlugin'];
+    const NotifyPlugin: typeof import('tdesign-vue-next')['NotifyPlugin'];
+    const LoadingPlugin: typeof import('tdesign-vue-next')['LoadingPlugin'];
+
+    // Custom Plugins
+    const RouterPlugin: typeof import('../plugins/router')['RouterPlugin'];
+    const PermissionPlugin: typeof import('../plugins/permission')['PermissionPlugin'];
+    const DirectivesPlugin: typeof import('../plugins/directives')['DirectivesPlugin'];
+    const ApiPlugin: typeof import('../plugins/api')['ApiPlugin'];
 }
 ```
 
@@ -445,12 +446,12 @@ declare global {
 
 ```typescript
 // main.ts
-app.use(createPinia());      // 1. 状态管理（最先）
-app.use(TDesign);            // 2. UI 组件库
-app.use(RouterPlugin);       // 3. 路由（依赖 Pinia 的 store）
-app.use(PermissionPlugin);   // 4. 权限（依赖路由守卫）
-app.use(DirectivesPlugin);   // 5. 指令（独立）
-app.use(ApiPlugin);          // 6. API（独立）
+app.use(createPinia()); // 1. 状态管理（最先）
+app.use(TDesign); // 2. UI 组件库
+app.use(RouterPlugin); // 3. 路由（依赖 Pinia 的 store）
+app.use(PermissionPlugin); // 4. 权限（依赖路由守卫）
+app.use(DirectivesPlugin); // 5. 指令（独立）
+app.use(ApiPlugin); // 6. API（独立）
 ```
 
 ### 2. 插件选项
@@ -479,12 +480,12 @@ app.use(ApiPlugin, { baseURL: '/api/v1' });
 
 ```typescript
 // ✅ 推荐：按功能拆分
-src/plugins/router.ts        - 路由
-src/plugins/permission.ts    - 权限
-src/plugins/directives.ts    - 指令
+src / plugins / router.ts - 路由;
+src / plugins / permission.ts - 权限;
+src / plugins / directives.ts - 指令;
 
 // ❌ 不推荐：全部放在一个文件
-src/plugins/common.ts        - 所有功能混在一起
+src / plugins / common.ts - 所有功能混在一起;
 ```
 
 ## 🎉 总结
@@ -500,5 +501,5 @@ src/plugins/common.ts        - 所有功能混在一起
 
 ---
 
-**实施状态：** ✅ 完成  
+**实施状态：** ✅ 完成
 **推荐指数：** ⭐⭐⭐⭐⭐
