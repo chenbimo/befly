@@ -1,0 +1,35 @@
+{
+    "name": "befly-admin",
+    "version": "3.0.0",
+    "description": "Befly Admin - 基于 Vue3 + TDesign 的后台管理系统",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "vite",
+        "build": "vue-tsc && vite build",
+        "preview": "vite preview",
+        "type-check": "vue-tsc --noEmit"
+    },
+    "dependencies": {
+        "vue": "3.5.22",
+        "vue-router": "4.5.1",
+        "pinia": "3.0.3",
+        "tdesign-vue-next": "1.17.1",
+        "tdesign-icons-vue-next": "0.4.1",
+        "axios": "1.12.2"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "6.0.1",
+        "@types/node": "24.7.2",
+        "typescript": "5.9.3",
+        "vite": "7.1.9",
+        "vue-tsc": "3.1.1",
+        "sass": "1.93.2",
+        "unplugin-vue-components": "29.1.0",
+        "unplugin-auto-import": "20.2.0"
+    },
+    "engines": {
+        "node": ">=22.0.0",
+        "bun": ">=1.2.22"
+    }
+}

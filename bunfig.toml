@@ -1,3 +1,2 @@
 [install]
 linker = "isolated"
-node-gyp = "bun x node-gyp"

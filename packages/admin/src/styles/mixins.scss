@@ -1,0 +1,98 @@
+// SCSS 混合宏（Mixins）
+
+// 文本溢出省略
+@mixin text-ellipsis($lines: 1) {
+    @if $lines == 1 {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    } @else {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: $lines;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+// Flex 布局
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+// 响应式断点
+@mixin respond-to($breakpoint) {
+    @if $breakpoint == xs {
+        @media (max-width: $breakpoint-xs) {
+            @content;
+        }
+    } @else if $breakpoint == sm {
+        @media (min-width: $breakpoint-xs) and (max-width: $breakpoint-sm) {
+            @content;
+        }
+    } @else if $breakpoint == md {
+        @media (min-width: $breakpoint-sm) and (max-width: $breakpoint-md) {
+            @content;
+        }
+    } @else if $breakpoint == lg {
+        @media (min-width: $breakpoint-md) and (max-width: $breakpoint-lg) {
+            @content;
+        }
+    } @else if $breakpoint == xl {
+        @media (min-width: $breakpoint-lg) {
+            @content;
+        }
+    }
+}
+
+// 清除浮动
+@mixin clearfix {
+    &::after {
+        content: '';
+        display: table;
+        clear: both;
+    }
+}
+
+// 动画过渡
+@mixin transition($property: all, $duration: $transition-normal, $timing: ease) {
+    transition: $property $duration $timing;
+}
+
+// 阴影
+@mixin shadow($level: medium) {
+    @if $level == small {
+        box-shadow: $shadow-small;
+    } @else if $level == medium {
+        box-shadow: $shadow-medium;
+    } @else if $level == large {
+        box-shadow: $shadow-large;
+    }
+}
+
+// 绝对居中
+@mixin absolute-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+// 固定宽高比
+@mixin aspect-ratio($width, $height) {
+    position: relative;
+
+    &::before {
+        content: '';
+        display: block;
+        padding-top: ($height / $width) * 100%;
+    }
+}
