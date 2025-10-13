@@ -9,14 +9,16 @@ import 'tdesign-vue-next/es/style/index.css';
 // 引入全局样式
 import './styles/index.css';
 
+// 引入路由实例
+import { router } from './plugins/router';
+
 const app = createApp(App);
 
 // 安装基础插件
 app.use(createPinia());
 app.use(TDesign);
 
-// 自动导入的路由插件（来自 src/plugins/router.ts）
-// 无需手动导入，unplugin-auto-import 会自动处理
-app.use(RouterPlugin);
+// 使用路由
+app.use(router);
 
 app.mount('#app');
