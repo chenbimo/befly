@@ -71,7 +71,7 @@ bun run publish:ci
 ```json
 {
     "version": "independent",
-    "npmClient": "bun",
+    "npmClient": "npm",
     "useWorkspaces": true,
     "command": {
         "publish": {
