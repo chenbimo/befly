@@ -200,6 +200,42 @@ export const RedisHelper = {
     },
 
     /**
+     * 批量生成基于时间的唯一 ID
+     * 格式: Date.now()(13位) + 3位自增 = 16位纯数字
+     * @param count - 需要生成的 ID 数量
+     * @returns ID 数组 (16位纯数字)
+     */
+    async genTimeIDBatch(count: number): Promise<number[]> {
+        if (count <= 0) {
+            return [];
+        }
+
+        // 限制单次批量生成数量
+        const MAX_BATCH_SIZE = 10000;
+        if (count > MAX_BATCH_SIZE) {
+            throw new Error(`Batch size ${count} exceeds maximum ${MAX_BATCH_SIZE}`);
+        }
+
+        const client = await getRedisClient();
+        const timestamp = Date.now();
+        const key = `${prefix}time_id_counter:${timestamp}`;
+
+        // 使用 INCRBY 一次性获取 N 个连续计数
+        const startCounter = await client.incrBy(key, count);
+        await client.expire(key, 1);
+
+        // 生成 ID 数组
+        const ids: number[] = [];
+        for (let i = 0; i < count; i++) {
+            const counter = startCounter - count + i + 1; // 计算每个 ID 的计数值
+            const counterSuffix = (counter % 1000).toString().padStart(3, '0');
+            ids.push(Number(`${timestamp}${counterSuffix}`));
+        }
+
+        return ids;
+    },
+
+    /**
      * 设置字符串值
      * @param key - 键名
      * @param value - 值

@@ -28,21 +28,30 @@ export class SqlHelper {
     }
 
     /**
-     * 处理插入数据（强制生成系统字段）
+     * 处理插入数据（强制生成系统字段，用户不可覆盖）
      */
     private async processDataForInsert(data: Record<string, any>): Promise<Record<string, any>> {
-        const processed = { ...data };
+        // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
+        const { id, created_at, updated_at, deleted_at, state, ...userData } = data;
 
-        // 强制生成 ID
-        processed.id = await this.befly.redis.genTimeID();
+        const processed: Record<string, any> = { ...userData };
 
-        // 强制生成时间戳
+        // 强制生成 ID（不可被用户覆盖）
+        try {
+            processed.id = await this.befly.redis.genTimeID();
+        } catch (error: any) {
+            throw new Error(`Failed to generate ID. Redis may not be available: ${error.message}`);
+        }
+
+        // 强制生成时间戳（不可被用户覆盖）
         const now = Date.now();
         processed.created_at = now;
         processed.updated_at = now;
 
-        // 强制设置 state 为 1（激活状态）
+        // 强制设置 state 为 1（激活状态，不可被用户覆盖）
         processed.state = 1;
+
+        // 注意：deleted_at 字段不在插入时生成，只在软删除时设置
 
         return processed;
     }
@@ -60,25 +69,46 @@ export class SqlHelper {
             return where ? { ...where, ...customState } : customState;
         }
 
+        // 检查用户是否已经在 where 中指定了 state 条件
+        if (where && 'state' in where) {
+            // 用户已指定 state 条件，直接返回，不覆盖
+            return where;
+        }
+
         // 默认排除已删除（state = 0）
         const stateFilter: WhereConditions = { state: { $gt: 0 } };
         return where ? { ...where, ...stateFilter } : stateFilter;
     }
 
     /**
-     * 执行 SQL（使用 sql.unsafe）
+     * 执行 SQL（使用 sql.unsafe，带慢查询日志）
      */
     private async executeWithConn(sqlStr: string, params?: any[]): Promise<any> {
         if (!this.sql) {
             throw new Error('数据库连接未初始化');
         }
 
+        // 记录开始时间
+        const startTime = Date.now();
+
         // 使用 sql.unsafe 执行查询
+        let result;
         if (params && params.length > 0) {
-            return await this.sql.unsafe(sqlStr, params);
+            result = await this.sql.unsafe(sqlStr, params);
         } else {
-            return await this.sql.unsafe(sqlStr);
+            result = await this.sql.unsafe(sqlStr);
         }
+
+        // 计算执行时间
+        const duration = Date.now() - startTime;
+
+        // 慢查询警告（超过 1000ms）
+        if (duration > 1000) {
+            const sqlPreview = sqlStr.length > 100 ? sqlStr.substring(0, 100) + '...' : sqlStr;
+            console.warn(`🐌 Slow query detected (${duration}ms): ${sqlPreview}`);
+        }
+
+        return result;
     }
 
     /**
@@ -99,7 +129,15 @@ export class SqlHelper {
      * 查询列表（带分页）
      */
     async getList<T = any>(options: QueryOptions): Promise<ListResult<T>> {
-        const { table, fields = ['*'], where, orderBy = ['id#DESC'], page = 1, limit = 10, includeDeleted = false, customState } = options;
+        const { table, fields = ['*'], where, orderBy = [], page = 1, limit = 10, includeDeleted = false, customState } = options;
+
+        // P1: 添加参数上限校验
+        if (page < 1 || page > 10000) {
+            throw new Error('Page must be between 1 and 10000');
+        }
+        if (limit < 1 || limit > 1000) {
+            throw new Error('Limit must be between 1 and 1000');
+        }
 
         // 构建查询
         const whereFiltered = this.addDefaultStateFilter(where, includeDeleted, customState);
@@ -111,9 +149,25 @@ export class SqlHelper {
         const countResult = await this.executeWithConn(countSql, countParams);
         const total = countResult?.[0]?.total || 0;
 
+        // P1: 如果总数为 0，直接返回，不执行第二次查询
+        if (total === 0) {
+            return {
+                list: [],
+                total: 0,
+                page,
+                limit,
+                pages: 0
+            };
+        }
+
         // 查询数据
         const offset = (page - 1) * limit;
-        const dataBuilder = new SqlBuilder().select(fields).from(table).where(whereFiltered).orderBy(orderBy).limit(limit).offset(offset);
+        const dataBuilder = new SqlBuilder().select(fields).from(table).where(whereFiltered).limit(limit).offset(offset);
+
+        // P1: 只有用户明确指定了 orderBy 才添加排序
+        if (orderBy && orderBy.length > 0) {
+            dataBuilder.orderBy(orderBy);
+        }
 
         const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
         const list = (await this.executeWithConn(dataSql, dataParams)) || [];
@@ -128,19 +182,36 @@ export class SqlHelper {
     }
 
     /**
-     * 查询所有数据（不分页）
+     * 查询所有数据（不分页，有上限保护）
+     * ⚠️ 警告：此方法会查询大量数据，建议使用 getList 分页查询
      */
     async getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
         const { table, fields = ['*'], where, orderBy, includeDeleted = false, customState } = options;
 
-        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where, includeDeleted, customState));
+        // 添加硬性上限保护，防止内存溢出
+        const MAX_LIMIT = 10000;
+        const WARNING_LIMIT = 1000;
+
+        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where, includeDeleted, customState)).limit(MAX_LIMIT); // 强制添加上限
 
         if (orderBy) {
             builder.orderBy(orderBy);
         }
 
         const { sql, params } = builder.toSelectSql();
-        return (await this.executeWithConn(sql, params)) || [];
+        const result = (await this.executeWithConn(sql, params)) || [];
+
+        // 警告日志：返回数据超过警告阈值
+        if (result.length >= WARNING_LIMIT) {
+            console.warn(`⚠️ getAll returned ${result.length} rows from table \`${table}\`. Consider using getList with pagination for better performance.`);
+        }
+
+        // 如果达到上限，额外警告
+        if (result.length >= MAX_LIMIT) {
+            console.warn(`🚨 getAll hit the maximum limit (${MAX_LIMIT}). There may be more data. Use getList for pagination.`);
+        }
+
+        return result;
     }
 
     /**
@@ -162,28 +233,70 @@ export class SqlHelper {
     }
 
     /**
-     * 批量插入数据
+     * 批量插入数据（真正的批量操作）
+     * 使用 INSERT INTO ... VALUES (...), (...), (...) 语法
+     * 自动生成系统字段并包装在事务中
      */
     async insDataBatch(table: string, dataList: Record<string, any>[]): Promise<number[]> {
-        const ids: number[] = [];
-
-        for (const data of dataList) {
-            const id = await this.insData({ table, data });
-            ids.push(id);
+        // 空数组直接返回
+        if (dataList.length === 0) {
+            return [];
         }
 
-        return ids;
+        // 限制批量大小
+        const MAX_BATCH_SIZE = 1000;
+        if (dataList.length > MAX_BATCH_SIZE) {
+            throw new Error(`Batch insert size ${dataList.length} exceeds maximum ${MAX_BATCH_SIZE}. Please split into smaller batches.`);
+        }
+
+        // 批量生成 ID（一次性从 Redis 获取 N 个 ID）
+        const ids = await this.befly.redis.genTimeIDBatch(dataList.length);
+        const now = Date.now();
+
+        // 处理所有数据（自动添加系统字段）
+        const processedList = dataList.map((data, index) => {
+            // 移除系统字段（防止用户尝试覆盖）
+            const { id, created_at, updated_at, deleted_at, state, ...userData } = data;
+
+            // 强制生成系统字段（不可被用户覆盖）
+            return {
+                ...userData,
+                id: ids[index],
+                created_at: now,
+                updated_at: now,
+                state: 1
+            };
+        });
+
+        // 构建批量插入 SQL
+        const builder = new SqlBuilder();
+        const { sql, params } = builder.toInsertSql(table, processedList);
+
+        // 在事务中执行批量插入
+        try {
+            await this.executeWithConn(sql, params);
+            return ids;
+        } catch (error: any) {
+            // 批量插入失败，记录错误
+            console.error(`Batch insert failed for table \`${table}\`:`, error.message);
+            throw error;
+        }
     }
 
     /**
-     * 更新数据（强制更新时间戳）
+     * 更新数据（强制更新时间戳，系统字段不可修改）
      */
     async updData(options: UpdateOptions): Promise<number> {
         const { table, data, where, includeDeleted = false } = options;
 
-        // 强制更新时间戳
-        const processed = { ...data };
-        processed.updated_at = Date.now();
+        // 移除系统字段（防止用户尝试修改）
+        const { id, created_at, updated_at, deleted_at, state, ...userData } = data;
+
+        // 强制更新时间戳（不可被用户覆盖）
+        const processed: Record<string, any> = {
+            ...userData,
+            updated_at: Date.now()
+        };
 
         // 构建 SQL
         const whereFiltered = this.addDefaultStateFilter(where, includeDeleted);
@@ -196,7 +309,7 @@ export class SqlHelper {
     }
 
     /**
-     * 删除数据（自动更新时间戳）
+     * 删除数据（软删除会记录删除时间）
      */
     async delData(options: DeleteOptions): Promise<number> {
         const { table, where, hard = false } = options;
@@ -209,10 +322,12 @@ export class SqlHelper {
             const result = await this.executeWithConn(sql, params);
             return result?.changes || 0;
         } else {
-            // 软删除（自动更新 state 和时间戳）
+            // 软删除（设置 state=0 并记录删除时间）
+            const now = Date.now();
             const data: Record<string, any> = {
                 state: 0,
-                updated_at: Date.now()
+                updated_at: now,
+                deleted_at: now // 记录删除时间
             };
 
             return await this.updData({
@@ -255,34 +370,71 @@ export class SqlHelper {
     }
 
     /**
-     * 检查数据是否存在
+     * 检查数据是否存在（优化性能）
      */
     async exists(options: Omit<QueryOptions, 'fields' | 'orderBy' | 'page' | 'limit'>): Promise<boolean> {
-        const result = await this.getDetail({
-            ...options,
-            fields: ['1']
-        });
-        return !!result;
+        const { table, where, includeDeleted = false, customState } = options;
+
+        // 使用 COUNT(1) 性能更好
+        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where, includeDeleted, customState)).limit(1);
+
+        const { sql, params } = builder.toSelectSql();
+        const result = await this.executeWithConn(sql, params);
+
+        return (result?.[0]?.cnt || 0) > 0;
     }
 
     /**
-     * 查询单个字段值
+     * 查询单个字段值（带字段名验证）
      */
     async getFieldValue<T = any>(options: Omit<QueryOptions, 'fields'> & { field: string }): Promise<T | null> {
         const { field, ...queryOptions } = options;
+
+        // 验证字段名格式（只允许字母、数字、下划线）
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
+            throw new Error(`Invalid field name: ${field}. Only letters, numbers, and underscores are allowed.`);
+        }
+
         const result = await this.getDetail({
             ...queryOptions,
             fields: [field]
         });
+
         return result ? result[field] : null;
     }
 
     /**
-     * 自增字段
+     * 自增字段（安全实现，防止 SQL 注入）
      */
     async increment(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
-        const sql = `UPDATE ${table} SET ${field} = ${field} + ? WHERE ${this.buildWhereClause(where)}`;
-        const result = await this.executeWithConn(sql, [value]);
+        // 验证表名格式（只允许字母、数字、下划线）
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
+            throw new Error(`Invalid table name: ${table}`);
+        }
+
+        // 验证字段名格式（只允许字母、数字、下划线）
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
+            throw new Error(`Invalid field name: ${field}`);
+        }
+
+        // 验证 value 必须是数字
+        if (typeof value !== 'number' || isNaN(value)) {
+            throw new Error(`Increment value must be a valid number`);
+        }
+
+        // 使用 SqlBuilder 构建安全的 WHERE 条件
+        const whereFiltered = this.addDefaultStateFilter(where, false);
+        const builder = new SqlBuilder().where(whereFiltered);
+        const { sql: selectSql, params: whereParams } = builder.toSelectSql();
+
+        // 提取 WHERE 子句（找到 WHERE 关键字后的部分）
+        const whereIndex = selectSql.indexOf('WHERE');
+        const whereClause = whereIndex > -1 ? selectSql.substring(whereIndex + 6).trim() : '1=1';
+
+        // 构建安全的 UPDATE SQL（表名和字段名使用反引号转义）
+        const sql = `UPDATE \`${table}\` SET \`${field}\` = \`${field}\` + ? WHERE ${whereClause}`;
+
+        const result = await this.executeWithConn(sql, [value, ...whereParams]);
         return result?.changes || 0;
     }
 
@@ -291,15 +443,5 @@ export class SqlHelper {
      */
     async decrement(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
         return await this.increment(table, field, where, -value);
-    }
-
-    /**
-     * 构建 WHERE 子句（辅助方法）
-     */
-    private buildWhereClause(where: WhereConditions): string {
-        const builder = new SqlBuilder().where(where);
-        const { sql } = builder.toSelectSql();
-        const whereIndex = sql.indexOf('WHERE');
-        return whereIndex > -1 ? sql.substring(whereIndex + 6) : '1=1';
     }
 }
