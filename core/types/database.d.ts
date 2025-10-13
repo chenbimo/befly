@@ -4,6 +4,9 @@
 
 import type { SqlValue, WhereConditions } from './common';
 
+// 重新导出 WhereOperator 和 WhereConditions，供其他模块使用
+export type { WhereOperator, WhereConditions } from './index';
+
 /**
  * 查询选项
  */

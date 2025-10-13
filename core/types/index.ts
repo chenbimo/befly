@@ -188,23 +188,50 @@ export interface WhereOperator {
     $lte?: number;
     /** 不等于 */
     $ne?: any;
+    /** 不等于（$ne 的别名） */
+    $not?: any;
     /** 在...之中 */
     $in?: any[];
     /** 不在...之中 */
     $nin?: any[];
+    /** 不在...之中（$nin 的别名） */
+    $notIn?: any[];
     /** LIKE 模糊匹配 */
     $like?: string;
-    /** BETWEEN...AND */
-    $between?: [number, number];
-    /** IS NULL */
+    /** NOT LIKE 模糊匹配 */
+    $notLike?: string;
+    /** BETWEEN...AND 范围查询 */
+    $between?: [any, any];
+    /** NOT BETWEEN...AND 范围查询 */
+    $notBetween?: [any, any];
+    /** IS NULL 空值检查 */
     $null?: boolean;
+    /** IS NOT NULL 非空检查 */
+    $notNull?: boolean;
 }
 
 /**
  * WHERE 条件
+ * 支持两种格式：
+ * 1. 嵌套格式：{ age: { $gt: 18 } }
+ * 2. 一级属性格式：{ 'age$gt': 18 }（推荐）
  */
 export type WhereConditions = {
-    [field: string]: string | number | boolean | null | WhereOperator;
+    /** 普通字段条件（支持一级属性格式：'field$operator'） */
+    [field: string]:
+        | string
+        | number
+        | boolean
+        | null
+        | any[] // 支持 $in、$nin 的数组值
+        | WhereOperator // 支持嵌套格式
+        | WhereConditions[]; // 支持 $or、$and 的数组值
+
+    /** OR 逻辑操作符 */
+    $or?: WhereConditions[];
+
+    /** AND 逻辑操作符 */
+    $and?: WhereConditions[];
 };
 
 /**
