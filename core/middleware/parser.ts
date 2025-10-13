@@ -30,7 +30,12 @@ export async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promi
         const contentType = ctx.contentType || '';
 
         if (contentType.indexOf('json') !== -1) {
-            ctx.body = await ctx.request.json();
+            try {
+                ctx.body = await ctx.request.json();
+            } catch (err) {
+                // 如果没有 body 或 JSON 解析失败，默认为空对象
+                ctx.body = {};
+            }
         } else if (contentType.indexOf('xml') !== -1) {
             const textData = await ctx.request.text();
             const xmlData = Xml.parse(textData);
