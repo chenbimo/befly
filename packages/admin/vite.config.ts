@@ -4,11 +4,18 @@ import vue from '@vitejs/plugin-vue';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { TDesignResolver } from 'unplugin-vue-components/resolvers';
+import { autoRouterPlugin } from './libs/autoRouter';
 
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [
         vue(),
+        // 自动路由插件
+        autoRouterPlugin({
+            viewsDir: '@/views',
+            layoutsDir: '@/layouts',
+            exclude: ['components']
+        }),
         // 自动导入 Vue3 API 和组合式函数
         AutoImport({
             imports: [
@@ -19,6 +26,8 @@ export default defineConfig({
                     'tdesign-vue-next': ['MessagePlugin', 'DialogPlugin', 'NotifyPlugin', 'LoadingPlugin']
                 }
             ],
+            // 自动导入 plugins 目录下的所有导出
+            dirs: ['./src/plugins'],
             dts: 'src/types/auto-imports.d.ts',
             eslintrc: {
                 enabled: false
