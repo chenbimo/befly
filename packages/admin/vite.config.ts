@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { TDesignResolver } from 'unplugin-vue-components/resolvers';
@@ -10,6 +11,8 @@ import { autoRouterPlugin } from './libs/autoRouter';
 export default defineConfig({
     plugins: [
         vue(),
+        // Vue 响应式语法糖
+        ReactivityTransform(),
         // 自动路由插件
         autoRouterPlugin({
             viewsDir: '@/views',

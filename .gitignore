@@ -24,6 +24,7 @@ addons2
 pnpm-lock.yaml
 bun.lock
 other
+AGENTS.md
 
 # 临时文件目录（保留目录结构）
 temp/*
