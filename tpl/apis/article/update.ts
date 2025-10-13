@@ -1,16 +1,17 @@
 /**
- * 创建文章接口 - TypeScript 示例
+ * 更新文章接口
  */
 
 import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
-import type { CreateArticleRequest } from '../../../types/api';
+import commonFields from 'befly/tables/_common.json';
 import articleTable from '../../tables/article.json';
 
-export default Api('创建文章', {
+export default Api('更新文章', {
     method: 'POST',
-    auth: false, // 临时关闭认证以测试插入逻辑
+    auth: false,
     fields: {
+        id: commonFields.id,
         title: articleTable.title,
         content: articleTable.content,
         summary: articleTable.summary,
@@ -21,22 +22,27 @@ export default Api('创建文章', {
         viewCount: articleTable.viewCount,
         status: articleTable.status
     },
-    required: ['title', 'content'],
+    required: ['id'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const data = ctx.body as CreateArticleRequest;
-        const userId = ctx.jwt?.userId || '1'; // 临时使用固定ID测试
+        const { id, ...updateData } = ctx.body;
 
-        // 插入文章
-        const articleId = await befly.db.insData({
+        // 检查文章是否存在
+        const article = await befly.db.getDetail({
             table: 'article',
-            data: {
-                ...data,
-                authorId: parseInt(userId),
-                viewCount: 0,
-                published: 0
-            }
+            where: { id }
         });
 
-        return Yes('创建成功', { articleId });
+        if (!article) {
+            return No('文章不存在');
+        }
+
+        // 更新文章
+        const result = await befly.db.updData({
+            table: 'article',
+            where: { id },
+            data: updateData
+        });
+
+        return Yes('更新成功', { affected: result });
     }
 });

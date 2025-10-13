@@ -3,6 +3,10 @@
  * 提供表字段规则解析功能
  */
 
+import path from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { getProjectDir } from '../system.js';
+import { getAddonDir } from './addonHelper.js';
 import type { ParsedFieldRule } from '../types/common.js';
 
 /**
@@ -81,3 +85,83 @@ export const parseRule = (rule: string): ParsedFieldRule => {
         regex: fieldRegx !== 'null' ? fieldRegx : null
     };
 };
+
+/**
+ * 从表定义中加载字段
+ * @param tableName - 表名
+ * @param options - 可选配置
+ * @returns 字段定义对象
+ */
+export function loadTableFields(
+    tableName: string,
+    options?: {
+        source?: 'core' | 'project' | 'addon';
+        addonName?: string;
+    }
+): Record<string, string> {
+    const source = options?.source || 'project';
+    const addonName = options?.addonName || '';
+
+    let tableFilePath: string;
+
+    // 根据来源确定表定义文件路径
+    if (source === 'core') {
+        tableFilePath = path.join(import.meta.dir, '../tables', `${tableName}.json`);
+    } else if (source === 'addon') {
+        if (!addonName) {
+            throw new Error('addon 来源必须提供 addonName 参数');
+        }
+        tableFilePath = path.join(getAddonDir(addonName, 'tables'), `${tableName}.json`);
+    } else {
+        tableFilePath = path.join(getProjectDir('tables'), `${tableName}.json`);
+    }
+
+    // 检查文件是否存在
+    if (!existsSync(tableFilePath)) {
+        throw new Error(`表定义文件不存在: ${tableFilePath}`);
+    }
+
+    try {
+        // 读取并解析 JSON 文件
+        const fileContent = readFileSync(tableFilePath, 'utf-8');
+        const fields = JSON.parse(fileContent);
+
+        // 验证是否为对象
+        if (typeof fields !== 'object' || fields === null || Array.isArray(fields)) {
+            throw new Error(`表定义文件格式错误: ${tableFilePath}`);
+        }
+
+        return fields;
+    } catch (error: any) {
+        throw new Error(`加载表定义失败 (${tableName}): ${error.message}`);
+    }
+}
+
+/**
+ * 从表定义中选择部分字段
+ * @param tableName - 表名
+ * @param fieldNames - 要选择的字段名数组
+ * @param options - 可选配置
+ * @returns 选择的字段定义对象
+ */
+export function pickTableFields(
+    tableName: string,
+    fieldNames: string[],
+    options?: {
+        source?: 'core' | 'project' | 'addon';
+        addonName?: string;
+    }
+): Record<string, string> {
+    const allFields = loadTableFields(tableName, options);
+    const pickedFields: Record<string, string> = {};
+
+    for (const fieldName of fieldNames) {
+        if (fieldName in allFields) {
+            pickedFields[fieldName] = allFields[fieldName];
+        } else {
+            throw new Error(`表 ${tableName} 中不存在字段: ${fieldName}`);
+        }
+    }
+
+    return pickedFields;
+}

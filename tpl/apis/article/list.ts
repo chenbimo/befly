@@ -6,24 +6,27 @@ import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 import type { GetArticlesRequest, GetArticlesResponse } from '../../../types/api';
 import type { Article } from '../../../types/models';
+import commonFields from 'befly/tables/_common.json';
 
 export default Api('获取文章列表', {
     method: 'POST',
     auth: false, // 公开接口
     fields: {
-        page: '页码|number|1|9999|1|0|null',
-        limit: '每页数量|number|1|100|10|0|null',
+        page: commonFields.page,
+        limit: commonFields.limit,
         categoryId: '分类ID|number|0|999999|null|0|null',
         authorId: '作者ID|number|0|999999|null|0|null',
-        keyword: '关键词|string|0|50|null|0|null',
-        published: '是否发布|number|0|1|null|0|^(0|1)$'
+        keyword: commonFields.keyword,
+        published: '是否发布|number|0|1|null|0|^(0|1)$',
+        where: commonFields.where,
+        orderBy: commonFields.orderBy
     },
     required: [],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const params = ctx.body as GetArticlesRequest;
-
         // 构建查询条件
-        const where: any = {};
+        let where: any = params.where || {};
+
+        // 兼容旧的查询参数
         if (params.categoryId) {
             where.categoryId = params.categoryId;
         }
@@ -38,14 +41,14 @@ export default Api('获取文章列表', {
         }
 
         // 查询文章列表
-        const result = await befly.db.getList<Article>({
+        const result = await befly.db.getList({
             table: 'article',
             where,
             page: params.page || 1,
             limit: params.limit || 10,
-            orderBy: ['created_at#DESC']
+            orderBy: params.orderBy || ['created_at#DESC']
         });
 
-        return Yes<GetArticlesResponse>('查询成功', result);
+        return Yes('查询成功', result);
     }
 });

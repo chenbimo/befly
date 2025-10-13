@@ -21,7 +21,7 @@ export { formatDate, calcPerfTime } from './datetime.js';
 export { toSnakeTableName, buildDatabaseUrl, createSqlClient } from './dbHelper.js';
 
 // ========== 表定义工具 ==========
-export { parseRule } from './tableHelper.js';
+export { parseRule, loadTableFields, pickTableFields } from './tableHelper.js';
 
 // ========== 插件系统工具 ==========
 export { sortPlugins } from './pluginHelper.js';

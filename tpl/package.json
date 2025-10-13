@@ -12,12 +12,12 @@
     "scripts": {
         "dev": "bun run main.ts",
         "serve": "bunx --bun pm2 start pm2.config.cjs -a",
-        "test": "bun test"
+        "test": "bun test",
+        "test:api": "bun run test-api-runner.ts"
     },
     "type": "module",
     "dependencies": {
-        "befly": "../core",
-        "mysql2": "^3.15.2"
+        "befly": "../core"
     },
     "devDependencies": {
         "@types/bun": "latest"
