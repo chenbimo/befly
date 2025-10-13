@@ -12,22 +12,19 @@ interface RouterPluginOptions {
  * 基于 views 目录结构自动生成路由配置
  *
  * 规则：
- * 1. views/ 下的每个目录/文件自动生成路由
- * 2. index.vue 映射为父路径
- * 3. 文件名转换为 kebab-case 路径
- * 4. 支持嵌套路由
- * 5. 支持布局模板
+ * 1. views/ 下的每个 .vue 文件自动生成路由
+ * 2. 文件名转换为 kebab-case 路径
+ * 3. 支持布局模板，通过文件名后缀 #数字 指定
  *
  * 文件命名规则：
- * - login/index.vue       → /login
- * - dashboard/index.vue   → /dashboard
- * - user/list.vue         → /user/list
- * - user/detail.vue       → /user/detail
- * - setting/index.vue     → /setting
+ * - login.vue       → /login
+ * - dashboard.vue   → /dashboard
+ * - news.vue        → /news (使用默认布局 0.vue)
+ * - news#1.vue      → /news (使用布局 1.vue)
  *
  * 布局规则：
- * - _public.vue           → 公开布局（不需要登录）
- * - 其他页面默认使用      → layouts/default.vue
+ * - 默认使用 layouts/0.vue
+ * - 文件名#数字.vue 使用对应的 layouts/数字.vue
  */
 export function autoRouterPlugin(options: RouterPluginOptions = {}): Plugin {
     const { viewsDir = '@/views', layoutsDir = '@/layouts', exclude = ['components'] } = options;
@@ -54,7 +51,7 @@ import type { RouteRecordRaw } from 'vue-router';
 const viewFiles = import.meta.glob('${viewsDir}/**/*.vue');
 
 // 导入布局文件
-const defaultLayout = () => import('${layoutsDir}/default.vue');
+const layoutFiles = import.meta.glob('${layoutsDir}/*.vue');
 
 /**
  * 将文件路径转换为路由路径
@@ -69,8 +66,8 @@ function filePathToRoutePath(filePath: string): string {
         .replace(/.*\\/views\\//, '')
         // 移除 .vue 后缀
         .replace(/\\.vue$/, '')
-        // 将 index 转换为空
-        .replace(/\\/index$/, '')
+        // 移除 #数字 后缀
+        .replace(/#\\d+$/, '')
         // 驼峰转 kebab-case
         .replace(/([a-z])([A-Z])/g, '$1-$2')
         .toLowerCase()
@@ -90,10 +87,20 @@ function filePathToRouteName(filePath: string): string {
         .replace(/[\\\\\\/]+/g, '/')
         .replace(/.*\\/views\\//, '')
         .replace(/\\.vue$/, '')
-        .replace(/\\/index$/, '')
+        .replace(/#\\d+$/, '')
         .split('/')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join('');
+}
+
+/**
+ * 从文件路径提取布局编号
+ * @param filePath - 文件路径
+ * @returns 布局编号，默认为 0
+ */
+function getLayoutIndex(filePath: string): string {
+    const match = filePath.match(/#(\\d+)\\.vue$/);
+    return match ? match[1] : '0';
 }
 
 /**
@@ -106,8 +113,8 @@ function isPublicRoute(filePath: string): boolean {
     const routeName = filePath
         .replace(/[\\\\\\/]+/g, '/')
         .replace(/.*\\/views\\//, '')
-        .replace(/\\/index\\.vue$/, '')
         .replace(/\\.vue$/, '')
+        .replace(/#\\d+$/, '')
         .split('/')[0];
     return publicRoutes.includes(routeName);
 }
@@ -115,7 +122,7 @@ function isPublicRoute(filePath: string): boolean {
 // 生成路由配置
 const routes: RouteRecordRaw[] = [];
 const publicRoutes: RouteRecordRaw[] = [];
-const layoutRoutes: RouteRecordRaw[] = [];
+const layoutRoutes: { [layoutIndex: string]: RouteRecordRaw[] } = {};
 
 // 排除的目录
 const excludeDirs = ${JSON.stringify(exclude)};
@@ -128,6 +135,7 @@ for (const filePath in viewFiles) {
 
     const routePath = filePathToRoutePath(filePath);
     const routeName = filePathToRouteName(filePath);
+    const layoutIndex = getLayoutIndex(filePath);
     const isPublic = isPublicRoute(filePath);
 
     const route: RouteRecordRaw = {
@@ -144,16 +152,11 @@ for (const filePath in viewFiles) {
         // 公开路由（不需要布局）
         publicRoutes.push(route);
     } else {
-        // 需要布局的路由
-        layoutRoutes.push({
-            path: routePath || '/',
-            name: routeName,
-            component: viewFiles[filePath],
-            meta: {
-                title: routeName,
-                public: false
-            }
-        });
+        // 需要布局的路由，按布局分组
+        if (!layoutRoutes[layoutIndex]) {
+            layoutRoutes[layoutIndex] = [];
+        }
+        layoutRoutes[layoutIndex].push(route);
     }
 }
 
@@ -165,15 +168,23 @@ const finalRoutes: RouteRecordRaw[] = [
         redirect: '/dashboard'
     },
     // 公开路由
-    ...publicRoutes,
-    // 带布局的路由
-    {
-        path: '/',
-        name: 'Layout',
-        component: defaultLayout,
-        children: layoutRoutes
-    }
+    ...publicRoutes
 ];
+
+// 为每个布局创建父路由
+for (const layoutIndex in layoutRoutes) {
+    const layoutPath = '${layoutsDir}/' + layoutIndex + '.vue';
+    const layoutComponent = layoutFiles[layoutPath];
+
+    if (layoutComponent) {
+        finalRoutes.push({
+            path: '/',
+            name: 'Layout' + layoutIndex,
+            component: layoutComponent,
+            children: layoutRoutes[layoutIndex]
+        });
+    }
+}
 
 export default finalRoutes;
 `;

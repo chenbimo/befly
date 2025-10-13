@@ -11,7 +11,7 @@ export const router = createRouter({
 });
 
 // 路由守卫 - 使用现代语法
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     // 设置页面标题
     const titlePrefix = 'Befly Admin';
     if (to.meta?.title) {
