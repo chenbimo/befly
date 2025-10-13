@@ -14,17 +14,17 @@ interface RouterPluginOptions {
  * 规则：
  * 1. views/ 下的每个 .vue 文件自动生成路由
  * 2. 文件名转换为 kebab-case 路径
- * 3. 支持布局模板，通过文件名后缀 #数字 指定
+ * 3. 支持布局模板，通过文件名后缀 _数字 指定
  *
  * 文件命名规则：
  * - login.vue       → /login
  * - dashboard.vue   → /dashboard
  * - news.vue        → /news (使用默认布局 0.vue)
- * - news#1.vue      → /news (使用布局 1.vue)
+ * - news_1.vue      → /news (使用布局 1.vue)
  *
  * 布局规则：
  * - 默认使用 layouts/0.vue
- * - 文件名#数字.vue 使用对应的 layouts/数字.vue
+ * - 文件名_数字.vue 使用对应的 layouts/数字.vue
  */
 export function autoRouterPlugin(options: RouterPluginOptions = {}): Plugin {
     const { viewsDir = '@/views', layoutsDir = '@/layouts', exclude = ['components'] } = options;
@@ -45,8 +45,6 @@ export function autoRouterPlugin(options: RouterPluginOptions = {}): Plugin {
         load(id) {
             if (id === resolvedVirtualModuleId) {
                 return `
-import type { RouteRecordRaw } from 'vue-router';
-
 // 自动导入所有 views 目录下的 .vue 文件
 const viewFiles = import.meta.glob('${viewsDir}/**/*.vue');
 
@@ -55,39 +53,28 @@ const layoutFiles = import.meta.glob('${layoutsDir}/*.vue');
 
 /**
  * 将文件路径转换为路由路径
- * @param filePath - 文件路径
- * @returns 路由路径
  */
-function filePathToRoutePath(filePath: string): string {
+function filePathToRoutePath(filePath) {
     return filePath
-        // 统一路径分隔符
         .replace(/[\\\\\\/]+/g, '/')
-        // 移除 views 目录前缀
         .replace(/.*\\/views\\//, '')
-        // 移除 .vue 后缀
         .replace(/\\.vue$/, '')
-        // 移除 #数字 后缀
-        .replace(/#\\d+$/, '')
-        // 驼峰转 kebab-case
+        .replace(/_\\d+$/, '')
         .replace(/([a-z])([A-Z])/g, '$1-$2')
         .toLowerCase()
-        // 清理多余的分隔符
         .replace(/[\\s_]+/g, '-')
-        // 确保以 / 开头
         .replace(/^\\/?/, '/');
 }
 
 /**
  * 从文件路径提取路由名称
- * @param filePath - 文件路径
- * @returns 路由名称
  */
-function filePathToRouteName(filePath: string): string {
+function filePathToRouteName(filePath) {
     return filePath
         .replace(/[\\\\\\/]+/g, '/')
         .replace(/.*\\/views\\//, '')
         .replace(/\\.vue$/, '')
-        .replace(/#\\d+$/, '')
+        .replace(/_\\d+$/, '')
         .split('/')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join('');
@@ -95,34 +82,29 @@ function filePathToRouteName(filePath: string): string {
 
 /**
  * 从文件路径提取布局编号
- * @param filePath - 文件路径
- * @returns 布局编号，默认为 0
  */
-function getLayoutIndex(filePath: string): string {
-    const match = filePath.match(/#(\\d+)\\.vue$/);
+function getLayoutIndex(filePath) {
+    const match = filePath.match(/_(\\d+)\\.vue$/);
     return match ? match[1] : '0';
 }
 
 /**
  * 判断是否为公开路由（不需要登录）
- * @param filePath - 文件路径
- * @returns 是否为公开路由
  */
-function isPublicRoute(filePath: string): boolean {
+function isPublicRoute(filePath) {
     const publicRoutes = ['login', 'register', 'forgot-password', '404', '403', '500'];
     const routeName = filePath
         .replace(/[\\\\\\/]+/g, '/')
         .replace(/.*\\/views\\//, '')
         .replace(/\\.vue$/, '')
-        .replace(/#\\d+$/, '')
+        .replace(/_\\d+$/, '')
         .split('/')[0];
     return publicRoutes.includes(routeName);
 }
 
 // 生成路由配置
-const routes: RouteRecordRaw[] = [];
-const publicRoutes: RouteRecordRaw[] = [];
-const layoutRoutes: { [layoutIndex: string]: RouteRecordRaw[] } = {};
+const publicRoutes = [];
+const layoutRoutes = {};
 
 // 排除的目录
 const excludeDirs = ${JSON.stringify(exclude)};
@@ -138,7 +120,7 @@ for (const filePath in viewFiles) {
     const layoutIndex = getLayoutIndex(filePath);
     const isPublic = isPublicRoute(filePath);
 
-    const route: RouteRecordRaw = {
+    const route = {
         path: routePath || '/',
         name: routeName,
         component: viewFiles[filePath],
@@ -161,7 +143,7 @@ for (const filePath in viewFiles) {
 }
 
 // 组合最终路由
-const finalRoutes: RouteRecordRaw[] = [
+const finalRoutes = [
     // 根路径重定向
     {
         path: '/',
