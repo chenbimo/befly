@@ -113,7 +113,7 @@ export class SqlBuilder {
      */
     private _validateParam(value: any): void {
         if (value === undefined) {
-            throw new Error('Parameter value cannot be undefined');
+            throw new Error('参数值不能为 undefined');
         }
     }
 
@@ -332,7 +332,7 @@ export class SqlBuilder {
         } else if (typeof fields === 'string') {
             this._select.push(this._escapeField(fields));
         } else {
-            throw new Error('SELECT fields must be string or array');
+            throw new Error('SELECT 字段必须是字符串或数组');
         }
         return this;
     }
@@ -342,7 +342,7 @@ export class SqlBuilder {
      */
     from(table: string): this {
         if (typeof table !== 'string' || !table.trim()) {
-            throw new Error('FROM table must be a non-empty string');
+            throw new Error('FROM 表名必须是非空字符串');
         }
         this._from = this._escapeTable(table.trim());
         return this;
@@ -370,7 +370,7 @@ export class SqlBuilder {
      */
     leftJoin(table: string, on: string): this {
         if (typeof table !== 'string' || typeof on !== 'string') {
-            throw new Error('JOIN table and condition must be strings');
+            throw new Error('JOIN 表名和条件必须是字符串');
         }
         const escapedTable = this._escapeTable(table);
         this._joins.push(`LEFT JOIN ${escapedTable} ON ${on}`);
@@ -383,12 +383,12 @@ export class SqlBuilder {
      */
     orderBy(fields: string[]): this {
         if (!Array.isArray(fields)) {
-            throw new Error('orderBy must be an array of strings in "field#direction" format');
+            throw new Error('orderBy 必须是字符串数组，格式为 "字段#方向"');
         }
 
         fields.forEach((item) => {
             if (typeof item !== 'string' || !item.includes('#')) {
-                throw new Error('orderBy field must be a string in "field#direction" format (e.g., "name#ASC", "id#DESC")');
+                throw new Error('orderBy 字段必须是 "字段#方向" 格式的字符串（例如："name#ASC", "id#DESC"）');
             }
 
             const [fieldName, direction] = item.split('#');
@@ -396,11 +396,11 @@ export class SqlBuilder {
             const cleanDir = direction.trim().toUpperCase() as OrderDirection;
 
             if (!cleanField) {
-                throw new Error('Field name cannot be empty in orderBy');
+                throw new Error('orderBy 中字段名不能为空');
             }
 
             if (!['ASC', 'DESC'].includes(cleanDir)) {
-                throw new Error('ORDER BY direction must be ASC or DESC');
+                throw new Error('ORDER BY 方向必须是 ASC 或 DESC');
             }
 
             const escapedField = this._escapeField(cleanField);
@@ -438,12 +438,12 @@ export class SqlBuilder {
      */
     limit(count: number, offset?: number): this {
         if (typeof count !== 'number' || count < 0) {
-            throw new Error('LIMIT count must be a non-negative number');
+            throw new Error('LIMIT 数量必须是非负数');
         }
         this._limit = Math.floor(count);
         if (offset !== undefined && offset !== null) {
             if (typeof offset !== 'number' || offset < 0) {
-                throw new Error('OFFSET must be a non-negative number');
+                throw new Error('OFFSET 必须是非负数');
             }
             this._offset = Math.floor(offset);
         }
@@ -455,7 +455,7 @@ export class SqlBuilder {
      */
     offset(count: number): this {
         if (typeof count !== 'number' || count < 0) {
-            throw new Error('OFFSET must be a non-negative number');
+            throw new Error('OFFSET 必须是非负数');
         }
         this._offset = Math.floor(count);
         return this;
@@ -470,7 +470,7 @@ export class SqlBuilder {
         sql += this._select.length > 0 ? this._select.join(', ') : '*';
 
         if (!this._from) {
-            throw new Error('FROM table is required');
+            throw new Error('FROM 表名是必需的');
         }
         sql += ` FROM ${this._from}`;
 
@@ -509,23 +509,23 @@ export class SqlBuilder {
      */
     toInsertSql(table: string, data: InsertData): SqlQuery {
         if (!table || typeof table !== 'string') {
-            throw new Error('Table name is required for INSERT');
+            throw new Error('INSERT 需要表名');
         }
 
         if (!data || typeof data !== 'object') {
-            throw new Error('Data is required for INSERT');
+            throw new Error('INSERT 需要数据');
         }
 
         const escapedTable = this._escapeTable(table);
 
         if (Array.isArray(data)) {
             if (data.length === 0) {
-                throw new Error('Insert data cannot be empty');
+                throw new Error('插入数据不能为空');
             }
 
             const fields = Object.keys(data[0]);
             if (fields.length === 0) {
-                throw new Error('Insert data must have at least one field');
+                throw new Error('插入数据必须至少有一个字段');
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));
@@ -539,7 +539,7 @@ export class SqlBuilder {
         } else {
             const fields = Object.keys(data);
             if (fields.length === 0) {
-                throw new Error('Insert data must have at least one field');
+                throw new Error('插入数据必须至少有一个字段');
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));
@@ -556,16 +556,16 @@ export class SqlBuilder {
      */
     toUpdateSql(table: string, data: UpdateData): SqlQuery {
         if (!table || typeof table !== 'string') {
-            throw new Error('Table name is required for UPDATE');
+            throw new Error('UPDATE 需要表名');
         }
 
         if (!data || typeof data !== 'object' || Array.isArray(data)) {
-            throw new Error('Data object is required for UPDATE');
+            throw new Error('UPDATE 需要数据对象');
         }
 
         const fields = Object.keys(data);
         if (fields.length === 0) {
-            throw new Error('Update data must have at least one field');
+            throw new Error('更新数据必须至少有一个字段');
         }
 
         const escapedTable = this._escapeTable(table);
@@ -577,7 +577,7 @@ export class SqlBuilder {
         if (this._where.length > 0) {
             sql += ' WHERE ' + this._where.join(' AND ');
         } else {
-            throw new Error('UPDATE requires WHERE condition for safety');
+            throw new Error('为安全起见，UPDATE 需要 WHERE 条件');
         }
 
         return { sql, params };
@@ -588,7 +588,7 @@ export class SqlBuilder {
      */
     toDeleteSql(table: string): SqlQuery {
         if (!table || typeof table !== 'string') {
-            throw new Error('Table name is required for DELETE');
+            throw new Error('DELETE 需要表名');
         }
 
         const escapedTable = this._escapeTable(table);
@@ -597,7 +597,7 @@ export class SqlBuilder {
         if (this._where.length > 0) {
             sql += ' WHERE ' + this._where.join(' AND ');
         } else {
-            throw new Error('DELETE requires WHERE condition for safety');
+            throw new Error('为安全起见，DELETE 需要 WHERE 条件');
         }
 
         return { sql, params: [...this._params] };
@@ -610,7 +610,7 @@ export class SqlBuilder {
         let sql = 'SELECT COUNT(*) as total';
 
         if (!this._from) {
-            throw new Error('FROM table is required for COUNT');
+            throw new Error('COUNT 需要 FROM 表名');
         }
         sql += ` FROM ${this._from}`;
 

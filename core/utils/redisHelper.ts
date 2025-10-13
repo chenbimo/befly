@@ -213,7 +213,7 @@ export const RedisHelper = {
         // 限制单次批量生成数量
         const MAX_BATCH_SIZE = 10000;
         if (count > MAX_BATCH_SIZE) {
-            throw new Error(`Batch size ${count} exceeds maximum ${MAX_BATCH_SIZE}`);
+            throw new Error(`批量大小 ${count} 超过最大限制 ${MAX_BATCH_SIZE}`);
         }
 
         const client = await getRedisClient();

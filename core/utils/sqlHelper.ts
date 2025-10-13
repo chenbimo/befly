@@ -40,7 +40,7 @@ export class SqlHelper {
         try {
             processed.id = await this.befly.redis.genTimeID();
         } catch (error: any) {
-            throw new Error(`Failed to generate ID. Redis may not be available: ${error.message}`);
+            throw new Error(`生成 ID 失败，Redis 可能不可用：${error.message}`);
         }
 
         // 强制生成时间戳（不可被用户覆盖）
@@ -105,7 +105,7 @@ export class SqlHelper {
         // 慢查询警告（超过 1000ms）
         if (duration > 1000) {
             const sqlPreview = sqlStr.length > 100 ? sqlStr.substring(0, 100) + '...' : sqlStr;
-            console.warn(`🐌 Slow query detected (${duration}ms): ${sqlPreview}`);
+            console.warn(`🐌 检测到慢查询 (${duration}ms): ${sqlPreview}`);
         }
 
         return result;
@@ -133,10 +133,10 @@ export class SqlHelper {
 
         // P1: 添加参数上限校验
         if (page < 1 || page > 10000) {
-            throw new Error('Page must be between 1 and 10000');
+            throw new Error('页码必须在 1 到 10000 之间');
         }
         if (limit < 1 || limit > 1000) {
-            throw new Error('Limit must be between 1 and 1000');
+            throw new Error('每页数量必须在 1 到 1000 之间');
         }
 
         // 构建查询
@@ -203,12 +203,12 @@ export class SqlHelper {
 
         // 警告日志：返回数据超过警告阈值
         if (result.length >= WARNING_LIMIT) {
-            console.warn(`⚠️ getAll returned ${result.length} rows from table \`${table}\`. Consider using getList with pagination for better performance.`);
+            console.warn(`⚠️ getAll 从表 \`${table}\` 返回了 ${result.length} 行数据，建议使用 getList 分页查询以获得更好的性能。`);
         }
 
         // 如果达到上限，额外警告
         if (result.length >= MAX_LIMIT) {
-            console.warn(`🚨 getAll hit the maximum limit (${MAX_LIMIT}). There may be more data. Use getList for pagination.`);
+            console.warn(`🚨 getAll 达到了最大限制 (${MAX_LIMIT})，可能还有更多数据。请使用 getList 分页查询。`);
         }
 
         return result;
@@ -246,7 +246,7 @@ export class SqlHelper {
         // 限制批量大小
         const MAX_BATCH_SIZE = 1000;
         if (dataList.length > MAX_BATCH_SIZE) {
-            throw new Error(`Batch insert size ${dataList.length} exceeds maximum ${MAX_BATCH_SIZE}. Please split into smaller batches.`);
+            throw new Error(`批量插入数量 ${dataList.length} 超过最大限制 ${MAX_BATCH_SIZE}，请分批插入。`);
         }
 
         // 批量生成 ID（一次性从 Redis 获取 N 个 ID）
@@ -278,7 +278,7 @@ export class SqlHelper {
             return ids;
         } catch (error: any) {
             // 批量插入失败，记录错误
-            console.error(`Batch insert failed for table \`${table}\`:`, error.message);
+            console.error(`表 \`${table}\` 批量插入失败:`, error.message);
             throw error;
         }
     }
@@ -392,7 +392,7 @@ export class SqlHelper {
 
         // 验证字段名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
-            throw new Error(`Invalid field name: ${field}. Only letters, numbers, and underscores are allowed.`);
+            throw new Error(`无效的字段名: ${field}，只允许字母、数字和下划线。`);
         }
 
         const result = await this.getDetail({
@@ -409,17 +409,17 @@ export class SqlHelper {
     async increment(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
         // 验证表名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
-            throw new Error(`Invalid table name: ${table}`);
+            throw new Error(`无效的表名: ${table}`);
         }
 
         // 验证字段名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
-            throw new Error(`Invalid field name: ${field}`);
+            throw new Error(`无效的字段名: ${field}`);
         }
 
         // 验证 value 必须是数字
         if (typeof value !== 'number' || isNaN(value)) {
-            throw new Error(`Increment value must be a valid number`);
+            throw new Error(`自增值必须是有效的数字`);
         }
 
         // 使用 SqlBuilder 构建安全的 WHERE 条件

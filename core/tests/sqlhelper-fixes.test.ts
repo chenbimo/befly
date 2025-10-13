@@ -92,7 +92,7 @@ describe('SqlHelper 修复验证', () => {
         test('page 参数校验', () => {
             const validatePage = (page: number) => {
                 if (page < 1 || page > 10000) {
-                    throw new Error('Page must be between 1 and 10000');
+                    throw new Error('页码必须在 1 到 10000 之间');
                 }
                 return true;
             };
@@ -112,7 +112,7 @@ describe('SqlHelper 修复验证', () => {
         test('limit 参数校验', () => {
             const validateLimit = (limit: number) => {
                 if (limit < 1 || limit > 1000) {
-                    throw new Error('Limit must be between 1 and 1000');
+                    throw new Error('每页数量必须在 1 到 1000 之间');
                 }
                 return true;
             };
