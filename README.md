@@ -173,6 +173,29 @@ DB_NAME=:memory:
 -   [数据库操作](./docs/05-数据库/)
 -   [TypeScript 支持](./docs/10-TypeScript/01-TypeScript支持.md)
 
+## 📁 项目结构
+
+```
+befly/
+├── packages/          # Monorepo 包目录
+│   ├── core/         # Befly 核心框架
+│   └── tpl/          # 项目模板示例
+├── docs/             # 使用文档
+├── notes/            # 说明记录文档
+│   ├── WORKSPACE.md  # 工作区说明
+│   └── PUBLISH.md    # 发布指南
+├── temp/             # 临时执行脚本
+│   └── publish.js    # 发布脚本
+└── AGENTS.md         # AI Agent 指令
+```
+
+### 目录说明
+
+-   **`packages/`** - Monorepo 工作区，包含 core 和 tpl
+-   **`docs/`** - 完整的使用教程和 API 文档
+-   **`notes/`** - 所有说明、记录、总结类文档
+-   **`temp/`** - 所有临时执行脚本和测试文件
+
 ## 🎓 示例项目
 
 查看 `/tpl` 目录获取完整的示例项目。

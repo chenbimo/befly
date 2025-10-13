@@ -7,8 +7,6 @@ data
 .cache
 lab
 labs
-temp
-notes
 cache
 .VSCodeCounter
 oclif.manifest.json
@@ -26,7 +24,13 @@ addons2
 pnpm-lock.yaml
 bun.lock
 other
-AGENTS.md
+
+# 临时文件目录（保留目录结构）
+temp/*
+!temp/.gitkeep
+
+# 说明文档目录（提交所有文档）
+# notes 目录不忽略，所有文档都应该提交
 
 # Editor directories and files
 .vscode/*
@@ -65,7 +69,9 @@ coverage
 build/Release
 
 # Dependency directories
-node_modules
+node_modules/
+lerna-debug.log
+.lerna-debug.log
 jspm_packages
 
 # Optional npm cache directory
