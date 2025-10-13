@@ -28,29 +28,21 @@ export class SqlHelper {
     }
 
     /**
-     * 处理插入数据（自动添加 ID、时间戳、state）
+     * 处理插入数据（强制生成系统字段）
      */
     private async processDataForInsert(data: Record<string, any>): Promise<Record<string, any>> {
         const processed = { ...data };
 
-        // 自动添加 ID
-        if (!processed.id) {
-            processed.id = await this.befly.redis.genTimeID();
-        }
+        // 强制生成 ID
+        processed.id = await this.befly.redis.genTimeID();
 
-        // 自动添加时间戳
+        // 强制生成时间戳
         const now = Date.now();
-        if (!processed.created_at) {
-            processed.created_at = now;
-        }
-        if (!processed.updated_at) {
-            processed.updated_at = now;
-        }
+        processed.created_at = now;
+        processed.updated_at = now;
 
-        // 自动添加 state
-        if (!processed.state) {
-            processed.state = 1;
-        }
+        // 强制设置 state 为 1（激活状态）
+        processed.state = 1;
 
         return processed;
     }
@@ -184,16 +176,14 @@ export class SqlHelper {
     }
 
     /**
-     * 更新数据（自动更新时间戳）
+     * 更新数据（强制更新时间戳）
      */
     async updData(options: UpdateOptions): Promise<number> {
         const { table, data, where, includeDeleted = false } = options;
 
-        // 自动添加更新时间
+        // 强制更新时间戳
         const processed = { ...data };
-        if (!processed.updated_at) {
-            processed.updated_at = Date.now();
-        }
+        processed.updated_at = Date.now();
 
         // 构建 SQL
         const whereFiltered = this.addDefaultStateFilter(where, includeDeleted);
