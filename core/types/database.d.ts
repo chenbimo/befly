@@ -161,14 +161,6 @@ export interface SyncStats {
 }
 
 /**
- * 数据库连接接口（占位符，实际类型由 SqlHelper 定义）
- */
-export interface DatabaseConnection {
-    query(sql: string, params?: any[]): Promise<any>;
-    close(): Promise<void>;
-}
-
-/**
  * SqlHelper 接口（前向声明）
  */
 export interface SqlHelper {

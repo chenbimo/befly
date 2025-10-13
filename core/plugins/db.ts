@@ -25,23 +25,8 @@ const dbPlugin: Plugin = {
                 // 创建 Bun SQL 客户端（内置连接池），并确保连接验证成功后再继续
                 sql = await createSqlClient();
 
-                // 包装 SQL 对象以符合 DatabaseConnection 接口
-                const connection = {
-                    query: async (sqlStr: string, params?: any[]) => {
-                        if (params && params.length > 0) {
-                            // 使用 Bun SQL 的 unsafe 方法,传递参数数组
-                            return await sql.unsafe(sqlStr, params);
-                        } else {
-                            return await sql.unsafe(sqlStr);
-                        }
-                    },
-                    close: async () => {
-                        await sql.close();
-                    }
-                };
-
-                // 创建数据库管理器实例
-                const dbManager = new SqlHelper(befly, connection);
+                // 创建数据库管理器实例，直接传入 sql 对象
+                const dbManager = new SqlHelper(befly, sql);
 
                 Logger.info('数据库插件初始化成功');
                 return dbManager;

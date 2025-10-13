@@ -6,25 +6,25 @@
 import { SqlBuilder } from './sqlBuilder.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
-import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback, DatabaseConnection } from '../types/database.js';
+import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
 
 /**
  * SQL 助手类
  */
 export class SqlHelper {
     private befly: BeflyContext;
-    private connection: DatabaseConnection | null = null;
+    private sql: any = null;
     private isTransaction: boolean = false;
 
     /**
      * 构造函数
      * @param befly - Befly 上下文
-     * @param connection - 数据库连接（可选，用于事务）
+     * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(befly: BeflyContext, connection: DatabaseConnection | null = null) {
+    constructor(befly: BeflyContext, sql: any = null) {
         this.befly = befly;
-        this.connection = connection;
-        this.isTransaction = !!connection;
+        this.sql = sql;
+        this.isTransaction = !!sql;
     }
 
     /**
@@ -76,16 +76,19 @@ export class SqlHelper {
     }
 
     /**
-     * 执行 SQL（带连接处理）
+     * 执行 SQL（使用 sql.unsafe）
      */
-    private async executeWithConn(sql: string, params?: any[]): Promise<any> {
-        if (!this.connection) {
+    private async executeWithConn(sqlStr: string, params?: any[]): Promise<any> {
+        if (!this.sql) {
             throw new Error('数据库连接未初始化');
         }
-        // 确保 params 始终是数组
-        const safeParams = params || [];
 
-        return await this.connection.query(sql, safeParams);
+        // 使用 sql.unsafe 执行查询
+        if (params && params.length > 0) {
+            return await this.sql.unsafe(sqlStr, params);
+        } else {
+            return await this.sql.unsafe(sqlStr);
+        }
     }
 
     /**
