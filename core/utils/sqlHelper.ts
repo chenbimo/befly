@@ -28,29 +28,27 @@ export class SqlHelper {
     }
 
     /**
-     * 处理插入数据（添加 ID、时间戳、state）
+     * 处理插入数据（自动添加 ID、时间戳、state）
      */
-    private async processDataForInsert(data: Record<string, any>, options: { autoId?: boolean; autoTimestamp?: boolean; autoState?: boolean }): Promise<Record<string, any>> {
+    private async processDataForInsert(data: Record<string, any>): Promise<Record<string, any>> {
         const processed = { ...data };
 
-        // 添加 ID
-        if (options.autoId !== false && !processed.id) {
+        // 自动添加 ID
+        if (!processed.id) {
             processed.id = await this.befly.redis.genTimeID();
         }
 
-        // 添加时间戳
-        if (options.autoTimestamp !== false) {
-            const now = Date.now();
-            if (!processed.created_at) {
-                processed.created_at = now;
-            }
-            if (!processed.updated_at) {
-                processed.updated_at = now;
-            }
+        // 自动添加时间戳
+        const now = Date.now();
+        if (!processed.created_at) {
+            processed.created_at = now;
+        }
+        if (!processed.updated_at) {
+            processed.updated_at = now;
         }
 
-        // 添加 state
-        if (options.autoState !== false && !processed.state) {
+        // 自动添加 state
+        if (!processed.state) {
             processed.state = 1;
         }
 
@@ -154,17 +152,13 @@ export class SqlHelper {
     }
 
     /**
-     * 插入数据
+     * 插入数据（自动生成 ID、时间戳、state）
      */
     async insData(options: InsertOptions): Promise<number> {
-        const { table, data, autoId = true, autoTimestamp = true, autoState = true } = options;
+        const { table, data } = options;
 
-        // 处理数据
-        const processed = await this.processDataForInsert(data, {
-            autoId,
-            autoTimestamp,
-            autoState
-        });
+        // 处理数据（自动添加必要字段）
+        const processed = await this.processDataForInsert(data);
 
         // 构建 SQL
         const builder = new SqlBuilder();
@@ -190,14 +184,14 @@ export class SqlHelper {
     }
 
     /**
-     * 更新数据
+     * 更新数据（自动更新时间戳）
      */
     async updData(options: UpdateOptions): Promise<number> {
-        const { table, data, where, autoTimestamp = true, includeDeleted = false } = options;
+        const { table, data, where, includeDeleted = false } = options;
 
-        // 添加更新时间
+        // 自动添加更新时间
         const processed = { ...data };
-        if (autoTimestamp && !processed.updated_at) {
+        if (!processed.updated_at) {
             processed.updated_at = Date.now();
         }
 
@@ -212,10 +206,10 @@ export class SqlHelper {
     }
 
     /**
-     * 删除数据
+     * 删除数据（自动更新时间戳）
      */
     async delData(options: DeleteOptions): Promise<number> {
-        const { table, where, hard = false, autoTimestamp = true } = options;
+        const { table, where, hard = false } = options;
 
         if (hard) {
             // 物理删除
@@ -225,11 +219,11 @@ export class SqlHelper {
             const result = await this.executeWithConn(sql, params);
             return result?.changes || 0;
         } else {
-            // 软删除（更新 state）
-            const data: Record<string, any> = { state: 0 };
-            if (autoTimestamp) {
-                data.updated_at = Date.now();
-            }
+            // 软删除（自动更新 state 和时间戳）
+            const data: Record<string, any> = {
+                state: 0,
+                updated_at: Date.now()
+            };
 
             return await this.updData({
                 table,

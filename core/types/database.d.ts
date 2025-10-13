@@ -32,14 +32,8 @@ export interface QueryOptions {
 export interface InsertOptions {
     /** 表名 */
     table: string;
-    /** 插入数据 */
+    /** 插入数据（ID、时间戳、state 会自动生成） */
     data: Record<string, any>;
-    /** 是否自动生成 ID */
-    autoId?: boolean;
-    /** 是否添加时间戳 */
-    autoTimestamp?: boolean;
-    /** 是否添加 state 字段 */
-    autoState?: boolean;
 }
 
 /**
@@ -48,12 +42,10 @@ export interface InsertOptions {
 export interface UpdateOptions {
     /** 表名 */
     table: string;
-    /** 更新数据 */
+    /** 更新数据（updated_at 会自动更新） */
     data: Record<string, any>;
     /** WHERE 条件 */
     where: WhereConditions;
-    /** 是否自动更新时间戳 */
-    autoTimestamp?: boolean;
     /** 是否包含已删除数据 */
     includeDeleted?: boolean;
 }
@@ -66,10 +58,8 @@ export interface DeleteOptions {
     table: string;
     /** WHERE 条件 */
     where: WhereConditions;
-    /** 是否物理删除 */
+    /** 是否物理删除（false=软删除，true=物理删除） */
     hard?: boolean;
-    /** 是否自动更新时间戳（软删除时） */
-    autoTimestamp?: boolean;
 }
 
 /**
