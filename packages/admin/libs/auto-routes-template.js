@@ -7,39 +7,70 @@
 
 const viewFiles = import.meta.glob('src/views/**/*.vue');
 const layoutFiles = import.meta.glob('src/layouts/*.vue');
-const EXCLUDE_DIRS = ['components']; // 固定排除目录
 
 const layoutRoutes = {};
 
-function isPageEntry(p){
-  const norm = p.replace(/\\\\/g,'/');
-  const m = norm.match(/\\/views\\/([^/]+)\\/([^/]+)\\.vue$/);
-  if(!m) return false;
-  const dir=m[1]; const file=m[2];
-  return file===dir || file===dir.replace(/_\\d+$/, '');
+function normalizePath(p) {
+    return p.replace(/\\/g, '/');
 }
-function extractBaseName(p){return p.replace(/\\\\/g,'/').replace(/.*\\/views\\//,'').replace(/\\.vue$/,'').split('/')[0];}
-function getLayoutIndex(base){const m=base.match(/_(\\d+)$/);return m?m[1]:'0';}
-function normalizeName(base){return base.replace(/_\\d+$/, '');}
-function toKebab(s){return s.replace(/([a-z])([A-Z])/g,'$1-$2').replace(/[\\s_]+/g,'-').toLowerCase();}
-function buildPath(name){return name==='index' ? '/' : '/' + toKebab(name);}
-function buildName(name){return toKebab(name);}
+
+function isPageEntry(p) {
+    const norm = normalizePath(p);
+    // 期望末尾形如: /views/<dir>/<file>.vue
+    const parts = norm.split('/');
+    const vuePart = parts[parts.length - 1]; // <file>.vue
+    const dirPart = parts[parts.length - 2]; // <dir>
+    if (!vuePart || !dirPart) return false;
+    if (!vuePart.endsWith('.vue')) return false;
+    const fileName = vuePart.slice(0, -4); // 去掉 .vue
+    // 允许 fileName === dir 或 fileName === 去掉 _数字 的 dir
+    const baseDir = dirPart.replace(/_\d+$/, '');
+    return fileName === dirPart || fileName === baseDir;
+}
+
+function extractBaseName(p) {
+    const norm = normalizePath(p);
+    const parts = norm.split('/');
+    const dirPart = parts[parts.length - 2];
+    return dirPart;
+}
+function getLayoutIndex(base) {
+    const m = base.match(/_(\\d+)$/);
+    return m ? m[1] : '0';
+}
+function normalizeName(base) {
+    return base.replace(/_\\d+$/, '');
+}
+function toKebab(s) {
+    return s
+        .replace(/([a-z])([A-Z])/g, '$1-$2')
+        .replace(/[\\s_]+/g, '-')
+        .toLowerCase();
+}
+function buildPath(name) {
+    return name === 'index' ? '/' : '/' + toKebab(name);
+}
+function buildName(name) {
+    return toKebab(name);
+}
 // 不再区分公开路由，全部放入对应布局
 
-for (const fp in viewFiles){
-  if (EXCLUDE_DIRS.some(d=>fp.includes('/'+d+'/'))) continue;
-  if (!isPageEntry(fp)) continue;
-  const base = extractBaseName(fp);
-  const norm = normalizeName(base);
-  const layout = getLayoutIndex(base);
-  const route = { path: buildPath(norm), name: buildName(norm), component: viewFiles[fp], meta: { title: buildName(norm) } };
-  if (!layoutRoutes[layout]) layoutRoutes[layout] = [];
-  if (!layoutRoutes[layout].some(r=>r.name===route.name)) layoutRoutes[layout].push(route);
+for (const fp in viewFiles) {
+    if (['components'].some((d) => fp.includes('/' + d + '/'))) continue;
+    if (!isPageEntry(fp)) continue;
+    const base = extractBaseName(fp); // 目录名（可能带 _n）
+    const norm = normalizeName(base); // 去掉 _n 的规范名
+    const layout = getLayoutIndex(base);
+    const route = { path: buildPath(norm), name: buildName(norm), component: viewFiles[fp], meta: { title: buildName(norm) } };
+    if (!layoutRoutes[layout]) layoutRoutes[layout] = [];
+    if (!layoutRoutes[layout].some((r) => r.name === route.name)) layoutRoutes[layout].push(route);
 }
 const finalRoutes = [];
-for (const k in layoutRoutes){
-  const lp='src/layouts/'+k+'.vue';
-  const comp = layoutFiles[lp];
-  if (comp){ finalRoutes.push({ path:'/', name:'layout'+k, component:comp, children:layoutRoutes[k] }); }
+for (const k in layoutRoutes) {
+    const lp = 'src/layouts/' + k + '.vue';
+    const comp = layoutFiles[lp];
+    if (comp) {
+        finalRoutes.push({ path: '/', name: 'layout' + k, component: comp, children: layoutRoutes[k] });
+    }
 }
 export default finalRoutes;
