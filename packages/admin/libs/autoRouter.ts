@@ -1,6 +1,7 @@
-import type { Plugin } from 'vite';
+import type { Plugin, HmrContext } from 'vite';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'path';
 
 /**
  * 自动路由生成插件
@@ -12,25 +13,55 @@ export default function autoRouter(): Plugin {
     const resolvedVirtualModuleId = '\0' + virtualModuleId;
     // 目录固定，无需配置
 
+    // 模板路径：基于当前文件所在目录，避免 process.cwd() 导致嵌套 workspace 时的重复路径问题
+    const thisDir = dirname(fileURLToPath(import.meta.url));
+    const templatePath = resolve(thisDir, 'auto-routes-template.js');
+
+    // 缓存与状态
+    let cached = '';
+    let loadError = false;
+
+    function readTemplate() {
+        try {
+            const content = readFileSync(templatePath, 'utf-8');
+            cached = content;
+            loadError = false;
+        } catch (e) {
+            loadError = true;
+            cached = `console.error('[auto-routes] 模板读取失败: ${templatePath}');export default [];`;
+        }
+    }
+
+    // 初次读取
+    readTemplate();
+
     return {
         name: 'auto-router',
         enforce: 'pre',
         resolveId(id) {
             if (id === virtualModuleId) return resolvedVirtualModuleId;
         },
-        load(id) {
-            if (id !== resolvedVirtualModuleId) return;
-            const templatePath = resolve(process.cwd(), 'packages', 'admin', 'libs', 'auto-routes-template.js');
+        buildStart() {
+            // 监听模板文件
             try {
                 this.addWatchFile(templatePath);
             } catch {}
-            let raw = '';
-            try {
-                raw = readFileSync(templatePath, 'utf-8');
-            } catch (e) {
-                return `console.error('[auto-routes] 模板读取失败: ${templatePath}');export default [];`;
+        },
+        handleHotUpdate(ctx: HmrContext) {
+            if (ctx.file === templatePath) {
+                const before = cached;
+                readTemplate();
+                if (cached !== before) {
+                    this.invalidate(resolvedVirtualModuleId);
+                }
             }
-            return raw; // 直接返回模板内容
+        },
+        load(id) {
+            if (id !== resolvedVirtualModuleId) return;
+            if (loadError || !cached) {
+                readTemplate();
+            }
+            return cached;
         }
     };
 }

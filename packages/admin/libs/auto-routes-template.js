@@ -5,8 +5,9 @@
 //   固定排除子目录：components
 //   不区分公开/私有路由，全部挂到对应布局（目录后缀 _n 指定布局 n，默认 0）
 
-const viewFiles = import.meta.glob('src/views/**/*.vue');
-const layoutFiles = import.meta.glob('src/layouts/*.vue');
+// Vite glob 需要以 ./ 或 / 开头，这里使用 ./ 相对项目根（与插件所在构建上下文一致）
+const viewFiles = import.meta.glob('./src/views/**/*.vue');
+const layoutFiles = import.meta.glob('./src/layouts/*.vue');
 
 const layoutRoutes = {};
 
@@ -67,7 +68,7 @@ for (const fp in viewFiles) {
 }
 const finalRoutes = [];
 for (const k in layoutRoutes) {
-    const lp = 'src/layouts/' + k + '.vue';
+    const lp = './src/layouts/' + k + '.vue';
     const comp = layoutFiles[lp];
     if (comp) {
         finalRoutes.push({ path: '/', name: 'layout' + k, component: comp, children: layoutRoutes[k] });
