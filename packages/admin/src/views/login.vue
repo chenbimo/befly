@@ -81,11 +81,8 @@
                 <!-- 扫码登录 -->
                 <div v-if="$Data.loginType === 'qrcode'" class="qrcode-container">
                     <div class="qrcode-box">
-                        <div class="qrcode-placeholder">
-                            <!-- 这里放二维码图片 -->
-                            <t-icon name="qrcode" size="120px" />
-                        </div>
-                        <p class="qrcode-tip">打开手机扫一扫登录</p>
+                        <t-qrcode :value="$Data.qrcodeValue" :size="200" :status="$Data.qrcodeStatus" @refresh="$Method.refreshQrcode" />
+                        <p class="qrcode-tip">{{ $Data.qrcodeTip }}</p>
                     </div>
                 </div>
             </div>
@@ -141,6 +138,9 @@ const $Data = $ref({
     isSignUp: false,
     loginType: 'email' as 'email' | 'phone' | 'qrcode',
     codeCountdown: 0,
+    qrcodeValue: '',
+    qrcodeStatus: 'loading' as 'active' | 'expired' | 'loading' | 'scanned',
+    qrcodeTip: '二维码加载中...',
     loginForm: {
         email: {
             email: '',
@@ -183,6 +183,61 @@ const $Method = {
     // 切换登录方式
     switchLoginType(type: 'email' | 'phone' | 'qrcode') {
         $Data.loginType = type;
+        // 如果切换到二维码登录，生成二维码
+        if (type === 'qrcode') {
+            $Method.generateQrcode();
+        }
+    },
+
+    // 生成二维码
+    generateQrcode() {
+        $Data.qrcodeStatus = 'loading';
+        $Data.qrcodeTip = '二维码加载中...';
+
+        // TODO: 调用生成二维码接口
+        // const res = await generateQrcodeApi();
+
+        // 模拟生成二维码
+        setTimeout(() => {
+            // 生成一个唯一的二维码标识
+            const qrcodeId = `qrcode_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            $Data.qrcodeValue = `https://befly.com/qrcode/scan?id=${qrcodeId}`;
+            $Data.qrcodeStatus = 'active';
+            $Data.qrcodeTip = '请使用手机扫描二维码登录';
+
+            // 开始轮询检查扫码状态
+            $Method.checkQrcodeStatus();
+        }, 1000);
+    },
+
+    // 刷新二维码
+    refreshQrcode() {
+        $Method.generateQrcode();
+    },
+
+    // 检查二维码状态
+    checkQrcodeStatus() {
+        // TODO: 实现轮询检查二维码扫描状态
+        // 这里模拟扫码状态变化
+        setTimeout(() => {
+            // 模拟扫码成功
+            // $Data.qrcodeStatus = 'scanned';
+            // $Data.qrcodeTip = '扫描成功，请在手机上确认登录';
+            // 模拟登录成功
+            // setTimeout(() => {
+            //     localStorage.setItem('token', 'mock-token');
+            //     MessagePlugin.success('登录成功');
+            //     router.push('/dashboard');
+            // }, 2000);
+        }, 5000);
+
+        // 模拟二维码过期
+        setTimeout(() => {
+            if ($Data.qrcodeStatus === 'active') {
+                $Data.qrcodeStatus = 'expired';
+                $Data.qrcodeTip = '二维码已过期，请点击刷新';
+            }
+        }, 30000); // 30秒后过期
     },
 
     // 发送验证码
@@ -547,26 +602,19 @@ const $Method = {
 
 .qrcode-box {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
 
-    .qrcode-placeholder {
-        width: 180px;
-        height: 180px;
-        margin: 0 auto 1.2rem;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-
-        :deep(.t-icon) {
-            color: #ccc;
-        }
+    :deep(.t-qrcode) {
+        margin: 0 auto;
     }
 
     .qrcode-tip {
         font-size: 0.9rem;
         color: #666;
+        margin-top: 0.5rem;
     }
 }
 
