@@ -1,16 +1,14 @@
 // 模板文件：自动路由生成结果基模板
-// 占位符：
-//   __VIEWS_GLOB__        -> import.meta.glob 视图匹配
-//   __LAYOUTS_GLOB__      -> import.meta.glob 布局匹配
-//   __EXCLUDE_DIRS__      -> JSON 字符串数组
-//   __LAYOUTS_DIR__       -> 布局目录（字符串）
-// 逻辑说明：仅识别 views/<name>/<name>.vue 结构，index 为根路径；固定排除 components 子目录；无公开路由特殊处理。
+// 说明：
+//   目录固定：src/views ；布局目录固定：src/layouts
+//   仅识别 views/<name>/<name>.vue 结构；index 为根路径
+//   固定排除子目录：components
+//   不区分公开/私有路由，全部挂到对应布局（目录后缀 _n 指定布局 n，默认 0）
 
-const viewFiles = import.meta.glob('__VIEWS_GLOB__');
-const layoutFiles = import.meta.glob('__LAYOUTS_GLOB__');
-const EXCLUDE_DIRS = ["components"]; // 固定排除目录
+const viewFiles = import.meta.glob('src/views/**/*.vue');
+const layoutFiles = import.meta.glob('src/layouts/*.vue');
+const EXCLUDE_DIRS = ['components']; // 固定排除目录
 
-const publicRoutes = [];
 const layoutRoutes = {};
 
 function isPageEntry(p){
@@ -38,9 +36,9 @@ for (const fp in viewFiles){
   if (!layoutRoutes[layout]) layoutRoutes[layout] = [];
   if (!layoutRoutes[layout].some(r=>r.name===route.name)) layoutRoutes[layout].push(route);
 }
-const finalRoutes = [...publicRoutes];
+const finalRoutes = [];
 for (const k in layoutRoutes){
-  const lp='__LAYOUTS_DIR__/'+k+'.vue';
+  const lp='src/layouts/'+k+'.vue';
   const comp = layoutFiles[lp];
   if (comp){ finalRoutes.push({ path:'/', name:'layout'+k, component:comp, children:layoutRoutes[k] }); }
 }
