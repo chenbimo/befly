@@ -5,7 +5,7 @@
 
 import path from 'path';
 import { appendFile, stat } from 'node:fs/promises';
-import { formatDate } from './index.js';
+import { formatDate, isDebug } from './index.js';
 import { Env } from '../config/env.js';
 import type { LogLevel } from '../types/common.js';
 
@@ -209,10 +209,14 @@ export class Logger {
     }
 
     /**
-     * 记录调试日志（总是记录，忽略级别检查）
+     * 记录调试日志（受 DEBUG 环境变量控制）
+     * DEBUG=1 或 development 环境下默认打印
      * @param message - 日志消息
      */
     static async debug(message: LogMessage): Promise<void> {
+        // 检查是否开启调试模式
+        if (!isDebug()) return;
+
         const formattedMessage = this.formatMessage('debug', message);
 
         // 控制台输出

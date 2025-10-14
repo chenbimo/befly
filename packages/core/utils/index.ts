@@ -11,6 +11,9 @@ export { Yes, No } from './response.js';
 // ========== 类型判断工具 ==========
 export { isType, isEmptyObject, isEmptyArray } from './typeHelper.js';
 
+// ========== 通用工具 ==========
+export { isDebug } from './common.js';
+
 // ========== 对象操作工具 ==========
 export { pickFields, omitFields } from './objectHelper.js';
 
