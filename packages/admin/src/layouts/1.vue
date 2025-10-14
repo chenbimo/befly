@@ -3,7 +3,7 @@
         <header class="layout-header">
             <h1>布局 1 - 侧边栏布局</h1>
             <nav class="nav-menu">
-                <router-link to="/dashboard">仪表板</router-link>
+                <router-link to="/">首页</router-link>
                 <router-link to="/news">新闻</router-link>
             </nav>
         </header>
@@ -12,7 +12,7 @@
             <aside class="sidebar">
                 <h3>侧边栏</h3>
                 <ul>
-                    <li><router-link to="/dashboard">仪表板</router-link></li>
+                    <li><router-link to="/">首页</router-link></li>
                     <li><router-link to="/news">新闻</router-link></li>
                 </ul>
             </aside>

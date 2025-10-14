@@ -6,11 +6,11 @@
                 <h2>Befly Admin</h2>
             </div>
             <t-menu :value="activeMenu" @change="handleMenuChange">
-                <t-menu-item value="dashboard">
+                <t-menu-item value="index">
                     <template #icon>
                         <dashboard-icon />
                     </template>
-                    仪表盘
+                    首页
                 </t-menu-item>
             </t-menu>
         </t-aside>

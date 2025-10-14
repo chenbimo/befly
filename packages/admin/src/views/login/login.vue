@@ -296,7 +296,7 @@ const $Method = {
             }
 
             MessagePlugin.success('登录成功');
-            router.push('/dashboard');
+            router.push('/');
         } catch (error) {
             // 错误已经在 request 拦截器中处理
         } finally {
