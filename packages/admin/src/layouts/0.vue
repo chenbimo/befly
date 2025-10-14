@@ -58,8 +58,6 @@
 </template>
 
 <script setup lang="ts">
-import { DashboardIcon, UserIcon, FileIcon, SettingIcon, AppIcon, ViewListIcon, ViewModuleIcon } from 'tdesign-icons-vue-next';
-
 const router = useRouter();
 const route = useRoute();
 
@@ -84,12 +82,13 @@ const activeMenu = computed(() => route.name as string);
 const currentTitle = computed(() => route.meta.title || '');
 
 // 图标映射（根据路由名称首段匹配）
+// 使用 markRaw 标记组件为非响应式，避免性能开销
 const iconMap: Record<string, any> = {
-    index: DashboardIcon,
-    user: UserIcon,
-    news: FileIcon,
-    system: SettingIcon,
-    default: AppIcon
+    index: markRaw(DashboardIcon),
+    user: markRaw(UserIcon),
+    news: markRaw(FileIcon),
+    system: markRaw(SettingIcon),
+    default: markRaw(AppIcon)
 };
 
 // 从路由构建菜单结构

@@ -25,6 +25,12 @@ export default defineConfig({
                     'tdesign-vue-next': ['MessagePlugin', 'DialogPlugin', 'NotifyPlugin', 'LoadingPlugin']
                 }
             ],
+            resolvers: [
+                TDesignResolver({
+                    library: 'vue-next',
+                    resolveIcons: true // 自动导入 TDesign 图标
+                })
+            ],
             // 自动导入 plugins 目录下的所有导出
             dirs: ['./src/plugins'],
             dts: 'src/types/auto-imports.d.ts',
@@ -36,7 +42,8 @@ export default defineConfig({
         Components({
             resolvers: [
                 TDesignResolver({
-                    library: 'vue-next'
+                    library: 'vue-next',
+                    resolveIcons: true // 自动导入 TDesign 图标
                 })
             ],
             dts: 'src/types/components.d.ts'
