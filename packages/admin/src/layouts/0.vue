@@ -6,7 +6,7 @@
                 <h2 v-if="!$Data.collapsed">Befly Admin</h2>
                 <h2 v-else class="logo-short">B</h2>
             </div>
-            <t-menu :value="activeMenu" @change="handleMenuChange" :expanded="$Data.expandedKeys" :collapsed="$Data.collapsed" :expand-type="$Data.collapsed ? 'popup' : 'normal'" theme="light">
+            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" :expanded="$Data.expandedKeys" :collapsed="$Data.collapsed" :expand-type="$Data.collapsed ? 'popup' : 'normal'" theme="light">
                 <template v-for="item in $Data.menuItems" :key="item.value">
                     <!-- 一级菜单项 -->
                     <t-menu-item v-if="!item.children" :value="item.value">
@@ -40,7 +40,7 @@
                     <h3>{{ currentTitle }}</h3>
                 </div>
                 <div class="header-right">
-                    <t-dropdown :options="userMenuOptions" @click="handleUserMenu">
+                    <t-dropdown :options="userMenuOptions" @click="$Method.handleUserMenu">
                         <t-button variant="text">
                             <user-icon />
                             <span class="ml-2">管理员</span>
@@ -68,15 +68,6 @@ const $Data = $ref({
     menuItems: [] as any[]
 });
 
-// 方法
-const $Method = {
-    // 切换折叠状态
-    toggleCollapse() {
-        $Data.collapsed = !$Data.collapsed;
-        localStorage.setItem('sidebar-collapsed', String($Data.collapsed));
-    }
-};
-
 // 当前激活菜单
 const activeMenu = computed(() => route.name as string);
 const currentTitle = computed(() => route.meta.title || '');
@@ -91,63 +82,72 @@ const iconMap: Record<string, any> = {
     default: markRaw(AppIcon)
 };
 
-// 从路由构建菜单结构
-function buildMenuFromRoutes() {
-    const routes = router.getRoutes();
-    // 过滤掉布局路由和登录页
-    const pageRoutes = routes.filter((r) => r.name && r.name !== 'layout0' && r.name !== 'login' && !String(r.name).startsWith('layout'));
-    const menuTree: Record<string, any> = {};
-    for (const r of pageRoutes) {
-        const name = String(r.name);
-        const segments = name.split('-');
-        const firstSeg = segments[0];
-        // 一级菜单
-        if (!menuTree[firstSeg]) {
-            menuTree[firstSeg] = {
-                value: segments.length === 1 ? name : firstSeg,
-                label: firstSeg.charAt(0).toUpperCase() + firstSeg.slice(1),
-                icon: iconMap[firstSeg] || iconMap.default,
-                children: []
-            };
-        }
-        // 多级路由加入子菜单
-        if (segments.length > 1) {
-            menuTree[firstSeg].children.push({
-                value: name,
-                label: segments.slice(1).join(' / ')
-            });
-        }
-    }
-    $Data.menuItems = Object.values(menuTree).sort((a, b) => {
-        if (a.value === 'index') return -1;
-        if (b.value === 'index') return 1;
-        return a.label.localeCompare(b.label);
-    });
-    // 默认展开所有包含子菜单的项
-    $Data.expandedKeys = $Data.menuItems.filter((m) => m.children && m.children.length).map((m) => m.value);
-}
-
-// 组件挂载时构建菜单
-onMounted(() => {
-    buildMenuFromRoutes();
-});
-
+// 用户菜单选项
 const userMenuOptions = [
     { content: '个人中心', value: 'profile' },
     { content: '退出登录', value: 'logout' }
 ];
 
-const handleMenuChange = (value: string) => {
-    router.push({ name: value });
-};
-
-const handleUserMenu = (data: any) => {
-    if (data.value === 'logout') {
-        localStorage.removeItem('token');
-        router.push('/login');
-        MessagePlugin.success('退出成功');
+// 方法
+const $Method = {
+    // 切换折叠状态
+    toggleCollapse() {
+        $Data.collapsed = !$Data.collapsed;
+        localStorage.setItem('sidebar-collapsed', String($Data.collapsed));
+    },
+    // 从路由构建菜单结构
+    buildMenuFromRoutes() {
+        const routes = router.getRoutes();
+        // 过滤掉布局路由和登录页
+        const pageRoutes = routes.filter((r) => r.name && r.name !== 'layout0' && r.name !== 'login' && !String(r.name).startsWith('layout'));
+        const menuTree: Record<string, any> = {};
+        for (const r of pageRoutes) {
+            const name = String(r.name);
+            const segments = name.split('-');
+            const firstSeg = segments[0];
+            // 一级菜单
+            if (!menuTree[firstSeg]) {
+                menuTree[firstSeg] = {
+                    value: segments.length === 1 ? name : firstSeg,
+                    label: firstSeg.charAt(0).toUpperCase() + firstSeg.slice(1),
+                    icon: iconMap[firstSeg] || iconMap.default,
+                    children: []
+                };
+            }
+            // 多级路由加入子菜单
+            if (segments.length > 1) {
+                menuTree[firstSeg].children.push({
+                    value: name,
+                    label: segments.slice(1).join(' / ')
+                });
+            }
+        }
+        $Data.menuItems = Object.values(menuTree).sort((a, b) => {
+            if (a.value === 'index') return -1;
+            if (b.value === 'index') return 1;
+            return a.label.localeCompare(b.label);
+        });
+        // 默认展开所有包含子菜单的项
+        $Data.expandedKeys = $Data.menuItems.filter((m) => m.children && m.children.length).map((m) => m.value);
+    },
+    // 处理菜单切换
+    handleMenuChange(value: string) {
+        router.push({ name: value });
+    },
+    // 处理用户菜单点击
+    handleUserMenu(data: any) {
+        if (data.value === 'logout') {
+            localStorage.removeItem('token');
+            router.push('/login');
+            MessagePlugin.success('退出成功');
+        }
     }
 };
+
+// 组件挂载时构建菜单
+onMounted(() => {
+    $Method.buildMenuFromRoutes();
+});
 </script>
 
 <style scoped lang="scss">
