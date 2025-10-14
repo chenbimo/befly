@@ -35,9 +35,11 @@ function stripLayoutSuffix(dir) {
 }
 function toKebab(s) {
     return s
-        .replace(/([a-z])([A-Z])/g, '$1-$2')
-        .replace(/[\\s_]+/g, '-')
-        .toLowerCase();
+        .replace(/([a-z])([A-Z])/g, '$1-$2') // camelCase -> camel-Case
+        .replace(/[\s_]+/g, '-') // 空白或下划线 -> -
+        .toLowerCase()
+        .replace(/-+/g, '-') // 合并多余 -
+        .replace(/^|-$/g, ''); // 去首尾 -
 }
 function buildPath(name) {
     return name === 'index' ? '/' : '/' + toKebab(name);
@@ -71,7 +73,7 @@ for (const fp in viewFiles) {
     let routePath = '/' + kebabSegments.join('/');
     if (routePath === '/') routePath = '/';
     const routeName = kebabSegments.length ? kebabSegments.join('-') : 'index';
-    const route = { path: routePath, name: routeName, component: viewFiles[fp], meta: { title: routeName } };
+    const route = { path: routePath, name: routeName, component: viewFiles[fp], meta: { title: routeName, file: fp } };
     if (!layoutRoutes[layout]) layoutRoutes[layout] = [];
     if (!layoutRoutes[layout].some((r) => r.name === route.name && r.path === route.path)) {
         layoutRoutes[layout].push(route);
@@ -85,4 +87,16 @@ for (const k in layoutRoutes) {
         finalRoutes.push({ path: '/', name: 'layout' + k, component: comp, children: layoutRoutes[k] });
     }
 }
+// 开发环境下在浏览器控制台打印一次路由结果
+if (typeof window !== 'undefined' && import.meta && import.meta.env && import.meta.env.DEV) {
+    // 使用 setTimeout 避免与其他插件初始化竞争
+    setTimeout(() => {
+        // eslint-disable-next-line no-console
+        console.log(
+            '[auto-routes] 当前生成路由:',
+            finalRoutes.map((r) => ({ layout: r.name, children: r.children?.map((c) => ({ path: c.path, name: c.name, file: c.meta?.file })) }))
+        );
+    }, 0);
+}
+
 export default finalRoutes;
