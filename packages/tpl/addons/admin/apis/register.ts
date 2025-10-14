@@ -34,16 +34,14 @@ export default Api('管理员注册', {
         const hashedPassword = await Crypto2.hashPassword(password);
 
         // 创建管理员
-        const adminId = await befly.db.insert({
+        const adminId = await befly.db.insData({
             table: 'admin_admin',
             data: {
                 name,
                 email,
                 password: hashedPassword,
                 role: 'user', // 默认为普通用户
-                status: 1,
-                created_at: new Date(),
-                updated_at: new Date()
+                status: 1
             }
         });
 

@@ -85,13 +85,12 @@ export default Api('管理员登录', {
         }
 
         // 更新最后登录信息
-        await befly.db.update({
+        await befly.db.updData({
             table: 'admin_admin',
             where: { id: admin.id },
             data: {
-                last_login_time: new Date(),
-                last_login_ip: ctx.req.ip,
-                updated_at: new Date()
+                last_login_time: Date.now(),
+                last_login_ip: ctx.req.ip
             }
         });
 
