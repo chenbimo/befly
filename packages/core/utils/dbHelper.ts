@@ -112,7 +112,7 @@ export async function createSqlClient(options: SqlClientOptions = {}): Promise<a
         sql = new SQL({
             url: finalUrl,
             max: options.max ?? 1,
-            bigint: options.bigint ?? true,
+            bigint: options.bigint ?? false,
             ...options
         });
     }

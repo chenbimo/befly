@@ -5,6 +5,6 @@
     "password": "密码|string|6|255|null|0|null",
     "role": "角色|string|1|20|admin|1|^(admin|user)$",
     "status": "状态|number|0|1|1|1|^(0|1)$",
-    "last_login_time": "最后登录时间|string|0|0|null|0|null",
-    "last_login_ip": "最后登录IP|string|0|50|null|0|null"
+    "last_login_time": "最后登录时间|number|0|null|0|0|null",
+    "last_login_ip": "最后登录IP|number|0|null|0|0|null"
 }

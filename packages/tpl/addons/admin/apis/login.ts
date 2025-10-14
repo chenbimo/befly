@@ -90,7 +90,7 @@ export default Api('管理员登录', {
             where: { id: admin.id },
             data: {
                 last_login_time: Date.now(),
-                last_login_ip: ctx.req.ip
+                last_login_ip: ctx.ip || 'unknown'
             }
         });
 
