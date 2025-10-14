@@ -1,93 +1,168 @@
 <template>
-    <div class="layout-1">
-        <header class="layout-header">
-            <h1>布局 2 - 侧边栏布局</h1>
-            <nav class="nav-menu">
-                <router-link to="/">首页</router-link>
-                <router-link to="/news">新闻</router-link>
-            </nav>
-        </header>
-
-        <div class="layout-content">
-            <aside class="sidebar">
-                <h3>侧边栏</h3>
-                <ul>
-                    <li><router-link to="/">首页</router-link></li>
-                    <li><router-link to="/news">新闻</router-link></li>
-                </ul>
-            </aside>
-
-            <main class="main-content">
-                <router-view />
-            </main>
-        </div>
+    <div class="layout-container">
+        <RouterView />
     </div>
 </template>
 
 <script setup lang="ts">
-// 布局 1 - 侧边栏布局
+import { DashboardIcon, UserIcon, FileIcon, SettingIcon, AppIcon, ViewListIcon, ViewModuleIcon } from 'tdesign-icons-vue-next';
+
+const router = useRouter();
+const route = useRoute();
+
+// 响应式数据
+const $Data = $ref({
+    collapsed: localStorage.getItem('sidebar-collapsed') === 'true',
+    expandedKeys: [] as string[],
+    menuItems: [] as any[]
+});
+
+// 方法
+const $Method = {
+    // 切换折叠状态
+    toggleCollapse() {
+        $Data.collapsed = !$Data.collapsed;
+        localStorage.setItem('sidebar-collapsed', String($Data.collapsed));
+    }
+};
+
+// 当前激活菜单
+const activeMenu = computed(() => route.name as string);
+const currentTitle = computed(() => route.meta.title || '');
+
+// 图标映射（根据路由名称首段匹配）
+const iconMap: Record<string, any> = {
+    index: DashboardIcon,
+    user: UserIcon,
+    news: FileIcon,
+    system: SettingIcon,
+    default: AppIcon
+};
+
+// 从路由构建菜单结构
+function buildMenuFromRoutes() {
+    const routes = router.getRoutes();
+    // 过滤掉布局路由和登录页
+    const pageRoutes = routes.filter((r) => r.name && r.name !== 'layout0' && r.name !== 'login' && !String(r.name).startsWith('layout'));
+    const menuTree: Record<string, any> = {};
+    for (const r of pageRoutes) {
+        const name = String(r.name);
+        const segments = name.split('-');
+        const firstSeg = segments[0];
+        // 一级菜单
+        if (!menuTree[firstSeg]) {
+            menuTree[firstSeg] = {
+                value: segments.length === 1 ? name : firstSeg,
+                label: firstSeg.charAt(0).toUpperCase() + firstSeg.slice(1),
+                icon: iconMap[firstSeg] || iconMap.default,
+                children: []
+            };
+        }
+        // 多级路由加入子菜单
+        if (segments.length > 1) {
+            menuTree[firstSeg].children.push({
+                value: name,
+                label: segments.slice(1).join(' / ')
+            });
+        }
+    }
+    $Data.menuItems = Object.values(menuTree).sort((a, b) => {
+        if (a.value === 'index') return -1;
+        if (b.value === 'index') return 1;
+        return a.label.localeCompare(b.label);
+    });
+    // 默认展开所有包含子菜单的项
+    $Data.expandedKeys = $Data.menuItems.filter((m) => m.children && m.children.length).map((m) => m.value);
+}
+
+// 组件挂载时构建菜单
+onMounted(() => {
+    buildMenuFromRoutes();
+});
+
+const userMenuOptions = [
+    { content: '个人中心', value: 'profile' },
+    { content: '退出登录', value: 'logout' }
+];
+
+const handleMenuChange = (value: string) => {
+    router.push({ name: value });
+};
+
+const handleUserMenu = (data: any) => {
+    if (data.value === 'logout') {
+        localStorage.removeItem('token');
+        router.push('/login');
+        MessagePlugin.success('退出成功');
+    }
+};
 </script>
 
-<style scoped>
-.layout-1 {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.layout-header {
-    background: #001529;
-    color: white;
-    padding: 0 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 64px;
-}
-
-.nav-menu a {
-    color: white;
-    margin-left: 20px;
-    text-decoration: none;
-}
-
-.nav-menu a.router-link-active {
-    color: #1890ff;
-}
-
-.layout-content {
-    display: flex;
-    flex: 1;
+<style scoped lang="scss">
+.layout-container {
+    height: 100vh;
 }
 
 .sidebar {
-    width: 200px;
-    background: #f0f2f5;
-    padding: 20px;
-    border-right: 1px solid #d9d9d9;
+    transition: width 0.3s ease;
 }
 
-.sidebar h3 {
-    margin-top: 0;
+.logo {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--td-border-level-1-color);
 }
 
-.sidebar ul {
-    list-style: none;
-    padding: 0;
+.logo h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
 }
 
-.sidebar li {
-    margin: 10px 0;
+.logo-short {
+    font-size: 24px;
 }
 
-.sidebar a {
-    color: #1890ff;
-    text-decoration: none;
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--td-bg-color-container);
+    border-bottom: 1px solid var(--td-border-level-1-color);
 }
 
-.main-content {
-    flex: 1;
-    padding: 20px;
-    background: white;
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-left h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.collapse-btn {
+    font-size: 20px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ml-2 {
+    margin-left: 8px;
+}
+
+.content {
+    padding: 24px;
+    background: var(--td-bg-color-page);
+    overflow-y: auto;
 }
 </style>
