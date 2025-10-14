@@ -65,20 +65,66 @@ export class Loader {
             const corePluginsScanTime = calcPerfTime(corePluginsScanStart);
             Logger.info(`核心插件扫描完成，耗时: ${corePluginsScanTime}，共找到 ${corePlugins.length} 个插件`);
 
+            // 判断是否开启调试模式: DEBUG=1 或 development 环境下默认开启
+            const isDebug = process.env.DEBUG === '1' || process.env.DEBUG === 'true' || (process.env.NODE_ENV === 'development' && process.env.DEBUG !== '0');
+            if (isDebug) {
+                Logger.info(`[DEBUG] 调试模式已开启`);
+                Logger.info(`[DEBUG] 开始排序核心插件，插件列表: ${corePlugins.map((p) => p.pluginName).join(', ')}`);
+            }
+
             const sortedCorePlugins = sortPlugins(corePlugins);
             if (sortedCorePlugins === false) {
                 ErrorHandler.critical('核心插件依赖关系错误，请检查插件的 after 属性');
             }
 
+            if (isDebug) {
+                Logger.info(`[DEBUG] 核心插件排序完成，顺序: ${sortedCorePlugins.map((p) => p.pluginName).join(' -> ')}`);
+            }
+
             // 初始化核心插件
             const corePluginsInitStart = Bun.nanoseconds();
+            Logger.info(`开始初始化核心插件...`);
             for (const plugin of sortedCorePlugins) {
                 try {
+                    if (isDebug) {
+                        Logger.info(`[DEBUG] 准备初始化核心插件: ${plugin.pluginName}`);
+                    }
+
                     befly.pluginLists.push(plugin);
-                    befly.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(befly.appContext) : {};
+
+                    if (isDebug) {
+                        Logger.info(`[DEBUG] 检查插件 ${plugin.pluginName} 是否有 onInit 方法: ${typeof plugin?.onInit === 'function'}`);
+                    }
+
+                    if (typeof plugin?.onInit === 'function') {
+                        if (isDebug) {
+                            Logger.info(`[DEBUG] 开始执行插件 ${plugin.pluginName} 的 onInit 方法`);
+                        }
+
+                        const pluginInitStart = Bun.nanoseconds();
+                        befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
+                        const pluginInitTime = calcPerfTime(pluginInitStart);
+
+                        if (isDebug) {
+                            Logger.info(`[DEBUG] 插件 ${plugin.pluginName} 初始化完成，耗时: ${pluginInitTime}`);
+                        }
+                    } else {
+                        befly.appContext[plugin.pluginName] = {};
+                        if (isDebug) {
+                            Logger.info(`[DEBUG] 插件 ${plugin.pluginName} 没有 onInit 方法，跳过初始化`);
+                        }
+                    }
+
+                    Logger.info(`核心插件 ${plugin.pluginName} 初始化成功`);
                 } catch (error: any) {
                     hadCorePluginError = true;
-                    ErrorHandler.warning(`核心插件 ${plugin.pluginName} 初始化失败`, error);
+                    Logger.error(`[ERROR] 核心插件 ${plugin.pluginName} 初始化失败`);
+                    Logger.error(`[ERROR] 错误类型: ${error.name}`);
+                    Logger.error(`[ERROR] 错误信息: ${error.message}`);
+                    Logger.error(`[ERROR] 错误堆栈: ${error.stack}`);
+
+                    // 核心插件初始化失败是致命错误,必须立即终止服务启动
+                    ErrorHandler.critical(`核心插件 ${plugin.pluginName} 初始化失败，无法继续启动服务`, error);
                 }
             }
             const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
@@ -134,12 +180,38 @@ export class Loader {
                 } else {
                     // 初始化 addon 插件
                     const addonPluginsInitStart = Bun.nanoseconds();
+                    Logger.info(`开始初始化 Addon 插件...`);
                     for (const plugin of sortedAddonPlugins) {
                         try {
+                            if (isDebug) {
+                                Logger.info(`[DEBUG] 准备初始化 Addon 插件: ${plugin.pluginName}`);
+                            }
+
                             befly.pluginLists.push(plugin);
-                            befly.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(befly.appContext) : {};
+
+                            if (typeof plugin?.onInit === 'function') {
+                                if (isDebug) {
+                                    Logger.info(`[DEBUG] 开始执行 Addon 插件 ${plugin.pluginName} 的 onInit 方法`);
+                                }
+
+                                const pluginInitStart = Bun.nanoseconds();
+                                befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
+                                const pluginInitTime = calcPerfTime(pluginInitStart);
+
+                                if (isDebug) {
+                                    Logger.info(`[DEBUG] Addon 插件 ${plugin.pluginName} 初始化完成，耗时: ${pluginInitTime}`);
+                                }
+                            } else {
+                                befly.appContext[plugin.pluginName] = {};
+                            }
+
+                            Logger.info(`Addon 插件 ${plugin.pluginName} 初始化成功`);
                         } catch (error: any) {
                             hadAddonPluginError = true;
+                            Logger.error(`[ERROR] Addon 插件 ${plugin.pluginName} 初始化失败`);
+                            Logger.error(`[ERROR] 错误类型: ${error.name}`);
+                            Logger.error(`[ERROR] 错误信息: ${error.message}`);
+                            Logger.error(`[ERROR] 错误堆栈: ${error.stack}`);
                             ErrorHandler.warning(`Addon 插件 ${plugin.pluginName} 初始化失败`, error);
                         }
                     }
@@ -192,12 +264,38 @@ export class Loader {
             // 初始化用户插件
             if (userPlugins.length > 0) {
                 const userPluginsInitStart = Bun.nanoseconds();
+                Logger.info(`开始初始化用户插件...`);
                 for (const plugin of sortedUserPlugins) {
                     try {
+                        if (isDebug) {
+                            Logger.info(`[DEBUG] 准备初始化用户插件: ${plugin.pluginName}`);
+                        }
+
                         befly.pluginLists.push(plugin);
-                        befly.appContext[plugin.pluginName] = typeof plugin?.onInit === 'function' ? await plugin?.onInit(befly.appContext) : {};
+
+                        if (typeof plugin?.onInit === 'function') {
+                            if (isDebug) {
+                                Logger.info(`[DEBUG] 开始执行用户插件 ${plugin.pluginName} 的 onInit 方法`);
+                            }
+
+                            const pluginInitStart = Bun.nanoseconds();
+                            befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
+                            const pluginInitTime = calcPerfTime(pluginInitStart);
+
+                            if (isDebug) {
+                                Logger.info(`[DEBUG] 用户插件 ${plugin.pluginName} 初始化完成，耗时: ${pluginInitTime}`);
+                            }
+                        } else {
+                            befly.appContext[plugin.pluginName] = {};
+                        }
+
+                        Logger.info(`用户插件 ${plugin.pluginName} 初始化成功`);
                     } catch (error: any) {
                         hadUserPluginError = true;
+                        Logger.error(`[ERROR] 用户插件 ${plugin.pluginName} 初始化失败`);
+                        Logger.error(`[ERROR] 错误类型: ${error.name}`);
+                        Logger.error(`[ERROR] 错误信息: ${error.message}`);
+                        Logger.error(`[ERROR] 错误堆栈: ${error.stack}`);
                         ErrorHandler.warning(`用户插件 ${plugin.pluginName} 初始化失败`, error);
                     }
                 }

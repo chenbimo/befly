@@ -175,6 +175,8 @@ export interface SqlClientOptions {
     max?: number;
     /** 是否使用 BigInt */
     bigint?: boolean;
+    /** 连接超时时间（毫秒），默认 5000ms */
+    connectionTimeout?: number;
     /** 其他自定义选项 */
     [key: string]: any;
 }

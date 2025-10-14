@@ -23,7 +23,12 @@ const dbPlugin: Plugin = {
         try {
             if (Env.DB_ENABLE === 1) {
                 // 创建 Bun SQL 客户端（内置连接池），并确保连接验证成功后再继续
-                sql = await createSqlClient();
+                // 从环境变量读取连接超时配置
+                const connectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000;
+
+                sql = await createSqlClient({
+                    connectionTimeout
+                });
 
                 // 创建数据库管理器实例，直接传入 sql 对象
                 const dbManager = new SqlHelper(befly, sql);

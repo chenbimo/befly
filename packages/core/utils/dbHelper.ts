@@ -118,25 +118,46 @@ export async function createSqlClient(options: SqlClientOptions = {}): Promise<a
     }
 
     try {
-        // 连接健康检查
-        let version = '';
-        if (Env.DB_TYPE === 'sqlite') {
-            const v = await sql`SELECT sqlite_version() AS version`;
-            version = v?.[0]?.version;
-        } else if (Env.DB_TYPE === 'postgresql' || Env.DB_TYPE === 'postgres') {
-            const v = await sql`SELECT version() AS version`;
-            version = v?.[0]?.version;
-        } else {
-            const v = await sql`SELECT VERSION() AS version`;
-            version = v?.[0]?.version;
-        }
+        // 连接健康检查 - 添加超时机制
+        const timeout = options.connectionTimeout ?? 5000; // 默认5秒超时
+
+        const healthCheckPromise = (async () => {
+            let version = '';
+            if (Env.DB_TYPE === 'sqlite') {
+                const v = await sql`SELECT sqlite_version() AS version`;
+                version = v?.[0]?.version;
+            } else if (Env.DB_TYPE === 'postgresql' || Env.DB_TYPE === 'postgres') {
+                const v = await sql`SELECT version() AS version`;
+                version = v?.[0]?.version;
+            } else {
+                const v = await sql`SELECT VERSION() AS version`;
+                version = v?.[0]?.version;
+            }
+            return version;
+        })();
+
+        // 创建超时 Promise
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => {
+                reject(new Error(`数据库连接超时 (${timeout}ms)`));
+            }, timeout);
+        });
+
+        // 使用 Promise.race 实现超时控制
+        const version = await Promise.race([healthCheckPromise, timeoutPromise]);
+
         Logger.info(`数据库连接成功，version: ${version}`);
         return sql;
-    } catch (error) {
-        Logger.error('数据库连接测试失败:', error);
+    } catch (error: any) {
+        Logger.error('数据库连接测试失败:', error.message || error);
+
+        // 清理资源
         try {
             await sql.close();
-        } catch {}
+        } catch (cleanupError) {
+            // 忽略清理错误
+        }
+
         throw error;
     }
 }
