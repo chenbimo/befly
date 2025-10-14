@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bun run
+#!/usr/bin/env bun
 /**
  * Befly CLI - TypeScript 版本
  * 列出并执行 core/scripts 与 tpl/scripts 下的脚本
