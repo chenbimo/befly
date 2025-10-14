@@ -16,111 +16,109 @@
 
         <!-- 右侧表单区域 -->
         <div class="right-panel">
-            <div class="forms-wrapper">
-                <!-- 登录表单 -->
-                <div class="form-container sign-in-form" :class="{ active: !$Data.isSignUp }">
-                    <h2 class="form-title">登录到 Befly</h2>
+            <!-- 登录表单 -->
+            <div class="form-container sign-in-form" :class="{ active: !$Data.isSignUp }">
+                <h2 class="form-title">登录到 Befly</h2>
 
-                    <!-- 登录方式切换 -->
-                    <div class="login-type-tabs">
-                        <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'email' }" @click="$Method.switchLoginType('email')">邮箱登录</button>
-                        <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'phone' }" @click="$Method.switchLoginType('phone')">手机登录</button>
-                        <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'qrcode' }" @click="$Method.switchLoginType('qrcode')">扫码登录</button>
-                    </div>
+                <!-- 登录方式切换 -->
+                <div class="login-type-tabs">
+                    <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'email' }" @click="$Method.switchLoginType('email')">邮箱登录</button>
+                    <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'phone' }" @click="$Method.switchLoginType('phone')">手机登录</button>
+                    <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'qrcode' }" @click="$Method.switchLoginType('qrcode')">扫码登录</button>
+                </div>
 
-                    <!-- 邮箱登录 -->
-                    <t-form v-if="$Data.loginType === 'email'" :data="$Data.loginForm.email" :rules="$Data.loginRules.email" ref="$Data.emailFormRef" @submit="$Method.handleLogin" class="login-form">
-                        <t-form-item name="email">
-                            <t-input v-model="$Data.loginForm.email.email" placeholder="请输入邮箱" size="large" clearable>
-                                <template #prefix-icon>
-                                    <mail-icon />
-                                </template>
-                            </t-input>
-                        </t-form-item>
+                <!-- 邮箱登录 -->
+                <t-form v-if="$Data.loginType === 'email'" :data="$Data.loginForm.email" :rules="$Data.loginRules.email" ref="$Data.emailFormRef" @submit="$Method.handleLogin" class="login-form">
+                    <t-form-item name="email">
+                        <t-input v-model="$Data.loginForm.email.email" placeholder="请输入邮箱" size="large" clearable>
+                            <template #prefix-icon>
+                                <mail-icon />
+                            </template>
+                        </t-input>
+                    </t-form-item>
 
-                        <t-form-item name="password">
-                            <t-input v-model="$Data.loginForm.email.password" type="password" placeholder="请输入密码" size="large" clearable>
-                                <template #prefix-icon>
-                                    <lock-on-icon />
-                                </template>
-                            </t-input>
-                        </t-form-item>
+                    <t-form-item name="password">
+                        <t-input v-model="$Data.loginForm.email.password" type="password" placeholder="请输入密码" size="large" clearable>
+                            <template #prefix-icon>
+                                <lock-on-icon />
+                            </template>
+                        </t-input>
+                    </t-form-item>
 
-                        <a href="#" class="forgot-password">忘记密码？</a>
+                    <a href="#" class="forgot-password">忘记密码？</a>
 
-                        <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.loginLoading"> 登录 </t-button>
-                    </t-form>
+                    <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.loginLoading"> 登录 </t-button>
+                </t-form>
 
-                    <!-- 手机登录 -->
-                    <t-form v-if="$Data.loginType === 'phone'" :data="$Data.loginForm.phone" :rules="$Data.loginRules.phone" ref="$Data.phoneFormRef" @submit="$Method.handleLogin" class="login-form">
-                        <t-form-item name="phone">
-                            <t-input v-model="$Data.loginForm.phone.phone" placeholder="请输入手机号" size="large" clearable>
-                                <template #prefix-icon>
-                                    <mobile-icon />
-                                </template>
-                            </t-input>
-                        </t-form-item>
+                <!-- 手机登录 -->
+                <t-form v-if="$Data.loginType === 'phone'" :data="$Data.loginForm.phone" :rules="$Data.loginRules.phone" ref="$Data.phoneFormRef" @submit="$Method.handleLogin" class="login-form">
+                    <t-form-item name="phone">
+                        <t-input v-model="$Data.loginForm.phone.phone" placeholder="请输入手机号" size="large" clearable>
+                            <template #prefix-icon>
+                                <mobile-icon />
+                            </template>
+                        </t-input>
+                    </t-form-item>
 
-                        <t-form-item name="code">
-                            <t-input v-model="$Data.loginForm.phone.code" placeholder="请输入验证码" size="large" clearable>
-                                <template #prefix-icon>
-                                    <secured-icon />
-                                </template>
-                                <template #suffix>
-                                    <t-button variant="text" :disabled="$Data.codeCountdown > 0" @click="$Method.sendCode">
-                                        {{ $Data.codeCountdown > 0 ? `${$Data.codeCountdown}秒后重试` : '发送验证码' }}
-                                    </t-button>
-                                </template>
-                            </t-input>
-                        </t-form-item>
+                    <t-form-item name="code">
+                        <t-input v-model="$Data.loginForm.phone.code" placeholder="请输入验证码" size="large" clearable>
+                            <template #prefix-icon>
+                                <secured-icon />
+                            </template>
+                            <template #suffix>
+                                <t-button variant="text" :disabled="$Data.codeCountdown > 0" @click="$Method.sendCode">
+                                    {{ $Data.codeCountdown > 0 ? `${$Data.codeCountdown}秒后重试` : '发送验证码' }}
+                                </t-button>
+                            </template>
+                        </t-input>
+                    </t-form-item>
 
-                        <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.loginLoading"> 登录 </t-button>
-                    </t-form>
+                    <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.loginLoading"> 登录 </t-button>
+                </t-form>
 
-                    <!-- 扫码登录 -->
-                    <div v-if="$Data.loginType === 'qrcode'" class="qrcode-container">
-                        <div class="qrcode-box">
-                            <div class="qrcode-placeholder">
-                                <!-- 这里放二维码图片 -->
-                                <t-icon name="qrcode" size="120px" />
-                            </div>
-                            <p class="qrcode-tip">打开手机扫一扫登录</p>
+                <!-- 扫码登录 -->
+                <div v-if="$Data.loginType === 'qrcode'" class="qrcode-container">
+                    <div class="qrcode-box">
+                        <div class="qrcode-placeholder">
+                            <!-- 这里放二维码图片 -->
+                            <t-icon name="qrcode" size="120px" />
                         </div>
+                        <p class="qrcode-tip">打开手机扫一扫登录</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- 注册表单 -->
-                <div class="form-container sign-up-form" :class="{ active: $Data.isSignUp }">
-                    <h2 class="form-title">注册账号</h2>
+            <!-- 注册表单 -->
+            <div class="form-container sign-up-form" :class="{ active: $Data.isSignUp }">
+                <h2 class="form-title">注册账号</h2>
 
-                    <t-form :data="$Data.registerForm" :rules="$Data.registerRules" ref="$Data.registerFormRef" @submit="$Method.handleRegister" class="login-form">
-                        <t-form-item name="name">
-                            <t-input v-model="$Data.registerForm.name" placeholder="请输入姓名" size="large" clearable>
-                                <template #prefix-icon>
-                                    <user-icon />
-                                </template>
-                            </t-input>
-                        </t-form-item>
+                <t-form :data="$Data.registerForm" :rules="$Data.registerRules" ref="$Data.registerFormRef" @submit="$Method.handleRegister" class="login-form">
+                    <t-form-item name="name">
+                        <t-input v-model="$Data.registerForm.name" placeholder="请输入姓名" size="large" clearable>
+                            <template #prefix-icon>
+                                <user-icon />
+                            </template>
+                        </t-input>
+                    </t-form-item>
 
-                        <t-form-item name="email">
-                            <t-input v-model="$Data.registerForm.email" placeholder="请输入邮箱" size="large" clearable>
-                                <template #prefix-icon>
-                                    <mail-icon />
-                                </template>
-                            </t-input>
-                        </t-form-item>
+                    <t-form-item name="email">
+                        <t-input v-model="$Data.registerForm.email" placeholder="请输入邮箱" size="large" clearable>
+                            <template #prefix-icon>
+                                <mail-icon />
+                            </template>
+                        </t-input>
+                    </t-form-item>
 
-                        <t-form-item name="password">
-                            <t-input v-model="$Data.registerForm.password" type="password" placeholder="请输入密码" size="large" clearable>
-                                <template #prefix-icon>
-                                    <lock-on-icon />
-                                </template>
-                            </t-input>
-                        </t-form-item>
+                    <t-form-item name="password">
+                        <t-input v-model="$Data.registerForm.password" type="password" placeholder="请输入密码" size="large" clearable>
+                            <template #prefix-icon>
+                                <lock-on-icon />
+                            </template>
+                        </t-input>
+                    </t-form-item>
 
-                        <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.registerLoading"> 注册 </t-button>
-                    </t-form>
-                </div>
+                    <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.registerLoading"> 注册 </t-button>
+                </t-form>
             </div>
         </div>
     </div>
@@ -360,42 +358,46 @@ const $Method = {
     }
 }
 
-// 表单容器包裹器
-.forms-wrapper {
+// 表单容器（跟随颜色区域滑动）
+.form-container {
     position: absolute;
     width: 50%;
     height: 100%;
     top: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: all 0.5s ease-in-out;
-}
-
-// 登录模式：表单在右侧
-.auth-container:not(.sign-up-mode) .forms-wrapper {
-    right: 0;
-    left: auto;
-}
-
-// 注册模式：表单在左侧
-.auth-container.sign-up-mode .forms-wrapper {
-    left: 0;
-    right: auto;
-}
-
-// 表单容器（用于切换动画）
-.form-container {
-    width: 100%;
-    max-width: 450px;
     padding: 3rem 2rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
+    transition: all 0.5s ease-in-out;
 
     &.active {
         opacity: 1;
         pointer-events: all;
+    }
+}
+
+// 登录模式：登录表单在右侧
+.auth-container:not(.sign-up-mode) {
+    .sign-in-form {
+        right: 0;
+    }
+
+    .sign-up-form {
+        left: 0;
+    }
+}
+
+// 注册模式：注册表单在左侧，登录表单在右侧
+.auth-container.sign-up-mode {
+    .sign-in-form {
+        right: -50%;
+    }
+
+    .sign-up-form {
+        left: 0;
     }
 }
 
@@ -405,6 +407,7 @@ const $Method = {
     margin-bottom: 1.5rem;
     font-weight: 600;
     text-align: center;
+    width: 100%;
 }
 
 // 登录方式切换标签
@@ -414,6 +417,8 @@ const $Method = {
     gap: 0;
     margin-bottom: 2rem;
     border-bottom: 2px solid #f0f0f0;
+    width: 100%;
+    max-width: 450px;
 
     .tab-btn {
         padding: 0.75rem 1.2rem;
@@ -454,6 +459,7 @@ const $Method = {
 
 .login-form {
     width: 100%;
+    max-width: 450px;
 }
 
 .t-form-item {
@@ -523,6 +529,8 @@ const $Method = {
     justify-content: center;
     min-height: 350px;
     padding: 2rem 0;
+    width: 100%;
+    max-width: 450px;
 }
 
 .qrcode-box {
@@ -582,9 +590,10 @@ const $Method = {
         min-height: 500px;
     }
 
-    .forms-wrapper {
-        max-width: 100%;
-        padding: 0 1rem;
+    .form-container {
+        width: 100%;
+        padding: 2rem 1rem;
+        position: static;
     }
 }
 
