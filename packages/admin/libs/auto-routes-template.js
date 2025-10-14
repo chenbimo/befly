@@ -6,18 +6,22 @@
 //   不区分公开/私有路由，全部挂到对应布局（目录后缀 _n 指定布局 n，默认 0）
 
 // 在虚拟模块环境中，统一使用绝对形式 '/src/...'
-// 支持多级目录：示例
-//   /src/views/user/profile/profile.vue        => /user/profile
-//   /src/views/system/user/user.vue            => /system/user
-//   /src/views/system/user/index/index.vue     => /system/user
-//   /src/views/index/index.vue                 => /
-//   /src/views/dashboard_2/dashboard.vue       => /dashboard  (布局 2)
-// 规则：
-//   1. 仅识别末级目录与同名文件（可带 _n 布局后缀）或 index/index 形式
-//   2. 布局后缀 _n 仅作用在最后一级目录
-//   3. 末级目录规范名为 'index' 时视为该层路径占位（不追加路径段）
-//   4. 任意层目录名中的大写会被 kebab 化
-//   5. 任意层若为 'components' 视为内部局部组件目录，直接忽略该文件
+// 支持多级目录：新规则
+//   1. 任意目录下的 index.vue 代表该目录的“默认路由”，不再附加文件段：/news/index.vue -> /news
+//   2. 非 index.vue 页面，路径 = 所有目录段 + 文件名：/news/detail/detail.vue -> /news/detail/detail
+//      即使文件名与末级目录同名亦需保留（区别于旧规则会省略重复）
+//   3. 根目录 index.vue -> '/'
+//   4. 末级目录可带布局后缀 _n，布局编号取自该后缀；路径使用去掉后缀的目录名；中间层暂不支持布局后缀
+//   5. 任何层级的 components 子目录下文件忽略
+//   6. 大小写驼峰与下划线会被 kebab 化
+// 示例：
+//   /src/views/news/index.vue              => /news
+//   /src/views/news/detail/detail.vue      => /news/detail/detail
+//   /src/views/user/profile/index.vue      => /user/profile
+//   /src/views/user/profile/edit.vue       => /user/profile/edit
+//   /src/views/index.vue                   => /
+//   /src/views/dashboard_2/index.vue       => /dashboard  (布局2)
+//   /src/views/dashboard_2/analysis.vue    => /dashboard/analysis  (布局2)
 const viewFiles = import.meta.glob('/src/views/**/*.vue');
 const layoutFiles = import.meta.glob('/src/layouts/*.vue');
 
@@ -51,33 +55,34 @@ function buildName(name) {
 
 for (const fp in viewFiles) {
     const normPath = normalizePath(fp);
-    if (normPath.includes('/components/')) continue;
     if (!normPath.endsWith('.vue')) continue;
-    const idx = normPath.indexOf('/src/views/');
+    if (normPath.includes('/components/')) continue;
+    const rootMarker = '/src/views/';
+    const idx = normPath.indexOf(rootMarker);
     if (idx === -1) continue;
-    const rel = normPath.slice(idx + '/src/views/'.length); // e.g. system/user/user.vue
+    const rel = normPath.slice(idx + rootMarker.length); // 相对 views 的路径
     const parts = rel.split('/');
-    if (parts.length < 2) continue; // 至少 <dir>/<file>.vue
-    const fileBase = parts[parts.length - 1].replace(/\.vue$/, '');
-    const lastDir = parts[parts.length - 2];
-    const lastDirBase = stripLayoutSuffix(lastDir);
-    // 允许: <lastDir>/<lastDir>.vue | <lastDir>/<lastDirBase>.vue | index/index.vue
-    if (!(fileBase === lastDir || fileBase === lastDirBase || (lastDirBase === 'index' && fileBase === 'index'))) continue;
-    const layout = getLayoutIndex(lastDir);
-    // 目录链（不含文件）
-    const dirChain = parts.slice(0, parts.length - 1).map((seg, i, arr) => (i === arr.length - 1 ? stripLayoutSuffix(seg) : seg));
-    // 若最后一级是 index 则移除
-    if (dirChain[dirChain.length - 1] === 'index') dirChain.pop();
-    // 生成路径与名称
-    const kebabSegments = dirChain.map(toKebab).filter(Boolean);
-    let routePath = '/' + kebabSegments.join('/');
-    if (routePath === '/') routePath = '/';
+    const fileName = parts.pop(); // <name>.vue 或 index.vue
+    if (!fileName) continue;
+    const fileBase = fileName.replace(/\.vue$/, '');
+    const dirChainOriginal = parts; // 目录数组（可能为空）
+    if (dirChainOriginal.some((d) => d === 'components')) continue;
+    // 布局取末级目录（若存在）
+    const lastDirOriginal = dirChainOriginal[dirChainOriginal.length - 1] || '';
+    const layout = lastDirOriginal ? getLayoutIndex(lastDirOriginal) : '0';
+    const dirChainForPath = dirChainOriginal.map((d, i) => (i === dirChainOriginal.length - 1 ? stripLayoutSuffix(d) : d));
+    // index.vue 作为目录默认：不追加文件名；非 index 保留
+    const pathSegments = [...dirChainForPath];
+    if (fileBase !== 'index') pathSegments.push(fileBase);
+    // root index 情况：views/index.vue => []
+    if (pathSegments.length === 1 && pathSegments[0] === 'index') pathSegments.pop();
+    // kebab 化
+    const kebabSegments = pathSegments.map(toKebab).filter(Boolean);
+    const routePath = '/' + kebabSegments.join('/');
     const routeName = kebabSegments.length ? kebabSegments.join('-') : 'index';
-    const route = { path: routePath, name: routeName, component: viewFiles[fp], meta: { title: routeName, file: fp } };
+    const route = { path: routePath === '/' ? '/' : routePath, name: routeName, component: viewFiles[fp], meta: { title: routeName, file: fp } };
     if (!layoutRoutes[layout]) layoutRoutes[layout] = [];
-    if (!layoutRoutes[layout].some((r) => r.name === route.name && r.path === route.path)) {
-        layoutRoutes[layout].push(route);
-    }
+    if (!layoutRoutes[layout].some((r) => r.path === route.path)) layoutRoutes[layout].push(route);
 }
 const finalRoutes = [];
 for (const k in layoutRoutes) {
