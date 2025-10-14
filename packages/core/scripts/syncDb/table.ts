@@ -9,6 +9,7 @@
 
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
+import { toSnakeTableName } from '../../utils/dbHelper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
@@ -56,13 +57,16 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     const indexActions = [];
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-        if (existingColumns[fieldKey]) {
-            const comparison = compareFieldDefinition(existingColumns[fieldKey], fieldRule, fieldKey);
+        // 转换字段名为下划线格式（用于与数据库字段对比）
+        const dbFieldName = toSnakeTableName(fieldKey);
+
+        if (existingColumns[dbFieldName]) {
+            const comparison = compareFieldDefinition(existingColumns[dbFieldName], fieldRule, dbFieldName);
             if (comparison.length > 0) {
                 for (const c of comparison) {
                     // 使用统一的日志格式函数和常量标签
                     const changeLabel = CHANGE_TYPE_LABELS[c.type] || '未知';
-                    logFieldChange(tableName, fieldKey, c.type, c.current, c.expected, changeLabel);
+                    logFieldChange(tableName, dbFieldName, c.type, c.current, c.expected, changeLabel);
 
                     // 全量计数：全局累加
                     if (c.type === 'datatype') globalCount.typeChanges++;
@@ -74,9 +78,9 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 const parsed = parseRule(fieldRule);
                 const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
 
-                if (isStringOrArrayType(fieldType) && existingColumns[fieldKey].length) {
-                    if (existingColumns[fieldKey].length! > fieldMax) {
-                        Logger.warn(`[跳过危险变更] ${tableName}.${fieldKey} 长度收缩 ${existingColumns[fieldKey].length} -> ${fieldMax} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
+                if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
+                    if (existingColumns[dbFieldName].length! > fieldMax) {
+                        Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].length} -> ${fieldMax} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
                     }
                 }
 
@@ -87,9 +91,9 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
                 // 严格限制：除 string/array 互转外，禁止任何字段类型变更；一旦发现，立即终止同步
                 if (hasTypeChange) {
-                    const currentSqlType = String(existingColumns[fieldKey].type || '').toLowerCase();
+                    const currentSqlType = String(existingColumns[dbFieldName].type || '').toLowerCase();
                     const newSqlType = String(typeMapping[fieldType] || '').toLowerCase();
-                    const errorMsg = [`禁止字段类型变更: ${tableName}.${fieldKey}`, `当前类型: ${currentSqlType}`, `目标类型: ${newSqlType}`, `说明: 仅允许 string<->array 互相切换，其他类型变更需要手动处理`].join('\n');
+                    const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${currentSqlType}`, `目标类型: ${newSqlType}`, `说明: 仅允许 string<->array 互相切换，其他类型变更需要手动处理`].join('\n');
                     throw new Error(errorMsg);
                 }
 
@@ -108,11 +112,11 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
                     if (v !== null && v !== '') {
                         if (IS_PG) {
-                            defaultClauses.push(`ALTER COLUMN "${fieldKey}" SET DEFAULT ${v}`);
+                            defaultClauses.push(`ALTER COLUMN "${dbFieldName}" SET DEFAULT ${v}`);
                         } else if (IS_MYSQL && onlyDefaultChanged) {
                             // MySQL 的 TEXT/BLOB 不允许 DEFAULT，跳过 text 类型
                             if (fieldType !== 'text') {
-                                defaultClauses.push(`ALTER COLUMN \`${fieldKey}\` SET DEFAULT ${v}`);
+                                defaultClauses.push(`ALTER COLUMN \`${dbFieldName}\` SET DEFAULT ${v}`);
                             }
                         }
                     }
@@ -121,15 +125,15 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 // 若不仅仅是默认值变化，继续生成修改子句
                 if (!onlyDefaultChanged) {
                     let skipModify = false;
-                    if (hasLengthChange && isStringOrArrayType(fieldType) && existingColumns[fieldKey].length) {
-                        const oldLen = existingColumns[fieldKey].length!;
+                    if (hasLengthChange && isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
+                        const oldLen = existingColumns[dbFieldName].length!;
                         const isShrink = oldLen > fieldMax;
                         if (isShrink) skipModify = true;
                     }
 
                     if (hasTypeChange) {
-                        if (IS_PG && isPgCompatibleTypeChange(existingColumns[fieldKey].type, typeMapping[fieldType].toLowerCase())) {
-                            Logger.info(`[PG兼容类型变更] ${tableName}.${fieldKey} ${existingColumns[fieldKey].type} -> ${typeMapping[fieldType].toLowerCase()} 允许执行`);
+                        if (IS_PG && isPgCompatibleTypeChange(existingColumns[dbFieldName].type, typeMapping[fieldType].toLowerCase())) {
+                            Logger.info(`[PG兼容类型变更] ${tableName}.${dbFieldName} ${existingColumns[dbFieldName].type} -> ${typeMapping[fieldType].toLowerCase()} 允许执行`);
                         }
                     }
 
@@ -141,7 +145,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             const parsed = parseRule(fieldRule);
             const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
             const lenPart = isStringOrArrayType(fieldType) ? ` 长度:${parseInt(String(fieldMax))}` : '';
-            Logger.info(`[新增字段] ${tableName}.${fieldKey} 类型:${fieldType}${lenPart} 默认:${fieldDefault ?? 'NULL'}`);
+            Logger.info(`[新增字段] ${tableName}.${dbFieldName} 类型:${fieldType}${lenPart} 默认:${fieldDefault ?? 'NULL'}`);
             addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
             changed = true;
             globalCount.addFields++;
@@ -160,14 +164,17 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
     // 检查业务字段索引
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+        // 转换字段名为下划线格式
+        const dbFieldName = toSnakeTableName(fieldKey);
+
         const parsed = parseRule(fieldRule);
-        const indexName = `idx_${fieldKey}`;
+        const indexName = `idx_${dbFieldName}`;
         if (parsed.index === 1 && !existingIndexes[indexName]) {
-            indexActions.push({ action: 'create', indexName, fieldName: fieldKey });
+            indexActions.push({ action: 'create', indexName, fieldName: dbFieldName });
             changed = true;
             globalCount.indexCreate++;
         } else if (!(parsed.index === 1) && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
-            indexActions.push({ action: 'drop', indexName, fieldName: fieldKey });
+            indexActions.push({ action: 'drop', indexName, fieldName: dbFieldName });
             changed = true;
             globalCount.indexDrop++;
         }
@@ -177,13 +184,16 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     const commentActions = [];
     if (IS_PG) {
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
-            if (existingColumns[fieldKey]) {
+            // 转换字段名为下划线格式
+            const dbFieldName = toSnakeTableName(fieldKey);
+
+            if (existingColumns[dbFieldName]) {
                 const parsed = parseRule(fieldRule);
                 const { name: fieldName } = parsed;
-                const curr = existingColumns[fieldKey].comment || '';
+                const curr = existingColumns[dbFieldName].comment || '';
                 const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
                 if (want !== curr) {
-                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${fieldKey}" IS ${want ? `'${want}'` : 'NULL'}`);
+                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS ${want ? `'${want}'` : 'NULL'}`);
                     changed = true;
                 }
             }

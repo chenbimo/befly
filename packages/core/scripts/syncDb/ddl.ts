@@ -10,7 +10,8 @@
 
 import { Logger } from '../../utils/logger.js';
 import { parseRule } from '../../utils/tableHelper.js';
-import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, typeMapping } from './constants.js';
+import { toSnakeTableName } from '../../utils/dbHelper.js';
+import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
 import type { SQL } from 'bun';
 
@@ -78,6 +79,9 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
     const colDefs: string[] = [];
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+        // 转换字段名为下划线格式
+        const dbFieldName = toSnakeTableName(fieldKey);
+
         const parsed = parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
         const sqlType = getSqlType(fieldType, fieldMax);
@@ -87,9 +91,9 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
         const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
         if (IS_MYSQL) {
-            colDefs.push(`\`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`);
+            colDefs.push(`\`${dbFieldName}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`);
         } else {
-            colDefs.push(`"${fieldKey}" ${sqlType} NOT NULL${defaultSql}`);
+            colDefs.push(`"${dbFieldName}" ${sqlType} NOT NULL${defaultSql}`);
         }
     }
 
@@ -105,6 +109,9 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
  * @returns DDL 子句
  */
 export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: boolean = false): string {
+    // 转换字段名为下划线格式
+    const dbFieldName = toSnakeTableName(fieldKey);
+
     const parsed = parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
     const sqlType = getSqlType(fieldType, fieldMax);
@@ -114,15 +121,15 @@ export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: bo
     const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
     if (IS_MYSQL) {
-        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${fieldKey}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`;
+        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${dbFieldName}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`;
     }
     if (IS_PG) {
-        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldKey}" ${sqlType} NOT NULL${defaultSql}`;
+        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType} NOT NULL${defaultSql}`;
         // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
-        return `ALTER COLUMN "${fieldKey}" TYPE ${sqlType}`;
+        return `ALTER COLUMN "${dbFieldName}" TYPE ${sqlType}`;
     }
     // SQLite 仅支持 ADD COLUMN（>=3.50.0：支持 IF NOT EXISTS）
-    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${fieldKey}" ${sqlType} NOT NULL${defaultSql}`;
+    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType} NOT NULL${defaultSql}`;
     return '';
 }
 
