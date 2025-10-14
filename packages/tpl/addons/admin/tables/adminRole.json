@@ -1,0 +1,7 @@
+{
+    "name": "角色名称|string|2|50|null|1|null",
+    "code": "角色编码|string|2|50|null|1|null",
+    "description": "角色描述|string|0|200|null|0|null",
+    "sort": "排序|number|0|9999|0|0|null",
+    "status": "状态|number|0|1|1|1|^(0|1)$"
+}

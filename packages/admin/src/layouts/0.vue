@@ -58,8 +58,11 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissionStore } from '@/stores/permission';
+
 const router = useRouter();
 const route = useRoute();
+const permissionStore = usePermissionStore();
 
 // 响应式数据
 const $Data = $ref({
@@ -95,59 +98,73 @@ const $Method = {
         $Data.collapsed = !$Data.collapsed;
         localStorage.setItem('sidebar-collapsed', String($Data.collapsed));
     },
-    // 从路由构建菜单结构
-    buildMenuFromRoutes() {
-        const routes = router.getRoutes();
-        // 过滤掉布局路由和登录页
-        const pageRoutes = routes.filter((r) => r.name && r.name !== 'layout0' && r.name !== 'login' && !String(r.name).startsWith('layout'));
-        const menuTree: Record<string, any> = {};
-        for (const r of pageRoutes) {
-            const name = String(r.name);
-            const segments = name.split('-');
-            const firstSeg = segments[0];
-            // 一级菜单
-            if (!menuTree[firstSeg]) {
-                menuTree[firstSeg] = {
-                    value: segments.length === 1 ? name : firstSeg,
-                    label: firstSeg.charAt(0).toUpperCase() + firstSeg.slice(1),
-                    icon: iconMap[firstSeg] || iconMap.default,
-                    children: []
-                };
-            }
-            // 多级路由加入子菜单
-            if (segments.length > 1) {
-                menuTree[firstSeg].children.push({
-                    value: name,
-                    label: segments.slice(1).join(' / ')
-                });
-            }
+    // 从权限 store 构建菜单结构
+    buildMenuFromPermissions() {
+        const menus = permissionStore.userMenus;
+        if (!menus || menus.length === 0) {
+            $Data.menuItems = [];
+            return;
         }
-        $Data.menuItems = Object.values(menuTree).sort((a, b) => {
-            if (a.value === 'index') return -1;
-            if (b.value === 'index') return 1;
-            return a.label.localeCompare(b.label);
-        });
+
+        // 转换后端菜单数据为前端菜单格式
+        const convertMenu = (menuItem: any): any => {
+            const item: any = {
+                value: menuItem.path || menuItem.id,
+                label: menuItem.name,
+                icon: iconMap[menuItem.icon] || iconMap.default
+            };
+
+            if (menuItem.children && menuItem.children.length > 0) {
+                item.children = menuItem.children.map((child: any) => convertMenu(child));
+            }
+
+            return item;
+        };
+
+        $Data.menuItems = menus.map(convertMenu);
+
         // 默认展开所有包含子菜单的项
         $Data.expandedKeys = $Data.menuItems.filter((m) => m.children && m.children.length).map((m) => m.value);
     },
     // 处理菜单切换
     handleMenuChange(value: string) {
-        router.push({ name: value });
+        // 检查是否为目录（不跳转）
+        const findMenuItem = (items: any[], val: string): any => {
+            for (const item of items) {
+                if (item.value === val) return item;
+                if (item.children) {
+                    const found = findMenuItem(item.children, val);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        const menuItem = findMenuItem($Data.menuItems, value);
+        // 只有菜单项才跳转，目录不跳转
+        if (menuItem && !menuItem.children) {
+            router.push({ path: value });
+        }
     },
     // 处理用户菜单点击
     handleUserMenu(data: any) {
         if (data.value === 'logout') {
             localStorage.removeItem('token');
+            permissionStore.clearPermissions();
             router.push('/login');
             MessagePlugin.success('退出成功');
         }
     }
 };
 
-// 组件挂载时构建菜单
-onMounted(() => {
-    $Method.buildMenuFromRoutes();
-});
+// 监听权限菜单变化，自动重建菜单
+watch(
+    () => permissionStore.userMenus,
+    () => {
+        $Method.buildMenuFromPermissions();
+    },
+    { deep: true, immediate: true }
+);
 </script>
 
 <style scoped lang="scss">
