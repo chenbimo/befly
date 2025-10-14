@@ -28,7 +28,7 @@
                 </div>
 
                 <!-- 邮箱登录 -->
-                <t-form v-if="$Data.loginType === 'email'" :data="$Data.loginForm.email" :rules="$Data.loginRules.email" ref="$Data.emailFormRef" @submit="$Method.handleLogin" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
+                <t-form v-if="$Data.loginType === 'email'" :data="$Data.loginForm.email" :rules="$Data.loginRules.email" :ref="(el: any) => ($Form.emailForm = el)" @submit="$Method.handleLogin" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
                     <t-form-item name="email" label="邮箱">
                         <t-input v-model="$Data.loginForm.email.email" placeholder="请输入邮箱" size="large" clearable>
                             <template #prefix-icon>
@@ -53,7 +53,7 @@
                 </t-form>
 
                 <!-- 手机登录 -->
-                <t-form v-if="$Data.loginType === 'phone'" :data="$Data.loginForm.phone" :rules="$Data.loginRules.phone" ref="$Data.phoneFormRef" @submit="$Method.handleLogin" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
+                <t-form v-if="$Data.loginType === 'phone'" :data="$Data.loginForm.phone" :rules="$Data.loginRules.phone" :ref="(el: any) => ($Form.phoneForm = el)" @submit="$Method.handleLogin" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
                     <t-form-item name="phone" label="手机号">
                         <t-input v-model="$Data.loginForm.phone.phone" placeholder="请输入手机号" size="large" clearable>
                             <template #prefix-icon>
@@ -91,7 +91,7 @@
             <div class="form-container sign-up-form" :class="{ active: $Data.isSignUp }">
                 <h2 class="form-title">注册账号</h2>
 
-                <t-form :data="$Data.registerForm" :rules="$Data.registerRules" ref="$Data.registerFormRef" @submit="$Method.handleRegister" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
+                <t-form :data="$Data.registerForm" :rules="$Data.registerRules" :ref="(el: any) => ($Form.registerForm = el)" @submit="$Method.handleRegister" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
                     <t-form-item name="name" label="姓名">
                         <t-input v-model="$Data.registerForm.name" placeholder="请输入姓名" size="large" clearable>
                             <template #prefix-icon>
@@ -129,11 +129,15 @@ import { loginApi, registerApi, sendSmsCodeApi } from '@/api/auth';
 
 const router = useRouter();
 
+// 表单引用定义
+const $Form = $ref({
+    emailForm: null as any,
+    phoneForm: null as any,
+    registerForm: null as any
+});
+
 // 数据定义
 const $Data = $ref({
-    emailFormRef: null as any,
-    phoneFormRef: null as any,
-    registerFormRef: null as any,
     loginLoading: false,
     registerLoading: false,
     isSignUp: false,
@@ -271,10 +275,10 @@ const $Method = {
         let formData = null;
 
         if ($Data.loginType === 'email') {
-            valid = await $Data.emailFormRef.validate();
+            valid = await $Form.emailForm.validate();
             formData = $Data.loginForm.email;
         } else if ($Data.loginType === 'phone') {
-            valid = await $Data.phoneFormRef.validate();
+            valid = await $Form.phoneForm.validate();
             formData = $Data.loginForm.phone;
         }
 
@@ -302,7 +306,7 @@ const $Method = {
 
     // 处理注册
     async handleRegister() {
-        const valid = await $Data.registerFormRef.validate();
+        const valid = await $Form.registerForm.validate();
         if (!valid) return;
 
         $Data.registerLoading = true;
