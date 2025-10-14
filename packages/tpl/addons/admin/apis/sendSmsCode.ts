@@ -5,12 +5,13 @@
 import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 import type { SendSmsCodeRequest } from '../types';
+import adminTable from '../tables/admin.json';
 
 export default Api('发送短信验证码', {
     method: 'POST',
     auth: false, // 公开接口
     fields: {
-        phone: '手机号|string|11|11|null|0|^1[3-9]\\d{9}$'
+        phone: adminTable.phone
     },
     required: ['phone'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {

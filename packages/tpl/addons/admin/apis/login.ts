@@ -7,15 +7,16 @@ import type { BeflyContext, RequestContext } from 'befly/types';
 import type { LoginRequest, LoginResponse, Admin } from '../types';
 import { Crypto2 } from 'befly/utils/crypto';
 import { Jwt } from 'befly/utils/jwt';
+import adminTable from '../tables/admin.json';
 
 export default Api('管理员登录', {
     method: 'POST',
     auth: false, // 公开接口
     fields: {
-        email: '邮箱|string|0|100|null|1|^[\\w.-]+@[\\w.-]+\\.\\w+$',
-        password: '密码|string|0|100|null|1|null',
-        phone: '手机号|varchar|0|20|null|1|^1[3-9]\\d{9}$',
-        code: '验证码|string|0|10|null|1|null'
+        email: adminTable.email,
+        password: adminTable.password,
+        phone: adminTable.phone,
+        code: '验证码|string|4|6|null|0|null'
     },
     required: [], // 不设置必填,因为要支持多种登录方式
     handler: async (befly: BeflyContext, ctx: RequestContext) => {

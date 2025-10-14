@@ -6,14 +6,15 @@ import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 import type { RegisterRequest } from '../types';
 import { Crypto2 } from 'befly/utils/crypto';
+import adminTable from '../tables/admin.json';
 
 export default Api('管理员注册', {
     method: 'POST',
     auth: false, // 公开接口
     fields: {
-        name: '姓名|string|2|50|null|0|null',
-        email: '邮箱|string|5|100|null|0|^[\\w.-]+@[\\w.-]+\\.\\w+$',
-        password: '密码|string|6|100|null|0|null'
+        name: adminTable.name,
+        email: adminTable.email,
+        password: adminTable.password
     },
     required: ['name', 'email', 'password'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
