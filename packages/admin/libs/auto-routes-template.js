@@ -3,7 +3,7 @@
 //   目录固定：src/views ；布局目录固定：src/layouts
 //   仅识别 views/<name>/<name>.vue 结构；index 为根路径
 //   固定排除子目录：components
-//   不区分公开/私有路由，全部挂到对应布局（目录后缀 _n 指定布局 n，默认 0）
+//   不区分公开/私有路由，全部挂到对应布局（文件名后缀 *_n.vue 指定布局 n，默认 0）
 
 // 在虚拟模块环境中，统一使用绝对形式 '/src/...'
 // 支持多级目录：新规则
@@ -11,7 +11,7 @@
 //   2. 非 index.vue 页面，路径 = 所有目录段 + 文件名：/news/detail/detail.vue -> /news/detail/detail
 //      即使文件名与末级目录同名亦需保留（区别于旧规则会省略重复）
 //   3. 根目录 index.vue -> '/'
-//   4. 末级目录可带布局后缀 _n，布局编号取自该后缀；路径使用去掉后缀的目录名；中间层暂不支持布局后缀
+//   4. 布局后缀规则：只允许出现在“页面文件名”末尾：<name>_n.vue；目录名不再解析布局编号
 //   5. 任何层级的 components 子目录下文件忽略
 //   6. 大小写驼峰与下划线会被 kebab 化
 // 示例：
@@ -30,12 +30,10 @@ const layoutRoutes = {};
 function normalizePath(p) {
     return p.replace(/\\/g, '/');
 }
-function getLayoutIndex(dir) {
-    const m = dir.match(/_(\d+)$/);
-    return m ? m[1] : '0';
-}
-function stripLayoutSuffix(dir) {
-    return dir.replace(/_\d+$/, '');
+function extractLayoutFromFile(baseName) {
+    const m = baseName.match(/_(\d+)$/);
+    if (m) return { name: baseName.replace(/_(\d+)$/, ''), layout: m[1] };
+    return { name: baseName, layout: '0' };
 }
 function toKebab(s) {
     return s
@@ -64,16 +62,15 @@ for (const fp in viewFiles) {
     const parts = rel.split('/');
     const fileName = parts.pop(); // <name>.vue 或 index.vue
     if (!fileName) continue;
-    const fileBase = fileName.replace(/\.vue$/, '');
+    const rawBase = fileName.replace(/\.vue$/, '');
+    const { name: logicalBase, layout } = extractLayoutFromFile(rawBase);
     const dirChainOriginal = parts; // 目录数组（可能为空）
     if (dirChainOriginal.some((d) => d === 'components')) continue;
-    // 布局取末级目录（若存在）
-    const lastDirOriginal = dirChainOriginal[dirChainOriginal.length - 1] || '';
-    const layout = lastDirOriginal ? getLayoutIndex(lastDirOriginal) : '0';
-    const dirChainForPath = dirChainOriginal.map((d, i) => (i === dirChainOriginal.length - 1 ? stripLayoutSuffix(d) : d));
-    // index.vue 作为目录默认：不追加文件名；非 index 保留
+    // 目录链直接使用原目录（不再剥离布局后缀）
+    const dirChainForPath = dirChainOriginal;
+    // index / index_n 作为目录默认：不追加文件名；非 index 保留
     const pathSegments = [...dirChainForPath];
-    if (fileBase !== 'index') pathSegments.push(fileBase);
+    if (logicalBase !== 'index') pathSegments.push(logicalBase);
     // root index 情况：views/index.vue => []
     if (pathSegments.length === 1 && pathSegments[0] === 'index') pathSegments.pop();
     // kebab 化
