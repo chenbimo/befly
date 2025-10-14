@@ -28,8 +28,8 @@
                 </div>
 
                 <!-- 邮箱登录 -->
-                <t-form v-if="$Data.loginType === 'email'" :data="$Data.loginForm.email" :rules="$Data.loginRules.email" ref="$Data.emailFormRef" @submit="$Method.handleLogin" class="login-form">
-                    <t-form-item name="email">
+                <t-form v-if="$Data.loginType === 'email'" :data="$Data.loginForm.email" :rules="$Data.loginRules.email" ref="$Data.emailFormRef" @submit="$Method.handleLogin" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
+                    <t-form-item name="email" label="邮箱">
                         <t-input v-model="$Data.loginForm.email.email" placeholder="请输入邮箱" size="large" clearable>
                             <template #prefix-icon>
                                 <mail-icon />
@@ -37,7 +37,7 @@
                         </t-input>
                     </t-form-item>
 
-                    <t-form-item name="password">
+                    <t-form-item name="password" label="密码">
                         <t-input v-model="$Data.loginForm.email.password" type="password" placeholder="请输入密码" size="large" clearable>
                             <template #prefix-icon>
                                 <lock-on-icon />
@@ -45,14 +45,16 @@
                         </t-input>
                     </t-form-item>
 
-                    <a href="#" class="forgot-password">忘记密码？</a>
+                    <div class="form-footer">
+                        <a href="#" class="forgot-password">忘记密码？</a>
+                    </div>
 
                     <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.loginLoading"> 登录 </t-button>
                 </t-form>
 
                 <!-- 手机登录 -->
-                <t-form v-if="$Data.loginType === 'phone'" :data="$Data.loginForm.phone" :rules="$Data.loginRules.phone" ref="$Data.phoneFormRef" @submit="$Method.handleLogin" class="login-form">
-                    <t-form-item name="phone">
+                <t-form v-if="$Data.loginType === 'phone'" :data="$Data.loginForm.phone" :rules="$Data.loginRules.phone" ref="$Data.phoneFormRef" @submit="$Method.handleLogin" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
+                    <t-form-item name="phone" label="手机号">
                         <t-input v-model="$Data.loginForm.phone.phone" placeholder="请输入手机号" size="large" clearable>
                             <template #prefix-icon>
                                 <mobile-icon />
@@ -60,7 +62,7 @@
                         </t-input>
                     </t-form-item>
 
-                    <t-form-item name="code">
+                    <t-form-item name="code" label="验证码">
                         <t-input v-model="$Data.loginForm.phone.code" placeholder="请输入验证码" size="large" clearable>
                             <template #prefix-icon>
                                 <secured-icon />
@@ -92,8 +94,8 @@
             <div class="form-container sign-up-form" :class="{ active: $Data.isSignUp }">
                 <h2 class="form-title">注册账号</h2>
 
-                <t-form :data="$Data.registerForm" :rules="$Data.registerRules" ref="$Data.registerFormRef" @submit="$Method.handleRegister" class="login-form">
-                    <t-form-item name="name">
+                <t-form :data="$Data.registerForm" :rules="$Data.registerRules" ref="$Data.registerFormRef" @submit="$Method.handleRegister" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
+                    <t-form-item name="name" label="姓名">
                         <t-input v-model="$Data.registerForm.name" placeholder="请输入姓名" size="large" clearable>
                             <template #prefix-icon>
                                 <user-icon />
@@ -101,7 +103,7 @@
                         </t-input>
                     </t-form-item>
 
-                    <t-form-item name="email">
+                    <t-form-item name="email" label="邮箱">
                         <t-input v-model="$Data.registerForm.email" placeholder="请输入邮箱" size="large" clearable>
                             <template #prefix-icon>
                                 <mail-icon />
@@ -109,7 +111,7 @@
                         </t-input>
                     </t-form-item>
 
-                    <t-form-item name="password">
+                    <t-form-item name="password" label="密码">
                         <t-input v-model="$Data.registerForm.password" type="password" placeholder="请输入密码" size="large" clearable>
                             <template #prefix-icon>
                                 <lock-on-icon />
@@ -464,9 +466,14 @@ const $Method = {
 
 .t-form-item {
     width: 100%;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
+
+    :deep(.t-form__controls) {
+        width: 100%;
+    }
 
     :deep(.t-input) {
+        width: 100%;
         background: #f8f9fa;
         border: 1px solid #e0e0e0;
         border-radius: 6px;
@@ -487,13 +494,17 @@ const $Method = {
     }
 }
 
+.form-footer {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
 .forgot-password {
-    display: block;
     font-size: 0.8rem;
     color: #888;
     text-decoration: none;
-    margin: 0.5rem 0 1rem auto;
-    width: fit-content;
 
     &:hover {
         color: #48b19f;
@@ -501,7 +512,8 @@ const $Method = {
 }
 
 .auth-btn {
-    width: 100%;
+    width: 100% !important;
+    max-width: 100%;
     height: 44px;
     border-radius: 6px;
     background: #48b19f;
