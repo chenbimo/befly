@@ -125,6 +125,7 @@
 
 <script setup lang="ts">
 import { UserIcon, LockOnIcon, MailIcon, MobileIcon, SecuredIcon } from 'tdesign-icons-vue-next';
+import { loginApi, registerApi, sendSmsCodeApi } from '@/api/auth';
 
 const router = useRouter();
 
@@ -248,8 +249,7 @@ const $Method = {
         }
 
         try {
-            // TODO: 调用发送验证码接口
-            // await sendCodeApi($Data.loginForm.phone.phone);
+            await sendSmsCodeApi($Data.loginForm.phone.phone);
 
             MessagePlugin.success('验证码已发送');
             $Data.codeCountdown = 60;
@@ -261,7 +261,7 @@ const $Method = {
                 }
             }, 1000);
         } catch (error) {
-            MessagePlugin.error('发送验证码失败');
+            // 错误已经在 request 拦截器中处理
         }
     },
 
@@ -283,18 +283,19 @@ const $Method = {
         $Data.loginLoading = true;
 
         try {
-            // TODO: 调用登录接口
-            // const res = await loginApi(formData);
+            const res = await loginApi(formData);
+            localStorage.setItem('token', res.data.token);
 
-            // 模拟登录
-            setTimeout(() => {
-                localStorage.setItem('token', 'mock-token');
-                MessagePlugin.success('登录成功');
-                router.push('/dashboard');
-                $Data.loginLoading = false;
-            }, 1000);
+            // 如果返回用户信息,也可以存储
+            if (res.data.userInfo) {
+                localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo));
+            }
+
+            MessagePlugin.success('登录成功');
+            router.push('/dashboard');
         } catch (error) {
-            MessagePlugin.error('登录失败');
+            // 错误已经在 request 拦截器中处理
+        } finally {
             $Data.loginLoading = false;
         }
     },
@@ -307,17 +308,17 @@ const $Method = {
         $Data.registerLoading = true;
 
         try {
-            // TODO: 调用注册接口
-            // const res = await registerApi($Data.registerForm);
+            await registerApi($Data.registerForm);
+            MessagePlugin.success('注册成功，请登录');
+            $Data.isSignUp = false;
 
-            // 模拟注册
-            setTimeout(() => {
-                MessagePlugin.success('注册成功，请登录');
-                $Data.isSignUp = false;
-                $Data.registerLoading = false;
-            }, 1000);
+            // 清空注册表单
+            $Data.registerForm.name = '';
+            $Data.registerForm.email = '';
+            $Data.registerForm.password = '';
         } catch (error) {
-            MessagePlugin.error('注册失败');
+            // 错误已经在 request 拦截器中处理
+        } finally {
             $Data.registerLoading = false;
         }
     }

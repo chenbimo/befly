@@ -25,7 +25,7 @@ export const RESERVED_NAMES = {
     /**
      * 禁止用作 addon 名称
      */
-    addonNames: ['core', 'system', 'admin', 'sys', 'befly', 'app', 'api', 'config', 'utils', 'types']
+    addonNames: ['core', 'system', 'sys', 'befly', 'app', 'api']
 } as const;
 
 /**

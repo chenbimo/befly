@@ -11,7 +11,7 @@ export default Api('更新文章', {
     method: 'POST',
     auth: false,
     fields: {
-        id: commonFields.id,
+        id: commonFields._id,
         title: articleTable.title,
         content: articleTable.content,
         summary: articleTable.summary,

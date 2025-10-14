@@ -10,7 +10,7 @@ export default Api('删除文章', {
     method: 'POST',
     auth: false,
     fields: {
-        id: commonFields.id
+        id: commonFields._id
     },
     required: ['id'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {

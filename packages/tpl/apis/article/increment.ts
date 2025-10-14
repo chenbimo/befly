@@ -10,7 +10,7 @@ export default Api('文章字段自增', {
     method: 'POST',
     auth: false,
     fields: {
-        id: commonFields.id,
+        id: commonFields._id,
         field: '字段名|string|1|50|null|1|^[a-zA-Z_][a-zA-Z0-9_]*$',
         value: '自增值|number|-999999|999999|1|0|null'
     },
