@@ -104,8 +104,6 @@ const detectColorSupport = (): boolean => {
 
 const isColorSupported = detectColorSupport();
 
-const isColorSupported = detectColorSupport();
-
 /**
  * 创建格式化函数
  * @param open - 开始 ANSI 码

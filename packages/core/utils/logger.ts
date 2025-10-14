@@ -6,6 +6,7 @@
 import path from 'path';
 import { appendFile, stat } from 'node:fs/promises';
 import { formatDate, isDebug } from './index.js';
+import { Colors } from './colors.js';
 import { Env } from '../config/env.js';
 import type { LogLevel } from '../types/common.js';
 
@@ -52,11 +53,30 @@ export class Logger {
      * 格式化日志消息
      * @param level - 日志级别
      * @param message - 日志消息
+     * @param colored - 是否对日志级别文字着色（仅用于控制台输出）
      * @returns 格式化后的日志字符串
      */
-    static formatMessage(level: LogLevel, message: LogMessage): string {
+    static formatMessage(level: LogLevel, message: LogMessage, colored: boolean = false): string {
         const timestamp = formatDate();
-        const levelStr = level.toUpperCase().padStart(5);
+        let levelStr = level.toUpperCase().padStart(5);
+
+        // 如果需要着色，只给日志级别文字添加颜色
+        if (colored) {
+            switch (level) {
+                case 'info':
+                    levelStr = Colors.greenBright(levelStr);
+                    break;
+                case 'debug':
+                    levelStr = Colors.cyanBright(levelStr);
+                    break;
+                case 'warn':
+                    levelStr = Colors.yellowBright(levelStr);
+                    break;
+                case 'error':
+                    levelStr = Colors.redBright(levelStr);
+                    break;
+            }
+        }
 
         let msg = `[${timestamp}] ${levelStr} - `;
 
@@ -90,13 +110,14 @@ export class Logger {
         // 检查日志级别
         if (!this.shouldLog(level)) return;
 
-        const formattedMessage = this.formatMessage(level, message);
-
-        // 控制台输出
+        // 控制台输出（带颜色）
         if (Env.LOG_TO_CONSOLE === 1) {
-            console.log(formattedMessage);
+            const coloredMessage = this.formatMessage(level, message, true);
+            console.log(coloredMessage);
         }
 
+        // 文件输出（不带颜色）
+        const formattedMessage = this.formatMessage(level, message, false);
         await this.writeToFile(formattedMessage, level);
     }
 
@@ -217,13 +238,14 @@ export class Logger {
         // 检查是否开启调试模式
         if (!isDebug()) return;
 
-        const formattedMessage = this.formatMessage('debug', message);
-
-        // 控制台输出
+        // 控制台输出（带颜色）
         if (Env.LOG_TO_CONSOLE === 1) {
-            console.log(formattedMessage);
+            const coloredMessage = this.formatMessage('debug', message, true);
+            console.log(coloredMessage);
         }
 
+        // 文件输出（不带颜色）
+        const formattedMessage = this.formatMessage('debug', message, false);
         await this.writeToFile(formattedMessage, 'debug');
     }
 
