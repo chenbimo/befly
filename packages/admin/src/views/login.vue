@@ -1,101 +1,619 @@
 <template>
-    <div class="login-container">
-        <t-card class="login-card">
-            <template #header>
-                <h2 class="login-title">Befly Admin</h2>
-                <p class="login-subtitle">后台管理系统</p>
-            </template>
+    <div class="auth-container" :class="{ 'sign-up-mode': $Data.isSignUp }">
+        <!-- 左侧欢迎区域 -->
+        <div class="left-panel">
+            <div class="panel-content" v-if="!$Data.isSignUp">
+                <h2>你好，朋友！</h2>
+                <p>填写个人信息，开始使用</p>
+                <button class="toggle-btn" @click="$Method.toggleMode">注册账号</button>
+            </div>
+            <div class="panel-content" v-else>
+                <h2>欢迎回来！</h2>
+                <p>使用您的账号登录</p>
+                <button class="toggle-btn" @click="$Method.toggleMode">立即登录</button>
+            </div>
+        </div>
 
-            <t-form :data="formData" @submit="handleLogin" :rules="rules" ref="formRef">
-                <t-form-item name="username">
-                    <t-input v-model="formData.username" placeholder="请输入用户名" size="large" clearable>
-                        <template #prefix-icon>
-                            <user-icon />
-                        </template>
-                    </t-input>
-                </t-form-item>
+        <!-- 右侧表单区域 -->
+        <div class="right-panel">
+            <div class="forms-wrapper">
+                <!-- 登录表单 -->
+                <div class="form-container sign-in-form" :class="{ active: !$Data.isSignUp }">
+                    <h2 class="form-title">登录到 Befly</h2>
 
-                <t-form-item name="password">
-                    <t-input v-model="formData.password" type="password" placeholder="请输入密码" size="large" clearable>
-                        <template #prefix-icon>
-                            <lock-on-icon />
-                        </template>
-                    </t-input>
-                </t-form-item>
+                    <!-- 登录方式切换 -->
+                    <div class="login-type-tabs">
+                        <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'email' }" @click="$Method.switchLoginType('email')">邮箱登录</button>
+                        <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'phone' }" @click="$Method.switchLoginType('phone')">手机登录</button>
+                        <button type="button" class="tab-btn" :class="{ active: $Data.loginType === 'qrcode' }" @click="$Method.switchLoginType('qrcode')">扫码登录</button>
+                    </div>
 
-                <t-form-item>
-                    <t-button theme="primary" type="submit" block size="large" :loading="loading">登录</t-button>
-                </t-form-item>
-            </t-form>
-        </t-card>
+                    <!-- 邮箱登录 -->
+                    <t-form v-if="$Data.loginType === 'email'" :data="$Data.loginForm.email" :rules="$Data.loginRules.email" ref="$Data.emailFormRef" @submit="$Method.handleLogin" class="login-form">
+                        <t-form-item name="email">
+                            <t-input v-model="$Data.loginForm.email.email" placeholder="请输入邮箱" size="large" clearable>
+                                <template #prefix-icon>
+                                    <mail-icon />
+                                </template>
+                            </t-input>
+                        </t-form-item>
+
+                        <t-form-item name="password">
+                            <t-input v-model="$Data.loginForm.email.password" type="password" placeholder="请输入密码" size="large" clearable>
+                                <template #prefix-icon>
+                                    <lock-on-icon />
+                                </template>
+                            </t-input>
+                        </t-form-item>
+
+                        <a href="#" class="forgot-password">忘记密码？</a>
+
+                        <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.loginLoading"> 登录 </t-button>
+                    </t-form>
+
+                    <!-- 手机登录 -->
+                    <t-form v-if="$Data.loginType === 'phone'" :data="$Data.loginForm.phone" :rules="$Data.loginRules.phone" ref="$Data.phoneFormRef" @submit="$Method.handleLogin" class="login-form">
+                        <t-form-item name="phone">
+                            <t-input v-model="$Data.loginForm.phone.phone" placeholder="请输入手机号" size="large" clearable>
+                                <template #prefix-icon>
+                                    <mobile-icon />
+                                </template>
+                            </t-input>
+                        </t-form-item>
+
+                        <t-form-item name="code">
+                            <t-input v-model="$Data.loginForm.phone.code" placeholder="请输入验证码" size="large" clearable>
+                                <template #prefix-icon>
+                                    <secured-icon />
+                                </template>
+                                <template #suffix>
+                                    <t-button variant="text" :disabled="$Data.codeCountdown > 0" @click="$Method.sendCode">
+                                        {{ $Data.codeCountdown > 0 ? `${$Data.codeCountdown}秒后重试` : '发送验证码' }}
+                                    </t-button>
+                                </template>
+                            </t-input>
+                        </t-form-item>
+
+                        <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.loginLoading"> 登录 </t-button>
+                    </t-form>
+
+                    <!-- 扫码登录 -->
+                    <div v-if="$Data.loginType === 'qrcode'" class="qrcode-container">
+                        <div class="qrcode-box">
+                            <div class="qrcode-placeholder">
+                                <!-- 这里放二维码图片 -->
+                                <t-icon name="qrcode" size="120px" />
+                            </div>
+                            <p class="qrcode-tip">打开手机扫一扫登录</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 注册表单 -->
+                <div class="form-container sign-up-form" :class="{ active: $Data.isSignUp }">
+                    <h2 class="form-title">注册账号</h2>
+
+                    <t-form :data="$Data.registerForm" :rules="$Data.registerRules" ref="$Data.registerFormRef" @submit="$Method.handleRegister" class="login-form">
+                        <t-form-item name="name">
+                            <t-input v-model="$Data.registerForm.name" placeholder="请输入姓名" size="large" clearable>
+                                <template #prefix-icon>
+                                    <user-icon />
+                                </template>
+                            </t-input>
+                        </t-form-item>
+
+                        <t-form-item name="email">
+                            <t-input v-model="$Data.registerForm.email" placeholder="请输入邮箱" size="large" clearable>
+                                <template #prefix-icon>
+                                    <mail-icon />
+                                </template>
+                            </t-input>
+                        </t-form-item>
+
+                        <t-form-item name="password">
+                            <t-input v-model="$Data.registerForm.password" type="password" placeholder="请输入密码" size="large" clearable>
+                                <template #prefix-icon>
+                                    <lock-on-icon />
+                                </template>
+                            </t-input>
+                        </t-form-item>
+
+                        <t-button theme="primary" type="submit" class="auth-btn" size="large" :loading="$Data.registerLoading"> 注册 </t-button>
+                    </t-form>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { UserIcon, LockOnIcon } from 'tdesign-icons-vue-next';
+import { UserIcon, LockOnIcon, MailIcon, MobileIcon, SecuredIcon } from 'tdesign-icons-vue-next';
 
 const router = useRouter();
-const formRef = ref();
-const loading = ref(false);
 
-const formData = reactive({
-    username: '',
-    password: ''
+// 数据定义
+const $Data = $ref({
+    emailFormRef: null as any,
+    phoneFormRef: null as any,
+    registerFormRef: null as any,
+    loginLoading: false,
+    registerLoading: false,
+    isSignUp: false,
+    loginType: 'email' as 'email' | 'phone' | 'qrcode',
+    codeCountdown: 0,
+    loginForm: {
+        email: {
+            email: '',
+            password: ''
+        },
+        phone: {
+            phone: '',
+            code: ''
+        }
+    },
+    loginRules: {
+        email: {
+            email: [{ required: true, message: '请输入邮箱', type: 'error' }],
+            password: [{ required: true, message: '请输入密码', type: 'error' }]
+        },
+        phone: {
+            phone: [{ required: true, message: '请输入手机号', type: 'error' }],
+            code: [{ required: true, message: '请输入验证码', type: 'error' }]
+        }
+    },
+    registerForm: {
+        name: '',
+        email: '',
+        password: ''
+    },
+    registerRules: {
+        name: [{ required: true, message: '请输入姓名', type: 'error' }],
+        email: [{ required: true, message: '请输入邮箱', type: 'error' }],
+        password: [{ required: true, message: '请输入密码', type: 'error' }]
+    }
 });
 
-const rules = {
-    username: [{ required: true, message: '请输入用户名', type: 'error' }],
-    password: [{ required: true, message: '请输入密码', type: 'error' }]
-};
+// 方法定义
+const $Method = {
+    // 切换登录/注册模式
+    toggleMode() {
+        $Data.isSignUp = !$Data.isSignUp;
+    },
 
-const handleLogin = async () => {
-    const valid = await formRef.value.validate();
-    if (!valid) return;
+    // 切换登录方式
+    switchLoginType(type: 'email' | 'phone' | 'qrcode') {
+        $Data.loginType = type;
+    },
 
-    loading.value = true;
+    // 发送验证码
+    async sendCode() {
+        if (!$Data.loginForm.phone.phone) {
+            MessagePlugin.warning('请先输入手机号');
+            return;
+        }
 
-    try {
-        // TODO: 调用登录接口
-        // const res = await loginApi(formData);
+        try {
+            // TODO: 调用发送验证码接口
+            // await sendCodeApi($Data.loginForm.phone.phone);
 
-        // 模拟登录
-        setTimeout(() => {
-            localStorage.setItem('token', 'mock-token');
-            MessagePlugin.success('登录成功');
-            router.push('/dashboard');
-            loading.value = false;
-        }, 1000);
-    } catch (error) {
-        MessagePlugin.error('登录失败');
-        loading.value = false;
+            MessagePlugin.success('验证码已发送');
+            $Data.codeCountdown = 60;
+
+            const timer = setInterval(() => {
+                $Data.codeCountdown--;
+                if ($Data.codeCountdown <= 0) {
+                    clearInterval(timer);
+                }
+            }, 1000);
+        } catch (error) {
+            MessagePlugin.error('发送验证码失败');
+        }
+    },
+
+    // 处理登录
+    async handleLogin() {
+        let valid = false;
+        let formData = null;
+
+        if ($Data.loginType === 'email') {
+            valid = await $Data.emailFormRef.validate();
+            formData = $Data.loginForm.email;
+        } else if ($Data.loginType === 'phone') {
+            valid = await $Data.phoneFormRef.validate();
+            formData = $Data.loginForm.phone;
+        }
+
+        if (!valid) return;
+
+        $Data.loginLoading = true;
+
+        try {
+            // TODO: 调用登录接口
+            // const res = await loginApi(formData);
+
+            // 模拟登录
+            setTimeout(() => {
+                localStorage.setItem('token', 'mock-token');
+                MessagePlugin.success('登录成功');
+                router.push('/dashboard');
+                $Data.loginLoading = false;
+            }, 1000);
+        } catch (error) {
+            MessagePlugin.error('登录失败');
+            $Data.loginLoading = false;
+        }
+    },
+
+    // 处理注册
+    async handleRegister() {
+        const valid = await $Data.registerFormRef.validate();
+        if (!valid) return;
+
+        $Data.registerLoading = true;
+
+        try {
+            // TODO: 调用注册接口
+            // const res = await registerApi($Data.registerForm);
+
+            // 模拟注册
+            setTimeout(() => {
+                MessagePlugin.success('注册成功，请登录');
+                $Data.isSignUp = false;
+                $Data.registerLoading = false;
+            }, 1000);
+        } catch (error) {
+            MessagePlugin.error('注册失败');
+            $Data.registerLoading = false;
+        }
     }
 };
 </script>
 
 <style scoped lang="scss">
-.login-container {
+.auth-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+}
+
+// 青色滑动背景块
+.left-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(135deg, #48b19f 0%, #3a9d8f 100%);
+    color: #fff;
+    z-index: 5;
+    transition: transform 0.5s ease-in-out;
+
+    .panel-content {
+        text-align: center;
+        padding: 2rem;
+        max-width: 400px;
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .toggle-btn {
+            padding: 0.8rem 3rem;
+            border: 2px solid #fff;
+            background: transparent;
+            color: #fff;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+
+            &:hover {
+                background: #fff;
+                color: #48b19f;
+            }
+        }
+    }
+}
+
+// 淡入动画
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// 表单区域容器（全屏背景）
+.right-panel {
+    position: absolute;
     width: 100%;
-    height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1;
 }
 
-.login-card {
-    width: 400px;
+// 注册模式下青色块移动到右侧
+.auth-container.sign-up-mode {
+    .left-panel {
+        transform: translateX(100%);
+    }
 }
 
-.login-title {
-    margin: 0 0 8px 0;
-    font-size: 28px;
+// 表单容器包裹器
+.forms-wrapper {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s ease-in-out;
+}
+
+// 登录模式：表单在右侧
+.auth-container:not(.sign-up-mode) .forms-wrapper {
+    right: 0;
+    left: auto;
+}
+
+// 注册模式：表单在左侧
+.auth-container.sign-up-mode .forms-wrapper {
+    left: 0;
+    right: auto;
+}
+
+// 表单容器（用于切换动画）
+.form-container {
+    width: 100%;
+    max-width: 450px;
+    padding: 3rem 2rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+
+    &.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+}
+
+.form-title {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 1.5rem;
     font-weight: 600;
     text-align: center;
 }
 
-.login-subtitle {
-    margin: 0 0 24px 0;
-    color: var(--td-text-color-secondary);
+// 登录方式切换标签
+.login-type-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #f0f0f0;
+
+    .tab-btn {
+        padding: 0.75rem 1.2rem;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-size: 0.875rem;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s;
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #48b19f;
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        &.active {
+            color: #48b19f;
+            font-weight: 600;
+
+            &::after {
+                transform: scaleX(1);
+            }
+        }
+
+        &:hover {
+            color: #48b19f;
+        }
+    }
+}
+
+.login-form {
+    width: 100%;
+}
+
+.t-form-item {
+    width: 100%;
+    margin-bottom: 1rem;
+
+    :deep(.t-input) {
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: #48b19f;
+        }
+
+        &:focus-within {
+            border-color: #48b19f;
+            background: #fff;
+        }
+
+        input {
+            padding: 0.75rem 1rem;
+        }
+    }
+}
+
+.forgot-password {
+    display: block;
+    font-size: 0.8rem;
+    color: #888;
+    text-decoration: none;
+    margin: 0.5rem 0 1rem auto;
+    width: fit-content;
+
+    &:hover {
+        color: #48b19f;
+    }
+}
+
+.auth-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 6px;
+    background: #48b19f;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    transition: all 0.3s;
+
+    &:hover {
+        background: #3a9d8f;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(72, 177, 159, 0.3);
+    }
+
+    :deep(.t-button__text) {
+        color: #fff;
+    }
+}
+
+// 二维码容器
+.qrcode-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 350px;
+    padding: 2rem 0;
+}
+
+.qrcode-box {
     text-align: center;
+
+    .qrcode-placeholder {
+        width: 180px;
+        height: 180px;
+        margin: 0 auto 1.2rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+
+        :deep(.t-icon) {
+            color: #ccc;
+        }
+    }
+
+    .qrcode-tip {
+        font-size: 0.9rem;
+        color: #666;
+    }
+}
+
+// 响应式设计
+@media (max-width: 968px) {
+    .auth-container {
+        flex-direction: column;
+    }
+
+    .left-panel,
+    .right-panel {
+        flex: none;
+        width: 100%;
+    }
+
+    .left-panel {
+        order: 1 !important;
+        min-height: 200px;
+
+        .panel-content {
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 0.9rem;
+            }
+        }
+    }
+
+    .right-panel {
+        order: 2 !important;
+        min-height: 500px;
+    }
+
+    .forms-wrapper {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .left-panel .panel-content {
+        padding: 1.5rem;
+
+        h2 {
+            font-size: 1.3rem;
+        }
+
+        p {
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-type-tabs {
+        gap: 0.2rem;
+
+        .tab-btn {
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+        }
+    }
 }
 </style>
