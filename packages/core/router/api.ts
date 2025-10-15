@@ -13,7 +13,7 @@ import { checkPermission } from '../middleware/permission.js';
 import { validateParams } from '../middleware/validator.js';
 import { executePluginHooks } from '../middleware/plugin-hooks.js';
 import { logRequest } from '../middleware/request-logger.js';
-import { RequestContext } from '../types/context.js';
+import { RequestContext } from '../utils/requestContext.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';

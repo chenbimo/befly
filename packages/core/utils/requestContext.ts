@@ -106,14 +106,14 @@ export class RequestContext {
      * @param key - 参数键名
      */
     has(key: string): boolean {
-        return key in this.params;
+        return key in this.body;
     }
 
     /**
      * 获取所有参数
      */
     all(): Record<string, any> {
-        return { ...this.params };
+        return { ...this.body };
     }
 
     /**
