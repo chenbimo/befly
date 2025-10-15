@@ -13,7 +13,7 @@ export default Api('删除角色', {
         try {
             // 检查是否有用户关联此角色
             const adminRoles = await befly.db.getAll({
-                table: 'admin_admin_role',
+                table: 'addon_admin_admin_role',
                 fields: ['id'],
                 where: { role_id: ctx.body.id }
             });
@@ -24,13 +24,13 @@ export default Api('删除角色', {
 
             // 删除角色
             await befly.db.delData({
-                table: 'admin_role',
+                table: 'addon_admin_role',
                 where: { id: ctx.body.id }
             });
 
             // 删除相关的角色-菜单关联（软删除）
             await befly.db.delData({
-                table: 'admin_role_menu',
+                table: 'addon_admin_role_menu',
                 where: { role_id: ctx.body.id }
             });
 

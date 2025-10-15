@@ -12,7 +12,7 @@ export default Api('获取用户角色', {
     handler: async (befly, ctx) => {
         try {
             const roleRecords = await befly.db.getAll({
-                table: 'admin_admin_role',
+                table: 'addon_admin_admin_role',
                 fields: ['role_id'],
                 where: { admin_id: ctx.body.adminId }
             });

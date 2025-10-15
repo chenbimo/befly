@@ -22,7 +22,7 @@ export default Api('保存角色菜单权限', {
 
             // 先删除该角色的所有菜单权限（软删除）
             await befly.db.delData({
-                table: 'admin_role_menu',
+                table: 'addon_admin_role_menu',
                 where: { role_id: ctx.body.roleId }
             });
 
@@ -30,7 +30,7 @@ export default Api('保存角色菜单权限', {
             if (menuIdArray.length > 0) {
                 for (const menuId of menuIdArray) {
                     await befly.db.insData({
-                        table: 'admin_role_menu',
+                        table: 'addon_admin_role_menu',
                         data: {
                             role_id: ctx.body.roleId,
                             menu_id: menuId

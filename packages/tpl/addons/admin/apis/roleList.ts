@@ -10,7 +10,7 @@ export default Api('获取角色列表', {
     handler: async (befly, ctx) => {
         try {
             const roles = await befly.db.getList({
-                table: 'admin_role',
+                table: 'addon_admin_role',
                 order: 'sort ASC, id ASC'
             });
 

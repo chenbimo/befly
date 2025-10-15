@@ -134,14 +134,14 @@ export const SyncDb = async (): Promise<void> => {
                 }
 
                 // 确定表名前缀：
-                // - 核心表：sys_ 前缀
-                // - addon 表：{addonName}_ 前缀
+                // - 核心表：core_ 前缀
+                // - addon 表：addon_{addonName}_ 前缀
                 // - 项目表：无前缀
                 let tableName = toSnakeTableName(fileName);
                 if (isCore) {
-                    tableName = `sys_${tableName}`;
+                    tableName = `core_${tableName}`;
                 } else if (addonName) {
-                    tableName = `${addonName}_${tableName}`;
+                    tableName = `addon_${addonName}_${tableName}`;
                 }
 
                 processedCount++;

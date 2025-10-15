@@ -20,7 +20,7 @@ export default Api('更新菜单', {
     handler: async (befly, ctx) => {
         try {
             await befly.db.updData({
-                table: 'admin_menu',
+                table: 'addon_admin_menu',
                 where: { id: ctx.body.id },
                 data: {
                     name: ctx.body.name,

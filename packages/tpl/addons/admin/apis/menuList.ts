@@ -10,7 +10,7 @@ export default Api('获取菜单列表', {
     handler: async (befly, ctx) => {
         try {
             const menus = await befly.db.getAll({
-                table: 'admin_menu',
+                table: 'addon_admin_menu',
                 fields: ['id', 'name', 'path', 'icon', 'sort', 'pid', 'type', 'status', 'created_at', 'updated_at'],
                 orderBy: [
                     { field: 'sort', direction: 'ASC' },

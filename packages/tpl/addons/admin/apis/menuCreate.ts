@@ -19,7 +19,7 @@ export default Api('创建菜单', {
     handler: async (befly, ctx) => {
         try {
             const menuId = await befly.db.insData({
-                table: 'admin_menu',
+                table: 'addon_admin_menu',
                 data: ctx.body
             });
 

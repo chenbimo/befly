@@ -14,9 +14,8 @@ export default Api('创建待办事项', {
     },
     required: ['title'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        // 插入数据到 demo_todo 表
-        const result = await befly.db.insData({
-            table: 'demo_todo',
+        // 插入数据�?demo_todo �?        const result = await befly.db.insData({
+            table: 'addon_demo_todo',
             data: {
                 title: ctx.body.title,
                 content: ctx.body.content || '',

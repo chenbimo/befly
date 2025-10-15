@@ -34,7 +34,7 @@ try {
         console.log(`⏭️  开发者角色已存在 (ID: ${devRoleId})`);
     } else {
         devRoleId = await db.insData({
-            table: 'admin_role',
+            table: 'addon_admin_role',
             data: {
                 name: '开发者',
                 code: 'dev',
@@ -59,7 +59,7 @@ try {
         // 分配所有菜单权限
         for (const menu of allMenus) {
             await db.insData({
-                table: 'admin_role_menu',
+                table: 'addon_admin_role_menu',
                 data: {
                     role_id: devRoleId,
                     menu_id: menu.id
@@ -87,7 +87,7 @@ try {
         devAdminId = existingAdmin[0].id;
         // 更新密码
         await db.updData({
-            table: 'admin_admin',
+            table: 'addon_admin_admin',
             where: { id: devAdminId },
             data: {
                 password: encryptedPassword,
@@ -97,7 +97,7 @@ try {
         console.log(`⏭️  开发者账号已存在，已更新密码 (ID: ${devAdminId})`);
     } else {
         devAdminId = await db.insData({
-            table: 'admin_admin',
+            table: 'addon_admin_admin',
             data: {
                 name: 'dev',
                 password: encryptedPassword,
@@ -124,7 +124,7 @@ try {
 
         // 分配新角色
         await db.insData({
-            table: 'admin_admin_role',
+            table: 'addon_admin_admin_role',
             data: {
                 admin_id: devAdminId,
                 role_id: devRoleId

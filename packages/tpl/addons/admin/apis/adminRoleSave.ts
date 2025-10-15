@@ -22,7 +22,7 @@ export default Api('保存用户角色', {
 
             // 先删除该用户的所有角色（软删除）
             await befly.db.delData({
-                table: 'admin_admin_role',
+                table: 'addon_admin_admin_role',
                 where: { admin_id: ctx.body.adminId }
             });
 
@@ -30,7 +30,7 @@ export default Api('保存用户角色', {
             if (roleIdArray.length > 0) {
                 for (const roleId of roleIdArray) {
                     await befly.db.insData({
-                        table: 'admin_admin_role',
+                        table: 'addon_admin_admin_role',
                         data: {
                             admin_id: ctx.body.adminId,
                             role_id: roleId

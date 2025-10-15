@@ -12,7 +12,7 @@ export default Api('获取角色菜单权限', {
     handler: async (befly, ctx) => {
         try {
             const menuRecords = await befly.db.getAll({
-                table: 'admin_role_menu',
+                table: 'addon_admin_role_menu',
                 fields: ['menu_id'],
                 where: { role_id: ctx.body.roleId }
             });

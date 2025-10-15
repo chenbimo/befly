@@ -19,7 +19,7 @@ export default Api('更新角色', {
         try {
             // 检查角色代码是否被其他角色占用
             const existing = await befly.db.getAll({
-                table: 'admin_role',
+                table: 'addon_admin_role',
                 fields: ['id'],
                 where: {
                     code: ctx.body.code,
@@ -32,7 +32,7 @@ export default Api('更新角色', {
             }
 
             await befly.db.updData({
-                table: 'admin_role',
+                table: 'addon_admin_role',
                 where: { id: ctx.body.id },
                 data: {
                     name: ctx.body.name,

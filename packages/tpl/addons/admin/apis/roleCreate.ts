@@ -18,7 +18,7 @@ export default Api('创建角色', {
         try {
             // 检查角色代码是否已存在
             const existing = await befly.db.getDetail({
-                table: 'admin_role',
+                table: 'addon_admin_role',
                 where: { code: ctx.body.code }
             });
 
@@ -27,7 +27,7 @@ export default Api('创建角色', {
             }
 
             const roleId = await befly.db.insData({
-                table: 'admin_role',
+                table: 'addon_admin_role',
                 data: ctx.body
             });
 

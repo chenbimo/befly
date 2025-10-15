@@ -26,7 +26,7 @@ export default Api('管理员登录', {
         if (ctx.body.email && ctx.body.password) {
             // 查询管理员
             admin = await befly.db.getDetail<Admin>({
-                table: 'admin_admin',
+                table: 'addon_admin_admin',
                 where: { email: ctx.body.email }
             });
 
@@ -66,7 +66,7 @@ export default Api('管理员登录', {
 
             // 查询管理员
             admin = await befly.db.getDetail<Admin>({
-                table: 'admin_admin',
+                table: 'addon_admin_admin',
                 where: { phone: ctx.body.phone }
             });
 
@@ -84,7 +84,7 @@ export default Api('管理员登录', {
 
         // 更新最后登录信息
         await befly.db.updData({
-            table: 'admin_admin',
+            table: 'addon_admin_admin',
             where: { id: admin.id },
             data: {
                 last_login_time: Date.now(),

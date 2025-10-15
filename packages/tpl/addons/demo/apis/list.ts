@@ -27,18 +27,15 @@ export default Api('查询待办列表', {
             where.priority = ctx.body.priority;
         }
 
-        // 查询数据（使用 getList 方法，带分页）
-        const result = await befly.db.getList({
-            table: 'demo_todo',
+        // 查询数据（使�?getList 方法，带分页�?        const result = await befly.db.getList({
+            table: 'addon_demo_todo',
             where,
             page,
             limit: pageSize,
             orderBy: ['created_at#DESC'],
-            includeDeleted: true // 暂时包含所有数据进行测试
-        });
+            includeDeleted: true // 暂时包含所有数据进行测�?        });
 
-        // 暂时不使用插件格式化，直接返回原始数据
-        // const demoTool = befly['demo.tool'];
+        // 暂时不使用插件格式化，直接返回原始数�?        // const demoTool = befly['demo.tool'];
         // const formattedTodos = result.list.map((todo: any) => demoTool.formatTodo(todo));
 
         return Yes('查询成功', {

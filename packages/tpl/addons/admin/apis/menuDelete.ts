@@ -13,7 +13,7 @@ export default Api('删除菜单', {
         try {
             // 检查是否有子菜单
             const children = await befly.db.getAll({
-                table: 'admin_menu',
+                table: 'addon_admin_menu',
                 fields: ['id'],
                 where: { pid: ctx.body.id }
             });
@@ -24,13 +24,13 @@ export default Api('删除菜单', {
 
             // 删除菜单
             await befly.db.delData({
-                table: 'admin_menu',
+                table: 'addon_admin_menu',
                 where: { id: ctx.body.id }
             });
 
             // 删除相关的角色-菜单关联（软删除）
             await befly.db.delData({
-                table: 'admin_role_menu',
+                table: 'addon_admin_role_menu',
                 where: { menu_id: ctx.body.id }
             });
 

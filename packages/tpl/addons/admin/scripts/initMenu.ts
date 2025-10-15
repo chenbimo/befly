@@ -37,7 +37,7 @@ async function insertMenus(menus: any[], parentId: number = 0): Promise<number[]
     for (const menu of menus) {
         // 插入当前菜单
         const menuId = await db.insData({
-            table: 'admin_menu',
+            table: 'addon_admin_menu',
             data: {
                 pid: parentId,
                 name: menu.name,

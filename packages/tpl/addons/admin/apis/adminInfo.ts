@@ -24,7 +24,7 @@ export default Api('获取用户信息', {
 
         // 查询用户信息
         const admin = await befly.db.getDetail<Admin>({
-            table: 'admin_admin',
+            table: 'addon_admin_admin',
             where: { id: parseInt(userId) }
         });
 

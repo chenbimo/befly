@@ -17,7 +17,7 @@ export default Api('获取用户菜单', {
 
             // 1. 查询用户的所有角色
             const userRoles = await befly.db.getAll({
-                table: 'admin_admin_role',
+                table: 'addon_admin_admin_role',
                 fields: ['role_id'],
                 where: { admin_id: userId }
             });
@@ -30,7 +30,7 @@ export default Api('获取用户菜单', {
 
             // 2. 查询角色对应的所有菜单ID
             const roleMenus = await befly.db.getAll({
-                table: 'admin_role_menu',
+                table: 'addon_admin_role_menu',
                 fields: ['menu_id'],
                 where: {
                     role_id: { $in: roleIds }
@@ -46,7 +46,7 @@ export default Api('获取用户菜单', {
 
             // 3. 查询菜单详情（仅查询启用状态的菜单）
             const menus = await befly.db.getAll({
-                table: 'admin_menu',
+                table: 'addon_admin_menu',
                 fields: ['id', 'name', 'path', 'icon', 'sort', 'pid', 'type', 'status'],
                 where: {
                     id: { $in: menuIds },

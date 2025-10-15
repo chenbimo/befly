@@ -20,7 +20,7 @@ export default Api('管理员注册', {
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         // 检查邮箱是否已存在
         const existingAdmin = await befly.db.getDetail({
-            table: 'admin_admin',
+            table: 'addon_admin_admin',
             where: { email: ctx.body.email }
         });
 
@@ -33,7 +33,7 @@ export default Api('管理员注册', {
 
         // 创建管理员
         const adminId = await befly.db.insData({
-            table: 'admin_admin',
+            table: 'addon_admin_admin',
             data: {
                 name: ctx.body.name,
                 email: ctx.body.email,

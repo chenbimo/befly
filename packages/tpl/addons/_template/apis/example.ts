@@ -19,7 +19,7 @@ export default Api('示例接口', {
 
         // 访问数据库
         // const result = await befly.db.getData({
-        //     table: 'addonName_tableName',
+        //     table: 'addon_addonName_tableName',
         //     where: { id: 1 }
         // });
 
