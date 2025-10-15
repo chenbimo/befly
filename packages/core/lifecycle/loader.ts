@@ -8,7 +8,7 @@ import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/datetime.js';
 import { sortPlugins } from '../utils/pluginHelper.js';
 import { isType } from '../utils/typeHelper.js';
-import { __dirplugins, __dirapis, getProjectDir } from '../system.js';
+import { __dirplugins, getProjectDir } from '../system.js';
 import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';
@@ -307,7 +307,7 @@ export class Loader {
 
     /**
      * 加载API路由
-     * @param dirName - 目录名称 ('core' | 'app' | addon名称)
+     * @param dirName - 目录名称 ('app' | addon名称)
      * @param apiRoutes - API路由映射表
      * @param options - 可选配置（用于 addon）
      */
@@ -316,10 +316,10 @@ export class Loader {
             const loadStartTime = Bun.nanoseconds();
             const isAddon = options?.isAddon || false;
             const addonName = options?.addonName || '';
-            const dirDisplayName = dirName === 'core' ? '核心' : isAddon ? `组件[${addonName}]` : '用户';
+            const dirDisplayName = isAddon ? `组件[${addonName}]` : '用户';
 
             const glob = new Bun.Glob('**/*.ts');
-            const apiDir = dirName === 'core' ? __dirapis : isAddon ? getAddonDir(addonName, 'apis') : getProjectDir('apis');
+            const apiDir = isAddon ? getAddonDir(addonName, 'apis') : getProjectDir('apis');
 
             let totalApis = 0;
             let loadedApis = 0;

@@ -12,7 +12,7 @@ import { Logger } from '../../utils/logger.js';
 import { Env } from '../../config/env.js';
 import { createSqlClient, toSnakeTableName } from '../../utils/dbHelper.js';
 import checkTable from '../../checks/table.js';
-import { __dirtables, getProjectDir } from '../../system.js';
+import { getProjectDir } from '../../system.js';
 import { scanAddons, hasAddonDir, getAddonDir } from '../../utils/addonHelper.js';
 
 // 导入模块化的功能
@@ -78,10 +78,7 @@ export const SyncDb = async (): Promise<void> => {
         // 阶段3：扫描表定义文件
         perfTracker.markPhase('scan');
         const tablesGlob = new Bun.Glob('*.json');
-        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [
-            { path: __dirtables, isCore: true },
-            { path: getProjectDir('tables'), isCore: false }
-        ];
+        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [{ path: getProjectDir('tables'), isCore: false }];
 
         // 添加所有 addon 的 tables 目录
         const addons = scanAddons();
@@ -118,7 +115,7 @@ export const SyncDb = async (): Promise<void> => {
 
         for (const dirConfig of directories) {
             const { path: dir, isCore, addonName } = dirConfig;
-            const dirType = isCore ? '内核' : addonName ? `组件[${addonName}]` : '项目';
+            const dirType = addonName ? `组件[${addonName}]` : '项目';
 
             for await (const file of tablesGlob.scan({
                 cwd: dir,
@@ -134,13 +131,10 @@ export const SyncDb = async (): Promise<void> => {
                 }
 
                 // 确定表名前缀：
-                // - 核心表：core_ 前缀
                 // - addon 表：addon_{addonName}_ 前缀
                 // - 项目表：无前缀
                 let tableName = toSnakeTableName(fileName);
-                if (isCore) {
-                    tableName = `core_${tableName}`;
-                } else if (addonName) {
+                if (addonName) {
                     tableName = `addon_${addonName}_${tableName}`;
                 }
 

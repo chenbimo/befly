@@ -18,9 +18,7 @@ export const __dirscript = join(__dirroot, 'scripts');
 export const __dirbin = join(__dirroot, 'bin');
 export const __dirutils = join(__dirroot, 'utils');
 export const __dirconfig = join(__dirroot, 'config');
-export const __dirtables = join(__dirroot, 'tables');
 export const __dirchecks = join(__dirroot, 'checks');
-export const __dirapis = join(__dirroot, 'apis');
 export const __dirplugins = join(__dirroot, 'plugins');
 export const __dirlibs = join(__dirroot, 'libs');
 export const __dirtests = join(__dirroot, 'tests');
@@ -80,9 +78,7 @@ export interface SystemPaths {
     bin: string;
     utils: string;
     config: string;
-    tables: string;
     checks: string;
-    apis: string;
     plugins: string;
     libs: string;
     tests: string;
@@ -126,9 +122,7 @@ const system: SystemConfig = {
         bin: __dirbin,
         utils: __dirutils,
         config: __dirconfig,
-        tables: __dirtables,
         checks: __dirchecks,
-        apis: __dirapis,
         plugins: __dirplugins,
         libs: __dirlibs,
         tests: __dirtests

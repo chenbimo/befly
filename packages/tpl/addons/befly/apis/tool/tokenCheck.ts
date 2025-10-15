@@ -1,22 +1,25 @@
 /**
- * 令牌检测接口 - TypeScript 版本
+ * 令牌检测接口
  * 验证 JWT 令牌是否有效
+ * 路由：POST /api/befly/tool/tokenCheck
  */
 
-import { Env } from '../../config/env.js';
-import { Api } from '../../utils/api.js';
-import { Yes, No } from '../../utils/index.js';
-import { Jwt } from '../../utils/jwt.js';
-import type { BeflyContext } from '../../types/befly.js';
-import type { JwtPayload } from '../../utils/jwt.js';
-import type { TokenCheckData } from '../../types/api.js';
+import { Api, Yes, No, Jwt } from 'befly';
+import type { BeflyContext, RequestContext } from 'befly/types';
+
+interface TokenCheckData {
+    valid: boolean;
+    payload?: any;
+    expiresIn?: number;
+}
 
 export default Api('令牌检测', {
+    auth: false, // 公开接口
     fields: {},
     required: [],
-    handler: async (befly: BeflyContext, ctx: any) => {
+    handler: async (befly: BeflyContext, ctx: RequestContext) => {
         // 从 Authorization 头获取 token
-        const authHeader = ctx.req?.headers?.get('authorization') || '';
+        const authHeader = ctx.headers.authorization || '';
         const token = authHeader.split(' ')[1] || '';
 
         if (!token) {

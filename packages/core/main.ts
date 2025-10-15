@@ -76,7 +76,6 @@ export class Befly {
         // 执行启动前的检查和加载
         await this.initCheck();
         await this.loadPlugins();
-        await this.loadApis('core');
 
         // 加载 addon APIs
         const addons = scanAddons();

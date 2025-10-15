@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
-import { __dirtables, __dirapis, __dirplugins, getProjectDir } from '../system.js';
+import { __dirplugins, getProjectDir } from '../system.js';
 import { isReservedTableName, isReservedRoute, isReservedPluginName, isReservedAddonName, getReservedTablePrefixes, getReservedRoutes, getReservedPlugins, getReservedAddonNames } from '../config/reserved.js';
 
 /**
@@ -24,73 +24,6 @@ interface ResourceRegistry {
 interface ConflictResult {
     hasConflicts: boolean;
     conflicts: string[];
-}
-
-/**
- * 收集核心表定义
- */
-async function collectCoreTables(registry: ResourceRegistry): Promise<void> {
-    try {
-        const glob = new Bun.Glob('*.json');
-        for await (const file of glob.scan({
-            cwd: __dirtables,
-            onlyFiles: true,
-            absolute: true
-        })) {
-            const fileName = path.basename(file, '.json');
-            if (fileName.startsWith('_')) continue;
-
-            try {
-                const tableDefine = await Bun.file(file).json();
-                const tableName = tableDefine.tableName || `sys_${fileName}`;
-
-                if (registry.tables.has(tableName)) {
-                    Logger.error(`核心表 "${tableName}" 重复定义`);
-                } else {
-                    registry.tables.set(tableName, 'core');
-                }
-            } catch (error: any) {
-                // 表定义解析错误会在 table.ts 中处理，这里跳过
-            }
-        }
-    } catch (error: any) {
-        Logger.error('收集核心表定义时出错:', error);
-    }
-}
-
-/**
- * 收集核心 API 路由
- */
-async function collectCoreApis(registry: ResourceRegistry): Promise<void> {
-    try {
-        const glob = new Bun.Glob('**/*.ts');
-        for await (const file of glob.scan({
-            cwd: __dirapis,
-            onlyFiles: true,
-            absolute: true
-        })) {
-            const apiPath = path
-                .relative(__dirapis, file)
-                .replace(/\.(js|ts)$/, '')
-                .replace(/\\/g, '/');
-            if (apiPath.indexOf('_') !== -1) continue;
-
-            try {
-                const api = (await import(file)).default;
-                const route = `${(api.method || 'POST').toUpperCase()}/api/${apiPath}`;
-
-                if (registry.routes.has(route)) {
-                    Logger.error(`核心路由 "${route}" 重复定义`);
-                } else {
-                    registry.routes.set(route, 'core');
-                }
-            } catch (error: any) {
-                // API 加载错误会在 loader.ts 中处理，这里跳过
-            }
-        }
-    } catch (error: any) {
-        Logger.error('收集核心 API 路由时出错:', error);
-    }
 }
 
 /**
@@ -364,9 +297,7 @@ export default async function checkConflict(): Promise<boolean> {
 
         const allConflicts: string[] = [];
 
-        // 1. 收集核心资源
-        await collectCoreTables(registry);
-        await collectCoreApis(registry);
+        // 1. 收集核心插件
         await collectCorePlugins(registry);
 
         // 2. 收集 addon 资源

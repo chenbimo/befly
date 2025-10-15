@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { parseRule } from '../utils/index.js';
-import { __dirtables, getProjectDir } from '../system.js';
+import { getProjectDir } from '../system.js';
 import { scanAddons, getAddonDir } from '../utils/addonHelper.js';
 
 /**
@@ -15,8 +15,8 @@ import { scanAddons, getAddonDir } from '../utils/addonHelper.js';
 interface TableFileInfo {
     /** 表文件路径 */
     file: string;
-    /** 文件类型：core（核心）、project（项目）或 addon（组件） */
-    type: 'core' | 'project' | 'addon';
+    /** 文件类型：project（项目）或 addon（组件） */
+    type: 'project' | 'addon';
     /** 如果是 addon 类型，记录 addon 名称 */
     addonName?: string;
 }
@@ -33,9 +33,9 @@ const FIELD_TYPES = ['string', 'number', 'text', 'array'] as const;
 
 /**
  * 小驼峰命名正则
- * 可选：以下划线开头（用于特殊文件如 _common.json）
+ * 可选：以下划线开头（用于特殊文件，如通用字段定义）
  * 必须以小写字母开头，后续可包含小写/数字，或多个 [大写+小写/数字] 片段
- * 示例：userTable、testCustomers、common、_common
+ * 示例：userTable、testCustomers、common
  */
 const LOWER_CAMEL_CASE_REGEX = /^_?[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)*$/;
 
@@ -66,39 +66,17 @@ export default async function (): Promise<boolean> {
 
         // 收集所有表文件
         const allTableFiles: TableFileInfo[] = [];
-        const coreTableNames = new Set<string>(); // 存储内核表文件名
 
-        // 收集内核表字段定义文件
-        for await (const file of tablesGlob.scan({
-            cwd: __dirtables,
-            absolute: true,
-            onlyFiles: true
-        })) {
-            const fileName = path.basename(file, '.json');
-            coreTableNames.add(fileName);
-            allTableFiles.push({ file, type: 'core' });
-        }
-
-        // 收集项目表字段定义文件，并检查是否与内核表同名
+        // 收集项目表字段定义文件
         for await (const file of tablesGlob.scan({
             cwd: getProjectDir('tables'),
             absolute: true,
             onlyFiles: true
         })) {
-            const fileName = path.basename(file, '.json');
-
-            // 检查项目表是否与内核表同名
-            if (coreTableNames.has(fileName)) {
-                Logger.error(`项目表 ${fileName}.json 与内核表同名，项目表不能与内核表定义文件同名`);
-                invalidFiles++;
-                totalFiles++;
-                continue;
-            }
-
             allTableFiles.push({ file, type: 'project' });
         }
 
-        // 收集 addon 表字段定义文件，并检查是否与内核表同名
+        // 收集 addon 表字段定义文件
         const addons = scanAddons();
         for (const addonName of addons) {
             const addonTablesDir = getAddonDir(addonName, 'tables');
@@ -109,16 +87,6 @@ export default async function (): Promise<boolean> {
                     absolute: true,
                     onlyFiles: true
                 })) {
-                    const fileName = path.basename(file, '.json');
-
-                    // 检查 addon 表是否与内核表同名
-                    if (coreTableNames.has(fileName)) {
-                        Logger.error(`组件${addonName}表 ${fileName}.json 与内核表同名，addon 表不能与内核表定义文件同名`);
-                        invalidFiles++;
-                        totalFiles++;
-                        continue;
-                    }
-
                     allTableFiles.push({ file, type: 'addon', addonName });
                 }
             } catch (error) {
@@ -131,7 +99,7 @@ export default async function (): Promise<boolean> {
             totalFiles++;
             const fileName = path.basename(file);
             const fileBaseName = path.basename(file, '.json');
-            const fileType = type === 'core' ? '内核' : type === 'project' ? '项目' : `组件${addonName}`;
+            const fileType = type === 'project' ? '项目' : `组件${addonName}`;
 
             try {
                 // 1) 文件名小驼峰校验

@@ -1,18 +1,32 @@
 /**
- * 健康检查接口 - TypeScript 版本
+ * 健康检查接口
  * 检查服务器、Redis、数据库等状态
+ * 路由：GET /api/befly/health/info
  */
 
-import { Env } from '../../config/env.js';
-import { Api } from '../../utils/api.js';
-import { Yes } from '../../utils/index.js';
-import type { BeflyContext } from '../../types/befly.js';
-import type { HealthInfo } from '../../types/api.js';
+import { Api, Yes, Env } from 'befly';
+import type { BeflyContext, RequestContext } from 'befly/types';
+
+interface HealthInfo {
+    status: string;
+    timestamp: string;
+    uptime: number;
+    memory: NodeJS.MemoryUsage;
+    runtime: string;
+    version: string;
+    platform: string;
+    arch: string;
+    redis?: string;
+    redisError?: string;
+    database?: string;
+    databaseError?: string;
+}
 
 export default Api('健康检查', {
+    auth: false, // 公开接口
     fields: {},
     required: [],
-    handler: async (befly: BeflyContext, ctx: any) => {
+    handler: async (befly: BeflyContext, ctx: RequestContext) => {
         const info: HealthInfo = {
             status: 'ok',
             timestamp: new Date().toISOString(),
