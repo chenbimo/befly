@@ -20,7 +20,7 @@ export const usePermissionStore = defineStore('permission', () => {
      */
     async function fetchUserMenus() {
         try {
-            const { data } = await $http.get('/admin/userMenus');
+            const { data } = await $http.get('/admin/adminMenus');
 
             if (data && Array.isArray(data)) {
                 userMenus.splice(0, userMenus.length, ...data);

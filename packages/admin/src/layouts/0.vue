@@ -6,10 +6,10 @@
                 <h2 v-if="!$Data.collapsed">Befly Admin</h2>
                 <h2 v-else class="logo-short">B</h2>
             </div>
-            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" :expanded="$Data.expandedKeys" :collapsed="$Data.collapsed" :expand-type="$Data.collapsed ? 'popup' : 'normal'" theme="light">
+            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" :expanded="$Data.expandedKeys" :collapsed="$Data.collapsed" :expand-type="$Data.collapsed ? 'popup' : 'normal'" theme="light" style="border-right: none">
                 <template v-for="item in $Data.menuItems" :key="item.value">
-                    <!-- 一级菜单项 -->
-                    <t-menu-item v-if="!item.children" :value="item.value">
+                    <!-- 一级菜单项（无子菜单） -->
+                    <t-menu-item v-if="!item.children || item.children.length === 0" :value="item.value">
                         <template #icon>
                             <component :is="item.icon" />
                         </template>
@@ -21,6 +21,9 @@
                             <component :is="item.icon" />
                         </template>
                         <t-menu-item v-for="child in item.children" :key="child.value" :value="child.value">
+                            <template v-if="child.icon" #icon>
+                                <component :is="child.icon" />
+                            </template>
                             {{ child.label }}
                         </t-menu-item>
                     </t-submenu>
@@ -34,8 +37,8 @@
             <t-header class="header">
                 <div class="header-left">
                     <t-button variant="text" @click="$Method.toggleCollapse" class="collapse-btn">
-                        <view-list-icon v-if="$Data.collapsed" />
-                        <view-module-icon v-else />
+                        <menu-fold-icon v-if="!$Data.collapsed" />
+                        <menu-unfold-icon v-else />
                     </t-button>
                     <h3>{{ currentTitle }}</h3>
                 </div>
@@ -58,6 +61,8 @@
 </template>
 
 <script setup lang="ts">
+import { DashboardIcon, UserIcon, FileIcon, SettingIcon, AppIcon, ViewListIcon, ViewModuleIcon, MenuFoldIcon, MenuUnfoldIcon, HomeIcon } from 'tdesign-icons-vue-next';
+import { MessagePlugin } from 'tdesign-vue-next';
 import { usePermissionStore } from '@/stores/permission';
 
 const router = useRouter();
@@ -71,17 +76,38 @@ const $Data = $ref({
     menuItems: [] as any[]
 });
 
-// 当前激活菜单
-const activeMenu = computed(() => route.name as string);
+// 当前激活菜单 - 使用路由路径作为菜单值
+const activeMenu = computed(() => {
+    return route.path;
+});
+
 const currentTitle = computed(() => route.meta.title || '');
 
-// 图标映射（根据路由名称首段匹配）
-// 使用 markRaw 标记组件为非响应式，避免性能开销
+// 图标映射 - 支持小写和Icon后缀两种格式
 const iconMap: Record<string, any> = {
-    index: markRaw(DashboardIcon),
+    // 小写格式
+    dashboard: markRaw(DashboardIcon),
+    home: markRaw(HomeIcon),
     user: markRaw(UserIcon),
+    admin: markRaw(UserIcon),
     news: markRaw(FileIcon),
+    article: markRaw(FileIcon),
+    file: markRaw(FileIcon),
     system: markRaw(SettingIcon),
+    setting: markRaw(SettingIcon),
+    menu: markRaw(ViewListIcon),
+    viewlist: markRaw(ViewListIcon),
+    role: markRaw(AppIcon),
+    app: markRaw(AppIcon),
+    // Icon后缀格式（与后端配置一致）
+    DashboardIcon: markRaw(DashboardIcon),
+    HomeIcon: markRaw(HomeIcon),
+    UserIcon: markRaw(UserIcon),
+    FileIcon: markRaw(FileIcon),
+    SettingIcon: markRaw(SettingIcon),
+    ViewListIcon: markRaw(ViewListIcon),
+    AppIcon: markRaw(AppIcon),
+    // 默认图标
     default: markRaw(AppIcon)
 };
 
@@ -108,12 +134,15 @@ const $Method = {
 
         // 转换后端菜单数据为前端菜单格式
         const convertMenu = (menuItem: any): any => {
+            // 使用 path 作为菜单值（用于路由跳转和激活状态匹配）
             const item: any = {
-                value: menuItem.path || menuItem.id,
+                value: menuItem.path || String(menuItem.id),
                 label: menuItem.name,
-                icon: iconMap[menuItem.icon] || iconMap.default
+                // 根据 icon 字段映射图标，如果没有则使用默认图标
+                icon: menuItem.icon ? iconMap[menuItem.icon] || iconMap.default : iconMap.default
             };
 
+            // 递归处理子菜单
             if (menuItem.children && menuItem.children.length > 0) {
                 item.children = menuItem.children.map((child: any) => convertMenu(child));
             }
@@ -128,7 +157,7 @@ const $Method = {
     },
     // 处理菜单切换
     handleMenuChange(value: string) {
-        // 检查是否为目录（不跳转）
+        // 检查是否为目录（有子菜单的项不跳转）
         const findMenuItem = (items: any[], val: string): any => {
             for (const item of items) {
                 if (item.value === val) return item;
@@ -141,8 +170,10 @@ const $Method = {
         };
 
         const menuItem = findMenuItem($Data.menuItems, value);
-        // 只有菜单项才跳转，目录不跳转
+
+        // 只有没有子菜单的项才跳转
         if (menuItem && !menuItem.children) {
+            // value 就是 path，直接跳转
             router.push({ path: value });
         }
     },
@@ -170,10 +201,13 @@ watch(
 <style scoped lang="scss">
 .layout-container {
     height: 100vh;
+    background: var(--td-bg-color-page);
 }
 
 .sidebar {
     transition: width 0.3s ease;
+    background: var(--td-bg-color-container);
+    border-right: 1px solid var(--td-border-level-1-color);
 }
 
 .logo {
@@ -182,16 +216,19 @@ watch(
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--td-border-level-1-color);
+    background: var(--td-bg-color-container);
 }
 
 .logo h2 {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
+    color: var(--td-text-color-primary);
 }
 
 .logo-short {
     font-size: 24px;
+    color: var(--td-brand-color);
 }
 
 .header {
@@ -201,6 +238,7 @@ watch(
     padding: 0 24px;
     background: var(--td-bg-color-container);
     border-bottom: 1px solid var(--td-border-level-1-color);
+    height: 64px;
 }
 
 .header-left {
@@ -213,6 +251,7 @@ watch(
     margin: 0;
     font-size: 18px;
     font-weight: 500;
+    color: var(--td-text-color-primary);
 }
 
 .collapse-btn {
@@ -233,5 +272,6 @@ watch(
     padding: 24px;
     background: var(--td-bg-color-page);
     overflow-y: auto;
+    height: calc(100vh - 64px);
 }
 </style>

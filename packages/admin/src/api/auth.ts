@@ -50,9 +50,9 @@ export const sendSmsCodeApi = (phone: string) => {
 /**
  * 获取用户信息
  */
-export const getUserInfoApi = () => {
-    return http.get('/admin/userInfo');
-};
+export function getUserInfo() {
+    return http.get('/admin/adminInfo');
+}
 
 /**
  * 退出登录
