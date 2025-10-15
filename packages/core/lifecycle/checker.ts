@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
-import { __dirchecks, getProjectDir } from '../system.js';
+import { __dirChecks, getProjectDir } from '../system.js';
 import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 
@@ -32,7 +32,7 @@ export class Checker {
 
             // 1. 优先执行资源冲突检测（如果存在）
             try {
-                const conflictCheckPath = path.join(__dirchecks, 'conflict.ts');
+                const conflictCheckPath = path.join(__dirChecks, 'conflict.ts');
                 const conflictCheckFile = Bun.file(conflictCheckPath);
 
                 if (await conflictCheckFile.exists()) {
@@ -70,10 +70,8 @@ export class Checker {
             }
 
             // 2. 检查目录列表：先核心，后项目，最后 addons
-            const checkDirs = [
-                { path: __dirchecks, type: 'core' as const },
-                { path: getProjectDir('checks'), type: 'project' as const }
-            ];
+            // 检查所有 checks 目录
+            const checkDirs = [{ path: __dirChecks, type: 'core' as const }];
 
             // 添加所有 addon 的 checks 目录
             const addons = scanAddons();

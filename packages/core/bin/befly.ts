@@ -6,7 +6,7 @@
 
 import path from 'node:path';
 import { Glob } from 'bun';
-import { __dirscript, getProjectDir } from '../system.js';
+import { __dirScript, getProjectDir } from '../system.js';
 import { Logger } from '../utils/logger.js';
 
 /**
@@ -35,7 +35,7 @@ interface CliArgs {
 
 // 解析目录（来自 system.js）
 // 核心脚本目录：core/scripts
-const coreScriptsDir = __dirscript;
+const coreScriptsDir = __dirScript;
 // 项目脚本目录：当前工作目录的 scripts
 const projectScriptsDir = getProjectDir('scripts');
 // Addons 脚本目录：当前工作目录的 addons/*/scripts

@@ -33,7 +33,7 @@ async function collectCorePlugins(registry: ResourceRegistry): Promise<void> {
     try {
         const glob = new Bun.Glob('*.ts');
         for await (const file of glob.scan({
-            cwd: __dirplugins,
+            cwd: __dirPlugins,
             onlyFiles: true,
             absolute: true
         })) {

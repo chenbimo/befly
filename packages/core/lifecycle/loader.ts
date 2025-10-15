@@ -39,7 +39,7 @@ export class Loader {
             // 扫描核心插件目录
             const corePluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: __dirplugins,
+                cwd: __dirPlugins,
                 onlyFiles: true,
                 absolute: true
             })) {
