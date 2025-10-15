@@ -9,7 +9,7 @@
  */
 
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
-import { isType } from '../../utils/typeHelper.js';
+import { isType } from '../../utils/helpers.js';
 import { Logger } from '../../utils/logger.js';
 
 /**

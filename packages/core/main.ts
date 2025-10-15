@@ -4,7 +4,7 @@
  */
 
 import { Env } from './config/env.js';
-import { Api } from './utils/api.js';
+import { Api } from './utils/framework.js';
 import { Yes, No } from './utils/index.js';
 import { Logger } from './utils/logger.js';
 import { Jwt } from './utils/jwt.js';

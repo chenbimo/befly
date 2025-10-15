@@ -13,7 +13,7 @@ import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
-import { parseRule } from '../../utils/tableHelper.js';
+import { parseRule } from '../../utils/framework.js';
 import { toSnakeTableName } from '../../utils/dbHelper.js';
 import type { SQL } from 'bun';
 

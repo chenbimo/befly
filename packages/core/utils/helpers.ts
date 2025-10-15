@@ -1,0 +1,296 @@
+/**
+ * Befly 通用辅助工具集
+ *
+ * 本文件整合了所有通用辅助函数，包括：
+ * - API 响应工具
+ * - 环境判断工具
+ * - 类型判断工具
+ * - 对象操作工具
+ * - 日期时间工具
+ */
+
+import type { KeyValue } from '../types/common.js';
+
+// ========================================
+// API 响应工具
+// ========================================
+
+/**
+ * 成功响应
+ * @param msg - 响应消息
+ * @param data - 响应数据
+ * @param other - 其他字段
+ * @returns 成功响应对象 { code: 0, msg, data, ...other }
+ */
+export const Yes = <T = any>(msg: string = '', data: T | {} = {}, other: KeyValue = {}): { code: 0; msg: string; data: T | {} } & KeyValue => {
+    return {
+        ...other,
+        code: 0,
+        msg: msg,
+        data: data
+    };
+};
+
+/**
+ * 失败响应
+ * @param msg - 错误消息
+ * @param data - 错误数据
+ * @param other - 其他字段
+ * @returns 失败响应对象 { code: 1, msg, data, ...other }
+ */
+export const No = <T = any>(msg: string = '', data: T | {} = {}, other: KeyValue = {}): { code: 1; msg: string; data: T | {} } & KeyValue => {
+    return {
+        ...other,
+        code: 1,
+        msg: msg,
+        data: data
+    };
+};
+
+// ========================================
+// 环境判断工具
+// ========================================
+
+/**
+ * 判断是否开启调试模式
+ * @returns 是否开启调试模式
+ *
+ * 判断逻辑：
+ * 1. DEBUG=1 或 DEBUG=true 时返回 true
+ * 2. development 环境下默认返回 true（除非 DEBUG=0）
+ * 3. 其他情况返回 false
+ *
+ * @example
+ * // DEBUG=1
+ * isDebug() // true
+ *
+ * // NODE_ENV=development
+ * isDebug() // true
+ *
+ * // NODE_ENV=development, DEBUG=0
+ * isDebug() // false
+ *
+ * // NODE_ENV=production
+ * isDebug() // false
+ */
+export function isDebug(): boolean {
+    return process.env.DEBUG === '1' || process.env.DEBUG === 'true' || (process.env.NODE_ENV === 'development' && process.env.DEBUG !== '0');
+}
+
+// ========================================
+// 类型判断工具
+// ========================================
+
+/**
+ * 类型判断
+ * @param value - 要判断的值
+ * @param type - 期望的类型
+ * @returns 是否匹配指定类型
+ *
+ * @example
+ * isType(123, 'number') // true
+ * isType('hello', 'string') // true
+ * isType([], 'array') // true
+ * isType({}, 'object') // true
+ * isType(null, 'null') // true
+ * isType(undefined, 'undefined') // true
+ * isType(NaN, 'nan') // true
+ * isType(42, 'integer') // true
+ * isType(3.14, 'float') // true
+ * isType(10, 'positive') // true
+ * isType(-5, 'negative') // true
+ * isType(0, 'zero') // true
+ * isType('', 'empty') // true
+ * isType(null, 'empty') // true
+ * isType(true, 'truthy') // true
+ * isType(false, 'falsy') // true
+ * isType('str', 'primitive') // true
+ * isType({}, 'reference') // true
+ */
+export const isType = (value: any, type: string): boolean => {
+    const actualType = Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
+    const expectedType = String(type).toLowerCase();
+
+    // 语义类型单独处理
+    switch (expectedType) {
+        case 'function':
+            return typeof value === 'function';
+        case 'nan':
+            return typeof value === 'number' && Number.isNaN(value);
+        case 'empty':
+            return value === '' || value === null || value === undefined;
+        case 'integer':
+            return Number.isInteger(value);
+        case 'float':
+            return typeof value === 'number' && !Number.isInteger(value) && !Number.isNaN(value);
+        case 'positive':
+            return typeof value === 'number' && value > 0;
+        case 'negative':
+            return typeof value === 'number' && value < 0;
+        case 'zero':
+            return value === 0;
+        case 'truthy':
+            return !!value;
+        case 'falsy':
+            return !value;
+        case 'primitive':
+            return value !== Object(value);
+        case 'reference':
+            return value === Object(value);
+        default:
+            return actualType === expectedType;
+    }
+};
+
+/**
+ * 判断是否为空对象
+ * @param obj - 要判断的值
+ * @returns 是否为空对象
+ *
+ * @example
+ * isEmptyObject({}) // true
+ * isEmptyObject({ a: 1 }) // false
+ * isEmptyObject([]) // false
+ * isEmptyObject(null) // false
+ */
+export const isEmptyObject = (obj: any): boolean => {
+    if (!isType(obj, 'object')) {
+        return false;
+    }
+    return Object.keys(obj).length === 0;
+};
+
+/**
+ * 判断是否为空数组
+ * @param arr - 要判断的值
+ * @returns 是否为空数组
+ *
+ * @example
+ * isEmptyArray([]) // true
+ * isEmptyArray([1, 2]) // false
+ * isEmptyArray({}) // false
+ * isEmptyArray(null) // false
+ */
+export const isEmptyArray = (arr: any): boolean => {
+    if (!isType(arr, 'array')) {
+        return false;
+    }
+    return arr.length === 0;
+};
+
+// ========================================
+// 对象操作工具
+// ========================================
+
+/**
+ * 挑选指定字段
+ * @param obj - 源对象
+ * @param keys - 要挑选的字段名数组
+ * @returns 包含指定字段的新对象
+ *
+ * @example
+ * pickFields({ a: 1, b: 2, c: 3 }, ['a', 'c']) // { a: 1, c: 3 }
+ * pickFields({ name: 'John', age: 30 }, ['name']) // { name: 'John' }
+ */
+export const pickFields = <T extends Record<string, any>>(obj: T, keys: string[]): Partial<T> => {
+    if (!obj || (!isType(obj, 'object') && !isType(obj, 'array'))) {
+        return {};
+    }
+
+    const result: any = {};
+    for (const key of keys) {
+        if (key in obj) {
+            result[key] = obj[key];
+        }
+    }
+
+    return result;
+};
+
+/**
+ * 排除指定字段和值
+ * @param data - 源数据（对象或数组）
+ * @param excludeKeys - 要排除的字段名数组
+ * @param excludeValues - 要排除的值数组
+ * @returns 排除指定字段和值后的新数据
+ *
+ * @example
+ * omitFields({ a: 1, b: 2, c: 3 }, ['b']) // { a: 1, c: 3 }
+ * omitFields({ a: 1, b: null, c: 3 }, [], [null]) // { a: 1, c: 3 }
+ * omitFields([{ a: 1 }, { a: 2 }], ['a']) // [{}, {}]
+ */
+export const omitFields = <T = any>(data: T, excludeKeys: string[] = [], excludeValues: any[] = []): T | Partial<T> => {
+    const shouldDropValue = (v: any): boolean => excludeValues.some((x) => x === v);
+
+    const cleanObject = (obj: any): any => {
+        if (!isType(obj, 'object')) return obj;
+        const result: any = {};
+        for (const [k, v] of Object.entries(obj)) {
+            if (excludeKeys.includes(k)) continue;
+            if (shouldDropValue(v)) continue;
+            result[k] = v;
+        }
+        return result;
+    };
+
+    if (isType(data, 'array')) {
+        return (data as any).filter((item: any) => !shouldDropValue(item)).map((item: any) => (isType(item, 'object') ? cleanObject(item) : item));
+    }
+
+    if (isType(data, 'object')) {
+        return cleanObject(data);
+    }
+
+    return data;
+};
+
+// ========================================
+// 日期时间工具
+// ========================================
+
+/**
+ * 格式化日期
+ * @param date - 日期对象、时间戳或日期字符串
+ * @param format - 格式化模板（支持 YYYY, MM, DD, HH, mm, ss）
+ * @returns 格式化后的日期字符串
+ *
+ * @example
+ * formatDate(new Date('2025-10-11 15:30:45')) // '2025-10-11 15:30:45'
+ * formatDate(new Date('2025-10-11'), 'YYYY-MM-DD') // '2025-10-11'
+ * formatDate(1728648645000, 'YYYY/MM/DD HH:mm') // '2025/10/11 15:30'
+ * formatDate('2025-10-11', 'MM-DD') // '10-11'
+ */
+export const formatDate = (date: Date | string | number = new Date(), format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hour = String(d.getHours()).padStart(2, '0');
+    const minute = String(d.getMinutes()).padStart(2, '0');
+    const second = String(d.getSeconds()).padStart(2, '0');
+
+    return format.replace('YYYY', String(year)).replace('MM', month).replace('DD', day).replace('HH', hour).replace('mm', minute).replace('ss', second);
+};
+
+/**
+ * 计算性能时间差
+ * 用于测量代码执行时间（使用 Bun.nanoseconds()）
+ * @param startTime - 开始时间（Bun.nanoseconds()返回值）
+ * @param endTime - 结束时间（可选，默认为当前时间）
+ * @returns 时间差（毫秒或秒）
+ *
+ * @example
+ * const start = Bun.nanoseconds();
+ * // ... 执行代码 ...
+ * const elapsed = calcPerfTime(start); // '15.23 毫秒' 或 '2.45 秒'
+ */
+export const calcPerfTime = (startTime: number, endTime: number = Bun.nanoseconds()): string => {
+    const elapsedMs = (endTime - startTime) / 1_000_000;
+
+    if (elapsedMs < 1000) {
+        return `${elapsedMs.toFixed(2)} 毫秒`;
+    } else {
+        const elapsedSeconds = elapsedMs / 1000;
+        return `${elapsedSeconds.toFixed(2)} 秒`;
+    }
+};

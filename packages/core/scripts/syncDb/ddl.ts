@@ -9,7 +9,9 @@
  */
 
 import { Logger } from '../../utils/logger.js';
-import { parseRule } from '../../utils/tableHelper.js';
+import { ErrorHandler } from '../../utils/errorHandler.js';
+import { parseRule } from '../../utils/framework.js';
+import type { ParsedFieldRule, AnyObject } from '../../types/common.js';
 import { toSnakeTableName } from '../../utils/dbHelper.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';

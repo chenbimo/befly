@@ -5,31 +5,19 @@
  * 保持向后兼容性，支持从 utils/index.js 导入所有工具函数
  */
 
-// ========== API 响应工具 ==========
-export { Yes, No } from './response.js';
+// ========== 通用辅助工具（helpers.ts）==========
+export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, calcPerfTime } from './helpers.js';
 
-// ========== 类型判断工具 ==========
-export { isType, isEmptyObject, isEmptyArray } from './typeHelper.js';
-
-// ========== 通用工具 ==========
-export { isDebug } from './common.js';
-
-// ========== 对象操作工具 ==========
-export { pickFields, omitFields } from './objectHelper.js';
-
-// ========== 日期时间工具 ==========
-export { formatDate, calcPerfTime } from './datetime.js';
+// ========== 框架工具 ==========
+export { Api, scanAddons, getAddonDir, hasAddonDir, sortPlugins, parseRule } from './framework.js';
 
 // ========== 数据库工具 ==========
 export { toSnakeTableName, buildDatabaseUrl, createSqlClient } from './dbHelper.js';
 
-// ========== 表定义工具 ==========
-export { parseRule, loadTableFields, pickTableFields } from './tableHelper.js';
+// ========== 错误处理 ==========
+export { ErrorHandler } from './errorHandler.js';
 
-// ========== 插件系统工具 ==========
-export { sortPlugins } from './pluginHelper.js';
-
-// 导出其他模块
+// 导出其他大型模块
 export { Colors } from './colors.js';
 export { Logger } from './logger.js';
 export { Validator } from './validate.js';
@@ -39,7 +27,6 @@ export { RedisHelper, initRedisClient, getRedisClient, closeRedisClient } from '
 export { Jwt } from './jwt.js';
 export { Crypto2 } from './crypto.js';
 export { Xml } from './xml.js';
-export { Api } from './api.js';
 export { Tool } from './tool.js';
 
 // 类型导出

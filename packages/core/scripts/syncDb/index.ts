@@ -13,7 +13,7 @@ import { Env } from '../../config/env.js';
 import { createSqlClient, toSnakeTableName } from '../../utils/dbHelper.js';
 import checkTable from '../../checks/table.js';
 import { paths } from '../../paths.js';
-import { scanAddons, hasAddonDir, getAddonDir } from '../../utils/addonHelper.js';
+import { scanAddons, hasAddonDir, getAddonDir } from '../../utils/framework.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';

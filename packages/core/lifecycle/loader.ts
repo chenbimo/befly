@@ -5,11 +5,11 @@
 
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
-import { calcPerfTime } from '../utils/datetime.js';
-import { sortPlugins } from '../utils/pluginHelper.js';
-import { isType } from '../utils/typeHelper.js';
+import { calcPerfTime } from '../utils/helpers.js';
+import { sortPlugins } from '../utils/framework.js';
+import { isType } from '../utils/helpers.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
+import { scanAddons, getAddonDir, hasAddonDir } from '../utils/framework.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';

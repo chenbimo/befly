@@ -5,7 +5,7 @@
 
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
-import { scanAddons, hasAddonDir } from '../utils/addonHelper.js';
+import { scanAddons, hasAddonDir } from '../utils/framework.js';
 import { Checker } from './checker.js';
 import { Loader } from './loader.js';
 import { Bootstrap } from './bootstrap.js';

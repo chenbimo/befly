@@ -7,7 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { parseRule } from '../utils/index.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir } from '../utils/addonHelper.js';
+import { scanAddons, getAddonDir } from '../utils/framework.js';
 
 /**
  * 表文件信息接口
