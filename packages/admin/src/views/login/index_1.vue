@@ -285,6 +285,8 @@ const $Method = {
 
         try {
             const res = await $Http.post('/admin/login', formData);
+
+            // 先保存 token
             localStorage.setItem('token', res.data.token);
 
             // 如果返回用户信息,也可以存储
@@ -293,7 +295,9 @@ const $Method = {
             }
 
             MessagePlugin.success('登录成功');
-            router.push('/');
+
+            // 跳转到首页，路由守卫会自动加载菜单
+            await router.push('/');
         } catch (error) {
             // 错误已经在 request 拦截器中处理
         } finally {

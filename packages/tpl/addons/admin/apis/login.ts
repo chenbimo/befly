@@ -95,7 +95,7 @@ export default Api('管理员登录', {
         // 生成 JWT Token
         const token = await Jwt.sign(
             {
-                userId: admin.id.toString(),
+                id: admin.id,
                 email: admin.email,
                 role: admin.role
             },

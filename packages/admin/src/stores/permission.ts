@@ -20,7 +20,14 @@ export const usePermissionStore = defineStore('permission', () => {
      */
     async function fetchUserMenus() {
         try {
+            if (import.meta.env.DEV) {
+                console.log('[Permission] 开始获取用户菜单...');
+                console.log('[Permission] 当前 token:', localStorage.getItem('token')?.substring(0, 20) + '...');
+            }
             const { data } = await $Http.get('/admin/adminMenus');
+            if (import.meta.env.DEV) {
+                console.log('[Permission] 菜单数据:', data);
+            }
 
             if (data && Array.isArray(data)) {
                 userMenus.splice(0, userMenus.length, ...data);
