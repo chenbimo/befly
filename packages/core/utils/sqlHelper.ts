@@ -106,7 +106,7 @@ export class SqlHelper {
         // 慢查询警告（超过 1000ms）
         if (duration > 1000) {
             const sqlPreview = sqlStr.length > 100 ? sqlStr.substring(0, 100) + '...' : sqlStr;
-            console.warn(`🐌 检测到慢查询 (${duration}ms): ${sqlPreview}`);
+            Logger.warn(`🐌 检测到慢查询 (${duration}ms): ${sqlPreview}`);
         }
 
         return result;
@@ -118,7 +118,11 @@ export class SqlHelper {
     async getDetail<T = any>(options: QueryOptions): Promise<T | null> {
         const { table, fields = ['*'], where, includeDeleted = false, customState } = options;
 
-        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where, includeDeleted, customState)).limit(1);
+        const builder = new SqlBuilder()
+            .select(fields)
+            .from(table)
+            .where(this.addDefaultStateFilter(where, includeDeleted, customState))
+            .limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -193,7 +197,11 @@ export class SqlHelper {
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
 
-        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where, includeDeleted, customState)).limit(MAX_LIMIT); // 强制添加上限
+        const builder = new SqlBuilder()
+            .select(fields)
+            .from(table)
+            .where(this.addDefaultStateFilter(where, includeDeleted, customState))
+            .limit(MAX_LIMIT); // 强制添加上限
 
         if (orderBy) {
             builder.orderBy(orderBy);
@@ -204,12 +212,12 @@ export class SqlHelper {
 
         // 警告日志：返回数据超过警告阈值
         if (result.length >= WARNING_LIMIT) {
-            console.warn(`⚠️ getAll 从表 \`${table}\` 返回了 ${result.length} 行数据，建议使用 getList 分页查询以获得更好的性能。`);
+            Logger.warn(`⚠️ getAll 从表 \`${table}\` 返回了 ${result.length} 行数据，建议使用 getList 分页查询以获得更好的性能。`);
         }
 
         // 如果达到上限，额外警告
         if (result.length >= MAX_LIMIT) {
-            console.warn(`🚨 getAll 达到了最大限制 (${MAX_LIMIT})，可能还有更多数据。请使用 getList 分页查询。`);
+            Logger.warn(`🚨 getAll 达到了最大限制 (${MAX_LIMIT})，可能还有更多数据。请使用 getList 分页查询。`);
         }
 
         return result;
@@ -279,7 +287,7 @@ export class SqlHelper {
             return ids;
         } catch (error: any) {
             // 批量插入失败，记录错误
-            console.error(`表 \`${table}\` 批量插入失败:`, error.message);
+            Logger.error(`表 \`${table}\` 批量插入失败:`, error.message);
             throw error;
         }
     }
@@ -409,7 +417,11 @@ export class SqlHelper {
         const { table, where, includeDeleted = false, customState } = options;
 
         // 使用 COUNT(1) 性能更好
-        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where, includeDeleted, customState)).limit(1);
+        const builder = new SqlBuilder()
+            .select(['COUNT(1) as cnt'])
+            .from(table)
+            .where(this.addDefaultStateFilter(where, includeDeleted, customState))
+            .limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);

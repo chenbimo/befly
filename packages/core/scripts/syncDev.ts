@@ -106,7 +106,7 @@ if (import.meta.main) {
             process.exit(ok ? 0 : 1);
         })
         .catch((err: Error) => {
-            console.error('❌ 开发管理员同步失败:', err);
+            Logger.error('❌ 开发管理员同步失败:', err);
             process.exit(1);
         });
 }

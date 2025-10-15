@@ -10,6 +10,7 @@
 
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { isType } from '../../utils/typeHelper.js';
+import { Logger } from '../../utils/logger.js';
 
 /**
  * 根据数据库类型引用标识符
@@ -158,7 +159,7 @@ export function escapeComment(str: string): string {
  * @param changeLabel - 变更类型的中文标签
  */
 export function logFieldChange(tableName: string, fieldName: string, changeType: string, oldValue: any, newValue: any, changeLabel: string): void {
-    console.log(`   修改表 ${tableName} 的字段 ${fieldName} 的${changeLabel}: ${oldValue} -> ${newValue}`);
+    Logger.log(`   修改表 ${tableName} 的字段 ${fieldName} 的${changeLabel}: ${oldValue} -> ${newValue}`);
 }
 
 /**

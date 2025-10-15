@@ -6,6 +6,8 @@
  * - 进度信息记录
  */
 
+import { Logger } from '../../utils/logger.js';
+
 /**
  * 阶段统计信息
  */
@@ -67,13 +69,13 @@ export class PerformanceTracker {
      * 输出所有阶段统计
      */
     logStats(): void {
-        console.log('\n⏱️  性能统计:');
+        Logger.log('\n⏱️  性能统计:');
         for (const [phase, stats] of this.phases) {
             const duration = stats.duration || Date.now() - stats.startTime;
             const timeStr = duration > 1000 ? `${(duration / 1000).toFixed(2)}s` : `${duration}ms`;
-            console.log(`   ${phase}: ${timeStr}`);
+            Logger.log(`   ${phase}: ${timeStr}`);
         }
-        console.log(`   总耗时: ${this.getTotalTime()}`);
+        Logger.log(`   总耗时: ${this.getTotalTime()}`);
     }
 }
 
@@ -85,20 +87,20 @@ export class ProgressLogger {
      * 记录表处理进度
      */
     logTableProgress(current: number, total: number, tableName: string): void {
-        console.log(`\n[${current}/${total}] 处理表: ${tableName}`);
+        Logger.log(`\n[${current}/${total}] 处理表: ${tableName}`);
     }
 
     /**
      * 记录字段变更进度
      */
     logFieldChangeProgress(current: number, total: number, fieldName: string, changeType: string): void {
-        console.log(`   [${current}/${total}] 修改字段 ${fieldName} (${changeType})`);
+        Logger.log(`   [${current}/${total}] 修改字段 ${fieldName} (${changeType})`);
     }
 
     /**
      * 记录索引创建进度
      */
     logIndexProgress(current: number, total: number, indexName: string): void {
-        console.log(`   [${current}/${total}] 创建索引: ${indexName}`);
+        Logger.log(`   [${current}/${total}] 创建索引: ${indexName}`);
     }
 }

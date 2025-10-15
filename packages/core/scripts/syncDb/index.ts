@@ -203,7 +203,7 @@ export const SyncDb = async (): Promise<void> => {
 // 如果直接运行此脚本（Bun 支持 import.meta.main）
 if (import.meta.main) {
     SyncDb().catch((error) => {
-        console.error('❌ 数据库同步失败:', error);
+        Logger.error('❌ 数据库同步失败:', error);
         process.exit(1);
     });
 }
