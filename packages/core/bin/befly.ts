@@ -232,9 +232,7 @@ async function resolveScriptPath(name: string): Promise<string | null> {
         const parts = name.split('/');
         if (parts.length === 2) {
             const [addonName, scriptName] = parts;
-            const found = addonScripts.find(
-                (a) => a.addonName === addonName && a.scriptName === scriptName.replace(/\.(js|ts)$/, '')
-            );
+            const found = addonScripts.find((a) => a.addonName === addonName && a.scriptName === scriptName.replace(/\.(js|ts)$/, ''));
             if (found) return found.scriptPath;
         }
         // 如果包含 / 但不是有效的 addon 格式，返回 null
@@ -258,9 +256,7 @@ async function resolveScriptPath(name: string): Promise<string | null> {
 
     // 回退到列表匹配（只匹配 core 和 project）
     const items = buildScriptItems();
-    const hit = 
-        items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'core') || 
-        items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'project');
+    const hit = items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'core') || items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'project');
 
     return hit ? hit.path : null;
 }
