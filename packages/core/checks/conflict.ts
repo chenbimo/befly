@@ -37,7 +37,7 @@ async function collectCorePlugins(registry: ResourceRegistry): Promise<void> {
             onlyFiles: true,
             absolute: true
         })) {
-            const pluginName = path.basename(file).replace(/\.(js|ts)$/, '');
+            const pluginName = path.basename(file).replace(/\.ts$/, '');
             if (pluginName.startsWith('_')) continue;
 
             if (registry.plugins.has(pluginName)) {
@@ -108,10 +108,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
             onlyFiles: true,
             absolute: true
         })) {
-            const apiPath = path
-                .relative(addonApisDir, file)
-                .replace(/\.(js|ts)$/, '')
-                .replace(/\\/g, '/');
+            const apiPath = path.relative(addonApisDir, file).replace(/\.ts$/, '').replace(/\\/g, '/');
             if (apiPath.indexOf('_') !== -1) continue;
 
             try {
@@ -146,7 +143,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
             onlyFiles: true,
             absolute: true
         })) {
-            const fileName = path.basename(file).replace(/\.(js|ts)$/, '');
+            const fileName = path.basename(file).replace(/\.ts$/, '');
             if (fileName.startsWith('_')) continue;
 
             // Addon 插件使用点号命名空间
@@ -221,10 +218,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
             onlyFiles: true,
             absolute: true
         })) {
-            const apiPath = path
-                .relative(userApisDir, file)
-                .replace(/\.(js|ts)$/, '')
-                .replace(/\\/g, '/');
+            const apiPath = path.relative(userApisDir, file).replace(/\.ts$/, '').replace(/\\/g, '/');
             if (apiPath.indexOf('_') !== -1) continue;
 
             try {
@@ -260,7 +254,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
             onlyFiles: true,
             absolute: true
         })) {
-            const pluginName = path.basename(file).replace(/\.(js|ts)$/, '');
+            const pluginName = path.basename(file).replace(/\.ts$/, '');
             if (pluginName.startsWith('_')) continue;
 
             // 检查是否使用保留名称

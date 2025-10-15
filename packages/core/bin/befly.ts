@@ -42,14 +42,14 @@ const projectScriptsDir = getProjectDir('scripts');
 const projectAddonsDir = getProjectDir('addons');
 
 /**
- * 安全地列出目录下的所有 .js/.ts 脚本文件
+ * 安全地列出目录下的所有 .ts 脚本文件
  * @param dir - 目录路径
  * @returns 脚本名称数组（不含扩展名）
  */
 function safeList(dir: string): string[] {
     try {
-        // 使用 Bun.Glob 查找当前目录下的所有 .js 和 .ts 文件（不递归）
-        const glob = new Glob('*.{js,ts}');
+        // 使用 Bun.Glob 查找当前目录下的所有 .ts 文件（不递归）
+        const glob = new Glob('*.ts');
         const files = Array.from(
             glob.scanSync({
                 cwd: dir,
@@ -62,7 +62,7 @@ function safeList(dir: string): string[] {
         return files
             .map((f) => {
                 const basename = path.basename(f);
-                return basename.replace(/\.(js|ts)$/, '');
+                return basename.replace(/\.ts$/, '');
             })
             .sort();
     } catch {
@@ -85,7 +85,7 @@ function scanAddonScripts(): Array<{ addonName: string; scriptName: string; scri
         }
 
         // 扫描 addons/*/scripts 目录
-        const addonGlob = new Glob('*/scripts/*.{js,ts}');
+        const addonGlob = new Glob('*/scripts/*.ts');
         const addonFiles = Array.from(
             addonGlob.scanSync({
                 cwd: addonsDir,
@@ -100,7 +100,7 @@ function scanAddonScripts(): Array<{ addonName: string; scriptName: string; scri
             const parts = file.split(path.sep);
             if (parts.length === 3 && parts[1] === 'scripts') {
                 const addonName = parts[0];
-                const scriptName = path.basename(parts[2]).replace(/\.(js|ts)$/, '');
+                const scriptName = path.basename(parts[2]).replace(/\.ts$/, '');
                 const scriptPath = path.resolve(addonsDir, file);
 
                 results.push({
@@ -222,7 +222,7 @@ function printAllScripts(): void {
 
 /**
  * 解析脚本名称到完整路径
- * @param name - 脚本名称（可带或不带 .js/.ts 扩展名）
+ * @param name - 脚本名称（可带或不带 .ts 扩展名）
  *               addon 脚本必须使用完整格式：addonName/scriptName
  * @returns 脚本完整路径，未找到返回 null
  */
@@ -233,7 +233,7 @@ async function resolveScriptPath(name: string): Promise<string | null> {
         const parts = name.split('/');
         if (parts.length === 2) {
             const [addonName, scriptName] = parts;
-            const found = addonScripts.find((a) => a.addonName === addonName && a.scriptName === scriptName.replace(/\.(js|ts)$/, ''));
+            const found = addonScripts.find((a) => a.addonName === addonName && a.scriptName === scriptName.replace(/\.ts$/, ''));
             if (found) return found.scriptPath;
         }
         // 如果包含 / 但不是有效的 addon 格式，返回 null
@@ -241,19 +241,13 @@ async function resolveScriptPath(name: string): Promise<string | null> {
     }
 
     // 只在 core 和 project 中查找（addon 必须使用完整路径）
-    const base = name.replace(/\.(js|ts)$/, '');
+    const base = name.replace(/\.ts$/, '');
 
-    // 检查 .ts 文件（优先）
+    // 检查 .ts 文件
     const coreTsPath = path.resolve(coreScriptsDir, `${base}.ts`);
     const projectTsPath = path.resolve(projectScriptsDir, `${base}.ts`);
     if (await Bun.file(coreTsPath).exists()) return coreTsPath;
     if (await Bun.file(projectTsPath).exists()) return projectTsPath;
-
-    // 回退到 .js 文件
-    const coreJsPath = path.resolve(coreScriptsDir, `${base}.js`);
-    const projectJsPath = path.resolve(projectScriptsDir, `${base}.js`);
-    if (await Bun.file(coreJsPath).exists()) return coreJsPath;
-    if (await Bun.file(projectJsPath).exists()) return projectJsPath;
 
     // 回退到列表匹配（只匹配 core 和 project）
     const items = buildScriptItems();

@@ -43,7 +43,7 @@ export class Loader {
                 onlyFiles: true,
                 absolute: true
             })) {
-                const fileName = path.basename(file).replace(/\.(js|ts)$/, '');
+                const fileName = path.basename(file).replace(/\.ts$/, '');
                 if (fileName.startsWith('_')) continue;
 
                 try {
@@ -127,7 +127,7 @@ export class Loader {
                         onlyFiles: true,
                         absolute: true
                     })) {
-                        const fileName = path.basename(file).replace(/\.(js|ts)$/, '');
+                        const fileName = path.basename(file).replace(/\.ts$/, '');
                         if (fileName.startsWith('_')) continue;
 
                         const pluginFullName = `${addon}.${fileName}`;
@@ -205,7 +205,7 @@ export class Loader {
                 onlyFiles: true,
                 absolute: true
             })) {
-                const fileName = path.basename(file).replace(/\.(js|ts)$/, '');
+                const fileName = path.basename(file).replace(/\.ts$/, '');
                 if (fileName.startsWith('_')) continue;
 
                 // 检查是否已经加载了同名的核心插件
@@ -331,11 +331,8 @@ export class Loader {
                 onlyFiles: true,
                 absolute: true
             })) {
-                const fileName = path.basename(file).replace(/\.(js|ts)$/, '');
-                const apiPath = path
-                    .relative(apiDir, file)
-                    .replace(/\.(js|ts)$/, '')
-                    .replace(/\\/g, '/');
+                const fileName = path.basename(file).replace(/\.ts$/, '');
+                const apiPath = path.relative(apiDir, file).replace(/\.ts$/, '').replace(/\\/g, '/');
                 if (apiPath.indexOf('_') !== -1) continue;
 
                 totalApis++;
