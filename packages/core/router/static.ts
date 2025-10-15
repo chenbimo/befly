@@ -4,7 +4,7 @@
  */
 
 import path from 'node:path';
-import { getProjectDir } from '../system.js';
+import { paths } from '../paths.js';
 import { No } from '../utils/index.js';
 import { setCorsOptions } from '../middleware/cors.js';
 
@@ -23,7 +23,7 @@ export async function staticHandler(req: Request): Promise<Response> {
     }
 
     const url = new URL(req.url);
-    const filePath = path.join(getProjectDir('public'), url.pathname);
+    const filePath = path.join(paths.projectDir, 'public', url.pathname);
 
     try {
         const file = Bun.file(filePath);

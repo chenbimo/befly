@@ -12,7 +12,7 @@ import { Logger } from '../../utils/logger.js';
 import { Env } from '../../config/env.js';
 import { createSqlClient, toSnakeTableName } from '../../utils/dbHelper.js';
 import checkTable from '../../checks/table.js';
-import { getProjectDir } from '../../system.js';
+import { paths } from '../../paths.js';
 import { scanAddons, hasAddonDir, getAddonDir } from '../../utils/addonHelper.js';
 
 // 导入模块化的功能
@@ -78,7 +78,7 @@ export const SyncDb = async (): Promise<void> => {
         // 阶段3：扫描表定义文件
         perfTracker.markPhase('scan');
         const tablesGlob = new Bun.Glob('*.json');
-        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [{ path: getProjectDir('tables'), isCore: false }];
+        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [{ path: paths.projectTableDir, isCore: false }];
 
         // 添加所有 addon 的 tables 目录
         const addons = scanAddons();

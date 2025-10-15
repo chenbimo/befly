@@ -8,7 +8,7 @@ import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/datetime.js';
 import { sortPlugins } from '../utils/pluginHelper.js';
 import { isType } from '../utils/typeHelper.js';
-import { __dirplugins, getProjectDir } from '../system.js';
+import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';
@@ -39,7 +39,7 @@ export class Loader {
             // 扫描核心插件目录
             const corePluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: __dirPlugins,
+                cwd: paths.rootPluginDir,
                 onlyFiles: true,
                 absolute: true
             })) {
@@ -201,7 +201,7 @@ export class Loader {
             // 扫描用户插件目录
             const userPluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: getProjectDir('plugins'),
+                cwd: paths.projectPluginDir,
                 onlyFiles: true,
                 absolute: true
             })) {
@@ -319,7 +319,7 @@ export class Loader {
             const dirDisplayName = isAddon ? `组件[${addonName}]` : '用户';
 
             const glob = new Bun.Glob('**/*.ts');
-            const apiDir = isAddon ? getAddonDir(addonName, 'apis') : getProjectDir('apis');
+            const apiDir = isAddon ? getAddonDir(addonName, 'apis') : paths.projectApiDir;
 
             let totalApis = 0;
             let loadedApis = 0;

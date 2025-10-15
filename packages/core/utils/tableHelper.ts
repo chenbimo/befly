@@ -5,7 +5,7 @@
 
 import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
-import { getProjectDir } from '../system.js';
+import { paths } from '../paths.js';
 import { getAddonDir } from './addonHelper.js';
 import type { ParsedFieldRule } from '../types/common.js';
 
@@ -113,7 +113,7 @@ export function loadTableFields(
         }
         tableFilePath = path.join(getAddonDir(addonName, 'tables'), `${tableName}.json`);
     } else {
-        tableFilePath = path.join(getProjectDir('tables'), `${tableName}.json`);
+        tableFilePath = path.join(paths.projectTableDir, `${tableName}.json`);
     }
 
     // 检查文件是否存在

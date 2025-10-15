@@ -5,8 +5,8 @@
 
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
-import { scanAddons, getAddonDir, hasAddonDir } from '../utils/addonHelper.js';
-import { __dirplugins, getProjectDir } from '../system.js';
+import { paths } from '../paths.js';
+import { scanAddons, hasAddonDir, getAddonDir } from '../utils/addonHelper.js';
 import { isReservedTableName, isReservedRoute, isReservedPluginName, isReservedAddonName, getReservedTablePrefixes, getReservedRoutes, getReservedPlugins, getReservedAddonNames } from '../config/reserved.js';
 
 /**
@@ -33,7 +33,7 @@ async function collectCorePlugins(registry: ResourceRegistry): Promise<void> {
     try {
         const glob = new Bun.Glob('*.ts');
         for await (const file of glob.scan({
-            cwd: __dirPlugins,
+            cwd: paths.rootPluginDir,
             onlyFiles: true,
             absolute: true
         })) {
@@ -174,7 +174,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
     const conflicts: string[] = [];
 
     // 收集用户表定义
-    const userTablesDir = getProjectDir('tables');
+    const userTablesDir = paths.projectTableDir;
     try {
         const glob = new Bun.Glob('*.json');
         for await (const file of glob.scan({
@@ -210,7 +210,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
     }
 
     // 收集用户 API 路由
-    const userApisDir = getProjectDir('apis');
+    const userApisDir = paths.projectApiDir;
     try {
         const glob = new Bun.Glob('**/*.ts');
         for await (const file of glob.scan({
@@ -246,7 +246,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
     }
 
     // 收集用户插件
-    const userPluginsDir = getProjectDir('plugins');
+    const userPluginsDir = paths.projectPluginDir;
     try {
         const glob = new Bun.Glob('*.ts');
         for await (const file of glob.scan({

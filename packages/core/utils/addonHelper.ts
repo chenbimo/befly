@@ -5,13 +5,13 @@
 
 import fs from 'node:fs';
 import { join } from 'node:path';
-import { getProjectRoot } from '../system.js';
+import { paths } from '../paths.js';
 
 /**
  * 获取 addons 目录路径
  */
 export const getAddonsDir = (): string => {
-    return join(getProjectRoot(), 'addons');
+    return paths.projectAddonDir;
 };
 
 /**
