@@ -1,8 +1,0 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-# 运行 lint-staged 自动格式化代码
-bunx lint-staged
-
-# 运行测试
-bun test
