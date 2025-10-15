@@ -11,10 +11,8 @@ export default Api('删除菜单', {
     },
     handler: async (befly, ctx) => {
         try {
-            const { id } = ctx.body;
-
             // 检查是否有子菜单
-            const children = await befly.db.query('SELECT id FROM admin_menu WHERE pid = ? AND deleted_at IS NULL', [id]);
+            const children = await befly.db.query('SELECT id FROM admin_menu WHERE pid = ? AND deleted_at IS NULL', [ctx.body.id]);
 
             if (children && children.length > 0) {
                 return {
@@ -26,11 +24,11 @@ export default Api('删除菜单', {
             // 删除菜单
             await befly.db.delData({
                 table: 'admin_menu',
-                where: { id }
+                where: { id: ctx.body.id }
             });
 
             // 删除相关的角色-菜单关联
-            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE menu_id = ?', [Date.now(), id]);
+            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE menu_id = ?', [Date.now(), ctx.body.id]);
 
             return befly.code.success;
         } catch (error) {

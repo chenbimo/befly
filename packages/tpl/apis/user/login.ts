@@ -18,12 +18,10 @@ export default Api('用户登录', {
     },
     required: ['username', 'password'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const { username, password } = ctx.body as LoginRequest;
-
         // 查询用户
         const user = await befly.db.getDetail<User>({
             table: 'user',
-            where: { username }
+            where: { username: ctx.body.username }
         });
 
         if (!user) {
@@ -31,7 +29,7 @@ export default Api('用户登录', {
         }
 
         // 验证密码
-        const isValid = await Crypto2.verifyPassword(password, user.password);
+        const isValid = await Crypto2.verifyPassword(ctx.body.password, user.password);
         if (!isValid) {
             return No('用户名或密码错误');
         }

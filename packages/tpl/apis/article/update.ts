@@ -24,12 +24,10 @@ export default Api('更新文章', {
     },
     required: ['id'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const { id, ...updateData } = ctx.body;
-
         // 检查文章是否存在
         const article = await befly.db.getDetail({
             table: 'article',
-            where: { id }
+            where: { id: ctx.body.id }
         });
 
         if (!article) {
@@ -39,8 +37,18 @@ export default Api('更新文章', {
         // 更新文章
         const result = await befly.db.updData({
             table: 'article',
-            where: { id },
-            data: updateData
+            where: { id: ctx.body.id },
+            data: {
+                title: ctx.body.title,
+                content: ctx.body.content,
+                summary: ctx.body.summary,
+                coverImage: ctx.body.coverImage,
+                author: ctx.body.author,
+                category: ctx.body.category,
+                tags: ctx.body.tags,
+                viewCount: ctx.body.viewCount,
+                status: ctx.body.status
+            }
         });
 
         return Yes('更新成功', { affected: result });

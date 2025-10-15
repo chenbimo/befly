@@ -14,11 +14,9 @@ export default Api('文章详情', {
     },
     required: ['id'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const { id } = ctx.body;
-
         const article = await befly.db.getDetail({
             table: 'article',
-            where: { id }
+            where: { id: ctx.body.id }
         });
 
         if (!article) {

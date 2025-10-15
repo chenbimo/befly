@@ -12,18 +12,16 @@ export default Api('保存角色菜单权限', {
     },
     handler: async (befly, ctx) => {
         try {
-            const { roleId, menuIds } = ctx.body;
-
             // 解析菜单 ID 数组
             let menuIdArray: number[] = [];
             try {
-                menuIdArray = typeof menuIds === 'string' ? JSON.parse(menuIds) : menuIds;
+                menuIdArray = typeof ctx.body.menuIds === 'string' ? JSON.parse(ctx.body.menuIds) : ctx.body.menuIds;
             } catch {
                 menuIdArray = [];
             }
 
             // 先删除该角色的所有菜单权限
-            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE role_id = ?', [Date.now(), roleId]);
+            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE role_id = ?', [Date.now(), ctx.body.roleId]);
 
             // 批量插入新的权限
             if (menuIdArray.length > 0) {
@@ -31,7 +29,7 @@ export default Api('保存角色菜单权限', {
                     await befly.db.insData({
                         table: 'admin_role_menu',
                         data: {
-                            role_id: roleId,
+                            role_id: ctx.body.roleId,
                             menu_id: menuId
                         }
                     });

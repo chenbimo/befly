@@ -11,10 +11,8 @@ export default Api('删除角色', {
     },
     handler: async (befly, ctx) => {
         try {
-            const { id } = ctx.body;
-
             // 检查是否有用户关联此角色
-            const adminRoles = await befly.db.query('SELECT id FROM admin_admin_role WHERE role_id = ? AND deleted_at IS NULL', [id]);
+            const adminRoles = await befly.db.query('SELECT id FROM admin_admin_role WHERE role_id = ? AND deleted_at IS NULL', [ctx.body.id]);
 
             if (adminRoles && adminRoles.length > 0) {
                 return {
@@ -26,11 +24,11 @@ export default Api('删除角色', {
             // 删除角色
             await befly.db.delData({
                 table: 'admin_role',
-                where: { id }
+                where: { id: ctx.body.id }
             });
 
             // 删除相关的角色-菜单关联
-            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE role_id = ?', [Date.now(), id]);
+            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE role_id = ?', [Date.now(), ctx.body.id]);
 
             return befly.code.success;
         } catch (error) {

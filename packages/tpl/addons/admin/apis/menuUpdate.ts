@@ -19,12 +19,18 @@ export default Api('更新菜单', {
     },
     handler: async (befly, ctx) => {
         try {
-            const { id, ...data } = ctx.body;
-
             await befly.db.updData({
                 table: 'admin_menu',
-                where: { id },
-                data
+                where: { id: ctx.body.id },
+                data: {
+                    name: ctx.body.name,
+                    path: ctx.body.path,
+                    icon: ctx.body.icon,
+                    sort: ctx.body.sort,
+                    pid: ctx.body.pid,
+                    type: ctx.body.type,
+                    status: ctx.body.status
+                }
             });
 
             return befly.code.success;

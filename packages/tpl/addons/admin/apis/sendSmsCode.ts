@@ -15,8 +15,6 @@ export default Api('发送短信验证码', {
     },
     required: ['phone'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const { phone } = ctx.body as SendSmsCodeRequest;
-
         // 生成6位数验证码
         const code = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -27,7 +25,7 @@ export default Api('发送短信验证码', {
         // 将验证码存储到 Redis 中,有效期5分钟
         // 如果项目没有 Redis,也可以存储到数据库中
         if (befly.redis) {
-            const key = `sms_code:${phone}`;
+            const key = `sms_code:${ctx.body.phone}`;
             await befly.redis.set(key, code, 'EX', 300); // 5分钟过期
         }
 

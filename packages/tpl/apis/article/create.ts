@@ -23,16 +23,22 @@ export default Api('创建文章', {
     },
     required: ['title', 'content'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const data = ctx.body as CreateArticleRequest;
         const userId = ctx.jwt?.userId || '1'; // 临时使用固定ID测试
 
         // 插入文章
         const articleId = await befly.db.insData({
             table: 'article',
             data: {
-                ...data,
+                title: ctx.body.title,
+                content: ctx.body.content,
+                summary: ctx.body.summary,
+                coverImage: ctx.body.coverImage,
+                author: ctx.body.author,
+                category: ctx.body.category,
+                tags: ctx.body.tags,
+                viewCount: ctx.body.viewCount || 0,
+                status: ctx.body.status,
                 authorId: parseInt(userId),
-                viewCount: 0,
                 published: 0
             }
         });

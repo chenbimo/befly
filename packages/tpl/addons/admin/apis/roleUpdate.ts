@@ -17,10 +17,8 @@ export default Api('更新角色', {
     },
     handler: async (befly, ctx) => {
         try {
-            const { id, code, ...data } = ctx.body;
-
             // 检查角色代码是否被其他角色占用
-            const existing = await befly.db.query('SELECT id FROM admin_role WHERE code = ? AND id != ? AND deleted_at IS NULL', [code, id]);
+            const existing = await befly.db.query('SELECT id FROM admin_role WHERE code = ? AND id != ? AND deleted_at IS NULL', [ctx.body.code, ctx.body.id]);
 
             if (existing && existing.length > 0) {
                 return {
@@ -31,8 +29,14 @@ export default Api('更新角色', {
 
             await befly.db.updData({
                 table: 'admin_role',
-                where: { id },
-                data: { ...data, code }
+                where: { id: ctx.body.id },
+                data: {
+                    name: ctx.body.name,
+                    code: ctx.body.code,
+                    description: ctx.body.description,
+                    sort: ctx.body.sort,
+                    status: ctx.body.status
+                }
             });
 
             return befly.code.success;

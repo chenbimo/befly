@@ -14,12 +14,10 @@ export default Api('删除文章', {
     },
     required: ['id'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const { id } = ctx.body;
-
         // 检查文章是否存在
         const article = await befly.db.getDetail({
             table: 'article',
-            where: { id }
+            where: { id: ctx.body.id }
         });
 
         if (!article) {
@@ -29,7 +27,7 @@ export default Api('删除文章', {
         // 软删除
         const result = await befly.db.delData({
             table: 'article',
-            where: { id }
+            where: { id: ctx.body.id }
         });
 
         return Yes('删除成功', { affected: result });

@@ -11,9 +11,7 @@ export default Api('获取角色菜单权限', {
     },
     handler: async (befly, ctx) => {
         try {
-            const { roleId } = ctx.body;
-
-            const menuIds = await befly.db.query('SELECT menu_id FROM admin_role_menu WHERE role_id = ? AND deleted_at IS NULL', [roleId]);
+            const menuIds = await befly.db.query('SELECT menu_id FROM admin_role_menu WHERE role_id = ? AND deleted_at IS NULL', [ctx.body.roleId]);
 
             const ids = menuIds ? menuIds.map((item: any) => item.menu_id) : [];
 

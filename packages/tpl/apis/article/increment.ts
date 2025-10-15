@@ -16,12 +16,10 @@ export default Api('文章字段自增', {
     },
     required: ['id', 'field'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const { id, field, value = 1 } = ctx.body;
-
         // 检查文章是否存在
         const article = await befly.db.getDetail({
             table: 'article',
-            where: { id }
+            where: { id: ctx.body.id }
         });
 
         if (!article) {
@@ -31,9 +29,9 @@ export default Api('文章字段自增', {
         // 执行自增
         const result = await befly.db.increment({
             table: 'article',
-            where: { id },
-            field,
-            value
+            where: { id: ctx.body.id },
+            field: ctx.body.field,
+            value: ctx.body.value || 1
         });
 
         return Yes('自增成功', { affected: result });

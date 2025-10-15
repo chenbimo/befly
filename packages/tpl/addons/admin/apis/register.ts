@@ -18,12 +18,10 @@ export default Api('管理员注册', {
     },
     required: ['name', 'email', 'password'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const { name, email, password } = ctx.body as RegisterRequest;
-
         // 检查邮箱是否已存在
         const existingAdmin = await befly.db.getDetail({
             table: 'admin_admin',
-            where: { email }
+            where: { email: ctx.body.email }
         });
 
         if (existingAdmin) {
@@ -31,14 +29,14 @@ export default Api('管理员注册', {
         }
 
         // 加密密码
-        const hashedPassword = await Crypto2.hashPassword(password);
+        const hashedPassword = await Crypto2.hashPassword(ctx.body.password);
 
         // 创建管理员
         const adminId = await befly.db.insData({
             table: 'admin_admin',
             data: {
-                name,
-                email,
+                name: ctx.body.name,
+                email: ctx.body.email,
                 password: hashedPassword,
                 role: 'user', // 默认为普通用户
                 status: 1
@@ -47,8 +45,8 @@ export default Api('管理员注册', {
 
         return Yes('注册成功', {
             id: adminId,
-            name,
-            email
+            name: ctx.body.name,
+            email: ctx.body.email
         });
     }
 });
