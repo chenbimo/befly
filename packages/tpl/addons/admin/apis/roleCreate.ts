@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 import adminRoleTable from '../tables/role.json';
 
 /**
@@ -23,10 +23,7 @@ export default Api('创建角色', {
             });
 
             if (existing) {
-                return {
-                    ...befly.code.fail,
-                    msg: '角色代码已存在'
-                };
+                return No('角色代码已存在');
             }
 
             const roleId = await befly.db.insData({
@@ -34,13 +31,11 @@ export default Api('创建角色', {
                 data: ctx.body
             });
 
-            return {
-                ...befly.code.success,
-                data: { id: roleId }
+            return Yes('操作成功', { id: roleId)
             };
         } catch (error) {
             befly.logger.error('创建角色失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

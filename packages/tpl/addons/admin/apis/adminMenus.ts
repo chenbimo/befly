@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 /**
  * 获取当前用户的菜单权限
@@ -16,51 +16,47 @@ export default Api('获取用户菜单', {
             const userId = ctx.user.id;
 
             // 1. 查询用户的所有角色
-            const userRoles = await befly.db.query(
-                `SELECT ar.role_id
-                 FROM admin_admin_role ar
-                 WHERE ar.admin_id = ?
-                 AND ar.deleted_at IS NULL`,
-                [userId]
-            );
+            const userRoles = await befly.db.getAll({
+                table: 'admin_admin_role',
+                fields: ['role_id'],
+                where: { admin_id: userId }
+            });
 
             if (!userRoles || userRoles.length === 0) {
-                return {
-                    ...befly.code.success,
-                    data: []
-                };
+                return Yes('获取菜单成功', []);
             }
 
             const roleIds = userRoles.map((r: any) => r.role_id);
 
             // 2. 查询角色对应的所有菜单ID
-            const roleMenus = await befly.db.query(
-                `SELECT DISTINCT rm.menu_id
-                 FROM admin_role_menu rm
-                 WHERE rm.role_id IN (?)
-                 AND rm.deleted_at IS NULL`,
-                [roleIds]
-            );
+            const roleMenus = await befly.db.getAll({
+                table: 'admin_role_menu',
+                fields: ['menu_id'],
+                where: {
+                    role_id: { $in: roleIds }
+                }
+            });
 
             if (!roleMenus || roleMenus.length === 0) {
-                return {
-                    ...befly.code.success,
-                    data: []
-                };
+                return Yes('获取菜单成功', []);
             }
 
-            const menuIds = roleMenus.map((m: any) => m.menu_id);
+            // 去重菜单ID
+            const menuIds = [...new Set(roleMenus.map((m: any) => m.menu_id))];
 
             // 3. 查询菜单详情（仅查询启用状态的菜单）
-            const menus = await befly.db.query(
-                `SELECT id, name, path, icon, sort, pid, type, status
-                 FROM admin_menu
-                 WHERE id IN (?)
-                 AND status = 1
-                 AND deleted_at IS NULL
-                 ORDER BY sort ASC, id ASC`,
-                [menuIds]
-            );
+            const menus = await befly.db.getAll({
+                table: 'admin_menu',
+                fields: ['id', 'name', 'path', 'icon', 'sort', 'pid', 'type', 'status'],
+                where: {
+                    id: { $in: menuIds },
+                    status: 1
+                },
+                orderBy: [
+                    { field: 'sort', direction: 'ASC' },
+                    { field: 'id', direction: 'ASC' }
+                ]
+            });
 
             // 4. 构建树形结构
             const buildTree = (items: any[], pid = 0) => {
@@ -87,13 +83,10 @@ export default Api('获取用户菜单', {
 
             const menuTree = buildTree(menus);
 
-            return {
-                ...befly.code.success,
-                data: menuTree
-            };
+            return Yes('获取菜单成功', menuTree);
         } catch (error) {
             befly.logger.error('获取用户菜单失败:', error);
-            return befly.code.fail;
+            return No('获取菜单失败');
         }
     }
 });

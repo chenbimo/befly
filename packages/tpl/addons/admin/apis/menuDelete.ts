@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 /**
  * 删除菜单
@@ -12,13 +12,14 @@ export default Api('删除菜单', {
     handler: async (befly, ctx) => {
         try {
             // 检查是否有子菜单
-            const children = await befly.db.query('SELECT id FROM admin_menu WHERE pid = ? AND deleted_at IS NULL', [ctx.body.id]);
+            const children = await befly.db.getAll({
+                table: 'admin_menu',
+                fields: ['id'],
+                where: { pid: ctx.body.id }
+            });
 
-            if (children && children.length > 0) {
-                return {
-                    ...befly.code.fail,
-                    msg: '该菜单下有子菜单，无法删除'
-                };
+            if (children.length > 0) {
+                return No('该菜单下有子菜单，无法删除');
             }
 
             // 删除菜单
@@ -27,13 +28,17 @@ export default Api('删除菜单', {
                 where: { id: ctx.body.id }
             });
 
-            // 删除相关的角色-菜单关联
-            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE menu_id = ?', [Date.now(), ctx.body.id]);
+            // 删除相关的角色-菜单关联（软删除）
+            await befly.db.updData({
+                table: 'admin_role_menu',
+                where: { menu_id: ctx.body.id },
+                data: { deleted_at: Date.now() }
+            });
 
-            return befly.code.success;
+            return Yes('操作成功');
         } catch (error) {
             befly.logger.error('删除菜单失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

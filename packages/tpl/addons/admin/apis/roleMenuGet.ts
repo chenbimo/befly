@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 /**
  * 获取角色的菜单权限
@@ -11,17 +11,18 @@ export default Api('获取角色菜单权限', {
     },
     handler: async (befly, ctx) => {
         try {
-            const menuIds = await befly.db.query('SELECT menu_id FROM admin_role_menu WHERE role_id = ? AND deleted_at IS NULL', [ctx.body.roleId]);
+            const menuRecords = await befly.db.getAll({
+                table: 'admin_role_menu',
+                fields: ['menu_id'],
+                where: { role_id: ctx.body.roleId }
+            });
 
-            const ids = menuIds ? menuIds.map((item: any) => item.menu_id) : [];
+            const ids = menuRecords.map((item: any) => item.menu_id);
 
-            return {
-                ...befly.code.success,
-                data: ids
-            };
+            return Yes('操作成功', ids);
         } catch (error) {
             befly.logger.error('获取角色菜单权限失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

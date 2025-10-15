@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 import adminMenuTable from '../tables/menu.json';
 
 /**
@@ -33,10 +33,10 @@ export default Api('更新菜单', {
                 }
             });
 
-            return befly.code.success;
+            return Yes('操作成功');
         } catch (error) {
             befly.logger.error('更新菜单失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

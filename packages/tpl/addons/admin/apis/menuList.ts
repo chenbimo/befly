@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 /**
  * 获取所有菜单列表
@@ -9,20 +9,19 @@ export default Api('获取菜单列表', {
     auth: true,
     handler: async (befly, ctx) => {
         try {
-            const menus = await befly.db.query(
-                `SELECT id, name, path, icon, sort, pid, type, status, created_at, updated_at
-                 FROM admin_menu
-                 WHERE deleted_at IS NULL
-                 ORDER BY sort ASC, id ASC`
-            );
+            const menus = await befly.db.getAll({
+                table: 'admin_menu',
+                fields: ['id', 'name', 'path', 'icon', 'sort', 'pid', 'type', 'status', 'created_at', 'updated_at'],
+                orderBy: [
+                    { field: 'sort', direction: 'ASC' },
+                    { field: 'id', direction: 'ASC' }
+                ]
+            });
 
-            return {
-                ...befly.code.success,
-                data: menus
-            };
+            return Yes('操作成功', menus);
         } catch (error) {
             befly.logger.error('获取菜单列表失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

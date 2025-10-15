@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 import adminRoleTable from '../tables/role.json';
 
 /**
@@ -18,13 +18,17 @@ export default Api('更新角色', {
     handler: async (befly, ctx) => {
         try {
             // 检查角色代码是否被其他角色占用
-            const existing = await befly.db.query('SELECT id FROM admin_role WHERE code = ? AND id != ? AND deleted_at IS NULL', [ctx.body.code, ctx.body.id]);
+            const existing = await befly.db.getAll({
+                table: 'admin_role',
+                fields: ['id'],
+                where: {
+                    code: ctx.body.code,
+                    id: { $ne: ctx.body.id }
+                }
+            });
 
-            if (existing && existing.length > 0) {
-                return {
-                    ...befly.code.fail,
-                    msg: '角色代码已被其他角色使用'
-                };
+            if (existing.length > 0) {
+                return No('角色代码已被其他角色使用');
             }
 
             await befly.db.updData({
@@ -39,10 +43,10 @@ export default Api('更新角色', {
                 }
             });
 
-            return befly.code.success;
+            return Yes('操作成功');
         } catch (error) {
             befly.logger.error('更新角色失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 /**
  * 保存用户的角色
@@ -20,8 +20,12 @@ export default Api('保存用户角色', {
                 roleIdArray = [];
             }
 
-            // 先删除该用户的所有角色
-            await befly.db.query('UPDATE admin_admin_role SET deleted_at = ? WHERE admin_id = ?', [Date.now(), ctx.body.adminId]);
+            // 先删除该用户的所有角色（软删除）
+            await befly.db.updData({
+                table: 'admin_admin_role',
+                where: { admin_id: ctx.body.adminId },
+                data: { deleted_at: Date.now() }
+            });
 
             // 批量插入新的角色
             if (roleIdArray.length > 0) {
@@ -36,10 +40,10 @@ export default Api('保存用户角色', {
                 }
             }
 
-            return befly.code.success;
+            return Yes('操作成功');
         } catch (error) {
             befly.logger.error('保存用户角色失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

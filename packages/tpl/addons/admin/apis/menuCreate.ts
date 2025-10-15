@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 import adminMenuTable from '../tables/menu.json';
 
 /**
@@ -23,13 +23,11 @@ export default Api('创建菜单', {
                 data: ctx.body
             });
 
-            return {
-                ...befly.code.success,
-                data: { id: menuId }
+            return Yes('操作成功', { id: menuId)
             };
         } catch (error) {
             befly.logger.error('创建菜单失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 /**
  * 获取用户的角色
@@ -11,17 +11,18 @@ export default Api('获取用户角色', {
     },
     handler: async (befly, ctx) => {
         try {
-            const roleIds = await befly.db.query('SELECT role_id FROM admin_admin_role WHERE admin_id = ? AND deleted_at IS NULL', [ctx.body.adminId]);
+            const roleRecords = await befly.db.getAll({
+                table: 'admin_admin_role',
+                fields: ['role_id'],
+                where: { admin_id: ctx.body.adminId }
+            });
 
-            const ids = roleIds ? roleIds.map((item: any) => item.role_id) : [];
+            const ids = roleRecords.map((item: any) => item.role_id);
 
-            return {
-                ...befly.code.success,
-                data: ids
-            };
+            return Yes('操作成功', ids);
         } catch (error) {
             befly.logger.error('获取用户角色失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });

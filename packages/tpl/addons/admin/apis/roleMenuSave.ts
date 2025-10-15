@@ -1,4 +1,4 @@
-import { Api } from 'befly';
+import { Api, Yes, No } from 'befly';
 
 /**
  * 保存角色的菜单权限
@@ -20,8 +20,12 @@ export default Api('保存角色菜单权限', {
                 menuIdArray = [];
             }
 
-            // 先删除该角色的所有菜单权限
-            await befly.db.query('UPDATE admin_role_menu SET deleted_at = ? WHERE role_id = ?', [Date.now(), ctx.body.roleId]);
+            // 先删除该角色的所有菜单权限（软删除）
+            await befly.db.updData({
+                table: 'admin_role_menu',
+                where: { role_id: ctx.body.roleId },
+                data: { deleted_at: Date.now() }
+            });
 
             // 批量插入新的权限
             if (menuIdArray.length > 0) {
@@ -36,10 +40,10 @@ export default Api('保存角色菜单权限', {
                 }
             }
 
-            return befly.code.success;
+            return Yes('操作成功');
         } catch (error) {
             befly.logger.error('保存角色菜单权限失败:', error);
-            return befly.code.fail;
+            return No('操作失败');
         }
     }
 });
