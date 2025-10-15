@@ -62,7 +62,6 @@
 
 <script setup lang="ts">
 import { DashboardIcon, UserIcon, FileIcon, SettingIcon, AppIcon, ViewListIcon, ViewModuleIcon, MenuFoldIcon, MenuUnfoldIcon, HomeIcon } from 'tdesign-icons-vue-next';
-import { MessagePlugin } from 'tdesign-vue-next';
 import { usePermissionStore } from '@/stores/permission';
 
 const router = useRouter();

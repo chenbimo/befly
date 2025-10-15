@@ -30,8 +30,6 @@
 </template>
 
 <script setup lang="ts">
-import { MessagePlugin } from 'tdesign-vue-next';
-
 // 响应式数据
 const $Data = $ref({
     loading: false,
@@ -55,8 +53,8 @@ const $Method = {
     async loadUserList() {
         $Data.loading = true;
         try {
-            const res = await window.$api.post('/admin/list', {});
-            if (res.code === 200 && res.data) {
+            const res = await $Http.post('/admin/list', {});
+            if (res.code === 0 && res.data) {
                 $Data.userList = res.data;
             }
         } catch (error) {
@@ -70,8 +68,8 @@ const $Method = {
     // 加载角色列表
     async loadRoleList() {
         try {
-            const res = await window.$api.post('/admin/roleList', {});
-            if (res.code === 200 && res.data) {
+            const res = await $Http.post('/admin/roleList', {});
+            if (res.code === 0 && res.data) {
                 $Data.roleOptions = res.data
                     .filter((role: any) => role.status === 1)
                     .map((role: any) => ({
@@ -95,8 +93,8 @@ const $Method = {
 
         // 加载该用户已有的角色
         try {
-            const res = await window.$api.post('/admin/adminRoleGet', { adminId: row.id });
-            if (res.code === 200 && res.data) {
+            const res = await $Http.post('/admin/adminRoleGet', { adminId: row.id });
+            if (res.code === 0 && res.data) {
                 $Data.checkedRoleIds = res.data;
             }
         } catch (error) {
@@ -108,12 +106,12 @@ const $Method = {
     // 提交角色分配
     async handleRoleSubmit() {
         try {
-            const res = await window.$api.post('/admin/adminRoleSave', {
+            const res = await $Http.post('/admin/adminRoleSave', {
                 adminId: $Data.currentUser.id,
                 roleIds: JSON.stringify($Data.checkedRoleIds)
             });
 
-            if (res.code === 200) {
+            if (res.code === 0) {
                 MessagePlugin.success('角色分配成功');
                 $Data.roleVisible = false;
                 return true;

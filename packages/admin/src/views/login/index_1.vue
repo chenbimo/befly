@@ -125,7 +125,6 @@
 
 <script setup lang="ts">
 import { UserIcon, LockOnIcon, MailIcon, MobileIcon, SecuredIcon } from 'tdesign-icons-vue-next';
-import { loginApi, registerApi, sendSmsCodeApi } from '@/api/auth';
 
 const router = useRouter();
 
@@ -253,7 +252,7 @@ const $Method = {
         }
 
         try {
-            await sendSmsCodeApi($Data.loginForm.phone.phone);
+            await $Http.post('/admin/sendSmsCode', { phone: $Data.loginForm.phone.phone });
 
             MessagePlugin.success('验证码已发送');
             $Data.codeCountdown = 60;
@@ -287,7 +286,7 @@ const $Method = {
         $Data.loginLoading = true;
 
         try {
-            const res = await loginApi(formData);
+            const res = await $Http.post('/admin/login', formData);
             localStorage.setItem('token', res.data.token);
 
             // 如果返回用户信息,也可以存储
@@ -312,7 +311,7 @@ const $Method = {
         $Data.registerLoading = true;
 
         try {
-            await registerApi($Data.registerForm);
+            await $Http.post('/admin/register', $Data.registerForm);
             MessagePlugin.success('注册成功，请登录');
             $Data.isSignUp = false;
 

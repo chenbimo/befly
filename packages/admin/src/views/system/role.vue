@@ -8,12 +8,7 @@
                 </t-button>
             </template>
 
-            <t-table
-                :data="$Data.roleList"
-                :columns="$Data.columns"
-                row-key="id"
-                :loading="$Data.loading"
-            >
+            <t-table :data="$Data.roleList" :columns="$Data.columns" row-key="id" :loading="$Data.loading">
                 <template #status="{ row }">
                     <t-tag v-if="row.status === 1" theme="success">启用</t-tag>
                     <t-tag v-else theme="danger">禁用</t-tag>
@@ -32,18 +27,8 @@
         </t-card>
 
         <!-- 添加/编辑对话框 -->
-        <t-dialog
-            v-model:visible="$Data.dialogVisible"
-            :header="$Data.isEdit ? '编辑角色' : '添加角色'"
-            width="600px"
-            :on-confirm="$Method.handleSubmit"
-        >
-            <t-form
-                :ref="(el: any) => ($Form.roleForm = el)"
-                :data="$Data.formData"
-                :rules="$Data.formRules"
-                label-width="80px"
-            >
+        <t-dialog v-model:visible="$Data.dialogVisible" :header="$Data.isEdit ? '编辑角色' : '添加角色'" width="600px" :on-confirm="$Method.handleSubmit">
+            <t-form :ref="(el: any) => ($Form.roleForm = el)" :data="$Data.formData" :rules="$Data.formRules" label-width="80px">
                 <t-form-item label="角色名称" name="name">
                     <t-input v-model="$Data.formData.name" placeholder="请输入角色名称" />
                 </t-form-item>
@@ -70,34 +55,20 @@
         </t-dialog>
 
         <!-- 权限分配对话框 -->
-        <t-dialog
-            v-model:visible="$Data.permissionVisible"
-            header="分配菜单权限"
-            width="600px"
-            :on-confirm="$Method.handlePermissionSubmit"
-        >
+        <t-dialog v-model:visible="$Data.permissionVisible" header="分配菜单权限" width="600px" :on-confirm="$Method.handlePermissionSubmit">
             <div class="permission-dialog">
                 <div class="role-info">
                     <t-tag theme="primary">{{ $Data.currentRole.name }}</t-tag>
                     <span class="role-code">{{ $Data.currentRole.code }}</span>
                 </div>
                 <t-divider />
-                <t-tree
-                    :ref="(el: any) => ($Form.menuTree = el)"
-                    :data="$Data.menuTreeData"
-                    :keys="{ value: 'id', label: 'name', children: 'children' }"
-                    checkable
-                    expand-all
-                    v-model:checked="$Data.checkedMenuIds"
-                    :loading="$Data.menuLoading"
-                />
+                <t-tree :ref="(el: any) => ($Form.menuTree = el)" :data="$Data.menuTreeData" :keys="{ value: 'id', label: 'name', children: 'children' }" checkable expand-all v-model:checked="$Data.checkedMenuIds" :loading="$Data.menuLoading" />
             </div>
         </t-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
-import { MessagePlugin } from 'tdesign-vue-next';
 import { AddIcon } from 'tdesign-icons-vue-next';
 
 // 响应式表单引用
@@ -148,8 +119,8 @@ const $Method = {
     async loadRoleList() {
         $Data.loading = true;
         try {
-            const res = await window.$api.post('/admin/roleList', {});
-            if (res.code === 200 && res.data) {
+            const res = await $Http.post('/admin/roleList', {});
+            if (res.code === 0 && res.data) {
                 $Data.roleList = res.data;
             }
         } catch (error) {
@@ -164,8 +135,8 @@ const $Method = {
     async loadMenuTree() {
         $Data.menuLoading = true;
         try {
-            const res = await window.$api.post('/admin/menuList', {});
-            if (res.code === 200 && res.data) {
+            const res = await $Http.post('/admin/menuList', {});
+            if (res.code === 0 && res.data) {
                 $Data.menuTreeData = $Method.buildMenuTree(res.data);
             }
         } catch (error) {
@@ -221,9 +192,9 @@ const $Method = {
 
         try {
             const apiUrl = $Data.isEdit ? '/admin/roleUpdate' : '/admin/roleCreate';
-            const res = await window.$api.post(apiUrl, $Data.formData);
-            
-            if (res.code === 200) {
+            const res = await $Http.post(apiUrl, $Data.formData);
+
+            if (res.code === 0) {
                 MessagePlugin.success($Data.isEdit ? '更新成功' : '创建成功');
                 $Data.dialogVisible = false;
                 await $Method.loadRoleList();
@@ -242,8 +213,8 @@ const $Method = {
     // 删除角色
     async handleDelete(id: number) {
         try {
-            const res = await window.$api.post('/admin/roleDelete', { id });
-            if (res.code === 200) {
+            const res = await $Http.post('/admin/roleDelete', { id });
+            if (res.code === 0) {
                 MessagePlugin.success('删除成功');
                 await $Method.loadRoleList();
             } else {
@@ -259,14 +230,14 @@ const $Method = {
     async handlePermission(row: any) {
         $Data.currentRole = row;
         $Data.permissionVisible = true;
-        
+
         // 加载菜单树
         await $Method.loadMenuTree();
-        
+
         // 加载该角色已有的权限
         try {
-            const res = await window.$api.post('/admin/roleMenuGet', { roleId: row.id });
-            if (res.code === 200 && res.data) {
+            const res = await $Http.post('/admin/roleMenuGet', { roleId: row.id });
+            if (res.code === 0 && res.data) {
                 $Data.checkedMenuIds = res.data;
             }
         } catch (error) {
@@ -278,12 +249,12 @@ const $Method = {
     // 提交权限分配
     async handlePermissionSubmit() {
         try {
-            const res = await window.$api.post('/admin/roleMenuSave', {
+            const res = await $Http.post('/admin/roleMenuSave', {
                 roleId: $Data.currentRole.id,
                 menuIds: JSON.stringify($Data.checkedMenuIds)
             });
-            
-            if (res.code === 200) {
+
+            if (res.code === 0) {
                 MessagePlugin.success('权限保存成功');
                 $Data.permissionVisible = false;
                 return true;

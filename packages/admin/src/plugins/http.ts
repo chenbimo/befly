@@ -76,8 +76,8 @@ request.interceptors.response.use(
     }
 );
 
-// 封装请求方法
-export const http = {
+// 封装请求方法，导出为 $Http
+export const $Http = {
     get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
         return request.get(url, config);
     },
@@ -94,5 +94,3 @@ export const http = {
         return request.delete(url, config);
     }
 };
-
-export default request;

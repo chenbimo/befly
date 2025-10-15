@@ -84,7 +84,6 @@
 </template>
 
 <script setup lang="ts">
-import { MessagePlugin } from 'tdesign-vue-next';
 import { UserIcon, DashboardIcon, SettingIcon, ViewListIcon, FolderOpenIcon, AppIcon, RootListIcon, AddIcon } from 'tdesign-icons-vue-next';
 import { markRaw } from 'vue';
 
@@ -157,8 +156,8 @@ const $Method = {
     async loadMenuList() {
         $Data.loading = true;
         try {
-            const res = await window.$api.post('/admin/menuList', {});
-            if (res.code === 200 && res.data) {
+            const res = await $Http.post('/admin/menuList', {});
+            if (res.code === 0 && res.data) {
                 // 构建树形结构
                 $Data.menuList = $Method.buildMenuTree(res.data);
                 // 构建树形选择器数据（添加"无"选项）
@@ -217,9 +216,9 @@ const $Method = {
 
         try {
             const apiUrl = $Data.isEdit ? '/admin/menuUpdate' : '/admin/menuCreate';
-            const res = await window.$api.post(apiUrl, $Data.formData);
+            const res = await $Http.post(apiUrl, $Data.formData);
 
-            if (res.code === 200) {
+            if (res.code === 0) {
                 MessagePlugin.success($Data.isEdit ? '更新成功' : '创建成功');
                 $Data.dialogVisible = false;
                 await $Method.loadMenuList();
@@ -238,8 +237,8 @@ const $Method = {
     // 删除菜单
     async handleDelete(id: number) {
         try {
-            const res = await window.$api.post('/admin/menuDelete', { id });
-            if (res.code === 200) {
+            const res = await $Http.post('/admin/menuDelete', { id });
+            if (res.code === 0) {
                 MessagePlugin.success('删除成功');
                 await $Method.loadMenuList();
             } else {

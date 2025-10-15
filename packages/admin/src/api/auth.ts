@@ -1,5 +1,3 @@
-import { http } from '@/utils/request';
-
 // 登录表单类型
 export interface LoginForm {
     email?: string;
@@ -30,33 +28,33 @@ export interface LoginResponse {
  * 用户登录
  */
 export const loginApi = (data: LoginForm) => {
-    return http.post<LoginResponse>('/admin/login', data);
+    return $Http.post<LoginResponse>('/admin/login', data);
 };
 
 /**
  * 用户注册
  */
 export const registerApi = (data: RegisterForm) => {
-    return http.post('/admin/register', data);
+    return $Http.post('/admin/register', data);
 };
 
 /**
  * 发送短信验证码
  */
 export const sendSmsCodeApi = (phone: string) => {
-    return http.post('/admin/sendSmsCode', { phone });
+    return $Http.post('/admin/sendSmsCode', { phone });
 };
 
 /**
  * 获取用户信息
  */
 export function getUserInfo() {
-    return http.get('/admin/adminInfo');
+    return $Http.get('/admin/adminInfo');
 }
 
 /**
  * 退出登录
  */
 export const logoutApi = () => {
-    return http.post('/admin/logout');
+    return $Http.post('/admin/logout');
 };

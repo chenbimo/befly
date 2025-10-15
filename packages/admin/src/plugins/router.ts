@@ -12,7 +12,7 @@ export const router = createRouter({
 });
 
 // 公开路由列表（无需登录和权限）
-const publicRoutes = ['/', '/login', '/register', '/404', '/403'];
+const publicRoutes = ['/login', '/register', '/404', '/403'];
 
 // 路由守卫 - 权限验证
 router.beforeEach(async (to, from, next) => {
