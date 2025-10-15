@@ -7,7 +7,7 @@
         "packages/*"
     ],
     "scripts": {
-        "dev": "bun --cwd packages/tpl run dev",
+        "dev:tpl": "bun --cwd packages/tpl run dev",
         "dev:admin": "bun --cwd packages/admin run dev",
         "dev:docs": "bun --cwd packages/docs run dev",
         "test": "bun --cwd packages/tpl test",
@@ -19,8 +19,7 @@
         "build:docs": "bun --cwd packages/docs run build",
         "build:admin": "bun --cwd packages/admin run build",
         "version": "lerna version --no-push --no-git-tag-version",
-        "publish": "lerna publish from-package --no-git-tag-version",
-        "publish:ci": "lerna publish from-package --no-git-tag-version --yes"
+        "publish": "lerna publish from-package --no-git-tag-version --yes"
     },
     "devDependencies": {
         "@lerna-lite/cli": "4.9.0",
