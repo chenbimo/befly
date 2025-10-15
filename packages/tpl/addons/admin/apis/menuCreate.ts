@@ -23,8 +23,7 @@ export default Api('创建菜单', {
                 data: ctx.body
             });
 
-            return Yes('操作成功', { id: menuId)
-            };
+            return Yes('操作成功', { id: menuId });
         } catch (error) {
             befly.logger.error('创建菜单失败:', error);
             return No('操作失败');

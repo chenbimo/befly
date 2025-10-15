@@ -31,8 +31,7 @@ export default Api('创建角色', {
                 data: ctx.body
             });
 
-            return Yes('操作成功', { id: roleId)
-            };
+            return Yes('操作成功', { id: roleId });
         } catch (error) {
             befly.logger.error('创建角色失败:', error);
             return No('操作失败');
