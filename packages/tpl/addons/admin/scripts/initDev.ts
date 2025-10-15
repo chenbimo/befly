@@ -1,8 +1,8 @@
-import { SqlHelper } from 'befly/utils/sqlHelper';
-import { Crypto2 } from 'befly/utils/crypto';
-import { Env } from 'befly/config/env';
-import { createSqlClient } from 'befly/utils/dbHelper';
-import { RedisHelper } from 'befly/utils/redisHelper';
+import { SqlHelper } from 'befly';
+import { Crypto2 } from 'befly';
+import { Env } from 'befly';
+import { createSqlClient } from 'befly';
+import { RedisHelper } from 'befly';
 
 /**
  * 初始化开发者账号和权限

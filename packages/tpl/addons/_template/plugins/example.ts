@@ -4,7 +4,7 @@
  */
 
 import type { BeflyPlugin, BeflyContext } from 'befly/types';
-import { Logger } from 'befly/utils/logger';
+import { Logger } from 'befly';
 
 export default {
     name: 'example', // 实际插件名会是：{addonName}.example

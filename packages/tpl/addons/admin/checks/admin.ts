@@ -3,7 +3,7 @@
  * 验证组件配置和依赖
  */
 
-import { Logger } from 'befly/utils/logger';
+import { Logger } from 'befly';
 
 export default async function (): Promise<boolean> {
     try {

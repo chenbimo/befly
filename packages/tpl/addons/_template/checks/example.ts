@@ -3,7 +3,7 @@
  * 在框架启动前执行，用于验证配置、依赖等
  */
 
-import { Logger } from 'befly/utils/logger';
+import { Logger } from 'befly';
 
 export default async function (): Promise<boolean> {
     try {

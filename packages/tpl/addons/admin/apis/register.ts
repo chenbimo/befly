@@ -5,7 +5,7 @@
 import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 import type { RegisterRequest } from '../types';
-import { Crypto2 } from 'befly/utils/crypto';
+import { Crypto2 } from 'befly';
 import adminTable from '../tables/admin.json';
 
 export default Api('管理员注册', {

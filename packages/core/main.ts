@@ -10,6 +10,9 @@ import { Logger } from './utils/logger.js';
 import { Jwt } from './utils/jwt.js';
 import { Validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
+import { SqlHelper } from './utils/sqlHelper.js';
+import { createSqlClient } from './utils/dbHelper.js';
+import { RedisHelper } from './utils/redisHelper.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 
 import type { Server } from 'bun';
@@ -40,6 +43,5 @@ export class Befly {
     }
 }
 
-// 核心类已通过 export class 导出
-export { Env, Api, Jwt, Validator, Crypto2, Logger, Yes, No };
-export type { ApiOptions, FieldRules } from './types/api.js';
+// 核心类和工具导出（只导出运行时代码，不导出类型）
+export { Env, Api, Jwt, Validator, Crypto2, Logger, Yes, No, SqlHelper, createSqlClient, RedisHelper };

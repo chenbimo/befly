@@ -6,8 +6,8 @@ import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
 import type { LoginRequest, LoginResponse } from '../../../types/api';
 import type { User } from '../../../types/models';
-import { Crypto2 } from 'befly/utils/crypto';
-import { Jwt } from 'befly/utils/jwt';
+import { Crypto2 } from 'befly';
+import { Jwt } from 'befly';
 
 export default Api('用户登录', {
     method: 'POST',

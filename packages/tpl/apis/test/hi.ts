@@ -1,5 +1,5 @@
 import { Api, Yes, No } from 'befly';
-import type { BeflyContext, BeflyInstance } from 'befly';
+import type { BeflyContext, BeflyInstance } from 'befly/types';
 
 export default Api('测试接口', {
     method: 'POST',

@@ -16,24 +16,8 @@
             "default": "./main.ts"
         },
         "./types": {
-            "types": "./types/index.ts",
-            "default": "./types/index.ts"
-        },
-        "./types/*": {
-            "types": "./types/*.ts",
-            "default": "./types/*.ts"
-        },
-        "./utils": {
-            "types": "./utils/index.ts",
-            "default": "./utils/index.ts"
-        },
-        "./utils/*": {
-            "types": "./utils/*.ts",
-            "default": "./utils/*.ts"
-        },
-        "./config": {
-            "types": "./config/env.ts",
-            "default": "./config/env.ts"
+            "types": "./types/index.d.ts",
+            "default": "./types/index.d.ts"
         }
     },
     "bin": {
