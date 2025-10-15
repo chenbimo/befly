@@ -28,8 +28,6 @@
 </template>
 
 <script setup lang="ts">
-import { ViewListIcon, UserIcon } from 'tdesign-icons-vue-next';
-
 const router = useRouter();
 
 const $Method = {

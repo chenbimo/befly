@@ -170,8 +170,6 @@
 </template>
 
 <script setup lang="ts">
-import { UserIcon, ChartLineIcon, ShopIcon, MoneyIcon, UserAddIcon, EditIcon, ChartBarIcon, SettingIcon } from 'tdesign-icons-vue-next';
-
 // 响应式数据
 const $Data = $ref({
     // 统计数据

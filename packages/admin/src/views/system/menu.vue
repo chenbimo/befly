@@ -84,7 +84,6 @@
 </template>
 
 <script setup lang="ts">
-import { UserIcon, DashboardIcon, SettingIcon, ViewListIcon, FolderOpenIcon, AppIcon, RootListIcon, AddIcon } from 'tdesign-icons-vue-next';
 import { markRaw } from 'vue';
 
 // 图标映射

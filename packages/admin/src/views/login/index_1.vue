@@ -124,8 +124,6 @@
 </template>
 
 <script setup lang="ts">
-import { UserIcon, LockOnIcon, MailIcon, MobileIcon, SecuredIcon } from 'tdesign-icons-vue-next';
-
 const router = useRouter();
 
 // 表单引用定义

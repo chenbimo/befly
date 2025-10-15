@@ -11,9 +11,6 @@ export const router = createRouter({
     routes: autoRoutes
 });
 
-// 公开路由列表（无需登录和权限）
-const publicRoutes = ['/login', '/register', '/404', '/403'];
-
 // 路由守卫 - 权限验证
 router.beforeEach(async (to, from, next) => {
     // 设置页面标题
@@ -25,16 +22,19 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const token = localStorage.getItem('token');
-    const isPublicRoute = publicRoutes.includes(to.path);
     const permissionStore = usePermissionStore();
 
-    // 1. 未登录且访问非公开路由 → 跳转登录
-    if (!token && !isPublicRoute) {
+    // 判断是否为公开路由：使用 layout0 的需要登录，其他 layout 为公开路由
+    // 通过匹配的路由记录判断（父路由名称包含 'layout0' 表示需要登录）
+    const isProtectedRoute = to.matched.some((record) => record.name === 'layout0');
+
+    // 1. 未登录且访问受保护路由 → 跳转登录
+    if (!token && isProtectedRoute) {
         return next('/login');
     }
 
     // 2. 已登录但未加载菜单权限 → 加载权限
-    if (token && !permissionStore.menusLoaded && !isPublicRoute) {
+    if (token && !permissionStore.menusLoaded && isProtectedRoute) {
         const success = await permissionStore.fetchUserMenus();
         if (!success) {
             // 加载权限失败，清除 token 并跳转登录
@@ -45,7 +45,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // 3. 已登录且已加载权限 → 检查路由权限
-    if (token && !isPublicRoute) {
+    if (token && isProtectedRoute) {
         const hasPermission = permissionStore.hasRoutePermission(to.path);
         if (!hasPermission) {
             MessagePlugin.warning('您没有访问该页面的权限');

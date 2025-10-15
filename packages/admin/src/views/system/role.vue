@@ -69,8 +69,6 @@
 </template>
 
 <script setup lang="ts">
-import { AddIcon } from 'tdesign-icons-vue-next';
-
 // 响应式表单引用
 const $Form = $ref({
     roleForm: null as any,

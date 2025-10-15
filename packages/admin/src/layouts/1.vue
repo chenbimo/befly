@@ -5,8 +5,6 @@
 </template>
 
 <script setup lang="ts">
-import { DashboardIcon, UserIcon, FileIcon, SettingIcon, AppIcon, ViewListIcon, ViewModuleIcon } from 'tdesign-icons-vue-next';
-
 const router = useRouter();
 const route = useRoute();
 
