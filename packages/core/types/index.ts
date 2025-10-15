@@ -288,8 +288,6 @@ export interface DeleteOptions {
     table: string;
     /** WHERE 条件 */
     where: WhereConditions;
-    /** 是否物理删除，默认 false（软删除） */
-    hard?: boolean;
 }
 
 /**

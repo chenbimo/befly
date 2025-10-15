@@ -29,10 +29,9 @@ export default Api('删除菜单', {
             });
 
             // 删除相关的角色-菜单关联（软删除）
-            await befly.db.updData({
+            await befly.db.delData({
                 table: 'admin_role_menu',
-                where: { menu_id: ctx.body.id },
-                data: { deleted_at: Date.now() }
+                where: { menu_id: ctx.body.id }
             });
 
             return Yes('操作成功');

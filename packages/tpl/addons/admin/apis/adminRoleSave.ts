@@ -21,10 +21,9 @@ export default Api('保存用户角色', {
             }
 
             // 先删除该用户的所有角色（软删除）
-            await befly.db.updData({
+            await befly.db.delData({
                 table: 'admin_admin_role',
-                where: { admin_id: ctx.body.adminId },
-                data: { deleted_at: Date.now() }
+                where: { admin_id: ctx.body.adminId }
             });
 
             // 批量插入新的角色

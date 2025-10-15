@@ -57,7 +57,7 @@ export class SqlHelper {
     }
 
     /**
-     * 添加默认 state 过滤（排除已删除数据）
+     * 添加默认 state 过滤（只返回正常数据）
      */
     private addDefaultStateFilter(where: WhereConditions | undefined, includeDeleted: boolean = false, customState?: WhereConditions): WhereConditions {
         if (includeDeleted) {
@@ -75,8 +75,9 @@ export class SqlHelper {
             return where;
         }
 
-        // 默认排除已删除（state = 0）
-        const stateFilter: WhereConditions = { state: { $gt: 0 } };
+        // 默认只查询正常数据（state = 1）
+        // state = 0: 已删除, state = 1: 正常, state = 2: 禁用
+        const stateFilter: WhereConditions = { state: 1 };
         return where ? { ...where, ...stateFilter } : stateFilter;
     }
 
@@ -290,7 +291,8 @@ export class SqlHelper {
         const { table, data, where, includeDeleted = false } = options;
 
         // 移除系统字段（防止用户尝试修改）
-        const { id, created_at, updated_at, deleted_at, state, ...userData } = data;
+        // 注意：state 允许用户修改（用于设置禁用状态 state=2）
+        const { id, created_at, updated_at, deleted_at, ...userData } = data;
 
         // 强制更新时间戳（不可被用户覆盖）
         const processed: Record<string, any> = {
@@ -309,34 +311,65 @@ export class SqlHelper {
     }
 
     /**
-     * 删除数据（软删除会记录删除时间）
+     * 软删除数据（设置 state=0 并记录删除时间）
      */
-    async delData(options: DeleteOptions): Promise<number> {
-        const { table, where, hard = false } = options;
+    async delData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
+        const { table, where } = options;
 
-        if (hard) {
-            // 物理删除
-            const builder = new SqlBuilder().where(where);
-            const { sql, params } = builder.toDeleteSql(table);
+        // 软删除（设置 state=0 并记录删除时间）
+        const now = Date.now();
+        const data: Record<string, any> = {
+            state: 0,
+            updated_at: now,
+            deleted_at: now // 记录删除时间
+        };
 
-            const result = await this.executeWithConn(sql, params);
-            return result?.changes || 0;
-        } else {
-            // 软删除（设置 state=0 并记录删除时间）
-            const now = Date.now();
-            const data: Record<string, any> = {
-                state: 0,
-                updated_at: now,
-                deleted_at: now // 记录删除时间
-            };
+        return await this.updData({
+            table,
+            data,
+            where,
+            includeDeleted: true // 软删除时允许操作已删除数据
+        });
+    }
 
-            return await this.updData({
-                table,
-                data,
-                where,
-                includeDeleted: true // 软删除时允许操作已删除数据
-            });
-        }
+    /**
+     * 硬删除数据（物理删除，不可恢复）
+     */
+    async delForce(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
+        const { table, where } = options;
+
+        // 物理删除
+        const builder = new SqlBuilder().where(where);
+        const { sql, params } = builder.toDeleteSql(table);
+
+        const result = await this.executeWithConn(sql, params);
+        return result?.changes || 0;
+    }
+
+    /**
+     * 禁用数据（设置 state=2）
+     */
+    async updDisable(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
+        const { table, where } = options;
+
+        return await this.updData({
+            table,
+            data: { state: 2 },
+            where
+        });
+    }
+
+    /**
+     * 启用数据（设置 state=1）
+     */
+    async updEnable(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
+        const { table, where } = options;
+
+        return await this.updData({
+            table,
+            data: { state: 1 },
+            where
+        });
     }
 
     /**

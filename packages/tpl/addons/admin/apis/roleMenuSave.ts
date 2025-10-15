@@ -21,10 +21,9 @@ export default Api('保存角色菜单权限', {
             }
 
             // 先删除该角色的所有菜单权限（软删除）
-            await befly.db.updData({
+            await befly.db.delData({
                 table: 'admin_role_menu',
-                where: { role_id: ctx.body.roleId },
-                data: { deleted_at: Date.now() }
+                where: { role_id: ctx.body.roleId }
             });
 
             // 批量插入新的权限
