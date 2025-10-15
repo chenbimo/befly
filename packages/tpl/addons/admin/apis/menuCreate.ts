@@ -1,5 +1,5 @@
 import { Api } from 'befly';
-import adminMenuTable from '../tables/adminMenu.json';
+import adminMenuTable from '../tables/menu.json';
 
 /**
  * 创建菜单

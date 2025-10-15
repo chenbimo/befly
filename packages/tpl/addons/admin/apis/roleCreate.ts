@@ -1,5 +1,5 @@
 import { Api } from 'befly';
-import adminRoleTable from '../tables/adminRole.json';
+import adminRoleTable from '../tables/role.json';
 
 /**
  * 创建角色

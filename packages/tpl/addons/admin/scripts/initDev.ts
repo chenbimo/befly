@@ -2,6 +2,7 @@ import { SqlHelper } from 'befly/utils/sqlHelper';
 import { Crypto2 } from 'befly/utils/crypto';
 import { Env } from 'befly/config/env';
 import { createSqlClient } from 'befly/utils/dbHelper';
+import { RedisHelper } from 'befly/utils/redisHelper';
 
 /**
  * 初始化开发者账号和权限
@@ -12,9 +13,10 @@ import { createSqlClient } from 'befly/utils/dbHelper';
  * 4. 为 dev 角色分配所有菜单权限
  */
 
-// 创建数据库客户端
+// 创建数据库和Redis客户端
 const SQL = await createSqlClient();
-const mockBefly: any = { sql: SQL };
+const redis = RedisHelper;
+const mockBefly: any = { sql: SQL, redis };
 const db = new SqlHelper(mockBefly, SQL);
 
 try {
@@ -59,8 +61,8 @@ try {
             await db.insData({
                 table: 'admin_role_menu',
                 data: {
-                    roleId: devRoleId,
-                    menuId: menu.id
+                    role_id: devRoleId,
+                    menu_id: menu.id
                 }
             });
         }
@@ -98,10 +100,10 @@ try {
             table: 'admin_admin',
             data: {
                 name: 'dev',
-                nickname: '开发者',
                 password: encryptedPassword,
                 email: 'dev@example.com',
                 phone: '13800138000',
+                role: 'admin',
                 status: 1
             }
         });
@@ -124,8 +126,8 @@ try {
         await db.insData({
             table: 'admin_admin_role',
             data: {
-                adminId: devAdminId,
-                roleId: devRoleId
+                admin_id: devAdminId,
+                role_id: devRoleId
             }
         });
         console.log(`✅ 已为 dev 管理员分配 dev 角色`);

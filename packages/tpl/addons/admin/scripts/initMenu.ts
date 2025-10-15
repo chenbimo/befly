@@ -1,5 +1,6 @@
 import { SqlHelper } from 'befly/utils/sqlHelper';
 import { createSqlClient } from 'befly/utils/dbHelper';
+import { RedisHelper } from 'befly/utils/redisHelper';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,10 +18,11 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 创建数据库客户端
+// 创建数据库和Redis客户端
 const SQL = await createSqlClient();
+const redis = RedisHelper;
 // 创建一个假的 befly 上下文用于 SqlHelper
-const mockBefly: any = { sql: SQL };
+const mockBefly: any = { sql: SQL, redis };
 const db = new SqlHelper(mockBefly, SQL);
 
 /**
@@ -39,11 +41,11 @@ async function insertMenus(menus: any[], parentId: number = 0): Promise<number[]
             data: {
                 pid: parentId,
                 name: menu.name,
-                path: menu.path,
-                icon: menu.icon,
-                sort: menu.sort,
-                type: menu.type,
-                status: menu.status
+                path: menu.path || '',
+                icon: menu.icon || '',
+                sort: menu.sort || 0,
+                type: menu.type || 1,
+                status: menu.status ?? 1
             }
         });
 
@@ -80,7 +82,7 @@ try {
 
     // 4. 构建树形结构预览
     console.log('\n=== 步骤 4: 菜单结构预览 ===');
-    const allMenus = await db.query('SELECT id, pid, name, path, type FROM admin_menu WHERE deleted_at = 0 ORDER BY pid, sort, id');
+    const allMenus = await db.query('SELECT id, pid, name, path, type FROM admin_admin_menu WHERE deleted_at = 0 ORDER BY pid, sort, id');
 
     // 递归构建树
     function buildTree(parentId: number = 0, level: number = 0): string[] {
