@@ -27,14 +27,13 @@ export default {
             where.priority = ctx.body.priority;
         }
 
-        // 查询数据（使�?getList 方法，带分页�?
+        // 查询数据（使用 getList 方法，带分页）
         const result = await befly.db.getList({
             table: 'addon_demo_todo',
             where,
             page,
             limit: pageSize,
-            orderBy: ['created_at#DESC'],
-            includeDeleted: true // 暂时包含所有数据进行测�?
+            orderBy: ['created_at#DESC']
         });
 
         // 暂时不使用插件格式化，直接返回原始数�?        // const demoTool = befly['demo.tool'];

@@ -311,10 +311,6 @@ export interface QueryOptions {
     page?: number;
     /** 每页数量 */
     limit?: number;
-    /** 是否包含已删除数据 */
-    includeDeleted?: boolean;
-    /** 自定义 state 条件 */
-    customState?: WhereConditions;
 }
 
 /**
@@ -337,8 +333,6 @@ export interface UpdateOptions {
     data: Record<string, any>;
     /** WHERE 条件 */
     where: WhereConditions;
-    /** 是否包含已删除数据，默认 false */
-    includeDeleted?: boolean;
 }
 
 /**

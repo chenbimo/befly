@@ -28,32 +28,26 @@ export class SqlHelper {
         this.isTransaction = !!sql;
     }
 
-    /**
-     * 添加默认 state 过滤（只返回正常数据）
-     */
-    private addDefaultStateFilter(where: WhereConditions | undefined, includeDeleted: boolean = false, customState?: WhereConditions): WhereConditions {
-        if (includeDeleted) {
-            return where || {};
-        }
+/**
+ * 添加默认的 state 过滤条件
+ * 默认查询 state > 0 的数据（排除已删除和特殊状态）
+ */
+function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
+    // 如果用户已经指定了 state 条件，优先使用用户的条件
+    const hasStateCondition = Object.keys(where).some((key) =>
+        key.startsWith('state')
+    );
 
-        // 如果有自定义 state 条件，使用自定义条件
-        if (customState) {
-            return where ? { ...where, ...customState } : customState;
-        }
-
-        // 检查用户是否已经在 where 中指定了 state 条件
-        if (where && 'state' in where) {
-            // 用户已指定 state 条件，直接返回，不覆盖
-            return where;
-        }
-
-        // 默认只查询正常数据（state = 1）
-        // state = 0: 已删除, state = 1: 正常, state = 2: 禁用
-        const stateFilter: WhereConditions = { state: 1 };
-        return where ? { ...where, ...stateFilter } : stateFilter;
+    if (hasStateCondition) {
+        return where;
     }
 
-    /**
+    // 默认查询 state > 0 的数据
+    return {
+        ...where,
+        state$gt: 0
+    };
+}    /**
      * 执行 SQL（使用 sql.unsafe，带慢查询日志）
      */
     private async executeWithConn(sqlStr: string, params?: any[]): Promise<any> {
@@ -88,16 +82,12 @@ export class SqlHelper {
      * 查询单条数据
      */
     async getOne<T = any>(options: QueryOptions): Promise<T | null> {
-        const { table, fields = ['*'], where, includeDeleted = false, customState } = options;
+        const { table, fields = ['*'], where } = options;
 
         // 转换 where 条件字段名：小驼峰 → 下划线
         const snakeWhere = whereKeysToSnake(where);
 
-        const builder = new SqlBuilder()
-            .select(fields)
-            .from(table)
-            .where(this.addDefaultStateFilter(snakeWhere, includeDeleted, customState))
-            .limit(1);
+        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -111,7 +101,7 @@ export class SqlHelper {
      * 查询列表（带分页）
      */
     async getList<T = any>(options: QueryOptions): Promise<ListResult<T>> {
-        const { table, fields = ['*'], where, orderBy = [], page = 1, limit = 10, includeDeleted = false, customState } = options;
+        const { table, fields = ['*'], where, orderBy = [], page = 1, limit = 10 } = options;
 
         // P1: 添加参数上限校验
         if (page < 1 || page > 10000) {
@@ -125,7 +115,7 @@ export class SqlHelper {
         const snakeWhere = whereKeysToSnake(where);
 
         // 构建查询
-        const whereFiltered = this.addDefaultStateFilter(snakeWhere, includeDeleted, customState);
+        const whereFiltered = this.addDefaultStateFilter(snakeWhere);
 
         // 查询总数
         const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(table).where(whereFiltered);
@@ -172,7 +162,7 @@ export class SqlHelper {
      * ⚠️ 警告：此方法会查询大量数据，建议使用 getList 分页查询
      */
     async getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
-        const { table, fields = ['*'], where, orderBy, includeDeleted = false, customState } = options;
+        const { table, fields = ['*'], where, orderBy } = options;
 
         // 添加硬性上限保护，防止内存溢出
         const MAX_LIMIT = 10000;
@@ -181,11 +171,7 @@ export class SqlHelper {
         // 转换 where 条件字段名：小驼峰 → 下划线
         const snakeWhere = whereKeysToSnake(where);
 
-        const builder = new SqlBuilder()
-            .select(fields)
-            .from(table)
-            .where(this.addDefaultStateFilter(snakeWhere, includeDeleted, customState))
-            .limit(MAX_LIMIT); // 强制添加上限
+        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(MAX_LIMIT); // 强制添加上限
 
         if (orderBy) {
             builder.orderBy(orderBy);
@@ -304,7 +290,7 @@ export class SqlHelper {
      * 更新数据（强制更新时间戳，系统字段不可修改）
      */
     async updData(options: UpdateOptions): Promise<number> {
-        const { table, data, where, includeDeleted = false } = options;
+        const { table, data, where } = options;
 
         // 字段名转换：小驼峰 → 下划线
         const snakeData = keysToSnake(data);
@@ -321,7 +307,7 @@ export class SqlHelper {
         };
 
         // 构建 SQL
-        const whereFiltered = this.addDefaultStateFilter(snakeWhere, includeDeleted);
+        const whereFiltered = this.addDefaultStateFilter(snakeWhere);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql, params } = builder.toUpdateSql(table, processed);
 
@@ -336,19 +322,34 @@ export class SqlHelper {
     async delData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
-        // 软删除（设置 state=0 并记录删除时间）
-        const now = Date.now();
+        // 字段名转换：小驼峰 → 下划线
+        const snakeWhere = whereKeysToSnake(where);
 
-        return await this.updData({
-            table: table,
-            data: {
-                state: 0,
-                updated_at: now,
-                deleted_at: now
-            },
-            where: where,
-            includeDeleted: true // 软删除时允许操作已删除数据
+        // 软删除：设置 state=0 并记录删除时间
+        const now = Date.now();
+        const snakeData = keysToSnake({
+            state: 0,
+            updatedAt: now,
+            deletedAt: now
         });
+
+        // 移除系统字段
+        const { id, created_at, updated_at, deleted_at, ...userData } = snakeData;
+
+        // 强制更新时间戳
+        const processed: Record<string, any> = {
+            ...userData,
+            updated_at: now
+        };
+
+        // 构建 SQL（软删除时也要加 state > 0 过滤，避免重复删除）
+        const whereFiltered = this.addDefaultStateFilter(snakeWhere);
+        const builder = new SqlBuilder().where(whereFiltered);
+        const { sql, params } = builder.toUpdateSql(table, processed);
+
+        // 执行
+        const result = await this.executeWithConn(sql, params);
+        return result?.changes || 0;
     }
 
     /**
@@ -429,14 +430,10 @@ export class SqlHelper {
      * 检查数据是否存在（优化性能）
      */
     async exists(options: Omit<QueryOptions, 'fields' | 'orderBy' | 'page' | 'limit'>): Promise<boolean> {
-        const { table, where, includeDeleted = false, customState } = options;
+        const { table, where } = options;
 
         // 使用 COUNT(1) 性能更好
-        const builder = new SqlBuilder()
-            .select(['COUNT(1) as cnt'])
-            .from(table)
-            .where(this.addDefaultStateFilter(where, includeDeleted, customState))
-            .limit(1);
+        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where)).limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -483,7 +480,7 @@ export class SqlHelper {
         }
 
         // 使用 SqlBuilder 构建安全的 WHERE 条件
-        const whereFiltered = this.addDefaultStateFilter(where, false);
+        const whereFiltered = this.addDefaultStateFilter(where);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql: selectSql, params: whereParams } = builder.toSelectSql();
 
