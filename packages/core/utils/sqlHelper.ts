@@ -84,8 +84,11 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
     async getOne<T = any>(options: QueryOptions): Promise<T | null> {
         const { table, fields = ['*'], where } = options;
 
+        // 清理 where 条件（排除 null 和 undefined）
+        const cleanWhere = fieldClear(where || {}, [null, undefined], {});
+
         // 转换 where 条件字段名：小驼峰 → 下划线
-        const snakeWhere = whereKeysToSnake(where);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(1);
 
@@ -111,8 +114,11 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
             throw new Error('每页数量必须在 1 到 1000 之间');
         }
 
+        // 清理 where 条件（排除 null 和 undefined）
+        const cleanWhere = fieldClear(where || {}, [null, undefined], {});
+
         // 转换 where 条件字段名：小驼峰 → 下划线
-        const snakeWhere = whereKeysToSnake(where);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 构建查询
         const whereFiltered = this.addDefaultStateFilter(snakeWhere);
@@ -168,8 +174,11 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
 
+        // 清理 where 条件（排除 null 和 undefined）
+        const cleanWhere = fieldClear(where || {}, [null, undefined], {});
+
         // 转换 where 条件字段名：小驼峰 → 下划线
-        const snakeWhere = whereKeysToSnake(where);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(MAX_LIMIT); // 强制添加上限
 
@@ -200,9 +209,12 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
     async insData(options: InsertOptions): Promise<number> {
         const { table, data } = options;
 
+        // 清理数据（排除 null 和 undefined）
+        const cleanData = fieldClear(data, [null, undefined], {});
+
         // 处理数据（自动添加必要字段）
         // 字段名转换：小驼峰 → 下划线
-        const snakeData = keysToSnake(data);
+        const snakeData = keysToSnake(cleanData);
 
         // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
         const { id, created_at, updated_at, deleted_at, state, ...userData } = snakeData;
@@ -292,9 +304,13 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
     async updData(options: UpdateOptions): Promise<number> {
         const { table, data, where } = options;
 
+        // 清理数据和条件（排除 null 和 undefined）
+        const cleanData = fieldClear(data, [null, undefined], {});
+        const cleanWhere = fieldClear(where, [null, undefined], {});
+
         // 字段名转换：小驼峰 → 下划线
-        const snakeData = keysToSnake(data);
-        const snakeWhere = whereKeysToSnake(where);
+        const snakeData = keysToSnake(cleanData);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 移除系统字段（防止用户尝试修改）
         // 注意：state 允许用户修改（用于设置禁用状态 state=2）
@@ -322,8 +338,11 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
     async delData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
+        // 清理 where 条件（排除 null 和 undefined）
+        const cleanWhere = fieldClear(where, [null, undefined], {});
+
         // 字段名转换：小驼峰 → 下划线
-        const snakeWhere = whereKeysToSnake(where);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 软删除：设置 state=0 并记录删除时间
         const now = Date.now();
@@ -432,8 +451,11 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
     async exists(options: Omit<QueryOptions, 'fields' | 'orderBy' | 'page' | 'limit'>): Promise<boolean> {
         const { table, where } = options;
 
+        // 清理 where 条件（排除 null 和 undefined）
+        const cleanWhere = fieldClear(where || {}, [null, undefined], {});
+
         // 使用 COUNT(1) 性能更好
-        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where)).limit(1);
+        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(cleanWhere)).limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -479,8 +501,11 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
             throw new Error(`自增值必须是有效的数字`);
         }
 
+        // 清理 where 条件（排除 null 和 undefined）
+        const cleanWhere = fieldClear(where, [null, undefined], {});
+
         // 使用 SqlBuilder 构建安全的 WHERE 条件
-        const whereFiltered = this.addDefaultStateFilter(where);
+        const whereFiltered = this.addDefaultStateFilter(cleanWhere);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql: selectSql, params: whereParams } = builder.toSelectSql();
 
