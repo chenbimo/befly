@@ -16,7 +16,7 @@ export default {
         // const myPlugin = befly['addonName.pluginName'];
 
         // 访问数据库
-        // const result = await befly.db.getDetail({
+        // const result = await befly.db.getOne({
         //     table: 'addon_addonName_tableName',
         //     where: { id: 1 }
         // });

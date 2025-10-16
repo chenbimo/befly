@@ -23,7 +23,7 @@ export default {
         // 邮箱登录
         if (ctx.body.email && ctx.body.password) {
             // 查询管理员
-            admin = await befly.db.getDetail({
+            admin = await befly.db.getOne({
                 table: 'addon_admin_admin',
                 where: { email: ctx.body.email }
             });
@@ -63,7 +63,7 @@ export default {
             }
 
             // 查询管理员
-            admin = await befly.db.getDetail({
+            admin = await befly.db.getOne({
                 table: 'addon_admin_admin',
                 where: { phone: ctx.body.phone }
             });

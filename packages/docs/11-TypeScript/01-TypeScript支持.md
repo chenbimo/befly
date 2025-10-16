@@ -41,19 +41,19 @@ export default Api.POST(
 
 ### 3. 重构支持
 
--   **安全重命名**：重命名变量/函数时自动更新所有引用
--   **查找引用**：快速找到所有使用位置
--   **跳转定义**：Ctrl+点击跳转到定义
--   **类型推导**：自动推导变量类型
+- **安全重命名**：重命名变量/函数时自动更新所有引用
+- **查找引用**：快速找到所有使用位置
+- **跳转定义**：Ctrl+点击跳转到定义
+- **类型推导**：自动推导变量类型
 
 ### 4. Bun 原生支持
 
 Befly 使用 Bun 运行时，原生支持 TypeScript：
 
--   ✅ **零配置**：无需 tsc 编译
--   ✅ **高性能**：原生 TS 解析
--   ✅ **即时运行**：直接运行 .ts 文件
--   ✅ **类型检查**：编辑时实时检查
+- ✅ **零配置**：无需 tsc 编译
+- ✅ **高性能**：原生 TS 解析
+- ✅ **即时运行**：直接运行 .ts 文件
+- ✅ **类型检查**：编辑时实时检查
 
 ## 核心类型定义
 
@@ -217,7 +217,7 @@ export default Api.POST(
             });
 
             // 查询新用户
-            const user = await befly.db.getDetail<UserResponse>({
+            const user = await befly.db.getOne<UserResponse>({
                 table: 'user',
                 where: { id: userId }
             });
@@ -405,9 +405,9 @@ const data = await befly.db.getList<MyData>({ table: 'my_table' });
 
 推荐的 VS Code 扩展：
 
--   **Bun for Visual Studio Code** - Bun 支持
--   **Error Lens** - 实时显示错误
--   **Pretty TypeScript Errors** - 美化错误信息
+- **Bun for Visual Studio Code** - Bun 支持
+- **Error Lens** - 实时显示错误
+- **Pretty TypeScript Errors** - 美化错误信息
 
 ### 配置
 
@@ -448,7 +448,7 @@ const data = await befly.db.getList<MyData>({ table: 'my_table' });
 
 ## 更多资源
 
--   [TypeScript 官方文档](https://www.typescriptlang.org/docs/)
--   [Bun TypeScript 支持](https://bun.sh/docs/typescript)
--   [Befly 类型定义](../types/)
--   [示例项目](../examples/)
+- [TypeScript 官方文档](https://www.typescriptlang.org/docs/)
+- [Bun TypeScript 支持](https://bun.sh/docs/typescript)
+- [Befly 类型定义](../types/)
+- [示例项目](../examples/)

@@ -18,7 +18,7 @@ export default {
     required: ['name', 'email', 'password'],
     handler: async (befly, ctx) => {
         // 检查邮箱是否已存在
-        const existingAdmin = await befly.db.getDetail({
+        const existingAdmin = await befly.db.getOne({
             table: 'addon_admin_admin',
             where: { email: ctx.body.email }
         });

@@ -17,7 +17,7 @@ export default {
     required: ['username', 'password'],
     handler: async (befly, ctx) => {
         // 查询用户
-        const user = await befly.db.getDetail({
+        const user = await befly.db.getOne({
             table: 'user',
             where: { username: ctx.body.username }
         });

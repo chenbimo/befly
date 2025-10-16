@@ -387,7 +387,7 @@ export interface SqlQuery {
  */
 export interface SqlHelper {
     /** 查询单条数据 */
-    getDetail<T = any>(options: QueryOptions): Promise<T | null>;
+    getOne<T = any>(options: QueryOptions): Promise<T | null>;
     /** 查询列表（带分页） */
     getList<T = any>(options: QueryOptions): Promise<ListResult<T>>;
     /** 查询所有数据 */

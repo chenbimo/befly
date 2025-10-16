@@ -6,19 +6,19 @@
 
 ## 特性
 
--   ✅ 基于 Bun SQL 原生 Promise API
--   ✅ 支持链式 SQL 构造器
--   ✅ 防 SQL 注入（参数化查询）
--   ✅ **字段和表名自动转义（反引号保护）**
--   ✅ 支持事务操作
--   ✅ 支持连接池管理
--   ✅ 支持 leftJoin 关联查询
--   ✅ 支持高级 where 条件（$in, $like, $gt 等）
--   ✅ 支持分页查询
--   ✅ 完善的错误处理
--   ✅ 状态字段自动管理（软删除）
--   ✅ **严格的数据库约束（NOT NULL + 默认值）**
--   ✅ **优化的字段类型（BIGINT 状态字段，管道分隔数组）**
+- ✅ 基于 Bun SQL 原生 Promise API
+- ✅ 支持链式 SQL 构造器
+- ✅ 防 SQL 注入（参数化查询）
+- ✅ **字段和表名自动转义（反引号保护）**
+- ✅ 支持事务操作
+- ✅ 支持连接池管理
+- ✅ 支持 leftJoin 关联查询
+- ✅ 支持高级 where 条件（$in, $like, $gt 等）
+- ✅ 支持分页查询
+- ✅ 完善的错误处理
+- ✅ 状态字段自动管理（软删除）
+- ✅ **严格的数据库约束（NOT NULL + 默认值）**
+- ✅ **优化的字段类型（BIGINT 状态字段，管道分隔数组）**
 
 ## 数据库字段约束
 
@@ -28,21 +28,20 @@
 
 ### 严格约束策略
 
--   **所有用户定义字段**: 自动添加 `NOT NULL` 约束
--   **默认值处理**:
-    -   `string/text/array`: 默认为 `''`（空字符串）
-    -   `number`: 默认为 `0`
-    -   如指定默认值则使用指定值
--   **系统字段约束**:
+- **所有用户定义字段**: 自动添加 `NOT NULL` 约束
+- **默认值处理**:
+    - `string/text/array`: 默认为 `''`（空字符串）
+    - `number`: 默认为 `0`
+    - 如指定默认值则使用指定值
+- **系统字段约束**:
+    - **所有系统字段**: `NOT NULL DEFAULT 0`（统一约束）
+    - `created_at/updated_at`: 创建和更新时间戳
+    - `deleted_at`: 删除时间戳（0 表示未删除，时间戳表示删除时间）
+    - `state`: 状态字段（0 表示正常状态）### 字段类型优化
 
-    -   **所有系统字段**: `NOT NULL DEFAULT 0`（统一约束）
-    -   `created_at/updated_at`: 创建和更新时间戳
-    -   `deleted_at`: 删除时间戳（0 表示未删除，时间戳表示删除时间）
-    -   `state`: 状态字段（0 表示正常状态）### 字段类型优化
-
--   **状态字段**: 使用 `BIGINT` 类型（支持大数值状态）
--   **数组存储**: 使用管道分隔格式 `value1|value2|value3`（替代 JSON）
--   **长度处理**: 直接使用 `max` 值作为字段长度
+- **状态字段**: 使用 `BIGINT` 类型（支持大数值状态）
+- **数组存储**: 使用管道分隔格式 `value1|value2|value3`（替代 JSON）
+- **长度处理**: 直接使用 `max` 值作为字段长度
 
 ### 示例字段定义
 
@@ -224,28 +223,28 @@ const result = await db.getList('products', {
 
 ### 兼容性说明
 
--   ✅ **向后兼容**：所有现有查询代码无需修改，自动享受转义保护
--   ✅ **智能识别**：自动识别函数、通配符、已转义字段，不会重复处理
--   ✅ **性能优化**：转义处理在查询构建阶段完成，不影响执行性能
--   ✅ **多表支持**：完美支持多表联查的字段转义
--   ✅ **别名友好**：正确处理字段和表的别名
+- ✅ **向后兼容**：所有现有查询代码无需修改，自动享受转义保护
+- ✅ **智能识别**：自动识别函数、通配符、已转义字段，不会重复处理
+- ✅ **性能优化**：转义处理在查询构建阶段完成，不影响执行性能
+- ✅ **多表支持**：完美支持多表联查的字段转义
+- ✅ **别名友好**：正确处理字段和表的别名
 
 ### 2. 简单查询
 
-#### getDetail - 获取单条记录
+#### getOne - 获取单条记录
 
 ```javascript
 // 基础用法
-const user = await db.getDetail('users', { id: 1 });
+const user = await db.getOne('users', { id: 1 });
 
 // 指定字段
-const user = await db.getDetail('users', {
+const user = await db.getOne('users', {
     where: { id: 1 },
     fields: ['id', 'name', 'email']
 });
 
 // 支持表别名
-const user = await db.getDetail('users u', {
+const user = await db.getOne('users u', {
     where: { 'u.id': 1, 'u.status': 1 }
 });
 ```
@@ -624,13 +623,13 @@ const result = await db.trans(async (tx) => {
 
 ### 高级事务 - 支持所有 CURD 方法
 
-事务中支持所有高级数据操作方法：`getDetail`、`getList`、`getAll`、`insData`、`updData`、`delData`、`delData2`、`getCount`、`insBatch`
+事务中支持所有高级数据操作方法：`getOne`、`getList`、`getAll`、`insData`、`updData`、`delData`、`delData2`、`getCount`、`insBatch`
 
 ```javascript
 // 使用高级方法的事务
 const result = await db.trans(async (tx) => {
     // 查询用户
-    const user = await tx.getDetail('users', { name: 'John' });
+    const user = await tx.getOne('users', { name: 'John' });
 
     if (!user) {
         // 创建用户
@@ -689,7 +688,7 @@ const result = await processOrder(orderData);
 | ----------------------------- | ---------------------- | ---------------------------------------------------------------------------- |
 | `execute(sql, params)`        | 执行原始 SQL           | `await tx.execute('SELECT * FROM users WHERE id = ?', [1])`                  |
 | `query(sql, params)`          | 执行查询（同 execute） | `await tx.query('INSERT INTO users (name) VALUES (?)', ['John'])`            |
-| `getDetail(table, options)`   | 获取单条记录           | `await tx.getDetail('users', { id: 1 })`                                     |
+| `getOne(table, options)`      | 获取单条记录           | `await tx.getOne('users', { id: 1 })`                                        |
 | `getList(table, options)`     | 获取列表（支持分页）   | `await tx.getList('users', { where: { status: 1 }, page: 1, pageSize: 10 })` |
 | `getAll(table, options)`      | 获取所有记录           | `await tx.getAll('users', { where: { status: 1 } })`                         |
 | `insData(table, data)`        | 插入单条记录           | `await tx.insData('users', { name: 'John', email: 'john@example.com' })`     |
@@ -701,13 +700,13 @@ const result = await processOrder(orderData);
 
 ### 事务特性
 
--   ✅ **自动回滚**：任何错误都会自动回滚事务
--   ✅ **完整 CURD 支持**：支持所有高级数据库操作方法
--   ✅ **一级属性 where 条件**：事务中的方法完全支持新的 where 条件格式
--   ✅ **自动 ID 和时间戳**：`insData` 和 `insBatch` 自动添加 ID 和时间戳
--   ✅ **安全的更新删除**：`updData`、`delData` 和 `delData2` 必须提供 where 条件
--   ✅ **JOIN 查询支持**：`getDetail`、`getList`、`getAll` 支持 leftJoin
--   ✅ **状态字段和软删除**：自动添加状态字段，智能过滤已删除记录
+- ✅ **自动回滚**：任何错误都会自动回滚事务
+- ✅ **完整 CURD 支持**：支持所有高级数据库操作方法
+- ✅ **一级属性 where 条件**：事务中的方法完全支持新的 where 条件格式
+- ✅ **自动 ID 和时间戳**：`insData` 和 `insBatch` 自动添加 ID 和时间戳
+- ✅ **安全的更新删除**：`updData`、`delData` 和 `delData2` 必须提供 where 条件
+- ✅ **JOIN 查询支持**：`getOne`、`getList`、`getAll` 支持 leftJoin
+- ✅ **状态字段和软删除**：自动添加状态字段，智能过滤已删除记录
 
 ## 状态字段和软删除功能
 
@@ -744,7 +743,7 @@ await db.insBatch('users', [
 
 ```javascript
 // 这些查询都会自动排除 state=2 的记录
-await db.getDetail('users', { id: 123 });
+await db.getOne('users', { id: 123 });
 await db.getList('users', { name: 'John' });
 await db.getAll('users', { age$gte: 18 });
 await db.getCount('users', { status: 'active' });
@@ -765,14 +764,14 @@ await db.getAll('users', { state$gte: 0 });
 await db.getAll('users', { state$in: [0, 1] });
 
 // 直接使用 state 字段
-await db.getDetail('users', { id: 123, state: 1 });
+await db.getOne('users', { id: 123, state: 1 });
 ```
 
 ### 状态值约定
 
--   `state: 0` - 正常状态（默认）
--   `state: 1` - 其他业务状态（如禁用、待审核等）
--   `state: 2` - 已删除状态（软删除）
+- `state: 0` - 正常状态（默认）
+- `state: 1` - 其他业务状态（如禁用、待审核等）
+- `state: 2` - 已删除状态（软删除）
 
 ### 软删除操作
 
@@ -814,11 +813,11 @@ const builder = db
 
 ### 排序规则
 
--   **必须格式**：必须是数组，数组中每个元素必须是 `字段名#方向` 格式
--   **必须方向**：每个字段都必须明确指定 `ASC`（升序）或 `DESC`（降序）
--   **大小写不敏感**：`ASC`、`asc`、`DESC`、`desc` 都可以
--   **多字段排序**：按数组顺序依次排序
--   **严格验证**：不符合格式的会抛出错误
+- **必须格式**：必须是数组，数组中每个元素必须是 `字段名#方向` 格式
+- **必须方向**：每个字段都必须明确指定 `ASC`（升序）或 `DESC`（降序）
+- **大小写不敏感**：`ASC`、`asc`、`DESC`、`desc` 都可以
+- **多字段排序**：按数组顺序依次排序
+- **严格验证**：不符合格式的会抛出错误
 
 ### 示例
 
@@ -978,8 +977,8 @@ await sendEmail();
 ### 1. 使用适当的查询方法
 
 ```javascript
-// 获取单条记录时使用 getDetail
-const user = await db.getDetail('users', { id: 1 });
+// 获取单条记录时使用 getOne
+const user = await db.getOne('users', { id: 1 });
 
 // 获取列表时使用 getList（自动分页）
 const users = await db.getList('users', {

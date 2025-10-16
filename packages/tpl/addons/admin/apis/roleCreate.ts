@@ -16,7 +16,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 检查角色代码是否已存在
-            const existing = await befly.db.getDetail({
+            const existing = await befly.db.getOne({
                 table: 'addon_admin_role',
                 where: { code: ctx.body.code }
             });

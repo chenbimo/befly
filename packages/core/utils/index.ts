@@ -6,7 +6,8 @@
  */
 
 // ========== 通用辅助工具（helpers.ts）==========
-export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, calcPerfTime } from './helpers.js';
+export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, formatDate, calcPerfTime, cleanData } from './helpers.js';
+export type { DataCleanOptions } from './helpers.js';
 
 // ========== 框架工具 ==========
 export { Api, scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './framework.js';

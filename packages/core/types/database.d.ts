@@ -155,7 +155,7 @@ export interface SyncStats {
  * SqlHelper 接口（前向声明）
  */
 export interface SqlHelper {
-    getDetail<T = any>(options: QueryOptions): Promise<T | null>;
+    getOne<T = any>(options: QueryOptions): Promise<T | null>;
     getList<T = any>(options: QueryOptions): Promise<ListResult<T>>;
     getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]>;
     insData(options: InsertOptions): Promise<number>;

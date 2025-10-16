@@ -8,13 +8,13 @@
 
 Befly 是专为 Bun 运行时设计的现代化 API 框架，提供：
 
--   ⚡ **原生 TypeScript 支持** - 完整的类型定义和智能提示
--   🚀 **高性能** - 基于 Bun 运行时，超快的启动和执行速度
--   🔌 **插件化架构** - 灵活的插件系统，轻松扩展功能
--   🗄️ **多数据库支持** - MySQL、PostgreSQL、SQLite 统一接口
--   📝 **自动化表管理** - 基于 JSON 的表定义，自动同步数据库结构
--   🔐 **内置身份验证** - JWT 认证，角色权限管理
--   📊 **完整日志系统** - 结构化日志，敏感字段过滤
+- ⚡ **原生 TypeScript 支持** - 完整的类型定义和智能提示
+- 🚀 **高性能** - 基于 Bun 运行时，超快的启动和执行速度
+- 🔌 **插件化架构** - 灵活的插件系统，轻松扩展功能
+- 🗄️ **多数据库支持** - MySQL、PostgreSQL、SQLite 统一接口
+- 📝 **自动化表管理** - 基于 JSON 的表定义，自动同步数据库结构
+- 🔐 **内置身份验证** - JWT 认证，角色权限管理
+- 📊 **完整日志系统** - 结构化日志，敏感字段过滤
 
 ## 📦 快速开始
 
@@ -83,7 +83,7 @@ export default Api.POST<User>('获取用户', true, { id: '用户ID⚡number⚡1
     const { id } = ctx.body;
 
     // 类型安全的数据库查询
-    const user = await befly.db.getDetail<User>({
+    const user = await befly.db.getOne<User>({
         table: 'user',
         where: { id }
     });
@@ -96,7 +96,7 @@ export default Api.POST<User>('获取用户', true, { id: '用户ID⚡number⚡1
 
 ```typescript
 // 查询单条
-const user = await befly.db.getDetail<User>({
+const user = await befly.db.getOne<User>({
     table: 'user',
     where: { id: 1 }
 });
@@ -167,11 +167,11 @@ DB_NAME=:memory:
 
 完整文档请访问 [`/docs` 目录](./docs/)：
 
--   [快速开始](./docs/02-快速上手/01-10分钟体验.md)
--   [核心概念](./docs/03-核心概念/)
--   [API 开发](./docs/04-API开发/)
--   [数据库操作](./docs/05-数据库/)
--   [TypeScript 支持](./docs/10-TypeScript/01-TypeScript支持.md)
+- [快速开始](./docs/02-快速上手/01-10分钟体验.md)
+- [核心概念](./docs/03-核心概念/)
+- [API 开发](./docs/04-API开发/)
+- [数据库操作](./docs/05-数据库/)
+- [TypeScript 支持](./docs/10-TypeScript/01-TypeScript支持.md)
 
 ## 📁 项目结构
 
@@ -192,12 +192,12 @@ befly/
 
 ### 目录说明
 
--   **`packages/core`** - Befly 核心框架包（发布到 npm）
--   **`packages/tpl`** - API 项目模板示例
--   **`packages/admin`** - 后台管理系统（Vue3 + TDesign + 自动导入）
--   **`docs/`** - 完整的使用教程和 API 文档
--   **`notes/`** - 所有说明、记录、总结类文档
--   **`temp/`** - 所有临时执行脚本和测试文件
+- **`packages/core`** - Befly 核心框架包（发布到 npm）
+- **`packages/tpl`** - API 项目模板示例
+- **`packages/admin`** - 后台管理系统（Vue3 + TDesign + 自动导入）
+- **`docs/`** - 完整的使用教程和 API 文档
+- **`notes/`** - 所有说明、记录、总结类文档
+- **`temp/`** - 所有临时执行脚本和测试文件
 
 ## 🚀 快速启动
 

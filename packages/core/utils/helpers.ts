@@ -215,26 +215,24 @@ export const pickFields = <T extends Record<string, any>>(obj: T, keys: string[]
  * @returns 排除指定字段和值后的新数据
  *
  * @example
- * omitFields({ a: 1, b: 2, c: 3 }, ['b']) // { a: 1, c: 3 }
- * omitFields({ a: 1, b: null, c: 3 }, [], [null]) // { a: 1, c: 3 }
- * omitFields([{ a: 1 }, { a: 2 }], ['a']) // [{}, {}]
+ * fieldClear({ a: 1, b: 2, c: 3 }, ['b']) // { a: 1, c: 3 }
+ * fieldClear({ a: 1, b: null, c: 3 }, [], [null]) // { a: 1, c: 3 }
+ * fieldClear([{ a: 1 }, { a: 2 }], ['a']) // [{}, {}]
  */
-export const omitFields = <T = any>(data: T, excludeKeys: string[] = [], excludeValues: any[] = []): T | Partial<T> => {
-    const shouldDropValue = (v: any): boolean => excludeValues.some((x) => x === v);
-
+export const fieldClear = <T = any>(data: T, excludeKeys: string[] = [], excludeValues: any[] = [null, undefined]): T | Partial<T> => {
     const cleanObject = (obj: any): any => {
         if (!isType(obj, 'object')) return obj;
         const result: any = {};
         for (const [k, v] of Object.entries(obj)) {
             if (excludeKeys.includes(k)) continue;
-            if (shouldDropValue(v)) continue;
+            if (excludeValues.includes(v)) continue;
             result[k] = v;
         }
         return result;
     };
 
     if (isType(data, 'array')) {
-        return (data as any).filter((item: any) => !shouldDropValue(item)).map((item: any) => (isType(item, 'object') ? cleanObject(item) : item));
+        return (data as any).filter((item: any) => !excludeValues.includes(item)).map((item: any) => (isType(item, 'object') ? cleanObject(item) : item));
     }
 
     if (isType(data, 'object')) {
@@ -434,6 +432,144 @@ export const whereKeysToSnake = (where: any): any => {
                 result[snakeKey] = value;
             }
         }
+    }
+
+    return result;
+};
+
+// ========================================
+// 数据清洗工具
+// ========================================
+
+/**
+ * 数据清洗选项
+ */
+export interface DataCleanOptions {
+    /** 要排除的字段名数组 */
+    excludeKeys?: string[];
+    /** 只包含的字段名数组（优先级高于 excludeKeys） */
+    includeKeys?: string[];
+    /** 要移除的值数组 */
+    removeValues?: any[];
+    /** 字段值最大长度（超过会截断） */
+    maxLen?: number;
+    /** 是否深度清洗（处理嵌套对象） */
+    deep?: boolean;
+}
+
+/**
+ * 数据清洗 - 清理和过滤对象数据
+ * @param data - 源数据对象
+ * @param options - 清洗选项
+ * @returns 清洗后的新对象
+ *
+ * @example
+ * // 排除指定字段
+ * cleanData2({ a: 1, b: 2, c: 3 }, { excludeKeys: ['b'] })
+ * // { a: 1, c: 3 }
+ *
+ * // 只包含指定字段
+ * cleanData2({ a: 1, b: 2, c: 3 }, { includeKeys: ['a', 'c'] })
+ * // { a: 1, c: 3 }
+ *
+ * // 移除指定值
+ * cleanData2({ a: 1, b: null, c: undefined, d: '' }, { removeValues: [null, undefined, ''] })
+ * // { a: 1 }
+ *
+ * // 限制字段值长度
+ * cleanData2({ name: 'A'.repeat(1000) }, { maxLen: 100 })
+ * // { name: 'AAA...AAA' (100个字符) }
+ *
+ * // 组合使用
+ * cleanData2(
+ *   { a: 1, b: null, c: 'very long text...', d: 4 },
+ *   { excludeKeys: ['d'], removeValues: [null], maxLen: 10 }
+ * )
+ * // { a: 1, c: 'very long ' }
+ *
+ * // 深度清洗嵌套对象
+ * cleanData2(
+ *   { user: { name: 'John', password: '123', nested: { secret: 'xxx' } } },
+ *   { excludeKeys: ['password', 'secret'], deep: true }
+ * )
+ * // { user: { name: 'John', nested: {} } }
+ */
+export const cleanData2 = <T = any>(data?: Record<string, any>, options: DataCleanOptions = {}): Partial<T> => {
+    // 参数默认值
+    const { excludeKeys = [], includeKeys = [], removeValues = [null, undefined], maxLen = 0, deep = false } = options;
+
+    // 非对象直接返回（不做任何处理）
+    if (!data || !isType(data, 'object')) {
+        return data as Partial<T>;
+    }
+
+    const result: any = {};
+
+    // 判断值是否应该被移除
+    const shouldRemoveValue = (value: any): boolean => {
+        return removeValues.some((removeVal) => {
+            // 使用 Object.is 进行严格比较（处理 NaN、0、-0 等特殊值）
+            return Object.is(removeVal, value);
+        });
+    };
+
+    // 处理字段值（截断、深度清洗）
+    const processValue = (value: any): any => {
+        // 深度清洗嵌套对象
+        if (deep && isType(value, 'object')) {
+            return cleanData(value, options);
+        }
+
+        // 深度清洗数组对象
+        if (deep && isType(value, 'array')) {
+            return value.map((item: any) => (isType(item, 'object') ? cleanData(item, options) : item));
+        }
+
+        // 字段值长度限制
+        if (maxLen > 0) {
+            // 字符串直接截断
+            if (isType(value, 'string') && value.length > maxLen) {
+                return value.substring(0, maxLen);
+            }
+
+            // 非字符串先转字符串再截断
+            if (!isType(value, 'string')) {
+                try {
+                    const strValue = JSON.stringify(value);
+                    if (strValue && strValue.length > maxLen) {
+                        return strValue.substring(0, maxLen);
+                    }
+                } catch {
+                    // JSON.stringify 失败则返回原值
+                }
+            }
+        }
+
+        return value;
+    };
+
+    // 遍历对象字段
+    for (const [key, value] of Object.entries(data)) {
+        // 排除指定值
+        if (shouldRemoveValue(value)) {
+            continue;
+        }
+
+        // includeKeys 优先级最高
+        if (includeKeys.length > 0) {
+            if (includeKeys.includes(key)) {
+                result[key] = processValue(value);
+            }
+            continue;
+        }
+
+        // 排除指定字段
+        if (excludeKeys.includes(key)) {
+            continue;
+        }
+
+        // 保留字段并处理值
+        result[key] = processValue(value);
     }
 
     return result;

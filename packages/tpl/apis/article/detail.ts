@@ -12,7 +12,7 @@ export default {
     },
     required: ['id'],
     handler: async (befly, ctx) => {
-        const article = await befly.db.getDetail({
+        const article = await befly.db.getOne({
             table: 'article',
             where: { id: ctx.body.id }
         });

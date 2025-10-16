@@ -24,7 +24,7 @@ export default {
     required: ['id'],
     handler: async (befly, ctx) => {
         // 检查文章是否存在
-        const article = await befly.db.getDetail({
+        const article = await befly.db.getOne({
             table: 'article',
             where: { id: ctx.body.id }
         });

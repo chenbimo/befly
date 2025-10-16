@@ -1,7 +1,7 @@
 # SQLBuilder 与 SQLHelper
 
--   SQLHelper：高级 CRUD 封装（getDetail/getList/getAll/ins/upd/del/trans...），由 `plugins/db.js` 注入为 `befly.db`。
--   SQLBuilder：链式 SQL 构造器，来自 `utils/sqlBuilder.js`，可通过 `befly.db.query()` 获取。
+- SQLHelper：高级 CRUD 封装（getOne/getList/getAll/ins/upd/del/trans...），由 `plugins/db.js` 注入为 `befly.db`。
+- SQLBuilder：链式 SQL 构造器，来自 `utils/sqlBuilder.js`，可通过 `befly.db.query()` 获取。
 
 ## 示例：构造器
 

@@ -20,7 +20,7 @@ export default {
         }
 
         // 查询用户信息
-        const admin = await befly.db.getDetail({
+        const admin = await befly.db.getOne({
             table: 'addon_admin_admin',
             where: { id: parseInt(userId) }
         });

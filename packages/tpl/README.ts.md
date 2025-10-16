@@ -47,9 +47,9 @@ bun run dev
 
 项目使用完整的 TypeScript 类型定义，包括：
 
--   **数据模型类型**（`types/models.ts`）
--   **API 请求/响应类型**（`types/api.ts`）
--   **继承 Befly 核心类型**（从 `befly/types` 导入）
+- **数据模型类型**（`types/models.ts`）
+- **API 请求/响应类型**（`types/api.ts`）
+- **继承 Befly 核心类型**（从 `befly/types` 导入）
 
 ### 2. 类型安全的 API 开发
 
@@ -69,7 +69,7 @@ export default Api.POST(
         const { username, password } = ctx.body as LoginRequest;
 
         // 类型安全的数据库查询
-        const user = await befly.db.getDetail<User>({
+        const user = await befly.db.getOne<User>({
             table: 'user',
             where: { username }
         });
@@ -85,7 +85,7 @@ export default Api.POST(
 
 ```typescript
 // 查询单条
-const user = await befly.db.getDetail<User>({
+const user = await befly.db.getOne<User>({
     table: 'user',
     where: { id: 1 }
 });
@@ -136,13 +136,13 @@ const hasAdmin = Jwt.hasRole(payload, 'admin');
 
 ### 用户相关
 
--   `POST /user/login` - 用户登录（公开）
--   `POST /user/list` - 获取用户列表（仅管理员）
+- `POST /user/login` - 用户登录（公开）
+- `POST /user/list` - 获取用户列表（仅管理员）
 
 ### 文章相关
 
--   `POST /article/create` - 创建文章（需登录）
--   `POST /article/list` - 获取文章列表（公开）
+- `POST /article/create` - 创建文章（需登录）
+- `POST /article/list` - 获取文章列表（公开）
 
 ## 🧪 测试
 
@@ -154,10 +154,10 @@ bun test
 
 ## 📚 相关文档
 
--   [TypeScript 支持指南](../docs/10-TypeScript/01-TypeScript支持.md)
--   [类型定义参考](../docs/10-TypeScript/02-类型定义参考.md)
--   [最佳实践](../docs/10-TypeScript/03-最佳实践.md)
--   [迁移指南](../docs/10-TypeScript/04-迁移指南.md)
+- [TypeScript 支持指南](../docs/10-TypeScript/01-TypeScript支持.md)
+- [类型定义参考](../docs/10-TypeScript/02-类型定义参考.md)
+- [最佳实践](../docs/10-TypeScript/03-最佳实践.md)
+- [迁移指南](../docs/10-TypeScript/04-迁移指南.md)
 
 ## 💡 提示
 

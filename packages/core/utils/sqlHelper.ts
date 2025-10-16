@@ -4,7 +4,7 @@
  */
 
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake } from './helpers.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear } from './helpers.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
@@ -26,38 +26,6 @@ export class SqlHelper {
         this.befly = befly;
         this.sql = sql;
         this.isTransaction = !!sql;
-    }
-
-    /**
-     * 处理插入数据（强制生成系统字段，用户不可覆盖）
-     */
-    private async processDataForInsert(data: Record<string, any>): Promise<Record<string, any>> {
-        // 字段名转换：小驼峰 → 下划线
-        const snakeData = keysToSnake(data);
-
-        // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
-        const { id, created_at, updated_at, deleted_at, state, ...userData } = snakeData;
-
-        const processed: Record<string, any> = { ...userData };
-
-        // 强制生成 ID（不可被用户覆盖）
-        try {
-            processed.id = await this.befly.redis.genTimeID();
-        } catch (error: any) {
-            throw new Error(`生成 ID 失败，Redis 可能不可用：${error.message}`);
-        }
-
-        // 强制生成时间戳（不可被用户覆盖）
-        const now = Date.now();
-        processed.created_at = now;
-        processed.updated_at = now;
-
-        // 强制设置 state 为 1（激活状态，不可被用户覆盖）
-        processed.state = 1;
-
-        // 注意：deleted_at 字段不在插入时生成，只在软删除时设置
-
-        return processed;
     }
 
     /**
@@ -119,7 +87,7 @@ export class SqlHelper {
     /**
      * 查询单条数据
      */
-    async getDetail<T = any>(options: QueryOptions): Promise<T | null> {
+    async getOne<T = any>(options: QueryOptions): Promise<T | null> {
         const { table, fields = ['*'], where, includeDeleted = false, customState } = options;
 
         // 转换 where 条件字段名：小驼峰 → 下划线
@@ -247,7 +215,30 @@ export class SqlHelper {
         const { table, data } = options;
 
         // 处理数据（自动添加必要字段）
-        const processed = await this.processDataForInsert(data);
+        // 字段名转换：小驼峰 → 下划线
+        const snakeData = keysToSnake(data);
+
+        // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
+        const { id, created_at, updated_at, deleted_at, state, ...userData } = snakeData;
+
+        const processed: Record<string, any> = { ...userData };
+
+        // 强制生成 ID（不可被用户覆盖）
+        try {
+            processed.id = await this.befly.redis.genTimeID();
+        } catch (error: any) {
+            throw new Error(`生成 ID 失败，Redis 可能不可用：${error.message}`);
+        }
+
+        // 强制生成时间戳（不可被用户覆盖）
+        const now = Date.now();
+        processed.created_at = now;
+        processed.updated_at = now;
+
+        // 强制设置 state 为 1（激活状态，不可被用户覆盖）
+        processed.state = 1;
+
+        // 注意：deleted_at 字段不在插入时生成，只在软删除时设置
 
         // 构建 SQL
         const builder = new SqlBuilder();
@@ -347,16 +338,15 @@ export class SqlHelper {
 
         // 软删除（设置 state=0 并记录删除时间）
         const now = Date.now();
-        const data: Record<string, any> = {
-            state: 0,
-            updated_at: now,
-            deleted_at: now // 记录删除时间
-        };
 
         return await this.updData({
-            table,
-            data,
-            where,
+            table: table,
+            data: {
+                state: 0,
+                updated_at: now,
+                deleted_at: now
+            },
+            where: where,
             includeDeleted: true // 软删除时允许操作已删除数据
         });
     }
@@ -382,9 +372,11 @@ export class SqlHelper {
         const { table, where } = options;
 
         return await this.updData({
-            table,
-            data: { state: 2 },
-            where
+            table: table,
+            data: {
+                state: 2
+            },
+            where: where
         });
     }
 
@@ -395,9 +387,11 @@ export class SqlHelper {
         const { table, where } = options;
 
         return await this.updData({
-            table,
-            data: { state: 1 },
-            where
+            table: table,
+            data: {
+                state: 1
+            },
+            where: where
         });
     }
 
@@ -461,7 +455,7 @@ export class SqlHelper {
             throw new Error(`无效的字段名: ${field}，只允许字母、数字和下划线。`);
         }
 
-        const result = await this.getDetail({
+        const result = await this.getOne({
             ...queryOptions,
             fields: [field]
         });
