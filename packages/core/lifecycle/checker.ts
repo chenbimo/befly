@@ -74,7 +74,7 @@ export class Checker {
             const checkDirs = [{ path: paths.rootCheckDir, type: 'core' as const }]; // 添加所有 addon 的 checks 目录
             const addons = scanAddons();
             for (const addon of addons) {
-                if (await addonDirExists(addon, 'checks')) {
+                if (addonDirExists(addon, 'checks')) {
                     checkDirs.push({
                         path: getAddonDir(addon, 'checks'),
                         type: 'addon' as const,

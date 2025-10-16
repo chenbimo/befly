@@ -83,7 +83,7 @@ export const SyncDb = async (): Promise<void> => {
         // 添加所有 addon 的 tables 目录
         const addons = scanAddons();
         for (const addon of addons) {
-            if (await addonDirExists(addon, 'tables')) {
+            if (addonDirExists(addon, 'tables')) {
                 directories.push({
                     path: getAddonDir(addon, 'tables'),
                     isCore: false,

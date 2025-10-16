@@ -70,15 +70,58 @@ export class Lifecycle {
      * 包括 addon APIs 和 app APIs
      */
     private async loadAllApis(): Promise<void> {
+        Logger.info('========== 开始加载所有 API 路由 ==========');
+        const totalLoadStart = Bun.nanoseconds();
+
         // 加载 addon APIs
         const addons = scanAddons();
+        Logger.info(`扫描到 ${addons.length} 个 addon: ${addons.join(', ')}`);
+
         for (const addon of addons) {
-            if (addonDirExists(addon, 'apis')) {
-                await Loader.loadApis(addon, this.apiRoutes, { isAddon: true, addonName: addon });
+            const addonLoadStart = Bun.nanoseconds();
+            const hasApis = addonDirExists(addon, 'apis');
+            Logger.info(`[Addon: ${addon}] APIs 目录存在: ${hasApis}`);
+
+            if (hasApis) {
+                Logger.info(`[Addon: ${addon}] ===== 开始加载 APIs =====`);
+                try {
+                    await Loader.loadApis(addon, this.apiRoutes, { isAddon: true, addonName: addon });
+                    const addonLoadTime = calcPerfTime(addonLoadStart);
+                    Logger.info(`[Addon: ${addon}] ===== APIs 加载完成，耗时: ${addonLoadTime} =====`);
+                } catch (error: any) {
+                    const addonLoadTime = calcPerfTime(addonLoadStart);
+                    Logger.error(`[Addon: ${addon}] !!!!! APIs 加载失败，耗时: ${addonLoadTime} !!!!!`);
+                    Logger.error(`[Addon: ${addon}] 错误类型: ${error.name}`);
+                    Logger.error(`[Addon: ${addon}] 错误信息: ${error.message}`);
+                    if (error.stack) {
+                        Logger.error(`[Addon: ${addon}] 错误堆栈:\n${error.stack}`);
+                    }
+                    throw error; // 重新抛出错误，让上层处理
+                }
             }
         }
 
-        // 加载 app APIs
-        await Loader.loadApis('app', this.apiRoutes);
+        Logger.info('========== Addon APIs 全部加载完成 ==========');
+        Logger.info('========== 开始加载用户 APIs ==========');
+
+        const userApiLoadStart = Bun.nanoseconds();
+        try {
+            // 加载 app APIs
+            await Loader.loadApis('app', this.apiRoutes);
+            const userApiLoadTime = calcPerfTime(userApiLoadStart);
+            Logger.info(`========== 用户 APIs 加载完成，耗时: ${userApiLoadTime} ==========`);
+        } catch (error: any) {
+            const userApiLoadTime = calcPerfTime(userApiLoadStart);
+            Logger.error(`!!!!! 用户 APIs 加载失败，耗时: ${userApiLoadTime} !!!!!`);
+            Logger.error(`错误类型: ${error.name}`);
+            Logger.error(`错误信息: ${error.message}`);
+            if (error.stack) {
+                Logger.error(`错误堆栈:\n${error.stack}`);
+            }
+            throw error;
+        }
+
+        const totalLoadTime = calcPerfTime(totalLoadStart);
+        Logger.info(`========== 所有 API 路由加载完成！总耗时: ${totalLoadTime} ==========`);
     }
 }

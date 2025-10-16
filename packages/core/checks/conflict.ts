@@ -64,7 +64,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
     }
 
     // 收集 addon 表定义
-    if (await addonDirExists(addonName, 'tables')) {
+    if (addonDirExists(addonName, 'tables')) {
         const addonTablesDir = getAddonDir(addonName, 'tables');
         const glob = new Bun.Glob('*.json');
 
@@ -99,7 +99,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
     }
 
     // 收集 addon API 路由
-    if (await addonDirExists(addonName, 'apis')) {
+    if (addonDirExists(addonName, 'apis')) {
         const addonApisDir = getAddonDir(addonName, 'apis');
         const glob = new Bun.Glob('**/*.ts');
 
@@ -134,7 +134,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
     }
 
     // 收集 addon 插件
-    if (await addonDirExists(addonName, 'plugins')) {
+    if (addonDirExists(addonName, 'plugins')) {
         const addonPluginsDir = getAddonDir(addonName, 'plugins');
         const glob = new Bun.Glob('*.ts');
 

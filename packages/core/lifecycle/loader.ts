@@ -16,6 +16,23 @@ import type { ApiRoute } from '../types/api.js';
 import type { BeflyContext } from '../types/befly.js';
 
 /**
+ * 带超时的模块导入函数
+ * @param filePath - 文件路径
+ * @param timeout - 超时时间（毫秒），默认 5000ms
+ * @returns 导入的模块
+ */
+async function importWithTimeout(filePath: string, timeout: number = 5000): Promise<any> {
+    return Promise.race([
+        import(filePath),
+        new Promise((_, reject) =>
+            setTimeout(() => {
+                reject(new Error(`模块导入超时 (${timeout}ms)，可能存在死循环或模块依赖问题`));
+            }, timeout)
+        )
+    ]);
+}
+
+/**
  * 加载器类
  */
 export class Loader {
@@ -48,8 +65,10 @@ export class Loader {
 
                 try {
                     const importStart = Bun.nanoseconds();
-                    const plugin = await import(file);
+                    Logger.debug(`准备导入核心插件: ${fileName}`);
+                    const plugin = await importWithTimeout(file, 5000);
                     const importTime = calcPerfTime(importStart);
+                    Logger.debug(`核心插件 ${fileName} 导入成功，耗时: ${importTime}`);
 
                     const pluginInstance = plugin.default;
                     pluginInstance.pluginName = fileName;
@@ -119,7 +138,7 @@ export class Loader {
             if (addons.length > 0) {
                 const addonPluginsScanStart = Bun.nanoseconds();
                 for (const addon of addons) {
-                    if (!(await addonDirExists(addon, 'plugins'))) continue;
+                    if (!addonDirExists(addon, 'plugins')) continue;
 
                     const addonPluginsDir = getAddonDir(addon, 'plugins');
                     for await (const file of glob.scan({
@@ -140,8 +159,10 @@ export class Loader {
 
                         try {
                             const importStart = Bun.nanoseconds();
-                            const plugin = await import(file);
+                            Logger.debug(`准备导入 addon 插件: ${addon}.${fileName}`);
+                            const plugin = await importWithTimeout(file, 5000);
                             const importTime = calcPerfTime(importStart);
+                            Logger.debug(`Addon 插件 ${addon}.${fileName} 导入成功，耗时: ${importTime}`);
 
                             const pluginInstance = plugin.default;
                             pluginInstance.pluginName = pluginFullName;
@@ -216,8 +237,10 @@ export class Loader {
 
                 try {
                     const importStart = Bun.nanoseconds();
-                    const plugin = await import(file);
+                    Logger.debug(`准备导入用户插件: ${fileName}`);
+                    const plugin = await importWithTimeout(file, 5000);
                     const importTime = calcPerfTime(importStart);
+                    Logger.debug(`用户插件 ${fileName} 导入成功，耗时: ${importTime}`);
 
                     const pluginInstance = plugin.default;
                     pluginInstance.pluginName = fileName;
@@ -339,7 +362,16 @@ export class Loader {
                 const singleApiStart = Bun.nanoseconds();
 
                 try {
-                    const api = (await import(file)).default;
+                    Logger.debug(`[${dirDisplayName}] 准备导入 API 文件: ${apiPath}`);
+                    Logger.debug(`[${dirDisplayName}] 文件绝对路径: ${file}`);
+
+                    const importStart = Bun.nanoseconds();
+                    const api = (await importWithTimeout(file, 5000)).default;
+                    const importTime = calcPerfTime(importStart);
+
+                    Logger.debug(`[${dirDisplayName}] API 文件导入成功: ${apiPath}，耗时: ${importTime}`);
+
+                    Logger.debug(`[${dirDisplayName}] 开始验证 API 属性: ${apiPath}`);
                     if (isType(api.name, 'string') === false || api.name.trim() === '') {
                         throw new Error(`接口 ${apiPath} 的 name 属性必须是非空字符串`);
                     }
@@ -359,6 +391,9 @@ export class Loader {
                     if (isType(api.handler, 'function') === false) {
                         throw new Error(`接口 ${apiPath} 的 handler 属性必须是函数`);
                     }
+
+                    Logger.debug(`[${dirDisplayName}] API 属性验证通过: ${apiPath}`);
+
                     // 构建路由：addon 接口添加前缀 /api/{addonName}/{apiPath}
                     if (isAddon) {
                         api.route = `${api.method.toUpperCase()}/api/${addonName}/${apiPath}`;
@@ -369,10 +404,17 @@ export class Loader {
 
                     const singleApiTime = calcPerfTime(singleApiStart);
                     loadedApis++;
-                    Logger.debug(`${dirDisplayName}接口 ${api.name} 路由: ${api.route}，耗时: ${singleApiTime}`);
+                    Logger.debug(`[${dirDisplayName}] API 注册成功 - 名称: ${api.name}, 路由: ${api.route}, 耗时: ${singleApiTime}`);
                 } catch (error: any) {
                     const singleApiTime = calcPerfTime(singleApiStart);
                     failedApis++;
+                    Logger.error(`[${dirDisplayName}] API 加载失败: ${apiPath}`);
+                    Logger.error(`[${dirDisplayName}] 错误类型: ${error.name}`);
+                    Logger.error(`[${dirDisplayName}] 错误信息: ${error.message}`);
+                    Logger.error(`[${dirDisplayName}] 文件路径: ${file}`);
+                    if (error.stack) {
+                        Logger.error(`[${dirDisplayName}] 错误堆栈: ${error.stack}`);
+                    }
                     ErrorHandler.warning(`${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime}`, error);
                 }
             }
