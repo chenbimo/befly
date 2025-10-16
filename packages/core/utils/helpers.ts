@@ -208,38 +208,58 @@ export const pickFields = <T extends Record<string, any>>(obj: T, keys: string[]
 };
 
 /**
- * 排除指定字段和值
- * @param data - 源数据（对象或数组）
- * @param excludeKeys - 要排除的字段名数组
+ * 字段清理 - 排除指定值，保留特定字段的特定值
+ * @param data - 源数据对象（只接受对象类型）
  * @param excludeValues - 要排除的值数组
- * @returns 排除指定字段和值后的新数据
+ * @param keepValues - 要保留的字段值对象（字段名: 值）
+ * @returns 清理后的新对象
  *
  * @example
- * fieldClear({ a: 1, b: 2, c: 3 }, ['b']) // { a: 1, c: 3 }
- * fieldClear({ a: 1, b: null, c: 3 }, [], [null]) // { a: 1, c: 3 }
- * fieldClear([{ a: 1 }, { a: 2 }], ['a']) // [{}, {}]
+ * // 排除指定值
+ * fieldClear({ a: 1, b: null, c: 3, d: undefined }, [null, undefined], {})
+ * // { a: 1, c: 3 }
+ *
+ * // 保留指定字段的特定值
+ * fieldClear({ category: '', name: 'John', recordId: 0, age: 30 }, [null, undefined, '', 0], { category: '', recordId: 0 })
+ * // { category: '', name: 'John', recordId: 0, age: 30 }
+ *
+ * // 排除空字符串和0，但保留特定字段的这些值
+ * fieldClear({ a: '', b: 'text', c: 0, d: 5 }, ['', 0], { a: '', c: 0 })
+ * // { a: '', b: 'text', c: 0, d: 5 }
+ *
+ * // 默认排除 null 和 undefined
+ * fieldClear({ a: 1, b: null, c: undefined, d: 2 }, [null, undefined], {})
+ * // { a: 1, d: 2 }
  */
-export const fieldClear = <T = any>(data: T, excludeKeys: string[] = [], excludeValues: any[] = [null, undefined]): T | Partial<T> => {
-    const cleanObject = (obj: any): any => {
-        if (!isType(obj, 'object')) return obj;
-        const result: any = {};
-        for (const [k, v] of Object.entries(obj)) {
-            if (excludeKeys.includes(k)) continue;
-            if (excludeValues.includes(v)) continue;
-            result[k] = v;
+export const fieldClear = <T extends Record<string, any> = any>(data: T, excludeValues: any[] = [null, undefined], keepValues: Record<string, any> = {}): Partial<T> => {
+    // 只接受对象类型
+    if (!data || !isType(data, 'object')) {
+        return {};
+    }
+
+    const result: any = {};
+
+    for (const [key, value] of Object.entries(data)) {
+        // 检查是否在 keepValues 中（保留特定字段的特定值，优先级最高）
+        if (key in keepValues) {
+            // 使用 Object.is 严格比较（处理 NaN、0、-0 等特殊值）
+            if (Object.is(keepValues[key], value)) {
+                result[key] = value;
+                continue;
+            }
         }
-        return result;
-    };
 
-    if (isType(data, 'array')) {
-        return (data as any).filter((item: any) => !excludeValues.includes(item)).map((item: any) => (isType(item, 'object') ? cleanObject(item) : item));
+        // 排除指定值
+        const shouldExclude = excludeValues.some((excludeVal) => Object.is(excludeVal, value));
+        if (shouldExclude) {
+            continue;
+        }
+
+        // 保留其他字段
+        result[key] = value;
     }
 
-    if (isType(data, 'object')) {
-        return cleanObject(data);
-    }
-
-    return data;
+    return result;
 };
 
 // ========================================
