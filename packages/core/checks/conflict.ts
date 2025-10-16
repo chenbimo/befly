@@ -7,7 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../utils/framework.js';
-import { isReservedTableName, isReservedRoute, isReservedPluginName, isReservedAddonName, getReservedTablePrefixes, getReservedRoutes, getReservedPlugins, getReservedAddonNames } from '../config/reserved.js';
+import { isReservedTableName, isReservedPluginName, isReservedAddonName, getReservedTablePrefixes, getReservedPlugins, getReservedAddonNames } from '../config/reserved.js';
 
 /**
  * 资源注册表
@@ -59,7 +59,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
 
     // 检查 addon 名称是否使用保留名称
     if (isReservedAddonName(addonName)) {
-        conflicts.push(`Addon 名称 "${addonName}" 使用了保留名称，保留名称包括: ${getReservedAddonNames().join(', ')}`);
+        conflicts.push(`组件名称 "${addonName}" 使用了保留名称，保留名称包括: ${getReservedAddonNames().join(', ')}`);
         return conflicts;
     }
 
@@ -82,15 +82,15 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
 
                 // 检查是否使用保留前缀
                 if (isReservedTableName(tableName)) {
-                    conflicts.push(`Addon [${addonName}] 表 "${tableName}" 使用了保留前缀，保留前缀包括: ${getReservedTablePrefixes().join(', ')}`);
+                    conflicts.push(`组件 [${addonName}] 表 "${tableName}" 使用了保留前缀，保留前缀包括: ${getReservedTablePrefixes().join(', ')}`);
                     continue;
                 }
 
                 // 检查是否与已有表冲突
                 if (registry.tables.has(tableName)) {
-                    conflicts.push(`Addon [${addonName}] 表 "${tableName}" 与 ${registry.tables.get(tableName)} 冲突`);
+                    conflicts.push(`组件 [${addonName}] 表 "${tableName}" 与 ${registry.tables.get(tableName)} 冲突`);
                 } else {
-                    registry.tables.set(tableName, `addon[${addonName}]`);
+                    registry.tables.set(tableName, `组件[${addonName}]`);
                 }
             } catch (error: any) {
                 // 表定义解析错误会在 table.ts 中处理，这里跳过
@@ -115,17 +115,17 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
                 const api = (await import(file)).default;
                 const route = `${(api.method || 'POST').toUpperCase()}/api/${addonName}/${apiPath}`;
 
-                // 检查是否使用保留路由
-                if (isReservedRoute(route)) {
-                    conflicts.push(`Addon [${addonName}] 路由 "${route}" 使用了保留路径，保留路径包括: ${getReservedRoutes().join(', ')}`);
+                // 检查是否使用保留路由前缀 /api
+                if (route.includes('/api/api/') || route.includes('/api/api')) {
+                    conflicts.push(`组件 [${addonName}] 路由 "${route}" 使用了保留路径前缀 "/api"`);
                     continue;
                 }
 
                 // 检查是否与已有路由冲突
                 if (registry.routes.has(route)) {
-                    conflicts.push(`Addon [${addonName}] 路由 "${route}" 与 ${registry.routes.get(route)} 冲突`);
+                    conflicts.push(`组件 [${addonName}] 路由 "${route}" 与 ${registry.routes.get(route)} 冲突`);
                 } else {
-                    registry.routes.set(route, `addon[${addonName}]`);
+                    registry.routes.set(route, `组件[${addonName}]`);
                 }
             } catch (error: any) {
                 // API 加载错误会在 loader.ts 中处理，这里跳过
@@ -151,15 +151,15 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
 
             // 检查是否使用保留名称
             if (isReservedPluginName(pluginName)) {
-                conflicts.push(`Addon [${addonName}] 插件 "${pluginName}" 使用了保留名称，保留名称包括: ${getReservedPlugins().join(', ')}`);
+                conflicts.push(`组件 [${addonName}] 插件 "${pluginName}" 使用了保留名称，保留名称包括: ${getReservedPlugins().join(', ')}`);
                 continue;
             }
 
             // 检查是否与已有插件冲突
             if (registry.plugins.has(pluginName)) {
-                conflicts.push(`Addon [${addonName}] 插件 "${pluginName}" 与 ${registry.plugins.get(pluginName)} 冲突`);
+                conflicts.push(`组件 [${addonName}] 插件 "${pluginName}" 与 ${registry.plugins.get(pluginName)} 冲突`);
             } else {
-                registry.plugins.set(pluginName, `addon[${addonName}]`);
+                registry.plugins.set(pluginName, `组件[${addonName}]`);
             }
         }
     }
@@ -225,9 +225,9 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
                 const api = (await import(file)).default;
                 const route = `${(api.method || 'POST').toUpperCase()}/api/${apiPath}`;
 
-                // 检查是否使用保留路由
-                if (isReservedRoute(route)) {
-                    conflicts.push(`用户路由 "${route}" 使用了保留路径，保留路径包括: ${getReservedRoutes().join(', ')}`);
+                // 检查是否使用保留路由前缀 /api
+                if (apiPath.startsWith('api/') || apiPath === 'api') {
+                    conflicts.push(`用户路由 "${route}" 使用了保留路径前缀 "/api"`);
                     continue;
                 }
 
