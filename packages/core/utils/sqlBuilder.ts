@@ -3,6 +3,7 @@
  * 提供类型安全的 SQL 查询构建功能
  */
 
+import { DBError } from './errors.js';
 import type { OrderDirection, SqlValue } from '../types/common.js';
 import type { SqlQuery, WhereOperator, WhereConditions, InsertData, UpdateData } from '../types/database';
 
@@ -113,7 +114,120 @@ export class SqlBuilder {
      */
     private _validateParam(value: any): void {
         if (value === undefined) {
-            throw new Error('参数值不能为 undefined');
+            throw DBError.invalidParams('参数值不能为 undefined', { value });
+        }
+    }
+
+    /**
+     * 处理单个操作符条件
+     */
+    private _applyOperator(fieldName: string, operator: WhereOperator, value: any): void {
+        const escapedField = this._escapeField(fieldName);
+
+        switch (operator) {
+            case '$ne':
+            case '$not':
+                this._validateParam(value);
+                this._where.push(`${escapedField} != ?`);
+                this._params.push(value);
+                break;
+
+            case '$in':
+                if (!Array.isArray(value)) {
+                    throw DBError.invalidParams(`$in 操作符的值必须是数组`, { operator, value });
+                }
+                if (value.length === 0) {
+                    throw DBError.invalidParams(`$in 操作符的数组不能为空。提示：空数组会导致查询永远不匹配任何记录，这通常不是预期行为。请检查查询条件或移除该字段。`, { operator, value });
+                }
+                const placeholders = value.map(() => '?').join(',');
+                this._where.push(`${escapedField} IN (${placeholders})`);
+                this._params.push(...value);
+                break;
+
+            case '$nin':
+            case '$notIn':
+                if (!Array.isArray(value)) {
+                    throw DBError.invalidParams(`$nin/$notIn 操作符的值必须是数组`, { operator, value });
+                }
+                if (value.length === 0) {
+                    throw DBError.invalidParams(`$nin/$notIn 操作符的数组不能为空。提示：空数组会导致查询匹配所有记录，这通常不是预期行为。请检查查询条件或移除该字段。`, { operator, value });
+                }
+                const placeholders2 = value.map(() => '?').join(',');
+                this._where.push(`${escapedField} NOT IN (${placeholders2})`);
+                this._params.push(...value);
+                break;
+
+            case '$like':
+                this._validateParam(value);
+                this._where.push(`${escapedField} LIKE ?`);
+                this._params.push(value);
+                break;
+
+            case '$notLike':
+                this._validateParam(value);
+                this._where.push(`${escapedField} NOT LIKE ?`);
+                this._params.push(value);
+                break;
+
+            case '$gt':
+                this._validateParam(value);
+                this._where.push(`${escapedField} > ?`);
+                this._params.push(value);
+                break;
+
+            case '$gte':
+                this._validateParam(value);
+                this._where.push(`${escapedField} >= ?`);
+                this._params.push(value);
+                break;
+
+            case '$lt':
+                this._validateParam(value);
+                this._where.push(`${escapedField} < ?`);
+                this._params.push(value);
+                break;
+
+            case '$lte':
+                this._validateParam(value);
+                this._where.push(`${escapedField} <= ?`);
+                this._params.push(value);
+                break;
+
+            case '$between':
+                if (Array.isArray(value) && value.length === 2) {
+                    this._validateParam(value[0]);
+                    this._validateParam(value[1]);
+                    this._where.push(`${escapedField} BETWEEN ? AND ?`);
+                    this._params.push(value[0], value[1]);
+                }
+                break;
+
+            case '$notBetween':
+                if (Array.isArray(value) && value.length === 2) {
+                    this._validateParam(value[0]);
+                    this._validateParam(value[1]);
+                    this._where.push(`${escapedField} NOT BETWEEN ? AND ?`);
+                    this._params.push(value[0], value[1]);
+                }
+                break;
+
+            case '$null':
+                if (value === true) {
+                    this._where.push(`${escapedField} IS NULL`);
+                }
+                break;
+
+            case '$notNull':
+                if (value === true) {
+                    this._where.push(`${escapedField} IS NOT NULL`);
+                }
+                break;
+
+            default:
+                // 等于条件
+                this._validateParam(value);
+                this._where.push(`${escapedField} = ?`);
+                this._params.push(value);
         }
     }
 
@@ -158,159 +272,14 @@ export class SqlBuilder {
                 // 一级属性格式：age$gt, role$in 等
                 const lastDollarIndex = key.lastIndexOf('$');
                 const fieldName = key.substring(0, lastDollarIndex);
-                const escapedFieldName = this._escapeField(fieldName);
                 const operator = ('$' + key.substring(lastDollarIndex + 1)) as WhereOperator;
-
-                switch (operator) {
-                    case '$ne':
-                    case '$not':
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} != ?`);
-                        this._params.push(value);
-                        break;
-                    case '$in':
-                        if (Array.isArray(value) && value.length > 0) {
-                            const placeholders = value.map(() => '?').join(',');
-                            this._where.push(`${escapedFieldName} IN (${placeholders})`);
-                            this._params.push(...value);
-                        }
-                        break;
-                    case '$nin':
-                    case '$notIn':
-                        if (Array.isArray(value) && value.length > 0) {
-                            const placeholders = value.map(() => '?').join(',');
-                            this._where.push(`${escapedFieldName} NOT IN (${placeholders})`);
-                            this._params.push(...value);
-                        }
-                        break;
-                    case '$like':
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} LIKE ?`);
-                        this._params.push(value);
-                        break;
-                    case '$notLike':
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} NOT LIKE ?`);
-                        this._params.push(value);
-                        break;
-                    case '$gt':
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} > ?`);
-                        this._params.push(value);
-                        break;
-                    case '$gte':
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} >= ?`);
-                        this._params.push(value);
-                        break;
-                    case '$lt':
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} < ?`);
-                        this._params.push(value);
-                        break;
-                    case '$lte':
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} <= ?`);
-                        this._params.push(value);
-                        break;
-                    case '$between':
-                        if (Array.isArray(value) && value.length === 2) {
-                            this._where.push(`${escapedFieldName} BETWEEN ? AND ?`);
-                            this._params.push(value[0], value[1]);
-                        }
-                        break;
-                    case '$notBetween':
-                        if (Array.isArray(value) && value.length === 2) {
-                            this._where.push(`${escapedFieldName} NOT BETWEEN ? AND ?`);
-                            this._params.push(value[0], value[1]);
-                        }
-                        break;
-                    case '$null':
-                        if (value === true) {
-                            this._where.push(`${escapedFieldName} IS NULL`);
-                        }
-                        break;
-                    case '$notNull':
-                        if (value === true) {
-                            this._where.push(`${escapedFieldName} IS NOT NULL`);
-                        }
-                        break;
-                    default:
-                        this._validateParam(value);
-                        this._where.push(`${escapedFieldName} = ?`);
-                        this._params.push(value);
-                }
+                this._applyOperator(fieldName, operator, value);
             } else {
                 // 检查值是否为对象（嵌套条件）
                 if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                     // 嵌套条件：如 { age: { $gt: 18 } }
-                    const escapedKey = this._escapeField(key);
                     for (const [op, val] of Object.entries(value)) {
-                        switch (op as WhereOperator) {
-                            case '$ne':
-                            case '$not':
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} != ?`);
-                                this._params.push(val);
-                                break;
-                            case '$gt':
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} > ?`);
-                                this._params.push(val);
-                                break;
-                            case '$gte':
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} >= ?`);
-                                this._params.push(val);
-                                break;
-                            case '$lt':
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} < ?`);
-                                this._params.push(val);
-                                break;
-                            case '$lte':
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} <= ?`);
-                                this._params.push(val);
-                                break;
-                            case '$like':
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} LIKE ?`);
-                                this._params.push(val);
-                                break;
-                            case '$notLike':
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} NOT LIKE ?`);
-                                this._params.push(val);
-                                break;
-                            case '$in':
-                                if (Array.isArray(val) && val.length > 0) {
-                                    const placeholders = val.map(() => '?').join(',');
-                                    this._where.push(`${escapedKey} IN (${placeholders})`);
-                                    this._params.push(...val);
-                                }
-                                break;
-                            case '$nin':
-                            case '$notIn':
-                                if (Array.isArray(val) && val.length > 0) {
-                                    const placeholders = val.map(() => '?').join(',');
-                                    this._where.push(`${escapedKey} NOT IN (${placeholders})`);
-                                    this._params.push(...val);
-                                }
-                                break;
-                            case '$null':
-                                if (val) {
-                                    this._where.push(`${escapedKey} IS NULL`);
-                                } else {
-                                    this._where.push(`${escapedKey} IS NOT NULL`);
-                                }
-                                break;
-                            default:
-                                // 未知操作符，按等于处理
-                                this._validateParam(val);
-                                this._where.push(`${escapedKey} = ?`);
-                                this._params.push(val);
-                        }
+                        this._applyOperator(key, op as WhereOperator, val);
                     }
                 } else {
                     // 简单的等于条件
@@ -324,6 +293,16 @@ export class SqlBuilder {
     }
 
     /**
+     * 获取 WHERE 条件（供 SqlHelper 使用）
+     */
+    getWhereConditions(): { sql: string; params: SqlValue[] } {
+        return {
+            sql: this._where.length > 0 ? this._where.join(' AND ') : '',
+            params: [...this._params]
+        };
+    }
+
+    /**
      * SELECT 字段
      */
     select(fields: string | string[] = '*'): this {
@@ -332,7 +311,7 @@ export class SqlBuilder {
         } else if (typeof fields === 'string') {
             this._select.push(this._escapeField(fields));
         } else {
-            throw new Error('SELECT 字段必须是字符串或数组');
+            throw DBError.invalidParams('SELECT 字段必须是字符串或数组', { fields });
         }
         return this;
     }
@@ -342,7 +321,7 @@ export class SqlBuilder {
      */
     from(table: string): this {
         if (typeof table !== 'string' || !table.trim()) {
-            throw new Error('FROM 表名必须是非空字符串');
+            throw DBError.invalidTableName('FROM 表名必须是非空字符串', { table });
         }
         this._from = this._escapeTable(table.trim());
         return this;
@@ -370,7 +349,7 @@ export class SqlBuilder {
      */
     leftJoin(table: string, on: string): this {
         if (typeof table !== 'string' || typeof on !== 'string') {
-            throw new Error('JOIN 表名和条件必须是字符串');
+            throw DBError.invalidParams('JOIN 表名和条件必须是字符串', { table, on });
         }
         const escapedTable = this._escapeTable(table);
         this._joins.push(`LEFT JOIN ${escapedTable} ON ${on}`);
@@ -383,12 +362,12 @@ export class SqlBuilder {
      */
     orderBy(fields: string[]): this {
         if (!Array.isArray(fields)) {
-            throw new Error('orderBy 必须是字符串数组，格式为 "字段#方向"');
+            throw DBError.invalidParams('orderBy 必须是字符串数组，格式为 "字段#方向"', { fields });
         }
 
         fields.forEach((item) => {
             if (typeof item !== 'string' || !item.includes('#')) {
-                throw new Error('orderBy 字段必须是 "字段#方向" 格式的字符串（例如："name#ASC", "id#DESC"）');
+                throw DBError.invalidParams('orderBy 字段必须是 "字段#方向" 格式的字符串（例如："name#ASC", "id#DESC"）', { item });
             }
 
             const [fieldName, direction] = item.split('#');
@@ -396,11 +375,11 @@ export class SqlBuilder {
             const cleanDir = direction.trim().toUpperCase() as OrderDirection;
 
             if (!cleanField) {
-                throw new Error('orderBy 中字段名不能为空');
+                throw DBError.invalidFieldName('orderBy 中字段名不能为空', { item });
             }
 
             if (!['ASC', 'DESC'].includes(cleanDir)) {
-                throw new Error('ORDER BY 方向必须是 ASC 或 DESC');
+                throw DBError.invalidParams('ORDER BY 方向必须是 ASC 或 DESC', { direction: cleanDir });
             }
 
             const escapedField = this._escapeField(cleanField);
@@ -438,12 +417,12 @@ export class SqlBuilder {
      */
     limit(count: number, offset?: number): this {
         if (typeof count !== 'number' || count < 0) {
-            throw new Error('LIMIT 数量必须是非负数');
+            throw DBError.invalidParams('LIMIT 数量必须是非负数', { count });
         }
         this._limit = Math.floor(count);
         if (offset !== undefined && offset !== null) {
             if (typeof offset !== 'number' || offset < 0) {
-                throw new Error('OFFSET 必须是非负数');
+                throw DBError.invalidParams('OFFSET 必须是非负数', { offset });
             }
             this._offset = Math.floor(offset);
         }
@@ -455,7 +434,7 @@ export class SqlBuilder {
      */
     offset(count: number): this {
         if (typeof count !== 'number' || count < 0) {
-            throw new Error('OFFSET 必须是非负数');
+            throw DBError.invalidParams('OFFSET 必须是非负数', { count });
         }
         this._offset = Math.floor(count);
         return this;
@@ -470,7 +449,7 @@ export class SqlBuilder {
         sql += this._select.length > 0 ? this._select.join(', ') : '*';
 
         if (!this._from) {
-            throw new Error('FROM 表名是必需的');
+            throw DBError.invalidTableName('FROM 表名是必需的', {});
         }
         sql += ` FROM ${this._from}`;
 
@@ -509,23 +488,23 @@ export class SqlBuilder {
      */
     toInsertSql(table: string, data: InsertData): SqlQuery {
         if (!table || typeof table !== 'string') {
-            throw new Error('INSERT 需要表名');
+            throw DBError.invalidTableName('INSERT 需要表名', { table });
         }
 
         if (!data || typeof data !== 'object') {
-            throw new Error('INSERT 需要数据');
+            throw DBError.invalidParams('INSERT 需要数据', { table, data });
         }
 
         const escapedTable = this._escapeTable(table);
 
         if (Array.isArray(data)) {
             if (data.length === 0) {
-                throw new Error('插入数据不能为空');
+                throw DBError.invalidParams('插入数据不能为空', { table });
             }
 
             const fields = Object.keys(data[0]);
             if (fields.length === 0) {
-                throw new Error('插入数据必须至少有一个字段');
+                throw DBError.invalidParams('插入数据必须至少有一个字段', { table });
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));
@@ -539,7 +518,7 @@ export class SqlBuilder {
         } else {
             const fields = Object.keys(data);
             if (fields.length === 0) {
-                throw new Error('插入数据必须至少有一个字段');
+                throw DBError.invalidParams('插入数据必须至少有一个字段', { table });
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));
