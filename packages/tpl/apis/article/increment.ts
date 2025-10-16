@@ -1,16 +1,15 @@
 /**
- * 文章字段自增接口
+ * 文章字段增量接口
  */
 
-import { Api, Yes, No } from 'befly';
+import { Api, Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
-import commonFields from 'befly/tables/_common.json';
 
-export default Api('文章字段自增', {
+export default Api('文章字段增量', {
     method: 'POST',
     auth: false,
     fields: {
-        id: commonFields._id,
+        id: Fields._id,
         field: '字段名|string|1|50|null|1|^[a-zA-Z_][a-zA-Z0-9_]*$',
         value: '自增值|number|-999999|999999|1|0|null'
     },

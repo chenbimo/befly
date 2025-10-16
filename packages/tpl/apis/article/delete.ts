@@ -2,15 +2,14 @@
  * 删除文章接口（软删除）
  */
 
-import { Api, Yes, No } from 'befly';
+import { Api, Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
-import commonFields from 'befly/tables/_common.json';
 
 export default Api('删除文章', {
     method: 'POST',
     auth: false,
     fields: {
-        id: commonFields._id
+        id: Fields._id
     },
     required: ['id'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {

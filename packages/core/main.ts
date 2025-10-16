@@ -4,6 +4,7 @@
  */
 
 import { Env } from './config/env.js';
+import { Fields } from './config/fields.js';
 import { Api } from './utils/framework.js';
 import { Yes, No } from './utils/index.js';
 import { Logger } from './utils/logger.js';
@@ -44,4 +45,4 @@ export class Befly {
 }
 
 // 核心类和工具导出（只导出运行时代码，不导出类型）
-export { Env, Api, Jwt, Validator, Crypto2, Logger, Yes, No, SqlHelper, createSqlClient, RedisHelper };
+export { Env, Fields, Api, Jwt, Validator, Crypto2, Logger, Yes, No, SqlHelper, createSqlClient, RedisHelper };

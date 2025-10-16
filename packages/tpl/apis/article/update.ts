@@ -2,16 +2,15 @@
  * 更新文章接口
  */
 
-import { Api, Yes, No } from 'befly';
+import { Api, Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
-import commonFields from 'befly/tables/_common.json';
 import articleTable from '../../tables/article.json';
 
 export default Api('更新文章', {
     method: 'POST',
     auth: false,
     fields: {
-        id: commonFields._id,
+        id: Fields._id,
         title: articleTable.title,
         content: articleTable.content,
         summary: articleTable.summary,

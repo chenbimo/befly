@@ -15,7 +15,7 @@
  * - 正则表达式：用于验证字段值的正则表达式，无验证时填 null
  */
 
-export const CommonFields = {
+export const Fields = {
     _id: 'ID|number|1|null|null|1|null',
     email: '邮箱|string|5|100|null|1|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
     phone: '手机号|string|11|11|null|1|^1[3-9]\\d{9}$',
@@ -35,4 +35,4 @@ export const CommonFields = {
     endTime: '结束时间|number|0|9999999999999|null|0|null'
 } as const;
 
-export default CommonFields;
+export default Fields;

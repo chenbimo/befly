@@ -1,16 +1,15 @@
 /**
- * 文章详情接口
+ * 获取文章详情接口
  */
 
-import { Api, Yes, No } from 'befly';
+import { Api, Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
-import commonFields from 'befly/tables/_common.json';
 
-export default Api('文章详情', {
+export default Api('获取文章详情', {
     method: 'POST',
     auth: false,
     fields: {
-        id: commonFields._id
+        id: Fields._id
     },
     required: ['id'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
