@@ -5,8 +5,6 @@
 import { Yes, No } from 'befly';
 export default {
     name: '保存角色菜单权限',
-    method: 'POST',
-    auth: true,
     fields: {
         roleId: '角色ID|number|1|999999999999999|null|1|null',
         menuIds: '菜单ID列表|string|0|10000|[]|0|null'

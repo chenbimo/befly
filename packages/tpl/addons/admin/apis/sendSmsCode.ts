@@ -10,8 +10,7 @@ import adminTable from '../tables/admin.json';
 
 export default {
     name: '发送短信验证码',
-    method: 'POST',
-    auth: false, // 公开接口
+    auth: false,
     fields: {
         phone: adminTable.phone
     },

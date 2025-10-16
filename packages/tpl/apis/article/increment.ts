@@ -8,7 +8,6 @@ import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '文章字段增量',
-    method: 'POST',
     auth: false,
     fields: {
         id: Fields._id,

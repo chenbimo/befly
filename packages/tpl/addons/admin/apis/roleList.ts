@@ -5,9 +5,6 @@
 import { Yes, No } from 'befly';
 export default {
     name: '获取角色列表',
-    method: 'POST',
-    auth: true,
-    fields: {},
     handler: async (befly, ctx) => {
         try {
             const roles = await befly.db.getList({

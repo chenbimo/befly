@@ -12,15 +12,13 @@ import adminTable from '../tables/admin.json';
 
 export default {
     name: '管理员登录',
-    method: 'POST',
-    auth: false, // 公开接口
+    auth: false,
     fields: {
         email: adminTable.email,
         password: adminTable.password,
         phone: adminTable.phone,
         code: '验证码|string|4|6|null|0|null'
     },
-    required: [], // 不设置必填,因为要支持多种登录方式
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         let admin: Admin | null = null;
 

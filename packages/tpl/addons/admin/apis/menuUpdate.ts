@@ -7,8 +7,6 @@ import type { ApiRoute } from 'befly/types';
  */
 export default {
     name: '更新菜单',
-    method: 'POST',
-    auth: true,
     fields: {
         id: '菜单ID|number|1|999999999999999|null|1|null',
         name: adminMenuTable.name,

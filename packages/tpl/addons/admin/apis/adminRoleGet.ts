@@ -5,8 +5,6 @@
 import { Yes, No } from 'befly';
 export default {
     name: '获取用户角色',
-    method: 'POST',
-    auth: true,
     fields: {
         adminId: '用户ID|number|1|999999999999999|null|1|null'
     },

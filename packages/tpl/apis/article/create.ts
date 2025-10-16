@@ -10,8 +10,7 @@ import articleTable from '../../tables/article.json';
 
 export default {
     name: '创建文章',
-    method: 'POST',
-    auth: false, // 临时关闭认证以测试插入逻辑
+    auth: false,
     fields: {
         title: articleTable.title,
         content: articleTable.content,

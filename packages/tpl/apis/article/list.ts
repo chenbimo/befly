@@ -10,8 +10,7 @@ import type { Article } from '../../../types/models';
 
 export default {
     name: '获取文章列表',
-    method: 'POST',
-    auth: false, // 公开接口
+    auth: false,
     fields: {
         page: Fields.page,
         limit: Fields.limit,
@@ -21,7 +20,6 @@ export default {
         published: '是否发布|number|0|1|null|0|^(0|1)
 
     },
-    required: [],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         // 构建查询条件
         let where: any = params.where || {};

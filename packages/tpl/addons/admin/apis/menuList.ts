@@ -6,8 +6,6 @@
 import { Yes, No } from 'befly';
 export default {
     name: '获取菜单列表',
-    method: 'GET',
-    auth: true,
     handler: async (befly, ctx) => {
         try {
             const menus = await befly.db.getAll({

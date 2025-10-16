@@ -5,8 +5,6 @@
 import { Yes, No } from 'befly';
 export default {
     name: '删除角色',
-    method: 'POST',
-    auth: true,
     fields: {
         id: '角色ID|number|1|999999999999999|null|1|null'
     },

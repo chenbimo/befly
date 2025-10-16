@@ -8,7 +8,6 @@ import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '创建待办事项',
-    method: 'POST',
     auth: false,
     fields: {
         title: '标题|string|1|100|null|0|null',

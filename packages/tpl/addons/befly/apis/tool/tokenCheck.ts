@@ -16,9 +16,7 @@ interface TokenCheckData {
 
 export default {
     name: '令牌检测',
-    auth: false, // 公开接口
-    fields: {},
-    required: [],
+    auth: false,
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         // 从 Authorization 头获取 token
         const authHeader = ctx.headers.authorization || '';

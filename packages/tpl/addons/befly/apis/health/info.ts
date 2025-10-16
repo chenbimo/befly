@@ -25,9 +25,7 @@ interface HealthInfo {
 
 export default {
     name: '健康检查',
-    auth: false, // 公开接口
-    fields: {},
-    required: [],
+    auth: false,
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         const info: HealthInfo = {
             status: 'ok',

@@ -9,7 +9,6 @@ import articleTable from '../../tables/article.json';
 
 export default {
     name: '更新文章',
-    method: 'POST',
     auth: false,
     fields: {
         id: Fields._id,

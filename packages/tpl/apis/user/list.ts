@@ -9,7 +9,6 @@ import type { User } from '../../../types/models';
 
 export default {
     name: '获取用户列表',
-    method: 'POST',
     auth: ['admin'], // 仅管理员可访问
     fields: {
         page: '页码|number|1|9999|1|0|null',
@@ -18,7 +17,6 @@ export default {
 ,
         keyword: '关键词|string|0|50|null|0|null'
     },
-    required: [],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         const params = ctx.body as GetUsersRequest;
 

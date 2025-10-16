@@ -11,8 +11,7 @@ import adminTable from '../tables/admin.json';
 
 export default {
     name: '管理员注册',
-    method: 'POST',
-    auth: false, // 公开接口
+    auth: false,
     fields: {
         name: adminTable.name,
         email: adminTable.email,

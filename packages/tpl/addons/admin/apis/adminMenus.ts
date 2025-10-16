@@ -9,8 +9,6 @@
 import { Yes, No } from 'befly';
 export default {
     name: '获取用户菜单',
-    method: 'GET',
-    auth: true, // 需要登录
     handler: async (befly, ctx) => {
         try {
             // 获取当前登录用户ID

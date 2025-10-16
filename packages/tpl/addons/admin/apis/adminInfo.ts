@@ -14,8 +14,6 @@ import type { Admin } from '../types';
 
 export default {
     name: '获取用户信息',
-    method: 'GET',
-    auth: true, // 需要认证
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         // 从 JWT token 中获取用户ID
         const userId = ctx.auth?.userId;

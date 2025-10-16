@@ -7,8 +7,6 @@ import type { ApiRoute } from 'befly/types';
  */
 export default {
     name: '创建角色',
-    method: 'POST',
-    auth: true,
     fields: {
         name: adminRoleTable.name,
         code: adminRoleTable.code,

@@ -8,8 +8,7 @@ import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '示例接口',
-    method: 'POST',
-    auth: false, // 不需要认证
+    auth: false,
     fields: {
         name: '名称|string|1|50|null|0|null',
         age: '年龄|number|1|150|18|0|null'
