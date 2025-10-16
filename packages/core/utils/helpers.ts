@@ -294,3 +294,147 @@ export const calcPerfTime = (startTime: number, endTime: number = Bun.nanosecond
         return `${elapsedSeconds.toFixed(2)} 秒`;
     }
 };
+
+// ========================================
+// 命名转换工具
+// ========================================
+
+/**
+ * 小驼峰转下划线
+ * @param str - 小驼峰字符串
+ * @returns 下划线格式字符串
+ *
+ * @example
+ * toSnakeCase('userId') // 'user_id'
+ * toSnakeCase('createdAt') // 'created_at'
+ * toSnakeCase('userName') // 'user_name'
+ * toSnakeCase('APIKey') // 'api_key'
+ */
+export const toSnakeCase = (str: string): string => {
+    if (!str || typeof str !== 'string') return str;
+    return str
+        .replace(/([A-Z])/g, '_$1')
+        .toLowerCase()
+        .replace(/^_/, '');
+};
+
+/**
+ * 下划线转小驼峰
+ * @param str - 下划线格式字符串
+ * @returns 小驼峰字符串
+ *
+ * @example
+ * toCamelCase('user_id') // 'userId'
+ * toCamelCase('created_at') // 'createdAt'
+ * toCamelCase('user_name') // 'userName'
+ */
+export const toCamelCase = (str: string): string => {
+    if (!str || typeof str !== 'string') return str;
+    return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+};
+
+/**
+ * 对象字段名转下划线
+ * @param obj - 源对象
+ * @returns 字段名转为下划线格式的新对象
+ *
+ * @example
+ * keysToSnake({ userId: 123, userName: 'John' }) // { user_id: 123, user_name: 'John' }
+ * keysToSnake({ createdAt: 1697452800000 }) // { created_at: 1697452800000 }
+ */
+export const keysToSnake = <T = any>(obj: Record<string, any>): T => {
+    if (!obj || !isType(obj, 'object')) return obj as T;
+
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+        const snakeKey = toSnakeCase(key);
+        result[snakeKey] = value;
+    }
+    return result;
+};
+
+/**
+ * 对象字段名转小驼峰
+ * @param obj - 源对象
+ * @returns 字段名转为小驼峰格式的新对象
+ *
+ * @example
+ * keysToCamel({ user_id: 123, user_name: 'John' }) // { userId: 123, userName: 'John' }
+ * keysToCamel({ created_at: 1697452800000 }) // { createdAt: 1697452800000 }
+ */
+export const keysToCamel = <T = any>(obj: Record<string, any>): T => {
+    if (!obj || !isType(obj, 'object')) return obj as T;
+
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+        const camelKey = toCamelCase(key);
+        result[camelKey] = value;
+    }
+    return result;
+};
+
+/**
+ * 数组对象字段名批量转小驼峰
+ * @param arr - 源数组
+ * @returns 字段名转为小驼峰格式的新数组
+ *
+ * @example
+ * arrayKeysToCamel([
+ *   { user_id: 1, user_name: 'John' },
+ *   { user_id: 2, user_name: 'Jane' }
+ * ])
+ * // [{ userId: 1, userName: 'John' }, { userId: 2, userName: 'Jane' }]
+ */
+export const arrayKeysToCamel = <T = any>(arr: Record<string, any>[]): T[] => {
+    if (!arr || !isType(arr, 'array')) return arr as T[];
+    return arr.map((item) => keysToCamel<T>(item));
+};
+
+/**
+ * Where 条件字段名转下划线（递归处理嵌套结构）
+ * @param where - Where 条件对象
+ * @returns 字段名转为下划线格式的新对象
+ *
+ * @example
+ * whereKeysToSnake({ userId: 123 }) // { user_id: 123 }
+ * whereKeysToSnake({ userId$gt: 100 }) // { user_id$gt: 100 }
+ * whereKeysToSnake({ $or: [{ userId: 1 }, { userName: 'John' }] })
+ * // { $or: [{ user_id: 1 }, { user_name: 'John' }] }
+ */
+export const whereKeysToSnake = (where: any): any => {
+    if (!where || !isType(where, 'object')) return where;
+
+    const result: any = {};
+
+    for (const [key, value] of Object.entries(where)) {
+        // 处理 $or、$and 等逻辑操作符
+        if (key === '$or' || key === '$and') {
+            if (isType(value, 'array')) {
+                result[key] = (value as any[]).map((item) => whereKeysToSnake(item));
+            } else {
+                result[key] = value;
+            }
+            continue;
+        }
+
+        // 处理字段名（包含操作符的情况，如 'userId$gt'）
+        if (key.includes('$')) {
+            // 分离字段名和操作符
+            const [fieldName, ...operators] = key.split('$');
+            const snakeField = toSnakeCase(fieldName);
+            const newKey = operators.length > 0 ? `${snakeField}$${operators.join('$')}` : snakeField;
+            result[newKey] = value;
+        } else {
+            // 普通字段名
+            const snakeKey = toSnakeCase(key);
+            // 如果值是对象（嵌套的操作符对象），递归处理
+            if (isType(value, 'object') && !isType(value, 'array')) {
+                result[snakeKey] = whereKeysToSnake(value);
+            } else {
+                result[snakeKey] = value;
+            }
+        }
+    }
+
+    return result;
+};

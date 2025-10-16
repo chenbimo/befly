@@ -4,6 +4,7 @@
  */
 
 import { SqlBuilder } from './sqlBuilder.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake } from './helpers.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
@@ -31,8 +32,11 @@ export class SqlHelper {
      * 处理插入数据（强制生成系统字段，用户不可覆盖）
      */
     private async processDataForInsert(data: Record<string, any>): Promise<Record<string, any>> {
+        // 字段名转换：小驼峰 → 下划线
+        const snakeData = keysToSnake(data);
+
         // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
-        const { id, created_at, updated_at, deleted_at, state, ...userData } = data;
+        const { id, created_at, updated_at, deleted_at, state, ...userData } = snakeData;
 
         const processed: Record<string, any> = { ...userData };
 
@@ -118,16 +122,21 @@ export class SqlHelper {
     async getDetail<T = any>(options: QueryOptions): Promise<T | null> {
         const { table, fields = ['*'], where, includeDeleted = false, customState } = options;
 
+        // 转换 where 条件字段名：小驼峰 → 下划线
+        const snakeWhere = whereKeysToSnake(where);
+
         const builder = new SqlBuilder()
             .select(fields)
             .from(table)
-            .where(this.addDefaultStateFilter(where, includeDeleted, customState))
+            .where(this.addDefaultStateFilter(snakeWhere, includeDeleted, customState))
             .limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
 
-        return result?.[0] || null;
+        // 字段名转换：下划线 → 小驼峰
+        const row = result?.[0] || null;
+        return row ? keysToCamel<T>(row) : null;
     }
 
     /**
@@ -144,8 +153,11 @@ export class SqlHelper {
             throw new Error('每页数量必须在 1 到 1000 之间');
         }
 
+        // 转换 where 条件字段名：小驼峰 → 下划线
+        const snakeWhere = whereKeysToSnake(where);
+
         // 构建查询
-        const whereFiltered = this.addDefaultStateFilter(where, includeDeleted, customState);
+        const whereFiltered = this.addDefaultStateFilter(snakeWhere, includeDeleted, customState);
 
         // 查询总数
         const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(table).where(whereFiltered);
@@ -177,8 +189,9 @@ export class SqlHelper {
         const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
         const list = (await this.executeWithConn(dataSql, dataParams)) || [];
 
+        // 字段名转换：下划线 → 小驼峰
         return {
-            list,
+            list: arrayKeysToCamel<T>(list),
             total,
             page,
             limit,
@@ -197,10 +210,13 @@ export class SqlHelper {
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
 
+        // 转换 where 条件字段名：小驼峰 → 下划线
+        const snakeWhere = whereKeysToSnake(where);
+
         const builder = new SqlBuilder()
             .select(fields)
             .from(table)
-            .where(this.addDefaultStateFilter(where, includeDeleted, customState))
+            .where(this.addDefaultStateFilter(snakeWhere, includeDeleted, customState))
             .limit(MAX_LIMIT); // 强制添加上限
 
         if (orderBy) {
@@ -220,7 +236,8 @@ export class SqlHelper {
             Logger.warn(`🚨 getAll 达到了最大限制 (${MAX_LIMIT})，可能还有更多数据。请使用 getList 分页查询。`);
         }
 
-        return result;
+        // 字段名转换：下划线 → 小驼峰
+        return arrayKeysToCamel<T>(result);
     }
 
     /**
@@ -298,9 +315,13 @@ export class SqlHelper {
     async updData(options: UpdateOptions): Promise<number> {
         const { table, data, where, includeDeleted = false } = options;
 
+        // 字段名转换：小驼峰 → 下划线
+        const snakeData = keysToSnake(data);
+        const snakeWhere = whereKeysToSnake(where);
+
         // 移除系统字段（防止用户尝试修改）
         // 注意：state 允许用户修改（用于设置禁用状态 state=2）
-        const { id, created_at, updated_at, deleted_at, ...userData } = data;
+        const { id, created_at, updated_at, deleted_at, ...userData } = snakeData;
 
         // 强制更新时间戳（不可被用户覆盖）
         const processed: Record<string, any> = {
@@ -309,7 +330,7 @@ export class SqlHelper {
         };
 
         // 构建 SQL
-        const whereFiltered = this.addDefaultStateFilter(where, includeDeleted);
+        const whereFiltered = this.addDefaultStateFilter(snakeWhere, includeDeleted);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql, params } = builder.toUpdateSql(table, processed);
 
