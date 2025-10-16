@@ -99,26 +99,26 @@ export interface ApiOptions {
  * API 路由配置
  */
 export interface ApiRoute<T = any, R = any> {
-    /** HTTP 方法 */
-    method: HttpMethod;
-
-    /** 接口名称 */
+    /** 接口名称（必填） */
     name: string;
+
+    /** 处理器函数（必填） */
+    handler: ApiHandler<T, R>;
+
+    /** HTTP 方法（可选，默认 POST） */
+    method?: HttpMethod;
+
+    /** 认证类型（可选，默认 true） */
+    auth?: boolean | string | string[];
+
+    /** 字段定义（验证规则）（可选，默认 {}） */
+    fields?: TableDefinition;
+
+    /** 必填字段（可选，默认 []） */
+    required?: string[];
 
     /** 路由路径（运行时生成） */
     route?: string;
-
-    /** 认证类型 */
-    auth: boolean | string | string[];
-
-    /** 字段定义（验证规则） */
-    fields: TableDefinition;
-
-    /** 必填字段 */
-    required: string[];
-
-    /** 处理器函数 */
-    handler: ApiHandler<T, R>;
 }
 
 /**

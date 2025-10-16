@@ -372,24 +372,36 @@ export class Loader {
                     Logger.debug(`[${dirDisplayName}] API 文件导入成功: ${apiPath}，耗时: ${importTime}`);
 
                     Logger.debug(`[${dirDisplayName}] 开始验证 API 属性: ${apiPath}`);
+
+                    // 验证必填属性：name 和 handler
                     if (isType(api.name, 'string') === false || api.name.trim() === '') {
                         throw new Error(`接口 ${apiPath} 的 name 属性必须是非空字符串`);
                     }
-                    if (isType(api.auth, 'boolean') === false && isType(api.auth, 'array') === false && isType(api.auth, 'string') === false) {
-                        throw new Error(`接口 ${apiPath} 的 auth 属性必须是布尔值或字符串或字符串数组`);
-                    }
-                    if (isType(api.fields, 'object') === false) {
-                        throw new Error(`接口 ${apiPath} 的 fields 属性必须是对象`);
-                    }
-                    if (isType(api.required, 'array') === false) {
-                        throw new Error(`接口 ${apiPath} 的 required 属性必须是数组`);
-                    }
-                    // 数组的每一项都必须是字符串
-                    if (api.required.some((item: any) => isType(item, 'string') === false)) {
-                        throw new Error(`接口 ${apiPath} 的 required 属性必须是字符串数组`);
-                    }
                     if (isType(api.handler, 'function') === false) {
                         throw new Error(`接口 ${apiPath} 的 handler 属性必须是函数`);
+                    }
+
+                    // 设置默认值
+                    api.method = api.method || 'POST';
+                    api.auth = api.auth !== undefined ? api.auth : true;
+                    api.fields = api.fields || {};
+                    api.required = api.required || [];
+
+                    // 验证可选属性的类型（如果提供了）
+                    if (api.method && !['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].includes(api.method.toUpperCase())) {
+                        throw new Error(`接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法`);
+                    }
+                    if (api.auth !== undefined && isType(api.auth, 'boolean') === false && isType(api.auth, 'array') === false && isType(api.auth, 'string') === false) {
+                        throw new Error(`接口 ${apiPath} 的 auth 属性必须是布尔值或字符串或字符串数组`);
+                    }
+                    if (api.fields && isType(api.fields, 'object') === false) {
+                        throw new Error(`接口 ${apiPath} 的 fields 属性必须是对象`);
+                    }
+                    if (api.required && isType(api.required, 'array') === false) {
+                        throw new Error(`接口 ${apiPath} 的 required 属性必须是数组`);
+                    }
+                    if (api.required && api.required.some((item: any) => isType(item, 'string') === false)) {
+                        throw new Error(`接口 ${apiPath} 的 required 属性必须是字符串数组`);
                     }
 
                     Logger.debug(`[${dirDisplayName}] API 属性验证通过: ${apiPath}`);
