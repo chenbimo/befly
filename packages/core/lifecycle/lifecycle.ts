@@ -73,7 +73,7 @@ export class Lifecycle {
         // 加载 addon APIs
         const addons = scanAddons();
         for (const addon of addons) {
-            if (await addonDirExists(addon, 'apis')) {
+            if (addonDirExists(addon, 'apis')) {
                 await Loader.loadApis(addon, this.apiRoutes, { isAddon: true, addonName: addon });
             }
         }
