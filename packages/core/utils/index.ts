@@ -9,7 +9,7 @@
 export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, calcPerfTime } from './helpers.js';
 
 // ========== 框架工具 ==========
-export { Api, scanAddons, getAddonDir, hasAddonDir, sortPlugins, parseRule } from './framework.js';
+export { Api, scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './framework.js';
 
 // ========== 数据库工具 ==========
 export { toSnakeTableName, buildDatabaseUrl, createSqlClient } from './dbHelper.js';

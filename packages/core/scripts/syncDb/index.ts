@@ -13,7 +13,7 @@ import { Env } from '../../config/env.js';
 import { createSqlClient, toSnakeTableName } from '../../utils/dbHelper.js';
 import checkTable from '../../checks/table.js';
 import { paths } from '../../paths.js';
-import { scanAddons, hasAddonDir, getAddonDir } from '../../utils/framework.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../../utils/framework.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -83,7 +83,7 @@ export const SyncDb = async (): Promise<void> => {
         // 添加所有 addon 的 tables 目录
         const addons = scanAddons();
         for (const addon of addons) {
-            if (hasAddonDir(addon, 'tables')) {
+            if (await addonDirExists(addon, 'tables')) {
                 directories.push({
                     path: getAddonDir(addon, 'tables'),
                     isCore: false,

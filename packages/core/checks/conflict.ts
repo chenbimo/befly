@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { paths } from '../paths.js';
-import { scanAddons, hasAddonDir, getAddonDir } from '../utils/framework.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/framework.js';
 import { isReservedTableName, isReservedRoute, isReservedPluginName, isReservedAddonName, getReservedTablePrefixes, getReservedRoutes, getReservedPlugins, getReservedAddonNames } from '../config/reserved.js';
 
 /**
@@ -64,7 +64,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
     }
 
     // 收集 addon 表定义
-    if (hasAddonDir(addonName, 'tables')) {
+    if (await addonDirExists(addonName, 'tables')) {
         const addonTablesDir = getAddonDir(addonName, 'tables');
         const glob = new Bun.Glob('*.json');
 
@@ -99,7 +99,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
     }
 
     // 收集 addon API 路由
-    if (hasAddonDir(addonName, 'apis')) {
+    if (await addonDirExists(addonName, 'apis')) {
         const addonApisDir = getAddonDir(addonName, 'apis');
         const glob = new Bun.Glob('**/*.ts');
 
@@ -134,7 +134,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
     }
 
     // 收集 addon 插件
-    if (hasAddonDir(addonName, 'plugins')) {
+    if (await addonDirExists(addonName, 'plugins')) {
         const addonPluginsDir = getAddonDir(addonName, 'plugins');
         const glob = new Bun.Glob('*.ts');
 

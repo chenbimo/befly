@@ -5,7 +5,7 @@
 
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
-import { scanAddons, hasAddonDir } from '../utils/framework.js';
+import { scanAddons, addonDirExists } from '../utils/framework.js';
 import { Checker } from './checker.js';
 import { Loader } from './loader.js';
 import { Bootstrap } from './bootstrap.js';
@@ -66,14 +66,14 @@ export class Lifecycle {
     }
 
     /**
-     * 加载所有 API
+     * 加载所有 API 路由
      * 包括 addon APIs 和 app APIs
      */
     private async loadAllApis(): Promise<void> {
         // 加载 addon APIs
         const addons = scanAddons();
         for (const addon of addons) {
-            if (hasAddonDir(addon, 'apis')) {
+            if (await addonDirExists(addon, 'apis')) {
                 await Loader.loadApis(addon, this.apiRoutes, { isAddon: true, addonName: addon });
             }
         }

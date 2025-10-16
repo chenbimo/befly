@@ -75,13 +75,13 @@ export const getAddonDir = (addonName: string, subDir: string): string => {
 };
 
 /**
- * 检查 addon 是否存在指定子目录
+ * 检查 addon 子目录是否存在
  * @param addonName - addon 名称
  * @param subDir - 子目录名称
  */
-export const hasAddonDir = (addonName: string, subDir: string): boolean => {
+export const addonDirExists = async (addonName: string, subDir: string): Promise<boolean> => {
     const dir = getAddonDir(addonName, subDir);
-    return fs.existsSync(dir) && fs.statSync(dir).isDirectory();
+    return await Bun.file(dir).exists();
 };
 
 // ========================================

@@ -7,7 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, hasAddonDir } from '../utils/framework.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/framework.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 
 /**
@@ -74,7 +74,7 @@ export class Checker {
             const checkDirs = [{ path: paths.rootCheckDir, type: 'core' as const }]; // 添加所有 addon 的 checks 目录
             const addons = scanAddons();
             for (const addon of addons) {
-                if (hasAddonDir(addon, 'checks')) {
+                if (await addonDirExists(addon, 'checks')) {
                     checkDirs.push({
                         path: getAddonDir(addon, 'checks'),
                         type: 'addon' as const,

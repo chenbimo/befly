@@ -9,7 +9,7 @@ import { calcPerfTime } from '../utils/helpers.js';
 import { sortPlugins } from '../utils/framework.js';
 import { isType } from '../utils/helpers.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, hasAddonDir } from '../utils/framework.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/framework.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
@@ -119,7 +119,7 @@ export class Loader {
             if (addons.length > 0) {
                 const addonPluginsScanStart = Bun.nanoseconds();
                 for (const addon of addons) {
-                    if (!hasAddonDir(addon, 'plugins')) continue;
+                    if (!(await addonDirExists(addon, 'plugins'))) continue;
 
                     const addonPluginsDir = getAddonDir(addon, 'plugins');
                     for await (const file of glob.scan({
