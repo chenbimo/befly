@@ -16,12 +16,12 @@ import type { ApiRoute } from '../types/api.js';
 import type { BeflyContext } from '../types/befly.js';
 
 /**
- * 带超时的模块导入函数
+ * 带超时的动态导入函数
  * @param filePath - 文件路径
- * @param timeout - 超时时间（毫秒），默认 5000ms
+ * @param timeout - 超时时间（毫秒），默认 3000ms
  * @returns 导入的模块
  */
-async function importWithTimeout(filePath: string, timeout: number = 5000): Promise<any> {
+async function importWithTimeout(filePath: string, timeout: number = 3000): Promise<any> {
     return Promise.race([
         import(filePath),
         new Promise((_, reject) =>
@@ -66,7 +66,7 @@ export class Loader {
                 try {
                     const importStart = Bun.nanoseconds();
                     Logger.debug(`准备导入核心插件: ${fileName}`);
-                    const plugin = await importWithTimeout(file, 5000);
+                    const plugin = await importWithTimeout(file);
                     const importTime = calcPerfTime(importStart);
                     Logger.debug(`核心插件 ${fileName} 导入成功，耗时: ${importTime}`);
 
@@ -78,7 +78,14 @@ export class Loader {
                     Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
                 } catch (err: any) {
                     hadCorePluginError = true;
-                    ErrorHandler.warning(`核心插件 ${fileName} 导入失败`, err);
+                    Logger.error(`核心插件 ${fileName} 导入失败`);
+                    Logger.error(`错误类型: ${err.name}`);
+                    Logger.error(`错误信息: ${err.message}`);
+                    if (err.stack) {
+                        Logger.error(`错误堆栈:\n${err.stack}`);
+                    }
+                    // 核心插件导入失败是致命错误，必须终止
+                    ErrorHandler.critical(`核心插件 ${fileName} 导入失败，无法继续启动服务`, err);
                 }
             }
             const corePluginsScanTime = calcPerfTime(corePluginsScanStart);
@@ -160,7 +167,7 @@ export class Loader {
                         try {
                             const importStart = Bun.nanoseconds();
                             Logger.debug(`准备导入 addon 插件: ${addon}.${fileName}`);
-                            const plugin = await importWithTimeout(file, 5000);
+                            const plugin = await importWithTimeout(file);
                             const importTime = calcPerfTime(importStart);
                             Logger.debug(`Addon 插件 ${addon}.${fileName} 导入成功，耗时: ${importTime}`);
 
@@ -172,7 +179,14 @@ export class Loader {
                             Logger.info(`组件[${addon}]插件 ${fileName} 导入耗时: ${importTime}`);
                         } catch (err: any) {
                             hadAddonPluginError = true;
-                            ErrorHandler.warning(`组件[${addon}]插件 ${fileName} 导入失败`, err);
+                            Logger.error(`组件[${addon}]插件 ${fileName} 导入失败`);
+                            Logger.error(`错误类型: ${err.name}`);
+                            Logger.error(`错误信息: ${err.message}`);
+                            if (err.stack) {
+                                Logger.error(`错误堆栈:\n${err.stack}`);
+                            }
+                            // Addon 插件导入失败也是致命错误
+                            ErrorHandler.critical(`组件[${addon}]插件 ${fileName} 导入失败，无法继续启动服务`, err);
                         }
                     }
                 }
@@ -238,7 +252,7 @@ export class Loader {
                 try {
                     const importStart = Bun.nanoseconds();
                     Logger.debug(`准备导入用户插件: ${fileName}`);
-                    const plugin = await importWithTimeout(file, 5000);
+                    const plugin = await importWithTimeout(file);
                     const importTime = calcPerfTime(importStart);
                     Logger.debug(`用户插件 ${fileName} 导入成功，耗时: ${importTime}`);
 
@@ -249,7 +263,14 @@ export class Loader {
                     Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
                 } catch (err: any) {
                     hadUserPluginError = true;
-                    ErrorHandler.warning(`用户插件 ${fileName} 导入失败`, err);
+                    Logger.error(`用户插件 ${fileName} 导入失败`);
+                    Logger.error(`错误类型: ${err.name}`);
+                    Logger.error(`错误信息: ${err.message}`);
+                    if (err.stack) {
+                        Logger.error(`错误堆栈:\n${err.stack}`);
+                    }
+                    // 用户插件导入失败也是致命错误
+                    ErrorHandler.critical(`用户插件 ${fileName} 导入失败，无法继续启动服务`, err);
                 }
             }
             const userPluginsScanTime = calcPerfTime(userPluginsScanStart);
@@ -366,7 +387,7 @@ export class Loader {
                     Logger.debug(`[${dirDisplayName}] 文件绝对路径: ${file}`);
 
                     const importStart = Bun.nanoseconds();
-                    const api = (await importWithTimeout(file, 5000)).default;
+                    const api = (await importWithTimeout(file)).default;
                     const importTime = calcPerfTime(importStart);
 
                     Logger.debug(`[${dirDisplayName}] API 文件导入成功: ${apiPath}，耗时: ${importTime}`);
@@ -423,24 +444,25 @@ export class Loader {
 
                     const errorMessage = error?.message || '未知错误';
 
-                    // 超时错误只显示简单提示
-                    if (errorMessage.includes('模块导入超时')) {
-                        Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 导入超时 (${singleApiTime})`);
-                    } else {
-                        // 其他错误显示详细信息
-                        Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime}): ${errorMessage}`);
+                    // 记录详细错误信息
+                    Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime})`);
+                    Logger.error(`[${dirDisplayName}] 错误类型: ${error.name}`);
+                    Logger.error(`[${dirDisplayName}] 错误信息: ${errorMessage}`);
+                    if (error.stack) {
+                        Logger.error(`[${dirDisplayName}] 错误堆栈:\n${error.stack}`);
                     }
 
-                    ErrorHandler.warning(`${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime}`, error);
+                    // API 加载失败是致命错误，必须终止
+                    ErrorHandler.critical(`${dirDisplayName}接口 ${apiPath} 加载失败，无法继续启动服务`, error);
                 }
             }
 
             const totalLoadTime = calcPerfTime(loadStartTime);
             Logger.info(`${dirDisplayName}接口加载完成! 总耗时: ${totalLoadTime}，总数: ${totalApis}, 成功: ${loadedApis}, 失败: ${failedApis}`);
 
-            // API 加载失败只是警告，不影响服务启动
+            // 检查是否有加载失败的 API（理论上不会到达这里，因为上面已经 critical 退出）
             if (failedApis > 0) {
-                ErrorHandler.info(`${failedApis} 个${dirDisplayName}接口加载失败`, {
+                ErrorHandler.critical(`有 ${failedApis} 个${dirDisplayName}接口加载失败，无法继续启动服务`, {
                     dirName,
                     totalApis,
                     failedApis
