@@ -408,13 +408,50 @@ export class Loader {
                 } catch (error: any) {
                     const singleApiTime = calcPerfTime(singleApiStart);
                     failedApis++;
-                    Logger.error(`[${dirDisplayName}] API 加载失败: ${apiPath}`);
-                    Logger.error(`[${dirDisplayName}] 错误类型: ${error.name}`);
-                    Logger.error(`[${dirDisplayName}] 错误信息: ${error.message}`);
-                    Logger.error(`[${dirDisplayName}] 文件路径: ${file}`);
-                    if (error.stack) {
-                        Logger.error(`[${dirDisplayName}] 错误堆栈: ${error.stack}`);
+
+                    // 区分错误类型，提供更精确的错误信息
+                    const errorName = error?.name || 'Error';
+                    const errorMessage = error?.message || '未知错误';
+
+                    Logger.error(`[${dirDisplayName}] ========== API 加载失败 ==========`);
+                    Logger.error(`[${dirDisplayName}] 文件: ${apiPath}`);
+                    Logger.error(`[${dirDisplayName}] 路径: ${file}`);
+                    Logger.error(`[${dirDisplayName}] 耗时: ${singleApiTime}`);
+                    Logger.error(`[${dirDisplayName}] ----------------------------------`);
+
+                    // 根据错误类型显示不同的提示
+                    if (errorName === 'SyntaxError') {
+                        Logger.error(`[${dirDisplayName}] 🔴 语法错误: ${errorMessage}`);
+                        Logger.error(`[${dirDisplayName}] 💡 提示: 请检查文件中的语法问题（缺少分号、括号不匹配、乱码字符等）`);
+                    } else if (errorMessage.includes('模块导入超时')) {
+                        Logger.error(`[${dirDisplayName}] ⏰ 导入超时: ${errorMessage}`);
+                        Logger.error(`[${dirDisplayName}] 💡 提示: 可能存在循环依赖或模块初始化时的死循环`);
+                    } else if (errorName === 'TypeError') {
+                        Logger.error(`[${dirDisplayName}] 🔴 类型错误: ${errorMessage}`);
+                        Logger.error(`[${dirDisplayName}] 💡 提示: 请检查导入的模块是否正确导出`);
+                    } else {
+                        Logger.error(`[${dirDisplayName}] ❌ ${errorName}: ${errorMessage}`);
                     }
+
+                    // 打印详细的错误堆栈
+                    if (error?.stack) {
+                        Logger.error(`[${dirDisplayName}] ----------------------------------`);
+                        Logger.error(`[${dirDisplayName}] 错误堆栈:`);
+                        // 分行打印堆栈，更易读
+                        const stackLines = error.stack.split('\n');
+                        stackLines.forEach((line: string, index: number) => {
+                            if (index < 10) {
+                                // 只显示前10行堆栈
+                                Logger.error(`[${dirDisplayName}]   ${line.trim()}`);
+                            }
+                        });
+                        if (stackLines.length > 10) {
+                            Logger.error(`[${dirDisplayName}]   ... (${stackLines.length - 10} 行省略)`);
+                        }
+                    }
+
+                    Logger.error(`[${dirDisplayName}] ========================================`);
+
                     ErrorHandler.warning(`${dirDisplayName}接口 ${apiPath} 加载失败，耗时: ${singleApiTime}`, error);
                 }
             }

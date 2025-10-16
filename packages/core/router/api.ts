@@ -26,22 +26,24 @@ import type { BeflyContext } from '../types/befly.js';
  */
 export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin[], appContext: BeflyContext) {
     return async (req: Request): Promise<Response> => {
-        try {
-            // 1. CORS处理
-            const corsOptions = setCorsOptions(req);
+        const corsOptions = setCorsOptions(req);
+        let ctx: RequestContext | null = null;
+        let api: ApiRoute | undefined;
+        let apiPath = '';
 
-            // OPTIONS预检请求
+        try {
+            // 1. OPTIONS预检请求
             if (req.method === 'OPTIONS') {
                 return handleOptionsRequest(corsOptions);
             }
 
             // 2. 创建请求上下文
-            const ctx = new RequestContext(req);
+            ctx = new RequestContext(req);
 
             // 3. 获取API路由
             const url = new URL(req.url);
-            const apiPath = `${req.method}${url.pathname}`;
-            const api = apiRoutes.get(apiPath);
+            apiPath = `${req.method}${url.pathname}`;
+            api = apiRoutes.get(apiPath);
 
             if (!api) {
                 return Response.json(No('接口不存在'), {
@@ -105,33 +107,53 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
                 });
             }
         } catch (error: any) {
-            const corsOptions = setCorsOptions(req);
-
-            // 获取接口信息用于日志
-            const url = new URL(req.url);
-            const apiPath = `${req.method}${url.pathname}`;
-            const api = apiRoutes.get(apiPath);
-
+            // 记录详细的错误日志
             Logger.error({
                 msg: api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误',
                 接口名称: api?.name || '未知',
-                接口路径: apiPath,
+                接口路径: apiPath || req.url,
                 请求方法: req.method,
                 请求URL: req.url,
+                客户端IP: ctx?.ip || 'unknown',
+                UserAgent: ctx?.userAgent || 'unknown',
+                用户ID: ctx?.user?.id || '未登录',
+                请求参数: ctx?.body || {},
+                错误类型: error.constructor?.name || 'Error',
                 错误信息: error.message,
                 错误堆栈: error.stack
             });
 
-            // 开发环境返回详细错误信息
-            const errorDetail =
-                Env.NODE_ENV === 'development'
-                    ? {
-                          message: error.message,
-                          stack: error.stack
-                      }
-                    : {};
+            // 根据错误类型返回不同的错误信息
+            let errorMessage = '内部服务器错误';
+            let errorDetail = {};
 
-            return Response.json(No('内部服务器错误', errorDetail), {
+            // 数据库错误
+            if (error.message?.includes('ECONNREFUSED') || error.message?.includes('database')) {
+                errorMessage = '数据库连接失败';
+            }
+            // Redis错误
+            else if (error.message?.includes('Redis') || error.message?.includes('redis')) {
+                errorMessage = 'Redis服务异常';
+            }
+            // 权限错误
+            else if (error.message?.includes('permission') || error.message?.includes('权限')) {
+                errorMessage = '权限不足';
+            }
+            // 认证错误
+            else if (error.message?.includes('token') || error.message?.includes('认证')) {
+                errorMessage = '认证失败';
+            }
+
+            // 开发环境返回详细错误信息
+            if (Env.NODE_ENV === 'development') {
+                errorDetail = {
+                    type: error.constructor?.name || 'Error',
+                    message: error.message,
+                    stack: error.stack
+                };
+            }
+
+            return Response.json(No(errorMessage, errorDetail), {
                 headers: corsOptions.headers
             });
         }
