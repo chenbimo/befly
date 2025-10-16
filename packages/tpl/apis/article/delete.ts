@@ -2,10 +2,12 @@
  * 删除文章接口（软删除）
  */
 
-import { Api, Yes, No, Fields } from 'befly';
+import { Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
-export default Api('删除文章', {
+export default {
+    name: '删除文章',
     method: 'POST',
     auth: false,
     fields: {
@@ -31,4 +33,4 @@ export default Api('删除文章', {
 
         return Yes('删除成功', { affected: result });
     }
-});
+};

@@ -7,11 +7,13 @@
  *  - created_at, updated_at
  */
 
-import { Api, Yes, No } from 'befly';
+import { Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 import type { Admin } from '../types';
 
-export default Api('获取用户信息', {
+export default {
+    name: '获取用户信息',
     method: 'GET',
     auth: true, // 需要认证
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
@@ -37,4 +39,4 @@ export default Api('获取用户信息', {
 
         return Yes('获取成功', userWithoutPassword);
     }
-});
+};

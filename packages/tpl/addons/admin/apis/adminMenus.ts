@@ -1,5 +1,3 @@
-import { Api, Yes, No } from 'befly';
-
 /**
  * 获取当前用户的菜单权限
  * 说明：
@@ -7,7 +5,10 @@ import { Api, Yes, No } from 'befly';
  * 2. 返回树形结构的菜单数据
  * 3. 仅返回状态为启用的菜单
  */
-export default Api('获取用户菜单', {
+
+import { Yes, No } from 'befly';
+export default {
+    name: '获取用户菜单',
     method: 'GET',
     auth: true, // 需要登录
     handler: async (befly, ctx) => {
@@ -89,4 +90,4 @@ export default Api('获取用户菜单', {
             return No('获取菜单失败');
         }
     }
-});
+};

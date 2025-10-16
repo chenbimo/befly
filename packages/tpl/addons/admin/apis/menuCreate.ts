@@ -1,10 +1,12 @@
-import { Api, Yes, No } from 'befly';
+import { Yes, No } from 'befly';
 import adminMenuTable from '../tables/menu.json';
+import type { ApiRoute } from 'befly/types';
 
 /**
  * 创建菜单
  */
-export default Api('创建菜单', {
+export default {
+    name: '创建菜单',
     method: 'POST',
     auth: true,
     fields: {
@@ -29,4 +31,4 @@ export default Api('创建菜单', {
             return No('操作失败');
         }
     }
-});
+};

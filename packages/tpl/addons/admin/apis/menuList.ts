@@ -1,10 +1,11 @@
-import { Api, Yes, No } from 'befly';
-
 /**
  * 获取所有菜单列表
  * 说明：用于后台管理的菜单配置页面
  */
-export default Api('获取菜单列表', {
+
+import { Yes, No } from 'befly';
+export default {
+    name: '获取菜单列表',
     method: 'GET',
     auth: true,
     handler: async (befly, ctx) => {
@@ -24,4 +25,4 @@ export default Api('获取菜单列表', {
             return No('操作失败');
         }
     }
-});
+};

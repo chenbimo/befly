@@ -2,13 +2,15 @@
  * 管理员注册接口
  */
 
-import { Api, Yes, No } from 'befly';
+import { Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 import type { RegisterRequest } from '../types';
 import { Crypto2 } from 'befly';
 import adminTable from '../tables/admin.json';
 
-export default Api('管理员注册', {
+export default {
+    name: '管理员注册',
     method: 'POST',
     auth: false, // 公开接口
     fields: {
@@ -49,4 +51,4 @@ export default Api('管理员注册', {
             email: ctx.body.email
         });
     }
-});
+};

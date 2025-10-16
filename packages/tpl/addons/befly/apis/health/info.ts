@@ -4,8 +4,9 @@
  * 路由：GET /api/befly/health/info
  */
 
-import { Api, Yes, Env } from 'befly';
+import { Yes } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
 interface HealthInfo {
     status: string;
@@ -22,7 +23,8 @@ interface HealthInfo {
     databaseError?: string;
 }
 
-export default Api('健康检查', {
+export default {
+    name: '健康检查',
     auth: false, // 公开接口
     fields: {},
     required: [],
@@ -75,4 +77,4 @@ export default Api('健康检查', {
 
         return Yes('健康检查成功', info);
     }
-});
+};

@@ -2,15 +2,18 @@
  * 文章字段增量接口
  */
 
-import { Api, Yes, No, Fields } from 'befly';
+import { Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
-export default Api('文章字段增量', {
+export default {
+    name: '文章字段增量',
     method: 'POST',
     auth: false,
     fields: {
         id: Fields._id,
-        field: '字段名|string|1|50|null|1|^[a-zA-Z_][a-zA-Z0-9_]*$',
+        field: '字段名|string|1|50|null|1|^[a-zA-Z_][a-zA-Z0-9_]*
+,
         value: '自增值|number|-999999|999999|1|0|null'
     },
     required: ['id', 'field'],
@@ -35,4 +38,4 @@ export default Api('文章字段增量', {
 
         return Yes('自增成功', { affected: result });
     }
-});
+}

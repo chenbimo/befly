@@ -4,8 +4,9 @@
  * 路由：POST /api/befly/tool/tokenCheck
  */
 
-import { Api, Yes, No, Jwt } from 'befly';
+import { Yes, No, Jwt } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
 interface TokenCheckData {
     valid: boolean;
@@ -13,7 +14,8 @@ interface TokenCheckData {
     expiresIn?: number;
 }
 
-export default Api('令牌检测', {
+export default {
+    name: '令牌检测',
     auth: false, // 公开接口
     fields: {},
     required: [],
@@ -51,4 +53,4 @@ export default Api('令牌检测', {
             throw error;
         }
     }
-});
+};

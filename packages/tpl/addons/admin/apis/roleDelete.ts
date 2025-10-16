@@ -1,9 +1,10 @@
-import { Api, Yes, No } from 'befly';
-
 /**
  * 删除角色
  */
-export default Api('删除角色', {
+
+import { Yes, No } from 'befly';
+export default {
+    name: '删除角色',
     method: 'POST',
     auth: true,
     fields: {
@@ -40,4 +41,4 @@ export default Api('删除角色', {
             return No('操作失败');
         }
     }
-});
+};

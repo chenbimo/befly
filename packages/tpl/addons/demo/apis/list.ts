@@ -3,15 +3,18 @@
  * 路由：GET /api/demo/list
  */
 
-import { Api, Yes, No } from 'befly';
+import { Yes } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
-export default Api('查询待办列表', {
+export default {
+    name: '查询待办列表',
     method: 'POST',
     auth: false,
     fields: {
         completed: '是否完成|number|0|1|null|0|null',
-        priority: '优先级|string|1|10|null|0|^(low|medium|high)$',
+        priority: '优先级|string|1|10|null|0|^(low|medium|high)
+,
         page: '页码|number|1|9999|1|0|null',
         pageSize: '每页数量|number|1|100|10|0|null'
     },
@@ -50,4 +53,4 @@ export default Api('查询待办列表', {
             }
         });
     }
-});
+}

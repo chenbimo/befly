@@ -1,9 +1,10 @@
-import { Api, Yes, No } from 'befly';
-
 /**
  * 获取角色的菜单权限
  */
-export default Api('获取角色菜单权限', {
+
+import { Yes, No } from 'befly';
+export default {
+    name: '获取角色菜单权限',
     method: 'POST',
     auth: true,
     fields: {
@@ -25,4 +26,4 @@ export default Api('获取角色菜单权限', {
             return No('操作失败');
         }
     }
-});
+};

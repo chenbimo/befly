@@ -2,10 +2,12 @@
  * 退出登录接口
  */
 
-import { Api, Yes } from 'befly';
+import { Yes } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
-export default Api('退出登录', {
+export default {
+    name: '退出登录',
     method: 'POST',
     auth: true, // 需要认证
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
@@ -22,4 +24,4 @@ export default Api('退出登录', {
 
         return Yes('退出成功');
     }
-});
+};

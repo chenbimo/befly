@@ -1,9 +1,10 @@
-import { Api, Yes, No } from 'befly';
-
 /**
  * 保存用户的角色
  */
-export default Api('保存用户角色', {
+
+import { Yes, No } from 'befly';
+export default {
+    name: '保存用户角色',
     method: 'POST',
     auth: true,
     fields: {
@@ -45,4 +46,4 @@ export default Api('保存用户角色', {
             return No('操作失败');
         }
     }
-});
+};

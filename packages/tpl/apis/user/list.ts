@@ -2,18 +2,20 @@
  * 获取用户列表接口 - TypeScript 示例
  */
 
-import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 import type { GetUsersRequest, GetUsersResponse } from '../../../types/api';
 import type { User } from '../../../types/models';
 
-export default Api('获取用户列表', {
+export default {
+    name: '获取用户列表',
     method: 'POST',
     auth: ['admin'], // 仅管理员可访问
     fields: {
         page: '页码|number|1|9999|1|0|null',
         limit: '每页数量|number|1|100|10|0|null',
-        role: '角色|string|0|20|null|0|^(admin|user|guest)$',
+        role: '角色|string|0|20|null|0|^(admin|user|guest)
+,
         keyword: '关键词|string|0|50|null|0|null'
     },
     required: [],
@@ -41,4 +43,4 @@ export default Api('获取用户列表', {
 
         return Yes<GetUsersResponse>('查询成功', result);
     }
-});
+}

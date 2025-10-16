@@ -2,12 +2,14 @@
  * 发送短信验证码接口
  */
 
-import { Api, Yes, No } from 'befly';
+import { Yes } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 import type { SendSmsCodeRequest } from '../types';
 import adminTable from '../tables/admin.json';
 
-export default Api('发送短信验证码', {
+export default {
+    name: '发送短信验证码',
     method: 'POST',
     auth: false, // 公开接口
     fields: {
@@ -34,4 +36,4 @@ export default Api('发送短信验证码', {
 
         return Yes('验证码已发送', isDev ? { code } : null);
     }
-});
+};

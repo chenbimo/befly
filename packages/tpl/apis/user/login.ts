@@ -2,18 +2,21 @@
  * 用户登录接口 - TypeScript 示例
  */
 
-import { Api, Yes, No } from 'befly';
+import { No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 import type { LoginRequest, LoginResponse } from '../../../types/api';
 import type { User } from '../../../types/models';
 import { Crypto2 } from 'befly';
 import { Jwt } from 'befly';
 
-export default Api('用户登录', {
+export default {
+    name: '用户登录',
     method: 'POST',
     auth: false, // 公开接口
     fields: {
-        username: '用户名|string|3|50|null|0|^[a-zA-Z0-9_]+$',
+        username: '用户名|string|3|50|null|0|^[a-zA-Z0-9_]+
+,
         password: '密码|string|6|100|null|0|null'
     },
     required: ['username', 'password'],
@@ -56,4 +59,4 @@ export default Api('用户登录', {
 
         return Yes<LoginResponse>('登录成功', response);
     }
-});
+}

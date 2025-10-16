@@ -1,10 +1,12 @@
-import { Api, Yes, No } from 'befly';
+import { Yes, No } from 'befly';
 import adminRoleTable from '../tables/role.json';
+import type { ApiRoute } from 'befly/types';
 
 /**
  * 创建角色
  */
-export default Api('创建角色', {
+export default {
+    name: '创建角色',
     method: 'POST',
     auth: true,
     fields: {
@@ -37,4 +39,4 @@ export default Api('创建角色', {
             return No('操作失败');
         }
     }
-});
+};

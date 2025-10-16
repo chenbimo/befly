@@ -3,10 +3,11 @@
  * 路由：POST /api/demo/create
  */
 
-import { Api, Yes, No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
-export default Api('创建待办事项', {
+export default {
+    name: '创建待办事项',
     method: 'POST',
     auth: false,
     fields: {
@@ -17,7 +18,7 @@ export default Api('创建待办事项', {
     required: ['title'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         // 插入数据到 demo_todo 表
-        // const result = await befly.db.insData({
+        const result = await befly.db.insData({
             table: 'addon_demo_todo',
             data: {
                 title: ctx.body.title,
@@ -27,11 +28,15 @@ export default Api('创建待办事项', {
             }
         });
 
-        return Yes('待办创建成功', {
-            id: result,
-            title: ctx.body.title,
-            content: ctx.body.content || '',
-            priority: ctx.body.priority || 'medium'
-        });
+        return {
+            code: 0,
+            msg: '待办创建成功',
+            data: {
+                id: result,
+                title: ctx.body.title,
+                content: ctx.body.content || '',
+                priority: ctx.body.priority || 'medium'
+            }
+        };
     }
-});
+} as ApiRoute;

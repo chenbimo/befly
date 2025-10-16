@@ -1,7 +1,9 @@
-import { Api, Yes, No } from 'befly';
+import { Yes } from 'befly';
 import type { BeflyContext, BeflyInstance } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
-export default Api('测试接口', {
+export default {
+    name: '测试接口',
     method: 'POST',
     auth: true,
     fields: {},
@@ -10,4 +12,4 @@ export default Api('测试接口', {
         // 返回成功信息
         return Yes('测试成功');
     }
-});
+};

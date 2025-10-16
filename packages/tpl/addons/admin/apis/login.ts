@@ -2,14 +2,16 @@
  * 管理员登录接口
  */
 
-import { Api, Yes, No } from 'befly';
+import { No } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 import type { LoginRequest, LoginResponse, Admin } from '../types';
 import { Crypto2 } from 'befly';
 import { Jwt } from 'befly';
 import adminTable from '../tables/admin.json';
 
-export default Api('管理员登录', {
+export default {
+    name: '管理员登录',
     method: 'POST',
     auth: false, // 公开接口
     fields: {
@@ -114,4 +116,4 @@ export default Api('管理员登录', {
 
         return Yes<LoginResponse>('登录成功', response);
     }
-});
+};

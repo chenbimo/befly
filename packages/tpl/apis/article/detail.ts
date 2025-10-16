@@ -2,10 +2,12 @@
  * 获取文章详情接口
  */
 
-import { Api, Yes, No, Fields } from 'befly';
+import { Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 
-export default Api('获取文章详情', {
+export default {
+    name: '获取文章详情',
     method: 'POST',
     auth: false,
     fields: {
@@ -24,4 +26,4 @@ export default Api('获取文章详情', {
 
         return Yes('获取成功', article);
     }
-});
+};

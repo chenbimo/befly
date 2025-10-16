@@ -1,9 +1,10 @@
-import { Api, Yes, No } from 'befly';
-
 /**
  * 获取角色列表
  */
-export default Api('获取角色列表', {
+
+import { Yes, No } from 'befly';
+export default {
+    name: '获取角色列表',
     method: 'POST',
     auth: true,
     fields: {},
@@ -20,4 +21,4 @@ export default Api('获取角色列表', {
             return No('操作失败');
         }
     }
-});
+};

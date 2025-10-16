@@ -2,11 +2,13 @@
  * 更新文章接口
  */
 
-import { Api, Yes, No, Fields } from 'befly';
+import { Yes, No, Fields } from 'befly';
 import type { BeflyContext, RequestContext } from 'befly/types';
+import type { ApiRoute } from 'befly/types';
 import articleTable from '../../tables/article.json';
 
-export default Api('更新文章', {
+export default {
+    name: '更新文章',
     method: 'POST',
     auth: false,
     fields: {
@@ -52,4 +54,4 @@ export default Api('更新文章', {
 
         return Yes('更新成功', { affected: result });
     }
-});
+};
