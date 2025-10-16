@@ -17,7 +17,7 @@ export default {
     required: ['title'],
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         // 插入数据到 demo_todo 表
-        // const result = await befly.db.insData({
+        const result = await befly.db.insData({
             table: 'addon_demo_todo',
             data: {
                 title: ctx.body.title,

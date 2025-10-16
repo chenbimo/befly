@@ -14,8 +14,7 @@ export default {
     fields: {
         page: Fields.page,
         limit: Fields.limit,
-        role: '角色|string|0|20|null|0|^(admin|user|guest)
-,
+        role: '角色|string|0|20|null|0|^(admin|user|guest)$',
         keyword: Fields.keyword
     },
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
@@ -42,4 +41,4 @@ export default {
 
         return Yes<GetUsersResponse>('查询成功', result);
     }
-}
+};
