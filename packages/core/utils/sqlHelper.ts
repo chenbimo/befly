@@ -369,7 +369,7 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
     /**
      * 禁用数据（设置 state=2）
      */
-    async updDisable(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
+    async disableData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
         return await this.updData({
@@ -384,7 +384,7 @@ function addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
     /**
      * 启用数据（设置 state=1）
      */
-    async updEnable(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
+    async enableData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
         return await this.updData({
