@@ -2,11 +2,7 @@
  * 获取用户列表接口 - TypeScript 示例
  */
 
-import type { BeflyContext, RequestContext } from 'befly/types';
 import { Fields } from 'befly';
-import type { ApiRoute } from 'befly/types';
-import type { GetUsersRequest, GetUsersResponse } from '../../../types/api';
-import type { User } from '../../../types/models';
 
 export default {
     name: '获取用户列表',
@@ -17,11 +13,11 @@ export default {
         role: '角色|string|0|20|null|0|^(admin|user|guest)$',
         keyword: Fields.keyword
     },
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         const params = ctx.body as GetUsersRequest;
 
         // 构建查询条件
-        const where: any = {};
+        const where = {};
         if (params.role) {
             where.role = params.role;
         }
@@ -30,7 +26,7 @@ export default {
         }
 
         // 查询用户列表（不返回密码字段）
-        const result = await befly.db.getList<User>({
+        const result = await befly.db.getList({
             table: 'user',
             fields: ['id', 'username', 'email', 'role', 'avatar', 'nickname', 'created_at', 'updated_at'],
             where,
@@ -39,6 +35,6 @@ export default {
             orderBy: ['created_at#DESC']
         });
 
-        return Yes<GetUsersResponse>('查询成功', result);
+        return Yes('查询成功', result);
     }
 };

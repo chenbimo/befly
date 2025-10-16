@@ -8,13 +8,10 @@
  */
 
 import { Yes, No } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
-import type { Admin } from '../types';
 
 export default {
     name: '获取用户信息',
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 从 JWT token 中获取用户ID
         const userId = ctx.auth?.userId;
 
@@ -23,7 +20,7 @@ export default {
         }
 
         // 查询用户信息
-        const admin = await befly.db.getDetail<Admin>({
+        const admin = await befly.db.getDetail({
             table: 'addon_admin_admin',
             where: { id: parseInt(userId) }
         });

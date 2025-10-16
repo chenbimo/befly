@@ -3,9 +3,7 @@
  */
 
 import { Yes, No } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
-import type { RegisterRequest } from '../types';
+
 import { Crypto2 } from 'befly';
 import adminTable from '../tables/admin.json';
 
@@ -18,7 +16,7 @@ export default {
         password: adminTable.password
     },
     required: ['name', 'email', 'password'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 检查邮箱是否已存在
         const existingAdmin = await befly.db.getDetail({
             table: 'addon_admin_admin',

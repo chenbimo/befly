@@ -3,7 +3,6 @@
  * 用于扩展 befly 对象功能
  */
 
-import type { BeflyPlugin, BeflyContext } from 'befly/types';
 import { Logger } from 'befly';
 
 export default {
@@ -14,7 +13,7 @@ export default {
     /**
      * 插件加载时执行
      */
-    async onLoad(befly: BeflyContext) {
+    async onLoad(befly) {
         Logger.info('Addon 示例插件加载中...');
     },
 
@@ -22,7 +21,7 @@ export default {
      * 插件初始化时执行
      * 这里可以扩展 befly 对象
      */
-    async onInit(befly: BeflyContext) {
+    async onInit(befly) {
         // 扩展 befly 对象
         return {
             // 添加自定义方法或属性

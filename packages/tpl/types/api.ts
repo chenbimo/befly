@@ -1,9 +1,7 @@
 /**
- * API 请求/响应类型定义
+ * API 请求/响应类型定义示例
+ * 注意：实际项目中可能不需要这些类型定义
  */
-
-import type { PaginationParams, ListResponse } from 'befly/types';
-import type { User, Article, Product, Order } from './models';
 
 /**
  * 用户登录请求

@@ -3,8 +3,6 @@
  */
 
 import { Yes, No, Fields } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '获取文章详情',
@@ -13,7 +11,7 @@ export default {
         id: Fields._id
     },
     required: ['id'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         const article = await befly.db.getDetail({
             table: 'article',
             where: { id: ctx.body.id }

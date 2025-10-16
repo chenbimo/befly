@@ -16,7 +16,7 @@ import { RedisHelper } from 'befly';
 // 创建数据库和Redis客户端
 const SQL = await createSqlClient();
 const redis = RedisHelper;
-const mockBefly: any = { sql: SQL, redis };
+const mockBefly = { sql: SQL, redis };
 const db = new SqlHelper(mockBefly, SQL);
 
 try {

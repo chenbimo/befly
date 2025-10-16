@@ -5,8 +5,6 @@
  */
 
 import { Yes } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
 
 interface HealthInfo {
     status: string;
@@ -26,8 +24,8 @@ interface HealthInfo {
 export default {
     name: '健康检查',
     auth: false,
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        const info: HealthInfo = {
+    handler: async (befly, ctx) => {
+        const info = {
             status: 'ok',
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),

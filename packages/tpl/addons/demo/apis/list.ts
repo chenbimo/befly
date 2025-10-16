@@ -4,8 +4,6 @@
  */
 
 import { Yes, Fields } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '查询待办列表',
@@ -16,12 +14,12 @@ export default {
         page: Fields.page,
         pageSize: '每页数量|number|1|100|10|0|null'
     },
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         const page = ctx.body.page || 1;
         const pageSize = ctx.body.pageSize || 10;
 
         // 构建查询条件
-        const where: any = {};
+        const where = {};
         if (ctx.body.completed !== undefined && ctx.body.completed !== null) {
             where.completed = ctx.body.completed;
         }

@@ -1,6 +1,5 @@
 import { Yes, No } from 'befly';
 import adminMenuTable from '../tables/menu.json';
-import type { ApiRoute } from 'befly/types';
 
 /**
  * 创建菜单

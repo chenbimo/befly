@@ -3,9 +3,7 @@
  */
 
 import { Yes } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
-import type { SendSmsCodeRequest } from '../types';
+
 import adminTable from '../tables/admin.json';
 
 export default {
@@ -15,7 +13,7 @@ export default {
         phone: adminTable.phone
     },
     required: ['phone'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 生成6位数验证码
         const code = Math.floor(100000 + Math.random() * 900000).toString();
 

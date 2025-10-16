@@ -3,9 +3,7 @@
  */
 
 import { No } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
-import type { LoginRequest, LoginResponse, Admin } from '../types';
+
 import { Crypto2 } from 'befly';
 import { Jwt } from 'befly';
 import adminTable from '../tables/admin.json';
@@ -19,13 +17,13 @@ export default {
         phone: adminTable.phone,
         code: '验证码|string|4|6|null|0|null'
     },
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
-        let admin: Admin | null = null;
+    handler: async (befly, ctx) => {
+        let admin = null;
 
         // 邮箱登录
         if (ctx.body.email && ctx.body.password) {
             // 查询管理员
-            admin = await befly.db.getDetail<Admin>({
+            admin = await befly.db.getDetail({
                 table: 'addon_admin_admin',
                 where: { email: ctx.body.email }
             });
@@ -65,7 +63,7 @@ export default {
             }
 
             // 查询管理员
-            admin = await befly.db.getDetail<Admin>({
+            admin = await befly.db.getDetail({
                 table: 'addon_admin_admin',
                 where: { phone: ctx.body.phone }
             });
@@ -107,11 +105,11 @@ export default {
         // 返回用户信息（不包含密码）
         const { password: _, ...userWithoutPassword } = admin;
 
-        const response: LoginResponse = {
+        const response = {
             token,
             userInfo: userWithoutPassword
         };
 
-        return Yes<LoginResponse>('登录成功', response);
+        return Yes('登录成功', response);
     }
 };

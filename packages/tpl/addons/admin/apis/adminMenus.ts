@@ -63,7 +63,7 @@ export default {
                 for (const item of items) {
                     if (item.pid === pid) {
                         const children = buildTree(items, item.id);
-                        const node: any = {
+                        const node = {
                             id: item.id,
                             name: item.name,
                             path: item.path,

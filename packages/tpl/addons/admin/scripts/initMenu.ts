@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 const SQL = await createSqlClient();
 const redis = RedisHelper;
 // 创建一个假的 befly 上下文用于 SqlHelper
-const mockBefly: any = { sql: SQL, redis };
+const mockBefly = { sql: SQL, redis };
 const db = new SqlHelper(mockBefly, SQL);
 
 /**

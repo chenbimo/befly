@@ -3,10 +3,7 @@
  */
 
 import { No } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
-import type { LoginRequest, LoginResponse } from '../../../types/api';
-import type { User } from '../../../types/models';
+
 import { Crypto2 } from 'befly';
 import { Jwt } from 'befly';
 
@@ -14,14 +11,13 @@ export default {
     name: '用户登录',
     auth: false, // 公开接口
     fields: {
-        username: '用户名|string|3|50|null|0|^[a-zA-Z0-9_]+
-,
+        username: '用户名|string|3|50|null|0|^[a-zA-Z0-9_]+$',
         password: '密码|string|6|100|null|0|null'
     },
     required: ['username', 'password'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 查询用户
-        const user = await befly.db.getDetail<User>({
+        const user = await befly.db.getDetail({
             table: 'user',
             where: { username: ctx.body.username }
         });
@@ -51,11 +47,11 @@ export default {
         // 返回用户信息（不包含密码）
         const { password: _, ...userWithoutPassword } = user;
 
-        const response: LoginResponse = {
+        const response = {
             token,
             user: userWithoutPassword
         };
 
-        return Yes<LoginResponse>('登录成功', response);
+        return Yes('登录成功', response);
     }
-}
+};

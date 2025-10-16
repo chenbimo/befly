@@ -5,8 +5,6 @@
  */
 
 import { Yes, No, Jwt } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
 
 interface TokenCheckData {
     valid: boolean;
@@ -17,7 +15,7 @@ interface TokenCheckData {
 export default {
     name: '令牌检测',
     auth: false,
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 从 Authorization 头获取 token
         const authHeader = ctx.headers.authorization || '';
         const token = authHeader.split(' ')[1] || '';
@@ -33,7 +31,7 @@ export default {
             // 计算剩余有效期
             const expiresIn = jwtData.exp ? jwtData.exp - Math.floor(Date.now() / 1000) : undefined;
 
-            const data: TokenCheckData = {
+            const data = {
                 valid: true,
                 payload: jwtData,
                 expiresIn

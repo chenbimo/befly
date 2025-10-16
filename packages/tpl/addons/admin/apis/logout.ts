@@ -3,12 +3,10 @@
  */
 
 import { Yes } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '退出登录',
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // JWT token 是无状态的,前端删除 token 即可
         // 如果需要实现 token 黑名单,可以在这里将 token 加入 Redis 黑名单
 

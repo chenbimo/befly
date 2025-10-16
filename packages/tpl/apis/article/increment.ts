@@ -3,20 +3,17 @@
  */
 
 import { Yes, No, Fields } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '文章字段增量',
     auth: false,
     fields: {
         id: Fields._id,
-        field: '字段名|string|1|50|null|1|^[a-zA-Z_][a-zA-Z0-9_]*
-,
+        field: '字段名|string|1|50|null|1|^[a-zA-Z_][a-zA-Z0-9_]*$',
         value: '自增值|number|-999999|999999|1|0|null'
     },
     required: ['id', 'field'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 检查文章是否存在
         const article = await befly.db.getDetail({
             table: 'article',
@@ -37,4 +34,4 @@ export default {
 
         return Yes('自增成功', { affected: result });
     }
-}
+};

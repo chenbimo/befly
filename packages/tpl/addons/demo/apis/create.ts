@@ -3,9 +3,8 @@
  * 路由：POST /api/demo/create
  */
 
-import type { BeflyContext, RequestContext } from 'befly/types';
 import { Fields } from 'befly';
-import type { ApiRoute } from 'befly/types';
+
 export default {
     name: '创建待办事项',
     auth: false,
@@ -15,7 +14,7 @@ export default {
         priority: '优先级|string|1|10|medium|0|^(low|medium|high)$'
     },
     required: ['title'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 插入数据到 demo_todo 表
         const result = await befly.db.insData({
             table: 'addon_demo_todo',
@@ -38,4 +37,4 @@ export default {
             }
         };
     }
-} as ApiRoute;
+};

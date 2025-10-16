@@ -1,8 +1,7 @@
 /**
- * 项目数据模型类型定义
+ * 数据模型类型定义示例
+ * 注意：实际项目中可能不需要这些类型定义
  */
-
-import type { BaseEntity } from 'befly/types';
 
 /**
  * 用户模型

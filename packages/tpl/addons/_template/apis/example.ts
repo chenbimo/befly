@@ -3,9 +3,6 @@
  * 路由会自动添加组件名前缀：/api/{addonName}/example
  */
 
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
-
 export default {
     name: '示例接口',
     auth: false,
@@ -14,7 +11,7 @@ export default {
         age: '年龄|number|1|150|18|0|null'
     },
     required: ['name'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         // 访问组件的插件（如果有）
         // const myPlugin = befly['addonName.pluginName'];
 
@@ -33,4 +30,4 @@ export default {
             }
         };
     }
-} as ApiRoute;
+};

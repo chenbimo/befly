@@ -3,9 +3,7 @@
  */
 
 import { Yes } from 'befly';
-import type { BeflyContext, RequestContext } from 'befly/types';
-import type { ApiRoute } from 'befly/types';
-import type { CreateArticleRequest } from '../../../types/api';
+
 import articleTable from '../../tables/article.json';
 
 export default {
@@ -23,7 +21,7 @@ export default {
         status: articleTable.status
     },
     required: ['title', 'content'],
-    handler: async (befly: BeflyContext, ctx: RequestContext) => {
+    handler: async (befly, ctx) => {
         const userId = ctx.jwt?.userId || '1'; // 临时使用固定ID测试
 
         // 插入文章

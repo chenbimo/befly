@@ -1,6 +1,5 @@
 import { Yes, No } from 'befly';
 import adminRoleTable from '../tables/role.json';
-import type { ApiRoute } from 'befly/types';
 
 /**
  * 创建角色

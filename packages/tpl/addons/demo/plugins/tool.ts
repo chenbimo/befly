@@ -3,7 +3,6 @@
  * 提供待办事项相关的工具函数
  */
 
-import type { BeflyPlugin, BeflyContext } from 'befly/types';
 import { Logger } from 'befly';
 
 export default {
@@ -11,11 +10,11 @@ export default {
     version: '1.0.0',
     priority: 100,
 
-    async onLoad(befly: BeflyContext) {
+    async onLoad(befly) {
         Logger.info('[Demo] 工具插件加载中...');
     },
 
-    async onInit(befly: BeflyContext) {
+    async onInit(befly) {
         Logger.info('[Demo] 工具插件初始化中...');
 
         return {
