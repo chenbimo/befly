@@ -3,6 +3,7 @@
  */
 
 import type { BeflyContext, RequestContext } from 'befly/types';
+import { Fields } from 'befly';
 import type { ApiRoute } from 'befly/types';
 import type { GetUsersRequest, GetUsersResponse } from '../../../types/api';
 import type { User } from '../../../types/models';
@@ -11,11 +12,11 @@ export default {
     name: '获取用户列表',
     auth: ['admin'], // 仅管理员可访问
     fields: {
-        page: '页码|number|1|9999|1|0|null',
-        limit: '每页数量|number|1|100|10|0|null',
+        page: Fields.page,
+        limit: Fields.limit,
         role: '角色|string|0|20|null|0|^(admin|user|guest)
 ,
-        keyword: '关键词|string|0|50|null|0|null'
+        keyword: Fields.keyword
     },
     handler: async (befly: BeflyContext, ctx: RequestContext) => {
         const params = ctx.body as GetUsersRequest;

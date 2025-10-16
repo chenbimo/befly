@@ -2,11 +2,11 @@
  * 获取角色的菜单权限
  */
 
-import { Yes, No } from 'befly';
+import { Yes, No, Fields } from 'befly';
 export default {
     name: '获取角色菜单权限',
     fields: {
-        roleId: '角色ID|number|1|999999999999999|null|1|null'
+        roleId: Fields._id
     },
     handler: async (befly, ctx) => {
         try {

@@ -2,11 +2,11 @@
  * 保存用户的角色
  */
 
-import { Yes, No } from 'befly';
+import { Yes, No, Fields } from 'befly';
 export default {
     name: '保存用户角色',
     fields: {
-        adminId: '用户ID|number|1|999999999999999|null|1|null',
+        adminId: Fields._id,
         roleIds: '角色ID列表|string|0|10000|[]|0|null'
     },
     handler: async (befly, ctx) => {

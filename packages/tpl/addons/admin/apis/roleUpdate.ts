@@ -1,4 +1,4 @@
-import { Yes, No } from 'befly';
+import { Yes, No, Fields } from 'befly';
 import adminRoleTable from '../tables/role.json';
 import type { ApiRoute } from 'befly/types';
 
@@ -8,7 +8,7 @@ import type { ApiRoute } from 'befly/types';
 export default {
     name: '更新角色',
     fields: {
-        id: '角色ID|number|1|999999999999999|null|1|null',
+        id: Fields._id,
         name: adminRoleTable.name,
         code: adminRoleTable.code,
         description: adminRoleTable.description,

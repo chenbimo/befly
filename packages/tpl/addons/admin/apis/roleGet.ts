@@ -2,11 +2,11 @@
  * 获取用户的角色
  */
 
-import { Yes, No } from 'befly';
+import { Yes, No, Fields } from 'befly';
 export default {
     name: '获取用户角色',
     fields: {
-        adminId: '用户ID|number|1|999999999999999|null|1|null'
+        adminId: Fields._id
     },
     handler: async (befly, ctx) => {
         try {

@@ -1,4 +1,4 @@
-import { Yes, No } from 'befly';
+import { Yes, No, Fields } from 'befly';
 import adminMenuTable from '../tables/menu.json';
 import type { ApiRoute } from 'befly/types';
 
@@ -8,7 +8,7 @@ import type { ApiRoute } from 'befly/types';
 export default {
     name: '更新菜单',
     fields: {
-        id: '菜单ID|number|1|999999999999999|null|1|null',
+        id: Fields._id,
         name: adminMenuTable.name,
         path: adminMenuTable.path,
         icon: adminMenuTable.icon,
