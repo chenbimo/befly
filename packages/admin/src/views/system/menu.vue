@@ -155,7 +155,7 @@ const $Method = {
     async loadMenuList() {
         $Data.loading = true;
         try {
-            const res = await $Http.post('/admin/menuList', {});
+            const res = await $Http('/admin/menuList', {});
             if (res.code === 0 && res.data) {
                 // 构建树形结构
                 $Data.menuList = $Method.buildMenuTree(res.data);
@@ -215,7 +215,7 @@ const $Method = {
 
         try {
             const apiUrl = $Data.isEdit ? '/admin/menuUpdate' : '/admin/menuCreate';
-            const res = await $Http.post(apiUrl, $Data.formData);
+            const res = await $Http(apiUrl, $Data.formData);
 
             if (res.code === 0) {
                 MessagePlugin.success($Data.isEdit ? '更新成功' : '创建成功');
@@ -236,7 +236,7 @@ const $Method = {
     // 删除菜单
     async handleDelete(id: number) {
         try {
-            const res = await $Http.post('/admin/menuDelete', { id });
+            const res = await $Http('/admin/menuDelete', { id });
             if (res.code === 0) {
                 MessagePlugin.success('删除成功');
                 await $Method.loadMenuList();

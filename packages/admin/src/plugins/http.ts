@@ -84,21 +84,32 @@ request.interceptors.response.use(
     }
 );
 
-// 封装请求方法，导出为 $Http
-export const $Http = {
-    get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        return request.get(url, config);
-    },
+/**
+ * 统一的 HTTP 请求方法（仅支持 GET 和 POST）
+ * @param url - 请求路径
+ * @param data - 请求数据，默认为空对象
+ * @param method - 请求方法，默认为 'post'，可选 'get' | 'post'
+ * @param config - axios 请求配置
+ * @returns Promise<ApiResponse<T>>
+ *
+ * @example
+ * // POST 请求（默认）
+ * await $Http('/api/admin/login', { email, password });
+ *
+ * // GET 请求
+ * await $Http('/api/admin/info', {}, 'get');
+ */
+export function $Http<T = any>(url: string, data: any = {}, method: 'get' | 'post' = 'post', config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const methodLower = method.toLowerCase() as 'get' | 'post';
 
-    post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        return request.post(url, data, config);
-    },
-
-    put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        return request.put(url, data, config);
-    },
-
-    delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        return request.delete(url, config);
+    // GET 请求将 data 作为 params
+    if (methodLower === 'get') {
+        return request.get(url, {
+            ...config,
+            params: data
+        });
     }
-};
+
+    // POST 请求将 data 作为 body
+    return request.post(url, data, config);
+}
