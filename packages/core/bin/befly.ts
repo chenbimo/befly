@@ -33,14 +33,6 @@ interface CliArgs {
     DRY_RUN: boolean;
 }
 
-// 解析目录（来自 paths.js）
-// 核心脚本目录：core/scripts
-const coreScriptsDir = paths.rootScriptDir;
-// 项目脚本目录：tpl/scripts
-const projectScriptsDir = paths.projectScriptDir;
-// 项目 addons 目录：tpl/addons
-const projectAddonsDir = paths.projectAddonDir;
-
 /**
  * 安全地列出目录下的所有 .ts 脚本文件
  * @param dir - 目录路径
@@ -79,8 +71,7 @@ function scanAddonScripts(): Array<{ addonName: string; scriptName: string; scri
 
     try {
         // 检查 addons 目录是否存在
-        const addonsDir = projectAddonsDir;
-        if (!Bun.file(addonsDir).exists) {
+        if (!Bun.file(paths.projectAddonDir).exists) {
             return results;
         }
 
@@ -88,7 +79,7 @@ function scanAddonScripts(): Array<{ addonName: string; scriptName: string; scri
         const addonGlob = new Glob('*/scripts/*.ts');
         const addonFiles = Array.from(
             addonGlob.scanSync({
-                cwd: addonsDir,
+                cwd: paths.projectAddonDir,
                 absolute: false,
                 onlyFiles: true,
                 dot: false
@@ -101,7 +92,7 @@ function scanAddonScripts(): Array<{ addonName: string; scriptName: string; scri
             if (parts.length === 3 && parts[1] === 'scripts') {
                 const addonName = parts[0];
                 const scriptName = path.basename(parts[2]).replace(/\.ts$/, '');
-                const scriptPath = path.resolve(addonsDir, file);
+                const scriptPath = path.resolve(paths.projectAddonDir, file);
 
                 results.push({
                     addonName,
@@ -122,8 +113,8 @@ function scanAddonScripts(): Array<{ addonName: string; scriptName: string; scri
  * @returns 脚本项数组
  */
 function buildScriptItems(): ScriptItem[] {
-    const coreList = safeList(coreScriptsDir);
-    const projectList = safeList(projectScriptsDir);
+    const coreList = safeList(paths.rootScriptDir);
+    const projectList = safeList(paths.projectScriptDir);
     const addonScripts = scanAddonScripts();
 
     const items: ScriptItem[] = [];
@@ -137,7 +128,7 @@ function buildScriptItems(): ScriptItem[] {
             source: 'core',
             displayName: name,
             duplicate: projectList.includes(name),
-            path: path.resolve(coreScriptsDir, `${name}.ts`) // 优先 .ts
+            path: path.resolve(paths.rootScriptDir, `${name}.ts`) // 优先 .ts
         });
     }
 
@@ -150,7 +141,7 @@ function buildScriptItems(): ScriptItem[] {
             source: 'project',
             displayName: name,
             duplicate: isDup,
-            path: path.resolve(projectScriptsDir, `${name}.ts`) // 优先 .ts
+            path: path.resolve(paths.projectScriptDir, `${name}.ts`) // 优先 .ts
         });
     }
 
@@ -244,8 +235,8 @@ async function resolveScriptPath(name: string): Promise<string | null> {
     const base = name.replace(/\.ts$/, '');
 
     // 检查 .ts 文件
-    const coreTsPath = path.resolve(coreScriptsDir, `${base}.ts`);
-    const projectTsPath = path.resolve(projectScriptsDir, `${base}.ts`);
+    const coreTsPath = path.resolve(paths.rootScriptDir, `${base}.ts`);
+    const projectTsPath = path.resolve(paths.projectScriptDir, `${base}.ts`);
     if (await Bun.file(coreTsPath).exists()) return coreTsPath;
     if (await Bun.file(projectTsPath).exists()) return projectTsPath;
 
