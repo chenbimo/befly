@@ -74,8 +74,8 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
 
             // 8. 权限验证
             const permissionResult = checkPermission(api, ctx);
-            if (!permissionResult.allowed) {
-                return Response.json(No(permissionResult.reason!, {}, permissionResult.extra), {
+            if (permissionResult.code !== 0) {
+                return Response.json(permissionResult, {
                     headers: corsOptions.headers
                 });
             }
