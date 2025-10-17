@@ -24,16 +24,6 @@ const ARGV = Array.isArray(process.argv) ? process.argv : [];
 const CLI: CliArgs = { DRY_RUN: ARGV.includes('--plan') };
 
 /**
- * 执行 SQL 查询
- */
-const exec = async (client: any, query: string, params: any[] = []): Promise<any> => {
-    if (params && params.length > 0) {
-        return await client.unsafe(query, params);
-    }
-    return await client.unsafe(query);
-};
-
-/**
  * 同步开发管理员账号（使用 sqlHelper）
  * 表名: addon_admin_admin
  * 邮箱: dev@qq.com
@@ -61,14 +51,6 @@ export async function SyncDev(client: any = null): Promise<boolean> {
             ownClient = true;
         }
 
-        // 检查 addon_admin_admin 表是否存在（保留原始 SQL，元数据查询）
-        const exist = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'addon_admin_admin']);
-
-        if (!exist || !exist[0] || Number(exist[0].cnt) === 0) {
-            Logger.warn('跳过开发管理员初始化：未检测到 addon_admin_admin 表');
-            return false;
-        }
-
         // 初始化 Redis（用于生成 ID）
         redis = new Redis();
         await redis.init();
@@ -83,6 +65,14 @@ export async function SyncDev(client: any = null): Promise<boolean> {
 
         // 创建 sqlHelper 实例
         const helper = new SqlHelper(befly, client);
+
+        // 检查 addon_admin_admin 表是否存在（使用 sqlHelper.query 执行元数据查询）
+        const exist = await helper.query('SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'addon_admin_admin']);
+
+        if (!exist || !exist[0] || Number(exist[0].cnt) === 0) {
+            Logger.warn('跳过开发管理员初始化：未检测到 addon_admin_admin 表');
+            return false;
+        }
 
         // 对密码进行双重加密
         const hashed = Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
