@@ -28,7 +28,6 @@ export { RedisHelper, initRedisClient, getRedisClient, closeRedisClient } from '
 export { Jwt } from './jwt.js';
 export { Crypto2 } from './crypto.js';
 export { Xml } from './xml.js';
-export { Tool } from './tool.js';
 
 // 类型导出
 export type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from './sqlHelper.js';

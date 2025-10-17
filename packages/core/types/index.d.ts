@@ -1,85 +1,29 @@
-/**/**/**
-
+/**
  * Befly 核心类型定义
-
- * 统一导出所有类型，简化导入路径 * Befly 核心类型定义 * Befly 核心类型定义
-
+ * 统一导出所有类型，简化导入路径
  *
-
- * @example * 统一导出所有类型，简化导入路径 * 统一导出所有类型，简化导入路径
-
+ * @example
  * ```typescript
-
- * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types'; * *
-
+ * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types';
  * ```
+ */
 
- */ * @example * @example
-
-
-
-// 基础类型 * ```typescript * ```typescript
-
+// 基础类型
 export * from './common.js';
+export * from './context.js';
 
-export * from './context.js'; * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types'; * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types';
-
-
-
-// 核心功能类型 * ``` * ```
-
+// 核心功能类型
 export * from './api.js';
-
-export * from './befly.js'; */ */
-
+export * from './befly.js';
 export * from './plugin.js';
 
-
-
 // 功能模块类型
-
-export * from './database.js';// 基础类型// 基础类型
-
+export * from './database.js';
 export * from './crypto.js';
-
-export * from './jwt.js';export * from './common.js';export * from './common.js';
-
+export * from './jwt.js';
 export * from './validator.js';
-
-export * from './redis.js';export * from './context.js';export * from './context.js';
-
+export * from './redis.js';
 export * from './logger.js';
-
-export * from './tool.js';
-
-
-// 核心功能类型// 核心功能类型
-
-export * from './api.js';export * from './api.js';
-
-export * from './befly.js';export * from './befly.js';
-
-export * from './plugin.js';export * from './plugin.js';
-
-
-
-// 功能模块类型// 功能模块类型
-
-export * from './database.js';export * from './database.js';
-
-export * from './crypto.js';export * from './crypto.js';
-
-export * from './jwt.js';export * from './jwt.js';
-
-export * from './validator.js';export * from './validator.js';
-
-export * from './redis.js';export * from './redis.js';
-
-export * from './logger.js';export * from './logger.js';
-
-export * from './tool.js';export * from './tool.js';
-
-
 
 /**
  * API 请求上下文
