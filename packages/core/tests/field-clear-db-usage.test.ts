@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { fieldClear } from '../utils/helpers.js';
+import { fieldClear } from '../utils/helper.js';
 
 describe('fieldClear 在数据库操作中的应用', () => {
     // ========================================

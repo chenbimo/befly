@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'bun:test';
-import { cleanData } from '../utils/helpers.js';
+import { cleanData } from '../utils/helper.js';
 
 describe('cleanData - 数据清洗', () => {
     describe('基础功能', () => {

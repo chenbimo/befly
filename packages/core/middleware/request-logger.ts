@@ -5,7 +5,7 @@
 
 import { Logger } from '../utils/logger.js';
 import { Env } from '../config/env.js';
-import { isType } from '../utils/helpers.js';
+import { isType } from '../utils/helper.js';
 import type { RequestContext } from '../types/context.js';
 
 /**

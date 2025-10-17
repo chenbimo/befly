@@ -4,7 +4,7 @@
  */
 
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear } from './helpers.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear } from './helper.js';
 import { Logger } from './logger.js';
 import { DBError } from './errors.js';
 import type { WhereConditions } from '../types/common.js';

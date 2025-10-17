@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { fieldClear } from '../utils/helpers.js';
+import { fieldClear } from '../utils/helper.js';
 
 describe('keepValues 优先级测试', () => {
     test('场景1：字段在 keepValues 中且值匹配 - 应该保留', () => {
