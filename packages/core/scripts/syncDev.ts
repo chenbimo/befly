@@ -1,16 +1,18 @@
 /**
- * 同步开发者管理员到数据库
+ * 同步开发者管理员到数据库（使用 sqlHelper）
  * - 邮箱: dev@qq.com
  * - 姓名: 开发者
  * - 密码: Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT)
  * - 表名: addon_admin_admin
  */
 
-import { DB } from '../plugins/db.js';
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { Crypto2 } from '../utils/crypto.js';
+import { SqlHelper } from '../utils/sqlHelper.js';
 import { createSqlClient } from '../utils/dbHelper.js';
+import { Redis } from '../plugins/redis.js';
+import type { BeflyContext } from '../types/befly.js';
 
 // CLI 参数类型
 interface CliArgs {
@@ -32,7 +34,7 @@ const exec = async (client: any, query: string, params: any[] = []): Promise<any
 };
 
 /**
- * 同步开发管理员账号
+ * 同步开发管理员账号（使用 sqlHelper）
  * 表名: addon_admin_admin
  * 邮箱: dev@qq.com
  * 姓名: 开发者
@@ -41,6 +43,7 @@ const exec = async (client: any, query: string, params: any[] = []): Promise<any
  */
 export async function SyncDev(client: any = null): Promise<boolean> {
     let ownClient = false;
+    let redis: Redis | null = null;
 
     try {
         if (CLI.DRY_RUN) {
@@ -58,7 +61,7 @@ export async function SyncDev(client: any = null): Promise<boolean> {
             ownClient = true;
         }
 
-        // 检查 addon_admin_admin 表是否存在
+        // 检查 addon_admin_admin 表是否存在（保留原始 SQL，元数据查询）
         const exist = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'addon_admin_admin']);
 
         if (!exist || !exist[0] || Number(exist[0].cnt) === 0) {
@@ -66,22 +69,57 @@ export async function SyncDev(client: any = null): Promise<boolean> {
             return false;
         }
 
-        const nowTs = Date.now();
+        // 初始化 Redis（用于生成 ID）
+        redis = new Redis();
+        await redis.init();
+
+        // 创建最小化 befly 上下文
+        const befly: BeflyContext = {
+            redis: redis,
+            db: null as any,
+            tool: null as any,
+            logger: null as any
+        };
+
+        // 创建 sqlHelper 实例
+        const helper = new SqlHelper(befly, client);
+
         // 对密码进行双重加密
         const hashed = Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
 
-        // 更新存在的 dev 账号
-        const updateRes = await exec(client, 'UPDATE `addon_admin_admin` SET `password` = ?, `updated_at` = ?, `role` = ? WHERE `email` = ? LIMIT 1', [hashed, nowTs, 'dev', 'dev@qq.com']);
+        // 准备开发管理员数据
+        const devData = {
+            name: '开发者',
+            nickname: '开发者',
+            email: 'dev@qq.com',
+            username: 'dev',
+            password: hashed,
+            role: 'dev',
+            roleType: 'admin' // 小驼峰，自动转换为 role_type
+        };
 
-        const affected = updateRes?.affectedRows ?? updateRes?.rowsAffected ?? 0;
+        // 查询现有账号
+        const existing = await helper.getOne({
+            table: 'addon_admin_admin',
+            where: { email: 'dev@qq.com' },
+            fields: ['id']
+        });
 
-        if (!affected || affected === 0) {
-            // 插入新账号
-            const id = nowTs;
-            await exec(client, 'INSERT INTO `addon_admin_admin` (`id`, `created_at`, `updated_at`, `deleted_at`, `state`, `name`, `email`, `password`, `role`) VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?) ', [id, nowTs, nowTs, '开发者', 'dev@qq.com', hashed, 'dev']);
-            Logger.info('开发管理员已初始化：email=dev@qq.com, role=dev');
+        if (existing) {
+            // 更新现有账号
+            await helper.updData({
+                table: 'addon_admin_admin',
+                where: { email: 'dev@qq.com' },
+                data: devData
+            });
+            Logger.info('开发管理员已更新：email=dev@qq.com, username=dev, role=dev, role_type=admin');
         } else {
-            Logger.info('开发管理员已更新密码并刷新更新时间：email=dev@qq.com, role=dev');
+            // 插入新账号
+            await helper.insData({
+                table: 'addon_admin_admin',
+                data: devData
+            });
+            Logger.info('开发管理员已初始化：email=dev@qq.com, username=dev, role=dev, role_type=admin');
         }
 
         return true;
@@ -89,6 +127,15 @@ export async function SyncDev(client: any = null): Promise<boolean> {
         Logger.warn(`开发管理员初始化步骤出错：${error.message}`);
         return false;
     } finally {
+        // 清理资源
+        if (redis) {
+            try {
+                await redis.close();
+            } catch (error: any) {
+                Logger.warn('关闭 Redis 连接时出错:', error.message);
+            }
+        }
+
         if (ownClient && client) {
             try {
                 await client.close();
