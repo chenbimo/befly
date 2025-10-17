@@ -10,7 +10,7 @@
 
 import { Logger } from '../../utils/logger.js';
 import { ErrorHandler } from '../../utils/errorHandler.js';
-import { parseRule } from '../../utils/framework.js';
+import { parseRule } from '../../utils/helper.js';
 import type { ParsedFieldRule, AnyObject } from '../../types/common.js';
 import { toSnakeTableName } from '../../utils/dbHelper.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';

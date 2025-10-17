@@ -6,10 +6,10 @@
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/helpers.js';
-import { sortPlugins } from '../utils/framework.js';
+import { sortPlugins } from '../utils/helper.js';
 import { isType } from '../utils/helpers.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../utils/framework.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/helper.js';
 import { ErrorHandler } from '../utils/errorHandler.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';

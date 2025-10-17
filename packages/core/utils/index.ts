@@ -10,7 +10,7 @@ export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, form
 export type { DataCleanOptions } from './helpers.js';
 
 // ========== 框架工具 ==========
-export { Api, scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './framework.js';
+export { Api, scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './helper.js';
 
 // ========== 数据库工具 ==========
 export { toSnakeTableName, buildDatabaseUrl, createSqlClient } from './dbHelper.js';
