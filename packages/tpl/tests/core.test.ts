@@ -5,7 +5,7 @@ import '../../core/tests/jwt.test.js';
 import '../../core/tests/redis.test.js';
 import '../../core/tests/smoke-sql.test.js';
 import '../../core/tests/sqlBuilder.test.js';
-import '../../core/tests/sqlHelper.test.js';
+import '../../core/tests/dbhelper-fixes.test.js';
 import '../../core/tests/state.test.js';
 import '../../core/tests/sync.test.js';
 import '../../core/tests/table.test.js';

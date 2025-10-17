@@ -23,14 +23,14 @@ export { Colors } from './colors.js';
 export { Logger } from './logger.js';
 export { Validator } from './validate.js';
 export { SqlBuilder } from './sqlBuilder.js';
-export { SqlHelper } from './sqlHelper.js';
-export { RedisHelper, initRedisClient, getRedisClient, closeRedisClient } from './redisHelper.js';
+export { DbHelper } from './dbHelper.js';
+export { RedisHelper } from './redisHelper.js';
 export { Jwt } from './jwt.js';
 export { Crypto2 } from './crypto.js';
 export { Xml } from './xml.js';
 
 // 类型导出
-export type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from './sqlHelper.js';
+export type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from './dbHelper.js';
 export type { JwtPayload } from './jwt.js';
 export type { EncodingType, HashAlgorithm } from './crypto.js';
 export type { XmlParseOptions } from './xml.js';

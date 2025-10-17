@@ -1,4 +1,4 @@
-import { SqlHelper } from 'befly';
+import { DbHelper } from 'befly';
 import { Crypto2 } from 'befly';
 import { Env } from 'befly';
 import { createSqlClient } from 'befly';
@@ -17,7 +17,7 @@ import { RedisHelper } from 'befly';
 const SQL = await createSqlClient();
 const redis = RedisHelper;
 const mockBefly = { sql: SQL, redis };
-const db = new SqlHelper(mockBefly, SQL);
+const db = new DbHelper(mockBefly, SQL);
 
 try {
     console.log('开始初始化开发者账号和权限...\n');

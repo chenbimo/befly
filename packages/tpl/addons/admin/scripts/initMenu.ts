@@ -1,4 +1,4 @@
-import { SqlHelper } from 'befly';
+import { DbHelper } from 'befly';
 import { createSqlClient } from 'befly';
 import { RedisHelper } from 'befly';
 import path from 'node:path';
@@ -21,9 +21,9 @@ const __dirname = path.dirname(__filename);
 // 创建数据库和Redis客户端
 const SQL = await createSqlClient();
 const redis = RedisHelper;
-// 创建一个假的 befly 上下文用于 SqlHelper
+// 创建一个假的 befly 上下文用于 DbHelper
 const mockBefly = { sql: SQL, redis };
-const db = new SqlHelper(mockBefly, SQL);
+const db = new DbHelper(mockBefly, SQL);
 
 /**
  * 递归插入菜单

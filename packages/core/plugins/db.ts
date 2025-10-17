@@ -6,7 +6,7 @@
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient } from '../utils/database.js';
-import { SqlHelper } from '../utils/sqlHelper.js';
+import { DbHelper } from '../utils/dbHelper.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
@@ -17,7 +17,7 @@ const dbPlugin: Plugin = {
     name: '_db',
     after: ['_redis'],
 
-    async onInit(befly: BeflyContext): Promise<SqlHelper | Record<string, never>> {
+    async onInit(befly: BeflyContext): Promise<DbHelper | Record<string, never>> {
         let sql: any = null;
 
         try {
@@ -31,7 +31,7 @@ const dbPlugin: Plugin = {
                 });
 
                 // 创建数据库管理器实例，直接传入 sql 对象
-                const dbManager = new SqlHelper(befly, sql);
+                const dbManager = new DbHelper(befly, sql);
 
                 Logger.info('数据库插件初始化成功');
                 return dbManager;

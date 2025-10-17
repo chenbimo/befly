@@ -1,5 +1,5 @@
 /**
- * SQL 助手 - TypeScript 版本
+ * 数据库助手 - TypeScript 版本
  * 提供数据库 CRUD 操作的封装
  */
 
@@ -12,9 +12,9 @@ import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
 
 /**
- * SQL 助手类
+ * 数据库助手类
  */
-export class SqlHelper {
+export class DbHelper {
     private befly: BeflyContext;
     private sql: any = null;
     private isTransaction: boolean = false;
@@ -444,7 +444,7 @@ export class SqlHelper {
         let committed = false;
 
         try {
-            const trans = new SqlHelper(this.befly, conn);
+            const trans = new DbHelper(this.befly, conn);
             const result = await callback(trans);
 
             // 提交事务

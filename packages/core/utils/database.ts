@@ -6,7 +6,7 @@
 import { SQL, RedisClient } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
-import { SqlHelper } from './sqlHelper.js';
+import { DbHelper } from './dbHelper.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { SqlClientOptions } from '../types/database.js';
 
@@ -16,7 +16,7 @@ import type { SqlClientOptions } from '../types/database.js';
 interface DatabaseConnections {
     redis: RedisClient | null;
     sql: any;
-    helper: SqlHelper | null;
+    helper: DbHelper | null;
 }
 
 /**
@@ -214,16 +214,16 @@ export async function initDatabase(options: SqlClientOptions = {}): Promise<Data
         Logger.info('正在初始化 SQL 连接...');
         connections.sql = await createSqlClient(options);
 
-        // 3. 创建 SqlHelper 实例
+        // 3. 创建 DbHelper 实例
         const befly: BeflyContext = {
             redis: connections.redis as any,
             db: null as any,
             tool: null as any,
             logger: null as any
         };
-        connections.helper = new SqlHelper(befly, connections.sql);
+        connections.helper = new DbHelper(befly, connections.sql);
 
-        Logger.info('数据库连接初始化完成（Redis + SQL + SqlHelper）');
+        Logger.info('数据库连接初始化完成（Redis + SQL + DbHelper）');
 
         return {
             redis: connections.redis,
@@ -265,7 +265,7 @@ export async function closeDatabase(): Promise<void> {
             connections.redis = null;
         }
 
-        // 清理 SqlHelper
+        // 清理 DbHelper
         connections.helper = null;
     } catch (error: any) {
         Logger.error('关闭数据库连接时出错:', error.message);
@@ -289,10 +289,10 @@ export function getSql(): any {
 }
 
 /**
- * 获取 SqlHelper 实例
- * @returns SqlHelper 实例
+ * 获取 DbHelper 实例
+ * @returns DbHelper 实例
  */
-export function getSqlHelper(): SqlHelper | null {
+export function getSqlHelper(): DbHelper | null {
     return connections.helper;
 }
 
@@ -307,9 +307,9 @@ export function isDatabaseInitialized(): boolean {
 /**
  * 仅初始化 SQL 连接（不需要 Redis 时使用）
  * @param options SQL 客户端选项
- * @returns SQL 客户端和 SqlHelper 实例
+ * @returns SQL 客户端和 DbHelper 实例
  */
-export async function initSqlOnly(options: SqlClientOptions = {}): Promise<{ sql: any; helper: SqlHelper }> {
+export async function initSqlOnly(options: SqlClientOptions = {}): Promise<{ sql: any; helper: DbHelper }> {
     try {
         Logger.info('正在初始化 SQL 连接（不含 Redis）...');
         connections.sql = await createSqlClient(options);
@@ -321,7 +321,7 @@ export async function initSqlOnly(options: SqlClientOptions = {}): Promise<{ sql
             tool: null as any,
             logger: null as any
         };
-        connections.helper = new SqlHelper(befly, connections.sql);
+        connections.helper = new DbHelper(befly, connections.sql);
 
         Logger.info('SQL 连接初始化完成');
 
