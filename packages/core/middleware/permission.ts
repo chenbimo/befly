@@ -19,8 +19,16 @@ export interface PermissionResult {
  * - true: 需要登录
  * - string: 需要特定角色类型
  * - array: 需要在角色列表中
+ *
+ * 特殊规则：
+ * - role='dev' 的用户拥有所有权限（超级管理员）
  */
 export function checkPermission(api: ApiRoute, ctx: RequestContext): PermissionResult {
+    // dev 角色拥有所有权限，直接通过（用 * 表示具备所有权限）
+    if (ctx.user?.role === 'dev') {
+        return { allowed: true };
+    }
+
     // 登录验证
     if (api.auth === true && !ctx.user.id) {
         return {

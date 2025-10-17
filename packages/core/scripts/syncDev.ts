@@ -1,7 +1,9 @@
 /**
- * 同步开发者用户到数据库
- * - 用户名: Env.DEV_USERNAME (默认 dev)
+ * 同步开发者管理员到数据库
+ * - 邮箱: dev@qq.com
+ * - 姓名: 开发者
  * - 密码: Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT)
+ * - 表名: addon_admin_admin
  */
 
 import { DB } from '../plugins/db.js';
@@ -31,6 +33,9 @@ const exec = async (client: any, query: string, params: any[] = []): Promise<any
 
 /**
  * 同步开发管理员账号
+ * 表名: addon_admin_admin
+ * 邮箱: dev@qq.com
+ * 姓名: 开发者
  * @param client 可选，复用已有 SQL 客户端；不传则内部创建与关闭
  * @returns 是否成功
  */
@@ -39,7 +44,7 @@ export async function SyncDev(client: any = null): Promise<boolean> {
 
     try {
         if (CLI.DRY_RUN) {
-            Logger.info('[计划] 同步完成后将初始化/更新 admin.dev 账号（plan 模式不执行）');
+            Logger.info('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
             return true;
         }
 
@@ -53,11 +58,11 @@ export async function SyncDev(client: any = null): Promise<boolean> {
             ownClient = true;
         }
 
-        // 检查 sys_admin 表是否存在（核心表带 sys_ 前缀）
-        const exist = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'sys_admin']);
+        // 检查 addon_admin_admin 表是否存在
+        const exist = await exec(client, 'SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'addon_admin_admin']);
 
         if (!exist || !exist[0] || Number(exist[0].cnt) === 0) {
-            Logger.warn('跳过开发管理员初始化：未检测到 sys_admin 表');
+            Logger.warn('跳过开发管理员初始化：未检测到 addon_admin_admin 表');
             return false;
         }
 
@@ -66,17 +71,17 @@ export async function SyncDev(client: any = null): Promise<boolean> {
         const hashed = Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
 
         // 更新存在的 dev 账号
-        const updateRes = await exec(client, 'UPDATE `sys_admin` SET `password` = ?, `updated_at` = ? WHERE `account` = ? LIMIT 1', [hashed, nowTs, 'dev']);
+        const updateRes = await exec(client, 'UPDATE `addon_admin_admin` SET `password` = ?, `updated_at` = ?, `role` = ? WHERE `email` = ? LIMIT 1', [hashed, nowTs, 'dev', 'dev@qq.com']);
 
         const affected = updateRes?.affectedRows ?? updateRes?.rowsAffected ?? 0;
 
         if (!affected || affected === 0) {
             // 插入新账号
             const id = nowTs;
-            await exec(client, 'INSERT INTO `sys_admin` (`id`, `created_at`, `updated_at`, `deleted_at`, `state`, `account`, `password`) VALUES (?, ?, ?, 0, 0, ?, ?)', [id, nowTs, nowTs, 'dev', hashed]);
-            Logger.info('开发管理员已初始化：account=dev');
+            await exec(client, 'INSERT INTO `addon_admin_admin` (`id`, `created_at`, `updated_at`, `deleted_at`, `state`, `name`, `email`, `password`, `role`) VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?) ', [id, nowTs, nowTs, '开发者', 'dev@qq.com', hashed, 'dev']);
+            Logger.info('开发管理员已初始化：email=dev@qq.com, role=dev');
         } else {
-            Logger.info('开发管理员已更新密码并刷新更新时间：account=dev');
+            Logger.info('开发管理员已更新密码并刷新更新时间：email=dev@qq.com, role=dev');
         }
 
         return true;
