@@ -292,7 +292,7 @@ export function getSql(): any {
  * 获取 DbHelper 实例
  * @returns DbHelper 实例
  */
-export function getSqlHelper(): DbHelper | null {
+export function getDbHelper(): DbHelper | null {
     return connections.helper;
 }
 

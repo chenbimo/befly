@@ -4,7 +4,7 @@
  * 路由：GET /api/befly/health/info
  */
 
-import { Yes } from 'befly';
+import { Yes, Env, getRedis } from 'befly';
 
 interface HealthInfo {
     status: string;
@@ -38,9 +38,10 @@ export default {
 
         // 检查 Redis 连接状态
         if (Env.REDIS_ENABLE === 1) {
-            if (befly.redis) {
+            const redisClient = getRedis();
+            if (redisClient) {
                 try {
-                    await befly.redis.getRedisClient().ping();
+                    await redisClient.ping();
                     info.redis = '已连接';
                 } catch (error: any) {
                     info.redis = '未连接';

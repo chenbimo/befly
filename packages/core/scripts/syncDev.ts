@@ -1,5 +1,5 @@
 /**
- * 同步开发者管理员到数据库（使用 sqlHelper）
+ * 同步开发者管理员到数据库（使用 dbHelper）
  * - 邮箱: dev@qq.com
  * - 姓名: 开发者
  * - 密码: Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT)
@@ -41,11 +41,11 @@ export async function SyncDev(): Promise<boolean> {
             return false;
         }
 
-        // 初始化数据库连接（Redis + SQL + SqlHelper）
+        // 初始化数据库连接（Redis + SQL + DbHelper）
         const { helper } = await initDatabase({ max: 1 });
         dbInitialized = true;
 
-        // 检查 addon_admin_admin 表是否存在（使用 sqlHelper.query 执行元数据查询）
+        // 检查 addon_admin_admin 表是否存在（使用 helper.query 执行元数据查询）
         const exist = await helper.query('SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'addon_admin_admin']);
 
         if (!exist || !exist[0] || Number(exist[0].cnt) === 0) {

@@ -293,7 +293,7 @@ export class SqlBuilder {
     }
 
     /**
-     * 获取 WHERE 条件（供 SqlHelper 使用）
+     * 获取 WHERE 条件（供 DbHelper 使用）
      */
     getWhereConditions(): { sql: string; params: SqlValue[] } {
         return {

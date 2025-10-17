@@ -1,11 +1,11 @@
 /**
- * SqlHelper 修复验证测试
+ * DbHelper 修复验证测试
  * 验证所有修复的功能是否正常工作
  */
 
 import { describe, test, expect } from 'bun:test';
 
-describe('SqlHelper 修复验证', () => {
+describe('DbHelper 修复验证', () => {
     describe('系统字段保护机制', () => {
         test('processDataForInsert 应移除用户指定的系统字段', () => {
             // 模拟用户数据（包含系统字段）

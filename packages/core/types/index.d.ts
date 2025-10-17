@@ -135,21 +135,13 @@ export interface JwtSignOptions {
 }
 
 /**
- * Befly 应用上下文
- * 包含所有插件提供的功能
+ * Befly 上下文接口
  */
 export interface BeflyContext {
     /** 数据库管理器 */
-    db: SqlHelper;
+    db: DbHelper;
     /** Redis 助手 */
     redis: typeof RedisHelper;
-    /** 日志记录器 */
-    logger: typeof Logger;
-    /** 数据处理工具 */
-    tool: Tool;
-    /** 自定义插件 */
-    [key: string]: any;
-}
 
 /**
  * 插件定义
@@ -310,7 +302,7 @@ export interface ListResult<T = any> {
 /**
  * 事务回调函数
  */
-export type TransactionCallback<T = any> = (trans: SqlHelper) => Promise<T>;
+export type TransactionCallback<T = any> = (trans: DbHelper) => Promise<T>;
 
 /**
  * SQL 查询对象
@@ -323,9 +315,9 @@ export interface SqlQuery {
 }
 
 /**
- * SQL 管理器接口
+ * 数据库管理器接口
  */
-export interface SqlHelper {
+export interface DbHelper {
     /** 查询单条数据 */
     getOne<T = any>(options: QueryOptions): Promise<T | null>;
     /** 查询列表（带分页） */

@@ -5,7 +5,8 @@
 
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { RedisHelper, initRedisClient, getRedisClient } from '../utils/redisHelper.js';
+import { RedisHelper } from '../utils/redisHelper.js';
+import { initRedisOnly } from '../utils/database.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
@@ -19,8 +20,8 @@ const redisPlugin: Plugin = {
     async onInit(befly: BeflyContext): Promise<typeof RedisHelper | Record<string, never>> {
         try {
             if (Env.REDIS_ENABLE === 1) {
-                // 初始化 Redis 客户端（带连接测试）
-                await initRedisClient();
+                // 初始化 Redis 客户端（统一使用 database.ts 的连接管理）
+                await initRedisOnly();
 
                 Logger.info('Redis 插件初始化成功', {
                     host: Env.REDIS_HOST,
