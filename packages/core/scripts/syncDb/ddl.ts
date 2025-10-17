@@ -10,9 +10,8 @@
 
 import { Logger } from '../../utils/logger.js';
 import { ErrorHandler } from '../../utils/errorHandler.js';
-import { parseRule } from '../../utils/helper.js';
+import { parseRule, toSnakeCase } from '../../utils/helper.js';
 import type { ParsedFieldRule, AnyObject } from '../../types/common.js';
-import { toSnakeTableName } from '../../utils/dbHelper.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
 import type { SQL } from 'bun';
@@ -82,7 +81,7 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeTableName(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
         const parsed = parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
@@ -112,7 +111,7 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
  */
 export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: boolean = false): string {
     // 转换字段名为下划线格式
-    const dbFieldName = toSnakeTableName(fieldKey);
+    const dbFieldName = toSnakeCase(fieldKey);
 
     const parsed = parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;

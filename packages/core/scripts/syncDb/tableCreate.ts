@@ -13,8 +13,7 @@ import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
-import { parseRule } from '../../utils/helper.js';
-import { toSnakeTableName } from '../../utils/dbHelper.js';
+import { parseRule, toSnakeCase } from '../../utils/helper.js';
 import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）
@@ -49,7 +48,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     // 业务字段注释
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeTableName(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
         const parsed = parseRule(fieldRule);
         const { name: fieldName } = parsed;
@@ -86,7 +85,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     // 业务字段索引
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeTableName(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
         const parsed = parseRule(fieldRule);
         if (parsed.index === 1) {

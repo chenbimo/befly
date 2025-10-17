@@ -329,7 +329,8 @@ export const calcPerfTime = (startTime: number, endTime: number = Bun.nanosecond
 // ========================================
 
 /**
- * 小驼峰转下划线
+ * 小驼峰转下划线（蛇形命名）
+ * 支持处理连续大写字母（如 APIKey -> api_key）
  * @param str - 小驼峰字符串
  * @returns 下划线格式字符串
  *
@@ -338,13 +339,15 @@ export const calcPerfTime = (startTime: number, endTime: number = Bun.nanosecond
  * toSnakeCase('createdAt') // 'created_at'
  * toSnakeCase('userName') // 'user_name'
  * toSnakeCase('APIKey') // 'api_key'
+ * toSnakeCase('HTTPResponse') // 'http_response'
+ * toSnakeCase('XMLParser') // 'xml_parser'
  */
 export const toSnakeCase = (str: string): string => {
     if (!str || typeof str !== 'string') return str;
-    return str
-        .replace(/([A-Z])/g, '_$1')
-        .toLowerCase()
-        .replace(/^_/, '');
+    return String(str)
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/([A-Z]+)([A-Z][a-z0-9]+)/g, '$1_$2')
+        .toLowerCase();
 };
 
 /**

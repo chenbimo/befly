@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Yes, No, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, parseRule, toSnakeTableName } from '../utils/index.js';
+import { Yes, No, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, parseRule, toSnakeCase } from '../utils/index.js';
 
 describe('响应函数', () => {
     test('Yes 应该返回成功响应', () => {
@@ -76,10 +76,10 @@ describe('日期格式化', () => {
 });
 
 describe('表名转换', () => {
-    test('toSnakeTableName 应该转换为蛇形命名', () => {
-        expect(toSnakeTableName('userTable')).toBe('user_table');
-        expect(toSnakeTableName('testNewFormat')).toBe('test_new_format');
-        expect(toSnakeTableName('common')).toBe('common');
+    test('toSnakeCase 应该转换为蛇形命名', () => {
+        expect(toSnakeCase('userTable')).toBe('user_table');
+        expect(toSnakeCase('testNewFormat')).toBe('test_new_format');
+        expect(toSnakeCase('common')).toBe('common');
     });
 });
 

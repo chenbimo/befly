@@ -10,7 +10,8 @@
 import path from 'node:path';
 import { Logger } from '../../utils/logger.js';
 import { Env } from '../../config/env.js';
-import { createSqlClient, toSnakeTableName } from '../../utils/dbHelper.js';
+import { createSqlClient } from '../../utils/dbHelper.js';
+import { toSnakeCase } from '../../utils/helper.js';
 import checkTable from '../../checks/table.js';
 import { paths } from '../../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../../utils/helper.js';
@@ -133,7 +134,7 @@ export const SyncDb = async (): Promise<void> => {
                 // 确定表名前缀：
                 // - addon 表：addon_{addonName}_ 前缀
                 // - 项目表：无前缀
-                let tableName = toSnakeTableName(fileName);
+                let tableName = toSnakeCase(fileName);
                 if (addonName) {
                     tableName = `addon_${addonName}_${tableName}`;
                 }

@@ -9,7 +9,7 @@
 
 import { Logger } from '../../utils/logger.js';
 import { ErrorHandler } from '../../utils/errorHandler.js';
-import { toSnakeTableName } from '../../utils/dbHelper.js';
+import { toSnakeCase } from '../../utils/helper.js';
 import { parseRule } from '../../utils/helper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
@@ -59,7 +59,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式（用于与数据库字段对比）
-        const dbFieldName = toSnakeTableName(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
         if (existingColumns[dbFieldName]) {
             const comparison = compareFieldDefinition(existingColumns[dbFieldName], fieldRule, dbFieldName);
@@ -166,7 +166,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     // 检查业务字段索引
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeTableName(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
         const parsed = parseRule(fieldRule);
         const indexName = `idx_${dbFieldName}`;
@@ -186,7 +186,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     if (IS_PG) {
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
             // 转换字段名为下划线格式
-            const dbFieldName = toSnakeTableName(fieldKey);
+            const dbFieldName = toSnakeCase(fieldKey);
 
             if (existingColumns[dbFieldName]) {
                 const parsed = parseRule(fieldRule);

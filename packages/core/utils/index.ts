@@ -6,14 +6,14 @@
  */
 
 // ========== 通用辅助工具（helpers.ts）==========
-export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, formatDate, calcPerfTime, cleanData } from './helper.js';
+export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, formatDate, calcPerfTime, cleanData, toSnakeCase, toCamelCase, keysToSnake, keysToCamel } from './helper.js';
 export type { DataCleanOptions } from './helper.js';
 
 // ========== 框架工具 ==========
 export { Api, scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './helper.js';
 
 // ========== 数据库工具 ==========
-export { toSnakeTableName, buildDatabaseUrl, createSqlClient } from './dbHelper.js';
+export { buildDatabaseUrl, createSqlClient } from './dbHelper.js';
 
 // ========== 错误处理 ==========
 export { ErrorHandler } from './errorHandler.js';

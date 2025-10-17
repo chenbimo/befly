@@ -1,32 +1,23 @@
 /**
  * Befly 数据库工具
- * 提供数据库连接和表名转换功能
+ * 提供数据库连接和 URL 构建功能
+ *
+ * @deprecated 推荐使用 database.ts 的统一连接管理接口
+ *
+ * 工具函数（仍然可用）：
+ * - buildDatabaseUrl - 构建数据库 URL
+ *
+ * 连接函数（不推荐）：
+ * - createSqlClient - 推荐使用 database.ts 的 initDatabase()
+ *
+ * 命名转换函数已迁移到 helper.ts：
+ * - 请使用 helper.ts 的 toSnakeCase 替代原来的 toSnakeTableName
  */
 
 import { SQL } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
 import type { SqlClientOptions } from '../types/database.js';
-
-/**
- * 转换为蛇形命名（snake_case）
- * 用于将小驼峰命名的表名转换为数据库约定的蛇形命名
- * @param name - 小驼峰命名的字符串
- * @returns 蛇形命名的字符串
- *
- * @example
- * toSnakeTableName('userTable') // 'user_table'
- * toSnakeTableName('testNewFormat') // 'test_new_format'
- * toSnakeTableName('common') // 'common'
- * toSnakeTableName('APIKey') // 'api_key'
- */
-export const toSnakeTableName = (name: string): string => {
-    if (!name) return name;
-    return String(name)
-        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-        .replace(/([A-Z]+)([A-Z][a-z0-9]+)/g, '$1_$2')
-        .toLowerCase();
-};
 
 /**
  * 构建数据库连接字符串

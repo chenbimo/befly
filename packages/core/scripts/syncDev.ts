@@ -9,10 +9,7 @@
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { Crypto2 } from '../utils/crypto.js';
-import { SqlHelper } from '../utils/sqlHelper.js';
-import { createSqlClient } from '../utils/dbHelper.js';
-import { Redis } from '../plugins/redis.js';
-import type { BeflyContext } from '../types/befly.js';
+import { initDatabase, closeDatabase } from '../utils/database.js';
 
 // CLI 参数类型
 interface CliArgs {
@@ -24,16 +21,14 @@ const ARGV = Array.isArray(process.argv) ? process.argv : [];
 const CLI: CliArgs = { DRY_RUN: ARGV.includes('--plan') };
 
 /**
- * 同步开发管理员账号（使用 sqlHelper）
+ * 同步开发管理员账号（使用统一的 database 工具）
  * 表名: addon_admin_admin
  * 邮箱: dev@qq.com
  * 姓名: 开发者
- * @param client 可选，复用已有 SQL 客户端；不传则内部创建与关闭
  * @returns 是否成功
  */
-export async function SyncDev(client: any = null): Promise<boolean> {
-    let ownClient = false;
-    let redis: Redis | null = null;
+export async function SyncDev(): Promise<boolean> {
+    let dbInitialized = false;
 
     try {
         if (CLI.DRY_RUN) {
@@ -46,25 +41,9 @@ export async function SyncDev(client: any = null): Promise<boolean> {
             return false;
         }
 
-        if (!client) {
-            client = await createSqlClient({ max: 1 });
-            ownClient = true;
-        }
-
-        // 初始化 Redis（用于生成 ID）
-        redis = new Redis();
-        await redis.init();
-
-        // 创建最小化 befly 上下文
-        const befly: BeflyContext = {
-            redis: redis,
-            db: null as any,
-            tool: null as any,
-            logger: null as any
-        };
-
-        // 创建 sqlHelper 实例
-        const helper = new SqlHelper(befly, client);
+        // 初始化数据库连接（Redis + SQL + SqlHelper）
+        const { helper } = await initDatabase({ max: 1 });
+        dbInitialized = true;
 
         // 检查 addon_admin_admin 表是否存在（使用 sqlHelper.query 执行元数据查询）
         const exist = await helper.query('SELECT COUNT(*) AS cnt FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? LIMIT 1', [Env.DB_NAME || '', 'addon_admin_admin']);
@@ -117,21 +96,9 @@ export async function SyncDev(client: any = null): Promise<boolean> {
         Logger.warn(`开发管理员初始化步骤出错：${error.message}`);
         return false;
     } finally {
-        // 清理资源
-        if (redis) {
-            try {
-                await redis.close();
-            } catch (error: any) {
-                Logger.warn('关闭 Redis 连接时出错:', error.message);
-            }
-        }
-
-        if (ownClient && client) {
-            try {
-                await client.close();
-            } catch (error: any) {
-                Logger.warn('关闭数据库连接时出错:', error.message);
-            }
+        // 清理资源：关闭所有数据库连接
+        if (dbInitialized) {
+            await closeDatabase();
         }
     }
 }
