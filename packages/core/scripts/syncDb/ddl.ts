@@ -9,7 +9,6 @@
  */
 
 import { Logger } from '../../utils/logger.js';
-import { ErrorHandler } from '../../utils/errorHandler.js';
 import { parseRule, toSnakeCase } from '../../utils/helper.js';
 import type { ParsedFieldRule, AnyObject } from '../../types/common.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';

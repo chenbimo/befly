@@ -8,7 +8,6 @@
  */
 
 import { Logger } from '../../utils/logger.js';
-import { ErrorHandler } from '../../utils/errorHandler.js';
 import { toSnakeCase } from '../../utils/helper.js';
 import { parseRule } from '../../utils/helper.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';

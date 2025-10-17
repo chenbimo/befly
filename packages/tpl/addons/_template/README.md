@@ -32,23 +32,23 @@ _template/
 
 ### 组件目录名
 
--   使用小驼峰命名：`payment`、`userCenter`、`smsService`
--   以 `_` 开头的目录会被跳过：`_template`、`_disabled`
+- 使用小驼峰命名：`payment`、`userCenter`、`smsService`
+- 以 `_` 开头的目录会被跳过：`_template`、`_disabled`
 
 ### API 路由
 
--   自动添加组件名前缀：`/api/{组件名}/{API路径}`
--   示例：`payment/apis/create.ts` → `POST /api/payment/create`
+- 自动添加组件名前缀：`/api/{组件名}/{API路径}`
+- 示例：`payment/apis/create.ts` → `POST /api/payment/create`
 
 ### 数据库表名
 
--   自动添加组件名前缀：`{组件名}_{表名}`
--   示例：`payment/tables/order.json` → `payment_order` 表
+- 自动添加组件名前缀：`{组件名}_{表名}`
+- 示例：`payment/tables/order.json` → `payment_order` 表
 
 ### 插件名称
 
--   自动添加组件名前缀：`{组件名}.{插件名}`
--   示例：`payment/plugins/alipay.ts` → `payment.alipay` 插件
+- 自动添加组件名前缀：`{组件名}.{插件名}`
+- 示例：`payment/plugins/alipay.ts` → `payment.alipay` 插件
 
 ## 子目录说明
 
@@ -58,8 +58,8 @@ _template/
 
 **特点：**
 
--   路由自动添加 `/api/{组件名}/` 前缀
--   可以访问所有已加载的插件
+- 路由自动添加 `/api/{组件名}/` 前缀
+- 可以访问所有已加载的插件
 
 ### checks/ - 检查脚本
 
@@ -67,9 +67,9 @@ _template/
 
 **要求：**
 
--   必须使用 `export default` 导出函数
--   函数返回 `true`（通过）或 `false`（失败）
--   检查失败会阻止框架启动
+- 必须使用 `export default` 导出函数
+- 函数返回 `true`（通过）或 `false`（失败）
+- 检查失败会阻止框架启动
 
 ### plugins/ - 插件
 
@@ -77,9 +77,9 @@ _template/
 
 **特点：**
 
--   插件名自动添加组件名前缀
--   可以注册中间件、扩展 befly 对象等
--   加载顺序：核心 → addons → 项目
+- 插件名自动添加组件名前缀
+- 可以注册中间件、扩展 befly 对象等
+- 加载顺序：核心 → addons → 项目
 
 ### tables/ - 表定义
 
@@ -87,9 +87,9 @@ _template/
 
 **特点：**
 
--   表名自动添加组件名前缀
--   使用 `bun syncDb` 自动同步到数据库
--   支持字段规则定义（类型、长度、默认值等）
+- 表名自动添加组件名前缀
+- 使用 `bun syncDb` 自动同步到数据库
+- 支持字段规则定义（类型、长度、默认值等）
 
 ### types/ - 类型定义
 
@@ -97,8 +97,8 @@ _template/
 
 **建议：**
 
--   统一导出到 `index.d.ts`
--   声明全局类型时使用 `declare global`
+- 统一导出到 `index.d.ts`
+- 声明全局类型时使用 `declare global`
 
 ### config/ - 配置文件
 
@@ -106,15 +106,15 @@ _template/
 
 **建议：**
 
--   配置项从环境变量读取
--   提供合理的默认值
--   在插件的 `onInit` 中加载配置
+- 配置项从环境变量读取
+- 提供合理的默认值
+- 在插件的 `onInit` 中加载配置
 
 ## 开发建议
 
 1. **保持独立性**：组件应该是自包含的，尽量减少对其他组件的依赖
 2. **环境变量**：使用 `{ADDON_NAME}_{CONFIG_KEY}` 格式命名
-3. **错误处理**：使用 `ErrorHandler` 统一处理错误
+3. **错误处理**：使用 `Logger` 统一记录错误，关键错误使用 `process.exit(1)` 退出
 4. **日志记录**：使用 `Logger` 记录关键操作
 5. **测试覆盖**：为组件编写测试用例
 

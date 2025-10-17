@@ -8,7 +8,6 @@ import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../utils/helper.js';
-import { ErrorHandler } from '../utils/errorHandler.js';
 
 /**
  * 系统检查器类
@@ -56,11 +55,15 @@ export class Checker {
                             Logger.error(`核心检查未通过: conflict.ts，耗时: ${conflictCheckTime}`);
                             stats.failedChecks++;
                             // 资源冲突检测失败，立即终止
-                            ErrorHandler.critical('资源冲突检测失败，无法继续启动', undefined, {
+                            Logger.error({
+                                level: 'CRITICAL',
+                                msg: '资源冲突检测失败，无法继续启动',
                                 totalChecks: stats.totalChecks,
                                 passedChecks: stats.passedChecks,
                                 failedChecks: stats.failedChecks
                             });
+                            Logger.error('系统即将退出...');
+                            process.exit(1);
                         }
                     }
                 }
@@ -150,18 +153,29 @@ export class Checker {
             Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${stats.totalChecks}, 通过: ${stats.passedChecks}, 失败: ${stats.failedChecks}`);
 
             if (stats.failedChecks > 0) {
-                ErrorHandler.critical('系统检查失败，无法继续启动', undefined, {
+                Logger.error({
+                    level: 'CRITICAL',
+                    msg: '系统检查失败，无法继续启动',
                     totalChecks: stats.totalChecks,
                     passedChecks: stats.passedChecks,
                     failedChecks: stats.failedChecks
                 });
+                Logger.error('系统即将退出...');
+                process.exit(1);
             } else if (stats.totalChecks > 0) {
                 Logger.info(`所有系统检查通过!`);
             } else {
                 Logger.info(`未执行任何检查`);
             }
         } catch (error: any) {
-            ErrorHandler.critical('执行系统检查时发生错误', error);
+            Logger.error({
+                level: 'CRITICAL',
+                msg: '执行系统检查时发生错误',
+                error: error.message,
+                stack: error.stack
+            });
+            Logger.error('系统即将退出...');
+            process.exit(1);
         }
     }
 }
