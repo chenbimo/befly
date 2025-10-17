@@ -10,7 +10,6 @@ import type { Jwt } from '../utils/jwt.js';
 import type { Validator } from '../utils/validate.js';
 import type { SqlHelper } from '../utils/sqlHelper.js';
 import type { Crypto2 } from '../utils/crypto.js';
-import type { Tool } from '../utils/tool.js';
 
 /**
  * Befly 应用选项
@@ -83,9 +82,6 @@ export interface Befly {
 
     /** 加密工具 */
     crypto: Crypto2;
-
-    /** 通用工具 */
-    tool: Tool;
 
     /** 数据库连接 */
     db: any;

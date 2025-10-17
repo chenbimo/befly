@@ -1,85 +1,29 @@
-/**/**/**
-
+/**
  * Befly 核心类型定义
-
- * 统一导出所有类型，简化导入路径 * Befly 核心类型定义 * Befly 核心类型定义
-
+ * 统一导出所有类型，简化导入路径
  *
-
- * @example * 统一导出所有类型，简化导入路径 * 统一导出所有类型，简化导入路径
-
+ * @example
  * ```typescript
-
- * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types'; * *
-
+ * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types';
  * ```
+ */
 
- */ * @example * @example
-
-
-
-// 基础类型 * ```typescript * ```typescript
-
+// 基础类型
 export * from './common.js';
+export * from './context.js';
 
-export * from './context.js'; * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types'; * import type { ApiRoute, BeflyContext, Plugin } from 'befly/types';
-
-
-
-// 核心功能类型 * ``` * ```
-
+// 核心功能类型
 export * from './api.js';
-
-export * from './befly.js'; */ */
-
+export * from './befly.js';
 export * from './plugin.js';
 
-
-
 // 功能模块类型
-
-export * from './database.js';// 基础类型// 基础类型
-
+export * from './database.js';
 export * from './crypto.js';
-
-export * from './jwt.js';export * from './common.js';export * from './common.js';
-
+export * from './jwt.js';
 export * from './validator.js';
-
-export * from './redis.js';export * from './context.js';export * from './context.js';
-
+export * from './redis.js';
 export * from './logger.js';
-
-export * from './tool.js';
-
-
-// 核心功能类型// 核心功能类型
-
-export * from './api.js';export * from './api.js';
-
-export * from './befly.js';export * from './befly.js';
-
-export * from './plugin.js';export * from './plugin.js';
-
-
-
-// 功能模块类型// 功能模块类型
-
-export * from './database.js';export * from './database.js';
-
-export * from './crypto.js';export * from './crypto.js';
-
-export * from './jwt.js';export * from './jwt.js';
-
-export * from './validator.js';export * from './validator.js';
-
-export * from './redis.js';export * from './redis.js';
-
-export * from './logger.js';export * from './logger.js';
-
-export * from './tool.js';export * from './tool.js';
-
-
 
 /**
  * API 请求上下文
@@ -201,8 +145,6 @@ export interface BeflyContext {
     redis: typeof RedisHelper;
     /** 日志记录器 */
     logger: typeof Logger;
-    /** 数据处理工具 */
-    tool: Tool;
     /** 自定义插件 */
     [key: string]: any;
 }
@@ -434,22 +376,6 @@ export interface Logger {
     error(message: string | object): void;
     /** 记录调试日志 */
     debug(message: string | object): void;
-}
-
-/**
- * 工具类接口
- */
-export interface Tool {
-    /** 处理更新数据 */
-    updData(data: Record<string, any>, now?: number): Promise<Record<string, any>>;
-    /** 处理插入数据 */
-    insData(data: Record<string, any> | Record<string, any>[], now?: number): Promise<Record<string, any> | Record<string, any>[]>;
-    /** 处理删除数据 */
-    delData(now?: number): Promise<Record<string, any>>;
-    /** 批量生成 ID */
-    genIds(count: number): Promise<number[]>;
-    /** 清理数据对象 */
-    cleanData(data: Record<string, any>, removeNull?: boolean, removeEmptyString?: boolean): Record<string, any>;
 }
 
 /**
