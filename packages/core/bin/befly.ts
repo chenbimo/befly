@@ -7,7 +7,6 @@
 import path from 'node:path';
 import { Glob } from 'bun';
 import { paths } from '../paths.js';
-import { Logger } from '../utils/logger.js';
 
 /**
  * 脚本项接口
@@ -180,7 +179,7 @@ function buildScriptItems(): ScriptItem[] {
 function printAllScripts(): void {
     const items = buildScriptItems();
     if (items.length === 0) {
-        Logger.log('  • <无>');
+        console.log('  • <无>');
         return;
     }
 
@@ -190,23 +189,23 @@ function printAllScripts(): void {
     const addonScripts = items.filter((it) => it.source.startsWith('addon:'));
 
     if (coreScripts.length > 0) {
-        Logger.log('\n📦 Core 脚本:');
+        console.log('\n📦 Core 脚本:');
         for (const it of coreScripts) {
-            Logger.log(`  • ${it.displayName}${it.duplicate ? ' (重复)' : ''}`);
+            console.log(`  • ${it.displayName}${it.duplicate ? ' (重复)' : ''}`);
         }
     }
 
     if (projectScripts.length > 0) {
-        Logger.log('\n📦 Project 脚本:');
+        console.log('\n📦 Project 脚本:');
         for (const it of projectScripts) {
-            Logger.log(`  • ${it.displayName}${it.duplicate ? ' (重复)' : ''}`);
+            console.log(`  • ${it.displayName}${it.duplicate ? ' (重复)' : ''}`);
         }
     }
 
     if (addonScripts.length > 0) {
-        Logger.log('\n📦 Addon 脚本 (必须使用完整路径):');
+        console.log('\n📦 Addon 脚本 (必须使用完整路径):');
         for (const it of addonScripts) {
-            Logger.log(`  • ${it.displayName}`);
+            console.log(`  • ${it.displayName}`);
         }
     }
 }
@@ -281,7 +280,7 @@ async function main(): Promise<void> {
     // 按名称执行（将剩余参数透传给脚本）
     const target = await resolveScriptPath(cmd);
     if (!target) {
-        Logger.error(`未找到脚本: ${cmd}`);
+        console.error(`未找到脚本: ${cmd}`);
         printAllScripts();
         process.exit(1);
     }
@@ -292,6 +291,6 @@ async function main(): Promise<void> {
 
 // 启动 CLI
 main().catch((e: Error) => {
-    Logger.error('Befly CLI 执行失败:', e);
+    console.error('Befly CLI 执行失败:', e);
     process.exit(1);
 });
