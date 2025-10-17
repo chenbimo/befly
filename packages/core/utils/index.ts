@@ -13,7 +13,7 @@ export type { DataCleanOptions } from './helper.js';
 export { Api, scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './helper.js';
 
 // ========== 数据库工具 ==========
-export { buildDatabaseUrl, createSqlClient } from './dbHelper.js';
+export { buildDatabaseUrl, createSqlClient, buildRedisUrl, createRedisClient, initDatabase, closeDatabase, initSqlOnly, initRedisOnly, getRedis, getSql, getSqlHelper, isDatabaseInitialized } from './database.js';
 
 // ========== 错误处理 ==========
 export { ErrorHandler } from './errorHandler.js';

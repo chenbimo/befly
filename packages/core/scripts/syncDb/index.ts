@@ -10,7 +10,7 @@
 import path from 'node:path';
 import { Logger } from '../../utils/logger.js';
 import { Env } from '../../config/env.js';
-import { createSqlClient } from '../../utils/dbHelper.js';
+import { createSqlClient } from '../../utils/database.js';
 import { toSnakeCase } from '../../utils/helper.js';
 import checkTable from '../../checks/table.js';
 import { paths } from '../../paths.js';

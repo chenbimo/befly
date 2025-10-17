@@ -11,7 +11,7 @@ import { Jwt } from './utils/jwt.js';
 import { Validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
 import { SqlHelper } from './utils/sqlHelper.js';
-import { createSqlClient } from './utils/dbHelper.js';
+import { createSqlClient } from './utils/database.js';
 import { RedisHelper } from './utils/redisHelper.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 

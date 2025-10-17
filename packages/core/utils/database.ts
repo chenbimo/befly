@@ -32,7 +32,7 @@ const connections: DatabaseConnections = {
  * 构建 Redis 连接 URL
  * @returns Redis 连接 URL
  */
-function buildRedisUrl(): string {
+export function buildRedisUrl(): string {
     const { REDIS_HOST, REDIS_PORT, REDIS_USERNAME, REDIS_PASSWORD, REDIS_DB } = Env;
 
     // 构建认证部分
@@ -55,7 +55,7 @@ function buildRedisUrl(): string {
  * @returns 数据库连接字符串
  * @throws 如果配置不完整或数据库类型不支持
  */
-function buildDatabaseUrl(): string {
+export function buildDatabaseUrl(): string {
     const type = Env.DB_TYPE || '';
     const host = Env.DB_HOST || '';
     const port = Env.DB_PORT;
@@ -99,7 +99,7 @@ function buildDatabaseUrl(): string {
  * @returns Redis 客户端实例
  * @throws 如果连接失败
  */
-async function createRedisClient(): Promise<RedisClient> {
+export async function createRedisClient(): Promise<RedisClient> {
     try {
         const url = buildRedisUrl();
         const redis = new RedisClient(url, {
@@ -139,7 +139,7 @@ async function createRedisClient(): Promise<RedisClient> {
  * @returns SQL 客户端实例
  * @throws 如果连接失败
  */
-async function createSqlClient(options: SqlClientOptions = {}): Promise<any> {
+export async function createSqlClient(options: SqlClientOptions = {}): Promise<any> {
     const finalUrl = buildDatabaseUrl();
     let sql: any = null;
 
