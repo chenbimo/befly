@@ -2,7 +2,7 @@
  * 获取用户列表接口 - TypeScript 示例
  */
 
-import { Fields } from 'befly';
+import { Yes, Fields } from 'befly';
 
 export default {
     name: '获取用户列表',

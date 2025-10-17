@@ -2,8 +2,7 @@
  * 用户登录接口 - TypeScript 示例
  */
 
-import { No } from 'befly';
-
+import { Yes, No } from 'befly';
 import { Crypto2 } from 'befly';
 import { Jwt } from 'befly';
 

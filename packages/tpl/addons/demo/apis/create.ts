@@ -3,7 +3,7 @@
  * 路由：POST /api/demo/create
  */
 
-import { Fields } from 'befly';
+import { Yes, Fields } from 'befly';
 
 export default {
     name: '创建待办事项',
@@ -26,15 +26,11 @@ export default {
             }
         });
 
-        return {
-            code: 0,
-            msg: '待办创建成功',
-            data: {
-                id: result,
-                title: ctx.body.title,
-                content: ctx.body.content || '',
-                priority: ctx.body.priority || 'medium'
-            }
-        };
+        return Yes('待办创建成功', {
+            id: result,
+            title: ctx.body.title,
+            content: ctx.body.content || '',
+            priority: ctx.body.priority || 'medium'
+        });
     }
 };
