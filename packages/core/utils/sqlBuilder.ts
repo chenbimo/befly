@@ -1,11 +1,9 @@
 /**
- * SQL 构建器 - TypeScript 版本
- * 提供类型安全的 SQL 查询构建功能
+ * SQL 构造器 - TypeScript 版本
+ * 提供链式 API 构建 SQL 查询
  */
 
-import { DBError } from './errors.js';
-import type { OrderDirection, SqlValue } from '../types/common.js';
-import type { SqlQuery, WhereOperator, WhereConditions, InsertData, UpdateData } from '../types/database';
+import type { WhereConditions, SqlValue, OrderByField } from '../types/common.js';
 
 /**
  * SQL 构建器类
@@ -114,7 +112,7 @@ export class SqlBuilder {
      */
     private _validateParam(value: any): void {
         if (value === undefined) {
-            throw DBError.invalidParams('参数值不能为 undefined', { value });
+            throw new Error(`参数值不能为 undefined`);
         }
     }
 
@@ -134,10 +132,10 @@ export class SqlBuilder {
 
             case '$in':
                 if (!Array.isArray(value)) {
-                    throw DBError.invalidParams(`$in 操作符的值必须是数组`, { operator, value });
+                    throw new Error(`$in 操作符的值必须是数组 (operator: ${operator})`);
                 }
                 if (value.length === 0) {
-                    throw DBError.invalidParams(`$in 操作符的数组不能为空。提示：空数组会导致查询永远不匹配任何记录，这通常不是预期行为。请检查查询条件或移除该字段。`, { operator, value });
+                    throw new Error(`$in 操作符的数组不能为空。提示：空数组会导致查询永远不匹配任何记录，这通常不是预期行为。请检查查询条件或移除该字段。`);
                 }
                 const placeholders = value.map(() => '?').join(',');
                 this._where.push(`${escapedField} IN (${placeholders})`);
@@ -147,10 +145,10 @@ export class SqlBuilder {
             case '$nin':
             case '$notIn':
                 if (!Array.isArray(value)) {
-                    throw DBError.invalidParams(`$nin/$notIn 操作符的值必须是数组`, { operator, value });
+                    throw new Error(`$nin/$notIn 操作符的值必须是数组 (operator: ${operator})`);
                 }
                 if (value.length === 0) {
-                    throw DBError.invalidParams(`$nin/$notIn 操作符的数组不能为空。提示：空数组会导致查询匹配所有记录，这通常不是预期行为。请检查查询条件或移除该字段。`, { operator, value });
+                    throw new Error(`$nin/$notIn 操作符的数组不能为空。提示：空数组会导致查询匹配所有记录，这通常不是预期行为。请检查查询条件或移除该字段。`);
                 }
                 const placeholders2 = value.map(() => '?').join(',');
                 this._where.push(`${escapedField} NOT IN (${placeholders2})`);
@@ -311,7 +309,7 @@ export class SqlBuilder {
         } else if (typeof fields === 'string') {
             this._select.push(this._escapeField(fields));
         } else {
-            throw DBError.invalidParams('SELECT 字段必须是字符串或数组', { fields });
+            throw new Error('SELECT 字段必须是字符串或数组');
         }
         return this;
     }
@@ -321,7 +319,7 @@ export class SqlBuilder {
      */
     from(table: string): this {
         if (typeof table !== 'string' || !table.trim()) {
-            throw DBError.invalidTableName('FROM 表名必须是非空字符串', { table });
+            throw new Error(`FROM 表名必须是非空字符串 (table: ${table})`);
         }
         this._from = this._escapeTable(table.trim());
         return this;
@@ -349,7 +347,7 @@ export class SqlBuilder {
      */
     leftJoin(table: string, on: string): this {
         if (typeof table !== 'string' || typeof on !== 'string') {
-            throw DBError.invalidParams('JOIN 表名和条件必须是字符串', { table, on });
+            throw new Error(`JOIN 表名和条件必须是字符串 (table: ${table}, on: ${on})`);
         }
         const escapedTable = this._escapeTable(table);
         this._joins.push(`LEFT JOIN ${escapedTable} ON ${on}`);
@@ -362,12 +360,12 @@ export class SqlBuilder {
      */
     orderBy(fields: string[]): this {
         if (!Array.isArray(fields)) {
-            throw DBError.invalidParams('orderBy 必须是字符串数组，格式为 "字段#方向"', { fields });
+            throw new Error('orderBy 必须是字符串数组，格式为 "字段#方向"');
         }
 
         fields.forEach((item) => {
             if (typeof item !== 'string' || !item.includes('#')) {
-                throw DBError.invalidParams('orderBy 字段必须是 "字段#方向" 格式的字符串（例如："name#ASC", "id#DESC"）', { item });
+                throw new Error(`orderBy 字段必须是 "字段#方向" 格式的字符串（例如："name#ASC", "id#DESC"） (item: ${item})`);
             }
 
             const [fieldName, direction] = item.split('#');
@@ -375,11 +373,11 @@ export class SqlBuilder {
             const cleanDir = direction.trim().toUpperCase() as OrderDirection;
 
             if (!cleanField) {
-                throw DBError.invalidFieldName('orderBy 中字段名不能为空', { item });
+                throw new Error(`orderBy 中字段名不能为空 (item: ${item})`);
             }
 
             if (!['ASC', 'DESC'].includes(cleanDir)) {
-                throw DBError.invalidParams('ORDER BY 方向必须是 ASC 或 DESC', { direction: cleanDir });
+                throw new Error(`ORDER BY 方向必须是 ASC 或 DESC (direction: ${cleanDir})`);
             }
 
             const escapedField = this._escapeField(cleanField);
@@ -417,12 +415,12 @@ export class SqlBuilder {
      */
     limit(count: number, offset?: number): this {
         if (typeof count !== 'number' || count < 0) {
-            throw DBError.invalidParams('LIMIT 数量必须是非负数', { count });
+            throw new Error(`LIMIT 数量必须是非负数 (count: ${count})`);
         }
         this._limit = Math.floor(count);
         if (offset !== undefined && offset !== null) {
             if (typeof offset !== 'number' || offset < 0) {
-                throw DBError.invalidParams('OFFSET 必须是非负数', { offset });
+                throw new Error(`OFFSET 必须是非负数 (offset: ${offset})`);
             }
             this._offset = Math.floor(offset);
         }
@@ -434,7 +432,7 @@ export class SqlBuilder {
      */
     offset(count: number): this {
         if (typeof count !== 'number' || count < 0) {
-            throw DBError.invalidParams('OFFSET 必须是非负数', { count });
+            throw new Error(`OFFSET 必须是非负数 (count: ${count})`);
         }
         this._offset = Math.floor(count);
         return this;
@@ -449,7 +447,7 @@ export class SqlBuilder {
         sql += this._select.length > 0 ? this._select.join(', ') : '*';
 
         if (!this._from) {
-            throw DBError.invalidTableName('FROM 表名是必需的', {});
+            throw new Error('FROM 表名是必需的');
         }
         sql += ` FROM ${this._from}`;
 
@@ -488,23 +486,23 @@ export class SqlBuilder {
      */
     toInsertSql(table: string, data: InsertData): SqlQuery {
         if (!table || typeof table !== 'string') {
-            throw DBError.invalidTableName('INSERT 需要表名', { table });
+            throw new Error(`INSERT 需要表名 (table: ${table})`);
         }
 
         if (!data || typeof data !== 'object') {
-            throw DBError.invalidParams('INSERT 需要数据', { table, data });
+            throw new Error(`INSERT 需要数据 (table: ${table}, data: ${JSON.stringify(data)})`);
         }
 
         const escapedTable = this._escapeTable(table);
 
         if (Array.isArray(data)) {
             if (data.length === 0) {
-                throw DBError.invalidParams('插入数据不能为空', { table });
+                throw new Error(`插入数据不能为空 (table: ${table})`);
             }
 
             const fields = Object.keys(data[0]);
             if (fields.length === 0) {
-                throw DBError.invalidParams('插入数据必须至少有一个字段', { table });
+                throw new Error(`插入数据必须至少有一个字段 (table: ${table})`);
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));
@@ -518,7 +516,7 @@ export class SqlBuilder {
         } else {
             const fields = Object.keys(data);
             if (fields.length === 0) {
-                throw DBError.invalidParams('插入数据必须至少有一个字段', { table });
+                throw new Error(`插入数据必须至少有一个字段 (table: ${table})`);
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));

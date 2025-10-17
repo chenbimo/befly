@@ -5,7 +5,6 @@
 
 import { describe, expect, test } from 'bun:test';
 import { SqlBuilder, createQueryBuilder } from '../utils/sqlBuilder.js';
-import { DatabaseError, DB_ERROR_CODES } from '../utils/errors.js';
 
 describe('SqlBuilder - 基础功能', () => {
     test('应该创建新的 SqlBuilder 实例', () => {
@@ -13,12 +12,12 @@ describe('SqlBuilder - 基础功能', () => {
         expect(builder).toBeInstanceOf(SqlBuilder);
     });
 
-    test('createQueryBuilder 应该返回新实例', () => {
+    test('createQueryBuilder 应该返回新实�?, () => {
         const builder = createQueryBuilder();
         expect(builder).toBeInstanceOf(SqlBuilder);
     });
 
-    test('reset() 应该重置所有状态', () => {
+    test('reset() 应该重置所有状�?, () => {
         const builder = new SqlBuilder().select(['id', 'name']).from('users').where({ id: 1 }).orderBy(['id#ASC']).limit(10).offset(5);
 
         builder.reset();
@@ -36,7 +35,7 @@ describe('SqlBuilder - 字段转义 (_escapeField)', () => {
         expect(result.sql).toContain('`username`');
     });
 
-    test('不应该转义 * 通配符', () => {
+    test('不应该转�?* 通配�?, () => {
         const builder = new SqlBuilder().select('*').from('users');
         const result = builder.toSelectSql();
         expect(result.sql).toContain('SELECT *');
@@ -61,7 +60,7 @@ describe('SqlBuilder - 字段转义 (_escapeField)', () => {
         expect(result.sql).toContain('`username` AS user_name');
     });
 
-    test('应该正确处理表名.字段名格式', () => {
+    test('应该正确处理表名.字段名格�?, () => {
         const builder = new SqlBuilder().select('users.id').from('users');
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`users`.`id`');
@@ -75,7 +74,7 @@ describe('SqlBuilder - 字段转义 (_escapeField)', () => {
 });
 
 describe('SqlBuilder - 表名转义 (_escapeTable)', () => {
-    test('应该转义普通表名', () => {
+    test('应该转义普通表�?, () => {
         const builder = new SqlBuilder().from('users');
         const result = builder.toSelectSql();
         expect(result.sql).toContain('FROM `users`');
@@ -88,7 +87,7 @@ describe('SqlBuilder - 表名转义 (_escapeTable)', () => {
         expect(result.sql).not.toContain('``');
     });
 
-    test('应该正确处理表别名', () => {
+    test('应该正确处理表别�?, () => {
         const builder = new SqlBuilder().from('users u');
         const result = builder.toSelectSql();
         expect(result.sql).toContain('FROM `users` u');
@@ -120,12 +119,12 @@ describe('SqlBuilder - SELECT 方法', () => {
         expect(result.sql).toBe('SELECT * FROM `users`');
     });
 
-    test('应该拒绝非字符串/数组的字段', () => {
+    test('应该拒绝非字符串/数组的字�?, () => {
         const builder = new SqlBuilder();
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.select(123);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 });
 
@@ -140,10 +139,10 @@ describe('SqlBuilder - FROM 方法', () => {
         const builder = new SqlBuilder();
         expect(() => {
             builder.from('');
-        }).toThrow(DatabaseError);
+        }).toThrow();
         expect(() => {
             builder.from('   ');
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
     test('应该拒绝非字符串表名', () => {
@@ -151,7 +150,7 @@ describe('SqlBuilder - FROM 方法', () => {
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.from(123);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
     test('应该自动 trim 表名', () => {
@@ -161,7 +160,7 @@ describe('SqlBuilder - FROM 方法', () => {
     });
 });
 
-describe('SqlBuilder - WHERE 方法 - 简单条件', () => {
+describe('SqlBuilder - WHERE 方法 - 简单条�?, () => {
     test('应该支持简单的等于条件', () => {
         const builder = new SqlBuilder().from('users').where({ id: 1 });
         const result = builder.toSelectSql();
@@ -176,14 +175,14 @@ describe('SqlBuilder - WHERE 方法 - 简单条件', () => {
         expect(result.params).toEqual([1, 'active']);
     });
 
-    test('应该跳过 undefined 值', () => {
+    test('应该跳过 undefined �?, () => {
         const builder = new SqlBuilder().from('users').where({ id: 1, name: undefined });
         const result = builder.toSelectSql();
         expect(result.sql).toBe('SELECT * FROM `users` WHERE `id` = ?');
         expect(result.params).toEqual([1]);
     });
 
-    test('应该支持字符串条件', () => {
+    test('应该支持字符串条�?, () => {
         const builder = new SqlBuilder().from('users').where('id > 10');
         const result = builder.toSelectSql();
         expect(result.sql).toContain('WHERE id > 10');
@@ -198,38 +197,38 @@ describe('SqlBuilder - WHERE 方法 - 简单条件', () => {
 });
 
 describe('SqlBuilder - WHERE 方法 - 操作符（一级格式）', () => {
-    test('$ne - 不等于', () => {
+    test('$ne - 不等�?, () => {
         const builder = new SqlBuilder().from('users').where({ status$ne: 'deleted' });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`status` != ?');
         expect(result.params).toEqual(['deleted']);
     });
 
-    test('$not - 不等于（别名）', () => {
+    test('$not - 不等于（别名�?, () => {
         const builder = new SqlBuilder().from('users').where({ status$not: 'deleted' });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`status` != ?');
         expect(result.params).toEqual(['deleted']);
     });
 
-    test('$in - IN 操作符', () => {
+    test('$in - IN 操作�?, () => {
         const builder = new SqlBuilder().from('users').where({ role$in: ['admin', 'editor'] });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`role` IN (?,?)');
         expect(result.params).toEqual(['admin', 'editor']);
     });
 
-    test('$in - 应该拒绝空数组', () => {
+    test('$in - 应该拒绝空数�?, () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             builder.where({ role$in: [] });
-        }).toThrow(DatabaseError);
+        }).toThrow();
         expect(() => {
             builder.where({ role$in: [] });
-        }).toThrow(/空数组会导致查询永远不匹配/);
+        }).toThrow(/空数组会导致查询永远不匹�?);
     });
 
-    test('$nin - NOT IN 操作符', () => {
+    test('$nin - NOT IN 操作�?, () => {
         const builder = new SqlBuilder().from('users').where({ role$nin: ['guest', 'banned'] });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`role` NOT IN (?,?)');
@@ -243,24 +242,24 @@ describe('SqlBuilder - WHERE 方法 - 操作符（一级格式）', () => {
         expect(result.params).toEqual(['guest', 'banned']);
     });
 
-    test('$nin - 应该拒绝空数组', () => {
+    test('$nin - 应该拒绝空数�?, () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             builder.where({ role$nin: [] });
-        }).toThrow(DatabaseError);
+        }).toThrow();
         expect(() => {
             builder.where({ role$nin: [] });
-        }).toThrow(/空数组会导致查询匹配所有记录/);
+        }).toThrow(/空数组会导致查询匹配所有记�?);
     });
 
-    test('$like - LIKE 操作符', () => {
+    test('$like - LIKE 操作�?, () => {
         const builder = new SqlBuilder().from('users').where({ name$like: '%John%' });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`name` LIKE ?');
         expect(result.params).toEqual(['%John%']);
     });
 
-    test('$notLike - NOT LIKE 操作符', () => {
+    test('$notLike - NOT LIKE 操作�?, () => {
         const builder = new SqlBuilder().from('users').where({ name$notLike: '%spam%' });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`name` NOT LIKE ?');
@@ -295,14 +294,14 @@ describe('SqlBuilder - WHERE 方法 - 操作符（一级格式）', () => {
         expect(result.params).toEqual([65]);
     });
 
-    test('$between - BETWEEN 操作符', () => {
+    test('$between - BETWEEN 操作�?, () => {
         const builder = new SqlBuilder().from('users').where({ age$between: [18, 65] });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`age` BETWEEN ? AND ?');
         expect(result.params).toEqual([18, 65]);
     });
 
-    test('$notBetween - NOT BETWEEN 操作符', () => {
+    test('$notBetween - NOT BETWEEN 操作�?, () => {
         const builder = new SqlBuilder().from('users').where({ age$notBetween: [0, 17] });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`age` NOT BETWEEN ? AND ?');
@@ -324,7 +323,7 @@ describe('SqlBuilder - WHERE 方法 - 操作符（一级格式）', () => {
     });
 });
 
-describe('SqlBuilder - WHERE 方法 - 操作符（嵌套格式）', () => {
+describe('SqlBuilder - WHERE 方法 - 操作符（嵌套格式�?, () => {
     test('应该支持嵌套的操作符对象', () => {
         const builder = new SqlBuilder().from('users').where({ age: { $gt: 18, $lt: 65 } });
         const result = builder.toSelectSql();
@@ -345,7 +344,7 @@ describe('SqlBuilder - WHERE 方法 - 操作符（嵌套格式）', () => {
     });
 });
 
-describe('SqlBuilder - WHERE 方法 - 逻辑操作符', () => {
+describe('SqlBuilder - WHERE 方法 - 逻辑操作�?, () => {
     test('$and - AND 逻辑', () => {
         const builder = new SqlBuilder().from('users').where({
             $and: [{ status: 'active' }, { age: { $gte: 18 } }]
@@ -365,7 +364,7 @@ describe('SqlBuilder - WHERE 方法 - 逻辑操作符', () => {
         expect(result.params).toEqual(['admin', 'editor']);
     });
 
-    test('$or - 复杂的 OR 条件', () => {
+    test('$or - 复杂�?OR 条件', () => {
         const builder = new SqlBuilder().from('users').where({
             $or: [{ status: 'active', age$gte: 18 }, { role: 'admin' }]
         });
@@ -374,7 +373,7 @@ describe('SqlBuilder - WHERE 方法 - 逻辑操作符', () => {
         expect(result.params).toEqual(['active', 18, 'admin']);
     });
 
-    test('混合 AND 和 OR', () => {
+    test('混合 AND �?OR', () => {
         const builder = new SqlBuilder().from('users').where({
             status: 'active',
             $or: [{ role: 'admin' }, { role: 'editor' }]
@@ -387,28 +386,27 @@ describe('SqlBuilder - WHERE 方法 - 逻辑操作符', () => {
 });
 
 describe('SqlBuilder - WHERE 方法 - 参数验证', () => {
-    test('undefined/null 值时应该作为原始 SQL 字符串处理', () => {
-        // 当 value 是 undefined 或 null 时，condition 会被当作原始 SQL 字符串
-        const builder = new SqlBuilder().from('users').where('status', undefined);
+    test('undefined/null 值时应该作为原始 SQL 字符串处�?, () => {
+        // �?value �?undefined �?null 时，condition 会被当作原始 SQL 字符�?        const builder = new SqlBuilder().from('users').where('status', undefined);
         const result = builder.toSelectSql();
         expect(result.sql).toBe('SELECT * FROM `users` WHERE status');
         expect(result.params).toEqual([]);
     });
 
-    test('$in 应该拒绝非数组值', () => {
+    test('$in 应该拒绝非数组�?, () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.where({ role$in: 'admin' });
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('$nin 应该拒绝非数组值', () => {
+    test('$nin 应该拒绝非数组�?, () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.where({ role$nin: 'guest' });
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 });
 
@@ -431,11 +429,11 @@ describe('SqlBuilder - LEFT JOIN 方法', () => {
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.leftJoin(123, 'condition');
-        }).toThrow(DatabaseError);
+        }).toThrow();
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.leftJoin('orders', 123);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 });
 
@@ -458,19 +456,19 @@ describe('SqlBuilder - ORDER BY 方法', () => {
         expect(result.sql).toContain('ORDER BY `id` DESC');
     });
 
-    test('应该拒绝非数组输入', () => {
+    test('应该拒绝非数组输�?, () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.orderBy('id#ASC');
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('应该拒绝不包含 # 的字符串', () => {
+    test('应该拒绝不包�?# 的字符串', () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             builder.orderBy(['id ASC']);
-        }).toThrow(DatabaseError);
+        }).toThrow();
         expect(() => {
             builder.orderBy(['id ASC']);
         }).toThrow(/字段#方向/);
@@ -480,20 +478,20 @@ describe('SqlBuilder - ORDER BY 方法', () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             builder.orderBy(['#ASC']);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('应该拒绝无效的排序方向', () => {
+    test('应该拒绝无效的排序方�?, () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             builder.orderBy(['id#INVALID']);
-        }).toThrow(DatabaseError);
+        }).toThrow();
         expect(() => {
             builder.orderBy(['id#INVALID']);
-        }).toThrow(/ASC 或 DESC/);
+        }).toThrow(/ASC �?DESC/);
     });
 
-    test('应该自动转换排序方向为大写', () => {
+    test('应该自动转换排序方向为大�?, () => {
         const builder = new SqlBuilder().from('users').orderBy(['id#asc', 'name#desc']);
         const result = builder.toSelectSql();
         expect(result.sql).toContain('ORDER BY `id` ASC, `name` DESC');
@@ -540,14 +538,14 @@ describe('SqlBuilder - HAVING 方法', () => {
     });
 });
 
-describe('SqlBuilder - LIMIT 和 OFFSET 方法', () => {
+describe('SqlBuilder - LIMIT �?OFFSET 方法', () => {
     test('应该添加 LIMIT', () => {
         const builder = new SqlBuilder().from('users').limit(10);
         const result = builder.toSelectSql();
         expect(result.sql).toContain('LIMIT 10');
     });
 
-    test('应该在 LIMIT 方法中同时设置 OFFSET', () => {
+    test('应该�?LIMIT 方法中同时设�?OFFSET', () => {
         const builder = new SqlBuilder().from('users').limit(10, 20);
         const result = builder.toSelectSql();
         expect(result.sql).toContain('LIMIT 10 OFFSET 20');
@@ -563,22 +561,22 @@ describe('SqlBuilder - LIMIT 和 OFFSET 方法', () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             builder.limit(-1);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
     test('应该拒绝负数 OFFSET', () => {
         const builder = new SqlBuilder().from('users').limit(10);
         expect(() => {
             builder.offset(-1);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('应该拒绝非数字 LIMIT', () => {
+    test('应该拒绝非数�?LIMIT', () => {
         const builder = new SqlBuilder().from('users');
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.limit('10');
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
     test('应该向下取整 LIMIT', () => {
@@ -595,14 +593,14 @@ describe('SqlBuilder - LIMIT 和 OFFSET 方法', () => {
 });
 
 describe('SqlBuilder - toSelectSql 方法', () => {
-    test('应该构建基本的 SELECT 查询', () => {
+    test('应该构建基本�?SELECT 查询', () => {
         const builder = new SqlBuilder().from('users');
         const result = builder.toSelectSql();
         expect(result.sql).toBe('SELECT * FROM `users`');
         expect(result.params).toEqual([]);
     });
 
-    test('应该构建带 WHERE 的查询', () => {
+    test('应该构建�?WHERE 的查�?, () => {
         const builder = new SqlBuilder().from('users').where({ id: 1 });
         const result = builder.toSelectSql();
         expect(result.sql).toBe('SELECT * FROM `users` WHERE `id` = ?');
@@ -623,14 +621,14 @@ describe('SqlBuilder - toSelectSql 方法', () => {
         expect(result.sql).toContain('LIMIT 10 OFFSET 20');
     });
 
-    test('应该拒绝没有 FROM 的查询', () => {
+    test('应该拒绝没有 FROM 的查�?, () => {
         const builder = new SqlBuilder().select('id');
         expect(() => {
             builder.toSelectSql();
-        }).toThrow(DatabaseError);
+        }).toThrow();
         expect(() => {
             builder.toSelectSql();
-        }).toThrow(/FROM 表名是必需的/);
+        }).toThrow(/FROM 表名是必需�?);
     });
 });
 
@@ -652,17 +650,17 @@ describe('SqlBuilder - toInsertSql 方法', () => {
         expect(result.params).toEqual(['John', 30, 'Jane', 25]);
     });
 
-    test('应该转义字段名', () => {
+    test('应该转义字段�?, () => {
         const builder = new SqlBuilder();
         const result = builder.toInsertSql('users', { user_name: 'John' });
         expect(result.sql).toContain('`user_name`');
     });
 
-    test('应该拒绝空表名', () => {
+    test('应该拒绝空表�?, () => {
         const builder = new SqlBuilder();
         expect(() => {
             builder.toInsertSql('', { name: 'John' });
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
     test('应该拒绝非字符串表名', () => {
@@ -670,36 +668,36 @@ describe('SqlBuilder - toInsertSql 方法', () => {
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.toInsertSql(123, { name: 'John' });
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('应该拒绝空数据', () => {
+    test('应该拒绝空数�?, () => {
         const builder = new SqlBuilder();
         expect(() => {
             // @ts-expect-error - 测试错误输入
             builder.toInsertSql('users', null);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('应该拒绝空数组', () => {
+    test('应该拒绝空数�?, () => {
         const builder = new SqlBuilder();
         expect(() => {
             builder.toInsertSql('users', []);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('应该拒绝没有字段的对象', () => {
+    test('应该拒绝没有字段的对�?, () => {
         const builder = new SqlBuilder();
         expect(() => {
             builder.toInsertSql('users', {});
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 
-    test('应该拒绝数组中第一个对象没有字段', () => {
+    test('应该拒绝数组中第一个对象没有字�?, () => {
         const builder = new SqlBuilder();
         expect(() => {
             builder.toInsertSql('users', [{}]);
-        }).toThrow(DatabaseError);
+        }).toThrow();
     });
 });
 
@@ -711,7 +709,7 @@ describe('SqlBuilder - toUpdateSql 方法', () => {
         expect(result.params).toEqual(['John', 30, 1]);
     });
 
-    test('应该转义字段名', () => {
+    test('应该转义字段�?, () => {
         const builder = new SqlBuilder().where({ id: 1 });
         const result = builder.toUpdateSql('users', { user_name: 'John' });
         expect(result.sql).toContain('`user_name`');
@@ -724,14 +722,14 @@ describe('SqlBuilder - toUpdateSql 方法', () => {
         }).toThrow(/WHERE 条件/);
     });
 
-    test('应该拒绝空表名', () => {
+    test('应该拒绝空表�?, () => {
         const builder = new SqlBuilder().where({ id: 1 });
         expect(() => {
             builder.toUpdateSql('', { name: 'John' });
         }).toThrow(/表名/);
     });
 
-    test('应该拒绝空数据', () => {
+    test('应该拒绝空数�?, () => {
         const builder = new SqlBuilder().where({ id: 1 });
         expect(() => {
             // @ts-expect-error - 测试错误输入
@@ -747,11 +745,11 @@ describe('SqlBuilder - toUpdateSql 方法', () => {
         }).toThrow(/数据/);
     });
 
-    test('应该拒绝没有字段的对象', () => {
+    test('应该拒绝没有字段的对�?, () => {
         const builder = new SqlBuilder().where({ id: 1 });
         expect(() => {
             builder.toUpdateSql('users', {});
-        }).toThrow(/至少有一个字段/);
+        }).toThrow(/至少有一个字�?);
     });
 });
 
@@ -770,7 +768,7 @@ describe('SqlBuilder - toDeleteSql 方法', () => {
         }).toThrow(/WHERE 条件/);
     });
 
-    test('应该拒绝空表名', () => {
+    test('应该拒绝空表�?, () => {
         const builder = new SqlBuilder().where({ id: 1 });
         expect(() => {
             builder.toDeleteSql('');
@@ -786,20 +784,20 @@ describe('SqlBuilder - toCountSql 方法', () => {
         expect(result.params).toEqual([]);
     });
 
-    test('应该支持带 WHERE 的 COUNT', () => {
+    test('应该支持�?WHERE �?COUNT', () => {
         const builder = new SqlBuilder().from('users').where({ status: 'active' });
         const result = builder.toCountSql();
         expect(result.sql).toBe('SELECT COUNT(*) as total FROM `users` WHERE `status` = ?');
         expect(result.params).toEqual(['active']);
     });
 
-    test('应该支持带 JOIN 的 COUNT', () => {
+    test('应该支持�?JOIN �?COUNT', () => {
         const builder = new SqlBuilder().from('users').leftJoin('orders', 'orders.user_id = users.id');
         const result = builder.toCountSql();
         expect(result.sql).toContain('LEFT JOIN');
     });
 
-    test('应该拒绝没有 FROM 的查询', () => {
+    test('应该拒绝没有 FROM 的查�?, () => {
         const builder = new SqlBuilder();
         expect(() => {
             builder.toCountSql();
@@ -808,14 +806,14 @@ describe('SqlBuilder - toCountSql 方法', () => {
 });
 
 describe('SqlBuilder - getWhereConditions 方法', () => {
-    test('应该返回 WHERE 条件和参数', () => {
+    test('应该返回 WHERE 条件和参�?, () => {
         const builder = new SqlBuilder().where({ id: 1, status: 'active' });
         const result = builder.getWhereConditions();
         expect(result.sql).toBe('`id` = ? AND `status` = ?');
         expect(result.params).toEqual([1, 'active']);
     });
 
-    test('没有条件时应该返回空字符串', () => {
+    test('没有条件时应该返回空字符�?, () => {
         const builder = new SqlBuilder();
         const result = builder.getWhereConditions();
         expect(result.sql).toBe('');
@@ -848,7 +846,7 @@ describe('SqlBuilder - 链式调用', () => {
         expect(builder.reset()).toBe(builder);
     });
 
-    test('应该支持完整的链式调用', () => {
+    test('应该支持完整的链式调�?, () => {
         const result = new SqlBuilder().select(['id', 'name']).from('users').where({ status: 'active' }).orderBy(['id#DESC']).limit(10).toSelectSql();
 
         expect(result.sql).toContain('SELECT');
@@ -859,14 +857,14 @@ describe('SqlBuilder - 链式调用', () => {
     });
 });
 
-describe('SqlBuilder - 边界情况和特殊场景', () => {
-    test('应该处理包含特殊字符的值', () => {
+describe('SqlBuilder - 边界情况和特殊场�?, () => {
+    test('应该处理包含特殊字符的�?, () => {
         const builder = new SqlBuilder().from('users').where({ name: "O'Brien" });
         const result = builder.toSelectSql();
         expect(result.params).toEqual(["O'Brien"]);
     });
 
-    test('应该处理 null 值', () => {
+    test('应该处理 null �?, () => {
         const builder = new SqlBuilder().from('users').where({ deleted_at: null });
         const result = builder.toSelectSql();
         expect(result.sql).toContain('`deleted_at` = ?');
@@ -885,7 +883,7 @@ describe('SqlBuilder - 边界情况和特殊场景', () => {
         expect(result.params).toEqual(['']);
     });
 
-    test('应该处理 false 值', () => {
+    test('应该处理 false �?, () => {
         const builder = new SqlBuilder().from('users').where({ is_active: false });
         const result = builder.toSelectSql();
         expect(result.params).toEqual([false]);
@@ -906,7 +904,7 @@ describe('SqlBuilder - 边界情况和特殊场景', () => {
         expect(result.sql).toContain('IN');
     });
 
-    test('应该处理复杂的嵌套 OR 条件', () => {
+    test('应该处理复杂的嵌�?OR 条件', () => {
         const builder = new SqlBuilder().from('users').where({
             status: 'active',
             $or: [{ age$gte: 18, age$lt: 65 }, { role: 'admin' }, { permissions$in: ['manage_users', 'view_reports'] }]
@@ -937,7 +935,7 @@ describe('SqlBuilder - 实际使用场景', () => {
         expect(result.sql).toContain('LIMIT 20 OFFSET 40');
     });
 
-    test('场景2：订单统计（JOIN + GROUP BY + HAVING）', () => {
+    test('场景2：订单统计（JOIN + GROUP BY + HAVING�?, () => {
         const result = new SqlBuilder().select(['users.id', 'users.name', 'COUNT(*) as order_count', 'SUM(orders.amount) as total_amount']).from('users').leftJoin('orders', 'orders.user_id = users.id').where({ 'orders.status': 'completed' }).groupBy(['users.id', 'users.name']).having('COUNT(*) >= 5').orderBy(['total_amount#DESC']).limit(10).toSelectSql();
 
         expect(result.sql).toContain('LEFT JOIN');
@@ -945,7 +943,7 @@ describe('SqlBuilder - 实际使用场景', () => {
         expect(result.sql).toContain('HAVING');
     });
 
-    test('场景3：高级搜索（多条件 OR）', () => {
+    test('场景3：高级搜索（多条�?OR�?, () => {
         const keyword = 'john';
         const result = new SqlBuilder()
             .from('users')
@@ -958,7 +956,7 @@ describe('SqlBuilder - 实际使用场景', () => {
         expect(result.params).toEqual([`%${keyword}%`, `%${keyword}%`, `%${keyword}%`]);
     });
 
-    test('场景4：批量插入用户', () => {
+    test('场景4：批量插入用�?, () => {
         const users = [
             { username: 'john', email: 'john@example.com', age: 30 },
             { username: 'jane', email: 'jane@example.com', age: 25 },
@@ -972,7 +970,7 @@ describe('SqlBuilder - 实际使用场景', () => {
         expect(result.params.length).toBe(9);
     });
 
-    test('场景5：更新用户信息', () => {
+    test('场景5：更新用户信�?, () => {
         const result = new SqlBuilder().where({ id: 123 }).toUpdateSql('users', {
             username: 'john_updated',
             email: 'john.new@example.com',
@@ -985,7 +983,7 @@ describe('SqlBuilder - 实际使用场景', () => {
         expect(result.params[3]).toBe(123);
     });
 
-    test('场景6：软删除（更新 deleted_at）', () => {
+    test('场景6：软删除（更�?deleted_at�?, () => {
         const result = new SqlBuilder().where({ id$in: [1, 2, 3, 4, 5] }).toUpdateSql('users', { deleted_at: Date.now() });
 
         expect(result.sql).toContain('UPDATE');
@@ -998,7 +996,7 @@ describe('SqlBuilder - 实际使用场景', () => {
         expect(result.sql).toBe('DELETE FROM `users` WHERE `deleted_at` IS NOT NULL');
     });
 
-    test('场景8：统计符合条件的记录数', () => {
+    test('场景8：统计符合条件的记录�?, () => {
         const result = new SqlBuilder()
             .from('users')
             .where({
@@ -1012,13 +1010,13 @@ describe('SqlBuilder - 实际使用场景', () => {
     });
 });
 
-describe('SqlBuilder - 错误码验证', () => {
+describe('SqlBuilder - 错误码验�?, () => {
     test('参数错误应该返回 DB_INVALID_PARAMS', () => {
         const builder = new SqlBuilder().from('users');
         try {
             builder.where('status', undefined);
         } catch (error: any) {
-            expect(error).toBeInstanceOf(DatabaseError);
+            expect(error).toBeInstanceOf(Error);
             expect(error.code).toBe(DB_ERROR_CODES.INVALID_PARAMS);
         }
     });
@@ -1028,17 +1026,17 @@ describe('SqlBuilder - 错误码验证', () => {
         try {
             builder.from('');
         } catch (error: any) {
-            expect(error).toBeInstanceOf(DatabaseError);
+            expect(error).toBeInstanceOf(Error);
             expect(error.code).toBe(DB_ERROR_CODES.INVALID_TABLE_NAME);
         }
     });
 
-    test('字段名错误应该返回 DB_INVALID_FIELD_NAME', () => {
+    test('字段名错误应该返�?DB_INVALID_FIELD_NAME', () => {
         const builder = new SqlBuilder().from('users');
         try {
             builder.orderBy(['#ASC']);
         } catch (error: any) {
-            expect(error).toBeInstanceOf(DatabaseError);
+            expect(error).toBeInstanceOf(Error);
             expect(error.code).toBe(DB_ERROR_CODES.INVALID_FIELD_NAME);
         }
     });

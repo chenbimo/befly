@@ -6,7 +6,6 @@
 import { SqlBuilder } from './sqlBuilder.js';
 import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear } from './helper.js';
 import { Logger } from './logger.js';
-import { DBError } from './errors.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
@@ -61,7 +60,7 @@ export class DbHelper {
      */
     private async executeWithConn(sqlStr: string, params?: any[]): Promise<any> {
         if (!this.sql) {
-            throw DBError.connectionFailed('数据库连接未初始化');
+            throw new Error('数据库连接未初始化');
         }
 
         // 记录开始时间
@@ -117,10 +116,10 @@ export class DbHelper {
 
         // P1: 添加参数上限校验
         if (page < 1 || page > 10000) {
-            throw DBError.invalidParams('页码必须在 1 到 10000 之间', { table, page, limit });
+            throw new Error(`页码必须在 1 到 10000 之间 (table: ${table}, page: ${page}, limit: ${limit})`);
         }
         if (limit < 1 || limit > 1000) {
-            throw DBError.invalidParams('每页数量必须在 1 到 1000 之间', { table, page, limit });
+            throw new Error(`每页数量必须在 1 到 1000 之间 (table: ${table}, page: ${page}, limit: ${limit})`);
         }
 
         // 清理 where 条件（排除 null 和 undefined）
@@ -234,7 +233,7 @@ export class DbHelper {
         try {
             processed.id = await this.befly.redis.genTimeID();
         } catch (error: any) {
-            throw DBError.idGenerationFailed('生成 ID 失败，Redis 可能不可用', { table }, error);
+            throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table}): ${error.message}`);
         }
 
         // 强制生成时间戳（不可被用户覆盖）
@@ -270,7 +269,7 @@ export class DbHelper {
         // 限制批量大小
         const MAX_BATCH_SIZE = 1000;
         if (dataList.length > MAX_BATCH_SIZE) {
-            throw DBError.batchSizeExceeded(dataList.length, MAX_BATCH_SIZE);
+            throw new Error(`批量插入数量 ${dataList.length} 超过最大限制 ${MAX_BATCH_SIZE}`);
         }
 
         // 批量生成 ID（一次性从 Redis 获取 N 个 ID）
@@ -454,7 +453,7 @@ export class DbHelper {
             } catch (commitError: any) {
                 Logger.error('事务提交失败，正在回滚:', commitError.message);
                 await conn.query('ROLLBACK');
-                throw DBError.transactionCommitFailed('事务提交失败', {}, commitError);
+                throw new Error(`事务提交失败: ${commitError.message}`);
             }
 
             return result;
@@ -506,7 +505,7 @@ export class DbHelper {
 
         // 验证字段名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
-            throw DBError.invalidFieldName(`无效的字段名: ${field}，只允许字母、数字和下划线。`, { field });
+            throw new Error(`无效的字段名: ${field}，只允许字母、数字和下划线`);
         }
 
         const result = await this.getOne({
@@ -544,17 +543,17 @@ export class DbHelper {
     async increment(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
         // 验证表名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
-            throw DBError.invalidTableName(`无效的表名: ${table}`, { table });
+            throw new Error(`无效的表名: ${table}`);
         }
 
         // 验证字段名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
-            throw DBError.invalidFieldName(`无效的字段名: ${field}`, { field });
+            throw new Error(`无效的字段名: ${field}`);
         }
 
         // 验证 value 必须是数字
         if (typeof value !== 'number' || isNaN(value)) {
-            throw DBError.invalidParams(`自增值必须是有效的数字`, { table, field, value });
+            throw new Error(`自增值必须是有效的数字 (table: ${table}, field: ${field}, value: ${value})`);
         }
 
         // 清理 where 条件（排除 null 和 undefined）
