@@ -12,7 +12,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 查询管理员信息（框架自动转换为小驼峰）
-            const admin = await befly.db.getDetail({
+            const admin = await befly.db.getOne({
                 table: 'addon_admin_admin',
                 where: { id: ctx.body.adminId }
             });
@@ -24,7 +24,7 @@ export default {
             // 如果有角色ID，查询角色详细信息
             let roleInfo = null;
             if (admin.roleId) {
-                roleInfo = await befly.db.getDetail({
+                roleInfo = await befly.db.getOne({
                     table: 'addon_admin_role',
                     where: { id: admin.roleId }
                 });

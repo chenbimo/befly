@@ -16,7 +16,7 @@ export default {
             const userId = ctx.user.id;
 
             // 1. 查询用户信息获取角色ID
-            const admin = await befly.db.getDetail({
+            const admin = await befly.db.getOne({
                 table: 'addon_admin_admin',
                 where: { id: userId }
             });
@@ -26,7 +26,7 @@ export default {
             }
 
             // 2. 查询角色信息获取菜单权限
-            const role = await befly.db.getDetail({
+            const role = await befly.db.getOne({
                 table: 'addon_admin_role',
                 where: { id: admin.roleId }
             });

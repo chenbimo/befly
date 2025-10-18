@@ -22,7 +22,7 @@ export default {
         // 邮箱登录
         if (ctx.body.email && ctx.body.password) {
             // 查询管理员
-            admin = await befly.db.getDetail({
+            admin = await befly.db.getOne({
                 table: 'addon_admin_admin',
                 where: { email: ctx.body.email }
             });
@@ -32,9 +32,18 @@ export default {
             }
 
             // 验证密码
-            const isValid = await Crypto2.verifyPassword(ctx.body.password, admin.password);
-            if (!isValid) {
-                return No('邮箱或密码错误');
+            try {
+                const isValid = await Crypto2.verifyPassword(ctx.body.password, admin.password);
+                if (!isValid) {
+                    return No('邮箱或密码错误');
+                }
+            } catch (error) {
+                befly.logger.error('密码验证失败:', {
+                    error: error.message,
+                    passwordLength: admin.password?.length,
+                    passwordPrefix: admin.password?.substring(0, 10)
+                });
+                return No('密码格式错误，请重新设置密码');
             }
         }
         // 手机号登录
@@ -62,7 +71,7 @@ export default {
             }
 
             // 查询管理员
-            admin = await befly.db.getDetail({
+            admin = await befly.db.getOne({
                 table: 'addon_admin_admin',
                 where: { phone: ctx.body.phone }
             });

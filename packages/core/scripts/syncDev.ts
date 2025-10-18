@@ -2,7 +2,8 @@
  * 同步开发者管理员到数据库（使用 dbHelper）
  * - 邮箱: dev@qq.com
  * - 姓名: 开发者
- * - 密码: Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT)
+ * - 密码: 使用 bcrypt 加密
+ * - 角色: roleCode=dev, roleType=admin
  * - 表名: addon_admin_admin
  */
 
@@ -24,7 +25,9 @@ const CLI: CliArgs = { DRY_RUN: ARGV.includes('--plan') };
  * 同步开发管理员账号（使用统一的 database 工具）
  * 表名: addon_admin_admin
  * 邮箱: dev@qq.com
+ * 用户名: dev
  * 姓名: 开发者
+ * 角色: roleCode=dev, roleType=admin
  * @returns 是否成功
  */
 export async function SyncDev(): Promise<boolean> {
@@ -53,8 +56,8 @@ export async function SyncDev(): Promise<boolean> {
             return false;
         }
 
-        // 对密码进行双重加密
-        const hashed = Crypto2.hmacMd5(Crypto2.md5(Env.DEV_PASSWORD), Env.MD5_SALT);
+        // 使用 bcrypt 加密密码（与登录验证一致）
+        const hashed = await Crypto2.hashPassword(Env.DEV_PASSWORD);
 
         // 准备开发管理员数据
         const devData = {
@@ -63,15 +66,14 @@ export async function SyncDev(): Promise<boolean> {
             email: 'dev@qq.com',
             username: 'dev',
             password: hashed,
-            role: 'dev',
+            roleCode: 'dev',
             roleType: 'admin' // 小驼峰，自动转换为 role_type
         };
 
         // 查询现有账号
         const existing = await helper.getOne({
             table: 'addon_admin_admin',
-            where: { email: 'dev@qq.com' },
-            fields: ['id']
+            where: { email: 'dev@qq.com' }
         });
 
         if (existing) {
@@ -81,14 +83,14 @@ export async function SyncDev(): Promise<boolean> {
                 where: { email: 'dev@qq.com' },
                 data: devData
             });
-            Logger.info('开发管理员已更新：email=dev@qq.com, username=dev, role=dev, role_type=admin');
+            Logger.info('开发管理员已更新：email=dev@qq.com, username=dev, roleCode=dev, roleType=admin');
         } else {
             // 插入新账号
             await helper.insData({
                 table: 'addon_admin_admin',
                 data: devData
             });
-            Logger.info('开发管理员已初始化：email=dev@qq.com, username=dev, role=dev, role_type=admin');
+            Logger.info('开发管理员已初始化：email=dev@qq.com, username=dev, roleCode=dev, roleType=admin');
         }
 
         return true;
