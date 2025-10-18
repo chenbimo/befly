@@ -3,6 +3,7 @@
  */
 
 import { Yes, No, Fields } from 'befly';
+
 export default {
     name: '删除角色',
     fields: {
@@ -10,14 +11,13 @@ export default {
     },
     handler: async (befly, ctx) => {
         try {
-            // 检查是否有用户关联此角色
-            const adminRoles = await befly.db.getAll({
-                table: 'addon_admin_admin_role',
-                fields: ['id'],
-                where: { role_id: ctx.body.id }
+            // 检查是否有用户使用此角色（使用 getList 代替 getAll）
+            const adminList = await befly.db.getList({
+                table: 'addon_admin_admin',
+                where: { roleId: ctx.body.id }
             });
 
-            if (adminRoles.length > 0) {
+            if (adminList.total > 0) {
                 return No('该角色已分配给用户，无法删除');
             }
 
@@ -25,12 +25,6 @@ export default {
             await befly.db.delData({
                 table: 'addon_admin_role',
                 where: { id: ctx.body.id }
-            });
-
-            // 删除相关的角色-菜单关联（软删除）
-            await befly.db.delData({
-                table: 'addon_admin_role_menu',
-                where: { role_id: ctx.body.id }
             });
 
             return Yes('操作成功');

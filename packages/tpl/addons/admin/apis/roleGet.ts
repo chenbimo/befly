@@ -1,8 +1,9 @@
 /**
- * 获取用户的角色
+ * 获取用户的角色（单角色模式）
  */
 
 import { Yes, No, Fields } from 'befly';
+
 export default {
     name: '获取用户角色',
     fields: {
@@ -10,15 +11,30 @@ export default {
     },
     handler: async (befly, ctx) => {
         try {
-            const roleRecords = await befly.db.getAll({
-                table: 'addon_admin_admin_role',
-                fields: ['role_id'],
-                where: { admin_id: ctx.body.adminId }
+            // 查询管理员信息（框架自动转换为小驼峰）
+            const admin = await befly.db.getDetail({
+                table: 'addon_admin_admin',
+                where: { id: ctx.body.adminId }
             });
 
-            const ids = roleRecords.map((item: any) => item.role_id);
+            if (!admin) {
+                return No('管理员不存在');
+            }
 
-            return Yes('操作成功', ids);
+            // 如果有角色ID，查询角色详细信息
+            let roleInfo = null;
+            if (admin.roleId) {
+                roleInfo = await befly.db.getDetail({
+                    table: 'addon_admin_role',
+                    where: { id: admin.roleId }
+                });
+            }
+
+            return Yes('操作成功', {
+                roleId: admin.roleId,
+                roleCode: admin.roleCode,
+                role: roleInfo
+            });
         } catch (error) {
             befly.logger.error('获取用户角色失败:', error);
             return No('操作失败');

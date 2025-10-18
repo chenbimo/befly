@@ -3,6 +3,7 @@
  */
 
 import { Yes, No, Fields } from 'befly';
+
 export default {
     name: '删除菜单',
     fields: {
@@ -10,14 +11,13 @@ export default {
     },
     handler: async (befly, ctx) => {
         try {
-            // 检查是否有子菜单
-            const children = await befly.db.getAll({
+            // 检查是否有子菜单（使用 getList 代替 getAll）
+            const childrenList = await befly.db.getList({
                 table: 'addon_admin_menu',
-                fields: ['id'],
                 where: { pid: ctx.body.id }
             });
 
-            if (children.length > 0) {
+            if (childrenList.total > 0) {
                 return No('该菜单下有子菜单，无法删除');
             }
 
@@ -27,11 +27,9 @@ export default {
                 where: { id: ctx.body.id }
             });
 
-            // 删除相关的角色-菜单关联（软删除）
-            await befly.db.delData({
-                table: 'addon_admin_role_menu',
-                where: { menu_id: ctx.body.id }
-            });
+            // 注意：菜单权限现在存储在 role.menus 字段中
+            // 如果需要从角色权限中移除此菜单，需要额外处理
+            // 这里暂时不处理，由管理员在角色管理界面手动调整
 
             return Yes('操作成功');
         } catch (error) {

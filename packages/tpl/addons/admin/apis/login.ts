@@ -79,32 +79,24 @@ export default {
             return No('账号已被禁用');
         }
 
-        // 查询角色信息
-        let roleInfo = null;
-        if (admin.roleId) {
-            roleInfo = await befly.db.getDetail({
-                table: 'addon_admin_role',
-                where: { id: admin.roleId }
-            });
-        }
-
         // 更新最后登录信息
         await befly.db.updData({
             table: 'addon_admin_admin',
             where: { id: admin.id },
             data: {
-                last_login_time: Date.now(),
-                last_login_ip: ctx.ip || 'unknown'
+                lastLoginTime: Date.now(),
+                lastLoginIp: ctx.ip || 'unknown'
             }
         });
 
-        // 生成 JWT Token（包含角色信息）
+        // 生成 JWT Token（包含核心身份信息）
         const token = await Jwt.sign(
             {
                 id: admin.id,
                 email: admin.email,
-                roleId: admin.roleId,
-                roleCode: roleInfo?.code || null
+                nickname: admin.nickname,
+                roleCode: admin.roleCode,
+                roleType: admin.roleType
             },
             {
                 expiresIn: '7d'
@@ -114,14 +106,9 @@ export default {
         // 返回用户信息（不包含密码）
         const { password: _, ...userWithoutPassword } = admin;
 
-        const response = {
+        return Yes('登录成功', {
             token,
-            userInfo: {
-                ...userWithoutPassword,
-                role: roleInfo
-            }
-        };
-
-        return Yes('登录成功', response);
+            userInfo: userWithoutPassword
+        });
     }
 };

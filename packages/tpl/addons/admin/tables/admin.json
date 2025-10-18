@@ -8,6 +8,7 @@
     "avatar": "头像|string|0|500|null|0|null",
     "roleId": "角色ID|number|1|999999999999999|null|1|null",
     "roleCode": "角色编码|string|2|50|null|0|^[a-zA-Z0-9_]+$",
+    "roleType": "角色类型|string|4|5|user|1|^(admin|user)$",
     "status": "状态|number|0|1|1|1|^(0|1)$",
     "lastLoginTime": "最后登录时间|number|0|null|0|0|null",
     "lastLoginIp": "最后登录IP|string|0|50|null|0|null"
