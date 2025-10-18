@@ -5,6 +5,7 @@
  */
 
 import path from 'node:path';
+import * as readline from 'node:readline';
 import { Glob } from 'bun';
 import { paths } from '../paths.js';
 
@@ -119,15 +120,14 @@ function buildScriptItems(): ScriptItem[] {
     const items: ScriptItem[] = [];
     const nameSet = new Set<string>();
 
-    // 添加核心脚本（带 core: 前缀）
+    // 添加核心脚本（不带前缀）
     for (const name of coreList) {
-        const displayName = `core:${name}`;
-        nameSet.add(displayName);
+        nameSet.add(name);
         items.push({
-            name: displayName,
+            name: name,
             source: 'core',
-            displayName: displayName,
-            duplicate: false, // core 脚本使用前缀，不会重名
+            displayName: name,
+            duplicate: false,
             path: path.resolve(paths.rootScriptDir, `${name}.ts`)
         });
     }
@@ -145,14 +145,15 @@ function buildScriptItems(): ScriptItem[] {
         });
     }
 
-    // 添加 addon 脚本（使用 addonName:scriptName 格式）
+    // 添加 addon 脚本（不带前缀）
     for (const addon of addonScripts) {
-        const fullName = `${addon.addonName}:${addon.scriptName}`;
+        const isDup = nameSet.has(addon.scriptName);
+        nameSet.add(addon.scriptName);
         items.push({
-            name: fullName,
+            name: addon.scriptName,
             source: `addon:${addon.addonName}`,
-            displayName: fullName,
-            duplicate: false, // addon 脚本使用前缀，不会重名
+            displayName: addon.scriptName,
+            duplicate: isDup,
             path: addon.scriptPath
         });
     }
@@ -175,9 +176,10 @@ function buildScriptItems(): ScriptItem[] {
 }
 
 /**
- * 打印所有可用的脚本列表
+ * 打印所有可用的脚本列表（带数字编号）
+ * @param numbered - 是否显示数字编号（用于交互式选择）
  */
-function printAllScripts(): void {
+function printAllScripts(numbered: boolean = false): void {
     const items = buildScriptItems();
     if (items.length === 0) {
         console.log('  • <无>');
@@ -189,72 +191,133 @@ function printAllScripts(): void {
     const projectScripts = items.filter((it) => it.source === 'project');
     const addonScripts = items.filter((it) => it.source.startsWith('addon:'));
 
+    let index = 1;
+
     if (coreScripts.length > 0) {
-        console.log('\n📦 Core 脚本 (使用 core:scriptName 格式):');
+        console.log('\n📦 内置脚本:');
         for (const it of coreScripts) {
-            console.log(`  • ${it.displayName}`);
+            if (numbered) {
+                console.log(`  ${index.toString().padStart(2, ' ')}. ${it.displayName}`);
+                index++;
+            } else {
+                console.log(`  • ${it.displayName}`);
+            }
         }
     }
 
     if (projectScripts.length > 0) {
-        console.log('\n📦 Project 脚本 (直接使用脚本名):');
+        console.log('\n📦 项目脚本:');
         for (const it of projectScripts) {
-            console.log(`  • ${it.displayName}${it.duplicate ? ' (与 core 重名，优先使用 project)' : ''}`);
+            if (numbered) {
+                console.log(`  ${index.toString().padStart(2, ' ')}. ${it.displayName}`);
+                index++;
+            } else {
+                console.log(`  • ${it.displayName}`);
+            }
         }
     }
 
     if (addonScripts.length > 0) {
-        console.log('\n📦 Addon 脚本 (使用 addonName:scriptName 格式):');
+        console.log('\n📦 组件脚本:');
         for (const it of addonScripts) {
-            console.log(`  • ${it.displayName}`);
+            if (numbered) {
+                console.log(`  ${index.toString().padStart(2, ' ')}. ${it.displayName}`);
+                index++;
+            } else {
+                console.log(`  • ${it.displayName}`);
+            }
         }
     }
 }
 
 /**
+ * 交互式选择脚本
+ * @returns 选中的脚本项，如果取消则返回 null
+ */
+async function interactiveSelect(): Promise<{ script: ScriptItem; args: string[] } | null> {
+    const items = buildScriptItems();
+    if (items.length === 0) {
+        console.log('❌ 没有可用的脚本');
+        return null;
+    }
+
+    console.log('\n🚀 Befly CLI - 脚本管理器\n');
+    printAllScripts(true);
+
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    return new Promise((resolve) => {
+        rl.question('\n请输入脚本编号 (输入 0 或直接回车退出): ', (answer) => {
+            const choice = parseInt(answer.trim());
+
+            // 退出
+            if (isNaN(choice) || choice === 0 || answer.trim() === '') {
+                console.log('👋 已取消');
+                rl.close();
+                resolve(null);
+                return;
+            }
+
+            // 验证选择
+            if (choice < 1 || choice > items.length) {
+                console.log(`❌ 无效的选择: ${choice}（请输入 1-${items.length}）`);
+                rl.close();
+                resolve(null);
+                return;
+            }
+
+            const selected = items[choice - 1];
+            console.log(`\n✅ 已选择: ${selected.displayName}`);
+
+            rl.question('是否添加 --plan 参数? (y/n，直接回车默认为 n): ', (planAnswer) => {
+                const addPlan = planAnswer.toLowerCase() === 'y' || planAnswer.toLowerCase() === 'yes';
+                const args = addPlan ? ['--plan'] : [];
+
+                rl.question('是否执行? (y/n，直接回车默认为 y): ', (confirmAnswer) => {
+                    const shouldRun = confirmAnswer.toLowerCase() === 'y' || confirmAnswer.toLowerCase() === 'yes' || confirmAnswer.trim() === '';
+
+                    rl.close();
+
+                    if (!shouldRun) {
+                        console.log('👋 已取消执行');
+                        resolve(null);
+                        return;
+                    }
+
+                    resolve({ script: selected, args });
+                });
+            });
+        });
+    });
+}
+
+/**
  * 解析脚本名称到完整路径
- * @param name - 脚本名称
- *               - core 脚本：core:scriptName
- *               - addon 脚本：addonName:scriptName
- *               - project 脚本：scriptName（不带前缀）
+ * @param name - 脚本名称（不带前缀）
  * @returns 脚本完整路径，未找到返回 null
+ *          优先级：project > addon > core
  */
 async function resolveScriptPath(name: string): Promise<string | null> {
-    // 1. 检查是否是 core 脚本格式：core:scriptName
-    if (name.startsWith('core:')) {
-        const scriptName = name.substring(5); // 移除 "core:" 前缀
-        const corePath = path.resolve(paths.rootScriptDir, `${scriptName}.ts`);
-        if (await Bun.file(corePath).exists()) {
-            return corePath;
-        }
-        return null;
-    }
-
-    // 2. 检查是否是 addon 格式：addonName:scriptName
-    if (name.includes(':')) {
-        const addonScripts = scanAddonScripts();
-        const parts = name.split(':');
-        if (parts.length === 2) {
-            const [addonName, scriptName] = parts;
-            const found = addonScripts.find((a) => a.addonName === addonName && a.scriptName === scriptName.replace(/\.ts$/, ''));
-            if (found) return found.scriptPath;
-        }
-        // 如果包含 : 但不是有效的格式，返回 null
-        return null;
-    }
-
-    // 3. 不带前缀，查找 project 脚本
     const base = name.replace(/\.ts$/, '');
-    const projectPath = path.resolve(paths.projectScriptDir, `${base}.ts`);
-    if (await Bun.file(projectPath).exists()) {
-        return projectPath;
-    }
-
-    // 4. 回退到列表匹配（只匹配 project，不会匹配 core 和 addon）
     const items = buildScriptItems();
-    const hit = items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'project');
 
-    return hit ? hit.path : null;
+    // 按优先级查找：project > addon > core
+    // 1. 优先查找项目脚本
+    let hit = items.find((it) => it.name === base && it.source === 'project');
+    if (hit) return hit.path;
+
+    // 2. 查找 addon 脚本
+    hit = items.find((it) => it.name === base && it.source.startsWith('addon:'));
+    if (hit) return hit.path;
+
+    // 3. 最后查找 core 脚本
+    hit = items.find((it) => it.name === base && it.source === 'core');
+    if (hit) return hit.path;
+
+    return null;
 }
 
 /**
@@ -282,10 +345,18 @@ async function runScriptAtPath(targetPath: string, label: string, args: string[]
 async function main(): Promise<void> {
     const [, , cmd, ...args] = process.argv;
 
-    // 无参数：打印所有脚本
+    // 无参数：进入交互式选择模式
     if (!cmd) {
-        printAllScripts();
-        process.exit(0);
+        const result = await interactiveSelect();
+        if (!result) {
+            process.exit(0);
+        }
+
+        const { script, args: scriptArgs } = result;
+        const argsInfo = scriptArgs.length > 0 ? ` (参数: ${scriptArgs.join(' ')})` : '';
+        console.log(`\n🚀 正在执行: ${script.displayName}${argsInfo}\n`);
+        const code = await runScriptAtPath(script.path, script.displayName, scriptArgs);
+        process.exit(code ?? 0);
     }
 
     // 按名称执行（将剩余参数透传给脚本）
