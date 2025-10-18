@@ -11,7 +11,7 @@ import { Jwt } from './utils/jwt.js';
 import { Validator } from './utils/validate.js';
 import { Crypto2 } from './utils/crypto.js';
 import { DbHelper } from './utils/dbHelper.js';
-import { createSqlClient, getRedis, getSql, getDbHelper } from './utils/database.js';
+import { createSqlClient, getRedis, getSql, getDbHelper, initDatabase, closeDatabase } from './utils/database.js';
 import { RedisHelper } from './utils/redisHelper.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 
@@ -44,4 +44,4 @@ export class Befly {
 }
 
 // 核心类和工具导出（只导出运行时代码，不导出类型）
-export { Env, Fields, Jwt, Validator, Crypto2, Logger, Yes, No, cleanData, DbHelper, createSqlClient, RedisHelper, getRedis, getSql, getDbHelper };
+export { Env, Fields, Jwt, Validator, Crypto2, Logger, Yes, No, cleanData, DbHelper, createSqlClient, RedisHelper, getRedis, getSql, getDbHelper, initDatabase, closeDatabase };

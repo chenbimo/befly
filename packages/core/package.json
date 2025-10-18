@@ -9,10 +9,9 @@
         "registry": "https://registry.npmjs.org"
     },
     "main": "main.ts",
-    "types": "main.ts",
+    "types": "./types/index.d.ts",
     "exports": {
         ".": {
-            "types": "./main.ts",
             "default": "./main.ts"
         },
         "./types": {
@@ -23,7 +22,9 @@
     "bin": {
         "befly": "./bin/befly.ts"
     },
-    "scripts": {},
+    "scripts": {
+        "bundler": "bun build ./main.ts --outfile ./main.single.ts --minify --target bun"
+    },
     "keywords": [
         "bun",
         "api",

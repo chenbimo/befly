@@ -119,19 +119,20 @@ function buildScriptItems(): ScriptItem[] {
     const items: ScriptItem[] = [];
     const nameSet = new Set<string>();
 
-    // 添加核心脚本
+    // 添加核心脚本（带 core: 前缀）
     for (const name of coreList) {
-        nameSet.add(name);
+        const displayName = `core:${name}`;
+        nameSet.add(displayName);
         items.push({
-            name: name,
+            name: displayName,
             source: 'core',
-            displayName: name,
-            duplicate: projectList.includes(name),
-            path: path.resolve(paths.rootScriptDir, `${name}.ts`) // 优先 .ts
+            displayName: displayName,
+            duplicate: false, // core 脚本使用前缀，不会重名
+            path: path.resolve(paths.rootScriptDir, `${name}.ts`)
         });
     }
 
-    // 添加项目脚本
+    // 添加项目脚本（不带前缀）
     for (const name of projectList) {
         const isDup = nameSet.has(name);
         nameSet.add(name);
@@ -140,18 +141,18 @@ function buildScriptItems(): ScriptItem[] {
             source: 'project',
             displayName: name,
             duplicate: isDup,
-            path: path.resolve(paths.projectScriptDir, `${name}.ts`) // 优先 .ts
+            path: path.resolve(paths.projectScriptDir, `${name}.ts`)
         });
     }
 
-    // 添加 addon 脚本（全部使用完整路径：addonName/scriptName）
+    // 添加 addon 脚本（使用 addonName:scriptName 格式）
     for (const addon of addonScripts) {
-        const fullName = `${addon.addonName}/${addon.scriptName}`;
+        const fullName = `${addon.addonName}:${addon.scriptName}`;
         items.push({
-            name: fullName, // 使用完整名称作为唯一标识
+            name: fullName,
             source: `addon:${addon.addonName}`,
             displayName: fullName,
-            duplicate: false, // addon 脚本不参与重名检测
+            duplicate: false, // addon 脚本使用前缀，不会重名
             path: addon.scriptPath
         });
     }
@@ -189,21 +190,21 @@ function printAllScripts(): void {
     const addonScripts = items.filter((it) => it.source.startsWith('addon:'));
 
     if (coreScripts.length > 0) {
-        console.log('\n📦 Core 脚本:');
+        console.log('\n📦 Core 脚本 (使用 core:scriptName 格式):');
         for (const it of coreScripts) {
-            console.log(`  • ${it.displayName}${it.duplicate ? ' (重复)' : ''}`);
+            console.log(`  • ${it.displayName}`);
         }
     }
 
     if (projectScripts.length > 0) {
-        console.log('\n📦 Project 脚本:');
+        console.log('\n📦 Project 脚本 (直接使用脚本名):');
         for (const it of projectScripts) {
-            console.log(`  • ${it.displayName}${it.duplicate ? ' (重复)' : ''}`);
+            console.log(`  • ${it.displayName}${it.duplicate ? ' (与 core 重名，优先使用 project)' : ''}`);
         }
     }
 
     if (addonScripts.length > 0) {
-        console.log('\n📦 Addon 脚本 (必须使用完整路径):');
+        console.log('\n📦 Addon 脚本 (使用 addonName:scriptName 格式):');
         for (const it of addonScripts) {
             console.log(`  • ${it.displayName}`);
         }
@@ -212,36 +213,46 @@ function printAllScripts(): void {
 
 /**
  * 解析脚本名称到完整路径
- * @param name - 脚本名称（可带或不带 .ts 扩展名）
- *               addon 脚本必须使用完整格式：addonName/scriptName
+ * @param name - 脚本名称
+ *               - core 脚本：core:scriptName
+ *               - addon 脚本：addonName:scriptName
+ *               - project 脚本：scriptName（不带前缀）
  * @returns 脚本完整路径，未找到返回 null
  */
 async function resolveScriptPath(name: string): Promise<string | null> {
-    // 检查是否是 addon 格式：addonName/scriptName（必须使用完整路径）
-    if (name.includes('/')) {
+    // 1. 检查是否是 core 脚本格式：core:scriptName
+    if (name.startsWith('core:')) {
+        const scriptName = name.substring(5); // 移除 "core:" 前缀
+        const corePath = path.resolve(paths.rootScriptDir, `${scriptName}.ts`);
+        if (await Bun.file(corePath).exists()) {
+            return corePath;
+        }
+        return null;
+    }
+
+    // 2. 检查是否是 addon 格式：addonName:scriptName
+    if (name.includes(':')) {
         const addonScripts = scanAddonScripts();
-        const parts = name.split('/');
+        const parts = name.split(':');
         if (parts.length === 2) {
             const [addonName, scriptName] = parts;
             const found = addonScripts.find((a) => a.addonName === addonName && a.scriptName === scriptName.replace(/\.ts$/, ''));
             if (found) return found.scriptPath;
         }
-        // 如果包含 / 但不是有效的 addon 格式，返回 null
+        // 如果包含 : 但不是有效的格式，返回 null
         return null;
     }
 
-    // 只在 core 和 project 中查找（addon 必须使用完整路径）
+    // 3. 不带前缀，查找 project 脚本
     const base = name.replace(/\.ts$/, '');
+    const projectPath = path.resolve(paths.projectScriptDir, `${base}.ts`);
+    if (await Bun.file(projectPath).exists()) {
+        return projectPath;
+    }
 
-    // 检查 .ts 文件
-    const coreTsPath = path.resolve(paths.rootScriptDir, `${base}.ts`);
-    const projectTsPath = path.resolve(paths.projectScriptDir, `${base}.ts`);
-    if (await Bun.file(coreTsPath).exists()) return coreTsPath;
-    if (await Bun.file(projectTsPath).exists()) return projectTsPath;
-
-    // 回退到列表匹配（只匹配 core 和 project）
+    // 4. 回退到列表匹配（只匹配 project，不会匹配 core 和 addon）
     const items = buildScriptItems();
-    const hit = items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'core') || items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'project');
+    const hit = items.find((it) => it.name.toLowerCase() === base.toLowerCase() && it.source === 'project');
 
     return hit ? hit.path : null;
 }
