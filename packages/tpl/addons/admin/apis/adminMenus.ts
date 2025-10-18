@@ -7,6 +7,7 @@
  */
 
 import { Yes, No } from 'befly';
+
 export default {
     name: '获取用户菜单',
     handler: async (befly, ctx) => {
@@ -14,50 +15,47 @@ export default {
             // 获取当前登录用户ID
             const userId = ctx.user.id;
 
-            // 1. 查询用户的所有角色
-            const userRoles = await befly.db.getAll({
-                table: 'addon_admin_admin_role',
-                fields: ['role_id'],
-                where: { admin_id: userId }
+            // 1. 查询用户信息获取角色ID
+            const admin = await befly.db.getDetail({
+                table: 'addon_admin_admin',
+                where: { id: userId }
             });
 
-            if (!userRoles || userRoles.length === 0) {
+            if (!admin || !admin.roleId) {
                 return Yes('获取菜单成功', []);
             }
 
-            const roleIds = userRoles.map((r: any) => r.role_id);
-
-            // 2. 查询角色对应的所有菜单ID
-            const roleMenus = await befly.db.getAll({
-                table: 'addon_admin_role_menu',
-                fields: ['menu_id'],
-                where: {
-                    role_id: { $in: roleIds }
-                }
+            // 2. 查询角色信息获取菜单权限
+            const role = await befly.db.getDetail({
+                table: 'addon_admin_role',
+                where: { id: admin.roleId }
             });
 
-            if (!roleMenus || roleMenus.length === 0) {
+            if (!role || !role.menus) {
                 return Yes('获取菜单成功', []);
             }
 
-            // 去重菜单ID
-            const menuIds = [...new Set(roleMenus.map((m: any) => m.menu_id))];
+            // 3. 解析菜单ID列表（逗号分隔的字符串）
+            const menuIds = role.menus
+                .split(',')
+                .map((id: string) => parseInt(id.trim()))
+                .filter((id: number) => !isNaN(id));
 
-            // 3. 查询菜单详情（仅查询启用状态的菜单）
-            const menus = await befly.db.getAll({
+            if (menuIds.length === 0) {
+                return Yes('获取菜单成功', []);
+            }
+
+            // 4. 查询菜单详情（仅查询启用状态的菜单）
+            const menus = await befly.db.getList({
                 table: 'addon_admin_menu',
-                fields: ['id', 'name', 'path', 'icon', 'sort', 'pid', 'type', 'status'],
                 where: {
-                    id: { $in: menuIds },
+                    id$in: menuIds,
                     status: 1
                 },
-                orderBy: [
-                    { field: 'sort', direction: 'ASC' },
-                    { field: 'id', direction: 'ASC' }
-                ]
+                orderBy: ['sort#ASC', 'id#ASC']
             });
 
-            // 4. 构建树形结构
+            // 5. 构建树形结构
             const buildTree = (items: any[], pid = 0) => {
                 const tree: any[] = [];
                 for (const item of items) {
@@ -80,7 +78,7 @@ export default {
                 return tree;
             };
 
-            const menuTree = buildTree(menus);
+            const menuTree = buildTree(menus.list);
 
             return Yes('获取菜单成功', menuTree);
         } catch (error) {

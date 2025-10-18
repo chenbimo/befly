@@ -162,6 +162,6 @@ export class RequestContext {
      * 获取用户角色
      */
     getUserRole(): string | null {
-        return this.user.role || this.user.role_type || null;
+        return this.user.role || this.user.roleType || null;
     }
 }

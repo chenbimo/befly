@@ -6,9 +6,9 @@
     "username": "用户名|string|3|30|null|0|^[a-zA-Z0-9_]+$",
     "password": "密码|string|6|255|null|0|null",
     "avatar": "头像|string|0|500|null|0|null",
-    "role": "角色|string|1|20|user|1|^(admin|user|dev)$",
-    "role_type": "角色分类|string|4|5|user|1|^(admin|user)$",
+    "roleId": "角色ID|number|1|999999999999999|null|1|null",
+    "roleCode": "角色编码|string|2|50|null|0|^[a-zA-Z0-9_]+$",
     "status": "状态|number|0|1|1|1|^(0|1)$",
-    "last_login_time": "最后登录时间|number|0|null|0|0|null",
-    "last_login_ip": "最后登录IP|string|0|50|null|0|null"
+    "lastLoginTime": "最后登录时间|number|0|null|0|0|null",
+    "lastLoginIp": "最后登录IP|string|0|50|null|0|null"
 }

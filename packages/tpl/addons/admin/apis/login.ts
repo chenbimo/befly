@@ -22,7 +22,7 @@ export default {
         // 邮箱登录
         if (ctx.body.email && ctx.body.password) {
             // 查询管理员
-            admin = await befly.db.getOne({
+            admin = await befly.db.getDetail({
                 table: 'addon_admin_admin',
                 where: { email: ctx.body.email }
             });
@@ -62,7 +62,7 @@ export default {
             }
 
             // 查询管理员
-            admin = await befly.db.getOne({
+            admin = await befly.db.getDetail({
                 table: 'addon_admin_admin',
                 where: { phone: ctx.body.phone }
             });
@@ -79,6 +79,15 @@ export default {
             return No('账号已被禁用');
         }
 
+        // 查询角色信息
+        let roleInfo = null;
+        if (admin.roleId) {
+            roleInfo = await befly.db.getDetail({
+                table: 'addon_admin_role',
+                where: { id: admin.roleId }
+            });
+        }
+
         // 更新最后登录信息
         await befly.db.updData({
             table: 'addon_admin_admin',
@@ -89,12 +98,13 @@ export default {
             }
         });
 
-        // 生成 JWT Token
+        // 生成 JWT Token（包含角色信息）
         const token = await Jwt.sign(
             {
                 id: admin.id,
                 email: admin.email,
-                role: admin.role
+                roleId: admin.roleId,
+                roleCode: roleInfo?.code || null
             },
             {
                 expiresIn: '7d'
@@ -106,7 +116,10 @@ export default {
 
         const response = {
             token,
-            userInfo: userWithoutPassword
+            userInfo: {
+                ...userWithoutPassword,
+                role: roleInfo
+            }
         };
 
         return Yes('登录成功', response);

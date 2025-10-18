@@ -43,7 +43,7 @@ export function checkPermission(api: ApiRoute, ctx: RequestContext): PermissionR
     }
 
     // 角色类型验证（字符串）
-    if (isType(api.auth, 'string') && api.auth !== ctx.user?.role_type) {
+    if (isType(api.auth, 'string') && api.auth !== ctx.user?.roleType) {
         return {
             code: 1,
             msg: '没有权限',
@@ -52,7 +52,7 @@ export function checkPermission(api: ApiRoute, ctx: RequestContext): PermissionR
     }
 
     // 角色列表验证（数组）
-    if (isType(api.auth, 'array') && !api.auth.includes(ctx.user?.role)) {
+    if (isType(api.auth, 'array') && !api.auth.includes(ctx.user?.roleCode)) {
         return {
             code: 1,
             msg: '没有权限',

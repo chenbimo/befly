@@ -11,22 +11,23 @@ export default {
         name: adminRoleTable.name,
         code: adminRoleTable.code,
         description: adminRoleTable.description,
+        menus: adminRoleTable.menus,
+        apis: adminRoleTable.apis,
         sort: adminRoleTable.sort,
         status: adminRoleTable.status
     },
     handler: async (befly, ctx) => {
         try {
             // 检查角色代码是否被其他角色占用
-            const existing = await befly.db.getAll({
+            const existing = await befly.db.getList({
                 table: 'addon_admin_role',
-                fields: ['id'],
                 where: {
                     code: ctx.body.code,
-                    id: { $ne: ctx.body.id }
+                    id$ne: ctx.body.id
                 }
             });
 
-            if (existing.length > 0) {
+            if (existing.total > 0) {
                 return No('角色代码已被其他角色使用');
             }
 
@@ -37,6 +38,8 @@ export default {
                     name: ctx.body.name,
                     code: ctx.body.code,
                     description: ctx.body.description,
+                    menus: ctx.body.menus || '',
+                    apis: ctx.body.apis || '',
                     sort: ctx.body.sort,
                     status: ctx.body.status
                 }
