@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import autoRoutes from 'virtual:auto-routes';
-import { usePermissionStore } from '@/stores/permission';
 
 /**
  * 创建并导出路由实例
@@ -11,7 +10,7 @@ export const router = createRouter({
     routes: autoRoutes
 });
 
-// 路由守卫 - 权限验证
+// 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
     // 设置页面标题
     const titlePrefix = 'Befly Admin';
@@ -22,10 +21,8 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const token = localStorage.getItem('token');
-    const permissionStore = usePermissionStore();
 
     // 判断是否为公开路由：使用 layout0 的需要登录，其他 layout 为公开路由
-    // 通过匹配的路由记录判断（父路由名称包含 'layout0' 表示需要登录）
     const isProtectedRoute = to.matched.some((record) => record.name === 'layout0');
 
     // 1. 未登录且访问受保护路由 → 跳转登录
@@ -33,27 +30,7 @@ router.beforeEach(async (to, from, next) => {
         return next('/login');
     }
 
-    // 2. 已登录但未加载菜单权限 → 加载权限
-    if (token && !permissionStore.menusLoaded && isProtectedRoute) {
-        const success = await permissionStore.fetchUserMenus();
-        if (!success) {
-            // 加载权限失败，清除 token 并跳转登录
-            localStorage.removeItem('token');
-            MessagePlugin.error('获取权限失败，请重新登录');
-            return next('/login');
-        }
-    }
-
-    // 3. 已登录且已加载权限 → 检查路由权限
-    if (token && isProtectedRoute) {
-        const hasPermission = permissionStore.hasRoutePermission(to.path);
-        if (!hasPermission) {
-            MessagePlugin.warning('您没有访问该页面的权限');
-            return next('/403');
-        }
-    }
-
-    // 4. 已登录访问登录页 → 跳转首页
+    // 2. 已登录访问登录页 → 跳转首页
     if (token && to.path === '/login') {
         return next('/');
     }

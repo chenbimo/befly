@@ -19,7 +19,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.menuItems" node-key="id" style="height: 100%" only-check-children width-adapt />
+            <tiny-tree-menu :data="$Data.userMenus" :props="$Data.menuProps" node-key="id" :node-height="40" :show-filter="false" style="height: 100%" only-check-children @node-click="$Method.onMenuClick" />
         </div>
 
         <!-- 内容区域 -->
@@ -30,15 +30,17 @@
 </template>
 
 <script setup lang="ts">
-import { usePermissionStore } from '@/stores/permission';
-
 const router = useRouter();
 const route = useRoute();
-const permissionStore = usePermissionStore();
 
 // 响应式数据
 const $Data = $ref({
-    menuItems: [] as any[],
+    menuProps: {
+        label: 'name'
+    },
+    menuItems: [] as any[], // 菜单树
+    userMenus: [] as any[], // 原始菜单数据
+    menusLoaded: false, // 是否已加载菜单
     expandedKeys: [] as string[],
     currentMenuKey: '' as string
 });
@@ -48,6 +50,31 @@ const activeMenu = computed(() => route.path);
 
 // 方法
 const $Method = {
+    // 获取用户菜单权限
+    async fetchUserMenus() {
+        try {
+            if (import.meta.env.DEV) {
+                console.log('[Permission] 开始获取用户菜单...');
+                console.log('[Permission] 当前 token:', localStorage.getItem('token')?.substring(0, 20) + '...');
+            }
+            const { data } = await $Http('/addon/admin/adminMenus');
+            if (import.meta.env.DEV) {
+                console.log('[Permission] 菜单数据:', data);
+            }
+
+            // 保存原始菜单数据
+            $Data.userMenus = data;
+        } catch (error) {
+            console.error('获取用户菜单失败:', error);
+        }
+    },
+
+    // 清空菜单权限数据
+    clearMenus() {
+        $Data.userMenus = [];
+        $Data.menuItems = [];
+    },
+
     // 根据当前路径查找对应的菜单项ID和父级ID
     findMenuByPath(menus: any[], path: string, parentIds: string[] = []): { menuId: string; parentIds: string[] } | null {
         for (const menu of menus) {
@@ -76,23 +103,11 @@ const $Method = {
             $Data.expandedKeys = result.parentIds;
         }
     },
-    // 构建菜单
-    buildMenuFromPermissions() {
-        const menus = permissionStore.userMenus;
-        if (!menus || menus.length === 0) {
-            $Data.menuItems = [];
-            return;
-        }
-
-        $Data.menuItems = menus.map(convertMenuItem);
-    },
 
     // 处理菜单点击
-    handleMenuClick(data: any) {
+    onMenuClick(data: any) {
         console.log('🔥[ data ]-111', data);
-        // if (data.url) {
-        //     router.push('/#/' + data.url);
-        // }
+        router.push(data.path);
     },
 
     // 处理用户菜单点击
@@ -104,7 +119,7 @@ const $Method = {
                 break;
             case 'logout':
                 localStorage.removeItem('token');
-                permissionStore.clearPermissions();
+                $Method.clearMenus();
                 router.push('/login');
                 Modal.message({ message: '退出成功', status: 'success' });
                 break;
@@ -112,9 +127,10 @@ const $Method = {
     }
 };
 
-// 组件挂载后构建菜单
-onMounted(() => {
-    $Method.buildMenuFromPermissions();
+// 组件挂载后获取菜单权限并构建菜单
+onMounted(async () => {
+    // 如果还未加载菜单，先获取菜单数据
+    await $Method.fetchUserMenus();
 });
 </script>
 
@@ -162,6 +178,7 @@ onMounted(() => {
         position: absolute;
         top: 64px;
         left: 0;
+        padding-left: 10px;
         bottom: 0;
         width: 240px;
         background: #ffffff;
