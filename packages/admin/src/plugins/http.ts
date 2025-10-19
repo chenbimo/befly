@@ -47,7 +47,7 @@ request.interceptors.response.use(
 
         // 如果code不是0,说明业务失败
         if (res.code !== 0) {
-            MessagePlugin.error(res.msg || '请求失败');
+            Message.error(res.msg || '请求失败');
             return Promise.reject(new Error(res.msg || '请求失败'));
         }
 
@@ -60,24 +60,24 @@ request.interceptors.response.use(
         if (error.response) {
             switch (error.response.status) {
                 case 401:
-                    MessagePlugin.error('未授权,请重新登录');
+                    Message.error('未授权,请重新登录');
                     localStorage.removeItem('token');
                     window.location.href = '/login';
                     break;
                 case 403:
-                    MessagePlugin.error('拒绝访问');
+                    Message.error('拒绝访问');
                     break;
                 case 404:
-                    MessagePlugin.error('请求的资源不存在');
+                    Message.error('请求的资源不存在');
                     break;
                 case 500:
-                    MessagePlugin.error('服务器错误');
+                    Message.error('服务器错误');
                     break;
                 default:
-                    MessagePlugin.error(error.response.data?.msg || '请求失败');
+                    Message.error(error.response.data?.msg || '请求失败');
             }
         } else {
-            MessagePlugin.error('网络连接失败');
+            Message.error('网络连接失败');
         }
 
         return Promise.reject(error);
