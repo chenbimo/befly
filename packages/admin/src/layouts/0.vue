@@ -6,40 +6,15 @@
                 <h2>Befly Admin</h2>
             </div>
             <div class="header-right">
-                <t-dropdown :options="userMenuOptions" @click="$Method.handleUserMenu">
-                    <t-button variant="text">
-                        <user-icon />
-                        <span class="ml-2">管理员</span>
-                    </t-button>
-                </t-dropdown>
+                <tiny-dropdown :menu-options="userMenuOptions" @menu-item-click="$Method.handleUserMenu">
+                    <tiny-button> 管理员 </tiny-button>
+                </tiny-dropdown>
             </div>
         </div>
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" mode="horizontal" theme="light" width="240px">
-                <template v-for="item in $Data.menuItems" :key="item.value">
-                    <!-- 一级菜单项（无子菜单） -->
-                    <t-menu-item v-if="!item.children || item.children.length === 0" :value="item.value">
-                        <template #icon>
-                            <component :is="item.icon" />
-                        </template>
-                        {{ item.label }}
-                    </t-menu-item>
-                    <!-- 带子菜单的项 -->
-                    <t-submenu v-else :value="item.value" :title="item.label">
-                        <template #icon>
-                            <component :is="item.icon" />
-                        </template>
-                        <t-menu-item v-for="child in item.children" :key="child.value" :value="child.value">
-                            <template v-if="child.icon" #icon>
-                                <component :is="child.icon" />
-                            </template>
-                            {{ child.label }}
-                        </t-menu-item>
-                    </t-submenu>
-                </template>
-            </t-menu>
+            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="[]" :get-menu-data-sync="$Method.getMenuDataSync" @node-click="$Method.handleMenuClick" />
         </div>
 
         <!-- 内容区域 -->
@@ -51,7 +26,6 @@
 
 <script setup lang="ts">
 import { usePermissionStore } from '@/stores/permission';
-import { DashboardIcon, HomeIcon, UserIcon, FileIcon, SettingIcon, ViewListIcon, AppIcon } from 'tdesign-icons-vue-next';
 
 const router = useRouter();
 const route = useRoute();
@@ -65,35 +39,10 @@ const $Data = $ref({
 // 当前激活菜单
 const activeMenu = computed(() => route.path);
 
-// 图标映射
-const iconMap: Record<string, any> = {
-    dashboard: markRaw(DashboardIcon),
-    home: markRaw(HomeIcon),
-    user: markRaw(UserIcon),
-    admin: markRaw(UserIcon),
-    news: markRaw(FileIcon),
-    article: markRaw(FileIcon),
-    file: markRaw(FileIcon),
-    system: markRaw(SettingIcon),
-    setting: markRaw(SettingIcon),
-    menu: markRaw(ViewListIcon),
-    viewlist: markRaw(ViewListIcon),
-    role: markRaw(AppIcon),
-    app: markRaw(AppIcon),
-    DashboardIcon: markRaw(DashboardIcon),
-    HomeIcon: markRaw(HomeIcon),
-    UserIcon: markRaw(UserIcon),
-    FileIcon: markRaw(FileIcon),
-    SettingIcon: markRaw(SettingIcon),
-    ViewListIcon: markRaw(ViewListIcon),
-    AppIcon: markRaw(AppIcon),
-    default: markRaw(AppIcon)
-};
-
 // 用户菜单选项
 const userMenuOptions = [
-    { content: '个人中心', value: 'profile' },
-    { content: '退出登录', value: 'logout' }
+    { label: '个人中心', value: 'profile' },
+    { label: '退出登录', value: 'logout' }
 ];
 
 // 方法
@@ -106,47 +55,44 @@ const $Method = {
             return;
         }
 
-        const convertMenu = (menuItem: any): any => {
-            const item: any = {
-                value: menuItem.path || String(menuItem.id),
-                label: menuItem.name,
-                icon: menuItem.icon ? iconMap[menuItem.icon] || iconMap.default : iconMap.default
+        // 转换为 TreeMenu 需要的格式
+        const convertMenuItem = (item: any): any => {
+            const menuItem: any = {
+                id: String(item.id),
+                label: item.name,
+                url: item.path || ''
             };
 
-            if (menuItem.children && menuItem.children.length > 0) {
-                item.children = menuItem.children.map((child: any) => convertMenu(child));
+            // 递归处理子菜单
+            if (item.children && item.children.length > 0) {
+                menuItem.children = item.children.map(convertMenuItem);
             }
 
-            return item;
+            return menuItem;
         };
 
-        $Data.menuItems = menus.map(convertMenu);
+        $Data.menuItems = menus.map(convertMenuItem);
     },
-    // 处理菜单切换
-    handleMenuChange(value: string) {
-        const findMenuItem = (items: any[], val: string): any => {
-            for (const item of items) {
-                if (item.value === val) return item;
-                if (item.children) {
-                    const found = findMenuItem(item.children, val);
-                    if (found) return found;
-                }
-            }
-            return null;
-        };
 
-        const menuItem = findMenuItem($Data.menuItems, value);
-        if (menuItem && !menuItem.children) {
-            router.push({ path: value });
+    // TreeMenu 同步获取菜单数据
+    getMenuDataSync() {
+        return $Data.menuItems;
+    },
+
+    // 处理菜单点击
+    handleMenuClick(data: any) {
+        if (data.url) {
+            router.push({ path: data.url });
         }
     },
+
     // 处理用户菜单点击
     handleUserMenu(data: any) {
-        if (data.value === 'logout') {
+        if (data.itemData.value === 'logout') {
             localStorage.removeItem('token');
             permissionStore.clearPermissions();
             router.push('/login');
-            MessagePlugin.success('退出成功');
+            Modal.message({ message: '退出成功', status: 'success' });
         }
     }
 };
@@ -164,7 +110,7 @@ onMounted(() => {
     left: 0;
     height: 100vh;
     width: 100vw;
-    background: var(--td-bg-color-page);
+    background: #f5f5f5;
     overflow: hidden;
 
     .layout-header {
@@ -177,8 +123,8 @@ onMounted(() => {
         align-items: center;
         justify-content: space-between;
         padding: 0 24px;
-        background: #fff;
-        border-bottom: 1px solid var(--td-border-level-1-color);
+        background: #ffffff;
+        border-bottom: 1px solid #e0e0e0;
         z-index: 100;
 
         .logo {
@@ -186,7 +132,7 @@ onMounted(() => {
                 margin: 0;
                 font-size: 20px;
                 font-weight: 600;
-                color: var(--td-text-color-primary);
+                color: #333;
             }
         }
 
@@ -194,10 +140,6 @@ onMounted(() => {
             display: flex;
             align-items: center;
             gap: 16px;
-
-            .ml-2 {
-                margin-left: 8px;
-            }
         }
     }
 
@@ -206,17 +148,30 @@ onMounted(() => {
         top: 64px;
         left: 0;
         right: 0;
-        width: 240px;
-        bottom: 0;
-        background: #fff;
-        border-bottom: 1px solid var(--td-border-level-1-color);
+        height: 48px;
+        background: #ffffff;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 0 24px;
         z-index: 99;
+        display: flex;
+        align-items: center;
+
+        :deep(.tiny-tree-menu) {
+            width: 100%;
+            background: transparent;
+            border: none;
+
+            .tree-node-body {
+                height: 48px;
+                line-height: 48px;
+            }
+        }
     }
 
     .layout-main {
         position: absolute;
-        top: 64px;
-        left: 240px;
+        top: 112px;
+        left: 0;
         right: 0;
         bottom: 0;
         overflow: auto;

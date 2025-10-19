@@ -11,14 +11,14 @@
         "type-check": "vue-tsc --noEmit"
     },
     "dependencies": {
-        "vue": "3.5.22",
-        "vue-router": "4.5.1",
+        "@opentiny/vue": "3.26.0",
+        "axios": "1.12.2",
         "pinia": "3.0.3",
-        "tdesign-vue-next": "1.17.1",
-        "tdesign-icons-vue-next": "0.4.1",
-        "axios": "1.12.2"
+        "vue": "3.5.22",
+        "vue-router": "4.5.1"
     },
     "devDependencies": {
+        "@opentiny/unplugin-tiny-vue": "1.0.0",
         "@types/node": "24.7.2",
         "@vitejs/plugin-vue": "6.0.1",
         "@vue-macros/reactivity-transform": "3.1.1",
@@ -31,6 +31,7 @@
     },
     "engines": {
         "node": ">=22.0.0",
-        "bun": ">=1.2.22"
-    }
+        "pnpm": ">=9.0.0"
+    },
+    "packageManager": "pnpm@9.0.0"
 }

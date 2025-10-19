@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue';
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
-import { TDesignResolver } from 'unplugin-vue-components/resolvers';
+import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
 import autoRouter from './libs/autoRouter';
 
 // https://vite.dev/config/
@@ -17,20 +17,8 @@ export default defineConfig({
         autoRouter(),
         // 自动导入 Vue3 API 和组合式函数
         AutoImport({
-            imports: [
-                'vue',
-                'vue-router',
-                'pinia',
-                {
-                    'tdesign-vue-next': ['MessagePlugin', 'DialogPlugin', 'NotifyPlugin', 'LoadingPlugin']
-                }
-            ],
-            resolvers: [
-                TDesignResolver({
-                    library: 'vue-next',
-                    resolveIcons: true // 自动导入 TDesign 图标
-                })
-            ],
+            imports: ['vue', 'vue-router', 'pinia'],
+            resolvers: [TinyVueSingleResolver],
             // 自动导入 plugins 目录下的所有导出
             dirs: ['./src/plugins'],
             dts: 'src/types/auto-imports.d.ts',
@@ -38,14 +26,9 @@ export default defineConfig({
                 enabled: false
             }
         }),
-        // 自动导入 TDesign 组件
+        // 自动导入 OpenTiny 组件
         Components({
-            resolvers: [
-                TDesignResolver({
-                    library: 'vue-next',
-                    resolveIcons: true // 自动导入 TDesign 图标
-                })
-            ],
+            resolvers: [TinyVueSingleResolver],
             dts: 'src/types/components.d.ts'
         })
     ],
@@ -53,6 +36,9 @@ export default defineConfig({
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url))
         }
+    },
+    define: {
+        'process.env': { TINY_MODE: 'pc' } // OpenTiny 需要的环境变量
     },
     css: {
         preprocessorOptions: {
@@ -75,7 +61,7 @@ export default defineConfig({
             output: {
                 manualChunks: {
                     'vue-vendor': ['vue', 'vue-router', 'pinia'],
-                    'tdesign-vendor': ['tdesign-vue-next', 'tdesign-icons-vue-next']
+                    'opentiny-vendor': ['@opentiny/vue']
                 }
             }
         }

@@ -22,16 +22,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--td-bg-color-container);
+    background: #f5f5f5;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--td-gray-color-4);
+    background: #d9d9d9;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--td-gray-color-6);
+    background: #bfbfbf;
 }
 
 /* 通用工具类 */
