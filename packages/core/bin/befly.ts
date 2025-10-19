@@ -118,11 +118,9 @@ function buildScriptItems(): ScriptItem[] {
     const addonScripts = scanAddonScripts();
 
     const items: ScriptItem[] = [];
-    const nameSet = new Set<string>();
 
-    // 添加核心脚本（不带前缀）
+    // 添加核心脚本
     for (const name of coreList) {
-        nameSet.add(name);
         items.push({
             name: name,
             source: 'core',
@@ -132,44 +130,41 @@ function buildScriptItems(): ScriptItem[] {
         });
     }
 
-    // 添加项目脚本（不带前缀）
+    // 添加项目脚本
     for (const name of projectList) {
-        const isDup = nameSet.has(name);
-        nameSet.add(name);
         items.push({
             name: name,
             source: 'project',
             displayName: name,
-            duplicate: isDup,
+            duplicate: false,
             path: path.resolve(paths.projectScriptDir, `${name}.ts`)
         });
     }
 
-    // 添加 addon 脚本（不带前缀）
+    // 添加 addon 脚本
     for (const addon of addonScripts) {
-        const isDup = nameSet.has(addon.scriptName);
-        nameSet.add(addon.scriptName);
         items.push({
             name: addon.scriptName,
             source: `addon:${addon.addonName}`,
             displayName: addon.scriptName,
-            duplicate: isDup,
+            duplicate: false,
             path: addon.scriptPath
         });
     }
 
-    // 排序：名称字典序，core > project > addon
+    // 按来源分组排序：core > project > addon，同组内按名称字母序
     items.sort((a, b) => {
-        const aDisplay = a.displayName;
-        const bDisplay = b.displayName;
-        if (aDisplay === bDisplay) {
-            if (a.source === 'core') return -1;
-            if (b.source === 'core') return 1;
-            if (a.source === 'project') return -1;
-            if (b.source === 'project') return 1;
-            return 0;
+        // 按来源优先级排序
+        const sourceOrder = { core: 1, project: 2 };
+        const aOrder = sourceOrder[a.source as keyof typeof sourceOrder] || 3;
+        const bOrder = sourceOrder[b.source as keyof typeof sourceOrder] || 3;
+
+        if (aOrder !== bOrder) {
+            return aOrder - bOrder;
         }
-        return aDisplay.localeCompare(bDisplay);
+
+        // 同来源按名称字母序
+        return a.displayName.localeCompare(b.displayName);
     });
 
     return items;
@@ -295,32 +290,6 @@ async function interactiveSelect(): Promise<{ script: ScriptItem; args: string[]
 }
 
 /**
- * 解析脚本名称到完整路径
- * @param name - 脚本名称（不带前缀）
- * @returns 脚本完整路径，未找到返回 null
- *          优先级：project > addon > core
- */
-async function resolveScriptPath(name: string): Promise<string | null> {
-    const base = name.replace(/\.ts$/, '');
-    const items = buildScriptItems();
-
-    // 按优先级查找：project > addon > core
-    // 1. 优先查找项目脚本
-    let hit = items.find((it) => it.name === base && it.source === 'project');
-    if (hit) return hit.path;
-
-    // 2. 查找 addon 脚本
-    hit = items.find((it) => it.name === base && it.source.startsWith('addon:'));
-    if (hit) return hit.path;
-
-    // 3. 最后查找 core 脚本
-    hit = items.find((it) => it.name === base && it.source === 'core');
-    if (hit) return hit.path;
-
-    return null;
-}
-
-/**
  * 在指定路径运行脚本
  * @param targetPath - 脚本完整路径
  * @param label - 脚本标签（用于日志）
@@ -340,34 +309,18 @@ async function runScriptAtPath(targetPath: string, label: string, args: string[]
 }
 
 /**
- * CLI 主函数
+ * CLI 主函数（仅交互模式）
  */
 async function main(): Promise<void> {
-    const [, , cmd, ...args] = process.argv;
-
-    // 无参数：进入交互式选择模式
-    if (!cmd) {
-        const result = await interactiveSelect();
-        if (!result) {
-            process.exit(0);
-        }
-
-        const { script, args: scriptArgs } = result;
-        const argsInfo = scriptArgs.length > 0 ? ` (参数: ${scriptArgs.join(' ')})` : '';
-        console.log(`\n🚀 正在执行: ${script.displayName}${argsInfo}\n`);
-        const code = await runScriptAtPath(script.path, script.displayName, scriptArgs);
-        process.exit(code ?? 0);
+    const result = await interactiveSelect();
+    if (!result) {
+        process.exit(0);
     }
 
-    // 按名称执行（将剩余参数透传给脚本）
-    const target = await resolveScriptPath(cmd);
-    if (!target) {
-        console.error(`未找到脚本: ${cmd}`);
-        printAllScripts();
-        process.exit(1);
-    }
-
-    const code = await runScriptAtPath(target, cmd, args);
+    const { script, args: scriptArgs } = result;
+    const argsInfo = scriptArgs.length > 0 ? ` (参数: ${scriptArgs.join(' ')})` : '';
+    console.log(`\n🚀 正在执行: ${script.displayName}${argsInfo}\n`);
+    const code = await runScriptAtPath(script.path, script.displayName, scriptArgs);
     process.exit(code ?? 0);
 }
 

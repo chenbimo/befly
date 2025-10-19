@@ -2,10 +2,11 @@
 
 ## 📋 核心特性
 
-### 1. 双模式支持
+### 1. 纯交互模式
 
-- **交互模式**：无参数运行 `bunx befly`，通过数字选择脚本
-- **传统模式**：直接传脚本名，如 `bunx befly syncDb --plan`
+- 运行 `bunx befly` 进入交互模式
+- 通过数字选择要执行的脚本
+- 所有参数通过交互式问答添加
 
 ### 2. 脚本分类
 
@@ -13,26 +14,34 @@
 - **项目脚本**：来自 `tpl/scripts`（如 `syncDev`）
 - **组件脚本**：来自 `tpl/addons/*/scripts`（如 `initMenu`、`syncDev`）
 
-### 3. 重名处理
+### 3. 脚本执行规则
 
-当多个来源有同名脚本时（如 `syncDev`），优先级为：
+- 选择哪个数字，就执行对应的脚本
+- 即使有同名脚本，也会精确执行选中的那个
+- 列表按来源分组：内置脚本 → 项目脚本 → 组件脚本
+
+例如，有 3 个 `syncDev`：
 
 ```
-项目脚本 > 组件脚本 > 内置脚本
+1. syncDb (内置)
+2. syncDev (内置)
+3. syncDev (项目)
+4. initMenu (组件)
+5. syncDev (组件)
 ```
 
-例如：
+- 选择 2 → 执行内置的 syncDev
+- 选择 3 → 执行项目的 syncDev
+- 选择 5 → 执行组件的 syncDev
 
-- `bunx befly syncDev` → 执行项目的 syncDev（优先级最高）
-- 如果项目没有 syncDev，则执行组件的 syncDev
-- 如果组件也没有，最后执行内置的 syncDev
-
-## 🎯 交互模式使用
+## 🎯 使用方法
 
 ### 启动交互模式
 
 ```bash
 bunx befly
+# 或者
+bunx befly <任何参数>  # 参数会被忽略，统一进入交互模式
 ```
 
 ### 显示效果
@@ -74,36 +83,7 @@ bunx befly
 # 开始执行 syncDb --plan
 ```
 
-## 🚀 传统模式使用
-
-### 基本语法
-
-```bash
-bunx befly <scriptName> [--plan]
-```
-
-### 示例
-
-```bash
-# 同步数据库（预演模式）
-bunx befly syncDb --plan
-
-# 同步数据库（实际执行）
-bunx befly syncDb
-
-# 同步开发管理员（优先执行项目的 syncDev）
-bunx befly syncDev
-
-# 初始化菜单（组件脚本）
-bunx befly initMenu
-```
-
-### 参数说明
-
-- `--plan`：预演模式，只输出计划不执行（DRY_RUN = true）
-- 无参数：实际执行模式（DRY_RUN = false）
-
-## 📝 开发说明
+## 开发说明
 
 ### 添加新脚本
 
@@ -163,9 +143,41 @@ A: 检查以下几点：
 2. 文件是否在正确的目录下（`core/scripts`、`tpl/scripts` 或 `tpl/addons/*/scripts`）
 3. 文件名是否符合命名规范
 
-### Q: 如何强制执行特定来源的脚本？
+### Q: 如何执行特定来源的脚本？
 
-A: 通过交互模式选择数字即可，列表中会明确显示脚本分类。
+A: 使用数字选择即可精确执行：
+
+```bash
+bunx befly
+
+# 列表显示：
+# 1. syncDb (内置)
+# 2. syncDev (内置)
+# 3. syncDev (项目)
+# 4. initMenu (组件)
+# 5. syncDev (组件)
+
+# 输入 2 → 执行内置的 syncDev
+# 输入 3 → 执行项目的 syncDev
+# 输入 5 → 执行组件的 syncDev
+```
+
+### Q: 如何快速执行脚本而不每次都要交互？
+
+A: 目前仅支持交互模式，这样可以：
+
+- 避免误执行错误的脚本
+- 清晰看到所有可用脚本
+- 灵活添加 --plan 等参数
+- 执行前再次确认
+
+如果需要自动化执行，建议直接使用 `bun` 运行脚本文件：
+
+```bash
+# 直接执行脚本文件
+bun packages/core/scripts/syncDb.ts --plan
+bun packages/tpl/scripts/syncDev.ts
+```
 
 ### Q: --plan 参数有什么用？
 
@@ -180,8 +192,8 @@ A: 用于预演模式，脚本会输出将要执行的操作但不实际执行�
 - **脚本扫描**：使用 `Bun.Glob` 扫描目录
 - **脚本执行**：使用 `Bun.spawn` 执行子进程
 - **交互输入**：使用 Node.js `readline` 模块
-- **优先级处理**：在 `resolveScriptPath()` 中实现
+- **纯交互模式**：所有执行都通过数字选择，无传统命令行模式
 
 ---
 
-**最后更新**: 2025-10-18
+**最后更新**: 2025-10-19
