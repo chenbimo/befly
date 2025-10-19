@@ -33,7 +33,7 @@
         <!-- 中：数据表格 -->
         <div class="main-table">
             <tiny-grid :data="$Data.userList" :loading="$Data.loading" border auto-resize max-height="100%">
-                <tiny-grid-column field="username" title="用户名" :width="150" />
+                <tiny-grid-column field="username" title="用户名" />
                 <tiny-grid-column field="email" title="邮箱" :width="200" />
                 <tiny-grid-column field="nickname" title="昵称" :width="150" />
                 <tiny-grid-column field="state" title="状态" :width="100">
@@ -50,13 +50,26 @@
                         <span v-else>-</span>
                     </template>
                 </tiny-grid-column>
-                <tiny-grid-column title="操作" :width="200" fixed="right">
+                <tiny-grid-column title="操作" :width="120" fixed="right">
                     <template #default="{ row }">
-                        <div class="operation-buttons">
-                            <tiny-button text type="primary" @click="$Method.handleRole(row)">分配角色</tiny-button>
-                            <tiny-button text type="warning" @click="$Method.handleEdit(row)">编辑</tiny-button>
-                            <tiny-button text type="danger" @click="$Method.handleDelete(row)">删除</tiny-button>
-                        </div>
+                        <tiny-dropdown title="操作" trigger="click" border visible-arrow @item-click="(data: any) => $Method.handleOperation(data, row)">
+                            <template #dropdown>
+                                <tiny-dropdown-menu>
+                                    <tiny-dropdown-item :item-data="{ command: 'role' }">
+                                        <icon-user style="margin-right: 8px" />
+                                        分配角色
+                                    </tiny-dropdown-item>
+                                    <tiny-dropdown-item :item-data="{ command: 'edit' }">
+                                        <icon-edit style="margin-right: 8px" />
+                                        编辑
+                                    </tiny-dropdown-item>
+                                    <tiny-dropdown-item :item-data="{ command: 'delete' }" divided>
+                                        <icon-delete style="margin-right: 8px" />
+                                        删除
+                                    </tiny-dropdown-item>
+                                </tiny-dropdown-menu>
+                            </template>
+                        </tiny-dropdown>
                     </template>
                 </tiny-grid-column>
             </tiny-grid>
@@ -64,7 +77,7 @@
 
         <!-- 下：分页器 -->
         <div class="main-page">
-            <tiny-pager v-model:current-page="$Data.pagerConfig.currentPage" v-model:page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" :page-sizes="$Data.pagerConfig.pageSizes" :layout="$Data.pagerConfig.layout" @current-change="$Method.handlePageChange" @size-change="$Method.handlePageChange" />
+            <tiny-pager v-model:current-page="$Data.pagerConfig.currentPage" v-model:page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" :layout="$Data.pagerConfig.layout" @current-change="$Method.handlePageChange" @size-change="$Method.handlePageChange" />
         </div>
 
         <!-- 角色分配对话框 -->
@@ -83,7 +96,6 @@
 
 <script setup lang="ts">
 import { Modal } from '@opentiny/vue';
-import { iconSearch, iconRefresh, iconPlus } from '@opentiny/vue-icon';
 
 // 响应式数据
 const $Data = $ref({
@@ -105,13 +117,28 @@ const $Data = $ref({
         currentPage: 1,
         pageSize: 10,
         total: 0,
-        pageSizes: [10, 20, 50, 100],
-        layout: 'total, prev, pager, next, sizes, jumper'
+        layout: 'total, prev, pager, next, jumper'
     }
 });
 
 // 方法集合
 const $Method = {
+    // 处理操作下拉菜单
+    handleOperation(data: any, row: any) {
+        const { command } = data;
+        switch (command) {
+            case 'role':
+                $Method.handleRole(row);
+                break;
+            case 'edit':
+                $Method.handleEdit(row);
+                break;
+            case 'delete':
+                $Method.handleDelete(row);
+                break;
+        }
+    },
+
     // 处理分页改变事件
     handlePageChange() {
         $Method.loadUserList();
@@ -267,10 +294,5 @@ $Method.loadUserList();
             color: var(--ti-common-color-text-secondary);
         }
     }
-}
-
-.operation-buttons {
-    display: flex;
-    gap: 8px;
 }
 </style>
