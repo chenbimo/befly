@@ -1,25 +1,61 @@
 <template>
     <div class="user-manage">
-        <t-card title="管理员管理" :bordered="false">
-            <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" :pagination="$Data.pagination" @page-change="$Method.onPageChange">
-                <template #state="{ row }">
-                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
-                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
-                    <t-tag v-else theme="danger">已删除</t-tag>
-                </template>
+        <!-- 上：过滤和操作栏 -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <t-button theme="primary" @click="$Method.handleAdd">
+                    <template #icon>
+                        <add-icon />
+                    </template>
+                    添加管理员
+                </t-button>
+            </div>
+            <div class="toolbar-right">
+                <t-space>
+                    <t-input v-model="$Data.searchKeyword" placeholder="搜索用户名/邮箱" clearable style="width: 200px" @enter="$Method.handleSearch" />
+                    <t-select v-model="$Data.searchState" placeholder="状态" clearable style="width: 120px" :options="$Data.stateOptions" @change="$Method.handleSearch" />
+                    <t-button theme="default" @click="$Method.handleSearch">
+                        <template #icon>
+                            <search-icon />
+                        </template>
+                        搜索
+                    </t-button>
+                    <t-button theme="default" @click="$Method.handleReset">
+                        <template #icon>
+                            <refresh-icon />
+                        </template>
+                        重置
+                    </t-button>
+                </t-space>
+            </div>
+        </div>
 
-                <template #lastLoginTime="{ row }">
-                    <span v-if="row.lastLoginTime">{{ new Date(Number(row.lastLoginTime)).toLocaleString() }}</span>
-                    <span v-else>-</span>
-                </template>
+        <!-- 中：数据表格 -->
+        <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered stripe hover>
+            <template #state="{ row }">
+                <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
+                <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
+                <t-tag v-else theme="danger">已删除</t-tag>
+            </template>
 
-                <template #operation="{ row }">
-                    <t-space>
-                        <t-link theme="primary" @click="$Method.handleRole(row)">分配角色</t-link>
-                    </t-space>
-                </template>
-            </t-table>
-        </t-card>
+            <template #lastLoginTime="{ row }">
+                <span v-if="row.lastLoginTime">{{ new Date(Number(row.lastLoginTime)).toLocaleString() }}</span>
+                <span v-else>-</span>
+            </template>
+
+            <template #operation="{ row }">
+                <t-space>
+                    <t-link theme="primary" @click="$Method.handleRole(row)">分配角色</t-link>
+                    <t-link theme="warning" @click="$Method.handleEdit(row)">编辑</t-link>
+                    <t-link theme="danger" @click="$Method.handleDelete(row)">删除</t-link>
+                </t-space>
+            </template>
+        </t-table>
+
+        <!-- 下：分页栏 -->
+        <div class="pagination-wrapper">
+            <t-pagination v-model="$Data.pagination.current" v-model:page-size="$Data.pagination.pageSize" :total="$Data.pagination.total" :page-size-options="[10, 20, 50, 100]" show-jumper show-page-size @change="$Method.onPageChange" />
+        </div>
 
         <!-- 角色分配对话框 -->
         <t-dialog v-model:visible="$Data.roleVisible" header="分配角色" width="600px" :on-confirm="$Method.handleRoleSubmit">
@@ -45,6 +81,13 @@ const $Data = $ref({
         pageSize: 10,
         total: 0
     },
+    searchKeyword: '',
+    searchState: undefined as number | undefined,
+    stateOptions: [
+        { label: '正常', value: 1 },
+        { label: '禁用', value: 2 },
+        { label: '已删除', value: 0 }
+    ],
     roleVisible: false,
     currentUser: {} as any,
     columns: [
@@ -54,7 +97,7 @@ const $Data = $ref({
         { colKey: 'state', title: '状态', width: 100 },
         { colKey: 'roleCode', title: '角色', width: 120 },
         { colKey: 'lastLoginTime', title: '最后登录', width: 180 },
-        { colKey: 'operation', title: '操作', width: 150, fixed: 'right' }
+        { colKey: 'operation', title: '操作', width: 200, fixed: 'right' }
     ],
     roleOptions: [] as any[],
     checkedRoleCode: '' as string
@@ -88,6 +131,48 @@ const $Method = {
         $Data.pagination.current = pageInfo.current;
         $Data.pagination.pageSize = pageInfo.pageSize;
         $Method.loadUserList();
+    },
+
+    // 搜索
+    handleSearch() {
+        $Data.pagination.current = 1;
+        $Method.loadUserList();
+    },
+
+    // 重置
+    handleReset() {
+        $Data.searchKeyword = '';
+        $Data.searchState = undefined;
+        $Data.pagination.current = 1;
+        $Method.loadUserList();
+    },
+
+    // 添加管理员
+    handleAdd() {
+        MessagePlugin.info('添加管理员功能待开发');
+    },
+
+    // 编辑管理员
+    handleEdit(row: any) {
+        MessagePlugin.info(`编辑管理员：${row.username}`);
+    },
+
+    // 删除管理员
+    handleDelete(row: any) {
+        DialogPlugin.confirm({
+            header: '确认删除',
+            body: `确定要删除管理员 "${row.username}" 吗？`,
+            onConfirm: async () => {
+                try {
+                    // TODO: 调用删除接口
+                    MessagePlugin.success('删除成功');
+                    await $Method.loadUserList();
+                } catch (error) {
+                    MessagePlugin.error('删除失败');
+                    console.error(error);
+                }
+            }
+        });
     },
 
     // 加载角色列表
@@ -166,7 +251,41 @@ $Method.loadUserList();
 
 <style scoped lang="scss">
 .user-manage {
-    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+// 上：工具栏
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--td-bg-color-container);
+    border-radius: var(--td-radius-default);
+    box-shadow: var(--td-shadow-1);
+
+    .toolbar-left {
+        display: flex;
+        gap: 12px;
+    }
+
+    .toolbar-right {
+        display: flex;
+        gap: 12px;
+    }
+}
+
+// 下：分页栏
+.pagination-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px;
+    background: var(--td-bg-color-container);
+    border-radius: var(--td-radius-default);
+    box-shadow: var(--td-shadow-1);
 }
 
 .role-dialog {
