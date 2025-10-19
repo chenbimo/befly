@@ -53,7 +53,7 @@ const $Method = {
     async loadUserList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/list', {});
+            const res = await $Http('/addon/admin/adminList', {});
             if (res.code === 0 && res.data) {
                 $Data.userList = res.data;
             }
