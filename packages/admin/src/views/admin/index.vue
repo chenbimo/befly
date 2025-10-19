@@ -163,7 +163,9 @@ const $Method = {
     handleDelete(row: any) {
         DialogPlugin.confirm({
             header: '确认删除',
+            attach: 'body',
             body: `确定要删除管理员 "${row.username}" 吗？`,
+            placement: 'center',
             onConfirm: async () => {
                 try {
                     // TODO: 调用删除接口
