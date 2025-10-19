@@ -1,7 +1,7 @@
 # 缺失接口补充报告
 
-**日期**：2025-10-19  
-**问题**：接口 `/api/addon/admin/list` 提示不存在  
+**日期**：2025-10-19
+**问题**：接口 `/api/addon/admin/list` 提示不存在
 **状态**：✅ 已修复
 
 ## 📋 问题分析
@@ -36,7 +36,7 @@
 
 ### 1. adminList.ts
 
-**路由**：`POST/api/addon/admin/adminList`  
+**路由**：`POST/api/addon/admin/adminList`
 **功能**：获取管理员列表
 
 **代码**：
@@ -58,7 +58,7 @@ export default {
 
 ### 2. adminRoleGet.ts
 
-**路由**：`POST/api/addon/admin/adminRoleGet`  
+**路由**：`POST/api/addon/admin/adminRoleGet`
 **功能**：获取管理员的角色
 
 **参数**：
@@ -86,7 +86,7 @@ export default {
 
 ### 3. adminRoleSave.ts
 
-**路由**：`POST/api/addon/admin/adminRoleSave`  
+**路由**：`POST/api/addon/admin/adminRoleSave`
 **功能**：保存管理员的角色
 
 **参数**：
@@ -102,7 +102,7 @@ export default {
 
 ### 4. roleMenuGet.ts
 
-**路由**：`POST/api/addon/admin/roleMenuGet`  
+**路由**：`POST/api/addon/admin/roleMenuGet`
 **功能**：获取角色的菜单权限
 
 **参数**：
@@ -121,7 +121,7 @@ export default {
 
 ### 5. roleMenuSave.ts
 
-**路由**：`POST/api/addon/admin/roleMenuSave`  
+**路由**：`POST/api/addon/admin/roleMenuSave`
 **功能**：保存角色的菜单权限
 
 **参数**：
@@ -163,8 +163,8 @@ export default {
 | roleMenuSave.ts  | POST/api/addon/admin/roleMenuSave  | 保存角色菜单权限 | ✅ **新建** |
 | sendSmsCode.ts   | POST/api/addon/admin/sendSmsCode   | 发送短信验证码   | ✅ 已存在   |
 
-**总计**：21 个接口  
-**原有**：16 个  
+**总计**：21 个接口
+**原有**：16 个
 **新建**：5 个
 
 ## 🔍 接口命名规范说明
@@ -357,6 +357,6 @@ curl -X POST http://localhost:3000/api/addon/admin/roleMenuSave \
 
 ---
 
-**创建人**：AI Assistant  
-**完成时间**：2025-10-19  
+**创建人**：AI Assistant
+**完成时间**：2025-10-19
 **状态**：✅ **问题已解决**
