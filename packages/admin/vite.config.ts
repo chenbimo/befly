@@ -24,7 +24,8 @@ export default defineConfig({
                 'pinia',
                 // OpenTiny 图标自动导入（全部 533 个图标，配置见 libs/icons.ts）
                 {
-                    '@opentiny/vue-icon': tinyIcons as any
+                    '@opentiny/vue-icon': tinyIcons as any,
+                    '@opentiny/vue': ['Modal', 'Notify', 'Loading', 'Message']
                 }
             ],
             resolvers: [TinyVueSingleResolver],

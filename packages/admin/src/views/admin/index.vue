@@ -95,8 +95,6 @@
 </template>
 
 <script setup lang="ts">
-import { Modal } from '@opentiny/vue';
-
 // 响应式数据
 const $Data = $ref({
     loading: false,
