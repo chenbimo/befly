@@ -490,9 +490,9 @@ export class Loader {
 
                     Logger.debug(`[${dirDisplayName}] API 属性验证通过: ${apiPath}`);
 
-                    // 构建路由：addon 接口添加前缀 /api/{addonName}/{apiPath}
+                    // 构建路由：addon 接口添加前缀 /api/addon/{addonName}/{apiPath}，项目接口为 /api/{apiPath}
                     if (isAddon) {
-                        api.route = `${api.method.toUpperCase()}/api/${addonName}/${apiPath}`;
+                        api.route = `${api.method.toUpperCase()}/api/addon/${addonName}/${apiPath}`;
                     } else {
                         api.route = `${api.method.toUpperCase()}/api/${apiPath}`;
                     }

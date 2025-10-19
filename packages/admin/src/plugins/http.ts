@@ -94,10 +94,10 @@ request.interceptors.response.use(
  *
  * @example
  * // POST 请求（默认）
- * await $Http('/api/admin/login', { email, password });
+ * await $Http('/addon/admin/login', { email, password });
  *
  * // GET 请求
- * await $Http('/api/admin/info', {}, 'get');
+ * await $Http('/addon/admin/info', {}, 'get');
  */
 export function $Http<T = any>(url: string, data: any = {}, method: 'get' | 'post' = 'post', config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const methodLower = method.toLowerCase() as 'get' | 'post';

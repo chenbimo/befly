@@ -250,7 +250,7 @@ const $Method = {
         }
 
         try {
-            await $Http('/admin/sendSmsCode', { phone: $Data.loginForm.phone.phone });
+            await $Http('/addon/admin/sendSmsCode', { phone: $Data.loginForm.phone.phone });
 
             MessagePlugin.success('验证码已发送');
             $Data.codeCountdown = 60;
@@ -284,7 +284,7 @@ const $Method = {
         $Data.loginLoading = true;
 
         try {
-            const res = await $Http('/admin/login', formData);
+            const res = await $Http('/addon/admin/login', formData);
 
             // 先保存 token
             localStorage.setItem('token', res.data.token);
@@ -313,7 +313,7 @@ const $Method = {
         $Data.registerLoading = true;
 
         try {
-            await $Http('/admin/register', $Data.registerForm);
+            await $Http('/addon/admin/register', $Data.registerForm);
             MessagePlugin.success('注册成功，请登录');
             $Data.isSignUp = false;
 

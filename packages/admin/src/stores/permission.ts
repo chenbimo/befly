@@ -24,7 +24,7 @@ export const usePermissionStore = defineStore('permission', () => {
                 console.log('[Permission] 开始获取用户菜单...');
                 console.log('[Permission] 当前 token:', localStorage.getItem('token')?.substring(0, 20) + '...');
             }
-            const { data } = await $Http('/admin/adminMenus');
+            const { data } = await $Http('/addon/admin/adminMenus');
             if (import.meta.env.DEV) {
                 console.log('[Permission] 菜单数据:', data);
             }

@@ -53,7 +53,7 @@ const $Method = {
     async loadUserList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/admin/list', {});
+            const res = await $Http('/addon/admin/list', {});
             if (res.code === 0 && res.data) {
                 $Data.userList = res.data;
             }
@@ -68,7 +68,7 @@ const $Method = {
     // 加载角色列表
     async loadRoleList() {
         try {
-            const res = await $Http('/admin/roleList', {});
+            const res = await $Http('/addon/admin/roleList', {});
             if (res.code === 0 && res.data) {
                 $Data.roleOptions = res.data
                     .filter((role: any) => role.status === 1)
@@ -93,7 +93,7 @@ const $Method = {
 
         // 加载该用户已有的角色
         try {
-            const res = await $Http('/admin/adminRoleGet', { adminId: row.id });
+            const res = await $Http('/addon/admin/adminRoleGet', { adminId: row.id });
             if (res.code === 0 && res.data) {
                 $Data.checkedRoleIds = res.data;
             }
@@ -106,7 +106,7 @@ const $Method = {
     // 提交角色分配
     async handleRoleSubmit() {
         try {
-            const res = await $Http('/admin/adminRoleSave', {
+            const res = await $Http('/addon/admin/adminRoleSave', {
                 adminId: $Data.currentUser.id,
                 roleIds: JSON.stringify($Data.checkedRoleIds)
             });

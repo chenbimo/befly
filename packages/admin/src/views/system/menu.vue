@@ -155,7 +155,7 @@ const $Method = {
     async loadMenuList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/admin/menuList', {});
+            const res = await $Http('/addon/admin/menuList', {});
             if (res.code === 0 && res.data) {
                 // 构建树形结构
                 $Data.menuList = $Method.buildMenuTree(res.data);
@@ -214,7 +214,7 @@ const $Method = {
         if (!valid) return false;
 
         try {
-            const apiUrl = $Data.isEdit ? '/admin/menuUpdate' : '/admin/menuCreate';
+            const apiUrl = $Data.isEdit ? '/addon/admin/menuUpdate' : '/addon/admin/menuCreate';
             const res = await $Http(apiUrl, $Data.formData);
 
             if (res.code === 0) {
@@ -236,7 +236,7 @@ const $Method = {
     // 删除菜单
     async handleDelete(id: number) {
         try {
-            const res = await $Http('/admin/menuDelete', { id });
+            const res = await $Http('/addon/admin/menuDelete', { id });
             if (res.code === 0) {
                 MessagePlugin.success('删除成功');
                 await $Method.loadMenuList();

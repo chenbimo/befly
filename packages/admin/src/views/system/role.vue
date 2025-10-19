@@ -117,7 +117,7 @@ const $Method = {
     async loadRoleList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/admin/roleList', {});
+            const res = await $Http('/addon/admin/roleList', {});
             if (res.code === 0 && res.data) {
                 $Data.roleList = res.data;
             }
@@ -133,7 +133,7 @@ const $Method = {
     async loadMenuTree() {
         $Data.menuLoading = true;
         try {
-            const res = await $Http('/admin/menuList', {});
+            const res = await $Http('/addon/admin/menuList', {});
             if (res.code === 0 && res.data) {
                 $Data.menuTreeData = $Method.buildMenuTree(res.data);
             }
@@ -189,7 +189,7 @@ const $Method = {
         if (!valid) return false;
 
         try {
-            const apiUrl = $Data.isEdit ? '/admin/roleUpdate' : '/admin/roleCreate';
+            const apiUrl = $Data.isEdit ? '/addon/admin/roleUpdate' : '/addon/admin/roleCreate';
             const res = await $Http(apiUrl, $Data.formData);
 
             if (res.code === 0) {
@@ -211,7 +211,7 @@ const $Method = {
     // 删除角色
     async handleDelete(id: number) {
         try {
-            const res = await $Http('/admin/roleDelete', { id });
+            const res = await $Http('/addon/admin/roleDelete', { id });
             if (res.code === 0) {
                 MessagePlugin.success('删除成功');
                 await $Method.loadRoleList();
@@ -234,7 +234,7 @@ const $Method = {
 
         // 加载该角色已有的权限
         try {
-            const res = await $Http('/admin/roleMenuGet', { roleId: row.id });
+            const res = await $Http('/addon/admin/roleMenuGet', { roleId: row.id });
             if (res.code === 0 && res.data) {
                 $Data.checkedMenuIds = res.data;
             }
@@ -247,7 +247,7 @@ const $Method = {
     // 提交权限分配
     async handlePermissionSubmit() {
         try {
-            const res = await $Http('/admin/roleMenuSave', {
+            const res = await $Http('/addon/admin/roleMenuSave', {
                 roleId: $Data.currentRole.id,
                 menuIds: JSON.stringify($Data.checkedMenuIds)
             });

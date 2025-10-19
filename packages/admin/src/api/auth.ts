@@ -28,33 +28,33 @@ export interface LoginResponse {
  * 用户登录
  */
 export const loginApi = (data: LoginForm) => {
-    return $Http<LoginResponse>('/admin/login', data);
+    return $Http<LoginResponse>('/addon/admin/login', data);
 };
 
 /**
  * 用户注册
  */
 export const registerApi = (data: RegisterForm) => {
-    return $Http('/admin/register', data);
+    return $Http('/addon/admin/register', data);
 };
 
 /**
  * 发送短信验证码
  */
 export const sendSmsCodeApi = (phone: string) => {
-    return $Http('/admin/sendSmsCode', { phone });
+    return $Http('/addon/admin/sendSmsCode', { phone });
 };
 
 /**
  * 获取用户信息
  */
 export function getUserInfo() {
-    return $Http('/admin/adminInfo');
+    return $Http('/addon/admin/adminInfo');
 }
 
 /**
  * 退出登录
  */
 export const logoutApi = () => {
-    return $Http('/admin/logout');
+    return $Http('/addon/admin/logout');
 };
