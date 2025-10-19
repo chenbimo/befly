@@ -30,9 +30,9 @@
             </div>
         </div>
 
-        <!-- 中：数据表格 -->
+        <!-- 下：数据表格（包含内置分页） -->
         <div class="table-wrapper">
-            <tiny-grid :data="$Data.userList" :loading="$Data.loading" border auto-resize max-height="100%">
+            <tiny-grid :data="$Data.userList" :loading="$Data.loading" :pager-config="$Data.pagerConfig" border auto-resize max-height="100%" @page-change="$Method.handlePageChange">
                 <tiny-grid-column field="username" title="用户名" :width="150" />
                 <tiny-grid-column field="email" title="邮箱" :width="200" />
                 <tiny-grid-column field="nickname" title="昵称" :width="150" />
@@ -62,11 +62,6 @@
             </tiny-grid>
         </div>
 
-        <!-- 下：分页栏 -->
-        <div class="pagination-wrapper">
-            <tiny-pager :current-page="$Data.pagination.current" :page-size="$Data.pagination.pageSize" :total="$Data.pagination.total" :page-sizes="[10, 20, 50, 100]" layout="total, prev, pager, next, sizes, jumper" @current-change="$Method.onPageChange" @size-change="$Method.onPageSizeChange" />
-        </div>
-
         <!-- 角色分配对话框 -->
         <tiny-dialog-box v-model:visible="$Data.roleVisible" title="分配角色" width="600px" :append-to-body="true" @confirm="$Method.handleRoleSubmit">
             <div class="role-dialog">
@@ -89,11 +84,6 @@ import { iconSearch, iconRefresh, iconPlus } from '@opentiny/vue-icon';
 const $Data = $ref({
     loading: false,
     userList: [] as any[],
-    pagination: {
-        current: 1,
-        pageSize: 10,
-        total: 0
-    },
     searchKeyword: '',
     searchState: undefined as number | undefined,
     stateOptions: [
@@ -104,23 +94,38 @@ const $Data = $ref({
     roleVisible: false,
     currentUser: {} as any,
     roleOptions: [] as any[],
-    checkedRoleCode: '' as string
+    checkedRoleCode: '' as string,
+    // Grid 内置分页配置
+    pagerConfig: {
+        currentPage: 1,
+        pageSize: 10,
+        total: 0,
+        pageSizes: [10, 20, 50, 100],
+        layout: 'total, prev, pager, next, sizes, jumper'
+    }
 });
 
 // 方法集合
 const $Method = {
+    // 处理分页改变事件
+    handlePageChange({ currentPage, pageSize }: { currentPage: number; pageSize: number }) {
+        $Data.pagerConfig.currentPage = currentPage;
+        $Data.pagerConfig.pageSize = pageSize;
+        $Method.loadUserList();
+    },
+
     // 加载用户列表
     async loadUserList() {
         $Data.loading = true;
         try {
             const res = await $Http('/addon/admin/adminList', {
-                page: $Data.pagination.current,
-                limit: $Data.pagination.pageSize
+                page: $Data.pagerConfig.currentPage,
+                limit: $Data.pagerConfig.pageSize
             });
             if (res.code === 0 && res.data) {
                 // getList 返回分页对象 { list, total, page, limit, pages }
                 $Data.userList = res.data.list || [];
-                $Data.pagination.total = res.data.total || 0;
+                $Data.pagerConfig.total = res.data.total || 0;
             }
         } catch (error) {
             Modal.message({ message: '加载用户列表失败', status: 'error' });
@@ -130,22 +135,9 @@ const $Method = {
         }
     },
 
-    // 分页变化
-    onPageChange(current: number) {
-        $Data.pagination.current = current;
-        $Method.loadUserList();
-    },
-
-    // 每页数量变化
-    onPageSizeChange(pageSize: number) {
-        $Data.pagination.pageSize = pageSize;
-        $Data.pagination.current = 1;
-        $Method.loadUserList();
-    },
-
     // 搜索
     handleSearch() {
-        $Data.pagination.current = 1;
+        $Data.pagerConfig.currentPage = 1;
         $Method.loadUserList();
     },
 
@@ -153,7 +145,7 @@ const $Method = {
     handleReset() {
         $Data.searchKeyword = '';
         $Data.searchState = undefined;
-        $Data.pagination.current = 1;
+        $Data.pagerConfig.currentPage = 1;
         $Method.loadUserList();
     },
 
@@ -265,14 +257,14 @@ $Method.loadUserList();
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
     padding: 16px;
-    overflow: hidden; // 防止外层滚动
+    overflow: hidden;
 }
 
 // 上：工具栏
 .toolbar {
-    flex-shrink: 0; // 不允许收缩
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -298,23 +290,12 @@ $Method.loadUserList();
     }
 }
 
-// 中：表格区域（撑满剩余空间并支持滚动）
+// 下：表格区域（包含内置分页）
 .table-wrapper {
-    flex: 1; // 占据剩余空间
-    overflow: hidden; // 隐藏超出部分
+    flex: 1;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-// 下：分页栏
-.pagination-wrapper {
-    flex-shrink: 0; // 不允许收缩
-    display: flex;
-    justify-content: flex-end;
-    padding: 16px;
     background: #fff;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
