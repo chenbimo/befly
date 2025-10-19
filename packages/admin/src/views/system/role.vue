@@ -1,151 +1,308 @@
 <template>
-    <div class="role-manage">
-        <t-card title="角色管理" :bordered="false">
-            <template #actions>
-                <t-button theme="primary" @click="$Method.handleAdd()">
-                    <template #icon><add-icon /></template>
+    <div class="page-data">
+        <!-- 上：过滤和操作栏 -->
+        <div class="main-toolbar">
+            <div class="toolbar-left">
+                <tiny-button type="primary" @click="$Method.handleAdd">
+                    <template #icon>
+                        <Icon name="Plus" :size="16" />
+                    </template>
                     添加角色
-                </t-button>
-            </template>
+                </tiny-button>
+            </div>
+            <div class="toolbar-right">
+                <tiny-input v-model="$Data.searchKeyword" placeholder="搜索角色名称/代码" clearable @keyup.enter="$Method.handleSearch" style="width: 200px" />
+                <tiny-button circle @click="$Method.handleSearch" title="搜索">
+                    <Icon name="Search" :size="16" />
+                </tiny-button>
+                <tiny-button circle @click="$Method.handleReset" title="重置">
+                    <Icon name="RotateCw" :size="16" />
+                </tiny-button>
+            </div>
+        </div>
 
-            <t-table :data="$Data.roleList" :columns="$Data.columns" row-key="id" :loading="$Data.loading">
-                <template #status="{ row }">
-                    <t-tag v-if="row.status === 1" theme="success">启用</t-tag>
-                    <t-tag v-else theme="danger">禁用</t-tag>
-                </template>
+        <!-- 中：数据表格 -->
+        <div class="main-table">
+            <tiny-grid :data="$Data.roleList" :loading="$Data.loading" border auto-resize max-height="100%">
+                <tiny-grid-column field="name" title="角色名称" :width="150" />
+                <tiny-grid-column field="code" title="角色代码" :width="150" />
+                <tiny-grid-column field="description" title="角色描述" />
+                <tiny-grid-column field="sort" title="排序" :width="100" />
+                <tiny-grid-column field="state" title="状态" :width="100">
+                    <template #default="{ row }">
+                        <tiny-tag v-if="row.state === 1" type="success">正常</tiny-tag>
+                        <tiny-tag v-else-if="row.state === 2" type="warning">禁用</tiny-tag>
+                        <tiny-tag v-else type="danger">已删除</tiny-tag>
+                    </template>
+                </tiny-grid-column>
+                <tiny-grid-column title="操作" :width="140" fixed="right">
+                    <template #default="{ row }">
+                        <tiny-dropdown title="操作" trigger="click" border visible-arrow @item-click="(data: any) => $Method.handleOperation(data, row)">
+                            <template #dropdown>
+                                <tiny-dropdown-menu>
+                                    <tiny-dropdown-item :item-data="{ command: 'menu' }">
+                                        <Icon name="List" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                                        菜单权限
+                                    </tiny-dropdown-item>
+                                    <tiny-dropdown-item :item-data="{ command: 'edit' }">
+                                        <Icon name="Edit" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                                        编辑
+                                    </tiny-dropdown-item>
+                                    <tiny-dropdown-item :item-data="{ command: 'delete' }" divided>
+                                        <Icon name="Trash2" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                                        删除
+                                    </tiny-dropdown-item>
+                                </tiny-dropdown-menu>
+                            </template>
+                        </tiny-dropdown>
+                    </template>
+                </tiny-grid-column>
+            </tiny-grid>
+        </div>
 
-                <template #operation="{ row }">
-                    <t-space>
-                        <t-link theme="primary" @click="$Method.handleEdit(row)">编辑</t-link>
-                        <t-link theme="primary" @click="$Method.handlePermission(row)">权限</t-link>
-                        <t-popconfirm content="确认删除该角色吗？" @confirm="$Method.handleDelete(row.id)">
-                            <t-link theme="danger">删除</t-link>
-                        </t-popconfirm>
-                    </t-space>
-                </template>
-            </t-table>
-        </t-card>
+        <!-- 下：分页器 -->
+        <div class="main-page">
+            <tiny-pager v-model:current-page="$Data.pagerConfig.currentPage" v-model:page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" :layout="$Data.pagerConfig.layout" @current-change="$Method.handlePageChange" @size-change="$Method.handlePageChange" />
+        </div>
 
         <!-- 添加/编辑对话框 -->
-        <t-dialog v-model:visible="$Data.dialogVisible" :header="$Data.isEdit ? '编辑角色' : '添加角色'" width="600px" :on-confirm="$Method.handleSubmit">
-            <t-form :ref="(el: any) => ($Form.roleForm = el)" :data="$Data.formData" :rules="$Data.formRules" label-width="80px">
-                <t-form-item label="角色名称" name="name">
-                    <t-input v-model="$Data.formData.name" placeholder="请输入角色名称" />
-                </t-form-item>
+        <tiny-dialog-box v-model:visible="$Data.editVisible" :title="$Data.isEdit ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
+            <tiny-form :model="$Data.editForm" label-width="80px" :rules="$Data.editRules" :ref="(el: any) => ($Data.editFormRef = el)">
+                <tiny-form-item label="角色名称" prop="name">
+                    <tiny-input v-model="$Data.editForm.name" placeholder="请输入角色名称" />
+                </tiny-form-item>
+                <tiny-form-item label="角色代码" prop="code">
+                    <tiny-input v-model="$Data.editForm.code" placeholder="请输入角色代码，如：admin" :disabled="$Data.isEdit" />
+                </tiny-form-item>
+                <tiny-form-item label="角色描述" prop="description">
+                    <tiny-input v-model="$Data.editForm.description" type="textarea" placeholder="请输入角色描述" :rows="3" />
+                </tiny-form-item>
+                <tiny-form-item label="排序" prop="sort">
+                    <tiny-numeric v-model="$Data.editForm.sort" :min="0" :max="9999" />
+                </tiny-form-item>
+                <tiny-form-item label="状态" prop="state" v-if="$Data.isEdit">
+                    <tiny-radio-group v-model="$Data.editForm.state">
+                        <tiny-radio :label="1">正常</tiny-radio>
+                        <tiny-radio :label="2">禁用</tiny-radio>
+                    </tiny-radio-group>
+                </tiny-form-item>
+            </tiny-form>
+            <template #footer>
+                <tiny-button @click="$Data.editVisible = false">取消</tiny-button>
+                <tiny-button type="primary" @click="$Method.handleEditSubmit">确定</tiny-button>
+            </template>
+        </tiny-dialog-box>
 
-                <t-form-item label="角色代码" name="code">
-                    <t-input v-model="$Data.formData.code" placeholder="请输入角色代码，如：admin" />
-                </t-form-item>
-
-                <t-form-item label="角色描述" name="description">
-                    <t-textarea v-model="$Data.formData.description" placeholder="请输入角色描述" :autosize="{ minRows: 3, maxRows: 5 }" />
-                </t-form-item>
-
-                <t-form-item label="排序" name="sort">
-                    <t-input-number v-model="$Data.formData.sort" :min="0" />
-                </t-form-item>
-
-                <t-form-item label="状态" name="status">
-                    <t-radio-group v-model="$Data.formData.status">
-                        <t-radio :value="1">启用</t-radio>
-                        <t-radio :value="0">禁用</t-radio>
-                    </t-radio-group>
-                </t-form-item>
-            </t-form>
-        </t-dialog>
-
-        <!-- 权限分配对话框 -->
-        <t-dialog v-model:visible="$Data.permissionVisible" header="分配菜单权限" width="600px" :on-confirm="$Method.handlePermissionSubmit">
-            <div class="permission-dialog">
+        <!-- 菜单权限对话框 -->
+        <tiny-dialog-box v-model:visible="$Data.menuVisible" title="分配菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
+            <div class="menu-dialog">
                 <div class="role-info">
-                    <t-tag theme="primary">{{ $Data.currentRole.name }}</t-tag>
+                    <tiny-tag type="info">{{ $Data.currentRole.name }}</tiny-tag>
                     <span class="role-code">{{ $Data.currentRole.code }}</span>
                 </div>
-                <t-divider />
-                <t-tree :ref="(el: any) => ($Form.menuTree = el)" :data="$Data.menuTreeData" :keys="{ value: 'id', label: 'name', children: 'children' }" checkable expand-all v-model:checked="$Data.checkedMenuIds" :loading="$Data.menuLoading" />
+                <tiny-divider />
+                <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name', children: 'children' }" :ref="(el: any) => ($Data.menuTreeRef = el)" />
             </div>
-        </t-dialog>
+            <template #footer>
+                <tiny-button @click="$Data.menuVisible = false">取消</tiny-button>
+                <tiny-button type="primary" @click="$Method.handleMenuSubmit">确定</tiny-button>
+            </template>
+        </tiny-dialog-box>
     </div>
 </template>
 
 <script setup lang="ts">
-// 响应式表单引用
-const $Form = $ref({
-    roleForm: null as any,
-    menuTree: null as any
-});
-
 // 响应式数据
 const $Data = $ref({
     loading: false,
-    menuLoading: false,
     roleList: [] as any[],
-    dialogVisible: false,
-    permissionVisible: false,
+    searchKeyword: '',
+    // 编辑对话框
+    editVisible: false,
     isEdit: false,
-    currentRole: {} as any,
-    formData: {
-        id: 0,
+    editFormRef: null as any,
+    editForm: {
+        id: '',
         name: '',
         code: '',
         description: '',
         sort: 0,
-        status: 1
+        state: 1
     },
-    columns: [
-        { colKey: 'name', title: '角色名称', width: 150 },
-        { colKey: 'code', title: '角色代码', width: 150 },
-        { colKey: 'description', title: '角色描述', ellipsis: true },
-        { colKey: 'sort', title: '排序', width: 80 },
-        { colKey: 'status', title: '状态', width: 80 },
-        { colKey: 'operation', title: '操作', width: 200, fixed: 'right' }
-    ],
-    formRules: {
-        name: [{ required: true, message: '请输入角色名称', type: 'error' }],
+    editRules: {
+        name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
         code: [
-            { required: true, message: '请输入角色代码', type: 'error' },
-            { pattern: /^[a-z_]+$/, message: '角色代码只能包含小写字母和下划线', type: 'error' }
-        ]
+            { required: true, message: '请输入角色代码', trigger: 'blur' },
+            { pattern: /^[a-zA-Z0-9_]+$/, message: '角色代码只能包含字母、数字和下划线', trigger: 'blur' }
+        ],
+        sort: [{ type: 'number', message: '排序必须是数字', trigger: 'blur' }]
     },
+    // 菜单权限对话框
+    menuVisible: false,
+    currentRole: {} as any,
     menuTreeData: [] as any[],
-    checkedMenuIds: [] as number[]
+    menuTreeRef: null as any,
+    // 分页配置
+    pagerConfig: {
+        currentPage: 1,
+        pageSize: 10,
+        total: 0,
+        layout: 'total, prev, pager, next, jumper'
+    }
 });
 
 // 方法集合
 const $Method = {
+    // 处理操作下拉菜单
+    handleOperation(data: any, row: any) {
+        const command = data.itemData?.command || data.command;
+        switch (command) {
+            case 'menu':
+                $Method.handleMenu(row);
+                break;
+            case 'edit':
+                $Method.handleEdit(row);
+                break;
+            case 'delete':
+                $Method.handleDelete(row);
+                break;
+        }
+    },
+
+    // 处理分页改变事件
+    handlePageChange() {
+        $Method.loadRoleList();
+    },
+
     // 加载角色列表
     async loadRoleList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/roleList', {});
+            const res = await $Http('/addon/admin/roleList', {
+                page: $Data.pagerConfig.currentPage,
+                limit: $Data.pagerConfig.pageSize,
+                keyword: $Data.searchKeyword
+            });
             if (res.code === 0 && res.data) {
-                $Data.roleList = res.data;
+                // roleList 接口返回的是数组，不是分页对象
+                if (Array.isArray(res.data)) {
+                    $Data.roleList = res.data;
+                    $Data.pagerConfig.total = res.data.length;
+                } else if (res.data.list) {
+                    // 如果返回的是分页对象
+                    $Data.roleList = res.data.list || [];
+                    $Data.pagerConfig.total = res.data.total || 0;
+                }
             }
         } catch (error) {
-            MessagePlugin.error('加载角色列表失败');
+            Modal.message({ message: '加载角色列表失败', status: 'error' });
             console.error(error);
         } finally {
             $Data.loading = false;
         }
     },
 
-    // 加载菜单树
-    async loadMenuTree() {
-        $Data.menuLoading = true;
+    // 搜索
+    async handleSearch() {
+        $Data.pagerConfig.currentPage = 1;
+        await $Method.loadRoleList();
+    },
+
+    // 重置
+    handleReset() {
+        $Data.searchKeyword = '';
+        $Data.pagerConfig.currentPage = 1;
+        $Method.loadRoleList();
+    },
+
+    // 添加角色
+    handleAdd() {
+        $Data.isEdit = false;
+        $Data.editForm = {
+            id: '',
+            name: '',
+            code: '',
+            description: '',
+            sort: 0,
+            state: 1
+        };
+        $Data.editVisible = true;
+    },
+
+    // 编辑角色
+    handleEdit(row: any) {
+        $Data.isEdit = true;
+        $Data.editForm = {
+            id: row.id,
+            name: row.name,
+            code: row.code,
+            description: row.description || '',
+            sort: row.sort || 0,
+            state: row.state
+        };
+        $Data.editVisible = true;
+    },
+
+    // 提交编辑
+    async handleEditSubmit() {
         try {
-            const res = await $Http('/addon/admin/menuList', {});
-            if (res.code === 0 && res.data) {
-                $Data.menuTreeData = $Method.buildMenuTree(res.data);
+            const valid = await $Data.editFormRef.validate();
+            if (!valid) {
+                return;
+            }
+
+            const apiUrl = $Data.isEdit ? '/addon/admin/roleUpdate' : '/addon/admin/roleCreate';
+            const params: any = {
+                name: $Data.editForm.name,
+                code: $Data.editForm.code,
+                description: $Data.editForm.description,
+                sort: $Data.editForm.sort
+            };
+
+            if ($Data.isEdit) {
+                params.id = $Data.editForm.id;
+            }
+
+            const res = await $Http(apiUrl, params);
+
+            if (res.code === 0) {
+                Modal.message({ message: $Data.isEdit ? '编辑成功' : '创建成功', status: 'success' });
+                $Data.editVisible = false;
+                await $Method.loadRoleList();
+            } else {
+                Modal.message({ message: res.msg || '操作失败', status: 'error' });
             }
         } catch (error) {
-            MessagePlugin.error('加载菜单列表失败');
+            Modal.message({ message: '操作失败', status: 'error' });
             console.error(error);
-        } finally {
-            $Data.menuLoading = false;
         }
     },
 
-    // 构建树形结构
+    // 删除角色
+    handleDelete(row: any) {
+        Modal.confirm({
+            message: `确定要删除角色 "${row.name}" 吗？`,
+            title: '确认删除',
+            top: '20vh'
+        }).then(async (res: string) => {
+            if (res === 'confirm') {
+                try {
+                    const result = await $Http('/addon/admin/roleDelete', { id: row.id });
+                    if (result.code === 0) {
+                        Modal.message({ message: '删除成功', status: 'success' });
+                        await $Method.loadRoleList();
+                    } else {
+                        Modal.message({ message: result.msg || '删除失败', status: 'error' });
+                    }
+                } catch (error) {
+                    Modal.message({ message: '删除失败', status: 'error' });
+                    console.error(error);
+                }
+            }
+        });
+    },
+
+    // 构建菜单树
     buildMenuTree(list: any[], pid = 0): any[] {
         const result: any[] = [];
         for (const item of list) {
@@ -162,108 +319,69 @@ const $Method = {
         return result;
     },
 
-    // 添加角色
-    handleAdd() {
-        $Data.isEdit = false;
-        $Data.formData = {
-            id: 0,
-            name: '',
-            code: '',
-            description: '',
-            sort: 0,
-            status: 1
-        };
-        $Data.dialogVisible = true;
-    },
-
-    // 编辑角色
-    handleEdit(row: any) {
-        $Data.isEdit = true;
-        $Data.formData = { ...row };
-        $Data.dialogVisible = true;
-    },
-
-    // 提交表单
-    async handleSubmit() {
-        const valid = await $Form.roleForm.validate();
-        if (!valid) return false;
-
+    // 加载菜单树
+    async loadMenuTree() {
         try {
-            const apiUrl = $Data.isEdit ? '/addon/admin/roleUpdate' : '/addon/admin/roleCreate';
-            const res = await $Http(apiUrl, $Data.formData);
-
-            if (res.code === 0) {
-                MessagePlugin.success($Data.isEdit ? '更新成功' : '创建成功');
-                $Data.dialogVisible = false;
-                await $Method.loadRoleList();
-                return true;
-            } else {
-                MessagePlugin.error(res.msg || '操作失败');
-                return false;
+            const res = await $Http('/addon/admin/menuList', {});
+            if (res.code === 0 && res.data) {
+                // menuList 接口返回的是数组，不是分页对象
+                const menuList = Array.isArray(res.data) ? res.data : res.data.list || [];
+                $Data.menuTreeData = $Method.buildMenuTree(menuList);
             }
         } catch (error) {
-            MessagePlugin.error('操作失败');
-            console.error(error);
-            return false;
-        }
-    },
-
-    // 删除角色
-    async handleDelete(id: number) {
-        try {
-            const res = await $Http('/addon/admin/roleDelete', { id });
-            if (res.code === 0) {
-                MessagePlugin.success('删除成功');
-                await $Method.loadRoleList();
-            } else {
-                MessagePlugin.error(res.msg || '删除失败');
-            }
-        } catch (error) {
-            MessagePlugin.error('删除失败');
+            Modal.message({ message: '加载菜单列表失败', status: 'error' });
             console.error(error);
         }
     },
 
-    // 打开权限分配对话框
-    async handlePermission(row: any) {
+    // 打开菜单权限对话框
+    async handleMenu(row: any) {
         $Data.currentRole = row;
-        $Data.permissionVisible = true;
+        $Data.menuVisible = true;
 
         // 加载菜单树
         await $Method.loadMenuTree();
 
-        // 加载该角色已有的权限
+        // 加载该角色已有的菜单权限
         try {
             const res = await $Http('/addon/admin/roleMenuGet', { roleId: row.id });
             if (res.code === 0 && res.data) {
-                $Data.checkedMenuIds = res.data;
+                // 设置选中的菜单节点
+                const checkedKeys = Array.isArray(res.data) ? res.data : [];
+                setTimeout(() => {
+                    if ($Data.menuTreeRef && $Data.menuTreeRef.setCheckedKeys) {
+                        $Data.menuTreeRef.setCheckedKeys(checkedKeys);
+                    }
+                }, 100);
             }
         } catch (error) {
-            MessagePlugin.error('加载权限失败');
+            Modal.message({ message: '加载菜单权限失败', status: 'error' });
             console.error(error);
         }
     },
 
-    // 提交权限分配
-    async handlePermissionSubmit() {
+    // 提交菜单权限分配
+    async handleMenuSubmit() {
         try {
+            // 获取选中的节点（包括半选中的父节点）
+            const checkedKeys = $Data.menuTreeRef.getCheckedKeys();
+            const halfCheckedKeys = $Data.menuTreeRef.getHalfCheckedKeys();
+            const allKeys = [...checkedKeys, ...halfCheckedKeys];
+
             const res = await $Http('/addon/admin/roleMenuSave', {
                 roleId: $Data.currentRole.id,
-                menuIds: JSON.stringify($Data.checkedMenuIds)
+                menuIds: JSON.stringify(allKeys)
             });
 
             if (res.code === 0) {
-                MessagePlugin.success('权限保存成功');
-                $Data.permissionVisible = false;
-                return true;
+                Modal.message({ message: '菜单权限保存成功', status: 'success' });
+                $Data.menuVisible = false;
             } else {
-                MessagePlugin.error(res.msg || '保存失败');
-                return false;
+                Modal.message({ message: res.msg || '保存失败', status: 'error' });
             }
         } catch (error) {
-            MessagePlugin.error('保存失败');
+            Modal.message({ message: '保存失败', status: 'error' });
             console.error(error);
-            return false;
         }
     }
 };
@@ -273,11 +391,7 @@ $Method.loadRoleList();
 </script>
 
 <style scoped lang="scss">
-.role-manage {
-    padding: 20px;
-}
-
-.permission-dialog {
+.menu-dialog {
     .role-info {
         display: flex;
         align-items: center;
@@ -285,7 +399,7 @@ $Method.loadRoleList();
         margin-bottom: 16px;
 
         .role-code {
-            color: var(--td-text-color-secondary);
+            color: var(--ti-common-color-text-secondary);
             font-family: monospace;
         }
     }
