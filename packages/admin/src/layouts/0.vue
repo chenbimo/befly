@@ -14,7 +14,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="[]" :get-menu-data-sync="$Method.getMenuDataSync" @node-click="$Method.handleMenuClick" />
+            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="[]" :get-menu-data-sync="$Method.getMenuDataSync" width-adapt @node-click="$Method.handleMenuClick" />
         </div>
 
         <!-- 内容区域 -->
@@ -147,23 +147,18 @@ onMounted(() => {
         position: absolute;
         top: 64px;
         left: 0;
-        right: 0;
-        height: 48px;
+        bottom: 0;
+        width: 240px;
         background: #ffffff;
-        border-bottom: 1px solid #e0e0e0;
-        padding: 0 24px;
         z-index: 99;
-        display: flex;
-        align-items: center;
     }
 
     .layout-main {
         position: absolute;
-        top: 112px;
-        left: 0;
+        top: 64px;
+        left: 240px;
         right: 0;
         bottom: 0;
-        overflow: auto;
     }
 }
 </style>

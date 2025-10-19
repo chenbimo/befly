@@ -3,77 +3,88 @@
         <!-- 上：过滤和操作栏 -->
         <div class="toolbar">
             <div class="toolbar-left">
-                <t-button theme="primary" @click="$Method.handleAdd">
+                <tiny-button type="primary" @click="$Method.handleAdd">
                     <template #icon>
-                        <add-icon />
+                        <icon-plus />
                     </template>
                     添加管理员
-                </t-button>
+                </tiny-button>
             </div>
             <div class="toolbar-right">
-                <t-space>
-                    <t-input v-model="$Data.searchKeyword" placeholder="搜索用户名/邮箱" clearable style="width: 200px" @enter="$Method.handleSearch" />
-                    <t-select v-model="$Data.searchState" placeholder="状态" clearable style="width: 120px" :options="$Data.stateOptions" @change="$Method.handleSearch" />
-                    <t-button theme="default" @click="$Method.handleSearch">
+                <div class="toolbar-search">
+                    <tiny-input v-model="$Data.searchKeyword" placeholder="搜索用户名/邮箱" clearable @keyup.enter="$Method.handleSearch" style="width: 200px" />
+                    <tiny-select v-model="$Data.searchState" placeholder="状态" clearable :options="$Data.stateOptions" @change="$Method.handleSearch" style="width: 120px" />
+                    <tiny-button @click="$Method.handleSearch">
                         <template #icon>
-                            <search-icon />
+                            <icon-search />
                         </template>
                         搜索
-                    </t-button>
-                    <t-button theme="default" @click="$Method.handleReset">
+                    </tiny-button>
+                    <tiny-button @click="$Method.handleReset">
                         <template #icon>
-                            <refresh-icon />
+                            <icon-refresh />
                         </template>
                         重置
-                    </t-button>
-                </t-space>
+                    </tiny-button>
+                </div>
             </div>
         </div>
 
         <!-- 中：数据表格 -->
         <div class="table-wrapper">
-            <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered hover max-height="100%">
-                <template #state="{ row }">
-                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
-                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
-                    <t-tag v-else theme="danger">已删除</t-tag>
-                </template>
-
-                <template #lastLoginTime="{ row }">
-                    <span v-if="row.lastLoginTime">{{ new Date(Number(row.lastLoginTime)).toLocaleString() }}</span>
-                    <span v-else>-</span>
-                </template>
-
-                <template #operation="{ row }">
-                    <t-space>
-                        <t-link theme="primary" @click="$Method.handleRole(row)">分配角色</t-link>
-                        <t-link theme="warning" @click="$Method.handleEdit(row)">编辑</t-link>
-                        <t-link theme="danger" @click="$Method.handleDelete(row)">删除</t-link>
-                    </t-space>
-                </template>
-            </t-table>
+            <tiny-grid :data="$Data.userList" :loading="$Data.loading" border auto-resize max-height="100%">
+                <tiny-grid-column field="username" title="用户名" :width="150" />
+                <tiny-grid-column field="email" title="邮箱" :width="200" />
+                <tiny-grid-column field="nickname" title="昵称" :width="150" />
+                <tiny-grid-column field="state" title="状态" :width="100">
+                    <template #default="{ row }">
+                        <tiny-tag v-if="row.state === 1" type="success">正常</tiny-tag>
+                        <tiny-tag v-else-if="row.state === 2" type="warning">禁用</tiny-tag>
+                        <tiny-tag v-else type="danger">已删除</tiny-tag>
+                    </template>
+                </tiny-grid-column>
+                <tiny-grid-column field="roleCode" title="角色" :width="120" />
+                <tiny-grid-column field="lastLoginTime" title="最后登录" :width="180">
+                    <template #default="{ row }">
+                        <span v-if="row.lastLoginTime">{{ new Date(Number(row.lastLoginTime)).toLocaleString() }}</span>
+                        <span v-else>-</span>
+                    </template>
+                </tiny-grid-column>
+                <tiny-grid-column title="操作" :width="200" fixed="right">
+                    <template #default="{ row }">
+                        <div class="operation-buttons">
+                            <tiny-button text type="primary" @click="$Method.handleRole(row)">分配角色</tiny-button>
+                            <tiny-button text type="warning" @click="$Method.handleEdit(row)">编辑</tiny-button>
+                            <tiny-button text type="danger" @click="$Method.handleDelete(row)">删除</tiny-button>
+                        </div>
+                    </template>
+                </tiny-grid-column>
+            </tiny-grid>
         </div>
 
         <!-- 下：分页栏 -->
         <div class="pagination-wrapper">
-            <t-pagination v-model="$Data.pagination.current" v-model:page-size="$Data.pagination.pageSize" :total="$Data.pagination.total" :page-size-options="[10, 20, 50, 100]" show-jumper show-page-size @change="$Method.onPageChange" />
+            <tiny-pager :current-page="$Data.pagination.current" :page-size="$Data.pagination.pageSize" :total="$Data.pagination.total" :page-sizes="[10, 20, 50, 100]" layout="total, prev, pager, next, sizes, jumper" @current-change="$Method.onPageChange" @size-change="$Method.onPageSizeChange" />
         </div>
 
         <!-- 角色分配对话框 -->
-        <t-dialog v-model:visible="$Data.roleVisible" header="分配角色" width="600px" :on-confirm="$Method.handleRoleSubmit">
+        <tiny-dialog-box v-model:visible="$Data.roleVisible" title="分配角色" width="600px" :append-to-body="true" @confirm="$Method.handleRoleSubmit">
             <div class="role-dialog">
                 <div class="user-info">
-                    <t-tag theme="primary">{{ $Data.currentUser.username }}</t-tag>
+                    <tiny-tag type="info">{{ $Data.currentUser.username }}</tiny-tag>
                     <span class="user-email">{{ $Data.currentUser.email }}</span>
                 </div>
-                <t-divider />
-                <t-select v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
+                <tiny-divider />
+                <tiny-select v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
             </div>
-        </t-dialog>
+        </tiny-dialog-box>
     </div>
 </template>
 
 <script setup lang="ts">
+import { Modal } from '@opentiny/vue';
+import { iconSearch, iconRefresh, iconPlus } from '@opentiny/vue-icon';
+
 // 响应式数据
 const $Data = $ref({
     loading: false,
@@ -92,15 +103,6 @@ const $Data = $ref({
     ],
     roleVisible: false,
     currentUser: {} as any,
-    columns: [
-        { colKey: 'username', title: '用户名', width: 150 },
-        { colKey: 'email', title: '邮箱', width: 200 },
-        { colKey: 'nickname', title: '昵称', width: 150 },
-        { colKey: 'state', title: '状态', width: 100 },
-        { colKey: 'roleCode', title: '角色', width: 120 },
-        { colKey: 'lastLoginTime', title: '最后登录', width: 180 },
-        { colKey: 'operation', title: '操作', width: 200, fixed: 'right' }
-    ],
     roleOptions: [] as any[],
     checkedRoleCode: '' as string
 });
@@ -121,7 +123,7 @@ const $Method = {
                 $Data.pagination.total = res.data.total || 0;
             }
         } catch (error) {
-            MessagePlugin.error('加载用户列表失败');
+            Modal.message({ message: '加载用户列表失败', status: 'error' });
             console.error(error);
         } finally {
             $Data.loading = false;
@@ -129,9 +131,15 @@ const $Method = {
     },
 
     // 分页变化
-    onPageChange(pageInfo: any) {
-        $Data.pagination.current = pageInfo.current;
-        $Data.pagination.pageSize = pageInfo.pageSize;
+    onPageChange(current: number) {
+        $Data.pagination.current = current;
+        $Method.loadUserList();
+    },
+
+    // 每页数量变化
+    onPageSizeChange(pageSize: number) {
+        $Data.pagination.pageSize = pageSize;
+        $Data.pagination.current = 1;
         $Method.loadUserList();
     },
 
@@ -151,28 +159,27 @@ const $Method = {
 
     // 添加管理员
     handleAdd() {
-        MessagePlugin.info('添加管理员功能待开发');
+        Modal.message({ message: '添加管理员功能待开发', status: 'info' });
     },
 
     // 编辑管理员
     handleEdit(row: any) {
-        MessagePlugin.info(`编辑管理员：${row.username}`);
+        Modal.message({ message: `编辑管理员：${row.username}`, status: 'info' });
     },
 
     // 删除管理员
     handleDelete(row: any) {
-        DialogPlugin.confirm({
-            header: '确认删除',
-            attach: 'body',
-            body: `确定要删除管理员 "${row.username}" 吗？`,
-            placement: 'center',
-            onConfirm: async () => {
+        Modal.confirm({
+            message: `确定要删除管理员 "${row.username}" 吗？`,
+            title: '确认删除'
+        }).then(async (res: string) => {
+            if (res === 'confirm') {
                 try {
                     // TODO: 调用删除接口
-                    MessagePlugin.success('删除成功');
+                    Modal.message({ message: '删除成功', status: 'success' });
                     await $Method.loadUserList();
                 } catch (error) {
-                    MessagePlugin.error('删除失败');
+                    Modal.message({ message: '删除失败', status: 'error' });
                     console.error(error);
                 }
             }
@@ -194,7 +201,7 @@ const $Method = {
                     }));
             }
         } catch (error) {
-            MessagePlugin.error('加载角色列表失败');
+            Modal.message({ message: '加载角色列表失败', status: 'error' });
             console.error(error);
         }
     },
@@ -214,7 +221,7 @@ const $Method = {
                 $Data.checkedRoleCode = res.data.roleCode || '';
             }
         } catch (error) {
-            MessagePlugin.error('加载用户角色失败');
+            Modal.message({ message: '加载用户角色失败', status: 'error' });
             console.error(error);
         }
     },
@@ -222,7 +229,7 @@ const $Method = {
     // 提交角色分配
     async handleRoleSubmit() {
         if (!$Data.checkedRoleCode) {
-            MessagePlugin.warning('请选择角色');
+            Modal.message({ message: '请选择角色', status: 'warning' });
             return false;
         }
 
@@ -233,16 +240,16 @@ const $Method = {
             });
 
             if (res.code === 0) {
-                MessagePlugin.success('角色分配成功');
+                Modal.message({ message: '角色分配成功', status: 'success' });
                 $Data.roleVisible = false;
                 await $Method.loadUserList();
                 return true;
             } else {
-                MessagePlugin.error(res.msg || '分配失败');
+                Modal.message({ message: res.msg || '分配失败', status: 'error' });
                 return false;
             }
         } catch (error) {
-            MessagePlugin.error('分配失败');
+            Modal.message({ message: '分配失败', status: 'error' });
             console.error(error);
             return false;
         }
@@ -258,7 +265,7 @@ $Method.loadUserList();
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
     padding: 16px;
     overflow: hidden; // 防止外层滚动
 }
@@ -270,9 +277,9 @@ $Method.loadUserList();
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    background: var(--td-bg-color-container);
-    border-radius: var(--td-radius-default);
-    box-shadow: var(--td-shadow-1);
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
     .toolbar-left {
         display: flex;
@@ -283,6 +290,12 @@ $Method.loadUserList();
         display: flex;
         gap: 12px;
     }
+
+    .toolbar-search {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
 }
 
 // 中：表格区域（撑满剩余空间并支持滚动）
@@ -291,9 +304,9 @@ $Method.loadUserList();
     overflow: hidden; // 隐藏超出部分
     display: flex;
     flex-direction: column;
-    background: var(--td-bg-color-container);
-    border-radius: var(--td-radius-default);
-    box-shadow: var(--td-shadow-1);
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 // 下：分页栏
@@ -302,9 +315,9 @@ $Method.loadUserList();
     display: flex;
     justify-content: flex-end;
     padding: 16px;
-    background: var(--td-bg-color-container);
-    border-radius: var(--td-radius-default);
-    box-shadow: var(--td-shadow-1);
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .role-dialog {
@@ -315,8 +328,13 @@ $Method.loadUserList();
         margin-bottom: 16px;
 
         .user-email {
-            color: var(--td-text-color-secondary);
+            color: var(--ti-common-color-text-secondary);
         }
     }
+}
+
+.operation-buttons {
+    display: flex;
+    gap: 8px;
 }
 </style>
