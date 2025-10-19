@@ -87,6 +87,23 @@ export class DbHelper {
     }
 
     /**
+     * 检查表是否存在
+     * @param tableName - 表名（支持小驼峰，会自动转换为下划线）
+     * @returns 表是否存在
+     */
+    async tableExists(tableName: string): Promise<boolean> {
+        // 将小驼峰表名转换为下划线格式
+        const snakeTableName = tableName
+            .replace(/([A-Z])/g, '_$1')
+            .toLowerCase()
+            .replace(/^_/, '');
+
+        const result = await this.executeWithConn('SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?', [snakeTableName]);
+
+        return result?.[0]?.count > 0;
+    }
+
+    /**
      * 查询单条数据
      */
     async getOne<T = any>(options: QueryOptions): Promise<T | null> {

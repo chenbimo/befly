@@ -7,6 +7,7 @@ import { SQL, RedisClient } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
 import { DbHelper } from './dbHelper.js';
+import { RedisHelper } from './redisHelper.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { SqlClientOptions } from '../types/database.js';
 
@@ -216,7 +217,7 @@ export async function initDatabase(options: SqlClientOptions = {}): Promise<Data
 
         // 3. 创建 DbHelper 实例
         const befly: BeflyContext = {
-            redis: connections.redis as any,
+            redis: RedisHelper, // 使用 RedisHelper 对象而不是 RedisClient
             db: null as any,
             tool: null as any,
             logger: null as any
