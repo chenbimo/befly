@@ -1,6 +1,6 @@
 <template>
-    <tiny-dialog-box v-model:visible="dialogVisible" :title="isEdit ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="handleClose">
-        <tiny-form :model="formData" label-width="120px" label-position="left" :rules="formRules" :ref="(el) => (formRef = el)">
+    <tiny-dialog-box v-model:visible="dialogVisible" :title="isEdit ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.handleClose">
+        <tiny-form :model="formData" label-width="120px" label-position="left" :rules="formRules" :ref="(el) => ($From = el)">
             <tiny-form-item label="角色名称" prop="name">
                 <tiny-input v-model="formData.name" placeholder="请输入角色名称" />
             </tiny-form-item>
@@ -21,14 +21,14 @@
             </tiny-form-item>
         </tiny-form>
         <template #footer>
-            <tiny-button @click="handleCancel">取消</tiny-button>
-            <tiny-button type="primary" @click="handleSubmit">确定</tiny-button>
+            <tiny-button @click="$Method.handleCancel">取消</tiny-button>
+            <tiny-button type="primary" @click="$Method.handleSubmit">确定</tiny-button>
         </template>
     </tiny-dialog-box>
 </template>
 
 <script setup>
-const props = defineProps({
+const $Prop = defineProps({
     visible: {
         type: Boolean,
         default: false
@@ -43,91 +43,62 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['update:visible', 'success']);
+const $Emit = defineEmits(['update:visible', 'success']);
 
 // 表单引用
-let formRef = $ref(null);
+const $From = $ref(null);
 
 // 对话框显示状态
 const dialogVisible = $computed({
-    get: () => props.visible,
-    set: (val) => emit('update:visible', val)
+    get: () => $Prop.visible,
+    set: (val) => $Emit('update:visible', val)
 });
 
-// 表单数据
-const formData = $ref({
-    id: '',
-    name: '',
-    code: '',
-    description: '',
-    sort: 0,
-    state: 1
+const $Data = $ref({});
+
+const $Object = markRaw({
+    formRules: {
+        name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
+        code: [
+            { required: true, message: '请输入角色代码', trigger: 'blur' },
+            { pattern: /^[a-zA-Z0-9_]+$/, message: '角色代码只能包含字母、数字和下划线', trigger: 'blur' }
+        ],
+        sort: [{ type: 'number', message: '排序必须是数字', trigger: 'blur' }]
+    }
 });
 
-// 表单验证规则
-const formRules = {
-    name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
-    code: [
-        { required: true, message: '请输入角色代码', trigger: 'blur' },
-        { pattern: /^[a-zA-Z0-9_]+$/, message: '角色代码只能包含字母、数字和下划线', trigger: 'blur' }
-    ],
-    sort: [{ type: 'number', message: '排序必须是数字', trigger: 'blur' }]
-};
-
-// 监听 roleData 变化，更新表单数据
-watch(
-    () => props.roleData,
-    (newVal) => {
-        if (newVal && props.isEdit) {
-            // 编辑时填充数据
-            formData.id = newVal.id || '';
-            formData.name = newVal.name || '';
-            formData.code = newVal.code || '';
-            formData.description = newVal.description || '';
-            formData.sort = newVal.sort || 0;
-            formData.state = newVal.state || 1;
-        } else {
-            // 新增时重置表单
-            formData.id = '';
-            formData.name = '';
-            formData.code = '';
-            formData.description = '';
-            formData.sort = 0;
-            formData.state = 1;
-        }
+// 方法集合
+const $Method = {
+    // 关闭对话框
+    handleClose() {
+        $Emit('update:visible', false);
     },
-    { immediate: true }
-);
 
-// 关闭对话框
-const handleClose = () => {
-    emit('update:visible', false);
-};
+    // 取消
+    handleCancel() {
+        $Method.handleClose();
+    },
 
-// 取消
-const handleCancel = () => {
-    handleClose();
-};
+    // 提交表单
+    async handleSubmit() {
+        try {
+            const valid = await $From.validate();
+            if (!valid) return;
 
-// 提交表单
-const handleSubmit = async () => {
-    try {
-        const valid = await formRef.validate();
-        if (!valid) return;
+            const apiUrl = $Prop.isEdit ? '/addon/admin/roleUpdate' : '/addon/admin/roleCreate';
+            const res = await $Http(apiUrl, formData);
 
-        const apiUrl = props.isEdit ? '/addon/admin/roleUpdate' : '/addon/admin/roleCreate';
-        const res = await $Http(apiUrl, formData);
-
-        if (res.code === 0) {
-            Modal.message({ message: props.isEdit ? '编辑成功' : '添加成功', status: 'success' });
-            handleClose();
-            emit('success');
-        } else {
-            Modal.message({ message: res.msg || '操作失败', status: 'error' });
+            if (res.code === 0) {
+                Modal.message({ message: $Prop.isEdit ? '编辑成功' : '添加成功', status: 'success' });
+                $Method.handleClose();
+                $Emit('success');
+            } else {
+                Modal.message({ message: res.msg || '操作失败', status: 'error' });
+            }
+        } catch (error) {
+            console.error('提交失败:', error);
+            Modal.message({ message: '提交失败', status: 'error' });
         }
-    } catch (error) {
-        console.error('提交失败:', error);
-        Modal.message({ message: '提交失败', status: 'error' });
     }
 };
 </script>
