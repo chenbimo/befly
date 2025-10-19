@@ -56,15 +56,15 @@
                             <template #dropdown>
                                 <tiny-dropdown-menu>
                                     <tiny-dropdown-item :item-data="{ command: 'role' }">
-                                        <Icon name="User" :size="16" style="margin-right: 8px" />
+                                        <Icon name="User" :size="16" style="margin-right: 8px; vertical-align: middle" />
                                         分配角色
                                     </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'edit' }">
-                                        <Icon name="Edit" :size="16" style="margin-right: 8px" />
+                                        <Icon name="Edit" :size="16" style="margin-right: 8px; vertical-align: middle" />
                                         编辑
                                     </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'delete' }" divided>
-                                        <Icon name="Trash2" :size="16" style="margin-right: 8px" />
+                                        <Icon name="Trash2" :size="16" style="margin-right: 8px; vertical-align: middle" />
                                         删除
                                     </tiny-dropdown-item>
                                 </tiny-dropdown-menu>
