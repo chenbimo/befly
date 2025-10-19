@@ -6,7 +6,7 @@
                 <h2>Befly Admin</h2>
             </div>
             <div class="header-right">
-                <tiny-dropdown title="管理员" trigger="click" @item-click="$Method.handleUserMenu">
+                <tiny-dropdown title="管理员" trigger="click" border type="info" @item-click="$Method.handleUserMenu">
                     <template #dropdown>
                         <tiny-dropdown-menu>
                             <tiny-dropdown-item :item-data="{ value: 'profile' }">个人中心</tiny-dropdown-item>
