@@ -67,7 +67,7 @@
 
         <!-- 添加/编辑对话框 -->
         <tiny-dialog-box v-model:visible="$Data.editVisible" :title="$Data.isEdit ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
-            <tiny-form :model="$Data.editForm" label-width="80px" :rules="$Data.editRules" :ref="(el: any) => ($Data.editFormRef = el)">
+            <tiny-form :model="$Data.editForm" label-width="120px" label-position="left" :rules="$Data.editRules" :ref="(el: any) => ($Data.editFormRef = el)">
                 <tiny-form-item label="角色名称" prop="name">
                     <tiny-input v-model="$Data.editForm.name" placeholder="请输入角色名称" />
                 </tiny-form-item>

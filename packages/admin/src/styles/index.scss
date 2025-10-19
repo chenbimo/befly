@@ -60,6 +60,10 @@ body {
     justify-content: space-between;
 }
 
+.tiny-form--label-left .tiny-form-item__label {
+    padding-left: 0 !important;
+}
+
 // 数据列表页面通用布局样式
 .page-data {
     height: 100%;
