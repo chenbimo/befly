@@ -46,7 +46,7 @@ export default {
             }
 
             // 4. 查询菜单详情（仅查询启用状态的菜单）
-            const menus = await befly.db.getList({
+            const menus = await befly.db.getAll({
                 table: 'addon_admin_menu',
                 where: {
                     id$in: menuIds,
@@ -78,7 +78,7 @@ export default {
                 return tree;
             };
 
-            const menuTree = buildTree(menus.list);
+            const menuTree = buildTree(menus);
 
             return Yes('获取菜单成功', menuTree);
         } catch (error) {
