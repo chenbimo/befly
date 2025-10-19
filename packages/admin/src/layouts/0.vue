@@ -19,7 +19,14 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.userMenus" :props="$Data.menuProps" node-key="id" :node-height="40" :show-filter="false" style="height: 100%" only-check-children @node-click="$Method.onMenuClick" />
+            <tiny-tree-menu :data="$Data.userMenus" :props="$Data.menuProps" node-key="id" :node-height="40" :show-filter="false" style="height: 100%" only-check-children @node-click="$Method.onMenuClick">
+                <template #default="{ data }">
+                    <span class="menu-item">
+                        <Icon :name="data.icon || 'Squircle'" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                        <span>{{ data.name }}</span>
+                    </span>
+                </template>
+            </tiny-tree-menu>
         </div>
 
         <!-- 内容区域 -->
@@ -183,6 +190,12 @@ onMounted(async () => {
         width: 240px;
         background: #ffffff;
         z-index: 99;
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
     }
 
     .layout-main {

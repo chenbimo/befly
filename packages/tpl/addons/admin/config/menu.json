@@ -2,42 +2,42 @@
     {
         "name": "首页",
         "path": "/",
-        "icon": "DashboardIcon",
+        "icon": "Home",
         "sort": 1,
         "type": 1
     },
     {
         "name": "管理员管理",
         "path": "/admin",
-        "icon": "UserIcon",
+        "icon": "Users",
         "sort": 2,
         "type": 1
     },
     {
         "name": "新闻管理",
         "path": "/news",
-        "icon": "FileIcon",
+        "icon": "Newspaper",
         "sort": 3,
         "type": 1
     },
     {
         "name": "系统管理",
         "path": "/system",
-        "icon": "SettingIcon",
+        "icon": "Settings",
         "sort": 4,
         "type": 0,
         "children": [
             {
                 "name": "菜单管理",
                 "path": "/system/menu",
-                "icon": "ViewListIcon",
+                "icon": "",
                 "sort": 1,
                 "type": 1
             },
             {
                 "name": "角色管理",
                 "path": "/system/role",
-                "icon": "UserIcon",
+                "icon": "",
                 "sort": 2,
                 "type": 1
             }
