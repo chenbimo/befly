@@ -8,7 +8,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 // 新闻页面逻辑
 </script>
 

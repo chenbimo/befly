@@ -27,11 +27,11 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 const router = useRouter();
 
 const $Method = {
-    goTo(path: string) {
+    goTo(path) {
         router.push(path);
     }
 };

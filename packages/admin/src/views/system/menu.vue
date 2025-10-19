@@ -37,7 +37,7 @@
 
         <!-- 添加/编辑对话框 -->
         <t-dialog v-model:visible="$Data.dialogVisible" :header="$Data.isEdit ? '编辑菜单' : '添加菜单'" width="600px" :on-confirm="$Method.handleSubmit">
-            <t-form :ref="(el: any) => ($Form.menuForm = el)" :data="$Data.formData" :rules="$Data.formRules" label-width="80px">
+            <t-form :ref="(el) => ($Form.menuForm = el)" :data="$Data.formData" :rules="$Data.formRules" label-width="80px">
                 <t-form-item label="上级菜单" name="pid">
                     <t-tree-select v-model="$Data.formData.pid" :data="$Data.menuTreeOptions" :tree-props="{ keys: { value: 'id', label: 'name', children: 'children' } }" clearable placeholder="选择上级菜单（不选则为顶级）" />
                 </t-form-item>
@@ -83,11 +83,11 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { markRaw } from 'vue';
 
 // 图标映射
-const iconMap: Record<string, any> = {
+const iconMap = {
     UserIcon: markRaw(UserIcon),
     DashboardIcon: markRaw(DashboardIcon),
     SettingIcon: markRaw(SettingIcon),
@@ -99,13 +99,13 @@ const iconMap: Record<string, any> = {
 
 // 响应式表单引用
 const $Form = $ref({
-    menuForm: null as any
+    menuForm: null
 });
 
 // 响应式数据
 const $Data = $ref({
     loading: false,
-    menuList: [] as any[],
+    menuList: [],
     dialogVisible: false,
     isEdit: false,
     formData: {
@@ -132,7 +132,7 @@ const $Data = $ref({
         path: [{ required: true, message: '请输入路由路径', type: 'error' }],
         type: [{ required: true, message: '请选择菜单类型', type: 'error' }]
     },
-    menuTreeOptions: [] as any[],
+    menuTreeOptions: [],
     iconOptions: [
         { label: '仪表盘', value: 'DashboardIcon' },
         { label: '用户', value: 'UserIcon' },
@@ -147,7 +147,7 @@ const $Data = $ref({
 // 方法集合
 const $Method = {
     // 获取图标组件
-    getIcon(iconName: string) {
+    getIcon(iconName) {
         return iconMap[iconName] || null;
     },
 
@@ -171,8 +171,8 @@ const $Method = {
     },
 
     // 构建树形结构
-    buildMenuTree(list: any[], pid = 0): any[] {
-        const result: any[] = [];
+    buildMenuTree(list, pid = 0) {
+        const result = [];
         for (const item of list) {
             if (item.pid === pid) {
                 const children = $Method.buildMenuTree(list, item.id);
@@ -202,7 +202,7 @@ const $Method = {
     },
 
     // 编辑菜单
-    handleEdit(row: any) {
+    handleEdit(row) {
         $Data.isEdit = true;
         $Data.formData = { ...row };
         $Data.dialogVisible = true;
@@ -234,7 +234,7 @@ const $Method = {
     },
 
     // 删除菜单
-    async handleDelete(id: number) {
+    async handleDelete(id) {
         try {
             const res = await $Http('/addon/admin/menuDelete', { id });
             if (res.code === 0) {

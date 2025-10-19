@@ -2,25 +2,32 @@
     <component :is="iconComponent" :size="size" :color="color" :stroke-width="strokeWidth" v-bind="$attrs" />
 </template>
 
-<script setup lang="ts">
+<script setup>
 import * as LucideIcons from 'lucide-vue-next';
 import { computed, markRaw } from 'vue';
 
-interface Props {
-    name: string;
-    size?: number;
-    color?: string;
-    strokeWidth?: number;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    size: 16,
-    strokeWidth: 2
+const props = defineProps({
+    name: {
+        type: String,
+        required: true
+    },
+    size: {
+        type: Number,
+        default: 16
+    },
+    color: {
+        type: String,
+        default: 'currentColor'
+    },
+    strokeWidth: {
+        type: Number,
+        default: 2
+    }
 });
 
 // 动态获取图标组件
 const iconComponent = computed(() => {
-    const iconName = props.name as keyof typeof LucideIcons;
+    const iconName = props.name;
     const icon = LucideIcons[iconName];
 
     if (!icon) {

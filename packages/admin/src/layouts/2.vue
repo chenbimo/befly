@@ -4,15 +4,15 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 const router = useRouter();
 const route = useRoute();
 
 // 响应式数据
 const $Data = $ref({
     collapsed: localStorage.getItem('sidebar-collapsed') === 'true',
-    expandedKeys: [] as string[],
-    menuItems: [] as any[]
+    expandedKeys: [],
+    menuItems: []
 });
 
 // 方法
@@ -25,11 +25,11 @@ const $Method = {
 };
 
 // 当前激活菜单
-const activeMenu = computed(() => route.name as string);
+const activeMenu = computed(() => route.name);
 const currentTitle = computed(() => route.meta.title || '');
 
 // 图标映射（根据路由名称首段匹配）
-const iconMap: Record<string, any> = {
+const iconMap = {
     index: DashboardIcon,
     user: UserIcon,
     news: FileIcon,
@@ -42,7 +42,7 @@ function buildMenuFromRoutes() {
     const routes = router.getRoutes();
     // 过滤掉布局路由和登录页
     const pageRoutes = routes.filter((r) => r.name && r.name !== 'layout0' && r.name !== 'login' && !String(r.name).startsWith('layout'));
-    const menuTree: Record<string, any> = {};
+    const menuTree = {};
     for (const r of pageRoutes) {
         const name = String(r.name);
         const segments = name.split('-');
@@ -83,11 +83,11 @@ const userMenuOptions = [
     { content: '退出登录', value: 'logout' }
 ];
 
-const handleMenuChange = (value: string) => {
+const handleMenuChange = (value) => {
     router.push({ name: value });
 };
 
-const handleUserMenu = (data: any) => {
+const handleUserMenu = (data) => {
     if (data.value === 'logout') {
         localStorage.removeItem('token');
         router.push('/login');

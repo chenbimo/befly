@@ -46,7 +46,7 @@
                 </tiny-grid-column>
                 <tiny-grid-column title="操作" :width="120" fixed="right">
                     <template #default="{ row }">
-                        <tiny-dropdown title="操作" trigger="click" border visible-arrow @item-click="(data: any) => $Method.handleOperation(data, row)">
+                        <tiny-dropdown title="操作" trigger="click" border visible-arrow @item-click="(data) => $Method.handleOperation(data, row)">
                             <template #dropdown>
                                 <tiny-dropdown-menu>
                                     <tiny-dropdown-item :item-data="{ command: 'role' }">
@@ -76,7 +76,7 @@
 
         <!-- 编辑对话框 -->
         <tiny-dialog-box v-model:visible="$Data.editVisible" title="编辑管理员" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
-            <tiny-form :model="$Data.editForm" label-width="80px" :rules="$Data.editRules" :ref="(el: any) => ($Data.editFormRef = el)">
+            <tiny-form :model="$Data.editForm" label-width="80px" :rules="$Data.editRules" :ref="(el) => ($Data.editFormRef = el)">
                 <tiny-form-item label="用户名" prop="username">
                     <tiny-input v-model="$Data.editForm.username" placeholder="请输入用户名" disabled />
                 </tiny-form-item>
@@ -123,13 +123,13 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 // 响应式数据
 const $Data = $ref({
     loading: false,
-    userList: [] as any[],
+    userList: [],
     searchKeyword: '',
-    searchState: undefined as number | undefined,
+    searchState: undefined,
     stateOptions: [
         { label: '正常', value: 1 },
         { label: '禁用', value: 2 },
@@ -137,7 +137,7 @@ const $Data = $ref({
     ],
     // 编辑对话框
     editVisible: false,
-    editFormRef: null as any,
+    editFormRef: null,
     editForm: {
         id: '',
         username: '',
@@ -158,9 +158,9 @@ const $Data = $ref({
     },
     // 角色分配对话框
     roleVisible: false,
-    currentUser: {} as any,
-    roleOptions: [] as any[],
-    checkedRoleCode: '' as string,
+    currentUser: {},
+    roleOptions: [],
+    checkedRoleCode: '',
     // Grid 内置分页配置
     pagerConfig: {
         currentPage: 1,
@@ -173,7 +173,7 @@ const $Data = $ref({
 // 方法集合
 const $Method = {
     // 处理操作下拉菜单
-    handleOperation(data: any, row: any) {
+    handleOperation(data, row) {
         // OpenTiny dropdown 的 item-click 事件，需要从 itemData 中获取
         const command = data.itemData?.command || data.command;
         switch (command) {
@@ -235,7 +235,7 @@ const $Method = {
     },
 
     // 编辑管理员
-    handleEdit(row: any) {
+    handleEdit(row) {
         $Data.editForm = {
             id: row.id,
             username: row.username,
@@ -279,12 +279,12 @@ const $Method = {
     },
 
     // 删除管理员
-    handleDelete(row: any) {
+    handleDelete(row) {
         Modal.confirm({
             message: `确定要删除管理员 "${row.username}" 吗？`,
             title: '确认删除',
             top: '20vh'
-        }).then(async (res: string) => {
+        }).then(async (res) => {
             if (res === 'confirm') {
                 try {
                     // TODO: 调用删除接口
@@ -306,8 +306,8 @@ const $Method = {
                 // getList 返回分页对象
                 const roleList = res.data.list || res.data || [];
                 $Data.roleOptions = roleList
-                    .filter((role: any) => role.state === 1)
-                    .map((role: any) => ({
+                    .filter((role) => role.state === 1)
+                    .map((role) => ({
                         label: role.name,
                         value: role.code
                     }));
@@ -319,7 +319,7 @@ const $Method = {
     },
 
     // 打开角色分配对话框
-    async handleRole(row: any) {
+    async handleRole(row) {
         $Data.currentUser = row;
         $Data.roleVisible = true;
 

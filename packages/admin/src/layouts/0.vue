@@ -36,7 +36,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 const router = useRouter();
 const route = useRoute();
 
@@ -45,11 +45,11 @@ const $Data = $ref({
     menuProps: {
         label: 'name'
     },
-    menuItems: [] as any[], // 菜单树
-    userMenus: [] as any[], // 原始菜单数据
+    menuItems: [], // 菜单树
+    userMenus: [], // 原始菜单数据
     menusLoaded: false, // 是否已加载菜单
-    expandedKeys: [] as string[],
-    currentMenuKey: '' as string
+    expandedKeys: [],
+    currentMenuKey: ''
 });
 
 // 当前激活菜单
@@ -83,7 +83,7 @@ const $Method = {
     },
 
     // 根据当前路径查找对应的菜单项ID和父级ID
-    findMenuByPath(menus: any[], path: string, parentIds: string[] = []): { menuId: string; parentIds: string[] } | null {
+    findMenuByPath(menus, path, parentIds = []) {
         for (const menu of menus) {
             if (menu.url === path) {
                 return { menuId: String(menu.id), parentIds };
@@ -112,13 +112,13 @@ const $Method = {
     },
 
     // 处理菜单点击
-    onMenuClick(data: any) {
+    onMenuClick(data) {
         console.log('🔥[ data ]-111', data);
         router.push(data.path);
     },
 
     // 处理用户菜单点击
-    handleUserMenu(data: any) {
+    handleUserMenu(data) {
         const value = data.itemData?.value || data.value;
         switch (value) {
             case 'profile':

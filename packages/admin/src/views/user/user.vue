@@ -73,25 +73,25 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 // 响应式数据
 const $Data = $ref({
     loading: false,
-    userList: [] as any[],
+    userList: [],
     pagination: {
         current: 1,
         pageSize: 10,
         total: 0
     },
     searchKeyword: '',
-    searchState: undefined as number | undefined,
+    searchState: undefined,
     stateOptions: [
         { label: '正常', value: 1 },
         { label: '禁用', value: 2 },
         { label: '已删除', value: 0 }
     ],
     roleVisible: false,
-    currentUser: {} as any,
+    currentUser: {},
     columns: [
         { colKey: 'username', title: '用户名', width: 150 },
         { colKey: 'email', title: '邮箱', width: 200 },
@@ -101,8 +101,8 @@ const $Data = $ref({
         { colKey: 'lastLoginTime', title: '最后登录', width: 180 },
         { colKey: 'operation', title: '操作', width: 200, fixed: 'right' }
     ],
-    roleOptions: [] as any[],
-    checkedRoleCode: '' as string
+    roleOptions: [],
+    checkedRoleCode: ''
 });
 
 // 方法集合
@@ -129,7 +129,7 @@ const $Method = {
     },
 
     // 分页变化
-    onPageChange(pageInfo: any) {
+    onPageChange(pageInfo) {
         $Data.pagination.current = pageInfo.current;
         $Data.pagination.pageSize = pageInfo.pageSize;
         $Method.loadUserList();
@@ -155,12 +155,12 @@ const $Method = {
     },
 
     // 编辑管理员
-    handleEdit(row: any) {
+    handleEdit(row) {
         MessagePlugin.info(`编辑管理员：${row.username}`);
     },
 
     // 删除管理员
-    handleDelete(row: any) {
+    handleDelete(row) {
         DialogPlugin.confirm({
             header: '确认删除',
             body: `确定要删除管理员 "${row.username}" 吗？`,
@@ -185,8 +185,8 @@ const $Method = {
                 // getList 返回分页对象
                 const roleList = res.data.list || res.data || [];
                 $Data.roleOptions = roleList
-                    .filter((role: any) => role.state === 1)
-                    .map((role: any) => ({
+                    .filter((role) => role.state === 1)
+                    .map((role) => ({
                         label: role.name,
                         value: role.code
                     }));
@@ -198,7 +198,7 @@ const $Method = {
     },
 
     // 打开角色分配对话框
-    async handleRole(row: any) {
+    async handleRole(row) {
         $Data.currentUser = row;
         $Data.roleVisible = true;
 

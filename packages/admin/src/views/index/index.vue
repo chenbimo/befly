@@ -169,7 +169,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 // 响应式数据
 const $Data = $ref({
     // 统计数据
@@ -213,7 +213,7 @@ const $Data = $ref({
 // 方法集合
 const $Method = {
     // 处理快捷操作
-    handleQuickAction(action: string) {
+    handleQuickAction(action) {
         MessagePlugin.info(`执行操作: ${action}`);
         // 这里可以根据不同的 action 跳转到不同的页面或执行不同的操作
     }
