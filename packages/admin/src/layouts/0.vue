@@ -155,17 +155,6 @@ onMounted(() => {
         z-index: 99;
         display: flex;
         align-items: center;
-
-        :deep(.tiny-tree-menu) {
-            width: 100%;
-            background: transparent;
-            border: none;
-
-            .tree-node-body {
-                height: 48px;
-                line-height: 48px;
-            }
-        }
     }
 
     .layout-main {
