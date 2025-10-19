@@ -11,22 +11,16 @@
                 </tiny-button>
             </div>
             <div class="toolbar-right">
-                <div class="toolbar-search">
-                    <tiny-input v-model="$Data.searchKeyword" placeholder="搜索用户名/邮箱" clearable @keyup.enter="$Method.handleSearch" style="width: 200px" />
-                    <tiny-select v-model="$Data.searchState" placeholder="状态" clearable :options="$Data.stateOptions" @change="$Method.handleSearch" style="width: 120px" />
-                    <tiny-button @click="$Method.handleSearch">
-                        <template #icon>
-                            <Icon name="Search" :size="16" />
-                        </template>
-                        搜索
-                    </tiny-button>
-                    <tiny-button @click="$Method.handleReset">
-                        <template #icon>
-                            <Icon name="RotateCw" :size="16" />
-                        </template>
-                        重置
-                    </tiny-button>
-                </div>
+                <!-- <div class="toolbar-search"> -->
+                <tiny-input v-model="$Data.searchKeyword" placeholder="搜索用户名/邮箱" clearable @keyup.enter="$Method.handleSearch" style="width: 200px" />
+                <tiny-select v-model="$Data.searchState" placeholder="状态" clearable :options="$Data.stateOptions" @change="$Method.handleSearch" style="width: 120px" />
+                <tiny-button circle @click="$Method.handleSearch" title="搜索">
+                    <Icon name="Search" :size="16" />
+                </tiny-button>
+                <tiny-button circle @click="$Method.handleReset" title="重置">
+                    <Icon name="RotateCw" :size="16" />
+                </tiny-button>
+                <!-- </div> -->
             </div>
         </div>
 
@@ -81,7 +75,7 @@
         </div>
 
         <!-- 编辑对话框 -->
-        <tiny-dialog-box v-model:visible="$Data.editVisible" title="编辑管理员" width="600px" :append-to-body="true" :show-footer="true" top="20vh">
+        <tiny-dialog-box v-model:visible="$Data.editVisible" title="编辑管理员" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
             <tiny-form :model="$Data.editForm" label-width="80px" :rules="$Data.editRules" :ref="(el: any) => ($Data.editFormRef = el)">
                 <tiny-form-item label="用户名" prop="username">
                     <tiny-input v-model="$Data.editForm.username" placeholder="请输入用户名" disabled />
