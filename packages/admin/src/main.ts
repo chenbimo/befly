@@ -3,7 +3,7 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 
 // 引入全局样式
-import './styles/index.css';
+import './styles/index.scss';
 
 // 引入路由实例
 import { router } from './plugins/router';

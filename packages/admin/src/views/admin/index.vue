@@ -1,7 +1,7 @@
 <template>
-    <div class="page-admin">
+    <div class="page-data">
         <!-- 上：过滤和操作栏 -->
-        <div class="toolbar">
+        <div class="main-toolbar">
             <div class="toolbar-left">
                 <tiny-button type="primary" @click="$Method.handleAdd">
                     <template #icon>
@@ -30,9 +30,9 @@
             </div>
         </div>
 
-        <!-- 下：数据表格（包含内置分页） -->
-        <div class="table-wrapper">
-            <tiny-grid :data="$Data.userList" :loading="$Data.loading" :pager-config="$Data.pagerConfig" border auto-resize max-height="100%" @page-change="$Method.handlePageChange">
+        <!-- 中：数据表格 -->
+        <div class="main-table">
+            <tiny-grid :data="$Data.userList" :loading="$Data.loading" border auto-resize max-height="100%">
                 <tiny-grid-column field="username" title="用户名" :width="150" />
                 <tiny-grid-column field="email" title="邮箱" :width="200" />
                 <tiny-grid-column field="nickname" title="昵称" :width="150" />
@@ -60,6 +60,11 @@
                     </template>
                 </tiny-grid-column>
             </tiny-grid>
+        </div>
+
+        <!-- 下：分页器 -->
+        <div class="main-page">
+            <tiny-pager v-model:current-page="$Data.pagerConfig.currentPage" v-model:page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" :page-sizes="$Data.pagerConfig.pageSizes" :layout="$Data.pagerConfig.layout" @current-change="$Method.handlePageChange" @size-change="$Method.handlePageChange" />
         </div>
 
         <!-- 角色分配对话框 -->
@@ -108,9 +113,7 @@ const $Data = $ref({
 // 方法集合
 const $Method = {
     // 处理分页改变事件
-    handlePageChange({ currentPage, pageSize }: { currentPage: number; pageSize: number }) {
-        $Data.pagerConfig.currentPage = currentPage;
-        $Data.pagerConfig.pageSize = pageSize;
+    handlePageChange() {
         $Method.loadUserList();
     },
 
@@ -136,9 +139,9 @@ const $Method = {
     },
 
     // 搜索
-    handleSearch() {
+    async handleSearch() {
         $Data.pagerConfig.currentPage = 1;
-        $Method.loadUserList();
+        await $Method.loadUserList(1, $Data.pagerConfig.pageSize);
     },
 
     // 重置
@@ -253,54 +256,6 @@ $Method.loadUserList();
 </script>
 
 <style scoped lang="scss">
-.page-admin {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-    overflow: hidden;
-}
-
-// 上：工具栏
-.toolbar {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-    .toolbar-left {
-        display: flex;
-        gap: 12px;
-    }
-
-    .toolbar-right {
-        display: flex;
-        gap: 12px;
-    }
-
-    .toolbar-search {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-    }
-}
-
-// 下：表格区域（包含内置分页）
-.table-wrapper {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
 .role-dialog {
     .user-info {
         display: flex;

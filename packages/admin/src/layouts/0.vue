@@ -14,7 +14,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="[]" :get-menu-data-sync="$Method.getMenuDataSync" width-adapt @node-click="$Method.handleMenuClick" />
+            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="[]" :get-menu-data-sync="$Method.getMenuDataSync" style="height: 100%" width-adapt menu-collapsible @node-click="$Method.handleMenuClick" />
         </div>
 
         <!-- 内容区域 -->
