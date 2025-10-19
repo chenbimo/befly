@@ -6,8 +6,13 @@
                 <h2>Befly Admin</h2>
             </div>
             <div class="header-right">
-                <tiny-dropdown :menu-options="userMenuOptions" @menu-item-click="$Method.handleUserMenu">
-                    <tiny-button> 管理员 </tiny-button>
+                <tiny-dropdown title="管理员" trigger="click" @item-click="$Method.handleUserMenu">
+                    <template #dropdown>
+                        <tiny-dropdown-menu>
+                            <tiny-dropdown-item :item-data="{ value: 'profile' }">个人中心</tiny-dropdown-item>
+                            <tiny-dropdown-item :item-data="{ value: 'logout' }" divided>退出登录</tiny-dropdown-item>
+                        </tiny-dropdown-menu>
+                    </template>
                 </tiny-dropdown>
             </div>
         </div>
@@ -38,12 +43,6 @@ const $Data = $ref({
 
 // 当前激活菜单
 const activeMenu = computed(() => route.path);
-
-// 用户菜单选项
-const userMenuOptions = [
-    { label: '个人中心', value: 'profile' },
-    { label: '退出登录', value: 'logout' }
-];
 
 // 方法
 const $Method = {
@@ -88,11 +87,17 @@ const $Method = {
 
     // 处理用户菜单点击
     handleUserMenu(data: any) {
-        if (data.itemData.value === 'logout') {
-            localStorage.removeItem('token');
-            permissionStore.clearPermissions();
-            router.push('/login');
-            Modal.message({ message: '退出成功', status: 'success' });
+        const value = data.itemData?.value || data.value;
+        switch (value) {
+            case 'profile':
+                router.push('/profile');
+                break;
+            case 'logout':
+                localStorage.removeItem('token');
+                permissionStore.clearPermissions();
+                router.push('/login');
+                Modal.message({ message: '退出成功', status: 'success' });
+                break;
         }
     }
 };
