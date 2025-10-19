@@ -1,11 +1,9 @@
 <template>
-    <t-layout class="layout-container">
-        <!-- 顶部导航栏（全宽） -->
-        <t-header class="header">
-            <div class="header-left">
-                <div class="logo">
-                    <h2>Befly Admin</h2>
-                </div>
+    <div class="layout-0-wrapper">
+        <!-- 顶部导航栏 -->
+        <div class="layout-header">
+            <div class="logo">
+                <h2>Befly Admin</h2>
             </div>
             <div class="header-right">
                 <t-dropdown :options="userMenuOptions" @click="$Method.handleUserMenu">
@@ -15,11 +13,11 @@
                     </t-button>
                 </t-dropdown>
             </div>
-        </t-header>
+        </div>
 
-        <!-- 菜单栏（全宽，水平布局） -->
-        <t-header class="menu-bar">
-            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" mode="horizontal" theme="light" style="width: 100%">
+        <!-- 菜单栏 -->
+        <div class="layout-menu">
+            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" mode="horizontal" theme="light" width="240px">
                 <template v-for="item in $Data.menuItems" :key="item.value">
                     <!-- 一级菜单项（无子菜单） -->
                     <t-menu-item v-if="!item.children || item.children.length === 0" :value="item.value">
@@ -42,19 +40,18 @@
                     </t-submenu>
                 </template>
             </t-menu>
-            <!-- 调试信息 -->
-            <div v-if="$Data.menuItems.length === 0" style="padding: 0 16px; color: #999; font-size: 14px">菜单加载中...（{{ $Data.menuItems.length }} 项）</div>
-        </t-header>
+        </div>
 
         <!-- 内容区域 -->
-        <t-content class="content">
+        <div class="layout-main">
             <RouterView />
-        </t-content>
-    </t-layout>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
 import { usePermissionStore } from '@/stores/permission';
+import { DashboardIcon, HomeIcon, UserIcon, FileIcon, SettingIcon, ViewListIcon, AppIcon } from 'tdesign-icons-vue-next';
 
 const router = useRouter();
 const route = useRoute();
@@ -65,14 +62,11 @@ const $Data = $ref({
     menuItems: [] as any[]
 });
 
-// 当前激活菜单 - 使用路由路径作为菜单值
-const activeMenu = computed(() => {
-    return route.path;
-});
+// 当前激活菜单
+const activeMenu = computed(() => route.path);
 
-// 图标映射 - 支持小写和Icon后缀两种格式
+// 图标映射
 const iconMap: Record<string, any> = {
-    // 小写格式
     dashboard: markRaw(DashboardIcon),
     home: markRaw(HomeIcon),
     user: markRaw(UserIcon),
@@ -86,7 +80,6 @@ const iconMap: Record<string, any> = {
     viewlist: markRaw(ViewListIcon),
     role: markRaw(AppIcon),
     app: markRaw(AppIcon),
-    // Icon后缀格式（与后端配置一致）
     DashboardIcon: markRaw(DashboardIcon),
     HomeIcon: markRaw(HomeIcon),
     UserIcon: markRaw(UserIcon),
@@ -94,7 +87,6 @@ const iconMap: Record<string, any> = {
     SettingIcon: markRaw(SettingIcon),
     ViewListIcon: markRaw(ViewListIcon),
     AppIcon: markRaw(AppIcon),
-    // 默认图标
     default: markRaw(AppIcon)
 };
 
@@ -106,7 +98,7 @@ const userMenuOptions = [
 
 // 方法
 const $Method = {
-    // 从权限 store 构建菜单结构
+    // 构建菜单
     buildMenuFromPermissions() {
         const menus = permissionStore.userMenus;
         if (!menus || menus.length === 0) {
@@ -114,17 +106,13 @@ const $Method = {
             return;
         }
 
-        // 转换后端菜单数据为前端菜单格式
         const convertMenu = (menuItem: any): any => {
-            // 使用 path 作为菜单值（用于路由跳转和激活状态匹配）
             const item: any = {
                 value: menuItem.path || String(menuItem.id),
                 label: menuItem.name,
-                // 根据 icon 字段映射图标，如果没有则使用默认图标
                 icon: menuItem.icon ? iconMap[menuItem.icon] || iconMap.default : iconMap.default
             };
 
-            // 递归处理子菜单
             if (menuItem.children && menuItem.children.length > 0) {
                 item.children = menuItem.children.map((child: any) => convertMenu(child));
             }
@@ -136,7 +124,6 @@ const $Method = {
     },
     // 处理菜单切换
     handleMenuChange(value: string) {
-        // 检查是否为目录（有子菜单的项不跳转）
         const findMenuItem = (items: any[], val: string): any => {
             for (const item of items) {
                 if (item.value === val) return item;
@@ -149,10 +136,7 @@ const $Method = {
         };
 
         const menuItem = findMenuItem($Data.menuItems, value);
-
-        // 只有没有子菜单的项才跳转
         if (menuItem && !menuItem.children) {
-            // value 就是 path，直接跳转
             router.push({ path: value });
         }
     },
@@ -169,82 +153,73 @@ const $Method = {
 
 // 组件挂载后构建菜单
 onMounted(() => {
-    console.log('[Layout] 组件已挂载');
-    console.log('[Layout] 菜单数据:', permissionStore.userMenus);
-    console.log('[Layout] 菜单数量:', permissionStore.userMenus.length);
     $Method.buildMenuFromPermissions();
-    console.log('[Layout] 构建后的菜单项:', $Data.menuItems);
 });
 </script>
 
 <style scoped lang="scss">
-.layout-container {
+.layout-0-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
     height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--td-bg-color-page);
-}
-
-// 顶部导航栏
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    background: var(--td-bg-color-container);
-    border-bottom: 1px solid var(--td-border-level-1-color);
-    height: 64px;
-    flex-shrink: 0;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-}
-
-.logo h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--td-text-color-primary);
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.ml-2 {
-    margin-left: 8px;
-}
-
-// 菜单栏（水平布局）
-.menu-bar {
-    height: 48px;
-    flex-shrink: 0;
-    background: var(--td-bg-color-container);
-    border-bottom: 1px solid var(--td-border-level-1-color);
-    padding: 0;
-    display: flex;
-    align-items: center;
-
-    :deep(.t-menu) {
-        width: 100%;
-        border-bottom: none;
-    }
-}
-
-// 内容区域
-.content {
-    flex: 1;
+    width: 100vw;
     background: var(--td-bg-color-page);
     overflow: hidden;
+
+    .layout-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        background: var(--td-bg-color-container);
+        border-bottom: 1px solid var(--td-border-level-1-color);
+        z-index: 100;
+
+        .logo {
+            h2 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                color: var(--td-text-color-primary);
+            }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            .ml-2 {
+                margin-left: 8px;
+            }
+        }
+    }
+
+    .layout-menu {
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        width: 240px;
+        bottom: 0;
+        background: #fff;
+        border-bottom: 1px solid var(--td-border-level-1-color);
+        z-index: 99;
+    }
+
+    .layout-main {
+        position: absolute;
+        top: 64px;
+        left: 240px;
+        right: 0;
+        bottom: 0;
+        overflow: auto;
+    }
 }
 </style>
