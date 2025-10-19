@@ -21,12 +21,12 @@ export default {
                 return No('管理员不存在');
             }
 
-            // 如果有角色ID，查询角色详细信息
+            // 如果有角色编码，查询角色详细信息（使用 roleCode 而非 roleId）
             let roleInfo = null;
-            if (admin.roleId) {
+            if (admin.roleCode) {
                 roleInfo = await befly.db.getOne({
                     table: 'addon_admin_role',
-                    where: { id: admin.roleId }
+                    where: { code: admin.roleCode }
                 });
             }
 

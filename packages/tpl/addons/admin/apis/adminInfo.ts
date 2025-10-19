@@ -30,12 +30,12 @@ export default {
             return No('用户不存在');
         }
 
-        // 查询角色信息（包含权限，框架自动转换为小驼峰）
+        // 查询角色信息（使用 roleCode 而非 roleId，框架自动转换为小驼峰）
         let roleInfo = null;
-        if (admin.roleId) {
+        if (admin.roleCode) {
             roleInfo = await befly.db.getOne({
                 table: 'addon_admin_role',
-                where: { id: admin.roleId }
+                where: { code: admin.roleCode }
             });
         }
 

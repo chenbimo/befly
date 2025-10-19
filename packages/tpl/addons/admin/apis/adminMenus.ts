@@ -22,14 +22,14 @@ export default {
                 where: { id: userId }
             });
 
-            if (!admin || !admin.roleId) {
+            if (!admin || !admin.roleCode) {
                 return Yes('获取菜单成功', []);
             }
 
-            // 2. 查询角色信息获取菜单权限
+            // 2. 查询角色信息获取菜单权限（使用 roleCode 而非 roleId）
             const role = await befly.db.getOne({
                 table: 'addon_admin_role',
-                where: { id: admin.roleId }
+                where: { code: admin.roleCode }
             });
 
             if (!role || !role.menus) {

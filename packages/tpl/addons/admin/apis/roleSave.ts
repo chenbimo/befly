@@ -8,14 +8,14 @@ export default {
     name: '保存用户角色',
     fields: {
         adminId: Fields._id,
-        roleId: Fields._id
+        roleCode: '角色编码|string|2|50|null|1|^[a-zA-Z0-9_]+$'
     },
     handler: async (befly, ctx) => {
         try {
-            // 查询角色是否存在
+            // 查询角色是否存在（使用 roleCode 而非 roleId）
             const role = await befly.db.getOne({
                 table: 'addon_admin_role',
-                where: { id: ctx.body.roleId }
+                where: { code: ctx.body.roleCode }
             });
 
             if (!role) {
@@ -30,7 +30,7 @@ export default {
                 table: 'addon_admin_admin',
                 where: { id: ctx.body.adminId },
                 data: {
-                    roleId: ctx.body.roleId,
+                    roleId: role.id,
                     roleCode: role.code,
                     roleType: roleType
                 }
