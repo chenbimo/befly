@@ -4,6 +4,5 @@
     "icon": "图标名称|string|0|50|null|0|null",
     "sort": "排序|number|0|9999|0|0|null",
     "pid": "父级ID|number|0|999999999999999|0|1|null",
-    "type": "菜单类型|number|1|2|1|1|^(1|2)$",
-    "status": "状态|number|0|1|1|1|^(0|1)$"
+    "type": "菜单类型|number|1|2|1|1|^(1|2)$"
 }

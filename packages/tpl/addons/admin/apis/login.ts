@@ -83,8 +83,8 @@ export default {
             return No('请提供正确的登录信息');
         }
 
-        // 检查账号状态
-        if (admin.status !== 1) {
+        // 检查账号状态（state=1 表示正常，state=2 表示禁用）
+        if (admin.state === 2) {
             return No('账号已被禁用');
         }
 

@@ -6,12 +6,14 @@
  * 流程：
  * 1. 读取 menu.json 配置文件
  * 2. 根据菜单的 path 字段检查是否存在
- * 3. 存在则更新其他字段（name、icon、sort、type、status、pid）
+ * 3. 存在则更新其他字段（name、icon、sort、type、pid）
  * 4. 不存在则新增菜单记录
  * 5. 递归处理子菜单，保持层级关系
+ * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
 import { Env, Logger, initDatabase, closeDatabase } from 'befly';
+import { RedisHelper } from 'befly/utils/redisHelper';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import menuConfig from '../config/menu.json';
@@ -60,8 +62,7 @@ async function syncMenus(helper: any, menus: any[], parentId: number = 0): Promi
                         name: menu.name,
                         icon: menu.icon || '',
                         sort: menu.sort || 0,
-                        type: menu.type || 1,
-                        status: menu.status ?? 1
+                        type: menu.type || 1
                     }
                 });
                 menuId = existing.id;
@@ -77,8 +78,7 @@ async function syncMenus(helper: any, menus: any[], parentId: number = 0): Promi
                         path: menu.path || '',
                         icon: menu.icon || '',
                         sort: menu.sort || 0,
-                        type: menu.type || 1,
-                        status: menu.status ?? 1
+                        type: menu.type || 1
                     }
                 });
                 stats.created++;
@@ -184,6 +184,24 @@ async function syncMenu(): Promise<boolean> {
         Logger.info(`✅ 总计处理: ${result.ids.length} 个`);
         Logger.info(`📋 当前顶级菜单: ${allMenus.filter((m: any) => m.pid === 0).length} 个`);
         Logger.info(`📋 当前子菜单: ${allMenus.filter((m: any) => m.pid !== 0).length} 个`);
+
+        // 5. 缓存菜单到 Redis
+        Logger.info('\n=== 步骤 4: 缓存菜单到 Redis ===');
+        try {
+            // 查询完整的菜单数据用于缓存（只缓存 state=1 的正常菜单）
+            const menusForCache = await helper.getAll({
+                table: 'addon_admin_menu',
+                fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
+                orderBy: ['sort#ASC', 'id#ASC']
+            });
+
+            // 缓存到 Redis（使用 RedisHelper）
+            await RedisHelper.setObject('befly:menus:all', menusForCache);
+            Logger.info(`✅ 已缓存 ${menusForCache.length} 个菜单到 Redis (Key: befly:menus:all)`);
+        } catch (cacheError: any) {
+            Logger.warn('⚠️ 菜单缓存失败（不影响同步）:', cacheError?.message || String(cacheError));
+            Logger.error('缓存错误详情:', cacheError);
+        }
 
         return true;
     } catch (error: any) {

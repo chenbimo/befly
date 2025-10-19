@@ -10,7 +10,7 @@ export interface Admin {
     phone?: string;
     password: string;
     role: 'admin' | 'user';
-    status: 0 | 1;
+    state: 0 | 1 | 2; // 0=删除, 1=正常, 2=禁用
     last_login_time?: string;
     last_login_ip?: string;
     created_at?: string;

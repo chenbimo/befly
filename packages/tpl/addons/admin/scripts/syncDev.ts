@@ -89,8 +89,7 @@ export async function SyncDev(): Promise<boolean> {
                     name: '开发者角色',
                     description: '拥有所有菜单权限的开发者角色',
                     menus: menuIds,
-                    apis: '', // 接口权限暂时为空
-                    status: 1
+                    apis: '' // 接口权限暂时为空
                 }
             });
             Logger.info('dev 角色菜单权限已更新');
@@ -104,7 +103,6 @@ export async function SyncDev(): Promise<boolean> {
                     description: '拥有所有菜单权限的开发者角色',
                     menus: menuIds,
                     apis: '', // 接口权限暂时为空
-                    status: 1,
                     sort: 0
                 }
             });

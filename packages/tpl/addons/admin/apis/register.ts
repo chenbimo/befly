@@ -37,8 +37,7 @@ export default {
                 name: ctx.body.name,
                 email: ctx.body.email,
                 password: hashedPassword,
-                role: 'user', // 默认为普通用户
-                status: 1
+                role: 'user' // 默认为普通用户，state 由框架自动设置为 1
             }
         });
 

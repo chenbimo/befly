@@ -12,8 +12,8 @@ export default {
         icon: adminMenuTable.icon,
         sort: adminMenuTable.sort,
         pid: adminMenuTable.pid,
-        type: adminMenuTable.type,
-        status: adminMenuTable.status
+        type: adminMenuTable.type
+        // state 由框架自动设置为 1（正常）
     },
     handler: async (befly, ctx) => {
         try {

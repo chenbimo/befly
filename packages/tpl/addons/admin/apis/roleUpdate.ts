@@ -13,8 +13,8 @@ export default {
         description: adminRoleTable.description,
         menus: adminRoleTable.menus,
         apis: adminRoleTable.apis,
-        sort: adminRoleTable.sort,
-        status: adminRoleTable.status
+        sort: adminRoleTable.sort
+        // state 需要禁用时传 2，启用时传 1
     },
     handler: async (befly, ctx) => {
         try {
@@ -40,8 +40,8 @@ export default {
                     description: ctx.body.description,
                     menus: ctx.body.menus || '',
                     apis: ctx.body.apis || '',
-                    sort: ctx.body.sort,
-                    status: ctx.body.status
+                    sort: ctx.body.sort
+                    // state 字段不在此处更新，需要禁用/启用时单独处理
                 }
             });
 

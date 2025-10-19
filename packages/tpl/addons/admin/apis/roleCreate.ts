@@ -12,8 +12,8 @@ export default {
         description: adminRoleTable.description,
         menus: adminRoleTable.menus,
         apis: adminRoleTable.apis,
-        sort: adminRoleTable.sort,
-        status: adminRoleTable.status
+        sort: adminRoleTable.sort
+        // state 由框架自动设置为 1（正常）
     },
     handler: async (befly, ctx) => {
         try {
@@ -35,8 +35,8 @@ export default {
                     description: ctx.body.description,
                     menus: ctx.body.menus || '',
                     apis: ctx.body.apis || '',
-                    sort: ctx.body.sort,
-                    status: ctx.body.status
+                    sort: ctx.body.sort
+                    // state 由框架自动设置为 1
                 }
             });
 

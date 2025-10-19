@@ -1,9 +1,10 @@
 /**
  * 获取当前用户的菜单权限
  * 说明：
- * 1. 根据当前登录用户的角色，查询其可访问的菜单
- * 2. 返回树形结构的菜单数据
- * 3. 仅返回状态为启用的菜单
+ * 1. 从 Redis 缓存读取所有菜单（如果缓存不存在则从数据库查询并缓存）
+ * 2. 根据当前登录用户的角色过滤可访问的菜单
+ * 3. 返回树形结构的菜单数据
+ * 4. 仅返回状态为启用的菜单
  */
 
 import { Yes, No } from 'befly';
@@ -45,17 +46,32 @@ export default {
                 return Yes('获取菜单成功', []);
             }
 
-            // 4. 查询菜单详情（仅查询启用状态的菜单）
-            const menus = await befly.db.getAll({
-                table: 'addon_admin_menu',
-                where: {
-                    id$in: menuIds,
-                    status: 1
-                },
-                orderBy: ['sort#ASC', 'id#ASC']
-            });
+            // 4. 从 Redis 缓存读取所有菜单
+            let allMenus = await befly.redis.getObject<any[]>('befly:menus:all');
 
-            // 5. 构建树形结构
+            // 如果缓存不存在，从数据库查询并缓存
+            if (!allMenus || allMenus.length === 0) {
+                befly.logger.info('菜单缓存未命中，从数据库查询');
+                allMenus = await befly.db.getAll({
+                    table: 'addon_admin_menu',
+                    fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
+                    orderBy: ['sort#ASC', 'id#ASC']
+                });
+
+                // 回写缓存
+                if (allMenus.length > 0) {
+                    await befly.redis.setObject('befly:menus:all', allMenus);
+                    befly.logger.info(`已缓存 ${allMenus.length} 个菜单到 Redis`);
+                }
+            } else {
+                befly.logger.debug(`从 Redis 缓存读取 ${allMenus.length} 个菜单`);
+            }
+
+            // 5. 根据角色权限过滤菜单
+            const menuIdSet = new Set(menuIds.map(String)); // 转为字符串 Set 方便比较
+            const authorizedMenus = allMenus.filter((menu: any) => menuIdSet.has(String(menu.id)));
+
+            // 6. 构建树形结构
             const buildTree = (items: any[], pid = 0) => {
                 const tree: any[] = [];
                 for (const item of items) {
@@ -78,7 +94,7 @@ export default {
                 return tree;
             };
 
-            const menuTree = buildTree(menus);
+            const menuTree = buildTree(authorizedMenus);
 
             return Yes('获取菜单成功', menuTree);
         } catch (error) {

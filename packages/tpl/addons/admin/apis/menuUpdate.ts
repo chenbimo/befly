@@ -13,8 +13,8 @@ export default {
         icon: adminMenuTable.icon,
         sort: adminMenuTable.sort,
         pid: adminMenuTable.pid,
-        type: adminMenuTable.type,
-        status: adminMenuTable.status
+        type: adminMenuTable.type
+        // state 需要禁用时传 2，启用时传 1
     },
     handler: async (befly, ctx) => {
         try {
@@ -27,8 +27,8 @@ export default {
                     icon: ctx.body.icon,
                     sort: ctx.body.sort,
                     pid: ctx.body.pid,
-                    type: ctx.body.type,
-                    status: ctx.body.status
+                    type: ctx.body.type
+                    // state 字段不在此处更新，需要禁用/启用时单独处理
                 }
             });
 
