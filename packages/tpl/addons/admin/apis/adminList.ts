@@ -2,15 +2,21 @@
  * 获取管理员列表
  */
 
-import { Yes } from 'befly';
+import { Yes, Fields } from 'befly';
 
 export default {
     name: '获取管理员列表',
+    fields: {
+        page: Fields.page,
+        limit: Fields.limit
+    },
     handler: async (befly, ctx) => {
         // 查询所有管理员（框架自动排除password字段，自动转换字段名为小驼峰）
         const result = await befly.db.getList({
             table: 'addon_admin_admin',
-            order: 'created_at DESC'
+            page: ctx.body.page || 1,
+            limit: ctx.body.limit || 10,
+            orderBy: ['created_at#DESC']
         });
 
         return Yes('获取成功', result);

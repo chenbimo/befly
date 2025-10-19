@@ -241,8 +241,8 @@ export interface QueryOptions {
     fields?: string[];
     /** WHERE 条件 */
     where?: WhereConditions;
-    /** 排序，如 'id DESC' */
-    orderBy?: string;
+    /** 排序（格式：["字段#ASC", "字段#DESC"]） */
+    orderBy?: string[];
     /** 页码（从 1 开始） */
     page?: number;
     /** 每页数量 */
