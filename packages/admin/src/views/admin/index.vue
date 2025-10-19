@@ -31,26 +31,28 @@
         </div>
 
         <!-- 中：数据表格 -->
-        <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered stripe hover>
-            <template #state="{ row }">
-                <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
-                <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
-                <t-tag v-else theme="danger">已删除</t-tag>
-            </template>
+        <div class="table-wrapper">
+            <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered stripe hover max-height="100%">
+                <template #state="{ row }">
+                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
+                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
+                    <t-tag v-else theme="danger">已删除</t-tag>
+                </template>
 
-            <template #lastLoginTime="{ row }">
-                <span v-if="row.lastLoginTime">{{ new Date(Number(row.lastLoginTime)).toLocaleString() }}</span>
-                <span v-else>-</span>
-            </template>
+                <template #lastLoginTime="{ row }">
+                    <span v-if="row.lastLoginTime">{{ new Date(Number(row.lastLoginTime)).toLocaleString() }}</span>
+                    <span v-else>-</span>
+                </template>
 
-            <template #operation="{ row }">
-                <t-space>
-                    <t-link theme="primary" @click="$Method.handleRole(row)">分配角色</t-link>
-                    <t-link theme="warning" @click="$Method.handleEdit(row)">编辑</t-link>
-                    <t-link theme="danger" @click="$Method.handleDelete(row)">删除</t-link>
-                </t-space>
-            </template>
-        </t-table>
+                <template #operation="{ row }">
+                    <t-space>
+                        <t-link theme="primary" @click="$Method.handleRole(row)">分配角色</t-link>
+                        <t-link theme="warning" @click="$Method.handleEdit(row)">编辑</t-link>
+                        <t-link theme="danger" @click="$Method.handleDelete(row)">删除</t-link>
+                    </t-space>
+                </template>
+            </t-table>
+        </div>
 
         <!-- 下：分页栏 -->
         <div class="pagination-wrapper">
@@ -255,10 +257,13 @@ $Method.loadUserList();
     display: flex;
     flex-direction: column;
     gap: 16px;
+    padding: 16px;
+    overflow: hidden; // 防止外层滚动
 }
 
 // 上：工具栏
 .toolbar {
+    flex-shrink: 0; // 不允许收缩
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -278,8 +283,20 @@ $Method.loadUserList();
     }
 }
 
+// 中：表格区域（撑满剩余空间并支持滚动）
+.table-wrapper {
+    flex: 1; // 占据剩余空间
+    overflow: hidden; // 隐藏超出部分
+    display: flex;
+    flex-direction: column;
+    background: var(--td-bg-color-container);
+    border-radius: var(--td-radius-default);
+    box-shadow: var(--td-shadow-1);
+}
+
 // 下：分页栏
 .pagination-wrapper {
+    flex-shrink: 0; // 不允许收缩
     display: flex;
     justify-content: flex-end;
     padding: 16px;

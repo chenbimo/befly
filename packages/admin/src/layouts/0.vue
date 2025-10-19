@@ -1,12 +1,25 @@
 <template>
     <t-layout class="layout-container">
-        <!-- 侧边栏 -->
-        <t-aside :width="$Data.collapsed ? '64px' : '240px'" class="sidebar">
-            <div class="logo">
-                <h2 v-if="!$Data.collapsed">Befly Admin</h2>
-                <h2 v-else class="logo-short">B</h2>
+        <!-- 顶部导航栏（全宽） -->
+        <t-header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <h2>Befly Admin</h2>
+                </div>
             </div>
-            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" :expanded="$Data.expandedKeys" :collapsed="$Data.collapsed" :expand-type="$Data.collapsed ? 'popup' : 'normal'" theme="light" style="border-right: none">
+            <div class="header-right">
+                <t-dropdown :options="userMenuOptions" @click="$Method.handleUserMenu">
+                    <t-button variant="text">
+                        <user-icon />
+                        <span class="ml-2">管理员</span>
+                    </t-button>
+                </t-dropdown>
+            </div>
+        </t-header>
+
+        <!-- 菜单栏（全宽，水平布局） -->
+        <t-header class="menu-bar">
+            <t-menu :value="activeMenu" @change="$Method.handleMenuChange" mode="horizontal" theme="light" style="width: 100%">
                 <template v-for="item in $Data.menuItems" :key="item.value">
                     <!-- 一级菜单项（无子菜单） -->
                     <t-menu-item v-if="!item.children || item.children.length === 0" :value="item.value">
@@ -29,34 +42,14 @@
                     </t-submenu>
                 </template>
             </t-menu>
-        </t-aside>
+            <!-- 调试信息 -->
+            <div v-if="$Data.menuItems.length === 0" style="padding: 0 16px; color: #999; font-size: 14px">菜单加载中...（{{ $Data.menuItems.length }} 项）</div>
+        </t-header>
 
-        <!-- 主内容区 -->
-        <t-layout>
-            <!-- 顶部导航栏 -->
-            <t-header class="header">
-                <div class="header-left">
-                    <t-button variant="text" @click="$Method.toggleCollapse" class="collapse-btn">
-                        <menu-fold-icon v-if="!$Data.collapsed" />
-                        <menu-unfold-icon v-else />
-                    </t-button>
-                    <h3>{{ currentTitle }}</h3>
-                </div>
-                <div class="header-right">
-                    <t-dropdown :options="userMenuOptions" @click="$Method.handleUserMenu">
-                        <t-button variant="text">
-                            <user-icon />
-                            <span class="ml-2">管理员</span>
-                        </t-button>
-                    </t-dropdown>
-                </div>
-            </t-header>
-
-            <!-- 内容区域 -->
-            <t-content class="content">
-                <RouterView />
-            </t-content>
-        </t-layout>
+        <!-- 内容区域 -->
+        <t-content class="content">
+            <RouterView />
+        </t-content>
     </t-layout>
 </template>
 
@@ -69,8 +62,6 @@ const permissionStore = usePermissionStore();
 
 // 响应式数据
 const $Data = $ref({
-    collapsed: localStorage.getItem('sidebar-collapsed') === 'true',
-    expandedKeys: [] as string[],
     menuItems: [] as any[]
 });
 
@@ -78,8 +69,6 @@ const $Data = $ref({
 const activeMenu = computed(() => {
     return route.path;
 });
-
-const currentTitle = computed(() => route.meta.title || '');
 
 // 图标映射 - 支持小写和Icon后缀两种格式
 const iconMap: Record<string, any> = {
@@ -117,11 +106,6 @@ const userMenuOptions = [
 
 // 方法
 const $Method = {
-    // 切换折叠状态
-    toggleCollapse() {
-        $Data.collapsed = !$Data.collapsed;
-        localStorage.setItem('sidebar-collapsed', String($Data.collapsed));
-    },
     // 从权限 store 构建菜单结构
     buildMenuFromPermissions() {
         const menus = permissionStore.userMenus;
@@ -149,9 +133,6 @@ const $Method = {
         };
 
         $Data.menuItems = menus.map(convertMenu);
-
-        // 默认展开所有包含子菜单的项
-        $Data.expandedKeys = $Data.menuItems.filter((m) => m.children && m.children.length).map((m) => m.value);
     },
     // 处理菜单切换
     handleMenuChange(value: string) {
@@ -186,49 +167,25 @@ const $Method = {
     }
 };
 
-// 监听权限菜单变化，自动重建菜单
-watch(
-    () => permissionStore.userMenus,
-    () => {
-        $Method.buildMenuFromPermissions();
-    },
-    { deep: true, immediate: true }
-);
+// 组件挂载后构建菜单
+onMounted(() => {
+    console.log('[Layout] 组件已挂载');
+    console.log('[Layout] 菜单数据:', permissionStore.userMenus);
+    console.log('[Layout] 菜单数量:', permissionStore.userMenus.length);
+    $Method.buildMenuFromPermissions();
+    console.log('[Layout] 构建后的菜单项:', $Data.menuItems);
+});
 </script>
 
 <style scoped lang="scss">
 .layout-container {
     height: 100vh;
+    display: flex;
+    flex-direction: column;
     background: var(--td-bg-color-page);
 }
 
-.sidebar {
-    transition: width 0.3s ease;
-    background: var(--td-bg-color-container);
-    border-right: 1px solid var(--td-border-level-1-color);
-}
-
-.logo {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid var(--td-border-level-1-color);
-    background: var(--td-bg-color-container);
-}
-
-.logo h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--td-text-color-primary);
-}
-
-.logo-short {
-    font-size: 24px;
-    color: var(--td-brand-color);
-}
-
+// 顶部导航栏
 .header {
     display: flex;
     align-items: center;
@@ -237,6 +194,7 @@ watch(
     background: var(--td-bg-color-container);
     border-bottom: 1px solid var(--td-border-level-1-color);
     height: 64px;
+    flex-shrink: 0;
 }
 
 .header-left {
@@ -245,15 +203,16 @@ watch(
     gap: 16px;
 }
 
-.header-left h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--td-text-color-primary);
+.logo {
+    display: flex;
+    align-items: center;
 }
 
-.collapse-btn {
+.logo h2 {
+    margin: 0;
     font-size: 20px;
+    font-weight: 600;
+    color: var(--td-text-color-primary);
 }
 
 .header-right {
@@ -266,10 +225,26 @@ watch(
     margin-left: 8px;
 }
 
+// 菜单栏（水平布局）
+.menu-bar {
+    height: 48px;
+    flex-shrink: 0;
+    background: var(--td-bg-color-container);
+    border-bottom: 1px solid var(--td-border-level-1-color);
+    padding: 0;
+    display: flex;
+    align-items: center;
+
+    :deep(.t-menu) {
+        width: 100%;
+        border-bottom: none;
+    }
+}
+
+// 内容区域
 .content {
-    padding: 24px;
+    flex: 1;
     background: var(--td-bg-color-page);
-    overflow-y: auto;
-    height: calc(100vh - 64px);
+    overflow: hidden;
 }
 </style>
