@@ -6,7 +6,6 @@ import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
 import autoRouter from './libs/autoRouter';
-import { tinyIcons } from './libs/icons';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -22,9 +21,7 @@ export default defineConfig({
                 'vue',
                 'vue-router',
                 'pinia',
-                // OpenTiny 图标自动导入（全部 533 个图标，配置见 libs/icons.ts）
                 {
-                    '@opentiny/vue-icon': tinyIcons as any,
                     '@opentiny/vue': ['Modal', 'Notify', 'Loading', 'Message']
                 }
             ],
@@ -39,6 +36,7 @@ export default defineConfig({
         // 自动导入 OpenTiny 组件
         Components({
             resolvers: [TinyVueSingleResolver],
+            dirs: ['src/components'],
             dts: 'src/types/components.d.ts'
         })
     ],

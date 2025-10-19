@@ -5,7 +5,7 @@
             <div class="toolbar-left">
                 <tiny-button type="primary" @click="$Method.handleAdd">
                     <template #icon>
-                        <icon-plus />
+                        <Icon name="Plus" :size="16" />
                     </template>
                     添加管理员
                 </tiny-button>
@@ -16,13 +16,13 @@
                     <tiny-select v-model="$Data.searchState" placeholder="状态" clearable :options="$Data.stateOptions" @change="$Method.handleSearch" style="width: 120px" />
                     <tiny-button @click="$Method.handleSearch">
                         <template #icon>
-                            <icon-search />
+                            <Icon name="Search" :size="16" />
                         </template>
                         搜索
                     </tiny-button>
                     <tiny-button @click="$Method.handleReset">
                         <template #icon>
-                            <icon-refresh />
+                            <Icon name="RotateCw" :size="16" />
                         </template>
                         重置
                     </tiny-button>
@@ -56,15 +56,15 @@
                             <template #dropdown>
                                 <tiny-dropdown-menu>
                                     <tiny-dropdown-item :item-data="{ command: 'role' }">
-                                        <iconUser style="margin-right: 8px" />
+                                        <Icon name="User" :size="16" style="margin-right: 8px" />
                                         分配角色
                                     </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'edit' }">
-                                        <iconEdit style="margin-right: 8px" />
+                                        <Icon name="Edit" :size="16" style="margin-right: 8px" />
                                         编辑
                                     </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'delete' }" divided>
-                                        <icon-delete style="margin-right: 8px" />
+                                        <Icon name="Trash2" :size="16" style="margin-right: 8px" />
                                         删除
                                     </tiny-dropdown-item>
                                 </tiny-dropdown-menu>
