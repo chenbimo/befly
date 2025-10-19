@@ -19,7 +19,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="[]" :get-menu-data-sync="$Method.getMenuDataSync" style="height: 100%" width-adapt menu-collapsible @node-click="$Method.handleMenuClick" />
+            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="$Data.expandedKeys" :default-current-key="$Data.currentMenuKey" node-key="id" style="height: 100%" only-check-children width-adapt @current-change="$Method.handleMenuClick" />
         </div>
 
         <!-- 内容区域 -->
@@ -38,7 +38,9 @@ const permissionStore = usePermissionStore();
 
 // 响应式数据
 const $Data = $ref({
-    menuItems: [] as any[]
+    menuItems: [] as any[],
+    expandedKeys: [] as string[],
+    currentMenuKey: '' as string
 });
 
 // 当前激活菜单
@@ -46,6 +48,34 @@ const activeMenu = computed(() => route.path);
 
 // 方法
 const $Method = {
+    // 根据当前路径查找对应的菜单项ID和父级ID
+    findMenuByPath(menus: any[], path: string, parentIds: string[] = []): { menuId: string; parentIds: string[] } | null {
+        for (const menu of menus) {
+            if (menu.url === path) {
+                return { menuId: String(menu.id), parentIds };
+            }
+            if (menu.children && menu.children.length > 0) {
+                const result = $Method.findMenuByPath(menu.children, path, [...parentIds, String(menu.id)]);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+        return null;
+    },
+
+    // 更新当前激活的菜单
+    updateActiveMenu() {
+        const currentPath = route.path;
+        const result = $Method.findMenuByPath($Data.menuItems, currentPath);
+
+        if (result) {
+            // 设置当前选中的菜单（高亮）
+            $Data.currentMenuKey = result.menuId;
+            // 展开父级菜单
+            $Data.expandedKeys = result.parentIds;
+        }
+    },
     // 构建菜单
     buildMenuFromPermissions() {
         const menus = permissionStore.userMenus;
@@ -71,11 +101,9 @@ const $Method = {
         };
 
         $Data.menuItems = menus.map(convertMenuItem);
-    },
 
-    // TreeMenu 同步获取菜单数据
-    getMenuDataSync() {
-        return $Data.menuItems;
+        // 构建菜单后更新激活状态
+        $Method.updateActiveMenu();
     },
 
     // 处理菜单点击
@@ -106,6 +134,14 @@ const $Method = {
 onMounted(() => {
     $Method.buildMenuFromPermissions();
 });
+
+// 监听路由变化，更新激活菜单
+watch(
+    () => route.path,
+    () => {
+        $Method.updateActiveMenu();
+    }
+);
 </script>
 
 <style scoped lang="scss">
