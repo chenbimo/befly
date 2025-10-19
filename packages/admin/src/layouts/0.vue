@@ -19,7 +19,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.menuItems" :default-expanded-keys="$Data.expandedKeys" :default-current-key="$Data.currentMenuKey" node-key="id" style="height: 100%" only-check-children width-adapt @current-change="$Method.handleMenuClick" />
+            <tiny-tree-menu :data="$Data.menuItems" node-key="id" style="height: 100%" only-check-children width-adapt />
         </div>
 
         <!-- 内容区域 -->
@@ -84,33 +84,15 @@ const $Method = {
             return;
         }
 
-        // 转换为 TreeMenu 需要的格式
-        const convertMenuItem = (item: any): any => {
-            const menuItem: any = {
-                id: String(item.id),
-                label: item.name,
-                url: item.path || ''
-            };
-
-            // 递归处理子菜单
-            if (item.children && item.children.length > 0) {
-                menuItem.children = item.children.map(convertMenuItem);
-            }
-
-            return menuItem;
-        };
-
         $Data.menuItems = menus.map(convertMenuItem);
-
-        // 构建菜单后更新激活状态
-        $Method.updateActiveMenu();
     },
 
     // 处理菜单点击
     handleMenuClick(data: any) {
-        if (data.url) {
-            router.push({ path: data.url });
-        }
+        console.log('🔥[ data ]-111', data);
+        // if (data.url) {
+        //     router.push('/#/' + data.url);
+        // }
     },
 
     // 处理用户菜单点击
@@ -134,14 +116,6 @@ const $Method = {
 onMounted(() => {
     $Method.buildMenuFromPermissions();
 });
-
-// 监听路由变化，更新激活菜单
-watch(
-    () => route.path,
-    () => {
-        $Method.updateActiveMenu();
-    }
-);
 </script>
 
 <style scoped lang="scss">

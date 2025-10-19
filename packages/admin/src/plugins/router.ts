@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import autoRoutes from 'virtual:auto-routes';
 import { usePermissionStore } from '@/stores/permission';
 
@@ -7,7 +7,7 @@ import { usePermissionStore } from '@/stores/permission';
  * 可直接在 main.ts 中使用 app.use(router)
  */
 export const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHashHistory(import.meta.env.BASE_URL),
     routes: autoRoutes
 });
 
