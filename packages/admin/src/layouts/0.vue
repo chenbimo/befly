@@ -177,7 +177,7 @@ onMounted(() => {
         align-items: center;
         justify-content: space-between;
         padding: 0 24px;
-        background: var(--td-bg-color-container);
+        background: #fff;
         border-bottom: 1px solid var(--td-border-level-1-color);
         z-index: 100;
 

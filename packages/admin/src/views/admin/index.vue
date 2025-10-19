@@ -1,5 +1,5 @@
 <template>
-    <div class="user-manage">
+    <div class="page-admin">
         <!-- 上：过滤和操作栏 -->
         <div class="toolbar">
             <div class="toolbar-left">
@@ -32,7 +32,7 @@
 
         <!-- 中：数据表格 -->
         <div class="table-wrapper">
-            <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered stripe hover max-height="100%">
+            <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered hover max-height="100%">
                 <template #state="{ row }">
                     <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
                     <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
@@ -252,7 +252,7 @@ $Method.loadUserList();
 </script>
 
 <style scoped lang="scss">
-.user-manage {
+.page-admin {
     height: 100%;
     display: flex;
     flex-direction: column;
