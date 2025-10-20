@@ -2,8 +2,8 @@
     <tiny-dialog-box v-model:visible="$Visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
         <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($Form.tree = el)" />
         <template #footer>
-            <tiny-button @click="$Method.onClose">取消</tiny-button>
-            <tiny-button type="primary" @click="$Method.handleSubmit">保存</tiny-button>
+            <tiny-button @click="$Visible = false">取消</tiny-button>
+            <tiny-button type="primary" @click="$Method.onSubmit">保存</tiny-button>
         </template>
     </tiny-dialog-box>
 </template>
@@ -31,10 +31,6 @@ const $Data = $ref({
 
 // 方法集合
 const $Method = {
-    onClose() {
-        $Visible.value = false;
-    },
-
     // 构建菜单树
     buildMenuTree(list, pid = 0) {
         const result = [];
@@ -87,7 +83,7 @@ const $Method = {
     },
 
     // 提交表单
-    async handleSubmit() {
+    async onSubmit() {
         try {
             if (!$Form.tree) {
                 Modal.message({ message: '菜单树未初始化', status: 'error' });
