@@ -1,5 +1,5 @@
 <template>
-    <component :is="iconComponent" :size="size" :color="color" :stroke-width="strokeWidth" v-bind="$attrs" />
+    <component :is="iconComponent" :size="size" :color="color" :stroke-width="strokeWidth" style="margin-right: 8px; vertical-align: middle" v-bind="$attrs" />
 </template>
 
 <script setup>

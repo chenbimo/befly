@@ -71,47 +71,11 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-
-    // 工具栏
-    .main-toolbar {
-        flex: 0 0 auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px;
-        background: #fff;
-        .toolbar-left {
-            display: flex;
-            gap: 12px;
-        }
-
-        .toolbar-right {
-            display: flex;
-            gap: 12px;
-        }
-
-        .toolbar-search {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-    }
-
-    // 表格区域
-    .main-table {
-        flex: 1 1 100%;
-        overflow: hidden;
-        background: #fff;
-        .custom-table-cell-class {
-            background-color: #e9e9e9 !important;
-        }
-    }
-
-    // 分页器
-    .main-page {
-        flex: 0 0 auto;
-        padding: 0 10px;
-        background: #fff;
-        border-top: 1px solid var(--tv-color-border-divider);
-    }
+}
+.custom-toolbar {
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    height: 52px;
+    justify-content: space-between;
 }

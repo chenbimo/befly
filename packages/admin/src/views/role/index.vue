@@ -1,15 +1,18 @@
 <template>
     <div class="page-role page-table">
-        <tiny-grid :fetch-data="$Method.fetchData()" :pager="$Data.pagerConfig" header-cell-class-name="custom-table-cell-class" size="small" height="auto" seq-serial border>
+        <tiny-grid :fetch-data="$Method.fetchData()" :pager="$Data.pagerConfig" header-cell-class-name="custom-table-cell-class" size="small" height="calc(100vh - 128px)" seq-serial border>
             <template #toolbar>
-                <tiny-grid-toolbar class="search-toolbar" setting full-screen>
-                    <template #buttons>
-                        <div>
-                            <tiny-search class="w-200" placeholder="请输入公司名称"></tiny-search>
-                            <!-- <tiny-button class="ml-8" @click="search">搜索</tiny-button> -->
-                        </div>
-                    </template>
-                </tiny-grid-toolbar>
+                <div class="custom-toolbar">
+                    <div class="left">
+                        <tiny-button type="primary" @click="$Method.onAction('add', {})">
+                            <Icon name="Plus" />
+                            新增角色
+                        </tiny-button>
+                    </div>
+                    <div class="right">
+                        <tiny-button icon="RefreshCw" circle @click="$Method.handleRefresh()" />
+                    </div>
+                </div>
             </template>
             <tiny-grid-column type="index" title="序号" :width="60" />
             <tiny-grid-column field="name" title="角色名称" />
@@ -23,21 +26,21 @@
                     <tiny-tag v-else type="danger">已删除</tiny-tag>
                 </template>
             </tiny-grid-column>
-            <tiny-grid-column title="操作" :width="120" align="center">
+            <tiny-grid-column title="操作" :width="120" align="right">
                 <template #default="{ row }">
                     <tiny-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                         <template #dropdown>
                             <tiny-dropdown-menu>
                                 <tiny-dropdown-item :item-data="{ command: 'edit' }">
-                                    <Icon name="Edit" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                                    <Icon name="Edit" />
                                     编辑
                                 </tiny-dropdown-item>
                                 <tiny-dropdown-item :item-data="{ command: 'menu' }">
-                                    <Icon name="Settings" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                                    <Icon name="Settings" />
                                     菜单权限
                                 </tiny-dropdown-item>
                                 <tiny-dropdown-item :item-data="{ command: 'delete' }" divided>
-                                    <Icon name="Trash2" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                                    <Icon name="Trash2" />
                                     删除
                                 </tiny-dropdown-item>
                             </tiny-dropdown-menu>

@@ -22,13 +22,13 @@
         </tiny-form>
         <template #footer>
             <tiny-button @click="$Visible = false">取消</tiny-button>
-            <tiny-button type="primary" @click="$Method.handleSubmit">确定</tiny-button>
+            <tiny-button type="primary" @click="$Method.onSubmit">确定</tiny-button>
         </template>
     </tiny-dialog-box>
 </template>
 
 <script setup>
-const $Visible = defineModel({ default: false });
+let $Visible = defineModel({ default: false });
 
 const $Prop = defineProps({
     actionType: {
@@ -73,28 +73,19 @@ const $Data2 = $shallowRef({
 
 // 方法集合
 const $Method = {
-    // 提交表单
-    async handleSubmit() {
+    async onSubmit() {
         try {
-            const valid = await $From.validate();
+            const valid = await $From.form.validate();
             if (!valid) return;
 
-            const apiUrl = $Prop.actionType ? '/addon/admin/roleUpdate' : '/addon/admin/roleCreate';
-            const res = await $Http(apiUrl, formData);
+            const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/roleCreate' : '/addon/admin/roleUpdate', $Data.formData);
 
-            if (res.code === 0) {
-                Modal.message({
-                    message: $Prop.actionType ? '编辑成功' : '添加成功',
-                    status: 'success'
-                });
-                $Method.handleClose();
-                $Emit('success');
-            } else {
-                Modal.message({
-                    message: res.msg || '操作失败',
-                    status: 'error'
-                });
-            }
+            Modal.message({
+                message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
+                status: 'success'
+            });
+            $Visible = false;
+            $Emit('success');
         } catch (error) {
             console.error('提交失败:', error);
             Modal.message({
