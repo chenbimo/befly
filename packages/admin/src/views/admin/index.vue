@@ -1,5 +1,5 @@
 <template>
-    <div class="page-data">
+    <div class="page-admin page-table">
         <!-- 上：过滤和操作栏 -->
         <div class="main-toolbar">
             <div class="toolbar-left">
@@ -11,7 +11,6 @@
                 </tiny-button>
             </div>
             <div class="toolbar-right">
-                <!-- <div class="toolbar-search"> -->
                 <tiny-input v-model="$Data.searchKeyword" placeholder="搜索用户名/邮箱" clearable @keyup.enter="$Method.handleSearch" style="width: 200px" />
                 <tiny-select v-model="$Data.searchState" placeholder="状态" clearable :options="$Data.stateOptions" @change="$Method.handleSearch" style="width: 120px" />
                 <tiny-button circle @click="$Method.handleSearch" title="搜索">
@@ -20,7 +19,6 @@
                 <tiny-button circle @click="$Method.handleReset" title="重置">
                     <Icon name="RotateCw" :size="16" />
                 </tiny-button>
-                <!-- </div> -->
             </div>
         </div>
 

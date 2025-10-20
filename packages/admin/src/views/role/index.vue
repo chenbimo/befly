@@ -1,27 +1,16 @@
 <template>
-    <div class="role-page">
-        <!-- 上：工具栏 -->
-        <div class="toolbar">
-            <div class="left">
-                <tiny-button type="primary" @click="$Method.onAction('add', {})">
-                    <template #icon>
-                        <Icon name="Plus" :size="16" />
+    <div class="page-role page-table">
+        <tiny-grid :fetch-data="$Method.fetchData()" :pager="$Data.pagerConfig" header-cell-class-name="custom-table-cell-class" size="small" height="auto" seq-serial border>
+            <template #toolbar>
+                <tiny-grid-toolbar class="search-toolbar" setting full-screen>
+                    <template #buttons>
+                        <div>
+                            <tiny-search class="w-200" placeholder="请输入公司名称"></tiny-search>
+                            <!-- <tiny-button class="ml-8" @click="search">搜索</tiny-button> -->
+                        </div>
                     </template>
-                    添加角色
-                </tiny-button>
-            </div>
-            <div class="right">
-                <tiny-button @click="$Method.handleRefresh">
-                    <template #icon>
-                        <Icon name="RotateCw" :size="16" />
-                    </template>
-                    刷新
-                </tiny-button>
-            </div>
-        </div>
-
-        <!-- 中：数据表格 -->
-        <tiny-grid :data="$Data.roleList" height="calc(100vh - 240px)">
+                </tiny-grid-toolbar>
+            </template>
             <tiny-grid-column type="index" title="序号" :width="60" />
             <tiny-grid-column field="name" title="角色名称" />
             <tiny-grid-column field="code" title="角色代码" :width="150" />
@@ -34,9 +23,9 @@
                     <tiny-tag v-else type="danger">已删除</tiny-tag>
                 </template>
             </tiny-grid-column>
-            <tiny-grid-column title="操作" :width="260">
+            <tiny-grid-column title="操作" :width="120" align="center">
                 <template #default="{ row }">
-                    <tiny-dropdown title="操作" trigger="click" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
+                    <tiny-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                         <template #dropdown>
                             <tiny-dropdown-menu>
                                 <tiny-dropdown-item :item-data="{ command: 'edit' }">
@@ -58,49 +47,43 @@
             </tiny-grid-column>
         </tiny-grid>
 
-        <!-- 下：分页器 -->
-        <div class="pagination">
-            <tiny-pager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.handlePageChange" @size-change="$Method.handleSizeChange" />
-        </div>
-
         <!-- 编辑对话框组件 -->
-        <EditDialog v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.currentRole" @success="$Method.loadRoleList" />
+        <EditDialog v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.loadRoleList" />
 
-        <!-- 菜单权限对话框 -->
-        <tiny-dialog-box v-model:visible="$Data.menuVisible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
-            <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name', children: 'children' }" :ref="(el) => ($Data.menuTreeRef = el)" />
-            <template #footer>
-                <tiny-button @click="$Data.menuVisible = false">取消</tiny-button>
-                <tiny-button type="primary" @click="$Method.handleSaveMenu">保存</tiny-button>
-            </template>
-        </tiny-dialog-box>
+        <!-- 菜单权限对话框组件 -->
+        <MenuDialog v-model="$Data.menuVisible" :row-data="$Data.rowData" @success="$Method.loadRoleList" />
     </div>
 </template>
 
 <script setup>
 import EditDialog from './components/edit.vue';
+import MenuDialog from './components/menu.vue';
 
 // 响应式数据
 const $Data = $ref({
     roleList: [],
     pagerConfig: {
-        currentPage: 1,
-        pageSize: 10,
-        total: 0
+        attrs: {
+            currentPage: 1,
+            pageSize: 5,
+            total: 0,
+            align: 'right',
+            layout: 'total, prev, pager, next, jumper'
+        }
     },
-    // 编辑对话框
     editVisible: false,
-    actionType: 'add', // 'add' 或 'edit'
-    rowData: {},
-    // 菜单权限对话框
     menuVisible: false,
-    currentRoleId: '',
-    menuTreeData: [],
-    menuTreeRef: null
+    actionType: 'add',
+    rowData: {}
 });
 
 // 方法
 const $Method = {
+    fetchData() {
+        return {
+            api: $Method.loadRoleList
+        };
+    },
     // 加载角色列表
     async loadRoleList() {
         try {
@@ -108,21 +91,12 @@ const $Method = {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.pageSize
             });
-
-            if (res.code === 0) {
-                // roleList 接口返回的是数组，不是分页对象
-                if (Array.isArray(res.data)) {
-                    $Data.roleList = res.data;
-                    $Data.pagerConfig.total = res.data.length;
-                } else if (res.data && res.data.list) {
-                    // 如果返回的是分页对象
-                    $Data.roleList = res.data.list || [];
-                    $Data.pagerConfig.total = res.data.total || 0;
-                } else {
-                    $Data.roleList = [];
-                    $Data.pagerConfig.total = 0;
+            return {
+                result: res.data.list,
+                page: {
+                    total: res.data.total
                 }
-            }
+            };
         } catch (error) {
             console.error('加载角色列表失败:', error);
             Modal.message({ message: '加载数据失败', status: 'error' });
@@ -151,87 +125,6 @@ const $Method = {
         });
     },
 
-    // 构建菜单树
-    buildMenuTree(list, pid = 0) {
-        const result = [];
-
-        for (const item of list) {
-            if (item.pid === pid) {
-                const node = {
-                    id: item.id,
-                    name: item.name,
-                    children: $Method.buildMenuTree(list, item.id)
-                };
-                result.push(node);
-            }
-        }
-
-        return result;
-    },
-
-    // 加载菜单树
-    async loadMenuTree() {
-        try {
-            const res = await $Http('/addon/admin/menuList');
-            if (res.code === 0) {
-                // menuList 接口返回的是数组，不是分页对象
-                const menuList = Array.isArray(res.data) ? res.data : res.data.list || [];
-                $Data.menuTreeData = $Method.buildMenuTree(menuList);
-            }
-        } catch (error) {
-            console.error('加载菜单失败:', error);
-            Modal.message({ message: '加载菜单失败', status: 'error' });
-        }
-    },
-
-    // 打开菜单权限对话框
-    async handleMenu(row) {
-        $Data.currentRoleId = row.id;
-        $Data.menuVisible = true;
-
-        // 加载菜单树
-        await $Method.loadMenuTree();
-
-        // 加载该角色已分配的菜单
-        try {
-            const res = await $Http('/addon/admin/roleMenuGet', { roleId: row.id });
-            if (res.code === 0) {
-                // 设置选中的菜单节点
-                const checkedKeys = Array.isArray(res.data) ? res.data : [];
-                nextTick(() => {
-                    $Data.menuTreeRef && $Data.menuTreeRef.setCheckedKeys(checkedKeys);
-                });
-            }
-        } catch (error) {
-            console.error('加载角色菜单失败:', error);
-        }
-    },
-
-    // 保存菜单权限
-    async handleSaveMenu() {
-        try {
-            // 获取选中的节点（包括半选中的父节点）
-            const checkedKeys = $Data.menuTreeRef.getCheckedKeys();
-            const halfCheckedKeys = $Data.menuTreeRef.getHalfCheckedKeys();
-            const menuIds = [...checkedKeys, ...halfCheckedKeys];
-
-            const res = await $Http('/addon/admin/roleMenuSave', {
-                roleId: $Data.currentRoleId,
-                menuIds
-            });
-
-            if (res.code === 0) {
-                Modal.message({ message: '保存成功', status: 'success' });
-                $Data.menuVisible = false;
-            } else {
-                Modal.message({ message: res.msg || '保存失败', status: 'error' });
-            }
-        } catch (error) {
-            console.error('保存失败:', error);
-            Modal.message({ message: '保存失败', status: 'error' });
-        }
-    },
-
     // 刷新
     handleRefresh() {
         $Method.loadRoleList();
@@ -250,15 +143,16 @@ const $Method = {
         if (command === 'add' || command === 'edit') {
             $Data.editVisible = true;
         } else if (command === 'menu') {
-            $Method.handleMenu(rowData);
+            $Data.menuVisible = true;
         } else if (command === 'delete') {
             $Method.handleDelete(rowData);
         }
     }
 };
 
-// 初始化加载
-$Method.loadRoleList();
+onMounted(() => {
+    $Method.loadRoleList();
+});
 </script>
 
 <style scoped lang="scss">

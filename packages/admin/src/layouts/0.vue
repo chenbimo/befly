@@ -19,7 +19,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.userMenus" :props="$Data.menuProps" node-key="id" :node-height="40" :show-filter="false" style="height: 100%" only-check-children @node-click="$Method.onMenuClick">
+            <tiny-tree-menu :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
                 <template #default="{ data }">
                     <span class="menu-item">
                         <Icon :name="data.icon || 'Squircle'" :size="16" style="margin-right: 8px; vertical-align: middle" />
@@ -42,9 +42,6 @@ const route = useRoute();
 
 // 响应式数据
 const $Data = $ref({
-    menuProps: {
-        label: 'name'
-    },
     menuItems: [], // 菜单树
     userMenus: [], // 原始菜单数据
     menusLoaded: false, // 是否已加载菜单
@@ -143,6 +140,8 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .layout-0-wrapper {
+    $menu-width: 220px;
+    $head-height: 64px;
     position: absolute;
     top: 0;
     left: 0;
@@ -156,7 +155,7 @@ onMounted(async () => {
         top: 0;
         left: 0;
         right: 0;
-        height: 64px;
+        height: $head-height;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -183,14 +182,18 @@ onMounted(async () => {
 
     .layout-menu {
         position: absolute;
-        top: 64px;
+        top: $head-height;
         left: 0;
-        padding-left: 10px;
         bottom: 0;
-        width: 240px;
+        width: $menu-width;
         background: #ffffff;
         z-index: 99;
-
+        padding-left: 10px;
+        padding-right: 10px;
+        border-right: 1px solid #eee;
+        .tiny-tree-menu:before {
+            display: none;
+        }
         .menu-item {
             display: flex;
             align-items: center;
@@ -200,8 +203,8 @@ onMounted(async () => {
 
     .layout-main {
         position: absolute;
-        top: 64px;
-        left: 240px;
+        top: $head-height;
+        left: $menu-width;
         right: 0;
         bottom: 0;
     }
