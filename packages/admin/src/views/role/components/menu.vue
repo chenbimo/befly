@@ -1,8 +1,8 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Visible = false">
+    <tiny-dialog-box v-model:visible="$Visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
         <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($Form.tree = el)" />
         <template #footer>
-            <tiny-button @click="$Visible = false">取消</tiny-button>
+            <tiny-button @click="$Method.onClose">取消</tiny-button>
             <tiny-button type="primary" @click="$Method.handleSubmit">保存</tiny-button>
         </template>
     </tiny-dialog-box>
@@ -31,6 +31,10 @@ const $Data = $ref({
 
 // 方法集合
 const $Method = {
+    onClose() {
+        $Visible.value = false;
+    },
+
     // 构建菜单树
     buildMenuTree(list, pid = 0) {
         const result = [];
@@ -105,7 +109,7 @@ const $Method = {
                     message: '保存成功',
                     status: 'success'
                 });
-                $Visible = false;
+                $Visible.value = false;
                 $Emit('success');
             } else {
                 Modal.message({

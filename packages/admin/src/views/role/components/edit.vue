@@ -1,5 +1,5 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Visible" :title="$Prop.actionType ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Visible = false">
+    <tiny-dialog-box v-model:visible="$Visible" :title="$Prop.actionType ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
         <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
             <tiny-form-item label="角色名称" prop="name">
                 <tiny-input v-model="$Data.formData.name" placeholder="请输入角色名称" />
@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-let $Visible = defineModel({ default: false });
+const $Visible = defineModel({ default: false });
 
 const $Prop = defineProps({
     actionType: {
@@ -85,7 +85,8 @@ const $Method = {
                 message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
                 status: 'success'
             });
-            $Visible = false;
+            $Visible.value = false;
+            $Emit('success');
         } catch (error) {
             console.log('提交失败:', error);
         }
