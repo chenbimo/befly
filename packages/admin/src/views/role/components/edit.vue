@@ -52,6 +52,7 @@ const $Computed = {};
 
 const $Data = $ref({
     formData: {
+        id: 0,
         name: '',
         code: '',
         description: '',
@@ -85,7 +86,6 @@ const $Method = {
                 status: 'success'
             });
             $Visible = false;
-            $Emit('success');
         } catch (error) {
             console.log('提交失败:', error);
         }
