@@ -21,26 +21,17 @@
         "type": 1
     },
     {
-        "name": "系统管理",
-        "path": "/system",
-        "icon": "Settings",
+        "name": "菜单管理",
+        "path": "/menu",
+        "icon": "Menu",
         "sort": 4,
-        "type": 0,
-        "children": [
-            {
-                "name": "菜单管理",
-                "path": "/system/menu",
-                "icon": "",
-                "sort": 1,
-                "type": 1
-            },
-            {
-                "name": "角色管理",
-                "path": "/system/role",
-                "icon": "",
-                "sort": 2,
-                "type": 1
-            }
-        ]
+        "type": 1
+    },
+    {
+        "name": "角色管理",
+        "path": "/role",
+        "icon": "Users",
+        "sort": 5,
+        "type": 1
     }
 ]

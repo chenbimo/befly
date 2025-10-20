@@ -3,7 +3,7 @@
         <!-- 上：工具栏 -->
         <div class="toolbar">
             <div class="left">
-                <tiny-button type="primary" @click="$Method.handleAdd">
+                <tiny-button type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
                         <Icon name="Plus" :size="16" />
                     </template>
@@ -21,10 +21,7 @@
         </div>
 
         <!-- 中：数据表格 -->
-        <tiny-grid :data="$Data.roleList" height="calc(100vh - 240px)" :pager="$Data.pagerConfig" @page-change="$Method.handlePageChange">
-            <template #toolbar>
-                <div></div>
-            </template>
+        <tiny-grid :data="$Data.roleList" height="calc(100vh - 240px)">
             <tiny-grid-column type="index" title="序号" :width="60" />
             <tiny-grid-column field="name" title="角色名称" />
             <tiny-grid-column field="code" title="角色代码" :width="150" />
@@ -39,7 +36,7 @@
             </tiny-grid-column>
             <tiny-grid-column title="操作" :width="260">
                 <template #default="{ row }">
-                    <tiny-dropdown title="操作" trigger="click" border visible-arrow @item-click="(data) => $Method.handleOperation(data, row)">
+                    <tiny-dropdown title="操作" trigger="click" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                         <template #dropdown>
                             <tiny-dropdown-menu>
                                 <tiny-dropdown-item :item-data="{ command: 'edit' }">
@@ -67,7 +64,7 @@
         </div>
 
         <!-- 编辑对话框组件 -->
-        <EditDialog v-model:visible="$Data.editVisible" :is-edit="$Data.isEdit" :role-data="$Data.currentRole" @success="$Method.loadRoleList" />
+        <EditDialog v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.currentRole" @success="$Method.loadRoleList" />
 
         <!-- 菜单权限对话框 -->
         <tiny-dialog-box v-model:visible="$Data.menuVisible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
@@ -93,8 +90,8 @@ const $Data = $ref({
     },
     // 编辑对话框
     editVisible: false,
-    isEdit: false,
-    currentRole: null,
+    actionType: 'add', // 'add' 或 'edit'
+    rowData: {},
     // 菜单权限对话框
     menuVisible: false,
     currentRoleId: '',
@@ -130,20 +127,6 @@ const $Method = {
             console.error('加载角色列表失败:', error);
             Modal.message({ message: '加载数据失败', status: 'error' });
         }
-    },
-
-    // 添加角色
-    handleAdd() {
-        $Data.isEdit = false;
-        $Data.currentRole = null;
-        $Data.editVisible = true;
-    },
-
-    // 编辑角色
-    handleEdit(row) {
-        $Data.isEdit = true;
-        $Data.currentRole = { ...row };
-        $Data.editVisible = true;
     },
 
     // 删除角色
@@ -260,26 +243,16 @@ const $Method = {
         $Method.loadRoleList();
     },
 
-    // 每页数量改变
-    handleSizeChange({ pageSize }) {
-        $Data.pagerConfig.pageSize = pageSize;
-        $Data.pagerConfig.currentPage = 1;
-        $Method.loadRoleList();
-    },
-
     // 操作菜单点击
-    handleOperation(data, row) {
-        const command = data.itemData?.command || data.command;
-        switch (command) {
-            case 'edit':
-                $Method.handleEdit(row);
-                break;
-            case 'menu':
-                $Method.handleMenu(row);
-                break;
-            case 'delete':
-                $Method.handleDelete(row);
-                break;
+    onAction(command, rowData) {
+        $Data.actionType = command;
+        $Data.rowData = rowData;
+        if (command === 'add' || command === 'edit') {
+            $Data.editVisible = true;
+        } else if (command === 'menu') {
+            $Method.handleMenu(rowData);
+        } else if (command === 'delete') {
+            $Method.handleDelete(rowData);
         }
     }
 };

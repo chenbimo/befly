@@ -32,6 +32,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
+ * 收集配置文件中所有菜单的 path（递归）
+ * @param menus - 菜单数组
+ * @param paths - 路径集合
+ */
+function collectPaths(menus: any[], paths: Set<string>) {
+    for (const menu of menus) {
+        if (menu.path) {
+            paths.add(menu.path);
+        }
+        if (menu.children && menu.children.length > 0) {
+            collectPaths(menu.children, paths);
+        }
+    }
+}
+
+/**
  * 递归同步菜单（增量更新模式）
  * @param helper - DbHelper 实例
  * @param menus - 菜单数组
@@ -162,12 +178,41 @@ async function syncMenu(): Promise<boolean> {
 
         Logger.info('✅ 表 addon_admin_menu 存在');
 
-        // 2. 递归同步菜单（增量更新）
-        Logger.info('\n=== 步骤 2: 同步菜单数据 ===');
+        // 2. 收集配置文件中所有菜单的 path
+        Logger.info('\n=== 步骤 2: 收集配置菜单路径 ===');
+        const configPaths = new Set<string>();
+        collectPaths(menuConfig, configPaths);
+        Logger.info(`✅ 配置文件中共有 ${configPaths.size} 个菜单路径`);
+
+        // 3. 同步菜单（新增和更新）
+        Logger.info('\n=== 步骤 3: 同步菜单数据（新增/更新） ===');
         const result = await syncMenus(helper, menuConfig, 0);
 
-        // 3. 构建树形结构预览
-        Logger.info('\n=== 步骤 3: 菜单结构预览 ===');
+        // 4. 删除配置中不存在的菜单
+        Logger.info('\n=== 步骤 4: 删除配置中不存在的菜单 ===');
+        const allDbMenus = await helper.getAll({
+            table: 'addon_admin_menu',
+            fields: ['id', 'path', 'name']
+        });
+
+        let deletedCount = 0;
+        for (const dbMenu of allDbMenus) {
+            if (dbMenu.path && !configPaths.has(dbMenu.path)) {
+                await helper.delData({
+                    table: 'addon_admin_menu',
+                    where: { id: dbMenu.id }
+                });
+                deletedCount++;
+                Logger.info(`  └ 删除菜单: ${dbMenu.name} (ID: ${dbMenu.id}, Path: ${dbMenu.path})`);
+            }
+        }
+
+        if (deletedCount === 0) {
+            Logger.info('  ✅ 无需删除的菜单');
+        }
+
+        // 5. 构建树形结构预览
+        Logger.info('\n=== 步骤 5: 菜单结构预览 ===');
         const allMenus = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id', 'pid', 'name', 'path', 'type'],
@@ -177,16 +222,17 @@ async function syncMenu(): Promise<boolean> {
         const treeLines = buildTree(allMenus);
         Logger.info(treeLines.join('\n'));
 
-        // 4. 输出统计信息
+        // 6. 输出统计信息
         Logger.info('\n=== 菜单同步完成 ===');
         Logger.info(`✅ 新增菜单: ${result.stats.created} 个`);
         Logger.info(`✅ 更新菜单: ${result.stats.updated} 个`);
+        Logger.info(`🗑️  删除菜单: ${deletedCount} 个`);
         Logger.info(`✅ 总计处理: ${result.ids.length} 个`);
         Logger.info(`📋 当前顶级菜单: ${allMenus.filter((m: any) => m.pid === 0).length} 个`);
         Logger.info(`📋 当前子菜单: ${allMenus.filter((m: any) => m.pid !== 0).length} 个`);
 
-        // 5. 缓存菜单到 Redis
-        Logger.info('\n=== 步骤 4: 缓存菜单到 Redis ===');
+        // 7. 缓存菜单到 Redis
+        Logger.info('\n=== 步骤 6: 缓存菜单到 Redis ===');
         try {
             // 查询完整的菜单数据用于缓存（只缓存 state=1 的正常菜单）
             const menusForCache = await helper.getAll({
