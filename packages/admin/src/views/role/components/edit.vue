@@ -87,11 +87,7 @@ const $Method = {
             $Visible = false;
             $Emit('success');
         } catch (error) {
-            console.error('提交失败:', error);
-            Modal.message({
-                message: '提交失败',
-                status: 'error'
-            });
+            console.log('提交失败:', error);
         }
     }
 };

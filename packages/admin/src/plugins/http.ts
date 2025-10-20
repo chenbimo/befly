@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import { Modal } from '@opentiny/vue';
 
 // API 响应格式
 interface ApiResponse<T = any> {
@@ -47,39 +48,17 @@ request.interceptors.response.use(
 
         // 如果code不是0,说明业务失败
         if (res.code !== 0) {
-            Message.error(res.msg || '请求失败');
-            return Promise.reject(new Error(res.msg || '请求失败'));
+            Modal.message({
+                message: res.msg || '请求失败',
+                status: 'error'
+            });
+            return Promise.reject(res.data);
         }
 
         return res;
     },
     (error) => {
-        console.error('[Response] 响应错误:', error);
-
-        // 处理HTTP错误状态
-        if (error.response) {
-            switch (error.response.status) {
-                case 401:
-                    Message.error('未授权,请重新登录');
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
-                    break;
-                case 403:
-                    Message.error('拒绝访问');
-                    break;
-                case 404:
-                    Message.error('请求的资源不存在');
-                    break;
-                case 500:
-                    Message.error('服务器错误');
-                    break;
-                default:
-                    Message.error(error.response.data?.msg || '请求失败');
-            }
-        } else {
-            Message.error('网络连接失败');
-        }
-
+        Modal.message({ message: '网络连接失败', status: 'error' });
         return Promise.reject(error);
     }
 );

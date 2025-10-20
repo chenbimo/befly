@@ -1,6 +1,6 @@
 <template>
     <div class="page-role page-table">
-        <tiny-grid :fetch-data="$Method.fetchData()" :pager="$Data.pagerConfig" header-cell-class-name="custom-table-cell-class" size="small" height="calc(100vh - 128px)" seq-serial border>
+        <tiny-grid :fetch-data="$Method.fetchData()" :pager="$Data.pagerConfig" header-cell-class-name="custom-table-cell-class" size="small" seq-serial border height="400px">
             <template #toolbar>
                 <div class="custom-toolbar">
                     <div class="left">
@@ -68,7 +68,7 @@ const $Data = $ref({
     pagerConfig: {
         attrs: {
             currentPage: 1,
-            pageSize: 5,
+            pageSize: 30,
             total: 0,
             align: 'right',
             layout: 'total, prev, pager, next, jumper'
@@ -91,8 +91,8 @@ const $Method = {
     async loadRoleList() {
         try {
             const res = await $Http('/addon/admin/roleList', {
-                page: $Data.pagerConfig.currentPage,
-                limit: $Data.pagerConfig.pageSize
+                page: $Data.pagerConfig.attrs.currentPage,
+                limit: $Data.pagerConfig.attrs.limit
             });
             return {
                 result: res.data.list,
