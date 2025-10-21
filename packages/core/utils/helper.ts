@@ -429,25 +429,28 @@ export const arrayKeysToCamel = <T = any>(arr: Record<string, any>[]): T[] => {
  * 转换规则：
  * 1. 白名单中的字段会被转换
  * 2. 所有以 'Id' 或 '_id' 结尾的字段会被自动转换
- * 3. 其他字段保持不变
+ * 3. 所有以 'At' 或 '_at' 结尾的字段会被自动转换（时间戳字段）
+ * 4. 其他字段保持不变
  *
  * @param arr - 数据数组
  * @param fields - 额外需要转换的字段名数组（默认：['id', 'pid', 'sort']）
  * @returns 转换后的数组
  *
  * @example
- * // 基础字段 + 自动匹配以 Id 结尾的字段
+ * // 基础字段 + 自动匹配以 Id/At 结尾的字段
  * convertBigIntFields([
  *   {
  *     id: '1760695696283001',      // ✅ 转换（在白名单）
  *     pid: '0',                     // ✅ 转换（在白名单）
  *     categoryId: '123',            // ✅ 转换（以 Id 结尾）
  *     user_id: '456',               // ✅ 转换（以 _id 结尾）
+ *     createdAt: '1697452800000',  // ✅ 转换（以 At 结尾）
+ *     created_at: '1697452800000', // ✅ 转换（以 _at 结尾）
  *     phone: '13800138000',         // ❌ 不转换（不匹配规则）
  *     name: 'test'                  // ❌ 不转换（不匹配规则）
  *   }
  * ])
- * // [{ id: 1760695696283001, pid: 0, categoryId: 123, user_id: 456, phone: '13800138000', name: 'test' }]
+ * // [{ id: 1760695696283001, pid: 0, categoryId: 123, user_id: 456, createdAt: 1697452800000, created_at: 1697452800000, phone: '13800138000', name: 'test' }]
  */
 export const convertBigIntFields = <T = any>(arr: Record<string, any>[], fields: string[] = ['id', 'pid', 'sort']): T[] => {
     if (!arr || !isType(arr, 'array')) return arr as T[];
@@ -466,7 +469,9 @@ export const convertBigIntFields = <T = any>(arr: Record<string, any>[], fields:
             // 1. 在白名单中
             // 2. 以 'Id' 结尾（如 userId, roleId, categoryId）
             // 3. 以 '_id' 结尾（如 user_id, role_id）
-            const shouldConvert = fields.includes(key) || key.endsWith('Id') || key.endsWith('_id');
+            // 4. 以 'At' 结尾（如 createdAt, updatedAt）
+            // 5. 以 '_at' 结尾（如 created_at, updated_at）
+            const shouldConvert = fields.includes(key) || key.endsWith('Id') || key.endsWith('_id') || key.endsWith('At') || key.endsWith('_at');
 
             if (shouldConvert && typeof value === 'string') {
                 const num = Number(value);
