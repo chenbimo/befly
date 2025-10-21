@@ -254,7 +254,7 @@ const $Method = {
                 return;
             }
 
-            const res = await $Http('/addon/admin/adminUpdate', {
+            const res = await $Http('/addon/admin/adminUpd', {
                 id: $Data.editForm.id,
                 email: $Data.editForm.email,
                 name: $Data.editForm.name,
@@ -326,7 +326,7 @@ const $Method = {
 
         // 加载该用户已有的角色
         try {
-            const res = await $Http('/addon/admin/adminRoleGet', { adminId: row.id });
+            const res = await $Http('/addon/admin/adminRoleDetail', { adminId: row.id });
             if (res.code === 0 && res.data) {
                 $Data.checkedRoleCode = res.data.roleCode || '';
             }

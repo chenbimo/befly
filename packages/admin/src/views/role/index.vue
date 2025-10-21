@@ -117,7 +117,7 @@ const $Method = {
             status: 'warning'
         }).then(async () => {
             try {
-                const res = await $Http('/addon/admin/roleDelete', { id: row.id });
+                const res = await $Http('/addon/admin/roleDel', { id: row.id });
                 if (res.code === 0) {
                     Modal.message({ message: '删除成功', status: 'success' });
                     $Method.loadRoleList();

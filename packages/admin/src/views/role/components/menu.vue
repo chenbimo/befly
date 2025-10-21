@@ -57,7 +57,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/roleMenuGet', { roleId: $Prop.rowData.id });
+            const res = await $Http('/addon/admin/roleMenuDetail', { roleId: $Prop.rowData.id });
             if (res.code === 0) {
                 // 设置选中的菜单节点
                 const checkedKeys = Array.isArray(res.data) ? res.data : [];

@@ -54,7 +54,7 @@ const $Method = {
     // 获取用户菜单权限
     async fetchUserMenus() {
         try {
-            const { data } = await $Http('/addon/admin/adminMenus');
+            const { data } = await $Http('/addon/admin/menuAll');
             console.log('🔥[ data ]-58', data);
             // 将一维数组转换为树形结构（最多2级）
             $Data.userMenus = arrayToTree(data);

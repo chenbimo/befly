@@ -79,7 +79,7 @@ const $Method = {
             const valid = await $From.form.validate();
             if (!valid) return;
 
-            const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/roleCreate' : '/addon/admin/roleUpdate', $Data.formData);
+            const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/roleIns' : '/addon/admin/roleUpd', $Data.formData);
 
             Modal.message({
                 message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',

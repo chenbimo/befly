@@ -85,7 +85,7 @@ const $Method = {
             const valid = await $Form.form.validate();
             if (!valid) return;
 
-            const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/menuCreate' : '/addon/admin/menuUpdate', $Data.formData);
+            const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/menuIns' : '/addon/admin/menuUpd', $Data.formData);
 
             Modal.message({
                 message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
