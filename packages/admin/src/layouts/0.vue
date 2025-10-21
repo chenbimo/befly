@@ -140,14 +140,14 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .layout-0-wrapper {
-    $menu-width: 220px;
+    $menu-width: 240px;
     $head-height: 64px;
     position: absolute;
     top: 0;
     left: 0;
     height: 100vh;
     width: 100vw;
-    background: #f5f5f5;
+    background: #f5f7fa;
     overflow: hidden;
 
     .layout-header {
@@ -159,17 +159,23 @@ onMounted(async () => {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 24px;
+        padding: 0 32px;
         background: #ffffff;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e8eaed;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         z-index: 100;
 
         .logo {
             h2 {
                 margin: 0;
-                font-size: 20px;
-                font-weight: 600;
-                color: #333;
+                font-size: 22px;
+                font-weight: 700;
+                color: #1f2329;
+                letter-spacing: 0.5px;
+                background: linear-gradient(135deg, #0052d9 0%, #0084f4 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
         }
 
@@ -188,16 +194,24 @@ onMounted(async () => {
         width: $menu-width;
         background: #ffffff;
         z-index: 99;
-        padding-left: 10px;
-        padding-right: 10px;
-        border-right: 1px solid #eee;
+        padding: 16px 12px;
+        border-right: 1px solid #e8eaed;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
+
         .tiny-tree-menu:before {
             display: none;
         }
+
         .menu-item {
             display: flex;
             align-items: center;
             width: 100%;
+            padding: 2px 0;
+            transition: all 0.2s ease;
+
+            &:hover {
+                color: #0052d9;
+            }
         }
     }
 
@@ -207,6 +221,7 @@ onMounted(async () => {
         left: $menu-width;
         right: 0;
         bottom: 0;
+        background: #f5f7fa;
     }
 }
 </style>
