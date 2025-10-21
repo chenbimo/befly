@@ -33,13 +33,16 @@ const $Data = $ref({
 
 // 方法集合
 const $Method = {
+    async initData() {
+        await Promise.all([$Method.loadMenuTree(), $Method.loadRoleMenus()]);
+    },
     // 加载菜单树
     async loadMenuTree() {
         try {
             const res = await $Http('/addon/admin/menuList');
             if (res.code === 0) {
                 // menuList 接口返回的是数组，不是分页对象
-                const menuList = Array.isArray(res.data) ? res.data : res.data.list || [];
+                const menuList = Array.isArray(res.data) ? res.data : res.data.lists || [];
                 // 使用工具函数转换为树形结构
                 $Data.menuTreeData = arrayToTree(menuList);
             }
@@ -107,6 +110,8 @@ const $Method = {
         }
     }
 };
+
+$Method.initData();
 </script>
 
 <style scoped lang="scss">
