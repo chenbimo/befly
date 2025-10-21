@@ -203,7 +203,7 @@ async function syncMenu(): Promise<boolean> {
 
         // 4. 删除配置中不存在的菜单
         Logger.info('\n=== 步骤 4: 删除配置中不存在的菜单 ===');
-        const allDbMenus = await helper.getAll({
+        const { lists: allDbMenus } = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id', 'path', 'name']
         });
@@ -226,7 +226,7 @@ async function syncMenu(): Promise<boolean> {
 
         // 5. 构建树形结构预览
         Logger.info('\n=== 步骤 5: 菜单结构预览 ===');
-        const allMenus = await helper.getAll({
+        const { lists: allMenus } = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id', 'pid', 'name', 'path', 'type'],
             orderBy: ['pid#ASC', 'sort#ASC', 'id#ASC']
@@ -234,11 +234,11 @@ async function syncMenu(): Promise<boolean> {
 
         // 6. 输出统计信息
         Logger.info('\n=== 菜单同步完成 ===');
-        Logger.info(`✅ 新增菜单: ${stats.created} 个`);
-        Logger.info(`✅ 更新菜单: ${stats.updated} 个`);
-        Logger.info(`🗑️ 删除菜单: ${deletedCount} 个`);
-        Logger.info(`📋 当前父级菜单: ${allMenus.filter((m: any) => m.pid === 0).length} 个`);
-        Logger.info(`📋 当前子级菜单: ${allMenus.filter((m: any) => m.pid !== 0).length} 个`);
+        Logger.info(`新增菜单: ${stats.created} 个`);
+        Logger.info(`更新菜单: ${stats.updated} 个`);
+        Logger.info(`删除菜单: ${deletedCount} 个`);
+        Logger.info(`当前父级菜单: ${allMenus.filter((m: any) => m.pid === 0).length} 个`);
+        Logger.info(`当前子级菜单: ${allMenus.filter((m: any) => m.pid !== 0).length} 个`);
 
         // 7. 缓存菜单到 Redis
         Logger.info('\n=== 步骤 6: 缓存菜单到 Redis ===');
