@@ -226,7 +226,7 @@ async function syncMenu(): Promise<boolean> {
         Logger.info('\n=== 菜单同步完成 ===');
         Logger.info(`✅ 新增菜单: ${result.stats.created} 个`);
         Logger.info(`✅ 更新菜单: ${result.stats.updated} 个`);
-        Logger.info(`🗑️  删除菜单: ${deletedCount} 个`);
+        Logger.info(`🗑️ 删除菜单: ${deletedCount} 个`);
         Logger.info(`✅ 总计处理: ${result.ids.length} 个`);
         Logger.info(`📋 当前顶级菜单: ${allMenus.filter((m: any) => m.pid === 0).length} 个`);
         Logger.info(`📋 当前子菜单: ${allMenus.filter((m: any) => m.pid !== 0).length} 个`);
@@ -240,6 +240,8 @@ async function syncMenu(): Promise<boolean> {
                 fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
+
+            console.log('🔥[ menusForCache ]-239', menusForCache);
 
             // 缓存到 Redis（使用 RedisHelper）
             await RedisHelper.setObject('befly:menus:all', menusForCache);

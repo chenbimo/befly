@@ -4,7 +4,7 @@
  */
 
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear } from './helper.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear, convertBigIntFields } from './helper.js';
 import { Logger } from './logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -122,7 +122,12 @@ export class DbHelper {
 
         // 字段名转换：下划线 → 小驼峰
         const row = result?.[0] || null;
-        return row ? keysToCamel<T>(row) : null;
+        if (!row) return null;
+
+        const camelRow = keysToCamel<T>(row);
+
+        // 转换 BIGINT 字段（id, pid 等）为数字类型
+        return convertBigIntFields<T>([camelRow])[0];
     }
 
     /**
@@ -158,10 +163,10 @@ export class DbHelper {
         // P1: 如果总数为 0，直接返回，不执行第二次查询
         if (total === 0) {
             return {
-                list: [],
+                table: [],
                 total: 0,
-                page,
-                limit,
+                page: page,
+                limit: limit,
                 pages: 0
             };
         }
@@ -179,11 +184,14 @@ export class DbHelper {
         const list = (await this.executeWithConn(dataSql, dataParams)) || [];
 
         // 字段名转换：下划线 → 小驼峰
+        const camelList = arrayKeysToCamel<T>(list);
+
+        // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
-            list: arrayKeysToCamel<T>(list),
-            total,
-            page,
-            limit,
+            table: convertBigIntFields<T>(camelList),
+            total: total,
+            page: page,
+            limit: limit,
             pages: Math.ceil(total / limit)
         };
     }
@@ -225,7 +233,10 @@ export class DbHelper {
         }
 
         // 字段名转换：下划线 → 小驼峰
-        return arrayKeysToCamel<T>(result);
+        const camelResult = arrayKeysToCamel<T>(result);
+
+        // 转换 BIGINT 字段（id, pid 等）为数字类型
+        return convertBigIntFields<T>(camelResult);
     }
 
     /**

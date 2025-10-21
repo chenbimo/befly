@@ -46,7 +46,7 @@ const route = useRoute();
 const $Data = $ref({
     userMenus: [],
     expandedKeys: [],
-    currentNodeKey: null
+    currentNodeKey: 0
 });
 
 // 方法
@@ -72,8 +72,11 @@ const $Method = {
     findMenuByPath(menus, path, parentIds = []) {
         for (const menu of menus) {
             if (menu.path === path) {
-                $Data.currentNodeKey = menu.id;
-                $Data.expandedKeys = parentIds;
+                // 使用 nextTick 确保 DOM 更新后再设置
+                nextTick(() => {
+                    $Data.currentNodeKey = menu.id;
+                    $Data.expandedKeys = [...parentIds];
+                });
                 return true;
             }
             if (menu.children?.length) {
