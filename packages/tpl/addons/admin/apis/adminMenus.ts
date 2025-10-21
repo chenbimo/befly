@@ -3,7 +3,7 @@
  * 说明：
  * 1. 从 Redis 缓存读取所有菜单（如果缓存不存在则从数据库查询并缓存）
  * 2. 根据当前登录用户的角色过滤可访问的菜单
- * 3. 返回树形结构的菜单数据
+ * 3. 返回一维数组（由前端构建树形结构）
  * 4. 仅返回状态为启用的菜单
  */
 
@@ -71,32 +71,8 @@ export default {
             const menuIdSet = new Set(menuIds.map(String)); // 转为字符串 Set 方便比较
             const authorizedMenus = allMenus.filter((menu: any) => menuIdSet.has(String(menu.id)));
 
-            // 6. 构建树形结构
-            const buildTree = (items: any[], pid = 0) => {
-                const tree: any[] = [];
-                for (const item of items) {
-                    if (item.pid === pid) {
-                        const children = buildTree(items, item.id);
-                        const node = {
-                            id: item.id,
-                            name: item.name,
-                            path: item.path,
-                            icon: item.icon,
-                            type: item.type,
-                            sort: item.sort
-                        };
-                        if (children.length > 0) {
-                            node.children = children;
-                        }
-                        tree.push(node);
-                    }
-                }
-                return tree;
-            };
-
-            const menuTree = buildTree(authorizedMenus);
-
-            return Yes('获取菜单成功', menuTree);
+            // 6. 返回一维数组（由前端构建树形结构）
+            return Yes('获取菜单成功', authorizedMenus);
         } catch (error) {
             befly.logger.error('获取用户菜单失败:', error);
             return No('获取菜单失败');

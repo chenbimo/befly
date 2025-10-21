@@ -19,7 +19,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
+            <tiny-tree-menu :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" :default-expanded-keys="$Data.expandedKeys" :default-expanded-keys-highlight="$Data.currentNodeKey" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
                 <template #default="{ data }">
                     <span class="menu-item">
                         <Icon :name="data.icon || 'Squircle'" :size="16" style="margin-right: 8px; vertical-align: middle" />
@@ -37,104 +37,77 @@
 </template>
 
 <script setup>
+import { arrayToTree } from '../util';
+
 const router = useRouter();
 const route = useRoute();
 
 // 响应式数据
 const $Data = $ref({
-    menuItems: [], // 菜单树
-    userMenus: [], // 原始菜单数据
-    menusLoaded: false, // 是否已加载菜单
+    userMenus: [],
     expandedKeys: [],
-    currentMenuKey: ''
+    currentNodeKey: null
 });
-
-// 当前激活菜单
-const activeMenu = computed(() => route.path);
 
 // 方法
 const $Method = {
     // 获取用户菜单权限
     async fetchUserMenus() {
         try {
-            if (import.meta.env.DEV) {
-                console.log('[Permission] 开始获取用户菜单...');
-                console.log('[Permission] 当前 token:', localStorage.getItem('token')?.substring(0, 20) + '...');
-            }
             const { data } = await $Http('/addon/admin/adminMenus');
-            if (import.meta.env.DEV) {
-                console.log('[Permission] 菜单数据:', data);
-            }
-
-            // 保存原始菜单数据
-            $Data.userMenus = data;
+            // 将一维数组转换为树形结构
+            $Data.userMenus = arrayToTree(data);
+            $Method.setActiveMenu();
         } catch (error) {
             console.error('获取用户菜单失败:', error);
         }
     },
 
-    // 清空菜单权限数据
-    clearMenus() {
-        $Data.userMenus = [];
-        $Data.menuItems = [];
+    // 设置当前激活的菜单
+    setActiveMenu() {
+        $Method.findMenuByPath($Data.userMenus, route.path);
     },
 
-    // 根据当前路径查找对应的菜单项ID和父级ID
+    // 查找菜单并设置激活状态
     findMenuByPath(menus, path, parentIds = []) {
         for (const menu of menus) {
-            if (menu.url === path) {
-                return { menuId: String(menu.id), parentIds };
+            if (menu.path === path) {
+                $Data.currentNodeKey = menu.id;
+                $Data.expandedKeys = parentIds;
+                return true;
             }
-            if (menu.children && menu.children.length > 0) {
-                const result = $Method.findMenuByPath(menu.children, path, [...parentIds, String(menu.id)]);
-                if (result) {
-                    return result;
+            if (menu.children?.length) {
+                if ($Method.findMenuByPath(menu.children, path, [...parentIds, menu.id])) {
+                    return true;
                 }
             }
         }
-        return null;
-    },
-
-    // 更新当前激活的菜单
-    updateActiveMenu() {
-        const currentPath = route.path;
-        const result = $Method.findMenuByPath($Data.menuItems, currentPath);
-
-        if (result) {
-            // 设置当前选中的菜单（高亮）
-            $Data.currentMenuKey = result.menuId;
-            // 展开父级菜单
-            $Data.expandedKeys = result.parentIds;
-        }
+        return false;
     },
 
     // 处理菜单点击
     onMenuClick(data) {
-        console.log('🔥[ data ]-111', data);
-        router.push(data.path);
+        if (data.path) {
+            router.push(data.path);
+        }
     },
 
     // 处理用户菜单点击
     handleUserMenu(data) {
         const value = data.itemData?.value || data.value;
-        switch (value) {
-            case 'profile':
-                router.push('/profile');
-                break;
-            case 'logout':
-                localStorage.removeItem('token');
-                $Method.clearMenus();
-                router.push('/login');
-                Modal.message({ message: '退出成功', status: 'success' });
-                break;
+        if (value === 'logout') {
+            localStorage.removeItem('token');
+            router.push('/login');
+            Modal.message({ message: '退出成功', status: 'success' });
+        } else if (value === 'profile') {
+            router.push('/profile');
         }
     }
 };
 
-// 组件挂载后获取菜单权限并构建菜单
-onMounted(async () => {
-    // 如果还未加载菜单，先获取菜单数据
-    await $Method.fetchUserMenus();
+// 组件挂载后获取菜单
+onMounted(() => {
+    $Method.fetchUserMenus();
 });
 </script>
 

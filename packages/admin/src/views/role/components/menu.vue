@@ -9,6 +9,8 @@
 </template>
 
 <script setup>
+import { arrayToTree } from '../../../util';
+
 const $Visible = defineModel({ default: false });
 
 const $Prop = defineProps({
@@ -31,24 +33,6 @@ const $Data = $ref({
 
 // 方法集合
 const $Method = {
-    // 构建菜单树
-    buildMenuTree(list, pid = 0) {
-        const result = [];
-
-        for (const item of list) {
-            if (item.pid === pid) {
-                const node = {
-                    id: item.id,
-                    name: item.name,
-                    children: $Method.buildMenuTree(list, item.id)
-                };
-                result.push(node);
-            }
-        }
-
-        return result;
-    },
-
     // 加载菜单树
     async loadMenuTree() {
         try {
@@ -56,7 +40,8 @@ const $Method = {
             if (res.code === 0) {
                 // menuList 接口返回的是数组，不是分页对象
                 const menuList = Array.isArray(res.data) ? res.data : res.data.list || [];
-                $Data.menuTreeData = $Method.buildMenuTree(menuList);
+                // 使用工具函数转换为树形结构
+                $Data.menuTreeData = arrayToTree(menuList);
             }
         } catch (error) {
             console.error('加载菜单失败:', error);
