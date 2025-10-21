@@ -58,14 +58,14 @@
         </div>
 
         <div class="main-page">
-            <tiny-pager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.handlePageChange" @size-change="$Method.handleSizeChange" />
+            <tiny-pager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
-        <EditDialog v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.loadRoleList" />
+        <EditDialog v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
 
         <!-- 菜单权限对话框组件 -->
-        <MenuDialog v-model="$Data.menuVisible" :row-data="$Data.rowData" @success="$Method.loadRoleList" />
+        <MenuDialog v-model="$Data.menuVisible" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
     </div>
 </template>
 
@@ -91,8 +91,11 @@ const $Data = $ref({
 
 // 方法
 const $Method = {
+    async initData() {
+        await $Method.apiRoleList();
+    },
     // 加载角色列表
-    async loadRoleList() {
+    async apiRoleList() {
         try {
             const res = await $Http('/addon/admin/roleList', {
                 page: $Data.pagerConfig.currentPage,
@@ -110,7 +113,7 @@ const $Method = {
     },
 
     // 删除角色
-    async handleDelete(row) {
+    async apiRoleDel(row) {
         Modal.confirm({
             header: '确认删除',
             body: `确定要删除角色"${row.name}" 吗？`,
@@ -120,7 +123,7 @@ const $Method = {
                 const res = await $Http('/addon/admin/roleDel', { id: row.id });
                 if (res.code === 0) {
                     Modal.message({ message: '删除成功', status: 'success' });
-                    $Method.loadRoleList();
+                    $Method.apiRoleList();
                 } else {
                     Modal.message({ message: res.msg || '删除失败', status: 'error' });
                 }
@@ -133,13 +136,13 @@ const $Method = {
 
     // 刷新
     handleRefresh() {
-        $Method.loadRoleList();
+        $Method.apiRoleList();
     },
 
     // 分页改变
-    handlePageChange({ currentPage }) {
+    onPageChange({ currentPage }) {
         $Data.pagerConfig.currentPage = currentPage;
-        $Method.loadRoleList();
+        $Method.apiRoleList();
     },
 
     // 操作菜单点击
@@ -151,14 +154,12 @@ const $Method = {
         } else if (command === 'menu') {
             $Data.menuVisible = true;
         } else if (command === 'delete') {
-            $Method.handleDelete(rowData);
+            $Method.apiRoleDel(rowData);
         }
     }
 };
 
-onMounted(() => {
-    $Method.loadRoleList();
-});
+$Method.initData();
 </script>
 
 <style scoped lang="scss">

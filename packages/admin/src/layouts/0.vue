@@ -55,11 +55,9 @@ const $Method = {
     async fetchUserMenus() {
         try {
             const { data } = await $Http('/addon/admin/menuAll');
-            console.log('🔥[ data ]-58', data);
             // 将一维数组转换为树形结构（最多2级）
             $Data.userMenus = arrayToTree(data);
             $Method.setActiveMenu();
-            console.log('🔥[ $Data ]-61', $Data);
         } catch (error) {
             console.error('获取用户菜单失败:', error);
         }
@@ -91,9 +89,6 @@ const $Method = {
                 }
             }
         }
-
-        console.log('=====666');
-        console.log($Data);
     },
 
     // 处理菜单点击

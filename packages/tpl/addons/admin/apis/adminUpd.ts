@@ -2,9 +2,8 @@
  * 更新管理员信息
  */
 
-import { Yes, No } from 'befly';
-import type { ApiRoute } from 'befly';
-import { Fields } from '#config/fields';
+import { Yes, No, Fields } from 'befly';
+import { Fields } from 'befly';
 import adminTable from '../tables/admin.json';
 
 export default {
@@ -52,4 +51,4 @@ export default {
 
         return Yes('更新成功');
     }
-} as ApiRoute;
+};
