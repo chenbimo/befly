@@ -259,13 +259,8 @@ async function syncMenu(): Promise<boolean> {
 
         return true;
     } catch (error: any) {
-        Logger.error('❌ 菜单同步失败:', error);
-        if (error.message) {
-            Logger.error('错误详情:', error.message);
-        }
-        if (error.stack) {
-            Logger.error('错误堆栈:', error.stack);
-        }
+        console.log('🔥[ error ]-262', error);
+        Logger.error('菜单同步失败:', { message: error.message, stack: error.stack });
         return false;
     } finally {
         if (dbInitialized) {
