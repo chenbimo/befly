@@ -55,37 +55,45 @@ const $Method = {
     async fetchUserMenus() {
         try {
             const { data } = await $Http('/addon/admin/adminMenus');
-            // 将一维数组转换为树形结构
+            console.log('🔥[ data ]-58', data);
+            // 将一维数组转换为树形结构（最多2级）
             $Data.userMenus = arrayToTree(data);
             $Method.setActiveMenu();
+            console.log('🔥[ $Data ]-61', $Data);
         } catch (error) {
             console.error('获取用户菜单失败:', error);
         }
     },
 
-    // 设置当前激活的菜单
+    // 设置当前激活的菜单（2级菜单专用）
     setActiveMenu() {
-        $Method.findMenuByPath($Data.userMenus, route.path);
-    },
+        const currentPath = route.path;
 
-    // 查找菜单并设置激活状态
-    findMenuByPath(menus, path, parentIds = []) {
-        for (const menu of menus) {
-            if (menu.path === path) {
-                // 使用 nextTick 确保 DOM 更新后再设置
-                nextTick(() => {
-                    $Data.currentNodeKey = menu.id;
-                    $Data.expandedKeys = [...parentIds];
-                });
-                return true;
+        // 遍历父级菜单
+        for (const parent of $Data.userMenus) {
+            // 检查父级菜单
+            if (parent.path === currentPath) {
+                $Data.currentNodeKey = parent.id;
+                $Data.expandedKeys = [parent.id];
+                return;
             }
-            if (menu.children?.length) {
-                if ($Method.findMenuByPath(menu.children, path, [...parentIds, menu.id])) {
-                    return true;
+
+            // 检查子级菜单
+            if (parent.children?.length) {
+                for (const child of parent.children) {
+                    if (child.path === currentPath) {
+                        nextTick(() => {
+                            $Data.currentNodeKey = child.id;
+                            $Data.expandedKeys = [parent.id];
+                        });
+                        return;
+                    }
                 }
             }
         }
-        return false;
+
+        console.log('=====666');
+        console.log($Data);
     },
 
     // 处理菜单点击
@@ -108,10 +116,7 @@ const $Method = {
     }
 };
 
-// 组件挂载后获取菜单
-onMounted(() => {
-    $Method.fetchUserMenus();
-});
+$Method.fetchUserMenus();
 </script>
 
 <style scoped lang="scss">
