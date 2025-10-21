@@ -142,6 +142,7 @@ onMounted(async () => {
 .layout-0-wrapper {
     $menu-width: 240px;
     $head-height: 64px;
+    $gap: 16px;
     position: absolute;
     top: 0;
     left: 0;
@@ -152,17 +153,18 @@ onMounted(async () => {
 
     .layout-header {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
+        top: $gap;
+        left: $gap;
+        right: $gap;
         height: $head-height;
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0 32px;
         background: #ffffff;
-        border-bottom: 1px solid #e8eaed;
+        border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e8eaed;
         z-index: 100;
 
         .logo {
@@ -188,15 +190,16 @@ onMounted(async () => {
 
     .layout-menu {
         position: absolute;
-        top: $head-height;
-        left: 0;
-        bottom: 0;
+        top: calc($head-height + $gap * 2);
+        left: $gap;
+        bottom: $gap;
         width: $menu-width;
         background: #ffffff;
+        border-radius: 8px;
         z-index: 99;
         padding: 16px 12px;
-        border-right: 1px solid #e8eaed;
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e8eaed;
 
         .tiny-tree-menu:before {
             display: none;
@@ -217,10 +220,10 @@ onMounted(async () => {
 
     .layout-main {
         position: absolute;
-        top: $head-height;
-        left: $menu-width;
-        right: 0;
-        bottom: 0;
+        top: calc($head-height + $gap * 2);
+        left: calc($menu-width + $gap * 2);
+        right: $gap;
+        bottom: $gap;
         background: #f5f7fa;
     }
 }
