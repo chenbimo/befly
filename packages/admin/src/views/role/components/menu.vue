@@ -31,21 +31,23 @@ const $Data = $ref({
     menuTreeData: []
 });
 
+// 监听弹窗显示，每次打开时重新加载数据
+watch($Visible, (newVal) => {
+    if (newVal) {
+        $Method.initData();
+    }
+});
+
 // 方法集合
 const $Method = {
     async initData() {
-        await Promise.all([$Method.loadMenuTree(), $Method.loadRoleMenus()]);
+        await Promise.all([$Method.apiMenuAll(), $Method.apiRoleDetail()]);
     },
     // 加载菜单树
-    async loadMenuTree() {
+    async apiMenuAll() {
         try {
-            const res = await $Http('/addon/admin/menuList');
-            if (res.code === 0) {
-                // menuList 接口返回的是数组，不是分页对象
-                const menuList = Array.isArray(res.data) ? res.data : res.data.lists || [];
-                // 使用工具函数转换为树形结构
-                $Data.menuTreeData = arrayToTree(menuList);
-            }
+            const res = await $Http('/addon/admin/menuAll');
+            $Data.menuTreeData = arrayToTree(res.data.lists);
         } catch (error) {
             console.error('加载菜单失败:', error);
             Modal.message({ message: '加载菜单失败', status: 'error' });
@@ -53,7 +55,7 @@ const $Method = {
     },
 
     // 加载该角色已分配的菜单
-    async loadRoleMenus() {
+    async apiRoleDetail() {
         if (!$Prop.rowData.id) return;
 
         try {
@@ -110,8 +112,6 @@ const $Method = {
         }
     }
 };
-
-$Method.initData();
 </script>
 
 <style scoped lang="scss">
