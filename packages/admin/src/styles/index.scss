@@ -77,9 +77,9 @@ body {
     // 工具栏
     .main-tool {
         position: absolute;
-        top: 16px;
-        left: 16px;
-        right: 16px;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 56px;
         display: flex;
         justify-content: space-between;
@@ -114,16 +114,15 @@ body {
     // 表格区域
     .main-table {
         position: absolute;
-        top: 88px;
-        left: 16px;
-        right: 16px;
-        bottom: 80px;
+        top: 72px;
+        left: 0;
+        right: 0;
+        bottom: 72px;
         overflow: hidden;
         background: #fff;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         border: 1px solid #e8eaed;
-        padding: 16px;
 
         .custom-table-cell-class {
             background-color: #f5f7fa !important;
@@ -135,9 +134,9 @@ body {
     // 分页器
     .main-page {
         position: absolute;
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
+        left: 0;
+        right: 0;
+        bottom: 0;
         height: 56px;
         padding: 0 20px;
         background: #fff;
