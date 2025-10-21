@@ -28,7 +28,8 @@ const $Form = $shallowRef({
 });
 
 const $Data = $ref({
-    menuTreeData: []
+    menuTreeData: [],
+    menuTreeCheckedKeys: []
 });
 
 // 监听弹窗显示，每次打开时重新加载数据
@@ -59,14 +60,8 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/roleMenuDetail', { roleId: $Prop.rowData.id });
-            if (res.code === 0) {
-                // 设置选中的菜单节点
-                const checkedKeys = Array.isArray(res.data) ? res.data : [];
-                nextTick(() => {
-                    $Form.tree?.setCheckedKeys(checkedKeys);
-                });
-            }
+            const res = await $Http('/addon/admin/roleDetail');
+            $Data.menuTreeCheckedKeys = res.data.menuIds || [];
         } catch (error) {
             console.error('加载角色菜单失败:', error);
         }
