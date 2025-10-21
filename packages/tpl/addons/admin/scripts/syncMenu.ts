@@ -120,31 +120,6 @@ async function syncMenus(helper: any, menus: any[], parentId: number = 0): Promi
 }
 
 /**
- * 构建菜单树形结构预览
- * @param allMenus - 所有菜单数据
- * @param parentId - 父菜单 ID
- * @param level - 缩进层级
- * @returns 树形结构文本行数组
- */
-function buildTree(allMenus: any[], parentId: number = 0, level: number = 0): string[] {
-    const lines: string[] = [];
-    const children = allMenus.filter((m: any) => m.pid === parentId);
-
-    children.forEach((menu: any, index: number) => {
-        const isLast = index === children.length - 1;
-        const prefix = '  '.repeat(level) + (isLast ? '└─' : '├─');
-        const typeLabel = menu.type === 0 ? '[目录]' : '[菜单]';
-        lines.push(`${prefix} ${typeLabel} ${menu.name} (${menu.path})`);
-
-        // 递归子菜单
-        const subLines = buildTree(allMenus, menu.id, level + 1);
-        lines.push(...subLines);
-    });
-
-    return lines;
-}
-
-/**
  * 同步菜单主函数
  */
 async function syncMenu(): Promise<boolean> {
@@ -195,6 +170,8 @@ async function syncMenu(): Promise<boolean> {
             fields: ['id', 'path', 'name']
         });
 
+        console.log('🔥[ allDbMenus ]-194', allDbMenus);
+
         let deletedCount = 0;
         for (const dbMenu of allDbMenus) {
             if (dbMenu.path && !configPaths.has(dbMenu.path)) {
@@ -219,9 +196,6 @@ async function syncMenu(): Promise<boolean> {
             orderBy: ['pid#ASC', 'sort#ASC', 'id#ASC']
         });
 
-        const treeLines = buildTree(allMenus);
-        Logger.info(treeLines.join('\n'));
-
         // 6. 输出统计信息
         Logger.info('\n=== 菜单同步完成 ===');
         Logger.info(`✅ 新增菜单: ${result.stats.created} 个`);
@@ -235,17 +209,17 @@ async function syncMenu(): Promise<boolean> {
         Logger.info('\n=== 步骤 6: 缓存菜单到 Redis ===');
         try {
             // 查询完整的菜单数据用于缓存（只缓存 state=1 的正常菜单）
-            const menusForCache = await helper.getAll({
+            const { lists } = await helper.getAll({
                 table: 'addon_admin_menu',
                 fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
 
-            console.log('🔥[ menusForCache ]-239', menusForCache);
+            console.log('🔥[ lists ]-239', lists);
 
             // 缓存到 Redis（使用 RedisHelper）
-            await RedisHelper.setObject('befly:menus:all', menusForCache);
-            Logger.info(`✅ 已缓存 ${menusForCache.length} 个菜单到 Redis (Key: befly:menus:all)`);
+            await RedisHelper.setObject('befly:menus:all', lists);
+            Logger.info(`✅ 已缓存 ${lists.length} 个菜单到 Redis (Key: befly:menus:all)`);
         } catch (cacheError: any) {
             Logger.warn('⚠️ 菜单缓存失败（不影响同步）:', cacheError?.message || String(cacheError));
             Logger.error('缓存错误详情:', cacheError);

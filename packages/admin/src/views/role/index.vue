@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="main-table">
-            <tiny-grid :data="$Data.roleList" header-cell-class-name="custom-table-cell-class" size="small" height="100%" seq-serial>
+            <tiny-grid :data="$Data.tableData" header-cell-class-name="custom-table-cell-class" size="small" height="100%" seq-serial>
                 <tiny-grid-column type="index" title="序号" :width="60" />
                 <tiny-grid-column field="name" title="角色名称" />
                 <tiny-grid-column field="code" title="角色代码" :width="150" />
@@ -75,7 +75,7 @@ import MenuDialog from './components/menu.vue';
 
 // 响应式数据
 const $Data = $ref({
-    roleList: [],
+    tableData: [],
     pagerConfig: {
         currentPage: 1,
         pageSize: 30,
@@ -98,7 +98,7 @@ const $Method = {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
-            $Data.roleList = res.data.list || [];
+            $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
         } catch (error) {
             console.error('加载角色列表失败:', error);

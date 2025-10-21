@@ -163,7 +163,7 @@ export class DbHelper {
         // P1: 如果总数为 0，直接返回，不执行第二次查询
         if (total === 0) {
             return {
-                table: [],
+                lists: [],
                 total: 0,
                 page: page,
                 limit: limit,
@@ -188,7 +188,7 @@ export class DbHelper {
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
-            table: convertBigIntFields<T>(camelList),
+            lists: convertBigIntFields<T>(camelList),
             total: total,
             page: page,
             limit: limit,
@@ -236,7 +236,9 @@ export class DbHelper {
         const camelResult = arrayKeysToCamel<T>(result);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        return convertBigIntFields<T>(camelResult);
+        return {
+            lists: convertBigIntFields<T>(camelResult)
+        };
     }
 
     /**

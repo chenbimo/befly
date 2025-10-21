@@ -1,2 +1,11 @@
+# Bun 全局配置
 [install]
-linker = "isolated"
+# isolated 模式：每个 workspace 独立管理依赖
+# 如果需要共享 @opentiny 包，建议改为 hoisted
+linker = "hoisted"
+
+# 可选：如果遇到 @opentiny 包解析问题，可以尝试改为：
+# linker = "hoisted"
+
+# Workspaces 配置
+# Bun 会自动读取 package.json 中的 workspaces 配置

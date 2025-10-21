@@ -12,41 +12,25 @@ export default {
         completed: '是否完成|number|0|1|null|0|null',
         priority: '优先级|string|1|10|null|0|^(low|medium|high)$',
         page: Fields.page,
-        pageSize: '每页数量|number|1|100|10|0|null'
+        limit: '每页数量|number|1|100|10|0|null'
     },
     handler: async (befly, ctx) => {
-        const page = ctx.body.page || 1;
-        const pageSize = ctx.body.pageSize || 10;
-
-        // 构建查询条件
-        const where = {};
-        if (ctx.body.completed !== undefined && ctx.body.completed !== null) {
-            where.completed = ctx.body.completed;
-        }
-        if (ctx.body.priority) {
-            where.priority = ctx.body.priority;
-        }
-
         // 查询数据（使用 getList 方法，带分页）
         const result = await befly.db.getList({
             table: 'addon_demo_todo',
-            where,
-            page,
-            limit: pageSize,
+            where: {
+                completed: ctx.body.completed,
+                priority: ctx.body.priority
+            },
+            page: ctx.body.page,
+            limit: ctx.body.limit,
             orderBy: ['created_at#DESC']
         });
 
-        // 暂时不使用插件格式化，直接返回原始数�?        // const demoTool = befly['demo.tool'];
+        // 暂时不使用插件格式化，直接返回原始数据
+        // const demoTool = befly['demo.tool'];
         // const formattedTodos = result.list.map((todo: any) => demoTool.formatTodo(todo));
 
-        return Yes('查询成功', {
-            list: result.list,
-            pagination: {
-                page: result.page,
-                pageSize: result.limit,
-                total: result.total,
-                totalPages: result.pages
-            }
-        });
+        return Yes('查询成功', result);
     }
 };

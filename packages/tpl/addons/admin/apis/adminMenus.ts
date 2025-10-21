@@ -13,27 +13,14 @@ export default {
     name: '获取用户菜单',
     handler: async (befly, ctx) => {
         try {
-            // 获取当前登录用户ID
-            const userId = ctx.user.id;
-
-            // 1. 查询用户信息获取角色ID
-            const admin = await befly.db.getOne({
-                table: 'addon_admin_admin',
-                where: { id: userId }
-            });
-
-            if (!admin || !admin.roleCode) {
-                return Yes('获取菜单成功', []);
-            }
-
             // 2. 查询角色信息获取菜单权限（使用 roleCode 而非 roleId）
             const role = await befly.db.getOne({
                 table: 'addon_admin_role',
-                where: { code: admin.roleCode }
+                where: { code: ctx.user.roleCode }
             });
 
             if (!role || !role.menus) {
-                return Yes('获取菜单成功', []);
+                return No('角色不存在', []);
             }
 
             // 3. 解析菜单ID列表（逗号分隔的字符串）
@@ -43,7 +30,7 @@ export default {
                 .filter((id: number) => !isNaN(id));
 
             if (menuIds.length === 0) {
-                return Yes('获取菜单成功', []);
+                return Yes('菜单为空', []);
             }
 
             // 4. 从 Redis 缓存读取所有菜单

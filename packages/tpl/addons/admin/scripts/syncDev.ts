@@ -67,7 +67,7 @@ export async function SyncDev(): Promise<boolean> {
         }
 
         // 查询所有菜单 ID
-        const allMenus = await helper.getAll({
+        const { lists: allMenus } = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id']
         });
