@@ -61,6 +61,14 @@ export default defineConfig({
         host: true,
         open: false
     },
+    optimizeDeps: {
+        include: ['vue', 'vue-router', 'pinia', 'lucide-vue-next'],
+        exclude: [],
+        // 自动发现并预构建所有依赖
+        esbuildOptions: {
+            target: 'esnext'
+        }
+    },
     build: {
         outDir: 'dist',
         sourcemap: false,
