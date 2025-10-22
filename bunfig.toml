@@ -1,11 +1,14 @@
-# Bun 全局配置
 [install]
-# isolated 模式：每个 workspace 独立管理依赖
-# 如果需要共享 @opentiny 包，建议改为 hoisted
-linker = "hoisted"
+# 使用隔离模式
+linker = "isolated"
 
-# 可选：如果遇到 @opentiny 包解析问题，可以尝试改为：
-# linker = "hoisted"
+# 提升类型定义和工具到根目录
+publicHoistPattern = [
+    "@types/*",    # 所有 TypeScript 类型
+    "prettier",    # Prettier 格式化工具
+    "typescript",  # TypeScript 编译器
+    "@opentiny/*",
+]
 
-# Workspaces 配置
-# Bun 会自动读取 package.json 中的 workspaces 配置
+# 内部提升常用依赖
+hoistPattern = []
