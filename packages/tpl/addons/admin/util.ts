@@ -89,7 +89,7 @@ export async function checkTableExists(helper: any, tableName: string): Promise<
 export async function deleteObsoleteRecords(helper: any, tableName: string, configPaths: Set<string>, pathField: string = 'path'): Promise<number> {
     Logger.info(`\n=== 删除配置中不存在的记录 ===`);
 
-    const { lists: allRecords } = await helper.getAll({
+    const allRecords = await helper.getAll({
         table: tableName,
         fields: ['id', pathField, 'name']
     });

@@ -236,9 +236,7 @@ export class DbHelper {
         const camelResult = arrayKeysToCamel<T>(result);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        return {
-            lists: convertBigIntFields<T>(camelResult)
-        };
+        return convertBigIntFields<T>(camelResult);
     }
 
     /**
