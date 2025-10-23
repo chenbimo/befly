@@ -4,7 +4,7 @@
  */
 
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear, convertBigIntFields } from './helper.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear, convertBigIntFields, fieldsToSnake } from './helper.js';
 import { Logger } from './logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -105,6 +105,11 @@ export class DbHelper {
 
     /**
      * 查询单条数据
+     * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
+     * @example
+     * // 以下两种写法等效：
+     * getOne({ table: 'user', fields: ['userId', 'userName'] })
+     * getOne({ table: 'user', fields: ['user_id', 'user_name'] })
      */
     async getOne<T = any>(options: QueryOptions): Promise<T | null> {
         const { table, fields = ['*'], where } = options;
@@ -112,10 +117,11 @@ export class DbHelper {
         // 清理 where 条件（排除 null 和 undefined）
         const cleanWhere = this.cleanFields(where);
 
-        // 转换 where 条件字段名：小驼峰 → 下划线
+        // 转换字段名和 where 条件：小驼峰 → 下划线
+        const snakeFields = fieldsToSnake(fields);
         const snakeWhere = whereKeysToSnake(cleanWhere);
 
-        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(1);
+        const builder = new SqlBuilder().select(snakeFields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -132,6 +138,10 @@ export class DbHelper {
 
     /**
      * 查询列表（带分页）
+     * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
+     * @example
+     * // 使用小驼峰格式（推荐）
+     * getList({ table: 'user', fields: ['userId', 'userName', 'createdAt'] })
      */
     async getList<T = any>(options: QueryOptions): Promise<ListResult<T>> {
         const { table, fields = ['*'], where, orderBy = [], page = 1, limit = 10 } = options;
@@ -147,7 +157,8 @@ export class DbHelper {
         // 清理 where 条件（排除 null 和 undefined）
         const cleanWhere = this.cleanFields(where);
 
-        // 转换 where 条件字段名：小驼峰 → 下划线
+        // 转换字段名和 where 条件：小驼峰 → 下划线
+        const snakeFields = fieldsToSnake(fields);
         const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 构建查询
@@ -173,7 +184,7 @@ export class DbHelper {
 
         // 查询数据
         const offset = (page - 1) * limit;
-        const dataBuilder = new SqlBuilder().select(fields).from(table).where(whereFiltered).limit(limit).offset(offset);
+        const dataBuilder = new SqlBuilder().select(snakeFields).from(table).where(whereFiltered).limit(limit).offset(offset);
 
         // P1: 只有用户明确指定了 orderBy 才添加排序
         if (orderBy && orderBy.length > 0) {
@@ -198,7 +209,11 @@ export class DbHelper {
 
     /**
      * 查询所有数据（不分页，有上限保护）
+     * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
      * ⚠️ 警告：此方法会查询大量数据，建议使用 getList 分页查询
+     * @example
+     * // 使用小驼峰格式（推荐）
+     * getAll({ table: 'user', fields: ['userId', 'userName'] })
      */
     async getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
         const { table, fields = ['*'], where, orderBy } = options;
@@ -210,10 +225,11 @@ export class DbHelper {
         // 清理 where 条件（排除 null 和 undefined）
         const cleanWhere = this.cleanFields(where);
 
-        // 转换 where 条件字段名：小驼峰 → 下划线
+        // 转换字段名和 where 条件：小驼峰 → 下划线
+        const snakeFields = fieldsToSnake(fields);
         const snakeWhere = whereKeysToSnake(cleanWhere);
 
-        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(MAX_LIMIT); // 强制添加上限
+        const builder = new SqlBuilder().select(snakeFields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(MAX_LIMIT); // 强制添加上限
 
         if (orderBy) {
             builder.orderBy(orderBy);

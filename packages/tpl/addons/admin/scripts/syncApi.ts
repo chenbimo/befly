@@ -238,7 +238,7 @@ async function syncApi(): Promise<boolean> {
         try {
             const lists = await helper.getAll({
                 table: 'addon_admin_api',
-                fields: ['id', 'name', 'path', 'method', 'description', 'addon_name']
+                fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
             });
 
             const result = await RedisHelper.setObject('apis:all', lists);

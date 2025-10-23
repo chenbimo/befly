@@ -366,6 +366,27 @@ export const toCamelCase = (str: string): string => {
 };
 
 /**
+ * 字段数组转下划线格式
+ * @param fields - 字段数组（可能包含小驼峰或下划线格式）
+ * @returns 下划线格式的字段数组
+ *
+ * @example
+ * fieldsToSnake(['userId', 'userName']) // ['user_id', 'user_name']
+ * fieldsToSnake(['*']) // ['*']
+ * fieldsToSnake(['id', 'createdAt']) // ['id', 'created_at']
+ */
+export const fieldsToSnake = (fields: string[]): string[] => {
+    if (!fields || !Array.isArray(fields)) return fields;
+    return fields.map((field) => {
+        // 保留通配符和特殊字段
+        if (field === '*' || field.includes('(') || field.includes(' ')) {
+            return field;
+        }
+        return toSnakeCase(field);
+    });
+};
+
+/**
  * 对象字段名转下划线
  * @param obj - 源对象
  * @returns 字段名转为下划线格式的新对象
