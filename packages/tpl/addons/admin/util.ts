@@ -3,6 +3,7 @@
  */
 
 import { Logger } from 'befly';
+import type { BeflyContext } from 'befly/types/befly';
 import { readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
@@ -140,5 +141,72 @@ export function getAddonDirs(addonsDir: string): string[] {
     } catch (error: any) {
         Logger.warn(`读取插件目录失败: ${addonsDir}`, error.message);
         return [];
+    }
+}
+
+/**
+ * 缓存角色权限到 Redis Set（增量更新）
+ * @param befly - Befly 上下文
+ * @param roleCode - 角色代码
+ * @param apiIds - 接口 ID 数组（逗号分隔的字符串）
+ */
+export async function cacheRolePermissions(befly: BeflyContext, roleCode: string, apiIds: string): Promise<void> {
+    try {
+        if (!apiIds) {
+            // 如果没有权限，删除缓存
+            await befly.redis.del(`befly:role:apis:${roleCode}`);
+            Logger.debug(`已删除角色 ${roleCode} 的权限缓存（无权限）`);
+            return;
+        }
+
+        // 解析接口 ID 列表
+        const apiIdArray = apiIds
+            .split(',')
+            .map((id: string) => parseInt(id.trim()))
+            .filter((id: number) => !isNaN(id));
+
+        if (apiIdArray.length === 0) {
+            await befly.redis.del(`befly:role:apis:${roleCode}`);
+            Logger.debug(`已删除角色 ${roleCode} 的权限缓存（ID 列表为空）`);
+            return;
+        }
+
+        // 查询所有接口
+        const allApis = await befly.db.getAll({
+            table: 'addon_admin_api',
+            fields: ['id', 'path', 'method']
+        });
+
+        // 根据 ID 过滤出接口路径
+        const roleApiPaths = allApis.filter((api: any) => apiIdArray.includes(api.id)).map((api: any) => `${api.method}${api.path}`);
+
+        if (roleApiPaths.length === 0) {
+            await befly.redis.del(`befly:role:apis:${roleCode}`);
+            Logger.debug(`已删除角色 ${roleCode} 的权限缓存（无匹配接口）`);
+            return;
+        }
+
+        // 使用 Redis Set 缓存（先删除再添加，确保数据一致性）
+        const redisKey = `befly:role:apis:${roleCode}`;
+        await befly.redis.del(redisKey);
+        const result = await befly.redis.sadd(redisKey, roleApiPaths);
+
+        Logger.debug(`已缓存角色 ${roleCode} 的权限: ${result} 个接口`);
+    } catch (error: any) {
+        Logger.warn(`缓存角色 ${roleCode} 权限失败:`, error?.message || '未知错误');
+    }
+}
+
+/**
+ * 删除角色权限缓存
+ * @param befly - Befly 上下文
+ * @param roleCode - 角色代码
+ */
+export async function deleteRolePermissions(befly: BeflyContext, roleCode: string): Promise<void> {
+    try {
+        await befly.redis.del(`befly:role:apis:${roleCode}`);
+        Logger.debug(`已删除角色 ${roleCode} 的权限缓存`);
+    } catch (error: any) {
+        Logger.warn(`删除角色 ${roleCode} 权限缓存失败:`, error?.message || '未知错误');
     }
 }

@@ -3,6 +3,7 @@
  */
 
 import { Yes, No, Fields } from 'befly';
+import { deleteRolePermissions } from '../util';
 
 export default {
     name: '删除角色',
@@ -21,11 +22,22 @@ export default {
                 return No('该角色已分配给用户，无法删除');
             }
 
+            // 获取角色信息（用于删除缓存）
+            const role = await befly.db.getDetail({
+                table: 'addon_admin_role',
+                where: { id: ctx.body.id }
+            });
+
             // 删除角色
             await befly.db.delData({
                 table: 'addon_admin_role',
                 where: { id: ctx.body.id }
             });
+
+            // 删除角色权限缓存
+            if (role?.code) {
+                await deleteRolePermissions(befly, role.code);
+            }
 
             return Yes('操作成功');
         } catch (error) {

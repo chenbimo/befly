@@ -1,5 +1,6 @@
 import { Yes, No } from 'befly';
 import adminRoleTable from '../tables/role.json';
+import { cacheRolePermissions } from '../util';
 
 /**
  * 创建角色
@@ -30,6 +31,9 @@ export default {
                 // state 由框架自动设置为 1
             }
         });
+
+        // 增量缓存角色权限到 Redis Set
+        await cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || '');
 
         return Yes('操作成功', { id: roleId });
     }

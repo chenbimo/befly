@@ -1,5 +1,6 @@
 import { Yes, No, Fields } from 'befly';
 import adminRoleTable from '../tables/role.json';
+import { cacheRolePermissions } from '../util';
 
 /**
  * 更新角色
@@ -43,6 +44,9 @@ export default {
                 // state 字段不在此处更新，需要禁用/启用时单独处理
             }
         });
+
+        // 增量更新角色权限缓存（先删除再重建）
+        await cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || '');
 
         return Yes('操作成功');
     }
