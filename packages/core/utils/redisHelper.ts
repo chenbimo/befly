@@ -251,5 +251,109 @@ export const RedisHelper = {
             });
             return -1;
         }
+    },
+
+    /**
+     * 向 Set 中添加一个或多个成员
+     * @param key - 键名
+     * @param members - 成员数组
+     * @returns 成功添加的成员数量
+     */
+    async sadd(key: string, members: string[]): Promise<number> {
+        try {
+            if (members.length === 0) return 0;
+
+            const client = getClient();
+            const pkey = `${prefix}${key}`;
+            return await client.sadd(pkey, ...members);
+        } catch (error: any) {
+            Logger.error({
+                msg: 'Redis sadd 错误',
+                message: error.message,
+                stack: error.stack
+            });
+            return 0;
+        }
+    },
+
+    /**
+     * 判断成员是否在 Set 中
+     * @param key - 键名
+     * @param member - 成员
+     * @returns 1 表示存在，0 表示不存在
+     */
+    async sismember(key: string, member: string): Promise<number> {
+        try {
+            const client = getClient();
+            const pkey = `${prefix}${key}`;
+            return await client.sismember(pkey, member);
+        } catch (error: any) {
+            Logger.error({
+                msg: 'Redis sismember 错误',
+                message: error.message,
+                stack: error.stack
+            });
+            return 0;
+        }
+    },
+
+    /**
+     * 获取 Set 的成员数量
+     * @param key - 键名
+     * @returns 成员数量
+     */
+    async scard(key: string): Promise<number> {
+        try {
+            const client = getClient();
+            const pkey = `${prefix}${key}`;
+            return await client.scard(pkey);
+        } catch (error: any) {
+            Logger.error({
+                msg: 'Redis scard 错误',
+                message: error.message,
+                stack: error.stack
+            });
+            return 0;
+        }
+    },
+
+    /**
+     * 获取 Set 的所有成员
+     * @param key - 键名
+     * @returns 成员数组
+     */
+    async smembers(key: string): Promise<string[]> {
+        try {
+            const client = getClient();
+            const pkey = `${prefix}${key}`;
+            return await client.smembers(pkey);
+        } catch (error: any) {
+            Logger.error({
+                msg: 'Redis smembers 错误',
+                message: error.message,
+                stack: error.stack
+            });
+            return [];
+        }
+    },
+
+    /**
+     * 删除键
+     * @param key - 键名
+     * @returns 删除的键数量
+     */
+    async del(key: string): Promise<number> {
+        try {
+            const client = getClient();
+            const pkey = `${prefix}${key}`;
+            return await client.del(pkey);
+        } catch (error: any) {
+            Logger.error({
+                msg: 'Redis del 错误',
+                message: error.message,
+                stack: error.stack
+            });
+            return 0;
+        }
     }
 };

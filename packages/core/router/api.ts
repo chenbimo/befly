@@ -72,8 +72,16 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             // 7. 记录请求日志
             logRequest(apiPath, ctx);
 
-            // 8. 权限验证
-            const permissionResult = checkPermission(api, ctx);
+            // 8. 权限验证（使用 Redis Set SISMEMBER 直接判断，提升性能）
+            let hasPermission = false;
+            if (api.auth === true && ctx.user?.roleCode && ctx.user.role !== 'dev') {
+                // 使用 Redis SISMEMBER 直接判断接口是否在角色权限集合中（O(1)复杂度）
+                const roleApisKey = `befly:role:apis:${ctx.user.roleCode}`;
+                const isMember = await appContext.redis.sismember(roleApisKey, apiPath);
+                hasPermission = isMember === 1;
+            }
+
+            const permissionResult = checkPermission(api, ctx, hasPermission);
             if (permissionResult.code !== 0) {
                 return Response.json(permissionResult, {
                     headers: corsOptions.headers

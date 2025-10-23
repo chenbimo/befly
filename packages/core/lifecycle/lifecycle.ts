@@ -9,6 +9,7 @@ import { scanAddons, addonDirExists } from '../utils/helper.js';
 import { Checker } from './checker.js';
 import { Loader } from './loader.js';
 import { Bootstrap } from './bootstrap.js';
+import { CacheManager } from './cacheManager.js';
 
 import type { Server } from 'bun';
 import type { Plugin } from '../types/plugin.js';
@@ -50,7 +51,14 @@ export class Lifecycle {
         // 3. 加载所有 API（addon + app）
         await this.loadAllApis();
 
-        // 4. 启动 HTTP 服务器
+        // 4. 缓存数据到 Redis（接口、菜单、角色权限）
+        if (appContext.redis) {
+            await CacheManager.cacheAll(this.apiRoutes, appContext);
+        } else {
+            Logger.warn('⚠️ Redis 未启用，跳过数据缓存');
+        }
+
+        // 5. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
         Logger.info(`服务器启动准备完成，总耗时: ${totalStartupTime}`);
 

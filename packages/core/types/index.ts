@@ -72,8 +72,8 @@ export interface ApiRoute {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS';
     /** 接口名称 */
     name: string;
-    /** 认证要求：false=公开，true=需登录，['admin']=需特定角色 */
-    auth: boolean | string[];
+    /** 认证要求: false=公开，true=需登录 */
+    auth: boolean;
     /** 字段规则定义 */
     fields: Record<string, string>;
     /** 必填字段列表 */

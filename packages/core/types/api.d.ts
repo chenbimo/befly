@@ -108,8 +108,11 @@ export interface ApiRoute<T = any, R = any> {
     /** HTTP 方法（可选，默认 POST） */
     method?: HttpMethod;
 
-    /** 认证类型（可选，默认 true） */
-    auth?: boolean | string | string[];
+    /** 认证类型（可选，默认 true）
+     * - true: 需要登录
+     * - false: 公开访问（无需登录）
+     */
+    auth?: boolean;
 
     /** 字段定义（验证规则）（可选，默认 {}） */
     fields?: TableDefinition;

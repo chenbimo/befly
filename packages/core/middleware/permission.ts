@@ -1,6 +1,6 @@
 /**
  * 权限验证中间件
- * 处理登录验证和角色权限检查
+ * 处理登录验证和接口权限检查
  */
 
 import { isType } from '../utils/index.js';
@@ -16,24 +16,28 @@ export interface PermissionResult {
 
 /**
  * 检查权限
- * auth 有3种值:
- * - true: 需要登录
- * - string: 需要特定角色类型
- * - array: 需要在角色列表中
  *
- * 特殊规则：
- * - role='dev' 的用户拥有所有权限（超级管理员）
+ * 验证流程:
+ * 1. auth=false → 公开接口，直接通过
+ * 2. auth=true → 需要登录认证
+ *    - 未登录 → 拒绝
+ *    - role='dev' → 超级管理员，拥有所有权限
+ *    - 其他角色 → 检查接口是否在角色的可访问接口列表中（通过 Redis SISMEMBER 预判断）
  *
+ * @param api - API 路由配置
+ * @param ctx - 请求上下文
+ * @param hasPermission - 是否有权限（通过 Redis SISMEMBER 预先判断）
  * @returns 统一的响应格式 { code: 0/1, msg, data, ...extra }
  */
-export function checkPermission(api: ApiRoute, ctx: RequestContext): PermissionResult {
-    // dev 角色拥有所有权限，直接通过（用 * 表示具备所有权限）
-    if (ctx.user?.role === 'dev') {
+export function checkPermission(api: ApiRoute, ctx: RequestContext, hasPermission: boolean = false): PermissionResult {
+    // 1. 公开接口（auth=false），无需验证
+    if (api.auth === false) {
         return { code: 0, msg: '', data: {} };
     }
 
-    // 登录验证
-    if (api.auth === true && !ctx.user.id) {
+    // 2. 需要登录的接口（auth=true）
+    // 2.1 检查是否登录
+    if (!ctx.user?.id) {
         return {
             code: 1,
             msg: '未登录',
@@ -42,23 +46,20 @@ export function checkPermission(api: ApiRoute, ctx: RequestContext): PermissionR
         };
     }
 
-    // 角色类型验证（字符串）
-    if (isType(api.auth, 'string') && api.auth !== ctx.user?.roleType) {
+    // 2.2 dev 角色拥有所有权限（超级管理员）
+    if (ctx.user.role === 'dev') {
+        return { code: 0, msg: '', data: {} };
+    }
+
+    // 2.3 检查接口权限（基于 Redis SISMEMBER 预判断结果）
+    if (!hasPermission) {
         return {
             code: 1,
-            msg: '没有权限',
+            msg: '没有权限访问此接口',
             data: {}
         };
     }
 
-    // 角色列表验证（数组）
-    if (isType(api.auth, 'array') && !api.auth.includes(ctx.user?.roleCode)) {
-        return {
-            code: 1,
-            msg: '没有权限',
-            data: {}
-        };
-    }
-
+    // 验证通过
     return { code: 0, msg: '', data: {} };
 }

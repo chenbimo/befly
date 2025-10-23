@@ -6,7 +6,7 @@ import { Yes, Fields } from 'befly';
 
 export default {
     name: '获取用户列表',
-    auth: ['admin'], // 仅管理员可访问
+    auth: true, // 需要登录（权限由角色接口列表控制）
     fields: {
         page: Fields.page,
         limit: Fields.limit,

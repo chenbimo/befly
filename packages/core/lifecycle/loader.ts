@@ -475,8 +475,8 @@ export class Loader {
                     if (api.method && !['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].includes(api.method.toUpperCase())) {
                         throw new Error(`接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法`);
                     }
-                    if (api.auth !== undefined && isType(api.auth, 'boolean') === false && isType(api.auth, 'array') === false && isType(api.auth, 'string') === false) {
-                        throw new Error(`接口 ${apiPath} 的 auth 属性必须是布尔值或字符串或字符串数组`);
+                    if (api.auth !== undefined && isType(api.auth, 'boolean') === false) {
+                        throw new Error(`接口 ${apiPath} 的 auth 属性必须是布尔值 (true=需登录, false=公开)`);
                     }
                     if (api.fields && isType(api.fields, 'object') === false) {
                         throw new Error(`接口 ${apiPath} 的 fields 属性必须是对象`);
