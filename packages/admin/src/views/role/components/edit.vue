@@ -1,5 +1,5 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+    <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '更新角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
         <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
             <tiny-form-item label="角色名称" prop="name">
                 <tiny-input v-model="$Data.formData.name" placeholder="请输入角色名称" />
@@ -79,7 +79,7 @@ const $Data2 = $shallowRef({
 const $Method = {
     async initData() {
         if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
-            $Data.formData = Object.assign({}, $Data.formData);
+            $Data.formData = Object.assign({}, $Prop.rowData);
         }
         $Method.onShow();
     },
@@ -102,19 +102,12 @@ const $Method = {
 
             const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/roleUpd' : '/addon/admin/roleIns', $Data.formData);
 
-            if (res.code === 0) {
-                Modal.message({
-                    message: $Prop.actionType === 'upd' ? '编辑成功' : '添加成功',
-                    status: 'success'
-                });
-                $Data.visible = false;
-                $Emit('success');
-            } else {
-                Modal.message({
-                    message: res.msg || '操作失败',
-                    status: 'error'
-                });
-            }
+            Modal.message({
+                message: $Prop.actionType === 'upd' ? '更新成功' : '添加成功',
+                status: 'success'
+            });
+            $Data.visible = false;
+            $Emit('success');
         } catch (error) {
             console.error('提交失败:', error);
             Modal.message({
