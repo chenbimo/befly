@@ -1,0 +1,7 @@
+{
+    "name": "接口名称|string|2|100|null|1|null",
+    "path": "接口路径|string|1|200|null|1|null",
+    "method": "请求方法|string|3|10|POST|1|^(GET|POST|PUT|DELETE|PATCH)$",
+    "description": "接口描述|string|0|500|null|0|null",
+    "addonName": "所属插件|string|0|50|null|0|null"
+}
