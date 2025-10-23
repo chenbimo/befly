@@ -4,7 +4,7 @@
  */
 
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear, convertBigIntFields, fieldsToSnake } from './helper.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear, convertBigIntFields, fieldsToSnake, toSnakeCase } from './helper.js';
 import { Logger } from './logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -92,11 +92,8 @@ export class DbHelper {
      * @returns 表是否存在
      */
     async tableExists(tableName: string): Promise<boolean> {
-        // 将小驼峰表名转换为下划线格式
-        const snakeTableName = tableName
-            .replace(/([A-Z])/g, '_$1')
-            .toLowerCase()
-            .replace(/^_/, '');
+        // 将表名转换为下划线格式
+        const snakeTableName = toSnakeCase(tableName);
 
         const result = await this.executeWithConn('SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?', [snakeTableName]);
 
@@ -105,11 +102,12 @@ export class DbHelper {
 
     /**
      * 查询单条数据
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
      * @example
      * // 以下两种写法等效：
-     * getOne({ table: 'user', fields: ['userId', 'userName'] })
-     * getOne({ table: 'user', fields: ['user_id', 'user_name'] })
+     * getOne({ table: 'userProfile', fields: ['userId', 'userName'] })
+     * getOne({ table: 'user_profile', fields: ['user_id', 'user_name'] })
      */
     async getOne<T = any>(options: QueryOptions): Promise<T | null> {
         const { table, fields = ['*'], where } = options;
@@ -117,11 +115,12 @@ export class DbHelper {
         // 清理 where 条件（排除 null 和 undefined）
         const cleanWhere = this.cleanFields(where);
 
-        // 转换字段名和 where 条件：小驼峰 → 下划线
+        // 转换表名、字段名和 where 条件：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
         const snakeFields = fieldsToSnake(fields);
         const snakeWhere = whereKeysToSnake(cleanWhere);
 
-        const builder = new SqlBuilder().select(snakeFields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(1);
+        const builder = new SqlBuilder().select(snakeFields).from(snakeTable).where(this.addDefaultStateFilter(snakeWhere));
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -138,10 +137,11 @@ export class DbHelper {
 
     /**
      * 查询列表（带分页）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
      * @example
      * // 使用小驼峰格式（推荐）
-     * getList({ table: 'user', fields: ['userId', 'userName', 'createdAt'] })
+     * getList({ table: 'userProfile', fields: ['userId', 'userName', 'createdAt'] })
      */
     async getList<T = any>(options: QueryOptions): Promise<ListResult<T>> {
         const { table, fields = ['*'], where, orderBy = [], page = 1, limit = 10 } = options;
@@ -157,7 +157,8 @@ export class DbHelper {
         // 清理 where 条件（排除 null 和 undefined）
         const cleanWhere = this.cleanFields(where);
 
-        // 转换字段名和 where 条件：小驼峰 → 下划线
+        // 转换表名、字段名和 where 条件：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
         const snakeFields = fieldsToSnake(fields);
         const snakeWhere = whereKeysToSnake(cleanWhere);
 
@@ -165,7 +166,7 @@ export class DbHelper {
         const whereFiltered = this.addDefaultStateFilter(snakeWhere);
 
         // 查询总数
-        const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(table).where(whereFiltered);
+        const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(snakeTable).where(whereFiltered);
 
         const { sql: countSql, params: countParams } = countBuilder.toSelectSql();
         const countResult = await this.executeWithConn(countSql, countParams);
@@ -184,7 +185,7 @@ export class DbHelper {
 
         // 查询数据
         const offset = (page - 1) * limit;
-        const dataBuilder = new SqlBuilder().select(snakeFields).from(table).where(whereFiltered).limit(limit).offset(offset);
+        const dataBuilder = new SqlBuilder().select(snakeFields).from(snakeTable).where(whereFiltered).limit(limit).offset(offset);
 
         // P1: 只有用户明确指定了 orderBy 才添加排序
         if (orderBy && orderBy.length > 0) {
@@ -209,11 +210,12 @@ export class DbHelper {
 
     /**
      * 查询所有数据（不分页，有上限保护）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
      * ⚠️ 警告：此方法会查询大量数据，建议使用 getList 分页查询
      * @example
      * // 使用小驼峰格式（推荐）
-     * getAll({ table: 'user', fields: ['userId', 'userName'] })
+     * getAll({ table: 'userProfile', fields: ['userId', 'userName'] })
      */
     async getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
         const { table, fields = ['*'], where, orderBy } = options;
@@ -225,11 +227,12 @@ export class DbHelper {
         // 清理 where 条件（排除 null 和 undefined）
         const cleanWhere = this.cleanFields(where);
 
-        // 转换字段名和 where 条件：小驼峰 → 下划线
+        // 转换表名、字段名和 where 条件：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
         const snakeFields = fieldsToSnake(fields);
         const snakeWhere = whereKeysToSnake(cleanWhere);
 
-        const builder = new SqlBuilder().select(snakeFields).from(table).where(this.addDefaultStateFilter(snakeWhere)).limit(MAX_LIMIT); // 强制添加上限
+        const builder = new SqlBuilder().select(snakeFields).from(snakeTable).where(this.addDefaultStateFilter(snakeWhere)).limit(MAX_LIMIT); // 强制添加上限
 
         if (orderBy) {
             builder.orderBy(orderBy);
@@ -257,12 +260,16 @@ export class DbHelper {
 
     /**
      * 插入数据（自动生成 ID、时间戳、state）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async insData(options: InsertOptions): Promise<number> {
         const { table, data } = options;
 
         // 清理数据（排除 null 和 undefined）
         const cleanData = this.cleanFields(data);
+
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
 
         // 处理数据（自动添加必要字段）
         // 字段名转换：小驼峰 → 下划线
@@ -292,7 +299,7 @@ export class DbHelper {
 
         // 构建 SQL
         const builder = new SqlBuilder();
-        const { sql, params } = builder.toInsertSql(table, processed);
+        const { sql, params } = builder.toInsertSql(snakeTable, processed);
 
         // 执行
         const result = await this.executeWithConn(sql, params);
@@ -303,6 +310,7 @@ export class DbHelper {
      * 批量插入数据（真正的批量操作）
      * 使用 INSERT INTO ... VALUES (...), (...), (...) 语法
      * 自动生成系统字段并包装在事务中
+     * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async insDataBatch(table: string, dataList: Record<string, any>[]): Promise<number[]> {
         // 空数组直接返回
@@ -315,6 +323,9 @@ export class DbHelper {
         if (dataList.length > MAX_BATCH_SIZE) {
             throw new Error(`批量插入数量 ${dataList.length} 超过最大限制 ${MAX_BATCH_SIZE}`);
         }
+
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
 
         // 批量生成 ID（一次性从 Redis 获取 N 个 ID）
         const ids = await this.befly.redis.genTimeIDBatch(dataList.length);
@@ -343,7 +354,7 @@ export class DbHelper {
 
         // 构建批量插入 SQL
         const builder = new SqlBuilder();
-        const { sql, params } = builder.toInsertSql(table, processedList);
+        const { sql, params } = builder.toInsertSql(snakeTable, processedList);
 
         // 在事务中执行批量插入
         try {
@@ -358,6 +369,7 @@ export class DbHelper {
 
     /**
      * 更新数据（强制更新时间戳，系统字段不可修改）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async updData(options: UpdateOptions): Promise<number> {
         const { table, data, where } = options;
@@ -365,6 +377,9 @@ export class DbHelper {
         // 清理数据和条件（排除 null 和 undefined）
         const cleanData = this.cleanFields(data);
         const cleanWhere = this.cleanFields(where);
+
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
 
         // 字段名转换：小驼峰 → 下划线
         const snakeData = keysToSnake(cleanData);
@@ -383,7 +398,7 @@ export class DbHelper {
         // 构建 SQL
         const whereFiltered = this.addDefaultStateFilter(snakeWhere);
         const builder = new SqlBuilder().where(whereFiltered);
-        const { sql, params } = builder.toUpdateSql(table, processed);
+        const { sql, params } = builder.toUpdateSql(snakeTable, processed);
 
         // 执行
         const result = await this.executeWithConn(sql, params);
@@ -391,53 +406,39 @@ export class DbHelper {
     }
 
     /**
-     * 软删除数据（设置 state=0 并记录删除时间）
+     * 软删除数据（deleted_at 设置为当前时间，state 设置为 0）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async delData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
+    async delData(options: DeleteOptions): Promise<number> {
         const { table, where } = options;
 
-        // 清理 where 条件（排除 null 和 undefined）
-        const cleanWhere = this.cleanFields(where);
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
 
-        // 字段名转换：小驼峰 → 下划线
-        const snakeWhere = whereKeysToSnake(cleanWhere);
-
-        // 软删除：设置 state=0 并记录删除时间
-        const now = Date.now();
-        const snakeData = keysToSnake({
-            state: 0,
-            updatedAt: now,
-            deletedAt: now
+        return await this.updData({
+            table: snakeTable,
+            data: { state: 0, deleted_at: Date.now() },
+            where
         });
-
-        // 移除系统字段
-        const { id, created_at, updated_at, deleted_at, ...userData } = snakeData;
-
-        // 强制更新时间戳
-        const processed: Record<string, any> = {
-            ...userData,
-            updated_at: now
-        };
-
-        // 构建 SQL（软删除时也要加 state > 0 过滤，避免重复删除）
-        const whereFiltered = this.addDefaultStateFilter(snakeWhere);
-        const builder = new SqlBuilder().where(whereFiltered);
-        const { sql, params } = builder.toUpdateSql(table, processed);
-
-        // 执行
-        const result = await this.executeWithConn(sql, params);
-        return result?.changes || 0;
     }
 
     /**
      * 硬删除数据（物理删除，不可恢复）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async delForce(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
+
+        // 清理条件字段
+        const cleanWhere = this.cleanFields(where);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
+
         // 物理删除
-        const builder = new SqlBuilder().where(where);
-        const { sql, params } = builder.toDeleteSql(table);
+        const builder = new SqlBuilder().where(snakeWhere);
+        const { sql, params } = builder.toDeleteSql(snakeTable);
 
         const result = await this.executeWithConn(sql, params);
         return result?.changes || 0;
@@ -445,12 +446,16 @@ export class DbHelper {
 
     /**
      * 禁用数据（设置 state=2）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async disableData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
+
         return await this.updData({
-            table: table,
+            table: snakeTable,
             data: {
                 state: 2
             },
@@ -460,12 +465,16 @@ export class DbHelper {
 
     /**
      * 启用数据（设置 state=1）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async enableData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
+
         return await this.updData({
-            table: table,
+            table: snakeTable,
             data: {
                 state: 1
             },
@@ -524,15 +533,20 @@ export class DbHelper {
 
     /**
      * 检查数据是否存在（优化性能）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async exists(options: Omit<QueryOptions, 'fields' | 'orderBy' | 'page' | 'limit'>): Promise<boolean> {
         const { table, where } = options;
 
+        // 转换表名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
+
         // 清理 where 条件（排除 null 和 undefined）
         const cleanWhere = this.cleanFields(where);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 使用 COUNT(1) 性能更好
-        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(cleanWhere)).limit(1);
+        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(snakeTable).where(this.addDefaultStateFilter(snakeWhere)).limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -583,15 +597,21 @@ export class DbHelper {
 
     /**
      * 自增字段（安全实现，防止 SQL 注入）
+     * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
+     * @param field - 字段名（支持小驼峰或下划线格式，会自动转换）
      */
     async increment(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
+        // 转换表名和字段名：小驼峰 → 下划线
+        const snakeTable = toSnakeCase(table);
+        const snakeField = toSnakeCase(field);
+
         // 验证表名格式（只允许字母、数字、下划线）
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
-            throw new Error(`无效的表名: ${table}`);
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(snakeTable)) {
+            throw new Error(`无效的表名: ${snakeTable}`);
         }
 
         // 验证字段名格式（只允许字母、数字、下划线）
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(snakeField)) {
             throw new Error(`无效的字段名: ${field}`);
         }
 
@@ -611,8 +631,8 @@ export class DbHelper {
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql: whereClause, params: whereParams } = builder.getWhereConditions();
 
-        // 构建安全的 UPDATE SQL（表名和字段名使用反引号转义）
-        const sql = whereClause ? `UPDATE \`${table}\` SET \`${field}\` = \`${field}\` + ? WHERE ${whereClause}` : `UPDATE \`${table}\` SET \`${field}\` = \`${field}\` + ?`;
+        // 构建安全的 UPDATE SQL（表名和字段名使用反引号转义，已经是下划线格式）
+        const sql = whereClause ? `UPDATE \`${snakeTable}\` SET \`${snakeField}\` = \`${snakeField}\` + ? WHERE ${whereClause}` : `UPDATE \`${snakeTable}\` SET \`${snakeField}\` = \`${snakeField}\` + ?`;
 
         const result = await this.executeWithConn(sql, [value, ...whereParams]);
         return result?.changes || 0;
@@ -620,6 +640,8 @@ export class DbHelper {
 
     /**
      * 自减字段
+     * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
+     * @param field - 字段名（支持小驼峰或下划线格式，会自动转换）
      */
     async decrement(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
         return await this.increment(table, field, where, -value);
