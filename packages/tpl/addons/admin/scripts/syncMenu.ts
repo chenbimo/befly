@@ -17,6 +17,7 @@ import { RedisHelper } from 'befly/utils/redisHelper';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import menuConfig from '../config/menu.json';
+import { collectPaths, checkTableExists, deleteObsoleteRecords, logSyncStats } from '../util';
 
 // CLI 参数类型
 interface CliArgs {
@@ -30,31 +31,6 @@ const CLI: CliArgs = {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-/**
- * 收集配置文件中所有菜单的 path（最多2级：父级和子级）
- * @param menus - 菜单数组
- * @returns 路径集合
- */
-function collectPaths(menus: any[]): Set<string> {
-    const paths = new Set<string>();
-
-    for (const menu of menus) {
-        if (menu.path) {
-            paths.add(menu.path);
-        }
-        // 只处理一级子菜单
-        if (menu.children && menu.children.length > 0) {
-            for (const child of menu.children) {
-                if (child.path) {
-                    paths.add(child.path);
-                }
-            }
-        }
-    }
-
-    return paths;
-}
 
 /**
  * 同步菜单（两层结构：父级和子级）
@@ -182,15 +158,9 @@ async function syncMenu(): Promise<boolean> {
         dbInitialized = true;
 
         // 1. 检查表是否存在
-        Logger.info('=== 步骤 1: 检查数据表 ===');
-        const exists = await helper.tableExists('addon_admin_menu');
-
-        if (!exists) {
-            Logger.error('❌ 表 addon_admin_menu 不存在，请先运行 befly syncDb 同步数据库');
+        if (!(await checkTableExists(helper, 'addon_admin_menu'))) {
             return false;
         }
-
-        Logger.info('✅ 表 addon_admin_menu 存在');
 
         // 2. 收集配置文件中所有菜单的 path
         Logger.info('\n=== 步骤 2: 收集配置菜单路径 ===');
@@ -202,27 +172,7 @@ async function syncMenu(): Promise<boolean> {
         const stats = await syncMenus(helper, menuConfig);
 
         // 4. 删除配置中不存在的菜单
-        Logger.info('\n=== 步骤 4: 删除配置中不存在的菜单 ===');
-        const { lists: allDbMenus } = await helper.getAll({
-            table: 'addon_admin_menu',
-            fields: ['id', 'path', 'name']
-        });
-
-        let deletedCount = 0;
-        for (const dbMenu of allDbMenus) {
-            if (dbMenu.path && !configPaths.has(dbMenu.path)) {
-                await helper.delData({
-                    table: 'addon_admin_menu',
-                    where: { id: dbMenu.id }
-                });
-                deletedCount++;
-                Logger.info(`  └ 删除菜单: ${dbMenu.name} (ID: ${dbMenu.id}, Path: ${dbMenu.path})`);
-            }
-        }
-
-        if (deletedCount === 0) {
-            Logger.info('  ✅ 无需删除的菜单');
-        }
+        const deletedCount = await deleteObsoleteRecords(helper, 'addon_admin_menu', configPaths);
 
         // 5. 构建树形结构预览
         Logger.info('\n=== 步骤 5: 菜单结构预览 ===');
@@ -233,10 +183,7 @@ async function syncMenu(): Promise<boolean> {
         });
 
         // 6. 输出统计信息
-        Logger.info('\n=== 菜单同步完成 ===');
-        Logger.info(`新增菜单: ${stats.created} 个`);
-        Logger.info(`更新菜单: ${stats.updated} 个`);
-        Logger.info(`删除菜单: ${deletedCount} 个`);
+        logSyncStats(stats, deletedCount, '菜单');
         Logger.info(`当前父级菜单: ${allMenus.filter((m: any) => m.pid === 0).length} 个`);
         Logger.info(`当前子级菜单: ${allMenus.filter((m: any) => m.pid !== 0).length} 个`);
 

@@ -17,6 +17,7 @@ import { RedisHelper } from 'befly/utils/redisHelper';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readdirSync, statSync } from 'node:fs';
+import { scanTsFiles, checkTableExists, deleteObsoleteRecords, logSyncStats, getAddonDirs } from '../util';
 
 // CLI 参数类型
 interface CliArgs {
@@ -40,34 +41,6 @@ const CLI: CliArgs = {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const tplDir = path.resolve(__dirname, '../../../');
-
-/**
- * 递归扫描目录下的所有 .ts 文件
- * @param dir - 目录路径
- * @param fileList - 文件列表
- * @returns 文件路径数组
- */
-function scanTsFiles(dir: string, fileList: string[] = []): string[] {
-    try {
-        const files = readdirSync(dir);
-
-        for (const file of files) {
-            const filePath = path.join(dir, file);
-            const stat = statSync(filePath);
-
-            if (stat.isDirectory()) {
-                // 递归扫描子目录
-                scanTsFiles(filePath, fileList);
-            } else if (file.endsWith('.ts') && !file.endsWith('.d.ts')) {
-                fileList.push(filePath);
-            }
-        }
-    } catch (error: any) {
-        Logger.warn(`扫描目录失败: ${dir}`, error.message);
-    }
-
-    return fileList;
-}
 
 /**
  * 从 API 文件中提取接口信息
@@ -137,10 +110,7 @@ async function scanAllApis(): Promise<ApiInfo[]> {
     // 2. 扫描插件 API (tpl/addons/*/apis)
     Logger.info('\n=== 扫描插件 API (tpl/addons/*/apis) ===');
     const addonsDir = path.join(tplDir, 'addons');
-    const addonDirs = readdirSync(addonsDir).filter((name) => {
-        const addonPath = path.join(addonsDir, name);
-        return statSync(addonPath).isDirectory() && !name.startsWith('_');
-    });
+    const addonDirs = getAddonDirs(addonsDir);
 
     for (const addonName of addonDirs) {
         const addonApisDir = path.join(addonsDir, addonName, 'apis');
@@ -240,15 +210,11 @@ async function syncApi(): Promise<boolean> {
         dbInitialized = true;
 
         // 1. 检查表是否存在
-        Logger.info('=== 步骤 1: 检查数据表 ===');
-        const exists = await helper.tableExists('addon_admin_api');
-
-        if (!exists) {
-            Logger.error('❌ 表 addon_admin_api 不存在，请先运行 befly syncDb 同步数据库');
+        if (!(await checkTableExists(helper, 'addon_admin_api'))) {
             return false;
         }
 
-        Logger.info('✅ 表 addon_admin_api 存在\n');
+        Logger.info('');
 
         // 2. 扫描所有 API 文件
         Logger.info('=== 步骤 2: 扫描 API 文件 ===');
@@ -261,33 +227,10 @@ async function syncApi(): Promise<boolean> {
         const stats = await syncApis(helper, apis);
 
         // 4. 删除文件中不存在的接口
-        Logger.info('\n=== 步骤 4: 删除文件中不存在的接口 ===');
-        const { lists: allDbApis } = await helper.getAll({
-            table: 'addon_admin_api',
-            fields: ['id', 'path', 'name']
-        });
-
-        let deletedCount = 0;
-        for (const dbApi of allDbApis) {
-            if (dbApi.path && !apiPaths.has(dbApi.path)) {
-                await helper.delData({
-                    table: 'addon_admin_api',
-                    where: { id: dbApi.id }
-                });
-                deletedCount++;
-                Logger.info(`  └ 删除接口: ${dbApi.name} (ID: ${dbApi.id}, Path: ${dbApi.path})`);
-            }
-        }
-
-        if (deletedCount === 0) {
-            Logger.info('  ✅ 无需删除的接口');
-        }
+        const deletedCount = await deleteObsoleteRecords(helper, 'addon_admin_api', apiPaths);
 
         // 5. 输出统计信息
-        Logger.info('\n=== API 同步完成 ===');
-        Logger.info(`新增接口: ${stats.created} 个`);
-        Logger.info(`更新接口: ${stats.updated} 个`);
-        Logger.info(`删除接口: ${deletedCount} 个`);
+        logSyncStats(stats, deletedCount, '接口');
         Logger.info(`当前总接口数: ${apis.length} 个`);
 
         // 6. 缓存接口到 Redis
