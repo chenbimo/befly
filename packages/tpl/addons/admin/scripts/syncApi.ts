@@ -13,7 +13,6 @@
  */
 
 import { Env, Logger, initDatabase, closeDatabase } from 'befly';
-import { RedisHelper } from 'befly/utils/redisHelper';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readdirSync, statSync } from 'node:fs';
@@ -232,24 +231,7 @@ async function syncApi(): Promise<boolean> {
         // 5. 输出统计信息
         logSyncStats(stats, deletedCount, '接口');
         Logger.info(`当前总接口数: ${apis.length} 个`);
-
-        // 6. 缓存接口到 Redis（独立 try-catch，不影响主流程）
-        Logger.info('\n=== 步骤 5: 缓存接口到 Redis ===');
-        try {
-            const lists = await helper.getAll({
-                table: 'addon_admin_api',
-                fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
-            });
-
-            const result = await RedisHelper.setObject('apis:all', lists);
-            if (result === null) {
-                Logger.warn('⚠️ 接口缓存失败（不影响同步），请查看上方错误日志');
-            } else {
-                Logger.info(`✅ 已缓存 ${lists.length} 个接口到 Redis (Key: befly:apis:all)`);
-            }
-        } catch (cacheError: any) {
-            Logger.warn('⚠️ 接口缓存异常（不影响同步）:', cacheError?.message || '未知错误');
-        }
+        Logger.info('提示: 接口缓存将在服务器启动时自动完成');
 
         return true;
     } catch (error: any) {
