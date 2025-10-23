@@ -1,5 +1,5 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Visible" :title="$Prop.actionType ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
+    <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
         <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
             <tiny-form-item label="角色名称" prop="name">
                 <tiny-input v-model="$Data.formData.name" placeholder="请输入角色名称" />
@@ -21,16 +21,18 @@
             </tiny-form-item>
         </tiny-form>
         <template #footer>
-            <tiny-button @click="$Visible = false">取消</tiny-button>
+            <tiny-button @click="$Method.onClose">取消</tiny-button>
             <tiny-button type="primary" @click="$Method.onSubmit">确定</tiny-button>
         </template>
     </tiny-dialog-box>
 </template>
 
 <script setup>
-const $Visible = defineModel({ default: false });
-
 const $Prop = defineProps({
+    modelValue: {
+        type: Boolean,
+        default: false
+    },
     actionType: {
         type: String,
         default: 'add'
@@ -41,7 +43,7 @@ const $Prop = defineProps({
     }
 });
 
-const $Emit = defineEmits(['success']);
+const $Emit = defineEmits(['update:modelValue', 'success']);
 
 // 表单引用
 const $From = $shallowRef({
@@ -51,6 +53,7 @@ const $From = $shallowRef({
 const $Computed = {};
 
 const $Data = $ref({
+    visible: false,
     formData: {
         id: 0,
         name: '',
@@ -74,26 +77,55 @@ const $Data2 = $shallowRef({
 
 // 方法集合
 const $Method = {
+    async initData() {
+        if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
+            $Data.formData = Object.assign({}, $Data.formData);
+        }
+        $Method.onShow();
+    },
+    onShow() {
+        setTimeout(() => {
+            $Data.visible = $Prop.modelValue;
+        }, 100);
+    },
+    // 关闭抽屉事件
+    onClose() {
+        $Data.visible = false;
+        setTimeout(() => {
+            $Emit('update:modelValue', false);
+        }, 300);
+    },
     async onSubmit() {
         try {
             const valid = await $From.form.validate();
             if (!valid) return;
 
-            const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/roleIns' : '/addon/admin/roleUpd', $Data.formData);
+            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/roleUpd' : '/addon/admin/roleIns', $Data.formData);
 
-            Modal.message({
-                message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
-                status: 'success'
-            });
-            $Visible.value = false;
-            $Emit('success');
+            if (res.code === 0) {
+                Modal.message({
+                    message: $Prop.actionType === 'upd' ? '编辑成功' : '添加成功',
+                    status: 'success'
+                });
+                $Data.visible = false;
+                $Emit('success');
+            } else {
+                Modal.message({
+                    message: res.msg || '操作失败',
+                    status: 'error'
+                });
+            }
         } catch (error) {
-            console.log('提交失败:', error);
+            console.error('提交失败:', error);
+            Modal.message({
+                message: '提交失败',
+                status: 'error'
+            });
         }
     }
 };
 
-onMounted(() => {});
+$Method.initData();
 </script>
 
 <style scoped lang="scss">

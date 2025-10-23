@@ -37,7 +37,7 @@
                         <tiny-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                             <template #dropdown>
                                 <tiny-dropdown-menu>
-                                    <tiny-dropdown-item :item-data="{ command: 'edit' }">
+                                    <tiny-dropdown-item :item-data="{ command: 'upd' }">
                                         <Icon name="Edit" />
                                         编辑
                                     </tiny-dropdown-item>
@@ -45,7 +45,7 @@
                                         <Icon name="Settings" />
                                         菜单权限
                                     </tiny-dropdown-item>
-                                    <tiny-dropdown-item :item-data="{ command: 'delete' }" divided>
+                                    <tiny-dropdown-item :item-data="{ command: 'del' }" divided>
                                         <Icon name="Trash2" />
                                         删除
                                     </tiny-dropdown-item>
@@ -62,7 +62,7 @@
         </div>
 
         <!-- 编辑对话框组件 -->
-        <EditDialog v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
+        <EditDialog v-if="$Data.editVisible" v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
 
         <!-- 菜单权限对话框组件 -->
         <MenuDialog v-model="$Data.menuVisible" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
@@ -149,11 +149,11 @@ const $Method = {
     onAction(command, rowData) {
         $Data.actionType = command;
         $Data.rowData = rowData;
-        if (command === 'add' || command === 'edit') {
+        if (command === 'add' || command === 'upd') {
             $Data.editVisible = true;
         } else if (command === 'menu') {
             $Data.menuVisible = true;
-        } else if (command === 'delete') {
+        } else if (command === 'del') {
             $Method.apiRoleDel(rowData);
         }
     }
