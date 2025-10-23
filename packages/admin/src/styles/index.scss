@@ -35,6 +35,15 @@ body {
     background: #bfbfbf;
 }
 
+.tiny-dialog-box {
+    .tiny-dialog-box__header {
+        .tiny-dialog-box__headerbtn {
+            top: 0 !important;
+            right: 0 !important;
+        }
+    }
+}
+
 /* 通用工具类 */
 .text-center {
     text-align: center;

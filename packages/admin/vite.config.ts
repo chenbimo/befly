@@ -59,12 +59,35 @@ export default defineConfig({
     server: {
         port: 5173,
         host: true,
-        open: false
+        open: false,
+        // 优化 HMR 和依赖预构建
+        hmr: {
+            overlay: false
+        },
+        fs: {
+            // 允许访问项目根目录
+            allow: ['../../']
+        }
+    },
+    logLevel: 'info',
+    customLogger: {
+        info: (msg) => {
+            // 过滤掉频繁的依赖优化信息
+            if (msg.includes('new dependencies optimized')) {
+                return;
+            }
+            console.info(msg);
+        },
+        warn: console.warn,
+        error: console.error
     },
     optimizeDeps: {
-        include: ['vue', 'vue-router', 'pinia', 'lucide-vue-next'],
+        include: ['vue', 'vue-router', 'pinia', 'lucide-vue-next', 'axios', '@opentiny/vue'],
         exclude: [],
-        // 自动发现并预构建所有依赖
+        // 禁用自动发现，减少频繁优化提示
+        noDiscovery: true,
+        // 增加缓存时间，避免重复优化
+        force: false,
         esbuildOptions: {
             target: 'esnext'
         }
