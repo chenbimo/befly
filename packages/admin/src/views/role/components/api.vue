@@ -109,7 +109,7 @@ const $Method = {
 
                 apiMap.get(addonName).apis.push({
                     id: api.id,
-                    label: `${api.name} [${api.method} ${api.path}]`,
+                    label: `${api.name}`,
                     description: api.description
                 });
             });
