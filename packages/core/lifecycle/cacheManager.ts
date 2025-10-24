@@ -41,13 +41,7 @@ export class CacheManager {
                 Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
             }
         } catch (error: any) {
-            const errorMessage = error?.message || error?.toString?.() || String(error);
-            const errorStack = error?.stack || '';
-            Logger.warn('⚠️ 接口缓存异常:', {
-                message: errorMessage,
-                stack: errorStack,
-                raw: error
-            });
+            Logger.error('⚠️ 接口缓存异常:', error);
         }
     }
 
