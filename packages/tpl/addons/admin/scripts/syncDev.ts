@@ -67,12 +67,37 @@ export async function SyncDev(): Promise<boolean> {
         }
 
         // 查询所有菜单 ID
-        const { lists: allMenus } = await helper.getAll({
+        const allMenus = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id']
         });
-        const menuIds = allMenus.map((m: any) => m.id).join(',');
-        Logger.info(`查询到 ${allMenus.length} 个菜单，ID 列表: ${menuIds}`);
+
+        if (!allMenus || !Array.isArray(allMenus)) {
+            Logger.warn('查询菜单失败或菜单表为空');
+            return false;
+        }
+
+        const menuIds = allMenus.length > 0 ? allMenus.map((m: any) => m.id).join(',') : '';
+        Logger.info(`查询到 ${allMenus.length} 个菜单，ID 列表: ${menuIds || '(空)'}`);
+
+        // 查询所有接口 ID
+        const existApi = await helper.tableExists('addon_admin_api');
+        let apiIds = '';
+        if (existApi) {
+            const allApis = await helper.getAll({
+                table: 'addon_admin_api',
+                fields: ['id']
+            });
+
+            if (allApis && Array.isArray(allApis) && allApis.length > 0) {
+                apiIds = allApis.map((a: any) => a.id).join(',');
+                Logger.info(`查询到 ${allApis.length} 个接口，ID 列表: ${apiIds}`);
+            } else {
+                Logger.info('未查询到接口数据');
+            }
+        } else {
+            Logger.info('接口表不存在，跳过接口权限配置');
+        }
 
         // 查询或创建 dev 角色
         let devRole = await helper.getOne({
@@ -81,18 +106,18 @@ export async function SyncDev(): Promise<boolean> {
         });
 
         if (devRole) {
-            // 更新 dev 角色的菜单权限
+            // 更新 dev 角色的菜单和接口权限
             await helper.updData({
                 table: 'addon_admin_role',
                 where: { code: 'dev' },
                 data: {
                     name: '开发者角色',
-                    description: '拥有所有菜单权限的开发者角色',
+                    description: '拥有所有菜单和接口权限的开发者角色',
                     menus: menuIds,
-                    apis: '' // 接口权限暂时为空
+                    apis: apiIds
                 }
             });
-            Logger.info('dev 角色菜单权限已更新');
+            Logger.info('dev 角色菜单和接口权限已更新');
         } else {
             // 创建 dev 角色
             const roleId = await helper.insData({
@@ -100,9 +125,9 @@ export async function SyncDev(): Promise<boolean> {
                 data: {
                     name: '开发者角色',
                     code: 'dev',
-                    description: '拥有所有菜单权限的开发者角色',
+                    description: '拥有所有菜单和接口权限的开发者角色',
                     menus: menuIds,
-                    apis: '', // 接口权限暂时为空
+                    apis: apiIds,
                     sort: 0
                 }
             });
