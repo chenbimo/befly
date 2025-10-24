@@ -33,5 +33,12 @@
         "icon": "Users",
         "sort": 5,
         "type": 1
+    },
+    {
+        "name": "字典管理",
+        "path": "/dict",
+        "icon": "BookOpen",
+        "sort": 6,
+        "type": 1
     }
 ]

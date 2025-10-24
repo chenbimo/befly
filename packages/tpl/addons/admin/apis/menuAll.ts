@@ -36,7 +36,6 @@ export default {
 
             // 4. 从 Redis 缓存读取所有菜单
             let allMenus = await befly.redis.getObject<any[]>('befly:menus:all');
-            console.log('🔥[ allMenus ]-51', allMenus);
 
             // 如果缓存不存在，从数据库查询并缓存
             if (!allMenus || allMenus.length === 0) {
