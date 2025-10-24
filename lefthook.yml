@@ -1,0 +1,8 @@
+# Lefthook 配置文件
+# 文档: https://lefthook.dev/
+
+pre-commit:
+    jobs:
+        - name: Format code
+          glob: '*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}'
+          run: bunx --bun prettier --write --cache --ignore-unknown {staged_files}
