@@ -1,5 +1,5 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
+    <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
         <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($Form.form = el)">
             <tiny-form-item label="菜单名称" prop="name">
                 <tiny-input v-model="$Data.formData.name" placeholder="请输入菜单名称" />
@@ -34,20 +34,22 @@
 </template>
 
 <script setup>
-const $Visible = defineModel({ default: false });
-
 const $Prop = defineProps({
+    modelValue: {
+        type: Boolean,
+        default: false
+    },
     actionType: {
         type: String,
         default: 'add'
     },
     rowData: {
         type: Object,
-        default: () => ({})
+        default: {}
     }
 });
 
-const $Emit = defineEmits(['success']);
+const $Emit = defineEmits(['update:modelValue', 'success']);
 
 // 表单引用
 const $Form = $shallowRef({
@@ -55,6 +57,7 @@ const $Form = $shallowRef({
 });
 
 const $Data = $ref({
+    visible: false,
     formData: {
         id: 0,
         name: '',
@@ -76,8 +79,37 @@ const $Data2 = $shallowRef({
 
 // 方法集合
 const $Method = {
+    async initData() {
+        $Method.onShow();
+    },
+
+    onShow() {
+        $Data.visible = true;
+        if ($Prop.actionType === 'upd' && $Prop.rowData) {
+            $Data.formData.id = $Prop.rowData.id || 0;
+            $Data.formData.name = $Prop.rowData.name || '';
+            $Data.formData.path = $Prop.rowData.path || '';
+            $Data.formData.icon = $Prop.rowData.icon || '';
+            $Data.formData.type = $Prop.rowData.type ?? 1;
+            $Data.formData.sort = $Prop.rowData.sort || 0;
+            $Data.formData.state = $Prop.rowData.state ?? 1;
+        } else {
+            // 重置表单
+            $Data.formData.id = 0;
+            $Data.formData.name = '';
+            $Data.formData.path = '';
+            $Data.formData.icon = '';
+            $Data.formData.type = 1;
+            $Data.formData.sort = 0;
+            $Data.formData.state = 1;
+        }
+    },
+
     onClose() {
-        $Visible.value = false;
+        $Data.visible = false;
+        setTimeout(() => {
+            $Emit('update:modelValue', false);
+        }, 300);
     },
 
     async onSubmit() {
@@ -91,7 +123,7 @@ const $Method = {
                 message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
                 status: 'success'
             });
-            $Visible.value = false;
+            $Method.onClose();
             $Emit('success');
         } catch (error) {
             console.error('提交失败:', error);
@@ -99,31 +131,17 @@ const $Method = {
     }
 };
 
-// 监听弹框打开，初始化数据
+// 监听 modelValue 变化
 watch(
-    () => $Visible.value,
-    (visible) => {
-        if (visible) {
-            if ($Prop.actionType === 'edit' && $Prop.rowData) {
-                $Data.formData.id = $Prop.rowData.id || 0;
-                $Data.formData.name = $Prop.rowData.name || '';
-                $Data.formData.path = $Prop.rowData.path || '';
-                $Data.formData.icon = $Prop.rowData.icon || '';
-                $Data.formData.type = $Prop.rowData.type ?? 1;
-                $Data.formData.sort = $Prop.rowData.sort || 0;
-                $Data.formData.state = $Prop.rowData.state ?? 1;
-            } else {
-                // 重置表单
-                $Data.formData.id = 0;
-                $Data.formData.name = '';
-                $Data.formData.path = '';
-                $Data.formData.icon = '';
-                $Data.formData.type = 1;
-                $Data.formData.sort = 0;
-                $Data.formData.state = 1;
-            }
+    () => $Prop.modelValue,
+    (val) => {
+        if (val && !$Data.visible) {
+            $Method.initData();
+        } else if (!val && $Data.visible) {
+            $Data.visible = false;
         }
-    }
+    },
+    { immediate: true }
 );
 </script>
 

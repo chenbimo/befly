@@ -48,11 +48,11 @@
                         <tiny-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                             <template #dropdown>
                                 <tiny-dropdown-menu>
-                                    <tiny-dropdown-item :item-data="{ command: 'edit' }">
+                                    <tiny-dropdown-item :item-data="{ command: 'upd' }">
                                         <Icon name="Edit" />
                                         编辑
                                     </tiny-dropdown-item>
-                                    <tiny-dropdown-item :item-data="{ command: 'delete' }" divided>
+                                    <tiny-dropdown-item :item-data="{ command: 'del' }" divided>
                                         <Icon name="Trash2" />
                                         删除
                                     </tiny-dropdown-item>
@@ -65,11 +65,11 @@
         </div>
 
         <div class="main-page">
-            <tiny-pager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.handlePageChange" @size-change="$Method.handleSizeChange" />
+            <tiny-pager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
-        <EditDialog v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.loadMenuList" />
+        <EditDialog v-if="$Data.editVisible" v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiMenuList" />
     </div>
 </template>
 
@@ -93,15 +93,19 @@ const $Data = $ref({
 
 // 方法
 const $Method = {
+    async initData() {
+        await $Method.apiMenuList();
+    },
+
     // 加载菜单列表
-    async loadMenuList() {
+    async apiMenuList() {
         try {
             const res = await $Http('/addon/admin/menuList', {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.pageSize
             });
-            $Data.menuList = res.data.list || res.data || [];
-            $Data.pagerConfig.total = res.data.total || $Data.menuList.length;
+            $Data.menuList = res.data.lists || [];
+            $Data.pagerConfig.total = res.data.total || 0;
         } catch (error) {
             console.error('加载菜单列表失败:', error);
             Modal.message({
@@ -112,7 +116,7 @@ const $Method = {
     },
 
     // 删除菜单
-    async handleDelete(row) {
+    async apiMenuDel(row) {
         Modal.confirm({
             header: '确认删除',
             body: `确定要删除菜单"${row.name}" 吗？`,
@@ -122,7 +126,7 @@ const $Method = {
                 const res = await $Http('/addon/admin/menuDel', { id: row.id });
                 if (res.code === 0) {
                     Modal.message({ message: '删除成功', status: 'success' });
-                    $Method.loadMenuList();
+                    $Method.apiMenuList();
                 } else {
                     Modal.message({ message: res.msg || '删除失败', status: 'error' });
                 }
@@ -135,30 +139,28 @@ const $Method = {
 
     // 刷新
     handleRefresh() {
-        $Method.loadMenuList();
+        $Method.apiMenuList();
     },
 
     // 分页改变
-    handlePageChange({ currentPage }) {
+    onPageChange({ currentPage }) {
         $Data.pagerConfig.currentPage = currentPage;
-        $Method.loadMenuList();
+        $Method.apiMenuList();
     },
 
     // 操作菜单点击
     onAction(command, rowData) {
         $Data.actionType = command;
         $Data.rowData = rowData;
-        if (command === 'add' || command === 'edit') {
+        if (command === 'add' || command === 'upd') {
             $Data.editVisible = true;
-        } else if (command === 'delete') {
-            $Method.handleDelete(rowData);
+        } else if (command === 'del') {
+            $Method.apiMenuDel(rowData);
         }
     }
 };
 
-onMounted(() => {
-    $Method.loadMenuList();
-});
+$Method.initData();
 </script>
 
 <style scoped lang="scss">
