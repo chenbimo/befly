@@ -38,7 +38,7 @@ const $Data = $ref({
 // 方法集合
 const $Method = {
     async initData() {
-        await Promise.all([$Method.apiMenuAll(), $Method.apiRoleDetail()]);
+        await Promise.all([$Method.apiMenuAll(), $Method.apiRoleMenuDetail()]);
         $Method.onShow();
     },
 
@@ -55,11 +55,13 @@ const $Method = {
         }, 300);
     },
 
-    // 加载菜单树
+    // 加载菜单树（用于配置权限）
     async apiMenuAll() {
         try {
             const res = await $Http('/addon/admin/menuAll');
-            $Data.menuTreeData = arrayToTree(res.data.lists);
+            // menuAll 返回的 data 直接就是菜单数组
+            const menuList = Array.isArray(res.data) ? res.data : [];
+            $Data.menuTreeData = arrayToTree(menuList);
         } catch (error) {
             console.error('加载菜单失败:', error);
             Modal.message({ message: '加载菜单失败', status: 'error' });
@@ -67,12 +69,23 @@ const $Method = {
     },
 
     // 加载该角色已分配的菜单
-    async apiRoleDetail() {
+    async apiRoleMenuDetail() {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/roleDetail');
-            $Data.menuTreeCheckedKeys = res.data.menuIds || [];
+            const res = await $Http('/addon/admin/roleMenuDetail', {
+                roleId: $Prop.rowData.id
+            });
+
+            // roleMenuDetail 返回的 data 直接就是菜单 ID 数组
+            $Data.menuTreeCheckedKeys = Array.isArray(res.data) ? res.data : [];
+
+            // 等待树渲染完成后设置选中状态
+            nextTick(() => {
+                if ($Form.tree && $Data.menuTreeCheckedKeys.length > 0) {
+                    $Form.tree.setCheckedKeys($Data.menuTreeCheckedKeys);
+                }
+            });
         } catch (error) {
             console.error('加载角色菜单失败:', error);
         }
