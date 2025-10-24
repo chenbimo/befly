@@ -45,6 +45,10 @@
                                         <Icon name="Settings" />
                                         菜单权限
                                     </tiny-dropdown-item>
+                                    <tiny-dropdown-item :item-data="{ command: 'api' }">
+                                        <Icon name="Code" />
+                                        接口权限
+                                    </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'del' }" divided>
                                         <Icon name="Trash2" />
                                         删除
@@ -65,13 +69,17 @@
         <EditDialog v-if="$Data.editVisible" v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
 
         <!-- 菜单权限对话框组件 -->
-        <MenuDialog v-model="$Data.menuVisible" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
+        <MenuDialog v-if="$Data.menuVisible" v-model="$Data.menuVisible" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
+
+        <!-- 接口权限对话框组件 -->
+        <ApiDialog v-if="$Data.apiVisible" v-model="$Data.apiVisible" :row-data="$Data.rowData" @success="$Method.apiRoleList" />
     </div>
 </template>
 
 <script setup>
 import EditDialog from './components/edit.vue';
 import MenuDialog from './components/menu.vue';
+import ApiDialog from './components/api.vue';
 
 // 响应式数据
 const $Data = $ref({
@@ -85,6 +93,7 @@ const $Data = $ref({
     },
     editVisible: false,
     menuVisible: false,
+    apiVisible: false,
     actionType: 'add',
     rowData: {}
 });
@@ -153,6 +162,8 @@ const $Method = {
             $Data.editVisible = true;
         } else if (command === 'menu') {
             $Data.menuVisible = true;
+        } else if (command === 'api') {
+            $Data.apiVisible = true;
         } else if (command === 'del') {
             $Method.apiRoleDel(rowData);
         }

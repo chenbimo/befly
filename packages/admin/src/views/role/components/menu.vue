@@ -1,8 +1,8 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
+    <tiny-dialog-box v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($Form.tree = el)" />
         <template #footer>
-            <tiny-button @click="$Visible = false">取消</tiny-button>
+            <tiny-button @click="$Method.onClose">取消</tiny-button>
             <tiny-button type="primary" @click="$Method.onSubmit">保存</tiny-button>
         </template>
     </tiny-dialog-box>
@@ -11,16 +11,18 @@
 <script setup>
 import { arrayToTree } from '../../../util';
 
-const $Visible = defineModel({ default: false });
-
 const $Prop = defineProps({
+    modelValue: {
+        type: Boolean,
+        default: false
+    },
     rowData: {
         type: Object,
         default: () => ({})
     }
 });
 
-const $Emit = defineEmits(['success']);
+const $Emit = defineEmits(['update:modelValue', 'success']);
 
 // 表单引用
 const $Form = $shallowRef({
@@ -28,22 +30,31 @@ const $Form = $shallowRef({
 });
 
 const $Data = $ref({
+    visible: false,
     menuTreeData: [],
     menuTreeCheckedKeys: []
-});
-
-// 监听弹窗显示，每次打开时重新加载数据
-watch($Visible, (newVal) => {
-    if (newVal) {
-        $Method.initData();
-    }
 });
 
 // 方法集合
 const $Method = {
     async initData() {
         await Promise.all([$Method.apiMenuAll(), $Method.apiRoleDetail()]);
+        $Method.onShow();
     },
+
+    onShow() {
+        setTimeout(() => {
+            $Data.visible = $Prop.modelValue;
+        }, 100);
+    },
+
+    onClose() {
+        $Data.visible = false;
+        setTimeout(() => {
+            $Emit('update:modelValue', false);
+        }, 300);
+    },
+
     // 加载菜单树
     async apiMenuAll() {
         try {
@@ -90,7 +101,7 @@ const $Method = {
                     message: '保存成功',
                     status: 'success'
                 });
-                $Visible.value = false;
+                $Data.visible = false;
                 $Emit('success');
             } else {
                 Modal.message({
@@ -107,6 +118,8 @@ const $Method = {
         }
     }
 };
+
+$Method.initData();
 </script>
 
 <style scoped lang="scss">
