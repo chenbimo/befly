@@ -21,7 +21,7 @@ export interface PermissionResult {
  * 1. auth=false → 公开接口，直接通过
  * 2. auth=true → 需要登录认证
  *    - 未登录 → 拒绝
- *    - role='dev' → 超级管理员，拥有所有权限
+ *    - roleCode='dev' → 超级管理员，拥有所有权限
  *    - 其他角色 → 检查接口是否在角色的可访问接口列表中（通过 Redis SISMEMBER 预判断）
  *
  * @param api - API 路由配置
@@ -47,7 +47,7 @@ export function checkPermission(api: ApiRoute, ctx: RequestContext, hasPermissio
     }
 
     // 2.2 dev 角色拥有所有权限（超级管理员）
-    if (ctx.user.role === 'dev') {
+    if (ctx.user.roleCode === 'dev') {
         return { code: 0, msg: '', data: {} };
     }
 

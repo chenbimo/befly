@@ -11,6 +11,7 @@ import { Yes, No } from 'befly';
 
 export default {
     name: '获取用户菜单',
+    auth: true,
     handler: async (befly, ctx) => {
         try {
             // 2. 查询角色信息获取菜单权限（使用 roleCode 而非 roleId）
