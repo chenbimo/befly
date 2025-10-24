@@ -207,10 +207,29 @@ export class Logger {
 
     /**
      * 记录错误日志
-     * @param message - 日志消息
+     * @param name - 错误名称/位置
+     * @param error - 错误对象或消息
      */
-    static async error(message: LogMessage): Promise<void> {
-        await this.log('error', message);
+    static async error(name: string, error?: any): Promise<void> {
+        let errorMessage: string;
+
+        if (error) {
+            // 优先使用 error.message 和 error.stack
+            if (error?.message || error?.stack) {
+                const message = error.message || '';
+                const stack = error.stack || '';
+                errorMessage = `${name} - ${message}${stack ? '\n' + stack : ''}`;
+            } else {
+                // 没有 message 和 stack，直接记录 error
+                const errorStr = typeof error === 'object' ? JSON.stringify(error) : String(error);
+                errorMessage = `${name} - ${errorStr}`;
+            }
+        } else {
+            // 只传了 name，没有 error
+            errorMessage = name;
+        }
+
+        await this.log('error', errorMessage);
     }
 
     /**

@@ -41,10 +41,12 @@ export class CacheManager {
                 Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
             }
         } catch (error: any) {
-            console.log('🔥[ error ]-44', error);
+            const errorMessage = error?.message || error?.toString?.() || String(error);
+            const errorStack = error?.stack || '';
             Logger.warn('⚠️ 接口缓存异常:', {
-                message: error?.message || '未知错误',
-                stack: error?.stack || ''
+                message: errorMessage,
+                stack: errorStack,
+                raw: error
             });
         }
     }
@@ -78,7 +80,8 @@ export class CacheManager {
                 Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: menus:all)`);
             }
         } catch (error: any) {
-            Logger.warn('⚠️ 菜单缓存异常:', error?.message || '未知错误');
+            const errorMessage = error?.message || error?.toString?.() || String(error);
+            Logger.warn('⚠️ 菜单缓存异常:', errorMessage);
         }
     }
 
@@ -142,7 +145,8 @@ export class CacheManager {
 
             Logger.info(`✅ 已缓存 ${cachedRoles} 个角色的接口权限`);
         } catch (error: any) {
-            Logger.warn('⚠️ 角色权限缓存异常:', error?.message || '未知错误');
+            const errorMessage = error?.message || error?.toString?.() || String(error);
+            Logger.warn('⚠️ 角色权限缓存异常:', errorMessage);
         }
     }
 
