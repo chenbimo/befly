@@ -5,20 +5,10 @@
 
 import path from 'path';
 import { appendFile, stat } from 'node:fs/promises';
-import { formatDate, isDebug } from './index.js';
+import { formatDate } from './index.js';
 import { Colors } from './colors.js';
 import { Env } from '../config/env.js';
 import type { LogLevel } from '../types/common.js';
-
-/**
- * 日志级别映射
- */
-interface LogLevels {
-    error: number;
-    warn: number;
-    info: number;
-    debug: number;
-}
 
 /**
  * 日志消息类型
@@ -29,17 +19,6 @@ type LogMessage = string | number | boolean | null | undefined | Record<string, 
  * 日志器类
  */
 export class Logger {
-    /** 当前日志级别 */
-    static level: LogLevel = (Env.LOG_LEVEL as LogLevel) || 'info';
-
-    /** 日志级别权重 */
-    static readonly levels: LogLevels = {
-        error: 0,
-        warn: 1,
-        info: 2,
-        debug: 3
-    };
-
     /** 日志目录 */
     static logDir: string = Env.LOG_DIR || 'logs';
 
@@ -62,29 +41,19 @@ export class Logger {
 
         // 如果需要着色，只给日志级别文字添加颜色
         if (colored) {
-            switch (level) {
-                case 'info':
-                    levelStr = Colors.greenBright(levelStr);
-                    break;
-                case 'debug':
-                    levelStr = Colors.cyanBright(levelStr);
-                    break;
-                case 'warn':
-                    levelStr = Colors.yellowBright(levelStr);
-                    break;
-                case 'error':
-                    levelStr = Colors.redBright(levelStr);
-                    break;
-            }
+            const colorMap = {
+                info: Colors.greenBright,
+                debug: Colors.cyanBright,
+                warn: Colors.yellowBright,
+                error: Colors.redBright
+            };
+            levelStr = colorMap[level](levelStr);
         }
 
-        let msg = `[${timestamp}] ${levelStr} - `;
-
         // 处理不同类型的消息
-        if (typeof message === 'object' && message !== null) {
-            if (Object.keys(message).length > 0) {
-                msg += JSON.stringify(message).replace(/\s+/g, ' ').replace(/\\"/g, '"').replace(/\\n/g, ' ');
-            }
+        let msg = `[${timestamp}] ${levelStr} - `;
+        if (typeof message === 'object' && message !== null && Object.keys(message).length > 0) {
+            msg += JSON.stringify(message, null, 0).replace(/\\"/g, '"');
         } else {
             msg += String(message);
         }
@@ -93,12 +62,21 @@ export class Logger {
     }
 
     /**
-     * 检查是否应该记录该级别的日志
-     * @param level - 日志级别
-     * @returns 是否应该记录
+     * 移除 ANSI 颜色代码
+     * @param text - 包含颜色代码的文本
+     * @returns 纯文本
      */
-    private static shouldLog(level: LogLevel): boolean {
-        return this.levels[level] <= this.levels[this.level];
+    private static stripColors(text: string): string {
+        return text.replace(/\x1b\[\d+m/g, '');
+    }
+
+    /**
+     * 获取日志文件前缀
+     * @param level - 日志级别
+     * @returns 文件前缀
+     */
+    private static getFilePrefix(level: LogLevel): string {
+        return level === 'debug' ? 'debug' : new Date().toISOString().split('T')[0];
     }
 
     /**
@@ -107,18 +85,20 @@ export class Logger {
      * @param message - 日志消息
      */
     static async log(level: LogLevel, message: LogMessage): Promise<void> {
-        // 检查日志级别
-        if (!this.shouldLog(level)) return;
+        // debug 日志特殊处理：仅当 LOG_DEBUG=1 时才记录
+        if (level === 'debug' && Env.LOG_DEBUG !== 1) return;
 
-        // 控制台输出（带颜色）
+        // 格式化消息（带颜色）
+        const coloredMessage = this.formatMessage(level, message, true);
+
+        // 控制台输出
         if (Env.LOG_TO_CONSOLE === 1) {
-            const coloredMessage = this.formatMessage(level, message, true);
             console.log(coloredMessage);
         }
 
-        // 文件输出（不带颜色）
-        const formattedMessage = this.formatMessage(level, message, false);
-        await this.writeToFile(formattedMessage, level);
+        // 文件输出（去除颜色）
+        const plainMessage = this.stripColors(coloredMessage);
+        await this.writeToFile(plainMessage, level);
     }
 
     /**
@@ -128,14 +108,7 @@ export class Logger {
      */
     static async writeToFile(message: string, level: LogLevel = 'info'): Promise<void> {
         try {
-            let prefix: string;
-
-            // debug 日志使用单独的文件名
-            if (level === 'debug') {
-                prefix = 'debug';
-            } else {
-                prefix = new Date().toISOString().split('T')[0];
-            }
+            const prefix = this.getFilePrefix(level);
 
             // 检查缓存的当前文件是否仍然可用
             let currentLogFile = this.currentFiles.get(prefix);
@@ -143,28 +116,25 @@ export class Logger {
             if (currentLogFile) {
                 try {
                     const stats = await stat(currentLogFile);
-                    // 如果文件超过最大大小，清除缓存
                     if (stats.size >= this.maxFileSize) {
                         this.currentFiles.delete(prefix);
                         currentLogFile = undefined;
                     }
-                } catch (error) {
-                    // 文件不存在或无法访问，清除缓存
+                } catch {
                     this.currentFiles.delete(prefix);
                     currentLogFile = undefined;
                 }
             }
 
-            // 如果没有缓存的文件或文件已满，查找合适的文件
+            // 查找或创建新文件
             if (!currentLogFile) {
                 currentLogFile = await this.findAvailableLogFile(prefix);
                 this.currentFiles.set(prefix, currentLogFile);
             }
 
-            // 使用 Node.js 的 appendFile 进行文件追加
             await appendFile(currentLogFile, message + '\n', 'utf8');
         } catch (error: any) {
-            console.error('写入日志文件失败:', error.message);
+            console.error('写入日志文件失败:', error?.message || error);
         }
     }
 
@@ -177,11 +147,10 @@ export class Logger {
         const glob = new Bun.Glob(`${prefix}.*.log`);
         const files = await Array.fromAsync(glob.scan(this.logDir));
 
-        // 按文件名排序
+        // 按索引排序
         files.sort((a, b) => {
-            const aNum = parseInt(a.match(/\.(\d+)\.log$/)?.[1] || '0');
-            const bNum = parseInt(b.match(/\.(\d+)\.log$/)?.[1] || '0');
-            return aNum - bNum;
+            const getIndex = (f: string) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0');
+            return getIndex(a) - getIndex(b);
         });
 
         // 从最后一个文件开始检查
@@ -189,20 +158,16 @@ export class Logger {
             const filePath = path.join(this.logDir, files[i]);
             try {
                 const stats = await stat(filePath);
-                if (stats.size < this.maxFileSize) {
-                    return filePath;
-                }
-            } catch (error) {
-                // 文件不存在或无法访问，跳过
+                if (stats.size < this.maxFileSize) return filePath;
+            } catch {
                 continue;
             }
         }
 
-        // 所有文件都已满或没有文件，创建新文件
-        const existingIndices = files.map((f) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0'));
-        const nextIndex = existingIndices.length > 0 ? Math.max(...existingIndices) + 1 : 0;
-
-        return path.join(this.logDir, `${prefix}.${nextIndex}.log`);
+        // 创建新文件
+        const getIndex = (f: string) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0');
+        const maxIndex = files.length > 0 ? Math.max(...files.map(getIndex)) : -1;
+        return path.join(this.logDir, `${prefix}.${maxIndex + 1}.log`);
     }
 
     /**
@@ -211,25 +176,21 @@ export class Logger {
      * @param error - 错误对象或消息
      */
     static async error(name: string, error?: any): Promise<void> {
-        let errorMessage: string;
-
-        if (error) {
-            // 优先使用 error.message 和 error.stack
-            if (error?.message || error?.stack) {
-                const message = error.message || '';
-                const stack = error.stack || '';
-                errorMessage = `${name} - ${message}${stack ? '\n' + stack : ''}`;
-            } else {
-                // 没有 message 和 stack，直接记录 error
-                const errorStr = typeof error === 'object' ? JSON.stringify(error) : String(error);
-                errorMessage = `${name} - ${errorStr}`;
-            }
-        } else {
-            // 只传了 name，没有 error
-            errorMessage = name;
+        if (!error) {
+            return this.log('error', name);
         }
 
-        await this.log('error', errorMessage);
+        // 构建错误消息
+        const parts = [name];
+        if (error?.message || error?.stack) {
+            if (error.message) parts.push(error.message);
+            if (error.stack) parts.push('\n' + error.stack);
+        } else {
+            const errorStr = typeof error === 'object' ? JSON.stringify(error) : String(error);
+            parts.push(errorStr);
+        }
+
+        await this.log('error', parts.join(' - '));
     }
 
     /**
@@ -249,39 +210,12 @@ export class Logger {
     }
 
     /**
-     * 记录调试日志（受 DEBUG 环境变量控制）
-     * DEBUG=1 或 development 环境下默认打印
+     * 记录调试日志
+     * 受 LOG_DEBUG 环境变量控制，仅当 LOG_DEBUG=1 时才记录
      * @param message - 日志消息
      */
     static async debug(message: LogMessage): Promise<void> {
-        // 检查是否开启调试模式
-        if (!isDebug()) return;
-
-        // 控制台输出（带颜色）
-        if (Env.LOG_TO_CONSOLE === 1) {
-            const coloredMessage = this.formatMessage('debug', message, true);
-            console.log(coloredMessage);
-        }
-
-        // 文件输出（不带颜色）
-        const formattedMessage = this.formatMessage('debug', message, false);
-        await this.writeToFile(formattedMessage, 'debug');
-    }
-
-    /**
-     * 设置日志级别
-     * @param level - 新的日志级别
-     */
-    static setLevel(level: LogLevel): void {
-        this.level = level;
-    }
-
-    /**
-     * 获取当前日志级别
-     * @returns 当前日志级别
-     */
-    static getLevel(): LogLevel {
-        return this.level;
+        await this.log('debug', message);
     }
 
     /**
@@ -314,13 +248,11 @@ export class Logger {
      * @returns 日志文件统计
      */
     static getStats(): {
-        level: LogLevel;
         logDir: string;
         maxFileSize: number;
         cachedFiles: number;
     } {
         return {
-            level: this.level,
             logDir: this.logDir,
             maxFileSize: this.maxFileSize,
             cachedFiles: this.currentFiles.size

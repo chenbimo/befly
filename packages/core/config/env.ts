@@ -26,8 +26,8 @@ export interface EnvConfig {
     PARAMS_CHECK: string;
 
     // ========== 日志配置 ==========
-    /** 日志等级：debug | info | warn | error */
-    LOG_LEVEL: string;
+    /** debug日志开关：0 | 1 */
+    LOG_DEBUG: number;
     /** 日志排除字段（逗号分隔） */
     LOG_EXCLUDE_FIELDS: string;
     /** 日志目录 */
@@ -158,7 +158,7 @@ export const Env: EnvConfig = {
     PARAMS_CHECK: getEnv('PARAMS_CHECK', 'true'),
 
     // ========== 日志配置 ==========
-    LOG_LEVEL: getEnv('LOG_LEVEL', 'info'),
+    LOG_DEBUG: getEnvNumber('LOG_DEBUG', 0),
     LOG_EXCLUDE_FIELDS: getEnv('LOG_EXCLUDE_FIELDS', 'password,token,secret'),
     LOG_DIR: getEnv('LOG_DIR', './logs'),
     LOG_TO_CONSOLE: getEnvNumber('LOG_TO_CONSOLE', 1),
