@@ -10,7 +10,7 @@ export { Yes, No, isDebug, isType, isEmptyObject, isEmptyArray, pickFields, form
 export type { DataCleanOptions } from './helper.js';
 
 // ========== 框架工具 ==========
-export { Api, scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './helper.js';
+export { scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from './helper.js';
 
 // ========== 数据库工具 ==========
 export { buildDatabaseUrl, createSqlClient, buildRedisUrl, createRedisClient, initDatabase, closeDatabase, initSqlOnly, initRedisOnly, getRedis, getSql, getDbHelper, isDatabaseInitialized } from './database.js';
