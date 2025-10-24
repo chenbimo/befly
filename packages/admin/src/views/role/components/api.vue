@@ -10,14 +10,6 @@
                 </tiny-input>
             </div>
 
-            <!-- 操作按钮 -->
-            <div class="action-buttons">
-                <tiny-button size="small" @click="$Method.onCheckAll">全选</tiny-button>
-                <tiny-button size="small" @click="$Method.onUncheckAll">取消全选</tiny-button>
-                <tiny-button size="small" @click="$Method.onExpandAll">展开全部</tiny-button>
-                <tiny-button size="small" @click="$Method.onCollapseAll">折叠全部</tiny-button>
-            </div>
-
             <!-- 折叠面板 -->
             <div class="collapse-container">
                 <tiny-collapse v-model="$Data.activeNames">
@@ -35,8 +27,16 @@
         </div>
 
         <template #footer>
-            <tiny-button @click="$Method.onClose">取消</tiny-button>
-            <tiny-button type="primary" @click="$Method.onSubmit">保存</tiny-button>
+            <div class="footer-left">
+                <tiny-button size="small" @click="$Method.onCheckAll">全选</tiny-button>
+                <tiny-button size="small" @click="$Method.onUncheckAll">取消全选</tiny-button>
+                <tiny-button size="small" @click="$Method.onExpandAll">展开全部</tiny-button>
+                <tiny-button size="small" @click="$Method.onCollapseAll">折叠全部</tiny-button>
+            </div>
+            <div class="footer-right">
+                <tiny-button @click="$Method.onClose">取消</tiny-button>
+                <tiny-button type="primary" @click="$Method.onSubmit">保存</tiny-button>
+            </div>
         </template>
     </tiny-dialog-box>
 </template>
@@ -220,15 +220,7 @@ $Method.initData();
     gap: 12px;
 
     .search-box {
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--ti-common-color-line-dividing);
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 8px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--ti-common-color-line-dividing);
+        padding-bottom: 12px;
     }
 
     .collapse-container {
@@ -291,6 +283,23 @@ $Method.initData();
                 }
             }
         }
+    }
+}
+
+// 底部操作栏布局
+:deep(.tiny-dialog-box__footer) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .footer-left {
+        display: flex;
+        gap: 8px;
+    }
+
+    .footer-right {
+        display: flex;
+        gap: 8px;
     }
 }
 </style>
