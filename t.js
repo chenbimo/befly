@@ -4,7 +4,6 @@ const sql = new Bun.SQL({
     username: 'root2',
     password: 'root2',
     bigint: false
-});
 
 const [{ x }] = await sql`SELECT 10000000000000 as x`;
 
