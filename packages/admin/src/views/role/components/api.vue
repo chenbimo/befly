@@ -6,19 +6,18 @@
                 <tiny-search v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @update:modelValue="$Method.onSearch" />
             </div>
 
-            <!-- 折叠面板 -->
-            <div class="collapse-container">
-                <tiny-collapse v-model="$Data.activeNames">
-                    <tiny-collapse-item v-for="group in $Data.filteredApiData" :key="group.name" :name="group.name" :title="group.name">
-                        <div class="api-checkbox-list">
-                            <tiny-checkbox-group v-model="$Data.checkedApiIds">
-                                <tiny-checkbox v-for="api in group.apis" :key="api.id" :label="api.id">
-                                    {{ api.label }}
-                                </tiny-checkbox>
-                            </tiny-checkbox-group>
-                        </div>
-                    </tiny-collapse-item>
-                </tiny-collapse>
+            <!-- 接口分组列表 -->
+            <div class="api-container">
+                <div v-for="group in $Data.filteredApiData" :key="group.name" class="api-group">
+                    <div class="group-header">{{ group.name }}</div>
+                    <div class="api-checkbox-list">
+                        <tiny-checkbox-group v-model="$Data.checkedApiIds">
+                            <tiny-checkbox v-for="api in group.apis" :key="api.id" :label="api.id">
+                                {{ api.label }}
+                            </tiny-checkbox>
+                        </tiny-checkbox-group>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -26,8 +25,6 @@
             <div class="footer-left">
                 <tiny-button size="small" @click="$Method.onCheckAll">全选</tiny-button>
                 <tiny-button size="small" @click="$Method.onUncheckAll">取消全选</tiny-button>
-                <tiny-button size="small" @click="$Method.onExpandAll">展开全部</tiny-button>
-                <tiny-button size="small" @click="$Method.onCollapseAll">折叠全部</tiny-button>
             </div>
             <div class="footer-right">
                 <tiny-button @click="$Method.onClose">取消</tiny-button>
@@ -56,8 +53,7 @@ const $Data = $ref({
     apiData: [],
     filteredApiData: [],
     searchText: '',
-    checkedApiIds: [],
-    activeNames: []
+    checkedApiIds: []
 });
 
 // 方法集合
@@ -66,8 +62,6 @@ const $Method = {
         $Method.onShow();
         await Promise.all([$Method.apiApiAll(), $Method.apiRoleApiDetail()]);
         $Data.filteredApiData = $Data.apiData;
-        // 默认展开所有折叠面板
-        $Data.activeNames = $Data.apiData.map((group) => group.name);
     },
 
     onShow() {
@@ -162,16 +156,6 @@ const $Method = {
         $Data.checkedApiIds = [];
     },
 
-    // 展开全部
-    onExpandAll() {
-        $Data.activeNames = $Data.apiData.map((group) => group.name);
-    },
-
-    // 折叠全部
-    onCollapseAll() {
-        $Data.activeNames = [];
-    },
-
     // 提交表单
     async onSubmit() {
         try {
@@ -217,63 +201,50 @@ $Method.initData();
         padding-bottom: 12px;
     }
 
-    .collapse-container {
+    .api-container {
         flex: 1;
         overflow-y: auto;
 
-        .api-checkbox-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding: 12px 0;
+        .api-group {
+            margin-bottom: 16px;
+            border: 1px solid var(--ti-common-color-line-dividing);
+            border-radius: 4px;
+            overflow: hidden;
 
-            :deep(.tiny-checkbox-group) {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 12px;
-                width: 100%;
+            &:last-child {
+                margin-bottom: 0;
             }
 
-            :deep(.tiny-checkbox) {
-                flex: 0 0 auto;
-                min-width: 280px;
-                max-width: 400px;
-                margin: 0;
-
-                .tiny-checkbox__label {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
+            .group-header {
+                padding: 12px 0px;
+                background-color: var(--ti-common-color-bg-navigation);
+                font-weight: 500;
+                font-size: 14px;
+                color: var(--ti-common-color-text-primary);
             }
-        }
 
-        :deep(.tiny-collapse) {
-            border: none;
+            .api-checkbox-list {
+                padding: 16px 0;
+                background-color: var(--ti-common-color-bg-white-normal);
 
-            .tiny-collapse-item {
-                margin-bottom: 8px;
-                border: 1px solid var(--ti-common-color-line-dividing);
-                border-radius: 4px;
-
-                &:last-child {
-                    margin-bottom: 0;
+                :deep(.tiny-checkbox-group) {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    width: 100%;
                 }
 
-                .tiny-collapse-item__header {
-                    padding: 12px 16px;
-                    background-color: var(--ti-common-color-bg-navigation);
-                    border-radius: 4px 4px 0 0;
-                    font-weight: 500;
+                :deep(.tiny-checkbox) {
+                    flex: 0 0 auto;
+                    min-width: 280px;
+                    max-width: 400px;
+                    margin: 0;
 
-                    &:hover {
-                        background-color: var(--ti-common-color-hover-background);
+                    .tiny-checkbox__label {
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
                     }
-                }
-
-                .tiny-collapse-item__content {
-                    padding: 0 16px;
-                    border-top: 1px solid var(--ti-common-color-line-dividing);
                 }
             }
         }
