@@ -29,57 +29,6 @@ export class Logger {
     private static currentFiles: Map<string, string> = new Map();
 
     /**
-     * 格式化日志消息
-     * @param level - 日志级别
-     * @param message - 日志消息
-     * @param colored - 是否对日志级别文字着色（仅用于控制台输出）
-     * @returns 格式化后的日志字符串
-     */
-    static formatMessage(level: LogLevel, message: LogMessage, colored: boolean = false): string {
-        const timestamp = formatDate();
-        let levelStr = level.toUpperCase().padStart(5);
-
-        // 如果需要着色，只给日志级别文字添加颜色
-        if (colored) {
-            const colorMap = {
-                info: Colors.greenBright,
-                debug: Colors.cyanBright,
-                warn: Colors.yellowBright,
-                error: Colors.redBright
-            };
-            levelStr = colorMap[level](levelStr);
-        }
-
-        // 处理不同类型的消息
-        let msg = `[${timestamp}] ${levelStr} - `;
-        if (typeof message === 'object' && message !== null && Object.keys(message).length > 0) {
-            msg += JSON.stringify(message, null, 0).replace(/\\"/g, '"');
-        } else {
-            msg += String(message);
-        }
-
-        return msg;
-    }
-
-    /**
-     * 移除 ANSI 颜色代码
-     * @param text - 包含颜色代码的文本
-     * @returns 纯文本
-     */
-    private static stripColors(text: string): string {
-        return text.replace(/\x1b\[\d+m/g, '');
-    }
-
-    /**
-     * 获取日志文件前缀
-     * @param level - 日志级别
-     * @returns 文件前缀
-     */
-    private static getFilePrefix(level: LogLevel): string {
-        return level === 'debug' ? 'debug' : new Date().toISOString().split('T')[0];
-    }
-
-    /**
      * 记录日志
      * @param level - 日志级别
      * @param message - 日志消息
@@ -88,16 +37,35 @@ export class Logger {
         // debug 日志特殊处理：仅当 LOG_DEBUG=1 时才记录
         if (level === 'debug' && Env.LOG_DEBUG !== 1) return;
 
-        // 格式化消息（带颜色）
-        const coloredMessage = this.formatMessage(level, message, true);
+        // 格式化消息
+        const timestamp = formatDate();
+        const colorMap = {
+            info: Colors.greenBright,
+            debug: Colors.cyanBright,
+            warn: Colors.yellowBright,
+            error: Colors.redBright
+        };
+
+        // 处理消息内容
+        let content = '';
+        if (typeof message === 'object' && message !== null && Object.keys(message).length > 0) {
+            content = JSON.stringify(message, null, 0).replace(/\\"/g, '"');
+        } else {
+            content = String(message);
+        }
+
+        // 带颜色的控制台消息
+        const coloredLevelStr = colorMap[level](level.toUpperCase().padStart(5));
+        const coloredMessage = `[${timestamp}] ${coloredLevelStr} - ${content}`;
 
         // 控制台输出
         if (Env.LOG_TO_CONSOLE === 1) {
             console.log(coloredMessage);
         }
 
-        // 文件输出（去除颜色）
-        const plainMessage = this.stripColors(coloredMessage);
+        // 文件输出（去除 ANSI 颜色代码）
+        const plainLevelStr = level.toUpperCase().padStart(5);
+        const plainMessage = `[${timestamp}] ${plainLevelStr} - ${content}`;
         await this.writeToFile(plainMessage, level);
     }
 
@@ -108,7 +76,8 @@ export class Logger {
      */
     static async writeToFile(message: string, level: LogLevel = 'info'): Promise<void> {
         try {
-            const prefix = this.getFilePrefix(level);
+            // 确定文件前缀
+            const prefix = level === 'debug' ? 'debug' : new Date().toISOString().split('T')[0];
 
             // 检查缓存的当前文件是否仍然可用
             let currentLogFile = this.currentFiles.get(prefix);
@@ -128,7 +97,34 @@ export class Logger {
 
             // 查找或创建新文件
             if (!currentLogFile) {
-                currentLogFile = await this.findAvailableLogFile(prefix);
+                const glob = new Bun.Glob(`${prefix}.*.log`);
+                const files = await Array.fromAsync(glob.scan(this.logDir));
+
+                // 按索引排序并查找可用文件
+                const getIndex = (f: string) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0');
+                files.sort((a, b) => getIndex(a) - getIndex(b));
+
+                let foundFile = false;
+                for (let i = files.length - 1; i >= 0; i--) {
+                    const filePath = path.join(this.logDir, files[i]);
+                    try {
+                        const stats = await stat(filePath);
+                        if (stats.size < this.maxFileSize) {
+                            currentLogFile = filePath;
+                            foundFile = true;
+                            break;
+                        }
+                    } catch {
+                        continue;
+                    }
+                }
+
+                // 没有可用文件，创建新文件
+                if (!foundFile) {
+                    const maxIndex = files.length > 0 ? Math.max(...files.map(getIndex)) : -1;
+                    currentLogFile = path.join(this.logDir, `${prefix}.${maxIndex + 1}.log`);
+                }
+
                 this.currentFiles.set(prefix, currentLogFile);
             }
 
@@ -136,38 +132,6 @@ export class Logger {
         } catch (error: any) {
             console.error('写入日志文件失败:', error?.message || error);
         }
-    }
-
-    /**
-     * 查找可用的日志文件
-     * @param prefix - 文件前缀
-     * @returns 可用的日志文件路径
-     */
-    static async findAvailableLogFile(prefix: string): Promise<string> {
-        const glob = new Bun.Glob(`${prefix}.*.log`);
-        const files = await Array.fromAsync(glob.scan(this.logDir));
-
-        // 按索引排序
-        files.sort((a, b) => {
-            const getIndex = (f: string) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0');
-            return getIndex(a) - getIndex(b);
-        });
-
-        // 从最后一个文件开始检查
-        for (let i = files.length - 1; i >= 0; i--) {
-            const filePath = path.join(this.logDir, files[i]);
-            try {
-                const stats = await stat(filePath);
-                if (stats.size < this.maxFileSize) return filePath;
-            } catch {
-                continue;
-            }
-        }
-
-        // 创建新文件
-        const getIndex = (f: string) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0');
-        const maxIndex = files.length > 0 ? Math.max(...files.map(getIndex)) : -1;
-        return path.join(this.logDir, `${prefix}.${maxIndex + 1}.log`);
     }
 
     /**
@@ -219,43 +183,9 @@ export class Logger {
     }
 
     /**
-     * 设置日志目录
-     * @param dir - 新的日志目录
-     */
-    static setLogDir(dir: string): void {
-        this.logDir = dir;
-        // 清除文件缓存
-        this.currentFiles.clear();
-    }
-
-    /**
-     * 设置最大文件大小
-     * @param size - 文件大小（字节）
-     */
-    static setMaxFileSize(size: number): void {
-        this.maxFileSize = size;
-    }
-
-    /**
      * 清除文件缓存
      */
     static clearCache(): void {
         this.currentFiles.clear();
-    }
-
-    /**
-     * 获取日志文件统计信息
-     * @returns 日志文件统计
-     */
-    static getStats(): {
-        logDir: string;
-        maxFileSize: number;
-        cachedFiles: number;
-    } {
-        return {
-            logDir: this.logDir,
-            maxFileSize: this.maxFileSize,
-            cachedFiles: this.currentFiles.size
-        };
     }
 }
