@@ -32,7 +32,7 @@
                         <tiny-tag v-else type="danger">已删除</tiny-tag>
                     </template>
                 </tiny-grid-column>
-                <tiny-grid-column title="操作" :width="120" align="right" fixed="right">
+                <tiny-grid-column title="操作" :width="120" align="center" fixed="right">
                     <template #default="{ row }">
                         <tiny-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                             <template #dropdown>
