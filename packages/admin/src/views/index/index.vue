@@ -223,7 +223,7 @@ const $Method = {
 <style scoped lang="scss">
 .dashboard-container {
     padding: 16px;
-    background: var(--td-bg-color-container);
+    background: $bg-color-container;
     min-height: 100%;
 }
 
@@ -265,14 +265,14 @@ const $Method = {
 
     .stat-title {
         font-size: 14px;
-        color: var(--td-text-color-secondary);
+        color: $text-secondary;
         margin-bottom: 8px;
     }
 
     .stat-value {
         font-size: 28px;
         font-weight: 600;
-        color: var(--td-text-color-primary);
+        color: $text-primary;
         margin-bottom: 6px;
         line-height: 1.2;
     }
@@ -284,11 +284,11 @@ const $Method = {
         gap: 4px;
 
         &.trend-up {
-            color: var(--td-success-color);
+            color: $success-color;
         }
 
         &.trend-down {
-            color: var(--td-error-color);
+            color: $error-color;
         }
     }
 
@@ -326,8 +326,8 @@ const $Method = {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        color: var(--td-text-color-placeholder);
-        background: var(--td-bg-color-component);
+        color: $text-placeholder;
+        background: $bg-color-hover;
         border-radius: 4px;
 
         p {
@@ -362,7 +362,7 @@ const $Method = {
     .tech-stack {
         margin-top: 24px;
         padding-top: 24px;
-        border-top: 1px solid var(--td-component-border);
+        border-top: 1px solid $border-color;
     }
 }
 

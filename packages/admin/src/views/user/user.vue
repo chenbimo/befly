@@ -268,9 +268,9 @@ $Method.loadUserList();
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    background: var(--td-bg-color-container);
-    border-radius: var(--td-radius-default);
-    box-shadow: var(--td-shadow-1);
+    background: $bg-color-container;
+    border-radius: $border-radius;
+    box-shadow: $shadow-card;
 
     .toolbar-left {
         display: flex;
@@ -289,9 +289,9 @@ $Method.loadUserList();
     overflow: hidden; // 隐藏超出部分
     display: flex;
     flex-direction: column;
-    background: var(--td-bg-color-container);
-    border-radius: var(--td-radius-default);
-    box-shadow: var(--td-shadow-1);
+    background: $bg-color-container;
+    border-radius: $border-radius;
+    box-shadow: $shadow-card;
 }
 
 // 下：分页栏
@@ -300,9 +300,9 @@ $Method.loadUserList();
     display: flex;
     justify-content: flex-end;
     padding: 16px;
-    background: var(--td-bg-color-container);
-    border-radius: var(--td-radius-default);
-    box-shadow: var(--td-shadow-1);
+    background: $bg-color-container;
+    border-radius: $border-radius;
+    box-shadow: $shadow-card;
 }
 
 .role-dialog {
@@ -313,7 +313,7 @@ $Method.loadUserList();
         margin-bottom: 16px;
 
         .user-email {
-            color: var(--td-text-color-secondary);
+            color: $text-secondary;
         }
     }
 }

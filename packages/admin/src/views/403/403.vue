@@ -28,6 +28,6 @@ const $Method = {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: var(--td-bg-color-page);
+    background: $bg-color-page;
 }
 </style>

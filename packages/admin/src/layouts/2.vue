@@ -110,7 +110,7 @@ const handleUserMenu = (data) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid var(--td-border-level-1-color);
+    border-bottom: 1px solid $border-color;
 }
 
 .logo h2 {
@@ -128,8 +128,8 @@ const handleUserMenu = (data) => {
     align-items: center;
     justify-content: space-between;
     padding: 0 24px;
-    background: var(--td-bg-color-container);
-    border-bottom: 1px solid var(--td-border-level-1-color);
+    background: $bg-color-container;
+    border-bottom: 1px solid $border-color;
 }
 
 .header-left {
@@ -160,7 +160,7 @@ const handleUserMenu = (data) => {
 
 .content {
     padding: 24px;
-    background: var(--td-bg-color-page);
+    background: $bg-color-page;
     overflow-y: auto;
 }
 </style>
