@@ -7,6 +7,9 @@
             <tiny-form-item label="邮箱" prop="email">
                 <tiny-input v-model="$Data.formData.email" placeholder="请输入邮箱" />
             </tiny-form-item>
+            <tiny-form-item v-if="$Prop.actionType === 'add'" label="密码" prop="password">
+                <tiny-input v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
+            </tiny-form-item>
             <tiny-form-item label="姓名" prop="name">
                 <tiny-input v-model="$Data.formData.name" placeholder="请输入姓名" />
             </tiny-form-item>
@@ -16,7 +19,7 @@
             <tiny-form-item label="手机号" prop="phone">
                 <tiny-input v-model="$Data.formData.phone" placeholder="请输入手机号" />
             </tiny-form-item>
-            <tiny-form-item label="状态" prop="state">
+            <tiny-form-item v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
                 <tiny-radio-group v-model="$Data.formData.state">
                     <tiny-radio :label="1">正常</tiny-radio>
                     <tiny-radio :label="2">禁用</tiny-radio>
@@ -59,6 +62,7 @@ const $Data = $ref({
         id: 0,
         username: '',
         email: '',
+        password: '',
         name: '',
         nickname: '',
         phone: '',
@@ -73,6 +77,10 @@ const $Data2 = $shallowRef({
             { required: true, message: '请输入邮箱', trigger: 'blur' },
             { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
         ],
+        password: [
+            { required: true, message: '请输入密码', trigger: 'blur' },
+            { min: 6, message: '密码至少6位', trigger: 'blur' }
+        ],
         name: [{ min: 2, max: 50, message: '姓名长度在 2 到 50 个字符', trigger: 'blur' }],
         nickname: [{ min: 2, max: 50, message: '昵称长度在 2 到 50 个字符', trigger: 'blur' }],
         phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }]
@@ -84,7 +92,14 @@ const $Method = {
     async initData() {
         $Method.onShow();
         if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
-            $Data.formData = Object.assign({}, $Prop.rowData);
+            // 编辑模式：复制数据
+            $Data.formData.id = $Prop.rowData.id || 0;
+            $Data.formData.username = $Prop.rowData.username || '';
+            $Data.formData.email = $Prop.rowData.email || '';
+            $Data.formData.name = $Prop.rowData.name || '';
+            $Data.formData.nickname = $Prop.rowData.nickname || '';
+            $Data.formData.phone = $Prop.rowData.phone || '';
+            $Data.formData.state = $Prop.rowData.state ?? 1;
         }
     },
 
@@ -112,8 +127,8 @@ const $Method = {
                 message: $Prop.actionType === 'upd' ? '编辑成功' : '添加成功',
                 status: 'success'
             });
-            $Method.onClose();
             $Emit('success');
+            $Method.onClose();
         } catch (error) {
             console.error('提交失败:', error);
             Modal.message({
