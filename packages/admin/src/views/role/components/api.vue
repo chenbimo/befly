@@ -207,8 +207,8 @@ $Method.initData();
 
         .api-group {
             margin-bottom: 16px;
-            border: 1px solid var(--ti-common-color-line-dividing);
-            border-radius: 4px;
+            border: 1px solid $border-color;
+            border-radius: $border-radius-small;
             overflow: hidden;
 
             &:last-child {
@@ -216,16 +216,29 @@ $Method.initData();
             }
 
             .group-header {
-                padding: 12px 0px;
-                background-color: var(--ti-common-color-bg-navigation);
+                padding: 12px 16px;
+                background-color: $bg-color-hover;
                 font-weight: 500;
-                font-size: 14px;
-                color: var(--ti-common-color-text-primary);
+                font-size: $font-size-sm;
+                color: $text-primary;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                &::before {
+                    content: '';
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background-color: $primary-color;
+                    opacity: 0.3;
+                    flex-shrink: 0;
+                }
             }
 
             .api-checkbox-list {
-                padding: 16px 0;
-                background-color: var(--ti-common-color-bg-white-normal);
+                padding: 16px;
+                background-color: $bg-color-container;
 
                 :deep(.tiny-checkbox-group) {
                     display: flex;

@@ -128,7 +128,7 @@ $Method.initData();
         margin-bottom: 16px;
 
         .user-email {
-            color: var(--ti-common-color-text-secondary);
+            color: $text-secondary;
         }
     }
 }
