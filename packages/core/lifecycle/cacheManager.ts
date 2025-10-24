@@ -13,18 +13,24 @@ import type { ApiRoute } from '../types/api.js';
 export class CacheManager {
     /**
      * 缓存所有接口到 Redis
-     * @param apiRoutes - API 路由映射表
+     * @param apiRoutes - API 路由映射表（已废弃，保留参数以兼容）
      * @param appContext - 应用上下文
      */
     static async cacheApis(apiRoutes: Map<string, ApiRoute>, appContext: BeflyContext): Promise<void> {
         try {
-            // 转换为数组格式（只缓存必要信息）
-            const apiList = Array.from(apiRoutes.values()).map((api) => ({
-                route: api.route,
-                name: api.name,
-                method: api.method,
-                auth: api.auth
-            }));
+            // 检查表是否存在
+            const tableExists = await appContext.db.tableExists('addon_admin_api');
+            if (!tableExists) {
+                Logger.warn('⚠️ 接口表不存在，跳过接口缓存');
+                return;
+            }
+
+            // 从数据库查询所有接口（与 apiAll.ts 保持一致）
+            const apiList = await appContext.db.getAll({
+                table: 'addon_admin_api',
+                fields: ['id', 'name', 'path', 'method', 'description', 'addonName'],
+                orderBy: ['addonName#ASC', 'path#ASC']
+            });
 
             // 缓存到 Redis
             const result = await appContext.redis.setObject('apis:all', apiList);
@@ -35,7 +41,11 @@ export class CacheManager {
                 Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
             }
         } catch (error: any) {
-            Logger.warn('⚠️ 接口缓存异常:', error?.message || '未知错误');
+            console.log('🔥[ error ]-44', error);
+            Logger.warn('⚠️ 接口缓存异常:', {
+                message: error?.message || '未知错误',
+                stack: error?.stack || ''
+            });
         }
     }
 
@@ -96,7 +106,7 @@ export class CacheManager {
             // 查询所有接口（用于权限映射）
             const allApis = await appContext.db.getAll({
                 table: 'addon_admin_api',
-                fields: ['id', 'path', 'method']
+                fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
             });
 
             // 为每个角色缓存接口权限
