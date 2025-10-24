@@ -9,7 +9,6 @@
  * - 日期时间工具
  * - 命名转换工具
  * - 数据清洗工具
- * - API 定义工具
  * - Addon 管理工具
  * - Plugin 管理工具
  * - 表定义工具
@@ -18,7 +17,6 @@
 import fs from 'node:fs';
 import { join } from 'node:path';
 import { paths } from '../paths.js';
-import type { ApiRoute, ApiOptions } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ParsedFieldRule, KeyValue } from '../types/common.js';
 
@@ -693,27 +691,6 @@ export const cleanData = <T = any>(data?: Record<string, any>, options: DataClea
 
     return result;
 };
-
-// ========================================
-// API 定义工具
-// ========================================
-
-/**
- * 定义 API 路由（主函数）
- * @param name - 接口名称
- * @param options - 接口配置选项
- * @returns API 路由定义
- */
-export function Api(name: string, options: ApiOptions): ApiRoute {
-    return {
-        method: options.method || 'POST',
-        name: name,
-        auth: options.auth ?? false,
-        fields: options.fields ?? {},
-        required: options.required ?? [],
-        handler: async (befly, ctx, req) => await options.handler(befly, ctx, req)
-    };
-}
 
 // ========================================
 // Addon 管理工具
