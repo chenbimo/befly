@@ -24,7 +24,7 @@ export default {
             },
             page: ctx.body.page,
             limit: ctx.body.limit,
-            orderBy: ['created_at#DESC']
+            orderBy: ['createdAt#DESC']
         });
 
         // 暂时不使用插件格式化，直接返回原始数据

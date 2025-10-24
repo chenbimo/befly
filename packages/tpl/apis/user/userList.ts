@@ -28,11 +28,11 @@ export default {
         // 查询用户列表（不返回密码字段）
         const result = await befly.db.getList({
             table: 'user',
-            fields: ['id', 'username', 'email', 'role', 'avatar', 'nickname', 'created_at', 'updated_at'],
+            fields: ['id', 'username', 'email', 'role', 'avatar', 'nickname', 'createdAt', 'updatedAt'],
             where,
             page: params.page || 1,
             limit: params.limit || 10,
-            orderBy: ['created_at#DESC']
+            orderBy: ['createdAt#DESC']
         });
 
         return Yes('查询成功', result);

@@ -16,7 +16,7 @@ export default {
             table: 'addon_admin_admin',
             page: ctx.body.page || 1,
             limit: ctx.body.limit || 10,
-            orderBy: ['created_at#DESC']
+            orderBy: ['createdAt#DESC']
         });
 
         return Yes('获取成功', result);

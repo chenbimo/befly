@@ -4,7 +4,7 @@
  */
 
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear, convertBigIntFields, fieldsToSnake, toSnakeCase } from './helper.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, whereKeysToSnake, fieldClear, convertBigIntFields, fieldsToSnake, orderByToSnake, toSnakeCase } from './helper.js';
 import { Logger } from './logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -189,7 +189,8 @@ export class DbHelper {
 
         // P1: 只有用户明确指定了 orderBy 才添加排序
         if (orderBy && orderBy.length > 0) {
-            dataBuilder.orderBy(orderBy);
+            const snakeOrderBy = orderByToSnake(orderBy);
+            dataBuilder.orderBy(snakeOrderBy);
         }
 
         const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
@@ -235,7 +236,8 @@ export class DbHelper {
         const builder = new SqlBuilder().select(snakeFields).from(snakeTable).where(this.addDefaultStateFilter(snakeWhere)).limit(MAX_LIMIT); // 强制添加上限
 
         if (orderBy) {
-            builder.orderBy(orderBy);
+            const snakeOrderBy = orderByToSnake(orderBy);
+            builder.orderBy(snakeOrderBy);
         }
 
         const { sql, params } = builder.toSelectSql();

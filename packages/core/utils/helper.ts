@@ -385,6 +385,25 @@ export const fieldsToSnake = (fields: string[]): string[] => {
 };
 
 /**
+ * orderBy 数组转下划线格式
+ * @param orderBy - orderBy 数组（格式：'字段#方向'）
+ * @returns 字段名转为下划线格式的 orderBy 数组
+ *
+ * @example
+ * orderByToSnake(['userId#DESC', 'createdAt#ASC']) // ['user_id#DESC', 'created_at#ASC']
+ * orderByToSnake(['userName#ASC']) // ['user_name#ASC']
+ * orderByToSnake([]) // []
+ */
+export const orderByToSnake = (orderBy: string[]): string[] => {
+    if (!orderBy || !Array.isArray(orderBy)) return orderBy;
+    return orderBy.map((item) => {
+        if (typeof item !== 'string' || !item.includes('#')) return item;
+        const [field, direction] = item.split('#');
+        return `${toSnakeCase(field.trim())}#${direction.trim()}`;
+    });
+};
+
+/**
  * 对象字段名转下划线
  * @param obj - 源对象
  * @returns 字段名转为下划线格式的新对象

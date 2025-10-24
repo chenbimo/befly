@@ -39,7 +39,7 @@ export default {
             where,
             page: params.page || 1,
             limit: params.limit || 10,
-            orderBy: params.orderBy || ['created_at#DESC']
+            orderBy: params.orderBy || ['createdAt#DESC']
         });
 
         return Yes('查询成功', result);
