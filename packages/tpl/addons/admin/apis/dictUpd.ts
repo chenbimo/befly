@@ -15,7 +15,7 @@ export default {
         sort: adminDictTable.sort,
         pid: adminDictTable.pid,
         description: adminDictTable.description,
-        state: Fields._state
+        state: Fields.state
     },
     handler: async (befly, ctx) => {
         try {
