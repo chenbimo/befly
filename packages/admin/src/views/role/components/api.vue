@@ -198,7 +198,6 @@ $Method.initData();
     gap: 12px;
 
     .search-box {
-        padding-bottom: 12px;
     }
 
     .api-container {
