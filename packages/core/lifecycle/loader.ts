@@ -166,10 +166,10 @@ export class Loader {
                             addonPlugins.push(pluginInstance);
                             loadedPluginNames.add(pluginFullName);
 
-                            Logger.info(`组件[${addon}]插件 ${fileName} 导入耗时: ${importTime}`);
+                            Logger.info(`组件${addon} ${fileName} 导入耗时: ${importTime}`);
                         } catch (err: any) {
                             hadAddonPluginError = true;
-                            Logger.error(`组件[${addon}]插件 ${fileName} 导入失败`, error);
+                            Logger.error(`组件${addon} ${fileName} 导入失败`, error);
                             process.exit(1);
                         }
                     }
@@ -342,7 +342,7 @@ export class Loader {
             const loadStartTime = Bun.nanoseconds();
             const isAddon = options?.isAddon || false;
             const addonName = options?.addonName || '';
-            const dirDisplayName = isAddon ? `组件[${addonName}]` : '用户';
+            const dirDisplayName = isAddon ? `组件${addonName}` : '用户';
 
             const glob = new Bun.Glob('**/*.ts');
             const apiDir = isAddon ? getAddonDir(addonName, 'apis') : paths.projectApiDir;

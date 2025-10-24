@@ -82,15 +82,15 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
 
                 // 检查是否使用保留前缀
                 if (isReservedTableName(tableName)) {
-                    conflicts.push(`组件 [${addonName}] 表 "${tableName}" 使用了保留前缀，保留前缀包括: ${getReservedTablePrefixes().join(', ')}`);
+                    conflicts.push(`组件 ${addonName} 表 "${tableName}" 使用了保留前缀，保留前缀包括: ${getReservedTablePrefixes().join(', ')}`);
                     continue;
                 }
 
                 // 检查是否与已有表冲突
                 if (registry.tables.has(tableName)) {
-                    conflicts.push(`组件 [${addonName}] 表 "${tableName}" 与 ${registry.tables.get(tableName)} 冲突`);
+                    conflicts.push(`组件 ${addonName} 表 "${tableName}" 与 ${registry.tables.get(tableName)} 冲突`);
                 } else {
-                    registry.tables.set(tableName, `组件[${addonName}]`);
+                    registry.tables.set(tableName, `组件${addonName}`);
                 }
             } catch (error: any) {
                 // 表定义解析错误会在 table.ts 中处理，这里跳过
@@ -125,7 +125,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
                 if (registry.routes.has(route)) {
                     conflicts.push(`组件 [${addonName}] 路由 "${route}" 与 ${registry.routes.get(route)} 冲突`);
                 } else {
-                    registry.routes.set(route, `组件[${addonName}]`);
+                    registry.routes.set(route, `组件${addonName}`);
                 }
             } catch (error: any) {
                 // API 加载错误会在 loader.ts 中处理，这里跳过
@@ -151,7 +151,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
 
             // 检查是否使用保留名称
             if (isReservedPluginName(pluginName)) {
-                conflicts.push(`组件 [${addonName}] 插件 "${pluginName}" 使用了保留名称，保留名称包括: ${getReservedPlugins().join(', ')}`);
+                conflicts.push(`组件 ${addonName} 插件 "${pluginName}" 使用了保留名称，保留名称包括: ${getReservedPlugins().join(', ')}`);
                 continue;
             }
 
@@ -159,7 +159,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
             if (registry.plugins.has(pluginName)) {
                 conflicts.push(`组件 [${addonName}] 插件 "${pluginName}" 与 ${registry.plugins.get(pluginName)} 冲突`);
             } else {
-                registry.plugins.set(pluginName, `组件[${addonName}]`);
+                registry.plugins.set(pluginName, `组件${addonName}`);
             }
         }
     }

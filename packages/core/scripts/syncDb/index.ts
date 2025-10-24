@@ -116,7 +116,7 @@ export const SyncDb = async (): Promise<void> => {
 
         for (const dirConfig of directories) {
             const { path: dir, isCore, addonName } = dirConfig;
-            const dirType = addonName ? `组件[${addonName}]` : '项目';
+            const dirType = addonName ? `组件${addonName}` : '项目';
 
             for await (const file of tablesGlob.scan({
                 cwd: dir,

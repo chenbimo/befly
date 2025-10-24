@@ -87,7 +87,7 @@ export class Checker {
             for (const checkConfig of checkDirs) {
                 const { path: checkDir, type } = checkConfig;
                 const addonName = 'addonName' in checkConfig ? checkConfig.addonName : undefined;
-                const checkTypeLabel = type === 'core' ? '核心' : type === 'project' ? '项目' : `组件[${addonName}]`;
+                const checkTypeLabel = type === 'core' ? '核心' : type === 'project' ? '项目' : `组件${addonName}`;
                 Logger.info(`开始执行${checkTypeLabel}检查，目录: ${checkDir}`);
 
                 for await (const file of glob.scan({
