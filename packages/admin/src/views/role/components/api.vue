@@ -3,11 +3,7 @@
         <div class="comp-role-api">
             <!-- 搜索框 -->
             <div class="search-box">
-                <tiny-input v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @input="$Method.onSearch">
-                    <template #prefix>
-                        <icon-search />
-                    </template>
-                </tiny-input>
+                <tiny-search v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @update:modelValue="$Method.onSearch" />
             </div>
 
             <!-- 折叠面板 -->
@@ -42,8 +38,6 @@
 </template>
 
 <script setup>
-import { IconSearch } from '@opentiny/vue-icon';
-
 const $Prop = defineProps({
     modelValue: {
         type: Boolean,
