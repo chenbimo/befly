@@ -1,5 +1,5 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Data.visible" title="接口权限" width="800px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
+    <tiny-dialog-box v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
         <div class="comp-role-api">
             <!-- 搜索框 -->
             <div class="search-box">
@@ -18,9 +18,19 @@
                 <tiny-button size="small" @click="$Method.onCollapseAll">折叠全部</tiny-button>
             </div>
 
-            <!-- 接口树 -->
-            <div class="tree-container">
-                <tiny-tree :data="$Data.filteredTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'label', children: 'children' }" :ref="(el) => ($Form.tree = el)" :filter-node-method="$Method.filterNode" />
+            <!-- 折叠面板 -->
+            <div class="collapse-container">
+                <tiny-collapse v-model="$Data.activeNames">
+                    <tiny-collapse-item v-for="group in $Data.filteredApiData" :key="group.name" :name="group.name" :title="group.name">
+                        <div class="api-checkbox-list">
+                            <tiny-checkbox-group v-model="$Data.checkedApiIds">
+                                <tiny-checkbox v-for="api in group.apis" :key="api.id" :label="api.id">
+                                    {{ api.label }}
+                                </tiny-checkbox>
+                            </tiny-checkbox-group>
+                        </div>
+                    </tiny-collapse-item>
+                </tiny-collapse>
             </div>
         </div>
 
@@ -47,25 +57,23 @@ const $Prop = defineProps({
 
 const $Emit = defineEmits(['update:modelValue', 'success']);
 
-// 表单引用
-const $Form = $shallowRef({
-    tree: null
-});
-
 const $Data = $ref({
     visible: false,
-    apiTreeData: [],
-    filteredTreeData: [],
+    apiData: [],
+    filteredApiData: [],
     searchText: '',
-    checkedKeys: []
+    checkedApiIds: [],
+    activeNames: []
 });
 
 // 方法集合
 const $Method = {
     async initData() {
-        await Promise.all([$Method.apiApiAll(), $Method.apiRoleApiDetail()]);
-        $Data.filteredTreeData = $Data.apiTreeData;
         $Method.onShow();
+        await Promise.all([$Method.apiApiAll(), $Method.apiRoleApiDetail()]);
+        $Data.filteredApiData = $Data.apiData;
+        // 默认展开所有折叠面板
+        $Data.activeNames = $Data.apiData.map((group) => group.name);
     },
 
     onShow() {
@@ -86,7 +94,7 @@ const $Method = {
         try {
             const res = await $Http('/addon/admin/apiAll');
 
-            // 将接口列表转换为树形结构
+            // 将接口列表按 addonName 分组
             const apiMap = new Map();
 
             res.data.lists.forEach((api) => {
@@ -94,21 +102,19 @@ const $Method = {
 
                 if (!apiMap.has(addonName)) {
                     apiMap.set(addonName, {
-                        id: `addon_${addonName}`,
-                        label: addonName,
-                        children: []
+                        name: addonName,
+                        apis: []
                     });
                 }
 
-                apiMap.get(addonName).children.push({
+                apiMap.get(addonName).apis.push({
                     id: api.id,
                     label: `${api.name} [${api.method} ${api.path}]`,
-                    description: api.description,
-                    isLeaf: true
+                    description: api.description
                 });
             });
 
-            $Data.apiTreeData = Array.from(apiMap.values());
+            $Data.apiData = Array.from(apiMap.values());
         } catch (error) {
             console.error('加载接口失败:', error);
             Modal.message({ message: '加载接口失败', status: 'error' });
@@ -124,14 +130,7 @@ const $Method = {
                 roleId: $Prop.rowData.id
             });
 
-            $Data.checkedKeys = res.data.apiIds || [];
-
-            // 等待树渲染完成后设置选中状态
-            nextTick(() => {
-                if ($Form.tree) {
-                    $Form.tree.setCheckedKeys($Data.checkedKeys);
-                }
-            });
+            $Data.checkedApiIds = res.data.apiIds || [];
         } catch (error) {
             console.error('加载角色接口失败:', error);
         }
@@ -140,96 +139,51 @@ const $Method = {
     // 搜索过滤
     onSearch() {
         if (!$Data.searchText) {
-            $Data.filteredTreeData = $Data.apiTreeData;
+            $Data.filteredApiData = $Data.apiData;
             return;
         }
 
         const searchLower = $Data.searchText.toLowerCase();
-        $Data.filteredTreeData = $Data.apiTreeData
-            .map((addon) => ({
-                ...addon,
-                children: addon.children.filter((api) => api.label.toLowerCase().includes(searchLower))
+        $Data.filteredApiData = $Data.apiData
+            .map((group) => ({
+                ...group,
+                apis: group.apis.filter((api) => api.label.toLowerCase().includes(searchLower))
             }))
-            .filter((addon) => addon.children.length > 0);
-    },
-
-    // 节点过滤方法
-    filterNode(value, data) {
-        if (!value) return true;
-        return data.label.toLowerCase().includes(value.toLowerCase());
+            .filter((group) => group.apis.length > 0);
     },
 
     // 全选
     onCheckAll() {
-        if (!$Form.tree) return;
-
-        const allLeafIds = [];
-        $Data.apiTreeData.forEach((addon) => {
-            addon.children.forEach((api) => {
-                if (api.isLeaf) {
-                    allLeafIds.push(api.id);
-                }
+        const allApiIds = [];
+        $Data.apiData.forEach((group) => {
+            group.apis.forEach((api) => {
+                allApiIds.push(api.id);
             });
         });
-
-        $Form.tree.setCheckedKeys(allLeafIds);
+        $Data.checkedApiIds = allApiIds;
     },
 
     // 取消全选
     onUncheckAll() {
-        if (!$Form.tree) return;
-        $Form.tree.setCheckedKeys([]);
+        $Data.checkedApiIds = [];
     },
 
     // 展开全部
     onExpandAll() {
-        if (!$Form.tree) return;
-
-        const allNodeIds = [];
-        $Data.apiTreeData.forEach((addon) => {
-            allNodeIds.push(addon.id);
-        });
-
-        allNodeIds.forEach((id) => {
-            const node = $Form.tree.getNode(id);
-            if (node) {
-                node.expanded = true;
-            }
-        });
+        $Data.activeNames = $Data.apiData.map((group) => group.name);
     },
 
     // 折叠全部
     onCollapseAll() {
-        if (!$Form.tree) return;
-
-        const allNodeIds = [];
-        $Data.apiTreeData.forEach((addon) => {
-            allNodeIds.push(addon.id);
-        });
-
-        allNodeIds.forEach((id) => {
-            const node = $Form.tree.getNode(id);
-            if (node) {
-                node.expanded = false;
-            }
-        });
+        $Data.activeNames = [];
     },
 
     // 提交表单
     async onSubmit() {
         try {
-            if (!$Form.tree) {
-                Modal.message({ message: '接口树未初始化', status: 'error' });
-                return;
-            }
-
-            // 获取选中的叶子节点（只保存接口 ID，不包括分组节点）
-            const checkedKeys = $Form.tree.getCheckedKeys();
-            const apiIds = checkedKeys.filter((key) => typeof key === 'number');
-
             const res = await $Http('/addon/admin/roleApiSave', {
                 roleId: $Prop.rowData.id,
-                apiIds: JSON.stringify(apiIds)
+                apiIds: JSON.stringify($Data.checkedApiIds)
             });
 
             if (res.code === 0) {
@@ -277,17 +231,63 @@ $Method.initData();
         border-bottom: 1px solid var(--ti-common-color-line-dividing);
     }
 
-    .tree-container {
+    .collapse-container {
         flex: 1;
         overflow-y: auto;
-        padding: 8px 0;
 
-        :deep(.tiny-tree) {
-            .tiny-tree-node__content {
-                padding: 4px 0;
+        .api-checkbox-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 12px 0;
 
-                &:hover {
-                    background-color: var(--ti-common-color-hover-background);
+            :deep(.tiny-checkbox-group) {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                width: 100%;
+            }
+
+            :deep(.tiny-checkbox) {
+                flex: 0 0 auto;
+                min-width: 280px;
+                max-width: 400px;
+                margin: 0;
+
+                .tiny-checkbox__label {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            }
+        }
+
+        :deep(.tiny-collapse) {
+            border: none;
+
+            .tiny-collapse-item {
+                margin-bottom: 8px;
+                border: 1px solid var(--ti-common-color-line-dividing);
+                border-radius: 4px;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+
+                .tiny-collapse-item__header {
+                    padding: 12px 16px;
+                    background-color: var(--ti-common-color-bg-navigation);
+                    border-radius: 4px 4px 0 0;
+                    font-weight: 500;
+
+                    &:hover {
+                        background-color: var(--ti-common-color-hover-background);
+                    }
+                }
+
+                .tiny-collapse-item__content {
+                    padding: 0 16px;
+                    border-top: 1px solid var(--ti-common-color-line-dividing);
                 }
             }
         }
