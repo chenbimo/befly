@@ -154,7 +154,9 @@ body {
         border: 1px solid #e8eaed;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        .tiny-pager {
+            width: 100%;
+        }
     }
 }
 .custom-toolbar {
