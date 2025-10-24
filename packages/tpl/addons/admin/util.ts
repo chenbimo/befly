@@ -154,7 +154,7 @@ export async function cacheRolePermissions(befly: BeflyContext, roleCode: string
     try {
         if (!apiIds) {
             // 如果没有权限，删除缓存
-            await befly.redis.del(`befly:role:apis:${roleCode}`);
+            await befly.redis.del(`role:apis:${roleCode}`);
             Logger.debug(`已删除角色 ${roleCode} 的权限缓存（无权限）`);
             return;
         }
@@ -166,7 +166,7 @@ export async function cacheRolePermissions(befly: BeflyContext, roleCode: string
             .filter((id: number) => !isNaN(id));
 
         if (apiIdArray.length === 0) {
-            await befly.redis.del(`befly:role:apis:${roleCode}`);
+            await befly.redis.del(`role:apis:${roleCode}`);
             Logger.debug(`已删除角色 ${roleCode} 的权限缓存（ID 列表为空）`);
             return;
         }
@@ -181,13 +181,13 @@ export async function cacheRolePermissions(befly: BeflyContext, roleCode: string
         const roleApiPaths = allApis.filter((api: any) => apiIdArray.includes(api.id)).map((api: any) => `${api.method}${api.path}`);
 
         if (roleApiPaths.length === 0) {
-            await befly.redis.del(`befly:role:apis:${roleCode}`);
+            await befly.redis.del(`role:apis:${roleCode}`);
             Logger.debug(`已删除角色 ${roleCode} 的权限缓存（无匹配接口）`);
             return;
         }
 
         // 使用 Redis Set 缓存（先删除再添加，确保数据一致性）
-        const redisKey = `befly:role:apis:${roleCode}`;
+        const redisKey = `role:apis:${roleCode}`;
         await befly.redis.del(redisKey);
         const result = await befly.redis.sadd(redisKey, roleApiPaths);
 
@@ -204,7 +204,7 @@ export async function cacheRolePermissions(befly: BeflyContext, roleCode: string
  */
 export async function deleteRolePermissions(befly: BeflyContext, roleCode: string): Promise<void> {
     try {
-        await befly.redis.del(`befly:role:apis:${roleCode}`);
+        await befly.redis.del(`role:apis:${roleCode}`);
         Logger.debug(`已删除角色 ${roleCode} 的权限缓存`);
     } catch (error: any) {
         Logger.warn(`删除角色 ${roleCode} 权限缓存失败:`, error?.message || '未知错误');

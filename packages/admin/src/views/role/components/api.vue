@@ -12,9 +12,7 @@
                     <div class="group-header">{{ group.name }}</div>
                     <div class="api-checkbox-list">
                         <tiny-checkbox-group v-model="$Data.checkedApiIds">
-                            <tiny-checkbox v-for="api in group.apis" :key="api.id" :label="api.id">
-                                {{ api.label }}
-                            </tiny-checkbox>
+                            <tiny-checkbox v-for="api in group.apis" :key="api.id" :label="api.id"> {{ api.label }} </tiny-checkbox>
                         </tiny-checkbox-group>
                     </div>
                 </div>

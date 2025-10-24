@@ -76,7 +76,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             let hasPermission = false;
             if (api.auth === true && ctx.user?.roleCode && ctx.user.roleCode !== 'dev') {
                 // 使用 Redis SISMEMBER 直接判断接口是否在角色权限集合中（O(1)复杂度）
-                const roleApisKey = `befly:role:apis:${ctx.user.roleCode}`;
+                const roleApisKey = `role:apis:${ctx.user.roleCode}`;
                 const isMember = await appContext.redis.sismember(roleApisKey, apiPath);
                 hasPermission = isMember === 1;
             }

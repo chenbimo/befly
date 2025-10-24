@@ -27,12 +27,12 @@ export class CacheManager {
             }));
 
             // 缓存到 Redis
-            const result = await appContext.redis.setObject('befly:apis:all', apiList);
+            const result = await appContext.redis.setObject('apis:all', apiList);
 
             if (result === null) {
                 Logger.warn('⚠️ 接口缓存失败');
             } else {
-                Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: befly:apis:all)`);
+                Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
             }
         } catch (error: any) {
             Logger.warn('⚠️ 接口缓存异常:', error?.message || '未知错误');
@@ -60,12 +60,12 @@ export class CacheManager {
             });
 
             // 缓存到 Redis
-            const result = await appContext.redis.setObject('befly:menus:all', menus);
+            const result = await appContext.redis.setObject('menus:all', menus);
 
             if (result === null) {
                 Logger.warn('⚠️ 菜单缓存失败');
             } else {
-                Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: befly:menus:all)`);
+                Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: menus:all)`);
             }
         } catch (error: any) {
             Logger.warn('⚠️ 菜单缓存异常:', error?.message || '未知错误');
@@ -116,7 +116,7 @@ export class CacheManager {
                 if (roleApiPaths.length === 0) continue;
 
                 // 使用 Redis Set 缓存角色权限（性能优化：SADD + SISMEMBER）
-                const redisKey = `befly:role:apis:${role.code}`;
+                const redisKey = `role:apis:${role.code}`;
 
                 // 先删除旧数据
                 await appContext.redis.del(redisKey);

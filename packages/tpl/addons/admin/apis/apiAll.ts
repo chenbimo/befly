@@ -11,7 +11,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 从 Redis 缓存读取所有接口
-            let allApis = await befly.redis.getObject<any[]>('befly:apis:all');
+            let allApis = await befly.redis.getObject<any[]>('apis:all');
 
             // 如果缓存不存在，从数据库查询
             if (!allApis || allApis.length === 0) {
@@ -24,11 +24,12 @@ export default {
 
                 // 回写缓存
                 if (allApis.length > 0) {
-                    await befly.redis.setObject('befly:apis:all', allApis);
+                    await befly.redis.setObject('apis:all', allApis);
                 }
+                return Yes('操作成功', { lists: allApis, from: '来自数据库' });
+            } else {
+                return Yes('操作成功', { lists: allApis, from: '来自缓存' });
             }
-
-            return Yes('操作成功', { lists: allApis });
         } catch (error: any) {
             befly.logger.error('获取接口列表失败:', error);
             return No('获取接口列表失败');
