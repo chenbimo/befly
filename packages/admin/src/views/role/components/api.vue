@@ -247,9 +247,7 @@ $Method.initData();
                 }
 
                 :deep(.tiny-checkbox) {
-                    flex: 0 0 auto;
-                    min-width: 280px;
-                    max-width: 400px;
+                    flex: 0 0 calc(33.333% - 8px);
                     margin: 0;
 
                     .tiny-checkbox__label {
