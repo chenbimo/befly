@@ -88,28 +88,23 @@ export class Lifecycle {
         for (const addon of addons) {
             const addonLoadStart = Bun.nanoseconds();
             const hasApis = addonDirExists(addon, 'apis');
-            Logger.info(`[Addon: ${addon}] APIs 目录存在: ${hasApis}`);
+            Logger.info(`[组件 ${addon}] APIs 目录存在: ${hasApis}`);
 
             if (hasApis) {
-                Logger.info(`[Addon: ${addon}] ===== 开始加载 APIs =====`);
+                Logger.info(`[组件 ${addon}] ===== 开始加载 APIs =====`);
                 try {
                     await Loader.loadApis(addon, this.apiRoutes, { isAddon: true, addonName: addon });
                     const addonLoadTime = calcPerfTime(addonLoadStart);
-                    Logger.info(`[Addon: ${addon}] ===== APIs 加载完成，耗时: ${addonLoadTime} =====`);
+                    Logger.info(`[组件 ${addon}] ===== APIs 加载完成，耗时: ${addonLoadTime} =====`);
                 } catch (error: any) {
                     const addonLoadTime = calcPerfTime(addonLoadStart);
-                    Logger.error(`[Addon: ${addon}] !!!!! APIs 加载失败，耗时: ${addonLoadTime} !!!!!`);
-                    Logger.error(`[Addon: ${addon}] 错误类型: ${error.name}`);
-                    Logger.error(`[Addon: ${addon}] 错误信息: ${error.message}`);
-                    if (error.stack) {
-                        Logger.error(`[Addon: ${addon}] 错误堆栈:\n${error.stack}`);
-                    }
+                    Logger.error(`[组件 ${addon}] APIs 加载失败，耗时: ${addonLoadTime}`, error);
                     throw error; // 重新抛出错误，让上层处理
                 }
             }
         }
 
-        Logger.info('========== Addon APIs 全部加载完成 ==========');
+        Logger.info('========== 组件 APIs 全部加载完成 ==========');
         Logger.info('========== 开始加载用户 APIs ==========');
 
         const userApiLoadStart = Bun.nanoseconds();
@@ -120,12 +115,7 @@ export class Lifecycle {
             Logger.info(`========== 用户 APIs 加载完成，耗时: ${userApiLoadTime} ==========`);
         } catch (error: any) {
             const userApiLoadTime = calcPerfTime(userApiLoadStart);
-            Logger.error(`!!!!! 用户 APIs 加载失败，耗时: ${userApiLoadTime} !!!!!`);
-            Logger.error(`错误类型: ${error.name}`);
-            Logger.error(`错误信息: ${error.message}`);
-            if (error.stack) {
-                Logger.error(`错误堆栈:\n${error.stack}`);
-            }
+            Logger.error(`用户 APIs 加载失败，耗时: ${userApiLoadTime}`, error);
             throw error;
         }
 

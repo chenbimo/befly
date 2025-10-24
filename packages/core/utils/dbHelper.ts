@@ -362,7 +362,7 @@ export class DbHelper {
             return ids;
         } catch (error: any) {
             // 批量插入失败，记录错误
-            Logger.error(`表 \`${table}\` 批量插入失败:`, error.message);
+            Logger.error(`表 \`${table}\` 批量插入失败`, error);
             throw error;
         }
     }
@@ -504,7 +504,7 @@ export class DbHelper {
                 await conn.query('COMMIT');
                 committed = true;
             } catch (commitError: any) {
-                Logger.error('事务提交失败，正在回滚:', commitError.message);
+                Logger.error('事务提交失败，正在回滚', commitError);
                 await conn.query('ROLLBACK');
                 throw new Error(`事务提交失败: ${commitError.message}`);
             }
@@ -517,7 +517,7 @@ export class DbHelper {
                     await conn.query('ROLLBACK');
                     Logger.warn('事务已回滚');
                 } catch (rollbackError: any) {
-                    Logger.error('事务回滚失败:', rollbackError.message);
+                    Logger.error('事务回滚失败:', rollbackError);
                 }
             }
             throw error;

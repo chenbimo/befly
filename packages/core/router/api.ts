@@ -116,8 +116,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             }
         } catch (error: any) {
             // 记录详细的错误日志
-            Logger.error({
-                msg: api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误',
+            Logger.warn(api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误', {
                 接口名称: api?.name || '未知',
                 接口路径: apiPath || req.url,
                 请求方法: req.method,

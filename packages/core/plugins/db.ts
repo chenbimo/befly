@@ -40,11 +40,7 @@ const dbPlugin: Plugin = {
                 return {};
             }
         } catch (error: any) {
-            Logger.error({
-                msg: '数据库初始化失败',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('数据库初始化失败', error);
 
             // 清理资源
             if (sql) {

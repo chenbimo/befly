@@ -43,8 +43,7 @@ export async function staticHandler(req: Request): Promise<Response> {
         }
     } catch (error: any) {
         // 记录详细的错误日志
-        Logger.error({
-            msg: '静态文件处理失败',
+        Logger.warn('静态文件处理失败', {
             请求方法: req.method,
             请求URL: req.url,
             文件路径: filePath,

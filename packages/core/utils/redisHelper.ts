@@ -48,11 +48,7 @@ export const RedisHelper = {
             }
             return await client.set(pkey, data);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis setObject 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis setObject 错误', error);
             return null;
         }
     },
@@ -69,11 +65,7 @@ export const RedisHelper = {
             const data = await client.get(pkey);
             return data ? JSON.parse(data) : null;
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis getObject 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis getObject 错误', error);
             return null;
         }
     },
@@ -88,11 +80,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             await client.del(pkey);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis delObject 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis delObject 错误', error);
         }
     },
 
@@ -167,11 +155,7 @@ export const RedisHelper = {
             }
             return await client.set(pkey, value);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis setString 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis setString 错误', error);
             return null;
         }
     },
@@ -186,11 +170,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.get(pkey);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis getString 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis getString 错误', error);
             return null;
         }
     },
@@ -205,11 +185,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.exists(pkey);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis exists 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis exists 错误', error);
             return 0;
         }
     },
@@ -225,11 +201,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.expire(pkey, seconds);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis expire 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis expire 错误', error);
             return 0;
         }
     },
@@ -244,11 +216,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.ttl(pkey);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis ttl 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis ttl 错误', error);
             return -1;
         }
     },
@@ -267,11 +235,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.sadd(pkey, ...members);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis sadd 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis sadd 错误', error);
             return 0;
         }
     },
@@ -288,11 +252,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.sismember(pkey, member);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis sismember 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis sismember 错误', error);
             return 0;
         }
     },
@@ -308,11 +268,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.scard(pkey);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis scard 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis scard 错误', error);
             return 0;
         }
     },
@@ -328,11 +284,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.smembers(pkey);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis smembers 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis smembers 错误', error);
             return [];
         }
     },
@@ -348,11 +300,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
             return await client.del(pkey);
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis del 错误',
-                message: error.message,
-                stack: error.stack
-            });
+            Logger.error('Redis del 错误', error);
             return 0;
         }
     }

@@ -46,23 +46,20 @@ export class Checker {
                         const conflictCheckTime = calcPerfTime(conflictCheckStart);
 
                         if (typeof conflictResult !== 'boolean') {
-                            Logger.error(`核心检查 conflict.ts 返回值必须为 true 或 false，当前为 ${typeof conflictResult}，耗时: ${conflictCheckTime}`);
+                            Logger.warn(`核心检查 conflict.ts 返回值必须为 true 或 false，当前为 ${typeof conflictResult}，耗时: ${conflictCheckTime}`);
                             stats.failedChecks++;
                         } else if (conflictResult === true) {
                             stats.passedChecks++;
                             Logger.info(`核心检查 conflict.ts 通过，耗时: ${conflictCheckTime}`);
                         } else {
-                            Logger.error(`核心检查未通过: conflict.ts，耗时: ${conflictCheckTime}`);
+                            Logger.warn(`核心检查未通过: conflict.ts，耗时: ${conflictCheckTime}`);
                             stats.failedChecks++;
                             // 资源冲突检测失败，立即终止
-                            Logger.error({
-                                level: 'CRITICAL',
-                                msg: '资源冲突检测失败，无法继续启动',
+                            Logger.warn('资源冲突检测失败，无法继续启动', {
                                 totalChecks: stats.totalChecks,
                                 passedChecks: stats.passedChecks,
                                 failedChecks: stats.failedChecks
                             });
-                            Logger.error('系统即将退出...');
                             process.exit(1);
                         }
                     }
@@ -121,27 +118,23 @@ export class Checker {
 
                             // 检查返回值是否为 boolean
                             if (typeof checkResult !== 'boolean') {
-                                Logger.error(`${checkTypeLabel}检查 ${fileName} 返回值必须为 true 或 false，当前为 ${typeof checkResult}，耗时: ${singleCheckTime}`);
+                                Logger.warn(`${checkTypeLabel}检查 ${fileName} 返回值必须为 true 或 false，当前为 ${typeof checkResult}，耗时: ${singleCheckTime}`);
                                 stats.failedChecks++;
                             } else if (checkResult === true) {
                                 stats.passedChecks++;
                                 Logger.info(`${checkTypeLabel}检查 ${fileName} 通过，耗时: ${singleCheckTime}`);
                             } else {
-                                Logger.error(`${checkTypeLabel}检查未通过: ${fileName}，耗时: ${singleCheckTime}`);
+                                Logger.warn(`${checkTypeLabel}检查未通过: ${fileName}，耗时: ${singleCheckTime}`);
                                 stats.failedChecks++;
                             }
                         } else {
                             const singleCheckTime = calcPerfTime(singleCheckStart);
-                            Logger.error(`${checkTypeLabel}检查文件 ${fileName} 未找到 default 导出的检查函数，耗时: ${singleCheckTime}`);
+                            Logger.warn(`${checkTypeLabel}检查文件 ${fileName} 未找到 default 导出的检查函数，耗时: ${singleCheckTime}`);
                             stats.failedChecks++;
                         }
                     } catch (error: any) {
                         const singleCheckTime = calcPerfTime(Bun.nanoseconds());
-                        Logger.error({
-                            msg: `${checkTypeLabel}检查失败 ${fileName}，耗时: ${singleCheckTime}`,
-                            error: error.message,
-                            stack: error.stack
-                        });
+                        Logger.error(`${checkTypeLabel}检查失败 ${fileName}，耗时: ${singleCheckTime}`, error);
                         stats.failedChecks++;
                     }
                 }
@@ -153,14 +146,11 @@ export class Checker {
             Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${stats.totalChecks}, 通过: ${stats.passedChecks}, 失败: ${stats.failedChecks}`);
 
             if (stats.failedChecks > 0) {
-                Logger.error({
-                    level: 'CRITICAL',
-                    msg: '系统检查失败，无法继续启动',
+                Logger.error('统检查失败，无法继续启动', {
                     totalChecks: stats.totalChecks,
                     passedChecks: stats.passedChecks,
                     failedChecks: stats.failedChecks
                 });
-                Logger.error('系统即将退出...');
                 process.exit(1);
             } else if (stats.totalChecks > 0) {
                 Logger.info(`所有系统检查通过!`);
@@ -168,13 +158,7 @@ export class Checker {
                 Logger.info(`未执行任何检查`);
             }
         } catch (error: any) {
-            Logger.error({
-                level: 'CRITICAL',
-                msg: '执行系统检查时发生错误',
-                error: error.message,
-                stack: error.stack
-            });
-            Logger.error('系统即将退出...');
+            Logger.error('执行系统检查时发生错误', error);
             process.exit(1);
         }
     }

@@ -151,8 +151,8 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
                     Logger.info(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
                 }
             } catch (error: any) {
-                Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败: ${error.message}`);
-                Logger.error(`表名: ${tableName}, 索引名: ${act.indexName}, 字段: ${act.fieldName}`);
+                Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败:`, error);
+                Logger.warn(`表名: ${tableName}, 索引名: ${act.indexName}, 字段: ${act.fieldName}`);
                 throw error;
             }
         }

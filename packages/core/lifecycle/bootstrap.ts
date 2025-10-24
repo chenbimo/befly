@@ -45,11 +45,7 @@ export class Bootstrap {
                 ...(befly.appOptions.routes || {})
             },
             error: (error: Error) => {
-                Logger.error({
-                    msg: '服务启动时发生错误',
-                    error: error.message,
-                    stack: error.stack
-                });
+                Logger.error('服务启动时发生错误', error);
                 return Response.json(No('内部服务器错误'));
             }
         });

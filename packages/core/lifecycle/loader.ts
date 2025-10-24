@@ -77,20 +77,7 @@ export class Loader {
                     Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
                 } catch (err: any) {
                     hadCorePluginError = true;
-                    Logger.error(`核心插件 ${fileName} 导入失败`);
-                    Logger.error(`错误类型: ${err.name}`);
-                    Logger.error(`错误信息: ${err.message}`);
-                    if (err.stack) {
-                        Logger.error(`错误堆栈:\n${err.stack}`);
-                    }
-                    // 核心插件导入失败是致命错误，必须终止
-                    Logger.error({
-                        level: 'CRITICAL',
-                        msg: `核心插件 ${fileName} 导入失败，无法继续启动服务`,
-                        error: err.message,
-                        stack: err.stack
-                    });
-                    Logger.error('系统即将退出...');
+                    Logger.error(`核心插件 ${fileName} 导入失败`, error);
                     process.exit(1);
                 }
             }
@@ -102,11 +89,7 @@ export class Loader {
 
             const sortedCorePlugins = sortPlugins(corePlugins);
             if (sortedCorePlugins === false) {
-                Logger.error({
-                    level: 'CRITICAL',
-                    msg: '核心插件依赖关系错误，请检查插件的 after 属性'
-                });
-                Logger.error('系统即将退出...');
+                Logger.warn('核心插件依赖关系错误，请检查插件的 after 属性');
                 process.exit(1);
             }
 
@@ -139,19 +122,8 @@ export class Loader {
                     Logger.info(`核心插件 ${plugin.pluginName} 初始化成功`);
                 } catch (error: any) {
                     hadCorePluginError = true;
-                    Logger.error(`核心插件 ${plugin.pluginName} 初始化失败`);
-                    Logger.error(`错误类型: ${error.name}`);
-                    Logger.error(`错误信息: ${error.message}`);
-                    Logger.error(`错误堆栈: ${error.stack}`);
+                    Logger.error(`核心插件 ${plugin.pluginName} 初始化失败`, error);
 
-                    // 核心插件初始化失败是致命错误,必须立即终止服务启动
-                    Logger.error({
-                        level: 'CRITICAL',
-                        msg: `核心插件 ${plugin.pluginName} 初始化失败，无法继续启动服务`,
-                        error: error.message,
-                        stack: error.stack
-                    });
-                    Logger.error('系统即将退出...');
                     process.exit(1);
                 }
             }
@@ -197,20 +169,7 @@ export class Loader {
                             Logger.info(`组件[${addon}]插件 ${fileName} 导入耗时: ${importTime}`);
                         } catch (err: any) {
                             hadAddonPluginError = true;
-                            Logger.error(`组件[${addon}]插件 ${fileName} 导入失败`);
-                            Logger.error(`错误类型: ${err.name}`);
-                            Logger.error(`错误信息: ${err.message}`);
-                            if (err.stack) {
-                                Logger.error(`错误堆栈:\n${err.stack}`);
-                            }
-                            // Addon 插件导入失败也是致命错误
-                            Logger.error({
-                                level: 'CRITICAL',
-                                msg: `组件[${addon}]插件 ${fileName} 导入失败，无法继续启动服务`,
-                                error: err.message,
-                                stack: err.stack
-                            });
-                            Logger.error('系统即将退出...');
+                            Logger.error(`组件[${addon}]插件 ${fileName} 导入失败`, error);
                             process.exit(1);
                         }
                     }
@@ -249,16 +208,7 @@ export class Loader {
                             Logger.info(`组件插件 ${plugin.pluginName} 初始化成功`);
                         } catch (error: any) {
                             hadAddonPluginError = true;
-                            Logger.error(`组件插件 ${plugin.pluginName} 初始化失败`);
-                            Logger.error(`错误类型: ${error.name}`);
-                            Logger.error(`错误信息: ${error.message}`);
-                            Logger.error(`错误堆栈: ${error.stack}`);
-                            Logger.warn({
-                                level: 'WARNING',
-                                msg: `组件插件 ${plugin.pluginName} 初始化失败`,
-                                error: error.message,
-                                stack: error.stack
-                            });
+                            Logger.error(`组件插件 ${plugin.pluginName} 初始化失败`, error);
                         }
                     }
                     const addonPluginsInitTime = calcPerfTime(addonPluginsInitStart);
@@ -296,20 +246,7 @@ export class Loader {
                     Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
                 } catch (err: any) {
                     hadUserPluginError = true;
-                    Logger.error(`用户插件 ${fileName} 导入失败`);
-                    Logger.error(`错误类型: ${err.name}`);
-                    Logger.error(`错误信息: ${err.message}`);
-                    if (err.stack) {
-                        Logger.error(`错误堆栈:\n${err.stack}`);
-                    }
-                    // 用户插件导入失败也是致命错误
-                    Logger.error({
-                        level: 'CRITICAL',
-                        msg: `用户插件 ${fileName} 导入失败，无法继续启动服务`,
-                        error: err.message,
-                        stack: err.stack
-                    });
-                    Logger.error('系统即将退出...');
+                    Logger.error(`用户插件 ${fileName} 导入失败`, error);
                     process.exit(1);
                 }
             }
@@ -351,16 +288,7 @@ export class Loader {
                         Logger.info(`用户插件 ${plugin.pluginName} 初始化成功`);
                     } catch (error: any) {
                         hadUserPluginError = true;
-                        Logger.error(`用户插件 ${plugin.pluginName} 初始化失败`);
-                        Logger.error(`错误类型: ${error.name}`);
-                        Logger.error(`错误信息: ${error.message}`);
-                        Logger.error(`错误堆栈: ${error.stack}`);
-                        Logger.warn({
-                            level: 'WARNING',
-                            msg: `用户插件 ${plugin.pluginName} 初始化失败`,
-                            error: error.message,
-                            stack: error.stack
-                        });
+                        Logger.error(`用户插件 ${plugin.pluginName} 初始化失败`, error);
                     }
                 }
                 const userPluginsInitTime = calcPerfTime(userPluginsInitStart);
@@ -373,13 +301,10 @@ export class Loader {
 
             // 核心插件失败 → 关键错误，必须退出
             if (hadCorePluginError) {
-                Logger.error({
-                    level: 'CRITICAL',
-                    msg: '核心插件加载失败，无法继续启动',
+                Logger.warn('核心插件加载失败，无法继续启动', {
                     corePluginCount: sortedCorePlugins.length,
                     totalPluginCount
                 });
-                Logger.error('系统即将退出...');
                 process.exit(1);
             }
 
@@ -401,13 +326,7 @@ export class Loader {
                 });
             }
         } catch (error: any) {
-            Logger.error({
-                level: 'CRITICAL',
-                msg: '加载插件时发生错误',
-                error: error.message,
-                stack: error.stack
-            });
-            Logger.error('系统即将退出...');
+            Logger.error('加载插件时发生错误', error);
             process.exit(1);
         }
     }
@@ -508,21 +427,8 @@ export class Loader {
                     const errorMessage = error?.message || '未知错误';
 
                     // 记录详细错误信息
-                    Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime})`);
-                    Logger.error(`[${dirDisplayName}] 错误类型: ${error.name}`);
-                    Logger.error(`[${dirDisplayName}] 错误信息: ${errorMessage}`);
-                    if (error.stack) {
-                        Logger.error(`[${dirDisplayName}] 错误堆栈:\n${error.stack}`);
-                    }
+                    Logger.warn(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime})`, error);
 
-                    // API 加载失败是致命错误，必须终止
-                    Logger.error({
-                        level: 'CRITICAL',
-                        msg: `${dirDisplayName}接口 ${apiPath} 加载失败，无法继续启动服务`,
-                        error: error.message,
-                        stack: error.stack
-                    });
-                    Logger.error('系统即将退出...');
                     process.exit(1);
                 }
             }
@@ -532,24 +438,15 @@ export class Loader {
 
             // 检查是否有加载失败的 API（理论上不会到达这里，因为上面已经 critical 退出）
             if (failedApis > 0) {
-                Logger.error({
-                    level: 'CRITICAL',
-                    msg: `有 ${failedApis} 个${dirDisplayName}接口加载失败，无法继续启动服务`,
+                Logger.warn(`有 ${failedApis} 个${dirDisplayName}接口加载失败，无法继续启动服务`, {
                     dirName,
                     totalApis,
                     failedApis
                 });
-                Logger.error('系统即将退出...');
                 process.exit(1);
             }
         } catch (error: any) {
-            Logger.error({
-                level: 'CRITICAL',
-                msg: `加载${dirDisplayName}接口时发生错误`,
-                error: error.message,
-                stack: error.stack
-            });
-            Logger.error('系统即将退出...');
+            Logger.error(`加载${dirDisplayName}接口时发生错误`, error);
             process.exit(1);
         }
     }

@@ -36,12 +36,7 @@ const redisPlugin: Plugin = {
                 return {};
             }
         } catch (error: any) {
-            Logger.error({
-                msg: 'Redis 初始化失败',
-                message: error.message,
-                code: error.code,
-                stack: error.stack
-            });
+            Logger.error('Redis 初始化失败', error);
 
             // 插件内禁止直接退出进程，抛出异常交由主流程统一处理
             throw error;

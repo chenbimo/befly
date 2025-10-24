@@ -18,11 +18,7 @@ export async function executePluginHooks(pluginLists: Plugin[], appContext: Befl
                 await plugin?.onGet(appContext, ctx, ctx.request);
             }
         } catch (error: any) {
-            Logger.error({
-                msg: '插件处理请求时发生错误',
-                error: error.message,
-                stack: error.stack
-            });
+            Logger.error('插件处理请求时发生错误', error);
         }
     }
 }

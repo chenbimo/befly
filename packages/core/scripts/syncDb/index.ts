@@ -181,14 +181,7 @@ export const SyncDb = async (): Promise<void> => {
         // 输出性能统计
         perfTracker.logStats();
     } catch (error: any) {
-        Logger.error(`数据库同步失败: ${error.message}`);
-        Logger.error(`错误详情: ${error.stack}`);
-        if (error.code) {
-            Logger.error(`错误代码: ${error.code}`);
-        }
-        if (error.errno) {
-            Logger.error(`错误编号: ${error.errno}`);
-        }
+        Logger.error(`数据库同步失败`, error);
         process.exit(1);
     } finally {
         if (sql) {
@@ -204,7 +197,7 @@ export const SyncDb = async (): Promise<void> => {
 // 如果直接运行此脚本（Bun 支持 import.meta.main）
 if (import.meta.main) {
     SyncDb().catch((error) => {
-        Logger.error('❌ 数据库同步失败:', error);
+        Logger.error('数据库同步失败', error);
         process.exit(1);
     });
 }

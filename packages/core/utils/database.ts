@@ -124,12 +124,7 @@ export async function createRedisClient(): Promise<RedisClient> {
 
         return redis;
     } catch (error: any) {
-        Logger.error({
-            msg: 'Redis 连接失败',
-            message: error.message,
-            code: error.code,
-            stack: error.stack
-        });
+        Logger.error('Redis 连接失败', error);
         throw new Error(`Redis 连接失败: ${error.message}`);
     }
 }
@@ -187,7 +182,7 @@ export async function createSqlClient(options: SqlClientOptions = {}): Promise<a
         Logger.info(`数据库连接成功，version: ${version}`);
         return sql;
     } catch (error: any) {
-        Logger.error('数据库连接测试失败:', error.message || error);
+        Logger.error('数据库连接测试失败', error);
 
         // 清理资源
         try {
@@ -232,7 +227,7 @@ export async function initDatabase(options: SqlClientOptions = {}): Promise<Data
             helper: connections.helper
         };
     } catch (error: any) {
-        Logger.error('数据库初始化失败:', error.message);
+        Logger.error('数据库初始化失败', error);
         // 清理已创建的连接
         await closeDatabase();
         throw error;
@@ -261,7 +256,7 @@ export async function closeDatabase(): Promise<void> {
                 connections.redis.close();
                 Logger.info('Redis 连接已关闭');
             } catch (error: any) {
-                Logger.warn('关闭 Redis 连接时出错:', error.message);
+                Logger.warn('关闭 Redis 连接时出错:', error);
             }
             connections.redis = null;
         }
@@ -269,7 +264,7 @@ export async function closeDatabase(): Promise<void> {
         // 清理 DbHelper
         connections.helper = null;
     } catch (error: any) {
-        Logger.error('关闭数据库连接时出错:', error.message);
+        Logger.error('关闭数据库连接时出错', error);
     }
 }
 
@@ -331,7 +326,7 @@ export async function initSqlOnly(options: SqlClientOptions = {}): Promise<{ sql
             helper: connections.helper
         };
     } catch (error: any) {
-        Logger.error('SQL 初始化失败:', error.message);
+        Logger.error('SQL 初始化失败', error);
         throw error;
     }
 }
@@ -347,7 +342,7 @@ export async function initRedisOnly(): Promise<RedisClient> {
         Logger.info('Redis 连接初始化完成');
         return connections.redis;
     } catch (error: any) {
-        Logger.error('Redis 初始化失败:', error.message);
+        Logger.error('Redis 初始化失败', error);
         throw error;
     }
 }

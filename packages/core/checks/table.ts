@@ -104,7 +104,7 @@ export default async function (): Promise<boolean> {
             try {
                 // 1) 文件名小驼峰校验
                 if (!LOWER_CAMEL_CASE_REGEX.test(fileBaseName)) {
-                    Logger.error(`${fileType}表 ${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
+                    Logger.warn(`${fileType}表 ${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
                     // 命名不合规，记录错误并计为无效文件，继续下一个文件
                     invalidFiles++;
                     continue;
@@ -118,7 +118,7 @@ export default async function (): Promise<boolean> {
                 // 检查 table 中的每个验证规则
                 for (const [colKey, rule] of Object.entries(table)) {
                     if (typeof rule !== 'string') {
-                        Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 规则必须为字符串`);
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 规则必须为字符串`);
                         fileValid = false;
                         continue;
                     }
@@ -130,7 +130,7 @@ export default async function (): Promise<boolean> {
 
                         // 检查是否使用了保留字段
                         if (RESERVED_FIELDS.includes(colKey as any)) {
-                            Logger.error(`${fileType}表 ${fileName} 文件包含保留字段 ${colKey}，` + `不能在表定义中使用以下字段: ${RESERVED_FIELDS.join(', ')}`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件包含保留字段 ${colKey}，` + `不能在表定义中使用以下字段: ${RESERVED_FIELDS.join(', ')}`);
                             fileValid = false;
                         }
 
@@ -139,7 +139,7 @@ export default async function (): Promise<boolean> {
                         try {
                             parsed = parseRule(rule);
                         } catch (error: any) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 字段规则解析失败：${error.message}`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段规则解析失败：${error.message}`);
                             fileValid = false;
                             continue;
                         }
@@ -148,37 +148,37 @@ export default async function (): Promise<boolean> {
 
                         // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
                         if (!FIELD_NAME_REGEX.test(fieldName)) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
                             fileValid = false;
                         }
 
                         // 第2个值：字段类型必须为string,number,text,array之一
                         if (!FIELD_TYPES.includes(fieldType as any)) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
                             fileValid = false;
                         }
 
                         // 第3/4个值：需要是 null 或 数字
                         if (!(fieldMin === null || typeof fieldMin === 'number')) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
                             fileValid = false;
                         }
                         if (!(fieldMax === null || typeof fieldMax === 'number')) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
                             fileValid = false;
                         }
 
                         // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
                         if (fieldMin !== null && fieldMax !== null) {
                             if (fieldMin > fieldMax) {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
+                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
                                 fileValid = false;
                             }
                         }
 
                         // 第6个值：是否创建索引必须为0或1
                         if (fieldIndex !== 0 && fieldIndex !== 1) {
-                            Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为0或1`);
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为0或1`);
                             fileValid = false;
                         }
 
@@ -189,28 +189,28 @@ export default async function (): Promise<boolean> {
                         if (fieldType === 'text') {
                             // text：min/max 必须为 null，默认值必须为 'null'
                             if (fieldMin !== null) {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
+                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
                                 fileValid = false;
                             }
                             if (fieldMax !== null) {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
+                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
                                 fileValid = false;
                             }
                             if (fieldDefault !== 'null') {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
+                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
                                 fileValid = false;
                             }
                         } else if (fieldType === 'string' || fieldType === 'array') {
                             if (fieldMax === null || typeof fieldMax !== 'number') {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
+                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
                                 fileValid = false;
                             } else if (fieldMax > MAX_VARCHAR_LENGTH) {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
+                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                                 fileValid = false;
                             }
                         } else if (fieldType === 'number') {
                             if (fieldDefault !== 'null' && typeof fieldDefault !== 'number') {
-                                Logger.error(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或null，当前为 "${fieldDefault}"`);
+                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或null，当前为 "${fieldDefault}"`);
                                 fileValid = false;
                             }
                         }
@@ -239,7 +239,7 @@ export default async function (): Promise<boolean> {
         Logger.info(`  失败文件: ${invalidFiles}`);
 
         if (invalidFiles > 0) {
-            Logger.error(`表定义检查失败，请修复上述错误后重试`);
+            Logger.warn(`表定义检查失败，请修复上述错误后重试`);
             return false;
         } else {
             Logger.info(`所有表定义检查通过 ✓`);

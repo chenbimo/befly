@@ -41,7 +41,7 @@ async function collectCorePlugins(registry: ResourceRegistry): Promise<void> {
             if (pluginName.startsWith('_')) continue;
 
             if (registry.plugins.has(pluginName)) {
-                Logger.error(`核心插件 "${pluginName}" 重复定义`);
+                Logger.warn(`核心插件 "${pluginName}" 重复定义`);
             } else {
                 registry.plugins.set(pluginName, 'core');
             }
@@ -307,15 +307,11 @@ export default async function checkConflict(): Promise<boolean> {
 
         // 4. 报告冲突
         if (allConflicts.length > 0) {
-            Logger.error('');
-            Logger.error('❌ 检测到资源冲突:');
-            Logger.error('');
+            Logger.warn('检测到资源冲突:');
             allConflicts.forEach((conflict, index) => {
-                Logger.error(`  ${index + 1}. ${conflict}`);
+                Logger.warn(`  ${index + 1}. ${conflict}`);
             });
-            Logger.error('');
-            Logger.error('请解决以上冲突后再启动服务器');
-            Logger.error('');
+            Logger.warn('请解决以上冲突后再启动服务器');
             return false;
         }
 
