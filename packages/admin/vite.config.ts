@@ -59,15 +59,7 @@ export default defineConfig({
     server: {
         port: 5173,
         host: true,
-        open: false,
-        // 优化 HMR 和依赖预构建
-        hmr: {
-            overlay: false
-        },
-        fs: {
-            // 允许访问项目根目录
-            allow: ['../../']
-        }
+        open: false
     },
     logLevel: 'info',
     customLogger: {

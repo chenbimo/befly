@@ -19,20 +19,20 @@
             </div>
         </div>
         <div class="main-table">
-            <tiny-grid :data="$Data.tableData" header-cell-class-name="custom-table-cell-class" size="small" height="100%" seq-serial>
-                <tiny-grid-column type="index" title="序号" :width="60" />
-                <tiny-grid-column field="name" title="角色名称" />
+            <tiny-grid :data="$Data.tableData" header-cell-class-name="custom-table-cell-class" size="small" height="100%" show-overflow="tooltip" border seq-serial>
+                <tiny-grid-column type="index" title="序号" align="center" :width="100" />
+                <tiny-grid-column field="name" title="角色名称" :width="150" />
                 <tiny-grid-column field="code" title="角色代码" :width="150" />
-                <tiny-grid-column field="description" title="描述" />
-                <tiny-grid-column field="sort" title="排序" :width="80" />
-                <tiny-grid-column field="state" title="状态" :width="100">
+                <tiny-grid-column field="description" title="描述" :min-width="150" />
+                <tiny-grid-column field="sort" title="排序" align="center" :width="80" />
+                <tiny-grid-column field="state" title="状态" align="center" :width="100">
                     <template #default="{ row }">
                         <tiny-tag v-if="row.state === 1" type="success">正常</tiny-tag>
                         <tiny-tag v-else-if="row.state === 2" type="warning">禁用</tiny-tag>
                         <tiny-tag v-else type="danger">已删除</tiny-tag>
                     </template>
                 </tiny-grid-column>
-                <tiny-grid-column title="操作" :width="120" align="right">
+                <tiny-grid-column title="操作" :width="120" align="right" fixed="right">
                     <template #default="{ row }">
                         <tiny-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                             <template #dropdown>
@@ -174,31 +174,6 @@ $Method.initData();
 </script>
 
 <style scoped lang="scss">
-.role-page {
-    padding: 16px;
-
-    .toolbar {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 16px;
-        padding: 16px;
-        background: #fff;
-        border-radius: 4px;
-
-        .left,
-        .right {
-            display: flex;
-            gap: 8px;
-        }
-    }
-
-    .pagination {
-        margin-top: 16px;
-        padding: 16px;
-        background: #fff;
-        border-radius: 4px;
-        display: flex;
-        justify-content: flex-end;
-    }
+.page-role {
 }
 </style>

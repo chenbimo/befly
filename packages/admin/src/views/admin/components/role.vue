@@ -38,8 +38,8 @@ const $Data = $ref({
 // 方法集合
 const $Method = {
     async initData() {
-        await Promise.all([$Method.apiRoleList(), $Method.apiAdminRoleDetail()]);
         $Method.onShow();
+        await Promise.all([$Method.apiRoleList(), $Method.apiAdminRoleDetail()]);
     },
 
     onShow() {

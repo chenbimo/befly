@@ -82,10 +82,10 @@ const $Data2 = $shallowRef({
 // 方法集合
 const $Method = {
     async initData() {
+        $Method.onShow();
         if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
             $Data.formData = Object.assign({}, $Prop.rowData);
         }
-        $Method.onShow();
     },
 
     onShow() {

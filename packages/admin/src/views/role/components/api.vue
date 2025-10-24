@@ -1,6 +1,6 @@
 <template>
     <tiny-dialog-box v-model:visible="$Data.visible" title="接口权限" width="800px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
-        <div class="api-permission-container">
+        <div class="comp-role-api">
             <!-- 搜索框 -->
             <div class="search-box">
                 <tiny-input v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @input="$Method.onSearch">
@@ -259,7 +259,7 @@ $Method.initData();
 </script>
 
 <style scoped lang="scss">
-.api-permission-container {
+.comp-role-api {
     height: 60vh;
     display: flex;
     flex-direction: column;

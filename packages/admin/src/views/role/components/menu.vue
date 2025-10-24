@@ -1,6 +1,8 @@
 <template>
     <tiny-dialog-box v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
-        <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($Form.tree = el)" />
+        <div class="comp-role-menu">
+            <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($Form.tree = el)" />
+        </div>
         <template #footer>
             <tiny-button @click="$Method.onClose">取消</tiny-button>
             <tiny-button type="primary" @click="$Method.onSubmit">保存</tiny-button>
@@ -136,5 +138,6 @@ $Method.initData();
 </script>
 
 <style scoped lang="scss">
-// 可根据需要添加样式
+.comp-role-menu {
+}
 </style>
