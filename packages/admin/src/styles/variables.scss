@@ -65,11 +65,11 @@ $breakpoint-lg: 1200px;
 $breakpoint-xl: 1600px;
 
 // 首页专用变量
-$dashboard-section-bg: $bg-color-container;
-$dashboard-section-border: $border-color;
-$dashboard-section-radius: $border-radius;
-$dashboard-section-padding: $spacing-md;
-$dashboard-section-gap: $spacing-md;
+$dashboard-section-bg: #ffffff;
+$dashboard-section-border: #e8eaed;
+$dashboard-section-radius: 8px;
+$dashboard-section-padding: 16px;
+$dashboard-section-gap: 16px;
 $dashboard-header-font-size: 16px;
 $dashboard-content-font-size: 14px;
 $dashboard-min-font-size: 14px;
