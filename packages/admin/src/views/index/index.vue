@@ -648,7 +648,6 @@ const $Method = {
 
 <style scoped lang="scss">
 .dashboard-container {
-    padding: 20px;
     background: $bg-color-page;
     height: 100%;
     overflow-y: auto;
@@ -657,24 +656,24 @@ const $Method = {
 // 欢迎区域
 .welcome-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 32px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+    padding: 20px 24px;
+    border-radius: 8px;
+    margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 
     .welcome-content {
         .welcome-title {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 600;
             color: white;
-            margin: 0 0 8px 0;
+            margin: 0 0 4px 0;
         }
 
         .welcome-desc {
-            font-size: 14px;
+            font-size: 13px;
             color: rgba(255, 255, 255, 0.9);
             margin: 0;
         }
@@ -684,10 +683,10 @@ const $Method = {
         .status-badge {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
             font-weight: 500;
 
             &.status-online {
@@ -702,22 +701,22 @@ const $Method = {
 // 区块样式
 .section-block {
     background: white;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    border-radius: 6px;
+    margin-bottom: 12px;
     border: 1px solid $border-color;
     overflow: hidden;
 
     .section-header {
         background: linear-gradient(to right, #f8f9fa, white);
-        padding: 16px 20px;
-        border-bottom: 2px solid $primary-color;
+        padding: 10px 16px;
+        border-bottom: 1px solid $primary-color;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
 
         h2 {
             margin: 0;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: $text-primary;
             flex: 1;
@@ -725,7 +724,7 @@ const $Method = {
     }
 
     .section-content {
-        padding: 20px;
+        padding: 12px;
     }
 }
 
@@ -733,20 +732,20 @@ const $Method = {
 .info-block {
     background: $bg-color-container;
     border: 1px solid $border-color;
-    border-radius: 8px;
-    padding: 16px;
+    border-radius: 6px;
+    padding: 12px;
     height: 100%;
 
     .info-header {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding-bottom: 12px;
-        margin-bottom: 16px;
-        border-bottom: 2px solid $primary-color;
+        gap: 6px;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid $primary-color;
 
         .info-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: $text-primary;
         }
@@ -755,31 +754,31 @@ const $Method = {
     .info-list {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
 
         .info-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 12px;
+            padding: 8px 10px;
             background: white;
-            border-radius: 6px;
+            border-radius: 4px;
             border: 1px solid $border-color;
 
             .label {
-                font-size: 13px;
+                font-size: 12px;
                 color: $text-secondary;
                 font-weight: 500;
             }
 
             .value {
-                font-size: 13px;
+                font-size: 12px;
                 color: $text-primary;
                 font-weight: 600;
 
                 &.highlight {
                     color: $primary-color;
-                    font-size: 14px;
+                    font-size: 13px;
                 }
             }
         }
@@ -790,34 +789,34 @@ const $Method = {
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 10px;
 
     .stat-box {
         background: white;
-        border: 2px solid;
-        border-radius: 8px;
-        padding: 16px;
+        border: 1px solid;
+        border-radius: 6px;
+        padding: 12px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         transition: all 0.3s;
 
         &:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .stat-content {
             flex: 1;
 
             .stat-value {
-                font-size: 24px;
+                font-size: 20px;
                 font-weight: 700;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .stat-label {
-                font-size: 12px;
+                font-size: 11px;
                 color: $text-secondary;
             }
         }
@@ -854,33 +853,33 @@ const $Method = {
 // 配置网格
 .config-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
 
     .config-card {
         background: white;
-        border: 2px solid;
-        border-radius: 8px;
-        padding: 16px;
+        border: 1px solid;
+        border-radius: 6px;
+        padding: 12px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         position: relative;
         overflow: hidden;
         transition: all 0.3s;
 
         &:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .config-icon {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 6px;
             flex-shrink: 0;
         }
 
@@ -889,13 +888,13 @@ const $Method = {
             min-width: 0;
 
             .config-name {
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 600;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .config-status {
-                font-size: 12px;
+                font-size: 11px;
                 display: flex;
                 align-items: center;
                 gap: 4px;
@@ -909,8 +908,8 @@ const $Method = {
 
         .config-badge {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 6px;
+            right: 6px;
             opacity: 0.2;
         }
 
@@ -962,30 +961,30 @@ const $Method = {
 .addon-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 
     .addon-item {
         background: $bg-color-container;
         border: 1px solid $border-color;
-        border-left: 4px solid $primary-color;
-        border-radius: 6px;
-        padding: 16px;
+        border-left: 3px solid $primary-color;
+        border-radius: 4px;
+        padding: 12px;
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 12px;
         transition: all 0.3s;
 
         &:hover {
             border-left-color: $success-color;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
             transform: translateX(4px);
         }
 
         .addon-icon {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, $primary-color, #764ba2);
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1000,20 +999,20 @@ const $Method = {
             .addon-title {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                margin-bottom: 6px;
+                gap: 6px;
+                margin-bottom: 4px;
 
                 .addon-name {
-                    font-size: 15px;
+                    font-size: 13px;
                     font-weight: 600;
                     color: $text-primary;
                 }
             }
 
             .addon-desc {
-                font-size: 13px;
+                font-size: 12px;
                 color: $text-secondary;
-                line-height: 1.5;
+                line-height: 1.4;
             }
         }
 
@@ -1026,18 +1025,18 @@ const $Method = {
 // 技术栈网格
 .tech-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
 
     .tech-item {
         background: linear-gradient(135deg, $bg-color-container, white);
         border: 1px solid $border-color;
-        border-radius: 6px;
-        padding: 12px 16px;
+        border-radius: 4px;
+        padding: 8px 12px;
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
+        gap: 6px;
+        font-size: 12px;
         font-weight: 500;
         color: $text-primary;
         transition: all 0.3s;
@@ -1052,51 +1051,51 @@ const $Method = {
 }
 
 .content-row {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 // 系统资源卡片
 .resource-card {
     background: $bg-color-container;
     border: 1px solid $border-color;
-    border-radius: 8px;
-    padding: 16px;
+    border-radius: 6px;
+    padding: 12px;
     height: 100%;
 
     .resource-header {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-        font-size: 13px;
+        gap: 6px;
+        margin-bottom: 10px;
+        font-size: 12px;
         color: $text-secondary;
         font-weight: 500;
     }
 
     .resource-value {
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 700;
         color: $primary-color;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
     .resource-info {
-        font-size: 12px;
+        font-size: 11px;
         color: $text-placeholder;
-        margin-top: 8px;
+        margin-top: 6px;
     }
 
     .resource-network {
-        margin-top: 16px;
+        margin-top: 12px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
 
         .network-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
+            gap: 6px;
+            padding: 8px 10px;
             background: white;
             border-radius: 6px;
             border: 1px solid $border-color;
@@ -1110,22 +1109,22 @@ const $Method = {
 .database-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
 
     .database-item {
         background: white;
         border: 1px solid $border-color;
-        border-radius: 8px;
-        padding: 16px;
+        border-radius: 6px;
+        padding: 12px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
 
         .db-icon {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, rgba(0, 82, 217, 0.1), rgba(0, 82, 217, 0.05));
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1136,14 +1135,14 @@ const $Method = {
             flex: 1;
 
             .db-value {
-                font-size: 20px;
+                font-size: 18px;
                 font-weight: 700;
                 color: $text-primary;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .db-label {
-                font-size: 12px;
+                font-size: 11px;
                 color: $text-secondary;
             }
         }
@@ -1154,30 +1153,30 @@ const $Method = {
 .performance-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 
     .perf-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px;
+        padding: 10px;
         background: white;
         border: 1px solid $border-color;
-        border-radius: 6px;
+        border-radius: 4px;
 
         .perf-label {
-            font-size: 13px;
+            font-size: 12px;
             color: $text-secondary;
         }
 
         .perf-value {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: $text-primary;
 
             &.highlight {
                 color: $primary-color;
-                font-size: 16px;
+                font-size: 14px;
             }
 
             &.success {
@@ -1195,28 +1194,28 @@ const $Method = {
 .env-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 8px;
 
     .env-item {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px;
+        gap: 8px;
+        padding: 10px;
         background: white;
         border: 1px solid $border-color;
-        border-radius: 6px;
+        border-radius: 4px;
 
         .env-info {
             flex: 1;
 
             .env-label {
-                font-size: 12px;
+                font-size: 11px;
                 color: $text-secondary;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .env-value {
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 600;
                 color: $text-primary;
             }
@@ -1227,25 +1226,25 @@ const $Method = {
 // 快捷操作
 .quick-actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
 }
 
 // 操作日志
 .operation-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 
     .operation-item {
         display: flex;
         align-items: flex-start;
-        gap: 12px;
-        padding: 12px;
+        gap: 10px;
+        padding: 10px;
         background: white;
         border: 1px solid $border-color;
-        border-left: 3px solid $primary-color;
-        border-radius: 6px;
+        border-left: 2px solid $primary-color;
+        border-radius: 4px;
 
         .operation-icon {
             padding-top: 2px;
@@ -1257,32 +1256,32 @@ const $Method = {
             .operation-main {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                margin-bottom: 4px;
+                gap: 6px;
+                margin-bottom: 2px;
                 flex-wrap: wrap;
 
                 .operation-user {
                     font-weight: 600;
                     color: $primary-color;
-                    font-size: 13px;
+                    font-size: 12px;
                 }
 
                 .operation-action {
-                    font-size: 13px;
+                    font-size: 12px;
                     color: $text-primary;
                 }
 
                 .operation-target {
-                    font-size: 13px;
+                    font-size: 12px;
                     color: $text-secondary;
                     background: $bg-color-container;
-                    padding: 2px 8px;
-                    border-radius: 4px;
+                    padding: 2px 6px;
+                    border-radius: 3px;
                 }
             }
 
             .operation-time {
-                font-size: 12px;
+                font-size: 11px;
                 color: $text-placeholder;
             }
         }
@@ -1292,33 +1291,33 @@ const $Method = {
 // 通知和待办
 .notification-section,
 .todo-section {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 
     &:last-child {
         margin-bottom: 0;
     }
 
     .subsection-title {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         color: $text-primary;
-        margin: 0 0 12px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid $border-color;
+        margin: 0 0 8px 0;
+        padding-bottom: 6px;
+        border-bottom: 1px solid $border-color;
     }
 }
 
 .notification-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 
     .notification-item {
         display: flex;
         align-items: flex-start;
-        gap: 10px;
-        padding: 12px;
-        border-radius: 6px;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 4px;
         border: 1px solid;
 
         &.notif-info {
@@ -1343,19 +1342,19 @@ const $Method = {
             flex: 1;
 
             .notification-title {
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 600;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .notification-desc {
-                font-size: 12px;
+                font-size: 11px;
                 color: $text-secondary;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
             }
 
             .notification-time {
-                font-size: 11px;
+                font-size: 10px;
                 color: $text-placeholder;
             }
         }
@@ -1365,16 +1364,16 @@ const $Method = {
 .todo-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 
     .todo-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 12px;
+        padding: 10px;
         background: white;
         border: 1px solid $border-color;
-        border-radius: 6px;
+        border-radius: 4px;
         cursor: pointer;
         transition: all 0.3s;
 
@@ -1387,10 +1386,10 @@ const $Method = {
         .todo-info {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
 
             .todo-title {
-                font-size: 13px;
+                font-size: 12px;
                 color: $text-primary;
             }
         }
@@ -1400,14 +1399,14 @@ const $Method = {
 // 响应式布局
 @media (max-width: 768px) {
     .dashboard-container {
-        padding: 12px;
+        padding: 10px;
     }
 
     .welcome-section {
         flex-direction: column;
         align-items: flex-start;
-        gap: 16px;
-        padding: 20px;
+        gap: 12px;
+        padding: 16px;
     }
 
     .stats-grid {
