@@ -28,7 +28,7 @@ export class CacheManager {
             // 从数据库查询所有接口（与 apiAll.ts 保持一致）
             const apiList = await appContext.db.getAll({
                 table: 'addon_admin_api',
-                fields: ['id', 'name', 'path', 'method', 'description', 'addonName'],
+                fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
 

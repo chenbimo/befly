@@ -18,7 +18,7 @@ export default {
                 befly.logger.info('接口缓存未命中，从数据库查询');
                 allApis = await befly.db.getAll({
                     table: 'addon_admin_api',
-                    fields: ['id', 'name', 'path', 'method', 'description', 'addonName'],
+                    fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                     orderBy: ['addonName#ASC', 'path#ASC']
                 });
 
