@@ -3,6 +3,7 @@
  */
 
 import { Yes } from 'befly';
+import type { ApiRoute } from 'befly';
 
 export default {
     name: '获取服务状态',
@@ -14,7 +15,7 @@ export default {
         // 数据库状态
         try {
             const startTime = Date.now();
-            await befly.db.query({ sql: 'SELECT 1', type: 'one' });
+            await befly.db.query('SELECT 1');
             const responseTime = Date.now() - startTime;
             services.push({
                 name: '数据库',
@@ -22,6 +23,7 @@ export default {
                 responseTime: `${responseTime}ms`
             });
         } catch (error) {
+            befly.logger.error('数据库状态检测失败:', error);
             services.push({
                 name: '数据库',
                 status: 'stopped',
@@ -41,6 +43,7 @@ export default {
                     responseTime: `${responseTime}ms`
                 });
             } catch (error) {
+                befly.logger.error('Redis状态检测失败:', error);
                 services.push({
                     name: 'Redis',
                     status: 'stopped',
@@ -48,6 +51,7 @@ export default {
                 });
             }
         } else {
+            befly.logger.warn('Redis实例不存在');
             services.push({
                 name: 'Redis',
                 status: 'stopped',
@@ -78,4 +82,4 @@ export default {
 
         return Yes('获取成功', { services });
     }
-};
+} as ApiRoute;
