@@ -161,7 +161,7 @@ const $Method = {
         try {
             const res = await $Http('/addon/admin/roleApiSave', {
                 roleId: $Prop.rowData.id,
-                apiIds: JSON.stringify($Data.checkedApiIds)
+                apiIds: $Data.checkedApiIds
             });
 
             if (res.code === 0) {
