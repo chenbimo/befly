@@ -29,7 +29,7 @@ const RESERVED_FIELDS = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'
 /**
  * 允许的字段类型
  */
-const FIELD_TYPES = ['string', 'number', 'text', 'array'] as const;
+const FIELD_TYPES = ['string', 'number', 'text', 'array_string', 'array_text'] as const;
 
 /**
  * 小驼峰命名正则
@@ -152,7 +152,7 @@ export default async function (): Promise<boolean> {
                             fileValid = false;
                         }
 
-                        // 第2个值：字段类型必须为string,number,text,array之一
+                        // 第2个值：字段类型必须为string,number,text,array_string,array_text之一
                         if (!FIELD_TYPES.includes(fieldType as any)) {
                             Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
                             fileValid = false;
