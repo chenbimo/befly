@@ -4,7 +4,6 @@
         <ServiceStatus />
         <AddonList />
         <SystemResources />
-        <DatabaseStats />
         <PerformanceMetrics />
         <EnvironmentInfo />
     </div>
@@ -15,7 +14,6 @@ import SystemOverview from './components/SystemOverview.vue';
 import ServiceStatus from './components/ServiceStatus.vue';
 import AddonList from './components/AddonList.vue';
 import SystemResources from './components/SystemResources.vue';
-import DatabaseStats from './components/DatabaseStats.vue';
 import PerformanceMetrics from './components/PerformanceMetrics.vue';
 import EnvironmentInfo from './components/EnvironmentInfo.vue';
 </script>
