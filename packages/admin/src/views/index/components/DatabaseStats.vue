@@ -74,6 +74,8 @@ const databaseStats = $ref({
         transition: all 0.3s ease;
 
         &:hover {
+            background: linear-gradient(135deg, rgba($primary-color, 0.05) 0%, rgba($primary-color, 0.02) 100%);
+            border-color: $primary-color;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba($primary-color, 0.1);
         }

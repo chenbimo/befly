@@ -19,10 +19,6 @@ const handleClearCache = () => {
 
 <style scoped lang="scss">
 .section-block {
-    background: $bg-color-container;
-    border-radius: $border-radius;
-    padding: $spacing-md;
-
     .section-content {
         display: flex;
         justify-content: center;

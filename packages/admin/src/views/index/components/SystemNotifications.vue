@@ -3,7 +3,6 @@
         <div class="section-header">
             <Icon name="Bell" :size="20" />
             <h2>系统通知</h2>
-            <t-tag theme="primary" variant="outline" size="small">{{ notifications.length }}</t-tag>
         </div>
         <div class="section-content">
             <div class="notification-compact-list">
@@ -69,14 +68,14 @@ const formatTime = (timestamp) => {
         align-items: center;
         gap: $spacing-sm;
         padding: $spacing-sm $spacing-md;
-        background: $bg-color-page;
+        background: rgba($primary-color, 0.02);
         border-radius: $border-radius-small;
         border: 1px solid $border-color;
         transition: all 0.2s ease;
 
         &:hover {
-            background: rgba($primary-color, 0.02);
-            border-color: rgba($primary-color, 0.2);
+            background: rgba($primary-color, 0.05);
+            border-color: $primary-color;
         }
 
         .notification-icon {

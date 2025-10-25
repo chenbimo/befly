@@ -78,9 +78,15 @@ const performanceMetrics = $ref({
         align-items: center;
         gap: $spacing-sm;
         padding: $spacing-sm $spacing-md;
-        background: $bg-color-page;
+        background: rgba($primary-color, 0.02);
         border-radius: $border-radius;
         border: 1px solid $border-color;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: rgba($primary-color, 0.05);
+            border-color: $primary-color;
+        }
 
         .perf-icon {
             display: flex;

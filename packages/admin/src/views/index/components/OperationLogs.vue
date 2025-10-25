@@ -3,7 +3,6 @@
         <div class="section-header">
             <Icon name="List" :size="20" />
             <h2>操作日志</h2>
-            <t-tag theme="primary" variant="outline" size="small">最近{{ operationLogs.length }}条</t-tag>
         </div>
         <div class="section-content">
             <div class="operation-table">

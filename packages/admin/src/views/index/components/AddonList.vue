@@ -3,7 +3,6 @@
         <div class="section-header">
             <Icon name="Package" :size="20" />
             <h2>已安装插件</h2>
-            <t-tag theme="primary" variant="outline" size="small">{{ addonList.length }}</t-tag>
         </div>
         <div class="section-content">
             <div class="addon-list">

@@ -118,10 +118,9 @@ const formatDateTime = (timestamp) => {
 
 <style scoped lang="scss">
 .info-block {
-    background: $bg-color-container;
-    border: 1px solid $border-color;
-    border-radius: 6px;
-    padding: 12px;
+    background: transparent;
+    border: none;
+    padding: 0;
     height: 100%;
 
     .info-header {
@@ -130,7 +129,7 @@ const formatDateTime = (timestamp) => {
         gap: 6px;
         padding-bottom: 8px;
         margin-bottom: 12px;
-        border-bottom: 1px solid $primary-color;
+        border-bottom: 2px solid $primary-color;
 
         .info-title {
             font-size: 14px;
@@ -149,9 +148,15 @@ const formatDateTime = (timestamp) => {
             justify-content: space-between;
             align-items: center;
             padding: 10px 12px;
-            background: $bg-color-page;
+            background: rgba($primary-color, 0.02);
             border-radius: $border-radius-small;
             border: 1px solid $border-color;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: rgba($primary-color, 0.05);
+                border-color: $primary-color;
+            }
 
             .label {
                 font-size: 14px;
@@ -178,8 +183,8 @@ const formatDateTime = (timestamp) => {
     gap: 10px;
 
     .stat-box {
-        background: white;
-        border: 1px solid;
+        background: rgba($primary-color, 0.02);
+        border: 1px solid $border-color;
         border-radius: 6px;
         padding: 12px;
         display: flex;
@@ -188,6 +193,8 @@ const formatDateTime = (timestamp) => {
         transition: all 0.3s;
 
         &:hover {
+            background: rgba($primary-color, 0.05);
+            border-color: $primary-color;
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }

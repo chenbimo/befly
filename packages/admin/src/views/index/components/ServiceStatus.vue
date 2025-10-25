@@ -76,8 +76,8 @@ const getStatusIcon = (status) => {
     gap: 10px;
 
     .config-card {
-        background: white;
-        border: 1px solid;
+        background: rgba($primary-color, 0.02);
+        border: 1px solid $border-color;
         border-radius: 6px;
         padding: 12px;
         display: flex;
@@ -88,6 +88,8 @@ const getStatusIcon = (status) => {
         transition: all 0.3s;
 
         &:hover {
+            background: rgba($primary-color, 0.05);
+            border-color: $primary-color;
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
