@@ -1,368 +1,1399 @@
 <template>
     <div class="dashboard-container">
-        <!-- 统计卡片区域 -->
-        <t-row :gutter="16" class="stats-row">
-            <t-col :xs="12" :sm="6" :md="6" :lg="6">
-                <t-card hover-shadow class="stat-card stat-card-primary">
-                    <div class="stat-card-content">
-                        <div class="stat-icon">
-                            <user-icon size="32px" />
+        <!-- 顶部欢迎区 -->
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <h1 class="welcome-title">欢迎使用 Befly Admin</h1>
+                <p class="welcome-desc">强大、灵活、易用的后台管理系统</p>
+            </div>
+            <div class="welcome-status">
+                <div class="status-badge status-online">
+                    <Icon name="Activity" :size="16" />
+                    <span>系统运行正常</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第一行：系统信息和权限统计 -->
+        <div class="section-block">
+            <div class="section-header">
+                <Icon name="Info" :size="20" />
+                <h2>系统概览</h2>
+            </div>
+            <div class="section-content">
+                <t-row :gutter="16">
+                    <t-col :xs="24" :sm="12" :md="12" :lg="12">
+                        <div class="info-block">
+                            <div class="info-header">
+                                <Icon name="Server" :size="18" />
+                                <span class="info-title">系统信息</span>
+                            </div>
+                            <div class="info-list">
+                                <div class="info-item">
+                                    <span class="label">系统名称</span>
+                                    <span class="value">{{ $Data.systemInfo.systemName }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">当前版本</span>
+                                    <span class="value">
+                                        <t-tag theme="primary" variant="outline" size="small">{{ $Data.systemInfo.version }}</t-tag>
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">运行环境</span>
+                                    <span class="value">
+                                        <t-tag theme="success" variant="outline" size="small">{{ $Data.systemInfo.environment }}</t-tag>
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">运行时长</span>
+                                    <span class="value highlight">{{ $Method.formatUptime($Data.systemInfo.uptime) }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">启动时间</span>
+                                    <span class="value">{{ $Method.formatDateTime($Data.systemInfo.startTime) }}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-info">
-                            <div class="stat-title">总用户数</div>
-                            <div class="stat-value">{{ $Data.stats.totalUsers }}</div>
-                            <div class="stat-trend trend-up">
-                                <chart-line-icon size="14px" />
-                                较昨日 +{{ $Data.stats.userGrowth }}%
+                    </t-col>
+                    <t-col :xs="24" :sm="12" :md="12" :lg="12">
+                        <div class="info-block">
+                            <div class="info-header">
+                                <Icon name="Shield" :size="18" />
+                                <span class="info-title">权限统计</span>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-box stat-primary">
+                                    <Icon name="Menu" :size="24" />
+                                    <div class="stat-content">
+                                        <div class="stat-value">{{ $Data.permissionStats.menuCount }}</div>
+                                        <div class="stat-label">菜单总数</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box stat-success">
+                                    <Icon name="Webhook" :size="24" />
+                                    <div class="stat-content">
+                                        <div class="stat-value">{{ $Data.permissionStats.apiCount }}</div>
+                                        <div class="stat-label">接口总数</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box stat-warning">
+                                    <Icon name="Users" :size="24" />
+                                    <div class="stat-content">
+                                        <div class="stat-value">{{ $Data.permissionStats.roleCount }}</div>
+                                        <div class="stat-label">角色总数</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t-col>
+                </t-row>
+            </div>
+        </div>
+
+        <!-- 第二行：配置状态 -->
+        <div class="section-block">
+            <div class="section-header">
+                <Icon name="Settings" :size="20" />
+                <h2>服务状态</h2>
+            </div>
+            <div class="section-content">
+                <div class="config-grid">
+                    <div v-for="(item, key) in $Data.configStatus" :key="key" class="config-card" :class="`config-${item.status}`">
+                        <div class="config-icon">
+                            <Icon :name="$Method.getConfigIcon(key)" :size="28" />
+                        </div>
+                        <div class="config-info">
+                            <div class="config-name">{{ $Method.getConfigLabel(key) }}</div>
+                            <div class="config-status">
+                                <Icon :name="$Method.getStatusIcon(item.status)" :size="14" />
+                                <span>{{ item.message }}</span>
+                                <span v-if="item.latency" class="latency">{{ item.latency }}ms</span>
+                            </div>
+                        </div>
+                        <div class="config-badge">
+                            <Icon :name="$Method.getStatusIcon(item.status)" :size="20" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 已安装插件 -->
+        <div class="section-block">
+            <div class="section-header">
+                <Icon name="Package" :size="20" />
+                <h2>已安装插件</h2>
+                <t-tag theme="primary" variant="outline" size="small">{{ $Data.addonList.length }}</t-tag>
+            </div>
+            <div class="section-content">
+                <div class="addon-list">
+                    <div v-for="addon in $Data.addonList" :key="addon.name" class="addon-item">
+                        <div class="addon-icon">
+                            <Icon name="Box" :size="24" />
+                        </div>
+                        <div class="addon-info">
+                            <div class="addon-title">
+                                <span class="addon-name">{{ addon.title }}</span>
+                                <t-tag theme="success" variant="outline" size="small">{{ addon.version }}</t-tag>
+                            </div>
+                            <div class="addon-desc">{{ addon.description }}</div>
+                        </div>
+                        <div class="addon-status">
+                            <t-tag v-if="addon.enabled" theme="success" size="small">已启用</t-tag>
+                            <t-tag v-else theme="default" size="small">已禁用</t-tag>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统资源监控 -->
+        <div class="section-block">
+            <div class="section-header">
+                <Icon name="Activity" :size="20" />
+                <h2>系统资源</h2>
+            </div>
+            <div class="section-content">
+                <t-row :gutter="16">
+                    <t-col :xs="24" :sm="12" :md="8" :lg="8">
+                        <div class="resource-card">
+                            <div class="resource-header">
+                                <Icon name="Cpu" :size="20" />
+                                <span>CPU使用率</span>
+                            </div>
+                            <div class="resource-value">{{ $Data.systemResources.cpu.usage }}%</div>
+                            <t-progress :percentage="$Data.systemResources.cpu.usage" :theme="$Method.getProgressColor($Data.systemResources.cpu.usage)" />
+                            <div class="resource-info">{{ $Data.systemResources.cpu.cores }} 核心</div>
+                        </div>
+                    </t-col>
+                    <t-col :xs="24" :sm="12" :md="8" :lg="8">
+                        <div class="resource-card">
+                            <div class="resource-header">
+                                <Icon name="HardDrive" :size="20" />
+                                <span>内存使用率</span>
+                            </div>
+                            <div class="resource-value">{{ $Data.systemResources.memory.percentage }}%</div>
+                            <t-progress :percentage="$Data.systemResources.memory.percentage" :theme="$Method.getProgressColor($Data.systemResources.memory.percentage)" />
+                            <div class="resource-info">{{ $Data.systemResources.memory.used }}GB / {{ $Data.systemResources.memory.total }}GB</div>
+                        </div>
+                    </t-col>
+                    <t-col :xs="24" :sm="12" :md="8" :lg="8">
+                        <div class="resource-card">
+                            <div class="resource-header">
+                                <Icon name="Disc" :size="20" />
+                                <span>磁盘使用率</span>
+                            </div>
+                            <div class="resource-value">{{ $Data.systemResources.disk.percentage }}%</div>
+                            <t-progress :percentage="$Data.systemResources.disk.percentage" :theme="$Method.getProgressColor($Data.systemResources.disk.percentage)" />
+                            <div class="resource-info">{{ $Data.systemResources.disk.used }}GB / {{ $Data.systemResources.disk.total }}GB</div>
+                        </div>
+                    </t-col>
+                </t-row>
+            </div>
+        </div>
+
+        <!-- 数据库统计和性能指标 -->
+        <t-row :gutter="16" class="content-row">
+            <t-col :xs="24" :sm="24" :md="12" :lg="12">
+                <div class="section-block">
+                    <div class="section-header">
+                        <Icon name="Database" :size="20" />
+                        <h2>数据库统计</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="database-grid">
+                            <div class="database-item">
+                                <div class="db-icon">
+                                    <Icon name="Table" :size="24" />
+                                </div>
+                                <div class="db-info">
+                                    <div class="db-value">{{ $Data.databaseStats.tableCount }}</div>
+                                    <div class="db-label">数据表</div>
+                                </div>
+                            </div>
+                            <div class="database-item">
+                                <div class="db-icon">
+                                    <Icon name="FileText" :size="24" />
+                                </div>
+                                <div class="db-info">
+                                    <div class="db-value">{{ $Data.databaseStats.totalRows }}</div>
+                                    <div class="db-label">数据行数</div>
+                                </div>
+                            </div>
+                            <div class="database-item">
+                                <div class="db-icon">
+                                    <Icon name="HardDrive" :size="24" />
+                                </div>
+                                <div class="db-info">
+                                    <div class="db-value">{{ $Data.databaseStats.databaseSize }}</div>
+                                    <div class="db-label">数据库大小</div>
+                                </div>
+                            </div>
+                            <div class="database-item">
+                                <div class="db-icon">
+                                    <Icon name="Link" :size="24" />
+                                </div>
+                                <div class="db-info">
+                                    <div class="db-value">{{ $Data.databaseStats.connections.current }}/{{ $Data.databaseStats.connections.max }}</div>
+                                    <div class="db-label">连接数</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </t-card>
+                </div>
             </t-col>
 
-            <t-col :xs="12" :sm="6" :md="6" :lg="6">
-                <t-card hover-shadow class="stat-card stat-card-success">
-                    <div class="stat-card-content">
-                        <div class="stat-icon">
-                            <chart-line-icon size="32px" />
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-title">今日访问</div>
-                            <div class="stat-value">{{ $Data.stats.todayVisits }}</div>
-                            <div class="stat-trend trend-up">
-                                <chart-line-icon size="14px" />
-                                较昨日 +{{ $Data.stats.visitGrowth }}%
+            <t-col :xs="24" :sm="24" :md="12" :lg="12">
+                <div class="section-block">
+                    <div class="section-header">
+                        <Icon name="Zap" :size="20" />
+                        <h2>性能指标</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="performance-list">
+                            <div class="perf-item">
+                                <span class="perf-label">平均响应时间</span>
+                                <span class="perf-value">{{ $Data.performance.avgResponseTime }}ms</span>
+                            </div>
+                            <div class="perf-item">
+                                <span class="perf-label">最慢接口</span>
+                                <span class="perf-value">{{ $Data.performance.slowestApi.name }} ({{ $Data.performance.slowestApi.time }}ms)</span>
+                            </div>
+                            <div class="perf-item">
+                                <span class="perf-label">今日请求总数</span>
+                                <span class="perf-value highlight">{{ $Data.performance.totalRequests }}</span>
+                            </div>
+                            <div class="perf-item">
+                                <span class="perf-label">成功率</span>
+                                <span class="perf-value success">{{ $Data.performance.successRate }}%</span>
+                            </div>
+                            <div class="perf-item">
+                                <span class="perf-label">缓存命中率</span>
+                                <span class="perf-value success">{{ $Data.performance.cacheHitRate }}%</span>
+                            </div>
+                            <div class="perf-item">
+                                <span class="perf-label">错误率</span>
+                                <span class="perf-value" :class="$Data.performance.errorRate > 1 ? 'error' : 'success'">{{ $Data.performance.errorRate }}%</span>
                             </div>
                         </div>
                     </div>
-                </t-card>
-            </t-col>
-
-            <t-col :xs="12" :sm="6" :md="6" :lg="6">
-                <t-card hover-shadow class="stat-card stat-card-warning">
-                    <div class="stat-card-content">
-                        <div class="stat-icon">
-                            <shop-icon size="32px" />
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-title">订单数量</div>
-                            <div class="stat-value">{{ $Data.stats.totalOrders }}</div>
-                            <div class="stat-trend trend-down">
-                                <chart-line-icon size="14px" />
-                                较昨日 {{ $Data.stats.orderGrowth }}%
-                            </div>
-                        </div>
-                    </div>
-                </t-card>
-            </t-col>
-
-            <t-col :xs="12" :sm="6" :md="6" :lg="6">
-                <t-card hover-shadow class="stat-card stat-card-danger">
-                    <div class="stat-card-content">
-                        <div class="stat-icon">
-                            <money-icon size="32px" />
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-title">收入金额</div>
-                            <div class="stat-value">¥{{ $Data.stats.totalRevenue }}</div>
-                            <div class="stat-trend trend-up">
-                                <chart-line-icon size="14px" />
-                                较昨日 +{{ $Data.stats.revenueGrowth }}%
-                            </div>
-                        </div>
-                    </div>
-                </t-card>
+                </div>
             </t-col>
         </t-row>
 
-        <!-- 图表和数据展示区域 -->
-        <t-row :gutter="16" class="chart-row">
-            <t-col :xs="24" :sm="24" :md="16" :lg="16">
-                <t-card title="访问趋势" hover-shadow class="chart-card">
-                    <template #actions>
-                        <t-radio-group v-model="$Data.chartPeriod" variant="default-filled" size="small">
-                            <t-radio-button value="week">近一周</t-radio-button>
-                            <t-radio-button value="month">近一月</t-radio-button>
-                            <t-radio-button value="year">近一年</t-radio-button>
-                        </t-radio-group>
-                    </template>
-                    <div class="chart-placeholder">
-                        <chart-line-icon size="64px" />
-                        <p>访问趋势图表（可接入 ECharts 或其他图表库）</p>
+        <!-- 运行环境 -->
+        <div class="section-block">
+            <div class="section-header">
+                <Icon name="Monitor" :size="20" />
+                <h2>运行环境</h2>
+            </div>
+            <div class="section-content">
+                <div class="env-grid">
+                    <div class="env-item">
+                        <Icon name="Box" :size="18" />
+                        <div class="env-info">
+                            <div class="env-label">Node.js</div>
+                            <div class="env-value">{{ $Data.environmentInfo.nodeVersion }}</div>
+                        </div>
                     </div>
-                </t-card>
-            </t-col>
-
-            <t-col :xs="24" :sm="24" :md="8" :lg="8">
-                <t-card title="快捷操作" hover-shadow class="quick-actions-card">
-                    <t-space direction="vertical" style="width: 100%">
-                        <t-button block theme="primary" @click="$Method.handleQuickAction('addUser')">
-                            <template #icon>
-                                <user-add-icon />
-                            </template>
-                            添加用户
-                        </t-button>
-                        <t-button block theme="success" @click="$Method.handleQuickAction('addContent')">
-                            <template #icon>
-                                <edit-icon />
-                            </template>
-                            发布内容
-                        </t-button>
-                        <t-button block theme="warning" @click="$Method.handleQuickAction('viewReports')">
-                            <template #icon>
-                                <chart-bar-icon />
-                            </template>
-                            查看报表
-                        </t-button>
-                        <t-button block theme="default" @click="$Method.handleQuickAction('settings')">
-                            <template #icon>
-                                <setting-icon />
-                            </template>
-                            系统设置
-                        </t-button>
-                    </t-space>
-                </t-card>
-            </t-col>
-        </t-row>
-
-        <!-- 最新动态和系统信息 -->
-        <t-row :gutter="16" class="info-row">
-            <t-col :xs="24" :sm="24" :md="12" :lg="12">
-                <t-card title="最新动态" hover-shadow class="activity-card">
-                    <t-list :split="true">
-                        <t-list-item v-for="(item, index) in $Data.activities" :key="index">
-                            <t-list-item-meta :image="item.avatar">
-                                <template #title>{{ item.title }}</template>
-                                <template #description>{{ item.time }}</template>
-                            </t-list-item-meta>
-                        </t-list-item>
-                    </t-list>
-                </t-card>
-            </t-col>
-
-            <t-col :xs="24" :sm="24" :md="12" :lg="12">
-                <t-card title="系统信息" hover-shadow class="system-info-card">
-                    <t-descriptions bordered>
-                        <t-descriptions-item label="系统名称">Befly Admin</t-descriptions-item>
-                        <t-descriptions-item label="版本号">v1.0.0</t-descriptions-item>
-                        <t-descriptions-item label="框架">Vue 3 + TypeScript</t-descriptions-item>
-                        <t-descriptions-item label="UI 组件">TDesign Vue Next</t-descriptions-item>
-                        <t-descriptions-item label="构建工具">Vite 5</t-descriptions-item>
-                        <t-descriptions-item label="后端框架">Befly API</t-descriptions-item>
-                        <t-descriptions-item label="运行时">Bun</t-descriptions-item>
-                        <t-descriptions-item label="数据库">MySQL 8</t-descriptions-item>
-                    </t-descriptions>
-
-                    <div class="tech-stack">
-                        <t-space>
-                            <t-tag theme="primary" variant="outline">Vue 3</t-tag>
-                            <t-tag theme="success" variant="outline">TypeScript</t-tag>
-                            <t-tag theme="warning" variant="outline">TDesign</t-tag>
-                            <t-tag theme="danger" variant="outline">Vite</t-tag>
-                            <t-tag theme="primary" variant="outline">Befly</t-tag>
-                            <t-tag theme="success" variant="outline">Bun</t-tag>
-                        </t-space>
+                    <div class="env-item">
+                        <Icon name="Zap" :size="18" />
+                        <div class="env-info">
+                            <div class="env-label">Bun</div>
+                            <div class="env-value">{{ $Data.environmentInfo.bunVersion }}</div>
+                        </div>
                     </div>
-                </t-card>
+                    <div class="env-item">
+                        <Icon name="Database" :size="18" />
+                        <div class="env-info">
+                            <div class="env-label">MySQL</div>
+                            <div class="env-value">{{ $Data.environmentInfo.mysqlVersion }}</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <Icon name="Layers" :size="18" />
+                        <div class="env-info">
+                            <div class="env-label">Redis</div>
+                            <div class="env-value">{{ $Data.environmentInfo.redisVersion }}</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <Icon name="Server" :size="18" />
+                        <div class="env-info">
+                            <div class="env-label">操作系统</div>
+                            <div class="env-value">{{ $Data.environmentInfo.os }}</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <Icon name="Laptop" :size="18" />
+                        <div class="env-info">
+                            <div class="env-label">平台</div>
+                            <div class="env-value">{{ $Data.environmentInfo.platform }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷操作 -->
+        <div class="section-block">
+            <div class="section-header">
+                <Icon name="Zap" :size="20" />
+                <h2>快捷操作</h2>
+            </div>
+            <div class="section-content">
+                <div class="quick-actions-grid">
+                    <t-button v-for="action in $Data.quickActions" :key="action.action" :theme="action.theme" @click="$Method.handleQuickAction(action.action)">
+                        <template #icon>
+                            <Icon :name="action.icon" :size="16" />
+                        </template>
+                        {{ action.label }}
+                    </t-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作日志和通知待办 -->
+        <t-row :gutter="16" class="content-row">
+            <t-col :xs="24" :sm="24" :md="14" :lg="14">
+                <div class="section-block">
+                    <div class="section-header">
+                        <Icon name="FileText" :size="20" />
+                        <h2>最近操作</h2>
+                        <t-tag theme="primary" variant="outline" size="small">最近{{ $Data.operationLogs.length }}条</t-tag>
+                    </div>
+                    <div class="section-content">
+                        <div class="operation-list">
+                            <div v-for="(log, index) in $Data.operationLogs" :key="index" class="operation-item">
+                                <div class="operation-icon">
+                                    <Icon :name="$Method.getLogStatusIcon(log.status)" :size="16" :color="$Method.getLogStatusColor(log.status)" />
+                                </div>
+                                <div class="operation-content">
+                                    <div class="operation-main">
+                                        <span class="operation-user">{{ log.user }}</span>
+                                        <span class="operation-action">{{ log.action }}</span>
+                                        <span class="operation-target">{{ log.target }}</span>
+                                    </div>
+                                    <div class="operation-time">{{ log.time }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t-col>
+
+            <t-col :xs="24" :sm="24" :md="10" :lg="10">
+                <div class="section-block">
+                    <div class="section-header">
+                        <Icon name="Bell" :size="20" />
+                        <h2>通知与待办</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="notification-section">
+                            <h3 class="subsection-title">系统通知</h3>
+                            <div class="notification-list">
+                                <div v-for="(notif, index) in $Data.notifications" :key="index" class="notification-item" :class="`notif-${notif.type}`">
+                                    <Icon :name="$Method.getNotificationIcon(notif.type)" :size="16" />
+                                    <div class="notification-content">
+                                        <div class="notification-title">{{ notif.title }}</div>
+                                        <div class="notification-desc">{{ notif.content }}</div>
+                                        <div class="notification-time">{{ notif.time }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="todo-section">
+                            <h3 class="subsection-title">待办事项</h3>
+                            <div class="todo-list">
+                                <div v-for="todo in $Data.todoItems" :key="todo.title" class="todo-item">
+                                    <div class="todo-info">
+                                        <span class="todo-title">{{ todo.title }}</span>
+                                        <t-tag theme="warning" size="small">{{ todo.count }}</t-tag>
+                                    </div>
+                                    <Icon name="ChevronRight" :size="16" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </t-col>
         </t-row>
     </div>
 </template>
 
 <script setup>
-// 响应式数据
+// 响应式数据（使用假数据）
 const $Data = $ref({
-    // 统计数据
-    stats: {
-        totalUsers: 1234,
-        userGrowth: 12.5,
-        todayVisits: 567,
-        visitGrowth: 8.3,
-        totalOrders: 89,
-        orderGrowth: -3.2,
-        totalRevenue: '12,345',
-        revenueGrowth: 15.8
+    loading: false,
+    systemInfo: {
+        systemName: 'Befly Admin',
+        version: 'v1.0.0',
+        environment: 'Production',
+        startTime: Date.now() - 56520000, // 15小时32分钟前
+        uptime: 56520000
     },
-    // 图表周期
-    chartPeriod: 'week',
-    // 最新动态
-    activities: [
-        {
-            avatar: 'https://tdesign.gtimg.com/site/avatar.jpg',
-            title: '用户 张三 注册了账号',
-            time: '5分钟前'
-        },
-        {
-            avatar: 'https://tdesign.gtimg.com/site/avatar.jpg',
-            title: '管理员 李四 发布了新内容',
-            time: '1小时前'
-        },
-        {
-            avatar: 'https://tdesign.gtimg.com/site/avatar.jpg',
-            title: '系统完成了数据备份',
-            time: '2小时前'
-        },
-        {
-            avatar: 'https://tdesign.gtimg.com/site/avatar.jpg',
-            title: '新订单 #12345 已创建',
-            time: '3小时前'
-        }
+    permissionStats: {
+        menuCount: 23,
+        apiCount: 156,
+        roleCount: 5
+    },
+    configStatus: {
+        database: { status: 'ok', latency: 23, message: '正常' },
+        redis: { status: 'ok', latency: 5, message: '正常' },
+        fileSystem: { status: 'ok', message: '正常' },
+        email: { status: 'warning', message: '未配置' },
+        oss: { status: 'warning', message: '未配置' }
+    },
+    addonList: [
+        { name: 'admin', title: '管理后台', version: '1.0.0', description: '系统核心管理功能模块', enabled: true },
+        { name: 'demo', title: '示例插件', version: '1.0.0', description: '演示插件开发示例', enabled: true },
+        { name: 'befly', title: '核心功能', version: '1.0.0', description: 'Befly 框架核心功能', enabled: true }
+    ],
+    // 系统资源监控
+    systemResources: {
+        cpu: { usage: 45, cores: 8 },
+        memory: { used: 6.5, total: 16, percentage: 40.6 },
+        disk: { used: 256, total: 512, percentage: 50 },
+        network: { upload: 1.2, download: 3.5 }
+    },
+    // 数据库统计
+    databaseStats: {
+        tableCount: 28,
+        totalRows: 15678,
+        databaseSize: '128 MB',
+        connections: { current: 5, max: 100 }
+    },
+    // 操作日志
+    operationLogs: [
+        { user: '管理员', action: '创建角色', target: '编辑人员', time: '2分钟前', status: 'success' },
+        { user: '张三', action: '修改菜单', target: '用户管理', time: '15分钟前', status: 'success' },
+        { user: '李四', action: '删除接口', target: 'userDelete', time: '1小时前', status: 'warning' },
+        { user: '管理员', action: '同步数据库', target: '全部表', time: '2小时前', status: 'success' },
+        { user: '王五', action: '登录系统', target: '-', time: '3小时前', status: 'success' }
+    ],
+    // 待办/通知
+    notifications: [
+        { type: 'warning', title: '系统更新提醒', content: 'v1.1.0 版本已发布，建议更新', time: '1小时前' },
+        { type: 'info', title: '数据备份完成', content: '今日凌晨2点自动备份已完成', time: '6小时前' },
+        { type: 'error', title: 'SSL证书即将过期', content: '证书将于30天后过期，请及时更新', time: '1天前' }
+    ],
+    todoItems: [
+        { title: '待审核用户', count: 3, link: '/user' },
+        { title: '待处理工单', count: 7, link: '/ticket' },
+        { title: '待发布文章', count: 12, link: '/article' }
+    ],
+    // 性能指标
+    performance: {
+        avgResponseTime: 125,
+        slowestApi: { name: '/addon/admin/menuList', time: 450 },
+        totalRequests: 15678,
+        successRate: 99.2,
+        cacheHitRate: 85.6,
+        errorRate: 0.8
+    },
+    // 环境信息
+    environmentInfo: {
+        nodeVersion: 'v20.11.0',
+        bunVersion: '1.0.25',
+        mysqlVersion: '8.0.35',
+        redisVersion: '7.2.3',
+        os: 'Linux x64',
+        platform: 'Ubuntu 22.04 LTS'
+    },
+    // 快捷操作
+    quickActions: [
+        { icon: 'Plus', label: '添加菜单', action: 'addMenu', theme: 'primary' },
+        { icon: 'UserPlus', label: '添加角色', action: 'addRole', theme: 'success' },
+        { icon: 'Database', label: '同步数据库', action: 'syncDb', theme: 'warning' },
+        { icon: 'Trash2', label: '清除缓存', action: 'clearCache', theme: 'danger' },
+        { icon: 'Download', label: '导出日志', action: 'exportLogs', theme: 'default' },
+        { icon: 'Upload', label: '数据备份', action: 'backup', theme: 'primary' }
     ]
 });
 
 // 方法集合
 const $Method = {
+    // 格式化运行时长
+    formatUptime(ms) {
+        if (!ms) return '-';
+        const seconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+            return `${days}天${hours % 24}小时`;
+        } else if (hours > 0) {
+            return `${hours}小时${minutes % 60}分钟`;
+        } else if (minutes > 0) {
+            return `${minutes}分钟`;
+        } else {
+            return `${seconds}秒`;
+        }
+    },
+
+    // 获取状态图标
+    getStatusIcon(status) {
+        const icons = {
+            ok: 'CheckCircle',
+            warning: 'AlertCircle',
+            error: 'XCircle'
+        };
+        return icons[status] || 'Circle';
+    },
+
+    // 获取状态颜色
+    getStatusColor(status) {
+        const colors = {
+            ok: '#52c41a',
+            warning: '#faad14',
+            error: '#ff4d4f'
+        };
+        return colors[status] || '#d9d9d9';
+    },
+
+    // 获取状态主题
+    getStatusTheme(status) {
+        const themes = {
+            ok: 'success',
+            warning: 'warning',
+            error: 'danger'
+        };
+        return themes[status] || 'default';
+    },
+
+    // 获取配置项标签
+    getConfigLabel(key) {
+        const labels = {
+            database: '数据库',
+            redis: 'Redis',
+            fileSystem: '文件系统',
+            email: '邮件服务',
+            oss: 'OSS存储'
+        };
+        return labels[key] || key;
+    },
+
+    // 获取配置项图标
+    getConfigIcon(key) {
+        const icons = {
+            database: 'Database',
+            redis: 'Zap',
+            fileSystem: 'HardDrive',
+            email: 'Mail',
+            oss: 'Cloud'
+        };
+        return icons[key] || 'Circle';
+    },
+
+    // 格式化日期时间
+    formatDateTime(timestamp) {
+        if (!timestamp) return '-';
+        const date = new Date(timestamp);
+        return date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+
     // 处理快捷操作
     handleQuickAction(action) {
         MessagePlugin.info(`执行操作: ${action}`);
-        // 这里可以根据不同的 action 跳转到不同的页面或执行不同的操作
+        // 实际项目中根据 action 执行相应操作
+    },
+
+    // 获取进度条颜色
+    getProgressColor(percentage) {
+        if (percentage < 50) return 'success';
+        if (percentage < 80) return 'warning';
+        return 'danger';
+    },
+
+    // 获取操作状态图标
+    getLogStatusIcon(status) {
+        const icons = {
+            success: 'CheckCircle',
+            warning: 'AlertCircle',
+            error: 'XCircle'
+        };
+        return icons[status] || 'Circle';
+    },
+
+    // 获取操作状态颜色
+    getLogStatusColor(status) {
+        const colors = {
+            success: '#52c41a',
+            warning: '#faad14',
+            error: '#ff4d4f'
+        };
+        return colors[status] || '#d9d9d9';
+    },
+
+    // 获取通知类型图标
+    getNotificationIcon(type) {
+        const icons = {
+            info: 'Info',
+            warning: 'AlertTriangle',
+            error: 'AlertCircle',
+            success: 'CheckCircle'
+        };
+        return icons[type] || 'Bell';
     }
 };
 </script>
 
 <style scoped lang="scss">
 .dashboard-container {
-    padding: 16px;
-    background: $bg-color-container;
-    min-height: 100%;
+    padding: 20px;
+    background: $bg-color-page;
+    height: 100%;
+    overflow-y: auto;
 }
 
-// 统计卡片行
-.stats-row {
-    margin-bottom: 16px;
+// 欢迎区域
+.welcome-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 32px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+
+    .welcome-content {
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: white;
+            margin: 0 0 8px 0;
+        }
+
+        .welcome-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+        }
+    }
+
+    .welcome-status {
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+
+            &.status-online {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                backdrop-filter: blur(10px);
+            }
+        }
+    }
 }
 
-// 统计卡片样式
-.stat-card {
+// 区块样式
+.section-block {
+    background: white;
     border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid $border-color;
     overflow: hidden;
 
-    :deep(.t-card__body) {
-        padding: 0;
-    }
-
-    .stat-card-content {
+    .section-header {
+        background: linear-gradient(to right, #f8f9fa, white);
+        padding: 16px 20px;
+        border-bottom: 2px solid $primary-color;
         display: flex;
         align-items: center;
-        padding: 24px;
-        gap: 16px;
-    }
+        gap: 12px;
 
-    .stat-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .stat-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .stat-title {
-        font-size: 14px;
-        color: $text-secondary;
-        margin-bottom: 8px;
-    }
-
-    .stat-value {
-        font-size: 28px;
-        font-weight: 600;
-        color: $text-primary;
-        margin-bottom: 6px;
-        line-height: 1.2;
-    }
-
-    .stat-trend {
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-
-        &.trend-up {
-            color: $success-color;
-        }
-
-        &.trend-down {
-            color: $error-color;
+        h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: $text-primary;
+            flex: 1;
         }
     }
 
-    // 不同主题的卡片
-    &.stat-card-primary .stat-icon {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    &.stat-card-success .stat-icon {
-        background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
-        color: white;
-    }
-
-    &.stat-card-warning .stat-icon {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-    }
-
-    &.stat-card-danger .stat-icon {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        color: white;
+    .section-content {
+        padding: 20px;
     }
 }
 
-// 图表行
-.chart-row {
-    margin-bottom: 16px;
-}
-
-.chart-card {
-    .chart-placeholder {
-        height: 300px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: $text-placeholder;
-        background: $bg-color-hover;
-        border-radius: 4px;
-
-        p {
-            margin-top: 16px;
-            font-size: 14px;
-        }
-    }
-}
-
-.quick-actions-card {
+// 信息块
+.info-block {
+    background: $bg-color-container;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    padding: 16px;
     height: 100%;
 
-    :deep(.t-card__body) {
-        height: calc(100% - 56px);
+    .info-header {
         display: flex;
         align-items: center;
+        gap: 8px;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        border-bottom: 2px solid $primary-color;
+
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: $text-primary;
+        }
+    }
+
+    .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid $border-color;
+
+            .label {
+                font-size: 13px;
+                color: $text-secondary;
+                font-weight: 500;
+            }
+
+            .value {
+                font-size: 13px;
+                color: $text-primary;
+                font-weight: 600;
+
+                &.highlight {
+                    color: $primary-color;
+                    font-size: 14px;
+                }
+            }
+        }
     }
 }
 
-// 信息行
-.info-row {
-    margin-bottom: 16px;
-}
+// 统计网格
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
 
-.activity-card {
-    :deep(.t-list-item) {
-        padding: 12px 0;
+    .stat-box {
+        background: white;
+        border: 2px solid;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-content {
+            flex: 1;
+
+            .stat-value {
+                font-size: 24px;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 12px;
+                color: $text-secondary;
+            }
+        }
+
+        &.stat-primary {
+            border-color: $primary-color;
+            background: linear-gradient(135deg, rgba(0, 82, 217, 0.05), white);
+
+            .stat-value {
+                color: $primary-color;
+            }
+        }
+
+        &.stat-success {
+            border-color: $success-color;
+            background: linear-gradient(135deg, rgba(82, 196, 26, 0.05), white);
+
+            .stat-value {
+                color: $success-color;
+            }
+        }
+
+        &.stat-warning {
+            border-color: $warning-color;
+            background: linear-gradient(135deg, rgba(250, 173, 20, 0.05), white);
+
+            .stat-value {
+                color: $warning-color;
+            }
+        }
     }
 }
 
-.system-info-card {
-    .tech-stack {
-        margin-top: 24px;
-        padding-top: 24px;
-        border-top: 1px solid $border-color;
+// 配置网格
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+
+    .config-card {
+        background: white;
+        border: 2px solid;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .config-info {
+            flex: 1;
+            min-width: 0;
+
+            .config-name {
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+
+            .config-status {
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+
+                .latency {
+                    margin-left: 4px;
+                    color: $text-placeholder;
+                }
+            }
+        }
+
+        .config-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0.2;
+        }
+
+        &.config-ok {
+            border-color: $success-color;
+            background: linear-gradient(135deg, rgba(82, 196, 26, 0.05), white);
+
+            .config-icon {
+                background: rgba(82, 196, 26, 0.1);
+                color: $success-color;
+            }
+
+            .config-name {
+                color: $success-color;
+            }
+        }
+
+        &.config-warning {
+            border-color: $warning-color;
+            background: linear-gradient(135deg, rgba(250, 173, 20, 0.05), white);
+
+            .config-icon {
+                background: rgba(250, 173, 20, 0.1);
+                color: $warning-color;
+            }
+
+            .config-name {
+                color: $warning-color;
+            }
+        }
+
+        &.config-error {
+            border-color: $error-color;
+            background: linear-gradient(135deg, rgba(255, 77, 79, 0.05), white);
+
+            .config-icon {
+                background: rgba(255, 77, 79, 0.1);
+                color: $error-color;
+            }
+
+            .config-name {
+                color: $error-color;
+            }
+        }
+    }
+}
+
+// 插件列表
+.addon-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .addon-item {
+        background: $bg-color-container;
+        border: 1px solid $border-color;
+        border-left: 4px solid $primary-color;
+        border-radius: 6px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: all 0.3s;
+
+        &:hover {
+            border-left-color: $success-color;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transform: translateX(4px);
+        }
+
+        .addon-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, $primary-color, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .addon-info {
+            flex: 1;
+            min-width: 0;
+
+            .addon-title {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 6px;
+
+                .addon-name {
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: $text-primary;
+                }
+            }
+
+            .addon-desc {
+                font-size: 13px;
+                color: $text-secondary;
+                line-height: 1.5;
+            }
+        }
+
+        .addon-status {
+            flex-shrink: 0;
+        }
+    }
+}
+
+// 技术栈网格
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+
+    .tech-item {
+        background: linear-gradient(135deg, $bg-color-container, white);
+        border: 1px solid $border-color;
+        border-radius: 6px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: $text-primary;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: $primary-color;
+            background: linear-gradient(135deg, rgba(0, 82, 217, 0.05), white);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+    }
+}
+
+.content-row {
+    margin-bottom: 20px;
+}
+
+// 系统资源卡片
+.resource-card {
+    background: $bg-color-container;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    padding: 16px;
+    height: 100%;
+
+    .resource-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: $text-secondary;
+        font-weight: 500;
+    }
+
+    .resource-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: $primary-color;
+        margin-bottom: 12px;
+    }
+
+    .resource-info {
+        font-size: 12px;
+        color: $text-placeholder;
+        margin-top: 8px;
+    }
+
+    .resource-network {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .network-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid $border-color;
+            font-size: 14px;
+            font-weight: 600;
+        }
+    }
+}
+
+// 数据库统计
+.database-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    .database-item {
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .db-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(0, 82, 217, 0.1), rgba(0, 82, 217, 0.05));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: $primary-color;
+        }
+
+        .db-info {
+            flex: 1;
+
+            .db-value {
+                font-size: 20px;
+                font-weight: 700;
+                color: $text-primary;
+                margin-bottom: 4px;
+            }
+
+            .db-label {
+                font-size: 12px;
+                color: $text-secondary;
+            }
+        }
+    }
+}
+
+// 性能指标
+.performance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .perf-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+
+        .perf-label {
+            font-size: 13px;
+            color: $text-secondary;
+        }
+
+        .perf-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: $text-primary;
+
+            &.highlight {
+                color: $primary-color;
+                font-size: 16px;
+            }
+
+            &.success {
+                color: $success-color;
+            }
+
+            &.error {
+                color: $error-color;
+            }
+        }
+    }
+}
+
+// 环境信息
+.env-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    .env-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+
+        .env-info {
+            flex: 1;
+
+            .env-label {
+                font-size: 12px;
+                color: $text-secondary;
+                margin-bottom: 4px;
+            }
+
+            .env-value {
+                font-size: 13px;
+                font-weight: 600;
+                color: $text-primary;
+            }
+        }
+    }
+}
+
+// 快捷操作
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+// 操作日志
+.operation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .operation-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background: white;
+        border: 1px solid $border-color;
+        border-left: 3px solid $primary-color;
+        border-radius: 6px;
+
+        .operation-icon {
+            padding-top: 2px;
+        }
+
+        .operation-content {
+            flex: 1;
+
+            .operation-main {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 4px;
+                flex-wrap: wrap;
+
+                .operation-user {
+                    font-weight: 600;
+                    color: $primary-color;
+                    font-size: 13px;
+                }
+
+                .operation-action {
+                    font-size: 13px;
+                    color: $text-primary;
+                }
+
+                .operation-target {
+                    font-size: 13px;
+                    color: $text-secondary;
+                    background: $bg-color-container;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                }
+            }
+
+            .operation-time {
+                font-size: 12px;
+                color: $text-placeholder;
+            }
+        }
+    }
+}
+
+// 通知和待办
+.notification-section,
+.todo-section {
+    margin-bottom: 20px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    .subsection-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: $text-primary;
+        margin: 0 0 12px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid $border-color;
+    }
+}
+
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .notification-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid;
+
+        &.notif-info {
+            background: rgba(0, 82, 217, 0.05);
+            border-color: rgba(0, 82, 217, 0.2);
+            color: $primary-color;
+        }
+
+        &.notif-warning {
+            background: rgba(250, 173, 20, 0.05);
+            border-color: rgba(250, 173, 20, 0.2);
+            color: $warning-color;
+        }
+
+        &.notif-error {
+            background: rgba(255, 77, 79, 0.05);
+            border-color: rgba(255, 77, 79, 0.2);
+            color: $error-color;
+        }
+
+        .notification-content {
+            flex: 1;
+
+            .notification-title {
+                font-size: 13px;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+
+            .notification-desc {
+                font-size: 12px;
+                color: $text-secondary;
+                margin-bottom: 4px;
+            }
+
+            .notification-time {
+                font-size: 11px;
+                color: $text-placeholder;
+            }
+        }
+    }
+}
+
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .todo-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: $primary-color;
+            background: rgba(0, 82, 217, 0.05);
+            transform: translateX(4px);
+        }
+
+        .todo-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .todo-title {
+                font-size: 13px;
+                color: $text-primary;
+            }
+        }
     }
 }
 
@@ -372,23 +1403,23 @@ const $Method = {
         padding: 12px;
     }
 
-    .stat-card {
-        .stat-card-content {
-            padding: 16px;
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-        }
+    .welcome-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
     }
 
-    .chart-card .chart-placeholder {
-        height: 200px;
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tech-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 </style>
