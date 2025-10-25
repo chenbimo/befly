@@ -41,4 +41,6 @@ export interface RedisHelper {
     expire(key: string, seconds: number): Promise<number>;
     /** 获取剩余过期时间 */
     ttl(key: string): Promise<number>;
+    /** 测试 Redis 连接 */
+    ping(): Promise<string>;
 }

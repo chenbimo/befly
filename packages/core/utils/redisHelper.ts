@@ -303,5 +303,19 @@ export const RedisHelper = {
             Logger.error('Redis del 错误', error);
             return 0;
         }
+    },
+
+    /**
+     * 测试 Redis 连接
+     * @returns ping 响应结果
+     */
+    async ping(): Promise<string> {
+        try {
+            const client = getClient();
+            return await client.ping();
+        } catch (error: any) {
+            Logger.error('Redis ping 错误', error);
+            throw error;
+        }
     }
 };

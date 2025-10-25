@@ -2,7 +2,7 @@
  * 获取服务状态
  */
 
-import { Yes } from 'befly';
+import { Yes, Env } from 'befly';
 import type { ApiRoute } from 'befly';
 
 export default {
@@ -32,7 +32,7 @@ export default {
         }
 
         // Redis 状态
-        if (befly.redis) {
+        if (Env.REDIS_ENABLE === 1 && befly.redis) {
             try {
                 const startTime = Date.now();
                 await befly.redis.ping();
@@ -51,7 +51,6 @@ export default {
                 });
             }
         } else {
-            befly.logger.warn('Redis实例不存在');
             services.push({
                 name: 'Redis',
                 status: 'stopped',
