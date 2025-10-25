@@ -318,6 +318,8 @@ export interface SqlQuery {
  * 数据库管理器接口
  */
 export interface DbHelper {
+    /** 查询记录数 */
+    getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number>;
     /** 查询单条数据 */
     getOne<T = any>(options: QueryOptions): Promise<T | null>;
     /** 查询列表（带分页） */

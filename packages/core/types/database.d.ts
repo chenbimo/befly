@@ -149,6 +149,7 @@ export interface SyncStats {
  * DbHelper 接口（前向声明）
  */
 export interface DbHelper {
+    getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number>;
     getOne<T = any>(options: QueryOptions): Promise<T | null>;
     getList<T = any>(options: QueryOptions): Promise<ListResult<T>>;
     getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]>;

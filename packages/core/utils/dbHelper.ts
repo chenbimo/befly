@@ -184,6 +184,27 @@ export class DbHelper {
     }
 
     /**
+     * 查询记录数
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
+     * @param options.where - 查询条件
+     * @example
+     * // 查询总数
+     * const count = await db.getCount({ table: 'user' });
+     * // 查询指定条件的记录数
+     * const activeCount = await db.getCount({ table: 'user', where: { state: 1 } });
+     */
+    async getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number> {
+        const { table, where } = this.prepareQueryOptions(options as QueryOptions);
+
+        const builder = new SqlBuilder().select(['COUNT(*) as count']).from(table).where(this.addDefaultStateFilter(where));
+
+        const { sql, params } = builder.toSelectSql();
+        const result = await this.executeWithConn(sql, params);
+
+        return result?.[0]?.count || 0;
+    }
+
+    /**
      * 查询单条数据
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）

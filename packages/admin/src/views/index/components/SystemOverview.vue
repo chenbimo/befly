@@ -40,12 +40,6 @@
 
 <script setup>
 // 组件内部数据
-const systemInfo = $ref({
-    systemName: 'Befly Admin',
-    version: 'v1.0.0',
-    environment: 'Production'
-});
-
 const permissionStats = $ref({
     menuCount: 0,
     apiCount: 0,
@@ -56,45 +50,13 @@ const permissionStats = $ref({
 const fetchData = async () => {
     try {
         const { data } = await $Http('/addon/admin/dashboardSystemOverview');
-        Object.assign(systemInfo, data.systemInfo);
-        Object.assign(permissionStats, data.permissionStats);
+        Object.assign(permissionStats, data);
     } catch (error) {
         console.error('获取系统概览失败:', error);
     }
 };
 
 fetchData();
-
-// 工具函数
-const formatUptime = (ms) => {
-    if (!ms) return '-';
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) {
-        return `${days}天${hours % 24}小时`;
-    } else if (hours > 0) {
-        return `${hours}小时${minutes % 60}分钟`;
-    } else if (minutes > 0) {
-        return `${minutes}分钟`;
-    } else {
-        return `${seconds}秒`;
-    }
-};
-
-const formatDateTime = (timestamp) => {
-    if (!timestamp) return '-';
-    const date = new Date(timestamp);
-    return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
 </script>
 
 <style scoped lang="scss">
