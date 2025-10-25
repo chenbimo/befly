@@ -64,20 +64,20 @@ export const SyncDb = async (): Promise<void> => {
         }
 
         // 阶段1：验证表定义文件
-        perfTracker.markPhase('validation');
+        perfTracker.markPhase('表定义验证');
         if (!(await checkTable())) {
             throw new Error('表定义验证失败');
         }
-        Logger.info(`✓ 表定义验证完成，耗时: ${perfTracker.getPhaseTime('validation')}`);
+        Logger.info(`✓ 表定义验证完成，耗时: ${perfTracker.getPhaseTime('表定义验证')}`);
 
         // 阶段2：建立数据库连接并检查版本
-        perfTracker.markPhase('connection');
+        perfTracker.markPhase('数据库连接');
         sql = await createSqlClient({ max: 1 });
         await ensureDbVersion(sql);
-        Logger.info(`✓ 数据库连接建立，耗时: ${perfTracker.getPhaseTime('connection')}`);
+        Logger.info(`✓ 数据库连接建立，耗时: ${perfTracker.getPhaseTime('数据库连接')}`);
 
         // 阶段3：扫描表定义文件
-        perfTracker.markPhase('scan');
+        perfTracker.markPhase('扫描表文件');
         const tablesGlob = new Bun.Glob('*.json');
         const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [{ path: paths.projectTableDir, isCore: false }];
 
@@ -107,11 +107,11 @@ export const SyncDb = async (): Promise<void> => {
                 }
             }
         }
-        perfTracker.finishPhase('scan');
-        Logger.info(`✓ 扫描完成，发现 ${totalTables} 个表定义文件，耗时: ${perfTracker.getPhaseTime('scan')}`);
+        perfTracker.finishPhase('扫描表文件');
+        Logger.info(`✓ 扫描完成，发现 ${totalTables} 个表定义文件，耗时: ${perfTracker.getPhaseTime('扫描表文件')}`);
 
         // 阶段4：处理表文件
-        perfTracker.markPhase('process');
+        perfTracker.markPhase('同步处理');
         let processedCount = 0;
 
         for (const dirConfig of directories) {
@@ -156,8 +156,8 @@ export const SyncDb = async (): Promise<void> => {
             }
         }
 
-        perfTracker.finishPhase('process');
-        Logger.info(`✓ 表处理完成，耗时: ${perfTracker.getPhaseTime('process')}`);
+        perfTracker.finishPhase('同步处理');
+        Logger.info(`✓ 表处理完成，耗时: ${perfTracker.getPhaseTime('同步处理')}`);
 
         // 阶段5：显示统计信息
         Logger.info('\n=== 同步统计信息 ===');
