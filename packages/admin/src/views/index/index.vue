@@ -21,35 +21,35 @@
                 <h2>系统概览</h2>
             </div>
             <div class="section-content">
-                <t-row :gutter="16">
+                <t-row :gutter="12">
                     <t-col :xs="24" :sm="12" :md="12" :lg="12">
                         <div class="info-block">
                             <div class="info-header">
                                 <Icon name="Server" :size="18" />
                                 <span class="info-title">系统信息</span>
                             </div>
-                            <div class="info-list">
-                                <div class="info-item">
+                            <div class="info-grid-compact">
+                                <div class="info-grid-item">
                                     <span class="label">系统名称</span>
                                     <span class="value">{{ $Data.systemInfo.systemName }}</span>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-grid-item">
                                     <span class="label">当前版本</span>
                                     <span class="value">
                                         <t-tag theme="primary" variant="outline" size="small">{{ $Data.systemInfo.version }}</t-tag>
                                     </span>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-grid-item">
                                     <span class="label">运行环境</span>
                                     <span class="value">
                                         <t-tag theme="success" variant="outline" size="small">{{ $Data.systemInfo.environment }}</t-tag>
                                     </span>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-grid-item">
                                     <span class="label">运行时长</span>
                                     <span class="value highlight">{{ $Method.formatUptime($Data.systemInfo.uptime) }}</span>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-grid-item">
                                     <span class="label">启动时间</span>
                                     <span class="value">{{ $Method.formatDateTime($Data.systemInfo.startTime) }}</span>
                                 </div>
@@ -155,46 +155,40 @@
                 <h2>系统资源</h2>
             </div>
             <div class="section-content">
-                <t-row :gutter="16">
-                    <t-col :xs="24" :sm="12" :md="8" :lg="8">
-                        <div class="resource-card">
-                            <div class="resource-header">
-                                <Icon name="Cpu" :size="20" />
-                                <span>CPU使用率</span>
-                            </div>
-                            <div class="resource-value">{{ $Data.systemResources.cpu.usage }}%</div>
-                            <t-progress :percentage="$Data.systemResources.cpu.usage" :theme="$Method.getProgressColor($Data.systemResources.cpu.usage)" />
-                            <div class="resource-info">{{ $Data.systemResources.cpu.cores }} 核心</div>
+                <div class="resource-compact-list">
+                    <div class="resource-compact-item">
+                        <div class="resource-compact-header">
+                            <Icon name="Cpu" :size="16" />
+                            <span class="resource-label">CPU</span>
+                            <span class="resource-value">{{ $Data.systemResources.cpu.usage }}%</span>
+                            <span class="resource-desc">{{ $Data.systemResources.cpu.cores }}核心</span>
                         </div>
-                    </t-col>
-                    <t-col :xs="24" :sm="12" :md="8" :lg="8">
-                        <div class="resource-card">
-                            <div class="resource-header">
-                                <Icon name="HardDrive" :size="20" />
-                                <span>内存使用率</span>
-                            </div>
-                            <div class="resource-value">{{ $Data.systemResources.memory.percentage }}%</div>
-                            <t-progress :percentage="$Data.systemResources.memory.percentage" :theme="$Method.getProgressColor($Data.systemResources.memory.percentage)" />
-                            <div class="resource-info">{{ $Data.systemResources.memory.used }}GB / {{ $Data.systemResources.memory.total }}GB</div>
+                        <t-progress :percentage="$Data.systemResources.cpu.usage" :theme="$Method.getProgressColor($Data.systemResources.cpu.usage)" size="small" />
+                    </div>
+                    <div class="resource-compact-item">
+                        <div class="resource-compact-header">
+                            <Icon name="HardDrive" :size="16" />
+                            <span class="resource-label">内存</span>
+                            <span class="resource-value">{{ $Data.systemResources.memory.percentage }}%</span>
+                            <span class="resource-desc">{{ $Data.systemResources.memory.used }}GB / {{ $Data.systemResources.memory.total }}GB</span>
                         </div>
-                    </t-col>
-                    <t-col :xs="24" :sm="12" :md="8" :lg="8">
-                        <div class="resource-card">
-                            <div class="resource-header">
-                                <Icon name="Disc" :size="20" />
-                                <span>磁盘使用率</span>
-                            </div>
-                            <div class="resource-value">{{ $Data.systemResources.disk.percentage }}%</div>
-                            <t-progress :percentage="$Data.systemResources.disk.percentage" :theme="$Method.getProgressColor($Data.systemResources.disk.percentage)" />
-                            <div class="resource-info">{{ $Data.systemResources.disk.used }}GB / {{ $Data.systemResources.disk.total }}GB</div>
+                        <t-progress :percentage="$Data.systemResources.memory.percentage" :theme="$Method.getProgressColor($Data.systemResources.memory.percentage)" size="small" />
+                    </div>
+                    <div class="resource-compact-item">
+                        <div class="resource-compact-header">
+                            <Icon name="Disc" :size="16" />
+                            <span class="resource-label">磁盘</span>
+                            <span class="resource-value">{{ $Data.systemResources.disk.percentage }}%</span>
+                            <span class="resource-desc">{{ $Data.systemResources.disk.used }}GB / {{ $Data.systemResources.disk.total }}GB</span>
                         </div>
-                    </t-col>
-                </t-row>
+                        <t-progress :percentage="$Data.systemResources.disk.percentage" :theme="$Method.getProgressColor($Data.systemResources.disk.percentage)" size="small" />
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- 数据库统计和性能指标 -->
-        <t-row :gutter="16" class="content-row">
+        <t-row :gutter="12" class="content-row">
             <t-col :xs="24" :sm="24" :md="12" :lg="12">
                 <div class="section-block">
                     <div class="section-header">
@@ -202,41 +196,33 @@
                         <h2>数据库统计</h2>
                     </div>
                     <div class="section-content">
-                        <div class="database-grid">
-                            <div class="database-item">
-                                <div class="db-icon">
-                                    <Icon name="Table" :size="24" />
-                                </div>
-                                <div class="db-info">
-                                    <div class="db-value">{{ $Data.databaseStats.tableCount }}</div>
-                                    <div class="db-label">数据表</div>
+                        <div class="database-grid-compact">
+                            <div class="db-compact-item">
+                                <Icon name="Table" :size="18" />
+                                <div class="db-compact-info">
+                                    <div class="db-compact-value">{{ $Data.databaseStats.tableCount }}</div>
+                                    <div class="db-compact-label">数据表</div>
                                 </div>
                             </div>
-                            <div class="database-item">
-                                <div class="db-icon">
-                                    <Icon name="FileText" :size="24" />
-                                </div>
-                                <div class="db-info">
-                                    <div class="db-value">{{ $Data.databaseStats.totalRows }}</div>
-                                    <div class="db-label">数据行数</div>
+                            <div class="db-compact-item">
+                                <Icon name="FileText" :size="18" />
+                                <div class="db-compact-info">
+                                    <div class="db-compact-value">{{ $Data.databaseStats.totalRows }}</div>
+                                    <div class="db-compact-label">数据行数</div>
                                 </div>
                             </div>
-                            <div class="database-item">
-                                <div class="db-icon">
-                                    <Icon name="HardDrive" :size="24" />
-                                </div>
-                                <div class="db-info">
-                                    <div class="db-value">{{ $Data.databaseStats.databaseSize }}</div>
-                                    <div class="db-label">数据库大小</div>
+                            <div class="db-compact-item">
+                                <Icon name="HardDrive" :size="18" />
+                                <div class="db-compact-info">
+                                    <div class="db-compact-value">{{ $Data.databaseStats.databaseSize }}</div>
+                                    <div class="db-compact-label">数据库大小</div>
                                 </div>
                             </div>
-                            <div class="database-item">
-                                <div class="db-icon">
-                                    <Icon name="Link" :size="24" />
-                                </div>
-                                <div class="db-info">
-                                    <div class="db-value">{{ $Data.databaseStats.connections.current }}/{{ $Data.databaseStats.connections.max }}</div>
-                                    <div class="db-label">连接数</div>
+                            <div class="db-compact-item">
+                                <Icon name="Link" :size="18" />
+                                <div class="db-compact-info">
+                                    <div class="db-compact-value">{{ $Data.databaseStats.connections.current }}/{{ $Data.databaseStats.connections.max }}</div>
+                                    <div class="db-compact-label">连接数</div>
                                 </div>
                             </div>
                         </div>
@@ -251,31 +237,27 @@
                         <h2>性能指标</h2>
                     </div>
                     <div class="section-content">
-                        <div class="performance-list">
-                            <div class="perf-item">
-                                <span class="perf-label">平均响应时间</span>
+                        <div class="performance-grid">
+                            <div class="perf-grid-item">
+                                <span class="perf-label">平均响应</span>
                                 <span class="perf-value">{{ $Data.performance.avgResponseTime }}ms</span>
                             </div>
-                            <div class="perf-item">
-                                <span class="perf-label">最慢接口</span>
-                                <span class="perf-value">{{ $Data.performance.slowestApi.name }} ({{ $Data.performance.slowestApi.time }}ms)</span>
-                            </div>
-                            <div class="perf-item">
-                                <span class="perf-label">今日请求总数</span>
+                            <div class="perf-grid-item">
+                                <span class="perf-label">今日请求</span>
                                 <span class="perf-value highlight">{{ $Data.performance.totalRequests }}</span>
                             </div>
-                            <div class="perf-item">
+                            <div class="perf-grid-item">
                                 <span class="perf-label">成功率</span>
                                 <span class="perf-value success">{{ $Data.performance.successRate }}%</span>
                             </div>
-                            <div class="perf-item">
-                                <span class="perf-label">缓存命中率</span>
+                            <div class="perf-grid-item">
+                                <span class="perf-label">缓存命中</span>
                                 <span class="perf-value success">{{ $Data.performance.cacheHitRate }}%</span>
                             </div>
-                            <div class="perf-item">
-                                <span class="perf-label">错误率</span>
-                                <span class="perf-value" :class="$Data.performance.errorRate > 1 ? 'error' : 'success'">{{ $Data.performance.errorRate }}%</span>
-                            </div>
+                        </div>
+                        <div class="perf-slowest">
+                            <Icon name="AlertCircle" :size="14" />
+                            <span>最慢接口: {{ $Data.performance.slowestApi.name }} ({{ $Data.performance.slowestApi.time }}ms)</span>
                         </div>
                     </div>
                 </div>
@@ -289,48 +271,36 @@
                 <h2>运行环境</h2>
             </div>
             <div class="section-content">
-                <div class="env-grid">
-                    <div class="env-item">
-                        <Icon name="Box" :size="18" />
-                        <div class="env-info">
-                            <div class="env-label">Node.js</div>
-                            <div class="env-value">{{ $Data.environmentInfo.nodeVersion }}</div>
-                        </div>
+                <div class="env-grid-compact">
+                    <div class="env-compact-item">
+                        <Icon name="Box" :size="16" />
+                        <span class="env-label">Node.js</span>
+                        <span class="env-value">{{ $Data.environmentInfo.nodeVersion }}</span>
                     </div>
-                    <div class="env-item">
-                        <Icon name="Zap" :size="18" />
-                        <div class="env-info">
-                            <div class="env-label">Bun</div>
-                            <div class="env-value">{{ $Data.environmentInfo.bunVersion }}</div>
-                        </div>
+                    <div class="env-compact-item">
+                        <Icon name="Zap" :size="16" />
+                        <span class="env-label">Bun</span>
+                        <span class="env-value">{{ $Data.environmentInfo.bunVersion }}</span>
                     </div>
-                    <div class="env-item">
-                        <Icon name="Database" :size="18" />
-                        <div class="env-info">
-                            <div class="env-label">MySQL</div>
-                            <div class="env-value">{{ $Data.environmentInfo.mysqlVersion }}</div>
-                        </div>
+                    <div class="env-compact-item">
+                        <Icon name="Database" :size="16" />
+                        <span class="env-label">MySQL</span>
+                        <span class="env-value">{{ $Data.environmentInfo.mysqlVersion }}</span>
                     </div>
-                    <div class="env-item">
-                        <Icon name="Layers" :size="18" />
-                        <div class="env-info">
-                            <div class="env-label">Redis</div>
-                            <div class="env-value">{{ $Data.environmentInfo.redisVersion }}</div>
-                        </div>
+                    <div class="env-compact-item">
+                        <Icon name="Layers" :size="16" />
+                        <span class="env-label">Redis</span>
+                        <span class="env-value">{{ $Data.environmentInfo.redisVersion }}</span>
                     </div>
-                    <div class="env-item">
-                        <Icon name="Server" :size="18" />
-                        <div class="env-info">
-                            <div class="env-label">操作系统</div>
-                            <div class="env-value">{{ $Data.environmentInfo.os }}</div>
-                        </div>
+                    <div class="env-compact-item">
+                        <Icon name="Server" :size="16" />
+                        <span class="env-label">操作系统</span>
+                        <span class="env-value">{{ $Data.environmentInfo.os }}</span>
                     </div>
-                    <div class="env-item">
-                        <Icon name="Laptop" :size="18" />
-                        <div class="env-info">
-                            <div class="env-label">平台</div>
-                            <div class="env-value">{{ $Data.environmentInfo.platform }}</div>
-                        </div>
+                    <div class="env-compact-item">
+                        <Icon name="Laptop" :size="16" />
+                        <span class="env-label">平台</span>
+                        <span class="env-value">{{ $Data.environmentInfo.platform }}</span>
                     </div>
                 </div>
             </div>
@@ -355,7 +325,7 @@
         </div>
 
         <!-- 操作日志和通知待办 -->
-        <t-row :gutter="16" class="content-row">
+        <t-row :gutter="12" class="content-row">
             <t-col :xs="24" :sm="24" :md="14" :lg="14">
                 <div class="section-block">
                     <div class="section-header">
@@ -364,19 +334,13 @@
                         <t-tag theme="primary" variant="outline" size="small">最近{{ $Data.operationLogs.length }}条</t-tag>
                     </div>
                     <div class="section-content">
-                        <div class="operation-list">
-                            <div v-for="(log, index) in $Data.operationLogs" :key="index" class="operation-item">
-                                <div class="operation-icon">
-                                    <Icon :name="$Method.getLogStatusIcon(log.status)" :size="16" :color="$Method.getLogStatusColor(log.status)" />
-                                </div>
-                                <div class="operation-content">
-                                    <div class="operation-main">
-                                        <span class="operation-user">{{ log.user }}</span>
-                                        <span class="operation-action">{{ log.action }}</span>
-                                        <span class="operation-target">{{ log.target }}</span>
-                                    </div>
-                                    <div class="operation-time">{{ log.time }}</div>
-                                </div>
+                        <div class="operation-table">
+                            <div v-for="(log, index) in $Data.operationLogs" :key="index" class="operation-row">
+                                <Icon :name="$Method.getLogStatusIcon(log.status)" :size="14" :color="$Method.getLogStatusColor(log.status)" class="op-icon" />
+                                <span class="op-user">{{ log.user }}</span>
+                                <span class="op-action">{{ log.action }}</span>
+                                <span class="op-target">{{ log.target }}</span>
+                                <span class="op-time">{{ log.time }}</span>
                             </div>
                         </div>
                     </div>
@@ -392,26 +356,23 @@
                     <div class="section-content">
                         <div class="notification-section">
                             <h3 class="subsection-title">系统通知</h3>
-                            <div class="notification-list">
-                                <div v-for="(notif, index) in $Data.notifications" :key="index" class="notification-item" :class="`notif-${notif.type}`">
-                                    <Icon :name="$Method.getNotificationIcon(notif.type)" :size="16" />
-                                    <div class="notification-content">
-                                        <div class="notification-title">{{ notif.title }}</div>
-                                        <div class="notification-desc">{{ notif.content }}</div>
-                                        <div class="notification-time">{{ notif.time }}</div>
+                            <div class="notification-compact-list">
+                                <div v-for="(notif, index) in $Data.notifications" :key="index" class="notification-compact-item" :class="`notif-${notif.type}`">
+                                    <Icon :name="$Method.getNotificationIcon(notif.type)" :size="14" />
+                                    <div class="notif-content">
+                                        <span class="notif-title">{{ notif.title }}</span>
+                                        <span class="notif-time">{{ notif.time }}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="todo-section">
                             <h3 class="subsection-title">待办事项</h3>
-                            <div class="todo-list">
-                                <div v-for="todo in $Data.todoItems" :key="todo.title" class="todo-item">
-                                    <div class="todo-info">
-                                        <span class="todo-title">{{ todo.title }}</span>
-                                        <t-tag theme="warning" size="small">{{ todo.count }}</t-tag>
-                                    </div>
-                                    <Icon name="ChevronRight" :size="16" />
+                            <div class="todo-compact-list">
+                                <div v-for="todo in $Data.todoItems" :key="todo.title" class="todo-compact-item">
+                                    <span class="todo-title">{{ todo.title }}</span>
+                                    <t-tag theme="warning" size="small">{{ todo.count }}</t-tag>
+                                    <Icon name="ChevronRight" :size="14" />
                                 </div>
                             </div>
                         </div>
@@ -748,6 +709,39 @@ const $Method = {
             font-size: 13px;
             font-weight: 600;
             color: $text-primary;
+        }
+    }
+
+    .info-grid-compact {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+
+        .info-grid-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid $border-color;
+
+            .label {
+                font-size: 12px;
+                color: $text-secondary;
+                font-weight: 500;
+            }
+
+            .value {
+                font-size: 12px;
+                color: $text-primary;
+                font-weight: 600;
+
+                &.highlight {
+                    color: $primary-color;
+                    font-size: 13px;
+                }
+            }
         }
     }
 
@@ -1105,7 +1099,177 @@ const $Method = {
     }
 }
 
-// 数据库统计
+// 系统资源紧凑样式
+.resource-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .resource-compact-item {
+        .resource-compact-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+
+            .resource-label {
+                font-size: 13px;
+                font-weight: 600;
+                color: $text-secondary;
+                min-width: 50px;
+            }
+
+            .resource-value {
+                font-size: 16px;
+                font-weight: 700;
+                color: $primary-color;
+                min-width: 60px;
+            }
+
+            .resource-desc {
+                font-size: 12px;
+                color: $text-placeholder;
+                flex: 1;
+            }
+        }
+    }
+}
+
+// 数据库紧凑样式
+.database-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+
+    .db-compact-item {
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: $primary-color;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .db-compact-info {
+            flex: 1;
+
+            .db-compact-value {
+                font-size: 16px;
+                font-weight: 700;
+                color: $primary-color;
+                margin-bottom: 2px;
+            }
+
+            .db-compact-label {
+                font-size: 11px;
+                color: $text-secondary;
+            }
+        }
+    }
+}
+
+// 性能指标网格样式
+.performance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+
+    .perf-grid-item {
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+        padding: 10px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: $primary-color;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .perf-label {
+            font-size: 12px;
+            color: $text-secondary;
+        }
+
+        .perf-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: $text-primary;
+
+            &.highlight {
+                color: $primary-color;
+            }
+
+            &.success {
+                color: $success-color;
+            }
+
+            &.error {
+                color: $error-color;
+            }
+        }
+    }
+}
+
+.perf-slowest {
+    background: rgba(250, 173, 20, 0.05);
+    border: 1px solid rgba(250, 173, 20, 0.2);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: $warning-color;
+}
+
+// 环境信息紧凑样式
+.env-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+
+    .env-compact-item {
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 6px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: $primary-color;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .env-label {
+            font-size: 12px;
+            color: $text-secondary;
+            min-width: 60px;
+        }
+
+        .env-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: $text-primary;
+            flex: 1;
+        }
+    }
+}
+
+// 旧样式保留（备用）
 .database-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1190,39 +1354,6 @@ const $Method = {
     }
 }
 
-// 环境信息
-.env-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-
-    .env-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px;
-        background: white;
-        border: 1px solid $border-color;
-        border-radius: 4px;
-
-        .env-info {
-            flex: 1;
-
-            .env-label {
-                font-size: 11px;
-                color: $text-secondary;
-                margin-bottom: 2px;
-            }
-
-            .env-value {
-                font-size: 12px;
-                font-weight: 600;
-                color: $text-primary;
-            }
-        }
-    }
-}
-
 // 快捷操作
 .quick-actions-grid {
     display: grid;
@@ -1230,7 +1361,62 @@ const $Method = {
     gap: 8px;
 }
 
-// 操作日志
+// 操作日志表格样式
+.operation-table {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .operation-row {
+        display: grid;
+        grid-template-columns: 24px auto 1fr 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: $primary-color;
+            background: rgba(0, 82, 217, 0.02);
+        }
+
+        .op-icon {
+            flex-shrink: 0;
+        }
+
+        .op-user {
+            font-size: 12px;
+            font-weight: 600;
+            color: $primary-color;
+            white-space: nowrap;
+        }
+
+        .op-action {
+            font-size: 12px;
+            color: $text-primary;
+            white-space: nowrap;
+        }
+
+        .op-target {
+            font-size: 12px;
+            color: $text-secondary;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .op-time {
+            font-size: 11px;
+            color: $text-placeholder;
+            white-space: nowrap;
+        }
+    }
+}
+
+// 旧操作日志样式（保留备用）
 .operation-list {
     display: flex;
     flex-direction: column;
@@ -1291,22 +1477,118 @@ const $Method = {
 // 通知和待办
 .notification-section,
 .todo-section {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 
     &:last-child {
         margin-bottom: 0;
     }
 
     .subsection-title {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         color: $text-primary;
-        margin: 0 0 8px 0;
-        padding-bottom: 6px;
+        margin: 0 0 6px 0;
+        padding-bottom: 4px;
         border-bottom: 1px solid $border-color;
     }
 }
 
+// 通知紧凑样式
+.notification-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .notification-compact-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid;
+        transition: all 0.3s;
+
+        &:hover {
+            transform: translateX(2px);
+        }
+
+        &.notif-info {
+            background: rgba(0, 82, 217, 0.05);
+            border-color: rgba(0, 82, 217, 0.2);
+            color: $primary-color;
+        }
+
+        &.notif-warning {
+            background: rgba(250, 173, 20, 0.05);
+            border-color: rgba(250, 173, 20, 0.2);
+            color: $warning-color;
+        }
+
+        &.notif-error {
+            background: rgba(255, 77, 79, 0.05);
+            border-color: rgba(255, 77, 79, 0.2);
+            color: $error-color;
+        }
+
+        .notif-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+
+            .notif-title {
+                font-size: 12px;
+                font-weight: 600;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .notif-time {
+                font-size: 10px;
+                color: currentColor;
+                opacity: 0.7;
+                white-space: nowrap;
+            }
+        }
+    }
+}
+
+// 待办紧凑样式
+.todo-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .todo-compact-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 6px 10px;
+        background: white;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        &:hover {
+            border-color: $primary-color;
+            background: rgba(0, 82, 217, 0.05);
+            transform: translateX(4px);
+        }
+
+        .todo-title {
+            font-size: 12px;
+            color: $text-primary;
+            flex: 1;
+        }
+    }
+}
+
+// 旧通知样式（保留备用）
 .notification-list {
     display: flex;
     flex-direction: column;
