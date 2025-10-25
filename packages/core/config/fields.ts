@@ -17,6 +17,19 @@
  * 类型说明：
  * - array_string: 短数组，存储为 VARCHAR，建议设置 max 限制（如 0-100）
  * - array_text: 长数组，存储为 MEDIUMTEXT，min/max 可设为 null 表示不限制
+ *
+ * 正则表达式别名：
+ * - 使用 @ 前缀可以引用内置正则表达式别名，例如：
+ *   - @number: 纯数字
+ *   - @alphanumeric: 字母+数字
+ *   - @email: 邮箱格式
+ *   - @phone: 中国手机号
+ *   - @chinese: 纯中文
+ * - 完整别名列表见 config/regexAliases.ts
+ *
+ * 示例：
+ * - '用户ID|array_text|null|null|null|0|@number' - 数字数组
+ * - '标签|array_string|0|50|null|0|@alphanumeric' - 字母数字数组
  */
 
 export const Fields = {

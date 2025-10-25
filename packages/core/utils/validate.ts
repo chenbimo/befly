@@ -5,6 +5,7 @@
 
 import { isType } from './helper.js';
 import { parseRule } from './helper.js';
+import { RegexAliases } from '../config/regexAliases.js';
 import type { TableDefinition, FieldRule, ParsedFieldRule } from '../types/common.js';
 import type { ValidationResult, ValidationError } from '../types/validator';
 
@@ -105,11 +106,41 @@ export class Validator {
     }
 
     /**
+     * 解析 regex 别名
+     * 如果 regex 以 @ 开头，则从别名表中获取实际正则表达式
+     * @param regex - 原始 regex 或别名（如 @number）
+     * @returns 实际的正则表达式字符串
+     */
+    private resolveRegexAlias(regex: string | null): string | null {
+        if (!regex || typeof regex !== 'string') {
+            return regex;
+        }
+
+        // 检查是否是别名（以 @ 开头）
+        if (regex.startsWith('@')) {
+            const aliasName = regex.substring(1);
+            const resolvedRegex = RegexAliases[aliasName as keyof typeof RegexAliases];
+
+            if (resolvedRegex) {
+                return resolvedRegex;
+            }
+
+            // 别名不存在，返回原值（让后续验证报错）
+            return regex;
+        }
+
+        return regex;
+    }
+
+    /**
      * 验证单个字段的值
      */
     private validateFieldValue(value: any, rule: FieldRule, fieldName: string): ValidationError {
         const parsed = parseRule(rule);
-        const { name, type, min, max, regex } = parsed;
+        let { name, type, min, max, regex } = parsed;
+
+        // 解析 regex 别名
+        regex = this.resolveRegexAlias(regex);
 
         switch (type.toLowerCase()) {
             case 'number':
@@ -256,7 +287,16 @@ export class Validator {
      */
     static validateSingleValue(value: any, rule: string): { valid: boolean; value: any; errors: string[] } {
         const parsed = parseRule(rule);
-        const { name, type, min, max, regex, default: defaultValue } = parsed;
+        let { name, type, min, max, regex, default: defaultValue } = parsed;
+
+        // 解析 regex 别名
+        if (regex && typeof regex === 'string' && regex.startsWith('@')) {
+            const aliasName = regex.substring(1);
+            const resolvedRegex = RegexAliases[aliasName as keyof typeof RegexAliases];
+            if (resolvedRegex) {
+                regex = resolvedRegex;
+            }
+        }
 
         // 处理 undefined/null 值，使用默认值
         if (value === undefined || value === null) {
