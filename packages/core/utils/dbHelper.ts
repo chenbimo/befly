@@ -471,11 +471,8 @@ export class DbHelper {
     async delData(options: DeleteOptions): Promise<number> {
         const { table, where } = options;
 
-        // 转换表名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
-
         return await this.updData({
-            table: snakeTable,
+            table: table,
             data: { state: 0, deleted_at: Date.now() },
             where: where
         });
@@ -510,11 +507,8 @@ export class DbHelper {
     async disableData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
-        // 转换表名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
-
         return await this.updData({
-            table: snakeTable,
+            table: table,
             data: {
                 state: 2
             },
@@ -529,11 +523,8 @@ export class DbHelper {
     async enableData(options: Omit<DeleteOptions, 'hard'>): Promise<number> {
         const { table, where } = options;
 
-        // 转换表名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
-
         return await this.updData({
-            table: snakeTable,
+            table: table,
             data: {
                 state: 1
             },
