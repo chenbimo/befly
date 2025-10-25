@@ -159,7 +159,7 @@ export function escapeComment(str: string): string {
  * @param changeLabel - 变更类型的中文标签
  */
 export function logFieldChange(tableName: string, fieldName: string, changeType: string, oldValue: any, newValue: any, changeLabel: string): void {
-    Logger.log(`   修改表 ${tableName} 的字段 ${fieldName} 的${changeLabel}: ${oldValue} -> ${newValue}`);
+    Logger.info(`   修改表 ${tableName} 的字段 ${fieldName} 的${changeLabel}: ${oldValue} -> ${newValue}`);
 }
 
 /**
