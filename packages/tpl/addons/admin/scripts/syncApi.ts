@@ -30,6 +30,7 @@ interface ApiInfo {
     method: string;
     description: string;
     addonName: string;
+    addonTitle: string;
 }
 
 // 解析命令行参数
@@ -45,9 +46,10 @@ const tplDir = path.resolve(__dirname, '../../../');
  * 从 API 文件中提取接口信息
  * @param filePath - API 文件路径
  * @param addonName - 插件名称
+ * @param addonTitle - 插件标题
  * @returns API 信息对象或 null
  */
-async function extractApiInfo(filePath: string, addonName: string = ''): Promise<ApiInfo | null> {
+async function extractApiInfo(filePath: string, addonName: string = '', addonTitle: string = ''): Promise<ApiInfo | null> {
     try {
         // 动态导入 API 文件
         const apiModule = await import(filePath);
@@ -77,10 +79,30 @@ async function extractApiInfo(filePath: string, addonName: string = ''): Promise
             path: apiPath,
             method: apiConfig.method || 'POST',
             description: apiConfig.description || '',
-            addonName: addonName
+            addonName: addonName,
+            addonTitle: addonTitle || addonName
         };
     } catch (error: any) {
         Logger.warn(`解析 API 文件失败: ${filePath}`, error.message);
+        return null;
+    }
+}
+
+/**
+ * 读取 Addon 配置文件（使用 Bun 原生方法）
+ * @param addonDir - Addon 目录路径
+ * @returns Addon 配置对象或 null
+ */
+async function loadAddonConfig(addonDir: string): Promise<{ name: string; title: string } | null> {
+    try {
+        const configPath = path.join(addonDir, 'addon.config.json');
+        const file = Bun.file(configPath);
+        const config = await file.json();
+        return {
+            name: config.name || '',
+            title: config.title || config.name || ''
+        };
+    } catch (error) {
         return null;
     }
 }
@@ -99,7 +121,7 @@ async function scanAllApis(): Promise<ApiInfo[]> {
     Logger.info(`  找到 ${projectApiFiles.length} 个项目 API 文件`);
 
     for (const filePath of projectApiFiles) {
-        const apiInfo = await extractApiInfo(filePath, '');
+        const apiInfo = await extractApiInfo(filePath, '', '项目接口');
         if (apiInfo) {
             apis.push(apiInfo);
             Logger.info(`  └ ${apiInfo.path} - ${apiInfo.name}`);
@@ -112,13 +134,19 @@ async function scanAllApis(): Promise<ApiInfo[]> {
     const addonDirs = getAddonDirs(addonsDir);
 
     for (const addonName of addonDirs) {
-        const addonApisDir = path.join(addonsDir, addonName, 'apis');
+        const addonDir = path.join(addonsDir, addonName);
+        const addonApisDir = path.join(addonDir, 'apis');
+
+        // 读取 addon 配置（使用 Bun 原生方法）
+        const addonConfig = await loadAddonConfig(addonDir);
+        const addonTitle = addonConfig?.title || addonName;
+
         try {
             const addonApiFiles = scanTsFiles(addonApisDir);
             Logger.info(`  [${addonName}] 找到 ${addonApiFiles.length} 个 API 文件`);
 
             for (const filePath of addonApiFiles) {
-                const apiInfo = await extractApiInfo(filePath, addonName);
+                const apiInfo = await extractApiInfo(filePath, addonName, addonTitle);
                 if (apiInfo) {
                     apis.push(apiInfo);
                     Logger.info(`    └ ${apiInfo.path} - ${apiInfo.name}`);
@@ -157,7 +185,8 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                         name: api.name,
                         method: api.method,
                         description: api.description,
-                        addonName: api.addonName
+                        addonName: api.addonName,
+                        addonTitle: api.addonTitle
                     }
                 });
                 stats.updated++;
@@ -171,7 +200,8 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                         path: api.path,
                         method: api.method,
                         description: api.description,
-                        addonName: api.addonName
+                        addonName: api.addonName,
+                        addonTitle: api.addonTitle
                     }
                 });
                 stats.created++;

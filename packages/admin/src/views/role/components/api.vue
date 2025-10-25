@@ -9,7 +9,7 @@
             <!-- 接口分组列表 -->
             <div class="api-container">
                 <div v-for="group in $Data.filteredApiData" :key="group.name" class="api-group">
-                    <div class="group-header">{{ group.name }}</div>
+                    <div class="group-header">{{ group.title }}</div>
                     <div class="api-checkbox-list">
                         <tiny-checkbox-group v-model="$Data.checkedApiIds">
                             <tiny-checkbox v-for="api in group.apis" :key="api.id" :label="api.id"> {{ api.label }} </tiny-checkbox>
@@ -80,15 +80,17 @@ const $Method = {
         try {
             const res = await $Http('/addon/admin/apiAll');
 
-            // 将接口列表按 addonName 分组
+            // 将接口列表按 addonTitle 分组
             const apiMap = new Map();
 
             res.data.lists.forEach((api) => {
-                const addonName = api.addonName || '项目接口';
+                const addonTitle = api.addonTitle || api.addonName || '项目接口';
+                const addonName = api.addonName || 'project';
 
                 if (!apiMap.has(addonName)) {
                     apiMap.set(addonName, {
                         name: addonName,
+                        title: addonTitle,
                         apis: []
                     });
                 }
