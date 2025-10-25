@@ -7,8 +7,9 @@
         <div class="section-content">
             <div class="addon-list">
                 <div v-for="addon in addonList" :key="addon.name" class="addon-item">
+                    <div class="addon-status-badge" :class="{ active: addon.enabled }"></div>
                     <div class="addon-icon">
-                        <Icon name="Box" :size="24" />
+                        <Icon name="Box" :size="20" />
                     </div>
                     <div class="addon-info">
                         <div class="addon-title">
@@ -16,10 +17,6 @@
                             <t-tag theme="success" variant="outline" size="small">{{ addon.version }}</t-tag>
                         </div>
                         <div class="addon-desc">{{ addon.description }}</div>
-                    </div>
-                    <div class="addon-status">
-                        <t-tag v-if="addon.enabled" theme="success" size="small">已启用</t-tag>
-                        <t-tag v-else theme="default" size="small">已禁用</t-tag>
                     </div>
                 </div>
             </div>
@@ -48,17 +45,18 @@ fetchData();
 .addon-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 
     .addon-item {
+        position: relative;
         background: $bg-color-container;
         border: 1px solid $border-color;
         border-left: 3px solid $primary-color;
         border-radius: $border-radius-small;
-        padding: $spacing-md;
+        padding: 10px 12px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         transition: all 0.3s;
 
         &:hover {
@@ -67,9 +65,25 @@ fetchData();
             transform: translateY(-2px);
         }
 
+        .addon-status-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: $text-disabled;
+            transition: all 0.3s;
+
+            &.active {
+                background: $success-color;
+                box-shadow: 0 0 0 2px rgba($success-color, 0.2);
+            }
+        }
+
         .addon-icon {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, $primary-color, #764ba2);
             border-radius: $border-radius-small;
             display: flex;
@@ -82,12 +96,13 @@ fetchData();
         .addon-info {
             flex: 1;
             min-width: 0;
+            padding-right: 16px;
 
             .addon-title {
                 display: flex;
                 align-items: center;
                 gap: 6px;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
 
                 .addon-name {
                     font-size: 14px;
@@ -99,12 +114,11 @@ fetchData();
             .addon-desc {
                 font-size: 14px;
                 color: $text-secondary;
-                line-height: 1.4;
+                line-height: 1.3;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
-        }
-
-        .addon-status {
-            flex-shrink: 0;
         }
     }
 }
