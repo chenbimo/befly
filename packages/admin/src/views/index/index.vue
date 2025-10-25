@@ -8,8 +8,6 @@
         <DatabaseStats />
         <PerformanceMetrics />
         <EnvironmentInfo />
-        <OperationLogs />
-        <SystemNotifications />
     </div>
 </template>
 
@@ -22,8 +20,6 @@ import SystemResources from './components/SystemResources.vue';
 import DatabaseStats from './components/DatabaseStats.vue';
 import PerformanceMetrics from './components/PerformanceMetrics.vue';
 import EnvironmentInfo from './components/EnvironmentInfo.vue';
-import OperationLogs from './components/OperationLogs.vue';
-import SystemNotifications from './components/SystemNotifications.vue';
 </script>
 
 <style scoped lang="scss">
