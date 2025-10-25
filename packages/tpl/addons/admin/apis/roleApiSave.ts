@@ -4,13 +4,14 @@
 
 import { Yes, No, Fields } from 'befly';
 import { cacheRolePermissions } from '../util';
+import adminRoleTable from '../tables/role.json';
 
 export default {
     name: '保存角色接口权限',
     auth: true,
     fields: {
         roleId: Fields._id,
-        apiIds: '接口ID列表|array_text|0|1000|null|0|null'
+        apiIds: adminRoleTable.apis
     },
     handler: async (befly, ctx) => {
         // 查询角色是否存在

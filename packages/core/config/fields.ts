@@ -7,12 +7,16 @@
  *
  * 说明：
  * - 字段标签：用于显示的中文名称
- * - 数据类型：string、number、boolean、array 等
- * - 最小值：string 类型表示最小长度，number 类型表示最小数值
- * - 最大值：string 类型表示最大长度，number 类型表示最大数值
+ * - 数据类型：string、number、boolean、array_string、array_text 等
+ * - 最小值：string 类型表示最小长度，number 类型表示最小数值，array 类型表示最小元素个数
+ * - 最大值：string 类型表示最大长度，number 类型表示最大数值，array 类型表示最大元素个数
  * - 默认值：字段的默认值，无默认值时填 null
  * - 是否必填：0 表示非必填，1 表示必填
  * - 正则表达式：用于验证字段值的正则表达式，无验证时填 null
+ * 
+ * 类型说明：
+ * - array_string: 短数组，存储为 VARCHAR，建议设置 max 限制（如 0-100）
+ * - array_text: 长数组，存储为 MEDIUMTEXT，min/max 可设为 null 表示不限制
  */
 
 export const Fields = {
