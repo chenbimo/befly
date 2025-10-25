@@ -53,43 +53,51 @@ bun run main.ts
 
 ```typescript
 // apis/user/hello.ts
-import { Api, Yes } from 'befly';
+import { Yes } from 'befly';
+import type { ApiRoute } from 'befly';
 
-export default Api.GET(
-    '问候接口',
-    false, // 公开接口
-    {},
-    [],
-    async (befly, ctx) => {
+export default {
+    name: '问候接口',
+    auth: false, // 公开接口
+    fields: {},
+    handler: async (befly, ctx) => {
         return Yes('Hello, Befly!', {
             timestamp: Date.now()
         });
     }
-);
+} as ApiRoute;
 ```
 
-访问：`http://localhost:3000/user/hello`
+访问：`http://localhost:3000/api/user/hello`
 
 ## 🔥 新版本特性（3.0）
 
 ### TypeScript 全面支持
 
 ```typescript
-import type { BeflyContext, ApiRoute } from 'befly';
+import { Yes } from 'befly';
+import type { ApiRoute, BeflyContext } from 'befly';
 import type { User } from './types/models';
 
-// 完整的类型提示
-export default Api.POST<User>('获取用户', true, { id: '用户ID⚡number⚡1⚡999999⚡null⚡0⚡null' }, ['id'], async (befly: BeflyContext, ctx) => {
-    const { id } = ctx.body;
+export default {
+    name: '获取用户',
+    auth: true,
+    fields: {
+        id: '用户ID|number|1|999999|null|1|null'
+    },
+    required: ['id'],
+    handler: async (befly: BeflyContext, ctx) => {
+        const { id } = ctx.body;
 
-    // 类型安全的数据库查询
-    const user = await befly.db.getOne<User>({
-        table: 'user',
-        where: { id }
-    });
+        // 类型安全的数据库查询
+        const user = await befly.db.getOne<User>({
+            table: 'user',
+            where: { id }
+        });
 
-    return Yes('查询成功', user);
-});
+        return Yes('查询成功', user);
+    }
+} as ApiRoute;
 ```
 
 ### 增强的数据库操作
@@ -107,13 +115,31 @@ const result = await befly.db.getList<Product>({
     where: { category: 'electronics' },
     page: 1,
     limit: 10,
-    orderBy: 'created_at DESC'
+    orderBy: ['createdAt#DESC']
 });
 
-// 事务支持
-await befly.db.trans(async (trans) => {
-    await trans.insData({ table: 'order', data: orderData });
-    await trans.updData({ table: 'product', data: { stock: newStock }, where: { id: productId } });
+// 插入数据
+await befly.db.insData({
+    table: 'user',
+    data: {
+        username: 'john',
+        email: 'john@example.com'
+    }
+});
+
+// 更新数据
+await befly.db.updData({
+    table: 'user',
+    where: { id: 1 },
+    data: {
+        nickname: 'John Doe'
+    }
+});
+
+// 删除数据
+await befly.db.delData({
+    table: 'user',
+    where: { id: 1 }
 });
 ```
 
@@ -121,13 +147,15 @@ await befly.db.trans(async (trans) => {
 
 ```json
 {
-    "username": "用户名⚡string⚡3⚡50⚡null⚡1⚡^[a-zA-Z0-9_]+$",
-    "email": "邮箱⚡string⚡5⚡100⚡null⚡1⚡^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-    "age": "年龄⚡number⚡0⚡150⚡0⚡0⚡null",
-    "tags": "标签⚡array⚡0⚡10⚡[]⚡0⚡null",
-    "bio": "简介⚡text⚡0⚡5000⚡null⚡0⚡null"
+    "username": "用户名|string|3|50|null|1|^[a-zA-Z0-9_]+$",
+    "email": "邮箱|string|5|100|null|1|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+    "age": "年龄|number|0|150|18|0|null",
+    "tags": "标签|array_string|0|10|null|0|null",
+    "bio": "简介|text|0|5000|null|0|null"
 }
 ```
+
+字段定义格式：`"字段名|类型|最小值|最大值|默认值|是否索引|正则约束"`
 
 同步到数据库：
 
@@ -173,31 +201,11 @@ DB_NAME=:memory:
 - [数据库操作](./docs/05-数据库/)
 - [TypeScript 支持](./docs/10-TypeScript/01-TypeScript支持.md)
 
-## 📁 项目结构
-
-```
-befly/
-├── packages/          # Monorepo 包目录
-│   ├── core/         # Befly 核心框架
-│   ├── tpl/          # 项目模板示例
-│   └── admin/        # 后台管理系统（Vue3 + TDesign）
-├── docs/             # 使用文档
-├── notes/            # 说明记录文档
-│   ├── WORKSPACE.md  # 工作区说明
-│   └── PUBLISH.md    # 发布指南
-├── temp/             # 临时执行脚本
-│   └── publish.js    # 发布脚本
-└── AGENTS.md         # AI Agent 指令
-```
-
 ### 目录说明
 
 - **`packages/core`** - Befly 核心框架包（发布到 npm）
 - **`packages/tpl`** - API 项目模板示例
-- **`packages/admin`** - 后台管理系统（Vue3 + TDesign + 自动导入）
-- **`docs/`** - 完整的使用教程和 API 文档
-- **`notes/`** - 所有说明、记录、总结类文档
-- **`temp/`** - 所有临时执行脚本和测试文件
+- **`packages/admin`** - 后台管理系统（Vue3 + TinyVue + 自动导入）
 
 ## 🚀 快速启动
 
