@@ -4,7 +4,7 @@
 
 import { Logger } from 'befly';
 import type { BeflyContext } from 'befly/types/befly';
-import { readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -209,4 +209,58 @@ export async function deleteRolePermissions(befly: BeflyContext, roleCode: strin
     } catch (error: any) {
         Logger.warn(`删除角色 ${roleCode} 权限缓存失败:`, error?.message || '未知错误');
     }
+}
+
+/**
+ * 获取插件列表
+ * @returns 插件列表
+ */
+export function getAddonList(): Array<{ name: string; title: string; version: string; description: string; enabled: boolean }> {
+    const addonList: Array<{ name: string; title: string; version: string; description: string; enabled: boolean }> = [];
+
+    // 获取 addons 目录路径
+    const addonsDir = path.join(process.cwd(), 'addons');
+
+    try {
+        const addonNames = readdirSync(addonsDir);
+
+        for (const addonName of addonNames) {
+            const addonPath = path.join(addonsDir, addonName);
+            const stat = statSync(addonPath);
+
+            // 只处理目录
+            if (!stat.isDirectory()) {
+                continue;
+            }
+
+            // 读取插件配置文件
+            const configPath = path.join(addonPath, 'addon.config.json');
+
+            try {
+                const configContent = readFileSync(configPath, 'utf-8');
+                const config = JSON.parse(configContent);
+
+                addonList.push({
+                    name: config.name || addonName,
+                    title: config.title || addonName,
+                    version: config.version || '1.0.0',
+                    description: config.description || '',
+                    enabled: true
+                });
+            } catch (error) {
+                // 配置文件不存在或解析失败，使用默认值
+                addonList.push({
+                    name: addonName,
+                    title: addonName,
+                    version: '1.0.0',
+                    description: '',
+                    enabled: true
+                });
+            }
+        }
+    } catch (error: any) {
+        Logger.warn(`扫描插件目录失败:`, error?.message || '未知错误');
+    }
+
+    return addonList;
 }
