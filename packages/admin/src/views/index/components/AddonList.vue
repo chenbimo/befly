@@ -46,8 +46,8 @@ fetchData();
 
 <style scoped lang="scss">
 .addon-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 12px;
 
     .addon-item {
