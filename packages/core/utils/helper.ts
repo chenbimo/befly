@@ -364,46 +364,6 @@ export const toCamelCase = (str: string): string => {
 };
 
 /**
- * 字段数组转下划线格式
- * @param fields - 字段数组（可能包含小驼峰或下划线格式）
- * @returns 下划线格式的字段数组
- *
- * @example
- * fieldsToSnake(['userId', 'userName']) // ['user_id', 'user_name']
- * fieldsToSnake(['*']) // ['*']
- * fieldsToSnake(['id', 'createdAt']) // ['id', 'created_at']
- */
-export const fieldsToSnake = (fields: string[]): string[] => {
-    if (!fields || !Array.isArray(fields)) return fields;
-    return fields.map((field) => {
-        // 保留通配符和特殊字段
-        if (field === '*' || field.includes('(') || field.includes(' ')) {
-            return field;
-        }
-        return toSnakeCase(field);
-    });
-};
-
-/**
- * orderBy 数组转下划线格式
- * @param orderBy - orderBy 数组（格式：'字段#方向'）
- * @returns 字段名转为下划线格式的 orderBy 数组
- *
- * @example
- * orderByToSnake(['userId#DESC', 'createdAt#ASC']) // ['user_id#DESC', 'created_at#ASC']
- * orderByToSnake(['userName#ASC']) // ['user_name#ASC']
- * orderByToSnake([]) // []
- */
-export const orderByToSnake = (orderBy: string[]): string[] => {
-    if (!orderBy || !Array.isArray(orderBy)) return orderBy;
-    return orderBy.map((item) => {
-        if (typeof item !== 'string' || !item.includes('#')) return item;
-        const [field, direction] = item.split('#');
-        return `${toSnakeCase(field.trim())}#${direction.trim()}`;
-    });
-};
-
-/**
  * 对象字段名转下划线
  * @param obj - 源对象
  * @returns 字段名转为下划线格式的新对象
@@ -522,55 +482,6 @@ export const convertBigIntFields = <T = any>(arr: Record<string, any>[], fields:
 
         return converted as T;
     }) as T[];
-};
-
-/**
- * Where 条件字段名转下划线（递归处理嵌套结构）
- * @param where - Where 条件对象
- * @returns 字段名转为下划线格式的新对象
- *
- * @example
- * whereKeysToSnake({ userId: 123 }) // { user_id: 123 }
- * whereKeysToSnake({ userId$gt: 100 }) // { user_id$gt: 100 }
- * whereKeysToSnake({ $or: [{ userId: 1 }, { userName: 'John' }] })
- * // { $or: [{ user_id: 1 }, { user_name: 'John' }] }
- */
-export const whereKeysToSnake = (where: any): any => {
-    if (!where || !isType(where, 'object')) return where;
-
-    const result: any = {};
-
-    for (const [key, value] of Object.entries(where)) {
-        // 处理 $or、$and 等逻辑操作符
-        if (key === '$or' || key === '$and') {
-            if (isType(value, 'array')) {
-                result[key] = (value as any[]).map((item) => whereKeysToSnake(item));
-            } else {
-                result[key] = value;
-            }
-            continue;
-        }
-
-        // 处理字段名（包含操作符的情况，如 'userId$gt'）
-        if (key.includes('$')) {
-            // 分离字段名和操作符
-            const [fieldName, ...operators] = key.split('$');
-            const snakeField = toSnakeCase(fieldName);
-            const newKey = operators.length > 0 ? `${snakeField}$${operators.join('$')}` : snakeField;
-            result[newKey] = value;
-        } else {
-            // 普通字段名
-            const snakeKey = toSnakeCase(key);
-            // 如果值是对象（嵌套的操作符对象），递归处理
-            if (isType(value, 'object') && !isType(value, 'array')) {
-                result[snakeKey] = whereKeysToSnake(value);
-            } else {
-                result[snakeKey] = value;
-            }
-        }
-    }
-
-    return result;
 };
 
 // ========================================
