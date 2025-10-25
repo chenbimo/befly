@@ -8,6 +8,7 @@
             <EnvironmentInfo />
         </div>
         <div class="dashboard-right">
+            <UserInfo />
             <AddonList />
         </div>
     </div>
@@ -16,6 +17,7 @@
 <script setup>
 import SystemOverview from './components/SystemOverview.vue';
 import ServiceStatus from './components/ServiceStatus.vue';
+import UserInfo from './components/UserInfo.vue';
 import AddonList from './components/AddonList.vue';
 import SystemResources from './components/SystemResources.vue';
 import PerformanceMetrics from './components/PerformanceMetrics.vue';

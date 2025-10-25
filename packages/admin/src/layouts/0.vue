@@ -9,7 +9,6 @@
                 <tiny-dropdown title="管理员" trigger="click" border type="info" @item-click="$Method.handleUserMenu">
                     <template #dropdown>
                         <tiny-dropdown-menu>
-                            <tiny-dropdown-item :item-data="{ value: 'profile' }">个人中心</tiny-dropdown-item>
                             <tiny-dropdown-item :item-data="{ value: 'clearCache' }">刷新缓存</tiny-dropdown-item>
                             <tiny-dropdown-item :item-data="{ value: 'logout' }" divided>退出登录</tiny-dropdown-item>
                         </tiny-dropdown-menu>
@@ -106,8 +105,6 @@ const $Method = {
             localStorage.removeItem('token');
             router.push('/login');
             Modal.message({ message: '退出成功', status: 'success' });
-        } else if (value === 'profile') {
-            router.push('/profile');
         } else if (value === 'clearCache') {
             console.log('刷新缓存');
             Modal.message({ message: '缓存刷新成功', status: 'success' });
