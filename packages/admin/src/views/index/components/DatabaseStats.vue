@@ -87,7 +87,7 @@ const databaseStats = $ref({
             width: 40px;
             height: 40px;
             border-radius: $border-radius;
-            background: linear-gradient(135deg, $primary-color 0%, lighten($primary-color, 10%) 100%);
+            background: linear-gradient(135deg, $primary-color 0%, #1a6eeb 100%);
             color: white;
             flex-shrink: 0;
         }

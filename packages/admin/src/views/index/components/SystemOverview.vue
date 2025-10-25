@@ -8,36 +8,6 @@
             <t-row :gutter="12">
                 <t-col :xs="24" :sm="12" :md="12" :lg="12">
                     <div class="info-block">
-                        <div class="info-header">
-                            <Icon name="Server" :size="18" />
-                            <span class="info-title">系统信息</span>
-                        </div>
-                        <div class="info-grid-compact">
-                            <div class="info-grid-item">
-                                <span class="label">系统名称</span>
-                                <span class="value">{{ systemInfo.systemName }}</span>
-                            </div>
-                            <div class="info-grid-item">
-                                <span class="label">当前版本</span>
-                                <span class="value">
-                                    <t-tag theme="primary" variant="outline" size="small">{{ systemInfo.version }}</t-tag>
-                                </span>
-                            </div>
-                            <div class="info-grid-item">
-                                <span class="label">运行环境</span>
-                                <span class="value">
-                                    <t-tag theme="success" variant="outline" size="small">{{ systemInfo.environment }}</t-tag>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </t-col>
-                <t-col :xs="24" :sm="12" :md="12" :lg="12">
-                    <div class="info-block">
-                        <div class="info-header">
-                            <Icon name="Shield" :size="18" />
-                            <span class="info-title">权限统计</span>
-                        </div>
                         <div class="stats-grid">
                             <div class="stat-box stat-primary">
                                 <Icon name="Menu" :size="24" />
