@@ -38,13 +38,25 @@
 <script setup>
 // 组件内部数据
 const environmentInfo = $ref({
-    os: 'Linux x64',
-    server: 'Ubuntu 22.04 LTS',
-    nodeVersion: 'v20.11.0',
-    database: 'MySQL 8.0.35',
-    cache: 'Redis 7.2.3',
-    timezone: 'Asia/Shanghai'
+    os: '',
+    server: '',
+    nodeVersion: '',
+    database: '',
+    cache: '',
+    timezone: ''
 });
+
+// 获取数据
+const fetchData = async () => {
+    try {
+        const { data } = await $Http('/addon/admin/dashboardEnvironmentInfo');
+        Object.assign(environmentInfo, data);
+    } catch (error) {
+        console.error('获取运行环境信息失败:', error);
+    }
+};
+
+fetchData();
 </script>
 
 <style scoped lang="scss">

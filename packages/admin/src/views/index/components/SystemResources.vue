@@ -41,10 +41,22 @@
 <script setup>
 // 组件内部数据
 const systemResources = $ref({
-    cpu: { usage: 45, cores: 8 },
-    memory: { used: 6.5, total: 16, percentage: 40.6 },
-    disk: { used: 256, total: 512, percentage: 50 }
+    cpu: { usage: 0, cores: 0 },
+    memory: { used: 0, total: 0, percentage: 0 },
+    disk: { used: 0, total: 0, percentage: 0 }
 });
+
+// 获取数据
+const fetchData = async () => {
+    try {
+        const { data } = await $Http('/addon/admin/dashboardSystemResources');
+        Object.assign(systemResources, data);
+    } catch (error) {
+        console.error('获取系统资源失败:', error);
+    }
+};
+
+fetchData();
 
 // 工具函数
 const getProgressColor = (percentage) => {

@@ -12,16 +12,7 @@
                     </div>
                     <div class="db-info">
                         <div class="db-label">数据表</div>
-                        <div class="db-value">{{ databaseStats.tables }}<span>个</span></div>
-                    </div>
-                </div>
-                <div class="db-compact-item">
-                    <div class="db-icon">
-                        <Icon name="Users" :size="20" />
-                    </div>
-                    <div class="db-info">
-                        <div class="db-label">总用户</div>
-                        <div class="db-value">{{ databaseStats.users }}<span>个</span></div>
+                        <div class="db-value">{{ databaseStats.tableCount }}<span>个</span></div>
                     </div>
                 </div>
                 <div class="db-compact-item">
@@ -30,7 +21,7 @@
                     </div>
                     <div class="db-info">
                         <div class="db-label">总记录</div>
-                        <div class="db-value">{{ databaseStats.records }}<span>条</span></div>
+                        <div class="db-value">{{ databaseStats.recordCount }}<span>条</span></div>
                     </div>
                 </div>
                 <div class="db-compact-item">
@@ -39,7 +30,16 @@
                     </div>
                     <div class="db-info">
                         <div class="db-label">数据大小</div>
-                        <div class="db-value">{{ databaseStats.size }}<span>MB</span></div>
+                        <div class="db-value">{{ databaseStats.dbSize }}<span>MB</span></div>
+                    </div>
+                </div>
+                <div class="db-compact-item">
+                    <div class="db-icon">
+                        <Icon name="Activity" :size="20" />
+                    </div>
+                    <div class="db-info">
+                        <div class="db-label">活跃连接</div>
+                        <div class="db-value">{{ databaseStats.connections }}<span>个</span></div>
                     </div>
                 </div>
             </div>
@@ -50,11 +50,23 @@
 <script setup>
 // 组件内部数据
 const databaseStats = $ref({
-    tables: 28,
-    users: 1256,
-    records: 15678,
-    size: 128
+    dbSize: 0,
+    tableCount: 0,
+    recordCount: 0,
+    connections: 0
 });
+
+// 获取数据
+const fetchData = async () => {
+    try {
+        const { data } = await $Http('/addon/admin/dashboardDatabaseStats');
+        Object.assign(databaseStats, data);
+    } catch (error) {
+        console.error('获取数据库统计失败:', error);
+    }
+};
+
+fetchData();
 </script>
 
 <style scoped lang="scss">

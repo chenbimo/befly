@@ -43,16 +43,27 @@
 const systemInfo = $ref({
     systemName: 'Befly Admin',
     version: 'v1.0.0',
-    environment: 'Production',
-    startTime: Date.now() - 56520000,
-    uptime: 56520000
+    environment: 'Production'
 });
 
 const permissionStats = $ref({
-    menuCount: 23,
-    apiCount: 156,
-    roleCount: 5
+    menuCount: 0,
+    apiCount: 0,
+    roleCount: 0
 });
+
+// 获取数据
+const fetchData = async () => {
+    try {
+        const { data } = await $Http('/addon/admin/dashboardSystemOverview');
+        Object.assign(systemInfo, data.systemInfo);
+        Object.assign(permissionStats, data.permissionStats);
+    } catch (error) {
+        console.error('获取系统概览失败:', error);
+    }
+};
+
+fetchData();
 
 // 工具函数
 const formatUptime = (ms) => {

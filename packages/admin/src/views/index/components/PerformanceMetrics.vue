@@ -55,15 +55,24 @@
 <script setup>
 // 组件内部数据
 const performanceMetrics = $ref({
-    avgResponseTime: 125,
-    qps: 856,
-    errorRate: 0.8,
-    activeConnections: 45,
-    slowestApi: {
-        path: '/addon/admin/menuList',
-        time: 450
-    }
+    avgResponseTime: 0,
+    qps: 0,
+    errorRate: 0,
+    activeConnections: 0,
+    slowestApi: null
 });
+
+// 获取数据
+const fetchData = async () => {
+    try {
+        const { data } = await $Http('/addon/admin/dashboardPerformanceMetrics');
+        Object.assign(performanceMetrics, data);
+    } catch (error) {
+        console.error('获取性能指标失败:', error);
+    }
+};
+
+fetchData();
 </script>
 
 <style scoped lang="scss">

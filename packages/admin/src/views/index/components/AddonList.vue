@@ -29,11 +29,19 @@
 
 <script setup>
 // 组件内部数据
-const addonList = $ref([
-    { name: 'admin', title: '管理后台', version: '1.0.0', description: '系统核心管理功能模块', enabled: true },
-    { name: 'demo', title: '示例插件', version: '1.0.0', description: '演示插件开发示例', enabled: true },
-    { name: 'befly', title: '核心功能', version: '1.0.0', description: 'Befly 框架核心功能', enabled: true }
-]);
+const addonList = $ref([]);
+
+// 获取数据
+const fetchData = async () => {
+    try {
+        const { data } = await $Http('/addon/admin/dashboardAddonList');
+        addonList.splice(0, addonList.length, ...data);
+    } catch (error) {
+        console.error('获取插件列表失败:', error);
+    }
+};
+
+fetchData();
 </script>
 
 <style scoped lang="scss">

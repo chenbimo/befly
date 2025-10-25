@@ -6,19 +6,19 @@
         </div>
         <div class="section-content">
             <div class="config-grid">
-                <div v-for="(item, key) in configStatus" :key="key" class="config-card" :class="`config-${item.status}`">
+                <div v-for="service in services" :key="service.name" class="config-card" :class="`config-${service.status}`">
                     <div class="config-icon">
-                        <Icon :name="getConfigIcon(key)" :size="20" />
+                        <Icon :name="getServiceIcon(service.name)" :size="20" />
                     </div>
                     <div class="config-info">
-                        <div class="config-name">{{ getConfigLabel(key) }}</div>
+                        <div class="config-name">{{ service.name }}</div>
                         <div class="config-status">
-                            {{ item.message }}
-                            <span v-if="item.latency" class="latency">{{ item.latency }}ms</span>
+                            {{ getStatusText(service.status) }}
+                            <span v-if="service.responseTime && service.responseTime !== '-'" class="latency">{{ service.responseTime }}</span>
                         </div>
                     </div>
                     <div class="config-badge">
-                        <Icon :name="getStatusIcon(item.status)" :size="32" />
+                        <Icon :name="getStatusIcon(service.status)" :size="32" />
                     </div>
                 </div>
             </div>
@@ -28,42 +28,55 @@
 
 <script setup>
 // 组件内部数据
-const configStatus = $ref({
-    database: { status: 'ok', latency: 23, message: '正常' },
-    redis: { status: 'ok', latency: 5, message: '正常' },
-    fileSystem: { status: 'ok', message: '正常' },
-    email: { status: 'warning', message: '未配置' },
-    oss: { status: 'warning', message: '未配置' }
-});
+const services = $ref([]);
 
-// 工具函数
-const getConfigLabel = (key) => {
-    const labels = {
-        database: '数据库',
-        redis: 'Redis',
-        fileSystem: '文件系统',
-        email: '邮件服务',
-        oss: 'OSS存储'
-    };
-    return labels[key] || key;
+// 获取数据
+const fetchData = async () => {
+    try {
+        const { data } = await $Http('/addon/admin/dashboardServiceStatus');
+        services.splice(0, services.length, ...data.services);
+    } catch (error) {
+        console.error('获取服务状态失败:', error);
+    }
 };
 
-const getConfigIcon = (key) => {
-    const icons = {
-        database: 'Database',
-        redis: 'Zap',
-        fileSystem: 'HardDrive',
-        email: 'Mail',
-        oss: 'Cloud'
+fetchData();
+
+// 工具函数
+const getStatusColor = (status) => {
+    const colors = {
+        running: 'success',
+        stopped: 'error',
+        unconfigured: 'warning'
     };
-    return icons[key] || 'Circle';
+    return colors[status] || 'default';
+};
+
+const getStatusText = (status) => {
+    const texts = {
+        running: '正常',
+        stopped: '停止',
+        unconfigured: '未配置'
+    };
+    return texts[status] || status;
+};
+
+const getServiceIcon = (name) => {
+    const icons = {
+        数据库: 'Database',
+        Redis: 'Zap',
+        文件系统: 'HardDrive',
+        邮件服务: 'Mail',
+        OSS存储: 'Cloud'
+    };
+    return icons[name] || 'Circle';
 };
 
 const getStatusIcon = (status) => {
     const icons = {
-        ok: 'CheckCircle',
-        warning: 'AlertCircle',
-        error: 'XCircle'
+        running: 'CheckCircle',
+        stopped: 'XCircle',
+        unconfigured: 'AlertCircle'
     };
     return icons[status] || 'Circle';
 };
@@ -134,7 +147,7 @@ const getStatusIcon = (status) => {
             opacity: 0.2;
         }
 
-        &.config-ok {
+        &.config-running {
             border-color: $success-color;
             background: linear-gradient(135deg, rgba(82, 196, 26, 0.05), white);
 
@@ -148,7 +161,7 @@ const getStatusIcon = (status) => {
             }
         }
 
-        &.config-warning {
+        &.config-unconfigured {
             border-color: $warning-color;
             background: linear-gradient(135deg, rgba(250, 173, 20, 0.05), white);
 
@@ -162,7 +175,7 @@ const getStatusIcon = (status) => {
             }
         }
 
-        &.config-error {
+        &.config-stopped {
             border-color: $error-color;
             background: linear-gradient(135deg, rgba(255, 77, 79, 0.05), white);
 

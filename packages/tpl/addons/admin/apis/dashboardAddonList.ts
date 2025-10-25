@@ -56,8 +56,6 @@ export default {
             }
         }
 
-        return Yes('获取成功', {
-            lists: addonList
-        });
+        return Yes('获取成功', addonList);
     }
 };
