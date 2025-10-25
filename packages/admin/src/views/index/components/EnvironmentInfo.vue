@@ -50,7 +50,7 @@ const environmentInfo = $ref({
 <style scoped lang="scss">
 .env-grid-compact {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 
     .env-compact-item {

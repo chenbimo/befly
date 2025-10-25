@@ -69,7 +69,7 @@ const performanceMetrics = $ref({
 <style scoped lang="scss">
 .performance-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: $spacing-sm;
     margin-bottom: $spacing-sm;
 

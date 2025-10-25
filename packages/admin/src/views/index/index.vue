@@ -28,7 +28,6 @@ import SystemNotifications from './components/SystemNotifications.vue';
 
 <style scoped lang="scss">
 .dashboard-container {
-    padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
