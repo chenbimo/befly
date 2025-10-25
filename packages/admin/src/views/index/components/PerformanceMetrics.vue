@@ -1,0 +1,133 @@
+<template>
+    <div class="section-block">
+        <div class="section-header">
+            <Icon name="Zap" :size="20" />
+            <h2>性能指标</h2>
+        </div>
+        <div class="section-content">
+            <div class="performance-grid">
+                <div class="perf-metric">
+                    <div class="perf-icon">
+                        <Icon name="Clock" :size="18" />
+                    </div>
+                    <div class="perf-info">
+                        <div class="perf-label">平均响应</div>
+                        <div class="perf-value">{{ performanceMetrics.avgResponseTime }}ms</div>
+                    </div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-icon">
+                        <Icon name="TrendingUp" :size="18" />
+                    </div>
+                    <div class="perf-info">
+                        <div class="perf-label">QPS</div>
+                        <div class="perf-value">{{ performanceMetrics.qps }}/s</div>
+                    </div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-icon">
+                        <Icon name="AlertCircle" :size="18" />
+                    </div>
+                    <div class="perf-info">
+                        <div class="perf-label">错误率</div>
+                        <div class="perf-value">{{ performanceMetrics.errorRate }}%</div>
+                    </div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-icon">
+                        <Icon name="Activity" :size="18" />
+                    </div>
+                    <div class="perf-info">
+                        <div class="perf-label">活跃连接</div>
+                        <div class="perf-value">{{ performanceMetrics.activeConnections }}</div>
+                    </div>
+                </div>
+            </div>
+            <!-- 最慢接口提示 -->
+            <div v-if="performanceMetrics.slowestApi" class="perf-slowest">
+                <Icon name="AlertTriangle" :size="14" />
+                <span>最慢接口: {{ performanceMetrics.slowestApi.path }} ({{ performanceMetrics.slowestApi.time }}ms)</span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+// 组件内部数据
+const performanceMetrics = $ref({
+    avgResponseTime: 125,
+    qps: 856,
+    errorRate: 0.8,
+    activeConnections: 45,
+    slowestApi: {
+        path: '/addon/admin/menuList',
+        time: 450
+    }
+});
+</script>
+
+<style scoped lang="scss">
+.performance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-sm;
+    margin-bottom: $spacing-sm;
+
+    .perf-metric {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        padding: $spacing-sm $spacing-md;
+        background: $bg-color-page;
+        border-radius: $border-radius;
+        border: 1px solid $border-color;
+
+        .perf-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: $border-radius-small;
+            background: linear-gradient(135deg, rgba($success-color, 0.1) 0%, rgba($success-color, 0.05) 100%);
+            color: $success-color;
+            flex-shrink: 0;
+        }
+
+        .perf-info {
+            flex: 1;
+
+            .perf-label {
+                font-size: 14px;
+                color: $text-secondary;
+                margin-bottom: 2px;
+            }
+
+            .perf-value {
+                font-size: 16px;
+                font-weight: 700;
+                color: $primary-color;
+            }
+        }
+    }
+}
+
+.perf-slowest {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: $spacing-sm $spacing-md;
+    background: rgba($warning-color, 0.05);
+    border-radius: $border-radius-small;
+    border: 1px solid rgba($warning-color, 0.2);
+    font-size: 14px;
+    color: $warning-color;
+
+    span {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+</style>

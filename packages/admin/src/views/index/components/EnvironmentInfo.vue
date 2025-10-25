@@ -69,13 +69,13 @@ const environmentInfo = $ref({
         }
 
         .env-label {
-            font-size: 13px;
+            font-size: 14px;
             color: $text-secondary;
             font-weight: 500;
         }
 
         .env-value {
-            font-size: 13px;
+            font-size: 14px;
             color: $text-primary;
             font-weight: 600;
             text-align: right;

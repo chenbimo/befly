@@ -29,14 +29,6 @@
                                     <t-tag theme="success" variant="outline" size="small">{{ systemInfo.environment }}</t-tag>
                                 </span>
                             </div>
-                            <div class="info-grid-item">
-                                <span class="label">运行时长</span>
-                                <span class="value highlight">{{ formatUptime(systemInfo.uptime) }}</span>
-                            </div>
-                            <div class="info-grid-item">
-                                <span class="label">启动时间</span>
-                                <span class="value">{{ formatDateTime(systemInfo.startTime) }}</span>
-                            </div>
                         </div>
                     </div>
                 </t-col>
@@ -141,7 +133,7 @@ const formatDateTime = (timestamp) => {
         border-bottom: 1px solid $primary-color;
 
         .info-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             color: $text-primary;
         }
@@ -149,32 +141,31 @@ const formatDateTime = (timestamp) => {
 
     .info-grid-compact {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
 
         .info-grid-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 10px;
-            background: white;
-            border-radius: 4px;
+            padding: 10px 12px;
+            background: $bg-color-page;
+            border-radius: $border-radius-small;
             border: 1px solid $border-color;
 
             .label {
-                font-size: 12px;
+                font-size: 14px;
                 color: $text-secondary;
                 font-weight: 500;
             }
 
             .value {
-                font-size: 12px;
+                font-size: 14px;
                 color: $text-primary;
                 font-weight: 600;
 
                 &.highlight {
                     color: $primary-color;
-                    font-size: 13px;
                 }
             }
         }
@@ -211,7 +202,7 @@ const formatDateTime = (timestamp) => {
             }
 
             .stat-label {
-                font-size: 11px;
+                font-size: 14px;
                 color: $text-secondary;
             }
         }

@@ -1,0 +1,29 @@
+// 首页组件通用样式
+.section-block {
+    background: $dashboard-section-bg;
+    border-radius: $dashboard-section-radius;
+    padding: $dashboard-section-padding;
+    border: 1px solid $dashboard-section-border;
+    box-shadow: $shadow-small;
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        margin-bottom: $spacing-md;
+        padding-bottom: $spacing-sm;
+        border-bottom: 1px solid $border-color-light;
+
+        h2 {
+            font-size: $dashboard-header-font-size;
+            font-weight: 600;
+            color: $text-primary;
+            margin: 0;
+            flex: 1;
+        }
+    }
+
+    .section-content {
+        font-size: $dashboard-content-font-size;
+    }
+}

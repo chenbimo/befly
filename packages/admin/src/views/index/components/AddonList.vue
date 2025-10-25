@@ -39,16 +39,16 @@ const addonList = $ref([
 
 <style scoped lang="scss">
 .addon-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
 
     .addon-item {
         background: $bg-color-container;
         border: 1px solid $border-color;
         border-left: 3px solid $primary-color;
-        border-radius: 4px;
-        padding: 12px;
+        border-radius: $border-radius-small;
+        padding: $spacing-md;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -57,14 +57,14 @@ const addonList = $ref([
         &:hover {
             border-left-color: $success-color;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-            transform: translateX(4px);
+            transform: translateY(-2px);
         }
 
         .addon-icon {
             width: 40px;
             height: 40px;
             background: linear-gradient(135deg, $primary-color, #764ba2);
-            border-radius: 6px;
+            border-radius: $border-radius-small;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -83,14 +83,14 @@ const addonList = $ref([
                 margin-bottom: 4px;
 
                 .addon-name {
-                    font-size: 13px;
+                    font-size: 14px;
                     font-weight: 600;
                     color: $text-primary;
                 }
             }
 
             .addon-desc {
-                font-size: 12px;
+                font-size: 14px;
                 color: $text-secondary;
                 line-height: 1.4;
             }

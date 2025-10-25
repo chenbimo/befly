@@ -56,19 +56,19 @@ const getProgressColor = (percentage) => {
 
 <style scoped lang="scss">
 .resource-compact-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-md;
 
     .resource-compact-item {
         .resource-compact-header {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
 
             .resource-label {
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 600;
                 color: $text-secondary;
                 min-width: 50px;
@@ -82,7 +82,7 @@ const getProgressColor = (percentage) => {
             }
 
             .resource-desc {
-                font-size: 12px;
+                font-size: 14px;
                 color: $text-placeholder;
                 flex: 1;
             }

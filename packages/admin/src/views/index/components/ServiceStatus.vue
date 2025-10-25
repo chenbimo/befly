@@ -107,13 +107,13 @@ const getStatusIcon = (status) => {
             min-width: 0;
 
             .config-name {
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 600;
                 margin-bottom: 2px;
             }
 
             .config-status {
-                font-size: 11px;
+                font-size: 14px;
                 display: flex;
                 align-items: center;
                 gap: 4px;

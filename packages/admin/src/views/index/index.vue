@@ -1,33 +1,29 @@
 <template>
     <div class="dashboard-container">
-        <WelcomeSection />
+        <QuickActions />
         <SystemOverview />
         <ServiceStatus />
         <AddonList />
         <SystemResources />
-        <DatabaseAndPerformance />
+        <DatabaseStats />
+        <PerformanceMetrics />
         <EnvironmentInfo />
-        <QuickActions @action-click="handleQuickAction" />
         <OperationLogs />
-        <NotificationAndTodo />
+        <SystemNotifications />
     </div>
 </template>
 
 <script setup>
-import WelcomeSection from './components/WelcomeSection.vue';
+import QuickActions from './components/QuickActions.vue';
 import SystemOverview from './components/SystemOverview.vue';
 import ServiceStatus from './components/ServiceStatus.vue';
 import AddonList from './components/AddonList.vue';
 import SystemResources from './components/SystemResources.vue';
-import DatabaseAndPerformance from './components/DatabaseAndPerformance.vue';
+import DatabaseStats from './components/DatabaseStats.vue';
+import PerformanceMetrics from './components/PerformanceMetrics.vue';
 import EnvironmentInfo from './components/EnvironmentInfo.vue';
-import QuickActions from './components/QuickActions.vue';
 import OperationLogs from './components/OperationLogs.vue';
-import NotificationAndTodo from './components/NotificationAndTodo.vue';
-
-const handleQuickAction = (action) => {
-    console.log('执行操作:', action);
-};
+import SystemNotifications from './components/SystemNotifications.vue';
 </script>
 
 <style scoped lang="scss">
