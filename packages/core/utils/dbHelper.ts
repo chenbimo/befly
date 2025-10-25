@@ -371,7 +371,7 @@ export class DbHelper {
      * 自动生成系统字段并包装在事务中
      * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async insDataBatch(table: string, dataList: Record<string, any>[]): Promise<number[]> {
+    async insBatch(table: string, dataList: Record<string, any>[]): Promise<number[]> {
         // 空数组直接返回
         if (dataList.length === 0) {
             return [];
@@ -477,7 +477,7 @@ export class DbHelper {
         return await this.updData({
             table: snakeTable,
             data: { state: 0, deleted_at: Date.now() },
-            where
+            where: where
         });
     }
 
