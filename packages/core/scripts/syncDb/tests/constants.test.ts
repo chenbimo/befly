@@ -82,7 +82,8 @@ describe('syncDb/constants', () => {
             expect(typeMapping.number).toBeDefined();
             expect(typeMapping.string).toBeDefined();
             expect(typeMapping.text).toBeDefined();
-            expect(typeMapping.array).toBeDefined();
+            expect(typeMapping.array_string).toBeDefined();
+            expect(typeMapping.array_text).toBeDefined();
         });
 
         test('不同数据库的类型映射应不同', () => {

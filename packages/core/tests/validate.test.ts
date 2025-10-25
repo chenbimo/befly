@@ -76,14 +76,14 @@ describe('数组验证', () => {
     });
 
     test('应该拒绝元素过多的数组', () => {
-        const rule = '标签|array|0|3|[]|0|null';
+        const rule = '标签|array_string|0|3|[]|0|null';
         const result = Validator.validate(['a', 'b', 'c', 'd'], rule);
 
         expect(Validator.isPassed(result)).toBe(false);
     });
 
     test('应该验证数组元素的正则表达式', () => {
-        const rule = '手机号列表|array|0|5|[]|0|^1[3-9]\\d{9}$';
+        const rule = '手机号列表|array_string|0|5|[]|0|^1[3-9]\\d{9}$';
         const valid = Validator.validate(['13812345678', '13998765432'], rule);
         const invalid = Validator.validate(['13812345678', '12345'], rule);
 
@@ -92,7 +92,7 @@ describe('数组验证', () => {
     });
 
     test('应该接受空数组（当最小值为0）', () => {
-        const rule = '标签|array|0|10|[]|0|null';
+        const rule = '标签|array_string|0|10|[]|0|null';
         const result = Validator.validate([], rule);
 
         expect(Validator.isPassed(result)).toBe(true);
@@ -134,7 +134,7 @@ describe('默认值处理', () => {
     });
 
     test('应该使用数组默认值', () => {
-        const rule = '标签|array|0|10|[]|0|null';
+        const rule = '标签|array_string|0|10|[]|0|null';
         const result = Validator.validate(undefined, rule);
 
         expect(result.value).toEqual([]);

@@ -24,13 +24,13 @@ export const Fields = {
     title: '标题|string|1|200|null|0|null',
     description: '描述|string|0|500|null|0|null',
     keyword: '关键词|string|1|50|null|1|null',
-    keywords: '关键词列表|array|0|50|null|0|null',
+    keywords: '关键词列表|array_string|0|50|null|0|null',
     enabled: '启用状态|number|0|1|1|0|^(0|1)$',
     date: '日期|string|10|10|null|0|^\\d{4}-\\d{2}-\\d{2}$',
     datetime: '日期时间|string|19|25|null|0|^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}',
     filename: '文件名|string|1|255|null|0|null',
     url: '网址|string|5|500|null|0|^https?://',
-    tag: '标签|array|0|10|null|0|null',
+    tag: '标签|array_string|0|10|null|0|null',
     startTime: '开始时间|number|0|9999999999999|null|0|null',
     endTime: '结束时间|number|0|9999999999999|null|0|null'
 } as const;

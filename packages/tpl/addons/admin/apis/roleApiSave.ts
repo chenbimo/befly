@@ -10,7 +10,7 @@ export default {
     auth: true,
     fields: {
         roleId: Fields._id,
-        apiIds: '接口ID列表|string|0|10000|null|0|null'
+        apiIds: '接口ID列表|array_text|0|1000|null|0|null'
     },
     handler: async (befly, ctx) => {
         // 查询角色是否存在
@@ -23,22 +23,8 @@ export default {
             return No('角色不存在');
         }
 
-        // apiIds 可能是 JSON 字符串或逗号分隔的字符串
-        let apiIdsStr = '';
-        if (ctx.body.apiIds) {
-            try {
-                // 尝试解析 JSON
-                const parsed = JSON.parse(ctx.body.apiIds);
-                if (Array.isArray(parsed)) {
-                    apiIdsStr = parsed.join(',');
-                } else {
-                    apiIdsStr = ctx.body.apiIds;
-                }
-            } catch {
-                // 如果不是 JSON，直接使用
-                apiIdsStr = ctx.body.apiIds;
-            }
-        }
+        // 将数组转为逗号分隔的字符串存储
+        const apiIdsStr = Array.isArray(ctx.body.apiIds) ? ctx.body.apiIds.join(',') : '';
 
         // 更新角色的接口权限
         await befly.db.updData({

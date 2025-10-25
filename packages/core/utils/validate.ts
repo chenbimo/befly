@@ -118,8 +118,9 @@ export class Validator {
                 return this.validateString(value, name, min, max, regex, fieldName);
             case 'text':
                 return this.validateString(value, name, min, max, regex, fieldName);
-            case 'array':
-                return this.validateArray(value, label, min, max, regex, fieldName);
+            case 'array_string':
+            case 'array_text':
+                return this.validateArray(value, name, min, max, regex, fieldName);
             default:
                 return `字段 ${fieldName} 的类型 ${type} 不支持`;
         }
@@ -261,7 +262,7 @@ export class Validator {
         if (value === undefined || value === null) {
             if (defaultValue !== 'null' && defaultValue !== null) {
                 // 特殊处理数组类型的默认值字符串
-                if (type === 'array' && typeof defaultValue === 'string') {
+                if ((type === 'array_string' || type === 'array_text') && typeof defaultValue === 'string') {
                     if (defaultValue === '[]') {
                         return { valid: true, value: [], errors: [] };
                     }
@@ -281,7 +282,7 @@ export class Validator {
             // 如果没有默认值，根据类型返回默认值
             if (type === 'number') {
                 return { valid: true, value: 0, errors: [] };
-            } else if (type === 'array') {
+            } else if (type === 'array_string' || type === 'array_text') {
                 return { valid: true, value: [], errors: [] };
             } else if (type === 'string' || type === 'text') {
                 return { valid: true, value: '', errors: [] };
@@ -347,7 +348,8 @@ export class Validator {
                 }
                 break;
 
-            case 'array':
+            case 'array_string':
+            case 'array_text':
                 if (!Array.isArray(convertedValue)) {
                     errors.push(`${name || '值'}必须是数组`);
                 }

@@ -66,5 +66,6 @@ export const typeMapping = {
     number: IS_SQLITE ? 'INTEGER' : 'BIGINT',
     string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
     text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT',
-    array: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR'
+    array_string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
+    array_text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT'
 };
