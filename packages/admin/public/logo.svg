@@ -1,0 +1,106 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 渐变色定义 -->
+    <linearGradient id="beeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667EEA;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#764BA2;stop-opacity:0.2" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="#667EEA" stroke-width="2" opacity="0.2"/>
+
+  <!-- 飞行轨迹 -->
+  <path d="M 30 80 Q 60 40, 100 60 T 170 80"
+        fill="none"
+        stroke="#764BA2"
+        stroke-width="2"
+        stroke-dasharray="5,5"
+        opacity="0.4">
+    <animate attributeName="stroke-dashoffset"
+             from="0"
+             to="20"
+             dur="2s"
+             repeatCount="indefinite"/>
+  </path>
+
+  <!-- 左翅膀 -->
+  <ellipse cx="75" cy="65" rx="25" ry="35"
+           fill="url(#wingGradient)"
+           transform="rotate(-30 75 65)"
+           opacity="0.6">
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      values="-30 75 65; -20 75 65; -30 75 65"
+                      dur="0.3s"
+                      repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- 右翅膀 -->
+  <ellipse cx="125" cy="65" rx="25" ry="35"
+           fill="url(#wingGradient)"
+           transform="rotate(30 125 65)"
+           opacity="0.6">
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      values="30 125 65; 20 125 65; 30 125 65"
+                      dur="0.3s"
+                      repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- 蜜蜂身体 -->
+  <g id="bee-body">
+    <!-- 头部 -->
+    <circle cx="100" cy="65" r="12" fill="#2D3748"/>
+
+    <!-- 眼睛 -->
+    <circle cx="95" cy="62" r="3" fill="white"/>
+    <circle cx="105" cy="62" r="3" fill="white"/>
+    <circle cx="96" cy="62" r="1.5" fill="#2D3748"/>
+    <circle cx="106" cy="62" r="1.5" fill="#2D3748"/>
+
+    <!-- 触角 -->
+    <path d="M 92 55 L 88 48" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 108 55 L 112 48" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="88" cy="48" r="2" fill="#667EEA"/>
+    <circle cx="112" cy="48" r="2" fill="#667EEA"/>
+
+    <!-- 胸部 -->
+    <ellipse cx="100" cy="80" rx="15" ry="12" fill="url(#beeGradient)"/>
+
+    <!-- 腹部 -->
+    <ellipse cx="100" cy="98" rx="18" ry="22" fill="url(#beeGradient)"/>
+
+    <!-- 黑色条纹 -->
+    <ellipse cx="100" cy="90" rx="17" ry="4" fill="#2D3748" opacity="0.8"/>
+    <ellipse cx="100" cy="100" rx="17" ry="4" fill="#2D3748" opacity="0.8"/>
+    <ellipse cx="100" cy="110" rx="16" ry="4" fill="#2D3748" opacity="0.8"/>
+
+    <!-- 尾刺 -->
+    <path d="M 100 115 L 100 125" stroke="#E53E3E" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="100" cy="125" r="2" fill="#E53E3E"/>
+  </g>
+
+  <!-- 装饰性代码符号 -->
+  <text x="150" y="140" font-family="monospace" font-size="14" fill="#667EEA" opacity="0.3">&lt;/&gt;</text>
+  <text x="30" y="40" font-family="monospace" font-size="12" fill="#764BA2" opacity="0.3">{}</text>
+
+  <!-- 文字 Befly -->
+  <text x="100" y="160"
+        font-family="Arial, sans-serif"
+        font-size="24"
+        font-weight="bold"
+        fill="#2D3748"
+        text-anchor="middle">Befly</text>
+
+  <!-- 副标题 -->
+  <text x="100" y="178"
+        font-family="Arial, sans-serif"
+        font-size="10"
+        fill="#718096"
+        text-anchor="middle">野蜂飞舞</text>
+</svg>
