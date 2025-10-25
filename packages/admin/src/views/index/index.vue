@@ -1,6 +1,5 @@
 <template>
     <div class="dashboard-container">
-        <QuickActions />
         <SystemOverview />
         <ServiceStatus />
         <AddonList />
@@ -12,7 +11,6 @@
 </template>
 
 <script setup>
-import QuickActions from './components/QuickActions.vue';
 import SystemOverview from './components/SystemOverview.vue';
 import ServiceStatus from './components/ServiceStatus.vue';
 import AddonList from './components/AddonList.vue';
