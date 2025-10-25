@@ -1,0 +1,13 @@
+{
+    "name": "admin",
+    "title": "管理后台",
+    "version": "1.0.0",
+    "description": "提供管理后台的基础功能，包括管理员注册、登录、用户信息管理等",
+    "author": {
+        "name": "Befly Team"
+    },
+    "keywords": ["admin", "backend", "management"],
+    "entry": "index.ts",
+    "enabled": true,
+    "license": "MIT"
+}

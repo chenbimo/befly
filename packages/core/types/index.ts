@@ -16,6 +16,7 @@ export * from './context.js';
 export * from './api.js';
 export * from './befly.js';
 export * from './plugin.js';
+export * from './addon.js';
 
 // 功能模块类型
 export * from './database.js';
@@ -142,6 +143,7 @@ export interface BeflyContext {
     db: DbHelper;
     /** Redis 助手 */
     redis: typeof RedisHelper;
+}
 
 /**
  * 插件定义
