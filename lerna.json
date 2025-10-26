@@ -13,7 +13,6 @@
         "version": {
             "changelog": false,
             "createRelease": "none",
-            "syncWorkspaceLock": true,
             "push": false
         }
     }
