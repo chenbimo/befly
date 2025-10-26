@@ -37,8 +37,8 @@
     ],
     "type": "module",
     "dependencies": {
-        "befly": "3.2.1",
-        "befly-cli": "^3.2.4"
+        "befly": "workspace:*",
+        "befly-cli": "workspace:*"
     },
     "engines": {
         "bun": ">=1.3.0"
