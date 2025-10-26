@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { buildIndexSQL, buildSystemColumnDefs, buildBusinessColumnDefs, generateDDLClause, isPgCompatibleTypeChange } from '../ddl.js';
-import { IS_MYSQL, IS_PG, IS_SQLITE } from '../constants.js';
+import { buildIndexSQL, buildSystemColumnDefs, buildBusinessColumnDefs, generateDDLClause, isPgCompatibleTypeChange } from '../commands/syncDb/ddl.js';
+import { IS_MYSQL, IS_PG, IS_SQLITE } from '../commands/syncDb/constants.js';
 
 describe('syncDb/ddl', () => {
     describe('buildIndexSQL', () => {

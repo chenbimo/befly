@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { DB_VERSION_REQUIREMENTS, SYSTEM_FIELDS, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, MYSQL_TABLE_CONFIG, IS_MYSQL, IS_PG, IS_SQLITE, typeMapping } from '../constants.js';
+import { DB_VERSION_REQUIREMENTS, SYSTEM_FIELDS, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, MYSQL_TABLE_CONFIG, IS_MYSQL, IS_PG, IS_SQLITE, typeMapping } from '../commands/syncDb/constants.js';
 
 describe('syncDb/constants', () => {
     describe('数据库版本要求', () => {

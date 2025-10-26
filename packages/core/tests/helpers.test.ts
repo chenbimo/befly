@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { quoteIdentifier, logFieldChange, formatFieldList } from '../helpers.js';
+import { quoteIdentifier, logFieldChange, formatFieldList } from '../commands/syncDb/helpers.js';
 
 describe('syncDb/helpers', () => {
     describe('quoteIdentifier', () => {

@@ -1,39 +1,44 @@
 /**
- * 缓存管理器
+ * 缓存插件 - TypeScript 版本
  * 负责在服务器启动时缓存接口、菜单和角色权限到 Redis
  */
 
 import { Logger } from '../utils/logger.js';
+import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { ApiRoute } from '../types/api.js';
 
 /**
  * 缓存管理器类
  */
-export class CacheManager {
+class CacheManager {
+    private appContext: BeflyContext;
+
+    constructor(appContext: BeflyContext) {
+        this.appContext = appContext;
+    }
+
     /**
      * 缓存所有接口到 Redis
-     * @param apiRoutes - API 路由映射表（已废弃，保留参数以兼容）
-     * @param appContext - 应用上下文
      */
-    static async cacheApis(apiRoutes: Map<string, ApiRoute>, appContext: BeflyContext): Promise<void> {
+    async cacheApis(): Promise<void> {
         try {
             // 检查表是否存在
-            const tableExists = await appContext.db.tableExists('addon_admin_api');
+            const tableExists = await this.appContext.db.tableExists('addon_admin_api');
             if (!tableExists) {
                 Logger.warn('⚠️ 接口表不存在，跳过接口缓存');
                 return;
             }
 
             // 从数据库查询所有接口（与 apiAll.ts 保持一致）
-            const apiList = await appContext.db.getAll({
+            const apiList = await this.appContext.db.getAll({
                 table: 'addon_admin_api',
                 fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
 
             // 缓存到 Redis
-            const result = await appContext.redis.setObject('apis:all', apiList);
+            const result = await this.appContext.redis.setObject('apis:all', apiList);
 
             if (result === null) {
                 Logger.warn('⚠️ 接口缓存失败');
@@ -47,26 +52,25 @@ export class CacheManager {
 
     /**
      * 缓存所有菜单到 Redis（从数据库读取）
-     * @param appContext - 应用上下文
      */
-    static async cacheMenus(appContext: BeflyContext): Promise<void> {
+    async cacheMenus(): Promise<void> {
         try {
             // 检查表是否存在
-            const tableExists = await appContext.db.tableExists('addon_admin_menu');
+            const tableExists = await this.appContext.db.tableExists('addon_admin_menu');
             if (!tableExists) {
                 Logger.warn('⚠️ 菜单表不存在，跳过菜单缓存');
                 return;
             }
 
             // 从数据库查询所有菜单
-            const menus = await appContext.db.getAll({
+            const menus = await this.appContext.db.getAll({
                 table: 'addon_admin_menu',
                 fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
 
             // 缓存到 Redis
-            const result = await appContext.redis.setObject('menus:all', menus);
+            const result = await this.appContext.redis.setObject('menus:all', menus);
 
             if (result === null) {
                 Logger.warn('⚠️ 菜单缓存失败');
@@ -81,13 +85,12 @@ export class CacheManager {
 
     /**
      * 缓存所有角色的接口权限到 Redis
-     * @param appContext - 应用上下文
      */
-    static async cacheRolePermissions(appContext: BeflyContext): Promise<void> {
+    async cacheRolePermissions(): Promise<void> {
         try {
             // 检查表是否存在
-            const apiTableExists = await appContext.db.tableExists('addon_admin_api');
-            const roleTableExists = await appContext.db.tableExists('addon_admin_role');
+            const apiTableExists = await this.appContext.db.tableExists('addon_admin_api');
+            const roleTableExists = await this.appContext.db.tableExists('addon_admin_role');
 
             if (!apiTableExists || !roleTableExists) {
                 Logger.warn('⚠️ 接口或角色表不存在，跳过角色权限缓存');
@@ -95,13 +98,13 @@ export class CacheManager {
             }
 
             // 查询所有角色
-            const roles = await appContext.db.getAll({
+            const roles = await this.appContext.db.getAll({
                 table: 'addon_admin_role',
                 fields: ['id', 'code', 'apis']
             });
 
             // 查询所有接口（用于权限映射）
-            const allApis = await appContext.db.getAll({
+            const allApis = await this.appContext.db.getAll({
                 table: 'addon_admin_api',
                 fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
             });
@@ -126,10 +129,10 @@ export class CacheManager {
                 const redisKey = `role:apis:${role.code}`;
 
                 // 先删除旧数据
-                await appContext.redis.del(redisKey);
+                await this.appContext.redis.del(redisKey);
 
                 // 批量添加到 Set
-                const result = await appContext.redis.sadd(redisKey, roleApiPaths);
+                const result = await this.appContext.redis.sadd(redisKey, roleApiPaths);
 
                 if (result > 0) {
                     cachedRoles++;
@@ -145,22 +148,40 @@ export class CacheManager {
     }
 
     /**
-     * 启动时缓存所有数据
-     * @param apiRoutes - API 路由映射表
-     * @param appContext - 应用上下文
+     * 缓存所有数据
      */
-    static async cacheAll(apiRoutes: Map<string, ApiRoute>, appContext: BeflyContext): Promise<void> {
+    async cacheAll(): Promise<void> {
         Logger.info('========== 开始缓存数据到 Redis ==========');
 
         // 1. 缓存接口
-        await this.cacheApis(apiRoutes, appContext);
+        await this.cacheApis();
 
         // 2. 缓存菜单
-        await this.cacheMenus(appContext);
+        await this.cacheMenus();
 
         // 3. 缓存角色权限
-        await this.cacheRolePermissions(appContext);
+        await this.cacheRolePermissions();
 
         Logger.info('========== 数据缓存完成 ==========\n');
     }
 }
+
+/**
+ * 缓存插件
+ */
+const cachePlugin: Plugin = {
+    name: '_cache',
+    after: ['_db', '_redis'],
+
+    async onInit(befly: BeflyContext): Promise<CacheManager> {
+        try {
+            const cacheManager = new CacheManager(befly);
+            Logger.info('缓存插件初始化成功');
+            return cacheManager;
+        } catch (error: any) {
+            throw error;
+        }
+    }
+};
+
+export default cachePlugin;
