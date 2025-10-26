@@ -156,7 +156,7 @@ befly addon list
 git clone https://github.com/chenbimo/befly.git
 
 # 进入 CLI 目录
-cd packages/befly-cli
+cd packages/cli
 
 # 安装依赖
 bun install
