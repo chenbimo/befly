@@ -11,7 +11,8 @@ publicHoistPattern = [
     "simple-git-hooks",
     "lint-staged",
     "lerna",
+    "ci-info",
 ]
 
 # 内部提升常用依赖
-hoistPattern = []
+hoistPattern = ["ci-info"]
