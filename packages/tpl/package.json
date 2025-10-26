@@ -4,7 +4,7 @@
     "main": "main.ts",
     "types": "main.ts",
     "description": "Befly 3.0 TypeScript Template",
-    "private": true,
+    "private": false,
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org"

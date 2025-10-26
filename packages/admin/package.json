@@ -3,7 +3,11 @@
     "version": "3.0.0",
     "description": "Befly Admin - 基于 Vue3 + TDesign 的后台管理系统",
     "type": "module",
-    "private": true,
+    "private": false,
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    },
     "scripts": {
         "dev": "vite",
         "build": "vue-tsc && vite build",
