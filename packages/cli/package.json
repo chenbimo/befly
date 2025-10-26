@@ -30,7 +30,8 @@
     "license": "Apache-2.0",
     "files": [
         "bin/",
-        "lib/",
+        "commands/",
+        "utils/",
         "templates/",
         "dist/",
         "LICENSE",

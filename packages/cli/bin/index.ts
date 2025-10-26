@@ -4,20 +4,20 @@
  * 为 Befly 框架提供项目管理和脚本执行功能
  */
 
-import { checkBunVersion } from '../lib/utils/checkBun.js';
+import { checkBunVersion } from '../utils/checkBun.js';
 
 // 检查 Bun 版本
 checkBunVersion();
 
 import { Command } from 'commander';
-import { initCommand } from '../lib/commands/init.js';
-import { scriptCommand } from '../lib/commands/script.js';
-import { devCommand } from '../lib/commands/dev.js';
-import { buildCommand } from '../lib/commands/build.js';
-import { startCommand } from '../lib/commands/start.js';
-import { syncCommand } from '../lib/commands/sync.js';
-import { addonCommand } from '../lib/commands/addon.js';
-import { Logger } from '../lib/utils/logger.js';
+import { initCommand } from '../commands/init.js';
+import { scriptCommand } from '../commands/script.js';
+import { devCommand } from '../commands/dev.js';
+import { buildCommand } from '../commands/build.js';
+import { startCommand } from '../commands/start.js';
+import { syncCommand } from '../commands/sync.js';
+import { addonCommand } from '../commands/addon.js';
+import { Logger } from '../utils/logger.js';
 
 const program = new Command();
 

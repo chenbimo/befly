@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { Logger } from '../lib/utils/logger.js';
+import { Logger } from '../utils/logger.js';
 
 it('Logger 输出包含不同级别的前缀', () => {
     const messages: string[] = [];

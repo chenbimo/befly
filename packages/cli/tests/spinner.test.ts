@@ -1,5 +1,5 @@
 import { it, expect } from 'bun:test';
-import { Spinner } from '../lib/utils/spinner.js';
+import { Spinner } from '../utils/spinner.js';
 
 it('Spinner.start 返回对象并有 succeed 方法', () => {
     const spinner = Spinner.start('测试');

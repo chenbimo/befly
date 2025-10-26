@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { scriptCommand } from '../lib/commands/script.js';
+import { scriptCommand } from '../commands/script.js';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
