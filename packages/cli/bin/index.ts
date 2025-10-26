@@ -24,7 +24,7 @@ const program = new Command();
 program.name('befly').description('Befly CLI - 为 Befly 框架提供命令行工具').version('3.0.0');
 
 // init 命令 - 初始化项目
-program.command('init').description('初始化 Befly 项目').argument('[name]', '项目名称').option('-t, --template <type>', '项目模板 (api/full)', 'full').option('--skip-install', '跳过依赖安装', false).option('-f, --force', '强制覆盖已存在的目录', false).action(initCommand);
+program.command('init').description('初始化 Befly 项目').argument('[name]', '项目名称').option('-t, --template <type>', '项目模板 (befly-tpl/befly-admin)', 'befly-tpl').option('--skip-install', '跳过依赖安装', false).option('-f, --force', '强制覆盖已存在的目录', false).action(initCommand);
 
 // script 命令 - 执行脚本
 program.command('script').description('列出并执行 befly 脚本').option('--dry-run', '预演模式，只显示不执行', false).action(scriptCommand);

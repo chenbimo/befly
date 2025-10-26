@@ -4,8 +4,8 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
-import degit from 'degit';
+import { writeFile, unlink } from 'node:fs/promises';
+import * as tar from 'tar';
 import inquirer from 'inquirer';
 import { Logger } from '../utils/logger.js';
 import { Spinner } from '../utils/spinner.js';
@@ -16,7 +16,7 @@ interface InitOptions {
     force: boolean;
 }
 
-export async function initCommand(projectName?: string, options: InitOptions = { template: 'full', skipInstall: false, force: false }) {
+export async function initCommand(projectName?: string, options: InitOptions = { template: 'befly-tpl', skipInstall: false, force: false }) {
     try {
         // 1. 获取项目名称
         if (!projectName) {
@@ -60,17 +60,17 @@ export async function initCommand(projectName?: string, options: InitOptions = {
 
         // 3. 选择模板
         let template = options.template;
-        if (!template || template === 'full') {
+        if (!template || !['befly-tpl', 'befly-admin'].includes(template)) {
             const answer = await inquirer.prompt([
                 {
                     type: 'list',
                     name: 'template',
                     message: '选择项目模板:',
                     choices: [
-                        { name: 'Full - 完整项目 (包含前端和后端)', value: 'full' },
-                        { name: 'API - 仅后端 API', value: 'api' }
+                        { name: 'befly-tpl - Befly 接口模板', value: 'befly-tpl' },
+                        { name: 'befly-admin - Befly 后台模板', value: 'befly-admin' }
                     ],
-                    default: 'full'
+                    default: 'befly-tpl'
                 }
             ]);
             template = answer.template;
@@ -83,16 +83,48 @@ export async function initCommand(projectName?: string, options: InitOptions = {
         const spinner = Spinner.start('正在下载模板...');
 
         try {
-            const emitter = degit('chenbimo/befly/packages/tpl', {
-                cache: false,
-                force: true,
-                verbose: false
+            // 4.1 获取包信息
+            const registry = 'https://registry.npmmirror.com';
+            const packageName = template; // 直接使用模板名称作为包名
+            const version = 'latest';
+
+            const metaResponse = await fetch(`${registry}/${packageName}/${version}`);
+            if (!metaResponse.ok) {
+                throw new Error(`获取包信息失败: ${metaResponse.statusText}`);
+            }
+
+            const metadata = await metaResponse.json();
+            const tarballUrl = metadata.dist.tarball;
+
+            // 4.2 下载 tarball
+            spinner.text = '正在下载模板文件...';
+            const tarballResponse = await fetch(tarballUrl);
+            if (!tarballResponse.ok) {
+                throw new Error(`下载失败: ${tarballResponse.statusText}`);
+            }
+
+            const arrayBuffer = await tarballResponse.arrayBuffer();
+            const tempFile = join(process.cwd(), '.befly-temp.tgz');
+
+            // 4.3 保存临时文件
+            await Bun.write(tempFile, arrayBuffer);
+
+            // 4.4 解压 tarball (tar 库自动处理 gzip)
+            spinner.text = '正在解压模板...';
+            await tar.extract({
+                file: tempFile,
+                cwd: targetDir,
+                strip: 1 // 去掉顶层 package/ 目录
             });
 
-            await emitter.clone(targetDir);
+            // 4.5 清理临时文件
+            await unlink(tempFile);
+
             spinner.succeed('模板下载完成');
         } catch (error) {
             spinner.fail('模板下载失败');
+            Logger.error('请检查网络连接或包是否存在');
+            console.error(error);
             throw error;
         }
 
