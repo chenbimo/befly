@@ -7,12 +7,12 @@
         "publish": {
             "ignoreScripts": false,
             "yes": true,
-            "registry": "https://registry.npmjs.org"
+            "registry": "https://registry.npmjs.org",
+            "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/tests/**", "**/docs/**", "**/temp/**", "**/__tests__/**"]
         },
         "version": {
             "yes": true,
             "changelog": false,
-            "forcePublish": true,
             "createRelease": "none",
             "syncWorkspaceLock": true,
             "push": false,
@@ -20,6 +20,5 @@
             "conventionalCommits": false,
             "exact": true
         }
-    },
-    "packages": ["packages/*"]
+    }
 }
