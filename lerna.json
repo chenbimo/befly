@@ -15,8 +15,6 @@
             "createRelease": "none",
             "syncWorkspaceLock": true,
             "push": false,
-            "gitTagVersion": false,
-            "conventionalCommits": false,
             "exact": true
         }
     }
