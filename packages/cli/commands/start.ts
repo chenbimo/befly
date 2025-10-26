@@ -33,6 +33,7 @@ export async function startCommand(options: StartOptions) {
             process.exit(1);
         }
 
+        // 设置生产环境变量
         process.env.NODE_ENV = 'production';
         process.env.APP_PORT = options.port;
         process.env.APP_HOST = options.host;
@@ -42,19 +43,10 @@ export async function startCommand(options: StartOptions) {
         Logger.info(`主机: ${options.host}`);
         Logger.info(`环境: production\n`);
 
-        const proc = Bun.spawn(['bun', 'run', mainFile], {
-            cwd: projectRoot,
-            stdout: 'inherit',
-            stderr: 'inherit',
-            stdin: 'inherit',
-            env: {
-                ...process.env,
-                FORCE_COLOR: '1'
-            }
-        });
+        // 直接导入并运行 main.ts（无额外进程开销）
+        await import(mainFile);
 
-        await proc.exited;
-        process.exit(proc.exitCode || 0);
+        // 注意：正常情况下不会执行到这里，因为 main.ts 会启动服务器并持续运行
     } catch (error) {
         Logger.error('启动失败:');
         console.error(error);

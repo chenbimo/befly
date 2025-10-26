@@ -58,12 +58,29 @@ export async function devCommand(options: DevOptions) {
             stdin: 'inherit',
             env: {
                 ...process.env,
+                NODE_ENV: 'development',
+                APP_PORT: options.port,
+                APP_HOST: options.host,
+                LOG_DEBUG: options.verbose ? '1' : process.env.LOG_DEBUG,
                 FORCE_COLOR: '1'
             }
         });
 
-        await proc.exited;
-        process.exit(proc.exitCode || 0);
+        // 添加信号处理，确保优雅关闭
+        const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT', 'SIGHUP'];
+        signals.forEach((signal) => {
+            process.on(signal, () => {
+                Logger.info(`\n收到 ${signal} 信号，正在关闭开发服务器...`);
+                proc.kill(signal);
+                setTimeout(() => {
+                    proc.kill('SIGKILL');
+                    process.exit(1);
+                }, 5000); // 5 秒强制关闭
+            });
+        });
+
+        const exitCode = await proc.exited;
+        process.exit(exitCode || 0);
     } catch (error) {
         Logger.error('启动开发服务器失败:');
         console.error(error);
