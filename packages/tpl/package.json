@@ -37,11 +37,11 @@
     ],
     "type": "module",
     "dependencies": {
-        "befly": "workspace:*",
-        "befly-cli": "workspace:*"
+        "befly": "3.2.1",
+        "befly-cli": "3.2.3"
     },
     "engines": {
         "bun": ">=1.3.0"
     },
-    "gitHead": "c12c120e54af6cd84bea95ba803ad66c8fe18241"
+    "gitHead": "ca9c9ece7b7df4febf552b61b2e95f8c35296e1e"
 }
