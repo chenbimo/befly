@@ -3,7 +3,7 @@
  */
 
 import path from 'node:path';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { Glob } from 'bun';
 import inquirer from 'inquirer';
 import { Logger } from '../utils/logger.js';
@@ -66,6 +66,45 @@ function safeList(dir: string): string[] {
 }
 
 /**
+ * 扫描 CLI 自带的 scripts
+ */
+function scanCliScripts(): Array<{ scriptName: string; scriptPath: string }> {
+    const results: Array<{ scriptName: string; scriptPath: string }> = [];
+
+    try {
+        // 获取 CLI 包的根目录（当前文件在 commands 目录下）
+        const cliRoot = path.resolve(__dirname, '..');
+        const scriptsDir = path.join(cliRoot, 'scripts');
+
+        if (!existsSync(scriptsDir)) {
+            return results;
+        }
+
+        const scriptFiles = readdirSync(scriptsDir);
+
+        for (const file of scriptFiles) {
+            // 只处理直接子级的 .ts 文件
+            if (file.endsWith('.ts')) {
+                const scriptName = file.replace(/\.ts$/, '');
+                const scriptPath = path.join(scriptsDir, file);
+
+                // 确保是文件而不是目录
+                if (statSync(scriptPath).isFile()) {
+                    results.push({
+                        scriptName,
+                        scriptPath
+                    });
+                }
+            }
+        }
+    } catch {
+        // 静默失败
+    }
+
+    return results;
+}
+
+/**
  * 扫描 node_modules/@befly/addon-* 下的 scripts
  */
 function scanAddonScripts(projectRoot: string): Array<{ addonName: string; scriptName: string; scriptPath: string }> {
@@ -124,6 +163,17 @@ function scanAddonScripts(projectRoot: string): Array<{ addonName: string; scrip
  */
 function buildScriptItems(projectRoot: string): ScriptItem[] {
     const items: ScriptItem[] = [];
+
+    // CLI 脚本
+    const cliScripts = scanCliScripts();
+    for (const script of cliScripts) {
+        items.push({
+            name: script.scriptName,
+            source: 'cli',
+            displayName: `[CLI] ${script.scriptName}`,
+            path: script.scriptPath
+        });
+    }
 
     // 项目脚本
     const projectScriptsDir = path.join(projectRoot, 'scripts');
