@@ -12,8 +12,7 @@
         "packages/*"
     ],
     "scripts": {
-        "version": "lerna version --no-push --no-git-tag-version",
-        "publish": "lerna publish from-package --no-git-tag-version --yes",
+        "publish": "lerna publish --no-push --no-git-tag-version",
         "format": "prettier --write \"**/*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}\"",
         "format:check": "prettier --check \"**/*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}\"",
         "prepare": "lefthook install"

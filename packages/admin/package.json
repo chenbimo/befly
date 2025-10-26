@@ -1,6 +1,6 @@
 {
     "name": "befly-admin",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Befly Admin - 基于 Vue3 + TDesign 的后台管理系统",
     "type": "module",
     "private": false,
@@ -37,5 +37,6 @@
     "engines": {
         "node": ">=22.0.0",
         "pnpm": ">=9.0.0"
-    }
+    },
+    "gitHead": "f96bac1a1c829e265284a6f619da680fffd1a075"
 }
