@@ -3,7 +3,7 @@
  */
 
 import path from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { Glob } from 'bun';
 import inquirer from 'inquirer';
 import { Logger } from '../utils/logger.js';
@@ -66,42 +66,53 @@ function safeList(dir: string): string[] {
 }
 
 /**
- * 扫描 addons 目录下所有组件的 scripts
+ * 扫描 node_modules/@befly/addon-* 下的 scripts
  */
 function scanAddonScripts(projectRoot: string): Array<{ addonName: string; scriptName: string; scriptPath: string }> {
     const results: Array<{ addonName: string; scriptName: string; scriptPath: string }> = [];
 
     try {
-        const addonsDir = path.join(projectRoot, 'addons');
-        if (!existsSync(addonsDir)) {
+        const beflyAddonsDir = path.join(projectRoot, 'node_modules', '@befly');
+
+        if (!existsSync(beflyAddonsDir)) {
             return results;
         }
 
-        const addonGlob = new Glob('*/scripts/*.ts');
-        const addonFiles = Array.from(
-            addonGlob.scanSync({
-                cwd: addonsDir,
-                absolute: false,
-                onlyFiles: true,
-                dot: false
-            })
-        );
+        // 读取 @befly 目录下的所有 addon
+        const addonDirs = readdirSync(beflyAddonsDir);
 
-        for (const file of addonFiles) {
-            const parts = file.split(path.sep);
-            if (parts.length === 3 && parts[1] === 'scripts') {
-                const addonName = parts[0];
-                const scriptName = path.basename(parts[2]).replace(/\.ts$/, '');
-                const scriptPath = path.resolve(addonsDir, file);
+        for (const addonDir of addonDirs) {
+            // 只处理 addon-* 开头的目录
+            if (!addonDir.startsWith('addon-')) {
+                continue;
+            }
 
-                results.push({
-                    addonName,
-                    scriptName,
-                    scriptPath
-                });
+            const scriptsDir = path.join(beflyAddonsDir, addonDir, 'scripts');
+
+            if (!existsSync(scriptsDir)) {
+                continue;
+            }
+
+            try {
+                const scriptFiles = readdirSync(scriptsDir);
+
+                for (const file of scriptFiles) {
+                    if (file.endsWith('.ts')) {
+                        const scriptName = file.replace(/\.ts$/, '');
+                        const scriptPath = path.join(scriptsDir, file);
+
+                        results.push({
+                            addonName: addonDir,
+                            scriptName,
+                            scriptPath
+                        });
+                    }
+                }
+            } catch {
+                // 忽略无法读取的目录
             }
         }
-    } catch {
+    } catch (error) {
         // 静默失败
     }
 
