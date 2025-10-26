@@ -4,7 +4,7 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { writeFile, unlink } from 'node:fs/promises';
+import { unlink } from 'node:fs/promises';
 import * as tar from 'tar';
 import inquirer from 'inquirer';
 import { Logger } from '../utils/logger.js';
@@ -12,11 +12,10 @@ import { Spinner } from '../utils/spinner.js';
 
 interface InitOptions {
     template: string;
-    skipInstall: boolean;
     force: boolean;
 }
 
-export async function initCommand(projectName?: string, options: InitOptions = { template: 'befly-tpl', skipInstall: false, force: false }) {
+export async function initCommand(projectName?: string, options: InitOptions = { template: 'befly-tpl', force: false }) {
     try {
         // 1. 获取项目名称
         if (!projectName) {
@@ -121,100 +120,14 @@ export async function initCommand(projectName?: string, options: InitOptions = {
             await unlink(tempFile);
 
             spinner.succeed('模板下载完成');
+
+            Logger.success(`\n✨ 项目创建成功！\n`);
         } catch (error) {
             spinner.fail('模板下载失败');
             Logger.error('请检查网络连接或包是否存在');
             console.error(error);
             throw error;
         }
-
-        // 5. 更新 package.json
-        const packageJsonPath = join(targetDir, 'package.json');
-        if (existsSync(packageJsonPath)) {
-            const spinner2 = Spinner.start('更新项目配置...');
-            try {
-                const packageJson = JSON.parse(await Bun.file(packageJsonPath).text());
-                packageJson.name = projectName;
-                packageJson.version = '0.1.0';
-                packageJson.private = true;
-
-                await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 4), 'utf-8');
-                spinner2.succeed('项目配置更新完成');
-            } catch (error) {
-                spinner2.fail('项目配置更新失败');
-                Logger.warn('请手动更新 package.json');
-            }
-        }
-
-        // 6. 创建 .env 文件
-        const envPath = join(targetDir, '.env');
-        if (!existsSync(envPath)) {
-            const envDevPath = join(targetDir, '.env.development');
-            if (existsSync(envDevPath)) {
-                const spinner3 = Spinner.start('创建环境变量文件...');
-                try {
-                    const envContent = await Bun.file(envDevPath).text();
-                    await writeFile(envPath, envContent, 'utf-8');
-                    spinner3.succeed('环境变量文件创建完成');
-                } catch (error) {
-                    spinner3.warn('请手动复制 .env.development 为 .env');
-                }
-            }
-        }
-
-        // 7. 安装依赖
-        if (!options.skipInstall) {
-            const spinner4 = Spinner.start('正在安装依赖...');
-            try {
-                const proc = Bun.spawn(['bun', 'install'], {
-                    cwd: targetDir,
-                    stdout: 'pipe',
-                    stderr: 'pipe'
-                });
-
-                await proc.exited;
-
-                if (proc.exitCode === 0) {
-                    spinner4.succeed('依赖安装完成');
-                } else {
-                    spinner4.fail('依赖安装失败');
-                    Logger.warn('请手动执行: cd ' + projectName + ' && bun install');
-                }
-            } catch (error) {
-                spinner4.fail('依赖安装失败');
-                Logger.warn('请手动执行: cd ' + projectName + ' && bun install');
-            }
-        }
-
-        // 8. 初始化 Git
-        const spinner5 = Spinner.start('初始化 Git 仓库...');
-        try {
-            const proc = Bun.spawn(['git', 'init'], {
-                cwd: targetDir,
-                stdout: 'pipe',
-                stderr: 'pipe'
-            });
-
-            await proc.exited;
-
-            if (proc.exitCode === 0) {
-                spinner5.succeed('Git 仓库初始化完成');
-            } else {
-                spinner5.warn('Git 仓库初始化失败');
-            }
-        } catch (error) {
-            spinner5.warn('Git 仓库初始化失败');
-        }
-
-        // 9. 显示下一步提示
-        Logger.success(`\n✨ 项目创建成功！\n`);
-        Logger.info('下一步:');
-        Logger.info(`  cd ${projectName}`);
-        if (options.skipInstall) {
-            Logger.info(`  bun install`);
-        }
-        Logger.info(`  bun run dev\n`);
-        Logger.info('访问: http://localhost:3000\n');
     } catch (error) {
         Logger.error('项目创建失败:');
         console.error(error);
