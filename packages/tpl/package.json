@@ -18,7 +18,6 @@
         "syncDev": " befly syncDev"
     },
     "files": [
-        "addons",
         "apis",
         "checks",
         "plugins",
@@ -38,7 +37,9 @@
     "type": "module",
     "dependencies": {
         "befly": "workspace:*",
-        "befly-cli": "workspace:*"
+        "befly-cli": "workspace:*",
+        "@befly/addon-admin": "workspace:*",
+        "@befly/addon-befly": "workspace:*"
     },
     "engines": {
         "bun": ">=1.3.0"

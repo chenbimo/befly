@@ -21,5 +21,9 @@
         "lefthook": "2.0.0",
         "lerna": "^9.0.0",
         "prettier": "3.6.2"
+    },
+    "dependencies": {
+        "@types/inquirer": "^9.0.9",
+        "inquirer": "^12.10.0"
     }
 }
