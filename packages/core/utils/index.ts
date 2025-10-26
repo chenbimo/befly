@@ -16,7 +16,6 @@ export { scanAddons, getAddonDir, addonDirExists, sortPlugins, parseRule } from 
 export { buildDatabaseUrl, createSqlClient, buildRedisUrl, createRedisClient, initDatabase, closeDatabase, initSqlOnly, initRedisOnly, getRedis, getSql, getDbHelper, isDatabaseInitialized } from './database.js';
 
 // 导出其他大型模块
-export { Colors } from './colors.js';
 export { Logger } from './logger.js';
 export { Validator } from './validate.js';
 export { SqlBuilder } from './sqlBuilder.js';

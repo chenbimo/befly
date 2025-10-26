@@ -6,7 +6,7 @@
 import path from 'path';
 import { appendFile, stat } from 'node:fs/promises';
 import { formatDate } from './index.js';
-import { Colors } from './colors.js';
+import chalk from 'chalk';
 import { Env } from '../config/env.js';
 import type { LogLevel } from '../types/common.js';
 
@@ -40,10 +40,10 @@ export class Logger {
         // 格式化消息
         const timestamp = formatDate();
         const colorMap = {
-            info: Colors.greenBright,
-            debug: Colors.cyanBright,
-            warn: Colors.yellowBright,
-            error: Colors.redBright
+            info: chalk.greenBright,
+            debug: chalk.cyanBright,
+            warn: chalk.yellowBright,
+            error: chalk.redBright
         };
 
         // 处理消息内容
