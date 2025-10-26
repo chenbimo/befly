@@ -38,8 +38,7 @@
     "dependencies": {
         "befly": "workspace:*",
         "befly-cli": "workspace:*",
-        "@befly/addon-admin": "workspace:*",
-        "@befly/addon-befly": "workspace:*"
+        "@befly/addon-admin": "workspace:*"
     },
     "engines": {
         "bun": ">=1.3.0"
