@@ -4,7 +4,7 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { unlink } from 'node:fs/promises';
+import { mkdir, unlink } from 'node:fs/promises';
 import * as tar from 'tar';
 import inquirer from 'inquirer';
 import { Logger } from '../utils/logger.js';
@@ -103,12 +103,21 @@ export async function initCommand(projectName?: string, options: InitOptions = {
             }
 
             const arrayBuffer = await tarballResponse.arrayBuffer();
-            const tempFile = join(process.cwd(), '.befly-temp.tgz');
+            const tempDir = join(process.cwd(), '.temp');
+            const tempFile = join(tempDir, 'befly-temp.tgz');
 
-            // 4.3 保存临时文件
+            // 4.3 创建临时目录和目标目录
+            if (!existsSync(tempDir)) {
+                await mkdir(tempDir, { recursive: true });
+            }
+            if (!existsSync(targetDir)) {
+                await mkdir(targetDir, { recursive: true });
+            }
+
+            // 4.4 保存临时文件
             await Bun.write(tempFile, arrayBuffer);
 
-            // 4.4 解压 tarball (tar 库自动处理 gzip)
+            // 4.5 解压 tarball (tar 库自动处理 gzip)
             spinner.text = '正在解压模板...';
             await tar.extract({
                 file: tempFile,
@@ -116,7 +125,7 @@ export async function initCommand(projectName?: string, options: InitOptions = {
                 strip: 1 // 去掉顶层 package/ 目录
             });
 
-            // 4.5 清理临时文件
+            // 4.6 清理临时文件
             await unlink(tempFile);
 
             spinner.succeed('模板下载完成');
