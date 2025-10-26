@@ -36,7 +36,5 @@ export const paths = {
     /** 项目 API 目录 */
     projectApiDir: join(projectRoot, 'apis'),
     /** 项目表定义目录 */
-    projectTableDir: join(projectRoot, 'tables'),
-    /** 项目 Addons 目录 */
-    projectAddonDir: join(projectRoot, 'addons')
+    projectTableDir: join(projectRoot, 'tables')
 } as const;

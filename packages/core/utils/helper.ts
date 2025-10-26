@@ -628,36 +628,20 @@ export const cleanData = <T = any>(data?: Record<string, any>, options: DataClea
 
 /**
  * 扫描所有可用的 addon
- * 扫描来源：
- * 1. 项目 addons 目录
- * 2. node_modules/@befly/addon-* 包
- * @returns addon 名称数组（去重且排序）
+ * 只扫描 node_modules/@befly/addon-* 包
+ * @returns addon 名称数组（排序）
  */
 export const scanAddons = (): string[] => {
-    const addonSet = new Set<string>();
+    const beflyDir = join(paths.projectDir, 'node_modules', '@befly');
 
-    // 1. 扫描项目 addons 目录
-    if (fs.existsSync(paths.projectAddonDir)) {
-        try {
-            const projectAddons = fs.readdirSync(paths.projectAddonDir).filter((name) => {
-                const fullPath = join(paths.projectAddonDir, name);
-                const stat = fs.statSync(fullPath);
-                const isDir = stat.isDirectory();
-                const notSkip = !name.startsWith('_');
-                return isDir && notSkip;
-            });
-
-            projectAddons.forEach((name) => addonSet.add(name));
-        } catch {
-            // 忽略错误
-        }
+    if (!fs.existsSync(beflyDir)) {
+        return [];
     }
 
-    // 2. 扫描 node_modules/@befly/addon-* 包
-    const beflyDir = join(paths.projectDir, 'node_modules', '@befly');
-    if (fs.existsSync(beflyDir)) {
-        try {
-            const npmAddons = fs.readdirSync(beflyDir).filter((name) => {
+    try {
+        return fs
+            .readdirSync(beflyDir)
+            .filter((name) => {
                 if (!name.startsWith('addon-')) return false;
                 const fullPath = join(beflyDir, name);
                 try {
@@ -666,33 +650,20 @@ export const scanAddons = (): string[] => {
                 } catch {
                     return false;
                 }
-            });
-
-            npmAddons.forEach((name) => addonSet.add(name));
-        } catch {
-            // 忽略错误
-        }
+            })
+            .sort();
+    } catch {
+        return [];
     }
-
-    return Array.from(addonSet).sort();
 };
 
 /**
  * 获取 addon 的指定子目录路径
- * 优先从项目 addons 目录查找，其次从 node_modules/@befly 查找
  * @param addonName - addon 名称
  * @param subDir - 子目录名称（apis, checks, plugins, tables, types, config）
  */
 export const getAddonDir = (addonName: string, subDir: string): string => {
-    // 优先检查项目 addons 目录
-    const projectAddonPath = join(paths.projectAddonDir, addonName, subDir);
-    if (fs.existsSync(projectAddonPath)) {
-        return projectAddonPath;
-    }
-
-    // 检查 node_modules/@befly 目录
-    const npmAddonPath = join(paths.projectDir, 'node_modules', '@befly', addonName, subDir);
-    return npmAddonPath;
+    return join(paths.projectDir, 'node_modules', '@befly', addonName, subDir);
 };
 
 /**
