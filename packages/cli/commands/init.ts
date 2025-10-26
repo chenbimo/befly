@@ -4,8 +4,7 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { mkdir, unlink } from 'node:fs/promises';
-import * as tar from 'tar';
+import pacote from 'pacote';
 import inquirer from 'inquirer';
 import { Logger } from '../utils/logger.js';
 import { Spinner } from '../utils/spinner.js';
@@ -82,51 +81,14 @@ export async function initCommand(projectName?: string, options: InitOptions = {
         const spinner = Spinner.start('正在下载模板...');
 
         try {
-            // 4.1 获取包信息
             const registry = 'https://registry.npmmirror.com';
-            const packageName = template; // 直接使用模板名称作为包名
-            const version = 'latest';
+            const packageSpec = `${template}@latest`;
 
-            const metaResponse = await fetch(`${registry}/${packageName}/${version}`);
-            if (!metaResponse.ok) {
-                throw new Error(`获取包信息失败: ${metaResponse.statusText}`);
-            }
-
-            const metadata = await metaResponse.json();
-            const tarballUrl = metadata.dist.tarball;
-
-            // 4.2 下载 tarball
-            spinner.text = '正在下载模板文件...';
-            const tarballResponse = await fetch(tarballUrl);
-            if (!tarballResponse.ok) {
-                throw new Error(`下载失败: ${tarballResponse.statusText}`);
-            }
-
-            const arrayBuffer = await tarballResponse.arrayBuffer();
-            const tempDir = join(process.cwd(), '.temp');
-            const tempFile = join(tempDir, 'befly-temp.tgz');
-
-            // 4.3 创建临时目录和目标目录
-            if (!existsSync(tempDir)) {
-                await mkdir(tempDir, { recursive: true });
-            }
-            if (!existsSync(targetDir)) {
-                await mkdir(targetDir, { recursive: true });
-            }
-
-            // 4.4 保存临时文件
-            await Bun.write(tempFile, arrayBuffer);
-
-            // 4.5 解压 tarball (tar 库自动处理 gzip)
-            spinner.text = '正在解压模板...';
-            await tar.extract({
-                file: tempFile,
-                cwd: targetDir,
-                strip: 1 // 去掉顶层 package/ 目录
+            // 使用 pacote 下载并解压到目标目录
+            await pacote.extract(packageSpec, targetDir, {
+                registry,
+                cache: join(process.cwd(), '.temp', 'pacote-cache')
             });
-
-            // 4.6 清理临时文件
-            await unlink(tempFile);
 
             spinner.succeed('模板下载完成');
 

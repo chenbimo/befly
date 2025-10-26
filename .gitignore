@@ -25,6 +25,7 @@ pnpm-lock.yaml
 bun.lock
 other
 AGENTS.md
+.temp
 
 # 临时文件目录（保留目录结构）
 temp/*
