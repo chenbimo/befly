@@ -1,6 +1,6 @@
 {
     "name": "befly-cli",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "description": "Befly CLI - 为 Befly 框架提供命令行工具",
     "type": "module",
     "private": false,
@@ -53,5 +53,5 @@
         "@types/inquirer": "^9.0.9",
         "@types/tar": "^6.1.13"
     },
-    "gitHead": "f96bac1a1c829e265284a6f619da680fffd1a075"
+    "gitHead": "c12c120e54af6cd84bea95ba803ad66c8fe18241"
 }

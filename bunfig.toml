@@ -10,6 +10,7 @@ publicHoistPattern = [
     "@opentiny/*",
     "simple-git-hooks",
     "lint-staged",
+    "lerna",
 ]
 
 # 内部提升常用依赖
