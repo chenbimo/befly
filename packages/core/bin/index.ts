@@ -35,12 +35,7 @@ program.command('build').description('构建项目').option('-o, --outdir <path>
 program.command('start').description('启动生产服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').action(startCommand);
 
 // syncDb 命令 - 同步数据库
-program
-    .command('syncDb')
-    .description('同步数据库表结构')
-    .option('-t, --table <name>', '指定表名')
-    .option('--dry-run', '预览模式，只显示不执行', false)
-    .action(syncDbCommand);
+program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).action(syncDbCommand);
 
 // addon 命令 - 插件管理
 const addon = program.command('addon').description('管理 Befly 插件');
