@@ -128,12 +128,16 @@ export const SyncDb = async (): Promise<void> => {
                     continue;
                 }
 
-                // 确定表名前缀：
-                // - addon 表：addon_{addonName}_ 前缀
-                // - 项目表：无前缀
+                // 确定表名：
+                // - addon 表：addon_{转换后的addonName}_{表名}
+                //   例如：addon-admin 的 user.json → addon_admin_user
+                // - 项目表：{表名}
+                //   例如：user.json → user
                 let tableName = util.toSnakeCase(fileName);
                 if (addonName) {
-                    tableName = `addon_${addonName}_${tableName}`;
+                    // 将 addon 名称中的中划线替换为下划线（addon-admin → addon_admin）
+                    const addonNameSnake = addonName.replace(/-/g, '_');
+                    tableName = `${addonNameSnake}_${tableName}`;
                 }
 
                 processedCount++;
