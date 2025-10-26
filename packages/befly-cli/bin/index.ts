@@ -50,12 +50,9 @@ addon.command('uninstall <name>').description('卸载插件').option('--keep-dat
 
 addon.command('list').description('列出已安装的插件').action(addonCommand.list);
 
-// 错误处理
-program.on('command:*', () => {
-    Logger.error(`无效的命令: ${program.args.join(' ')}`);
-    Logger.info('使用 --help 查看可用命令');
-    process.exit(1);
-});
+// 显示建议和错误
+program.showSuggestionAfterError();
+program.showHelpAfterError();
 
 // 解析命令行参数
 program.parse();
