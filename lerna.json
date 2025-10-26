@@ -7,8 +7,7 @@
         "publish": {
             "ignoreScripts": false,
             "yes": true,
-            "registry": "https://registry.npmjs.org",
-            "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/tests/**", "**/docs/**", "**/notes/**", "**/__tests__/**"]
+            "registry": "https://registry.npmjs.org"
         },
         "version": {
             "yes": true,
