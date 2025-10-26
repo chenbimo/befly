@@ -19,9 +19,6 @@
             "default": "./types/index.d.ts"
         }
     },
-    "bin": {
-        "befly": "./bin/befly.ts"
-    },
     "scripts": {
         "bundler": "bun build ./main.ts --outfile ./main.single.ts --minify --target bun"
     },
@@ -41,7 +38,6 @@
     "homepage": "https://chensuiyi.me",
     "license": "Apache-2.0",
     "files": [
-        "bin/",
         "apis/",
         "checks/",
         "config/",

@@ -7,7 +7,7 @@
 import path from 'node:path';
 import * as readline from 'node:readline';
 import { Glob } from 'bun';
-import { paths } from '../paths.js';
+import { paths } from './paths.js';
 
 /**
  * 脚本项接口
