@@ -1,0 +1,72 @@
+/**
+ * Dev 命令 - 启动开发服务器
+ */
+
+import { join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { Logger } from '../utils/logger.js';
+
+interface DevOptions {
+    port: string;
+    host: string;
+    sync: boolean;
+    verbose: boolean;
+}
+
+function getProjectRoot(): string {
+    let current = process.cwd();
+    while (current !== require('node:path').parse(current).root) {
+        if (existsSync(join(current, 'package.json'))) {
+            return current;
+        }
+        current = require('node:path').dirname(current);
+    }
+    return process.cwd();
+}
+
+export async function devCommand(options: DevOptions) {
+    try {
+        const projectRoot = getProjectRoot();
+        const mainFile = join(projectRoot, 'main.ts');
+
+        if (!existsSync(mainFile)) {
+            Logger.error('未找到 main.ts 文件，请确保在 Befly 项目目录下');
+            process.exit(1);
+        }
+
+        // 设置环境变量
+        process.env.NODE_ENV = 'development';
+        process.env.APP_PORT = options.port;
+        process.env.APP_HOST = options.host;
+
+        if (options.verbose) {
+            process.env.LOG_DEBUG = '1';
+        }
+
+        Logger.info('正在启动开发服务器...\n');
+        Logger.info(`端口: ${options.port}`);
+        Logger.info(`主机: ${options.host}`);
+        Logger.info(`环境: development\n`);
+
+        // 使用 Bun 的 --watch 模式
+        const args = ['--watch', mainFile];
+
+        const proc = Bun.spawn(['bun', 'run', ...args], {
+            cwd: projectRoot,
+            stdout: 'inherit',
+            stderr: 'inherit',
+            stdin: 'inherit',
+            env: {
+                ...process.env,
+                FORCE_COLOR: '1'
+            }
+        });
+
+        await proc.exited;
+        process.exit(proc.exitCode || 0);
+    } catch (error) {
+        Logger.error('启动开发服务器失败:');
+        console.error(error);
+        process.exit(1);
+    }
+}

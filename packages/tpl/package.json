@@ -19,7 +19,8 @@
     },
     "type": "module",
     "dependencies": {
-        "befly": "workspace:*"
+        "befly": "workspace:*",
+        "befly-cli": "workspace:*"
     },
     "engines": {
         "bun": ">=1.3.0"
