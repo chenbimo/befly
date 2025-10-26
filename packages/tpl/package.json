@@ -17,6 +17,24 @@
         "syncDb": "befly syncDb",
         "syncDev": " befly syncDev"
     },
+    "files": [
+        "addons/*",
+        "apis/*",
+        "checks/*",
+        "plugins/*",
+        "scripts/*",
+        "tables/*",
+        "types/*",
+        "tests/*",
+        ".env.development",
+        ".npmrc",
+        "LICENSE",
+        "main.ts",
+        "package.json",
+        "pm2.config.cjs",
+        "README.md",
+        "tsconfig.json"
+    ],
     "type": "module",
     "dependencies": {
         "befly": "workspace:*",
