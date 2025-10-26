@@ -1,5 +1,6 @@
 {
     "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+    "version": "independent",
     "packages": ["packages/*"],
     "npmClient": "bun",
     "command": {
@@ -10,7 +11,6 @@
             "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/tests/**", "**/docs/**", "**/temp/**", "**/__tests__/**"]
         },
         "version": {
-            "yes": true,
             "changelog": false,
             "createRelease": "none",
             "syncWorkspaceLock": true,
