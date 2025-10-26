@@ -5,7 +5,7 @@
 
 import { Env } from './config/env.js';
 import { Fields } from './config/fields.js';
-import { Yes, No, cleanData } from './utils/index.js';
+import { Yes, No } from './utils/index.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 import checkTable from './checks/table.js';
 import { paths } from './paths.js';
@@ -46,14 +46,9 @@ export {
     // 配置
     Env,
     Fields,
-    // 响应工具（保持向后兼容）
     Yes,
     No,
-    cleanData,
-    // 工具命名空间（推荐使用方式：util.Logger, util.createSqlClient 等）
     util,
-    // 检查函数
     checkTable,
-    // 路径配置
     paths
 };
