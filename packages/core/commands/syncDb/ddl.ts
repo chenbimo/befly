@@ -8,7 +8,7 @@
  * - 构建系统列和业务列定义
  */
 
-import { util } from 'befly';
+import { util } from '../../main.js';
 import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';

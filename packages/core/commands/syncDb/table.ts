@@ -7,7 +7,7 @@
  * - 应用变更计划
  */
 
-import { util } from 'befly';
+import { util } from '../../main.js';
 import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';

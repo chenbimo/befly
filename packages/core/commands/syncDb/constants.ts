@@ -8,7 +8,8 @@
  * - 字段变更类型标签
  */
 
-import { Env } from 'befly';
+import { Env } from '../../main.js';
+import type { Dialect } from './types.js';
 
 /**
  * 数据库版本要求

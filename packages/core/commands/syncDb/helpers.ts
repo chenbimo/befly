@@ -8,7 +8,7 @@
  * - 默认值处理
  */
 
-import { util } from 'befly';
+import { util } from '../../main.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { Logger } from '../../utils/logger.js';
 

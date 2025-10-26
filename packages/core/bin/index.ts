@@ -14,7 +14,7 @@ import { scriptCommand } from '../commands/script.js';
 import { devCommand } from '../commands/dev.js';
 import { buildCommand } from '../commands/build.js';
 import { startCommand } from '../commands/start.js';
-import { syncCommand } from '../commands/sync.js';
+import { syncDbCommand } from '../commands/syncDb.js';
 import { addonCommand } from '../commands/addon.js';
 import { Logger } from '../utils/logger.js';
 
@@ -34,8 +34,13 @@ program.command('build').description('构建项目').option('-o, --outdir <path>
 // start 命令 - 启动生产服务器
 program.command('start').description('启动生产服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').action(startCommand);
 
-// sync 命令 - 同步数据库
-program.command('sync').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('-f, --force', '强制同步', false).option('--dry-run', '只显示 SQL 不执行', false).option('--drop', '删除不存在的表', false).action(syncCommand);
+// syncDb 命令 - 同步数据库
+program
+    .command('syncDb')
+    .description('同步数据库表结构')
+    .option('-t, --table <name>', '指定表名')
+    .option('--dry-run', '预览模式，只显示不执行', false)
+    .action(syncDbCommand);
 
 // addon 命令 - 插件管理
 const addon = program.command('addon').description('管理 Befly 插件');

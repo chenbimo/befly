@@ -37,7 +37,6 @@
     "type": "module",
     "dependencies": {
         "befly": "workspace:*",
-        "befly-cli": "workspace:*",
         "@befly/addon-admin": "workspace:*"
     },
     "engines": {

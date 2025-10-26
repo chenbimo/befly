@@ -11,7 +11,7 @@ import path from 'node:path';
 import { Logger } from '../../utils/logger.js';
 
 // 从 befly 核心包导入依赖
-import { Env, util, checkTable, paths } from 'befly';
+import { Env, util, checkTable, paths } from '../../main.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';

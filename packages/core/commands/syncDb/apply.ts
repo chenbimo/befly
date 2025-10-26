@@ -7,7 +7,7 @@
  */
 
 import { Logger } from '../../utils/logger.js';
-import { util } from 'befly';
+import { util } from '../../main.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
