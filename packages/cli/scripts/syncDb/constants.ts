@@ -8,7 +8,7 @@
  * - 字段变更类型标签
  */
 
-import { Env } from '../../config/env.js';
+import { Env } from 'befly';
 
 /**
  * 数据库版本要求

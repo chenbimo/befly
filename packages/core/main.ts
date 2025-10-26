@@ -6,14 +6,12 @@
 import { Env } from './config/env.js';
 import { Fields } from './config/fields.js';
 import { Yes, No, cleanData } from './utils/index.js';
-import { Logger } from './utils/logger.js';
-import { Jwt } from './utils/jwt.js';
-import { Validator } from './utils/validate.js';
-import { Crypto2 } from './utils/crypto.js';
-import { DbHelper } from './utils/dbHelper.js';
-import { createSqlClient, getRedis, getSql, getDbHelper, initDatabase, closeDatabase } from './utils/database.js';
-import { RedisHelper } from './utils/redisHelper.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
+import checkTable from './checks/table.js';
+import { paths } from './paths.js';
+
+// 导入所有 utils 作为命名空间
+import * as util from './utils/index.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -43,5 +41,19 @@ export class Befly {
     }
 }
 
-// 核心类和工具导出（只导出运行时代码，不导出类型）
-export { Env, Fields, Jwt, Validator, Crypto2, Logger, Yes, No, cleanData, DbHelper, createSqlClient, RedisHelper, getRedis, getSql, getDbHelper, initDatabase, closeDatabase };
+// 核心类和工具导出
+export {
+    // 配置
+    Env,
+    Fields,
+    // 响应工具（保持向后兼容）
+    Yes,
+    No,
+    cleanData,
+    // 工具命名空间（推荐使用方式：util.Logger, util.createSqlClient 等）
+    util,
+    // 检查函数
+    checkTable,
+    // 路径配置
+    paths
+};

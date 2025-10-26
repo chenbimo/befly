@@ -9,11 +9,12 @@
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
 
+import { util } from 'befly';
 import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
-import { parseRule, toSnakeCase } from '../../utils/helper.js';
+
 import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）
@@ -48,9 +49,9 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     // 业务字段注释
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeCase(fieldKey);
+        const dbFieldName = util.toSnakeCase(fieldKey);
 
-        const parsed = parseRule(fieldRule);
+        const parsed = util.parseRule(fieldRule);
         const { name: fieldName } = parsed;
         const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS '${fieldName}'`;
         if (IS_PLAN) {
@@ -85,9 +86,9 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     // 业务字段索引
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeCase(fieldKey);
+        const dbFieldName = util.toSnakeCase(fieldKey);
 
-        const parsed = parseRule(fieldRule);
+        const parsed = util.parseRule(fieldRule);
         if (parsed.index === 1) {
             const stmt = buildIndexSQL(tableName, `idx_${dbFieldName}`, dbFieldName, 'create');
             if (IS_PLAN) {

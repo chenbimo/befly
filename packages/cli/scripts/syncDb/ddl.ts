@@ -8,12 +8,13 @@
  * - 构建系统列和业务列定义
  */
 
+import { util } from 'befly';
 import { Logger } from '../../utils/logger.js';
-import { parseRule, toSnakeCase } from '../../utils/helper.js';
-import type { ParsedFieldRule, AnyObject } from '../../types/common.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
+
 import type { SQL } from 'bun';
+import type { ParsedFieldRule, AnyObject } from 'befly/types/common.js';
 
 /**
  * 构建索引操作 SQL（统一使用在线策略）
@@ -80,9 +81,9 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeCase(fieldKey);
+        const dbFieldName = util.toSnakeCase(fieldKey);
 
-        const parsed = parseRule(fieldRule);
+        const parsed = util.parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
         const sqlType = getSqlType(fieldType, fieldMax);
 
@@ -110,9 +111,9 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
  */
 export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: boolean = false): string {
     // 转换字段名为下划线格式
-    const dbFieldName = toSnakeCase(fieldKey);
+    const dbFieldName = util.toSnakeCase(fieldKey);
 
-    const parsed = parseRule(fieldRule);
+    const parsed = util.parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
     const sqlType = getSqlType(fieldType, fieldMax);
 

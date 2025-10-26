@@ -9,12 +9,9 @@
 
 import path from 'node:path';
 import { Logger } from '../../utils/logger.js';
-import { Env } from '../../config/env.js';
-import { createSqlClient } from '../../utils/database.js';
-import { toSnakeCase } from '../../utils/helper.js';
-import checkTable from '../../checks/table.js';
-import { paths } from '../../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../../utils/helper.js';
+
+// 从 befly 核心包导入依赖
+import { Env, util, checkTable, paths } from 'befly';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -72,7 +69,7 @@ export const SyncDb = async (): Promise<void> => {
 
         // 阶段2：建立数据库连接并检查版本
         perfTracker.markPhase('数据库连接');
-        sql = await createSqlClient({ max: 1 });
+        sql = await util.createSqlClient({ max: 1 });
         await ensureDbVersion(sql);
         Logger.info(`✓ 数据库连接建立，耗时: ${perfTracker.getPhaseTime('数据库连接')}`);
 
@@ -82,11 +79,11 @@ export const SyncDb = async (): Promise<void> => {
         const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [{ path: paths.projectTableDir, isCore: false }];
 
         // 添加所有 addon 的 tables 目录
-        const addons = scanAddons();
+        const addons = util.scanAddons();
         for (const addon of addons) {
-            if (addonDirExists(addon, 'tables')) {
+            if (util.addonDirExists(addon, 'tables')) {
                 directories.push({
-                    path: getAddonDir(addon, 'tables'),
+                    path: util.getAddonDir(addon, 'tables'),
                     isCore: false,
                     addonName: addon
                 });
@@ -134,7 +131,7 @@ export const SyncDb = async (): Promise<void> => {
                 // 确定表名前缀：
                 // - addon 表：addon_{addonName}_ 前缀
                 // - 项目表：无前缀
-                let tableName = toSnakeCase(fileName);
+                let tableName = util.toSnakeCase(fileName);
                 if (addonName) {
                     tableName = `addon_${addonName}_${tableName}`;
                 }
