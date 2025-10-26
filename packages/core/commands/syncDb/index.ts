@@ -9,9 +9,10 @@
 
 import path from 'node:path';
 import { Logger } from '../../utils/logger.js';
-
-// 从 befly 核心包导入依赖
-import { Env, util, checkTable, paths } from '../../main.js';
+import { Env } from '../../config/env.js';
+import { createSqlClient, toSnakeCase, scanAddons, addonDirExists, getAddonDir } from '../../utils/index.js';
+import checkTable from '../../checks/table.js';
+import { paths } from '../../paths.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -69,7 +70,7 @@ export const SyncDb = async (): Promise<void> => {
 
         // 阶段2：建立数据库连接并检查版本
         perfTracker.markPhase('数据库连接');
-        sql = await util.createSqlClient({ max: 1 });
+        sql = await createSqlClient({ max: 1 });
         await ensureDbVersion(sql);
         Logger.info(`✓ 数据库连接建立，耗时: ${perfTracker.getPhaseTime('数据库连接')}`);
 
@@ -79,11 +80,11 @@ export const SyncDb = async (): Promise<void> => {
         const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [{ path: paths.projectTableDir, isCore: false }];
 
         // 添加所有 addon 的 tables 目录
-        const addons = util.scanAddons();
+        const addons = scanAddons();
         for (const addon of addons) {
-            if (util.addonDirExists(addon, 'tables')) {
+            if (addonDirExists(addon, 'tables')) {
                 directories.push({
-                    path: util.getAddonDir(addon, 'tables'),
+                    path: getAddonDir(addon, 'tables'),
                     isCore: false,
                     addonName: addon
                 });
@@ -133,7 +134,7 @@ export const SyncDb = async (): Promise<void> => {
                 //   例如：addon-admin 的 user.json → addon_admin_user
                 // - 项目表：{表名}
                 //   例如：user.json → user
-                let tableName = util.toSnakeCase(fileName);
+                let tableName = toSnakeCase(fileName);
                 if (addonName) {
                     // 将 addon 名称中的中划线替换为下划线（addon-admin → addon_admin）
                     const addonNameSnake = addonName.replace(/-/g, '_');

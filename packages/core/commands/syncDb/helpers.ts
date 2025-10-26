@@ -8,7 +8,7 @@
  * - 默认值处理
  */
 
-import { util } from '../../main.js';
+import { isType } from '../../utils/helper.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { Logger } from '../../utils/logger.js';
 
@@ -86,7 +86,7 @@ export function generateDefaultSql(actualDefault: any, fieldType: 'number' | 'st
 
     // 仅 number/string/array 类型设置默认值
     if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array') {
-        if (util.isType(actualDefault, 'number')) {
+        if (isType(actualDefault, 'number')) {
             return ` DEFAULT ${actualDefault}`;
         } else {
             // 字符串需要转义单引号：' -> ''

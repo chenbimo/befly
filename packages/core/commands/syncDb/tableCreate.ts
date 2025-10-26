@@ -9,7 +9,7 @@
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
 
-import { util } from '../../main.js';
+import { toSnakeCase, parseRule } from '../../utils/helper.js';
 import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
@@ -49,9 +49,9 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     // 业务字段注释
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = util.toSnakeCase(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
-        const parsed = util.parseRule(fieldRule);
+        const parsed = parseRule(fieldRule);
         const { name: fieldName } = parsed;
         const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS '${fieldName}'`;
         if (IS_PLAN) {
@@ -86,9 +86,9 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     // 业务字段索引
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = util.toSnakeCase(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
-        const parsed = util.parseRule(fieldRule);
+        const parsed = parseRule(fieldRule);
         if (parsed.index === 1) {
             const stmt = buildIndexSQL(tableName, `idx_${dbFieldName}`, dbFieldName, 'create');
             if (IS_PLAN) {

@@ -8,7 +8,7 @@
  * - 构建系统列和业务列定义
  */
 
-import { util } from '../../main.js';
+import { toSnakeCase, parseRule } from '../../utils/helper.js';
 import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
@@ -81,9 +81,9 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = util.toSnakeCase(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
-        const parsed = util.parseRule(fieldRule);
+        const parsed = parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
         const sqlType = getSqlType(fieldType, fieldMax);
 
@@ -111,9 +111,9 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
  */
 export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: boolean = false): string {
     // 转换字段名为下划线格式
-    const dbFieldName = util.toSnakeCase(fieldKey);
+    const dbFieldName = toSnakeCase(fieldKey);
 
-    const parsed = util.parseRule(fieldRule);
+    const parsed = parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
     const sqlType = getSqlType(fieldType, fieldMax);
 

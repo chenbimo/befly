@@ -2,13 +2,13 @@
  * syncDb 常量定义模块
  *
  * 包含：
- * - 数据库版本要求
+ * - 数据库类型判断
+ * - 版本要求
+ * - 数据类型映射
  * - 系统字段定义
- * - 索引字段配置
- * - 字段变更类型标签
  */
 
-import { Env } from '../../main.js';
+import { Env } from '../../config/env.js';
 import type { Dialect } from './types.js';
 
 /**

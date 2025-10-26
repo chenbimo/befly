@@ -7,7 +7,7 @@
  * - 应用变更计划
  */
 
-import { util } from '../../main.js';
+import { toSnakeCase, parseRule } from '../../utils/helper.js';
 import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
@@ -57,7 +57,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式（用于与数据库字段对比）
-        const dbFieldName = util.toSnakeCase(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
         if (existingColumns[dbFieldName]) {
             const comparison = compareFieldDefinition(existingColumns[dbFieldName], fieldRule, dbFieldName);
@@ -74,7 +74,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     else if (c.type === 'comment') globalCount.nameChanges++;
                 }
 
-                const parsed = util.parseRule(fieldRule);
+                const parsed = parseRule(fieldRule);
                 const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
 
                 if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
@@ -141,7 +141,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 changed = true;
             }
         } else {
-            const parsed = util.parseRule(fieldRule);
+            const parsed = parseRule(fieldRule);
             const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
             const lenPart = isStringOrArrayType(fieldType) ? ` 长度:${parseInt(String(fieldMax))}` : '';
             Logger.info(`[新增字段] ${tableName}.${dbFieldName} 类型:${fieldType}${lenPart} 默认:${fieldDefault ?? 'NULL'}`);
@@ -164,9 +164,9 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     // 检查业务字段索引
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = util.toSnakeCase(fieldKey);
+        const dbFieldName = toSnakeCase(fieldKey);
 
-        const parsed = util.parseRule(fieldRule);
+        const parsed = parseRule(fieldRule);
         const indexName = `idx_${dbFieldName}`;
         if (parsed.index === 1 && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName: dbFieldName });
@@ -184,10 +184,10 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     if (IS_PG) {
         for (const [fieldKey, fieldRule] of Object.entries(fields)) {
             // 转换字段名为下划线格式
-            const dbFieldName = util.toSnakeCase(fieldKey);
+            const dbFieldName = toSnakeCase(fieldKey);
 
             if (existingColumns[dbFieldName]) {
-                const parsed = util.parseRule(fieldRule);
+                const parsed = parseRule(fieldRule);
                 const { name: fieldName } = parsed;
                 const curr = existingColumns[dbFieldName].comment || '';
                 const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';

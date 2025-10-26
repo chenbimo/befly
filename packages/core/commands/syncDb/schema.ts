@@ -7,7 +7,7 @@
  * - 获取表的索引信息
  */
 
-import { Env } from '../../main.js';
+import { Env } from '../../config/env.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
 import type { ColumnInfo, IndexInfo } from './types.js';
 import type { SQL } from 'bun';
