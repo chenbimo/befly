@@ -12,7 +12,7 @@
         "packages/*"
     ],
     "scripts": {
-        "publish": "lerna publish --no-push --no-git-tag-version",
+        "r": "lerna publish",
         "format": "prettier --write \"**/*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}\"",
         "format:check": "prettier --check \"**/*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}\""
     },

@@ -1,15 +1,21 @@
 {
     "$schema": "node_modules/lerna/schemas/lerna-schema.json",
     "version": "independent",
-    "npmClient": "npm",
+    "npmClient": "bun",
     "useWorkspaces": true,
     "command": {
         "publish": {
+            "ignoreScripts": false,
+            "yes": true,
             "registry": "https://registry.npmjs.org",
             "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/tests/**", "**/docs/**", "**/notes/**", "**/__tests__/**"]
         },
         "version": {
+            "yes": true,
+            "changelog": false,
+            "forcePublish": true,
             "createRelease": "none",
+            "syncWorkspaceLock": true,
             "push": false,
             "gitTagVersion": false,
             "conventionalCommits": false,
