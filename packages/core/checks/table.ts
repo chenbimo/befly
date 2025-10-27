@@ -4,7 +4,7 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../lib/logger.js';;
+import { Logger } from '../lib/logger.js';
 import { parseRule } from '../util.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir } from '../util.js';

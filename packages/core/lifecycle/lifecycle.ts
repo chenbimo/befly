@@ -3,7 +3,7 @@
  * 统一管理框架的启动流程：检查、加载插件、加载API、启动服务器
  */
 
-import { Logger } from '../lib/logger.js';;
+import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { scanAddons, addonDirExists } from '../util.js';
 import { Checker } from './checker.js';

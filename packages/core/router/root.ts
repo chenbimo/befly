@@ -5,7 +5,7 @@
 
 import { Env } from '../config/env.js';
 import { setCorsOptions } from '../middleware/cors.js';
-import { Logger } from '../lib/logger.js';;
+import { Logger } from '../lib/logger.js';
 import { No } from '../util.js';
 
 /**

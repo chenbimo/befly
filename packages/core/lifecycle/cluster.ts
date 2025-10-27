@@ -5,7 +5,7 @@
 
 import { join } from 'node:path';
 import type { Subprocess } from 'bun';
-import { Logger } from '../lib/logger.js';;
+import { Logger } from '../lib/logger.js';
 
 export interface ClusterOptions {
     /** 实例数量（数字或 'max'） */

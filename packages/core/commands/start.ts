@@ -4,7 +4,7 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { Logger } from '../lib/logger.js';;
+import { Logger } from '../lib/logger.js';
 import { ClusterManager } from '../lifecycle/cluster.js';
 
 function getProjectRoot(): string {

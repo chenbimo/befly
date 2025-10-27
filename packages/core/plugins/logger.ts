@@ -3,7 +3,7 @@
  * 提供全局日志功能
  */
 
-import { Logger } from '../lib/logger.js';;
+import { Logger } from '../lib/logger.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 

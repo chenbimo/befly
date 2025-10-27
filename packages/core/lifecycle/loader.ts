@@ -4,7 +4,7 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../lib/logger.js';;
+import { Logger } from '../lib/logger.js';
 import { calcPerfTime, isType } from '../util.js';
 import { sortPlugins } from '../util.js';
 import { paths } from '../paths.js';
