@@ -427,7 +427,7 @@ export class Loader {
                     const errorMessage = error?.message || '未知错误';
 
                     // 记录详细错误信息
-                    Logger.warn(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime})`, error);
+                    Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime})`, error);
 
                     process.exit(1);
                 }

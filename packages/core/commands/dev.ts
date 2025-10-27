@@ -33,7 +33,7 @@ export async function devCommand(options: DevOptions) {
             Logger.error('未找到 main.ts 文件，请确保在 Befly 项目目录下');
             process.exit(1);
         }
-        console.log('===================222222');
+
         // 设置环境变量
         process.env.NODE_ENV = 'development';
         process.env.APP_PORT = options.port;
@@ -54,11 +54,39 @@ export async function devCommand(options: DevOptions) {
             Logger.info(`环境变量文件: .env.development\n`);
         }
 
-        // 直接导入并运行 main.ts（Bun 会自动加载 .env.development）
+        // 使用 Bun.spawn 启动开发服务器（不使用 --watch 避免监听 node_modules）
+        const args = ['--env-file=.env.development', mainFile];
 
-        await import(mainFile);
+        const proc = Bun.spawn(['bun', 'run', ...args], {
+            cwd: projectRoot,
+            stdout: 'inherit',
+            stderr: 'inherit',
+            stdin: 'inherit',
+            env: {
+                ...process.env,
+                NODE_ENV: 'development',
+                APP_PORT: options.port,
+                APP_HOST: options.host,
+                LOG_DEBUG: options.verbose ? '1' : process.env.LOG_DEBUG,
+                FORCE_COLOR: '1'
+            }
+        });
 
-        // 注意：正常情况下不会执行到这里，因为 main.ts 会启动服务器并持续运行
+        // 添加信号处理，确保优雅关闭
+        const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT', 'SIGHUP'];
+        signals.forEach((signal) => {
+            process.on(signal, () => {
+                Logger.info(`\n收到 ${signal} 信号，正在关闭开发服务器...`);
+                proc.kill(signal);
+                setTimeout(() => {
+                    proc.kill('SIGKILL');
+                    process.exit(1);
+                }, 5000); // 5 秒强制关闭
+            });
+        });
+
+        const exitCode = await proc.exited;
+        process.exit(exitCode || 0);
     } catch (error) {
         Logger.error('启动开发服务器失败:');
         console.error(error);
