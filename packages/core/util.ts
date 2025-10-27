@@ -7,7 +7,6 @@
  * - 对象操作（pickFields, fieldClear, cleanData）
  * - 日期时间（formatDate, calcPerfTime）
  * - 字段转换（toSnakeCase, toCamelCase 等）
- * - Bun 版本检查（checkBunVersion）
  * - 表定义工具（parseRule）
  * - Addon 管理（scanAddons, getAddonDir 等）
  * - 数据库管理（createRedisClient, createSqlClient 等）
@@ -415,76 +414,6 @@ export const convertBigIntFields = <T = any>(arr: Record<string, any>[], fields:
         return converted as T;
     }) as T[];
 };
-
-// ========================================
-// Bun 版本检查
-// ========================================
-
-const REQUIRED_BUN_VERSION = '1.3.0';
-
-function compareVersions(v1: string, v2: string): number {
-    const parts1 = v1.split('.').map(Number);
-    const parts2 = v2.split('.').map(Number);
-
-    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-        const num1 = parts1[i] || 0;
-        const num2 = parts2[i] || 0;
-
-        if (num1 > num2) return 1;
-        if (num1 < num2) return -1;
-    }
-
-    return 0;
-}
-
-function getBunVersion(): string | null {
-    try {
-        if (typeof Bun !== 'undefined' && Bun.version) {
-            return Bun.version;
-        }
-
-        const proc = Bun.spawnSync(['bun', '--version'], {
-            stdout: 'pipe',
-            stderr: 'pipe'
-        });
-
-        if (proc.exitCode === 0) {
-            const version = proc.stdout.toString().trim();
-            return version;
-        }
-
-        return null;
-    } catch {
-        return null;
-    }
-}
-
-/**
- * 检查 Bun 版本
- */
-export function checkBunVersion(): void {
-    const currentVersion = getBunVersion();
-
-    if (!currentVersion) {
-        Logger.error('未检测到 Bun 运行时');
-        Logger.info('\nBefly CLI 需要 Bun v1.3.0 或更高版本');
-        Logger.info('请访问 https://bun.sh 安装 Bun\n');
-        Logger.info('安装命令:');
-        Logger.info('  Windows (PowerShell): powershell -c "irm bun.sh/install.ps1 | iex"');
-        Logger.info('  macOS/Linux: curl -fsSL https://bun.sh/install | bash\n');
-        process.exit(1);
-    }
-
-    const comparison = compareVersions(currentVersion, REQUIRED_BUN_VERSION);
-
-    if (comparison < 0) {
-        Logger.error(`Bun 版本过低: ${currentVersion}`);
-        Logger.info(`\n需要 Bun v${REQUIRED_BUN_VERSION} 或更高版本`);
-        Logger.info('请升级 Bun:\n');
-        Logger.info('  bun upgrade\n');
-        process.exit(1);
-    }
-}
 
 // ========================================
 // JWT 工具类
