@@ -178,16 +178,6 @@ export class Cipher {
     }
 
     /**
-     * 创建流式哈希器
-     * @param algorithm - 算法名称
-     * @param key - 可选的 HMAC 密钥
-     * @returns 流式哈希器实例
-     */
-    static createHasher(algorithm: HashAlgorithm, key: string | Uint8Array | null = null): StreamHasher {
-        return new StreamHasher(algorithm, key);
-    }
-
-    /**
      * 密码哈希 (使用 Argon2)
      * @param password - 密码
      * @param options - 选项
@@ -253,56 +243,5 @@ export class Cipher {
      */
     static fastHash(data: string | Uint8Array, seed: number = 0): number {
         return Bun.hash(data, seed);
-    }
-}
-
-/**
- * 流式哈希器类
- */
-export class StreamHasher {
-    private hasher: any;
-    private finalized: boolean = false;
-
-    constructor(algorithm: HashAlgorithm, key: string | Uint8Array | null = null) {
-        this.hasher = new Bun.CryptoHasher(algorithm, key);
-    }
-
-    /**
-     * 更新数据
-     * @param data - 数据
-     * @returns 支持链式调用
-     */
-    update(data: string | Uint8Array): this {
-        if (this.finalized) {
-            throw new Error('哈希器已经完成，不能再更新数据');
-        }
-        this.hasher.update(data);
-        return this;
-    }
-
-    /**
-     * 生成最终哈希值
-     * @param encoding - 输出编码
-     * @returns 哈希值
-     */
-    digest(encoding: EncodingType = 'hex'): string {
-        if (this.finalized) {
-            throw new Error('哈希器已经完成');
-        }
-        this.finalized = true;
-        return this.hasher.digest(encoding);
-    }
-
-    /**
-     * 复制哈希器
-     * @returns 新的哈希器实例
-     */
-    copy(): StreamHasher {
-        if (this.finalized) {
-            throw new Error('不能复制已完成的哈希器');
-        }
-        const newHasher = new StreamHasher('md5'); // 临时算法
-        newHasher.hasher = this.hasher.copy();
-        return newHasher;
     }
 }
