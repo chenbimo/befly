@@ -5,7 +5,7 @@
  * - SQLite 重建表迁移（处理列修改等不支持的操作）
  */
 
-import { Logger } from '../../utils/logger.js';
+import { Logger } from '../../util.js';
 import { createTable } from './tableCreate.js';
 import type { SQL } from 'bun';
 

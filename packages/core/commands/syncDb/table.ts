@@ -7,9 +7,9 @@
  * - 应用变更计划
  */
 
-import { toSnakeCase } from '../../utils/util.js';
-import { parseRule } from '../../utils/table.js';
-import { Logger } from '../../utils/logger.js';
+import { toSnakeCase } from '../../util.js';
+import { parseRule } from '../../util.js';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';

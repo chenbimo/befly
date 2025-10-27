@@ -4,10 +4,10 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../utils/logger.js';
-import { calcPerfTime } from '../utils/index.js';
+import { Logger } from '../util.js';
+import { calcPerfTime } from '../util.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../utils/addon.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 
 /**
  * 系统检查器类

@@ -4,10 +4,10 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../utils/logger.js';
-import { parseRule } from '../utils/index.js';
+import { Logger } from '../util.js';
+import { parseRule } from '../util.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir } from '../utils/addon.js';
+import { scanAddons, getAddonDir } from '../util.js';
 
 /**
  * 表文件信息接口

@@ -5,8 +5,8 @@
 
 import { RedisClient } from 'bun';
 import { Env } from '../config/env.js';
-import { Logger } from '../utils/logger.js';
-import { getRedis } from '../utils/database.js';
+import { Logger } from '../util.js';
+import { getRedis } from '../util.js';
 
 /**
  * Redis 键前缀

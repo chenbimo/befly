@@ -7,9 +7,9 @@
  * - 日志输出格式化
  */
 
-import { isType } from '../../utils/util.js';
+import { isType } from '../../util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
-import { Logger } from '../../utils/logger.js';
+import { Logger } from '../../util.js';
 
 /**
  * 根据数据库类型引用标识符

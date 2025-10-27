@@ -4,7 +4,7 @@
  * 为 Befly 框架提供项目管理和脚本执行功能
  */
 
-import { checkBunVersion } from '../utils/util.js';
+import { checkBunVersion } from '../util.js';
 
 // 检查 Bun 版本
 checkBunVersion();
@@ -16,7 +16,7 @@ import { buildCommand } from '../commands/build.js';
 import { startCommand } from '../commands/start.js';
 import { syncDbCommand } from '../commands/syncDb.js';
 import { addonCommand } from '../commands/addon.js';
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../util.js';
 
 const program = new Command();
 

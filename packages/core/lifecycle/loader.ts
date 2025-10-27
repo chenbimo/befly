@@ -4,11 +4,11 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../utils/logger.js';
-import { calcPerfTime, isType } from '../utils/util.js';
-import { sortPlugins } from '../utils/plugin.js';
+import { Logger } from '../util.js';
+import { calcPerfTime, isType } from '../util.js';
+import { sortPlugins } from '../util.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../utils/addon.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
 import type { BeflyContext } from '../types/befly.js';

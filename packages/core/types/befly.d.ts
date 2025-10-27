@@ -5,9 +5,9 @@
 import type { Plugin } from './plugin.js';
 import type { ApiRoute, HttpMethod } from './api.js';
 import type { KeyValue } from './common.js';
-import type { Logger } from '../utils/logger.js';
-import type { Jwt } from '../utils/jwt.js';
-import type { Validator } from '../utils/validate.js';
+import type { Logger } from '../util.js';
+import type { Jwt } from '../util.js';
+import type { Validator } from '../util.js';
 import type { Database } from 'bun:sqlite';
 import type { DbHelper } from '../lib/dbHelper.js';
 import type { RedisHelper } from '../lib/redisHelper.js';

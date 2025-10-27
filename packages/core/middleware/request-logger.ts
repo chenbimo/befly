@@ -3,9 +3,9 @@
  * 记录API请求信息
  */
 
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../util.js';
 import { Env } from '../config/env.js';
-import { isType } from '../utils/helper.js';
+import { isType } from '../util.js';
 import type { RequestContext } from '../types/context.js';
 
 /**

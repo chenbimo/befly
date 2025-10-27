@@ -4,9 +4,9 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../util.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../utils/addon.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import { isReservedTableName, isReservedPluginName, isReservedAddonName, getReservedTablePrefixes, getReservedPlugins, getReservedAddonNames } from '../config/reserved.js';
 
 /**

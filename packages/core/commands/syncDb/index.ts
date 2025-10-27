@@ -8,9 +8,9 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../../utils/logger.js';
+import { Logger } from '../../util.js';
 import { Env } from '../../config/env.js';
-import { createSqlClient, toSnakeCase, scanAddons, addonDirExists, getAddonDir } from '../../utils/index.js';
+import { createSqlClient, toSnakeCase, scanAddons, addonDirExists, getAddonDir } from '../../util.js';
 import checkTable from '../../checks/table.js';
 import { paths } from '../../paths.js';
 

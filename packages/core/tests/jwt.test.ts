@@ -4,8 +4,8 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Jwt } from '../utils/jwt.js';
-import type { JwtPayload } from '../utils/jwt.js';
+import { Jwt } from '../util.js';
+import type { JwtPayload } from '../util.js';
 
 describe('JWT 签名和验证', () => {
     test('sign 应该生成有效的 token', async () => {

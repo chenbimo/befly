@@ -3,7 +3,7 @@
  * 负责在服务器启动时缓存接口、菜单和角色权限到 Redis
  */
 
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { ApiRoute } from '../types/api.js';

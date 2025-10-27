@@ -4,7 +4,7 @@
 
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../util.js';
 import { Spinner } from '../lib/spinner.js';
 
 export const addonCommand = {

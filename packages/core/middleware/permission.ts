@@ -3,7 +3,7 @@
  * 处理登录验证和接口权限检查
  */
 
-import { isType } from '../utils/index.js';
+import { isType } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 

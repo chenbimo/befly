@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 /**
  * fieldClear 在数据库场景中的使用测试
  */
-import { fieldClear } from '../utils/util.js';
+import { fieldClear } from '../util.js';
 
 describe('fieldClear 在数据库操作中的应用', () => {
     // ========================================

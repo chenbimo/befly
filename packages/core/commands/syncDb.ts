@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../util.js';
 import { Spinner } from '../lib/spinner.js';
 import { SyncDb } from './syncDb/index.js';
 

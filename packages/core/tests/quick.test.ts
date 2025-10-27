@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Yes, No, isType, formatDate } from '../utils/index.js';
+import { Yes, No, isType, formatDate } from '../util.js';
 import { Cipher } from '../lib/cipher.js';
 
 describe('核心工具', () => {

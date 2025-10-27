@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Yes, No, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, parseRule, toSnakeCase } from '../utils/index.js';
+import { Yes, No, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, parseRule, toSnakeCase } from '../util.js';
 
 describe('响应函数', () => {
     test('Yes 应该返回成功响应', () => {

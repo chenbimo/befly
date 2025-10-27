@@ -3,8 +3,8 @@
  * 处理 /api/* 路径的请求
  */
 
-import { Logger } from '../utils/logger.js';
-import { No } from '../utils/index.js';
+import { Logger } from '../util.js';
+import { No } from '../util.js';
 import { setCorsOptions, handleOptionsRequest } from '../middleware/cors.js';
 import { Env } from '../config/env.js';
 import { authenticate } from '../middleware/auth.js';
@@ -13,7 +13,7 @@ import { checkPermission } from '../middleware/permission.js';
 import { validateParams } from '../middleware/validator.js';
 import { executePluginHooks } from '../middleware/plugin-hooks.js';
 import { logRequest } from '../middleware/request-logger.js';
-import { RequestContext } from '../utils/requestContext.js';
+import { RequestContext } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';

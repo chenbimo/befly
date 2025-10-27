@@ -6,7 +6,7 @@ import path from 'node:path';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { Glob } from 'bun';
 import inquirer from 'inquirer';
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../util.js';
 
 /**
  * 脚本项接口

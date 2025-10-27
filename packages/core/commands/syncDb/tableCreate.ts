@@ -9,9 +9,9 @@
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
 
-import { toSnakeCase } from '../../utils/util.js';
-import { parseRule } from '../../utils/table.js';
-import { Logger } from '../../utils/logger.js';
+import { toSnakeCase } from '../../util.js';
+import { parseRule } from '../../util.js';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';

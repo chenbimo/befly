@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Validator } from '../utils/validate.js';
+import { Validator } from '../util.js';
 
 describe('字符串验证', () => {
     test('应该验证有效的字符串', () => {

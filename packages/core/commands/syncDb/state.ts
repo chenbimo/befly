@@ -6,7 +6,7 @@
  * - 进度信息记录
  */
 
-import { Logger } from '../../utils/logger.js';
+import { Logger } from '../../util.js';
 
 /**
  * 阶段统计信息

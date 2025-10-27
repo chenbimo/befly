@@ -8,9 +8,9 @@
  * - 构建系统列和业务列定义
  */
 
-import { toSnakeCase } from '../../utils/util.js';
-import { parseRule } from '../../utils/table.js';
-import { Logger } from '../../utils/logger.js';
+import { toSnakeCase } from '../../util.js';
+import { parseRule } from '../../util.js';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
 
