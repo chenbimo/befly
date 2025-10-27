@@ -3,6 +3,5 @@
  * 实现代码位于 util.ts
  */
 
-// 重新导出 RequestContext 接口和 createContext 函数
+// 重新导出 RequestContext 接口
 export type { RequestContext } from '../util.js';
-export { createContext } from '../util.js';

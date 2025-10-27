@@ -84,13 +84,6 @@ export const No = <T = any>(msg: string = '', data: T | {} = {}, other: KeyValue
 // 环境判断工具
 // ========================================
 
-/**
- * 判断是否开启调试模式
- */
-export function isDebug(): boolean {
-    return process.env.DEBUG === '1' || process.env.DEBUG === 'true' || (process.env.NODE_ENV === 'development' && process.env.DEBUG !== '0');
-}
-
 // ========================================
 // 类型判断工具
 // ========================================
@@ -753,68 +746,22 @@ const connections: DatabaseConnections = {
 };
 
 /**
- * 构建 Redis 连接 URL
- */
-export function buildRedisUrl(): string {
-    const { REDIS_HOST, REDIS_PORT, REDIS_USERNAME, REDIS_PASSWORD, REDIS_DB } = Env;
-
-    let auth = '';
-    if (REDIS_USERNAME && REDIS_PASSWORD) {
-        auth = `${REDIS_USERNAME}:${REDIS_PASSWORD}@`;
-    } else if (REDIS_PASSWORD) {
-        auth = `:${REDIS_PASSWORD}@`;
-    }
-
-    const url = `redis://${auth}${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}`;
-
-    return url;
-}
-
-/**
- * 构建数据库连接字符串
- */
-export function buildDatabaseUrl(): string {
-    const type = Env.DB_TYPE || '';
-    const host = Env.DB_HOST || '';
-    const port = Env.DB_PORT;
-    const user = encodeURIComponent(Env.DB_USER || '');
-    const pass = encodeURIComponent(Env.DB_PASS || '');
-    const name = Env.DB_NAME || '';
-
-    if (!type) throw new Error('DB_TYPE 未配置');
-    if (!name && type !== 'sqlite') throw new Error('DB_NAME 未配置');
-
-    if (type === 'sqlite') {
-        if (!name || name === ':memory:') {
-            return 'sqlite://:memory:';
-        }
-        if (name.startsWith('/') || /^[a-zA-Z]:/.test(name)) {
-            return `sqlite://${name}`;
-        }
-        return `sqlite://${name}`;
-    }
-
-    if (type === 'postgresql' || type === 'postgres') {
-        if (!host || !port) throw new Error('DB_HOST/DB_PORT 未配置');
-        const auth = user || pass ? `${user}:${pass}@` : '';
-        return `postgres://${auth}${host}:${port}/${encodeURIComponent(name)}`;
-    }
-
-    if (type === 'mysql') {
-        if (!host || !port) throw new Error('DB_HOST/DB_PORT 未配置');
-        const auth = user || pass ? `${user}:${pass}@` : '';
-        return `mysql://${auth}${host}:${port}/${encodeURIComponent(name)}`;
-    }
-
-    throw new Error(`不支持的 DB_TYPE: ${type}`);
-}
-
-/**
  * 创建 Redis 客户端
  */
 export async function createRedisClient(): Promise<RedisClient> {
     try {
-        const url = buildRedisUrl();
+        // 构建 Redis URL
+        const { REDIS_HOST, REDIS_PORT, REDIS_USERNAME, REDIS_PASSWORD, REDIS_DB } = Env;
+
+        let auth = '';
+        if (REDIS_USERNAME && REDIS_PASSWORD) {
+            auth = `${REDIS_USERNAME}:${REDIS_PASSWORD}@`;
+        } else if (REDIS_PASSWORD) {
+            auth = `:${REDIS_PASSWORD}@`;
+        }
+
+        const url = `redis://${auth}${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}`;
+
         const redis = new RedisClient(url, {
             connectionTimeout: 10000,
             idleTimeout: 0,
@@ -838,7 +785,24 @@ export async function createRedisClient(): Promise<RedisClient> {
  * 创建 SQL 客户端
  */
 export async function createSqlClient(options: SqlClientOptions = {}): Promise<any> {
-    const finalUrl = buildDatabaseUrl();
+    // 构建数据库连接字符串
+    const type = Env.DB_TYPE || '';
+    const host = Env.DB_HOST || '';
+    const port = Env.DB_PORT;
+    const user = encodeURIComponent(Env.DB_USER || '');
+    const password = encodeURIComponent(Env.DB_PASSWORD || '');
+    const database = encodeURIComponent(Env.DB_DATABASE || '');
+
+    let finalUrl: string;
+    if (type === 'sqlite') {
+        finalUrl = database;
+    } else {
+        if (!host || !database) {
+            throw new Error('数据库配置不完整，请检查环境变量');
+        }
+        finalUrl = `${type}://${user}:${password}@${host}:${port}/${database}`;
+    }
+
     let sql: any = null;
 
     if (Env.DB_TYPE === 'sqlite') {
@@ -963,27 +927,6 @@ export function getRedis(): RedisClient | null {
 }
 
 /**
- * 获取 SQL 客户端
- */
-export function getSql(): any {
-    return connections.sql;
-}
-
-/**
- * 获取 DbHelper 实例
- */
-export function getDbHelper(): DbHelper | null {
-    return connections.helper;
-}
-
-/**
- * 检查数据库连接是否已初始化
- */
-export function isDatabaseInitialized(): boolean {
-    return connections.redis !== null && connections.sql !== null && connections.helper !== null;
-}
-
-/**
  * 仅初始化 SQL 连接
  */
 export async function initSqlOnly(options: SqlClientOptions = {}): Promise<{ sql: any; helper: DbHelper }> {
@@ -1072,21 +1015,10 @@ export interface RequestContext {
     /** 请求体参数 */
     body: Record<string, any>;
     /** 用户信息 */
+    /** 用户信息 */
     user: Record<string, any>;
     /** 原始请求对象 */
     request: Request;
     /** 请求开始时间（毫秒） */
     startTime: number;
-}
-
-/**
- * 创建请求上下文
- */
-export function createContext(req: Request): RequestContext {
-    return {
-        body: {},
-        user: {},
-        request: req,
-        startTime: Date.now()
-    };
 }
