@@ -1,10 +1,10 @@
 /**
  * 数据验证器测试 - TypeScript 版本
- * 测试 utils/validate.ts 中的验证功能
+ * 测试 lib/validator.ts 中的验证功能
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Validator } from '../util.js';
+import { Validator } from '../lib/validator.js';
 
 describe('字符串验证', () => {
     test('应该验证有效的字符串', () => {

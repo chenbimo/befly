@@ -1,26 +1,23 @@
 /**
  * 数据验证器 - Befly 项目专用
- * 直接集成 RegexAliases，提供开箱即用的验证功能
+ * 内置 RegexAliases，直接使用 util.ts 中的 parseRule
  */
 
-import { RegexAliases } from '../config/regexAliases.js';
-import type { TableDefinition, FieldRule, ParsedFieldRule } from '../types/common.js';
+import { parseRule } from '../util.js';
+import type { TableDefinition, FieldRule } from '../types/common.js';
 import type { ValidationResult, ValidationError } from '../types/validator';
 
 /**
- * 解析字段规则字符串（类型定义）
+ * 内置正则表达式别名（项目专用）
  */
-export type ParseRuleFunction = (rule: string) => ParsedFieldRule;
-
-/**
- * 内置正则表达式别名
- */
-export const DEFAULT_REGEX_ALIASES = {
+const RegexAliases = {
     // 数字类型
     number: '^\\d+$',
     integer: '^-?\\d+$',
     float: '^-?\\d+(\\.\\d+)?$',
     positive: '^[1-9]\\d*$',
+    negative: '^-\\d+$',
+    zero: '^0$',
 
     // 字符串类型
     word: '^[a-zA-Z]+$',
@@ -38,20 +35,32 @@ export const DEFAULT_REGEX_ALIASES = {
     phone: '^1[3-9]\\d{9}$',
     url: '^https?://',
     ip: '^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$',
+    domain: '^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$',
 
     // 特殊格式
     uuid: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
     hex: '^[0-9a-fA-F]+$',
     base64: '^[A-Za-z0-9+/=]+$',
+    md5: '^[a-f0-9]{32}$',
+    sha1: '^[a-f0-9]{40}$',
+    sha256: '^[a-f0-9]{64}$',
 
     // 日期时间
     date: '^\\d{4}-\\d{2}-\\d{2}$',
     time: '^\\d{2}:\\d{2}:\\d{2}$',
     datetime: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}',
+    year: '^\\d{4}$',
+    month: '^(0[1-9]|1[0-2])$',
+    day: '^(0[1-9]|[12]\\d|3[01])$',
 
     // 代码相关
     variable: '^[a-zA-Z_][a-zA-Z0-9_]*$',
     constant: '^[A-Z][A-Z0-9_]*$',
+    package: '^[a-z][a-z0-9-]*$',
+
+    // 证件相关
+    id_card: '^\\d{17}[\\dXx]$',
+    passport: '^[a-zA-Z0-9]{5,17}$',
 
     // 空值
     empty: '^$',
@@ -68,33 +77,12 @@ function isType(value: any, type: string): boolean {
 }
 
 /**
- * 验证器配置接口
- */
-export interface ValidatorConfig {
-    /** 正则别名映射 */
-    regexAliases?: Record<string, string>;
-    /** 自定义规则解析函数 */
-    parseRule?: ParseRuleFunction;
-}
-
-/**
  * 验证器类（Befly 项目专用）
- * 默认集成 RegexAliases 配置
+ * 内置 RegexAliases，直接使用 util.ts 中的 parseRule
  */
 export class Validator {
-    /** 正则别名映射 */
-    private regexAliases: Record<string, string>;
-    /** 规则解析函数 */
-    private parseRule: ParseRuleFunction;
-
-    constructor(config: ValidatorConfig = {}) {
-        this.regexAliases = config.regexAliases || (RegexAliases as any);
-        // parseRule 必须从外部传入（通常是 util.ts 中的 parseRule）
-        if (!config.parseRule) {
-            throw new Error('Validator 需要 parseRule 函数，请在创建实例时传入');
-        }
-        this.parseRule = config.parseRule;
-    }
+    /** 正则别名映射（内置） */
+    private readonly regexAliases: Record<string, string> = RegexAliases;
 
     /**
      * 验证数据
@@ -156,7 +144,7 @@ export class Validator {
             const value = data[fieldName];
             if (!(fieldName in data) || value === undefined || value === null || value === '') {
                 result.code = 1;
-                const ruleParts = this.parseRule(rules[fieldName] || '');
+                const ruleParts = parseRule(rules[fieldName] || '');
                 const fieldLabel = ruleParts.name || fieldName;
                 result.fields[fieldName] = `${fieldLabel}(${fieldName})为必填项`;
             }
@@ -212,7 +200,7 @@ export class Validator {
      * 验证单个字段的值
      */
     private validateFieldValue(value: any, rule: FieldRule, fieldName: string): ValidationError {
-        const parsed = this.parseRule(rule);
+        const parsed = parseRule(rule);
         let { name, type, min, max, regex } = parsed;
 
         regex = this.resolveRegexAlias(regex);
@@ -339,7 +327,7 @@ export class Validator {
      * 验证单个值
      */
     validateSingleValue(value: any, rule: string): { valid: boolean; value: any; errors: string[] } {
-        const parsed = this.parseRule(rule);
+        const parsed = parseRule(rule);
         let { name, type, min, max, regex, default: defaultValue } = parsed;
 
         regex = this.resolveRegexAlias(regex);
@@ -474,19 +462,16 @@ export class Validator {
     /**
      * 静态方法：快速验证
      */
-    static validate(data: Record<string, any>, rules: TableDefinition, required?: string[], config?: ValidatorConfig): ValidationResult;
-    static validate(value: any, rule: string, config?: ValidatorConfig): { valid: boolean; value: any; errors: string[] };
-    static validate(dataOrValue: any, rulesOrRule: any, requiredOrConfig?: any, config?: ValidatorConfig): any {
+    static validate(data: Record<string, any>, rules: TableDefinition, required?: string[]): ValidationResult;
+    static validate(value: any, rule: string): { valid: boolean; value: any; errors: string[] };
+    static validate(dataOrValue: any, rulesOrRule: any, required?: string[]): any {
+        const validator = new Validator();
+
         if (typeof rulesOrRule === 'string') {
-            const cfg = typeof requiredOrConfig === 'object' && !Array.isArray(requiredOrConfig) ? requiredOrConfig : config;
-            const validator = new Validator(cfg);
             return validator.validateSingleValue(dataOrValue, rulesOrRule);
         }
 
-        const required = Array.isArray(requiredOrConfig) ? requiredOrConfig : [];
-        const cfg = config || {};
-        const validator = new Validator(cfg);
-        return validator.validate(dataOrValue, rulesOrRule, required);
+        return validator.validate(dataOrValue, rulesOrRule, required || []);
     }
 
     /**

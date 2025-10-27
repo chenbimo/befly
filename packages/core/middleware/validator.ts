@@ -3,7 +3,7 @@
  * 验证请求参数是否符合要求
  */
 
-import { Validator } from '../util.js';
+import { Validator } from '../lib/validator.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 

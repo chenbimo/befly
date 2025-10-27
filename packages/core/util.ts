@@ -1,22 +1,22 @@
 /**
  * Befly 核心工具函数集合
  *
- * 本文件整合了框架所有工具函数和类：
+ * 本文件整合了框架核心工具函数：
  * - API 响应工具（Yes, No）
- * - 环境判断（isDebug）
  * - 类型判断（isType, isEmptyObject, isEmptyArray）
  * - 对象操作（pickFields, fieldClear, cleanData）
  * - 日期时间（formatDate, calcPerfTime）
  * - 字段转换（toSnakeCase, toCamelCase 等）
  * - Bun 版本检查（checkBunVersion）
- * - JWT 工具（Jwt 类）
- * - Logger 工具（Logger）
- * - Validator 工具（Validator, validator, validate）
- * - Addon 管理（scanAddons, getAddonDir 等）
- * - 数据库管理（buildRedisUrl, buildDatabaseUrl 等）
- * - 插件管理（sortPlugins）
  * - 表定义工具（parseRule）
- * - 请求上下文（RequestContext）
+ * - Addon 管理（scanAddons, getAddonDir 等）
+ * - 数据库管理（createRedisClient, createSqlClient 等）
+ * - 插件管理（sortPlugins）
+ *
+ * 注意：
+ * - JWT 工具位于 lib/jwt.ts
+ * - Logger 位于 lib/logger.ts
+ * - Validator 位于 lib/validator.ts
  */
 
 import fs from 'node:fs';
@@ -24,7 +24,6 @@ import { join } from 'node:path';
 import { SQL, RedisClient } from 'bun';
 import { Env } from './config/env.js';
 import { Logger } from './lib/logger.js';
-import { Validator } from './lib/validator.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
 import { paths } from './paths.js';
@@ -494,11 +493,12 @@ export function checkBunVersion(): void {
 // JWT 位于 lib/jwt.ts，直接从那里导入使用
 
 // ========================================
-// Validator 工具类
+// 表定义工具
 // ========================================
 
 /**
  * 解析字段规则字符串
+ * 格式："字段名|类型|最小值|最大值|默认值|必填|正则"
  * 注意：只分割前6个|，第7个|之后的所有内容（包括|）都属于正则表达式
  */
 export const parseRule = (rule: string): ParsedFieldRule => {
@@ -537,21 +537,6 @@ export const parseRule = (rule: string): ParsedFieldRule => {
         index: fieldIndex,
         regex: fieldRegx !== 'null' ? fieldRegx : null
     };
-};
-
-/**
- * 验证器实例（传入 parseRule）
- */
-export const validator = new Validator({ parseRule });
-
-/**
- * 验证函数（快捷方式）
- */
-export const validate = (dataOrValue: any, rulesOrRule: any, required: string[] = []): any => {
-    if (typeof rulesOrRule === 'string') {
-        return validator.validateSingleValue(dataOrValue, rulesOrRule);
-    }
-    return validator.validate(dataOrValue, rulesOrRule, required);
 };
 
 // ========================================
@@ -881,4 +866,4 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
 // 统一导出
 // ========================================
 
-export { Logger, Validator };
+export { Logger };
