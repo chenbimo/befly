@@ -9,7 +9,7 @@
 
 import { isType } from '../../util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
-import { Logger } from '../../util.js';
+import { Logger } from '../../lib/logger.js';
 
 /**
  * 根据数据库类型引用标识符

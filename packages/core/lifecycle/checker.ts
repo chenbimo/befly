@@ -4,7 +4,7 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../util.js';
+import { Logger } from '../lib/logger.js';;
 import { calcPerfTime } from '../util.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';

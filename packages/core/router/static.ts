@@ -7,7 +7,7 @@ import path from 'node:path';
 import { paths } from '../paths.js';
 import { No } from '../util.js';
 import { setCorsOptions } from '../middleware/cors.js';
-import { Logger } from '../util.js';
+import { Logger } from '../lib/logger.js';;
 import { Env } from '../config/env.js';
 
 /**

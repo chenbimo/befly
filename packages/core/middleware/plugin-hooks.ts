@@ -3,7 +3,7 @@
  * 执行插件的请求处理钩子
  */
 
-import { Logger } from '../util.js';
+import { Logger } from '../lib/logger.js';;
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { RequestContext } from '../types/context.js';

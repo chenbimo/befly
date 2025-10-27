@@ -5,8 +5,8 @@
 
 import { RedisClient } from 'bun';
 import { Env } from '../config/env.js';
-import { Logger } from '../util.js';
-import { getRedis } from '../util.js';
+import { Logger } from '../lib/logger.js';
+import { Database } from './database.js';
 
 /**
  * Redis 键前缀
@@ -19,9 +19,9 @@ const prefix = Env.REDIS_KEY_PREFIX ? `${Env.REDIS_KEY_PREFIX}:` : '';
  * @throws 如果客户端未初始化
  */
 function getClient(): RedisClient {
-    const client = getRedis();
+    const client = Database.getRedis();
     if (!client) {
-        throw new Error('Redis 客户端未初始化，请先调用 initDatabase() 或 initRedisOnly()');
+        throw new Error('Redis 客户端未初始化，请先调用 Database.connectRedis()');
     }
     return client;
 }

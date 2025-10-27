@@ -4,7 +4,7 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { Logger } from '../util.js';
+import { Logger } from '../lib/logger.js';;
 
 interface DevOptions {
     port: string;

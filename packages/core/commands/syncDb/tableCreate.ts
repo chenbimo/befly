@@ -11,7 +11,7 @@
 
 import { toSnakeCase } from '../../util.js';
 import { parseRule } from '../../util.js';
-import { Logger } from '../../util.js';
+import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';

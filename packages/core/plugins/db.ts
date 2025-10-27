@@ -4,8 +4,8 @@
  */
 
 import { Env } from '../config/env.js';
-import { Logger } from '../util.js';
-import { createSqlClient } from '../util.js';
+import { Logger } from '../lib/logger.js';
+import { Database } from '../lib/database.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -26,7 +26,7 @@ const dbPlugin: Plugin = {
                 // 从环境变量读取连接超时配置
                 const connectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000;
 
-                sql = await createSqlClient({
+                sql = await Database.connectSql({
                     connectionTimeout
                 });
 

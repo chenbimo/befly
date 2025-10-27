@@ -6,7 +6,7 @@
  * - 应用表结构变更计划
  */
 
-import { Logger } from '../../util.js';
+import { Logger } from '../../lib/logger.js';
 import { parseRule } from '../../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';

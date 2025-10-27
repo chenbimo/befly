@@ -3,7 +3,7 @@
  * 解析不同类型的请求参数
  */
 
-import { Logger } from '../util.js';
+import { Logger } from '../lib/logger.js';;
 import { Xml } from '../lib/xml.js';
 import { pickFields, isEmptyObject } from '../util.js';
 import type { ApiRoute } from '../types/api.js';

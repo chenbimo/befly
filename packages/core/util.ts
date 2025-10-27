@@ -9,27 +9,22 @@
  * - 字段转换（toSnakeCase, toCamelCase 等）
  * - 表定义工具（parseRule）
  * - Addon 管理（scanAddons, getAddonDir 等）
- * - 数据库管理（createRedisClient, createSqlClient 等）
  * - 插件管理（sortPlugins）
  *
  * 注意：
  * - JWT 工具位于 lib/jwt.ts
  * - Logger 位于 lib/logger.ts
  * - Validator 位于 lib/validator.ts
+ * - Database 管理位于 lib/database.ts
  */
 
 import fs from 'node:fs';
 import { join } from 'node:path';
-import { SQL, RedisClient } from 'bun';
 import { Env } from './config/env.js';
 import { Logger } from './lib/logger.js';
-import { DbHelper } from './lib/dbHelper.js';
-import { RedisHelper } from './lib/redisHelper.js';
 import { paths } from './paths.js';
 import type { KeyValue } from './types/common.js';
 import type { JwtPayload, JwtSignOptions, JwtVerifyOptions } from './types/jwt';
-import type { BeflyContext } from './types/befly.js';
-import type { SqlClientOptions } from './types/database.js';
 import type { Plugin } from './types/plugin.js';
 import type { ParsedFieldRule } from './types/common.js';
 
@@ -515,240 +510,6 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
     const dir = getAddonDir(addonName, subDir);
     return fs.existsSync(dir) && fs.statSync(dir).isDirectory();
 };
-
-// ========================================
-// 数据库管理工具
-// ========================================
-
-const connections: import('./types/util.js').DatabaseConnections = {
-    redis: null,
-    sql: null,
-    helper: null
-};
-
-/**
- * 创建 Redis 客户端
- */
-export async function createRedisClient(): Promise<RedisClient> {
-    try {
-        // 构建 Redis URL
-        const { REDIS_HOST, REDIS_PORT, REDIS_USERNAME, REDIS_PASSWORD, REDIS_DB } = Env;
-
-        let auth = '';
-        if (REDIS_USERNAME && REDIS_PASSWORD) {
-            auth = `${REDIS_USERNAME}:${REDIS_PASSWORD}@`;
-        } else if (REDIS_PASSWORD) {
-            auth = `:${REDIS_PASSWORD}@`;
-        }
-
-        const url = `redis://${auth}${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}`;
-
-        const redis = new RedisClient(url, {
-            connectionTimeout: 10000,
-            idleTimeout: 0,
-            autoReconnect: true,
-            maxRetries: 0,
-            enableOfflineQueue: true,
-            enableAutoPipelining: true
-        });
-
-        await redis.ping();
-        Logger.info('Redis 连接成功');
-
-        return redis;
-    } catch (error: any) {
-        Logger.error('Redis 连接失败', error);
-        throw new Error(`Redis 连接失败: ${error.message}`);
-    }
-}
-
-/**
- * 创建 SQL 客户端
- */
-export async function createSqlClient(options: SqlClientOptions = {}): Promise<any> {
-    // 构建数据库连接字符串
-    const type = Env.DB_TYPE || '';
-    const host = Env.DB_HOST || '';
-    const port = Env.DB_PORT;
-    const user = encodeURIComponent(Env.DB_USER || '');
-    const password = encodeURIComponent(Env.DB_PASSWORD || '');
-    const database = encodeURIComponent(Env.DB_DATABASE || '');
-
-    let finalUrl: string;
-    if (type === 'sqlite') {
-        finalUrl = database;
-    } else {
-        if (!host || !database) {
-            throw new Error('数据库配置不完整，请检查环境变量');
-        }
-        finalUrl = `${type}://${user}:${password}@${host}:${port}/${database}`;
-    }
-
-    let sql: any = null;
-
-    if (Env.DB_TYPE === 'sqlite') {
-        sql = new SQL(finalUrl);
-    } else {
-        sql = new SQL({
-            url: finalUrl,
-            max: options.max ?? 1,
-            bigint: false,
-            ...options
-        });
-    }
-
-    try {
-        const timeout = options.connectionTimeout ?? 5000;
-
-        const healthCheckPromise = (async () => {
-            let version = '';
-            if (Env.DB_TYPE === 'sqlite') {
-                const v = await sql`SELECT sqlite_version() AS version`;
-                version = v?.[0]?.version;
-            } else if (Env.DB_TYPE === 'postgresql' || Env.DB_TYPE === 'postgres') {
-                const v = await sql`SELECT version() AS version`;
-                version = v?.[0]?.version;
-            } else {
-                const v = await sql`SELECT VERSION() AS version`;
-                version = v?.[0]?.version;
-            }
-            return version;
-        })();
-
-        const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => {
-                reject(new Error(`数据库连接超时 (${timeout}ms)`));
-            }, timeout);
-        });
-
-        const version = await Promise.race([healthCheckPromise, timeoutPromise]);
-
-        Logger.info(`数据库连接成功，version: ${version}`);
-        return sql;
-    } catch (error: any) {
-        Logger.error('数据库连接测试失败', error);
-
-        try {
-            await sql.close();
-        } catch (cleanupError) {}
-
-        throw error;
-    }
-}
-
-/**
- * 初始化数据库连接
- */
-export async function initDatabase(options: SqlClientOptions = {}): Promise<import('./types/util.js').DatabaseConnections> {
-    try {
-        Logger.info('正在初始化 Redis 连接...');
-        connections.redis = await createRedisClient();
-
-        Logger.info('正在初始化 SQL 连接...');
-        connections.sql = await createSqlClient(options);
-
-        const befly: BeflyContext = {
-            redis: RedisHelper,
-            db: null as any,
-            tool: null as any,
-            logger: null as any
-        };
-        connections.helper = new DbHelper(befly, connections.sql);
-
-        Logger.info('数据库连接初始化完成（Redis + SQL + DbHelper）');
-
-        return {
-            redis: connections.redis,
-            sql: connections.sql,
-            helper: connections.helper
-        };
-    } catch (error: any) {
-        Logger.error('数据库初始化失败', error);
-        await closeDatabase();
-        throw error;
-    }
-}
-
-/**
- * 关闭所有数据库连接
- */
-export async function closeDatabase(): Promise<void> {
-    try {
-        if (connections.sql) {
-            try {
-                await connections.sql.close();
-                Logger.info('SQL 连接已关闭');
-            } catch (error: any) {
-                Logger.warn('关闭 SQL 连接时出错:', error.message);
-            }
-            connections.sql = null;
-        }
-
-        if (connections.redis) {
-            try {
-                connections.redis.close();
-                Logger.info('Redis 连接已关闭');
-            } catch (error: any) {
-                Logger.warn('关闭 Redis 连接时出错:', error);
-            }
-            connections.redis = null;
-        }
-
-        connections.helper = null;
-    } catch (error: any) {
-        Logger.error('关闭数据库连接时出错', error);
-    }
-}
-
-/**
- * 获取 Redis 客户端
- */
-export function getRedis(): RedisClient | null {
-    return connections.redis;
-}
-
-/**
- * 仅初始化 SQL 连接
- */
-export async function initSqlOnly(options: SqlClientOptions = {}): Promise<{ sql: any; helper: DbHelper }> {
-    try {
-        Logger.info('正在初始化 SQL 连接（不含 Redis）...');
-        connections.sql = await createSqlClient(options);
-
-        const befly: BeflyContext = {
-            redis: null as any,
-            db: null as any,
-            tool: null as any,
-            logger: null as any
-        };
-        connections.helper = new DbHelper(befly, connections.sql);
-
-        Logger.info('SQL 连接初始化完成');
-
-        return {
-            sql: connections.sql,
-            helper: connections.helper
-        };
-    } catch (error: any) {
-        Logger.error('SQL 初始化失败', error);
-        throw error;
-    }
-}
-
-/**
- * 仅初始化 Redis 连接
- */
-export async function initRedisOnly(): Promise<RedisClient> {
-    try {
-        Logger.info('正在初始化 Redis 连接（不含 SQL）...');
-        connections.redis = await createRedisClient();
-        Logger.info('Redis 连接初始化完成');
-        return connections.redis;
-    } catch (error: any) {
-        Logger.error('Redis 初始化失败', error);
-        throw error;
-    }
-}
 
 // ========================================
 // 插件管理工具

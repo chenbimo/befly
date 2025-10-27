@@ -6,7 +6,8 @@
  * - 进度信息记录
  */
 
-import { Logger } from '../../util.js';
+import type { SQL } from 'bun';
+import { Logger } from '../../lib/logger.js';
 
 /**
  * 阶段统计信息

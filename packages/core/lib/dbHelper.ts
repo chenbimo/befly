@@ -5,7 +5,7 @@
 
 import { SqlBuilder } from './sqlBuilder.js';
 import { keysToCamel, arrayKeysToCamel, keysToSnake, toSnakeCase, convertBigIntFields, whereKeysToSnake, fieldClear } from '../util.js';
-import { Logger } from '../util.js';
+import { Logger } from '../lib/logger.js';;
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';

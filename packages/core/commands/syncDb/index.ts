@@ -8,9 +8,10 @@
  */
 
 import path from 'node:path';
-import { Logger } from '../../util.js';
+import { Logger } from '../../lib/logger.js';
 import { Env } from '../../config/env.js';
-import { createSqlClient, toSnakeCase, scanAddons, addonDirExists, getAddonDir } from '../../util.js';
+import { toSnakeCase, scanAddons, addonDirExists, getAddonDir } from '../../util.js';
+import { Database } from '../../lib/database.js';
 import checkTable from '../../checks/table.js';
 import { paths } from '../../paths.js';
 
@@ -70,7 +71,7 @@ export const SyncDb = async (): Promise<void> => {
 
         // 阶段2：建立数据库连接并检查版本
         perfTracker.markPhase('数据库连接');
-        sql = await createSqlClient({ max: 1 });
+        sql = await Database.connectSql({ max: 1 });
         await ensureDbVersion(sql);
         Logger.info(`✓ 数据库连接建立，耗时: ${perfTracker.getPhaseTime('数据库连接')}`);
 
@@ -188,7 +189,7 @@ export const SyncDb = async (): Promise<void> => {
     } finally {
         if (sql) {
             try {
-                await sql.close();
+                await Database.disconnectSql();
             } catch (error: any) {
                 Logger.warn('关闭数据库连接时出错:', error.message);
             }

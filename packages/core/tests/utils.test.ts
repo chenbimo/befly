@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Yes, No, isType, isEmptyObject, isEmptyArray, pickFields, omitFields, formatDate, parseRule, toSnakeCase } from '../util.js';
+import { Yes, No, isType, isEmptyObject, isEmptyArray, pickFields, formatDate, parseRule, toSnakeCase } from '../util.js';
 
 describe('响应函数', () => {
     test('Yes 应该返回成功响应', () => {
@@ -54,11 +54,12 @@ describe('对象操作', () => {
         expect(result).toEqual({ a: 1, c: 3 });
     });
 
-    test('omitFields 应该排除指定字段', () => {
-        const obj = { a: 1, b: 2, c: 3 };
-        const result = omitFields(obj, ['b']);
-        expect(result).toEqual({ a: 1, c: 3 });
-    });
+    // omitFields 函数已移除，测试已注释
+    // test('omitFields 应该排除指定字段', () => {
+    //     const obj = { a: 1, b: 2, c: 3 };
+    //     const result = omitFields(obj, ['b']);
+    //     expect(result).toEqual({ a: 1, c: 3 });
+    // });
 });
 
 describe('日期格式化', () => {

@@ -6,7 +6,7 @@
  */
 
 import { Env } from '../../config/env.js';
-import { Logger } from '../../util.js';
+import { Logger } from '../../lib/logger.js';
 import { DB_VERSION_REQUIREMENTS, IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
 import type { SQL } from 'bun';
 
