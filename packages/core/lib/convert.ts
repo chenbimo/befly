@@ -20,13 +20,31 @@ const isType = (value: any, type: string): boolean => {
  * toSnakeCase('userId') // 'user_id'
  * toSnakeCase('createdAt') // 'created_at'
  * toSnakeCase('userName') // 'user_name'
+ * toSnakeCase('APIKey') // 'a_p_i_key'
+ * toSnakeCase('HTTPRequest') // 'h_t_t_p_request'
+ * toSnakeCase('XMLParser') // 'x_m_l_parser'
  */
 export const toSnakeCase = (str: string): string => {
     if (!str || typeof str !== 'string') return str;
-    return String(str)
-        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-        .replace(/([A-Z]+)([A-Z][a-z0-9]+)/g, '$1_$2')
-        .toLowerCase();
+
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        const nextChar = i < str.length - 1 ? str[i + 1] : null;
+
+        // 当前字符是大写字母
+        if (char >= 'A' && char <= 'Z') {
+            // 如果不是第一个字符，则需要在大写字母前添加下划线
+            if (i > 0) {
+                result += '_';
+            }
+            result += char.toLowerCase();
+        } else {
+            result += char;
+        }
+    }
+
+    return result;
 };
 
 /**
@@ -99,6 +117,68 @@ export const keysToCamel = <T = any>(obj: Record<string, any>): T => {
 export const arrayKeysToCamel = <T = any>(arr: Record<string, any>[]): T[] => {
     if (!arr || !isType(arr, 'array')) return arr as T[];
     return arr.map((item) => keysToCamel<T>(item));
+};
+
+/**
+ * Where 条件键名转下划线格式（递归处理嵌套）
+ * 支持操作符字段（如 userId$gt）和逻辑操作符（$or, $and）
+ *
+ * @param where - 查询条件对象
+ * @returns 字段名转为下划线格式的新条件对象
+ *
+ * @example
+ * // 简单条件
+ * whereKeysToSnake({ userId: 123, userName: 'John' })
+ * // { user_id: 123, user_name: 'John' }
+ *
+ * // 带操作符
+ * whereKeysToSnake({ userId$gt: 100, userName$like: '%John%' })
+ * // { user_id$gt: 100, user_name$like: '%John%' }
+ *
+ * // 逻辑操作符
+ * whereKeysToSnake({ $or: [{ userId: 1 }, { userName: 'John' }] })
+ * // { $or: [{ user_id: 1 }, { user_name: 'John' }] }
+ *
+ * // 嵌套对象
+ * whereKeysToSnake({ userId: { $gt: 100, $lt: 200 } })
+ * // { user_id: { $gt: 100, $lt: 200 } }
+ */
+export const whereKeysToSnake = (where: any): any => {
+    if (!where || typeof where !== 'object') return where;
+
+    // 处理数组（$or, $and 等）
+    if (Array.isArray(where)) {
+        return where.map((item) => whereKeysToSnake(item));
+    }
+
+    const result: any = {};
+    for (const [key, value] of Object.entries(where)) {
+        // 保留 $or, $and 等逻辑操作符
+        if (key === '$or' || key === '$and') {
+            result[key] = (value as any[]).map((item) => whereKeysToSnake(item));
+            continue;
+        }
+
+        // 处理带操作符的字段名（如 userId$gt）
+        if (key.includes('$')) {
+            const lastDollarIndex = key.lastIndexOf('$');
+            const fieldName = key.substring(0, lastDollarIndex);
+            const operator = key.substring(lastDollarIndex);
+            const snakeKey = toSnakeCase(fieldName) + operator;
+            result[snakeKey] = value;
+            continue;
+        }
+
+        // 普通字段：转换键名，递归处理值（支持嵌套对象）
+        const snakeKey = toSnakeCase(key);
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            result[snakeKey] = whereKeysToSnake(value);
+        } else {
+            result[snakeKey] = value;
+        }
+    }
+
+    return result;
 };
 
 /**

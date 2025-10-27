@@ -7,7 +7,7 @@
  * - 应用变更计划
  */
 
-import { toSnakeCase } from '../../lib/convert.js';
+import { toSnakeCase } from '../../utils/util.js';
 import { parseRule } from '../../utils/table.js';
 import { Logger } from '../../utils/logger.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';

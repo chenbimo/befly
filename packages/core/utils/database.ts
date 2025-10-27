@@ -6,8 +6,8 @@
 import { SQL, RedisClient } from 'bun';
 import { Env } from '../config/env.js';
 import { Logger } from './logger.js';
-import { DbHelper } from './dbHelper.js';
-import { RedisHelper } from './redisHelper.js';
+import { DbHelper } from '../lib/dbHelper.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { SqlClientOptions } from '../types/database.js';
 

@@ -1,9 +1,9 @@
-/**
- * 测试 fieldClear 在数据库操作中的应用
- */
+import { describe, expect, test } from 'bun:test';
 
-import { describe, test, expect } from 'bun:test';
-import { fieldClear } from '../utils/helper.js';
+/**
+ * fieldClear 在数据库场景中的使用测试
+ */
+import { fieldClear } from '../utils/util.js';
 
 describe('fieldClear 在数据库操作中的应用', () => {
     // ========================================

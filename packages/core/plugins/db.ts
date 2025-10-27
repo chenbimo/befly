@@ -6,7 +6,7 @@
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
 import { createSqlClient } from '../utils/database.js';
-import { DbHelper } from '../utils/dbHelper.js';
+import { DbHelper } from '../lib/dbHelper.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 

@@ -1,14 +1,13 @@
 /**
- * syncDb 辅助函数模块
+ * syncDb 辅助工具模块
  *
  * 包含：
- * - SQL 标识符引用
- * - 日志格式化
- * - 类型判断工具
+ * - 标识符引用（反引号/双引号转义）
  * - 默认值处理
+ * - 日志输出格式化
  */
 
-import { isType } from '../../utils/helper.js';
+import { isType } from '../../utils/util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { Logger } from '../../utils/logger.js';
 

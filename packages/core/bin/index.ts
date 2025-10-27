@@ -4,7 +4,7 @@
  * 为 Befly 框架提供项目管理和脚本执行功能
  */
 
-import { checkBunVersion } from '../utils/checkBun.js';
+import { checkBunVersion } from '../utils/util.js';
 
 // 检查 Bun 版本
 checkBunVersion();

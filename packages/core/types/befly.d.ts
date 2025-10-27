@@ -9,8 +9,8 @@ import type { Logger } from '../utils/logger.js';
 import type { Jwt } from '../utils/jwt.js';
 import type { Validator } from '../utils/validate.js';
 import type { Database } from 'bun:sqlite';
-import type { DbHelper } from '../utils/dbHelper.js';
-import type { RedisHelper } from '../utils/redisHelper.js';
+import type { DbHelper } from '../lib/dbHelper.js';
+import type { RedisHelper } from '../lib/redisHelper.js';
 import type { Cipher } from '../lib/cipher.js';
 
 /**

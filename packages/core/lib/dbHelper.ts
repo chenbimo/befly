@@ -3,10 +3,9 @@
  * 提供数据库 CRUD 操作的封装
  */
 
-import { SqlBuilder } from '../lib/sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, toSnakeCase, convertBigIntFields } from '../lib/convert.js';
-import { fieldClear } from './helper.js';
-import { Logger } from './logger.js';
+import { SqlBuilder } from './sqlBuilder.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, toSnakeCase, convertBigIntFields, whereKeysToSnake, fieldClear } from '../utils/util.js';
+import { Logger } from '../utils/logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
@@ -57,47 +56,6 @@ export class DbHelper {
     }
 
     /**
-     * where 条件键名转下划线格式（私有方法，递归处理嵌套）
-     */
-    private whereKeysToSnake(where: any): any {
-        if (!where || typeof where !== 'object') return where;
-
-        // 处理数组（$or, $and 等）
-        if (Array.isArray(where)) {
-            return where.map((item) => this.whereKeysToSnake(item));
-        }
-
-        const result: any = {};
-        for (const [key, value] of Object.entries(where)) {
-            // 保留 $or, $and 等逻辑操作符
-            if (key === '$or' || key === '$and') {
-                result[key] = (value as any[]).map((item) => this.whereKeysToSnake(item));
-                continue;
-            }
-
-            // 处理带操作符的字段名（如 userId$gt）
-            if (key.includes('$')) {
-                const lastDollarIndex = key.lastIndexOf('$');
-                const fieldName = key.substring(0, lastDollarIndex);
-                const operator = key.substring(lastDollarIndex);
-                const snakeKey = toSnakeCase(fieldName) + operator;
-                result[snakeKey] = value;
-                continue;
-            }
-
-            // 普通字段：转换键名，递归处理值（支持嵌套对象）
-            const snakeKey = toSnakeCase(key);
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                result[snakeKey] = this.whereKeysToSnake(value);
-            } else {
-                result[snakeKey] = value;
-            }
-        }
-
-        return result;
-    }
-
-    /**
      * 统一的查询参数预处理方法
      */
     private prepareQueryOptions(options: QueryOptions) {
@@ -106,7 +64,7 @@ export class DbHelper {
         return {
             table: toSnakeCase(options.table),
             fields: this.fieldsToSnake(options.fields || ['*']),
-            where: this.whereKeysToSnake(cleanWhere),
+            where: whereKeysToSnake(cleanWhere),
             orderBy: this.orderByToSnake(options.orderBy || []),
             page: options.page || 1,
             limit: options.limit || 10
@@ -464,7 +422,7 @@ export class DbHelper {
 
         // 字段名转换：小驼峰 → 下划线
         const snakeData = keysToSnake(cleanData);
-        const snakeWhere = this.whereKeysToSnake(cleanWhere);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 移除系统字段（防止用户尝试修改）
         // 注意：state 允许用户修改（用于设置禁用状态 state=2）
@@ -512,7 +470,7 @@ export class DbHelper {
 
         // 清理条件字段
         const cleanWhere = this.cleanFields(where);
-        const snakeWhere = this.whereKeysToSnake(cleanWhere);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 物理删除
         const builder = new SqlBuilder().where(snakeWhere);
@@ -689,7 +647,7 @@ export class DbHelper {
         const cleanWhere = this.cleanFields(where);
 
         // 转换 where 条件字段名：小驼峰 → 下划线
-        const snakeWhere = this.whereKeysToSnake(cleanWhere);
+        const snakeWhere = whereKeysToSnake(cleanWhere);
 
         // 使用 SqlBuilder 构建安全的 WHERE 条件
         const whereFiltered = this.addDefaultStateFilter(snakeWhere);

@@ -1,11 +1,9 @@
 /**
- * 字段名转换功能测试
- * 测试 utils/helpers.ts 中的字段名转换函数
+ * 字段转换功能测试
  */
 
 import { describe, test, expect } from 'bun:test';
-import { toSnakeCase, toCamelCase, keysToSnake, keysToCamel, arrayKeysToCamel } from '../lib/convert.js';
-// import { whereKeysToSnake } from '../utils/helper.js'; // 已移除
+import { toSnakeCase, toCamelCase, keysToSnake, keysToCamel, arrayKeysToCamel, whereKeysToSnake } from '../utils/util.js';
 
 describe('字符串命名转换', () => {
     describe('toSnakeCase - 小驼峰转下划线', () => {

@@ -5,7 +5,7 @@
 
 import { Env } from '../config/env.js';
 import { Logger } from '../utils/logger.js';
-import { RedisHelper } from '../utils/redisHelper.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import { initRedisOnly } from '../utils/database.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';

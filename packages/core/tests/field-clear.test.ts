@@ -1,9 +1,9 @@
-/**
- * fieldClear 函数测试
- */
+import { describe, expect, test } from 'bun:test';
 
-import { describe, test, expect } from 'bun:test';
-import { fieldClear } from '../utils/helper.js';
+/**
+ * 字段清理功能测试
+ */
+import { fieldClear } from '../utils/util.js';
 
 describe('fieldClear - 字段清理功能', () => {
     // ========================================

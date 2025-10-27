@@ -5,9 +5,8 @@
 
 import path from 'node:path';
 import { Logger } from '../utils/logger.js';
-import { calcPerfTime } from '../utils/helper.js';
+import { calcPerfTime, isType } from '../utils/util.js';
 import { sortPlugins } from '../utils/plugin.js';
-import { isType } from '../utils/helper.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../utils/addon.js';
 import type { Plugin } from '../types/plugin.js';
