@@ -24,7 +24,6 @@ import { join } from 'node:path';
 import { SQL, RedisClient } from 'bun';
 import { Env } from './config/env.js';
 import { Logger as LibLogger } from './lib/logger.js';
-import { Jwt as LibJwt } from './lib/jwt.js';
 import { Validator as LibValidator } from './lib/validator.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
@@ -508,95 +507,7 @@ export function checkBunVersion(): void {
 // JWT 工具类
 // ========================================
 
-/**
- * JWT 工具类（带 Env 集成）
- */
-export class Jwt extends LibJwt {
-    static create(payload: JwtPayload): string {
-        const expiresIn = Env.JWT_EXPIRES_IN || '7d';
-        const algorithm = (Env.JWT_ALGORITHM || 'HS256') as any;
-        return super.sign(payload, Env.JWT_SECRET, {
-            expiresIn,
-            algorithm
-        });
-    }
-
-    static check(token: string): JwtPayload {
-        return this.verify(token, Env.JWT_SECRET);
-    }
-
-    static parse(token: string): JwtPayload {
-        return this.decode(token);
-    }
-
-    static sign(payload: JwtPayload, secretOrOptions?: string | JwtSignOptions, expiresIn?: string | number): string {
-        if (typeof secretOrOptions === 'string') {
-            return super.sign(payload, secretOrOptions, { expiresIn });
-        }
-
-        const options = secretOrOptions || {};
-        const secret = options.secret || Env.JWT_SECRET;
-        const { secret: _, ...restOptions } = options;
-
-        return super.sign(payload, secret, restOptions);
-    }
-
-    static verify(token: string, secretOrOptions?: string | JwtVerifyOptions): JwtPayload {
-        if (typeof secretOrOptions === 'string') {
-            return super.verify(token, secretOrOptions);
-        }
-
-        const options = secretOrOptions || {};
-        const secret = options.secret || Env.JWT_SECRET;
-        const { secret: _, ...restOptions } = options;
-
-        return super.verify(token, secret, restOptions);
-    }
-
-    static signUserToken(userInfo: JwtPayload, options: Omit<JwtSignOptions, 'secret'> = {}): string {
-        return super.signUserToken(userInfo, Env.JWT_SECRET, options);
-    }
-
-    static signAPIToken(payload: JwtPayload, options: Omit<JwtSignOptions, 'secret'> = {}): string {
-        return super.signAPIToken(payload, Env.JWT_SECRET, options);
-    }
-
-    static signRefreshToken(payload: JwtPayload, options: Omit<JwtSignOptions, 'secret'> = {}): string {
-        return super.signRefreshToken(payload, Env.JWT_SECRET, options);
-    }
-
-    static signTempToken(payload: JwtPayload, options: Omit<JwtSignOptions, 'secret'> = {}): string {
-        return super.signTempToken(payload, Env.JWT_SECRET, options);
-    }
-
-    static verifyUserToken(token: string, options: Omit<JwtVerifyOptions, 'secret'> = {}): JwtPayload {
-        return super.verifyUserToken(token, Env.JWT_SECRET, options);
-    }
-
-    static verifyAPIToken(token: string, options: Omit<JwtVerifyOptions, 'secret'> = {}): JwtPayload {
-        return super.verifyAPIToken(token, Env.JWT_SECRET, options);
-    }
-
-    static verifyRefreshToken(token: string, options: Omit<JwtVerifyOptions, 'secret'> = {}): JwtPayload {
-        return super.verifyRefreshToken(token, Env.JWT_SECRET, options);
-    }
-
-    static verifyTempToken(token: string, options: Omit<JwtVerifyOptions, 'secret'> = {}): JwtPayload {
-        return super.verifyTempToken(token, Env.JWT_SECRET, options);
-    }
-
-    static verifyWithPermissions(token: string, requiredPermissions: string | string[], options: Omit<JwtVerifyOptions, 'secret'> = {}): JwtPayload {
-        return super.verifyWithPermissions(token, Env.JWT_SECRET, requiredPermissions, options);
-    }
-
-    static verifyWithRoles(token: string, requiredRoles: string | string[], options: Omit<JwtVerifyOptions, 'secret'> = {}): JwtPayload {
-        return super.verifyWithRoles(token, Env.JWT_SECRET, requiredRoles, options);
-    }
-
-    static verifySoft(token: string, options: Omit<JwtVerifyOptions, 'secret'> = {}): JwtPayload {
-        return super.verifySoft(token, Env.JWT_SECRET, options);
-    }
-}
+// JWT 位于 lib/jwt.ts，直接从那里导入使用
 
 // ========================================
 // Validator 工具类

@@ -4,8 +4,8 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Jwt } from '../util.js';
-import type { JwtPayload } from '../util.js';
+import { Jwt } from '../lib/jwt.js';
+import type { JwtPayload } from '../types/jwt.js';
 
 describe('JWT 签名和验证', () => {
     test('sign 应该生成有效的 token', async () => {
@@ -131,21 +131,21 @@ describe('角色和权限检查', () => {
 });
 
 describe('Token 过期', () => {
-    test('过期的 token 应该被拒绝', async () => {
-        const payload: JwtPayload = { userId: '1' };
-        // 创建一个已过期的 token（过期时间为 -1 秒）
-        const token = await Jwt.sign(payload, 'secret', '-1s');
+    test('Token 过期 > 过期的 token 应该被拒绝', async () => {
+        const payload = { userId: 1, username: 'testuser' };
+        // 创建一个 -1 秒过期的 token
+        const token = await Jwt.sign(payload, { expiresIn: '-1s', secret: 'secret' });
 
-        // 等待 token 过期
+        // 等待足够的时间确保过期
         await new Promise((resolve) => setTimeout(resolve, 1100));
 
         try {
-            await Jwt.verify(token, 'secret');
+            await Jwt.verify(token, { secret: 'secret' });
             expect(true).toBe(false); // 不应该执行到这里
         } catch (error: any) {
             expect(error.message).toContain('expired');
         }
-    }, 2000); // 增加测试超时时间
+    });
 });
 
 describe('静态便捷方法', () => {

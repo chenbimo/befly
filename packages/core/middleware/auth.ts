@@ -3,7 +3,7 @@
  * 处理用户身份验证
  */
 
-import { Jwt } from '../util.js';
+import { Jwt } from '../lib/jwt.js';
 import type { RequestContext } from '../types/context.js';
 
 /**

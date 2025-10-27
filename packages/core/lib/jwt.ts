@@ -1,9 +1,10 @@
 /**
- * JWT 工具类 - 通用库版本
- * 提供JWT token的签名、验证和解码功能（无框架依赖）
+ * JWT 工具类 - Befly 项目专用
+ * 直接集成环境变量，提供开箱即用的 JWT 功能
  */
 
 import { createHmac } from 'crypto';
+import { Env } from '../config/env.js';
 import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtAlgorithm, JwtHeader, JwtDecoded } from '../types/jwt';
 
 /**
@@ -95,21 +96,21 @@ export class Jwt {
     /**
      * 签名 JWT token
      * @param payload - JWT载荷数据
-     * @param secret - JWT密钥
-     * @param options - 签名选项
+     * @param options - 签名选项（自动使用 Env.JWT_SECRET）
      * @returns JWT token字符串
      */
-    static sign(payload: JwtPayload, secret: string, options?: Omit<JwtSignOptions, 'secret'>): string {
+    static sign(payload: JwtPayload, options?: JwtSignOptions): string {
         if (!payload || typeof payload !== 'object') {
             throw new Error('载荷必须是非空对象');
         }
 
+        const secret = options?.secret || Env.JWT_SECRET;
         if (!secret) {
-            throw new Error('JWT密钥是必需的');
+            throw new Error('JWT密钥未配置');
         }
 
         const opts = options || {};
-        const algorithm = (opts.algorithm || 'HS256') as JwtAlgorithm;
+        const algorithm = (opts.algorithm || Env.JWT_ALGORITHM || 'HS256') as JwtAlgorithm;
 
         const now = Math.floor(Date.now() / 1000);
 
@@ -126,6 +127,11 @@ export class Jwt {
 
         if (opts.expiresIn) {
             const expSeconds = Jwt.parseExpiration(opts.expiresIn);
+            jwtPayload.exp = now + expSeconds;
+        } else {
+            // 使用默认过期时间
+            const defaultExpiry = Env.JWT_EXPIRES_IN || '7d';
+            const expSeconds = Jwt.parseExpiration(defaultExpiry);
             jwtPayload.exp = now + expSeconds;
         }
         if (opts.issuer) jwtPayload.iss = opts.issuer;
@@ -148,17 +154,17 @@ export class Jwt {
     /**
      * 验证 JWT token
      * @param token - JWT token字符串
-     * @param secret - JWT密钥
-     * @param options - 验证选项
+     * @param options - 验证选项（自动使用 Env.JWT_SECRET）
      * @returns 解码后的载荷数据
      */
-    static verify(token: string, secret: string, options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
+    static verify(token: string, options?: JwtVerifyOptions): JwtPayload {
         if (!token || typeof token !== 'string') {
             throw new Error('Token必须是非空字符串');
         }
 
+        const secret = options?.secret || Env.JWT_SECRET;
         if (!secret) {
-            throw new Error('JWT密钥是必需的');
+            throw new Error('JWT密钥未配置');
         }
 
         const opts = options || {};
@@ -330,69 +336,90 @@ export class Jwt {
         return permissions.every((permission) => this.hasPermission(payload, permission));
     }
 
-    // ==================== 应用层便捷方法（需要传递配置） ====================
+    // ==================== 便捷方法（自动使用环境变量） ====================
+
+    /**
+     * 创建用户 token（快捷方法）
+     */
+    static create(payload: JwtPayload): string {
+        return this.sign(payload);
+    }
+
+    /**
+     * 检查 token（快捷方法）
+     */
+    static check(token: string): JwtPayload {
+        return this.verify(token);
+    }
+
+    /**
+     * 解析 token（快捷方法，不验证签名）
+     */
+    static parse(token: string): JwtPayload {
+        return this.decode(token);
+    }
 
     /**
      * 签名用户认证 token
      */
-    static signUserToken(userInfo: JwtPayload, secret: string, options?: Omit<JwtSignOptions, 'secret'>): string {
-        return this.sign(userInfo, secret, options);
+    static signUserToken(userInfo: JwtPayload, options?: JwtSignOptions): string {
+        return this.sign(userInfo, options);
     }
 
     /**
      * 签名 API 访问 token
      */
-    static signAPIToken(payload: JwtPayload, secret: string, options?: Omit<JwtSignOptions, 'secret'>): string {
-        return this.sign(payload, secret, { audience: 'api', expiresIn: '1h', ...options });
+    static signAPIToken(payload: JwtPayload, options?: JwtSignOptions): string {
+        return this.sign(payload, { audience: 'api', expiresIn: '1h', ...options });
     }
 
     /**
      * 签名刷新 token
      */
-    static signRefreshToken(payload: JwtPayload, secret: string, options?: Omit<JwtSignOptions, 'secret'>): string {
-        return this.sign(payload, secret, { audience: 'refresh', expiresIn: '30d', ...options });
+    static signRefreshToken(payload: JwtPayload, options?: JwtSignOptions): string {
+        return this.sign(payload, { audience: 'refresh', expiresIn: '30d', ...options });
     }
 
     /**
      * 签名临时 token (用于重置密码等)
      */
-    static signTempToken(payload: JwtPayload, secret: string, options?: Omit<JwtSignOptions, 'secret'>): string {
-        return this.sign(payload, secret, { audience: 'temporary', expiresIn: '15m', ...options });
+    static signTempToken(payload: JwtPayload, options?: JwtSignOptions): string {
+        return this.sign(payload, { audience: 'temporary', expiresIn: '15m', ...options });
     }
 
     /**
      * 验证用户认证 token
      */
-    static verifyUserToken(token: string, secret: string, options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
-        return this.verify(token, secret, options);
+    static verifyUserToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+        return this.verify(token, options);
     }
 
     /**
      * 验证 API 访问 token
      */
-    static verifyAPIToken(token: string, secret: string, options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
-        return this.verify(token, secret, { audience: 'api', ...options });
+    static verifyAPIToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+        return this.verify(token, { audience: 'api', ...options });
     }
 
     /**
      * 验证刷新 token
      */
-    static verifyRefreshToken(token: string, secret: string, options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
-        return this.verify(token, secret, { audience: 'refresh', ...options });
+    static verifyRefreshToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+        return this.verify(token, { audience: 'refresh', ...options });
     }
 
     /**
      * 验证临时 token
      */
-    static verifyTempToken(token: string, secret: string, options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
-        return this.verify(token, secret, { audience: 'temporary', ...options });
+    static verifyTempToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+        return this.verify(token, { audience: 'temporary', ...options });
     }
 
     /**
      * 验证 token 并检查权限
      */
-    static verifyWithPermissions(token: string, secret: string, requiredPermissions: string | string[], options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
-        const payload = this.verify(token, secret, options);
+    static verifyWithPermissions(token: string, requiredPermissions: string | string[], options?: JwtVerifyOptions): JwtPayload {
+        const payload = this.verify(token, options);
 
         if (!payload.permissions) {
             throw new Error('Token中不包含权限信息');
@@ -411,8 +438,8 @@ export class Jwt {
     /**
      * 验证 token 并检查角色
      */
-    static verifyWithRoles(token: string, secret: string, requiredRoles: string | string[], options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
-        const payload = this.verify(token, secret, options);
+    static verifyWithRoles(token: string, requiredRoles: string | string[], options?: JwtVerifyOptions): JwtPayload {
+        const payload = this.verify(token, options);
 
         if (!payload.role && !payload.roles) {
             throw new Error('Token中不包含角色信息');
@@ -433,7 +460,7 @@ export class Jwt {
     /**
      * 软验证 token (忽略过期时间)
      */
-    static verifySoft(token: string, secret: string, options?: Omit<JwtVerifyOptions, 'secret'>): JwtPayload {
-        return this.verify(token, secret, { ignoreExpiration: true, ...options });
+    static verifySoft(token: string, options?: JwtVerifyOptions): JwtPayload {
+        return this.verify(token, { ignoreExpiration: true, ...options });
     }
 }
