@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
         {
-            name: 'yiapi',
+            name: 'tpl',
             instances: 4,
             script: './main.js',
             exec_mode: 'cluster',

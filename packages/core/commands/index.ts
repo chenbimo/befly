@@ -78,6 +78,7 @@ interface StartOptions {
 
 export async function startCommand(options: StartOptions) {
     try {
+        console.log('===================');
         const projectRoot = getProjectRoot();
         const mainFile = join(projectRoot, 'main.ts');
 

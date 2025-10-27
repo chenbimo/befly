@@ -10,12 +10,9 @@
         "registry": "https://registry.npmjs.org"
     },
     "scripts": {
-        "dev": "bun run main.ts",
+        "dev": "bun --env-file=.env.development run main.ts",
         "serve": "bunx --bun pm2 start pm2.config.cjs -a",
-        "test": "bun test",
-        "test:api": "bun run test-api-runner.ts",
-        "syncDb": "befly syncDb",
-        "syncDev": " befly syncDev"
+        "test": "bun test"
     },
     "files": [
         "apis",
