@@ -7,7 +7,7 @@ import type { ApiRoute, HttpMethod } from './api.js';
 import type { KeyValue } from './common.js';
 import type { Logger } from '../lib/logger.js';
 import type { Jwt } from '../lib/jwt.js';
-import type { Validator } from '../util.js';
+import type { Validator } from '../lib/validator.js';
 import type { Database } from 'bun:sqlite';
 import type { DbHelper } from '../lib/dbHelper.js';
 import type { RedisHelper } from '../lib/redisHelper.js';

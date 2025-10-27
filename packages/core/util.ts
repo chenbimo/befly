@@ -24,10 +24,9 @@ import { join } from 'node:path';
 import { SQL, RedisClient } from 'bun';
 import { Env } from './config/env.js';
 import { Logger } from './lib/logger.js';
-import { Validator as LibValidator } from './lib/validator.js';
+import { Validator } from './lib/validator.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
-import { RegexAliases } from './config/regexAliases.js';
 import { paths } from './paths.js';
 import type { KeyValue } from './types/common.js';
 import type { JwtPayload, JwtSignOptions, JwtVerifyOptions } from './types/jwt';
@@ -35,7 +34,6 @@ import type { BeflyContext } from './types/befly.js';
 import type { SqlClientOptions } from './types/database.js';
 import type { Plugin } from './types/plugin.js';
 import type { ParsedFieldRule } from './types/common.js';
-import type { ValidationResult } from './types/validator';
 
 // ========================================
 // API 响应工具
@@ -501,6 +499,7 @@ export function checkBunVersion(): void {
 
 /**
  * 解析字段规则字符串
+ * 注意：只分割前6个|，第7个|之后的所有内容（包括|）都属于正则表达式
  */
 export const parseRule = (rule: string): ParsedFieldRule => {
     const parts: string[] = [];
@@ -541,34 +540,19 @@ export const parseRule = (rule: string): ParsedFieldRule => {
 };
 
 /**
- * 验证器类
+ * 验证器实例（传入 parseRule）
  */
-export class Validator extends LibValidator {
-    constructor() {
-        super({
-            regexAliases: RegexAliases as any,
-            parseRule
-        });
-    }
-}
+export const validator = new Validator({ parseRule });
 
 /**
- * 验证器实例
- */
-export const validator = new Validator();
-
-/**
- * 验证函数
+ * 验证函数（快捷方式）
  */
 export const validate = (dataOrValue: any, rulesOrRule: any, required: string[] = []): any => {
-    const config = { regexAliases: RegexAliases as any, parseRule };
     if (typeof rulesOrRule === 'string') {
-        return LibValidator.validate(dataOrValue, rulesOrRule, config);
+        return validator.validateSingleValue(dataOrValue, rulesOrRule);
     }
-    return LibValidator.validate(dataOrValue, rulesOrRule, required, config);
+    return validator.validate(dataOrValue, rulesOrRule, required);
 };
-
-export type { ValidatorConfig, DEFAULT_REGEX_ALIASES } from './lib/validator.js';
 
 // ========================================
 // Addon 管理工具
@@ -897,4 +881,4 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
 // 统一导出
 // ========================================
 
-export { Logger };
+export { Logger, Validator };

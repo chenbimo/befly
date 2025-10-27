@@ -1,8 +1,9 @@
 /**
- * 数据验证器 - 通用库版本
- * 提供类型安全的字段验证功能（无框架依赖）
+ * 数据验证器 - Befly 项目专用
+ * 直接集成 RegexAliases，提供开箱即用的验证功能
  */
 
+import { RegexAliases } from '../config/regexAliases.js';
 import type { TableDefinition, FieldRule, ParsedFieldRule } from '../types/common.js';
 import type { ValidationResult, ValidationError } from '../types/validator';
 
@@ -67,69 +68,6 @@ function isType(value: any, type: string): boolean {
 }
 
 /**
- * 默认的规则解析函数（简化版）
- * 注意：只分割前6个|，第7个|之后的所有内容（包括|）都属于正则表达式
- */
-function defaultParseRule(rule: string): ParsedFieldRule {
-    if (typeof rule !== 'string') {
-        return {
-            name: '',
-            type: 'string',
-            min: null,
-            max: null,
-            default: null,
-            required: 0,
-            regex: null
-        };
-    }
-
-    // 手动分割前6个|，剩余部分作为正则表达式
-    const parts: string[] = [];
-    let currentPart = '';
-    let pipeCount = 0;
-
-    for (let i = 0; i < rule.length; i++) {
-        if (rule[i] === '|' && pipeCount < 6) {
-            parts.push(currentPart);
-            currentPart = '';
-            pipeCount++;
-        } else {
-            currentPart += rule[i];
-        }
-    }
-    parts.push(currentPart);
-
-    const parseNumber = (val: string) => {
-        if (!val || val === 'null') return null;
-        const num = Number(val);
-        return isNaN(num) ? null : num;
-    };
-
-    const defaultValue = parts[4];
-    let parsedDefault: any = null;
-    if (defaultValue && defaultValue !== 'null') {
-        // 对于 number 类型，尝试转换为数字
-        const type = (parts[1] || 'string').toLowerCase();
-        if (type === 'number') {
-            const num = Number(defaultValue);
-            parsedDefault = isNaN(num) ? defaultValue : num;
-        } else {
-            parsedDefault = defaultValue;
-        }
-    }
-
-    return {
-        name: parts[0] || '',
-        type: (parts[1] || 'string').toLowerCase(),
-        min: parseNumber(parts[2]),
-        max: parseNumber(parts[3]),
-        default: parsedDefault,
-        required: parseInt(parts[5]) || 0,
-        regex: parts[6] && parts[6] !== 'null' ? parts[6] : null
-    };
-}
-
-/**
  * 验证器配置接口
  */
 export interface ValidatorConfig {
@@ -140,7 +78,8 @@ export interface ValidatorConfig {
 }
 
 /**
- * 验证器类
+ * 验证器类（Befly 项目专用）
+ * 默认集成 RegexAliases 配置
  */
 export class Validator {
     /** 正则别名映射 */
@@ -149,8 +88,12 @@ export class Validator {
     private parseRule: ParseRuleFunction;
 
     constructor(config: ValidatorConfig = {}) {
-        this.regexAliases = config.regexAliases || DEFAULT_REGEX_ALIASES;
-        this.parseRule = config.parseRule || defaultParseRule;
+        this.regexAliases = config.regexAliases || (RegexAliases as any);
+        // parseRule 必须从外部传入（通常是 util.ts 中的 parseRule）
+        if (!config.parseRule) {
+            throw new Error('Validator 需要 parseRule 函数，请在创建实例时传入');
+        }
+        this.parseRule = config.parseRule;
     }
 
     /**
