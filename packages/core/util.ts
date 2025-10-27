@@ -200,18 +200,10 @@ export const fieldClear = <T extends Record<string, any> = any>(data: T, exclude
 // 数据清洗工具
 // ========================================
 
-export interface DataCleanOptions {
-    excludeKeys?: string[];
-    includeKeys?: string[];
-    removeValues?: any[];
-    maxLen?: number;
-    deep?: boolean;
-}
-
 /**
  * 数据清洗
  */
-export const cleanData = <T = any>(data?: Record<string, any>, options: DataCleanOptions = {}): Partial<T> => {
+export const cleanData = <T = any>(data?: Record<string, any>, options: import('./types/util.js').DataCleanOptions = {}): Partial<T> => {
     const { excludeKeys = [], includeKeys = [], removeValues = [null, undefined], maxLen = 0, deep = false } = options;
 
     if (!data || !isType(data, 'object')) {
@@ -733,13 +725,7 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
 // 数据库管理工具
 // ========================================
 
-interface DatabaseConnections {
-    redis: RedisClient | null;
-    sql: any;
-    helper: DbHelper | null;
-}
-
-const connections: DatabaseConnections = {
+const connections: import('./types/util.js').DatabaseConnections = {
     redis: null,
     sql: null,
     helper: null
@@ -858,7 +844,7 @@ export async function createSqlClient(options: SqlClientOptions = {}): Promise<a
 /**
  * 初始化数据库连接
  */
-export async function initDatabase(options: SqlClientOptions = {}): Promise<DatabaseConnections> {
+export async function initDatabase(options: SqlClientOptions = {}): Promise<import('./types/util.js').DatabaseConnections> {
     try {
         Logger.info('正在初始化 Redis 连接...');
         connections.redis = await createRedisClient();
@@ -1008,17 +994,4 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
 // 请求上下文
 // ========================================
 
-/**
- * 请求上下文接口
- */
-export interface RequestContext {
-    /** 请求体参数 */
-    body: Record<string, any>;
-    /** 用户信息 */
-    /** 用户信息 */
-    user: Record<string, any>;
-    /** 原始请求对象 */
-    request: Request;
-    /** 请求开始时间（毫秒） */
-    startTime: number;
-}
+// RequestContext 类型定义位于 types/util.d.ts
