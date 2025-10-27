@@ -4,7 +4,7 @@
  */
 
 import { isType } from './helper.js';
-import { parseRule } from './helper.js';
+import { parseRule } from './table.js';
 import { RegexAliases } from '../config/regexAliases.js';
 import type { TableDefinition, FieldRule, ParsedFieldRule } from '../types/common.js';
 import type { ValidationResult, ValidationError } from '../types/validator';

@@ -8,8 +8,10 @@ import type { KeyValue } from './common.js';
 import type { Logger } from '../utils/logger.js';
 import type { Jwt } from '../utils/jwt.js';
 import type { Validator } from '../utils/validate.js';
+import type { Database } from 'bun:sqlite';
 import type { DbHelper } from '../utils/dbHelper.js';
-import type { Cipher } from '../utils/crypto.js';
+import type { RedisHelper } from '../utils/redisHelper.js';
+import type { Cipher } from '../lib/cipher.js';
 
 /**
  * Befly 应用选项

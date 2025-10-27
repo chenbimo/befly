@@ -4,7 +4,7 @@
 
 import { describe, test, expect } from 'bun:test';
 import { Yes, No, isType, formatDate } from '../utils/index.js';
-import { Cipher } from '../utils/crypto.js';
+import { Cipher } from '../lib/cipher.js';
 
 describe('核心工具', () => {
     test('Yes 应该返回成功响应', () => {

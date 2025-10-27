@@ -3,8 +3,9 @@
  * 提供数据库 CRUD 操作的封装
  */
 
-import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, fieldClear, convertBigIntFields, toSnakeCase } from './helper.js';
+import { SqlBuilder } from '../lib/sqlBuilder.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, toSnakeCase, convertBigIntFields } from '../lib/convert.js';
+import { fieldClear } from './helper.js';
 import { Logger } from './logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';

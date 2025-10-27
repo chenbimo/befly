@@ -5,7 +5,7 @@
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { Logger } from '../utils/logger.js';
-import { Spinner } from '../utils/spinner.js';
+import { Spinner } from '../lib/spinner.js';
 
 function getProjectRoot(): string {
     let current = process.cwd();

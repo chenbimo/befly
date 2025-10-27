@@ -7,7 +7,7 @@ import path from 'node:path';
 import { Logger } from '../utils/logger.js';
 import { calcPerfTime } from '../utils/index.js';
 import { paths } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../utils/helper.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/addon.js';
 
 /**
  * 系统检查器类

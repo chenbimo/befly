@@ -2,7 +2,10 @@
  * Addon 命令 - 插件管理
  */
 
-import { Spinner } from '../utils/spinner.js';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { Logger } from '../utils/logger.js';
+import { Spinner } from '../lib/spinner.js';
 
 export const addonCommand = {
     async install(name: string, options: { source?: string }) {

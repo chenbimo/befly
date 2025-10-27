@@ -4,7 +4,7 @@
  */
 
 import { Logger } from '../utils/logger.js';
-import { Xml } from '../utils/xml.js';
+import { Xml } from '../lib/xml.js';
 import { pickFields, isEmptyObject } from '../utils/index.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';

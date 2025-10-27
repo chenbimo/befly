@@ -4,7 +4,8 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { toSnakeCase, toCamelCase, keysToSnake, keysToCamel, arrayKeysToCamel, whereKeysToSnake } from '../utils/helper.js';
+import { toSnakeCase, toCamelCase, keysToSnake, keysToCamel, arrayKeysToCamel } from '../lib/convert.js';
+// import { whereKeysToSnake } from '../utils/helper.js'; // 已移除
 
 describe('字符串命名转换', () => {
     describe('toSnakeCase - 小驼峰转下划线', () => {
