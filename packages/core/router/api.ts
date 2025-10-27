@@ -13,7 +13,8 @@ import { checkPermission } from '../middleware/permission.js';
 import { validateParams } from '../middleware/validator.js';
 import { executePluginHooks } from '../middleware/plugin-hooks.js';
 import { logRequest } from '../middleware/request-logger.js';
-import { RequestContext } from '../util.js';
+import { createContext } from '../util.js';
+import type { RequestContext } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -38,7 +39,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             }
 
             // 2. 创建请求上下文
-            ctx = new RequestContext(req);
+            ctx = createContext(req);
 
             // 3. 获取API路由
             const url = new URL(req.url);

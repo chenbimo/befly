@@ -39,9 +39,9 @@ export function logRequest(apiPath: string, ctx: RequestContext): void {
     Logger.info({
         msg: '通用接口日志',
         请求路径: apiPath,
-        请求方法: ctx.method,
+        请求方法: ctx.request.method,
         用户信息: ctx.user,
         请求参数: filterLogFields(ctx.body, Env.LOG_EXCLUDE_FIELDS),
-        耗时: ctx.getElapsedTime() + 'ms'
+        耗时: Date.now() - ctx.startTime + 'ms'
     });
 }

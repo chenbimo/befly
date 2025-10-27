@@ -10,7 +10,7 @@ import type { RequestContext } from '../types/context.js';
  * 从请求头中提取并验证JWT token
  */
 export async function authenticate(ctx: RequestContext): Promise<void> {
-    const authHeader = ctx.header('authorization');
+    const authHeader = ctx.request.headers.get('authorization');
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);

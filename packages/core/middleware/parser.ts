@@ -13,7 +13,7 @@ import type { RequestContext } from '../types/context.js';
  * 解析GET请求参数
  */
 export function parseGetParams(api: ApiRoute, ctx: RequestContext): void {
-    const url = new URL(ctx.url);
+    const url = new URL(ctx.request.url);
 
     if (isEmptyObject(api.fields) === false) {
         ctx.body = pickFields(Object.fromEntries(url.searchParams), Object.keys(api.fields));
@@ -27,7 +27,7 @@ export function parseGetParams(api: ApiRoute, ctx: RequestContext): void {
  */
 export async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promise<boolean> {
     try {
-        const contentType = ctx.contentType || '';
+        const contentType = ctx.request.headers.get('content-type') || '';
 
         if (contentType.indexOf('json') !== -1) {
             try {
@@ -56,7 +56,7 @@ export async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promi
 
         return true;
     } catch (err: any) {
-        Logger.error('处理请求参数时发生错误', error);
+        Logger.error('处理请求参数时发生错误', err);
         return false;
     }
 }

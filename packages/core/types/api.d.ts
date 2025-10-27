@@ -12,42 +12,6 @@ import type { RequestContext } from './context.js';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
 
 /**
- * 请求上下文类型（已废弃，使用 RequestContext 类）
- * @deprecated 使用 RequestContext 类替代
- */
-export interface RequestContext<T = any> {
-    /** 请求对象 */
-    request: Request;
-
-    /** 请求体参数 */
-    body: T;
-
-    /** URL 参数 */
-    query: KeyValue<string>;
-
-    /** 路径参数 */
-    pathParams: KeyValue<string>;
-
-    /** 请求头 */
-    headers: Headers;
-
-    /** 用户信息（认证后） */
-    user?: UserInfo;
-
-    /** 客户端 IP */
-    ip?: string;
-
-    /** User-Agent */
-    userAgent?: string;
-
-    /** 请求 ID */
-    requestId?: string;
-
-    /** 开始时间 */
-    startTime: number;
-}
-
-/**
  * 用户信息类型
  */
 export interface UserInfo {

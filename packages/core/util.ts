@@ -1062,96 +1062,31 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
 };
 
 // ========================================
-// 请求上下文类
+// 请求上下文
 // ========================================
 
 /**
- * 标准请求上下文类
+ * 请求上下文接口
  */
-export class RequestContext {
-    public readonly request: Request;
-    public readonly startTime: number;
-    public body: Record<string, any> = {};
-    public user: Record<string, any> = {};
-    public state: Record<string, any> = {};
-    public response?: any;
+export interface RequestContext {
+    /** 请求体参数 */
+    body: Record<string, any>;
+    /** 用户信息 */
+    user: Record<string, any>;
+    /** 原始请求对象 */
+    request: Request;
+    /** 请求开始时间（毫秒） */
+    startTime: number;
+}
 
-    constructor(req: Request) {
-        this.request = req;
-        this.startTime = Date.now();
-    }
-
-    get method(): string {
-        return this.request.method;
-    }
-
-    get url(): string {
-        return this.request.url;
-    }
-
-    get headers(): Headers {
-        return this.request.headers;
-    }
-
-    get ip(): string | null {
-        return this.request.headers.get('x-forwarded-for') || this.request.headers.get('x-real-ip') || this.request.headers.get('cf-connecting-ip') || null;
-    }
-
-    get userAgent(): string | null {
-        return this.request.headers.get('user-agent');
-    }
-
-    get contentType(): string | null {
-        return this.request.headers.get('content-type');
-    }
-
-    header(name: string): string | null {
-        return this.request.headers.get(name);
-    }
-
-    get(key: string): any {
-        return this.body[key];
-    }
-
-    set(key: string, value: any): void {
-        this.body[key] = value;
-    }
-
-    has(key: string): boolean {
-        return key in this.body;
-    }
-
-    all(): Record<string, any> {
-        return { ...this.body };
-    }
-
-    getElapsedTime(): number {
-        return Date.now() - this.startTime;
-    }
-
-    getRequestInfo(): Record<string, any> {
-        return {
-            method: this.method,
-            url: this.url,
-            ip: this.ip,
-            userAgent: this.userAgent,
-            elapsedTime: this.getElapsedTime()
-        };
-    }
-
-    setResponse(data: any): void {
-        this.response = data;
-    }
-
-    isAuthenticated(): boolean {
-        return !!this.user.id;
-    }
-
-    getUserId(): number | null {
-        return this.user.id || null;
-    }
-
-    getUserRole(): string | null {
-        return this.user.role || this.user.roleType || null;
-    }
+/**
+ * 创建请求上下文
+ */
+export function createContext(req: Request): RequestContext {
+    return {
+        body: {},
+        user: {},
+        request: req,
+        startTime: Date.now()
+    };
 }
