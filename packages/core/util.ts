@@ -784,15 +784,3 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
     plugins.forEach((p) => visit(p.name));
     return isPass ? result : false;
 };
-
-// ========================================
-// 请求上下文
-// ========================================
-
-// RequestContext 类型定义位于 types/util.d.ts
-
-// ========================================
-// 统一导出
-// ========================================
-
-export { Logger };
