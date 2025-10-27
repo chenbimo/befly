@@ -2,13 +2,13 @@
  * 获取角色的接口权限
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '获取角色接口权限',
     auth: true,
     fields: {
-        roleId: Fields._id
+        roleId: Field._id
     },
     handler: async (befly, ctx) => {
         // 查询角色信息

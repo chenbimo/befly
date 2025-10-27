@@ -1,4 +1,4 @@
-import { Fields, Yes, No } from 'befly';
+import { Field, Yes, No } from 'befly';
 import type { ApiRoute } from 'befly';
 import adminDictTable from '../tables/dict.json';
 
@@ -8,14 +8,14 @@ import adminDictTable from '../tables/dict.json';
 export default {
     name: '更新字典',
     fields: {
-        id: Fields._id,
+        id: Field._id,
         name: adminDictTable.name,
         code: adminDictTable.code,
         value: adminDictTable.value,
         sort: adminDictTable.sort,
         pid: adminDictTable.pid,
         description: adminDictTable.description,
-        state: Fields.state
+        state: Field.state
     },
     handler: async (befly, ctx) => {
         try {

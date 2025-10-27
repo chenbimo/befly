@@ -2,19 +2,19 @@
  * 更新管理员信息
  */
 
-import { Yes, No, Fields } from 'befly';
-import { Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
+import { Field } from 'befly';
 import adminTable from '../tables/admin.json';
 
 export default {
     name: '更新管理员',
     fields: {
-        id: Fields._id,
+        id: Field._id,
         name: adminTable.name,
         nickname: adminTable.nickname,
         email: adminTable.email,
         phone: adminTable.phone,
-        state: Fields._state
+        state: Field._state
     },
     required: ['id'],
     handler: async (befly, ctx) => {

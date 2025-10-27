@@ -4,10 +4,9 @@
  */
 
 import { Env } from './config/env.js';
-import { Fields } from './config/fields.js';
+import { Field } from './config/fields.js';
 import { Yes, No } from './utils/index.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
-import checkTable from './checks/table.js';
 import { paths } from './paths.js';
 
 // 导入所有 utils 作为命名空间
@@ -45,10 +44,9 @@ export class Befly {
 export {
     // 配置
     Env,
-    Fields,
+    Field,
     Yes,
     No,
     util,
-    checkTable,
     paths
 };

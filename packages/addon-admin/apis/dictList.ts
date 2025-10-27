@@ -1,4 +1,4 @@
-import { Fields, Yes, No } from 'befly';
+import { Field, Yes, No } from 'befly';
 import type { ApiRoute } from 'befly';
 
 /**
@@ -7,8 +7,8 @@ import type { ApiRoute } from 'befly';
 export default {
     name: '获取字典列表',
     fields: {
-        page: Fields.page,
-        limit: Fields.limit
+        page: Field.page,
+        limit: Field.limit
     },
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({

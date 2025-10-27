@@ -1,4 +1,4 @@
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 import adminRoleTable from '../tables/role.json';
 import { cacheRolePermissions } from '../util';
 
@@ -8,7 +8,7 @@ import { cacheRolePermissions } from '../util';
 export default {
     name: '更新角色',
     fields: {
-        id: Fields._id,
+        id: Field._id,
         name: adminRoleTable.name,
         code: adminRoleTable.code,
         description: adminRoleTable.description,

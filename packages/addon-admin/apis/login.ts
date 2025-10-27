@@ -3,7 +3,7 @@
  */
 
 import { Yes, No } from 'befly';
-import { Crypto2 } from 'befly';
+import { Cipher } from 'befly';
 import { Jwt } from 'befly';
 import adminTable from '../tables/admin.json';
 
@@ -33,7 +33,7 @@ export default {
 
             // 验证密码
             try {
-                const isValid = await Crypto2.verifyPassword(ctx.body.password, admin.password);
+                const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
                 if (!isValid) {
                     return No('邮箱或密码错误');
                 }

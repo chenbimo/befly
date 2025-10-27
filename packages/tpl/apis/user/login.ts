@@ -3,7 +3,7 @@
  */
 
 import { Yes, No } from 'befly';
-import { Crypto2 } from 'befly';
+import { Cipher } from 'befly';
 import { Jwt } from 'befly';
 
 export default {
@@ -26,7 +26,7 @@ export default {
         }
 
         // 验证密码
-        const isValid = await Crypto2.verifyPassword(ctx.body.password, user.password);
+        const isValid = await Cipher.verifyPassword(ctx.body.password, user.password);
         if (!isValid) {
             return No('用户名或密码错误');
         }

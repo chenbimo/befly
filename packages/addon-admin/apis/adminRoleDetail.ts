@@ -2,12 +2,12 @@
  * 获取管理员的角色（单角色模式）
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '获取管理员角色',
     fields: {
-        adminId: Fields._id
+        adminId: Field._id
     },
     handler: async (befly, ctx) => {
         // 查询管理员信息（框架自动转换为小驼峰）

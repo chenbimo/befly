@@ -2,7 +2,7 @@
  * 添加管理员
  */
 
-import { Yes, No, Fields, Crypto2 } from 'befly';
+import { Yes, No, Field, Cipher } from 'befly';
 import adminTable from '../tables/admin.json';
 
 export default {
@@ -43,7 +43,7 @@ export default {
         }
 
         // 加密密码
-        const hashedPassword = await Crypto2.hashPassword(ctx.body.password);
+        const hashedPassword = await Cipher.hashPassword(ctx.body.password);
 
         // 创建管理员
         const adminId = await befly.db.insData({

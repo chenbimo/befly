@@ -9,7 +9,7 @@ import type { EncodingType, HashAlgorithm, PasswordHashOptions } from '../types/
 /**
  * 加密工具类
  */
-export class Crypto2 {
+export class Cipher {
     /**
      * MD5 哈希
      * @param data - 要哈希的数据

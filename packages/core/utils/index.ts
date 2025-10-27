@@ -22,7 +22,7 @@ export { SqlBuilder } from './sqlBuilder.js';
 export { DbHelper } from './dbHelper.js';
 export { RedisHelper } from './redisHelper.js';
 export { Jwt } from './jwt.js';
-export { Crypto2 } from './crypto.js';
+export { Cipher } from './crypto.js';
 export { Xml } from './xml.js';
 
 // 类型导出

@@ -2,17 +2,17 @@
  * 获取文章列表接口 - TypeScript 示例
  */
 
-import { Yes, Fields } from 'befly';
+import { Yes, Field } from 'befly';
 
 export default {
     name: '获取文章列表',
     auth: false,
     fields: {
-        page: Fields.page,
-        limit: Fields.limit,
+        page: Field.page,
+        limit: Field.limit,
         categoryId: '分类ID|number|0|999999|null|0|null',
         authorId: '作者ID|number|0|999999|null|0|null',
-        keyword: Fields.keyword,
+        keyword: Field.keyword,
         published: '是否发布|number|0|1|null|0|^(0|1)'
     },
     handler: async (befly, ctx) => {

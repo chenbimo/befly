@@ -32,7 +32,7 @@
  * - '标签|array_string|0|50|null|0|@alphanumeric' - 字母数字数组
  */
 
-export const Fields = {
+export const Field = {
     _id: 'ID|number|1|null|null|1|null',
     email: '邮箱|string|5|100|null|1|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
     phone: '手机号|string|11|11|null|1|^1[3-9]\\d{9}$',
@@ -52,4 +52,4 @@ export const Fields = {
     endTime: '结束时间|number|0|9999999999999|null|0|null'
 } as const;
 
-export default Fields;
+export default Field;

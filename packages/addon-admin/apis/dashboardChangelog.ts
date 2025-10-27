@@ -2,13 +2,13 @@
  * 获取更新日志
  */
 
-import { Yes, Fields } from 'befly';
+import { Yes, Field } from 'befly';
 
 export default {
     name: '获取更新日志',
     auth: true,
     fields: {
-        limit: Fields.limit
+        limit: Field.limit
     },
     handler: async (befly, ctx) => {
         // 更新日志数据（实际项目中可以从配置文件或数据库读取）

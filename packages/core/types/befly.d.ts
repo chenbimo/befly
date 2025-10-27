@@ -9,7 +9,7 @@ import type { Logger } from '../utils/logger.js';
 import type { Jwt } from '../utils/jwt.js';
 import type { Validator } from '../utils/validate.js';
 import type { DbHelper } from '../utils/dbHelper.js';
-import type { Crypto2 } from '../utils/crypto.js';
+import type { Cipher } from '../utils/crypto.js';
 
 /**
  * Befly 应用选项
@@ -81,7 +81,7 @@ export interface Befly {
     sql: DbHelper;
 
     /** 加密工具 */
-    crypto: Crypto2;
+    crypto: Cipher;
 
     /** 数据库连接 */
     db: any;

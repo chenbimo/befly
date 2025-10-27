@@ -2,13 +2,13 @@
  * 删除角色
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 import { deleteRolePermissions } from '../util';
 
 export default {
     name: '删除角色',
     fields: {
-        id: Fields._id
+        id: Field._id
     },
     handler: async (befly, ctx) => {
         try {

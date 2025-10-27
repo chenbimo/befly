@@ -2,13 +2,13 @@
  * 删除文章接口（软删除）
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '删除文章',
     auth: false,
     fields: {
-        id: Fields._id
+        id: Field._id
     },
     required: ['id'],
     handler: async (befly, ctx) => {

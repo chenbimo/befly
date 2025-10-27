@@ -2,13 +2,13 @@
  * 保存角色的菜单权限
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 import adminRoleTable from '../tables/role.json';
 
 export default {
     name: '保存角色菜单权限',
     fields: {
-        roleId: Fields._id,
+        roleId: Field._id,
         menuIds: adminRoleTable.menus
     },
     handler: async (befly, ctx) => {

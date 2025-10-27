@@ -6,7 +6,7 @@
 import type { ApiRoute } from 'befly/types/api';
 import { Yes, No } from 'befly/utils';
 import { CacheManager } from 'befly/lifecycle/cacheManager';
-import { Fields } from 'befly/config/fields';
+import { Field } from 'befly/config/fields';
 
 export default {
     name: '刷新缓存',

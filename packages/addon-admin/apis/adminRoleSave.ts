@@ -2,12 +2,12 @@
  * 保存管理员的角色（单角色模式）
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '保存管理员角色',
     fields: {
-        adminId: Fields._id,
+        adminId: Field._id,
         roleCode: '角色编码|string|2|50|null|1|^[a-zA-Z0-9_]+$'
     },
     handler: async (befly, ctx) => {

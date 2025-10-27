@@ -4,7 +4,7 @@
 
 import { describe, test, expect } from 'bun:test';
 import { Yes, No, isType, formatDate } from '../utils/index.js';
-import { Crypto2 } from '../utils/crypto.js';
+import { Cipher } from '../utils/crypto.js';
 
 describe('核心工具', () => {
     test('Yes 应该返回成功响应', () => {
@@ -37,19 +37,19 @@ describe('核心工具', () => {
 
 describe('加密工具', () => {
     test('MD5 应该生成哈希', () => {
-        const hash = Crypto2.md5('hello');
+        const hash = Cipher.md5('hello');
         expect(typeof hash).toBe('string');
         expect(hash.length).toBe(32);
     });
 
     test('SHA256 应该生成哈希', () => {
-        const hash = Crypto2.sha256('hello');
+        const hash = Cipher.sha256('hello');
         expect(typeof hash).toBe('string');
         expect(hash.length).toBe(64);
     });
 
     test('HMAC-MD5 应该生成签名', () => {
-        const signature = Crypto2.hmacMd5('secret', 'data');
+        const signature = Cipher.hmacMd5('secret', 'data');
         expect(typeof signature).toBe('string');
         expect(signature.length).toBeGreaterThan(0);
     });

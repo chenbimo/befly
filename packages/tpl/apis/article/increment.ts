@@ -2,13 +2,13 @@
  * 文章字段增量接口
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '文章字段增量',
     auth: false,
     fields: {
-        id: Fields._id,
+        id: Field._id,
         field: '字段名|string|1|50|null|1|^[a-zA-Z_][a-zA-Z0-9_]*$',
         value: '自增值|number|-999999|999999|1|0|null'
     },

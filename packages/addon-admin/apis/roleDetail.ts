@@ -2,13 +2,13 @@
  * 获取用户的角色（单角色模式）
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '获取用户角色',
     auth: true, // 需要登录（权限由角色接口列表控制）
     fields: {
-        id: Fields._id
+        id: Field._id
     },
     handler: async (befly, ctx) => {
         let roleInfo = null;

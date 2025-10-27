@@ -2,7 +2,7 @@
  * 保存角色的接口权限
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 import { cacheRolePermissions } from '../util';
 import adminRoleTable from '../tables/role.json';
 
@@ -10,7 +10,7 @@ export default {
     name: '保存角色接口权限',
     auth: true,
     fields: {
-        roleId: Fields._id,
+        roleId: Field._id,
         apiIds: adminRoleTable.apis
     },
     handler: async (befly, ctx) => {

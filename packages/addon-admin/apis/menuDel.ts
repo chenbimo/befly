@@ -2,12 +2,12 @@
  * 删除菜单
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '删除菜单',
     fields: {
-        id: Fields._id
+        id: Field._id
     },
     handler: async (befly, ctx) => {
         try {

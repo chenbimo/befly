@@ -2,13 +2,13 @@
  * 获取管理员列表
  */
 
-import { Yes, Fields } from 'befly';
+import { Yes, Field } from 'befly';
 
 export default {
     name: '获取管理员列表',
     fields: {
-        page: Fields.page,
-        limit: Fields.limit
+        page: Field.page,
+        limit: Field.limit
     },
     handler: async (befly, ctx) => {
         // 查询所有管理员（框架自动排除password字段，自动转换字段名为小驼峰）

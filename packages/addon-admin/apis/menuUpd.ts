@@ -1,4 +1,4 @@
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 import adminMenuTable from '../tables/menu.json';
 
 /**
@@ -7,7 +7,7 @@ import adminMenuTable from '../tables/menu.json';
 export default {
     name: '更新菜单',
     fields: {
-        id: Fields._id,
+        id: Field._id,
         name: adminMenuTable.name,
         path: adminMenuTable.path,
         icon: adminMenuTable.icon,

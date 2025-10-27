@@ -7,7 +7,7 @@
  * - 表名: addon_admin_admin
  */
 
-import { Env, Logger, Crypto2, initDatabase, closeDatabase } from 'befly';
+import { Env, Logger, Cipher, initDatabase, closeDatabase } from 'befly';
 
 // CLI 参数类型
 interface CliArgs {
@@ -136,7 +136,7 @@ export async function SyncDev(): Promise<boolean> {
         }
 
         // 使用 bcrypt 加密密码（与登录验证一致）
-        const hashed = await Crypto2.hashPassword(Env.DEV_PASSWORD);
+        const hashed = await Cipher.hashPassword(Env.DEV_PASSWORD);
 
         // 准备开发管理员数据
         const devData = {

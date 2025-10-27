@@ -2,13 +2,13 @@
  * 获取文章详情接口
  */
 
-import { Yes, No, Fields } from 'befly';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '获取文章详情',
     auth: false,
     fields: {
-        id: Fields._id
+        id: Field._id
     },
     required: ['id'],
     handler: async (befly, ctx) => {
