@@ -1,31 +1,18 @@
 /**
- * 日志系统 - 通用库版本
- * 提供分级日志记录和文件管理功能（无框架依赖）
+ * 日志系统 - Befly 项目专用
+ * 直接集成环境变量，提供开箱即用的日志功能
  */
 
 import path from 'path';
 import { appendFile, stat } from 'node:fs/promises';
 import chalk from 'chalk';
+import { Env } from '../config/env.js';
 import type { LogLevel } from '../types/common.js';
 
 /**
  * 日志消息类型
  */
 type LogMessage = string | number | boolean | null | undefined | Record<string, any> | any[];
-
-/**
- * 日志配置接口
- */
-export interface LoggerConfig {
-    /** 日志目录 */
-    logDir?: string;
-    /** 单个日志文件最大大小（字节） */
-    maxFileSize?: number;
-    /** 是否启用 debug 日志 */
-    enableDebug?: boolean;
-    /** 是否输出到控制台 */
-    toConsole?: boolean;
-}
 
 /**
  * 格式化日期时间
@@ -45,34 +32,16 @@ function formatDate(): string {
  * 日志器类
  */
 export class Logger {
-    /** 日志配置 */
-    private static config: Required<LoggerConfig> = {
-        logDir: 'logs',
-        maxFileSize: 50 * 1024 * 1024, // 50MB
-        enableDebug: false,
-        toConsole: true
+    /** 日志配置（直接使用 Env） */
+    private static readonly config = {
+        logDir: Env.LOG_DIR || 'logs',
+        maxFileSize: Env.LOG_MAX_SIZE || 50 * 1024 * 1024,
+        enableDebug: Env.LOG_DEBUG === 1,
+        toConsole: Env.LOG_TO_CONSOLE === 1
     };
 
     /** 当前使用的日志文件缓存 */
     private static currentFiles: Map<string, string> = new Map();
-
-    /**
-     * 配置日志器
-     * @param config - 日志配置
-     */
-    static configure(config: LoggerConfig): void {
-        this.config = {
-            ...this.config,
-            ...config
-        };
-    }
-
-    /**
-     * 获取当前配置
-     */
-    static getConfig(): Readonly<Required<LoggerConfig>> {
-        return { ...this.config };
-    }
 
     /**
      * 记录日志

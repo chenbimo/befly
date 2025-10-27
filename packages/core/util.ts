@@ -23,7 +23,7 @@ import fs from 'node:fs';
 import { join } from 'node:path';
 import { SQL, RedisClient } from 'bun';
 import { Env } from './config/env.js';
-import { Logger as LibLogger } from './lib/logger.js';
+import { Logger } from './lib/logger.js';
 import { Validator as LibValidator } from './lib/validator.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
@@ -36,20 +36,6 @@ import type { SqlClientOptions } from './types/database.js';
 import type { Plugin } from './types/plugin.js';
 import type { ParsedFieldRule } from './types/common.js';
 import type { ValidationResult } from './types/validator';
-
-// ========================================
-// Logger 配置和导出
-// ========================================
-
-LibLogger.configure({
-    logDir: Env.LOG_DIR || 'logs',
-    maxFileSize: Env.LOG_MAX_SIZE || 50 * 1024 * 1024,
-    enableDebug: Env.LOG_DEBUG === 1,
-    toConsole: Env.LOG_TO_CONSOLE === 1
-});
-
-export const Logger = LibLogger;
-export type { LoggerConfig } from './lib/logger.js';
 
 // ========================================
 // API 响应工具
@@ -906,3 +892,9 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
 // ========================================
 
 // RequestContext 类型定义位于 types/util.d.ts
+
+// ========================================
+// 统一导出
+// ========================================
+
+export { Logger };
