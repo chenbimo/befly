@@ -1,6 +1,6 @@
 /**
  * SyncApi 命令 - 同步 API 接口数据到数据库
- * 说明：遍历所有 API 文件，收集接口路由信息并同步到 addon_admin_api 表
+ * 说明：遍历所有 API 文件，收集接口路由信息并同步到 core_api 表
  *
  * 流程：
  * 1. 扫描 core/apis 目录下所有 Core API 文件
@@ -189,13 +189,13 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
     for (const api of apis) {
         try {
             const existing = await helper.getOne({
-                table: 'addon_admin_api',
+                table: 'core_api',
                 where: { path: api.path }
             });
 
             if (existing) {
                 await helper.updData({
-                    table: 'addon_admin_api',
+                    table: 'core_api',
                     where: { id: existing.id },
                     data: {
                         name: api.name,
@@ -209,7 +209,7 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                 Logger.info(`  └ 更新接口: ${api.name} (ID: ${existing.id}, Path: ${api.path})`);
             } else {
                 const id = await helper.insData({
-                    table: 'addon_admin_api',
+                    table: 'core_api',
                     data: {
                         name: api.name,
                         path: api.path,
@@ -237,7 +237,7 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
     Logger.info(`\n=== 删除配置中不存在的记录 ===`);
 
     const allRecords = await helper.getAll({
-        table: 'addon_admin_api',
+        table: 'core_api',
         fields: ['id', 'path', 'name']
     });
 
@@ -245,7 +245,7 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
     for (const record of allRecords) {
         if (record.path && !apiPaths.has(record.path)) {
             await helper.delData({
-                table: 'addon_admin_api',
+                table: 'core_api',
                 where: { id: record.id }
             });
             deletedCount++;
@@ -286,14 +286,14 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
 
         // 1. 检查表是否存在
         Logger.info('=== 检查数据表 ===');
-        const exists = await helper.tableExists('addon_admin_api');
+        const exists = await helper.tableExists('core_api');
 
         if (!exists) {
-            Logger.error(`❌ 表 addon_admin_api 不存在，请先运行 befly syncDb 同步数据库`);
+            Logger.error(`❌ 表 core_api 不存在，请先运行 befly syncDb 同步数据库`);
             process.exit(1);
         }
 
-        Logger.info(`✅ 表 addon_admin_api 存在\n`);
+        Logger.info(`✅ 表 core_api 存在\n`);
 
         // 2. 扫描所有 API 文件
         Logger.info('=== 步骤 2: 扫描 API 文件 ===');
