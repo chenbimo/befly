@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import { join } from 'node:path';
 import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { isEmpty, isPlainObject } from 'es-toolkit/compat';
-import { snakeCase, camelCase } from 'es-toolkit/string';
+import { snakeCase, camelCase, kebabCase } from 'es-toolkit/string';
 import { Env } from './config/env.js';
 import { Logger } from './lib/logger.js';
 import { paths } from './paths.js';
@@ -251,7 +251,9 @@ export const scanAddons = (): string[] => {
         return fs
             .readdirSync(beflyDir)
             .filter((name) => {
-                if (!name.startsWith('addon-')) return false;
+                // 先转为 kebab-case 格式再判断
+                const kebabName = kebabCase(name);
+                if (!kebabName.startsWith('addon-')) return false;
                 const fullPath = join(beflyDir, name);
                 try {
                     const stat = statSync(fullPath);
