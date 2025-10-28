@@ -79,9 +79,14 @@ export const SyncDb = async (): Promise<void> => {
         // 阶段3：扫描表定义文件
         perfTracker.markPhase('扫描表文件');
         const tablesGlob = new Bun.Glob('*.json');
-        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [{ path: paths.projectTableDir, isCore: false }];
+        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [
+            // 1. core 框架表（core_ 前缀）
+            { path: paths.coreTableDir, isCore: true },
+            // 2. 项目表（无前缀）
+            { path: paths.projectTableDir, isCore: false }
+        ];
 
-        // 添加所有 addon 的 tables 目录
+        // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
         const addons = scanAddons();
         for (const addon of addons) {
             if (addonDirExists(addon, 'tables')) {
@@ -116,7 +121,7 @@ export const SyncDb = async (): Promise<void> => {
 
         for (const dirConfig of directories) {
             const { path: dir, isCore, addonName } = dirConfig;
-            const dirType = addonName ? `组件${addonName}` : '项目';
+            const dirType = isCore ? 'Core框架' : addonName ? `组件${addonName}` : '项目';
 
             for await (const file of tablesGlob.scan({
                 cwd: dir,
@@ -132,12 +137,18 @@ export const SyncDb = async (): Promise<void> => {
                 }
 
                 // 确定表名：
+                // - core 表：core_{表名}
+                //   例如：user.json → core_user
                 // - addon 表：addon_{转换后的addonName}_{表名}
                 //   例如：addon-admin 的 user.json → addon_admin_user
                 // - 项目表：{表名}
                 //   例如：user.json → user
                 let tableName = snakeCase(fileName);
-                if (addonName) {
+                if (isCore) {
+                    // core 框架表，添加 core_ 前缀
+                    tableName = `core_${tableName}`;
+                } else if (addonName) {
+                    // addon 表，添加 addon_{name}_ 前缀
                     // 将 addon 名称中的中划线替换为下划线（addon-admin → addon_admin）
                     const addonNameSnake = addonName.replace(/-/g, '_');
                     tableName = `${addonNameSnake}_${tableName}`;
