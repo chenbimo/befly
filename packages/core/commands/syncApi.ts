@@ -302,8 +302,8 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
 
         const projectRoot = process.cwd();
 
-        // 连接数据库
-        await Database.connectSql();
+        // 连接数据库（SQL + Redis）
+        await Database.connect();
 
         const helper = Database.getDbHelper();
 

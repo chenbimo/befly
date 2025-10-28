@@ -35,8 +35,8 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
 
         Logger.info('开始同步开发管理员账号...\n');
 
-        // 连接数据库
-        await Database.connectSql();
+        // 连接数据库（SQL + Redis）
+        await Database.connect();
         dbConnected = true;
 
         const helper = Database.getDbHelper();

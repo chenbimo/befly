@@ -201,8 +201,8 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         const menuFile = Bun.file(menuConfigPath);
         const menuConfig = await menuFile.json();
 
-        // 连接数据库
-        await Database.connectSql();
+        // 连接数据库（SQL + Redis）
+        await Database.connect();
         dbConnected = true;
 
         const helper = Database.getDbHelper();
