@@ -48,12 +48,17 @@ export const CHANGE_TYPE_LABELS = {
 } as const;
 
 /**
- * MySQL 表配置（支持环境变量自定义）
+ * MySQL 表配置
+ *
+ * 固定配置说明：
+ * - ENGINE: InnoDB（支持事务、外键）
+ * - CHARSET: utf8mb4（完整 Unicode 支持，包括 Emoji）
+ * - COLLATE: utf8mb4_0900_ai_ci（MySQL 8.0 推荐，不区分重音和大小写）
  */
 export const MYSQL_TABLE_CONFIG = {
-    ENGINE: Env.MYSQL_ENGINE || 'InnoDB',
-    CHARSET: Env.MYSQL_CHARSET || 'utf8mb4',
-    COLLATE: Env.MYSQL_COLLATE || 'utf8mb4_0900_as_cs'
+    ENGINE: 'InnoDB',
+    CHARSET: 'utf8mb4',
+    COLLATE: 'utf8mb4_0900_ai_ci'
 } as const;
 
 // 数据库类型判断
