@@ -8,9 +8,10 @@
  */
 
 import path from 'node:path';
+import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
 import { Env } from '../../config/env.js';
-import { toSnakeCase, scanAddons, addonDirExists, getAddonDir } from '../../util.js';
+import { scanAddons, addonDirExists, getAddonDir } from '../../util.js';
 import { Database } from '../../lib/database.js';
 import checkTable from '../../checks/table.js';
 import { paths } from '../../paths.js';
@@ -135,7 +136,7 @@ export const SyncDb = async (): Promise<void> => {
                 //   例如：addon-admin 的 user.json → addon_admin_user
                 // - 项目表：{表名}
                 //   例如：user.json → user
-                let tableName = toSnakeCase(fileName);
+                let tableName = snakeCase(fileName);
                 if (addonName) {
                     // 将 addon 名称中的中划线替换为下划线（addon-admin → addon_admin）
                     const addonNameSnake = addonName.replace(/-/g, '_');

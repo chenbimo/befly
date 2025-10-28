@@ -3,8 +3,9 @@
  * 提供数据库 CRUD 操作的封装
  */
 
+import { snakeCase } from 'es-toolkit/string';
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, toSnakeCase, convertBigIntFields, whereKeysToSnake, fieldClear } from '../util.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, convertBigIntFields, whereKeysToSnake, fieldClear } from '../util.js';
 import { Logger } from '../lib/logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -39,7 +40,7 @@ export class DbHelper {
             if (field === '*' || field.includes('(') || field.includes(' ')) {
                 return field;
             }
-            return toSnakeCase(field);
+            return snakeCase(field);
         });
     }
 
@@ -51,7 +52,7 @@ export class DbHelper {
         return orderBy.map((item) => {
             if (typeof item !== 'string' || !item.includes('#')) return item;
             const [field, direction] = item.split('#');
-            return `${toSnakeCase(field.trim())}#${direction.trim()}`;
+            return `${snakeCase(field.trim())}#${direction.trim()}`;
         });
     }
 
@@ -62,7 +63,7 @@ export class DbHelper {
         const cleanWhere = this.cleanFields(options.where);
 
         return {
-            table: toSnakeCase(options.table),
+            table: snakeCase(options.table),
             fields: this.fieldsToSnake(options.fields || ['*']),
             where: whereKeysToSnake(cleanWhere),
             orderBy: this.orderByToSnake(options.orderBy || []),
@@ -135,7 +136,7 @@ export class DbHelper {
      */
     async tableExists(tableName: string): Promise<boolean> {
         // 将表名转换为下划线格式
-        const snakeTableName = toSnakeCase(tableName);
+        const snakeTableName = snakeCase(tableName);
 
         const result = await this.executeWithConn('SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?', [snakeTableName]);
 
@@ -308,7 +309,7 @@ export class DbHelper {
         const cleanData = this.cleanFields(data);
 
         // 转换表名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
+        const snakeTable = snakeCase(table);
 
         // 处理数据（自动添加必要字段）
         // 字段名转换：小驼峰 → 下划线
@@ -364,7 +365,7 @@ export class DbHelper {
         }
 
         // 转换表名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
+        const snakeTable = snakeCase(table);
 
         // 批量生成 ID（一次性从 Redis 获取 N 个 ID）
         const ids = await this.befly.redis.genTimeIDBatch(dataList.length);
@@ -418,7 +419,7 @@ export class DbHelper {
         const cleanWhere = this.cleanFields(where);
 
         // 转换表名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
+        const snakeTable = snakeCase(table);
 
         // 字段名转换：小驼峰 → 下划线
         const snakeData = keysToSnake(cleanData);
@@ -466,7 +467,7 @@ export class DbHelper {
         const { table, where } = options;
 
         // 转换表名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
+        const snakeTable = snakeCase(table);
 
         // 清理条件字段
         const cleanWhere = this.cleanFields(where);
@@ -625,8 +626,8 @@ export class DbHelper {
      */
     async increment(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
         // 转换表名和字段名：小驼峰 → 下划线
-        const snakeTable = toSnakeCase(table);
-        const snakeField = toSnakeCase(field);
+        const snakeTable = snakeCase(table);
+        const snakeField = snakeCase(field);
 
         // 验证表名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(snakeTable)) {

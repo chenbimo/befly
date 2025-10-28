@@ -8,7 +8,7 @@
  * - 构建系统列和业务列定义
  */
 
-import { toSnakeCase } from '../../util.js';
+import { snakeCase } from 'es-toolkit/string';
 import { parseRule } from '../../util.js';
 import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
@@ -82,7 +82,7 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
 
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeCase(fieldKey);
+        const dbFieldName = snakeCase(fieldKey);
 
         const parsed = parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
@@ -112,7 +112,7 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
  */
 export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: boolean = false): string {
     // 转换字段名为下划线格式
-    const dbFieldName = toSnakeCase(fieldKey);
+    const dbFieldName = snakeCase(fieldKey);
 
     const parsed = parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;

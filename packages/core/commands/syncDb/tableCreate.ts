@@ -8,8 +8,7 @@
  *
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
-
-import { toSnakeCase } from '../../util.js';
+import { snakeCase } from 'es-toolkit/string';
 import { parseRule } from '../../util.js';
 import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
@@ -50,7 +49,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     // 业务字段注释
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeCase(fieldKey);
+        const dbFieldName = snakeCase(fieldKey);
 
         const parsed = parseRule(fieldRule);
         const { name: fieldName } = parsed;
@@ -87,7 +86,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     // 业务字段索引
     for (const [fieldKey, fieldRule] of Object.entries(fields)) {
         // 转换字段名为下划线格式
-        const dbFieldName = toSnakeCase(fieldKey);
+        const dbFieldName = snakeCase(fieldKey);
 
         const parsed = parseRule(fieldRule);
         if (parsed.index === 1) {

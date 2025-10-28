@@ -8,24 +8,6 @@ import { isPlainObject } from 'es-toolkit/compat';
 import { snakeCase, camelCase } from 'es-toolkit/string';
 
 /**
- * 小驼峰转下划线（基于 es-toolkit）
- * @param str - 小驼峰格式字符串
- * @returns 下划线字符串
- *
- * @example
- * toSnakeCase('userId') // 'user_id'
- * toSnakeCase('createdAt') // 'created_at'
- * toSnakeCase('userName') // 'user_name'
- * toSnakeCase('APIKey') // 'a_p_i_key'
- * toSnakeCase('HTTPRequest') // 'h_t_t_p_request'
- * toSnakeCase('XMLParser') // 'x_m_l_parser'
- */
-export const toSnakeCase = (str: string): string => {
-    if (!str || typeof str !== 'string') return str;
-    return snakeCase(str);
-};
-
-/**
  * 下划线转小驼峰（基于 es-toolkit）
  * @param str - 下划线格式字符串
  * @returns 小驼峰字符串
@@ -54,7 +36,7 @@ export const keysToSnake = <T = any>(obj: Record<string, any>): T => {
 
     const result: any = {};
     for (const [key, value] of Object.entries(obj)) {
-        const snakeKey = toSnakeCase(key);
+        const snakeKey = snakeCase(key);
         result[snakeKey] = value;
     }
     return result;
@@ -142,13 +124,13 @@ export const whereKeysToSnake = (where: any): any => {
             const lastDollarIndex = key.lastIndexOf('$');
             const fieldName = key.substring(0, lastDollarIndex);
             const operator = key.substring(lastDollarIndex);
-            const snakeKey = toSnakeCase(fieldName) + operator;
+            const snakeKey = snakeCase(fieldName) + operator;
             result[snakeKey] = value;
             continue;
         }
 
         // 普通字段：转换键名，递归处理值（支持嵌套对象）
-        const snakeKey = toSnakeCase(key);
+        const snakeKey = snakeCase(key);
         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
             result[snakeKey] = whereKeysToSnake(value);
         } else {

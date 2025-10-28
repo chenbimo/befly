@@ -3,21 +3,22 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { toSnakeCase, whereKeysToSnake } from '../lib/convert.js';
+import { snakeCase } from 'es-toolkit/string';
+import { whereKeysToSnake } from '../lib/convert.js';
 
 describe('性能测试', () => {
-    describe('toSnakeCase 性能', () => {
+    describe('snakeCase 性能', () => {
         test('单次转换性能', () => {
             const start = performance.now();
             for (let i = 0; i < 10000; i++) {
-                toSnakeCase('userId');
-                toSnakeCase('createdAt');
-                toSnakeCase('userName');
-                toSnakeCase('APIKey');
-                toSnakeCase('HTTPRequest');
+                snakeCase('userId');
+                snakeCase('createdAt');
+                snakeCase('userName');
+                snakeCase('APIKey');
+                snakeCase('HTTPRequest');
             }
             const duration = performance.now() - start;
-            console.log(`toSnakeCase 50000次转换耗时: ${duration.toFixed(2)}ms`);
+            console.log(`snakeCase 50000次转换耗时: ${duration.toFixed(2)}ms`);
             expect(duration).toBeLessThan(100); // 应该在100ms内完成
         });
 
@@ -25,10 +26,10 @@ describe('性能测试', () => {
             const fields = ['userId', 'userName', 'userEmail', 'createdAt', 'updatedAt', 'APIKey', 'HTTPRequest', 'XMLParser'];
             const start = performance.now();
             for (let i = 0; i < 10000; i++) {
-                fields.forEach((field) => toSnakeCase(field));
+                fields.forEach((field) => snakeCase(field));
             }
             const duration = performance.now() - start;
-            console.log(`toSnakeCase 80000次批量转换耗时: ${duration.toFixed(2)}ms`);
+            console.log(`snakeCase 80000次批量转换耗时: ${duration.toFixed(2)}ms`);
             expect(duration).toBeLessThan(200);
         });
     });
@@ -93,7 +94,7 @@ describe('性能测试', () => {
 
             // 执行大量转换
             for (let i = 0; i < 100000; i++) {
-                toSnakeCase('userId');
+                snakeCase('userId');
                 whereKeysToSnake({ userId: 123, userName: 'John' });
             }
 
@@ -137,7 +138,7 @@ describe('性能测试', () => {
 
             const start = performance.now();
             for (let i = 0; i < 10000; i++) {
-                const converted = fields.map((f) => toSnakeCase(f));
+                const converted = fields.map((f) => snakeCase(f));
                 // 模拟后续操作
                 converted.forEach((f) => f.length);
             }
