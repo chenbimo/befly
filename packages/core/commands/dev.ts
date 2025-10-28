@@ -55,20 +55,19 @@ export async function devCommand(options: DevOptions) {
         }
 
         // 使用 Bun.spawn 启动开发服务器（不使用 --watch 避免监听 node_modules）
-        const args = ['--env-file=.env.development', mainFile];
 
-        const proc = Bun.spawn(['bun', 'run', ...args], {
+        const proc = Bun.spawn(['bun', '--env-file=.env.development', 'run', mainFile], {
             cwd: projectRoot,
             stdout: 'inherit',
             stderr: 'inherit',
             stdin: 'inherit',
             env: {
-                ...process.env,
-                NODE_ENV: 'development',
-                APP_PORT: options.port,
-                APP_HOST: options.host,
-                LOG_DEBUG: options.verbose ? '1' : process.env.LOG_DEBUG,
-                FORCE_COLOR: '1'
+                // ...process.env,
+                // NODE_ENV: 'development',
+                // APP_PORT: options.port,
+                // APP_HOST: options.host,
+                // LOG_DEBUG: options.verbose ? '1' : process.env.LOG_DEBUG,
+                // FORCE_COLOR: '1'
             }
         });
 

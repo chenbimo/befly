@@ -8,10 +8,10 @@ import { Field } from './config/field.js';
 import { Yes, No } from './util.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 import { Logger } from './lib/logger.js';
+import { Cipher } from './lib/cipher.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
-
 /**
  * Befly 框架核心类
  * 职责：管理应用上下文和生命周期
@@ -43,6 +43,7 @@ export {
     Env,
     Field,
     Logger,
+    Cipher,
     Yes,
     No
 };

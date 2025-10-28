@@ -35,8 +35,8 @@ export class Database {
         const host = Env.DB_HOST || '';
         const port = Env.DB_PORT;
         const user = encodeURIComponent(Env.DB_USER || '');
-        const password = encodeURIComponent(Env.DB_PASSWORD || '');
-        const database = encodeURIComponent(Env.DB_DATABASE || '');
+        const password = encodeURIComponent(Env.DB_PASS || '');
+        const database = encodeURIComponent(Env.DB_NAME || '');
 
         let finalUrl: string;
         if (type === 'sqlite') {

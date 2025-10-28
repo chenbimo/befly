@@ -4,9 +4,7 @@
  */
 
 import type { ApiRoute } from 'befly/types/api';
-import { Yes, No } from 'befly/utils';
-import { CacheManager } from 'befly/lifecycle/cacheManager';
-import { Field } from 'befly/config/fields';
+import { Yes, No, Field } from 'befly';
 
 export default {
     name: '刷新缓存',
@@ -22,7 +20,7 @@ export default {
             }
 
             // 执行缓存刷新
-            await CacheManager.cacheAll(befly.apiRoutes, befly);
+            await befly.cache.cacheAll(befly.apiRoutes, befly);
 
             return Yes('缓存刷新成功', {
                 message: '已重新缓存接口、菜单和角色权限'

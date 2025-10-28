@@ -7,17 +7,7 @@ import adminTable from '../tables/admin.json';
 
 export default {
     name: '添加管理员',
-    fields: {
-        username: adminTable.username,
-        email: adminTable.email,
-        password: adminTable.password,
-        name: adminTable.name,
-        nickname: adminTable.nickname,
-        phone: adminTable.phone,
-        roleId: adminTable.roleId,
-        roleCode: adminTable.roleCode,
-        roleType: adminTable.roleType
-    },
+    fields: adminTable,
     required: ['username', 'email', 'password'],
     handler: async (befly, ctx) => {
         // 检查用户名是否已存在
