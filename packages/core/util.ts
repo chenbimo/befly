@@ -279,3 +279,21 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
     const dir = getAddonDir(addonName, subDir);
     return fs.existsSync(dir) && fs.statSync(dir).isDirectory();
 };
+
+
+/**
+ * 获取插件目录列表
+ * @param addonsDir - addons 根目录路径
+ * @returns 插件名称数组
+ */
+export function getAddonDirs(addonsDir: string): string[] {
+    try {
+        return readdirSync(addonsDir).filter((name) => {
+            const addonPath = path.join(addonsDir, name);
+            return statSync(addonPath).isDirectory() && !name.startsWith('_');
+        });
+    } catch (error: any) {
+        Logger.warn(`读取插件目录失败: ${addonsDir}`, error.message);
+        return [];
+    }
+}

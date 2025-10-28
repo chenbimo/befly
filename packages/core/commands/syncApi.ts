@@ -13,6 +13,7 @@
 
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
+import { getAddonDirs } from '../util.js';
 import { readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
@@ -51,21 +52,6 @@ function scanTsFiles(dir: string, fileList: string[] = []): string[] {
     }
 
     return fileList;
-}
-
-/**
- * 获取插件目录列表
- */
-function getAddonDirs(addonsDir: string): string[] {
-    try {
-        return readdirSync(addonsDir).filter((name) => {
-            const addonPath = path.join(addonsDir, name);
-            return statSync(addonPath).isDirectory() && !name.startsWith('_');
-        });
-    } catch (error: any) {
-        Logger.warn(`读取插件目录失败: ${addonsDir}`, error.message);
-        return [];
-    }
 }
 
 /**

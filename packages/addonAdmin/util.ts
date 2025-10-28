@@ -36,31 +36,6 @@ export function scanTsFiles(dir: string, fileList: string[] = []): string[] {
 }
 
 /**
- * 收集配置文件中所有菜单的 path（最多2级：父级和子级）
- * @param menus - 菜单数组
- * @returns 路径集合
- */
-export function collectPaths(menus: any[]): Set<string> {
-    const paths = new Set<string>();
-
-    for (const menu of menus) {
-        if (menu.path) {
-            paths.add(menu.path);
-        }
-        // 只处理一级子菜单
-        if (menu.children && menu.children.length > 0) {
-            for (const child of menu.children) {
-                if (child.path) {
-                    paths.add(child.path);
-                }
-            }
-        }
-    }
-
-    return paths;
-}
-
-/**
  * 检查数据表是否存在
  * @param helper - DbHelper 实例
  * @param tableName - 表名
@@ -125,23 +100,6 @@ export function logSyncStats(stats: { created: number; updated: number }, delete
     Logger.info(`新增${resourceName}: ${stats.created} 个`);
     Logger.info(`更新${resourceName}: ${stats.updated} 个`);
     Logger.info(`删除${resourceName}: ${deletedCount} 个`);
-}
-
-/**
- * 获取插件目录列表
- * @param addonsDir - addons 根目录路径
- * @returns 插件名称数组
- */
-export function getAddonDirs(addonsDir: string): string[] {
-    try {
-        return readdirSync(addonsDir).filter((name) => {
-            const addonPath = path.join(addonsDir, name);
-            return statSync(addonPath).isDirectory() && !name.startsWith('_');
-        });
-    } catch (error: any) {
-        Logger.warn(`读取插件目录失败: ${addonsDir}`, error.message);
-        return [];
-    }
 }
 
 /**
