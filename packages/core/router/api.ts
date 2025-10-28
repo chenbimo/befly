@@ -115,19 +115,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             }
         } catch (error: any) {
             // 记录详细的错误日志
-            Logger.warn(api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误', {
-                接口名称: api?.name || '未知',
-                接口路径: apiPath || req.url,
-                请求方法: req.method,
-                请求URL: req.url,
-                客户端IP: ctx?.ip || 'unknown',
-                UserAgent: ctx?.userAgent || 'unknown',
-                用户ID: ctx?.user?.id || '未登录',
-                请求参数: ctx?.body || {},
-                错误类型: error.constructor?.name || 'Error',
-                错误信息: error.message,
-                错误堆栈: error.stack
-            });
+            Logger.warn(api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误', error);
 
             // 根据错误类型返回不同的错误信息
             let errorMessage = '内部服务器错误';

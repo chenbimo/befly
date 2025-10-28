@@ -43,14 +43,7 @@ export async function staticHandler(req: Request): Promise<Response> {
         }
     } catch (error: any) {
         // 记录详细的错误日志
-        Logger.warn('静态文件处理失败', {
-            请求方法: req.method,
-            请求URL: req.url,
-            文件路径: filePath,
-            错误类型: error.constructor?.name || 'Error',
-            错误信息: error.message,
-            错误堆栈: error.stack
-        });
+        Logger.error('静态文件处理失败', error);
 
         // 根据错误类型返回不同的错误信息
         let errorMessage = '文件读取失败';
