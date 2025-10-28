@@ -4,7 +4,7 @@
 
 import { describe, test, expect } from 'bun:test';
 import { snakeCase } from 'es-toolkit/string';
-import { whereKeysToSnake } from '../lib/convert.js';
+import { whereKeysToSnake } from '../util.js';
 
 describe('性能测试', () => {
     describe('snakeCase 性能', () => {

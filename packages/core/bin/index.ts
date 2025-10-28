@@ -3,7 +3,13 @@
  * Befly CLI - 命令行工具入口
  * 为 Befly 框架提供项目管理和脚本执行功能
  */
-
+import { Command } from 'commander';
+import { scriptCommand } from '../commands/script.js';
+import { devCommand } from '../commands/dev.js';
+import { buildCommand } from '../commands/build.js';
+import { startCommand } from '../commands/start.js';
+import { syncDbCommand } from '../commands/syncDb.js';
+import { addonCommand } from '../commands/addon.js';
 import { Logger } from '../lib/logger.js';
 
 /**
@@ -83,14 +89,6 @@ function checkBunVersion(): void {
 
 // 检查 Bun 版本
 checkBunVersion();
-
-import { Command } from 'commander';
-import { scriptCommand } from '../commands/script.js';
-import { devCommand } from '../commands/dev.js';
-import { buildCommand } from '../commands/build.js';
-import { startCommand } from '../commands/start.js';
-import { syncDbCommand } from '../commands/syncDb.js';
-import { addonCommand } from '../commands/addon.js';
 
 const program = new Command();
 

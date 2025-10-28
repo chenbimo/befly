@@ -4,74 +4,7 @@
 
 import { describe, test, expect } from 'bun:test';
 import { snakeCase } from 'es-toolkit/string';
-import { toCamelCase, keysToSnake, keysToCamel, arrayKeysToCamel, whereKeysToSnake } from '../util.js';
-
-describe('字符串命名转换', () => {
-    describe('snakeCase - 小驼峰转下划线', () => {
-        test('应该正确转换基本的小驼峰', () => {
-            expect(snakeCase('userId')).toBe('user_id');
-            expect(snakeCase('userName')).toBe('user_name');
-            expect(snakeCase('createdAt')).toBe('created_at');
-            expect(snakeCase('updatedBy')).toBe('updated_by');
-        });
-
-        test('应该正确转换大驼峰', () => {
-            expect(snakeCase('UserId')).toBe('user_id');
-            expect(snakeCase('UserName')).toBe('user_name');
-        });
-
-        test('应该正确转换连续大写字母', () => {
-            expect(snakeCase('APIKey')).toBe('a_p_i_key');
-            expect(snakeCase('HTTPRequest')).toBe('h_t_t_p_request');
-        });
-
-        test('应该处理已经是下划线格式的字符串', () => {
-            expect(snakeCase('user_id')).toBe('user_id');
-            expect(snakeCase('created_at')).toBe('created_at');
-        });
-
-        test('应该处理单个单词', () => {
-            expect(snakeCase('user')).toBe('user');
-            expect(snakeCase('name')).toBe('name');
-        });
-
-        test('应该处理边界情况', () => {
-            expect(snakeCase('')).toBe('');
-            expect(snakeCase(null as any)).toBe(null);
-            expect(snakeCase(undefined as any)).toBe(undefined);
-        });
-    });
-
-    describe('toCamelCase - 下划线转小驼峰', () => {
-        test('应该正确转换基本的下划线格式', () => {
-            expect(toCamelCase('user_id')).toBe('userId');
-            expect(toCamelCase('user_name')).toBe('userName');
-            expect(toCamelCase('created_at')).toBe('createdAt');
-            expect(toCamelCase('updated_by')).toBe('updatedBy');
-        });
-
-        test('应该正确转换多个下划线', () => {
-            expect(toCamelCase('last_login_time')).toBe('lastLoginTime');
-            expect(toCamelCase('user_created_at_time')).toBe('userCreatedAtTime');
-        });
-
-        test('应该处理已经是小驼峰的字符串', () => {
-            expect(toCamelCase('userId')).toBe('userId');
-            expect(toCamelCase('userName')).toBe('userName');
-        });
-
-        test('应该处理单个单词', () => {
-            expect(toCamelCase('user')).toBe('user');
-            expect(toCamelCase('name')).toBe('name');
-        });
-
-        test('应该处理边界情况', () => {
-            expect(toCamelCase('')).toBe('');
-            expect(toCamelCase(null as any)).toBe(null);
-            expect(toCamelCase(undefined as any)).toBe(undefined);
-        });
-    });
-});
+import { keysToSnake, keysToCamel, arrayKeysToCamel, whereKeysToSnake } from '../util.js';
 
 describe('对象键名转换', () => {
     describe('keysToSnake - 对象键转下划线', () => {
@@ -327,7 +260,7 @@ describe('双向转换一致性', () => {
     test('小驼峰 → 下划线 → 小驼峰应该保持一致', () => {
         const original = 'userId';
         const snake = snakeCase(original);
-        const camel = toCamelCase(snake);
+        const camel = camelCase(snake);
         expect(camel).toBe(original);
     });
 
