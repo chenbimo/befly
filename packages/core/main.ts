@@ -7,7 +7,6 @@ import { Env } from './config/env.js';
 import { Field } from './config/fields.js';
 import { Yes, No } from './util.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
-import { paths } from './paths.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -43,6 +42,5 @@ export {
     Env,
     Field,
     Yes,
-    No,
-    paths
+    No
 };
