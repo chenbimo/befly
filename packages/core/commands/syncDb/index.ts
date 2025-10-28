@@ -149,8 +149,8 @@ export const SyncDb = async (): Promise<void> => {
                     tableName = `core_${tableName}`;
                 } else if (type === 'addon') {
                     // addon 表，添加 addon_{name}_ 前缀
-                    // 将 addon 名称中的中划线替换为下划线（addon-admin → addon_admin）
-                    const addonNameSnake = addonName!.replace(/-/g, '_');
+                    // 使用 snakeCase 统一转换（addon-admin → addon_admin）
+                    const addonNameSnake = snakeCase(addonName!);
                     tableName = `${addonNameSnake}_${tableName}`;
                 }
 
