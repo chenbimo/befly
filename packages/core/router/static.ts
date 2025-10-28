@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { paths } from '../paths.js';
 import { No } from '../util.js';
-import { setCorsOptions } from '../middleware/cors.js';
+import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
 import { Env } from '../config/env.js';
 

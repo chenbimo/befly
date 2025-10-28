@@ -9,9 +9,6 @@ import { Yes, No } from './util.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 import { paths } from './paths.js';
 
-// 导入所有 utils 作为命名空间
-import * as util from './util.js';
-
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
 
@@ -47,6 +44,5 @@ export {
     Field,
     Yes,
     No,
-    util,
     paths
 };

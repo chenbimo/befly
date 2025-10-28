@@ -3,11 +3,10 @@
  *
  * 本文件整合了框架核心工具函数：
  * - API 响应工具（Yes, No）
- * - 对象操作（pickFields, fieldClear, cleanData）
- * - 日期时间（formatDate, calcPerfTime）
+ * - 对象操作（pickFields, fieldClear）
+ * - 日期时间（calcPerfTime）
  * - 表定义工具（parseRule）
  * - Addon 管理（scanAddons, getAddonDir 等）
- * - 插件管理（sortPlugins）
  *
  * 注意：
  * - JWT 工具位于 lib/jwt.ts

@@ -5,14 +5,8 @@
 
 import { Logger } from '../lib/logger.js';
 import { No } from '../util.js';
-import { setCorsOptions, handleOptionsRequest } from '../middleware/cors.js';
+import { setCorsOptions, handleOptionsRequest, authenticate, parseGetParams, parsePostParams, checkPermission, validateParams, executePluginHooks, logRequest } from '../lib/middleware.js';
 import { Env } from '../config/env.js';
-import { authenticate } from '../middleware/auth.js';
-import { parseGetParams, parsePostParams } from '../middleware/parser.js';
-import { checkPermission } from '../middleware/permission.js';
-import { validateParams } from '../middleware/validator.js';
-import { executePluginHooks } from '../middleware/plugin-hooks.js';
-import { logRequest } from '../middleware/request-logger.js';
 import type { RequestContext } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
