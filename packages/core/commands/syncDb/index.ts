@@ -79,11 +79,11 @@ export const SyncDb = async (): Promise<void> => {
         // 阶段3：扫描表定义文件
         perfTracker.markPhase('扫描表文件');
         const tablesGlob = new Bun.Glob('*.json');
-        const directories: Array<{ path: string; isCore: boolean; addonName?: string }> = [
+        const directories: Array<{ path: string; type: 'core' | 'app' | 'addon'; addonName?: string }> = [
             // 1. core 框架表（core_ 前缀）
-            { path: paths.coreTableDir, isCore: true },
+            { path: paths.coreTableDir, type: 'core' },
             // 2. 项目表（无前缀）
-            { path: paths.projectTableDir, isCore: false }
+            { path: paths.projectTableDir, type: 'app' }
         ];
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
@@ -92,7 +92,7 @@ export const SyncDb = async (): Promise<void> => {
             if (addonDirExists(addon, 'tables')) {
                 directories.push({
                     path: getAddonDir(addon, 'tables'),
-                    isCore: false,
+                    type: 'addon',
                     addonName: addon
                 });
             }
@@ -120,8 +120,8 @@ export const SyncDb = async (): Promise<void> => {
         let processedCount = 0;
 
         for (const dirConfig of directories) {
-            const { path: dir, isCore, addonName } = dirConfig;
-            const dirType = isCore ? 'Core框架' : addonName ? `组件${addonName}` : '项目';
+            const { path: dir, type, addonName } = dirConfig;
+            const dirType = type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目';
 
             for await (const file of tablesGlob.scan({
                 cwd: dir,
@@ -144,13 +144,13 @@ export const SyncDb = async (): Promise<void> => {
                 // - 项目表：{表名}
                 //   例如：user.json → user
                 let tableName = snakeCase(fileName);
-                if (isCore) {
+                if (type === 'core') {
                     // core 框架表，添加 core_ 前缀
                     tableName = `core_${tableName}`;
-                } else if (addonName) {
+                } else if (type === 'addon') {
                     // addon 表，添加 addon_{name}_ 前缀
                     // 将 addon 名称中的中划线替换为下划线（addon-admin → addon_admin）
-                    const addonNameSnake = addonName.replace(/-/g, '_');
+                    const addonNameSnake = addonName!.replace(/-/g, '_');
                     tableName = `${addonNameSnake}_${tableName}`;
                 }
 
