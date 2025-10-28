@@ -5,7 +5,7 @@
 
 import { describe, test, expect } from 'bun:test';
 import { snakeCase } from 'es-toolkit/string';
-import { Yes, No, pickFields, formatDate, parseRule } from '../util.js';
+import { Yes, No, pickFields, parseRule } from '../util.js';
 
 describe('响应函数', () => {
     test('Yes 应该返回成功响应', () => {
@@ -36,20 +36,6 @@ describe('对象操作', () => {
     //     const result = omitFields(obj, ['b']);
     //     expect(result).toEqual({ a: 1, c: 3 });
     // });
-});
-
-describe('日期格式化', () => {
-    test('formatDate 应该正确格式化日期', () => {
-        const date = new Date('2025-01-01T12:00:00Z');
-        const result = formatDate(date, 'YYYY-MM-DD');
-        expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    });
-
-    test('formatDate 应该支持完整格式', () => {
-        const date = new Date('2025-01-01T12:00:00Z');
-        const result = formatDate(date, 'YYYY-MM-DD HH:mm:ss');
-        expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
-    });
 });
 
 describe('表名转换', () => {

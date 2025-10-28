@@ -368,21 +368,6 @@ export const cleanData = <T = any>(data?: Record<string, any>, options: import('
 // ========================================
 
 /**
- * 格式化日期
- */
-export const formatDate = (date: Date | string | number = new Date(), format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hour = String(d.getHours()).padStart(2, '0');
-    const minute = String(d.getMinutes()).padStart(2, '0');
-    const second = String(d.getSeconds()).padStart(2, '0');
-
-    return format.replace('YYYY', String(year)).replace('MM', month).replace('DD', day).replace('HH', hour).replace('mm', minute).replace('ss', second);
-};
-
-/**
  * 计算性能时间差
  */
 export const calcPerfTime = (startTime: number, endTime: number = Bun.nanoseconds()): string => {

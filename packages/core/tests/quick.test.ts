@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Yes, No, formatDate } from '../util.js';
+import { Yes, No } from '../util.js';
 import { Cipher } from '../lib/cipher.js';
 
 describe('核心工具', () => {
@@ -18,13 +18,6 @@ describe('核心工具', () => {
         const result = No('失败');
         expect(result.code).toBe(1);
         expect(result.msg).toBe('失败');
-    });
-
-    test('formatDate 应该格式化日期', () => {
-        const date = new Date('2024-01-01T12:00:00Z');
-        const formatted = formatDate(date);
-        expect(formatted).toContain('2024');
-        expect(formatted).toContain('01');
     });
 });
 
