@@ -4,7 +4,6 @@
  */
 
 import { Env } from './config/env.js';
-import { Field } from './config/field.js';
 import { Yes, No } from './util.js';
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
@@ -42,7 +41,6 @@ export class Befly {
 export {
     // 配置
     Env,
-    Field,
     Logger,
     Cipher,
     Jwt,

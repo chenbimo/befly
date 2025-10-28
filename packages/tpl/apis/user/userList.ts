@@ -2,16 +2,14 @@
  * 获取用户列表接口 - TypeScript 示例
  */
 
-import { Yes, Field } from 'befly';
+import { Yes } from 'befly';
 
 export default {
     name: '获取用户列表',
     auth: true, // 需要登录（权限由角色接口列表控制）
     fields: {
-        page: Field.page,
-        limit: Field.limit,
-        role: '角色|string|0|20|null|0|^(admin|user|guest)$',
-        keyword: Field.keyword
+        // page, limit, keyword 会自动从默认字段合并
+        role: '角色|string|0|20|null|0|^(admin|user|guest)$'
     },
     handler: async (befly, ctx) => {
         const params = ctx.body as GetUsersRequest;

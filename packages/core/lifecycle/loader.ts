@@ -14,6 +14,18 @@ import type { ApiRoute } from '../types/api.js';
 import type { BeflyContext } from '../types/befly.js';
 
 /**
+ * API 默认字段定义
+ * 这些字段会自动合并到所有 API 的 fields 中
+ * API 自定义的同名字段可以覆盖这些默认值
+ */
+const DEFAULT_API_FIELDS = {
+    id: 'ID|number|1|null|null|0|null',
+    page: '页码|number|1|9999|1|0|null',
+    limit: '每页数量|number|1|100|10|0|null',
+    keyword: '关键词|string|1|50|null|0|null'
+} as const;
+
+/**
  * 排序插件（根据依赖关系）
  */
 export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
@@ -417,7 +429,9 @@ export class Loader {
                     // 设置默认值
                     api.method = api.method || 'POST';
                     api.auth = api.auth !== undefined ? api.auth : true;
-                    api.fields = api.fields || {};
+
+                    // 合并默认字段：先设置默认字段，再用 API 自定义字段覆盖
+                    api.fields = { ...DEFAULT_API_FIELDS, ...(api.fields || {}) };
                     api.required = api.required || [];
 
                     // 验证可选属性的类型（如果提供了）

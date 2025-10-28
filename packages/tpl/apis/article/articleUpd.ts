@@ -2,7 +2,7 @@
  * 更新文章接口
  */
 
-import { Yes, No, Field } from 'befly';
+import { Yes, No } from 'befly';
 
 import articleTable from '../../tables/article.json';
 
@@ -10,7 +10,7 @@ export default {
     name: '更新文章',
     auth: false,
     fields: {
-        id: Field._id,
+        // id 会自动从默认字段合并
         title: articleTable.title,
         content: articleTable.content,
         summary: articleTable.summary,
