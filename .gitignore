@@ -3,6 +3,7 @@ logs
 *.log
 npm-debug.log*
 esdata
+tests
 data
 .cache
 lab
