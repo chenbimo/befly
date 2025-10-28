@@ -5,9 +5,10 @@
  */
 
 import { isPlainObject } from 'es-toolkit/compat';
+import { snakeCase, camelCase } from 'es-toolkit/string';
 
 /**
- * 小驼峰转下划线
+ * 小驼峰转下划线（基于 es-toolkit）
  * @param str - 小驼峰格式字符串
  * @returns 下划线字符串
  *
@@ -21,29 +22,11 @@ import { isPlainObject } from 'es-toolkit/compat';
  */
 export const toSnakeCase = (str: string): string => {
     if (!str || typeof str !== 'string') return str;
-
-    let result = '';
-    for (let i = 0; i < str.length; i++) {
-        const char = str[i];
-        const nextChar = i < str.length - 1 ? str[i + 1] : null;
-
-        // 当前字符是大写字母
-        if (char >= 'A' && char <= 'Z') {
-            // 如果不是第一个字符，则需要在大写字母前添加下划线
-            if (i > 0) {
-                result += '_';
-            }
-            result += char.toLowerCase();
-        } else {
-            result += char;
-        }
-    }
-
-    return result;
+    return snakeCase(str);
 };
 
 /**
- * 下划线转小驼峰
+ * 下划线转小驼峰（基于 es-toolkit）
  * @param str - 下划线格式字符串
  * @returns 小驼峰字符串
  *
@@ -54,7 +37,7 @@ export const toSnakeCase = (str: string): string => {
  */
 export const toCamelCase = (str: string): string => {
     if (!str || typeof str !== 'string') return str;
-    return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    return camelCase(str);
 };
 
 /**
