@@ -2,9 +2,7 @@
  * 管理员登录接口
  */
 
-import { Yes, No } from 'befly';
-import { Cipher } from 'befly';
-import { Jwt } from 'befly';
+import { Yes, No, Cipher, Jwt } from 'befly';
 import adminTable from '../tables/admin.json';
 
 export default {

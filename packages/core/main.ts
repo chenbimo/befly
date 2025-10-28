@@ -6,9 +6,10 @@
 import { Env } from './config/env.js';
 import { Field } from './config/field.js';
 import { Yes, No } from './util.js';
-import { Lifecycle } from './lifecycle/lifecycle.js';
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
+import { Jwt } from './lib/jwt.js';
+import { Lifecycle } from './lifecycle/lifecycle.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -44,6 +45,7 @@ export {
     Field,
     Logger,
     Cipher,
+    Jwt,
     Yes,
     No
 };
