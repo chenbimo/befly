@@ -68,15 +68,6 @@ const RegexAliases = {
 } as const;
 
 /**
- * 类型检查函数（内部实现）
- */
-function isType(value: any, type: string): boolean {
-    const valueType = Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
-    const types = type.split('|').map((t) => t.trim().toLowerCase());
-    return types.includes(valueType);
-}
-
-/**
  * 验证器类（Befly 项目专用）
  * 内置 RegexAliases，直接使用 util.ts 中的 parseRule
  */
@@ -224,7 +215,7 @@ export class Validator {
      */
     private validateNumber(value: any, name: string, min: number | null, max: number | null, spec: string | null, fieldName: string): ValidationError {
         try {
-            if (isType(value, 'number') === false) {
+            if (typeof value !== 'number' || Number.isNaN(value)) {
                 return `${name}(${fieldName})必须是数字`;
             }
 
@@ -258,7 +249,7 @@ export class Validator {
      */
     private validateString(value: any, name: string, min: number | null, max: number | null, spec: string | null, fieldName: string): ValidationError {
         try {
-            if (isType(value, 'string') === false) {
+            if (typeof value !== 'string') {
                 return `${name}(${fieldName})必须是字符串`;
             }
 
@@ -381,7 +372,7 @@ export class Validator {
         // 类型验证
         switch (type.toLowerCase()) {
             case 'number':
-                if (!isType(convertedValue, 'number')) {
+                if (typeof convertedValue !== 'number' || Number.isNaN(convertedValue)) {
                     errors.push(`${name || '值'}必须是数字`);
                 }
                 if (min !== null && convertedValue < min) {
@@ -404,7 +395,7 @@ export class Validator {
 
             case 'string':
             case 'text':
-                if (!isType(convertedValue, 'string')) {
+                if (typeof convertedValue !== 'string') {
                     errors.push(`${name || '值'}必须是字符串`);
                 }
                 if (min !== null && convertedValue.length < min) {

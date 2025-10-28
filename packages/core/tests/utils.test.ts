@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Yes, No, isType, isEmptyObject, isEmptyArray, pickFields, formatDate, parseRule, toSnakeCase } from '../util.js';
+import { Yes, No, pickFields, formatDate, parseRule, toSnakeCase } from '../util.js';
 
 describe('响应函数', () => {
     test('Yes 应该返回成功响应', () => {
@@ -19,31 +19,6 @@ describe('响应函数', () => {
         expect(result.code).toBe(1);
         expect(result.msg).toBe('操作失败');
         expect(result.data).toEqual({ error: 'test' });
-    });
-});
-
-describe('类型检查', () => {
-    test('isType 应该正确判断类型', () => {
-        expect(isType('hello', 'String')).toBe(true);
-        expect(isType(123, 'Number')).toBe(true);
-        expect(isType([], 'Array')).toBe(true);
-        expect(isType({}, 'Object')).toBe(true);
-        expect(isType(null, 'Null')).toBe(true);
-        expect(isType(undefined, 'Undefined')).toBe(true);
-    });
-
-    test('isEmptyObject 应该正确判断空对象', () => {
-        expect(isEmptyObject({})).toBe(true);
-        expect(isEmptyObject({ a: 1 })).toBe(false);
-        expect(isEmptyObject(null)).toBe(false);
-        expect(isEmptyObject([])).toBe(false);
-    });
-
-    test('isEmptyArray 应该正确判断空数组', () => {
-        expect(isEmptyArray([])).toBe(true);
-        expect(isEmptyArray([1, 2])).toBe(false);
-        expect(isEmptyArray(null)).toBe(false);
-        expect(isEmptyArray({})).toBe(false);
     });
 });
 

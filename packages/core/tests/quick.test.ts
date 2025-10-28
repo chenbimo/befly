@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { Yes, No, isType, formatDate } from '../util.js';
+import { Yes, No, formatDate } from '../util.js';
 import { Cipher } from '../lib/cipher.js';
 
 describe('核心工具', () => {
@@ -18,13 +18,6 @@ describe('核心工具', () => {
         const result = No('失败');
         expect(result.code).toBe(1);
         expect(result.msg).toBe('失败');
-    });
-
-    test('isType 应该正确判断类型', () => {
-        expect(isType('hello', 'string')).toBe(true);
-        expect(isType(123, 'number')).toBe(true);
-        expect(isType([], 'array')).toBe(true);
-        expect(isType({}, 'object')).toBe(true);
     });
 
     test('formatDate 应该格式化日期', () => {

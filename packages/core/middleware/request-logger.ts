@@ -3,9 +3,9 @@
  * 记录API请求信息
  */
 
+import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { Env } from '../config/env.js';
-import { isType } from '../util.js';
 import type { RequestContext } from '../types/context.js';
 
 /**
@@ -16,7 +16,7 @@ import type { RequestContext } from '../types/context.js';
  * @returns 过滤后的对象
  */
 function filterLogFields(body: any, excludeFields: string = ''): any {
-    if (!body || (!isType(body, 'object') && !isType(body, 'array'))) return body;
+    if (!body || (!isPlainObject(body) && !Array.isArray(body))) return body;
 
     const fieldsArray = excludeFields
         .split(',')

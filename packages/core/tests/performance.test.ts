@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { toSnakeCase, whereKeysToSnake } from '../util.js';
+import { toSnakeCase, whereKeysToSnake } from '../lib/convert.js';
 
 describe('性能测试', () => {
     describe('toSnakeCase 性能', () => {

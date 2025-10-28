@@ -4,12 +4,7 @@
  * 提供命名格式转换、对象字段转换、BigInt 字段转换等功能
  */
 
-/**
- * 类型判断工具
- */
-const isType = (value: any, type: string): boolean => {
-    return Object.prototype.toString.call(value).slice(8, -1).toLowerCase() === type.toLowerCase();
-};
+import { isPlainObject } from 'es-toolkit/compat';
 
 /**
  * 小驼峰转下划线
@@ -72,7 +67,7 @@ export const toCamelCase = (str: string): string => {
  * keysToSnake({ createdAt: 1697452800000 }) // { created_at: 1697452800000 }
  */
 export const keysToSnake = <T = any>(obj: Record<string, any>): T => {
-    if (!obj || !isType(obj, 'object')) return obj as T;
+    if (!obj || !isPlainObject(obj)) return obj as T;
 
     const result: any = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -92,7 +87,7 @@ export const keysToSnake = <T = any>(obj: Record<string, any>): T => {
  * keysToCamel({ created_at: 1697452800000 }) // { createdAt: 1697452800000 }
  */
 export const keysToCamel = <T = any>(obj: Record<string, any>): T => {
-    if (!obj || !isType(obj, 'object')) return obj as T;
+    if (!obj || !isPlainObject(obj)) return obj as T;
 
     const result: any = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -115,7 +110,7 @@ export const keysToCamel = <T = any>(obj: Record<string, any>): T => {
  * // [{ userId: 1, userName: 'John' }, { userId: 2, userName: 'Jane' }]
  */
 export const arrayKeysToCamel = <T = any>(arr: Record<string, any>[]): T[] => {
-    if (!arr || !isType(arr, 'array')) return arr as T[];
+    if (!arr || !Array.isArray(arr)) return arr as T[];
     return arr.map((item) => keysToCamel<T>(item));
 };
 
@@ -212,7 +207,7 @@ export const whereKeysToSnake = (where: any): any => {
  * // [{ id: 1760695696283001, pid: 0, categoryId: 123, user_id: 456, createdAt: 1697452800000, created_at: 1697452800000, phone: '13800138000', name: 'test' }]
  */
 export const convertBigIntFields = <T = any>(arr: Record<string, any>[], fields: string[] = ['id', 'pid', 'sort']): T[] => {
-    if (!arr || !isType(arr, 'array')) return arr as T[];
+    if (!arr || !Array.isArray(arr)) return arr as T[];
 
     return arr.map((item) => {
         const converted = { ...item };

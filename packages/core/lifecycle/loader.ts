@@ -4,8 +4,9 @@
  */
 
 import path from 'node:path';
+import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime, isType } from '../util.js';
+import { calcPerfTime } from '../util.js';
 import { sortPlugins } from '../util.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
@@ -376,10 +377,10 @@ export class Loader {
                     Logger.debug(`[${dirDisplayName}] 开始验证 API 属性: ${apiPath}`);
 
                     // 验证必填属性：name 和 handler
-                    if (isType(api.name, 'string') === false || api.name.trim() === '') {
+                    if (typeof api.name !== 'string' || api.name.trim() === '') {
                         throw new Error(`接口 ${apiPath} 的 name 属性必须是非空字符串`);
                     }
-                    if (isType(api.handler, 'function') === false) {
+                    if (typeof api.handler !== 'function') {
                         throw new Error(`接口 ${apiPath} 的 handler 属性必须是函数`);
                     }
 
@@ -393,16 +394,16 @@ export class Loader {
                     if (api.method && !['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].includes(api.method.toUpperCase())) {
                         throw new Error(`接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法`);
                     }
-                    if (api.auth !== undefined && isType(api.auth, 'boolean') === false) {
+                    if (api.auth !== undefined && typeof api.auth !== 'boolean') {
                         throw new Error(`接口 ${apiPath} 的 auth 属性必须是布尔值 (true=需登录, false=公开)`);
                     }
-                    if (api.fields && isType(api.fields, 'object') === false) {
+                    if (api.fields && !isPlainObject(api.fields)) {
                         throw new Error(`接口 ${apiPath} 的 fields 属性必须是对象`);
                     }
-                    if (api.required && isType(api.required, 'array') === false) {
+                    if (api.required && !Array.isArray(api.required)) {
                         throw new Error(`接口 ${apiPath} 的 required 属性必须是数组`);
                     }
-                    if (api.required && api.required.some((item: any) => isType(item, 'string') === false)) {
+                    if (api.required && api.required.some((item: any) => typeof item !== 'string')) {
                         throw new Error(`接口 ${apiPath} 的 required 属性必须是字符串数组`);
                     }
 

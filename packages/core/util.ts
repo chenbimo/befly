@@ -3,7 +3,6 @@
  *
  * 本文件整合了框架核心工具函数：
  * - API 响应工具（Yes, No）
- * - 类型判断（isType, isEmptyObject, isEmptyArray）
  * - 对象操作（pickFields, fieldClear, cleanData）
  * - 日期时间（formatDate, calcPerfTime）
  * - 字段转换（toSnakeCase, toCamelCase 等）
@@ -20,6 +19,7 @@
 
 import fs from 'node:fs';
 import { join } from 'node:path';
+import { isEmpty, isPlainObject } from 'es-toolkit/compat';
 import { Env } from './config/env.js';
 import { Logger } from './lib/logger.js';
 import { paths } from './paths.js';
@@ -57,69 +57,10 @@ export const No = <T = any>(msg: string = '', data: T | {} = {}, other: KeyValue
 };
 
 // ========================================
-// 环境判断工具
+// 字段转换工具（重新导出 lib/convert.ts）
 // ========================================
 
-// ========================================
-// 类型判断工具
-// ========================================
-
-/**
- * 类型判断
- */
-export const isType = (value: any, type: string): boolean => {
-    const actualType = Object.prototype.toString.call(value).slice(8, -1).toLowerCase();
-    const expectedType = String(type).toLowerCase();
-
-    switch (expectedType) {
-        case 'function':
-            return typeof value === 'function';
-        case 'nan':
-            return typeof value === 'number' && Number.isNaN(value);
-        case 'empty':
-            return value === '' || value === null || value === undefined;
-        case 'integer':
-            return Number.isInteger(value);
-        case 'float':
-            return typeof value === 'number' && !Number.isInteger(value) && !Number.isNaN(value);
-        case 'positive':
-            return typeof value === 'number' && value > 0;
-        case 'negative':
-            return typeof value === 'number' && value < 0;
-        case 'zero':
-            return value === 0;
-        case 'truthy':
-            return !!value;
-        case 'falsy':
-            return !value;
-        case 'primitive':
-            return value !== Object(value);
-        case 'reference':
-            return value === Object(value);
-        default:
-            return actualType === expectedType;
-    }
-};
-
-/**
- * 判断是否为空对象
- */
-export const isEmptyObject = (obj: any): boolean => {
-    if (!isType(obj, 'object')) {
-        return false;
-    }
-    return Object.keys(obj).length === 0;
-};
-
-/**
- * 判断是否为空数组
- */
-export const isEmptyArray = (arr: any): boolean => {
-    if (!isType(arr, 'array')) {
-        return false;
-    }
-    return arr.length === 0;
-};
+export { toSnakeCase, toCamelCase, keysToSnake, keysToCamel, arrayKeysToCamel, whereKeysToSnake, convertBigIntFields } from './lib/convert.js';
 
 // ========================================
 // 对象操作工具
@@ -129,7 +70,7 @@ export const isEmptyArray = (arr: any): boolean => {
  * 挑选指定字段
  */
 export const pickFields = <T extends Record<string, any>>(obj: T, keys: string[]): Partial<T> => {
-    if (!obj || (!isType(obj, 'object') && !isType(obj, 'array'))) {
+    if (!obj || (!isPlainObject(obj) && !Array.isArray(obj))) {
         return {};
     }
 
@@ -147,7 +88,7 @@ export const pickFields = <T extends Record<string, any>>(obj: T, keys: string[]
  * 字段清理
  */
 export const fieldClear = <T extends Record<string, any> = any>(data: T, excludeValues: any[] = [null, undefined], keepValues: Record<string, any> = {}): Partial<T> => {
-    if (!data || !isType(data, 'object')) {
+    if (!data || !isPlainObject(data)) {
         return {};
     }
 
@@ -182,7 +123,7 @@ export const fieldClear = <T extends Record<string, any> = any>(data: T, exclude
 export const cleanData = <T = any>(data?: Record<string, any>, options: import('./types/util.js').DataCleanOptions = {}): Partial<T> => {
     const { excludeKeys = [], includeKeys = [], removeValues = [null, undefined], maxLen = 0, deep = false } = options;
 
-    if (!data || !isType(data, 'object')) {
+    if (!data || !isPlainObject(data)) {
         return data as Partial<T>;
     }
 
@@ -193,20 +134,20 @@ export const cleanData = <T = any>(data?: Record<string, any>, options: import('
     };
 
     const processValue = (value: any): any => {
-        if (deep && isType(value, 'object')) {
+        if (deep && isPlainObject(value)) {
             return cleanData(value, options);
         }
 
-        if (deep && isType(value, 'array')) {
-            return value.map((item: any) => (isType(item, 'object') ? cleanData(item, options) : item));
+        if (deep && Array.isArray(value)) {
+            return value.map((item: any) => (isPlainObject(item) ? cleanData(item, options) : item));
         }
 
         if (maxLen > 0) {
-            if (isType(value, 'string') && value.length > maxLen) {
+            if (typeof value === 'string' && value.length > maxLen) {
                 return value.substring(0, maxLen);
             }
 
-            if (!isType(value, 'string')) {
+            if (typeof value !== 'string') {
                 try {
                     const strValue = JSON.stringify(value);
                     if (strValue && strValue.length > maxLen) {

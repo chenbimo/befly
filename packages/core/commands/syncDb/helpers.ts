@@ -7,7 +7,6 @@
  * - 日志输出格式化
  */
 
-import { isType } from '../../util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { Logger } from '../../lib/logger.js';
 
@@ -85,7 +84,7 @@ export function generateDefaultSql(actualDefault: any, fieldType: 'number' | 'st
 
     // 仅 number/string/array 类型设置默认值
     if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array') {
-        if (isType(actualDefault, 'number')) {
+        if (typeof actualDefault === 'number' && !Number.isNaN(actualDefault)) {
             return ` DEFAULT ${actualDefault}`;
         } else {
             // 字符串需要转义单引号：' -> ''
