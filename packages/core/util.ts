@@ -479,34 +479,3 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
 // ========================================
 // 插件管理工具
 // ========================================
-
-/**
- * 排序插件（根据依赖关系）
- */
-export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
-    const result: Plugin[] = [];
-    const visited = new Set<string>();
-    const visiting = new Set<string>();
-    const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.name, p]));
-    let isPass = true;
-
-    const visit = (name: string): void => {
-        if (visited.has(name)) return;
-        if (visiting.has(name)) {
-            isPass = false;
-            return;
-        }
-
-        const plugin = pluginMap[name];
-        if (!plugin) return;
-
-        visiting.add(name);
-        (plugin.dependencies || []).forEach(visit);
-        visiting.delete(name);
-        visited.add(name);
-        result.push(plugin);
-    };
-
-    plugins.forEach((p) => visit(p.name));
-    return isPass ? result : false;
-};

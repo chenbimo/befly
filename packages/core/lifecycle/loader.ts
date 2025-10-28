@@ -7,12 +7,42 @@ import path from 'node:path';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
-import { sortPlugins } from '../util.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
 import type { BeflyContext } from '../types/befly.js';
+
+/**
+ * 排序插件（根据依赖关系）
+ */
+export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
+    const result: Plugin[] = [];
+    const visited = new Set<string>();
+    const visiting = new Set<string>();
+    const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.name, p]));
+    let isPass = true;
+
+    const visit = (name: string): void => {
+        if (visited.has(name)) return;
+        if (visiting.has(name)) {
+            isPass = false;
+            return;
+        }
+
+        const plugin = pluginMap[name];
+        if (!plugin) return;
+
+        visiting.add(name);
+        (plugin.dependencies || []).forEach(visit);
+        visiting.delete(name);
+        visited.add(name);
+        result.push(plugin);
+    };
+
+    plugins.forEach((p) => visit(p.name));
+    return isPass ? result : false;
+};
 
 /**
  * 带超时的动态导入函数
