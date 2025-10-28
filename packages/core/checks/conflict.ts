@@ -7,7 +7,15 @@ import path from 'node:path';
 import { Logger } from '../lib/logger.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
-import { isReservedTableName, isReservedPluginName, isReservedAddonName, getReservedTablePrefixes, getReservedPlugins, getReservedAddonNames } from '../config/reserved.js';
+
+/**
+ * 保留名称配置
+ */
+const RESERVED_NAMES = {
+    tablePrefix: ['sys_'],
+    plugins: ['db', 'logger', 'redis', 'tool'],
+    addonNames: ['app', 'api']
+} as const;
 
 /**
  * 资源注册表
@@ -58,8 +66,8 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
     const conflicts: string[] = [];
 
     // 检查 addon 名称是否使用保留名称
-    if (isReservedAddonName(addonName)) {
-        conflicts.push(`组件名称 "${addonName}" 使用了保留名称，保留名称包括: ${getReservedAddonNames().join(', ')}`);
+    if (RESERVED_NAMES.addonNames.includes(addonName.toLowerCase())) {
+        conflicts.push(`组件名称 "${addonName}" 使用了保留名称，保留名称包括: ${RESERVED_NAMES.addonNames.join(', ')}`);
         return conflicts;
     }
 
@@ -81,8 +89,8 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
                 const tableName = tableDefine.tableName || `${addonName}_${fileName}`;
 
                 // 检查是否使用保留前缀
-                if (isReservedTableName(tableName)) {
-                    conflicts.push(`组件 ${addonName} 表 "${tableName}" 使用了保留前缀，保留前缀包括: ${getReservedTablePrefixes().join(', ')}`);
+                if (RESERVED_NAMES.tablePrefix.some((prefix) => tableName.startsWith(prefix))) {
+                    conflicts.push(`组件 ${addonName} 表 "${tableName}" 使用了保留前缀，保留前缀包括: ${RESERVED_NAMES.tablePrefix.join(', ')}`);
                     continue;
                 }
 
@@ -149,9 +157,10 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
             // Addon 插件使用点号命名空间
             const pluginName = `${addonName}.${fileName}`;
 
-            // 检查是否使用保留名称
-            if (isReservedPluginName(pluginName)) {
-                conflicts.push(`组件 ${addonName} 插件 "${pluginName}" 使用了保留名称，保留名称包括: ${getReservedPlugins().join(', ')}`);
+            // 检查是否使用保留名称（检测核心插件名或点号前缀是保留名称）
+            const isReserved = RESERVED_NAMES.plugins.includes(pluginName) || (pluginName.includes('.') && RESERVED_NAMES.plugins.includes(pluginName.split('.')[0]));
+            if (isReserved) {
+                conflicts.push(`组件 ${addonName} 插件 "${pluginName}" 使用了保留名称，保留名称包括: ${RESERVED_NAMES.plugins.join(', ')}`);
                 continue;
             }
 
@@ -190,8 +199,8 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
                 const tableName = tableDefine.tableName || fileName;
 
                 // 检查是否使用保留前缀
-                if (isReservedTableName(tableName)) {
-                    conflicts.push(`用户表 "${tableName}" 使用了保留前缀，保留前缀包括: ${getReservedTablePrefixes().join(', ')}`);
+                if (RESERVED_NAMES.tablePrefix.some((prefix) => tableName.startsWith(prefix))) {
+                    conflicts.push(`用户表 "${tableName}" 使用了保留前缀，保留前缀包括: ${RESERVED_NAMES.tablePrefix.join(', ')}`);
                     continue;
                 }
 
@@ -257,9 +266,10 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
             const pluginName = path.basename(file).replace(/\.ts$/, '');
             if (pluginName.startsWith('_')) continue;
 
-            // 检查是否使用保留名称
-            if (isReservedPluginName(pluginName)) {
-                conflicts.push(`用户插件 "${pluginName}" 使用了保留名称，保留名称包括: ${getReservedPlugins().join(', ')}`);
+            // 检查是否使用保留名称（检测核心插件名或点号前缀是保留名称）
+            const isReserved = RESERVED_NAMES.plugins.includes(pluginName) || (pluginName.includes('.') && RESERVED_NAMES.plugins.includes(pluginName.split('.')[0]));
+            if (isReserved) {
+                conflicts.push(`用户插件 "${pluginName}" 使用了保留名称，保留名称包括: ${RESERVED_NAMES.plugins.join(', ')}`);
                 continue;
             }
 
