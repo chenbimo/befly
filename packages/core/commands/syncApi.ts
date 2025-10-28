@@ -88,7 +88,7 @@ async function loadAddonConfig(addonDir: string): Promise<{ name: string; title:
 /**
  * 从 API 文件中提取接口信息
  */
-async function extractApiInfo(filePath: string, projectRoot: string, addonName: string = '', addonTitle: string = ''): Promise<ApiInfo | null> {
+async function extractApiInfo(filePath: string, apiRoot: string, type: 'core' | 'app' | 'addon', addonName: string = '', addonTitle: string = ''): Promise<ApiInfo | null> {
     try {
         const apiModule = await import(filePath);
         const apiConfig = apiModule.default;
@@ -98,11 +98,18 @@ async function extractApiInfo(filePath: string, projectRoot: string, addonName: 
         }
 
         let apiPath = '';
-        if (addonName) {
+
+        if (type === 'core') {
+            // Core 接口：core_{fileName}
             const fileName = path.basename(filePath, '.ts');
-            apiPath = `/addon/${addonName}/${fileName}`;
+            apiPath = `/api/core_${fileName}`;
+        } else if (type === 'addon') {
+            // Addon 接口：addon/{addonName}/{fileName}
+            const fileName = path.basename(filePath, '.ts');
+            apiPath = `/api/addon_${addonName}_${fileName}`;
         } else {
-            const relativePath = path.relative(path.join(projectRoot, 'apis'), filePath);
+            // 项目接口：{dirName}/{fileName}
+            const relativePath = path.relative(apiRoot, filePath);
             const parts = relativePath.replace(/\\/g, '/').split('/');
             const dirName = parts[0];
             const fileName = path.basename(filePath, '.ts');
@@ -114,8 +121,8 @@ async function extractApiInfo(filePath: string, projectRoot: string, addonName: 
             path: apiPath,
             method: apiConfig.method || 'POST',
             description: apiConfig.description || '',
-            addonName: addonName,
-            addonTitle: addonTitle || addonName
+            addonName: type === 'core' ? 'core' : addonName,
+            addonTitle: type === 'core' ? '核心接口' : addonTitle || addonName
         };
     } catch (error: any) {
         Logger.warn(`解析 API 文件失败: ${filePath}`, error.message);
@@ -129,22 +136,44 @@ async function extractApiInfo(filePath: string, projectRoot: string, addonName: 
 async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
-    // 1. 扫描项目 API
-    Logger.info('=== 扫描项目 API (apis) ===');
-    const projectApisDir = path.join(projectRoot, 'apis');
-    const projectApiFiles = scanTsFiles(projectApisDir);
-    Logger.info(`  找到 ${projectApiFiles.length} 个项目 API 文件`);
+    // 1. 扫描 Core 框架 API
+    Logger.info('=== 扫描 Core 框架 API (core/apis) ===');
+    const coreApisDir = path.join(path.dirname(projectRoot), 'core', 'apis');
+    try {
+        const coreApiFiles = scanTsFiles(coreApisDir);
+        Logger.info(`  找到 ${coreApiFiles.length} 个核心 API 文件`);
 
-    for (const filePath of projectApiFiles) {
-        const apiInfo = await extractApiInfo(filePath, projectRoot, '', '项目接口');
-        if (apiInfo) {
-            apis.push(apiInfo);
-            Logger.info(`  └ ${apiInfo.path} - ${apiInfo.name}`);
+        for (const filePath of coreApiFiles) {
+            const apiInfo = await extractApiInfo(filePath, coreApisDir, 'core', '', '核心接口');
+            if (apiInfo) {
+                apis.push(apiInfo);
+                Logger.info(`  └ ${apiInfo.path} - ${apiInfo.name}`);
+            }
         }
+    } catch (error: any) {
+        Logger.warn(`  扫描 Core API 失败:`, error.message);
     }
 
-    // 2. 扫描插件 API
-    Logger.info('\n=== 扫描插件 API (addons/*/apis) ===');
+    // 2. 扫描项目 API
+    Logger.info('\n=== 扫描项目 API (apis) ===');
+    const projectApisDir = path.join(projectRoot, 'apis');
+    try {
+        const projectApiFiles = scanTsFiles(projectApisDir);
+        Logger.info(`  找到 ${projectApiFiles.length} 个项目 API 文件`);
+
+        for (const filePath of projectApiFiles) {
+            const apiInfo = await extractApiInfo(filePath, projectApisDir, 'app', '', '项目接口');
+            if (apiInfo) {
+                apis.push(apiInfo);
+                Logger.info(`  └ ${apiInfo.path} - ${apiInfo.name}`);
+            }
+        }
+    } catch (error: any) {
+        Logger.warn(`  扫描项目 API 失败:`, error.message);
+    }
+
+    // 3. 扫描组件 API
+    Logger.info('\n=== 扫描组件 API (addons/*/apis) ===');
     const addonsDir = path.join(projectRoot, 'addons');
     const addonDirs = getAddonDirs(addonsDir);
 
@@ -160,7 +189,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
             Logger.info(`  [${addonName}] 找到 ${addonApiFiles.length} 个 API 文件`);
 
             for (const filePath of addonApiFiles) {
-                const apiInfo = await extractApiInfo(filePath, projectRoot, addonName, addonTitle);
+                const apiInfo = await extractApiInfo(filePath, addonApisDir, 'addon', addonName, addonTitle);
                 if (apiInfo) {
                     apis.push(apiInfo);
                     Logger.info(`    └ ${apiInfo.path} - ${apiInfo.name}`);
