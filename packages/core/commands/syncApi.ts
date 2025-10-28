@@ -287,8 +287,6 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
  * SyncApi 命令主函数
  */
 export async function syncApiCommand(options: SyncApiOptions = {}) {
-    let dbConnected = false;
-
     try {
         if (options.plan) {
             Logger.info('[计划] 同步 API 接口到数据库（plan 模式不执行）');
@@ -306,7 +304,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
 
         // 连接数据库
         await Database.connectSql();
-        dbConnected = true;
 
         const helper = Database.getDbHelper();
 
@@ -345,8 +342,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
         Logger.error('API 同步失败:', error);
         process.exit(1);
     } finally {
-        if (dbConnected) {
-            await Database.disconnectSql();
-        }
+        await Database?.disconnectSql();
     }
 }
