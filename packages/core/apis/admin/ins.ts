@@ -4,7 +4,7 @@
 
 import { Yes, No, Cipher } from '../../util.js';
 import { Cipher } from '../../lib/cipher.js';
-import adminTable from '../tables/admin.json';
+import adminTable from '../../tables/admin.json';
 
 export default {
     name: '添加管理员',

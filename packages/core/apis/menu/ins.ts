@@ -1,5 +1,5 @@
 import { Yes, No } from '../../util.js';
-import adminMenuTable from '../tables/menu.json';
+import adminMenuTable from '../../tables/menu.json';
 
 export default {
     name: '创建菜单',

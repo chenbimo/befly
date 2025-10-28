@@ -1,5 +1,5 @@
 import { Yes, No } from '../../util.js';
-import adminDictTable from '../tables/dict.json';
+import adminDictTable from '../../tables/dict.json';
 
 export default {
     name: '添加字典',

@@ -1,5 +1,5 @@
 import { Yes, No } from '../../util.js';
-import adminRoleTable from '../tables/role.json';
+import adminRoleTable from '../../tables/role.json';
 
 /**
  * 创建角色

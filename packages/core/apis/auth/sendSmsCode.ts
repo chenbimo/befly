@@ -3,7 +3,7 @@
  */
 
 import { Yes } from '../../util.js';
-import adminTable from '../tables/admin.json';
+import adminTable from '../../tables/admin.json';
 
 export default {
     name: '发送短信验证码',

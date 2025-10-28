@@ -5,7 +5,7 @@
 import { Yes, No } from '../../util.js';
 import { Cipher } from '../../lib/cipher.js';
 import { Jwt } from '../../lib/jwt.js';
-import adminTable from '../tables/admin.json';
+import adminTable from '../../tables/admin.json';
 
 export default {
     name: '管理员登录',
