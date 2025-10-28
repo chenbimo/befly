@@ -3,17 +3,18 @@
  * 说明：遍历所有 API 文件，收集接口路由信息并同步到 addon_admin_api 表
  *
  * 流程：
- * 1. 扫描 apis 目录下所有 API 文件
- * 2. 扫描 addons/组件/apis 目录下所有 API 文件
- * 3. 提取每个 API 的 name、method、auth 等信息
- * 4. 根据接口路径检查是否存在
- * 5. 存在则更新，不存在则新增
- * 6. 删除配置中不存在的接口记录
+ * 1. 扫描 core/apis 目录下所有 Core API 文件
+ * 2. 扫描项目 apis 目录下所有项目 API 文件
+ * 3. 扫描 node_modules/@befly/addon-* 目录下所有组件 API 文件
+ * 4. 提取每个 API 的 name、method、auth 等信息
+ * 5. 根据接口路径检查是否存在
+ * 6. 存在则更新，不存在则新增
+ * 7. 删除配置中不存在的接口记录
  */
 
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
-import { getAddonDirs } from '../util.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import { readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
@@ -52,23 +53,6 @@ function scanTsFiles(dir: string, fileList: string[] = []): string[] {
     }
 
     return fileList;
-}
-
-/**
- * 读取 Addon 配置文件
- */
-async function loadAddonConfig(addonDir: string): Promise<{ name: string; title: string } | null> {
-    try {
-        const configPath = path.join(addonDir, 'addon.config.json');
-        const file = Bun.file(configPath);
-        const config = await file.json();
-        return {
-            name: config.name || '',
-            title: config.title || config.name || ''
-        };
-    } catch (error) {
-        return null;
-    }
 }
 
 /**
@@ -151,17 +135,32 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
             }
         }
 
-        // 3. 扫描组件 API
-        Logger.info('\n=== 扫描组件 API (addons/*/apis) ===');
-        const addonsDir = path.join(projectRoot, 'addons');
-        const addonDirs = getAddonDirs(addonsDir);
+        // 3. 扫描组件 API (node_modules/@befly/addon-*)
+        Logger.info('\n=== 扫描组件 API (node_modules/@befly/addon-*) ===');
+        const addonNames = scanAddons();
 
-        for (const addonName of addonDirs) {
-            const addonDir = path.join(addonsDir, addonName);
-            const addonApisDir = path.join(addonDir, 'apis');
+        for (const fullAddonName of addonNames) {
+            // fullAddonName 格式: addon-admin, addon-demo 等
+            const addonName = fullAddonName.replace('addon-', ''); // 移除 addon- 前缀
 
-            const addonConfig = await loadAddonConfig(addonDir);
-            const addonTitle = addonConfig?.title || addonName;
+            // 检查 apis 子目录是否存在
+            if (!addonDirExists(fullAddonName, 'apis')) {
+                Logger.info(`  [${addonName}] 无 apis 目录，跳过`);
+                continue;
+            }
+
+            const addonApisDir = getAddonDir(fullAddonName, 'apis');
+
+            // 读取 addon 配置
+            const addonConfigPath = getAddonDir(fullAddonName, 'addon.config.json');
+            let addonTitle = addonName;
+            try {
+                const configFile = Bun.file(addonConfigPath);
+                const config = await configFile.json();
+                addonTitle = config.title || addonName;
+            } catch (error) {
+                Logger.debug(`  [${addonName}] 无法读取配置文件，使用默认标题`);
+            }
 
             const addonApiFiles = scanTsFiles(addonApisDir);
             Logger.info(`  [${addonName}] 找到 ${addonApiFiles.length} 个 API 文件`);

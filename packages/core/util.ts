@@ -17,6 +17,7 @@
 
 import fs from 'node:fs';
 import { join } from 'node:path';
+import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { isEmpty, isPlainObject } from 'es-toolkit/compat';
 import { snakeCase, camelCase } from 'es-toolkit/string';
 import { Env } from './config/env.js';
@@ -242,7 +243,7 @@ export const parseRule = (rule: string): ParsedFieldRule => {
 export const scanAddons = (): string[] => {
     const beflyDir = join(paths.projectDir, 'node_modules', '@befly');
 
-    if (!fs.existsSync(beflyDir)) {
+    if (!existsSync(beflyDir)) {
         return [];
     }
 
@@ -253,7 +254,7 @@ export const scanAddons = (): string[] => {
                 if (!name.startsWith('addon-')) return false;
                 const fullPath = join(beflyDir, name);
                 try {
-                    const stat = fs.statSync(fullPath);
+                    const stat = statSync(fullPath);
                     return stat.isDirectory();
                 } catch {
                     return false;
@@ -277,7 +278,7 @@ export const getAddonDir = (addonName: string, subDir: string): string => {
  */
 export const addonDirExists = (addonName: string, subDir: string): boolean => {
     const dir = getAddonDir(addonName, subDir);
-    return fs.existsSync(dir) && fs.statSync(dir).isDirectory();
+    return existsSync(dir) && statSync(dir).isDirectory();
 };
 
 /**
@@ -286,13 +287,13 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
  * @returns 插件名称数组
  */
 export function getAddonDirs(addonsDir: string): string[] {
-    try {
-        return readdirSync(addonsDir).filter((name) => {
-            const addonPath = path.join(addonsDir, name);
-            return statSync(addonPath).isDirectory() && !name.startsWith('_');
-        });
-    } catch (error: any) {
-        Logger.warn(`读取插件目录失败: ${addonsDir}`, error.message);
-        return [];
-    }
+    // try {
+    return readdirSync(addonsDir).filter((name) => {
+        const addonPath = path.join(addonsDir, name);
+        return statSync(addonPath).isDirectory() && !name.startsWith('_');
+    });
+    // } catch (error: any) {
+    //     Logger.error(`读取插件目录失败: ${addonsDir}`, error.message);
+    //     return [];
+    // }
 }
