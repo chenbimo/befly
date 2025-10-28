@@ -1,8 +1,0 @@
-{
-    "name": "菜单名称|string|2|50|null|1|null",
-    "path": "路由路径|string|1|200|null|1|null",
-    "icon": "图标名称|string|0|50|null|0|null",
-    "sort": "排序|number|0|9999|0|0|null",
-    "pid": "父级ID|number|0|999999999999999|0|1|null",
-    "type": "菜单类型|number|1|2|1|1|^(1|2)$"
-}

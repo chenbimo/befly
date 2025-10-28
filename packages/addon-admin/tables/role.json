@@ -1,8 +1,0 @@
-{
-    "name": "角色名称|string|2|50|null|1|null",
-    "code": "角色编码|string|2|50|null|1|^[a-zA-Z0-9_]+$",
-    "description": "角色描述|string|0|200|null|0|null",
-    "menus": "菜单权限|array_text|null|null|null|0|null",
-    "apis": "接口权限|array_text|null|null|null|0|null",
-    "sort": "排序|number|0|9999|0|0|null"
-}
