@@ -125,7 +125,7 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'core' | 
             addonTitle: type === 'core' ? '核心接口' : addonTitle || addonName
         };
     } catch (error: any) {
-        Logger.warn(`解析 API 文件失败: ${filePath}`, error.message);
+        Logger.error(`解析 API 文件失败: ${filePath}`, error);
         return null;
     }
 }
@@ -150,14 +150,10 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
                 Logger.info(`  └ ${apiInfo.path} - ${apiInfo.name}`);
             }
         }
-    } catch (error: any) {
-        Logger.warn(`  扫描 Core API 失败:`, error.message);
-    }
 
-    // 2. 扫描项目 API
-    Logger.info('\n=== 扫描项目 API (apis) ===');
-    const projectApisDir = path.join(projectRoot, 'apis');
-    try {
+        // 2. 扫描项目 API
+        Logger.info('\n=== 扫描项目 API (apis) ===');
+        const projectApisDir = path.join(projectRoot, 'apis');
         const projectApiFiles = scanTsFiles(projectApisDir);
         Logger.info(`  找到 ${projectApiFiles.length} 个项目 API 文件`);
 
@@ -168,23 +164,19 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
                 Logger.info(`  └ ${apiInfo.path} - ${apiInfo.name}`);
             }
         }
-    } catch (error: any) {
-        Logger.warn(`  扫描项目 API 失败:`, error.message);
-    }
 
-    // 3. 扫描组件 API
-    Logger.info('\n=== 扫描组件 API (addons/*/apis) ===');
-    const addonsDir = path.join(projectRoot, 'addons');
-    const addonDirs = getAddonDirs(addonsDir);
+        // 3. 扫描组件 API
+        Logger.info('\n=== 扫描组件 API (addons/*/apis) ===');
+        const addonsDir = path.join(projectRoot, 'addons');
+        const addonDirs = getAddonDirs(addonsDir);
 
-    for (const addonName of addonDirs) {
-        const addonDir = path.join(addonsDir, addonName);
-        const addonApisDir = path.join(addonDir, 'apis');
+        for (const addonName of addonDirs) {
+            const addonDir = path.join(addonsDir, addonName);
+            const addonApisDir = path.join(addonDir, 'apis');
 
-        const addonConfig = await loadAddonConfig(addonDir);
-        const addonTitle = addonConfig?.title || addonName;
+            const addonConfig = await loadAddonConfig(addonDir);
+            const addonTitle = addonConfig?.title || addonName;
 
-        try {
             const addonApiFiles = scanTsFiles(addonApisDir);
             Logger.info(`  [${addonName}] 找到 ${addonApiFiles.length} 个 API 文件`);
 
@@ -195,12 +187,12 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
                     Logger.info(`    └ ${apiInfo.path} - ${apiInfo.name}`);
                 }
             }
-        } catch (error: any) {
-            Logger.warn(`  [${addonName}] 扫描失败:`, error.message);
         }
-    }
 
-    return apis;
+        return apis;
+    } catch (error: any) {
+        Logger.error(`接口扫描失败:`, error);
+    }
 }
 
 /**
@@ -246,7 +238,7 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                 Logger.info(`  └ 新增接口: ${api.name} (ID: ${id}, Path: ${api.path})`);
             }
         } catch (error: any) {
-            Logger.error(`同步接口 "${api.name}" 失败:`, error.message || String(error));
+            Logger.error(`同步接口 "${api.name}" 失败:`, error);
         }
     }
 
@@ -342,6 +334,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
         Logger.error('API 同步失败:', error);
         process.exit(1);
     } finally {
-        await Database?.disconnectSql();
+        await Database?.disconnect();
     }
 }
