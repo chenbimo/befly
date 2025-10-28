@@ -7,6 +7,7 @@ import { Env } from './config/env.js';
 import { Field } from './config/field.js';
 import { Yes, No } from './util.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
+import { Logger } from './lib/logger.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -41,6 +42,7 @@ export {
     // 配置
     Env,
     Field,
+    Logger,
     Yes,
     No
 };
