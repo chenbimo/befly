@@ -1,5 +1,5 @@
 /**
- * Build、Start、Sync、Addon 命令实现
+ * Build、Start、Sync、Addon、SyncApi、SyncMenu、SyncDev 命令实现
  */
 
 import { join } from 'node:path';
@@ -82,7 +82,6 @@ interface StartOptions {
 
 export async function startCommand(options: StartOptions) {
     try {
-        console.log('===================');
         const projectRoot = getProjectRoot();
         const mainFile = join(projectRoot, 'main.ts');
 
@@ -246,3 +245,8 @@ export const addonCommand = {
         }
     }
 };
+
+// ========== 导出新增的同步命令 ==========
+export { syncApiCommand } from './syncApi.js';
+export { syncMenuCommand } from './syncMenu.js';
+export { syncDevCommand } from './syncDev.js';

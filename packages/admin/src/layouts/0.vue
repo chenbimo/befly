@@ -3,7 +3,7 @@
         <!-- 顶部导航栏 -->
         <div class="layout-header">
             <div class="logo">
-                <h2>野蜂飞舞后台管理</h2>
+                <h2>一百一万后台管理</h2>
             </div>
             <div class="header-right">
                 <tiny-dropdown title="管理员" trigger="click" border type="info" @item-click="$Method.handleUserMenu">

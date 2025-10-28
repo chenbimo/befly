@@ -10,6 +10,9 @@ import { buildCommand } from '../commands/build.js';
 import { startCommand } from '../commands/start.js';
 import { syncDbCommand } from '../commands/syncDb.js';
 import { addonCommand } from '../commands/addon.js';
+import { syncApiCommand } from '../commands/syncApi.js';
+import { syncMenuCommand } from '../commands/syncMenu.js';
+import { syncDevCommand } from '../commands/syncDev.js';
 import { Logger } from '../lib/logger.js';
 
 /**
@@ -108,6 +111,15 @@ program.command('start').description('启动生产服务器').option('-p, --port
 
 // syncDb 命令 - 同步数据库
 program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).action(syncDbCommand);
+
+// syncApi 命令 - 同步 API 接口
+program.command('syncApi').description('同步 API 接口到数据库').option('--plan', '计划模式，只显示不执行', false).action(syncApiCommand);
+
+// syncMenu 命令 - 同步菜单
+program.command('syncMenu').description('同步菜单配置到数据库').option('--plan', '计划模式，只显示不执行', false).action(syncMenuCommand);
+
+// syncDev 命令 - 同步开发者账号
+program.command('syncDev').description('同步开发者管理员账号').option('--plan', '计划模式，只显示不执行', false).action(syncDevCommand);
 
 // addon 命令 - 插件管理
 const addon = program.command('addon').description('管理 Befly 插件');
