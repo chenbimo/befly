@@ -4,8 +4,8 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import ora from 'ora';
 import { Logger } from '../lib/logger.js';
-import { Spinner } from '../lib/spinner.js';
 
 function getProjectRoot(): string {
     let current = process.cwd();
@@ -35,7 +35,11 @@ export async function buildCommand(options: BuildOptions) {
             process.exit(1);
         }
 
-        const spinner = Spinner.start('正在构建项目...');
+        const spinner = ora({
+            text: '正在构建项目...',
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         const args = ['build', mainFile, '--outdir', options.outdir, '--target', 'bun'];
 

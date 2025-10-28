@@ -4,8 +4,8 @@
 
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import ora from 'ora';
 import { Logger } from '../lib/logger.js';
-import { Spinner } from '../lib/spinner.js';
 
 function getProjectRoot(): string {
     let current = process.cwd();
@@ -36,7 +36,11 @@ export async function buildCommand(options: BuildOptions) {
             process.exit(1);
         }
 
-        const spinner = Spinner.start('正在构建项目...');
+        const spinner = ora({
+            text: '正在构建项目...',
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         const args = ['build', mainFile, '--outdir', options.outdir, '--target', 'bun'];
 
@@ -134,7 +138,11 @@ export async function syncCommand(options: SyncOptions) {
             process.exit(1);
         }
 
-        const spinner = Spinner.start('正在同步数据库表...');
+        const spinner = ora({
+            text: '正在同步数据库表...',
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         const args = ['run', syncScript];
 
@@ -179,7 +187,11 @@ export async function syncCommand(options: SyncOptions) {
 // ========== Addon 命令 ==========
 export const addonCommand = {
     async install(name: string, options: { source?: string }) {
-        const spinner = Spinner.start(`正在安装插件: ${name}`);
+        const spinner = ora({
+            text: `正在安装插件: ${name}`,
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         try {
             // TODO: 实现插件安装逻辑
@@ -196,7 +208,11 @@ export const addonCommand = {
     },
 
     async uninstall(name: string, options: { keepData: boolean }) {
-        const spinner = Spinner.start(`正在卸载插件: ${name}`);
+        const spinner = ora({
+            text: `正在卸载插件: ${name}`,
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         try {
             // TODO: 实现插件卸载逻辑

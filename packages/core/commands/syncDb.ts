@@ -5,8 +5,8 @@
 import { Command } from 'commander';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import ora from 'ora';
 import { Logger } from '../lib/logger.js';
-import { Spinner } from '../lib/spinner.js';
 import { SyncDb } from './syncDb/index.js';
 
 interface SyncDbOptions {
@@ -16,7 +16,11 @@ interface SyncDbOptions {
 
 export async function syncDbCommand(options: SyncDbOptions) {
     try {
-        const spinner = Spinner.start('正在同步数据库表结构...');
+        const spinner = ora({
+            text: '正在同步数据库表结构...',
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         // 设置环境变量
         if (options.dryRun) {

@@ -4,12 +4,16 @@
 
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import ora from 'ora';
 import { Logger } from '../lib/logger.js';
-import { Spinner } from '../lib/spinner.js';
 
 export const addonCommand = {
     async install(name: string, options: { source?: string }) {
-        const spinner = Spinner.start(`正在安装插件: ${name}`);
+        const spinner = ora({
+            text: `正在安装插件: ${name}`,
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         try {
             // TODO: 实现插件安装逻辑
@@ -26,7 +30,11 @@ export const addonCommand = {
     },
 
     async uninstall(name: string, options: { keepData: boolean }) {
-        const spinner = Spinner.start(`正在卸载插件: ${name}`);
+        const spinner = ora({
+            text: `正在卸载插件: ${name}`,
+            color: 'cyan',
+            spinner: 'dots'
+        }).start();
 
         try {
             // TODO: 实现插件卸载逻辑
