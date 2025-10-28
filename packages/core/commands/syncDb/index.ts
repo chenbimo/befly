@@ -155,8 +155,7 @@ export const SyncDb = async (): Promise<void> => {
                 }
 
                 processedCount++;
-                progressLogger.logTableProgress(processedCount, totalTables, tableName);
-                Logger.info(`  类型: ${dirType}`);
+                progressLogger.logTableProgress(processedCount, totalTables, tableName, dirType);
 
                 const tableDefinition = await Bun.file(file).json();
                 const existsTable = await tableExists(sql!, tableName);

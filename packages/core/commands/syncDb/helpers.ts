@@ -149,7 +149,7 @@ export function escapeComment(str: string): string {
 }
 
 /**
- * 记录字段变更信息（带缩进和格式化）
+ * 记录字段变更信息（紧凑格式）
  *
  * @param tableName - 表名
  * @param fieldName - 字段名
@@ -159,7 +159,7 @@ export function escapeComment(str: string): string {
  * @param changeLabel - 变更类型的中文标签
  */
 export function logFieldChange(tableName: string, fieldName: string, changeType: string, oldValue: any, newValue: any, changeLabel: string): void {
-    Logger.info(`   修改表 ${tableName} 的字段 ${fieldName} 的${changeLabel}: ${oldValue} -> ${newValue}`);
+    Logger.info(`  ~ 修改 ${fieldName} ${changeLabel}: ${oldValue} -> ${newValue}`);
 }
 
 /**

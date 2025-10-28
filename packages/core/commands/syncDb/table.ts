@@ -145,7 +145,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             const parsed = parseRule(fieldRule);
             const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
             const lenPart = isStringOrArrayType(fieldType) ? ` 长度:${parseInt(String(fieldMax))}` : '';
-            Logger.info(`[新增字段] ${tableName}.${dbFieldName} 类型:${fieldType}${lenPart} 默认:${fieldDefault ?? 'NULL'}`);
+            Logger.info(`  + 新增字段 ${dbFieldName} (${fieldType}${lenPart})`);
             addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
             changed = true;
             globalCount.addFields++;

@@ -85,10 +85,15 @@ export class PerformanceTracker {
  */
 export class ProgressLogger {
     /**
-     * 记录表处理进度
+     * 记录表处理进度（紧凑格式）
+     * @param current 当前进度
+     * @param total 总数
+     * @param tableName 表名
+     * @param dirType 目录类型（核心/项目/组件名）
      */
-    logTableProgress(current: number, total: number, tableName: string): void {
-        Logger.info(`\n[${current}/${total}] 处理表: ${tableName}`);
+    logTableProgress(current: number, total: number, tableName: string, dirType?: string): void {
+        const typeInfo = dirType ? ` (${dirType})` : '';
+        Logger.info(`[${current}/${total}] ${tableName}${typeInfo}`);
     }
 
     /**
