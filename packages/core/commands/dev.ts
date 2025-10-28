@@ -75,7 +75,7 @@ export async function devCommand(options: DevOptions) {
         const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT', 'SIGHUP'];
         signals.forEach((signal) => {
             process.on(signal, () => {
-                Logger.info(`\n收到 ${signal} 信号，正在关闭开发服务器...`);
+                console.log(`\nShutting down dev server (${signal})...`);
                 proc.kill(signal);
                 setTimeout(() => {
                     proc.kill('SIGKILL');
