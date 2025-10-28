@@ -179,70 +179,6 @@ export const whereKeysToSnake = (where: any): any => {
     return result;
 };
 
-/**
- * 转换数据库 BIGINT 字段为数字类型
- * 当 bigint: false 时，Bun SQL 会将大于 u32 的 BIGINT 返回为字符串，此函数将其转换为 number
- *
- * 转换规则：
- * 1. 白名单中的字段会被转换
- * 2. 所有以 'Id' 或 '_id' 结尾的字段会被自动转换
- * 3. 所有以 'At' 或 '_at' 结尾的字段会被自动转换（时间戳字段）
- * 4. 其他字段保持不变
- *
- * @param arr - 数据数组
- * @param fields - 额外需要转换的字段名数组（默认：['id', 'pid', 'sort']）
- * @returns 转换后的数组
- *
- * @example
- * // 基础字段 + 自动匹配以 Id/At 结尾的字段
- * convertBigIntFields([
- *   {
- *     id: '1760695696283001',      // ✅ 转换（在白名单）
- *     pid: '0',                     // ✅ 转换（在白名单）
- *     categoryId: '123',            // ✅ 转换（以 Id 结尾）
- *     user_id: '456',               // ✅ 转换（以 _id 结尾）
- *     createdAt: '1697452800000',  // ✅ 转换（以 At 结尾）
- *     created_at: '1697452800000', // ✅ 转换（以 _at 结尾）
- *     phone: '13800138000',         // ❌ 不转换（不匹配规则）
- *     name: 'test'                  // ❌ 不转换（不匹配规则）
- *   }
- * ])
- * // [{ id: 1760695696283001, pid: 0, categoryId: 123, user_id: 456, createdAt: 1697452800000, created_at: 1697452800000, phone: '13800138000', name: 'test' }]
- */
-export const convertBigIntFields = <T = any>(arr: Record<string, any>[], fields: string[] = ['id', 'pid', 'sort']): T[] => {
-    if (!arr || !Array.isArray(arr)) return arr as T[];
-
-    return arr.map((item) => {
-        const converted = { ...item };
-
-        // 遍历对象的所有字段
-        for (const [key, value] of Object.entries(converted)) {
-            // 跳过 undefined 和 null
-            if (value === undefined || value === null) {
-                continue;
-            }
-
-            // 判断是否需要转换：
-            // 1. 在白名单中
-            // 2. 以 'Id' 结尾（如 userId, roleId, categoryId）
-            // 3. 以 '_id' 结尾（如 user_id, role_id）
-            // 4. 以 'At' 结尾（如 createdAt, updatedAt）
-            // 5. 以 '_at' 结尾（如 created_at, updated_at）
-            const shouldConvert = fields.includes(key) || key.endsWith('Id') || key.endsWith('_id') || key.endsWith('At') || key.endsWith('_at');
-
-            if (shouldConvert && typeof value === 'string') {
-                const num = Number(value);
-                if (!isNaN(num)) {
-                    converted[key] = num;
-                }
-            }
-            // number 类型保持不变（小于 u32 的值）
-        }
-
-        return converted as T;
-    }) as T[];
-};
-
 // ========================================
 // 对象操作工具
 // ========================================
@@ -475,7 +411,3 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
     const dir = getAddonDir(addonName, subDir);
     return fs.existsSync(dir) && fs.statSync(dir).isDirectory();
 };
-
-// ========================================
-// 插件管理工具
-// ========================================
