@@ -3,7 +3,6 @@
  */
 
 import { Yes, No } from '../../util.js';
-import { deleteRolePermissions } from '../util';
 
 export default {
     name: '删除角色',
@@ -33,7 +32,7 @@ export default {
 
             // 删除角色权限缓存
             if (role?.code) {
-                await deleteRolePermissions(befly, role.code);
+                await befly.cache.deleteRolePermissions(befly, role.code);
             }
 
             return Yes('操作成功');
