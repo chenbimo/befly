@@ -1,0 +1,8 @@
+{
+    "name": "字典名称|string|2|50|null|1|null",
+    "code": "字典代码|string|2|50|null|1|^[a-zA-Z0-9_]+$",
+    "value": "字典值|string|0|200|null|1|null",
+    "sort": "排序|number|0|9999|0|0|null",
+    "pid": "父级ID|number|0|999999999999999|0|1|null",
+    "description": "描述|string|0|200|null|0|null"
+}
