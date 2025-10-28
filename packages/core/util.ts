@@ -280,7 +280,6 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
     return fs.existsSync(dir) && fs.statSync(dir).isDirectory();
 };
 
-
 /**
  * 获取插件目录列表
  * @param addonsDir - addons 根目录路径
