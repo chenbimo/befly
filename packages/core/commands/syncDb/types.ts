@@ -83,10 +83,10 @@ export interface GlobalStats {
  */
 export interface ParsedFieldRule {
     name: string;
-    type: string;
-    min: any;
-    max: any;
+    type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
+    min: number | null;
+    max: number | null;
     default: any;
-    index: number;
-    regex: string;
+    index: 0 | 1;
+    regex: string | null;
 }

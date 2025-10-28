@@ -40,7 +40,7 @@ export type TableDefinition = Record<string, FieldRule>;
  */
 export interface ParsedFieldRule {
     name: string; // 字段名称
-    type: 'string' | 'number' | 'text' | 'array';
+    type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
     min: number | null; // 最小值
     max: number | null; // 最大值
     default: any; // 默认值

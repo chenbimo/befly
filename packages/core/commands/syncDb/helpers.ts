@@ -97,39 +97,41 @@ export function generateDefaultSql(actualDefault: any, fieldType: 'number' | 'st
 }
 
 /**
- * 判断是否为字符串或数组类型（需要长度限制的类型）
+ * 判断是否为字符串或数组类型（需要长度参数）
  *
  * @param fieldType - 字段类型
- * @returns 是否为 string 或 array
+ * @returns 是否为字符串或数组类型
  *
  * @example
  * isStringOrArrayType('string') // => true
- * isStringOrArrayType('array') // => true
+ * isStringOrArrayType('array_string') // => true
+ * isStringOrArrayType('array_text') // => false
  * isStringOrArrayType('number') // => false
  * isStringOrArrayType('text') // => false
  */
 export function isStringOrArrayType(fieldType: string): boolean {
-    return fieldType === 'string' || fieldType === 'array';
+    return fieldType === 'string' || fieldType === 'array_string';
 }
 
 /**
  * 获取 SQL 数据类型
  *
- * @param fieldType - 字段类型（number/string/text/array）
- * @param fieldMax - 最大长度（string/array 类型需要）
+ * @param fieldType - 字段类型（number/string/text/array_string/array_text）
+ * @param fieldMax - 最大长度（string/array_string 类型需要）
  * @returns SQL 类型字符串
  *
  * @example
  * getSqlType('string', 100) // => 'VARCHAR(100)'
  * getSqlType('number', null) // => 'BIGINT'
- * getSqlType('text', null) // => 'TEXT'
- * getSqlType('array', 500) // => 'VARCHAR(500)'
+ * getSqlType('text', null) // => 'MEDIUMTEXT'
+ * getSqlType('array_string', 500) // => 'VARCHAR(500)'
+ * getSqlType('array_text', null) // => 'MEDIUMTEXT'
  */
 export function getSqlType(fieldType: string, fieldMax: number | null): string {
     if (isStringOrArrayType(fieldType)) {
         return `${typeMapping[fieldType]}(${fieldMax})`;
     }
-    return typeMapping[fieldType];
+    return typeMapping[fieldType] || 'TEXT';
 }
 
 /**

@@ -223,7 +223,7 @@ export const parseRule = (rule: string): ParsedFieldRule => {
 
     return {
         name: fieldName,
-        type: fieldType as 'string' | 'number' | 'text' | 'array',
+        type: fieldType as 'string' | 'number' | 'text' | 'array_string' | 'array_text',
         min: fieldMin,
         max: fieldMax,
         default: fieldDefault,
