@@ -51,5 +51,3 @@ export const Field = {
     startTime: '开始时间|number|0|9999999999999|null|0|null',
     endTime: '结束时间|number|0|9999999999999|null|0|null'
 } as const;
-
-export default Field;

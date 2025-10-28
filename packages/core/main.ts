@@ -4,7 +4,7 @@
  */
 
 import { Env } from './config/env.js';
-import { Field } from './config/fields.js';
+import { Field } from './config/field.js';
 import { Yes, No } from './util.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 
