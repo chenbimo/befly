@@ -48,12 +48,28 @@ export default function autoRouter(): Plugin {
             } catch {}
         },
         handleHotUpdate(ctx: HmrContext) {
+            const normalizedFile = ctx.file.replace(/\\/g, '/');
+
+            // 监听 template.js 变化
             if (ctx.file === templatePath) {
                 const before = cached;
                 readTemplate();
                 if (cached !== before) {
-                    this.invalidate(resolvedVirtualModuleId);
+                    const module = ctx.server.moduleGraph.getModuleById(resolvedVirtualModuleId);
+                    if (module) {
+                        ctx.server.moduleGraph.invalidateModule(module);
+                    }
+                    return [];
                 }
+            }
+
+            // 监听 views 和 layouts 目录文件变化（新建、删除、修改）
+            if (normalizedFile.includes('/src/views/') || normalizedFile.includes('/src/layouts/')) {
+                const module = ctx.server.moduleGraph.getModuleById(resolvedVirtualModuleId);
+                if (module) {
+                    ctx.server.moduleGraph.invalidateModule(module);
+                }
+                return [];
             }
         },
         load(id) {
