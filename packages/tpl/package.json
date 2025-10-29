@@ -9,11 +9,7 @@
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
-    "scripts": {
-        "dev": "bun --env-file=.env.development run main.ts",
-        "serve": "bunx --bun pm2 start pm2.config.cjs -a",
-        "test": "bun test"
-    },
+    "scripts": {},
     "files": [
         "apis",
         "checks",
