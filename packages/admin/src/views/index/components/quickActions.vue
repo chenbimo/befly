@@ -1,12 +1,12 @@
 <template>
     <div class="section-block">
         <div class="section-content">
-            <t-button theme="primary" size="large" @click="handleClearCache">
-                <template #icon>
+            <tiny-button type="primary" size="large" @click="handleClearCache">
+                <template #prefix>
                     <Icon name="RotateCw" :size="18" />
                 </template>
                 刷新缓存
-            </t-button>
+            </tiny-button>
         </div>
     </div>
 </template>

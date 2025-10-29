@@ -5,8 +5,8 @@
             <h2>系统概览</h2>
         </div>
         <div class="section-content">
-            <t-row :gutter="12">
-                <t-col :xs="24" :sm="12" :md="12" :lg="12">
+            <tiny-row :flex="true" :gap="12">
+                <tiny-col :xs="24" :sm="12" :md="12" :lg="12">
                     <div class="info-block">
                         <div class="stats-grid">
                             <div class="stat-box stat-primary">
@@ -32,8 +32,8 @@
                             </div>
                         </div>
                     </div>
-                </t-col>
-            </t-row>
+                </tiny-col>
+            </tiny-row>
         </div>
     </div>
 </template>
