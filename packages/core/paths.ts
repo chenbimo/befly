@@ -7,7 +7,6 @@
  * 路径分类：
  * - root* 系列：Core 框架内部路径（packages/core/*）
  * - project* 系列：用户项目路径（process.cwd()/*）
- * - coreTableDir：Core 框架表定义目录（特殊命名，保持向后兼容）
  *
  * 目录结构：
  * ```
@@ -17,7 +16,7 @@
  *   ├── checks/            (rootCheckDir)
  *   ├── plugins/           (rootPluginDir)
  *   ├── apis/              (rootApiDir)
- *   └── tables/            (coreTableDir)
+ *   └── tables/            (rootTableDir)
  *
  * project/                 (projectDir)
  *   ├── scripts/           (projectScriptDir)
@@ -86,9 +85,8 @@ export const rootApiDir = join(__dirname, 'apis');
  * Core 框架表定义目录
  * @description packages/core/tables/
  * @usage 存放框架核心表定义（JSON 格式）
- * @note 特殊命名 coreTableDir（非 rootTableDir）保持向后兼容
  */
-export const coreTableDir = join(__dirname, 'tables');
+export const rootTableDir = join(__dirname, 'tables');
 
 // ==================== 用户项目路径 ====================
 
