@@ -9,14 +9,14 @@
             {
                 "name": "用户列表",
                 "path": "/list",
-                "icon": "List",
+                "icon": "Minus",
                 "sort": 1,
                 "type": 1
             },
             {
                 "name": "用户详情",
                 "path": "/detail",
-                "icon": "FileText",
+                "icon": "Minus",
                 "sort": 2,
                 "type": 1
             }

@@ -51,14 +51,14 @@
             {
                 "name": "用户列表",
                 "path": "/list",
-                "icon": "List",
+                "icon": "Minus",
                 "sort": 1,
                 "type": 1
             },
             {
                 "name": "用户权限",
                 "path": "/permission",
-                "icon": "Shield",
+                "icon": "Minus",
                 "sort": 2,
                 "type": 1
             }

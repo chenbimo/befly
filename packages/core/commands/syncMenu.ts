@@ -17,6 +17,7 @@ import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
+import { paths } from '../paths.js';
 
 interface SyncMenuOptions {
     plan?: boolean;
@@ -280,18 +281,19 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
 
         Logger.info('开始同步菜单配置到数据库...\n');
 
-        const projectRoot = process.cwd();
-
         // 1. 读取两个配置文件
         Logger.info('=== 步骤 1: 读取菜单配置文件 ===');
-        const tplMenuPath = join(projectRoot, 'packages', 'tpl', 'config', 'menu.json');
-        const coreMenuPath = join(projectRoot, 'packages', 'core', 'config', 'menu.json');
+        const tplMenuPath = join(paths.projectConfigDir, 'menu.json');
+        const coreMenuPath = join(paths.rootConfigDir, 'menu.json');
+
+        Logger.info(`  tpl 路径: ${tplMenuPath}`);
+        Logger.info(`  core 路径: ${coreMenuPath}`);
 
         const tplMenus = await readMenuConfig(tplMenuPath);
         const coreMenus = await readMenuConfig(coreMenuPath);
 
-        Logger.info(`✅ tpl 配置: ${tplMenus.length} 个父级菜单 (${tplMenuPath})`);
-        Logger.info(`✅ core 配置: ${coreMenus.length} 个父级菜单 (${coreMenuPath})`);
+        Logger.info(`✅ tpl 配置: ${tplMenus.length} 个父级菜单`);
+        Logger.info(`✅ core 配置: ${coreMenus.length} 个父级菜单`);
 
         // 2. 合并菜单配置
         Logger.info('\n=== 步骤 2: 合并菜单配置（core 优先覆盖 tpl） ===');

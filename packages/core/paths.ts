@@ -17,28 +17,18 @@ const projectRoot = process.cwd();
  * 系统路径配置对象
  */
 export const paths = {
-    /** Befly 框架根目录 */
     rootDir: __dirname,
-    /** Befly 框架脚本目录 */
     rootScriptDir: join(__dirname, 'scripts'),
-    /** Befly 框架检查目录 */
+    rootConfigDir: join(__dirname, 'config'),
     rootCheckDir: join(__dirname, 'checks'),
-    /** Befly 框架插件目录 */
     rootPluginDir: join(__dirname, 'plugins'),
-    /** Befly API 目录 */
     rootApiDir: join(__dirname, 'apis'),
-    /** Befly 框架表定义目录（core_前缀表） */
     coreTableDir: join(__dirname, 'tables'),
-    /** 项目根目录 */
     projectDir: projectRoot,
-    /** 项目脚本目录 */
     projectScriptDir: join(projectRoot, 'scripts'),
-    /** 项目检查目录 */
+    projectConfigDir: join(projectRoot, 'config'),
     projectCheckDir: join(projectRoot, 'checks'),
-    /** 项目插件目录 */
     projectPluginDir: join(projectRoot, 'plugins'),
-    /** 项目 API 目录 */
     projectApiDir: join(projectRoot, 'apis'),
-    /** 项目表定义目录 */
     projectTableDir: join(projectRoot, 'tables')
 } as const;
