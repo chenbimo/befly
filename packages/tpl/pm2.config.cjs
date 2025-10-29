@@ -17,6 +17,8 @@ module.exports = {
                 APP_PORT: 3000,
                 // 监听端口,
                 APP_HOST: '127.0.0.1',
+                // 开发管理员邮箱
+                DEV_EMAIL: 'dev@qq.com',
                 // 开发管理员密码,
                 DEV_PASSWORD: '123456',
                 // 请求体大小,

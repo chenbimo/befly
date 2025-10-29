@@ -16,7 +16,9 @@ export interface EnvConfig {
     APP_PORT: number;
     /** 监听主机 */
     APP_HOST: string;
-    /** 超级管理员密码 */
+    /** 开发管理员邮箱 */
+    DEV_EMAIL: string;
+    /** 开发管理员密码 */
     DEV_PASSWORD: string;
     /** 请求体大小限制（字节） */
     BODY_LIMIT: number;
@@ -150,6 +152,7 @@ export const Env: EnvConfig = {
     APP_NAME: getEnv('APP_NAME', 'befly'),
     APP_PORT: getEnvNumber('APP_PORT', 3000),
     APP_HOST: getEnv('APP_HOST', '0.0.0.0'),
+    DEV_EMAIL: getEnv('DEV_EMAIL', 'dev@qq.com'),
     DEV_PASSWORD: getEnv('DEV_PASSWORD', ''),
     BODY_LIMIT: getEnvNumber('BODY_LIMIT', 10485760), // 10MB
     PARAMS_CHECK: getEnv('PARAMS_CHECK', 'true'),

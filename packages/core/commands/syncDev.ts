@@ -1,8 +1,8 @@
 /**
  * SyncDev 命令 - 同步开发者管理员到数据库
- * - 邮箱: dev@qq.com
+ * - 邮箱: 通过 DEV_EMAIL 环境变量配置（默认 dev@qq.com）
  * - 姓名: 开发者
- * - 密码: 使用 bcrypt 加密
+ * - 密码: 使用 bcrypt 加密，通过 DEV_PASSWORD 环境变量配置
  * - 角色: roleCode=dev, roleType=admin
  * - 表名: core_admin
  */
@@ -135,7 +135,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         const devData = {
             name: '开发者',
             nickname: '开发者',
-            email: 'dev@qq.com',
+            email: Env.DEV_EMAIL,
             username: 'dev',
             password: hashed,
             roleId: devRole.id,
@@ -146,24 +146,24 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         // 查询现有账号
         const existing = await helper.getOne({
             table: 'core_admin',
-            where: { email: 'dev@qq.com' }
+            where: { email: Env.DEV_EMAIL }
         });
 
         if (existing) {
             // 更新现有账号
             await helper.updData({
                 table: 'core_admin',
-                where: { email: 'dev@qq.com' },
+                where: { email: Env.DEV_EMAIL },
                 data: devData
             });
-            Logger.info('✅ 开发管理员已更新：email=dev@qq.com, username=dev, roleCode=dev, roleType=admin');
+            Logger.info(`✅ 开发管理员已更新：email=${Env.DEV_EMAIL}, username=dev, roleCode=dev, roleType=admin`);
         } else {
             // 插入新账号
             await helper.insData({
                 table: 'core_admin',
                 data: devData
             });
-            Logger.info('✅ 开发管理员已初始化：email=dev@qq.com, username=dev, roleCode=dev, roleType=admin');
+            Logger.info(`✅ 开发管理员已初始化：email=${Env.DEV_EMAIL}, username=dev, roleCode=dev, roleType=admin`);
         }
     } catch (error: any) {
         Logger.error('开发管理员同步失败:', error);
