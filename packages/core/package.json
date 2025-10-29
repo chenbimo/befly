@@ -75,7 +75,8 @@
         "commander": "^14.0.2",
         "es-toolkit": "^1.41.0",
         "inquirer": "^12.10.0",
-        "ora": "^9.0.0"
+        "ora": "^9.0.0",
+        "pathe": "^2.0.3"
     },
     "gitHead": "c12c120e54af6cd84bea95ba803ad66c8fe18241"
 }

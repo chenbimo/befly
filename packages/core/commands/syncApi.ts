@@ -70,20 +70,23 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'core' | 
         let apiPath = '';
 
         if (type === 'core') {
-            // Core 接口：core_{fileName}
-            const fileName = path.basename(filePath, '.ts');
-            apiPath = `/api/core/${fileName}`;
-        } else if (type === 'addon') {
-            // Addon 接口：addon/{addonName}/{fileName}
-            const fileName = path.basename(filePath, '.ts');
-            apiPath = `/api/addon/${addonName}/${fileName}`;
-        } else {
-            // 项目接口：{dirName}/{fileName}
+            // Core 接口：保留完整目录层级
+            // 例: apis/menu/all.ts → /api/core/menu/all
             const relativePath = path.relative(apiRoot, filePath);
-            const parts = relativePath.replace(/\\/g, '/').split('/');
-            const dirName = parts[0];
-            const fileName = path.basename(filePath, '.ts');
-            apiPath = `/api/${dirName}/${fileName}`;
+            const pathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/');
+            apiPath = `/api/core/${pathWithoutExt}`;
+        } else if (type === 'addon') {
+            // Addon 接口：保留完整目录层级
+            // 例: apis/menu/list.ts → /api/addon/admin/menu/list
+            const relativePath = path.relative(apiRoot, filePath);
+            const pathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/');
+            apiPath = `/api/addon/${addonName}/${pathWithoutExt}`;
+        } else {
+            // 项目接口：保留完整目录层级
+            // 例: apis/user/list.ts → /api/user/list
+            const relativePath = path.relative(apiRoot, filePath);
+            const pathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/');
+            apiPath = `/api/${pathWithoutExt}`;
         }
 
         return {
