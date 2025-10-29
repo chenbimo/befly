@@ -72,11 +72,11 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'core' | 
         if (type === 'core') {
             // Core 接口：core_{fileName}
             const fileName = path.basename(filePath, '.ts');
-            apiPath = `/api/core_${fileName}`;
+            apiPath = `/api/core/${fileName}`;
         } else if (type === 'addon') {
             // Addon 接口：addon/{addonName}/{fileName}
             const fileName = path.basename(filePath, '.ts');
-            apiPath = `/api/addon_${addonName}_${fileName}`;
+            apiPath = `/api/addon/${addonName}/${fileName}`;
         } else {
             // 项目接口：{dirName}/{fileName}
             const relativePath = path.relative(apiRoot, filePath);
