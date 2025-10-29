@@ -56,14 +56,10 @@ const $Method = {
 
             $Data.loading = true;
 
-            // 判断是邮箱还是用户名
-            const isEmail = $Data.formData.account.includes('@');
-            const loginData = {
-                password: $Data.formData.password,
-                ...(isEmail ? { email: $Data.formData.account } : { username: $Data.formData.account })
-            };
-
-            const res = await $Http('/core/auth/login', loginData);
+            const res = await $Http('/core/auth/login', {
+                account: $Data.formData.account,
+                password: $Data.formData.password
+            });
 
             // 先保存 token
             $Storage.local.set('token', res.data.token);

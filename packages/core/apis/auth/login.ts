@@ -11,60 +11,32 @@ export default {
     name: '管理员登录',
     auth: false,
     fields: {
-        username: adminTable.username,
-        email: adminTable.email,
+        account: '账号|string|3|100|null|1|null',
         password: adminTable.password
     },
+    required: ['account', 'password'],
     handler: async (befly, ctx) => {
-        let admin = null;
-
-        // 用户名登录
-        if (ctx.body.username && ctx.body.password) {
-            // 查询管理员
-            admin = await befly.db.getOne({
-                table: 'core_admin',
-                where: { username: ctx.body.username }
-            });
-
-            if (!admin) {
-                return No('用户名或密码错误1');
+        // 查询管理员（account 匹配 username 或 email）
+        const admin = await befly.db.getOne({
+            table: 'core_admin',
+            where: {
+                $or: [{ username: ctx.body.account }, { email: ctx.body.account }]
             }
+        });
 
-            // 验证密码
-            try {
-                const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
-                if (!isValid) {
-                    return No('用户名或密码错误2');
-                }
-            } catch (error) {
-                befly.logger.error('密码验证失败', error);
-                return No('密码格式错误，请重新设置密码');
-            }
+        if (!admin) {
+            return No('账号或密码错误1');
         }
-        // 邮箱登录
-        else if (ctx.body.email && ctx.body.password) {
-            // 查询管理员
-            admin = await befly.db.getOne({
-                table: 'core_admin',
-                where: { email: ctx.body.email }
-            });
 
-            if (!admin) {
-                return No('邮箱或密码错误');
+        // 验证密码
+        try {
+            const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
+            if (!isValid) {
+                return No('账号或密码错误2');
             }
-
-            // 验证密码
-            try {
-                const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
-                if (!isValid) {
-                    return No('邮箱或密码错误');
-                }
-            } catch (error) {
-                befly.logger.error('密码验证失败', error);
-                return No('密码格式错误，请重新设置密码');
-            }
-        } else {
-            return No('请提供用户名或邮箱以及密码');
+        } catch (error) {
+            befly.logger.error('密码验证失败', error);
+            return No('密码格式错误，请重新设置密码');
         }
 
         // 检查账号状态（state=1 表示正常，state=2 表示禁用）

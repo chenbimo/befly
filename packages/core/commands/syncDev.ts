@@ -20,16 +20,14 @@ interface SyncDevOptions {
  * SyncDev 命令主函数
  */
 export async function syncDevCommand(options: SyncDevOptions = {}) {
-    let dbConnected = false;
-
     try {
         if (options.plan) {
             Logger.info('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
             return;
         }
 
-        if (!Env.DEV_PASSWORD || !Env.MD5_SALT) {
-            Logger.warn('跳过开发管理员初始化：缺少 DEV_PASSWORD 或 MD5_SALT 配置');
+        if (!Env.DEV_PASSWORD) {
+            Logger.warn('跳过开发管理员初始化：缺少 DEV_PASSWORD 配置');
             return;
         }
 
@@ -37,7 +35,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
 
         // 连接数据库（SQL + Redis）
         await Database.connect();
-        dbConnected = true;
 
         const helper = Database.getDbHelper();
 
@@ -172,8 +169,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         Logger.error('开发管理员同步失败:', error);
         process.exit(1);
     } finally {
-        if (dbConnected) {
-            await Database.disconnectSql();
-        }
+        await Database?.disconnect();
     }
 }

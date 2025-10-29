@@ -12,8 +12,6 @@ export interface EnvConfig {
     NODE_ENV: string;
     /** 应用名称 */
     APP_NAME: string;
-    /** MD5 加密盐 */
-    MD5_SALT: string;
     /** 监听端口 */
     APP_PORT: number;
     /** 监听主机 */
@@ -150,7 +148,6 @@ export const Env: EnvConfig = {
     // ========== 项目配置 ==========
     NODE_ENV: getEnv('NODE_ENV', 'development'),
     APP_NAME: getEnv('APP_NAME', 'befly'),
-    MD5_SALT: getEnv('MD5_SALT', 'befly'),
     APP_PORT: getEnvNumber('APP_PORT', 3000),
     APP_HOST: getEnv('APP_HOST', '0.0.0.0'),
     DEV_PASSWORD: getEnv('DEV_PASSWORD', ''),
