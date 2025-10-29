@@ -19,7 +19,7 @@ export default {
                 where: { code: ctx.user.roleCode }
             });
 
-            if (!role || !role.menus) {
+            if (!role) {
                 return No('角色不存在', []);
             }
 
@@ -52,7 +52,6 @@ export default {
                 }
             } else {
                 befly.logger.debug(`从 Redis 缓存读取 ${allMenus.length} 个菜单`);
-                // JSON.parse 会保持数字类型，无需额外转换
             }
 
             // 5. 根据角色权限过滤菜单
