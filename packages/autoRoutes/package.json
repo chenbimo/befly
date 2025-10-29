@@ -1,0 +1,43 @@
+{
+    "name": "befly-auto-routes",
+    "version": "1.0.0",
+    "description": "Befly 配套的 Vue Router 自动路由生成插件",
+    "type": "module",
+    "private": false,
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    },
+    "main": "index.ts",
+    "types": "index.ts",
+    "exports": {
+        ".": {
+            "types": "./index.ts",
+            "default": "./index.ts"
+        }
+    },
+    "files": [
+        "index.ts",
+        "template.js",
+        "README.md"
+    ],
+    "keywords": [
+        "vite",
+        "plugin",
+        "vue",
+        "vue-router",
+        "auto-routes",
+        "file-based-routing",
+        "typescript"
+    ],
+    "author": "chenbimo",
+    "license": "Apache-2.0",
+    "peerDependencies": {
+        "vite": "^5.0.0 || ^6.0.0",
+        "vue": "^3.0.0",
+        "vue-router": "^4.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0"
+    }
+}

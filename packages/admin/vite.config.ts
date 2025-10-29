@@ -5,7 +5,7 @@ import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
-import autoRouter from './libs/autoRouter';
+import autoRoutes from 'befly-auto-routes';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,7 +14,7 @@ export default defineConfig({
         // Vue 响应式语法糖
         ReactivityTransform(),
         // 自动路由插件
-        autoRouter(),
+        autoRoutes({ debug: true }),
         // 自动导入 Vue3 API 和组合式函数
         AutoImport({
             imports: [
