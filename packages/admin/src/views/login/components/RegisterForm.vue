@@ -1,6 +1,6 @@
 <template>
-    <tiny-form :data="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :required-mark="false" show-error-message label-width="70px">
-        <tiny-form-item name="username" label="用户名">
+    <tiny-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="70px" label-position="left">
+        <tiny-form-item prop="username" label="用户名">
             <tiny-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="User" :size="18" />
@@ -8,7 +8,7 @@
             </tiny-input>
         </tiny-form-item>
 
-        <tiny-form-item name="email" label="邮箱">
+        <tiny-form-item prop="email" label="邮箱">
             <tiny-input v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="Mail" :size="18" />
@@ -16,7 +16,7 @@
             </tiny-input>
         </tiny-form-item>
 
-        <tiny-form-item name="password" label="密码">
+        <tiny-form-item prop="password" label="密码">
             <tiny-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="Lock" :size="18" />
@@ -24,7 +24,7 @@
             </tiny-input>
         </tiny-form-item>
 
-        <tiny-form-item name="nickname" label="昵称">
+        <tiny-form-item prop="nickname" label="昵称">
             <tiny-input v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="Smile" :size="18" />
@@ -57,9 +57,18 @@ const $Data = $ref({
 
 const $Data2 = $shallowRef({
     formRules: {
-        username: [{ required: true, message: '请输入用户名', type: 'error' }],
-        email: [{ required: true, message: '请输入邮箱', type: 'error' }],
-        password: [{ required: true, message: '请输入密码', type: 'error' }]
+        username: [
+            { required: true, message: '请输入用户名', trigger: 'blur' },
+            { min: 3, max: 20, message: '用户名长度为 3-20 个字符', trigger: 'blur' }
+        ],
+        email: [
+            { required: true, message: '请输入邮箱', trigger: 'blur' },
+            { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+        ],
+        password: [
+            { required: true, message: '请输入密码', trigger: 'blur' },
+            { min: 6, message: '密码长度至少 6 个字符', trigger: 'blur' }
+        ]
         // nickname 是选填项，不需要验证规则
     }
 });

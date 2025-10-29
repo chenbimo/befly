@@ -1,6 +1,6 @@
 <template>
-    <tiny-form :data="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :required-mark="false" show-error-message label-width="90px">
-        <tiny-form-item name="account" label="账号">
+    <tiny-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left">
+        <tiny-form-item prop="account" label="账号">
             <tiny-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="User" :size="18" />
@@ -8,7 +8,7 @@
             </tiny-input>
         </tiny-form-item>
 
-        <tiny-form-item name="password" label="密码">
+        <tiny-form-item prop="password" label="密码">
             <tiny-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="Lock" :size="18" />
@@ -43,8 +43,8 @@ const $Data = $ref({
 
 const $Data2 = $shallowRef({
     formRules: {
-        account: [{ required: true, message: '请输入用户名或邮箱', type: 'error' }],
-        password: [{ required: true, message: '请输入密码', type: 'error' }]
+        account: [{ required: true, message: '请输入用户名或邮箱', trigger: 'blur' }],
+        password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
     }
 });
 
