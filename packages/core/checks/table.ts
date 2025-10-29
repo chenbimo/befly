@@ -6,7 +6,7 @@
 import { basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
 import { parseRule } from '../util.js';
-import { paths } from '../paths.js';
+import { projectTableDir } from '../paths.js';
 import { scanAddons, getAddonDir } from '../util.js';
 
 /**
@@ -69,7 +69,7 @@ export default async function (): Promise<boolean> {
 
         // 收集项目表字段定义文件
         for await (const file of tablesGlob.scan({
-            cwd: paths.projectTableDir,
+            cwd: projectTableDir,
             absolute: true,
             onlyFiles: true
         })) {

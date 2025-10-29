@@ -22,7 +22,7 @@ import { isEmpty, isPlainObject } from 'es-toolkit/compat';
 import { snakeCase, camelCase, kebabCase } from 'es-toolkit/string';
 import { Env } from './config/env.js';
 import { Logger } from './lib/logger.js';
-import { paths } from './paths.js';
+import { projectDir } from './paths.js';
 import type { KeyValue } from './types/common.js';
 import type { JwtPayload, JwtSignOptions, JwtVerifyOptions } from './types/jwt';
 import type { Plugin } from './types/plugin.js';
@@ -241,7 +241,7 @@ export const parseRule = (rule: string): ParsedFieldRule => {
  * 扫描所有可用的 addon
  */
 export const scanAddons = (): string[] => {
-    const beflyDir = join(paths.projectDir, 'node_modules', '@befly-addon');
+    const beflyDir = join(projectDir, 'node_modules', '@befly-addon');
 
     if (!existsSync(beflyDir)) {
         return [];
@@ -270,7 +270,7 @@ export const scanAddons = (): string[] => {
  * 获取 addon 的指定子目录路径
  */
 export const getAddonDir = (addonName: string, subDir: string): string => {
-    return join(paths.projectDir, 'node_modules', '@befly-addon', addonName, subDir);
+    return join(projectDir, 'node_modules', '@befly-addon', addonName, subDir);
 };
 
 /**

@@ -4,7 +4,7 @@
  */
 
 import { join } from 'pathe';
-import { paths } from '../paths.js';
+import { projectDir } from '../paths.js';
 import { No } from '../util.js';
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
@@ -16,7 +16,7 @@ import { Env } from '../config/env.js';
 export async function staticHandler(req: Request): Promise<Response> {
     const corsOptions = setCorsOptions(req);
     const url = new URL(req.url);
-    const filePath = join(paths.projectDir, 'public', url.pathname);
+    const filePath = join(projectDir, 'public', url.pathname);
 
     try {
         // OPTIONS预检请求

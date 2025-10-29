@@ -6,7 +6,7 @@
 import { join, basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
-import { paths } from '../paths.js';
+import { rootCheckDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 
 /**
@@ -31,7 +31,7 @@ export class Checker {
 
             // 1. 优先执行资源冲突检测（如果存在）
             try {
-                const conflictCheckPath = join(paths.rootCheckDir, 'conflict.ts');
+                const conflictCheckPath = join(rootCheckDir, 'conflict.ts');
                 const conflictCheckFile = Bun.file(conflictCheckPath);
 
                 if (await conflictCheckFile.exists()) {
@@ -71,7 +71,7 @@ export class Checker {
 
             // 2. 检查目录列表：先核心，后项目，最后 addons
             // 检查所有 checks 目录
-            const checkDirs = [{ path: paths.rootCheckDir, type: 'core' as const }]; // 添加所有 addon 的 checks 目录
+            const checkDirs = [{ path: rootCheckDir, type: 'core' as const }]; // 添加所有 addon 的 checks 目录
             const addons = scanAddons();
             for (const addon of addons) {
                 if (addonDirExists(addon, 'checks')) {
