@@ -65,7 +65,7 @@ const performanceMetrics = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/core/admin/dashboard/performanceMetrics');
+        const { data } = await $Http('/core/dashboard/performanceMetrics');
         Object.assign(performanceMetrics, data);
     } catch (error) {
         console.error('获取性能指标失败:', error);

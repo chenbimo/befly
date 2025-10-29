@@ -82,7 +82,7 @@ const $Method = {
         $Data.loading = true;
 
         try {
-            await $Http('/core/admin/register', $Data.formData);
+            await $Http('/core/register', $Data.formData);
             MessagePlugin.success('注册成功，请登录');
 
             // 清空表单

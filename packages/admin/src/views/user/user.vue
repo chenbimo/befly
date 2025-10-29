@@ -111,7 +111,7 @@ const $Method = {
     async loadUserList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/core/admin/list', {
+            const res = await $Http('/core/list', {
                 page: $Data.pagination.current,
                 limit: $Data.pagination.pageSize
             });
@@ -207,7 +207,7 @@ const $Method = {
 
         // 加载该用户已有的角色
         try {
-            const res = await $Http('/core/admin/roleDetail', { adminId: row.id });
+            const res = await $Http('/core/roleDetail', { adminId: row.id });
             if (res.code === 0 && res.data) {
                 $Data.checkedRoleCode = res.data.roleCode || '';
             }
@@ -225,7 +225,7 @@ const $Method = {
         }
 
         try {
-            const res = await $Http('/core/admin/roleSave', {
+            const res = await $Http('/core/roleSave', {
                 adminId: $Data.currentUser.id,
                 roleCode: $Data.checkedRoleCode
             });

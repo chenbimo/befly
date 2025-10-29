@@ -80,7 +80,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/core/admin/roleDetail', {
+            const res = await $Http('/core/roleDetail', {
                 adminId: $Prop.rowData.id
             });
             $Data.checkedRoleCode = res.data.roleCode || '';
@@ -97,7 +97,7 @@ const $Method = {
         }
 
         try {
-            const res = await $Http('/core/admin/roleSave', {
+            const res = await $Http('/core/roleSave', {
                 adminId: $Prop.rowData.id,
                 roleCode: $Data.checkedRoleCode
             });

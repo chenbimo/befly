@@ -33,7 +33,7 @@ const userInfo = $ref({});
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/core/admin/info');
+        const { data } = await $Http('/core/info');
         Object.assign(userInfo, data);
     } catch (error) {
         console.error('获取用户信息失败:', error);
