@@ -102,7 +102,7 @@ const $Method = {
     handleUserMenu(data) {
         const value = data.itemData?.value || data.value;
         if (value === 'logout') {
-            localStorage.removeItem('token');
+            $Storage.local.remove('token');
             router.push('/login');
             Modal.message({ message: '退出成功', status: 'success' });
         } else if (value === 'clearCache') {

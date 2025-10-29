@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import autoRoutes from 'virtual:auto-routes';
+import { $Storage } from './storage';
 
 /**
  * 创建并导出路由实例
@@ -20,7 +21,7 @@ router.beforeEach(async (to, from, next) => {
         document.title = titlePrefix;
     }
 
-    const token = localStorage.getItem('token');
+    const token = $Storage.local.get('token');
 
     // 判断是否为公开路由：使用 layout0 的需要登录，其他 layout 为公开路由
     const isProtectedRoute = to.matched.some((record) => record.name === 'layout0');

@@ -10,7 +10,7 @@ const route = useRoute();
 
 // 响应式数据
 const $Data = $ref({
-    collapsed: localStorage.getItem('sidebar-collapsed') === 'true',
+    collapsed: $Storage.local.get('sidebar-collapsed') === 'true',
     expandedKeys: [],
     menuItems: []
 });
@@ -20,7 +20,7 @@ const $Method = {
     // 切换折叠状态
     toggleCollapse() {
         $Data.collapsed = !$Data.collapsed;
-        localStorage.setItem('sidebar-collapsed', String($Data.collapsed));
+        $Storage.local.set('sidebar-collapsed', String($Data.collapsed));
     }
 };
 
@@ -89,9 +89,12 @@ const handleMenuChange = (value) => {
 
 const handleUserMenu = (data) => {
     if (data.value === 'logout') {
-        localStorage.removeItem('token');
+        $Storage.local.remove('token');
         router.push('/login');
-        MessagePlugin.success('退出成功');
+        Modal.message({
+            message: '退出成功',
+            status: 'success'
+        });
     }
 };
 </script>

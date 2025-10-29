@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { Modal } from '@opentiny/vue';
+import { $Storage } from './storage';
 
 // API 响应格式
 interface ApiResponse<T = any> {
@@ -21,7 +22,7 @@ const request: AxiosInstance = axios.create({
 request.interceptors.request.use(
     (config) => {
         // 添加 token
-        const token = localStorage.getItem('token');
+        const token = $Storage.local.get('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
             // 开发环境下打印 token 信息
