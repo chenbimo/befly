@@ -5,7 +5,7 @@
  * 流程：
  * 1. 扫描 core/apis 目录下所有 Core API 文件
  * 2. 扫描项目 apis 目录下所有项目 API 文件
- * 3. 扫描 node_modules/@befly/addon-* 目录下所有组件 API 文件
+ * 3. 扫描 node_modules/@befly-addon/* 目录下所有组件 API 文件
  * 4. 提取每个 API 的 name、method、auth 等信息
  * 5. 根据接口路径检查是否存在
  * 6. 存在则更新，不存在则新增
@@ -138,24 +138,23 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
             }
         }
 
-        // 3. 扫描组件 API (node_modules/@befly/addon-*)
-        Logger.info('\n=== 扫描组件 API (node_modules/@befly/addon-*) ===');
+        // 3. 扫描组件 API (node_modules/@befly-addon/*)
+        Logger.info('\n=== 扫描组件 API (node_modules/@befly-addon/*) ===');
         const addonNames = scanAddons();
 
-        for (const fullAddonName of addonNames) {
-            // fullAddonName 格式: addon-admin, addon-demo 等
-            const addonName = fullAddonName.replace('addon-', ''); // 移除 addon- 前缀
+        for (const addonName of addonNames) {
+            // addonName 格式: admin, demo 等
 
             // 检查 apis 子目录是否存在
-            if (!addonDirExists(fullAddonName, 'apis')) {
+            if (!addonDirExists(addonName, 'apis')) {
                 Logger.info(`  [${addonName}] 无 apis 目录，跳过`);
                 continue;
             }
 
-            const addonApisDir = getAddonDir(fullAddonName, 'apis');
+            const addonApisDir = getAddonDir(addonName, 'apis');
 
             // 读取 addon 配置
-            const addonConfigPath = getAddonDir(fullAddonName, 'addon.config.json');
+            const addonConfigPath = getAddonDir(addonName, 'addon.config.json');
             let addonTitle = addonName;
             try {
                 const configFile = Bun.file(addonConfigPath);

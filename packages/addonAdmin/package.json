@@ -1,5 +1,5 @@
 {
-    "name": "@befly/addon-admin",
+    "name": "@befly-addon/admin",
     "version": "1.0.1",
     "description": "Befly Admin Addon - 管理后台功能组件",
     "type": "module",
@@ -38,5 +38,6 @@
     },
     "peerDependencies": {
         "befly": "^3.0.0"
-    }
+    },
+    "gitHead": "24b35d0ef83d78db3dea67784e052516d4a83fc5"
 }

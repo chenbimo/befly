@@ -139,8 +139,8 @@ export const SyncDb = async (): Promise<void> => {
                 // 确定表名：
                 // - core 表：core_{表名}
                 //   例如：user.json → core_user
-                // - addon 表：addon_{转换后的addonName}_{表名}
-                //   例如：addon-admin 的 user.json → core_user
+                // - addon 表：{addonName}_{表名}
+                //   例如：admin addon 的 user.json → admin_user
                 // - 项目表：{表名}
                 //   例如：user.json → user
                 let tableName = snakeCase(fileName);
@@ -148,8 +148,8 @@ export const SyncDb = async (): Promise<void> => {
                     // core 框架表，添加 core_ 前缀
                     tableName = `core_${tableName}`;
                 } else if (type === 'addon') {
-                    // addon 表，添加 addon_{name}_ 前缀
-                    // 使用 snakeCase 统一转换（addon-admin → addon_admin）
+                    // addon 表，添加 {addonName}_ 前缀
+                    // 使用 snakeCase 统一转换（admin → admin）
                     const addonNameSnake = snakeCase(addonName!);
                     tableName = `${addonNameSnake}_${tableName}`;
                 }

@@ -105,27 +105,22 @@ function scanCliScripts(): Array<{ scriptName: string; scriptPath: string }> {
 }
 
 /**
- * 扫描 node_modules/@befly/addon-* 下的 scripts
+ * 扫描 node_modules/@befly-addon/* 下的 scripts
  */
 function scanAddonScripts(projectRoot: string): Array<{ addonName: string; scriptName: string; scriptPath: string }> {
     const results: Array<{ addonName: string; scriptName: string; scriptPath: string }> = [];
 
     try {
-        const beflyAddonsDir = join(projectRoot, 'node_modules', '@befly');
+        const beflyAddonsDir = join(projectRoot, 'node_modules', '@befly-addon');
 
         if (!existsSync(beflyAddonsDir)) {
             return results;
         }
 
-        // 读取 @befly 目录下的所有 addon
+        // 读取 @befly-addon 目录下的所有 addon
         const addonDirs = readdirSync(beflyAddonsDir);
 
         for (const addonDir of addonDirs) {
-            // 只处理 addon-* 开头的目录
-            if (!addonDir.startsWith('addon-')) {
-                continue;
-            }
-
             const scriptsDir = join(beflyAddonsDir, addonDir, 'scripts');
 
             if (!existsSync(scriptsDir)) {

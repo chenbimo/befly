@@ -13,12 +13,11 @@ export default {
         // 使用 scanAddons 扫描所有 addon
         const addonNames = scanAddons();
 
-        for (const fullAddonName of addonNames) {
-            // fullAddonName 格式: addon-admin, addon-demo 等
-            const addonName = fullAddonName.replace('addon-', ''); // 移除 addon- 前缀
+        for (const addonName of addonNames) {
+            // addonName 格式: admin, demo 等
 
             // 读取插件配置文件
-            const configPath = getAddonDir(fullAddonName, 'addon.config.json');
+            const configPath = getAddonDir(addonName, 'addon.config.json');
 
             try {
                 const configContent = readFileSync(configPath, 'utf-8');

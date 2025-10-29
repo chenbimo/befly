@@ -241,7 +241,7 @@ export const parseRule = (rule: string): ParsedFieldRule => {
  * 扫描所有可用的 addon
  */
 export const scanAddons = (): string[] => {
-    const beflyDir = join(paths.projectDir, 'node_modules', '@befly');
+    const beflyDir = join(paths.projectDir, 'node_modules', '@befly-addon');
 
     if (!existsSync(beflyDir)) {
         return [];
@@ -251,9 +251,7 @@ export const scanAddons = (): string[] => {
         return fs
             .readdirSync(beflyDir)
             .filter((name) => {
-                // 先转为 kebab-case 格式再判断
-                const kebabName = kebabCase(name);
-                if (!kebabName.startsWith('addon-')) return false;
+                // addon 名称格式：admin, demo 等（不带 addon- 前缀）
                 const fullPath = join(beflyDir, name);
                 try {
                     const stat = statSync(fullPath);
@@ -272,7 +270,7 @@ export const scanAddons = (): string[] => {
  * 获取 addon 的指定子目录路径
  */
 export const getAddonDir = (addonName: string, subDir: string): string => {
-    return join(paths.projectDir, 'node_modules', '@befly', addonName, subDir);
+    return join(paths.projectDir, 'node_modules', '@befly-addon', addonName, subDir);
 };
 
 /**
