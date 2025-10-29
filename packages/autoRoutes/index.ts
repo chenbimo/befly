@@ -9,7 +9,7 @@ import { dirname, resolve } from 'path';
  */
 // 固定：视图目录 src/views；布局目录 src/layouts；排除目录 ['components']；不区分公开路由；模板已为最终可执行代码，不再做占位符替换。
 export default function autoRouter(): Plugin {
-    const virtualModuleId = 'virtual:befly-auto-routes';
+    const virtualModuleId = 'virtual:vite-plugin-vue-auto-routes';
     const resolvedVirtualModuleId = '\0' + virtualModuleId;
     // 目录固定，无需配置
 
@@ -36,7 +36,7 @@ export default function autoRouter(): Plugin {
     readTemplate();
 
     return {
-        name: 'befly-auto-routes',
+        name: 'vite-plugin-vue-auto-routes',
         enforce: 'pre',
         resolveId(id) {
             if (id === virtualModuleId) return resolvedVirtualModuleId;

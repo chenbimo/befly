@@ -1,5 +1,5 @@
 {
-    "name": "befly-auto-routes",
+    "name": "vite-plugin-vue-auto-routes",
     "version": "1.0.0",
     "description": "Befly 配套的 Vue Router 自动路由生成插件",
     "type": "module",
