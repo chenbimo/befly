@@ -25,6 +25,8 @@ export const paths = {
     rootCheckDir: join(__dirname, 'checks'),
     /** Befly 框架插件目录 */
     rootPluginDir: join(__dirname, 'plugins'),
+    /** Befly API 目录 */
+    rootApiDir: join(__dirname, 'apis'),
     /** Befly 框架表定义目录（core_前缀表） */
     coreTableDir: join(__dirname, 'tables'),
     /** 项目根目录 */

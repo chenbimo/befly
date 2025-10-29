@@ -376,19 +376,29 @@ export class Loader {
 
     /**
      * 加载API路由
-     * @param dirName - 目录名称 ('app' | addon名称)
+     * @param dirName - 目录名称 ('core' | 'app' | addon名称)
      * @param apiRoutes - API路由映射表
-     * @param options - 可选配置（用于 addon）
+     * @param options - 可选配置
+     * @param options.where - API来源类型：'core' | 'addon' | 'app'
+     * @param options.addonName - addon名称（仅当 where='addon' 时需要）
      */
-    static async loadApis(dirName: string, apiRoutes: Map<string, ApiRoute>, options?: { isAddon?: boolean; addonName?: string }): Promise<void> {
+    static async loadApis(dirName: string, apiRoutes: Map<string, ApiRoute>, options?: { where?: 'core' | 'addon' | 'app'; addonName?: string }): Promise<void> {
         try {
             const loadStartTime = Bun.nanoseconds();
-            const isAddon = options?.isAddon || false;
+            const where = options?.where || 'app';
             const addonName = options?.addonName || '';
-            const dirDisplayName = isAddon ? `组件${addonName}` : '用户';
+            const dirDisplayName = where === 'core' ? '核心' : where === 'addon' ? `组件${addonName}` : '用户';
 
             const glob = new Bun.Glob('**/*.ts');
-            const apiDir = isAddon ? getAddonDir(addonName, 'apis') : paths.projectApiDir;
+            let apiDir: string;
+
+            if (where === 'core') {
+                apiDir = paths.rootApiDir;
+            } else if (where === 'addon') {
+                apiDir = getAddonDir(addonName, 'apis');
+            } else {
+                apiDir = paths.projectApiDir;
+            }
 
             let totalApis = 0;
             let loadedApis = 0;
@@ -454,8 +464,13 @@ export class Loader {
 
                     Logger.debug(`[${dirDisplayName}] API 属性验证通过: ${apiPath}`);
 
-                    // 构建路由：addon 接口添加前缀 /api/addon/{addonName}/{apiPath}，项目接口为 /api/{apiPath}
-                    if (isAddon) {
+                    // 构建路由：
+                    // - core 接口: /api/core/{apiPath}
+                    // - addon 接口: /api/addon/{addonName}/{apiPath}
+                    // - 项目接口: /api/{apiPath}
+                    if (where === 'core') {
+                        api.route = `${api.method.toUpperCase()}/api/core/${apiPath}`;
+                    } else if (where === 'addon') {
                         api.route = `${api.method.toUpperCase()}/api/addon/${addonName}/${apiPath}`;
                     } else {
                         api.route = `${api.method.toUpperCase()}/api/${apiPath}`;

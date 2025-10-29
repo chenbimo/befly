@@ -74,13 +74,26 @@ export class Lifecycle {
 
     /**
      * 加载所有 API 路由
-     * 包括 addon APIs 和 app APIs
+     * 包括 core APIs、addon APIs 和 app APIs
      */
     private async loadAllApis(): Promise<void> {
         Logger.info('========== 开始加载所有 API 路由 ==========');
         const totalLoadStart = Bun.nanoseconds();
 
-        // 加载 addon APIs
+        // 1. 加载 Core APIs
+        Logger.info('========== 开始加载核心 APIs ==========');
+        const coreApiLoadStart = Bun.nanoseconds();
+        try {
+            await Loader.loadApis('core', this.apiRoutes, { where: 'core' });
+            const coreApiLoadTime = calcPerfTime(coreApiLoadStart);
+            Logger.info(`========== 核心 APIs 加载完成，耗时: ${coreApiLoadTime} ==========`);
+        } catch (error: any) {
+            const coreApiLoadTime = calcPerfTime(coreApiLoadStart);
+            Logger.error(`核心 APIs 加载失败，耗时: ${coreApiLoadTime}`, error);
+            throw error;
+        }
+
+        // 2. 加载 addon APIs
         const addons = scanAddons();
         Logger.info(`扫描到 ${addons.length} 个 addon: ${addons.join(', ')}`);
 
@@ -92,7 +105,7 @@ export class Lifecycle {
             if (hasApis) {
                 Logger.info(`[组件 ${addon}] ===== 开始加载 APIs =====`);
                 try {
-                    await Loader.loadApis(addon, this.apiRoutes, { isAddon: true, addonName: addon });
+                    await Loader.loadApis(addon, this.apiRoutes, { where: 'addon', addonName: addon });
                     const addonLoadTime = calcPerfTime(addonLoadStart);
                     Logger.info(`[组件 ${addon}] ===== APIs 加载完成，耗时: ${addonLoadTime} =====`);
                 } catch (error: any) {
@@ -104,12 +117,14 @@ export class Lifecycle {
         }
 
         Logger.info('========== 组件 APIs 全部加载完成 ==========');
+
+        // 3. 加载用户 APIs
         Logger.info('========== 开始加载用户 APIs ==========');
 
         const userApiLoadStart = Bun.nanoseconds();
         try {
             // 加载 app APIs
-            await Loader.loadApis('app', this.apiRoutes);
+            await Loader.loadApis('app', this.apiRoutes, { where: 'app' });
             const userApiLoadTime = calcPerfTime(userApiLoadStart);
             Logger.info(`========== 用户 APIs 加载完成，耗时: ${userApiLoadTime} ==========`);
         } catch (error: any) {
