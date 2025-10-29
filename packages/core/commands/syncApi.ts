@@ -16,7 +16,7 @@ import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import { readdirSync, statSync } from 'node:fs';
-import path from 'node:path';
+import { join, dirname, relative, basename } from 'pathe';
 
 interface SyncApiOptions {
     plan?: boolean;
@@ -39,7 +39,7 @@ function scanTsFiles(dir: string, fileList: string[] = []): string[] {
         const files = readdirSync(dir);
 
         for (const file of files) {
-            const filePath = path.join(dir, file);
+            const filePath = join(dir, file);
             const stat = statSync(filePath);
 
             if (stat.isDirectory()) {
@@ -72,20 +72,20 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'core' | 
         if (type === 'core') {
             // Core 接口：保留完整目录层级
             // 例: apis/menu/all.ts → /api/core/menu/all
-            const relativePath = path.relative(apiRoot, filePath);
-            const pathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/');
+            const relativePath = relative(apiRoot, filePath);
+            const pathWithoutExt = relativePath.replace(/\.ts$/, '');
             apiPath = `/api/core/${pathWithoutExt}`;
         } else if (type === 'addon') {
             // Addon 接口：保留完整目录层级
             // 例: apis/menu/list.ts → /api/addon/admin/menu/list
-            const relativePath = path.relative(apiRoot, filePath);
-            const pathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/');
+            const relativePath = relative(apiRoot, filePath);
+            const pathWithoutExt = relativePath.replace(/\.ts$/, '');
             apiPath = `/api/addon/${addonName}/${pathWithoutExt}`;
         } else {
             // 项目接口：保留完整目录层级
             // 例: apis/user/list.ts → /api/user/list
-            const relativePath = path.relative(apiRoot, filePath);
-            const pathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/');
+            const relativePath = relative(apiRoot, filePath);
+            const pathWithoutExt = relativePath.replace(/\.ts$/, '');
             apiPath = `/api/${pathWithoutExt}`;
         }
 
@@ -111,7 +111,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 
     // 1. 扫描 Core 框架 API
     Logger.info('=== 扫描 Core 框架 API (core/apis) ===');
-    const coreApisDir = path.join(path.dirname(projectRoot), 'core', 'apis');
+    const coreApisDir = join(dirname(projectRoot), 'core', 'apis');
     try {
         const coreApiFiles = scanTsFiles(coreApisDir);
         Logger.info(`  找到 ${coreApiFiles.length} 个核心 API 文件`);
@@ -126,7 +126,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 
         // 2. 扫描项目 API
         Logger.info('\n=== 扫描项目 API (apis) ===');
-        const projectApisDir = path.join(projectRoot, 'apis');
+        const projectApisDir = join(projectRoot, 'apis');
         const projectApiFiles = scanTsFiles(projectApisDir);
         Logger.info(`  找到 ${projectApiFiles.length} 个项目 API 文件`);
 
