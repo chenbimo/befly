@@ -1,4 +1,4 @@
-# vite-plugin-vue-auto-routes
+# befly-auto-routes
 
 Vue Router 自动路由生成插件，基于文件结构自动生成路由配置。
 
@@ -16,15 +16,15 @@ Vue Router 自动路由生成插件，基于文件结构自动生成路由配置
 ## 安装
 
 ```bash
-bun add vite-plugin-vue-auto-routes -D
+bun add befly-auto-routes -D
 # or
-npm install vite-plugin-vue-auto-routes -D
+npm install befly-auto-routes -D
 ```
 
 ## 项目结构
 
 ```
-vite-plugin-vue-auto-routes/
+befly-auto-routes/
 ├── index.ts        # 插件主文件
 ├── template.js     # 路由生成模板
 ├── package.json
@@ -39,7 +39,7 @@ vite-plugin-vue-auto-routes/
 // vite.config.ts
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import autoRoutes from 'vite-plugin-vue-auto-routes';
+import autoRoutes from 'befly-auto-routes';
 
 export default defineConfig({
     plugins: [

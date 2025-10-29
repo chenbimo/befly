@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import autoRoutes from 'virtual:vite-plugin-vue-auto-routes';
+import autoRoutes from 'virtual:befly-auto-routes';
 import { $Storage } from './storage';
 
 /**

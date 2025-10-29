@@ -5,7 +5,7 @@ import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
-import autoRoutes from 'vite-plugin-vue-auto-routes';
+import autoRoutes from 'befly-auto-routes';
 
 // https://vite.dev/config/
 export default defineConfig({

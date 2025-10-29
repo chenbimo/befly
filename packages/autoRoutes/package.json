@@ -1,5 +1,5 @@
 {
-    "name": "vite-plugin-vue-auto-routes",
+    "name": "befly-auto-routes",
     "version": "1.0.1",
     "description": "具备继承功能的 Vue 3 自动路由生成插件。",
     "type": "module",
@@ -39,5 +39,6 @@
     },
     "devDependencies": {
         "@types/node": "^22.0.0"
-    }
+    },
+    "gitHead": "96136321570fd1abf859e691d6ccbc69d7696c4b"
 }
