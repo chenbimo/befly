@@ -147,7 +147,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
         const glob = new Bun.Glob('*.ts');
 
         for await (const file of glob.scan({
-            cwd: addonPluginDir,
+            cwd: addonPluginsDir,
             onlyFiles: true,
             absolute: true
         })) {
@@ -187,7 +187,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
     try {
         const glob = new Bun.Glob('*.json');
         for await (const file of glob.scan({
-            cwd: addonTableDir,
+            cwd: userTablesDir,
             onlyFiles: true,
             absolute: true
         })) {
@@ -263,7 +263,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
             onlyFiles: true,
             absolute: true
         })) {
-            const pluginName = path.basename(file).replace(/\.ts$/, '');
+            const pluginName = basename(file).replace(/\.ts$/, '');
             if (pluginName.startsWith('_')) continue;
 
             // 检查是否使用保留名称（检测核心插件名或点号前缀是保留名称）
