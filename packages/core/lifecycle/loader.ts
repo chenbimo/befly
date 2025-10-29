@@ -3,7 +3,7 @@
  * 负责加载和初始化插件以及API路由
  */
 
-import path from 'node:path';
+import { relative, basename } from 'pathe';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
@@ -102,7 +102,7 @@ export class Loader {
                 onlyFiles: true,
                 absolute: true
             })) {
-                const fileName = path.basename(file).replace(/\.ts$/, '');
+                const fileName = basename(file).replace(/\.ts$/, '');
                 if (fileName.startsWith('_')) continue;
 
                 try {
@@ -182,11 +182,11 @@ export class Loader {
 
                     const addonPluginsDir = getAddonDir(addon, 'plugins');
                     for await (const file of glob.scan({
-                        cwd: addonPluginsDir,
+                        cwd: addonDir,
                         onlyFiles: true,
                         absolute: true
                     })) {
-                        const fileName = path.basename(file).replace(/\.ts$/, '');
+                        const fileName = basename(file).replace(/\.ts$/, '');
                         if (fileName.startsWith('_')) continue;
 
                         const pluginFullName = `${addon}.${fileName}`;
@@ -262,11 +262,11 @@ export class Loader {
             // 扫描用户插件目录
             const userPluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: paths.projectPluginDir,
+                cwd: userPluginDir,
                 onlyFiles: true,
                 absolute: true
             })) {
-                const fileName = path.basename(file).replace(/\.ts$/, '');
+                const fileName = basename(file).replace(/\.ts$/, '');
                 if (fileName.startsWith('_')) continue;
 
                 // 检查是否已经加载了同名的核心插件
@@ -400,8 +400,8 @@ export class Loader {
                 onlyFiles: true,
                 absolute: true
             })) {
-                const fileName = path.basename(file).replace(/\.ts$/, '');
-                const apiPath = path.relative(apiDir, file).replace(/\.ts$/, '').replace(/\\/g, '/');
+                const fileName = basename(file).replace(/\.ts$/, '');
+                const apiPath = relative(apiDir, file).replace(/\.ts$/, '');
                 if (apiPath.indexOf('_') !== -1) continue;
 
                 totalApis++;

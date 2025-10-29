@@ -16,7 +16,7 @@
  */
 
 import fs from 'node:fs';
-import { join } from 'node:path';
+import { join } from 'pathe';
 import { readdirSync, statSync, readFileSync, existsSync } from 'node:fs';
 import { isEmpty, isPlainObject } from 'es-toolkit/compat';
 import { snakeCase, camelCase, kebabCase } from 'es-toolkit/string';

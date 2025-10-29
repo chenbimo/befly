@@ -3,7 +3,7 @@
  * 负责在框架启动前执行系统检查
  */
 
-import path from 'node:path';
+import { join, basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { paths } from '../paths.js';
@@ -31,7 +31,7 @@ export class Checker {
 
             // 1. 优先执行资源冲突检测（如果存在）
             try {
-                const conflictCheckPath = path.join(paths.rootCheckDir, 'conflict.ts');
+                const conflictCheckPath = join(paths.rootCheckDir, 'conflict.ts');
                 const conflictCheckFile = Bun.file(conflictCheckPath);
 
                 if (await conflictCheckFile.exists()) {
@@ -95,7 +95,7 @@ export class Checker {
                     onlyFiles: true,
                     absolute: true
                 })) {
-                    const fileName = path.basename(file);
+                    const fileName = basename(file);
                     if (fileName.startsWith('_')) continue; // 跳过以下划线开头的文件
 
                     // 跳过已经执行过的 conflict.ts

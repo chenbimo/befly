@@ -3,7 +3,7 @@
  * 处理 /* 路径的静态文件请求
  */
 
-import path from 'node:path';
+import { join } from 'pathe';
 import { paths } from '../paths.js';
 import { No } from '../util.js';
 import { setCorsOptions } from '../lib/middleware.js';
@@ -16,7 +16,7 @@ import { Env } from '../config/env.js';
 export async function staticHandler(req: Request): Promise<Response> {
     const corsOptions = setCorsOptions(req);
     const url = new URL(req.url);
-    const filePath = path.join(paths.projectDir, 'public', url.pathname);
+    const filePath = join(paths.projectDir, 'public', url.pathname);
 
     try {
         // OPTIONS预检请求

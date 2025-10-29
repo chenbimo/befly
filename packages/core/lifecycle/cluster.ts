@@ -3,7 +3,7 @@
  * 负责多进程启动、自动重启、优雅关闭
  */
 
-import { join } from 'node:path';
+import { join } from 'pathe';
 import type { Subprocess } from 'bun';
 import { Logger } from '../lib/logger.js';
 

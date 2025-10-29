@@ -2,7 +2,7 @@
  * Dev 命令 - 启动开发服务器
  */
 
-import { join } from 'node:path';
+import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 

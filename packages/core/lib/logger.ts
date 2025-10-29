@@ -3,7 +3,7 @@
  * 直接集成环境变量，提供开箱即用的日志功能
  */
 
-import path from 'path';
+import { join } from 'pathe';
 import { appendFile, stat } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Env } from '../config/env.js';
@@ -129,7 +129,7 @@ export class Logger {
 
                 let foundFile = false;
                 for (let i = files.length - 1; i >= 0; i--) {
-                    const filePath = path.join(this.config.logDir, files[i]);
+                    const filePath = join(this.config.logDir, files[i]);
                     try {
                         const stats = await stat(filePath);
                         if (stats.size < this.config.maxFileSize) {
@@ -142,10 +142,10 @@ export class Logger {
                     }
                 }
 
-                // 没有可用文件，创建新文件
+                // 没有可用文件,创建新文件
                 if (!foundFile) {
                     const maxIndex = files.length > 0 ? Math.max(...files.map(getIndex)) : -1;
-                    currentLogFile = path.join(this.config.logDir, `${prefix}.${maxIndex + 1}.log`);
+                    currentLogFile = join(this.config.logDir, `${prefix}.${maxIndex + 1}.log`);
                 }
 
                 this.currentFiles.set(prefix, currentLogFile);

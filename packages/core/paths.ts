@@ -4,7 +4,7 @@
  */
 
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join } from 'pathe';
 
 // 当前文件的路径信息
 const __filename = fileURLToPath(import.meta.url);

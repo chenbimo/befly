@@ -2,7 +2,7 @@
  * Build、Start、Sync、Addon、SyncApi、SyncMenu、SyncDev 命令实现
  */
 
-import { join } from 'node:path';
+import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import ora from 'ora';
 import { Logger } from '../lib/logger.js';

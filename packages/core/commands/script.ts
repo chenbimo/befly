@@ -2,7 +2,7 @@
  * Script 命令 - 列出并执行项目脚本
  */
 
-import path from 'node:path';
+import { join, dirname, parse, resolve, basename } from 'pathe';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { Glob } from 'bun';
 import inquirer from 'inquirer';
@@ -25,16 +25,16 @@ interface ScriptItem {
 /**
  * 查找项目根目录（向上查找 package.json）
  */
-function findProjectRoot(startDir: string = process.cwd()): string | null {
+function findProjectRoot(startDir: string): string | null {
     let currentDir = startDir;
-    const root = path.parse(currentDir).root;
+    const root = parse(currentDir).root;
 
     while (currentDir !== root) {
-        const packagePath = path.join(currentDir, 'package.json');
+        const packagePath = join(currentDir, 'package.json');
         if (existsSync(packagePath)) {
             return currentDir;
         }
-        currentDir = path.dirname(currentDir);
+        currentDir = dirname(currentDir);
     }
 
     return null;
@@ -59,7 +59,7 @@ function safeList(dir: string): string[] {
             })
         );
 
-        return files.map((f) => path.basename(f).replace(/\.ts$/, '')).sort();
+        return files.map((f) => basename(f).replace(/\.ts$/, '')).sort();
     } catch {
         return [];
     }
@@ -73,8 +73,8 @@ function scanCliScripts(): Array<{ scriptName: string; scriptPath: string }> {
 
     try {
         // 获取 CLI 包的根目录（当前文件在 commands 目录下）
-        const cliRoot = path.resolve(__dirname, '..');
-        const scriptsDir = path.join(cliRoot, 'scripts');
+        const cliRoot = resolve(__dirname, '..');
+        const scriptsDir = join(cliRoot, 'scripts');
 
         if (!existsSync(scriptsDir)) {
             return results;
@@ -86,7 +86,7 @@ function scanCliScripts(): Array<{ scriptName: string; scriptPath: string }> {
             // 只处理直接子级的 .ts 文件
             if (file.endsWith('.ts')) {
                 const scriptName = file.replace(/\.ts$/, '');
-                const scriptPath = path.join(scriptsDir, file);
+                const scriptPath = join(scriptsDir, file);
 
                 // 确保是文件而不是目录
                 if (statSync(scriptPath).isFile()) {
@@ -111,7 +111,7 @@ function scanAddonScripts(projectRoot: string): Array<{ addonName: string; scrip
     const results: Array<{ addonName: string; scriptName: string; scriptPath: string }> = [];
 
     try {
-        const beflyAddonsDir = path.join(projectRoot, 'node_modules', '@befly');
+        const beflyAddonsDir = join(projectRoot, 'node_modules', '@befly');
 
         if (!existsSync(beflyAddonsDir)) {
             return results;
@@ -126,7 +126,7 @@ function scanAddonScripts(projectRoot: string): Array<{ addonName: string; scrip
                 continue;
             }
 
-            const scriptsDir = path.join(beflyAddonsDir, addonDir, 'scripts');
+            const scriptsDir = join(beflyAddonsDir, addonDir, 'scripts');
 
             if (!existsSync(scriptsDir)) {
                 continue;
@@ -138,7 +138,7 @@ function scanAddonScripts(projectRoot: string): Array<{ addonName: string; scrip
                 for (const file of scriptFiles) {
                     if (file.endsWith('.ts')) {
                         const scriptName = file.replace(/\.ts$/, '');
-                        const scriptPath = path.join(scriptsDir, file);
+                        const scriptPath = join(scriptsDir, file);
 
                         results.push({
                             addonName: addonDir,
@@ -176,14 +176,14 @@ function buildScriptItems(projectRoot: string): ScriptItem[] {
     }
 
     // 项目脚本
-    const projectScriptsDir = path.join(projectRoot, 'scripts');
+    const projectScriptsDir = join(projectRoot, 'scripts');
     const projectList = safeList(projectScriptsDir);
     for (const name of projectList) {
         items.push({
             name,
             source: 'project',
             displayName: `[Project] ${name}`,
-            path: path.resolve(projectScriptsDir, `${name}.ts`)
+            path: resolve(projectScriptsDir, `${name}.ts`)
         });
     }
 

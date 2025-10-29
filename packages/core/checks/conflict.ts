@@ -3,7 +3,7 @@
  * 在系统启动前检测表名、API 路由、插件名等资源是否存在冲突
  */
 
-import path from 'node:path';
+import { relative, basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
 import { paths } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
@@ -41,11 +41,11 @@ async function collectCorePlugins(registry: ResourceRegistry): Promise<void> {
     try {
         const glob = new Bun.Glob('*.ts');
         for await (const file of glob.scan({
-            cwd: paths.rootPluginDir,
+            cwd: paths.projectPluginDir,
             onlyFiles: true,
             absolute: true
         })) {
-            const pluginName = path.basename(file).replace(/\.ts$/, '');
+            const pluginName = basename(file).replace(/\.ts$/, '');
             if (pluginName.startsWith('_')) continue;
 
             if (registry.plugins.has(pluginName)) {
@@ -77,11 +77,11 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
         const glob = new Bun.Glob('*.json');
 
         for await (const file of glob.scan({
-            cwd: addonTablesDir,
+            cwd: paths.rootTableDir,
             onlyFiles: true,
             absolute: true
         })) {
-            const fileName = path.basename(file, '.json');
+            const fileName = basename(file, '.json');
             if (fileName.startsWith('_')) continue;
 
             try {
@@ -116,7 +116,7 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
             onlyFiles: true,
             absolute: true
         })) {
-            const apiPath = path.relative(addonApisDir, file).replace(/\.ts$/, '').replace(/\\/g, '/');
+            const apiPath = relative(addonApisDir, file).replace(/\.ts$/, '');
             if (apiPath.indexOf('_') !== -1) continue;
 
             try {
@@ -147,11 +147,11 @@ async function collectAddonResources(addonName: string, registry: ResourceRegist
         const glob = new Bun.Glob('*.ts');
 
         for await (const file of glob.scan({
-            cwd: addonPluginsDir,
+            cwd: addonPluginDir,
             onlyFiles: true,
             absolute: true
         })) {
-            const fileName = path.basename(file).replace(/\.ts$/, '');
+            const fileName = basename(file).replace(/\.ts$/, '');
             if (fileName.startsWith('_')) continue;
 
             // Addon 插件使用点号命名空间
@@ -187,11 +187,11 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
     try {
         const glob = new Bun.Glob('*.json');
         for await (const file of glob.scan({
-            cwd: userTablesDir,
+            cwd: addonTableDir,
             onlyFiles: true,
             absolute: true
         })) {
-            const fileName = path.basename(file, '.json');
+            const fileName = basename(file, '.json');
             if (fileName.startsWith('_')) continue;
 
             try {
@@ -227,7 +227,7 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
             onlyFiles: true,
             absolute: true
         })) {
-            const apiPath = path.relative(userApisDir, file).replace(/\.ts$/, '').replace(/\\/g, '/');
+            const apiPath = relative(userApisDir, file).replace(/\.ts$/, '');
             if (apiPath.indexOf('_') !== -1) continue;
 
             try {

@@ -3,7 +3,7 @@
  */
 
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { join } from 'pathe';
 import ora from 'ora';
 import { Logger } from '../lib/logger.js';
 

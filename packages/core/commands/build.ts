@@ -2,7 +2,7 @@
  * Build 命令 - 构建项目
  */
 
-import { join } from 'node:path';
+import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import ora from 'ora';
 import { Logger } from '../lib/logger.js';

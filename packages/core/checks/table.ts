@@ -3,7 +3,7 @@
  * 验证表定义文件的格式和规则
  */
 
-import path from 'node:path';
+import { basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
 import { parseRule } from '../util.js';
 import { paths } from '../paths.js';
@@ -97,8 +97,8 @@ export default async function (): Promise<boolean> {
         // 合并进行验证逻辑
         for (const { file, type, addonName } of allTableFiles) {
             totalFiles++;
-            const fileName = path.basename(file);
-            const fileBaseName = path.basename(file, '.json');
+            const fileName = basename(file);
+            const fileBaseName = basename(file, '.json');
             const fileType = type === 'project' ? '项目' : `组件${addonName}`;
 
             try {

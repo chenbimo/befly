@@ -7,7 +7,7 @@
  * - 提供统计信息和错误处理
  */
 
-import path from 'node:path';
+import { basename } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
 import { Env } from '../../config/env.js';
@@ -106,7 +106,7 @@ export const SyncDb = async (): Promise<void> => {
                 absolute: true,
                 onlyFiles: true
             })) {
-                const fileName = path.basename(file, '.json');
+                const fileName = basename(file, '.json');
                 if (!fileName.startsWith('_')) {
                     totalTables++;
                 }
@@ -128,7 +128,7 @@ export const SyncDb = async (): Promise<void> => {
                 absolute: true,
                 onlyFiles: true
             })) {
-                const fileName = path.basename(file, '.json');
+                const fileName = basename(file, '.json');
 
                 // 跳过以下划线开头的文件（这些是公共字段规则，不是表定义）
                 if (fileName.startsWith('_')) {

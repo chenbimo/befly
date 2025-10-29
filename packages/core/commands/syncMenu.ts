@@ -13,7 +13,7 @@
 
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
-import path from 'node:path';
+import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 
 interface SyncMenuOptions {
@@ -189,7 +189,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         const projectRoot = process.cwd();
 
         // 查找 menu.json 文件
-        const menuConfigPath = path.join(projectRoot, 'addons', 'admin', 'config', 'menu.json');
+        const menuConfigPath = join(projectRoot, 'addons', 'admin', 'config', 'menu.json');
 
         if (!existsSync(menuConfigPath)) {
             Logger.error(`❌ 未找到菜单配置文件: ${menuConfigPath}`);

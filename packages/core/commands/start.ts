@@ -2,7 +2,7 @@
  * Start 命令 - 启动生产服务器
  */
 
-import { join } from 'node:path';
+import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { ClusterManager } from '../lifecycle/cluster.js';
