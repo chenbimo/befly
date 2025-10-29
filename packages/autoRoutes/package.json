@@ -1,7 +1,7 @@
 {
     "name": "vite-plugin-vue-auto-routes",
     "version": "1.0.0",
-    "description": "Befly 配套的 Vue Router 自动路由生成插件",
+    "description": "具备继承功能的 Vue 3 自动路由生成插件。",
     "type": "module",
     "private": false,
     "publishConfig": {
