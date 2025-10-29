@@ -26,9 +26,9 @@
 </template>
 
 <script setup>
-import WelcomePanel from './components/WelcomePanel.vue';
-import EmailLoginForm from './components/EmailLoginForm.vue';
-import RegisterForm from './components/RegisterForm.vue';
+import WelcomePanel from './components/welcomePanel.vue';
+import EmailLoginForm from './components/emailLoginForm.vue';
+import RegisterForm from './components/registerForm.vue';
 
 // 数据定义
 const $Data = $ref({

@@ -15,13 +15,13 @@
 </template>
 
 <script setup>
-import SystemOverview from './components/SystemOverview.vue';
-import ServiceStatus from './components/ServiceStatus.vue';
-import UserInfo from './components/UserInfo.vue';
-import AddonList from './components/AddonList.vue';
-import SystemResources from './components/SystemResources.vue';
-import PerformanceMetrics from './components/PerformanceMetrics.vue';
-import EnvironmentInfo from './components/EnvironmentInfo.vue';
+import SystemOverview from './components/systemOverview.vue';
+import ServiceStatus from './components/serviceStatus.vue';
+import UserInfo from './components/userInfo.vue';
+import AddonList from './components/addonList.vue';
+import SystemResources from './components/systemResources.vue';
+import PerformanceMetrics from './components/performanceMetrics.vue';
+import EnvironmentInfo from './components/environmentInfo.vue';
 </script>
 
 <style scoped lang="scss">
