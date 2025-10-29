@@ -69,12 +69,15 @@ const $Method = {
                 $Storage.local.set('userInfo', res.data.userInfo);
             }
 
-            MessagePlugin.success('登录成功');
+            Modal.message({
+                message: '登录成功',
+                status: 'success'
+            });
 
             // 跳转到首页，路由守卫会自动加载菜单
             await router.push('/');
         } catch (error) {
-            // 错误已经在 request 拦截器中处理
+            console.log('🔥[ error ]-77', error);
         } finally {
             $Data.loading = false;
         }
