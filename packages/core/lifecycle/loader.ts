@@ -484,8 +484,6 @@ export class Loader {
                     const singleApiTime = calcPerfTime(singleApiStart);
                     failedApis++;
 
-                    const errorMessage = error?.message || '未知错误';
-
                     // 记录详细错误信息
                     Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime})`, error);
 
@@ -506,7 +504,7 @@ export class Loader {
                 process.exit(1);
             }
         } catch (error: any) {
-            Logger.error(`加载${dirDisplayName}接口时发生错误`, error);
+            Logger.error(`加载接口时发生错误`, error);
             process.exit(1);
         }
     }
