@@ -1,0 +1,25 @@
+[
+    {
+        "name": "用户管理",
+        "path": "/user",
+        "icon": "User",
+        "sort": 10,
+        "type": 1,
+        "children": [
+            {
+                "name": "用户列表",
+                "path": "/list",
+                "icon": "List",
+                "sort": 1,
+                "type": 1
+            },
+            {
+                "name": "用户详情",
+                "path": "/detail",
+                "icon": "FileText",
+                "sort": 2,
+                "type": 1
+            }
+        ]
+    }
+]
