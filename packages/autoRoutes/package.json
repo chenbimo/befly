@@ -1,6 +1,6 @@
 {
     "name": "befly-auto-routes",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "具备继承功能的 Vue 3 自动路由生成插件。",
     "type": "module",
     "private": false,
