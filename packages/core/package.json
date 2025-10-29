@@ -50,6 +50,7 @@
         "lifecycle/",
         "plugins/",
         "router/",
+        "tables/",
         "types/",
         ".gitignore",
         ".npmignore",
