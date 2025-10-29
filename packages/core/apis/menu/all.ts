@@ -15,7 +15,7 @@ export default {
         try {
             // 2. 查询角色信息获取菜单权限（使用 roleCode 而非 roleId）
             const role = await befly.db.getOne({
-                table: 'addon_admin_role',
+                table: 'core_role',
                 where: { code: ctx.user.roleCode }
             });
 
@@ -40,7 +40,7 @@ export default {
             if (!allMenus || allMenus.length === 0) {
                 befly.logger.info('菜单缓存未命中，从数据库查询');
                 allMenus = await befly.db.getAll({
-                    table: 'addon_admin_menu',
+                    table: 'core_menu',
                     fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                     orderBy: ['sort#ASC', 'id#ASC']
                 });

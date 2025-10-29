@@ -49,7 +49,7 @@ const systemResources = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/addon/admin/dashboardSystemResources');
+        const { data } = await $Http('/core/dashboard/systemResources');
         Object.assign(systemResources, data);
     } catch (error) {
         console.error('获取系统资源失败:', error);

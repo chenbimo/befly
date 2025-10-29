@@ -4,7 +4,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             await befly.db.delData({
-                table: 'addon_admin_dict',
+                table: 'core_dict',
                 where: {
                     id: ctx.body.id
                 }

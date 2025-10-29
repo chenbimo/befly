@@ -9,7 +9,7 @@ export default {
     handler: async (befly, ctx) => {
         // 查询角色信息
         const role = await befly.db.getOne({
-            table: 'addon_admin_role',
+            table: 'core_role',
             where: { id: ctx.body.roleId }
         });
 

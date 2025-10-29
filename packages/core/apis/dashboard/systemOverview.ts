@@ -9,17 +9,17 @@ export default {
     handler: async (befly, ctx) => {
         // 权限统计
         const menuCount = await befly.db.getCount({
-            table: 'addon_admin_menu',
+            table: 'core_menu',
             where: { state: 1 }
         });
 
         const roleCount = await befly.db.getCount({
-            table: 'addon_admin_role',
+            table: 'core_role',
             where: { state: 1 }
         });
 
         const apiCount = await befly.db.getCount({
-            table: 'addon_admin_api',
+            table: 'core_api',
             where: { state: 1 }
         });
 

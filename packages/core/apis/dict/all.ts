@@ -8,7 +8,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             const dicts = await befly.db.getAll({
-                table: 'addon_admin_dict',
+                table: 'core_dict',
                 fields: ['id', 'name', 'code', 'value', 'sort', 'pid', 'description', 'state', 'created_at', 'updated_at'],
                 orderBy: [
                     { field: 'sort', direction: 'ASC' },

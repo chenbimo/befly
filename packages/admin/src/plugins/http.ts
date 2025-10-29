@@ -70,13 +70,6 @@ request.interceptors.response.use(
  * @param method - 请求方法，默认为 'post'，可选 'get' | 'post'
  * @param config - axios 请求配置
  * @returns Promise<ApiResponse<T>>
- *
- * @example
- * // POST 请求（默认）
- * await $Http('/addon/admin/login', { email, password });
- *
- * // GET 请求
- * await $Http('/addon/admin/info', {}, 'get');
  */
 export function $Http<T = any>(url: string, data: any = {}, method: 'get' | 'post' = 'post', config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const methodLower = method.toLowerCase() as 'get' | 'post';

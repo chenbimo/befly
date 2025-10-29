@@ -99,7 +99,7 @@ const $Method = {
     // 加载管理员列表
     async apiAdminList() {
         try {
-            const res = await $Http('/addon/admin/adminList', {
+            const res = await $Http('/core/admin/list', {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.pageSize
             });
@@ -122,7 +122,7 @@ const $Method = {
             status: 'warning'
         }).then(async () => {
             try {
-                const res = await $Http('/addon/admin/adminDel', { id: row.id });
+                const res = await $Http('/core/admin/del', { id: row.id });
                 if (res.code === 0) {
                     Modal.message({ message: '删除成功', status: 'success' });
                     $Method.apiAdminList();

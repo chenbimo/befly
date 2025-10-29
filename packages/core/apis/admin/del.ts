@@ -11,7 +11,7 @@ export default {
     handler: async (befly, ctx) => {
         // 检查管理员是否存在
         const admin = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             where: { id: ctx.body.id }
         });
 
@@ -26,7 +26,7 @@ export default {
 
         // 删除管理员
         await befly.db.delData({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             where: { id: ctx.body.id }
         });
 

@@ -19,7 +19,7 @@ export default {
     handler: async (befly, ctx) => {
         // 检查邮箱是否已存在
         const existingAdmin = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             where: { email: ctx.body.email }
         });
 
@@ -32,7 +32,7 @@ export default {
 
         // 创建管理员
         const adminId = await befly.db.insData({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             data: {
                 name: ctx.body.name,
                 email: ctx.body.email,

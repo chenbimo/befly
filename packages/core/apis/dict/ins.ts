@@ -7,7 +7,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             const dictId = await befly.db.insData({
-                table: 'addon_admin_dict',
+                table: 'core_dict',
                 data: {
                     name: ctx.body.name,
                     code: ctx.body.code,

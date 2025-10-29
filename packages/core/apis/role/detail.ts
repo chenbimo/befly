@@ -10,7 +10,7 @@ export default {
         let roleInfo = null;
         if (ctx.body.id && ctx.user.roleType === 'admin') {
             roleInfo = await befly.db.getOne({
-                table: 'addon_admin_role',
+                table: 'core_role',
                 where: { code: ctx.body.id }
             });
         }

@@ -7,7 +7,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             await befly.db.updData({
-                table: 'addon_admin_menu',
+                table: 'core_menu',
                 where: { id: ctx.body.id },
                 data: {
                     name: ctx.body.name,

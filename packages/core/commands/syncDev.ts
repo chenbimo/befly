@@ -4,7 +4,7 @@
  * - 姓名: 开发者
  * - 密码: 使用 bcrypt 加密
  * - 角色: roleCode=dev, roleType=admin
- * - 表名: addon_admin_admin
+ * - 表名: core_admin
  */
 
 import { Logger } from '../lib/logger.js';
@@ -41,30 +41,30 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
 
         const helper = Database.getDbHelper();
 
-        // 检查 addon_admin_admin 表是否存在
-        const existAdmin = await helper.tableExists('addon_admin_admin');
+        // 检查 core_admin 表是否存在
+        const existAdmin = await helper.tableExists('core_admin');
         if (!existAdmin) {
-            Logger.warn('跳过开发管理员初始化：未检测到 addon_admin_admin 表');
+            Logger.warn('跳过开发管理员初始化：未检测到 core_admin 表');
             return;
         }
 
-        // 检查 addon_admin_role 表是否存在
-        const existRole = await helper.tableExists('addon_admin_role');
+        // 检查 core_role 表是否存在
+        const existRole = await helper.tableExists('core_role');
         if (!existRole) {
-            Logger.warn('跳过开发管理员初始化：未检测到 addon_admin_role 表');
+            Logger.warn('跳过开发管理员初始化：未检测到 core_role 表');
             return;
         }
 
-        // 检查 addon_admin_menu 表是否存在
-        const existMenu = await helper.tableExists('addon_admin_menu');
+        // 检查 core_menu 表是否存在
+        const existMenu = await helper.tableExists('core_menu');
         if (!existMenu) {
-            Logger.warn('跳过开发管理员初始化：未检测到 addon_admin_menu 表');
+            Logger.warn('跳过开发管理员初始化：未检测到 core_menu 表');
             return;
         }
 
         // 查询所有菜单 ID
         const allMenus = await helper.getAll({
-            table: 'addon_admin_menu',
+            table: 'core_menu',
             fields: ['id']
         });
 
@@ -77,11 +77,11 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         Logger.info(`查询到 ${allMenus.length} 个菜单，ID 列表: ${menuIds || '(空)'}`);
 
         // 查询所有接口 ID
-        const existApi = await helper.tableExists('addon_admin_api');
+        const existApi = await helper.tableExists('core_api');
         let apiIds = '';
         if (existApi) {
             const allApis = await helper.getAll({
-                table: 'addon_admin_api',
+                table: 'core_api',
                 fields: ['id']
             });
 
@@ -97,14 +97,14 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
 
         // 查询或创建 dev 角色
         let devRole = await helper.getOne({
-            table: 'addon_admin_role',
+            table: 'core_role',
             where: { code: 'dev' }
         });
 
         if (devRole) {
             // 更新 dev 角色的菜单和接口权限
             await helper.updData({
-                table: 'addon_admin_role',
+                table: 'core_role',
                 where: { code: 'dev' },
                 data: {
                     name: '开发者角色',
@@ -117,7 +117,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         } else {
             // 创建 dev 角色
             const roleId = await helper.insData({
-                table: 'addon_admin_role',
+                table: 'core_role',
                 data: {
                     name: '开发者角色',
                     code: 'dev',
@@ -148,14 +148,14 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
 
         // 查询现有账号
         const existing = await helper.getOne({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             where: { email: 'dev@qq.com' }
         });
 
         if (existing) {
             // 更新现有账号
             await helper.updData({
-                table: 'addon_admin_admin',
+                table: 'core_admin',
                 where: { email: 'dev@qq.com' },
                 data: devData
             });
@@ -163,7 +163,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         } else {
             // 插入新账号
             await helper.insData({
-                table: 'addon_admin_admin',
+                table: 'core_admin',
                 data: devData
             });
             Logger.info('✅ 开发管理员已初始化：email=dev@qq.com, username=dev, roleCode=dev, roleType=admin');

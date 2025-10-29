@@ -49,7 +49,7 @@ const permissionStats = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/addon/admin/dashboardSystemOverview');
+        const { data } = await $Http('/core/dashboard/systemOverview');
         Object.assign(permissionStats, data);
     } catch (error) {
         console.error('获取系统概览失败:', error);

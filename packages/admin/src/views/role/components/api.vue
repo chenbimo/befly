@@ -78,7 +78,7 @@ const $Method = {
     // 加载所有接口
     async apiApiAll() {
         try {
-            const res = await $Http('/addon/admin/apiAll');
+            const res = await $Http('/core/api/all');
 
             // 将接口列表按 addonTitle 分组
             const apiMap = new Map();
@@ -114,7 +114,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/roleApiDetail', {
+            const res = await $Http('/core/role/apiDetail', {
                 roleId: $Prop.rowData.id
             });
 
@@ -159,7 +159,7 @@ const $Method = {
     // 提交表单
     async onSubmit() {
         try {
-            const res = await $Http('/addon/admin/roleApiSave', {
+            const res = await $Http('/core/role/apiSave', {
                 roleId: $Prop.rowData.id,
                 apiIds: $Data.checkedApiIds
             });

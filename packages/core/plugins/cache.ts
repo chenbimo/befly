@@ -24,7 +24,7 @@ class CacheManager {
     async cacheApis(): Promise<void> {
         try {
             // 检查表是否存在
-            const tableExists = await this.appContext.db.tableExists('addon_admin_api');
+            const tableExists = await this.appContext.db.tableExists('core_api');
             if (!tableExists) {
                 Logger.warn('⚠️ 接口表不存在，跳过接口缓存');
                 return;
@@ -32,7 +32,7 @@ class CacheManager {
 
             // 从数据库查询所有接口（与 apiAll.ts 保持一致）
             const apiList = await this.appContext.db.getAll({
-                table: 'addon_admin_api',
+                table: 'core_api',
                 fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
@@ -56,7 +56,7 @@ class CacheManager {
     async cacheMenus(): Promise<void> {
         try {
             // 检查表是否存在
-            const tableExists = await this.appContext.db.tableExists('addon_admin_menu');
+            const tableExists = await this.appContext.db.tableExists('core_menu');
             if (!tableExists) {
                 Logger.warn('⚠️ 菜单表不存在，跳过菜单缓存');
                 return;
@@ -64,7 +64,7 @@ class CacheManager {
 
             // 从数据库查询所有菜单
             const menus = await this.appContext.db.getAll({
-                table: 'addon_admin_menu',
+                table: 'core_menu',
                 fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
@@ -89,8 +89,8 @@ class CacheManager {
     async cacheRolePermissions(): Promise<void> {
         try {
             // 检查表是否存在
-            const apiTableExists = await this.appContext.db.tableExists('addon_admin_api');
-            const roleTableExists = await this.appContext.db.tableExists('addon_admin_role');
+            const apiTableExists = await this.appContext.db.tableExists('core_api');
+            const roleTableExists = await this.appContext.db.tableExists('core_role');
 
             if (!apiTableExists || !roleTableExists) {
                 Logger.warn('⚠️ 接口或角色表不存在，跳过角色权限缓存');
@@ -99,13 +99,13 @@ class CacheManager {
 
             // 查询所有角色
             const roles = await this.appContext.db.getAll({
-                table: 'addon_admin_role',
+                table: 'core_role',
                 fields: ['id', 'code', 'apis']
             });
 
             // 查询所有接口（用于权限映射）
             const allApis = await this.appContext.db.getAll({
-                table: 'addon_admin_api',
+                table: 'core_api',
                 fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
             });
 

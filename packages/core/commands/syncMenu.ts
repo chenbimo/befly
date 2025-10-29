@@ -52,7 +52,7 @@ async function syncMenus(helper: any, menus: any[]): Promise<{ created: number; 
         try {
             // 1. 同步父级菜单
             const existingParent = await helper.getOne({
-                table: 'addon_admin_menu',
+                table: 'core_menu',
                 where: { path: menu.path || '' }
             });
 
@@ -60,7 +60,7 @@ async function syncMenus(helper: any, menus: any[]): Promise<{ created: number; 
 
             if (existingParent) {
                 await helper.updData({
-                    table: 'addon_admin_menu',
+                    table: 'core_menu',
                     where: { id: existingParent.id },
                     data: {
                         pid: 0,
@@ -75,7 +75,7 @@ async function syncMenus(helper: any, menus: any[]): Promise<{ created: number; 
                 Logger.info(`  └ 更新父级菜单: ${menu.name} (ID: ${parentId}, Path: ${menu.path})`);
             } else {
                 parentId = await helper.insData({
-                    table: 'addon_admin_menu',
+                    table: 'core_menu',
                     data: {
                         pid: 0,
                         name: menu.name,
@@ -93,13 +93,13 @@ async function syncMenus(helper: any, menus: any[]): Promise<{ created: number; 
             if (menu.children && menu.children.length > 0) {
                 for (const child of menu.children) {
                     const existingChild = await helper.getOne({
-                        table: 'addon_admin_menu',
+                        table: 'core_menu',
                         where: { path: child.path || '' }
                     });
 
                     if (existingChild) {
                         await helper.updData({
-                            table: 'addon_admin_menu',
+                            table: 'core_menu',
                             where: { id: existingChild.id },
                             data: {
                                 pid: parentId,
@@ -113,7 +113,7 @@ async function syncMenus(helper: any, menus: any[]): Promise<{ created: number; 
                         Logger.info(`    └ 更新子级菜单: ${child.name} (ID: ${existingChild.id}, PID: ${parentId}, Path: ${child.path})`);
                     } else {
                         const childId = await helper.insData({
-                            table: 'addon_admin_menu',
+                            table: 'core_menu',
                             data: {
                                 pid: parentId,
                                 name: child.name,
@@ -144,7 +144,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
     Logger.info(`\n=== 删除配置中不存在的记录 ===`);
 
     const allRecords = await helper.getAll({
-        table: 'addon_admin_menu',
+        table: 'core_menu',
         fields: ['id', 'path', 'name']
     });
 
@@ -152,7 +152,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
     for (const record of allRecords) {
         if (record.path && !configPaths.has(record.path)) {
             await helper.delData({
-                table: 'addon_admin_menu',
+                table: 'core_menu',
                 where: { id: record.id }
             });
             deletedCount++;
@@ -209,14 +209,14 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
 
         // 1. 检查表是否存在
         Logger.info('=== 检查数据表 ===');
-        const exists = await helper.tableExists('addon_admin_menu');
+        const exists = await helper.tableExists('core_menu');
 
         if (!exists) {
-            Logger.error(`❌ 表 addon_admin_menu 不存在，请先运行 befly syncDb 同步数据库`);
+            Logger.error(`❌ 表 core_menu 不存在，请先运行 befly syncDb 同步数据库`);
             process.exit(1);
         }
 
-        Logger.info(`✅ 表 addon_admin_menu 存在`);
+        Logger.info(`✅ 表 core_menu 存在`);
 
         // 2. 收集配置文件中所有菜单的 path
         Logger.info('\n=== 步骤 2: 收集配置菜单路径 ===');
@@ -233,7 +233,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         // 5. 构建树形结构预览
         Logger.info('\n=== 步骤 5: 菜单结构预览 ===');
         const allMenus = await helper.getAll({
-            table: 'addon_admin_menu',
+            table: 'core_menu',
             fields: ['id', 'pid', 'name', 'path', 'type'],
             orderBy: ['pid#ASC', 'sort#ASC', 'id#ASC']
         });

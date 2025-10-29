@@ -140,7 +140,7 @@ export const SyncDb = async (): Promise<void> => {
                 // - core 表：core_{表名}
                 //   例如：user.json → core_user
                 // - addon 表：addon_{转换后的addonName}_{表名}
-                //   例如：addon-admin 的 user.json → addon_admin_user
+                //   例如：addon-admin 的 user.json → core_user
                 // - 项目表：{表名}
                 //   例如：user.json → user
                 let tableName = snakeCase(fileName);

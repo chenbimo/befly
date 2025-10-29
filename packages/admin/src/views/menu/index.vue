@@ -100,7 +100,7 @@ const $Method = {
     // 加载菜单列表
     async apiMenuList() {
         try {
-            const res = await $Http('/addon/admin/menuList', {
+            const res = await $Http('/core/menu/list', {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.pageSize
             });
@@ -123,7 +123,7 @@ const $Method = {
             status: 'warning'
         }).then(async () => {
             try {
-                const res = await $Http('/addon/admin/menuDel', { id: row.id });
+                const res = await $Http('/core/menu/del', { id: row.id });
                 if (res.code === 0) {
                     Modal.message({ message: '删除成功', status: 'success' });
                     $Method.apiMenuList();

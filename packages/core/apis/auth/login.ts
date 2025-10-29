@@ -23,7 +23,7 @@ export default {
         if (ctx.body.email && ctx.body.password) {
             // 查询管理员
             admin = await befly.db.getOne({
-                table: 'addon_admin_admin',
+                table: 'core_admin',
                 where: { email: ctx.body.email }
             });
 
@@ -72,7 +72,7 @@ export default {
 
             // 查询管理员
             admin = await befly.db.getOne({
-                table: 'addon_admin_admin',
+                table: 'core_admin',
                 where: { phone: ctx.body.phone }
             });
 
@@ -90,7 +90,7 @@ export default {
 
         // 更新最后登录信息
         await befly.db.updData({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             where: { id: admin.id },
             data: {
                 lastLoginTime: Date.now(),

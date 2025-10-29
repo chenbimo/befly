@@ -19,7 +19,7 @@ export default {
 
         // 检查管理员是否存在
         const admin = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             where: { id }
         });
 
@@ -30,7 +30,7 @@ export default {
         // 如果更新邮箱，检查是否重复
         if (updateData.email && updateData.email !== admin.email) {
             const existingAdmin = await befly.db.getOne({
-                table: 'addon_admin_admin',
+                table: 'core_admin',
                 where: { email: updateData.email }
             });
 
@@ -41,7 +41,7 @@ export default {
 
         // 更新管理员信息
         await befly.db.updData({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             data: updateData,
             where: { id }
         });

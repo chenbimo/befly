@@ -5,7 +5,7 @@ export default {
     handler: async (befly, ctx) => {
         const roles = await befly.db.getList({
             limit: 30,
-            table: 'addon_admin_role',
+            table: 'core_role',
             orderBy: ['sort#ASC', 'id#ASC']
         });
 

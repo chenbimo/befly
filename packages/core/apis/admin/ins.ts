@@ -14,7 +14,7 @@ export default {
         // 检查用户名是否已存在
         if (ctx.body.username) {
             const existingByUsername = await befly.db.getOne({
-                table: 'addon_admin_admin',
+                table: 'core_admin',
                 where: { username: ctx.body.username }
             });
 
@@ -25,7 +25,7 @@ export default {
 
         // 检查邮箱是否已存在
         const existingByEmail = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             where: { email: ctx.body.email }
         });
 
@@ -38,7 +38,7 @@ export default {
 
         // 创建管理员
         const adminId = await befly.db.insData({
-            table: 'addon_admin_admin',
+            table: 'core_admin',
             data: {
                 username: ctx.body.username,
                 email: ctx.body.email,

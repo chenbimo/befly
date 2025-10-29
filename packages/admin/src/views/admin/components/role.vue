@@ -58,7 +58,7 @@ const $Method = {
     // 加载角色列表
     async apiRoleList() {
         try {
-            const res = await $Http('/addon/admin/roleList', {
+            const res = await $Http('/core/role/list', {
                 page: 1,
                 limit: 1000
             });
@@ -80,7 +80,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/adminRoleDetail', {
+            const res = await $Http('/core/admin/roleDetail', {
                 adminId: $Prop.rowData.id
             });
             $Data.checkedRoleCode = res.data.roleCode || '';
@@ -97,7 +97,7 @@ const $Method = {
         }
 
         try {
-            const res = await $Http('/addon/admin/adminRoleSave', {
+            const res = await $Http('/core/admin/roleSave', {
                 adminId: $Prop.rowData.id,
                 roleCode: $Data.checkedRoleCode
             });
