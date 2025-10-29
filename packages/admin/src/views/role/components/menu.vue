@@ -1,7 +1,7 @@
 <template>
     <tiny-dialog-box v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <div class="comp-role-menu">
-            <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($Form.tree = el)" />
+            <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
         </div>
         <template #footer>
             <tiny-button @click="$Method.onClose">取消</tiny-button>
@@ -27,7 +27,7 @@ const $Prop = defineProps({
 const $Emit = defineEmits(['update:modelValue', 'success']);
 
 // 表单引用
-const $Form = $shallowRef({
+const $From = $shallowRef({
     tree: null
 });
 
@@ -84,8 +84,8 @@ const $Method = {
 
             // 等待树渲染完成后设置选中状态
             nextTick(() => {
-                if ($Form.tree && $Data.menuTreeCheckedKeys.length > 0) {
-                    $Form.tree.setCheckedKeys($Data.menuTreeCheckedKeys);
+                if ($From.tree && $Data.menuTreeCheckedKeys.length > 0) {
+                    $From.tree.setCheckedKeys($Data.menuTreeCheckedKeys);
                 }
             });
         } catch (error) {
@@ -96,14 +96,14 @@ const $Method = {
     // 提交表单
     async onSubmit() {
         try {
-            if (!$Form.tree) {
+            if (!$From.tree) {
                 Modal.message({ message: '菜单树未初始化', status: 'error' });
                 return;
             }
 
             // 获取选中的节点（包括半选中的父节点）
-            const checkedKeys = $Form.tree.getCheckedKeys();
-            const halfCheckedKeys = $Form.tree.getHalfCheckedKeys();
+            const checkedKeys = $From.tree.getCheckedKeys();
+            const halfCheckedKeys = $From.tree.getHalfCheckedKeys();
             const menuIds = [...checkedKeys, ...halfCheckedKeys];
 
             const res = await $Http('/core/role/menuSave', {

@@ -1,6 +1,6 @@
 <template>
     <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
-        <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($Form.form = el)">
+        <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
             <tiny-form-item label="菜单名称" prop="name">
                 <tiny-input v-model="$Data.formData.name" placeholder="请输入菜单名称" />
             </tiny-form-item>
@@ -52,7 +52,7 @@ const $Prop = defineProps({
 const $Emit = defineEmits(['update:modelValue', 'success']);
 
 // 表单引用
-const $Form = $shallowRef({
+const $From = $shallowRef({
     form: null
 });
 
@@ -114,7 +114,7 @@ const $Method = {
 
     async onSubmit() {
         try {
-            const valid = await $Form.form.validate();
+            const valid = await $From.form.validate();
             if (!valid) return;
 
             const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/menuIns' : '/addon/admin/menuUpd', $Data.formData);

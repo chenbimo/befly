@@ -1,6 +1,6 @@
 <template>
-    <tiny-form :data="$Data.formData" :rules="$Data.rules" :ref="(el) => ($Form.form = el)" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="90px">
-        <tiny-form-item name="account" label="用户名/邮箱">
+    <tiny-form :data="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :required-mark="false" show-error-message label-width="90px">
+        <tiny-form-item name="account" label="账号">
             <tiny-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="User" :size="18" />
@@ -20,7 +20,7 @@
             <a href="#" class="forgot-password">忘记密码？</a>
         </div>
 
-        <tiny-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.handleSubmit"> 登录 </tiny-button>
+        <tiny-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </tiny-button>
     </tiny-form>
 </template>
 
@@ -28,7 +28,7 @@
 const router = useRouter();
 
 // 表单引用
-const $Form = $ref({
+const $From = $shallowRef({
     form: null
 });
 
@@ -38,8 +38,11 @@ const $Data = $ref({
     formData: {
         account: '',
         password: ''
-    },
-    rules: {
+    }
+});
+
+const $Data2 = $shallowRef({
+    formRules: {
         account: [{ required: true, message: '请输入用户名或邮箱', type: 'error' }],
         password: [{ required: true, message: '请输入密码', type: 'error' }]
     }
@@ -47,8 +50,9 @@ const $Data = $ref({
 
 // 方法定义
 const $Method = {
-    async handleSubmit() {
-        const valid = await $Form.form.validate();
+    async apiLogin() {
+        const valid = await $From.form.validate();
+        console.log('🔥[ valid ]-52', valid);
         if (!valid) return;
 
         $Data.loading = true;
@@ -64,11 +68,11 @@ const $Method = {
             const res = await $Http('/core/auth/login', loginData);
 
             // 先保存 token
-            localStorage.setItem('token', res.data.token);
+            $Storage.local.set('token', res.data.token);
 
             // 如果返回用户信息,也可以存储
             if (res.data.userInfo) {
-                localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo));
+                $Storage.local.set('userInfo', res.data.userInfo);
             }
 
             MessagePlugin.success('登录成功');

@@ -1,5 +1,5 @@
 <template>
-    <tiny-form :data="$Data.formData" :rules="$Data.rules" :ref="(el) => ($Form.form = el)" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
+    <tiny-form :data="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :required-mark="false" show-error-message label-width="70px">
         <tiny-form-item name="username" label="用户名">
             <tiny-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
                 <template #prefix-icon>
@@ -40,7 +40,7 @@
 const emit = defineEmits(['success']);
 
 // 表单引用
-const $Form = $ref({
+const $From = $shallowRef({
     form: null
 });
 
@@ -52,8 +52,11 @@ const $Data = $ref({
         email: '',
         password: '',
         nickname: ''
-    },
-    rules: {
+    }
+});
+
+const $Data2 = $shallowRef({
+    formRules: {
         username: [{ required: true, message: '请输入用户名', type: 'error' }],
         email: [{ required: true, message: '请输入邮箱', type: 'error' }],
         password: [{ required: true, message: '请输入密码', type: 'error' }]
@@ -64,7 +67,7 @@ const $Data = $ref({
 // 方法定义
 const $Method = {
     async handleSubmit() {
-        const valid = await $Form.form.validate();
+        const valid = await $From.form.validate();
         if (!valid) return;
 
         $Data.loading = true;

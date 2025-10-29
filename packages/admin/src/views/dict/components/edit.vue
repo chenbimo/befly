@@ -1,6 +1,6 @@
 <template>
     <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑字典' : '添加字典'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($Form.form = el)">
+        <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
             <tiny-form-item label="字典名称" prop="name">
                 <tiny-input v-model="$Data.formData.name" placeholder="请输入字典名称" />
             </tiny-form-item>
@@ -52,7 +52,7 @@ const $Prop = defineProps({
 const $Emit = defineEmits(['update:modelValue', 'success']);
 
 // 表单引用
-const $Form = $shallowRef({
+const $From = $shallowRef({
     form: null
 });
 
@@ -120,7 +120,7 @@ const $Method = {
 
     async onSubmit() {
         try {
-            const valid = await $Form.form.validate();
+            const valid = await $From.form.validate();
             if (!valid) return;
 
             const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/dictIns' : '/addon/admin/dictUpd', $Data.formData);
