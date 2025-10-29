@@ -27,14 +27,14 @@ export default {
             });
 
             if (!admin) {
-                return No('用户名或密码错误');
+                return No('用户名或密码错误1');
             }
 
             // 验证密码
             try {
                 const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
                 if (!isValid) {
-                    return No('用户名或密码错误');
+                    return No('用户名或密码错误2');
                 }
             } catch (error) {
                 befly.logger.error('密码验证失败:', {

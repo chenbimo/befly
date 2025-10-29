@@ -1,5 +1,5 @@
 <template>
-    <tiny-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left">
+    <tiny-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
         <tiny-form-item prop="account" label="账号">
             <tiny-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
                 <template #prefix-icon>
@@ -51,13 +51,11 @@ const $Data2 = $shallowRef({
 // 方法定义
 const $Method = {
     async apiLogin() {
-        const valid = await $From.form.validate();
-        console.log('🔥[ valid ]-52', valid);
-        if (!valid) return;
-
-        $Data.loading = true;
-
         try {
+            const valid = await $From.form.validate();
+
+            $Data.loading = true;
+
             // 判断是邮箱还是用户名
             const isEmail = $Data.formData.account.includes('@');
             const loginData = {
