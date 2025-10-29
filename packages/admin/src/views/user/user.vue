@@ -34,9 +34,9 @@
         <div class="table-wrapper">
             <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered stripe hover max-height="100%">
                 <template #state="{ row }">
-                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
-                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
-                    <t-tag v-else theme="danger">已删除</t-tag>
+                    <tiny-tag v-if="row.state === 1" type="success">正常</tiny-tag>
+                    <tiny-tag v-else-if="row.state === 2" type="warning">禁用</tiny-tag>
+                    <tiny-tag v-else type="danger">已删除</tiny-tag>
                 </template>
 
                 <template #lastLoginTime="{ row }">
@@ -63,7 +63,7 @@
         <t-dialog v-model:visible="$Data.roleVisible" header="分配角色" width="600px" :on-confirm="$Method.handleRoleSubmit">
             <div class="role-dialog">
                 <div class="user-info">
-                    <t-tag theme="primary">{{ $Data.currentUser.username }}</t-tag>
+                    <tiny-tag type="primary">{{ $Data.currentUser.username }}</tiny-tag>
                     <span class="user-email">{{ $Data.currentUser.email }}</span>
                 </div>
                 <t-divider />

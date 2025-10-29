@@ -22,9 +22,9 @@
                         <span class="col-module">{{ log.module }}</span>
                         <span class="col-ip">{{ log.ip }}</span>
                         <span class="col-status">
-                            <t-tag :theme="log.status === 'success' ? 'success' : 'danger'" size="small" variant="light">
+                            <tiny-tag :type="log.status === 'success' ? 'success' : 'danger'" size="small">
                                 {{ log.status === 'success' ? '成功' : '失败' }}
-                            </t-tag>
+                            </tiny-tag>
                         </span>
                     </div>
                 </div>

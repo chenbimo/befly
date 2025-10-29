@@ -14,7 +14,7 @@
                     <div class="addon-info">
                         <div class="addon-title">
                             <span class="addon-name">{{ addon.title }}</span>
-                            <t-tag theme="success" variant="outline" size="small">{{ addon.version }}</t-tag>
+                            <tiny-tag type="success" size="small">{{ addon.version }}</tiny-tag>
                         </div>
                         <div class="addon-desc">{{ addon.description }}</div>
                     </div>

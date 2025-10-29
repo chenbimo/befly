@@ -14,7 +14,7 @@
                         <span class="notification-title">{{ notification.title }}</span>
                         <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
                     </div>
-                    <t-tag v-if="!notification.isRead" theme="primary" size="small" variant="light">新</t-tag>
+                    <tiny-tag v-if="!notification.isRead" type="primary" size="small">新</tiny-tag>
                 </div>
             </div>
         </div>
