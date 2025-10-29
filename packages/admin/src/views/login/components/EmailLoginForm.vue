@@ -1,9 +1,9 @@
 <template>
-    <tiny-form :data="$Data.formData" :rules="$Data.rules" :ref="(el) => ($Form.form = el)" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
-        <tiny-form-item name="email" label="邮箱">
-            <tiny-input v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
+    <tiny-form :data="$Data.formData" :rules="$Data.rules" :ref="(el) => ($Form.form = el)" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="90px">
+        <tiny-form-item name="account" label="用户名/邮箱">
+            <tiny-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
                 <template #prefix-icon>
-                    <Icon name="Mail" :size="18" />
+                    <Icon name="User" :size="18" />
                 </template>
             </tiny-input>
         </tiny-form-item>
@@ -36,11 +36,11 @@ const $Form = $ref({
 const $Data = $ref({
     loading: false,
     formData: {
-        email: '',
+        account: '',
         password: ''
     },
     rules: {
-        email: [{ required: true, message: '请输入邮箱', type: 'error' }],
+        account: [{ required: true, message: '请输入用户名或邮箱', type: 'error' }],
         password: [{ required: true, message: '请输入密码', type: 'error' }]
     }
 });
@@ -54,7 +54,14 @@ const $Method = {
         $Data.loading = true;
 
         try {
-            const res = await $Http('/core/admin/login', $Data.formData);
+            // 判断是邮箱还是用户名
+            const isEmail = $Data.formData.account.includes('@');
+            const loginData = {
+                password: $Data.formData.password,
+                ...(isEmail ? { email: $Data.formData.account } : { username: $Data.formData.account })
+            };
+
+            const res = await $Http('/core/auth/login', loginData);
 
             // 先保存 token
             localStorage.setItem('token', res.data.token);

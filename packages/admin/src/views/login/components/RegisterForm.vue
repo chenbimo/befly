@@ -1,7 +1,7 @@
 <template>
     <tiny-form :data="$Data.formData" :rules="$Data.rules" :ref="(el) => ($Form.form = el)" class="login-form" :required-mark="false" show-error-message label-align="left" label-width="70px">
-        <tiny-form-item name="name" label="姓名">
-            <tiny-input v-model="$Data.formData.name" placeholder="请输入姓名" size="large" clearable>
+        <tiny-form-item name="username" label="用户名">
+            <tiny-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
                 <template #prefix-icon>
                     <Icon name="User" :size="18" />
                 </template>
@@ -24,6 +24,14 @@
             </tiny-input>
         </tiny-form-item>
 
+        <tiny-form-item name="nickname" label="昵称">
+            <tiny-input v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
+                <template #prefix-icon>
+                    <Icon name="Smile" :size="18" />
+                </template>
+            </tiny-input>
+        </tiny-form-item>
+
         <tiny-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.handleSubmit"> 注册 </tiny-button>
     </tiny-form>
 </template>
@@ -40,14 +48,16 @@ const $Form = $ref({
 const $Data = $ref({
     loading: false,
     formData: {
-        name: '',
+        username: '',
         email: '',
-        password: ''
+        password: '',
+        nickname: ''
     },
     rules: {
-        name: [{ required: true, message: '请输入姓名', type: 'error' }],
+        username: [{ required: true, message: '请输入用户名', type: 'error' }],
         email: [{ required: true, message: '请输入邮箱', type: 'error' }],
         password: [{ required: true, message: '请输入密码', type: 'error' }]
+        // nickname 是选填项，不需要验证规则
     }
 });
 
@@ -77,9 +87,10 @@ const $Method = {
 
     // 清空表单
     resetForm() {
-        $Data.formData.name = '';
+        $Data.formData.username = '';
         $Data.formData.email = '';
         $Data.formData.password = '';
+        $Data.formData.nickname = '';
     }
 };
 </script>

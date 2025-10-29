@@ -11,16 +11,42 @@ export default {
     name: '管理员登录',
     auth: false,
     fields: {
+        username: adminTable.username,
         email: adminTable.email,
-        password: adminTable.password,
-        phone: adminTable.phone,
-        code: '验证码|string|4|6|null|0|null'
+        password: adminTable.password
     },
     handler: async (befly, ctx) => {
         let admin = null;
 
+        // 用户名登录
+        if (ctx.body.username && ctx.body.password) {
+            // 查询管理员
+            admin = await befly.db.getOne({
+                table: 'core_admin',
+                where: { username: ctx.body.username }
+            });
+
+            if (!admin) {
+                return No('用户名或密码错误');
+            }
+
+            // 验证密码
+            try {
+                const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
+                if (!isValid) {
+                    return No('用户名或密码错误');
+                }
+            } catch (error) {
+                befly.logger.error('密码验证失败:', {
+                    error: error.message,
+                    passwordLength: admin.password?.length,
+                    passwordPrefix: admin.password?.substring(0, 10)
+                });
+                return No('密码格式错误，请重新设置密码');
+            }
+        }
         // 邮箱登录
-        if (ctx.body.email && ctx.body.password) {
+        else if (ctx.body.email && ctx.body.password) {
             // 查询管理员
             admin = await befly.db.getOne({
                 table: 'core_admin',
@@ -45,42 +71,8 @@ export default {
                 });
                 return No('密码格式错误，请重新设置密码');
             }
-        }
-        // 手机号登录
-        else if (ctx.body.phone && ctx.body.code) {
-            // 验证验证码
-            if (befly.redis) {
-                const key = `sms_code:${ctx.body.phone}`;
-                const storedCode = await befly.redis.get(key);
-
-                if (!storedCode) {
-                    return No('验证码已过期或不存在');
-                }
-
-                if (storedCode !== ctx.body.code) {
-                    return No('验证码错误');
-                }
-
-                // 验证成功后删除验证码
-                await befly.redis.del(key);
-            } else {
-                // 没有 Redis 时的降级处理(开发环境)
-                if (ctx.body.code !== '123456') {
-                    return No('验证码错误');
-                }
-            }
-
-            // 查询管理员
-            admin = await befly.db.getOne({
-                table: 'core_admin',
-                where: { phone: ctx.body.phone }
-            });
-
-            if (!admin) {
-                return No('该手机号未注册');
-            }
         } else {
-            return No('请提供正确的登录信息');
+            return No('请提供用户名或邮箱以及密码');
         }
 
         // 检查账号状态（state=1 表示正常，state=2 表示禁用）
@@ -102,7 +94,6 @@ export default {
         const token = await Jwt.sign(
             {
                 id: admin.id,
-                email: admin.email,
                 nickname: admin.nickname,
                 roleCode: admin.roleCode,
                 roleType: admin.roleType
