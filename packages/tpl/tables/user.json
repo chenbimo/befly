@@ -1,6 +1,6 @@
 {
     "username": "用户名|string|3|50|null|1|^[a-zA-Z0-9_]+$",
-    "password": "密码|string|6|255|null|0|null",
+    "password": "密码|string|6|500|null|0|null",
     "email": "邮箱|string|5|100|null|1|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
     "role": "角色|string|1|20|user|1|^(admin|user|guest)$",
     "nickname": "昵称|string|0|50|null|0|null",

@@ -37,11 +37,7 @@ export default {
                     return No('用户名或密码错误2');
                 }
             } catch (error) {
-                befly.logger.error('密码验证失败:', {
-                    error: error.message,
-                    passwordLength: admin.password?.length,
-                    passwordPrefix: admin.password?.substring(0, 10)
-                });
+                befly.logger.error('密码验证失败', error);
                 return No('密码格式错误，请重新设置密码');
             }
         }
@@ -64,11 +60,7 @@ export default {
                     return No('邮箱或密码错误');
                 }
             } catch (error) {
-                befly.logger.error('密码验证失败:', {
-                    error: error.message,
-                    passwordLength: admin.password?.length,
-                    passwordPrefix: admin.password?.substring(0, 10)
-                });
+                befly.logger.error('密码验证失败', error);
                 return No('密码格式错误，请重新设置密码');
             }
         } else {

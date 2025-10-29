@@ -178,13 +178,18 @@ export class Cipher {
     }
 
     /**
-     * 密码哈希 (使用 Argon2)
+     * 密码哈希（使用 bcrypt 算法）
      * @param password - 密码
-     * @param options - 选项
-     * @returns 哈希后的密码
+     * @param options - 选项（可选，支持自定义 cost 参数）
+     * @returns 哈希后的密码（固定 60 字符）
+     * @example
+     * // 默认配置（推荐）
+     * const hash = await Cipher.hashPassword('123456');
+     *
+     * // 自定义强度（可选）
+     * const hash = await Cipher.hashPassword('123456', { cost: 12 });
      */
     static async hashPassword(password: string, options: PasswordHashOptions = {}): Promise<string> {
-        // 设置默认算法为 bcrypt
         const finalOptions = {
             algorithm: 'bcrypt',
             ...options
@@ -195,8 +200,13 @@ export class Cipher {
     /**
      * 验证密码
      * @param password - 原始密码
-     * @param hash - 哈希值
+     * @param hash - 存储的哈希值（自动识别算法和提取盐值）
      * @returns 验证结果
+     * @example
+     * const isValid = await Cipher.verifyPassword('123456', storedHash);
+     * if (isValid) {
+     *   // 密码正确
+     * }
      */
     static async verifyPassword(password: string, hash: string): Promise<boolean> {
         return await Bun.password.verify(password, hash);
