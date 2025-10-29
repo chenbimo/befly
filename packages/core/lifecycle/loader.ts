@@ -7,7 +7,7 @@ import { relative, basename } from 'pathe';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
-import { rootPluginDir, projectPluginDir, rootApiDir, projectApiDir } from '../paths.js';
+import { corePluginDir, projectPluginDir, coreApiDir, projectApiDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
@@ -98,7 +98,7 @@ export class Loader {
             // 扫描核心插件目录
             const corePluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: rootPluginDir,
+                cwd: corePluginDir,
                 onlyFiles: true,
                 absolute: true
             })) {
@@ -393,7 +393,7 @@ export class Loader {
             let apiDir: string;
 
             if (where === 'core') {
-                apiDir = rootApiDir;
+                apiDir = coreApiDir;
             } else if (where === 'addon') {
                 apiDir = getAddonDir(addonName, 'apis');
             } else {

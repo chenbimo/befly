@@ -5,7 +5,7 @@
 
 import { relative, basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
-import { projectPluginDir, rootTableDir, projectTableDir, projectApiDir } from '../paths.js';
+import { projectPluginDir, coreTableDir, projectTableDir, projectApiDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 
 /**

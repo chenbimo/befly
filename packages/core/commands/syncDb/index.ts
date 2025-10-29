@@ -14,7 +14,7 @@ import { Env } from '../../config/env.js';
 import { scanAddons, addonDirExists, getAddonDir } from '../../util.js';
 import { Database } from '../../lib/database.js';
 import checkTable from '../../checks/table.js';
-import { rootTableDir, projectTableDir } from '../../paths.js';
+import { coreTableDir, projectTableDir } from '../../paths.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -81,7 +81,7 @@ export const SyncDb = async (): Promise<void> => {
         const tablesGlob = new Bun.Glob('*.json');
         const directories: Array<{ path: string; type: 'core' | 'app' | 'addon'; addonName?: string }> = [
             // 1. core 框架表（core_ 前缀）
-            { path: rootTableDir, type: 'core' },
+            { path: coreTableDir, type: 'core' },
             // 2. 项目表（无前缀）
             { path: projectTableDir, type: 'app' }
         ];

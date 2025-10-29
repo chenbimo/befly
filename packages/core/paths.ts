@@ -10,13 +10,13 @@
  *
  * 目录结构：
  * ```
- * packages/core/           (rootDir)
- *   ├── scripts/           (rootScriptDir)
- *   ├── config/            (rootConfigDir)
- *   ├── checks/            (rootCheckDir)
- *   ├── plugins/           (rootPluginDir)
- *   ├── apis/              (rootApiDir)
- *   └── tables/            (rootTableDir)
+ * packages/core/           (coreDir)
+ *   ├── scripts/           (coreScriptDir)
+ *   ├── config/            (coreConfigDir)
+ *   ├── checks/            (coreCheckDir)
+ *   ├── plugins/           (corePluginDir)
+ *   ├── apis/              (coreApiDir)
+ *   └── tables/            (coreTableDir)
  *
  * project/                 (projectDir)
  *   ├── scripts/           (projectScriptDir)
@@ -44,49 +44,49 @@ const projectRoot = process.cwd();
  * Core 框架根目录
  * @description packages/core/
  */
-export const rootDir = __dirname;
+export const coreDir = __dirname;
 
 /**
  * Core 框架脚本目录
  * @description packages/core/scripts/
  * @usage 存放框架级别的脚本工具
  */
-export const rootScriptDir = join(__dirname, 'scripts');
+export const coreScriptDir = join(__dirname, 'scripts');
 
 /**
  * Core 框架配置目录
  * @description packages/core/config/
  * @usage 存放框架默认配置（env.ts, fields.ts 等）
  */
-export const rootConfigDir = join(__dirname, 'config');
+export const coreConfigDir = join(__dirname, 'config');
 
 /**
  * Core 框架检查目录
  * @description packages/core/checks/
  * @usage 存放启动检查模块（返回 boolean 的 default 函数）
  */
-export const rootCheckDir = join(__dirname, 'checks');
+export const coreCheckDir = join(__dirname, 'checks');
 
 /**
  * Core 框架插件目录
  * @description packages/core/plugins/
  * @usage 存放内置插件（db, logger, redis, tool 等）
  */
-export const rootPluginDir = join(__dirname, 'plugins');
+export const corePluginDir = join(__dirname, 'plugins');
 
 /**
  * Core 框架 API 目录
  * @description packages/core/apis/
  * @usage 存放框架级别的 API 接口
  */
-export const rootApiDir = join(__dirname, 'apis');
+export const coreApiDir = join(__dirname, 'apis');
 
 /**
  * Core 框架表定义目录
  * @description packages/core/tables/
  * @usage 存放框架核心表定义（JSON 格式）
  */
-export const rootTableDir = join(__dirname, 'tables');
+export const coreTableDir = join(__dirname, 'tables');
 
 // ==================== 用户项目路径 ====================
 
