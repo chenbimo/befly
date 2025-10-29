@@ -182,7 +182,7 @@ export class Loader {
 
                     const addonPluginsDir = getAddonDir(addon, 'plugins');
                     for await (const file of glob.scan({
-                        cwd: addonDir,
+                        cwd: addonPluginsDir,
                         onlyFiles: true,
                         absolute: true
                     })) {
@@ -262,7 +262,7 @@ export class Loader {
             // 扫描用户插件目录
             const userPluginsScanStart = Bun.nanoseconds();
             for await (const file of glob.scan({
-                cwd: userPluginDir,
+                cwd: paths.projectPluginDir,
                 onlyFiles: true,
                 absolute: true
             })) {
