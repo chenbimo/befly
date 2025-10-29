@@ -241,13 +241,14 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
 
     const allRecords = await helper.getAll({
         table: 'core_api',
-        fields: ['id', 'path', 'name']
+        fields: ['id', 'path', 'name'],
+        where: { state$gte: 0 } // 查询所有状态（包括软删除的 state=0）
     });
 
     let deletedCount = 0;
     for (const record of allRecords) {
         if (record.path && !apiPaths.has(record.path)) {
-            await helper.delData({
+            await helper.delForce({
                 table: 'core_api',
                 where: { id: record.id }
             });
