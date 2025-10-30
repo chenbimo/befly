@@ -211,4 +211,16 @@ export class Logger {
     static clearCache(): void {
         this.currentFiles.clear();
     }
+
+    /**
+     * 打印当前运行环境
+     * 用于命令开始时提示用户当前环境
+     */
+    static printEnv(): void {
+        const env = process.env.NODE_ENV || 'development';
+        const envColor = env === 'production' ? chalk.red : env === 'test' ? chalk.yellow : chalk.green;
+        console.log(chalk.gray('────────────────────────────────────────'));
+        console.log(chalk.bold('运行环境: ') + envColor.bold(env.toUpperCase()));
+        console.log(chalk.gray('────────────────────────────────────────'));
+    }
 }

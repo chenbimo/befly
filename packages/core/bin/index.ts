@@ -18,12 +18,10 @@ await launch(import.meta.path);
  * 此时环境变量已正确加载
  */
 import { Command } from 'commander';
-import { scriptCommand } from '../commands/script.js';
 import { devCommand } from '../commands/dev.js';
 import { buildCommand } from '../commands/build.js';
 import { startCommand } from '../commands/start.js';
 import { syncDbCommand } from '../commands/syncDb.js';
-import { addonCommand } from '../commands/addon.js';
 import { syncApiCommand } from '../commands/syncApi.js';
 import { syncMenuCommand } from '../commands/syncMenu.js';
 import { syncDevCommand } from '../commands/syncDev.js';
@@ -111,38 +109,36 @@ const program = new Command();
 
 program.name('befly').description('Befly CLI - 为 Befly 框架提供命令行工具').version('3.0.0');
 
-// script 命令 - 执行脚本
-program.command('script').description('列出并执行 befly 脚本').option('--dry-run', '预演模式，只显示不执行', false).action(scriptCommand);
+/**
+ * 包装命令处理函数，在执行前打印环境
+ */
+function wrapCommand<T extends (...args: any[]) => any>(fn: T): T {
+    return (async (...args: any[]) => {
+        Logger.printEnv();
+        return await fn(...args);
+    }) as T;
+}
 
 // dev 命令 - 开发服务器
-program.command('dev').description('启动开发服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').option('--no-sync', '跳过表同步', false).option('-v, --verbose', '详细日志', false).action(devCommand);
+program.command('dev').description('启动开发服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').option('--no-sync', '跳过表同步', false).option('-v, --verbose', '详细日志', false).action(wrapCommand(devCommand));
 
 // build 命令 - 构建项目
-program.command('build').description('构建项目').option('-o, --outdir <path>', '输出目录', 'dist').option('--minify', '压缩代码', false).option('--sourcemap', '生成 sourcemap', false).action(buildCommand);
+program.command('build').description('构建项目').option('-o, --outdir <path>', '输出目录', 'dist').option('--minify', '压缩代码', false).option('--sourcemap', '生成 sourcemap', false).action(wrapCommand(buildCommand));
 
 // start 命令 - 启动生产服务器
-program.command('start').description('启动生产服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').option('-c, --cluster <instances>', '集群模式（数字或 max）').action(startCommand);
+program.command('start').description('启动生产服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').option('-c, --cluster <instances>', '集群模式（数字或 max）').action(wrapCommand(startCommand));
 
 // syncDb 命令 - 同步数据库
-program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncDbCommand);
+program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncDbCommand));
 
 // syncApi 命令 - 同步 API 接口
-program.command('syncApi').description('同步 API 接口到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncApiCommand);
+program.command('syncApi').description('同步 API 接口到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncApiCommand));
 
 // syncMenu 命令 - 同步菜单
-program.command('syncMenu').description('同步菜单配置到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncMenuCommand);
+program.command('syncMenu').description('同步菜单配置到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncMenuCommand));
 
 // syncDev 命令 - 同步开发者账号
-program.command('syncDev').description('同步开发者管理员账号').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncDevCommand);
-
-// addon 命令 - 插件管理
-const addon = program.command('addon').description('管理 Befly 插件');
-
-addon.command('install <name>').description('安装插件').option('-s, --source <url>', '插件源地址').action(addonCommand.install);
-
-addon.command('uninstall <name>').description('卸载插件').option('--keep-data', '保留插件数据', false).action(addonCommand.uninstall);
-
-addon.command('list').description('列出已安装的插件').action(addonCommand.list);
+program.command('syncDev').description('同步开发者管理员账号').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncDevCommand));
 
 // 显示建议和错误
 program.showSuggestionAfterError();
