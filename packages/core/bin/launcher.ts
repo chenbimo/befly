@@ -101,9 +101,13 @@ export async function launch(entryFile: string): Promise<void> {
         cwd: process.cwd(),
         stdio: ['inherit', 'inherit', 'inherit'],
         env: {
-            ...process.env,
+            // 不继承父进程的环境变量，只使用以下变量
             BEFLY_SUBPROCESS: '1', // 标记为子进程
-            NODE_ENV: envName // 同时设置 NODE_ENV
+            NODE_ENV: envName, // 设置 NODE_ENV
+            PATH: process.env.PATH, // 保留 PATH
+            SYSTEMROOT: process.env.SYSTEMROOT, // Windows 需要
+            TEMP: process.env.TEMP, // Windows 需要
+            TMP: process.env.TMP // Windows 需要
         }
     });
 
