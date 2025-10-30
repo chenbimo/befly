@@ -71,12 +71,15 @@ export async function launch(entryFile: string): Promise<void> {
     }
 
     // 确定环境名称
-    const envArgIndex = process.argv.indexOf('--env');
+    const longEnvIndex = process.argv.indexOf('--env');
+    const shortEnvIndex = process.argv.indexOf('-e');
     let envInput = 'development'; // 默认环境
 
-    if (envArgIndex !== -1 && process.argv[envArgIndex + 1]) {
-        // 如果指定了 --env 参数
-        envInput = process.argv[envArgIndex + 1];
+    // 检查 --env 或 -e 参数
+    if (longEnvIndex !== -1 && process.argv[longEnvIndex + 1]) {
+        envInput = process.argv[longEnvIndex + 1];
+    } else if (shortEnvIndex !== -1 && process.argv[shortEnvIndex + 1]) {
+        envInput = process.argv[shortEnvIndex + 1];
     } else if (process.env.NODE_ENV) {
         // 如果设置了 NODE_ENV 环境变量
         envInput = process.env.NODE_ENV;
@@ -86,10 +89,10 @@ export async function launch(entryFile: string): Promise<void> {
     const envName = resolveEnvName(envInput);
     const envFile = `.env.${envName}`;
 
-    // 过滤掉 --env 参数（已通过 --env-file 处理）
+    // 过滤掉 --env/-e 参数（已通过 --env-file 处理）
     const filteredArgs = process.argv.slice(2).filter((arg, i, arr) => {
-        if (arg === '--env') return false;
-        if (arr[i - 1] === '--env') return false;
+        if (arg === '--env' || arg === '-e') return false;
+        if (arr[i - 1] === '--env' || arr[i - 1] === '-e') return false;
         return true;
     });
 
