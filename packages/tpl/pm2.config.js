@@ -1,9 +1,10 @@
 /**
  * PM2 进程管理配置文件
+ * 使用 Bun 自动加载环境变量文件
  *
  * 使用方法：
- * 1. 启动生产环境：pm2 start ecosystem.config.js --env production
- * 2. 启动开发环境：pm2 start ecosystem.config.js --env development
+ * 1. 生产环境：pm2 start pm2.config.js --env production
+ * 2. 开发环境：pm2 start pm2.config.js --env development
  * 3. 查看状态：pm2 status
  * 4. 查看日志：pm2 logs befly
  * 5. 重启：pm2 restart befly
@@ -11,6 +12,11 @@
  * 7. 删除：pm2 delete befly
  * 8. 保存配置：pm2 save
  * 9. 开机自启：pm2 startup
+ *
+ * 环境变量加载：
+ * - Bun 会根据 NODE_ENV 自动加载对应的 .env 文件
+ * - production → .env.production
+ * - development → .env.development
  */
 
 module.exports = {
@@ -35,18 +41,14 @@ module.exports = {
             log_date_format: 'YYYY-MM-DD HH:mm:ss',
             merge_logs: true,
 
-            // 生产环境变量
+            // 环境变量（只设置 NODE_ENV，其他由 Bun 自动从 .env 文件加载）
             env_production: {
-                NODE_ENV: 'production',
-                APP_PORT: 3000,
-                APP_HOST: '0.0.0.0'
+                NODE_ENV: 'production'
             },
 
             // 开发环境变量
             env_development: {
-                NODE_ENV: 'development',
-                APP_PORT: 3000,
-                APP_HOST: '0.0.0.0'
+                NODE_ENV: 'development'
             }
         }
     ]
