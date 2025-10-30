@@ -18,7 +18,7 @@ export async function rootHandler(req: Request): Promise<Response> {
         return Response.json(
             {
                 code: 0,
-                msg: 'Befly 接口服务已启动',
+                msg: `${Env.APP_NAME} 接口服务已启动`,
                 data: {
                     mode: Env.NODE_ENV,
                     timestamp: Date.now()
