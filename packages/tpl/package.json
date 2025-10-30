@@ -18,10 +18,12 @@
         "tests",
         ".env.development",
         ".npmrc",
+        "befly.service",
         "LICENSE",
         "package.json",
         "pm2.config.cjs",
         "README.md",
+        "SYSTEMD_DEPLOY.md",
         "tsconfig.json"
     ],
     "type": "module",
