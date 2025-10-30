@@ -51,7 +51,7 @@ export class Bootstrap {
         });
 
         const finalStartupTime = calcPerfTime(startTime);
-        Logger.info(`Befly 服务器启动成功! 服务器启动耗时: ${finalStartupTime}`);
+        Logger.info(`${Env.APP_NAME} 服务器启动成功! 服务器启动耗时: ${finalStartupTime}`);
         Logger.info(`服务器监听地址: http://${Env.APP_HOST}:${Env.APP_PORT}`);
 
         if (callback && typeof callback === 'function') {
