@@ -44,26 +44,24 @@ pm2log() {
 # PM2 增强函数（参数化）
 
 # pm2start - 智能启动
-# 用法：pm2start <app|config> [env]
+# 用法：pm2start <app|config>
 # 示例：
-#   pm2start befly                    # 启动应用
-#   pm2start pm2.config.js            # 启动配置（默认 production）
-#   pm2start pm2.config.js dev        # 启动开发环境
+#   pm2start befly              # 启动应用
+#   pm2start pm2.config.cjs     # 启动配置（生产环境）
 pm2start() {
     if [ -z "$1" ]; then
-        echo "用法: pm2start <app|config> [env]"
+        echo "用法: pm2start <app|config>"
         echo "示例:"
         echo "  pm2start befly"
-        echo "  pm2start pm2.config.js production"
+        echo "  pm2start pm2.config.cjs"
         return 1
     fi
 
     local target="$1"
-    local env="${2:-production}"
 
     # 判断是配置文件还是应用名
-    if [[ "$target" == *.js ]]; then
-        bunx --bun pm2 start "$target" --env "$env"
+    if [[ "$target" == *.js ]] || [[ "$target" == *.cjs ]]; then
+        bunx --bun pm2 start "$target"
     else
         bunx --bun pm2 start "$target"
     fi
@@ -80,21 +78,14 @@ pm2stop() {
 }
 
 # pm2restart - 重启应用
-# 用法：pm2restart <app|all> [env]
+# 用法：pm2restart <app|config|all>
 pm2restart() {
     if [ -z "$1" ]; then
-        echo "用法: pm2restart <app|config|all> [env]"
+        echo "用法: pm2restart <app|config|all>"
         return 1
     fi
 
-    local target="$1"
-    local env="${2:-production}"
-
-    if [[ "$target" == *.js ]]; then
-        bunx --bun pm2 restart "$target" --env "$env"
-    else
-        bunx --bun pm2 restart "$target"
-    fi
+    bunx --bun pm2 restart "$1"
 }
 
 # pm2reload - 重载应用（零停机）
@@ -160,10 +151,9 @@ alias pm2kill='bunx --bun pm2 kill'
 # 高级部署函数
 
 # pm2deploy - 完整部署
-# 用法：pm2deploy [config] [env]
+# 用法：pm2deploy [config]
 pm2deploy() {
-    local config="${1:-pm2.config.js}"
-    local env="${2:-production}"
+    local config="${1:-pm2.config.cjs}"
 
     if [ ! -f "$config" ]; then
         echo "错误: 配置文件 '$config' 不存在"
@@ -171,12 +161,12 @@ pm2deploy() {
     fi
 
     echo "========================================="
-    echo "PM2 部署 (环境: $env)"
+    echo "PM2 部署"
     echo "========================================="
 
     bunx --bun pm2 stop "$config" 2>/dev/null || echo "跳过停止..."
     bunx --bun pm2 delete "$config" 2>/dev/null || echo "跳过删除..."
-    bunx --bun pm2 start "$config" --env "$env"
+    bunx --bun pm2 start "$config"
     bunx --bun pm2 save
     bunx --bun pm2 ls
 
@@ -186,18 +176,17 @@ pm2deploy() {
 }
 
 # pm2redeploy - 零停机重新部署
-# 用法：pm2redeploy [config] [env]
+# 用法：pm2redeploy [config]
 pm2redeploy() {
-    local config="${1:-pm2.config.js}"
-    local env="${2:-production}"
+    local config="${1:-pm2.config.cjs}"
 
     if [ ! -f "$config" ]; then
         echo "错误: 配置文件 '$config' 不存在"
         return 1
     fi
 
-    echo "零停机重新部署 (环境: $env)"
-    bunx --bun pm2 reload "$config" --env "$env"
+    echo "零停机重新部署"
+    bunx --bun pm2 reload "$config"
     bunx --bun pm2 save
 }
 
@@ -232,9 +221,9 @@ PM2 命令别名帮助
   pm2mon           - 实时监控
 
 进程管理:
-  pm2start <app|config> [env]  - 启动应用/配置
+  pm2start <app|config>        - 启动应用/配置
   pm2stop <app|all>            - 停止应用
-  pm2restart <app|all> [env]   - 重启应用
+  pm2restart <app|all>         - 重启应用
   pm2reload <app|all>          - 重载应用（零停机）
   pm2del <app|all>             - 删除应用
   pm2scale <app> <num>         - 扩展实例
@@ -248,8 +237,8 @@ PM2 命令别名帮助
   pm2flush [app]               - 清空日志
 
 部署操作:
-  pm2deploy [config] [env]     - 完整部署（默认 pm2.config.js production）
-  pm2redeploy [config] [env]   - 零停机重新部署
+  pm2deploy [config]           - 完整部署（默认 pm2.config.cjs）
+  pm2redeploy [config]         - 零停机重新部署
 
 系统管理:
   pm2save                      - 保存进程列表
@@ -261,8 +250,7 @@ PM2 命令别名帮助
 常用示例:
   # 启动应用
   pm2start befly
-  pm2start pm2.config.js
-  pm2start pm2.config.js dev
+  pm2start pm2.config.cjs
 
   # 查看日志
   pm2log                       # 所有日志
@@ -280,7 +268,6 @@ PM2 命令别名帮助
   # 部署
   pm2deploy                    # 完整部署
   pm2redeploy                  # 零停机重新部署
-  pm2deploy pm2.config.js dev  # 部署开发环境
 
   # 查看
   pm2ls                        # 列表
