@@ -36,10 +36,23 @@ export class Befly {
         const server = await this.lifecycle.start(this.appContext, callback);
 
         // 注册优雅关闭信号处理器
-        const gracefulShutdown = (signal: string) => {
+        const gracefulShutdown = async (signal: string) => {
             Logger.info(`\n收到 ${signal} 信号，开始优雅关闭...`);
+
+            // 1. 停止接收新请求
             server.stop(true);
-            Logger.info('服务器已关闭');
+            Logger.info('✅ HTTP 服务器已停止');
+
+            // 2. 关闭数据库连接
+            try {
+                const { Database } = await import('./lib/database.js');
+                await Database.disconnect();
+                Logger.info('✅ 数据库连接已关闭');
+            } catch (error: any) {
+                Logger.warn('⚠️ 关闭数据库连接时出错:', error.message);
+            }
+
+            Logger.info('✅ 服务器已优雅关闭');
             process.exit(0);
         };
 

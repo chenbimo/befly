@@ -2,21 +2,13 @@
 /**
  * Befly CLI - 命令行工具入口
  * 为 Befly 框架提供项目管理和脚本执行功能
+ *
+ * 环境变量加载：
+ * 1. Bun 自动加载：根据 NODE_ENV 自动加载 .env.{NODE_ENV} 文件
+ * 2. 手动指定：bun --env-file=.env.xxx befly <command>
+ * 3. 默认环境：如未设置 NODE_ENV，Bun 加载 .env.development
  */
 
-/**
- * 环境启动器
- * 必须在任何模块导入前执行
- * 父进程会在这里启动子进程并退出
- * 只有子进程会继续执行后面的代码
- */
-import { launch } from './launcher.js';
-await launch(import.meta.path);
-
-/**
- * 以下代码只在子进程中执行
- * 此时环境变量已正确加载
- */
 import { Command } from 'commander';
 import { buildCommand } from '../commands/build.js';
 import { syncCommand } from '../commands/sync.js';
