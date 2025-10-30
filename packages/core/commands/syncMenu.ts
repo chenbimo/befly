@@ -18,7 +18,7 @@ import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { coreConfigDir, projectDir } from '../paths.js';
+import { coreDIr, projectDir } from '../paths.js';
 
 interface SyncMenuOptions {
     plan?: boolean;
@@ -296,7 +296,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         // 1. 读取两个配置文件
         Logger.info('=== 步骤 1: 读取菜单配置文件 ===');
         const projectMenuPath = join(projectDir, 'menu.json');
-        const coreMenuPath = join(coreConfigDir, 'menu.json');
+        const coreMenuPath = join(coreDIr, 'menu.json');
 
         Logger.info(`  项目路径: ${projectMenuPath}`);
         Logger.info(`  core 路径: ${coreMenuPath}`);
