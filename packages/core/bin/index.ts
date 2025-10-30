@@ -26,6 +26,20 @@ import { syncApiCommand } from '../commands/syncApi.js';
 import { syncMenuCommand } from '../commands/syncMenu.js';
 import { syncDevCommand } from '../commands/syncDev.js';
 import { Logger } from '../lib/logger.js';
+import { join } from 'pathe';
+
+/**
+ * 读取 package.json 版本号
+ */
+function getVersion(): string {
+    try {
+        const pkgPath = join(import.meta.dir, '..', 'package.json');
+        const pkg = require(pkgPath);
+        return pkg.version || '0.0.0';
+    } catch (error) {
+        return '0.0.0';
+    }
+}
 
 /**
  * Bun 版本要求
@@ -107,7 +121,7 @@ checkBunVersion();
 
 const program = new Command();
 
-program.name('befly').description('Befly CLI - 为 Befly 框架提供命令行工具').version('3.0.0');
+program.name('befly').description('Befly CLI - 为 Befly 框架提供命令行工具').version(getVersion());
 
 /**
  * 包装命令处理函数，在执行前打印环境
