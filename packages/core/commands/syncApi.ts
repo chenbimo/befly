@@ -14,6 +14,7 @@
 
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
@@ -327,8 +328,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
 
-            const redis = Database.getRedis();
-            const result = await redis.setObject('apis:all', apiList);
+            const result = await RedisHelper.setObject('apis:all', apiList);
 
             if (result === null) {
                 Logger.warn('⚠️ 接口缓存失败');

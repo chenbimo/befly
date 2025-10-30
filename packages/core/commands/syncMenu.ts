@@ -16,6 +16,7 @@
 
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { coreDir, projectDir } from '../paths.js';
@@ -380,8 +381,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
                 orderBy: ['sort#ASC', 'id#ASC']
             });
 
-            const redis = Database.getRedis();
-            const result = await redis.setObject('menus:all', menus);
+            const result = await RedisHelper.setObject('menus:all', menus);
 
             if (result === null) {
                 Logger.warn('⚠️ 菜单缓存失败');
