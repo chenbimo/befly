@@ -37,7 +37,7 @@ export async function buildCommand(options: BuildOptions) {
         }
 
         // 使用内置默认入口文件
-        const entryFile = join(import.meta.dir, '..', 'defaults', 'entry.ts');
+        const entryFile = join(import.meta.dir, '..', 'entry.ts');
 
         const spinner = ora({
             text: '正在构建项目...',
