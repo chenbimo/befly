@@ -4,6 +4,7 @@
  */
 
 import { relative, basename } from 'pathe';
+import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { projectPluginDir, coreTableDir, projectTableDir, projectApiDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
@@ -38,6 +39,11 @@ interface ConflictResult {
  * 收集核心插件
  */
 async function collectCorePlugins(registry: ResourceRegistry): Promise<void> {
+    // 检查插件目录是否存在
+    if (!existsSync(projectPluginDir)) {
+        return;
+    }
+
     try {
         const glob = new Bun.Glob('*.ts');
         for await (const file of glob.scan({
@@ -55,7 +61,7 @@ async function collectCorePlugins(registry: ResourceRegistry): Promise<void> {
             }
         }
     } catch (error: any) {
-        Logger.error('收集核心插件时出错:', error);
+        Logger.error('收集插件时出错:', error);
     }
 }
 
@@ -184,104 +190,110 @@ async function collectUserResources(registry: ResourceRegistry): Promise<string[
 
     // 收集用户表定义
     const userTablesDir = projectTableDir;
-    try {
-        const glob = new Bun.Glob('*.json');
-        for await (const file of glob.scan({
-            cwd: userTablesDir,
-            onlyFiles: true,
-            absolute: true
-        })) {
-            const fileName = basename(file, '.json');
-            if (fileName.startsWith('_')) continue;
+    if (existsSync(userTablesDir)) {
+        try {
+            const glob = new Bun.Glob('*.json');
+            for await (const file of glob.scan({
+                cwd: userTablesDir,
+                onlyFiles: true,
+                absolute: true
+            })) {
+                const fileName = basename(file, '.json');
+                if (fileName.startsWith('_')) continue;
 
-            try {
-                const tableDefine = await Bun.file(file).json();
-                const tableName = tableDefine.tableName || fileName;
+                try {
+                    const tableDefine = await Bun.file(file).json();
+                    const tableName = tableDefine.tableName || fileName;
 
-                // 检查是否使用保留前缀
-                if (RESERVED_NAMES.tablePrefix.some((prefix) => tableName.startsWith(prefix))) {
-                    conflicts.push(`用户表 "${tableName}" 使用了保留前缀，保留前缀包括: ${RESERVED_NAMES.tablePrefix.join(', ')}`);
-                    continue;
+                    // 检查是否使用保留前缀
+                    if (RESERVED_NAMES.tablePrefix.some((prefix) => tableName.startsWith(prefix))) {
+                        conflicts.push(`用户表 "${tableName}" 使用了保留前缀，保留前缀包括: ${RESERVED_NAMES.tablePrefix.join(', ')}`);
+                        continue;
+                    }
+
+                    // 检查是否与已有表冲突
+                    if (registry.tables.has(tableName)) {
+                        conflicts.push(`用户表 "${tableName}" 与 ${registry.tables.get(tableName)} 冲突`);
+                    } else {
+                        registry.tables.set(tableName, 'user');
+                    }
+                } catch (error: any) {
+                    // 表定义解析错误会在 table.ts 中处理，这里跳过
                 }
-
-                // 检查是否与已有表冲突
-                if (registry.tables.has(tableName)) {
-                    conflicts.push(`用户表 "${tableName}" 与 ${registry.tables.get(tableName)} 冲突`);
-                } else {
-                    registry.tables.set(tableName, 'user');
-                }
-            } catch (error: any) {
-                // 表定义解析错误会在 table.ts 中处理，这里跳过
             }
+        } catch (error: any) {
+            Logger.error('收集用户表定义时出错:', error);
         }
-    } catch (error: any) {
-        // 用户可能没有 tables 目录，这是正常的
     }
 
     // 收集用户 API 路由
     const userApisDir = projectApiDir;
-    try {
-        const glob = new Bun.Glob('**/*.ts');
-        for await (const file of glob.scan({
-            cwd: userApisDir,
-            onlyFiles: true,
-            absolute: true
-        })) {
-            const apiPath = relative(userApisDir, file).replace(/\.ts$/, '');
-            if (apiPath.indexOf('_') !== -1) continue;
+    if (existsSync(userApisDir)) {
+        try {
+            const glob = new Bun.Glob('**/*.ts');
+            for await (const file of glob.scan({
+                cwd: userApisDir,
+                onlyFiles: true,
+                absolute: true
+            })) {
+                const apiPath = relative(userApisDir, file).replace(/\.ts$/, '');
+                if (apiPath.indexOf('_') !== -1) continue;
 
-            try {
-                const api = (await import(file)).default;
-                const route = `${(api.method || 'POST').toUpperCase()}/api/${apiPath}`;
+                try {
+                    const api = (await import(file)).default;
+                    const route = `${(api.method || 'POST').toUpperCase()}/api/${apiPath}`;
 
-                // 检查是否使用保留路由前缀 /api
-                if (apiPath.startsWith('api/') || apiPath === 'api') {
-                    conflicts.push(`用户路由 "${route}" 使用了保留路径前缀 "/api"`);
-                    continue;
+                    // 检查是否使用保留路由前缀 /api
+                    if (apiPath.startsWith('api/') || apiPath === 'api') {
+                        conflicts.push(`用户路由 "${route}" 使用了保留路径前缀 "/api"`);
+                        continue;
+                    }
+
+                    // 检查是否与已有路由冲突
+                    if (registry.routes.has(route)) {
+                        conflicts.push(`用户路由 "${route}" 与 ${registry.routes.get(route)} 冲突`);
+                    } else {
+                        registry.routes.set(route, 'user');
+                    }
+                } catch (error: any) {
+                    // API 加载错误会在 loader.ts 中处理，这里跳过
                 }
-
-                // 检查是否与已有路由冲突
-                if (registry.routes.has(route)) {
-                    conflicts.push(`用户路由 "${route}" 与 ${registry.routes.get(route)} 冲突`);
-                } else {
-                    registry.routes.set(route, 'user');
-                }
-            } catch (error: any) {
-                // API 加载错误会在 loader.ts 中处理，这里跳过
             }
+        } catch (error: any) {
+            Logger.error('收集用户 API 路由时出错:', error);
         }
-    } catch (error: any) {
-        // 用户可能没有 apis 目录，这是正常的
     }
 
     // 收集用户插件
     const userPluginsDir = projectPluginDir;
-    try {
-        const glob = new Bun.Glob('*.ts');
-        for await (const file of glob.scan({
-            cwd: userPluginsDir,
-            onlyFiles: true,
-            absolute: true
-        })) {
-            const pluginName = basename(file).replace(/\.ts$/, '');
-            if (pluginName.startsWith('_')) continue;
+    if (existsSync(userPluginsDir)) {
+        try {
+            const glob = new Bun.Glob('*.ts');
+            for await (const file of glob.scan({
+                cwd: userPluginsDir,
+                onlyFiles: true,
+                absolute: true
+            })) {
+                const pluginName = basename(file).replace(/\.ts$/, '');
+                if (pluginName.startsWith('_')) continue;
 
-            // 检查是否使用保留名称（检测核心插件名或点号前缀是保留名称）
-            const isReserved = RESERVED_NAMES.plugins.includes(pluginName) || (pluginName.includes('.') && RESERVED_NAMES.plugins.includes(pluginName.split('.')[0]));
-            if (isReserved) {
-                conflicts.push(`用户插件 "${pluginName}" 使用了保留名称，保留名称包括: ${RESERVED_NAMES.plugins.join(', ')}`);
-                continue;
-            }
+                // 检查是否使用保留名称（检测核心插件名或点号前缀是保留名称）
+                const isReserved = RESERVED_NAMES.plugins.includes(pluginName) || (pluginName.includes('.') && RESERVED_NAMES.plugins.includes(pluginName.split('.')[0]));
+                if (isReserved) {
+                    conflicts.push(`用户插件 "${pluginName}" 使用了保留名称，保留名称包括: ${RESERVED_NAMES.plugins.join(', ')}`);
+                    continue;
+                }
 
-            // 检查是否与已有插件冲突
-            if (registry.plugins.has(pluginName)) {
-                conflicts.push(`用户插件 "${pluginName}" 与 ${registry.plugins.get(pluginName)} 冲突`);
-            } else {
-                registry.plugins.set(pluginName, 'user');
+                // 检查是否与已有插件冲突
+                if (registry.plugins.has(pluginName)) {
+                    conflicts.push(`用户插件 "${pluginName}" 与 ${registry.plugins.get(pluginName)} 冲突`);
+                } else {
+                    registry.plugins.set(pluginName, 'user');
+                }
             }
+        } catch (error: any) {
+            Logger.error('收集用户插件时出错:', error);
         }
-    } catch (error: any) {
-        // 用户可能没有 plugins 目录，这是正常的
     }
 
     return conflicts;
