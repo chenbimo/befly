@@ -58,7 +58,23 @@ export async function devCommand(options: DevOptions) {
 
         // 直接启动 Befly 实例
         const app = new Befly();
-        await app.listen();
+        const server = await app.listen();
+
+        // 设置信号处理，确保优雅关闭
+        const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT'];
+        signals.forEach((signal) => {
+            process.on(signal, async () => {
+                Logger.info(`\n收到 ${signal} 信号，正在关闭开发服务器...`);
+                try {
+                    server.stop(true);
+                    Logger.info('开发服务器已关闭');
+                    process.exit(0);
+                } catch (error) {
+                    Logger.error('关闭开发服务器失败:', error);
+                    process.exit(1);
+                }
+            });
+        });
     } catch (error) {
         Logger.error('启动开发服务器失败:');
         console.error(error);

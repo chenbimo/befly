@@ -37,7 +37,7 @@ export class Lifecycle {
      * @param appContext - 应用上下文
      * @param callback - 启动完成后的回调函数
      */
-    async start(appContext: BeflyContext, callback?: (server: Server) => void): Promise<void> {
+    async start(appContext: BeflyContext, callback?: (server: Server) => void): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
         Logger.info('开始启动 Befly 服务器...');
 
@@ -61,7 +61,7 @@ export class Lifecycle {
         const totalStartupTime = calcPerfTime(serverStartTime);
         Logger.info(`服务器启动准备完成，总耗时: ${totalStartupTime}`);
 
-        await Bootstrap.start(
+        return await Bootstrap.start(
             {
                 apiRoutes: this.apiRoutes,
                 pluginLists: this.pluginLists,

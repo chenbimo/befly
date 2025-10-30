@@ -32,8 +32,8 @@ export class Befly {
      * 启动服务器
      * @param callback - 启动完成后的回调函数
      */
-    async listen(callback?: (server: Server) => void): Promise<void> {
-        await this.lifecycle.start(this.appContext, callback);
+    async listen(callback?: (server: Server) => void): Promise<Server> {
+        return await this.lifecycle.start(this.appContext, callback);
     }
 }
 

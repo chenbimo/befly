@@ -207,24 +207,38 @@ export class ClusterManager {
         // 向所有 Worker 发送 SIGTERM
         for (const [id, worker] of this.workers.entries()) {
             Logger.info(`关闭 Worker ${id} (端口 ${worker.port})...`);
-            worker.process.kill('SIGTERM');
+            try {
+                worker.process.kill('SIGTERM');
+            } catch (error) {
+                Logger.warn(`无法向 Worker ${id} 发送 SIGTERM:`, error);
+            }
         }
 
-        // 等待所有进程退出，最多 5 秒
+        // 等待所有进程退出，最多 3 秒（Bun 的 server.stop() 很快）
         const timeout = setTimeout(() => {
-            Logger.warn('等待超时，强制关闭所有 Worker');
+            Logger.warn('等待超时（3秒），强制关闭所有 Worker');
             for (const worker of this.workers.values()) {
-                worker.process.kill('SIGKILL');
+                try {
+                    worker.process.kill('SIGKILL');
+                } catch (error) {
+                    // 忽略 SIGKILL 失败（进程可能已退出）
+                }
             }
+            // 强制退出主进程
+            setTimeout(() => process.exit(1), 500);
+        }, 3000);
+
+        try {
+            // 等待所有进程退出
+            await Promise.all(Array.from(this.workers.values()).map((w) => w.process.exited));
+            clearTimeout(timeout);
+            Logger.info('集群已安全关闭');
+            process.exit(0);
+        } catch (error) {
+            clearTimeout(timeout);
+            Logger.error('等待 Worker 退出时发生错误:', error);
             process.exit(1);
-        }, 5000);
-
-        // 等待所有进程退出
-        await Promise.all(Array.from(this.workers.values()).map((w) => w.process.exited));
-
-        clearTimeout(timeout);
-        Logger.info('集群已安全关闭');
-        process.exit(0);
+        }
     }
 
     /**
