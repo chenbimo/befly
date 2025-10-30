@@ -3,6 +3,20 @@
  * Befly CLI - 命令行工具入口
  * 为 Befly 框架提供项目管理和脚本执行功能
  */
+
+/**
+ * 环境启动器
+ * 必须在任何模块导入前执行
+ * 父进程会在这里启动子进程并退出
+ * 只有子进程会继续执行后面的代码
+ */
+import { launch } from './launcher.js';
+await launch(import.meta.path);
+
+/**
+ * 以下代码只在子进程中执行
+ * 此时环境变量已正确加载
+ */
 import { Command } from 'commander';
 import { scriptCommand } from '../commands/script.js';
 import { devCommand } from '../commands/dev.js';
@@ -110,16 +124,16 @@ program.command('build').description('构建项目').option('-o, --outdir <path>
 program.command('start').description('启动生产服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').option('-c, --cluster <instances>', '集群模式（数字或 max）').action(startCommand);
 
 // syncDb 命令 - 同步数据库
-program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).action(syncDbCommand);
+program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncDbCommand);
 
 // syncApi 命令 - 同步 API 接口
-program.command('syncApi').description('同步 API 接口到数据库').option('--plan', '计划模式，只显示不执行', false).action(syncApiCommand);
+program.command('syncApi').description('同步 API 接口到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncApiCommand);
 
 // syncMenu 命令 - 同步菜单
-program.command('syncMenu').description('同步菜单配置到数据库').option('--plan', '计划模式，只显示不执行', false).action(syncMenuCommand);
+program.command('syncMenu').description('同步菜单配置到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncMenuCommand);
 
 // syncDev 命令 - 同步开发者账号
-program.command('syncDev').description('同步开发者管理员账号').option('--plan', '计划模式，只显示不执行', false).action(syncDevCommand);
+program.command('syncDev').description('同步开发者管理员账号').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(syncDevCommand);
 
 // addon 命令 - 插件管理
 const addon = program.command('addon').description('管理 Befly 插件');
