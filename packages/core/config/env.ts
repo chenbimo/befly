@@ -116,16 +116,6 @@ export interface EnvConfig {
     MAIL_SENDER: string;
     /** 发件人地址 */
     MAIL_ADDRESS: string;
-
-    // ========== 同步脚本配置 ==========
-    /** 是否合并 ALTER 语句 */
-    SYNC_MERGE_ALTER: string;
-    /** 是否同步在线索引 */
-    SYNC_ONLINE_INDEX: string;
-    /** 是否禁止字段缩小 */
-    SYNC_DISALLOW_SHRINK: string;
-    /** 是否允许类型变更 */
-    SYNC_ALLOW_TYPE_CHANGE: string;
 }
 
 /**
@@ -208,11 +198,5 @@ export const Env: EnvConfig = {
     MAIL_USER: getEnv('MAIL_USER', ''),
     MAIL_PASS: getEnv('MAIL_PASS', ''),
     MAIL_SENDER: getEnv('MAIL_SENDER', ''),
-    MAIL_ADDRESS: getEnv('MAIL_ADDRESS', ''),
-
-    // ========== 同步脚本配置 ==========
-    SYNC_MERGE_ALTER: getEnv('SYNC_MERGE_ALTER', 'false'),
-    SYNC_ONLINE_INDEX: getEnv('SYNC_ONLINE_INDEX', 'false'),
-    SYNC_DISALLOW_SHRINK: getEnv('SYNC_DISALLOW_SHRINK', 'true'),
-    SYNC_ALLOW_TYPE_CHANGE: getEnv('SYNC_ALLOW_TYPE_CHANGE', 'false')
+    MAIL_ADDRESS: getEnv('MAIL_ADDRESS', '')
 };

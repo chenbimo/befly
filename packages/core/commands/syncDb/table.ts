@@ -80,7 +80,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
                 if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
                     if (existingColumns[dbFieldName].length! > fieldMax) {
-                        Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].length} -> ${fieldMax} 已被跳过（设置 SYNC_DISALLOW_SHRINK=0 可放开）`);
+                        Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].length} -> ${fieldMax} 已被跳过`);
                     }
                 }
 
