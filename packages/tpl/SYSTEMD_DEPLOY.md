@@ -138,18 +138,14 @@ sudo systemctl restart befly
 
 ## 配置说明
 
-### 集群模式选择
+### 单进程模式
 
 ```ini
-# 选项1：单进程模式（适合小型应用）
+# Systemd 推荐单进程模式
 ExecStart=/usr/local/bin/bun run befly start
-
-# 选项2：自动集群模式（推荐，使用所有CPU核心）
-ExecStart=/usr/local/bin/bun run befly start --cluster max
-
-# 选项3：指定进程数（如4个进程）
-ExecStart=/usr/local/bin/bun run befly start --cluster 4
 ```
+
+**集群部署推荐使用 PM2**：Systemd 适合单进程部署，如需集群模式请使用 PM2（参见项目根目录的 PM2 相关文档）
 
 ### 用户和权限
 
@@ -193,18 +189,9 @@ EnvironmentFile=/var/www/befly/.env.production
 
 ### Nginx 配置示例
 
+#### 单进程模式
+
 ```nginx
-upstream befly_cluster {
-    # 集群模式下配置多个端口
-    server 127.0.0.1:3000;
-    server 127.0.0.1:3001;
-    server 127.0.0.1:3002;
-    server 127.0.0.1:3003;
-
-    # 负载均衡策略
-    least_conn;  # 最少连接
-}
-
 server {
     listen 80;
     server_name yourdomain.com;
@@ -215,7 +202,7 @@ server {
     # ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://befly_cluster;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
 
         # WebSocket 支持
@@ -306,7 +293,7 @@ sudo systemd-analyze verify /etc/systemd/system/befly.service
 
 # 测试启动命令
 cd /var/www/befly
-sudo -u www-data bun run befly start --cluster max
+sudo -u www-data bun run befly start
 ```
 
 ### 权限问题
