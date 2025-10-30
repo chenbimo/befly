@@ -1,8 +1,6 @@
 {
     "name": "befly-tpl",
     "version": "3.3.5",
-    "main": "main.ts",
-    "types": "main.ts",
     "description": "Befly 3.0 TypeScript Template",
     "private": false,
     "publishConfig": {
@@ -21,7 +19,6 @@
         ".env.development",
         ".npmrc",
         "LICENSE",
-        "main.ts",
         "package.json",
         "pm2.config.cjs",
         "README.md",

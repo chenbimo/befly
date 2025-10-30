@@ -28,12 +28,16 @@ interface BuildOptions {
 export async function buildCommand(options: BuildOptions) {
     try {
         const projectRoot = getProjectRoot();
-        const mainFile = join(projectRoot, 'main.ts');
 
-        if (!existsSync(mainFile)) {
-            Logger.error('未找到 main.ts 文件');
+        // 验证是否在项目目录下
+        const packageJsonPath = join(projectRoot, 'package.json');
+        if (!existsSync(packageJsonPath)) {
+            Logger.error('未找到 package.json 文件，请确保在项目目录下');
             process.exit(1);
         }
+
+        // 使用内置默认入口文件
+        const entryFile = join(import.meta.dir, '..', 'defaults', 'entry.ts');
 
         const spinner = ora({
             text: '正在构建项目...',
@@ -41,7 +45,7 @@ export async function buildCommand(options: BuildOptions) {
             spinner: 'dots'
         }).start();
 
-        const args = ['build', mainFile, '--outdir', options.outdir, '--target', 'bun'];
+        const args = ['build', entryFile, '--outdir', options.outdir, '--target', 'bun'];
 
         if (options.minify) {
             args.push('--minify');

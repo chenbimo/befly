@@ -6,6 +6,7 @@
 import { join } from 'pathe';
 import type { Subprocess } from 'bun';
 import { Logger } from '../lib/logger.js';
+import { Befly } from '../main.js';
 
 export interface ClusterOptions {
     /** 实例数量（数字或 'max'） */
@@ -16,8 +17,6 @@ export interface ClusterOptions {
     host: string;
     /** 项目根目录 */
     projectRoot: string;
-    /** main.ts 文件路径 */
-    mainFile: string;
     /** 环境变量 */
     env?: Record<string, string>;
 }
@@ -88,14 +87,14 @@ export class ClusterManager {
      * 启动单个 Worker
      */
     private spawnWorker(id: number, port: number): void {
-        const { projectRoot, mainFile, host, env = {} } = this.options;
+        const { projectRoot, host, env = {} } = this.options;
 
         Logger.info(`启动 Worker ${id} (端口 ${port})...`);
 
-        // 检查环境变量文件
-        const envFile = join(projectRoot, '.env.production');
+        // 使用内置的 worker 入口文件
+        const workerFile = join(import.meta.dir, 'cluster-worker.ts');
 
-        const proc = Bun.spawn(['bun', 'run', '--env-file=.env.production', mainFile], {
+        const proc = Bun.spawn(['bun', 'run', '--env-file=.env.production', workerFile], {
             cwd: projectRoot,
             stdout: 'inherit',
             stderr: 'inherit',

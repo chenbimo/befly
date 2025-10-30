@@ -6,6 +6,7 @@ import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { ClusterManager } from '../lifecycle/cluster.js';
+import { Befly } from '../main.js';
 
 function getProjectRoot(): string {
     let current = process.cwd();
@@ -28,10 +29,11 @@ interface StartOptions {
 export async function startCommand(options: StartOptions) {
     try {
         const projectRoot = getProjectRoot();
-        const mainFile = join(projectRoot, 'main.ts');
 
-        if (!existsSync(mainFile)) {
-            Logger.error('未找到 main.ts 文件');
+        // 验证是否在项目目录下
+        const packageJsonPath = join(projectRoot, 'package.json');
+        if (!existsSync(packageJsonPath)) {
+            Logger.error('未找到 package.json 文件，请确保在项目目录下');
             process.exit(1);
         }
 
@@ -49,8 +51,7 @@ export async function startCommand(options: StartOptions) {
                 instances,
                 startPort: parseInt(options.port),
                 host: options.host,
-                projectRoot,
-                mainFile
+                projectRoot
             });
 
             await clusterManager.start();
@@ -67,10 +68,9 @@ export async function startCommand(options: StartOptions) {
                 Logger.info(`环境变量文件: .env.production\n`);
             }
 
-            // 直接导入并运行 main.ts（Bun 会自动加载 .env.production）
-            await import(mainFile);
-
-            // 注意：正常情况下不会执行到这里，因为 main.ts 会启动服务器并持续运行
+            // 直接启动 Befly 实例
+            const app = new Befly();
+            await app.listen();
         }
     } catch (error) {
         Logger.error('启动失败:');

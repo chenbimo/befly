@@ -5,6 +5,7 @@
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
+import { Befly } from '../main.js';
 
 interface DevOptions {
     port: string;
@@ -27,10 +28,11 @@ function getProjectRoot(): string {
 export async function devCommand(options: DevOptions) {
     try {
         const projectRoot = getProjectRoot();
-        const mainFile = join(projectRoot, 'main.ts');
 
-        if (!existsSync(mainFile)) {
-            Logger.error('未找到 main.ts 文件，请确保在 Befly 项目目录下');
+        // 验证是否在 Befly 项目目录下
+        const packageJsonPath = join(projectRoot, 'package.json');
+        if (!existsSync(packageJsonPath)) {
+            Logger.error('未找到 package.json 文件，请确保在项目目录下');
             process.exit(1);
         }
 
@@ -54,38 +56,9 @@ export async function devCommand(options: DevOptions) {
             Logger.info(`环境变量文件: .env.development\n`);
         }
 
-        // 使用 Bun.spawn 启动开发服务器（不使用 --watch 避免监听 node_modules）
-
-        const proc = Bun.spawn(['bun', '--env-file=.env.development', 'run', mainFile], {
-            cwd: projectRoot,
-            stdout: 'inherit',
-            stderr: 'inherit',
-            stdin: 'inherit',
-            env: {
-                // ...process.env,
-                // NODE_ENV: 'development',
-                // APP_PORT: options.port,
-                // APP_HOST: options.host,
-                // LOG_DEBUG: options.verbose ? '1' : process.env.LOG_DEBUG,
-                // FORCE_COLOR: '1'
-            }
-        });
-
-        // 添加信号处理，确保优雅关闭
-        const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT', 'SIGHUP'];
-        signals.forEach((signal) => {
-            process.on(signal, () => {
-                console.log(`\nShutting down dev server (${signal})...`);
-                proc.kill(signal);
-                setTimeout(() => {
-                    proc.kill('SIGKILL');
-                    process.exit(1);
-                }, 5000); // 5 秒强制关闭
-            });
-        });
-
-        const exitCode = await proc.exited;
-        process.exit(exitCode || 0);
+        // 直接启动 Befly 实例
+        const app = new Befly();
+        await app.listen();
     } catch (error) {
         Logger.error('启动开发服务器失败:');
         console.error(error);
