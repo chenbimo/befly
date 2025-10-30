@@ -10,10 +10,7 @@
     "scripts": {},
     "files": [
         "apis",
-        "checks",
-        "plugins",
         "tables",
-        "tests",
         ".env.development",
         ".npmrc",
         "befly.service",

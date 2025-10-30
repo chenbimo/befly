@@ -1,0 +1,3 @@
+[install]
+# 使用隔离模式
+linker = "isolated"
