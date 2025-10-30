@@ -12,9 +12,7 @@
         "apis",
         "checks",
         "plugins",
-        "scripts",
         "tables",
-        "types",
         "tests",
         ".env.development",
         ".npmrc",
@@ -28,7 +26,6 @@
     ],
     "type": "module",
     "dependencies": {
-        "@befly-addon/admin": "1.0.2",
         "befly": "^3.4.0"
     },
     "engines": {
