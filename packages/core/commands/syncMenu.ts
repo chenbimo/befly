@@ -3,13 +3,14 @@
  * 说明：根据 menu.json 配置文件增量同步菜单数据（最多2级：父级和子级）
  *
  * 流程：
- * 1. 读取 core 和 tpl 两个配置文件，core 优先覆盖 tpl
- * 2. 合并菜单配置（根据 path 匹配，core 覆盖 tpl）
- * 3. 子级菜单自动追加父级路径作为前缀
- * 4. 根据菜单的 path 字段检查是否存在
- * 5. 存在则更新其他字段（name、icon、sort、type、pid）
- * 6. 不存在则新增菜单记录
- * 7. 强制删除配置中不存在的菜单记录
+ * 1. 读取 core/config/menu.json 和项目根目录的 menu.json 配置文件
+ * 2. core 配置优先覆盖项目配置（根据 path 匹配）
+ * 3. 文件不存在或格式错误时默认为空数组
+ * 4. 子级菜单自动追加父级路径作为前缀
+ * 5. 根据菜单的 path 字段检查是否存在
+ * 6. 存在则更新其他字段（name、icon、sort、type、pid）
+ * 7. 不存在则新增菜单记录
+ * 8. 强制删除配置中不存在的菜单记录
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
@@ -17,7 +18,7 @@ import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { coreConfigDir, projectConfigDir } from '../paths.js';
+import { coreConfigDir, projectDir } from '../paths.js';
 
 interface SyncMenuOptions {
     plan?: boolean;
@@ -34,35 +35,46 @@ interface MenuConfig {
 
 /**
  * 读取菜单配置文件
+ * 如果文件不存在或不是数组格式，返回空数组
  */
 async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
     try {
         if (!existsSync(filePath)) {
+            Logger.warn(`菜单配置文件不存在: ${filePath}，使用空数组`);
             return [];
         }
+
         const file = Bun.file(filePath);
-        return await file.json();
+        const content = await file.json();
+
+        // 验证是否为数组
+        if (!Array.isArray(content)) {
+            Logger.warn(`菜单配置文件格式错误（非数组）: ${filePath}，使用空数组`);
+            return [];
+        }
+
+        return content;
     } catch (error: any) {
-        Logger.warn(`读取菜单配置失败: ${filePath}`, error.message);
+        Logger.warn(`读取菜单配置失败: ${filePath}，使用空数组`, error.message);
         return [];
     }
 }
 
 /**
- * 合并菜单配置（core 优先覆盖 tpl）
+ * 合并菜单配置（core 优先覆盖项目）
  * 支持二级菜单结构：父级和子级
  */
-function mergeMenuConfigs(tplMenus: MenuConfig[], coreMenus: MenuConfig[]): MenuConfig[] {
+function mergeMenuConfigs(projectMenus: MenuConfig[], coreMenus: MenuConfig[]): MenuConfig[] {
     const menuMap = new Map<string, MenuConfig>();
 
-    // 1. 先添加 tpl 菜单
-    for (const menu of tplMenus) {
+    // 1. 先添加项目菜单
+    for (const menu of projectMenus) {
         if (menu.path) {
             menuMap.set(menu.path, { ...menu });
         }
     }
 
-    // 2. core 菜单覆盖同 path 的 tpl 菜单
+    // 2. core 菜单覆盖同 path 的项目菜单
     for (const menu of coreMenus) {
         if (menu.path) {
             menuMap.set(menu.path, { ...menu });
@@ -78,10 +90,10 @@ function mergeMenuConfigs(tplMenus: MenuConfig[], coreMenus: MenuConfig[]): Menu
         if (menu.children && menu.children.length > 0) {
             const childMap = new Map<string, MenuConfig>();
 
-            // 先添加 tpl 的子菜单
-            const tplMenu = tplMenus.find((m) => m.path === menu.path);
-            if (tplMenu?.children) {
-                for (const child of tplMenu.children) {
+            // 先添加项目的子菜单
+            const projectMenu = projectMenus.find((m) => m.path === menu.path);
+            if (projectMenu?.children) {
+                for (const child of projectMenu.children) {
                     if (child.path) {
                         childMap.set(child.path, { ...child });
                     }
@@ -269,8 +281,8 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
     try {
         if (options.plan) {
             Logger.info('[计划] 同步菜单配置到数据库（plan 模式不执行）');
-            Logger.info('[计划] 1. 读取 core 和 tpl 两个配置文件');
-            Logger.info('[计划] 2. 合并菜单配置（core 优先覆盖 tpl）');
+            Logger.info('[计划] 1. 读取 core/config/menu.json 和项目根目录 menu.json');
+            Logger.info('[计划] 2. 合并菜单配置（core 优先覆盖项目）');
             Logger.info('[计划] 3. 子级菜单自动追加父级路径前缀');
             Logger.info('[计划] 4. 根据 path 检查菜单是否存在');
             Logger.info('[计划] 5. 存在则更新，不存在则新增');
@@ -283,21 +295,21 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
 
         // 1. 读取两个配置文件
         Logger.info('=== 步骤 1: 读取菜单配置文件 ===');
-        const tplMenuPath = join(projectConfigDir, 'menu.json');
+        const projectMenuPath = join(projectDir, 'menu.json');
         const coreMenuPath = join(coreConfigDir, 'menu.json');
 
-        Logger.info(`  tpl 路径: ${tplMenuPath}`);
+        Logger.info(`  项目路径: ${projectMenuPath}`);
         Logger.info(`  core 路径: ${coreMenuPath}`);
 
-        const tplMenus = await readMenuConfig(tplMenuPath);
+        const projectMenus = await readMenuConfig(projectMenuPath);
         const coreMenus = await readMenuConfig(coreMenuPath);
 
-        Logger.info(`✅ tpl 配置: ${tplMenus.length} 个父级菜单`);
+        Logger.info(`✅ 项目配置: ${projectMenus.length} 个父级菜单`);
         Logger.info(`✅ core 配置: ${coreMenus.length} 个父级菜单`);
 
         // 2. 合并菜单配置
-        Logger.info('\n=== 步骤 2: 合并菜单配置（core 优先覆盖 tpl） ===');
-        const mergedMenus = mergeMenuConfigs(tplMenus, coreMenus);
+        Logger.info('\n=== 步骤 2: 合并菜单配置（core 优先覆盖项目） ===');
+        const mergedMenus = mergeMenuConfigs(projectMenus, coreMenus);
         Logger.info(`✅ 合并后共有 ${mergedMenus.length} 个父级菜单`);
 
         // 打印合并后的菜单结构
