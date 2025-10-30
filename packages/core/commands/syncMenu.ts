@@ -370,7 +370,27 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         Logger.info(`删除菜单: ${deletedCount} 个`);
         Logger.info(`当前父级菜单: ${allMenus.filter((m: any) => m.pid === 0).length} 个`);
         Logger.info(`当前子级菜单: ${allMenus.filter((m: any) => m.pid !== 0).length} 个`);
-        Logger.info('提示: 菜单缓存将在服务器启动时自动完成');
+
+        // 9. 缓存菜单数据到 Redis
+        Logger.info('\n=== 步骤 8: 缓存菜单数据到 Redis ===');
+        try {
+            const menus = await helper.getAll({
+                table: 'core_menu',
+                fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
+                orderBy: ['sort#ASC', 'id#ASC']
+            });
+
+            const redis = Database.getRedis();
+            const result = await redis.setObject('menus:all', menus);
+
+            if (result === null) {
+                Logger.warn('⚠️ 菜单缓存失败');
+            } else {
+                Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: menus:all)`);
+            }
+        } catch (error: any) {
+            Logger.error('⚠️ 菜单缓存异常:', error);
+        }
     } catch (error: any) {
         Logger.error('菜单同步失败:', error);
         process.exit(1);

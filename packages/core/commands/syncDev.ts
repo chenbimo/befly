@@ -165,6 +165,67 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
             });
             Logger.info(`✅ 开发管理员已初始化：email=${Env.DEV_EMAIL}, username=dev, roleCode=dev, roleType=admin`);
         }
+
+        // 缓存角色权限数据到 Redis
+        Logger.info('\n=== 缓存角色权限到 Redis ===');
+        try {
+            // 检查必要的表是否存在
+            const apiTableExists = await helper.tableExists('core_api');
+            const roleTableExists = await helper.tableExists('core_role');
+
+            if (!apiTableExists || !roleTableExists) {
+                Logger.warn('⚠️ 接口或角色表不存在，跳过角色权限缓存');
+            } else {
+                // 查询所有角色
+                const roles = await helper.getAll({
+                    table: 'core_role',
+                    fields: ['id', 'code', 'apis']
+                });
+
+                // 查询所有接口
+                const allApis = await helper.getAll({
+                    table: 'core_api',
+                    fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
+                });
+
+                const redis = Database.getRedis();
+                let cachedRoles = 0;
+
+                // 为每个角色缓存接口权限
+                for (const role of roles) {
+                    if (!role.apis) continue;
+
+                    // 解析角色的接口 ID 列表
+                    const apiIds = role.apis
+                        .split(',')
+                        .map((id: string) => parseInt(id.trim()))
+                        .filter((id: number) => !isNaN(id));
+
+                    // 根据 ID 过滤出接口路径
+                    const roleApiPaths = allApis.filter((api: any) => apiIds.includes(api.id)).map((api: any) => `${api.method}${api.path}`);
+
+                    if (roleApiPaths.length === 0) continue;
+
+                    // 使用 Redis Set 缓存角色权限
+                    const redisKey = `role:apis:${role.code}`;
+
+                    // 先删除旧数据
+                    await redis.del(redisKey);
+
+                    // 批量添加到 Set
+                    const result = await redis.sadd(redisKey, roleApiPaths);
+
+                    if (result > 0) {
+                        cachedRoles++;
+                        Logger.debug(`   └ 角色 ${role.code}: ${result} 个接口`);
+                    }
+                }
+
+                Logger.info(`✅ 已缓存 ${cachedRoles} 个角色的接口权限`);
+            }
+        } catch (error: any) {
+            Logger.error('⚠️ 角色权限缓存异常:', error);
+        }
     } catch (error: any) {
         Logger.error('开发管理员同步失败:', error);
         process.exit(1);

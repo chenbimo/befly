@@ -50,14 +50,7 @@ export class Lifecycle {
         // 3. 加载所有 API（addon + app）
         await this.loadAllApis();
 
-        // 4. 缓存数据到 Redis（接口、菜单、角色权限）
-        if (appContext.cache && appContext.redis) {
-            await appContext.cache.cacheAll();
-        } else {
-            Logger.warn('⚠️ Redis 或 Cache 插件未启用，跳过数据缓存');
-        }
-
-        // 5. 启动 HTTP 服务器
+        // 4. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
         Logger.info(`服务器启动准备完成，总耗时: ${totalStartupTime}`);
 

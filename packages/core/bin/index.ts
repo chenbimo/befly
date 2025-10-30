@@ -18,9 +18,8 @@ await launch(import.meta.path);
  * 此时环境变量已正确加载
  */
 import { Command } from 'commander';
-import { devCommand } from '../commands/dev.js';
 import { buildCommand } from '../commands/build.js';
-import { startCommand } from '../commands/start.js';
+import { syncCommand } from '../commands/sync.js';
 import { syncDbCommand } from '../commands/syncDb.js';
 import { syncApiCommand } from '../commands/syncApi.js';
 import { syncMenuCommand } from '../commands/syncMenu.js';
@@ -130,14 +129,11 @@ function wrapCommand<T extends (...args: any[]) => any>(fn: T): T {
     }) as T;
 }
 
-// dev 命令 - 开发服务器
-program.command('dev').description('启动开发服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').option('--no-sync', '跳过表同步', false).option('-v, --verbose', '详细日志', false).action(wrapCommand(devCommand));
-
 // build 命令 - 构建项目
 program.command('build').description('构建项目').option('-o, --outdir <path>', '输出目录', 'dist').option('--minify', '压缩代码', false).option('--sourcemap', '生成 sourcemap', false).action(wrapCommand(buildCommand));
 
-// start 命令 - 启动生产服务器
-program.command('start').description('启动生产服务器').option('-p, --port <number>', '端口号', '3000').option('-h, --host <string>', '主机地址', '0.0.0.0').option('-c, --cluster <instances>', '集群模式（数字或 max）').action(wrapCommand(startCommand));
+// sync 命令 - 一次性执行所有同步
+program.command('sync').description('一次性执行所有同步操作（syncApi + syncMenu + syncDev）').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncCommand));
 
 // syncDb 命令 - 同步数据库
 program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncDbCommand));

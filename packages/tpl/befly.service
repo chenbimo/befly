@@ -49,14 +49,11 @@ Environment="APP_PORT=3000"
 Environment="APP_HOST=0.0.0.0"
 
 # 启动命令
-# 单进程模式：
-# ExecStart=/usr/local/bin/bun run befly start
+# 单进程模式（推荐配合 PM2 或多个 systemd 实例）：
+ExecStart=/usr/local/bin/bun run /var/www/befly/main.ts
 #
-# 集群模式（推荐，自动使用所有CPU核心）：
-ExecStart=/usr/local/bin/bun run befly start --cluster max
-#
-# 集群模式（指定进程数）：
-# ExecStart=/usr/local/bin/bun run befly start --cluster 4
+# 如果使用 PM2 管理集群，可以这样配置：
+# ExecStart=/usr/local/bin/pm2 start /var/www/befly/ecosystem.config.js --env production --no-daemon
 
 # 重启策略
 Restart=always                    # 总是自动重启（崩溃、OOM、异常退出等）

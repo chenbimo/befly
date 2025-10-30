@@ -317,7 +317,27 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
         Logger.info(`更新接口: ${stats.updated} 个`);
         Logger.info(`删除接口: ${deletedCount} 个`);
         Logger.info(`当前总接口数: ${apis.length} 个`);
-        Logger.info('提示: 接口缓存将在服务器启动时自动完成');
+
+        // 6. 缓存接口数据到 Redis
+        Logger.info('\n=== 步骤 4: 缓存接口数据到 Redis ===');
+        try {
+            const apiList = await helper.getAll({
+                table: 'core_api',
+                fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
+                orderBy: ['addonName#ASC', 'path#ASC']
+            });
+
+            const redis = Database.getRedis();
+            const result = await redis.setObject('apis:all', apiList);
+
+            if (result === null) {
+                Logger.warn('⚠️ 接口缓存失败');
+            } else {
+                Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
+            }
+        } catch (error: any) {
+            Logger.error('⚠️ 接口缓存异常:', error);
+        }
     } catch (error: any) {
         Logger.error('API 同步失败:', error);
         process.exit(1);
