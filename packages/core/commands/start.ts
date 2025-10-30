@@ -7,18 +7,7 @@ import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { ClusterManager } from '../lifecycle/cluster.js';
 import { Befly } from '../main.js';
-
-function getProjectRoot(): string {
-    let current = process.cwd();
-    const path = require('node:path');
-    while (current !== path.parse(current).root) {
-        if (existsSync(join(current, 'package.json'))) {
-            return current;
-        }
-        current = path.dirname(current);
-    }
-    return process.cwd();
-}
+import { getProjectRoot } from './util.js';
 
 interface StartOptions {
     port: string;

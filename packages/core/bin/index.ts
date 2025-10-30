@@ -27,18 +27,14 @@ import { syncMenuCommand } from '../commands/syncMenu.js';
 import { syncDevCommand } from '../commands/syncDev.js';
 import { Logger } from '../lib/logger.js';
 import { join } from 'pathe';
+import { getPackageVersion } from '../commands/util.js';
 
 /**
  * 读取 package.json 版本号
  */
 function getVersion(): string {
-    try {
-        const pkgPath = join(import.meta.dir, '..', 'package.json');
-        const pkg = require(pkgPath);
-        return pkg.version || '0.0.0';
-    } catch (error) {
-        return '0.0.0';
-    }
+    const coreDir = join(import.meta.dir, '..');
+    return getPackageVersion(coreDir);
 }
 
 /**

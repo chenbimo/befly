@@ -6,18 +6,7 @@ import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import ora from 'ora';
 import { Logger } from '../lib/logger.js';
-
-function getProjectRoot(): string {
-    let current = process.cwd();
-    const path = require('node:path');
-    while (current !== path.parse(current).root) {
-        if (existsSync(join(current, 'package.json'))) {
-            return current;
-        }
-        current = path.dirname(current);
-    }
-    return process.cwd();
-}
+import { getProjectRoot } from './util.js';
 
 // ========== Build 命令 ==========
 interface BuildOptions {

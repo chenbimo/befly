@@ -6,23 +6,13 @@ import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { Befly } from '../main.js';
+import { getProjectRoot } from './util.js';
 
 interface DevOptions {
     port: string;
     host: string;
     sync: boolean;
     verbose: boolean;
-}
-
-function getProjectRoot(): string {
-    let current = process.cwd();
-    while (current !== require('node:path').parse(current).root) {
-        if (existsSync(join(current, 'package.json'))) {
-            return current;
-        }
-        current = require('node:path').dirname(current);
-    }
-    return process.cwd();
 }
 
 export async function devCommand(options: DevOptions) {
