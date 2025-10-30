@@ -29,11 +29,24 @@ export class Befly {
     }
 
     /**
-     * 启动服务器
+     * 启动服务器并注册优雅关闭处理
      * @param callback - 启动完成后的回调函数
      */
     async listen(callback?: (server: Server) => void): Promise<Server> {
-        return await this.lifecycle.start(this.appContext, callback);
+        const server = await this.lifecycle.start(this.appContext, callback);
+
+        // 注册优雅关闭信号处理器
+        const gracefulShutdown = (signal: string) => {
+            Logger.info(`\n收到 ${signal} 信号，开始优雅关闭...`);
+            server.stop(true);
+            Logger.info('服务器已关闭');
+            process.exit(0);
+        };
+
+        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+        return server;
     }
 }
 

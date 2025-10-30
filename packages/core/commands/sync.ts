@@ -7,6 +7,7 @@ import { Logger } from '../lib/logger.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
+import { existsSync, mkdirSync } from 'node:fs';
 
 interface SyncOptions {
     env?: string;
@@ -20,6 +21,12 @@ export async function syncCommand(options: SyncOptions = {}) {
         Logger.info('========================================\n');
 
         const startTime = Date.now();
+
+        // 确保 logs 目录存在
+        if (!existsSync('./logs')) {
+            mkdirSync('./logs', { recursive: true });
+            Logger.info('✅ 已创建 logs 目录\n');
+        }
 
         // 1. 同步接口（并缓存）
         Logger.info('【步骤 1/3】同步接口数据\n');
