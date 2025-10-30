@@ -1,6 +1,6 @@
 /**
  * PM2 进程管理配置文件（CommonJS 格式）
- * 使用 Bun 的 --env-file 参数显式指定环境变量文件
+ * 使用 Bun 运行 TypeScript 文件
  *
  * 使用方法：
  * 1. 启动：pm2 start pm2.config.cjs
@@ -22,9 +22,8 @@ module.exports = {
     apps: [
         {
             name: 'befly',
-            script: './main.ts',
-            interpreter: 'bun',
-            interpreter_args: '--env-file=.env.production',
+            script: 'bun',
+            args: 'run --env-file=.env.production main.ts',
 
             // 集群模式配置
             instances: 4, // 实例数量，可设置为 'max' 使用所有 CPU
