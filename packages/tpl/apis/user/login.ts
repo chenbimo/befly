@@ -2,9 +2,7 @@
  * 用户登录接口 - TypeScript 示例
  */
 
-import { Yes, No } from 'befly';
-import { Cipher } from 'befly';
-import { Jwt } from 'befly';
+import { Yes, No, Cipher, Jwt } from 'befly';
 
 export default {
     name: '用户登录',
