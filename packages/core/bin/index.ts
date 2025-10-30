@@ -120,12 +120,13 @@ const program = new Command();
 program.name('befly').description('Befly CLI - 为 Befly 框架提供命令行工具').version(getVersion());
 
 /**
- * 包装命令处理函数，在执行前打印环境
+ * 包装命令处理函数，在执行后打印环境
  */
 function wrapCommand<T extends (...args: any[]) => any>(fn: T): T {
     return (async (...args: any[]) => {
+        const result = await fn(...args);
         Logger.printEnv();
-        return await fn(...args);
+        return result;
     }) as T;
 }
 
