@@ -3,7 +3,7 @@
  */
 
 import { join } from 'pathe';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { Befly } from '../main.js';
 import { getProjectRoot } from './util.js';
@@ -24,6 +24,13 @@ export async function devCommand(options: DevOptions) {
         if (!existsSync(packageJsonPath)) {
             Logger.error('未找到 package.json 文件，请确保在项目目录下');
             process.exit(1);
+        }
+
+        // 检查并创建 logs 目录
+        const logsDir = join(projectRoot, 'logs');
+        if (!existsSync(logsDir)) {
+            mkdirSync(logsDir, { recursive: true });
+            Logger.info('已创建 logs 目录');
         }
 
         // 设置环境变量
