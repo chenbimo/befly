@@ -4,6 +4,7 @@
  */
 
 import { relative, basename } from 'pathe';
+import { existsSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
@@ -260,41 +261,45 @@ export class Loader {
             }
 
             // 扫描用户插件目录
-            const userPluginsScanStart = Bun.nanoseconds();
-            for await (const file of glob.scan({
-                cwd: projectPluginDir,
-                onlyFiles: true,
-                absolute: true
-            })) {
-                const fileName = basename(file).replace(/\.ts$/, '');
-                if (fileName.startsWith('_')) continue;
+            if (!existsSync(projectPluginDir)) {
+                Logger.info(`项目插件目录不存在，跳过加载: ${projectPluginDir}`);
+            } else {
+                const userPluginsScanStart = Bun.nanoseconds();
+                for await (const file of glob.scan({
+                    cwd: projectPluginDir,
+                    onlyFiles: true,
+                    absolute: true
+                })) {
+                    const fileName = basename(file).replace(/\.ts$/, '');
+                    if (fileName.startsWith('_')) continue;
 
-                // 检查是否已经加载了同名的核心插件
-                if (loadedPluginNames.has(fileName)) {
-                    Logger.info(`跳过用户插件 ${fileName}，因为同名的核心插件已存在`);
-                    continue;
+                    // 检查是否已经加载了同名的核心插件
+                    if (loadedPluginNames.has(fileName)) {
+                        Logger.info(`跳过用户插件 ${fileName}，因为同名的核心插件已存在`);
+                        continue;
+                    }
+
+                    try {
+                        const importStart = Bun.nanoseconds();
+                        Logger.debug(`准备导入用户插件: ${fileName}`);
+                        const plugin = await importWithTimeout(file);
+                        const importTime = calcPerfTime(importStart);
+                        Logger.debug(`用户插件 ${fileName} 导入成功，耗时: ${importTime}`);
+
+                        const pluginInstance = plugin.default;
+                        pluginInstance.pluginName = fileName;
+                        userPlugins.push(pluginInstance);
+
+                        Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
+                    } catch (err: any) {
+                        hadUserPluginError = true;
+                        Logger.error(`用户插件 ${fileName} 导入失败`, error);
+                        process.exit(1);
+                    }
                 }
-
-                try {
-                    const importStart = Bun.nanoseconds();
-                    Logger.debug(`准备导入用户插件: ${fileName}`);
-                    const plugin = await importWithTimeout(file);
-                    const importTime = calcPerfTime(importStart);
-                    Logger.debug(`用户插件 ${fileName} 导入成功，耗时: ${importTime}`);
-
-                    const pluginInstance = plugin.default;
-                    pluginInstance.pluginName = fileName;
-                    userPlugins.push(pluginInstance);
-
-                    Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
-                } catch (err: any) {
-                    hadUserPluginError = true;
-                    Logger.error(`用户插件 ${fileName} 导入失败`, error);
-                    process.exit(1);
-                }
+                const userPluginsScanTime = calcPerfTime(userPluginsScanStart);
+                Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime}，共找到 ${userPlugins.length} 个插件`);
             }
-            const userPluginsScanTime = calcPerfTime(userPluginsScanStart);
-            Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime}，共找到 ${userPlugins.length} 个插件`);
 
             const sortedUserPlugins = sortPlugins(userPlugins);
             if (sortedUserPlugins === false) {
@@ -398,6 +403,12 @@ export class Loader {
                 apiDir = getAddonDir(addonName, 'apis');
             } else {
                 apiDir = projectApiDir;
+            }
+
+            // 检查目录是否存在
+            if (!existsSync(apiDir)) {
+                Logger.info(`${dirDisplayName}接口目录不存在，跳过加载: ${apiDir}`);
+                return;
             }
 
             let totalApis = 0;
