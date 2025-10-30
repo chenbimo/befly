@@ -92,6 +92,7 @@ export class Database {
             this.sqlClient = sql;
             return sql;
         } catch (error: any) {
+            Logger.debug('数据库连接字符串:', finalUrl);
             Logger.error('数据库连接测试失败', error);
 
             try {
