@@ -166,16 +166,19 @@ export class Loader {
                         const pluginFullName = `${addon}.${fileName}`;
 
                         // 检查是否已经加载了同名插件
-                        if (loadedPluginNames.has(pluginFullName)) {                            continue;
+                        if (loadedPluginNames.has(pluginFullName)) {
+                            continue;
                         }
 
                         try {
-                            const importStart = Bun.nanoseconds();                            const plugin = await importWithTimeout(file);
+                            const importStart = Bun.nanoseconds();
+                            const plugin = await importWithTimeout(file);
                             const importTime = calcPerfTime(importStart);
                             const pluginInstance = plugin.default;
                             pluginInstance.pluginName = pluginFullName;
                             addonPlugins.push(pluginInstance);
-                            loadedPluginNames.add(pluginFullName);                        } catch (err: any) {
+                            loadedPluginNames.add(pluginFullName);
+                        } catch (err: any) {
                             hadAddonPluginError = true;
                             Logger.error(`组件${addon} ${fileName} 导入失败`, error);
                             process.exit(1);
@@ -228,14 +231,16 @@ export class Loader {
                     if (fileName.startsWith('_')) continue;
 
                     // 检查是否已经加载了同名的核心插件
-                    if (loadedPluginNames.has(fileName)) {                        continue;
+                    if (loadedPluginNames.has(fileName)) {
+                        continue;
                     }
 
                     try {
                         const plugin = await importWithTimeout(file);
                         const pluginInstance = plugin.default;
                         pluginInstance.pluginName = fileName;
-                        userPlugins.push(pluginInstance);                    } catch (err: any) {
+                        userPlugins.push(pluginInstance);
+                    } catch (err: any) {
                         hadUserPluginError = true;
                         Logger.error(`用户插件 ${fileName} 导入失败`, error);
                         process.exit(1);
@@ -326,7 +331,8 @@ export class Loader {
             }
 
             // 检查目录是否存在
-            if (!existsSync(apiDir)) {                return;
+            if (!existsSync(apiDir)) {
+                return;
             }
 
             let totalApis = 0;
