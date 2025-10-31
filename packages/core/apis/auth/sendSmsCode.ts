@@ -2,7 +2,8 @@
  * 发送短信验证码接口
  */
 
-import { Yes, Env } from '../../util.js';
+import { Yes } from '../../util.js';
+import { Env } from '../../env.js';
 import adminTable from '../../tables/admin.json';
 
 export default {

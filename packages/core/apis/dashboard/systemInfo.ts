@@ -2,7 +2,8 @@
  * 获取系统信息
  */
 
-import { Yes, Env } from '../../util.js';
+import { Yes } from '../../util.js';
+import { Env } from '../../env.js';
 
 export default {
     name: '获取系统信息',
