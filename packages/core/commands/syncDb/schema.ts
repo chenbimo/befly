@@ -1,4 +1,4 @@
-/**
+﻿/**
  * syncDb 表结构查询模块
  *
  * 包含：
@@ -7,7 +7,7 @@
  * - 获取表的索引信息
  */
 
-import { Env } from '../../config/env.js';
+import { Env } from '../../env.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
 import type { ColumnInfo, IndexInfo } from './types.js';
 import type { SQL } from 'bun';

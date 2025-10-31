@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Befly 核心工具函数集合
  *
  * 本文件整合了框架核心工具函数：
@@ -20,7 +20,7 @@ import { join } from 'pathe';
 import { readdirSync, statSync, readFileSync, existsSync } from 'node:fs';
 import { isEmpty, isPlainObject } from 'es-toolkit/compat';
 import { snakeCase, camelCase, kebabCase } from 'es-toolkit/string';
-import { Env } from './config/env.js';
+import { Env } from './env.js';
 import { Logger } from './lib/logger.js';
 import { projectDir } from './paths.js';
 import type { KeyValue } from './types/common.js';

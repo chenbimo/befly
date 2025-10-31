@@ -1,11 +1,11 @@
-/**
+﻿/**
  * 服务启动引导器
  * 负责组装和启动Bun HTTP服务器
  */
 
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime, No } from '../util.js';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { rootHandler } from '../router/root.js';
 import { apiHandler } from '../router/api.js';
 import { staticHandler } from '../router/static.js';

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SyncDev 命令 - 同步开发者管理员到数据库
  * - 邮箱: 通过 DEV_EMAIL 环境变量配置（默认 dev@qq.com）
  * - 姓名: 开发者
@@ -10,7 +10,7 @@
 import { Logger } from '../lib/logger.js';
 import { Cipher } from '../lib/cipher.js';
 import { Database } from '../lib/database.js';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 
 interface SyncDevOptions {
     plan?: boolean;

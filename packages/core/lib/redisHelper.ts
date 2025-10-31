@@ -1,10 +1,10 @@
-/**
+﻿/**
  * Redis 助手 - TypeScript 版本
  * 提供 Redis 操作的便捷方法
  */
 
 import { RedisClient } from 'bun';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { Logger } from '../lib/logger.js';
 import { Database } from './database.js';
 

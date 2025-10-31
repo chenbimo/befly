@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 数据验证器 - Befly 项目专用
  * 内置 RegexAliases，直接使用 util.ts 中的 parseRule
  */

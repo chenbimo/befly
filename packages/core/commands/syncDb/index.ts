@@ -1,4 +1,4 @@
-/**
+﻿/**
  * syncDb 主入口文件
  *
  * 功能：
@@ -10,7 +10,7 @@
 import { basename } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
-import { Env } from '../../config/env.js';
+import { Env } from '../../env.js';
 import { scanAddons, addonDirExists, getAddonDir } from '../../util.js';
 import { Database } from '../../lib/database.js';
 import checkTable from '../../checks/table.js';

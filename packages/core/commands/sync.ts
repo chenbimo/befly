@@ -1,10 +1,10 @@
-/**
+﻿/**
  * Sync 命令 - 一次性执行所有同步操作
  * 按顺序执行：syncDb → syncApi → syncMenu → syncDev
  */
 
 import { Logger } from '../lib/logger.js';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { syncDbCommand, type SyncDbStats } from './syncDb.js';
 import { syncApiCommand, type SyncApiStats } from './syncApi.js';
 import { syncMenuCommand, type SyncMenuStats } from './syncMenu.js';

@@ -1,4 +1,4 @@
-import { Field, Yes, No } from '../../util.js';
+﻿import { Field, Yes, No } from '../../util.js';
 export default {
     name: '删除字典',
     handler: async (befly, ctx) => {

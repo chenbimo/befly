@@ -1,10 +1,10 @@
-/**
+﻿/**
  * 数据库连接管理器
  * 统一管理 SQL 和 Redis 连接
  */
 
 import { SQL, RedisClient } from 'bun';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { Logger } from './logger.js';
 import { DbHelper } from './dbHelper.js';
 import { RedisHelper } from './redisHelper.js';

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * XML 解析器 - TypeScript 版本
  * 将 XML 字符串解析为 JSON 对象
  */

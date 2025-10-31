@@ -1,4 +1,4 @@
-/**
+﻿/**
  * syncDb 常量定义模块
  *
  * 包含：
@@ -8,7 +8,7 @@
  * - 系统字段定义
  */
 
-import { Env } from '../../config/env.js';
+import { Env } from '../../env.js';
 import type { Dialect } from './types.js';
 
 /**

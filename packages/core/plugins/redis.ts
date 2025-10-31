@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Redis 插件 - TypeScript 版本
  * 初始化 Redis 连接和助手工具
  */
 
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { Logger } from '../lib/logger.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { Database } from '../lib/database.js';

@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 获取服务状态
  */
 
 import { Yes } from '../../util.js';
-import { Env } from '../../config/env.js';
+import { Env } from '../../env.js';
 
 export default {
     name: '获取服务状态',

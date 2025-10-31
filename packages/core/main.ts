@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Befly 框架主入口文件
  * 提供简洁的框架接口，核心逻辑已提取到 lifecycle 层
  */
 
-import { Env } from './config/env.js';
+import { Env } from './env.js';
 import { Yes, No } from './util.js';
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';

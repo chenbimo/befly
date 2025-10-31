@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+﻿#!/usr/bin/env bun
 /**
  * Befly CLI - 命令行工具入口
  * 只提供 sync 命令，用于同步所有数据

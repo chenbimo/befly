@@ -1,10 +1,10 @@
-/**
+﻿/**
  * JWT 工具类 - Befly 项目专用
  * 直接集成环境变量，提供开箱即用的 JWT 功能
  */
 
 import { createHmac } from 'crypto';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtAlgorithm, JwtHeader, JwtDecoded } from '../types/jwt';
 
 /**

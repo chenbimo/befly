@@ -1,4 +1,4 @@
-import { Yes, No } from '../../util.js';
+﻿import { Yes, No } from '../../util.js';
 
 /**
  * 获取所有字典（不分页）

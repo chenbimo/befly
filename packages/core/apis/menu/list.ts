@@ -1,4 +1,4 @@
-import { Yes, No } from '../../util.js';
+﻿import { Yes, No } from '../../util.js';
 export default {
     name: '获取菜单列表',
     handler: async (befly, ctx) => {

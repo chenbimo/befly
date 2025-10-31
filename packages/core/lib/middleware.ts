@@ -1,10 +1,10 @@
-/**
+﻿/**
  * 中间件集合
  * 整合所有请求处理中间件
  */
 
 import { isEmpty, isPlainObject } from 'es-toolkit/compat';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { Logger } from './logger.js';
 import { Jwt } from './jwt.js';
 import { Xml } from './xml.js';

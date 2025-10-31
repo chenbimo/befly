@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 根路径路由处理器
  * 处理 / 路径的请求
  */
 
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
 import { No } from '../util.js';

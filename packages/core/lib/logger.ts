@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 日志系统 - Befly 项目专用
  * 直接集成环境变量，提供开箱即用的日志功能
  */
@@ -6,7 +6,7 @@
 import { join } from 'pathe';
 import { appendFile, stat } from 'node:fs/promises';
 import chalk from 'chalk';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import type { LogLevel } from '../types/common.js';
 
 /**

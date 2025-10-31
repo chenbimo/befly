@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 数据库插件 - TypeScript 版本
  * 初始化数据库连接和 SQL 管理器
  */
 
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
 import { DbHelper } from '../lib/dbHelper.js';

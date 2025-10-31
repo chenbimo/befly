@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 静态文件路由处理器
  * 处理 /* 路径的静态文件请求
  */
@@ -8,7 +8,7 @@ import { projectDir } from '../paths.js';
 import { No } from '../util.js';
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 
 /**
  * 静态文件处理器

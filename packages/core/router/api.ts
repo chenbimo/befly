@@ -1,4 +1,4 @@
-/**
+﻿/**
  * API路由处理器
  * 处理 /api/* 路径的请求
  */
@@ -6,7 +6,7 @@
 import { Logger } from '../lib/logger.js';
 import { No } from '../util.js';
 import { setCorsOptions, handleOptionsRequest, authenticate, parseGetParams, parsePostParams, checkPermission, validateParams, executePluginHooks, logRequest } from '../lib/middleware.js';
-import { Env } from '../config/env.js';
+import { Env } from '../env.js';
 import type { RequestContext } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
