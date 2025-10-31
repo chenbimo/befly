@@ -11,47 +11,34 @@ const isDev = process.env.NODE_ENV === 'development';
  * 项目自定义配置
  * 只需要配置需要覆盖的字段
  */
-const projectEnv: Partial<EnvConfig> = {
+export const Env: Partial<EnvConfig> = {
     // ========== 项目配置 ==========
     APP_NAME: isDev ? '野蜂飞舞开发环境' : '野蜂飞舞正式环境',
     APP_PORT: 3000,
     APP_HOST: '127.0.0.1',
     DEV_EMAIL: 'dev@qq.com',
     DEV_PASSWORD: '111111',
-    BODY_LIMIT: 10485760,
-    PARAMS_CHECK: isDev ? 'true' : 'false',
 
     // ========== 日志配置 ==========
     LOG_DEBUG: isDev ? 1 : 0,
     LOG_EXCLUDE_FIELDS: 'password,token',
-    LOG_DIR: './logs',
     LOG_TO_CONSOLE: 1,
-    LOG_MAX_SIZE: 52428800,
 
     // ========== 数据库配置 ==========
     DB_TYPE: 'mysql',
     DB_HOST: '127.0.0.1',
-    DB_PORT: 3306,
     DB_USER: 'root2',
     DB_PASS: 'root2',
     DB_NAME: 'test4',
-    DB_DEBUG: isDev ? 1 : 0,
-    DB_POOL_MAX: 10,
 
     // ========== Redis 配置 ==========
     REDIS_HOST: '127.0.0.1',
     REDIS_PORT: 6379,
     REDIS_PASSWORD: '',
     REDIS_DB: 0,
-    REDIS_KEY_PREFIX: isDev ? 'befly_dev' : 'befly',
+    REDIS_KEY_PREFIX: 'befly_demo',
 
     // ========== JWT 配置 ==========
-    JWT_SECRET: isDev ? 'dev-secret-key-befly' : 'prod-secret-key-befly',
-    JWT_EXPIRES_IN: '7d',
-
-    // ========== CORS 配置 ==========
-    CORS_ALLOWED_ORIGIN: '*',
-    CORS_ALLOW_CREDENTIALS: 'true'
+    JWT_SECRET: isDev ? 'befly-jwt-dev' : 'befly-jwt-prod',
+    JWT_EXPIRES_IN: '7d'
 };
-
-export default projectEnv;

@@ -93,7 +93,7 @@ async function loadProjectEnv(): Promise<Partial<EnvConfig>> {
 
         // 动态导入
         const module = await import(projectEnvPath);
-        return module.default || module.Env || {};
+        return module.Env || module.default || {};
     } catch (error) {
         // 项目没有自定义配置，使用核心默认配置
         return {};
