@@ -2,7 +2,7 @@
  * 获取系统信息
  */
 
-import { Yes } from '../../util.js';
+import { Yes, Env } from '../../util.js';
 
 export default {
     name: '获取系统信息',
@@ -14,7 +14,7 @@ export default {
         const uptime = Math.floor(process.uptime() * 1000);
 
         // 环境
-        const environment = process.env.NODE_ENV || 'development';
+        const environment = Env.NODE_ENV || 'development';
 
         return Yes('获取成功', {
             environment: environment,

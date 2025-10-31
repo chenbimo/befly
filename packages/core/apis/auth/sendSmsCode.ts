@@ -2,7 +2,7 @@
  * 发送短信验证码接口
  */
 
-import { Yes } from '../../util.js';
+import { Yes, Env } from '../../util.js';
 import adminTable from '../../tables/admin.json';
 
 export default {
@@ -28,7 +28,7 @@ export default {
         }
 
         // 开发环境下返回验证码(生产环境应该删除)
-        const isDev = process.env.NODE_ENV === 'development';
+        const isDev = Env.NODE_ENV === 'development';
 
         return Yes('验证码已发送', isDev ? { code } : null);
     }
