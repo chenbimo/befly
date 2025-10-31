@@ -1,27 +1,29 @@
 #!/usr/bin/env bun
 /**
  * Befly CLI - 命令行工具入口
- * 为 Befly 框架提供项目管理和脚本执行功能
+ * 只提供 sync 命令，用于同步所有数据
+ *
+ * 使用方法：
+ *   befly sync              # 使用当前环境（默认 development）
+ *   befly sync -e prod      # 使用生产环境
+ *   befly sync -e dev       # 使用开发环境
+ *   befly sync --plan       # 计划模式（只显示不执行）
+ *   befly sync --help       # 显示帮助
  *
  * 环境变量加载：
- * 1. Bun 自动加载：根据 NODE_ENV 自动加载 .env.{NODE_ENV} 文件
- * 2. 手动指定：bun --env-file=.env.xxx befly <command>
- * 3. 默认环境：如未设置 NODE_ENV，Bun 加载 .env.development
+ * Bun 自动根据 NODE_ENV 加载对应的 .env 文件：
+ * - NODE_ENV=development → .env.development
+ * - NODE_ENV=production → .env.production
+ * - NODE_ENV=test → .env.test
  */
 
-import { Command } from 'commander';
-import { buildCommand } from '../commands/build.js';
 import { syncCommand } from '../commands/sync.js';
-import { syncDbCommand } from '../commands/syncDb.js';
-import { syncApiCommand } from '../commands/syncApi.js';
-import { syncMenuCommand } from '../commands/syncMenu.js';
-import { syncDevCommand } from '../commands/syncDev.js';
 import { Logger } from '../lib/logger.js';
 import { join } from 'pathe';
 import { getPackageVersion } from '../commands/util.js';
 
 /**
- * 读取 package.json 版本号
+ * 读取版本号
  */
 function getVersion(): string {
     const coreDir = join(import.meta.dir, '..');
@@ -29,119 +31,103 @@ function getVersion(): string {
 }
 
 /**
- * Bun 版本要求
+ * 显示帮助信息
  */
-const REQUIRED_BUN_VERSION = '1.3.0';
+function showHelp(): void {
+    const version = getVersion();
+    console.log(`
+Befly CLI v${version}
 
-/**
- * 比较版本号
- */
-function compareVersions(v1: string, v2: string): number {
-    const parts1 = v1.split('.').map(Number);
-    const parts2 = v2.split('.').map(Number);
+用法:
+  befly sync [选项]
 
-    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-        const num1 = parts1[i] || 0;
-        const num2 = parts2[i] || 0;
+选项:
+  -e, --env <environment>  指定环境 (dev/development, prod/production, test)
+  --plan                   计划模式，只显示不执行
+  -h, --help               显示帮助信息
+  -v, --version            显示版本号
 
-        if (num1 > num2) return 1;
-        if (num1 < num2) return -1;
-    }
-
-    return 0;
+示例:
+  befly sync               # 使用当前环境同步所有数据
+  befly sync -e prod       # 使用生产环境同步
+  befly sync -e dev        # 使用开发环境同步
+  befly sync --plan        # 预览同步计划（不执行）
+`);
 }
 
 /**
- * 获取 Bun 版本
+ * 显示版本号
  */
-function getBunVersion(): string | null {
+function showVersion(): void {
+    console.log(getVersion());
+}
+
+/**
+ * 解析命令行参数
+ */
+function parseArgs(): { env?: string; plan?: boolean; help?: boolean; version?: boolean } {
+    const args = process.argv.slice(2);
+    const options: any = {};
+
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+
+        if (arg === '-h' || arg === '--help') {
+            options.help = true;
+        } else if (arg === '-v' || arg === '--version') {
+            options.version = true;
+        } else if (arg === '--plan') {
+            options.plan = true;
+        } else if (arg === '-e' || arg === '--env') {
+            options.env = args[++i];
+        } else if (arg === 'sync') {
+            // 忽略命令名称
+            continue;
+        } else {
+            Logger.error(`未知参数: ${arg}`);
+            Logger.info('使用 befly sync --help 查看帮助信息');
+            process.exit(1);
+        }
+    }
+
+    return options;
+}
+
+/**
+ * 主函数
+ */
+async function main() {
+    const args = process.argv.slice(2);
+
+    // 如果没有参数，显示帮助
+    if (args.length === 0) {
+        showHelp();
+        process.exit(0);
+    }
+
+    const options = parseArgs();
+
+    // 显示帮助
+    if (options.help) {
+        showHelp();
+        process.exit(0);
+    }
+
+    // 显示版本
+    if (options.version) {
+        showVersion();
+        process.exit(0);
+    }
+
+    // 执行 sync 命令
     try {
-        if (typeof Bun !== 'undefined' && Bun.version) {
-            return Bun.version;
-        }
-
-        const proc = Bun.spawnSync(['bun', '--version'], {
-            stdout: 'pipe',
-            stderr: 'pipe'
-        });
-
-        if (proc.exitCode === 0) {
-            const version = proc.stdout.toString().trim();
-            return version;
-        }
-
-        return null;
-    } catch {
-        return null;
-    }
-}
-
-/**
- * 检查 Bun 版本
- */
-function checkBunVersion(): void {
-    const currentVersion = getBunVersion();
-
-    if (!currentVersion) {
-        Logger.error('未检测到 Bun 运行时');
-        Logger.info('\nBefly CLI 需要 Bun v1.3.0 或更高版本');
-        Logger.info('请访问 https://bun.sh 安装 Bun\n');
-        Logger.info('安装命令:');
-        Logger.info('  Windows (PowerShell): powershell -c "irm bun.sh/install.ps1 | iex"');
-        Logger.info('  macOS/Linux: curl -fsSL https://bun.sh/install | bash\n');
-        process.exit(1);
-    }
-
-    const comparison = compareVersions(currentVersion, REQUIRED_BUN_VERSION);
-
-    if (comparison < 0) {
-        Logger.error(`Bun 版本过低: ${currentVersion}`);
-        Logger.info(`\n需要 Bun v${REQUIRED_BUN_VERSION} 或更高版本`);
-        Logger.info('请升级 Bun:\n');
-        Logger.info('  bun upgrade\n');
-        process.exit(1);
-    }
-}
-
-// 检查 Bun 版本
-checkBunVersion();
-
-const program = new Command();
-
-program.name('befly').description('Befly CLI - 为 Befly 框架提供命令行工具').version(getVersion());
-
-/**
- * 包装命令处理函数，在执行后打印环境
- */
-function wrapCommand<T extends (...args: any[]) => any>(fn: T): T {
-    return (async (...args: any[]) => {
-        const result = await fn(...args);
+        await syncCommand(options);
         Logger.printEnv();
-        return result;
-    }) as T;
+    } catch (error: any) {
+        Logger.error('命令执行失败:', error.message || error);
+        process.exit(1);
+    }
 }
 
-// build 命令 - 构建项目
-program.command('build').description('构建项目').option('-o, --outdir <path>', '输出目录', 'dist').option('--minify', '压缩代码', false).option('--sourcemap', '生成 sourcemap', false).action(wrapCommand(buildCommand));
-
-// sync 命令 - 一次性执行所有同步
-program.command('sync').description('一次性执行所有同步操作（syncApi + syncMenu + syncDev）').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncCommand));
-
-// syncDb 命令 - 同步数据库
-program.command('syncDb').description('同步数据库表结构').option('-t, --table <name>', '指定表名').option('--dry-run', '预览模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncDbCommand));
-
-// syncApi 命令 - 同步 API 接口
-program.command('syncApi').description('同步 API 接口到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncApiCommand));
-
-// syncMenu 命令 - 同步菜单
-program.command('syncMenu').description('同步菜单配置到数据库').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncMenuCommand));
-
-// syncDev 命令 - 同步开发者账号
-program.command('syncDev').description('同步开发者管理员账号').option('--plan', '计划模式，只显示不执行', false).option('-e, --env <environment>', '指定环境 (development, production, test)').action(wrapCommand(syncDevCommand));
-
-// 显示建议和错误
-program.showSuggestionAfterError();
-program.showHelpAfterError();
-
-// 解析命令行参数
-program.parse();
+// 运行主函数
+main();
