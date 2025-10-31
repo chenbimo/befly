@@ -1,0 +1,45 @@
+{
+    "name": "befly-cli",
+    "version": "3.5.1",
+    "description": "Befly CLI - Command line tools for Befly framework",
+    "type": "module",
+    "bin": {
+        "befly": "./bin/index.js"
+    },
+    "exports": {
+        ".": "./bin/index.js"
+    },
+    "files": [
+        "bin",
+        "commands",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "echo 'No build needed for CLI'"
+    },
+    "keywords": [
+        "befly",
+        "cli",
+        "framework",
+        "command-line"
+    ],
+    "author": "chenbimo",
+    "license": "MIT",
+    "dependencies": {
+        "befly": "workspace:*",
+        "cross-env": "^10.1.0",
+        "pathe": "^1.1.2"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "bun": ">=1.0.0"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    }
+}

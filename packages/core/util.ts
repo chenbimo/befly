@@ -1,21 +1,4 @@
-﻿/**
- * Befly 核心工具函数集合
- *
- * 本文件整合了框架核心工具函数：
- * - API 响应工具（Yes, No）
- * - 对象操作（pickFields, fieldClear）
- * - 日期时间（calcPerfTime）
- * - 表定义工具（parseRule）
- * - Addon 管理（scanAddons, getAddonDir 等）
- *
- * 注意：
- * - JWT 工具位于 lib/jwt.ts
- * - Logger 位于 lib/logger.ts
- * - Validator 位于 lib/validator.ts
- * - Database 管理位于 lib/database.ts
- */
-
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import { join } from 'pathe';
 import { readdirSync, statSync, readFileSync, existsSync } from 'node:fs';
 import { isEmpty, isPlainObject } from 'es-toolkit/compat';
@@ -287,13 +270,8 @@ export const addonDirExists = (addonName: string, subDir: string): boolean => {
  * @returns 插件名称数组
  */
 export function getAddonDirs(addonsDir: string): string[] {
-    // try {
     return readdirSync(addonsDir).filter((name) => {
         const addonPath = path.join(addonsDir, name);
         return statSync(addonPath).isDirectory() && !name.startsWith('_');
     });
-    // } catch (error: any) {
-    //     Logger.error(`读取插件目录失败: ${addonsDir}`, error.message);
-    //     return [];
-    // }
 }
