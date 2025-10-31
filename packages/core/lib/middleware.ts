@@ -61,14 +61,14 @@ export const setCorsOptions = (req: Request): CorsResult => {
     const requestOrigin = req.headers.get('origin');
     let allowedOrigin = '*';
 
-    // 如果配置了 ALLOWED_ORIGIN
-    if (Env.ALLOWED_ORIGIN) {
+    // 如果配置了 CORS_ALLOWED_ORIGIN
+    if (Env.CORS_ALLOWED_ORIGIN) {
         // 如果配置为 *，使用请求的 origin（而不是返回 *）
-        if (Env.ALLOWED_ORIGIN === '*') {
+        if (Env.CORS_ALLOWED_ORIGIN === '*') {
             allowedOrigin = requestOrigin || '*';
         } else {
             // 支持多个源，用逗号分隔
-            const allowedOrigins = Env.ALLOWED_ORIGIN.split(',').map((origin) => origin.trim());
+            const allowedOrigins = Env.CORS_ALLOWED_ORIGIN.split(',').map((origin) => origin.trim());
 
             // 如果请求的 origin 在允许列表中，返回该 origin
             if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
@@ -82,18 +82,18 @@ export const setCorsOptions = (req: Request): CorsResult => {
             }
         }
     } else if (requestOrigin) {
-        // 没有配置 ALLOWED_ORIGIN，使用请求的 origin
+        // 没有配置 CORS_ALLOWED_ORIGIN，使用请求的 origin
         allowedOrigin = requestOrigin;
     }
 
     return {
         headers: {
             'Access-Control-Allow-Origin': allowedOrigin,
-            'Access-Control-Allow-Methods': Env.ALLOWED_METHODS || 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': Env.ALLOWED_HEADERS || 'Content-Type, Authorization, authorization, token',
-            'Access-Control-Expose-Headers': Env.EXPOSE_HEADERS || 'Content-Range, X-Content-Range, Authorization, authorization, token',
-            'Access-Control-Max-Age': Env.MAX_AGE || 86400,
-            'Access-Control-Allow-Credentials': Env.ALLOW_CREDENTIALS || 'true'
+            'Access-Control-Allow-Methods': Env.CORS_ALLOWED_METHODS || 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': Env.CORS_ALLOWED_HEADERS || 'Content-Type, Authorization, authorization, token',
+            'Access-Control-Expose-Headers': Env.CORS_EXPOSE_HEADERS || 'Content-Range, X-Content-Range, Authorization, authorization, token',
+            'Access-Control-Max-Age': Env.CORS_MAX_AGE || 86400,
+            'Access-Control-Allow-Credentials': Env.CORS_ALLOW_CREDENTIALS || 'true'
         }
     };
 };

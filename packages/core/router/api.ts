@@ -21,6 +21,7 @@ import type { BeflyContext } from '../types/befly.js';
 export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin[], appContext: BeflyContext) {
     return async (req: Request): Promise<Response> => {
         const corsOptions = setCorsOptions(req);
+        console.log('🔥[ corsOptions ]-24', corsOptions);
         let ctx: RequestContext | null = null;
         let api: ApiRoute | undefined;
         let apiPath = '';

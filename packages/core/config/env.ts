@@ -87,17 +87,17 @@ export interface EnvConfig {
 
     // ========== CORS 配置 ==========
     /** 允许的来源 */
-    ALLOWED_ORIGIN: string;
+    CORS_ALLOWED_ORIGIN: string;
     /** 允许的方法 */
-    ALLOWED_METHODS: string;
+    CORS_ALLOWED_METHODS: string;
     /** 允许的头部 */
-    ALLOWED_HEADERS: string;
+    CORS_ALLOWED_HEADERS: string;
     /** 暴露的头部 */
-    EXPOSE_HEADERS: string;
+    CORS_EXPOSE_HEADERS: string;
     /** 预检请求缓存时间（秒） */
-    MAX_AGE: number;
+    CORS_MAX_AGE: number;
     /** 是否允许凭证 */
-    ALLOW_CREDENTIALS: string;
+    CORS_ALLOW_CREDENTIALS: string;
 
     // ========== 邮件配置 ==========
     /** 邮件服务器主机 */
@@ -183,12 +183,12 @@ export const Env: EnvConfig = {
     JWT_ALGORITHM: getEnv('JWT_ALGORITHM', 'HS256'),
 
     // ========== CORS 配置 ==========
-    ALLOWED_ORIGIN: getEnv('ALLOWED_ORIGIN', '*'),
-    ALLOWED_METHODS: getEnv('ALLOWED_METHODS', 'GET, POST, PUT, DELETE, OPTIONS'),
-    ALLOWED_HEADERS: getEnv('ALLOWED_HEADERS', 'Content-Type, Authorization, authorization, token'),
-    EXPOSE_HEADERS: getEnv('EXPOSE_HEADERS', 'Content-Range, X-Content-Range, Authorization, authorization, token'),
-    MAX_AGE: getEnvNumber('MAX_AGE', 86400),
-    ALLOW_CREDENTIALS: getEnv('ALLOW_CREDENTIALS', 'true'),
+    CORS_ALLOWED_ORIGIN: getEnv('CORS_ALLOWED_ORIGIN', '*'),
+    CORS_ALLOWED_METHODS: getEnv('CORS_ALLOWED_METHODS', 'GET, POST, PUT, DELETE, OPTIONS'),
+    CORS_ALLOWED_HEADERS: getEnv('CORS_ALLOWED_HEADERS', 'Content-Type, Authorization, authorization, token'),
+    CORS_EXPOSE_HEADERS: getEnv('CORS_EXPOSE_HEADERS', 'Content-Range, X-Content-Range, Authorization, authorization, token'),
+    CORS_MAX_AGE: getEnvNumber('CORS_MAX_AGE', 86400),
+    CORS_ALLOW_CREDENTIALS: getEnv('CORS_ALLOW_CREDENTIALS', 'true'),
 
     // ========== 邮件配置 ==========
     MAIL_HOST: getEnv('MAIL_HOST', ''),
