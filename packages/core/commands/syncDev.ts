@@ -71,7 +71,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         }
 
         const menuIds = allMenus.length > 0 ? allMenus.map((m: any) => m.id).join(',') : '';
-        Logger.info(`查询到 ${allMenus.length} 个菜单，ID 列表: ${menuIds || '(空)'}`);
+        Logger.debug(`查询到 ${allMenus.length} 个菜单，ID 列表: ${menuIds || '(空)'}`);
 
         // 查询所有接口 ID
         const existApi = await helper.tableExists('core_api');
@@ -84,7 +84,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
 
             if (allApis && Array.isArray(allApis) && allApis.length > 0) {
                 apiIds = allApis.map((a: any) => a.id).join(',');
-                Logger.info(`查询到 ${allApis.length} 个接口，ID 列表: ${apiIds}`);
+                Logger.debug(`查询到 ${allApis.length} 个接口，ID 列表: ${apiIds}`);
             } else {
                 Logger.info('未查询到接口数据');
             }

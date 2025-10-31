@@ -176,7 +176,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                 });
                 parentId = existingParent.id;
                 stats.updated++;
-                Logger.info(`  └ 更新父级菜单: ${menu.name} (ID: ${parentId}, Path: ${menu.path})`);
+                Logger.debug(`  └ 更新父级菜单: ${menu.name} (ID: ${parentId}, Path: ${menu.path})`);
             } else {
                 parentId = await helper.insData({
                     table: 'core_menu',
@@ -190,7 +190,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                     }
                 });
                 stats.created++;
-                Logger.info(`  └ 新增父级菜单: ${menu.name} (ID: ${parentId}, Path: ${menu.path})`);
+                Logger.debug(`  └ 新增父级菜单: ${menu.name} (ID: ${parentId}, Path: ${menu.path})`);
             }
 
             // 2. 同步子级菜单（自动追加父级路径前缀）
@@ -217,7 +217,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             }
                         });
                         stats.updated++;
-                        Logger.info(`    └ 更新子级菜单: ${child.name} (ID: ${existingChild.id}, PID: ${parentId}, Path: ${childFullPath})`);
+                        Logger.debug(`    └ 更新子级菜单: ${child.name} (ID: ${existingChild.id}, PID: ${parentId}, Path: ${childFullPath})`);
                     } else {
                         const childId = await helper.insData({
                             table: 'core_menu',
@@ -231,7 +231,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             }
                         });
                         stats.created++;
-                        Logger.info(`    └ 新增子级菜单: ${child.name} (ID: ${childId}, PID: ${parentId}, Path: ${childFullPath})`);
+                        Logger.debug(`    └ 新增子级菜单: ${child.name} (ID: ${childId}, PID: ${parentId}, Path: ${childFullPath})`);
                     }
                 }
             }
@@ -248,7 +248,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
  * 删除配置中不存在的菜单（强制删除）
  */
 async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<number> {
-    Logger.info(`\n=== 删除配置中不存在的记录 ===`);
+    Logger.debug(`\n=== 删除配置中不存在的记录 ===`);
 
     const allRecords = await helper.getAll({
         table: 'core_menu',
@@ -264,12 +264,12 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
                 where: { id: record.id }
             });
             deletedCount++;
-            Logger.info(`  └ 删除记录: ${record.name} (ID: ${record.id}, path: ${record.path})`);
+            Logger.debug(`  └ 删除记录: ${record.name} (ID: ${record.id}, path: ${record.path})`);
         }
     }
 
     if (deletedCount === 0) {
-        Logger.info('  ✅ 无需删除的记录');
+        Logger.debug('  ✅ 无需删除的记录');
     }
 
     return deletedCount;
@@ -295,7 +295,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         Logger.info('开始同步菜单配置到数据库...\n');
 
         // 1. 读取两个配置文件
-        Logger.info('=== 步骤 1: 读取菜单配置文件 ===');
+        Logger.debug('=== 步骤 1: 读取菜单配置文件 ===');
         const projectMenuPath = join(projectDir, 'menu.json');
         const coreMenuPath = join(coreDir, 'menu.json');
 
@@ -316,7 +316,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         // 打印合并后的菜单结构
         for (const menu of mergedMenus) {
             const childCount = menu.children?.length || 0;
-            Logger.info(`  └ ${menu.name} (${menu.path}) - ${childCount} 个子菜单`);
+            Logger.debug(`  └ ${menu.name} (${menu.path}) - ${childCount} 个子菜单`);
         }
 
         // 连接数据库（SQL + Redis）
@@ -325,7 +325,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         const helper = Database.getDbHelper();
 
         // 3. 检查表是否存在
-        Logger.info('\n=== 步骤 3: 检查数据表 ===');
+        Logger.debug('\n=== 步骤 3: 检查数据表 ===');
         const exists = await helper.tableExists('core_menu');
 
         if (!exists) {
@@ -333,22 +333,22 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
             process.exit(1);
         }
 
-        Logger.info(`✅ 表 core_menu 存在`);
+        Logger.debug(`✅ 表 core_menu 存在`);
 
         // 4. 收集配置文件中所有菜单的 path
-        Logger.info('\n=== 步骤 4: 收集配置菜单路径 ===');
+        Logger.debug('\n=== 步骤 4: 收集配置菜单路径 ===');
         const configPaths = collectPaths(mergedMenus);
-        Logger.info(`✅ 配置文件中共有 ${configPaths.size} 个菜单路径`);
+        Logger.debug(`✅ 配置文件中共有 ${configPaths.size} 个菜单路径`);
 
         // 5. 同步菜单
-        Logger.info('\n=== 步骤 5: 同步菜单数据（新增/更新） ===');
+        Logger.debug('\n=== 步骤 5: 同步菜单数据（新增/更新） ===');
         const stats = await syncMenus(helper, mergedMenus);
 
         // 6. 删除文件中不存在的菜单（强制删除）
         const deletedCount = await deleteObsoleteRecords(helper, configPaths);
 
         // 7. 构建树形结构预览
-        Logger.info('\n=== 步骤 7: 菜单结构预览 ===');
+        Logger.debug('\n=== 步骤 7: 菜单结构预览 ===');
         const allMenus = await helper.getAll({
             table: 'core_menu',
             fields: ['id', 'pid', 'name', 'path', 'type'],
@@ -358,9 +358,9 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}) {
         const parentMenus = allMenus.filter((m: any) => m.pid === 0);
         for (const parent of parentMenus) {
             const children = allMenus.filter((m: any) => m.pid === parent.id);
-            Logger.info(`  └ ${parent.name} (${parent.path})`);
+            Logger.debug(`  └ ${parent.name} (${parent.path})`);
             for (const child of children) {
-                Logger.info(`    └ ${child.name} (${child.path})`);
+                Logger.debug(`    └ ${child.name} (${child.path})`);
             }
         }
 

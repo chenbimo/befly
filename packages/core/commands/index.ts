@@ -1,5 +1,5 @@
 /**
- * Build、Start、Sync、Addon、SyncApi、SyncMenu、SyncDev 命令实现
+ * Build、Start、Sync、SyncApi、SyncMenu、SyncDev 命令实现
  */
 
 import { join } from 'pathe';
@@ -163,62 +163,7 @@ export async function syncCommand(options: SyncOptions) {
     }
 }
 
-// ========== Addon 命令 ==========
-export const addonCommand = {
-    async install(name: string, options: { source?: string }) {
-        Logger.info(`正在安装插件: ${name}`);
-
-        try {
-            // TODO: 实现插件安装逻辑
-            // 1. 从 source 或默认源下载插件
-            // 2. 解压到 addons 目录
-            // 3. 安装插件依赖
-            // 4. 执行插件安装脚本
-
-            Logger.success(`插件 ${name} 安装成功`);
-        } catch (error) {
-            Logger.error(`插件 ${name} 安装失败`);
-            throw error;
-        }
-    },
-
-    async uninstall(name: string, options: { keepData: boolean }) {
-        Logger.info(`正在卸载插件: ${name}`);
-
-        try {
-            // TODO: 实现插件卸载逻辑
-            // 1. 执行插件卸载脚本
-            // 2. 删除插件文件
-            // 3. 可选：删除插件数据
-
-            Logger.success(`插件 ${name} 卸载成功`);
-        } catch (error) {
-            Logger.error(`插件 ${name} 卸载失败`);
-            throw error;
-        }
-    },
-
-    async list() {
-        try {
-            const projectRoot = getProjectRoot();
-            const addonsDir = join(projectRoot, 'addons');
-
-            if (!existsSync(addonsDir)) {
-                Logger.info('未找到 addons 目录');
-                return;
-            }
-
-            // TODO: 读取已安装的插件列表
-            Logger.info('已安装的插件:\n');
-            Logger.info('(功能开发中)');
-        } catch (error) {
-            Logger.error('获取插件列表失败:');
-            console.error(error);
-        }
-    }
-};
-
-// ========== 导出新增的同步命令 ==========
+// ========== 导出同步命令 ==========
 export { syncApiCommand } from './syncApi.js';
 export { syncMenuCommand } from './syncMenu.js';
 export { syncDevCommand } from './syncDev.js';
