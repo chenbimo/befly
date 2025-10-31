@@ -26,17 +26,15 @@ module.exports = {
             args: 'run --env-file=.env.production main.ts',
 
             // 集群模式配置
-            instances: 4, // 实例数量，可设置为 'max' 使用所有 CPU
+            instances: 2, // 实例数量，可设置为 'max' 使用所有 CPU
             exec_mode: 'cluster', // 集群模式
 
             // 自动重启配置
             autorestart: true,
             watch: false,
-            max_memory_restart: '1G', // 内存超过 1G 自动重启
+            max_memory_restart: '200M', // 内存超过 200M 自动重启
 
             // 日志配置
-            error_file: './logs/pm2-error.log',
-            out_file: './logs/pm2-out.log',
             log_date_format: 'YYYY-MM-DD HH:mm:ss',
             merge_logs: true
         }
