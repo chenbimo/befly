@@ -212,8 +212,8 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
                     // 先删除旧数据
                     await redis.del(redisKey);
 
-                    // 批量添加到 Set
-                    const result = await redis.sadd(redisKey, roleApiPaths);
+                    // 批量添加到 Set（使用扩展运算符展开数组）
+                    const result = await redis.sadd(redisKey, ...roleApiPaths);
 
                     if (result > 0) {
                         cachedRoles++;
