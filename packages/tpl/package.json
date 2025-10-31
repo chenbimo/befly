@@ -11,7 +11,8 @@
         "dev": "bun run --env-file=.env.development main.ts",
         "start": "bun run --env-file=.env.production main.ts",
         "pm2": "pm2 start pm2.config.cjs",
-        "sync": "befly sync -e prod"
+        "sync:dev": "cross-env NODE_ENV=development bunx befly sync",
+        "sync:prod": "cross-env NODE_ENV=production bunx befly sync"
     },
     "files": [
         "apis",
@@ -37,6 +38,7 @@
     },
     "gitHead": "96136321570fd1abf859e691d6ccbc69d7696c4b",
     "devDependencies": {
+        "cross-env": "^10.1.0",
         "dotenv": "^17.2.3"
     }
 }

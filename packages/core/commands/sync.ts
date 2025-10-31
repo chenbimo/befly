@@ -11,47 +11,10 @@ import { syncMenuCommand, type SyncMenuStats } from './syncMenu.js';
 import { syncDevCommand, type SyncDevStats } from './syncDev.js';
 import { existsSync, mkdirSync } from 'node:fs';
 
-interface SyncOptions {
-    env?: string;
-    plan?: boolean;
-}
+interface SyncOptions {}
 
 export async function syncCommand(options: SyncOptions = {}) {
     try {
-        // 如果指定了环境但当前 NODE_ENV 不匹配，重新启动进程
-        if (options.env) {
-            const envMap: Record<string, string> = {
-                dev: 'development',
-                development: 'development',
-                prod: 'production',
-                production: 'production',
-                test: 'test'
-            };
-
-            const targetEnv = envMap[options.env.toLowerCase()] || options.env;
-            const currentEnv = process.env.NODE_ENV || 'development';
-
-            if (targetEnv !== currentEnv) {
-                Logger.info(`切换环境: ${currentEnv} → ${targetEnv}`);
-                Logger.info(`重新启动进程以加载正确的环境变量...\n`);
-
-                // 重新启动进程，设置正确的 NODE_ENV
-                const proc = Bun.spawn(['bun', 'befly', 'sync'], {
-                    cwd: process.cwd(),
-                    stdout: 'inherit',
-                    stderr: 'inherit',
-                    stdin: 'inherit',
-                    env: {
-                        ...process.env,
-                        NODE_ENV: targetEnv
-                    }
-                });
-
-                await proc.exited;
-                process.exit(proc.exitCode || 0);
-            }
-        }
-
         const startTime = Date.now();
 
         // 确保 logs 目录存在
@@ -63,13 +26,13 @@ export async function syncCommand(options: SyncOptions = {}) {
         const dbStats = await syncDbCommand({ dryRun: false });
 
         // 2. 同步接口（并缓存）
-        const apiStats = await syncApiCommand(options);
+        const apiStats = await syncApiCommand();
 
         // 3. 同步菜单（并缓存）
-        const menuStats = await syncMenuCommand(options);
+        const menuStats = await syncMenuCommand();
 
         // 4. 同步开发管理员（并缓存角色权限）
-        const devStats = await syncDevCommand(options);
+        const devStats = await syncDevCommand();
 
         // 输出总结
         const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
