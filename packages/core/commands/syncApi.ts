@@ -16,6 +16,7 @@ import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
+import { coreApiDir, projectApiDir } from '../paths.js';
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
 
@@ -118,23 +119,21 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
     // 1. 扫描 Core 框架 API
-    const coreApisDir = join(dirname(projectRoot), 'core', 'apis');
     try {
-        const coreApiFiles = scanTsFiles(coreApisDir);
+        const coreApiFiles = scanTsFiles(coreApiDir);
 
         for (const filePath of coreApiFiles) {
-            const apiInfo = await extractApiInfo(filePath, coreApisDir, 'core', '', '核心接口');
+            const apiInfo = await extractApiInfo(filePath, coreApiDir, 'core', '', '核心接口');
             if (apiInfo) {
                 apis.push(apiInfo);
             }
         }
 
         // 2. 扫描项目 API
-        const projectApisDir = join(projectRoot, 'apis');
-        const projectApiFiles = scanTsFiles(projectApisDir);
+        const projectApiFiles = scanTsFiles(projectApiDir);
 
         for (const filePath of projectApiFiles) {
-            const apiInfo = await extractApiInfo(filePath, projectApisDir, 'app', '', '项目接口');
+            const apiInfo = await extractApiInfo(filePath, projectApiDir, 'app', '', '项目接口');
             if (apiInfo) {
                 apis.push(apiInfo);
             }
