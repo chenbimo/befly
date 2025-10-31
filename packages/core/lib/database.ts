@@ -62,7 +62,7 @@ export class Database {
         }
 
         try {
-            const timeout = options.connectionTimeout ?? 5000;
+            const timeout = options.connectionTimeout ?? 30000;
 
             const healthCheckPromise = (async () => {
                 let version = '';
@@ -174,7 +174,7 @@ export class Database {
             const url = `redis://${auth}${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}`;
 
             const redis = new RedisClient(url, {
-                connectionTimeout: 10000,
+                connectionTimeout: 30000,
                 idleTimeout: 0,
                 autoReconnect: true,
                 maxRetries: 0,

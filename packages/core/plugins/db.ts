@@ -24,7 +24,7 @@ const dbPlugin: Plugin = {
             if (Env.DB_ENABLE === 1) {
                 // 创建 Bun SQL 客户端（内置连接池），并确保连接验证成功后再继续
                 // 从环境变量读取连接超时配置
-                const connectionTimeout = Env.DB_CONNECTION_TIMEOUT ? parseInt(Env.DB_CONNECTION_TIMEOUT) : 5000;
+                const connectionTimeout = Env.DB_CONNECTION_TIMEOUT ? parseInt(Env.DB_CONNECTION_TIMEOUT) : 30000;
 
                 sql = await Database.connectSql({
                     connectionTimeout
