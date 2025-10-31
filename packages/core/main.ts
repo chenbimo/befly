@@ -8,6 +8,7 @@ import { Yes, No } from './util.js';
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
+import { Database } from './lib/database.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
 
 import type { Server } from 'bun';
@@ -35,8 +36,6 @@ export class Befly {
     async listen(callback?: (server: Server) => void): Promise<Server> {
         const server = await this.lifecycle.start(this.appContext, callback);
 
-        console.log('=====================================123');
-
         // 注册优雅关闭信号处理器
         const gracefulShutdown = async (signal: string) => {
             Logger.info(`\n收到 ${signal} 信号，开始优雅关闭...`);
@@ -47,7 +46,6 @@ export class Befly {
 
             // 2. 关闭数据库连接
             try {
-                const { Database } = await import('./lib/database.js');
                 await Database.disconnect();
                 Logger.info('✅ 数据库连接已关闭');
             } catch (error: any) {
