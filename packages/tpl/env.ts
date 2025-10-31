@@ -13,7 +13,7 @@ const isDev = process.env.NODE_ENV === 'development';
  */
 const projectEnv: Partial<EnvConfig> = {
     // ========== 项目配置 ==========
-    APP_NAME: isDev ? '易接口1' : '易接口2',
+    APP_NAME: isDev ? '野蜂飞舞开发环境' : '野蜂飞舞正式环境',
     APP_PORT: 3000,
     APP_HOST: '127.0.0.1',
     DEV_EMAIL: 'dev@qq.com',
@@ -46,11 +46,11 @@ const projectEnv: Partial<EnvConfig> = {
     REDIS_KEY_PREFIX: isDev ? 'befly_dev' : 'befly',
 
     // ========== JWT 配置 ==========
-    JWT_SECRET: isDev ? 'dev-secret-key-2024' : 'prod-secret-key-2024',
+    JWT_SECRET: isDev ? 'dev-secret-key-befly' : 'prod-secret-key-befly',
     JWT_EXPIRES_IN: '7d',
 
     // ========== CORS 配置 ==========
-    CORS_ALLOWED_ORIGIN: isDev ? '*' : 'https://yourdomain.com',
+    CORS_ALLOWED_ORIGIN: '*',
     CORS_ALLOW_CREDENTIALS: 'true'
 };
 

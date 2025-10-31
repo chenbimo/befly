@@ -16,7 +16,7 @@ const isDev = process.env.NODE_ENV === 'development';
 const coreEnv: EnvConfig = {
     // ========== 项目配置 ==========
     NODE_ENV: process.env.NODE_ENV || 'development',
-    APP_NAME: isDev ? 'befly-dev' : 'befly',
+    APP_NAME: isDev ? '野蜂飞舞开发环境' : '野蜂飞舞正式环境',
     APP_PORT: isDev ? 3000 : 3000,
     APP_HOST: isDev ? '0.0.0.0' : '127.0.0.1',
     DEV_EMAIL: 'dev@qq.com',
@@ -52,10 +52,10 @@ const coreEnv: EnvConfig = {
     REDIS_USERNAME: '',
     REDIS_PASSWORD: isDev ? '' : '',
     REDIS_DB: 0,
-    REDIS_KEY_PREFIX: isDev ? 'befly_dev' : 'befly',
+    REDIS_KEY_PREFIX: isDev ? 'befly_dev' : 'befly-prod',
 
     // ========== JWT 配置 ==========
-    JWT_SECRET: isDev ? 'befly-dev-secret' : 'befly-secret',
+    JWT_SECRET: isDev ? 'befly-dev-secret' : 'befly-prod-secret',
     JWT_EXPIRES_IN: '7d',
     JWT_ALGORITHM: 'HS256',
 
