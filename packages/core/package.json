@@ -64,6 +64,8 @@
         "tsconfig.json",
         "LICENSE",
         "main.ts",
+        "env.ts",
+        "entry.ts",
         "menu.json",
         "paths.ts",
         "util.ts",
