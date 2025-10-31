@@ -17,12 +17,12 @@ const coreEnv: EnvConfig = {
     // ========== 项目配置 ==========
     NODE_ENV: process.env.NODE_ENV || 'development',
     APP_NAME: isDev ? '野蜂飞舞开发环境' : '野蜂飞舞正式环境',
-    APP_PORT: isDev ? 3000 : 3000,
+    APP_PORT: 3000,
     APP_HOST: isDev ? '0.0.0.0' : '127.0.0.1',
     DEV_EMAIL: 'dev@qq.com',
-    DEV_PASSWORD: isDev ? '123456' : '',
+    DEV_PASSWORD: isDev ? '123456' : '123456',
     BODY_LIMIT: 10485760, // 10MB
-    PARAMS_CHECK: isDev ? 'true' : 'false',
+    PARAMS_CHECK: false,
 
     // ========== 日志配置 ==========
     LOG_DEBUG: isDev ? 1 : 0,
@@ -37,22 +37,22 @@ const coreEnv: EnvConfig = {
     // ========== 数据库配置 ==========
     DB_ENABLE: 1,
     DB_TYPE: 'mysql',
-    DB_HOST: isDev ? '127.0.0.1' : 'localhost',
+    DB_HOST: '127.0.0.1',
     DB_PORT: 3306,
     DB_USER: 'root',
-    DB_PASS: isDev ? '123456' : '',
-    DB_NAME: isDev ? 'befly_dev' : 'befly',
-    DB_DEBUG: isDev ? 1 : 0,
+    DB_PASS: '',
+    DB_NAME: 'befly_demo',
+    DB_DEBUG: 0,
     DB_POOL_MAX: 10,
 
     // ========== Redis 配置 ==========
     REDIS_ENABLE: 1,
-    REDIS_HOST: isDev ? '127.0.0.1' : 'localhost',
+    REDIS_HOST: '127.0.0.1',
     REDIS_PORT: 6379,
     REDIS_USERNAME: '',
-    REDIS_PASSWORD: isDev ? '' : '',
+    REDIS_PASSWORD: '',
     REDIS_DB: 0,
-    REDIS_KEY_PREFIX: isDev ? 'befly_dev' : 'befly-prod',
+    REDIS_KEY_PREFIX: 'befly',
 
     // ========== JWT 配置 ==========
     JWT_SECRET: isDev ? 'befly-dev-secret' : 'befly-prod-secret',
@@ -60,7 +60,7 @@ const coreEnv: EnvConfig = {
     JWT_ALGORITHM: 'HS256',
 
     // ========== CORS 配置 ==========
-    CORS_ALLOWED_ORIGIN: isDev ? '*' : '',
+    CORS_ALLOWED_ORIGIN: '*',
     CORS_ALLOWED_METHODS: 'GET, POST, PUT, DELETE, OPTIONS',
     CORS_ALLOWED_HEADERS: 'Content-Type, Authorization, authorization, token',
     CORS_EXPOSE_HEADERS: 'Content-Range, X-Content-Range, Authorization, authorization, token',
