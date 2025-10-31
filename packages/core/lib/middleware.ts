@@ -58,40 +58,12 @@ export interface CorsResult {
  * @returns CORS 配置对象
  */
 export const setCorsOptions = (req: Request): CorsResult => {
-    const requestOrigin = req.headers.get('origin');
-    let allowedOrigin = '*';
-
-    // 如果配置了 CORS_ALLOWED_ORIGIN
-    if (Env.CORS_ALLOWED_ORIGIN) {
-        // 如果配置为 *，使用请求的 origin（而不是返回 *）
-        if (Env.CORS_ALLOWED_ORIGIN === '*') {
-            allowedOrigin = requestOrigin || '*';
-        } else {
-            // 支持多个源，用逗号分隔
-            const allowedOrigins = Env.CORS_ALLOWED_ORIGIN.split(',').map((origin) => origin.trim());
-
-            // 如果请求的 origin 在允许列表中，返回该 origin
-            if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
-                allowedOrigin = requestOrigin;
-            } else if (allowedOrigins.length === 1) {
-                // 如果只配置了一个源，直接使用
-                allowedOrigin = allowedOrigins[0];
-            } else {
-                // 多个源但请求源不在列表中，不允许跨域
-                allowedOrigin = 'null';
-            }
-        }
-    } else if (requestOrigin) {
-        // 没有配置 CORS_ALLOWED_ORIGIN，使用请求的 origin
-        allowedOrigin = requestOrigin;
-    }
-
     return {
         headers: {
-            'Access-Control-Allow-Origin': allowedOrigin,
-            'Access-Control-Allow-Methods': Env.CORS_ALLOWED_METHODS || 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': Env.CORS_ALLOWED_HEADERS || 'Content-Type, Authorization, authorization, token',
-            'Access-Control-Expose-Headers': Env.CORS_EXPOSE_HEADERS || 'Content-Range, X-Content-Range, Authorization, authorization, token',
+            'Access-Control-Allow-Origin': Env.CORS_ALLOWED_ORIGIN === '*' ? req.headers.get('origin') : Env.CORS_ALLOWED_ORIGIN,
+            'Access-Control-Allow-Methods': Env.CORS_ALLOWED_METHODS,
+            'Access-Control-Allow-Headers': Env.CORS_ALLOWED_HEADERS,
+            'Access-Control-Expose-Headers': Env.CORS_EXPOSE_HEADERS,
             'Access-Control-Max-Age': Env.CORS_MAX_AGE || 86400,
             'Access-Control-Allow-Credentials': Env.CORS_ALLOW_CREDENTIALS || 'true'
         }

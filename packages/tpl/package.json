@@ -36,5 +36,8 @@
     "engines": {
         "bun": ">=1.3.0"
     },
-    "gitHead": "96136321570fd1abf859e691d6ccbc69d7696c4b"
+    "gitHead": "96136321570fd1abf859e691d6ccbc69d7696c4b",
+    "devDependencies": {
+        "dotenv": "^17.2.3"
+    }
 }

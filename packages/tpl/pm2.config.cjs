@@ -12,11 +12,28 @@
  * 7. 保存配置：pm2 save
  * 8. 开机自启：pm2 startup
  *
- * 环境变量加载：
- * - 默认使用生产环境：--env-file=.env.production
+ * 环境变量说明：
+ * - 使用 dotenv 模块读取 .env.production 文件
+ * - PM2 会在进程启动时直接注入这些环境变量
  *
  * 注意：PM2 配置文件必须使用 CommonJS 格式（.cjs），不支持 ESM
  */
+
+const dotenv = require('dotenv');
+const path = require('path');
+
+// 使用 dotenv 读取 .env.production 文件
+const result = dotenv.config({
+    path: path.join(__dirname, '.env.production'),
+    override: true
+});
+
+if (result.error) {
+    console.error('读取 .env.production 失败:', result.error.message);
+}
+
+// 获取解析后的环境变量
+const productionEnv = result.parsed || {};
 
 module.exports = {
     apps: [
@@ -24,7 +41,7 @@ module.exports = {
             name: 'befly',
             script: 'main.ts',
             interpreter: 'bun',
-            args: ['--env-file=.env.production'],
+
             // 集群模式配置
             instances: 2, // 实例数量，可设置为 'max' 使用所有 CPU
             exec_mode: 'cluster', // 集群模式
@@ -32,15 +49,14 @@ module.exports = {
             // 自动重启配置
             autorestart: true,
             watch: false,
-            ignore_watch: ['logs', 'node_modules', '*.log'],
-            max_memory_restart: '500M', // 内存超过 200M 自动重启
+            max_memory_restart: '500M', // 内存超过 500M 自动重启
 
             // 日志配置
             log_date_format: 'YYYY-MM-DD HH:mm:ss',
             merge_logs: true,
-            env: {
-                NODE_ENV: 'production'
-            }
+
+            // 从 .env.production 动态加载的环境变量（使用 Bun API）
+            env: productionEnv
         }
     ]
 };

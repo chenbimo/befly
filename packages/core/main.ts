@@ -35,6 +35,7 @@ export class Befly {
      */
     async listen(callback?: (server: Server) => void): Promise<Server> {
         const server = await this.lifecycle.start(this.appContext, callback);
+        Logger.info('数据库======:' + Env.APP_NAME);
 
         // 注册优雅关闭信号处理器
         const gracefulShutdown = async (signal: string) => {
