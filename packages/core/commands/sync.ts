@@ -4,6 +4,7 @@
  */
 
 import { Logger } from '../lib/logger.js';
+import { Env } from '../config/env.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
@@ -16,8 +17,44 @@ interface SyncOptions {
 
 export async function syncCommand(options: SyncOptions = {}) {
     try {
+        // 如果指定了环境但当前 NODE_ENV 不匹配，重新启动进程
+        if (options.env) {
+            const envMap: Record<string, string> = {
+                dev: 'development',
+                development: 'development',
+                prod: 'production',
+                production: 'production',
+                test: 'test'
+            };
+            
+            const targetEnv = envMap[options.env.toLowerCase()] || options.env;
+            const currentEnv = process.env.NODE_ENV || 'development';
+            
+            if (targetEnv !== currentEnv) {
+                Logger.info(`切换环境: ${currentEnv} → ${targetEnv}`);
+                Logger.info(`重新启动进程以加载正确的环境变量...\n`);
+                
+                // 重新启动进程，设置正确的 NODE_ENV
+                const proc = Bun.spawn(['bun', 'befly', 'sync'], {
+                    cwd: process.cwd(),
+                    stdout: 'inherit',
+                    stderr: 'inherit',
+                    stdin: 'inherit',
+                    env: {
+                        ...process.env,
+                        NODE_ENV: targetEnv
+                    }
+                });
+                
+                await proc.exited;
+                process.exit(proc.exitCode || 0);
+            }
+        }
+        
         Logger.info('========================================');
         Logger.info('开始执行完整同步流程');
+        Logger.info(`当前环境: ${process.env.NODE_ENV || 'development'}`);
+        Logger.info(`数据库主机: ${Env.DB_HOST}`);
         Logger.info('========================================\n');
 
         const startTime = Date.now();
