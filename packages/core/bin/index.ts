@@ -19,24 +19,13 @@
 
 import { syncCommand } from '../commands/sync.js';
 import { Logger } from '../lib/logger.js';
-import { join } from 'pathe';
-import { getPackageVersion } from '../commands/util.js';
-
-/**
- * 读取版本号
- */
-function getVersion(): string {
-    const coreDir = join(import.meta.dir, '..');
-    return getPackageVersion(coreDir);
-}
 
 /**
  * 显示帮助信息
  */
 function showHelp(): void {
-    const version = getVersion();
     console.log(`
-Befly CLI v${version}
+Befly CLI
 
 用法:
   befly sync [选项]
@@ -45,7 +34,6 @@ Befly CLI v${version}
   -e, --env <environment>  指定环境 (dev/development, prod/production, test)
   --plan                   计划模式，只显示不执行
   -h, --help               显示帮助信息
-  -v, --version            显示版本号
 
 示例:
   befly sync               # 使用当前环境同步所有数据
@@ -56,16 +44,9 @@ Befly CLI v${version}
 }
 
 /**
- * 显示版本号
- */
-function showVersion(): void {
-    console.log(getVersion());
-}
-
-/**
  * 解析命令行参数
  */
-function parseArgs(): { env?: string; plan?: boolean; help?: boolean; version?: boolean } {
+function parseArgs(): { env?: string; plan?: boolean; help?: boolean } {
     const args = process.argv.slice(2);
     const options: any = {};
 
@@ -74,8 +55,6 @@ function parseArgs(): { env?: string; plan?: boolean; help?: boolean; version?: 
 
         if (arg === '-h' || arg === '--help') {
             options.help = true;
-        } else if (arg === '-v' || arg === '--version') {
-            options.version = true;
         } else if (arg === '--plan') {
             options.plan = true;
         } else if (arg === '-e' || arg === '--env') {
@@ -110,12 +89,6 @@ async function main() {
     // 显示帮助
     if (options.help) {
         showHelp();
-        process.exit(0);
-    }
-
-    // 显示版本
-    if (options.version) {
-        showVersion();
         process.exit(0);
     }
 
