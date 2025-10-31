@@ -1,40 +1,3 @@
-/**
- * PM2 进程管理配置文件（CommonJS 格式）
- * 使用 Bun 运行 TypeScript 文件
- *
- * 使用方法：
- * 1. 启动：pm2 start pm2.config.cjs
- * 2. 查看状态：pm2 status
- * 3. 查看日志：pm2 logs befly
- * 4. 重启：pm2 restart befly
- * 5. 停止：pm2 stop befly
- * 6. 删除：pm2 delete befly
- * 7. 保存配置：pm2 save
- * 8. 开机自启：pm2 startup
- *
- * 环境变量说明：
- * - 使用 dotenv 模块读取 .env.production 文件
- * - PM2 会在进程启动时直接注入这些环境变量
- *
- * 注意：PM2 配置文件必须使用 CommonJS 格式（.cjs），不支持 ESM
- */
-
-const dotenv = require('dotenv');
-const path = require('path');
-
-// 使用 dotenv 读取 .env.production 文件
-const result = dotenv.config({
-    path: path.join(__dirname, '.env.production'),
-    override: true
-});
-
-if (result.error) {
-    console.error('读取 .env.production 失败:', result.error.message);
-}
-
-// 获取解析后的环境变量
-const productionEnv = result.parsed || {};
-
 module.exports = {
     apps: [
         {
@@ -56,7 +19,9 @@ module.exports = {
             merge_logs: true,
 
             // 从 .env.production 动态加载的环境变量（使用 Bun API）
-            env: productionEnv
+            env: {
+                NODE_ENV: 'production'
+            }
         }
     ]
 };
