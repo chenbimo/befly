@@ -46,20 +46,15 @@ export class Checker {
                         const conflictCheckTime = calcPerfTime(conflictCheckStart);
 
                         if (typeof conflictResult !== 'boolean') {
-                            Logger.warn(`核心检查 conflict.ts 返回值必须为 true 或 false，当前为 ${typeof conflictResult}，耗时: ${conflictCheckTime}`);
+                            Logger.warn(`核心检查 conflict.ts 返回值必须为 true 或 false，当前为 ${typeof conflictResult}`);
                             stats.failedChecks++;
                         } else if (conflictResult === true) {
                             stats.passedChecks++;
-                            Logger.info(`核心检查 conflict.ts 通过，耗时: ${conflictCheckTime}`);
                         } else {
-                            Logger.warn(`核心检查未通过: conflict.ts，耗时: ${conflictCheckTime}`);
+                            Logger.warn(`核心检查未通过: conflict.ts`);
                             stats.failedChecks++;
                             // 资源冲突检测失败，立即终止
-                            Logger.warn('资源冲突检测失败，无法继续启动', {
-                                totalChecks: stats.totalChecks,
-                                passedChecks: stats.passedChecks,
-                                failedChecks: stats.failedChecks
-                            });
+                            Logger.warn('资源冲突检测失败，无法继续启动');
                             process.exit(1);
                         }
                     }
@@ -88,8 +83,6 @@ export class Checker {
                 const { path: checkDir, type } = checkConfig;
                 const addonName = 'addonName' in checkConfig ? checkConfig.addonName : undefined;
                 const checkTypeLabel = type === 'core' ? '核心' : type === 'project' ? '项目' : `组件${addonName}`;
-                Logger.info(`开始执行${checkTypeLabel}检查，目录: ${checkDir}`);
-
                 for await (const file of glob.scan({
                     cwd: checkDir,
                     onlyFiles: true,
@@ -118,18 +111,16 @@ export class Checker {
 
                             // 检查返回值是否为 boolean
                             if (typeof checkResult !== 'boolean') {
-                                Logger.warn(`${checkTypeLabel}检查 ${fileName} 返回值必须为 true 或 false，当前为 ${typeof checkResult}，耗时: ${singleCheckTime}`);
+                                Logger.warn(`${checkTypeLabel}检查 ${fileName} 返回值必须为 true 或 false，当前为 ${typeof checkResult}`);
                                 stats.failedChecks++;
                             } else if (checkResult === true) {
                                 stats.passedChecks++;
-                                Logger.info(`${checkTypeLabel}检查 ${fileName} 通过，耗时: ${singleCheckTime}`);
                             } else {
-                                Logger.warn(`${checkTypeLabel}检查未通过: ${fileName}，耗时: ${singleCheckTime}`);
+                                Logger.warn(`${checkTypeLabel}检查未通过: ${fileName}`);
                                 stats.failedChecks++;
                             }
                         } else {
-                            const singleCheckTime = calcPerfTime(singleCheckStart);
-                            Logger.warn(`${checkTypeLabel}检查文件 ${fileName} 未找到 default 导出的检查函数，耗时: ${singleCheckTime}`);
+                            Logger.warn(`${checkTypeLabel}检查文件 ${fileName} 未找到 default 导出的检查函数`);
                             stats.failedChecks++;
                         }
                     } catch (error: any) {
@@ -143,19 +134,11 @@ export class Checker {
             const totalCheckTime = calcPerfTime(checkStartTime);
 
             // 输出检查结果统计
-            Logger.info(`系统检查完成! 总耗时: ${totalCheckTime}，总检查数: ${stats.totalChecks}, 通过: ${stats.passedChecks}, 失败: ${stats.failedChecks}`);
-
             if (stats.failedChecks > 0) {
-                Logger.error('统检查失败，无法继续启动', {
-                    totalChecks: stats.totalChecks,
-                    passedChecks: stats.passedChecks,
-                    failedChecks: stats.failedChecks
-                });
+                Logger.error(`✗ 系统检查失败: ${stats.failedChecks}/${stats.totalChecks}，耗时: ${totalCheckTime}`);
                 process.exit(1);
             } else if (stats.totalChecks > 0) {
-                Logger.info(`所有系统检查通过!`);
-            } else {
-                Logger.info(`未执行任何检查`);
+                Logger.info(`✓ 系统检查通过: ${stats.passedChecks}/${stats.totalChecks}，耗时: ${totalCheckTime}`);
             }
         } catch (error: any) {
             Logger.error('执行系统检查时发生错误', error);

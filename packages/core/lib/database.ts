@@ -87,8 +87,6 @@ export class Database {
 
             const version = await Promise.race([healthCheckPromise, timeoutPromise]);
 
-            Logger.info(`数据库连接成功，version: ${version}`);
-
             this.sqlClient = sql;
             return sql;
         } catch (error: any) {
@@ -110,7 +108,6 @@ export class Database {
         if (this.sqlClient) {
             try {
                 await this.sqlClient.close();
-                Logger.info('SQL 连接已关闭');
             } catch (error: any) {
                 Logger.warn('关闭 SQL 连接时出错:', error.message);
             }
@@ -186,7 +183,6 @@ export class Database {
             });
 
             await redis.ping();
-            Logger.info('Redis 连接成功');
 
             this.redisClient = redis;
             return redis;
@@ -203,7 +199,6 @@ export class Database {
         if (this.redisClient) {
             try {
                 this.redisClient.close();
-                Logger.info('Redis 连接已关闭');
             } catch (error: any) {
                 Logger.warn('关闭 Redis 连接时出错:', error);
             }
@@ -233,16 +228,12 @@ export class Database {
     static async connect(options?: { sql?: SqlClientOptions; redis?: boolean }): Promise<void> {
         try {
             if (options?.sql !== false) {
-                Logger.info('正在初始化 SQL 连接...');
                 await this.connectSql(options?.sql);
             }
 
             if (options?.redis !== false) {
-                Logger.info('正在初始化 Redis 连接...');
                 await this.connectRedis();
             }
-
-            Logger.info('数据库连接初始化完成');
         } catch (error: any) {
             Logger.error('数据库初始化失败', error);
             await this.disconnect();

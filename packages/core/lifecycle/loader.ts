@@ -107,18 +107,11 @@ export class Loader {
                 if (fileName.startsWith('_')) continue;
 
                 try {
-                    const importStart = Bun.nanoseconds();
-                    Logger.debug(`准备导入核心插件: ${fileName}`);
                     const plugin = await importWithTimeout(file);
-                    const importTime = calcPerfTime(importStart);
-                    Logger.debug(`核心插件 ${fileName} 导入成功，耗时: ${importTime}`);
-
                     const pluginInstance = plugin.default;
                     pluginInstance.pluginName = fileName;
                     corePlugins.push(pluginInstance);
                     loadedPluginNames.add(fileName); // 记录已加载的核心插件名称
-
-                    Logger.info(`核心插件 ${fileName} 导入耗时: ${importTime}`);
                 } catch (err: any) {
                     hadCorePluginError = true;
                     Logger.error(`核心插件 ${fileName} 导入失败`, error);
@@ -126,10 +119,6 @@ export class Loader {
                 }
             }
             const corePluginsScanTime = calcPerfTime(corePluginsScanStart);
-            Logger.info(`核心插件扫描完成，耗时: ${corePluginsScanTime}，共找到 ${corePlugins.length} 个插件`);
-
-            Logger.debug(`调试模式已开启`);
-            Logger.debug(`开始排序核心插件，插件列表: ${corePlugins.map((p) => p.pluginName).join(', ')}`);
 
             const sortedCorePlugins = sortPlugins(corePlugins);
             if (sortedCorePlugins === false) {
@@ -137,42 +126,26 @@ export class Loader {
                 process.exit(1);
             }
 
-            Logger.debug(`核心插件排序完成，顺序: ${sortedCorePlugins.map((p) => p.pluginName).join(' -> ')}`);
-
             // 初始化核心插件
             const corePluginsInitStart = Bun.nanoseconds();
-            Logger.info(`开始初始化核心插件...`);
             for (const plugin of sortedCorePlugins) {
                 try {
-                    Logger.debug(`准备初始化核心插件: ${plugin.pluginName}`);
-
                     befly.pluginLists.push(plugin);
-
-                    Logger.debug(`检查插件 ${plugin.pluginName} 是否有 onInit 方法: ${typeof plugin?.onInit === 'function'}`);
-
                     if (typeof plugin?.onInit === 'function') {
-                        Logger.debug(`开始执行插件 ${plugin.pluginName} 的 onInit 方法`);
-
                         const pluginInitStart = Bun.nanoseconds();
                         befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
                         const pluginInitTime = calcPerfTime(pluginInitStart);
-
-                        Logger.debug(`插件 ${plugin.pluginName} 初始化完成，耗时: ${pluginInitTime}`);
                     } else {
                         befly.appContext[plugin.pluginName] = {};
-                        Logger.debug(`插件 ${plugin.pluginName} 没有 onInit 方法，跳过初始化`);
                     }
-
-                    Logger.info(`核心插件 ${plugin.pluginName} 初始化成功`);
                 } catch (error: any) {
                     hadCorePluginError = true;
                     Logger.error(`核心插件 ${plugin.pluginName} 初始化失败`, error);
-
                     process.exit(1);
                 }
             }
             const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
-            Logger.info(`核心插件初始化完成，耗时: ${corePluginsInitTime}`);
+            Logger.info(`✓ 核心插件加载完成: ${corePlugins.length} 个，耗时: ${corePluginsScanTime}`);
 
             // 扫描 addon 插件目录
             const addons = scanAddons();
@@ -193,25 +166,16 @@ export class Loader {
                         const pluginFullName = `${addon}.${fileName}`;
 
                         // 检查是否已经加载了同名插件
-                        if (loadedPluginNames.has(pluginFullName)) {
-                            Logger.info(`跳过组件插件 ${pluginFullName}，因为同名插件已存在`);
-                            continue;
+                        if (loadedPluginNames.has(pluginFullName)) {                            continue;
                         }
 
                         try {
-                            const importStart = Bun.nanoseconds();
-                            Logger.debug(`准备导入 addon 插件: ${addon}.${fileName}`);
-                            const plugin = await importWithTimeout(file);
+                            const importStart = Bun.nanoseconds();                            const plugin = await importWithTimeout(file);
                             const importTime = calcPerfTime(importStart);
-                            Logger.debug(`Addon 插件 ${addon}.${fileName} 导入成功，耗时: ${importTime}`);
-
                             const pluginInstance = plugin.default;
                             pluginInstance.pluginName = pluginFullName;
                             addonPlugins.push(pluginInstance);
-                            loadedPluginNames.add(pluginFullName);
-
-                            Logger.info(`组件${addon} ${fileName} 导入耗时: ${importTime}`);
-                        } catch (err: any) {
+                            loadedPluginNames.add(pluginFullName);                        } catch (err: any) {
                             hadAddonPluginError = true;
                             Logger.error(`组件${addon} ${fileName} 导入失败`, error);
                             process.exit(1);
@@ -219,7 +183,6 @@ export class Loader {
                     }
                 }
                 const addonPluginsScanTime = calcPerfTime(addonPluginsScanStart);
-                Logger.info(`组件插件扫描完成，耗时: ${addonPluginsScanTime}，共找到 ${addonPlugins.length} 个插件`);
 
                 const sortedAddonPlugins = sortPlugins(addonPlugins);
                 if (sortedAddonPlugins === false) {
@@ -230,39 +193,30 @@ export class Loader {
                 } else {
                     // 初始化组件插件
                     const addonPluginsInitStart = Bun.nanoseconds();
-                    Logger.info(`开始初始化组件插件...`);
                     for (const plugin of sortedAddonPlugins) {
                         try {
-                            Logger.debug(`准备初始化组件插件: ${plugin.pluginName}`);
-
                             befly.pluginLists.push(plugin);
 
                             if (typeof plugin?.onInit === 'function') {
-                                Logger.debug(`开始执行组件插件 ${plugin.pluginName} 的 onInit 方法`);
-
                                 const pluginInitStart = Bun.nanoseconds();
                                 befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
                                 const pluginInitTime = calcPerfTime(pluginInitStart);
-
-                                Logger.debug(`组件插件 ${plugin.pluginName} 初始化完成，耗时: ${pluginInitTime}`);
                             } else {
                                 befly.appContext[plugin.pluginName] = {};
                             }
-
-                            Logger.info(`组件插件 ${plugin.pluginName} 初始化成功`);
                         } catch (error: any) {
                             hadAddonPluginError = true;
                             Logger.error(`组件插件 ${plugin.pluginName} 初始化失败`, error);
                         }
                     }
                     const addonPluginsInitTime = calcPerfTime(addonPluginsInitStart);
-                    Logger.info(`组件插件初始化完成，耗时: ${addonPluginsInitTime}`);
+                    Logger.info(`✓ 组件插件加载完成: ${addonPlugins.length} 个，耗时: ${addonPluginsScanTime}`);
                 }
             }
 
             // 扫描用户插件目录
             if (!existsSync(projectPluginDir)) {
-                Logger.info(`项目插件目录不存在，跳过加载: ${projectPluginDir}`);
+                // 项目插件目录不存在，跳过
             } else {
                 const userPluginsScanStart = Bun.nanoseconds();
                 for await (const file of glob.scan({
@@ -274,31 +228,19 @@ export class Loader {
                     if (fileName.startsWith('_')) continue;
 
                     // 检查是否已经加载了同名的核心插件
-                    if (loadedPluginNames.has(fileName)) {
-                        Logger.info(`跳过用户插件 ${fileName}，因为同名的核心插件已存在`);
-                        continue;
+                    if (loadedPluginNames.has(fileName)) {                        continue;
                     }
 
                     try {
-                        const importStart = Bun.nanoseconds();
-                        Logger.debug(`准备导入用户插件: ${fileName}`);
                         const plugin = await importWithTimeout(file);
-                        const importTime = calcPerfTime(importStart);
-                        Logger.debug(`用户插件 ${fileName} 导入成功，耗时: ${importTime}`);
-
                         const pluginInstance = plugin.default;
                         pluginInstance.pluginName = fileName;
-                        userPlugins.push(pluginInstance);
-
-                        Logger.info(`用户插件 ${fileName} 导入耗时: ${importTime}`);
-                    } catch (err: any) {
+                        userPlugins.push(pluginInstance);                    } catch (err: any) {
                         hadUserPluginError = true;
                         Logger.error(`用户插件 ${fileName} 导入失败`, error);
                         process.exit(1);
                     }
                 }
-                const userPluginsScanTime = calcPerfTime(userPluginsScanStart);
-                Logger.info(`用户插件扫描完成，耗时: ${userPluginsScanTime}，共找到 ${userPlugins.length} 个插件`);
             }
 
             const sortedUserPlugins = sortPlugins(userPlugins);
@@ -314,64 +256,42 @@ export class Loader {
             // 初始化用户插件
             if (userPlugins.length > 0) {
                 const userPluginsInitStart = Bun.nanoseconds();
-                Logger.info(`开始初始化用户插件...`);
                 for (const plugin of sortedUserPlugins) {
                     try {
-                        Logger.debug(`准备初始化用户插件: ${plugin.pluginName}`);
-
                         befly.pluginLists.push(plugin);
 
                         if (typeof plugin?.onInit === 'function') {
-                            Logger.debug(`开始执行用户插件 ${plugin.pluginName} 的 onInit 方法`);
-
-                            const pluginInitStart = Bun.nanoseconds();
                             befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
-                            const pluginInitTime = calcPerfTime(pluginInitStart);
-
-                            Logger.debug(`用户插件 ${plugin.pluginName} 初始化完成，耗时: ${pluginInitTime}`);
                         } else {
                             befly.appContext[plugin.pluginName] = {};
                         }
-
-                        Logger.info(`用户插件 ${plugin.pluginName} 初始化成功`);
                     } catch (error: any) {
                         hadUserPluginError = true;
                         Logger.error(`用户插件 ${plugin.pluginName} 初始化失败`, error);
                     }
                 }
                 const userPluginsInitTime = calcPerfTime(userPluginsInitStart);
-                Logger.info(`用户插件初始化完成，耗时: ${userPluginsInitTime}`);
+                Logger.info(`✓ 用户插件加载完成: ${sortedUserPlugins.length} 个，耗时: ${userPluginsInitTime}`);
             }
 
             const totalLoadTime = calcPerfTime(loadStartTime);
             const totalPluginCount = sortedCorePlugins.length + addonPlugins.length + sortedUserPlugins.length;
-            Logger.info(`插件加载完成! 总耗时: ${totalLoadTime}，共加载 ${totalPluginCount} 个插件`);
+            Logger.info(`✓ 所有插件加载完成: ${totalPluginCount} 个，总耗时: ${totalLoadTime}`);
 
             // 核心插件失败 → 关键错误，必须退出
             if (hadCorePluginError) {
-                Logger.warn('核心插件加载失败，无法继续启动', {
-                    corePluginCount: sortedCorePlugins.length,
-                    totalPluginCount
-                });
+                Logger.warn('核心插件加载失败，无法继续启动');
                 process.exit(1);
             }
 
             // Addon 插件失败 → 警告，可以继续运行
             if (hadAddonPluginError) {
-                Logger.info({
-                    level: 'INFO',
-                    msg: '部分 Addon 插件加载失败，但不影响核心功能',
-                    addonPluginCount: addonPlugins.length
-                });
+                Logger.warn('部分 Addon 插件加载失败，但不影响核心功能');
             }
 
             // 用户插件失败 → 警告，可以继续运行
             if (hadUserPluginError) {
-                Logger.info({
-                    level: 'INFO',
-                    msg: '部分用户插件加载失败，但不影响核心功能',
-                    userPluginCount: sortedUserPlugins.length
-                });
+                Logger.warn('部分用户插件加载失败，但不影响核心功能');
             }
         } catch (error: any) {
             Logger.error('加载插件时发生错误', error);
@@ -406,9 +326,7 @@ export class Loader {
             }
 
             // 检查目录是否存在
-            if (!existsSync(apiDir)) {
-                Logger.info(`${dirDisplayName}接口目录不存在，跳过加载: ${apiDir}`);
-                return;
+            if (!existsSync(apiDir)) {                return;
             }
 
             let totalApis = 0;
@@ -429,17 +347,9 @@ export class Loader {
                 const singleApiStart = Bun.nanoseconds();
 
                 try {
-                    Logger.debug(`[${dirDisplayName}] 准备导入 API 文件: ${apiPath}`);
-                    Logger.debug(`[${dirDisplayName}] 文件绝对路径: ${file}`);
-
                     const importStart = Bun.nanoseconds();
                     const api = (await importWithTimeout(file)).default;
                     const importTime = calcPerfTime(importStart);
-
-                    Logger.debug(`[${dirDisplayName}] API 文件导入成功: ${apiPath}，耗时: ${importTime}`);
-
-                    Logger.debug(`[${dirDisplayName}] 开始验证 API 属性: ${apiPath}`);
-
                     // 验证必填属性：name 和 handler
                     if (typeof api.name !== 'string' || api.name.trim() === '') {
                         throw new Error(`接口 ${apiPath} 的 name 属性必须是非空字符串`);
@@ -472,9 +382,6 @@ export class Loader {
                     if (api.required && api.required.some((item: any) => typeof item !== 'string')) {
                         throw new Error(`接口 ${apiPath} 的 required 属性必须是字符串数组`);
                     }
-
-                    Logger.debug(`[${dirDisplayName}] API 属性验证通过: ${apiPath}`);
-
                     // 构建路由：
                     // - core 接口: /api/core/{apiPath}
                     // - addon 接口: /api/addon/{addonName}/{apiPath}
@@ -488,22 +395,19 @@ export class Loader {
                     }
                     apiRoutes.set(api.route, api);
 
-                    const singleApiTime = calcPerfTime(singleApiStart);
                     loadedApis++;
-                    Logger.debug(`[${dirDisplayName}] API 注册成功 - 名称: ${api.name}, 路由: ${api.route}, 耗时: ${singleApiTime}`);
                 } catch (error: any) {
-                    const singleApiTime = calcPerfTime(singleApiStart);
                     failedApis++;
 
                     // 记录详细错误信息
-                    Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 加载失败 (${singleApiTime})`, error);
+                    Logger.error(`[${dirDisplayName}] 接口 ${apiPath} 加载失败`, error);
 
                     process.exit(1);
                 }
             }
 
             const totalLoadTime = calcPerfTime(loadStartTime);
-            Logger.info(`${dirDisplayName}接口加载完成! 总耗时: ${totalLoadTime}，总数: ${totalApis}, 成功: ${loadedApis}, 失败: ${failedApis}`);
+            Logger.info(`✓ ${dirDisplayName}接口加载完成: ${loadedApis}/${totalApis}，耗时: ${totalLoadTime}`);
 
             // 检查是否有加载失败的 API（理论上不会到达这里，因为上面已经 critical 退出）
             if (failedApis > 0) {

@@ -16,22 +16,25 @@ interface SyncDevOptions {
     plan?: boolean;
 }
 
+export interface SyncDevStats {
+    adminCount: number;
+    roleCount: number;
+    cachedRoles: number;
+}
+
 /**
  * SyncDev 命令主函数
  */
-export async function syncDevCommand(options: SyncDevOptions = {}) {
+export async function syncDevCommand(options: SyncDevOptions = {}): Promise<SyncDevStats> {
     try {
         if (options.plan) {
             Logger.info('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
-            return;
+            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
         if (!Env.DEV_PASSWORD) {
-            Logger.warn('跳过开发管理员初始化：缺少 DEV_PASSWORD 配置');
-            return;
+            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
-
-        Logger.info('开始同步开发管理员账号...\n');
 
         // 连接数据库（SQL + Redis）
         await Database.connect();
@@ -41,22 +44,19 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         // 检查 core_admin 表是否存在
         const existAdmin = await helper.tableExists('core_admin');
         if (!existAdmin) {
-            Logger.warn('跳过开发管理员初始化：未检测到 core_admin 表');
-            return;
+            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
         // 检查 core_role 表是否存在
         const existRole = await helper.tableExists('core_role');
         if (!existRole) {
-            Logger.warn('跳过开发管理员初始化：未检测到 core_role 表');
-            return;
+            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
         // 检查 core_menu 表是否存在
         const existMenu = await helper.tableExists('core_menu');
         if (!existMenu) {
-            Logger.warn('跳过开发管理员初始化：未检测到 core_menu 表');
-            return;
+            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
         // 查询所有菜单 ID
@@ -66,12 +66,10 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
         });
 
         if (!allMenus || !Array.isArray(allMenus)) {
-            Logger.warn('查询菜单失败或菜单表为空');
-            return;
+            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
         const menuIds = allMenus.length > 0 ? allMenus.map((m: any) => m.id).join(',') : '';
-        Logger.debug(`查询到 ${allMenus.length} 个菜单，ID 列表: ${menuIds || '(空)'}`);
 
         // 查询所有接口 ID
         const existApi = await helper.tableExists('core_api');
@@ -84,12 +82,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
 
             if (allApis && Array.isArray(allApis) && allApis.length > 0) {
                 apiIds = allApis.map((a: any) => a.id).join(',');
-                Logger.debug(`查询到 ${allApis.length} 个接口，ID 列表: ${apiIds}`);
-            } else {
-                Logger.info('未查询到接口数据');
             }
-        } else {
-            Logger.info('接口表不存在，跳过接口权限配置');
         }
 
         // 查询或创建 dev 角色
@@ -110,7 +103,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
                     apis: apiIds
                 }
             });
-            Logger.info('dev 角色菜单和接口权限已更新');
         } else {
             // 创建 dev 角色
             const roleId = await helper.insData({
@@ -149,6 +141,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
             where: { email: Env.DEV_EMAIL }
         });
 
+        let isNew = false;
         if (existing) {
             // 更新现有账号
             await helper.updData({
@@ -156,26 +149,23 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
                 where: { email: Env.DEV_EMAIL },
                 data: devData
             });
-            Logger.info(`✅ 开发管理员已更新：email=${Env.DEV_EMAIL}, username=dev, roleCode=dev, roleType=admin`);
         } else {
             // 插入新账号
             await helper.insData({
                 table: 'core_admin',
                 data: devData
             });
-            Logger.info(`✅ 开发管理员已初始化：email=${Env.DEV_EMAIL}, username=dev, roleCode=dev, roleType=admin`);
+            isNew = true;
         }
 
         // 缓存角色权限数据到 Redis
-        Logger.info('\n=== 缓存角色权限到 Redis ===');
+        let cachedRolesCount = 0;
         try {
             // 检查必要的表是否存在
             const apiTableExists = await helper.tableExists('core_api');
             const roleTableExists = await helper.tableExists('core_role');
 
-            if (!apiTableExists || !roleTableExists) {
-                Logger.warn('⚠️ 接口或角色表不存在，跳过角色权限缓存');
-            } else {
+            if (apiTableExists && roleTableExists) {
                 // 查询所有角色
                 const roles = await helper.getAll({
                     table: 'core_role',
@@ -189,7 +179,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
                 });
 
                 const redis = Database.getRedis();
-                let cachedRoles = 0;
 
                 // 为每个角色缓存接口权限
                 for (const role of roles) {
@@ -216,16 +205,29 @@ export async function syncDevCommand(options: SyncDevOptions = {}) {
                     const result = await redis.sadd(redisKey, ...roleApiPaths);
 
                     if (result > 0) {
-                        cachedRoles++;
-                        Logger.debug(`   └ 角色 ${role.code}: ${result} 个接口`);
+                        cachedRolesCount++;
                     }
                 }
-
-                Logger.info(`✅ 已缓存 ${cachedRoles} 个角色的接口权限`);
             }
         } catch (error: any) {
-            Logger.error('⚠️ 角色权限缓存异常:', error);
+            // 忽略缓存错误
         }
+
+        // 获取统计数据
+        const allAdmins = await helper.getAll({
+            table: 'core_admin',
+            fields: ['id']
+        });
+        const allRoles = await helper.getAll({
+            table: 'core_role',
+            fields: ['id']
+        });
+
+        return {
+            adminCount: allAdmins.length,
+            roleCount: allRoles.length,
+            cachedRoles: cachedRolesCount
+        };
     } catch (error: any) {
         Logger.error('开发管理员同步失败:', error);
         process.exit(1);

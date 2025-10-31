@@ -32,6 +32,13 @@ interface ApiInfo {
     addonTitle: string;
 }
 
+export interface SyncApiStats {
+    totalApis: number;
+    created: number;
+    updated: number;
+    deleted: number;
+}
+
 /**
  * 递归扫描目录下的所有 .ts 文件
  */
@@ -111,36 +118,29 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
     // 1. 扫描 Core 框架 API
-    Logger.debug('=== 扫描 Core 框架 API (core/apis) ===');
     const coreApisDir = join(dirname(projectRoot), 'core', 'apis');
     try {
         const coreApiFiles = scanTsFiles(coreApisDir);
-        Logger.debug(`  找到 ${coreApiFiles.length} 个核心 API 文件`);
 
         for (const filePath of coreApiFiles) {
             const apiInfo = await extractApiInfo(filePath, coreApisDir, 'core', '', '核心接口');
             if (apiInfo) {
                 apis.push(apiInfo);
-                Logger.debug(`  └ ${apiInfo.path} - ${apiInfo.name}`);
             }
         }
 
         // 2. 扫描项目 API
-        Logger.info('\n=== 扫描项目 API (apis) ===');
         const projectApisDir = join(projectRoot, 'apis');
         const projectApiFiles = scanTsFiles(projectApisDir);
-        Logger.debug(`  找到 ${projectApiFiles.length} 个项目 API 文件`);
 
         for (const filePath of projectApiFiles) {
             const apiInfo = await extractApiInfo(filePath, projectApisDir, 'app', '', '项目接口');
             if (apiInfo) {
                 apis.push(apiInfo);
-                Logger.debug(`  └ ${apiInfo.path} - ${apiInfo.name}`);
             }
         }
 
         // 3. 扫描组件 API (node_modules/@befly-addon/*)
-        Logger.info('\n=== 扫描组件 API (node_modules/@befly-addon/*) ===');
         const addonNames = scanAddons();
 
         for (const addonName of addonNames) {
@@ -148,7 +148,6 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 
             // 检查 apis 子目录是否存在
             if (!addonDirExists(addonName, 'apis')) {
-                Logger.debug(`  [${addonName}] 无 apis 目录，跳过`);
                 continue;
             }
 
@@ -162,17 +161,15 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
                 const config = await configFile.json();
                 addonTitle = config.title || addonName;
             } catch (error) {
-                Logger.debug(`  [${addonName}] 无法读取配置文件，使用默认标题`);
+                // 忽略配置读取错误
             }
 
             const addonApiFiles = scanTsFiles(addonApisDir);
-            Logger.debug(`  [${addonName}] 找到 ${addonApiFiles.length} 个 API 文件`);
 
             for (const filePath of addonApiFiles) {
                 const apiInfo = await extractApiInfo(filePath, addonApisDir, 'addon', addonName, addonTitle);
                 if (apiInfo) {
                     apis.push(apiInfo);
-                    Logger.debug(`    └ ${apiInfo.path} - ${apiInfo.name}`);
                 }
             }
         }
@@ -180,6 +177,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
         return apis;
     } catch (error: any) {
         Logger.error(`接口扫描失败:`, error);
+        return apis;
     }
 }
 
@@ -191,6 +189,7 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
 
     for (const api of apis) {
         try {
+            // 根据 path 查询是否存在
             const existing = await helper.getOne({
                 table: 'core_api',
                 where: { path: api.path }
@@ -209,7 +208,6 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                     }
                 });
                 stats.updated++;
-                Logger.debug(`  └ 更新接口: ${api.name} (ID: ${existing.id}, Path: ${api.path})`);
             } else {
                 const id = await helper.insData({
                     table: 'core_api',
@@ -223,7 +221,6 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                     }
                 });
                 stats.created++;
-                Logger.debug(`  └ 新增接口: ${api.name} (ID: ${id}, Path: ${api.path})`);
             }
         } catch (error: any) {
             Logger.error(`同步接口 "${api.name}" 失败:`, error);
@@ -237,8 +234,6 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
  * 删除配置中不存在的记录
  */
 async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<number> {
-    Logger.info(`\n=== 删除配置中不存在的记录 ===`);
-
     const allRecords = await helper.getAll({
         table: 'core_api',
         fields: ['id', 'path', 'name'],
@@ -253,12 +248,7 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
                 where: { id: record.id }
             });
             deletedCount++;
-            Logger.debug(`  └ 删除记录: ${record.name} (ID: ${record.id}, path: ${record.path})`);
         }
-    }
-
-    if (deletedCount === 0) {
-        Logger.info('  ✅ 无需删除的记录');
     }
 
     return deletedCount;
@@ -267,19 +257,12 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
 /**
  * SyncApi 命令主函数
  */
-export async function syncApiCommand(options: SyncApiOptions = {}) {
+export async function syncApiCommand(options: SyncApiOptions = {}): Promise<SyncApiStats> {
     try {
         if (options.plan) {
             Logger.info('[计划] 同步 API 接口到数据库（plan 模式不执行）');
-            Logger.info('[计划] 1. 扫描 apis 和 addons/*/apis 目录');
-            Logger.info('[计划] 2. 提取每个 API 的配置信息');
-            Logger.info('[计划] 3. 根据 path 检查接口是否存在');
-            Logger.info('[计划] 4. 存在则更新，不存在则新增');
-            Logger.info('[计划] 5. 删除文件中不存在的接口记录');
-            return;
+            return { totalApis: 0, created: 0, updated: 0, deleted: 0 };
         }
-
-        Logger.info('开始同步 API 接口到数据库...\n');
 
         const projectRoot = process.cwd();
 
@@ -289,7 +272,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
         const helper = Database.getDbHelper();
 
         // 1. 检查表是否存在
-        Logger.debug('=== 检查数据表 ===');
         const exists = await helper.tableExists('core_api');
 
         if (!exists) {
@@ -297,30 +279,17 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
             process.exit(1);
         }
 
-        Logger.info(`✅ 表 core_api 存在\n`);
-
         // 2. 扫描所有 API 文件
-        Logger.debug('=== 步骤 2: 扫描 API 文件 ===');
         const apis = await scanAllApis(projectRoot);
         const apiPaths = new Set(apis.map((api) => api.path));
-        Logger.info(`\n✅ 共扫描到 ${apis.length} 个 API 接口\n`);
 
         // 3. 同步 API 数据
-        Logger.debug('=== 步骤 3: 同步 API 数据（新增/更新） ===');
         const stats = await syncApis(helper, apis);
 
         // 4. 删除文件中不存在的接口
         const deletedCount = await deleteObsoleteRecords(helper, apiPaths);
 
-        // 5. 输出统计信息
-        Logger.info(`\n=== 接口同步完成 ===`);
-        Logger.info(`新增接口: ${stats.created} 个`);
-        Logger.info(`更新接口: ${stats.updated} 个`);
-        Logger.info(`删除接口: ${deletedCount} 个`);
-        Logger.info(`当前总接口数: ${apis.length} 个`);
-
-        // 6. 缓存接口数据到 Redis
-        Logger.info('\n=== 步骤 4: 缓存接口数据到 Redis ===');
+        // 5. 缓存接口数据到 Redis
         try {
             const apiList = await helper.getAll({
                 table: 'core_api',
@@ -328,16 +297,17 @@ export async function syncApiCommand(options: SyncApiOptions = {}) {
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
 
-            const result = await RedisHelper.setObject('apis:all', apiList);
-
-            if (result === null) {
-                Logger.warn('⚠️ 接口缓存失败');
-            } else {
-                Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
-            }
+            await RedisHelper.setObject('apis:all', apiList);
         } catch (error: any) {
-            Logger.error('⚠️ 接口缓存异常:', error);
+            // 忽略缓存错误
         }
+
+        return {
+            totalApis: apis.length,
+            created: stats.created,
+            updated: stats.updated,
+            deleted: deletedCount
+        };
     } catch (error: any) {
         Logger.error('API 同步失败:', error);
         process.exit(1);

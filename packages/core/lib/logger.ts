@@ -217,10 +217,12 @@ export class Logger {
      * 用于命令开始时提示用户当前环境
      */
     static printEnv(): void {
-        const env = process.env.NODE_ENV || 'development';
-        const envColor = env === 'production' ? chalk.red : env === 'test' ? chalk.yellow : chalk.green;
-        console.log(chalk.gray('────────────────────────────────────────'));
-        console.log(chalk.bold('运行环境: ') + envColor.bold(env.toUpperCase()));
-        console.log(chalk.gray('────────────────────────────────────────'));
+        console.log('========================================');
+        console.log('开始执行完整同步流程');
+        console.log(`当前环境: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`项目名称: ${Env.APP_NAME}`);
+        console.log(`数据库地址: ${Env.DB_HOST}`);
+        console.log(`数据库名称: ${Env.DB_NAME}`);
+        console.log('========================================\n');
     }
 }

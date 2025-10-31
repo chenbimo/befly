@@ -221,7 +221,7 @@ export default async function (): Promise<boolean> {
 
                 if (fileValid) {
                     validFiles++;
-                    Logger.info(`${fileType}表 ${fileName} 验证通过（${fileRules} 个字段）`);
+                    // Logger.info(`${fileType}表 ${fileName} 验证通过（${fileRules} 个字段）`);
                 } else {
                     invalidFiles++;
                 }
@@ -232,17 +232,15 @@ export default async function (): Promise<boolean> {
         }
 
         // 输出统计信息
-        Logger.info(`表定义检查完成：`);
-        Logger.info(`  总文件数: ${totalFiles}`);
-        Logger.info(`  总规则数: ${totalRules}`);
-        Logger.info(`  通过文件: ${validFiles}`);
-        Logger.info(`  失败文件: ${invalidFiles}`);
+        // Logger.info(`  总文件数: ${totalFiles}`);
+        // Logger.info(`  总规则数: ${totalRules}`);
+        // Logger.info(`  通过文件: ${validFiles}`);
+        // Logger.info(`  失败文件: ${invalidFiles}`);
 
         if (invalidFiles > 0) {
             Logger.warn(`表定义检查失败，请修复上述错误后重试`);
             return false;
         } else {
-            Logger.info(`所有表定义检查通过 ✓`);
             return true;
         }
     } catch (error: any) {

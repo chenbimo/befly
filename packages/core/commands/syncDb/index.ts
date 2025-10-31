@@ -41,6 +41,21 @@ const globalCount: Record<string, number> = {
     indexDrop: 0
 };
 
+// 导出统计接口
+export interface SyncDbStats {
+    processedTables: number;
+    createdTables: number;
+    modifiedTables: number;
+    addFields: number;
+    nameChanges: number;
+    typeChanges: number;
+    minChanges: number;
+    maxChanges: number;
+    defaultChanges: number;
+    indexCreate: number;
+    indexDrop: number;
+}
+
 /**
  * 主同步函数
  *
@@ -49,15 +64,13 @@ const globalCount: Record<string, number> = {
  * 2. 建立数据库连接并检查版本
  * 3. 扫描表定义文件（核心表、项目表、addon表）
  * 4. 对比并应用表结构变更
- * 5. 输出统计信息
+ * 5. 返回统计信息
  */
-export const SyncDb = async (): Promise<void> => {
+export const SyncDb = async (): Promise<SyncDbStats> => {
     const perfTracker = new PerformanceTracker();
     const progressLogger = new ProgressLogger();
 
     try {
-        Logger.info('开始数据库表结构同步...');
-
         // 重置全局统计，避免多次调用累加
         for (const k of Object.keys(globalCount)) {
             if (typeof globalCount[k] === 'number') globalCount[k] = 0;
@@ -68,13 +81,11 @@ export const SyncDb = async (): Promise<void> => {
         if (!(await checkTable())) {
             throw new Error('表定义验证失败');
         }
-        Logger.info(`✓ 表定义验证完成，耗时: ${perfTracker.getPhaseTime('表定义验证')}`);
 
         // 阶段2：建立数据库连接并检查版本
         perfTracker.markPhase('数据库连接');
         sql = await Database.connectSql({ max: 1 });
         await ensureDbVersion(sql);
-        Logger.info(`✓ 数据库连接建立，耗时: ${perfTracker.getPhaseTime('数据库连接')}`);
 
         // 阶段3：扫描表定义文件
         perfTracker.markPhase('扫描表文件');
@@ -113,7 +124,6 @@ export const SyncDb = async (): Promise<void> => {
             }
         }
         perfTracker.finishPhase('扫描表文件');
-        Logger.info(`✓ 扫描完成，发现 ${totalTables} 个表定义文件，耗时: ${perfTracker.getPhaseTime('扫描表文件')}`);
 
         // 阶段4：处理表文件
         perfTracker.markPhase('同步处理');
@@ -132,7 +142,6 @@ export const SyncDb = async (): Promise<void> => {
 
                 // 跳过以下划线开头的文件（这些是公共字段规则，不是表定义）
                 if (fileName.startsWith('_')) {
-                    Logger.info(`跳过非表定义文件: ${fileName}.json`);
                     continue;
                 }
 
@@ -155,7 +164,6 @@ export const SyncDb = async (): Promise<void> => {
                 }
 
                 processedCount++;
-                progressLogger.logTableProgress(processedCount, totalTables, tableName, dirType);
 
                 const tableDefinition = await Bun.file(file).json();
                 const existsTable = await tableExists(sql!, tableName);
@@ -171,29 +179,21 @@ export const SyncDb = async (): Promise<void> => {
         }
 
         perfTracker.finishPhase('同步处理');
-        Logger.info(`✓ 表处理完成，耗时: ${perfTracker.getPhaseTime('同步处理')}`);
 
-        // 阶段5：显示统计信息
-        Logger.info('\n=== 同步统计信息 ===');
-        Logger.info(`总耗时: ${perfTracker.getTotalTime()}`);
-        Logger.info(`处理表总数: ${globalCount.processedTables}`);
-        Logger.info(`创建表: ${globalCount.createdTables}`);
-        Logger.info(`修改表: ${globalCount.modifiedTables}`);
-        Logger.info(`字段新增: ${globalCount.addFields}`);
-        Logger.info(`字段名称变更: ${globalCount.nameChanges}`);
-        Logger.info(`字段类型变更: ${globalCount.typeChanges}`);
-        Logger.info(`字段最小值变更: ${globalCount.minChanges}`);
-        Logger.info(`字段最大值变更: ${globalCount.maxChanges}`);
-        Logger.info(`字段默认值变更: ${globalCount.defaultChanges}`);
-        Logger.info(`索引新增: ${globalCount.indexCreate}`);
-        Logger.info(`索引删除: ${globalCount.indexDrop}`);
-
-        if (globalCount.processedTables === 0) {
-            Logger.warn('没有找到任何表定义文件');
-        }
-
-        // 输出性能统计
-        perfTracker.logStats();
+        // 返回统计信息
+        return {
+            processedTables: globalCount.processedTables,
+            createdTables: globalCount.createdTables,
+            modifiedTables: globalCount.modifiedTables,
+            addFields: globalCount.addFields,
+            nameChanges: globalCount.nameChanges,
+            typeChanges: globalCount.typeChanges,
+            minChanges: globalCount.minChanges,
+            maxChanges: globalCount.maxChanges,
+            defaultChanges: globalCount.defaultChanges,
+            indexCreate: globalCount.indexCreate,
+            indexDrop: globalCount.indexDrop
+        };
     } catch (error: any) {
         Logger.error(`数据库同步失败`, error);
         process.exit(1);
