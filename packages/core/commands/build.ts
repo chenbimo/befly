@@ -4,7 +4,6 @@
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import ora from 'ora';
 import { Logger } from '../lib/logger.js';
 import { getProjectRoot } from './util.js';
 
@@ -28,11 +27,7 @@ export async function buildCommand(options: BuildOptions) {
         // 使用内置默认入口文件
         const entryFile = join(import.meta.dir, '..', 'entry.ts');
 
-        const spinner = ora({
-            text: '正在构建项目...',
-            color: 'cyan',
-            spinner: 'dots'
-        }).start();
+        Logger.info('正在构建项目...');
 
         const args = ['build', entryFile, '--outdir', options.outdir, '--target', 'bun'];
 
@@ -53,10 +48,10 @@ export async function buildCommand(options: BuildOptions) {
         await proc.exited;
 
         if (proc.exitCode === 0) {
-            spinner.succeed('项目构建完成');
+            Logger.success('项目构建完成');
             Logger.success(`输出目录: ${options.outdir}`);
         } else {
-            spinner.fail('项目构建失败');
+            Logger.error('项目构建失败');
             process.exit(1);
         }
     } catch (error) {

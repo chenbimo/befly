@@ -31,7 +31,7 @@
     ],
     "type": "module",
     "dependencies": {
-        "befly": "^3.4.16"
+        "befly": "workspace:*"
     },
     "engines": {
         "bun": ">=1.3.0"

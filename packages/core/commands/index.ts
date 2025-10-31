@@ -4,7 +4,6 @@
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import ora from 'ora';
 import { Logger } from '../lib/logger.js';
 import { getProjectRoot } from './util.js';
 
@@ -25,11 +24,7 @@ export async function buildCommand(options: BuildOptions) {
             process.exit(1);
         }
 
-        const spinner = ora({
-            text: '正在构建项目...',
-            color: 'cyan',
-            spinner: 'dots'
-        }).start();
+        Logger.info('正在构建项目...');
 
         const args = ['build', mainFile, '--outdir', options.outdir, '--target', 'bun'];
 
@@ -50,10 +45,10 @@ export async function buildCommand(options: BuildOptions) {
         await proc.exited;
 
         if (proc.exitCode === 0) {
-            spinner.succeed('项目构建完成');
+            Logger.success('项目构建完成');
             Logger.success(`输出目录: ${options.outdir}`);
         } else {
-            spinner.fail('项目构建失败');
+            Logger.error('项目构建失败');
             process.exit(1);
         }
     } catch (error) {
@@ -126,11 +121,7 @@ export async function syncCommand(options: SyncOptions) {
             process.exit(1);
         }
 
-        const spinner = ora({
-            text: '正在同步数据库表...',
-            color: 'cyan',
-            spinner: 'dots'
-        }).start();
+        Logger.info('正在同步数据库表...');
 
         const args = ['run', syncScript];
 
@@ -160,9 +151,9 @@ export async function syncCommand(options: SyncOptions) {
         await proc.exited;
 
         if (proc.exitCode === 0) {
-            spinner.succeed('数据库同步完成');
+            Logger.success('数据库同步完成');
         } else {
-            spinner.fail('数据库同步失败');
+            Logger.error('数据库同步失败');
             process.exit(1);
         }
     } catch (error) {
@@ -175,11 +166,7 @@ export async function syncCommand(options: SyncOptions) {
 // ========== Addon 命令 ==========
 export const addonCommand = {
     async install(name: string, options: { source?: string }) {
-        const spinner = ora({
-            text: `正在安装插件: ${name}`,
-            color: 'cyan',
-            spinner: 'dots'
-        }).start();
+        Logger.info(`正在安装插件: ${name}`);
 
         try {
             // TODO: 实现插件安装逻辑
@@ -188,19 +175,15 @@ export const addonCommand = {
             // 3. 安装插件依赖
             // 4. 执行插件安装脚本
 
-            spinner.succeed(`插件 ${name} 安装成功`);
+            Logger.success(`插件 ${name} 安装成功`);
         } catch (error) {
-            spinner.fail(`插件 ${name} 安装失败`);
+            Logger.error(`插件 ${name} 安装失败`);
             throw error;
         }
     },
 
     async uninstall(name: string, options: { keepData: boolean }) {
-        const spinner = ora({
-            text: `正在卸载插件: ${name}`,
-            color: 'cyan',
-            spinner: 'dots'
-        }).start();
+        Logger.info(`正在卸载插件: ${name}`);
 
         try {
             // TODO: 实现插件卸载逻辑
@@ -208,9 +191,9 @@ export const addonCommand = {
             // 2. 删除插件文件
             // 3. 可选：删除插件数据
 
-            spinner.succeed(`插件 ${name} 卸载成功`);
+            Logger.success(`插件 ${name} 卸载成功`);
         } catch (error) {
-            spinner.fail(`插件 ${name} 卸载失败`);
+            Logger.error(`插件 ${name} 卸载失败`);
             throw error;
         }
     },

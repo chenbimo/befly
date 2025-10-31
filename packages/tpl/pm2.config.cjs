@@ -22,9 +22,8 @@ module.exports = {
     apps: [
         {
             name: 'befly',
-            script: 'bun',
-            args: 'run --env-file=.env.production main.ts',
-
+            script: 'main.ts',
+            interpreter: 'bun',
             // 集群模式配置
             instances: 2, // 实例数量，可设置为 'max' 使用所有 CPU
             exec_mode: 'cluster', // 集群模式
@@ -36,7 +35,12 @@ module.exports = {
 
             // 日志配置
             log_date_format: 'YYYY-MM-DD HH:mm:ss',
-            merge_logs: true
+            merge_logs: true,
+
+            // 环境变量
+            env_production: {
+                NODE_ENV: 'production'
+            }
         }
     ]
 };

@@ -5,7 +5,6 @@
 import { Command } from 'commander';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import ora from 'ora';
 import { Logger } from '../lib/logger.js';
 import { SyncDb } from './syncDb/index.js';
 
