@@ -21,7 +21,6 @@ import type { BeflyContext } from '../types/befly.js';
 export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin[], appContext: BeflyContext) {
     return async (req: Request): Promise<Response> => {
         const corsOptions = setCorsOptions(req);
-        console.log('🔥[ corsOptions ]-24', corsOptions);
         let ctx: RequestContext | null = null;
         let api: ApiRoute | undefined;
         let apiPath = '';
@@ -118,37 +117,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             // 记录详细的错误日志
             Logger.warn(api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误', error);
 
-            // 根据错误类型返回不同的错误信息
-            let errorMessage = '内部服务器错误';
-            let errorDetail = {};
-
-            // 数据库错误
-            if (error.message?.includes('ECONNREFUSED') || error.message?.includes('database')) {
-                errorMessage = '数据库连接失败';
-            }
-            // Redis错误
-            else if (error.message?.includes('Redis') || error.message?.includes('redis')) {
-                errorMessage = 'Redis服务异常';
-            }
-            // 权限错误
-            else if (error.message?.includes('permission') || error.message?.includes('权限')) {
-                errorMessage = '权限不足';
-            }
-            // 认证错误
-            else if (error.message?.includes('token') || error.message?.includes('认证')) {
-                errorMessage = '认证失败';
-            }
-
-            // 开发环境返回详细错误信息
-            if (Env.NODE_ENV === 'development') {
-                errorDetail = {
-                    type: error.constructor?.name || 'Error',
-                    message: error.message,
-                    stack: error.stack
-                };
-            }
-
-            return Response.json(No(errorMessage, errorDetail), {
+            return Response.json(No('内部服务器错误'), {
                 headers: corsOptions.headers
             });
         }
