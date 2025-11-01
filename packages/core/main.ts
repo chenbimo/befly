@@ -44,17 +44,17 @@ export class Befly {
         const gracefulShutdown = async (signal: string) => {
             // 1. 停止接收新请求
             server.stop(true);
-            Logger.info('✅ HTTP 服务器已停止');
+            Logger.info('HTTP 服务器已停止');
 
             // 2. 关闭数据库连接
             try {
                 await Database.disconnect();
-                Logger.info('✅ 数据库连接已关闭');
+                Logger.info('数据库连接已关闭');
             } catch (error: any) {
-                Logger.warn('⚠️ 关闭数据库连接时出错:', error.message);
+                Logger.err('关闭数据库连接时出错:', error);
             }
 
-            Logger.info('✅ 服务器已优雅关闭');
+            Logger.info('服务器已优雅关闭');
             process.exit(0);
         };
 

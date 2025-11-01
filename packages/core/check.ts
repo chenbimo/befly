@@ -81,16 +81,12 @@ export const checkDefault = async function (): Promise<void> {
         for (const addonName of addons) {
             const addonTablesDir = Addon.getDir(addonName, 'tables');
 
-            try {
-                for await (const file of tablesGlob.scan({
-                    cwd: addonTablesDir,
-                    absolute: true,
-                    onlyFiles: true
-                })) {
-                    allTableFiles.push({ file: file, type: 'addon', addonName: addonName });
-                }
-            } catch (error) {
-                // addon 的 tables 目录可能不存在，跳过
+            for await (const file of tablesGlob.scan({
+                cwd: addonTablesDir,
+                absolute: true,
+                onlyFiles: true
+            })) {
+                allTableFiles.push({ file: file, type: 'addon', addonName: addonName });
             }
         }
 
@@ -124,98 +120,94 @@ export const checkDefault = async function (): Promise<void> {
                     }
 
                     // 验证规则格式
+                    fileRules++;
+                    totalRules++;
+
+                    // 检查是否使用了保留字段
+                    if (RESERVED_FIELDS.includes(colKey as any)) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件包含保留字段 ${colKey}，` + `不能在表定义中使用以下字段: ${RESERVED_FIELDS.join(', ')}`);
+                        fileValid = false;
+                    }
+
+                    // 使用 parseRule 解析字段规则
+                    let parsed;
                     try {
-                        fileRules++;
-                        totalRules++;
-
-                        // 检查是否使用了保留字段
-                        if (RESERVED_FIELDS.includes(colKey as any)) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件包含保留字段 ${colKey}，` + `不能在表定义中使用以下字段: ${RESERVED_FIELDS.join(', ')}`);
-                            fileValid = false;
-                        }
-
-                        // 使用 parseRule 解析字段规则
-                        let parsed;
-                        try {
-                            parsed = parseRule(rule);
-                        } catch (error: any) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段规则解析失败：${error.message}`);
-                            fileValid = false;
-                            continue;
-                        }
-
-                        const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
-
-                        // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
-                        if (!FIELD_NAME_REGEX.test(fieldName)) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
-                            fileValid = false;
-                        }
-
-                        // 第2个值：字段类型必须为string,number,text,array_string,array_text之一
-                        if (!FIELD_TYPES.includes(fieldType as any)) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
-                            fileValid = false;
-                        }
-
-                        // 第3/4个值：需要是 null 或 数字
-                        if (!(fieldMin === null || typeof fieldMin === 'number')) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
-                            fileValid = false;
-                        }
-                        if (!(fieldMax === null || typeof fieldMax === 'number')) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
-                            fileValid = false;
-                        }
-
-                        // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
-                        if (fieldMin !== null && fieldMax !== null) {
-                            if (fieldMin > fieldMax) {
-                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
-                                fileValid = false;
-                            }
-                        }
-
-                        // 第6个值：是否创建索引必须为0或1
-                        if (fieldIndex !== 0 && fieldIndex !== 1) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为0或1`);
-                            fileValid = false;
-                        }
-
-                        // 第7个值：必须为null或正则表达式（parseRule已经验证过了）
-                        // parseRule 已经将正则字符串转换为 RegExp 或 null，这里不需要再验证
-
-                        // 第4个值与类型联动校验 + 默认值规则
-                        if (fieldType === 'text') {
-                            // text：min/max 必须为 null，默认值必须为 'null'
-                            if (fieldMin !== null) {
-                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
-                                fileValid = false;
-                            }
-                            if (fieldMax !== null) {
-                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
-                                fileValid = false;
-                            }
-                            if (fieldDefault !== 'null') {
-                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
-                                fileValid = false;
-                            }
-                        } else if (fieldType === 'string' || fieldType === 'array') {
-                            if (fieldMax === null || typeof fieldMax !== 'number') {
-                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
-                                fileValid = false;
-                            } else if (fieldMax > MAX_VARCHAR_LENGTH) {
-                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
-                                fileValid = false;
-                            }
-                        } else if (fieldType === 'number') {
-                            if (fieldDefault !== 'null' && typeof fieldDefault !== 'number') {
-                                Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或null，当前为 "${fieldDefault}"`);
-                                fileValid = false;
-                            }
-                        }
+                        parsed = parseRule(rule);
                     } catch (error: any) {
-                        // 单个字段规则解析失败已在上面处理
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段规则解析失败：${error.message}`);
+                        fileValid = false;
+                        continue;
+                    }
+
+                    const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
+
+                    // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
+                    if (!FIELD_NAME_REGEX.test(fieldName)) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
+                        fileValid = false;
+                    }
+
+                    // 第2个值：字段类型必须为string,number,text,array_string,array_text之一
+                    if (!FIELD_TYPES.includes(fieldType as any)) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
+                        fileValid = false;
+                    }
+
+                    // 第3/4个值：需要是 null 或 数字
+                    if (!(fieldMin === null || typeof fieldMin === 'number')) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
+                        fileValid = false;
+                    }
+                    if (!(fieldMax === null || typeof fieldMax === 'number')) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
+                        fileValid = false;
+                    }
+
+                    // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
+                    if (fieldMin !== null && fieldMax !== null) {
+                        if (fieldMin > fieldMax) {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
+                            fileValid = false;
+                        }
+                    }
+
+                    // 第6个值：是否创建索引必须为0或1
+                    if (fieldIndex !== 0 && fieldIndex !== 1) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为0或1`);
+                        fileValid = false;
+                    }
+
+                    // 第7个值：必须为null或正则表达式（parseRule已经验证过了）
+                    // parseRule 已经将正则字符串转换为 RegExp 或 null，这里不需要再验证
+
+                    // 第4个值与类型联动校验 + 默认值规则
+                    if (fieldType === 'text') {
+                        // text：min/max 必须为 null，默认值必须为 'null'
+                        if (fieldMin !== null) {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
+                            fileValid = false;
+                        }
+                        if (fieldMax !== null) {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
+                            fileValid = false;
+                        }
+                        if (fieldDefault !== 'null') {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
+                            fileValid = false;
+                        }
+                    } else if (fieldType === 'string' || fieldType === 'array') {
+                        if (fieldMax === null || typeof fieldMax !== 'number') {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
+                            fileValid = false;
+                        } else if (fieldMax > MAX_VARCHAR_LENGTH) {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
+                            fileValid = false;
+                        }
+                    } else if (fieldType === 'number') {
+                        if (fieldDefault !== 'null' && typeof fieldDefault !== 'number') {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或null，当前为 "${fieldDefault}"`);
+                            fileValid = false;
+                        }
                     }
                 }
 
@@ -226,7 +218,7 @@ export const checkDefault = async function (): Promise<void> {
                     invalidFiles++;
                 }
             } catch (error: any) {
-                Logger.error(`${fileType}表 ${fileName} 解析失败: ${error.message}`);
+                Logger.error(`${fileType}表 ${fileName} 解析失败`, error);
                 invalidFiles++;
             }
         }
@@ -241,7 +233,7 @@ export const checkDefault = async function (): Promise<void> {
             throw new Error('表定义检查失败，请修复上述错误后重试');
         }
     } catch (error: any) {
-        Logger.error('数据表定义检查过程中出错:', error);
+        Logger.error('数据表定义检查过程中出错', error);
         throw error;
     }
 };

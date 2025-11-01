@@ -94,7 +94,7 @@ export class Database {
             Logger.error('数据库连接测试失败', error);
 
             try {
-                await sql.close();
+                await sql?.close();
             } catch (cleanupError) {}
 
             throw error;
@@ -109,7 +109,7 @@ export class Database {
             try {
                 await this.sqlClient.close();
             } catch (error: any) {
-                Logger.warn('关闭 SQL 连接时出错:', error.message);
+                Logger.error('关闭 SQL 连接时出错', error);
             }
             this.sqlClient = null;
         }
@@ -200,7 +200,7 @@ export class Database {
             try {
                 this.redisClient.close();
             } catch (error: any) {
-                Logger.warn('关闭 Redis 连接时出错:', error);
+                Logger.error('关闭 Redis 连接时出错', error);
             }
             this.redisClient = null;
         }

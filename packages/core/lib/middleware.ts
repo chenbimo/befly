@@ -132,8 +132,8 @@ export async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promi
         }
 
         return true;
-    } catch (err: any) {
-        Logger.error('处理请求参数时发生错误', err);
+    } catch (error: any) {
+        Logger.error('处理请求参数时发生错误', error);
         return false;
     }
 }

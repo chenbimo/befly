@@ -410,7 +410,7 @@ export class DbHelper {
         try {
             processed.id = await this.befly.redis.genTimeID();
         } catch (error: any) {
-            throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table}): ${error.message}`);
+            throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table})`, error);
         }
 
         // 强制生成时间戳（不可被用户覆盖）
@@ -634,7 +634,7 @@ export class DbHelper {
                     await conn.query('ROLLBACK');
                     Logger.warn('事务已回滚');
                 } catch (rollbackError: any) {
-                    Logger.error('事务回滚失败:', rollbackError);
+                    Logger.error('事务回滚失败', rollbackError);
                 }
             }
             throw error;

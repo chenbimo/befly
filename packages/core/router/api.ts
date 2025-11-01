@@ -115,7 +115,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             }
         } catch (error: any) {
             // 记录详细的错误日志
-            Logger.warn(api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误', error);
+            Logger.error(api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误', error);
 
             return Response.json(No('内部服务器错误'), {
                 headers: corsOptions.headers
