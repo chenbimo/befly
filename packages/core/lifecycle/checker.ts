@@ -7,6 +7,7 @@ import { join, basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { projectCheckDir } from '../paths.js';
+import { checkDefault } from '../check.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 
 /**
@@ -19,6 +20,9 @@ export class Checker {
     static async run(): Promise<void> {
         try {
             const checkStartTime = Bun.nanoseconds();
+
+            // 先执行默认检查（有异常会自动抛出）
+            await checkDefault();
 
             const glob = new Bun.Glob('*.{ts}');
 
