@@ -8,7 +8,7 @@
  *  - role: 角色完整信息（包含 menus 和 apis 权限）
  */
 
-import { Yes, No } from '../../util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '获取用户信息',

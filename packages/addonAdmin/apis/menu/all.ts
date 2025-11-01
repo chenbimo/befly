@@ -7,7 +7,7 @@
  * 4. 仅返回状态为启用的菜单
  */
 
-import { Yes, No } from '../../util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '获取用户菜单',

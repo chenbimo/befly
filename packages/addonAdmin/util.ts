@@ -7,9 +7,6 @@ import type { BeflyContext } from 'befly/types/befly';
 import { readdirSync, statSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-// 重新导出 Addon 类供内部使用
-export { Addon };
-
 /**
  * 递归扫描目录下的所有 .ts 文件
  * @param dir - 目录路径

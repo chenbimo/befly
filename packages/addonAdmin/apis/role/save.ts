@@ -2,7 +2,7 @@
  * 保存用户的角色（单角色模式）
  */
 
-import { Yes, No } from '../../util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '保存用户角色',

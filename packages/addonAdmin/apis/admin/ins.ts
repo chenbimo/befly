@@ -2,7 +2,7 @@
  * 添加管理员
  */
 
-import { Yes, No, Cipher } from '../../util.js';
+import { Yes, No, Cipher } from 'befly';
 import { Cipher } from '../../lib/cipher.js';
 import adminTable from '../../tables/admin.json';
 

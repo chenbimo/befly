@@ -2,7 +2,7 @@
  * 获取用户的角色（单角色模式）
  */
 
-import { Yes, No } from '../../util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '获取用户角色',

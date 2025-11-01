@@ -176,7 +176,6 @@ const cachePlugin: Plugin = {
     async onInit(befly: BeflyContext): Promise<CacheManager> {
         try {
             const cacheManager = new CacheManager(befly);
-            Logger.info('缓存插件初始化成功');
             return cacheManager;
         } catch (error: any) {
             throw error;

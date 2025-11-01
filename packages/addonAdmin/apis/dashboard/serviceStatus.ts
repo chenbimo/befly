@@ -2,7 +2,7 @@
  * 获取服务状态
  */
 
-import { Yes } from '../../util.js';
+import { Yes } from 'befly';
 import { Env } from '../../env.js';
 
 export default {

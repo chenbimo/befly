@@ -2,7 +2,7 @@
  * 获取插件列表
  */
 
-import { Yes, Addon } from '../../util.js';
+import { Yes, Addon } from 'befly';
 import { readFileSync } from 'node:fs';
 
 export default {

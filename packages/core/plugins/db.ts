@@ -33,7 +33,6 @@ const dbPlugin: Plugin = {
                 // 创建数据库管理器实例，直接传入 sql 对象
                 const dbManager = new DbHelper(befly, sql);
 
-                Logger.info('数据库插件初始化成功');
                 return dbManager;
             } else {
                 Logger.warn('数据库未启用（DB_ENABLE≠1），跳过初始化');

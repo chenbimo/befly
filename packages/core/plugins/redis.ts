@@ -23,12 +23,6 @@ const redisPlugin: Plugin = {
                 // 初始化 Redis 客户端（统一使用 database.ts 的连接管理）
                 await Database.connectRedis();
 
-                Logger.info('Redis 插件初始化成功', {
-                    host: Env.REDIS_HOST,
-                    port: Env.REDIS_PORT,
-                    db: Env.REDIS_DB
-                });
-
                 // 返回工具对象，向下游以相同 API 暴露
                 return RedisHelper;
             } else {

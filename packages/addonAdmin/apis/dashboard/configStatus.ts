@@ -2,7 +2,7 @@
  * 获取系统配置状态
  */
 
-import { Yes } from '../../util.js';
+import { Yes } from 'befly';
 
 export default {
     name: '获取配置状态',

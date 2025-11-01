@@ -1,4 +1,4 @@
-﻿import { Yes, No } from '../../util.js';
+﻿import { Yes, No } from 'befly';
 import adminMenuTable from '../../tables/menu.json';
 
 export default {

@@ -2,7 +2,7 @@
  * 获取管理员列表
  */
 
-import { Yes } from '../../util.js';
+import { Yes } from 'befly';
 
 export default {
     name: '获取管理员列表',

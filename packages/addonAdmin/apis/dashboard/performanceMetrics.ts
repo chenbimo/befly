@@ -2,7 +2,7 @@
  * 获取性能指标
  */
 
-import { Yes } from '../../util.js';
+import { Yes } from 'befly';
 
 export default {
     name: '获取性能指标',

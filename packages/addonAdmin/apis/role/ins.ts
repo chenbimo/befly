@@ -1,4 +1,4 @@
-﻿import { Yes, No } from '../../util.js';
+﻿import { Yes, No } from 'befly';
 import adminRoleTable from '../../tables/role.json';
 
 /**

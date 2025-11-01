@@ -1,4 +1,4 @@
-﻿import { Yes, No } from '../../util.js';
+﻿import { Yes, No } from 'befly';
 import adminDictTable from '../../tables/dict.json';
 
 export default {

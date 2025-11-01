@@ -2,7 +2,7 @@
  * 获取运行环境信息
  */
 
-import { Yes } from '../../util.js';
+import { Yes } from 'befly';
 import os from 'node:os';
 
 export default {

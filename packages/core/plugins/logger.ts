@@ -16,7 +16,6 @@ const loggerPlugin: Plugin = {
 
     async onInit(befly: BeflyContext): Promise<typeof Logger> {
         try {
-            Logger.info('日志插件初始化成功');
             return Logger;
         } catch (error: any) {
             // 插件内禁止直接退出进程，抛出异常交由主流程统一处理

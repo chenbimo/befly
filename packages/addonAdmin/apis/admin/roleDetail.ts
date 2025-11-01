@@ -2,7 +2,7 @@
  * 获取管理员的角色（单角色模式）
  */
 
-import { Yes, No } from '../../util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '获取管理员角色',

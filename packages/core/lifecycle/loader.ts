@@ -145,7 +145,6 @@ export class Loader {
                 }
             }
             const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
-            Logger.info(`✓ 核心插件加载完成: ${corePlugins.length} 个，耗时: ${corePluginsScanTime}`);
 
             // 扫描 addon 插件目录
             const addons = Addon.scan();

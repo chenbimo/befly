@@ -2,7 +2,7 @@
  * 删除管理员
  */
 
-import { Yes, No } from '../../util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '删除管理员',

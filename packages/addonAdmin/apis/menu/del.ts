@@ -2,7 +2,7 @@
  * 删除菜单
  */
 
-import { Yes, No } from '../../util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '删除菜单',
