@@ -106,7 +106,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
                 }
             });
             devRole = { id: roleId };
-            Logger.info('dev 角色已创建');
         }
 
         // 使用 bcrypt 加密密码

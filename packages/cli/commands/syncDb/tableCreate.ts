@@ -132,7 +132,6 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
         Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
     } else {
         await sql.unsafe(createSQL);
-        Logger.info(`  ✓ 新建表`);
     }
 
     // PostgreSQL: 添加列注释
