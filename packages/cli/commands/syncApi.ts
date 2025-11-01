@@ -12,7 +12,7 @@
  * 7. 删除配置中不存在的接口记录
  */
 
-import { Logger } from '../lib/logger.js';
+import { Logger } from '../util.js';
 import { Database } from '../lib/database.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';

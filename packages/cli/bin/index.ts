@@ -14,7 +14,7 @@
  */
 
 import { syncCommand } from '../commands/sync.js';
-import { Logger } from '../lib/logger.js';
+import { Logger } from '../util.js';
 
 /**
  * 主函数

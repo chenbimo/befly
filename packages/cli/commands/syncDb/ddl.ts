@@ -10,7 +10,7 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { parseRule } from '../../util.js';
-import { Logger } from '../../lib/logger.js';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
 

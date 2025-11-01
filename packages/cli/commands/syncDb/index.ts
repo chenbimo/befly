@@ -9,7 +9,7 @@
 
 import { basename } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
-import { Logger } from '../../lib/logger.js';
+import { Logger } from '../../util.js';
 import { Env } from '../../env.js';
 import { scanAddons, addonDirExists, getAddonDir } from '../../util.js';
 import { Database } from '../../lib/database.js';

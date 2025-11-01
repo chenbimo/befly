@@ -8,7 +8,7 @@
  */
 
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
-import { Logger } from '../../lib/logger.js';
+import { Logger } from '../../util.js';
 
 /**
  * 根据数据库类型引用标识符

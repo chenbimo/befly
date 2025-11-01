@@ -7,7 +7,7 @@
  */
 
 import type { SQL } from 'bun';
-import { Logger } from '../../lib/logger.js';
+import { Logger } from '../../util.js';
 import type { PhaseStats } from '../../types.js';
 
 /**

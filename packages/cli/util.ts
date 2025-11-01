@@ -7,6 +7,54 @@ import { join, parse, dirname } from 'pathe';
 import { existsSync, readFileSync } from 'node:fs';
 
 /**
+ * CLI Logger 工具
+ * 提供统一的日志输出功能
+ */
+export const Logger = {
+    /**
+     * 普通日志
+     */
+    log(...args: any[]) {
+        console.log(...args);
+    },
+
+    /**
+     * 信息日志（蓝色）
+     */
+    info(...args: any[]) {
+        console.log('\x1b[34m%s\x1b[0m', ...args);
+    },
+
+    /**
+     * 成功日志（绿色）
+     */
+    success(...args: any[]) {
+        console.log('\x1b[32m%s\x1b[0m', ...args);
+    },
+
+    /**
+     * 警告日志（黄色）
+     */
+    warn(...args: any[]) {
+        console.warn('\x1b[33m%s\x1b[0m', ...args);
+    },
+
+    /**
+     * 错误日志（红色）
+     */
+    error(...args: any[]) {
+        console.error('\x1b[31m%s\x1b[0m', ...args);
+    },
+
+    /**
+     * 调试日志（灰色）
+     */
+    debug(...args: any[]) {
+        console.log('\x1b[90m%s\x1b[0m', ...args);
+    }
+};
+
+/**
  * 获取项目根目录
  * 向上查找包含 package.json 的目录
  *

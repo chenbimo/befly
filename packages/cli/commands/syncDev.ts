@@ -7,7 +7,7 @@
  * - 表名: core_admin
  */
 
-import { Logger } from '../lib/logger.js';
+import { Logger } from '../util.js';
 import { Cipher } from '../lib/cipher.js';
 import { Database } from '../lib/database.js';
 import { Env } from '../env.js';
