@@ -6,7 +6,7 @@
 import { join, basename } from 'pathe';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
-import { coreCheckDir } from '../paths.js';
+import { projectCheckDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 
 /**
@@ -29,50 +29,19 @@ export class Checker {
                 failedChecks: 0
             };
 
-            // 1. 优先执行资源冲突检测（如果存在）
-            try {
-                const conflictCheckPath = join(coreCheckDir, 'conflict.ts');
-                const conflictCheckFile = Bun.file(conflictCheckPath);
+            // 检查目录列表：先项目，后 addons
+            const checkDirs: Array<{ path: string; type: 'app' | 'addon'; addonName?: string }> = [];
 
-                if (await conflictCheckFile.exists()) {
-                    stats.totalChecks++;
-                    const conflictCheckStart = Bun.nanoseconds();
+            // 添加项目 checks 目录
+            checkDirs.push({ path: projectCheckDir, type: 'app' });
 
-                    const conflictModule = await import(conflictCheckPath);
-                    const conflictCheckFn = conflictModule.default;
-
-                    if (typeof conflictCheckFn === 'function') {
-                        const conflictResult = await conflictCheckFn();
-                        const conflictCheckTime = calcPerfTime(conflictCheckStart);
-
-                        if (typeof conflictResult !== 'boolean') {
-                            Logger.warn(`核心检查 conflict.ts 返回值必须为 true 或 false，当前为 ${typeof conflictResult}`);
-                            stats.failedChecks++;
-                        } else if (conflictResult === true) {
-                            stats.passedChecks++;
-                        } else {
-                            Logger.warn(`核心检查未通过: conflict.ts`);
-                            stats.failedChecks++;
-                            // 资源冲突检测失败，立即终止
-                            Logger.warn('资源冲突检测失败，无法继续启动');
-                            process.exit(1);
-                        }
-                    }
-                }
-            } catch (error: any) {
-                Logger.error('执行资源冲突检测时出错:', error);
-                stats.failedChecks++;
-            }
-
-            // 2. 检查目录列表：先核心，后项目，最后 addons
-            // 检查所有 checks 目录
-            const checkDirs = [{ path: coreCheckDir, type: 'core' as const }]; // 添加所有 addon 的 checks 目录
+            // 添加所有 addon 的 checks 目录
             const addons = scanAddons();
             for (const addon of addons) {
                 if (addonDirExists(addon, 'checks')) {
                     checkDirs.push({
                         path: getAddonDir(addon, 'checks'),
-                        type: 'addon' as const,
+                        type: 'addon',
                         addonName: addon
                     });
                 }
@@ -80,9 +49,10 @@ export class Checker {
 
             // 按顺序扫描并执行检查函数
             for (const checkConfig of checkDirs) {
-                const { path: checkDir, type } = checkConfig;
+                const { path: checkDir, type: type } = checkConfig;
                 const addonName = 'addonName' in checkConfig ? checkConfig.addonName : undefined;
-                const checkTypeLabel = type === 'core' ? '核心' : type === 'project' ? '项目' : `组件${addonName}`;
+                const checkTypeLabel = type === 'app' ? '项目' : `组件${addonName}`;
+
                 for await (const file of glob.scan({
                     cwd: checkDir,
                     onlyFiles: true,
@@ -90,9 +60,6 @@ export class Checker {
                 })) {
                     const fileName = basename(file);
                     if (fileName.startsWith('_')) continue; // 跳过以下划线开头的文件
-
-                    // 跳过已经执行过的 conflict.ts
-                    if (type === 'core' && fileName === 'conflict.ts') continue;
 
                     try {
                         stats.totalChecks++;
@@ -135,10 +102,10 @@ export class Checker {
 
             // 输出检查结果统计
             if (stats.failedChecks > 0) {
-                Logger.error(`✗ 系统检查失败: ${stats.failedChecks}/${stats.totalChecks}，耗时: ${totalCheckTime}`);
+                Logger.error(`系统检查失败: ${stats.failedChecks}/${stats.totalChecks}，耗时: ${totalCheckTime}`);
                 process.exit(1);
             } else if (stats.totalChecks > 0) {
-                Logger.info(`✓ 系统检查通过: ${stats.passedChecks}/${stats.totalChecks}，耗时: ${totalCheckTime}`);
+                Logger.info(`系统检查通过: ${stats.passedChecks}/${stats.totalChecks}，耗时: ${totalCheckTime}`);
             }
         } catch (error: any) {
             Logger.error('执行系统检查时发生错误', error);
