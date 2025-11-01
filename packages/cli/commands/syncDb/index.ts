@@ -133,7 +133,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
                     // addon 表，添加 {addonName}_ 前缀
                     // 使用 snakeCase 统一转换（admin → admin）
                     const addonNameSnake = snakeCase(addonName);
-                    tableName = `${addonNameSnake}_${tableName}`;
+                    tableName = `addon_${addonNameSnake}_${tableName}`;
                 }
 
                 processedCount++;
