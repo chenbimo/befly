@@ -12,11 +12,11 @@
  * 7. 删除配置中不存在的接口记录
  */
 
-import { Logger } from './util.js';
-import { Database } from 'befly/lib/database.js';
-import { RedisHelper } from 'befly/lib/redisHelper.js';
-import { scanAddons, getAddonDir, addonDirExists } from 'befly/util.js';
-import { coreApiDir, projectApiDir } from 'befly/paths.js';
+import { Logger } from '../lib/logger.js';
+import { Database } from '../lib/database.js';
+import { RedisHelper } from '../lib/redisHelper.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
+import { coreApiDir, projectApiDir } from '../paths.js';
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
 

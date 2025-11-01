@@ -7,10 +7,10 @@
  * - 表名: core_admin
  */
 
-import { Logger } from './util.js';
-import { Cipher } from 'befly/lib/cipher.js';
-import { Database } from 'befly/lib/database.js';
-import { Env } from 'befly/env.js';
+import { Logger } from '../lib/logger.js';
+import { Cipher } from '../lib/cipher.js';
+import { Database } from '../lib/database.js';
+import { Env } from '../env.js';
 
 interface SyncDevOptions {
     plan?: boolean;

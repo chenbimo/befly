@@ -7,17 +7,6 @@ import { join, parse, dirname } from 'pathe';
 import { existsSync, readFileSync } from 'node:fs';
 
 /**
- * CLI Logger - 简单的终端日志输出
- */
-export const Logger = {
-    log: (...args: any[]) => console.log(...args),
-    info: (...args: any[]) => console.log('[INFO]', ...args),
-    warn: (...args: any[]) => console.log('[WARN]', ...args),
-    error: (...args: any[]) => console.error('[ERROR]', ...args),
-    debug: (...args: any[]) => console.log('[DEBUG]', ...args)
-};
-
-/**
  * 获取项目根目录
  * 向上查找包含 package.json 的目录
  *

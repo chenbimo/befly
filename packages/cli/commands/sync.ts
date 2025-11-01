@@ -3,8 +3,8 @@
  * 按顺序执行：syncDb → syncApi → syncMenu → syncDev
  */
 
-import { Logger } from './util.js';
-import { Env } from 'befly/env.js';
+import { Logger } from '../lib/logger.js';
+import { Env } from '../env.js';
 import { syncDbCommand, type SyncDbStats } from './syncDb.js';
 import { syncApiCommand, type SyncApiStats } from './syncApi.js';
 import { syncMenuCommand, type SyncMenuStats } from './syncMenu.js';

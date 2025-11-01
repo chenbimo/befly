@@ -14,12 +14,12 @@
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
-import { Logger } from './util.js';
-import { Database } from 'befly/lib/database.js';
-import { RedisHelper } from 'befly/lib/redisHelper.js';
+import { Logger } from '../lib/logger.js';
+import { Database } from '../lib/database.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { coreDir, projectDir } from 'befly/paths.js';
+import { coreDir, projectDir } from '../paths.js';
 
 interface SyncMenuOptions {
     plan?: boolean;

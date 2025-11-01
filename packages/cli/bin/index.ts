@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+﻿#!/usr/bin/env bun
 /**
  * Befly CLI - 命令行工具入口
  * 只提供 sync 命令，用于同步所有数据
@@ -14,7 +14,7 @@
  */
 
 import { syncCommand } from '../commands/sync.js';
-import { Logger } from '../commands/util.js';
+import { Logger } from '../lib/logger.js';
 
 /**
  * 主函数
@@ -23,6 +23,7 @@ async function main() {
     // 执行 sync 命令
     try {
         await syncCommand();
+        Logger.printEnv();
     } catch (error: any) {
         Logger.error('命令执行失败:', error.message || error);
         process.exit(1);
