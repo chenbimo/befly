@@ -1,7 +1,7 @@
 {
     "name": "befly-cli",
     "version": "3.5.1",
-    "description": "Befly CLI - Command line tools for Befly framework",
+    "description": "Befly 框架命令行工具",
     "type": "module",
     "bin": {
         "befly": "./bin/index.js"
