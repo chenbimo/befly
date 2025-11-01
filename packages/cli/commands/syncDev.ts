@@ -4,7 +4,7 @@
  * - 姓名: 开发者
  * - 密码: 使用 bcrypt 加密，通过 DEV_PASSWORD 环境变量配置
  * - 角色: roleCode=dev, roleType=admin
- * - 表名: core_admin
+ * - 表名: addon_admin_admin
  */
 
 import { Database, Cipher, Env } from 'befly';
@@ -30,27 +30,27 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
 
         const helper = Database.getDbHelper();
 
-        // 检查 core_admin 表是否存在
-        const existAdmin = await helper.tableExists('core_admin');
+        // 检查 addon_admin_admin 表是否存在
+        const existAdmin = await helper.tableExists('addon_admin_admin');
         if (!existAdmin) {
             return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
-        // 检查 core_role 表是否存在
-        const existRole = await helper.tableExists('core_role');
+        // 检查 addon_admin_role 表是否存在
+        const existRole = await helper.tableExists('addon_admin_role');
         if (!existRole) {
             return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
-        // 检查 core_menu 表是否存在
-        const existMenu = await helper.tableExists('core_menu');
+        // 检查 addon_admin_menu 表是否存在
+        const existMenu = await helper.tableExists('addon_admin_menu');
         if (!existMenu) {
             return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
         }
 
         // 查询所有菜单 ID
         const allMenus = await helper.getAll({
-            table: 'core_menu',
+            table: 'addon_admin_menu',
             fields: ['id']
         });
 
@@ -61,11 +61,11 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
         const menuIds = allMenus.length > 0 ? allMenus.map((m: any) => m.id).join(',') : '';
 
         // 查询所有接口 ID
-        const existApi = await helper.tableExists('core_api');
+        const existApi = await helper.tableExists('addon_admin_api');
         let apiIds = '';
         if (existApi) {
             const allApis = await helper.getAll({
-                table: 'core_api',
+                table: 'addon_admin_api',
                 fields: ['id']
             });
 
@@ -76,14 +76,14 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
 
         // 查询或创建 dev 角色
         let devRole = await helper.getOne({
-            table: 'core_role',
+            table: 'addon_admin_role',
             where: { code: 'dev' }
         });
 
         if (devRole) {
             // 更新 dev 角色的菜单和接口权限
             await helper.updData({
-                table: 'core_role',
+                table: 'addon_admin_role',
                 where: { code: 'dev' },
                 data: {
                     name: '开发者角色',
@@ -95,7 +95,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
         } else {
             // 创建 dev 角色
             const roleId = await helper.insData({
-                table: 'core_role',
+                table: 'addon_admin_role',
                 data: {
                     name: '开发者角色',
                     code: 'dev',
@@ -125,7 +125,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
 
         // 查询现有账号
         const existing = await helper.getOne({
-            table: 'core_admin',
+            table: 'addon_admin_admin',
             where: { email: Env.DEV_EMAIL }
         });
 
@@ -133,14 +133,14 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
         if (existing) {
             // 更新现有账号
             await helper.updData({
-                table: 'core_admin',
+                table: 'addon_admin_admin',
                 where: { email: Env.DEV_EMAIL },
                 data: devData
             });
         } else {
             // 插入新账号
             await helper.insData({
-                table: 'core_admin',
+                table: 'addon_admin_admin',
                 data: devData
             });
             isNew = true;
@@ -150,19 +150,19 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
         let cachedRolesCount = 0;
         try {
             // 检查必要的表是否存在
-            const apiTableExists = await helper.tableExists('core_api');
-            const roleTableExists = await helper.tableExists('core_role');
+            const apiTableExists = await helper.tableExists('addon_admin_api');
+            const roleTableExists = await helper.tableExists('addon_admin_role');
 
             if (apiTableExists && roleTableExists) {
                 // 查询所有角色
                 const roles = await helper.getAll({
-                    table: 'core_role',
+                    table: 'addon_admin_role',
                     fields: ['id', 'code', 'apis']
                 });
 
                 // 查询所有接口
                 const allApis = await helper.getAll({
-                    table: 'core_api',
+                    table: 'addon_admin_api',
                     fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
                 });
 
@@ -203,11 +203,11 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
 
         // 获取统计数据
         const allAdmins = await helper.getAll({
-            table: 'core_admin',
+            table: 'addon_admin_admin',
             fields: ['id']
         });
         const allRoles = await helper.getAll({
-            table: 'core_role',
+            table: 'addon_admin_role',
             fields: ['id']
         });
 

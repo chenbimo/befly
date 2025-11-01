@@ -140,7 +140,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
         try {
             // 1. 同步父级菜单
             const existingParent = await helper.getOne({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 where: { path: menu.path || '' }
             });
 
@@ -148,7 +148,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
 
             if (existingParent) {
                 await helper.updData({
-                    table: 'core_menu',
+                    table: 'addon_admin_menu',
                     where: { id: existingParent.id },
                     data: {
                         pid: 0,
@@ -162,7 +162,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                 stats.updated++;
             } else {
                 parentId = await helper.insData({
-                    table: 'core_menu',
+                    table: 'addon_admin_menu',
                     data: {
                         pid: 0,
                         name: menu.name,
@@ -182,13 +182,13 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                     const childFullPath = menu.path + child.path;
 
                     const existingChild = await helper.getOne({
-                        table: 'core_menu',
+                        table: 'addon_admin_menu',
                         where: { path: childFullPath }
                     });
 
                     if (existingChild) {
                         await helper.updData({
-                            table: 'core_menu',
+                            table: 'addon_admin_menu',
                             where: { id: existingChild.id },
                             data: {
                                 pid: parentId,
@@ -201,7 +201,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                         stats.updated++;
                     } else {
                         await helper.insData({
-                            table: 'core_menu',
+                            table: 'addon_admin_menu',
                             data: {
                                 pid: parentId,
                                 name: child.name,
@@ -229,7 +229,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
  */
 async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<number> {
     const allRecords = await helper.getAll({
-        table: 'core_menu',
+        table: 'addon_admin_menu',
         fields: ['id', 'path', 'name'],
         where: { state$gte: 0 } // 查询所有状态（包括软删除的 state=0）
     });
@@ -238,7 +238,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
     for (const record of allRecords) {
         if (record.path && !configPaths.has(record.path)) {
             await helper.delForce({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 where: { id: record.id }
             });
             deletedCount++;
@@ -274,10 +274,10 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         const helper = Database.getDbHelper();
 
         // 3. 检查表是否存在
-        const exists = await helper.tableExists('core_menu');
+        const exists = await helper.tableExists('addon_admin_menu');
 
         if (!exists) {
-            Logger.error(`❌ 表 core_menu 不存在，请先运行 befly syncDb 同步数据库`);
+            Logger.error(`表 addon_admin_menu 不存在，请先运行 befly syncDb 同步数据库`);
             process.exit(1);
         }
 
@@ -292,7 +292,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
 
         // 7. 获取最终菜单数据
         const allMenus = await helper.getAll({
-            table: 'core_menu',
+            table: 'addon_admin_menu',
             fields: ['id', 'pid', 'name', 'path', 'type'],
             orderBy: ['pid#ASC', 'sort#ASC', 'id#ASC']
         });
@@ -300,7 +300,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         // 8. 缓存菜单数据到 Redis
         try {
             const menus = await helper.getAll({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
