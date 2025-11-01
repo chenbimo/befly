@@ -1,13 +1,13 @@
-﻿/**
+/**
  * 表规则检查器 - TypeScript 版本
  * 验证表定义文件的格式和规则
  */
 
 import { basename } from 'pathe';
-import { Logger } from '../lib/logger.js';
-import { parseRule } from '../util.js';
-import { projectTableDir } from '../paths.js';
-import { scanAddons, getAddonDir } from '../util.js';
+import { Logger } from './lib/logger.js';
+import { parseRule } from './util.js';
+import { projectTableDir } from './paths.js';
+import { scanAddons, getAddonDir } from './util.js';
 
 /**
  * 表文件信息接口
@@ -54,7 +54,7 @@ const MAX_VARCHAR_LENGTH = 65535;
  * 检查表定义文件
  * @returns 检查是否通过
  */
-export default async function (): Promise<boolean> {
+export const checkTable = async function (): Promise<boolean> {
     try {
         const tablesGlob = new Bun.Glob('*.json');
 
@@ -73,7 +73,7 @@ export default async function (): Promise<boolean> {
             absolute: true,
             onlyFiles: true
         })) {
-            allTableFiles.push({ file, type: 'project' });
+            allTableFiles.push({ file: file, type: 'project' });
         }
 
         // 收集 addon 表字段定义文件
@@ -247,4 +247,4 @@ export default async function (): Promise<boolean> {
         Logger.error('数据表定义检查过程中出错:', error);
         return false;
     }
-}
+};

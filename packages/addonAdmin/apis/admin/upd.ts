@@ -2,8 +2,8 @@
  * 更新管理员信息
  */
 
-import { Yes, No } from '../../util.js';
-import adminTable from '../../tables/admin.json';
+import { Yes, No } from '../../../core/util.js';
+import adminTable from '../../../core/tables/admin.json';
 
 export default {
     name: '更新管理员',
