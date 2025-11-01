@@ -8,7 +8,7 @@
  * - 系统字段定义
  */
 
-import { Env } from '../../env.js';
+import { Env } from 'befly';
 
 /**
  * 数据库版本要求

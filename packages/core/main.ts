@@ -10,6 +10,9 @@ import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
 import { Database } from './lib/database.js';
 import { Lifecycle } from './lifecycle/lifecycle.js';
+import { coreDir } from './paths.js';
+import { DbHelper } from './lib/dbHelper.js';
+import { RedisHelper } from './lib/redisHelper.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -71,5 +74,9 @@ export {
     Cipher,
     Jwt,
     Yes,
-    No
+    No,
+    coreDir,
+    Database,
+    DbHelper,
+    RedisHelper
 };

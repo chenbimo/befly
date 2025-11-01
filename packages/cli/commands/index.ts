@@ -4,15 +4,14 @@
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { Logger, getProjectRoot } from '../util.js';
+import { Logger, projectDir } from '../util.js';
 import type { SyncOptions } from '../types.js';
 
 // ========== Sync 命令 ==========
 
 export async function syncCommand(options: SyncOptions) {
     try {
-        const projectRoot = getProjectRoot();
-        const syncScript = join(projectRoot, 'node_modules', 'befly', 'scripts', 'syncTable.ts');
+        const syncScript = join(projectDir, 'node_modules', 'befly', 'scripts', 'syncTable.ts');
 
         if (!existsSync(syncScript)) {
             Logger.error('未找到同步脚本，请确保已安装 befly');
@@ -40,7 +39,7 @@ export async function syncCommand(options: SyncOptions) {
         }
 
         const proc = Bun.spawn(['bun', ...args], {
-            cwd: projectRoot,
+            cwd: projectDir,
             stdout: 'inherit',
             stderr: 'inherit',
             stdin: 'inherit'

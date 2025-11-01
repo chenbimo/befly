@@ -5,7 +5,7 @@
  * - 数据库版本验证（MySQL/PostgreSQL/SQLite）
  */
 
-import { Env } from '../../env.js';
+import { Env } from 'befly';
 import { Logger } from '../../util.js';
 import { DB_VERSION_REQUIREMENTS, IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
 import type { SQL } from 'bun';

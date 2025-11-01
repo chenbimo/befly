@@ -6,6 +6,8 @@
 import { join, parse, dirname } from 'pathe';
 import { existsSync, readFileSync } from 'node:fs';
 
+export const projectDir = process.cwd();
+
 /**
  * CLI Logger 工具
  * 提供统一的日志输出功能
@@ -53,26 +55,6 @@ export const Logger = {
         console.log('\x1b[90m%s\x1b[0m', ...args);
     }
 };
-
-/**
- * 获取项目根目录
- * 向上查找包含 package.json 的目录
- *
- * @returns 项目根目录路径
- */
-export function getProjectRoot(): string {
-    let current = process.cwd();
-    const root = parse(current).root;
-
-    while (current !== root) {
-        if (existsSync(join(current, 'package.json'))) {
-            return current;
-        }
-        current = dirname(current);
-    }
-
-    return process.cwd();
-}
 
 /**
  * 读取 package.json 文件内容

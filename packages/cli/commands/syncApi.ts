@@ -11,14 +11,13 @@
  * 6. 存在则更新，不存在则新增
  * 7. 删除配置中不存在的接口记录
  */
-
-import { Logger } from '../util.js';
-import { Database } from '../lib/database.js';
-import { RedisHelper } from '../lib/redisHelper.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
-import { coreApiDir, projectApiDir } from '../paths.js';
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
+import { Database, RedisHelper, coreDir } from 'befly';
+
+import { Logger, projectDir } from '../util.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
+
 import type { SyncApiOptions, ApiInfo, SyncApiStats } from '../types.js';
 
 /**
@@ -101,20 +100,20 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 
     // 1. 扫描 Core 框架 API
     try {
-        const coreApiFiles = scanTsFiles(coreApiDir);
+        const coreApiFiles = scanTsFiles(coreDir);
 
         for (const filePath of coreApiFiles) {
-            const apiInfo = await extractApiInfo(filePath, coreApiDir, 'core', '', '核心接口');
+            const apiInfo = await extractApiInfo(filePath, coreDir, 'core', '', '核心接口');
             if (apiInfo) {
                 apis.push(apiInfo);
             }
         }
 
         // 2. 扫描项目 API
-        const projectApiFiles = scanTsFiles(projectApiDir);
+        const projectApiFiles = scanTsFiles(projectDir);
 
         for (const filePath of projectApiFiles) {
-            const apiInfo = await extractApiInfo(filePath, projectApiDir, 'app', '', '项目接口');
+            const apiInfo = await extractApiInfo(filePath, projectDir, 'app', '', '项目接口');
             if (apiInfo) {
                 apis.push(apiInfo);
             }

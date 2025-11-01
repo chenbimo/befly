@@ -8,24 +8,6 @@
  * - root* 系列：Core 框架内部路径（packages/core/*）
  * - project* 系列：用户项目路径（process.cwd()/*）
  *
- * 目录结构：
- * ```
- * packages/core/           (coreDir)
- *   ├── scripts/           (coreScriptDir)
- *   ├── config/            (coreConfigDir)
- *   ├── checks/            (coreCheckDir)
- *   ├── plugins/           (corePluginDir)
- *   ├── apis/              (coreApiDir)
- *   └── tables/            (coreTableDir)
- *
- * project/                 (projectDir)
- *   ├── scripts/           (projectScriptDir)
- *   ├── config/            (projectConfigDir)
- *   ├── checks/            (projectCheckDir)
- *   ├── plugins/           (projectPluginDir)
- *   ├── apis/              (projectApiDir)
- *   └── tables/            (projectTableDir)
- * ```
  */
 
 import { fileURLToPath } from 'node:url';
@@ -35,9 +17,6 @@ import { dirname, join } from 'pathe';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 项目根目录（befly 框架的使用方项目）
-const projectRoot = process.cwd();
-
 // ==================== Core 框架路径 ====================
 
 /**
@@ -45,20 +24,6 @@ const projectRoot = process.cwd();
  * @description packages/core/
  */
 export const coreDir = __dirname;
-
-/**
- * Core 框架脚本目录
- * @description packages/core/scripts/
- * @usage 存放框架级别的脚本工具
- */
-export const coreScriptDir = join(__dirname, 'scripts');
-
-/**
- * Core 框架配置目录
- * @description packages/core/config/
- * @usage 存放框架默认配置（env.ts, fields.ts 等）
- */
-export const coreConfigDir = join(__dirname, 'config');
 
 /**
  * Core 框架检查目录
@@ -95,46 +60,32 @@ export const coreTableDir = join(__dirname, 'tables');
  * @description process.cwd()
  * @usage 用户项目的根目录
  */
-export const projectDir = projectRoot;
-
-/**
- * 项目脚本目录
- * @description {projectDir}/scripts/
- * @usage 存放用户自定义脚本工具
- */
-export const projectScriptDir = join(projectRoot, 'scripts');
-
-/**
- * 项目配置目录
- * @description {projectDir}/config/
- * @usage 存放用户项目配置（覆盖框架默认配置）
- */
-export const projectConfigDir = join(projectRoot, 'config');
+export const projectDir = process.cwd();
 
 /**
  * 项目检查目录
  * @description {projectDir}/checks/
  * @usage 存放用户自定义启动检查模块
  */
-export const projectCheckDir = join(projectRoot, 'checks');
+export const projectCheckDir = join(projectDir, 'checks');
 
 /**
  * 项目插件目录
  * @description {projectDir}/plugins/
  * @usage 存放用户自定义插件
  */
-export const projectPluginDir = join(projectRoot, 'plugins');
+export const projectPluginDir = join(projectDir, 'plugins');
 
 /**
  * 项目 API 目录
  * @description {projectDir}/apis/
  * @usage 存放用户业务 API 接口
  */
-export const projectApiDir = join(projectRoot, 'apis');
+export const projectApiDir = join(projectDir, 'apis');
 
 /**
  * 项目表定义目录
  * @description {projectDir}/tables/
  * @usage 存放用户业务表定义（JSON 格式）
  */
-export const projectTableDir = join(projectRoot, 'tables');
+export const projectTableDir = join(projectDir, 'tables');

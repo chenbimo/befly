@@ -7,10 +7,8 @@
  * - 表名: core_admin
  */
 
+import { Database, Cipher, Env } from 'befly';
 import { Logger } from '../util.js';
-import { Cipher } from '../lib/cipher.js';
-import { Database } from '../lib/database.js';
-import { Env } from '../env.js';
 import type { SyncDevOptions, SyncDevStats } from '../types.js';
 
 /**

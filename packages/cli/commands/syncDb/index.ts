@@ -9,13 +9,10 @@
 
 import { basename } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
-import { Logger } from '../../util.js';
-import { Env } from '../../env.js';
+import { Env, Database, coreDir } from 'befly';
+import { Logger, projectDir } from '../../util.js';
 import { scanAddons, addonDirExists, getAddonDir } from '../../util.js';
-import { Database } from '../../lib/database.js';
 import checkTable from '../../checks/table.js';
-import { coreTableDir, projectTableDir } from '../../paths.js';
-import type { SyncDbStats } from '../../types.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -23,6 +20,7 @@ import { tableExists } from './schema.js';
 import { createTable, modifyTable } from './table.js';
 import { PerformanceTracker, ProgressLogger } from './state.js';
 import type { SQL } from 'bun';
+import type { SyncDbStats } from '../../types.js';
 
 // 全局 SQL 客户端实例
 let sql: SQL | null = null;
@@ -78,9 +76,9 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
         const tablesGlob = new Bun.Glob('*.json');
         const directories: Array<{ path: string; type: 'core' | 'app' | 'addon'; addonName?: string }> = [
             // 1. core 框架表（core_ 前缀）
-            { path: coreTableDir, type: 'core' },
+            { path: path.resolve(coreDir, 'tables'), type: 'core' },
             // 2. 项目表（无前缀）
-            { path: projectTableDir, type: 'app' }
+            { path: path.resolve(projectDir, 'tables'), type: 'app' }
         ];
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
