@@ -87,7 +87,7 @@ export const checkDefault = async function (): Promise<void> {
                     absolute: true,
                     onlyFiles: true
                 })) {
-                    allTableFiles.push({ file, type: 'addon', addonName });
+                    allTableFiles.push({ file: file, type: 'addon', addonName: addonName });
                 }
             } catch (error) {
                 // addon 的 tables 目录可能不存在，跳过
