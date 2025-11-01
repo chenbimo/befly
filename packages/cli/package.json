@@ -1,6 +1,6 @@
 {
     "name": "befly-cli",
-    "version": "3.5.1",
+    "version": "3.6.0",
     "description": "Befly 框架命令行工具",
     "type": "module",
     "bin": {
@@ -28,8 +28,8 @@
     "license": "MIT",
     "dependencies": {
         "befly": "workspace:*",
-        "pathe": "^1.1.2",
-        "es-toolkit": "^1.41.0"
+        "es-toolkit": "^1.41.0",
+        "pathe": "^1.1.2"
     },
     "devDependencies": {
         "@types/bun": "latest"
