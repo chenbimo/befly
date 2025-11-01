@@ -2,9 +2,7 @@
  * 管理员注册接口
  */
 
-import { Yes, No } from 'befly';
-import { Cipher } from '../../lib/cipher.js';
-
+import { Yes, No, Cipher } from 'befly';
 import adminTable from '../../tables/admin.json';
 
 export default {

@@ -2,8 +2,7 @@
  * 获取系统信息
  */
 
-import { Yes } from 'befly';
-import { Env } from '../../env.js';
+import { Yes, Env } from 'befly';
 
 export default {
     name: '获取系统信息',

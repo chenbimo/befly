@@ -2,8 +2,7 @@
  * 获取服务状态
  */
 
-import { Yes } from 'befly';
-import { Env } from '../../env.js';
+import { Yes, Env } from 'befly';
 
 export default {
     name: '获取服务状态',

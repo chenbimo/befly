@@ -3,7 +3,6 @@
  */
 
 import { Yes, No, Cipher } from 'befly';
-import { Cipher } from '../../lib/cipher.js';
 import adminTable from '../../tables/admin.json';
 
 export default {
