@@ -2,10 +2,8 @@
  * 管理员登录接口
  */
 
-import { Yes, No } from '../../../core/util.js';
-import { Cipher } from '../../../core/lib/cipher.js';
-import { Jwt } from '../../../core/lib/jwt.js';
-import adminTable from '../../../core/tables/admin.json';
+import { Yes, No, Cipher, Jwt } from 'befly';
+import adminTable from '../../tables/admin.json';
 
 export default {
     name: '管理员登录',

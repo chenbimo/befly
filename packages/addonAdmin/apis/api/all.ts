@@ -3,7 +3,7 @@
  * 说明：用于角色权限配置，返回所有接口信息
  */
 
-import { Yes, No } from '../../../core/util.js';
+import { Yes, No } from 'befly';
 
 export default {
     name: '获取所有接口',

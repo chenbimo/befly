@@ -1,5 +1,5 @@
-﻿import { Yes, No } from '../../../core/util.js';
-import adminMenuTable from '../../../core/tables/menu.json';
+﻿import { Yes, No } from 'befly';
+import adminMenuTable from '../../tables/menu.json';
 
 export default {
     name: '更新菜单',

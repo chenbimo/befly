@@ -1,5 +1,5 @@
-﻿import { Yes, No } from '../../../core/util.js';
-import adminRoleTable from '../../../core/tables/role.json';
+﻿import { Yes, No } from 'befly';
+import adminRoleTable from '../../tables/role.json';
 
 export default {
     name: '更新角色',
