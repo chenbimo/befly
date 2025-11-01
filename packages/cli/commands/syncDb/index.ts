@@ -9,7 +9,7 @@
 
 import { basename } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
-import { Env, Database, coreDir, Addon } from 'befly';
+import { Env, Database, Addon } from 'befly';
 import { Logger, projectDir } from '../../util.js';
 import checkTable from '../../checks/table.js';
 
@@ -73,10 +73,8 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
         // 阶段3：扫描表定义文件
         perfTracker.markPhase('扫描表文件');
         const tablesGlob = new Bun.Glob('*.json');
-        const directories: Array<{ path: string; type: 'core' | 'app' | 'addon'; addonName?: string }> = [
-            // 1. core 框架表（core_ 前缀）
-            { path: path.resolve(coreDir, 'tables'), type: 'core' },
-            // 2. 项目表（无前缀）
+        const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string }> = [
+            // 1. 项目表（无前缀）
             { path: path.resolve(projectDir, 'tables'), type: 'app' }
         ];
 
@@ -114,7 +112,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
 
         for (const dirConfig of directories) {
             const { path: dir, type, addonName } = dirConfig;
-            const dirType = type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目';
+            const dirType = type === 'addon' ? `组件${addonName}` : '项目';
 
             for await (const file of tablesGlob.scan({
                 cwd: dir,
@@ -129,20 +127,15 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
                 }
 
                 // 确定表名：
-                // - core 表：core_{表名}
-                //   例如：user.json → core_user
                 // - addon 表：{addonName}_{表名}
                 //   例如：admin addon 的 user.json → admin_user
                 // - 项目表：{表名}
                 //   例如：user.json → user
                 let tableName = snakeCase(fileName);
-                if (type === 'core') {
-                    // core 框架表，添加 core_ 前缀
-                    tableName = `core_${tableName}`;
-                } else if (type === 'addon') {
+                if (type === 'addon' && addonName) {
                     // addon 表，添加 {addonName}_ 前缀
                     // 使用 snakeCase 统一转换（admin → admin）
-                    const addonNameSnake = snakeCase(addonName!);
+                    const addonNameSnake = snakeCase(addonName);
                     tableName = `${addonNameSnake}_${tableName}`;
                 }
 
