@@ -53,6 +53,20 @@ export const Logger = {
      */
     debug(...args: any[]) {
         console.log('\x1b[90m%s\x1b[0m', ...args);
+    },
+
+    /**
+     * 打印当前运行环境
+     * 用于命令开始时提示用户当前环境
+     */
+    printEnv() {
+        console.log('========================================');
+        console.log('开始执行完整同步流程');
+        console.log(`当前环境: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`项目名称: ${process.env.APP_NAME || '-'}`);
+        console.log(`数据库地址: ${process.env.DB_HOST || '-'}`);
+        console.log(`数据库名称: ${process.env.DB_NAME || '-'}`);
+        console.log('========================================\n');
     }
 };
 
