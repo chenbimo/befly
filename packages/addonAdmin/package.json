@@ -10,16 +10,12 @@
     },
     "main": "addon.config.json",
     "files": [
+        "apis/",
+        "tables/",
         "addon.config.json",
-        "apis",
-        "checks",
-        "config",
-        "plugins",
-        "scripts",
-        "tables",
-        "types",
         "util.ts",
-        "README.md"
+        "README.md",
+        "package.json"
     ],
     "keywords": [
         "befly",

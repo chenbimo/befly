@@ -19,7 +19,8 @@
     "files": [
         "index.ts",
         "template.js",
-        "README.md"
+        "README.md",
+        "package.json"
     ],
     "keywords": [
         "vite",
