@@ -15,8 +15,9 @@ import { join, dirname, relative, basename } from 'pathe';
 import { Database, RedisHelper, Addon } from 'befly';
 
 import { Logger, projectDir } from '../util.js';
+import { ReportCollector } from '../utils/reportCollector.js';
 
-import type { SyncApiOptions, ApiInfo, SyncApiStats } from '../types.js';
+import type { SyncApiOptions, ApiInfo, SyncApiStats, ApiDetail, ApiDetailWithDiff } from '../types.js';
 
 /**
  * Glob 实例（模块级常量，复用）
@@ -156,8 +157,9 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 /**
  * 同步 API 数据到数据库
  */
-async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number; updated: number }> {
-    const stats = { created: 0, updated: 0 };
+async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number; updated: number; createdList: ApiDetail[]; updatedList: ApiDetailWithDiff[] }> {
+    const stats = { created: 0, updated: 0, createdList: [] as ApiDetail[], updatedList: [] as ApiDetailWithDiff[] };
+    const collector = ReportCollector.getInstance();
 
     for (const api of apis) {
         try {
@@ -168,20 +170,50 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
             });
 
             if (existing) {
-                await helper.updData({
-                    table: 'addon_admin_api',
-                    where: { id: existing.id },
-                    data: {
+                // 对比差异
+                const changes: { field: string; before: any; after: any }[] = [];
+
+                if (existing.name !== api.name) {
+                    changes.push({ field: 'name', before: existing.name, after: api.name });
+                }
+                if (existing.method !== api.method) {
+                    changes.push({ field: 'method', before: existing.method, after: api.method });
+                }
+                if (existing.description !== api.description) {
+                    changes.push({ field: 'description', before: existing.description, after: api.description });
+                }
+                if (existing.addonName !== api.addonName) {
+                    changes.push({ field: 'addonName', before: existing.addonName, after: api.addonName });
+                }
+                if (existing.addonTitle !== api.addonTitle) {
+                    changes.push({ field: 'addonTitle', before: existing.addonTitle, after: api.addonTitle });
+                }
+
+                if (changes.length > 0) {
+                    await helper.updData({
+                        table: 'addon_admin_api',
+                        where: { id: existing.id },
+                        data: {
+                            name: api.name,
+                            method: api.method,
+                            description: api.description,
+                            addonName: api.addonName,
+                            addonTitle: api.addonTitle
+                        }
+                    });
+                    stats.updated++;
+                    stats.updatedList.push({
                         name: api.name,
+                        path: api.path,
                         method: api.method,
                         description: api.description,
                         addonName: api.addonName,
-                        addonTitle: api.addonTitle
-                    }
-                });
-                stats.updated++;
+                        addonTitle: api.addonTitle,
+                        changes: changes
+                    });
+                }
             } else {
-                const id = await helper.insData({
+                await helper.insData({
                     table: 'addon_admin_api',
                     data: {
                         name: api.name,
@@ -193,6 +225,14 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                     }
                 });
                 stats.created++;
+                stats.createdList.push({
+                    name: api.name,
+                    path: api.path,
+                    method: api.method,
+                    description: api.description,
+                    addonName: api.addonName,
+                    addonTitle: api.addonTitle
+                });
             }
         } catch (error: any) {
             Logger.error(`同步接口 "${api.name}" 失败:`, error);
@@ -205,16 +245,27 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
 /**
  * 删除配置中不存在的记录
  */
-async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<number> {
+async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<{ count: number; list: ApiDetail[] }> {
     const allRecords = await helper.getAll({
         table: 'addon_admin_api',
-        fields: ['id', 'path', 'name'],
+        fields: ['id', 'path', 'name', 'method', 'description', 'addonName', 'addonTitle'],
         where: { state$gte: 0 } // 查询所有状态（包括软删除的 state=0）
     });
 
+    const deletedList: ApiDetail[] = [];
     let deletedCount = 0;
+
     for (const record of allRecords) {
         if (record.path && !apiPaths.has(record.path)) {
+            deletedList.push({
+                name: record.name || '',
+                path: record.path,
+                method: record.method || 'POST',
+                description: record.description || '',
+                addonName: record.addonName || '',
+                addonTitle: record.addonTitle || ''
+            });
+
             await helper.delForce({
                 table: 'addon_admin_api',
                 where: { id: record.id }
@@ -223,13 +274,15 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
         }
     }
 
-    return deletedCount;
+    return { count: deletedCount, list: deletedList };
 }
 
 /**
  * SyncApi 命令主函数
  */
 export async function syncApiCommand(options: SyncApiOptions = {}): Promise<SyncApiStats> {
+    const collector = ReportCollector.getInstance();
+
     try {
         if (options.plan) {
             Logger.info('[计划] 同步 API 接口到数据库（plan 模式不执行）');
@@ -239,7 +292,9 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         const projectRoot = process.cwd();
 
         // 连接数据库（SQL + Redis）
+        collector.startTimer('api_connection');
         await Database.connect();
+        const connectionTime = collector.endTimer('api_connection');
 
         const helper = Database.getDbHelper();
 
@@ -252,16 +307,21 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         }
 
         // 2. 扫描所有 API 文件
+        collector.startTimer('api_scanning');
         const apis = await scanAllApis(projectRoot);
         const apiPaths = new Set(apis.map((api) => api.path));
+        const scanningTime = collector.endTimer('api_scanning');
 
         // 3. 同步 API 数据
+        collector.startTimer('api_processing');
         const stats = await syncApis(helper, apis);
 
         // 4. 删除文件中不存在的接口
-        const deletedCount = await deleteObsoleteRecords(helper, apiPaths);
+        const deleteResult = await deleteObsoleteRecords(helper, apiPaths);
+        const processingTime = collector.endTimer('api_processing');
 
         // 5. 缓存接口数据到 Redis
+        collector.startTimer('api_caching');
         try {
             const apiList = await helper.getAll({
                 table: 'addon_admin_api',
@@ -273,15 +333,63 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         } catch (error: any) {
             // 忽略缓存错误
         }
+        const cachingTime = collector.endTimer('api_caching');
+
+        // 6. 收集详细数据到 ReportCollector
+        const projectApis: ApiDetail[] = [];
+        const addonApisMap: Record<string, ApiDetail[]> = {};
+
+        for (const api of apis) {
+            const apiDetail: ApiDetail = {
+                name: api.name,
+                path: api.path,
+                method: api.method,
+                description: api.description,
+                addonName: api.addonName,
+                addonTitle: api.addonTitle
+            };
+
+            if (api.addonName) {
+                if (!addonApisMap[api.addonName]) {
+                    addonApisMap[api.addonName] = [];
+                }
+                addonApisMap[api.addonName].push(apiDetail);
+            } else {
+                projectApis.push(apiDetail);
+            }
+        }
+
+        collector.setApiStats({
+            totalApis: apis.length,
+            projectApis: projectApis.length,
+            addonApis: apis.length - projectApis.length,
+            created: stats.created,
+            updated: stats.updated,
+            deleted: deleteResult.count
+        });
+
+        collector.setApiBySource('project', projectApis);
+        for (const [addonName, addonApis] of Object.entries(addonApisMap)) {
+            collector.setApiBySource(addonName, addonApis);
+        }
+
+        collector.setApiByAction('created', stats.createdList);
+        collector.setApiByAction('updated', stats.updatedList);
+        collector.setApiByAction('deleted', deleteResult.list);
+
+        collector.setApiTiming('scanning', scanningTime);
+        collector.setApiTiming('processing', processingTime);
+        collector.setApiTiming('caching', cachingTime);
 
         return {
             totalApis: apis.length,
             created: stats.created,
             updated: stats.updated,
-            deleted: deletedCount
+            deleted: deleteResult.count
         };
     } catch (error: any) {
         Logger.error('API 同步失败:', error);
+        collector.setStatus('error', error.message);
         process.exit(1);
     } finally {
         await Database?.disconnect();

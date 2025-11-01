@@ -207,3 +207,238 @@ export interface PhaseStats {
     endTime?: number;
     duration?: number;
 }
+
+// ==================== 报告相关类型 ====================
+
+/**
+ * 完整的同步报告数据结构
+ */
+export interface SyncReport {
+    meta: SyncReportMeta;
+    database: DatabaseReport;
+    api: ApiReport;
+    menu: MenuReport;
+    dev: DevReport;
+}
+
+/**
+ * 报告元信息
+ */
+export interface SyncReportMeta {
+    timestamp: number;
+    timestampStr: string;
+    environment: string;
+    totalTime: number;
+    status: 'success' | 'error';
+    error?: string;
+}
+
+/**
+ * 数据库同步报告
+ */
+export interface DatabaseReport {
+    stats: SyncDbStats;
+    details: {
+        tables: TableChangeDetail[];
+    };
+    timing: {
+        validation: number;
+        connection: number;
+        scanning: number;
+        processing: number;
+    };
+}
+
+/**
+ * 表变更详情
+ */
+export interface TableChangeDetail {
+    name: string;
+    source: 'app' | 'addon';
+    addonName?: string;
+    action: 'create' | 'modify' | 'none';
+    fields: {
+        added: FieldDetail[];
+        modified: FieldModification[];
+        removed: FieldDetail[];
+    };
+    indexes: {
+        added: IndexDetail[];
+        removed: IndexDetail[];
+    };
+    sql: string[];
+}
+
+/**
+ * 字段详情
+ */
+export interface FieldDetail {
+    name: string;
+    type: string;
+    length?: number;
+    nullable?: boolean;
+    defaultValue?: any;
+    comment?: string;
+}
+
+/**
+ * 字段修改详情
+ */
+export interface FieldModification {
+    name: string;
+    before: FieldDetail;
+    after: FieldDetail;
+    changeType: 'type' | 'length' | 'default' | 'nullable' | 'comment';
+}
+
+/**
+ * 索引详情
+ */
+export interface IndexDetail {
+    name: string;
+    fields: string[];
+    type?: string;
+}
+
+/**
+ * 接口同步报告
+ */
+export interface ApiReport {
+    stats: {
+        totalApis: number;
+        projectApis: number;
+        addonApis: number;
+        created: number;
+        updated: number;
+        deleted: number;
+    };
+    details: {
+        bySource: {
+            project: ApiDetail[];
+            addons: Record<string, ApiDetail[]>;
+        };
+        byAction: {
+            created: ApiDetail[];
+            updated: ApiDetailWithDiff[];
+            deleted: ApiDetail[];
+        };
+    };
+    timing: {
+        scanning: number;
+        processing: number;
+        caching: number;
+    };
+}
+
+/**
+ * 接口详情
+ */
+export interface ApiDetail {
+    name: string;
+    path: string;
+    method: string;
+    description: string;
+    addonName: string;
+    addonTitle: string;
+    auth?: boolean;
+}
+
+/**
+ * 带差异的接口详情
+ */
+export interface ApiDetailWithDiff extends ApiDetail {
+    changes: {
+        field: string;
+        before: any;
+        after: any;
+    }[];
+}
+
+/**
+ * 菜单同步报告
+ */
+export interface MenuReport {
+    stats: SyncMenuStats;
+    details: {
+        tree: MenuTreeNode[];
+        byAction: {
+            created: MenuDetail[];
+            updated: MenuDetailWithDiff[];
+            deleted: MenuDetail[];
+        };
+    };
+    timing: {
+        scanning: number;
+        processing: number;
+        caching: number;
+    };
+}
+
+/**
+ * 菜单树节点
+ */
+export interface MenuTreeNode {
+    name: string;
+    path: string;
+    icon?: string;
+    sort?: number;
+    type?: number;
+    action?: 'created' | 'updated' | 'none';
+    children?: MenuTreeNode[];
+}
+
+/**
+ * 菜单详情
+ */
+export interface MenuDetail {
+    name: string;
+    path: string;
+    icon?: string;
+    sort?: number;
+    type?: number;
+    addonName: string;
+    addonTitle: string;
+}
+
+/**
+ * 带差异的菜单详情
+ */
+export interface MenuDetailWithDiff extends MenuDetail {
+    changes: {
+        field: string;
+        before: any;
+        after: any;
+    }[];
+}
+
+/**
+ * 开发账号同步报告
+ */
+export interface DevReport {
+    stats: SyncDevStats;
+    details: {
+        admins: AdminDetail[];
+        roles: RoleDetail[];
+    };
+    timing: {
+        processing: number;
+        caching: number;
+    };
+}
+
+/**
+ * 管理员详情
+ */
+export interface AdminDetail {
+    username: string;
+    action: 'created' | 'updated' | 'exists';
+}
+
+/**
+ * 角色详情
+ */
+export interface RoleDetail {
+    name: string;
+    permissions: number;
+    action: 'created' | 'updated' | 'exists';
+}
