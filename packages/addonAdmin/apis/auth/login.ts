@@ -16,7 +16,7 @@ export default {
     handler: async (befly, ctx) => {
         // 查询管理员（account 匹配 username 或 email）
         const admin = await befly.db.getOne({
-            table: 'core_admin',
+            table: 'addon_admin_admin',
             where: {
                 $or: [{ username: ctx.body.account }, { email: ctx.body.account }]
             }
@@ -44,7 +44,7 @@ export default {
 
         // 更新最后登录信息
         await befly.db.updData({
-            table: 'core_admin',
+            table: 'addon_admin_admin',
             where: { id: admin.id },
             data: {
                 lastLoginTime: Date.now(),

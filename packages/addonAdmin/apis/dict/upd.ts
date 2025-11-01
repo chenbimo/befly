@@ -7,7 +7,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             await befly.db.updData({
-                table: 'core_dict',
+                table: 'addon_admin_dict',
                 data: {
                     name: ctx.body.name,
                     code: ctx.body.code,

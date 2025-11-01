@@ -10,7 +10,7 @@ export default {
         try {
             // 检查是否有子菜单（使用 getList 代替 getAll）
             const childrenList = await befly.db.getList({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 where: { pid: ctx.body.id }
             });
 
@@ -20,7 +20,7 @@ export default {
 
             // 删除菜单
             await befly.db.delData({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 where: { id: ctx.body.id }
             });
 

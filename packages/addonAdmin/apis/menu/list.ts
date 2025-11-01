@@ -4,7 +4,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             const menus = await befly.db.getAll({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 fields: ['id', 'name', 'path', 'icon', 'sort', 'pid', 'type', 'state', 'created_at', 'updated_at'],
                 orderBy: [
                     { field: 'sort', direction: 'ASC' },

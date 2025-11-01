@@ -13,7 +13,7 @@ export default {
     handler: async (befly, ctx) => {
         // 查询角色是否存在（使用 roleCode 而非 roleId）
         const role = await befly.db.getOne({
-            table: 'core_role',
+            table: 'addon_admin_role',
             where: { code: ctx.body.roleCode }
         });
 
@@ -26,7 +26,7 @@ export default {
 
         // 更新管理员的角色ID、角色编码和角色类型
         await befly.db.updData({
-            table: 'core_admin',
+            table: 'addon_admin_admin',
             where: { id: ctx.body.adminId },
             data: {
                 roleId: role.id,

@@ -10,7 +10,7 @@ export default {
         try {
             // 检查是否有用户使用此角色（使用 getList 代替 getAll）
             const adminList = await befly.db.getList({
-                table: 'core_admin',
+                table: 'addon_admin_admin',
                 where: { roleId: ctx.body.id }
             });
 
@@ -20,13 +20,13 @@ export default {
 
             // 获取角色信息（用于删除缓存）
             const role = await befly.db.getDetail({
-                table: 'core_role',
+                table: 'addon_admin_role',
                 where: { id: ctx.body.id }
             });
 
             // 删除角色
             await befly.db.delData({
-                table: 'core_role',
+                table: 'addon_admin_role',
                 where: { id: ctx.body.id }
             });
 

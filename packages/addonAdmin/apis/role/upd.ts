@@ -7,7 +7,7 @@ export default {
     handler: async (befly, ctx) => {
         // 检查角色代码是否被其他角色占用
         const existing = await befly.db.getList({
-            table: 'core_role',
+            table: 'addon_admin_role',
             where: {
                 code: ctx.body.code,
                 id$ne: ctx.body.id
@@ -19,7 +19,7 @@ export default {
         }
 
         await befly.db.updData({
-            table: 'core_role',
+            table: 'addon_admin_role',
             where: { id: ctx.body.id },
             data: {
                 name: ctx.body.name,

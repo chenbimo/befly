@@ -10,7 +10,7 @@ export default {
     handler: async (befly, ctx) => {
         // 检查角色代码是否已存在
         const existing = await befly.db.getOne({
-            table: 'core_role',
+            table: 'addon_admin_role',
             where: { code: ctx.body.code }
         });
 
@@ -19,7 +19,7 @@ export default {
         }
 
         const roleId = await befly.db.insData({
-            table: 'core_role',
+            table: 'addon_admin_role',
             data: {
                 name: ctx.body.name,
                 code: ctx.body.code,

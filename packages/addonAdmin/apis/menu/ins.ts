@@ -7,7 +7,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             const menuId = await befly.db.insData({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 data: ctx.body
             });
 

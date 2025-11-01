@@ -5,7 +5,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             const dict = await befly.db.getDetail({
-                table: 'core_dict',
+                table: 'addon_admin_dict',
                 fields: ['id', 'name', 'code', 'value', 'sort', 'pid', 'description', 'state', 'created_at', 'updated_at'],
                 where: {
                     id: ctx.body.id
