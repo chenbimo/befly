@@ -19,28 +19,9 @@ import { Logger, projectDir } from '../util.js';
 import type { SyncApiOptions, ApiInfo, SyncApiStats } from '../types.js';
 
 /**
- * 递归扫描目录下的所有 .ts 文件
+ * Glob 实例（模块级常量，复用）
  */
-function scanTsFiles(dir: string, fileList: string[] = []): string[] {
-    try {
-        const files = readdirSync(dir);
-
-        for (const file of files) {
-            const filePath = join(dir, file);
-            const stat = statSync(filePath);
-
-            if (stat.isDirectory()) {
-                scanTsFiles(filePath, fileList);
-            } else if (file.endsWith('.ts') && !file.endsWith('.d.ts')) {
-                fileList.push(filePath);
-            }
-        }
-    } catch (error: any) {
-        Logger.warn(`扫描目录失败: ${dir}`, error.message);
-    }
-
-    return fileList;
-}
+const tsGlob = new Bun.Glob('**/*.ts');
 
 /**
  * 从 API 文件中提取接口信息
@@ -90,12 +71,28 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'app' | '
 async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
-    // 1. 扫描项目 API
+    // 1. 扫描项目 API（只扫描 apis 目录）
     try {
-        const projectApiFiles = scanTsFiles(projectDir);
+        const projectApisDir = join(projectDir, 'apis');
+
+        // 扫描项目 API 文件
+        const projectApiFiles: string[] = [];
+        try {
+            for await (const file of tsGlob.scan({
+                cwd: projectApisDir,
+                absolute: true,
+                onlyFiles: true
+            })) {
+                if (!file.endsWith('.d.ts')) {
+                    projectApiFiles.push(file);
+                }
+            }
+        } catch (error: any) {
+            Logger.warn(`扫描项目 API 目录失败: ${projectApisDir}`, error.message);
+        }
 
         for (const filePath of projectApiFiles) {
-            const apiInfo = await extractApiInfo(filePath, projectDir, 'app', '', '项目接口');
+            const apiInfo = await extractApiInfo(filePath, projectApisDir, 'app', '', '项目接口');
             if (apiInfo) {
                 apis.push(apiInfo);
             }
@@ -125,7 +122,21 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
                 // 忽略配置读取错误
             }
 
-            const addonApiFiles = scanTsFiles(addonApisDir);
+            // 扫描 addon API 文件
+            const addonApiFiles: string[] = [];
+            try {
+                for await (const file of tsGlob.scan({
+                    cwd: addonApisDir,
+                    absolute: true,
+                    onlyFiles: true
+                })) {
+                    if (!file.endsWith('.d.ts')) {
+                        addonApiFiles.push(file);
+                    }
+                }
+            } catch (error: any) {
+                Logger.warn(`扫描 addon API 目录失败: ${addonApisDir}`, error.message);
+            }
 
             for (const filePath of addonApiFiles) {
                 const apiInfo = await extractApiInfo(filePath, addonApisDir, 'addon', addonName, addonTitle);
