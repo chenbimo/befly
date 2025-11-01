@@ -104,3 +104,46 @@ export function getPackageVersion(dir: string): string {
         return '0.0.0';
     }
 }
+
+/**
+ * 解析字段规则字符串
+ * 格式："字段名|类型|最小值|最大值|默认值|必填|正则"
+ * 注意：只分割前6个|，第7个|之后的所有内容（包括|）都属于正则表达式
+ */
+export const parseRule = (rule: string): ParsedFieldRule => {
+    const parts: string[] = [];
+    let currentPart = '';
+    let pipeCount = 0;
+
+    for (let i = 0; i < rule.length; i++) {
+        if (rule[i] === '|' && pipeCount < 6) {
+            parts.push(currentPart);
+            currentPart = '';
+            pipeCount++;
+        } else {
+            currentPart += rule[i];
+        }
+    }
+    parts.push(currentPart);
+
+    const [fieldName = '', fieldType = 'string', fieldMinStr = 'null', fieldMaxStr = 'null', fieldDefaultStr = 'null', fieldIndexStr = '0', fieldRegx = 'null'] = parts;
+
+    const fieldIndex = Number(fieldIndexStr) as 0 | 1;
+    const fieldMin = fieldMinStr !== 'null' ? Number(fieldMinStr) : null;
+    const fieldMax = fieldMaxStr !== 'null' ? Number(fieldMaxStr) : null;
+
+    let fieldDefault: any = fieldDefaultStr;
+    if (fieldType === 'number' && fieldDefaultStr !== 'null') {
+        fieldDefault = Number(fieldDefaultStr);
+    }
+
+    return {
+        name: fieldName,
+        type: fieldType as 'string' | 'number' | 'text' | 'array_string' | 'array_text',
+        min: fieldMin,
+        max: fieldMax,
+        default: fieldDefault,
+        index: fieldIndex,
+        regex: fieldRegx !== 'null' ? fieldRegx : null
+    };
+};
