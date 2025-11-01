@@ -5,7 +5,6 @@
 
 import { join } from 'pathe';
 import { appendFile, stat } from 'node:fs/promises';
-import chalk from 'chalk';
 import { Env } from '../env.js';
 import type { LogLevel } from '../types/common.js';
 
@@ -54,12 +53,6 @@ export class Logger {
 
         // 格式化消息
         const timestamp = formatDate();
-        const colorMap = {
-            info: chalk.greenBright,
-            debug: chalk.cyanBright,
-            warn: chalk.yellowBright,
-            error: chalk.redBright
-        };
 
         // 处理消息内容
         let content = '';
@@ -69,19 +62,17 @@ export class Logger {
             content = String(message);
         }
 
-        // 带颜色的控制台消息
-        const coloredLevelStr = colorMap[level](level.toUpperCase().padStart(5));
-        const coloredMessage = `[${timestamp}] ${coloredLevelStr} - ${content}`;
+        // 格式化日志消息
+        const levelStr = level.toUpperCase().padStart(5);
+        const logMessage = `[${timestamp}] ${levelStr} - ${content}`;
 
         // 控制台输出
         if (this.config.toConsole) {
-            console.log(coloredMessage);
+            console.log(logMessage);
         }
 
-        // 文件输出（去除 ANSI 颜色代码）
-        const plainLevelStr = level.toUpperCase().padStart(5);
-        const plainMessage = `[${timestamp}] ${plainLevelStr} - ${content}`;
-        await this.writeToFile(plainMessage, level);
+        // 文件输出
+        await this.writeToFile(logMessage, level);
     }
 
     /**
