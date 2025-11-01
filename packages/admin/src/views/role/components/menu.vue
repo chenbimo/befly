@@ -60,7 +60,7 @@ const $Method = {
     // 加载菜单树（用于配置权限）
     async apiMenuAll() {
         try {
-            const res = await $Http('/core/menu/all');
+            const res = await $Http('/addon/admin/menu/all');
             // menuAll 返回的 data 直接就是菜单数组
             const menuList = Array.isArray(res.data) ? res.data : [];
             $Data.menuTreeData = arrayToTree(menuList);
@@ -75,7 +75,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/core/role/menuDetail', {
+            const res = await $Http('/addon/admin/role/menuDetail', {
                 roleId: $Prop.rowData.id
             });
 
@@ -106,7 +106,7 @@ const $Method = {
             const halfCheckedKeys = $From.tree.getHalfCheckedKeys();
             const menuIds = [...checkedKeys, ...halfCheckedKeys];
 
-            const res = await $Http('/core/role/menuSave', {
+            const res = await $Http('/addon/admin/role/menuSave', {
                 roleId: $Prop.rowData.id,
                 menuIds
             });

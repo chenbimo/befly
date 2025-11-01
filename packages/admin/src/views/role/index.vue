@@ -106,7 +106,7 @@ const $Method = {
     // 加载角色列表
     async apiRoleList() {
         try {
-            const res = await $Http('/core/role/list', {
+            const res = await $Http('/addon/admin/role/list', {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -129,7 +129,7 @@ const $Method = {
             status: 'warning'
         }).then(async () => {
             try {
-                const res = await $Http('/core/role/del', { id: row.id });
+                const res = await $Http('/addon/admin/role/del', { id: row.id });
                 if (res.code === 0) {
                     Modal.message({ message: '删除成功', status: 'success' });
                     $Method.apiRoleList();

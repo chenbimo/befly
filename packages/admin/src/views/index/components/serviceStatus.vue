@@ -33,7 +33,7 @@ const services = $ref([]);
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/core/dashboard/serviceStatus');
+        const { data } = await $Http('/addon/admin/dashboard/serviceStatus');
         services.splice(0, services.length, ...data.services);
     } catch (error) {
         console.error('获取服务状态失败:', error);

@@ -53,7 +53,6 @@ export class Lifecycle {
 
         // 4. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
-        Logger.info(`✓ 服务器启动准备完成，总耗时: ${totalStartupTime}`);
 
         return await Bootstrap.start(
             {

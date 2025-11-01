@@ -212,7 +212,6 @@ export class Loader {
                         }
                     }
                     const addonPluginsInitTime = calcPerfTime(addonPluginsInitStart);
-                    Logger.info(`✓ 组件插件加载完成: ${addonPlugins.length} 个，耗时: ${addonPluginsScanTime}`);
                 }
             }
 
@@ -275,12 +274,10 @@ export class Loader {
                     }
                 }
                 const userPluginsInitTime = calcPerfTime(userPluginsInitStart);
-                Logger.info(`✓ 用户插件加载完成: ${sortedUserPlugins.length} 个，耗时: ${userPluginsInitTime}`);
             }
 
             const totalLoadTime = calcPerfTime(loadStartTime);
             const totalPluginCount = sortedCorePlugins.length + addonPlugins.length + sortedUserPlugins.length;
-            Logger.info(`✓ 所有插件加载完成: ${totalPluginCount} 个，总耗时: ${totalLoadTime}`);
 
             // 核心插件失败 → 关键错误，必须退出
             if (hadCorePluginError) {
@@ -412,7 +409,6 @@ export class Loader {
             }
 
             const totalLoadTime = calcPerfTime(loadStartTime);
-            Logger.info(`✓ ${dirDisplayName}接口加载完成: ${loadedApis}/${totalApis}，耗时: ${totalLoadTime}`);
 
             // 检查是否有加载失败的 API（理论上不会到达这里，因为上面已经 critical 退出）
             if (failedApis > 0) {

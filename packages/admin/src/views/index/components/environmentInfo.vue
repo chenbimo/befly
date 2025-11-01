@@ -49,7 +49,7 @@ const environmentInfo = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/core/dashboard/environmentInfo');
+        const { data } = await $Http('/addon/admin/dashboard/environmentInfo');
         Object.assign(environmentInfo, data);
     } catch (error) {
         console.error('获取运行环境信息失败:', error);

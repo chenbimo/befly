@@ -56,7 +56,7 @@ const $Method = {
 
             $Data.loading = true;
 
-            const res = await $Http('/core/auth/login', {
+            const res = await $Http('/addon/admin/auth/login', {
                 account: $Data.formData.account,
                 password: $Data.formData.password
             });

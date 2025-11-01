@@ -31,7 +31,7 @@ const addonList = $ref([]);
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/core/dashboard/addonList');
+        const { data } = await $Http('/addon/admin/dashboard/addonList');
         addonList.splice(0, addonList.length, ...data);
     } catch (error) {
         console.error('获取插件列表失败:', error);
