@@ -30,7 +30,25 @@ export async function syncCommand(options: SyncOptions = {}) {
 
         // 1. 同步数据库表结构
         Logger.info('📦 正在同步数据库...');
+        collector.startTimer('database.scanning');
         const dbStats = await syncDbCommand({ dryRun: false });
+        collector.endTimer('database.scanning');
+
+        // 收集数据库统计信息
+        collector.setDatabaseStats({
+            processedTables: dbStats.processedTables,
+            createdTables: dbStats.createdTables,
+            modifiedTables: dbStats.modifiedTables,
+            addFields: dbStats.addFields,
+            nameChanges: dbStats.nameChanges,
+            typeChanges: dbStats.typeChanges,
+            minChanges: dbStats.minChanges,
+            maxChanges: dbStats.maxChanges,
+            defaultChanges: dbStats.defaultChanges,
+            indexCreate: dbStats.indexCreate,
+            indexDrop: dbStats.indexDrop
+        });
+
         Logger.info(`✓ 数据库同步完成 (处理 ${dbStats.processedTables} 个表)\n`);
 
         // 2. 同步接口（并缓存）

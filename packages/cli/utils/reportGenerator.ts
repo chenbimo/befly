@@ -134,13 +134,58 @@ function generateSummary(report: SyncReport): string {
  * 生成数据库详情区
  */
 function generateDatabaseSection(report: SyncReport): string {
+    const stats = report.database.stats;
     const tables = report.database.details.tables;
 
-    if (tables.length === 0) {
+    // 检查是否有任何变更（基于 stats）
+    const hasChanges = stats.createdTables > 0 || stats.modifiedTables > 0 || stats.addFields > 0 || stats.nameChanges > 0 || stats.typeChanges > 0 || stats.indexCreate > 0 || stats.indexDrop > 0;
+
+    // 检查是否有处理记录
+    const hasProcessed = stats.processedTables > 0;
+
+    // 如果没有处理任何表
+    if (!hasProcessed) {
         return `
 <section class="section">
     <h2>📦 数据库同步</h2>
-    <p class="empty-message">无表变更</p>
+    <p class="empty-message">未处理任何表</p>
+</section>`;
+    }
+
+    // 如果处理了表但没有变更，显示统计信息
+    if (hasProcessed && !hasChanges && tables.length === 0) {
+        return `
+<section class="section">
+    <h2>📦 数据库同步</h2>
+    <div class="stats-summary">
+        <div class="stat-item">
+            <span class="stat-label">处理表数:</span>
+            <span class="stat-value">${stats.processedTables}</span>
+        </div>
+    </div>
+    <p class="info-message">已处理 ${stats.processedTables} 个表，数据库表结构已是最新状态，无需变更</p>
+</section>`;
+    }
+
+    // 如果有变更但没有详细列表，显示统计信息
+    if (hasChanges && tables.length === 0) {
+        return `
+<section class="section">
+    <h2>📦 数据库同步</h2>
+    <div class="stats-summary">
+        <div class="stat-item">
+            <span class="stat-label">处理表数:</span>
+            <span class="stat-value">${stats.processedTables}</span>
+        </div>
+        ${stats.createdTables > 0 ? `<div class="stat-item"><span class="stat-label">新建表:</span><span class="stat-value created">${stats.createdTables}</span></div>` : ''}
+        ${stats.modifiedTables > 0 ? `<div class="stat-item"><span class="stat-label">修改表:</span><span class="stat-value updated">${stats.modifiedTables}</span></div>` : ''}
+        ${stats.addFields > 0 ? `<div class="stat-item"><span class="stat-label">新增字段:</span><span class="stat-value created">${stats.addFields}</span></div>` : ''}
+        ${stats.nameChanges > 0 ? `<div class="stat-item"><span class="stat-label">字段名变更:</span><span class="stat-value updated">${stats.nameChanges}</span></div>` : ''}
+        ${stats.typeChanges > 0 ? `<div class="stat-item"><span class="stat-label">字段类型变更:</span><span class="stat-value updated">${stats.typeChanges}</span></div>` : ''}
+        ${stats.indexCreate > 0 ? `<div class="stat-item"><span class="stat-label">新增索引:</span><span class="stat-value created">${stats.indexCreate}</span></div>` : ''}
+        ${stats.indexDrop > 0 ? `<div class="stat-item"><span class="stat-label">删除索引:</span><span class="stat-value deleted">${stats.indexDrop}</span></div>` : ''}
+    </div>
+    <p class="info-message">本次同步已处理 ${stats.processedTables} 个表，执行了变更操作</p>
 </section>`;
     }
 
@@ -532,6 +577,49 @@ body {
     border-radius: 4px;
     color: #1e40af;
     font-size: 0.9em;
+}
+
+.stats-summary {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    margin: 16px 0;
+}
+
+.stats-summary .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.stats-summary .stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.95em;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #1f2937;
+    font-size: 1.05em;
+}
+
+.stat-value.created {
+    color: #10b981;
+}
+
+.stat-value.updated {
+    color: #f59e0b;
+}
+
+.stat-value.deleted {
+    color: #ef4444;
 }
 
 .summary {
