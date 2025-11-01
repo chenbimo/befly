@@ -15,7 +15,7 @@ import { join, dirname, relative, basename } from 'pathe';
 import { Database, RedisHelper, Addon } from 'befly';
 
 import { Logger, projectDir } from '../util.js';
-import { ReportCollector } from '../utils/reportCollector.js';
+import { ReportCollector } from '../report/collector.js';
 
 import type { SyncApiOptions, ApiInfo, SyncApiStats, ApiDetail, ApiDetailWithDiff } from '../types.js';
 

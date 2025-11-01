@@ -10,10 +10,16 @@
         ".": "./bin/index.ts"
     },
     "files": [
-        "bin",
-        "commands",
+        "bin/",
+        "commands/",
+        "report/",
+        "util/",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "package.json",
+        "tsconfig.json",
+        "types.d.ts",
+        "util.ts"
     ],
     "scripts": {
         "build": "echo 'No build needed for CLI'"

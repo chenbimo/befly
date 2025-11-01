@@ -10,8 +10,8 @@ import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
 import { existsSync, mkdirSync } from 'node:fs';
-import { ReportCollector } from '../utils/reportCollector.js';
-import { generateReportHTML } from '../utils/reportGenerator.js';
+import { ReportCollector } from '../report/collector.js';
+import { generateReportHTML } from '../report/generator.js';
 import type { SyncDbStats, SyncApiStats, SyncMenuStats, SyncDevStats, SyncOptions } from '../types.js';
 
 export async function syncCommand(options: SyncOptions = {}) {

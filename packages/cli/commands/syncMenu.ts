@@ -18,7 +18,7 @@ import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Database, RedisHelper, coreDir } from 'befly';
 import { Logger, projectDir } from '../util.js';
-import { ReportCollector } from '../utils/reportCollector.js';
+import { ReportCollector } from '../report/collector.js';
 
 import type { SyncMenuOptions, MenuConfig, SyncMenuStats, MenuDetail, MenuDetailWithDiff } from '../types.js';
 
