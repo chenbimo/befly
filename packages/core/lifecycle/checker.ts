@@ -4,6 +4,7 @@
  */
 
 import { join, basename } from 'pathe';
+import { existsSync, statSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { projectCheckDir } from '../paths.js';
@@ -36,8 +37,10 @@ export class Checker {
             // 检查目录列表：先项目，后 addons
             const checkDirs: Array<{ path: string; type: 'app' | 'addon'; addonName?: string }> = [];
 
-            // 添加项目 checks 目录
-            checkDirs.push({ path: projectCheckDir, type: 'app' });
+            // 添加项目 checks 目录（如果存在）
+            if (existsSync(projectCheckDir) && statSync(projectCheckDir).isDirectory()) {
+                checkDirs.push({ path: projectCheckDir, type: 'app' });
+            }
 
             // 添加所有 addon 的 checks 目录
             const addons = Addon.scan();
