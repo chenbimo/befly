@@ -5,6 +5,7 @@
 
 import { join, parse, dirname } from 'pathe';
 import { existsSync, readFileSync } from 'node:fs';
+import { Env } from 'befly';
 
 export const projectDir = process.cwd();
 
@@ -62,10 +63,10 @@ export const Logger = {
     printEnv() {
         console.log('========================================');
         console.log('开始执行完整同步流程');
-        console.log(`当前环境: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`项目名称: ${process.env.APP_NAME || '-'}`);
-        console.log(`数据库地址: ${process.env.DB_HOST || '-'}`);
-        console.log(`数据库名称: ${process.env.DB_NAME || '-'}`);
+        console.log(`当前环境: ${Env.NODE_ENV || 'development'}`);
+        console.log(`项目名称: ${Env.APP_NAME || '-'}`);
+        console.log(`数据库地址: ${Env.DB_HOST || '-'}`);
+        console.log(`数据库名称: ${Env.DB_NAME || '-'}`);
         console.log('========================================\n');
     }
 };
