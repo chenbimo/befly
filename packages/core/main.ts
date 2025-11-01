@@ -13,6 +13,7 @@ import { Lifecycle } from './lifecycle/lifecycle.js';
 import { coreDir } from './paths.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
+import { Addon } from './lib/addon.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -78,5 +79,6 @@ export {
     coreDir,
     Database,
     DbHelper,
-    RedisHelper
+    RedisHelper,
+    Addon
 };

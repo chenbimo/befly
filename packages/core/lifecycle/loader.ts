@@ -9,7 +9,7 @@ import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { corePluginDir, projectPluginDir, coreApiDir, projectApiDir } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
+import { Addon } from '../lib/addon.js';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -148,13 +148,13 @@ export class Loader {
             Logger.info(`✓ 核心插件加载完成: ${corePlugins.length} 个，耗时: ${corePluginsScanTime}`);
 
             // 扫描 addon 插件目录
-            const addons = scanAddons();
+            const addons = Addon.scan();
             if (addons.length > 0) {
                 const addonPluginsScanStart = Bun.nanoseconds();
                 for (const addon of addons) {
-                    if (!addonDirExists(addon, 'plugins')) continue;
+                    if (!Addon.dirExists(addon, 'plugins')) continue;
 
-                    const addonPluginsDir = getAddonDir(addon, 'plugins');
+                    const addonPluginsDir = Addon.getDir(addon, 'plugins');
                     for await (const file of glob.scan({
                         cwd: addonPluginsDir,
                         onlyFiles: true,
@@ -325,7 +325,7 @@ export class Loader {
             if (where === 'core') {
                 apiDir = coreApiDir;
             } else if (where === 'addon') {
-                apiDir = getAddonDir(addonName, 'apis');
+                apiDir = Addon.getDir(addonName, 'apis');
             } else {
                 apiDir = projectApiDir;
             }

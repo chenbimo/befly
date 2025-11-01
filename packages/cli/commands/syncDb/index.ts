@@ -9,9 +9,8 @@
 
 import { basename } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
-import { Env, Database, coreDir } from 'befly';
+import { Env, Database, coreDir, Addon } from 'befly';
 import { Logger, projectDir } from '../../util.js';
-import { scanAddons, addonDirExists, getAddonDir } from '../../util.js';
 import checkTable from '../../checks/table.js';
 
 // 导入模块化的功能
@@ -82,11 +81,11 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
         ];
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
-        const addons = scanAddons();
+        const addons = Addon.scan();
         for (const addon of addons) {
-            if (addonDirExists(addon, 'tables')) {
+            if (Addon.dirExists(addon, 'tables')) {
                 directories.push({
-                    path: getAddonDir(addon, 'tables'),
+                    path: Addon.getDir(addon, 'tables'),
                     type: 'addon',
                     addonName: addon
                 });

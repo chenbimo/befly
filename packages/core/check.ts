@@ -7,7 +7,7 @@ import { basename } from 'pathe';
 import { Logger } from './lib/logger.js';
 import { parseRule } from './util.js';
 import { projectTableDir } from './paths.js';
-import { scanAddons, getAddonDir } from './util.js';
+import { Addon } from './lib/addon.js';
 
 /**
  * 表文件信息接口
@@ -77,9 +77,9 @@ export const checkDefault = async function (): Promise<void> {
         }
 
         // 收集 addon 表字段定义文件
-        const addons = scanAddons();
+        const addons = Addon.scan();
         for (const addonName of addons) {
-            const addonTablesDir = getAddonDir(addonName, 'tables');
+            const addonTablesDir = Addon.getDir(addonName, 'tables');
 
             try {
                 for await (const file of tablesGlob.scan({

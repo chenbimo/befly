@@ -8,7 +8,7 @@ import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { projectCheckDir } from '../paths.js';
 import { checkDefault } from '../check.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
+import { Addon } from '../lib/addon.js';
 
 /**
  * 系统检查器类
@@ -40,11 +40,11 @@ export class Checker {
             checkDirs.push({ path: projectCheckDir, type: 'app' });
 
             // 添加所有 addon 的 checks 目录
-            const addons = scanAddons();
+            const addons = Addon.scan();
             for (const addon of addons) {
-                if (addonDirExists(addon, 'checks')) {
+                if (Addon.dirExists(addon, 'checks')) {
                     checkDirs.push({
-                        path: getAddonDir(addon, 'checks'),
+                        path: Addon.getDir(addon, 'checks'),
                         type: 'addon',
                         addonName: addon
                     });

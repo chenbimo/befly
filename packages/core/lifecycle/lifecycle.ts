@@ -4,10 +4,12 @@
  */
 
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime } from '../util.js';
-import { scanAddons, addonDirExists } from '../util.js';
-import { Checker } from './checker.js';
+import { Database } from '../lib/database.js';
 import { Loader } from './loader.js';
+import { Checker } from './checker.js';
+import { Env } from '../env.js';
+import { calcPerfTime } from '../util.js';
+import { Addon } from '../lib/addon.js';
 import { Bootstrap } from './bootstrap.js';
 
 import type { Server } from 'bun';
@@ -78,10 +80,10 @@ export class Lifecycle {
         }
 
         // 2. 加载 addon APIs
-        const addons = scanAddons();
+        const addons = Addon.scan();
 
         for (const addon of addons) {
-            const hasApis = addonDirExists(addon, 'apis');
+            const hasApis = Addon.dirExists(addon, 'apis');
             if (hasApis) {
                 try {
                     await Loader.loadApis(addon, this.apiRoutes, { where: 'addon', addonName: addon });
