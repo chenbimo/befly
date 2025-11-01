@@ -4,10 +4,10 @@
     "description": "Befly 框架命令行工具",
     "type": "module",
     "bin": {
-        "befly": "./bin/index.js"
+        "befly": "./bin/index.ts"
     },
     "exports": {
-        ".": "./bin/index.js"
+        ".": "./bin/index.ts"
     },
     "files": [
         "bin",

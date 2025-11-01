@@ -1,4 +1,3 @@
-import type { Plugin, HmrContext } from 'vite';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'path';
@@ -8,7 +7,7 @@ import { dirname, resolve } from 'path';
  * 逻辑放在外部模板文件 `template.js` 中，通过占位符替换实现：
  */
 // 固定：视图目录 src/views；布局目录 src/layouts；排除目录 ['components']；不区分公开路由；模板已为最终可执行代码，不再做占位符替换。
-export default function autoRouter(): Plugin {
+export default function autoRouter() {
     const virtualModuleId = 'virtual:befly-auto-routes';
     const resolvedVirtualModuleId = '\0' + virtualModuleId;
     // 目录固定，无需配置
@@ -47,7 +46,7 @@ export default function autoRouter(): Plugin {
                 this.addWatchFile(templatePath);
             } catch {}
         },
-        handleHotUpdate(ctx: HmrContext) {
+        handleHotUpdate(ctx) {
             const normalizedFile = ctx.file.replace(/\\/g, '/');
 
             // 监听 template.js 变化

@@ -4,7 +4,6 @@
         "module": "ESNext",
         "lib": ["ESNext"],
         "moduleResolution": "Bundler",
-        "types": ["node"],
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
