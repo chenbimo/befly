@@ -20,10 +20,14 @@ import { Logger } from '../util.js';
  * 主函数
  */
 async function main() {
+    // 打印环境信息
+    Logger.printEnv();
+
     // 执行 sync 命令
     try {
         await syncCommand();
-        Logger.printEnv();
+        // 命令执行成功，主动退出
+        process.exit(0);
     } catch (error: any) {
         Logger.error('命令执行失败:', error.message || error);
         process.exit(1);
