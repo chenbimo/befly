@@ -10,9 +10,6 @@
     },
     "main": "main.ts",
     "types": "./types/index.d.ts",
-    "bin": {
-        "befly": "./bin/index.ts"
-    },
     "exports": {
         ".": {
             "default": "./main.ts"
@@ -30,7 +27,6 @@
         "api",
         "framework",
         "core",
-        "cli",
         "typescript",
         "javascript",
         "backend",
@@ -42,10 +38,8 @@
     "homepage": "https://chensuiyi.me",
     "license": "Apache-2.0",
     "files": [
-        "bin/",
         "apis/",
         "checks/",
-        "commands/",
         "config/",
         "lib/",
         "lifecycle/",
