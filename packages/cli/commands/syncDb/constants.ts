@@ -9,7 +9,6 @@
  */
 
 import { Env } from '../../env.js';
-import type { Dialect } from './types.js';
 
 /**
  * 数据库版本要求

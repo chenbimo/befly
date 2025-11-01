@@ -5,15 +5,10 @@
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
-import { getProjectRoot } from './util.js';
+import { getProjectRoot } from '../util.js';
+import type { SyncOptions } from '../types.js';
 
 // ========== Sync 命令 ==========
-interface SyncOptions {
-    table?: string;
-    force: boolean;
-    dryRun: boolean;
-    drop: boolean;
-}
 
 export async function syncCommand(options: SyncOptions) {
     try {

@@ -5,13 +5,12 @@
 
 import { Logger } from '../lib/logger.js';
 import { Env } from '../env.js';
-import { syncDbCommand, type SyncDbStats } from './syncDb.js';
-import { syncApiCommand, type SyncApiStats } from './syncApi.js';
-import { syncMenuCommand, type SyncMenuStats } from './syncMenu.js';
-import { syncDevCommand, type SyncDevStats } from './syncDev.js';
+import { syncDbCommand } from './syncDb.js';
+import { syncApiCommand } from './syncApi.js';
+import { syncMenuCommand } from './syncMenu.js';
+import { syncDevCommand } from './syncDev.js';
 import { existsSync, mkdirSync } from 'node:fs';
-
-interface SyncOptions {}
+import type { SyncDbStats, SyncApiStats, SyncMenuStats, SyncDevStats } from '../types.js';
 
 export async function syncCommand(options: SyncOptions = {}) {
     try {

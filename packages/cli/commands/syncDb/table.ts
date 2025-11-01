@@ -16,7 +16,7 @@ import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './dd
 import { getTableColumns, getTableIndexes, type ColumnInfo } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
 import { createTable } from './tableCreate.js';
-import type { TablePlan } from './types.js';
+import type { TablePlan } from '../../types.js';
 import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）

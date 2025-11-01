@@ -19,26 +19,7 @@ import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import { coreApiDir, projectApiDir } from '../paths.js';
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
-
-interface SyncApiOptions {
-    plan?: boolean;
-}
-
-interface ApiInfo {
-    name: string;
-    path: string;
-    method: string;
-    description: string;
-    addonName: string;
-    addonTitle: string;
-}
-
-export interface SyncApiStats {
-    totalApis: number;
-    created: number;
-    updated: number;
-    deleted: number;
-}
+import type { SyncApiOptions, ApiInfo, SyncApiStats } from '../types.js';
 
 /**
  * 递归扫描目录下的所有 .ts 文件

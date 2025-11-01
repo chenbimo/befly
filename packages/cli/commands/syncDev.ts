@@ -11,16 +11,7 @@ import { Logger } from '../lib/logger.js';
 import { Cipher } from '../lib/cipher.js';
 import { Database } from '../lib/database.js';
 import { Env } from '../env.js';
-
-interface SyncDevOptions {
-    plan?: boolean;
-}
-
-export interface SyncDevStats {
-    adminCount: number;
-    roleCount: number;
-    cachedRoles: number;
-}
+import type { SyncDevOptions, SyncDevStats } from '../types.js';
 
 /**
  * SyncDev 命令主函数

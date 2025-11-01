@@ -9,7 +9,7 @@
 
 import { Env } from '../../env.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
-import type { ColumnInfo, IndexInfo } from './types.js';
+import type { ColumnInfo, IndexInfo } from '../../types.js';
 import type { SQL } from 'bun';
 
 // 重新导出类型供其他模块使用

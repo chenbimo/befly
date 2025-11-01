@@ -6,12 +6,8 @@ import { Command } from 'commander';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
-import { SyncDb, type SyncDbStats } from './syncDb/index.js';
-
-interface SyncDbOptions {
-    table?: string;
-    dryRun: boolean;
-}
+import { SyncDb } from './syncDb/index.js';
+import type { SyncDbOptions, SyncDbStats } from '../types.js';
 
 export async function syncDbCommand(options: SyncDbOptions): Promise<SyncDbStats> {
     try {

@@ -8,15 +8,7 @@
 
 import type { SQL } from 'bun';
 import { Logger } from '../../lib/logger.js';
-
-/**
- * 阶段统计信息
- */
-export interface PhaseStats {
-    startTime: number;
-    endTime?: number;
-    duration?: number;
-}
+import type { PhaseStats } from '../../types.js';
 
 /**
  * 性能统计器

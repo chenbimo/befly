@@ -20,28 +20,7 @@ import { RedisHelper } from '../lib/redisHelper.js';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { coreDir, projectDir } from '../paths.js';
-
-interface SyncMenuOptions {
-    plan?: boolean;
-}
-
-interface MenuConfig {
-    name: string;
-    path: string;
-    icon?: string;
-    sort?: number;
-    type?: number;
-    children?: MenuConfig[];
-}
-
-export interface SyncMenuStats {
-    totalMenus: number;
-    parentMenus: number;
-    childMenus: number;
-    created: number;
-    updated: number;
-    deleted: number;
-}
+import type { SyncMenuOptions, MenuConfig, SyncMenuStats } from '../types.js';
 
 /**
  * 读取菜单配置文件

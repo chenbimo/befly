@@ -15,6 +15,7 @@ import { scanAddons, addonDirExists, getAddonDir } from '../../util.js';
 import { Database } from '../../lib/database.js';
 import checkTable from '../../checks/table.js';
 import { coreTableDir, projectTableDir } from '../../paths.js';
+import type { SyncDbStats } from '../../types.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -40,21 +41,6 @@ const globalCount: Record<string, number> = {
     indexCreate: 0,
     indexDrop: 0
 };
-
-// 导出统计接口
-export interface SyncDbStats {
-    processedTables: number;
-    createdTables: number;
-    modifiedTables: number;
-    addFields: number;
-    nameChanges: number;
-    typeChanges: number;
-    minChanges: number;
-    maxChanges: number;
-    defaultChanges: number;
-    indexCreate: number;
-    indexDrop: number;
-}
 
 /**
  * 主同步函数

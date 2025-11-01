@@ -12,7 +12,7 @@ import { IS_MYSQL, IS_PG, IS_SQLITE, CHANGE_TYPE_LABELS, typeMapping } from './c
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
 import { rebuildSqliteTable } from './sqlite.js';
-import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from './types.js';
+import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from '../../types.js';
 import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）

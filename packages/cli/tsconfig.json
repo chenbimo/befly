@@ -15,6 +15,6 @@
         "resolveJsonModule": true,
         "isolatedModules": true
     },
-    "include": ["bin/**/*", "commands/**/*"],
+    "include": ["bin/**/*", "commands/**/*", "util.ts"],
     "exclude": ["node_modules"]
 }
