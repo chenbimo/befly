@@ -7,11 +7,10 @@
  * - 提供统计信息和错误处理
  */
 
-import { basename } from 'pathe';
+import { basename, resolve } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
-import { Env, Database, Addon } from 'befly';
+import { Env, Database, Addon, checkDefault } from 'befly';
 import { Logger, projectDir } from '../../util.js';
-import checkTable from '../../checks/table.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -61,9 +60,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
 
         // 阶段1：验证表定义文件
         perfTracker.markPhase('表定义验证');
-        if (!(await checkTable())) {
-            throw new Error('表定义验证失败');
-        }
+        await checkDefault();
 
         // 阶段2：建立数据库连接并检查版本
         perfTracker.markPhase('数据库连接');
@@ -75,7 +72,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
         const tablesGlob = new Bun.Glob('*.json');
         const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string }> = [
             // 1. 项目表（无前缀）
-            { path: path.resolve(projectDir, 'tables'), type: 'app' }
+            { path: resolve(projectDir, 'tables'), type: 'app' }
         ];
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
