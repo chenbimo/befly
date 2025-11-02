@@ -156,6 +156,9 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                 // 对比差异
                 const changes: { field: string; before: any; after: any }[] = [];
 
+                if (existingParent.pid !== 0) {
+                    changes.push({ field: 'pid', before: existingParent.pid, after: 0 });
+                }
                 if (existingParent.name !== menu.name) {
                     changes.push({ field: 'name', before: existingParent.name, after: menu.name });
                 }
@@ -169,22 +172,24 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                     changes.push({ field: 'type', before: existingParent.type, after: menu.type || 1 });
                 }
 
-                await helper.updData({
-                    table: 'addon_admin_menu',
-                    where: { id: existingParent.id },
-                    data: {
-                        pid: 0,
-                        name: menu.name,
-                        icon: menu.icon || '',
-                        sort: menu.sort || 0,
-                        type: menu.type || 1
-                    }
-                });
                 parentId = existingParent.id;
-                stats.updated++;
 
-                // 记录更新的菜单（只有实际有变化时才记录）
+                // 只有存在差异时才执行更新
                 if (changes.length > 0) {
+                    await helper.updData({
+                        table: 'addon_admin_menu',
+                        where: { id: existingParent.id },
+                        data: {
+                            pid: 0,
+                            name: menu.name,
+                            icon: menu.icon || '',
+                            sort: menu.sort || 0,
+                            type: menu.type || 1
+                        }
+                    });
+                    stats.updated++;
+
+                    // 记录更新的菜单
                     stats.updatedList.push({
                         name: menu.name,
                         path: menu.path || '',
@@ -235,6 +240,9 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                         // 对比差异
                         const changes: { field: string; before: any; after: any }[] = [];
 
+                        if (existingChild.pid !== parentId) {
+                            changes.push({ field: 'pid', before: existingChild.pid, after: parentId });
+                        }
                         if (existingChild.name !== child.name) {
                             changes.push({ field: 'name', before: existingChild.name, after: child.name });
                         }
@@ -248,20 +256,21 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             changes.push({ field: 'type', before: existingChild.type, after: child.type || 1 });
                         }
 
-                        await helper.updData({
-                            table: 'addon_admin_menu',
-                            where: { id: existingChild.id },
-                            data: {
-                                pid: parentId,
-                                name: child.name,
-                                icon: child.icon || '',
-                                sort: child.sort || 0,
-                                type: child.type || 1
-                            }
-                        });
-                        stats.updated++;
-
+                        // 只有存在差异时才执行更新
                         if (changes.length > 0) {
+                            await helper.updData({
+                                table: 'addon_admin_menu',
+                                where: { id: existingChild.id },
+                                data: {
+                                    pid: parentId,
+                                    name: child.name,
+                                    icon: child.icon || '',
+                                    sort: child.sort || 0,
+                                    type: child.type || 1
+                                }
+                            });
+                            stats.updated++;
+
                             stats.updatedList.push({
                                 name: child.name,
                                 path: childFullPath,
