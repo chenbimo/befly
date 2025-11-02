@@ -12,17 +12,14 @@ import { Logger, parseRule } from '../../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
-import { getTableColumns, getTableIndexes, type ColumnInfo } from './schema.js';
+import { getTableColumns, getTableIndexes } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
 import { createTable } from './tableCreate.js';
-import type { TablePlan } from '../../types.js';
+import type { TablePlan, ColumnInfo } from '../../types.js';
 import type { SQL } from 'bun';
 
 // 是否为计划模式（从环境变量读取）
 const IS_PLAN = process.argv.includes('--plan');
-
-// 导出 createTable 供其他模块使用
-export { createTable };
 
 /**
  * 同步表结构（对比和应用变更）

@@ -12,9 +12,6 @@ import { IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
 import type { ColumnInfo, IndexInfo } from '../../types.js';
 import type { SQL } from 'bun';
 
-// 重新导出类型供其他模块使用
-export type { ColumnInfo, IndexInfo };
-
 /**
  * 判断表是否存在（返回布尔值）
  *

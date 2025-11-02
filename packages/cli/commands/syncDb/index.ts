@@ -15,7 +15,8 @@ import { Logger, projectDir } from '../../util.js';
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
 import { tableExists } from './schema.js';
-import { createTable, modifyTable } from './table.js';
+import { modifyTable } from './table.js';
+import { createTable } from './tableCreate.js';
 import { PerformanceTracker, ProgressLogger } from './state.js';
 import type { SQL } from 'bun';
 import type { SyncDbStats } from '../../types.js';
