@@ -35,10 +35,11 @@ export default {
 
             // 4. 从 Redis 缓存读取所有菜单
             let allMenus = await befly.redis.getObject<any[]>('menus:all');
+            let fromMenus = 'cache';
 
             // 如果缓存不存在，从数据库查询并缓存
             if (!allMenus || allMenus.length === 0) {
-                befly.logger.info('菜单缓存未命中，从数据库查询');
+                fromMenus = 'database';
                 allMenus = await befly.db.getAll({
                     table: 'addon_admin_menu',
                     fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
@@ -59,7 +60,7 @@ export default {
             const authorizedMenus = allMenus.filter((menu: any) => menuIdSet.has(String(menu.id)));
 
             // 6. 返回一维数组（由前端构建树形结构）
-            return Yes('获取菜单成功', authorizedMenus);
+            return Yes('获取菜单成功', authorizedMenus, { from: fromMenus });
         } catch (error) {
             befly.logger.error('获取用户菜单失败:', error);
             return No('获取菜单失败');

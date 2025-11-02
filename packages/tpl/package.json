@@ -8,11 +8,11 @@
         "registry": "https://registry.npmjs.org"
     },
     "scripts": {
-        "dev": "bun run --env-file=.env.development main.ts",
-        "start": "bun run --env-file=.env.production main.ts",
-        "pm2": "pm2 start pm2.config.cjs",
-        "sync:dev": "cross-env NODE_ENV=development bun run ./node_modules/befly-cli/bin/index.ts",
-        "sync:prod": "cross-env NODE_ENV=production bun run ./node_modules/befly-cli/bin/index.ts"
+        "dev": "NODE_ENV=development bun run main.ts",
+        "start": "NODE_ENV=production bun run main.ts",
+        "pm2": "bun --bun pm2 start pm2.config.cjs",
+        "sync:dev": "NODE_ENV=development befly sync",
+        "sync:prod": "NODE_ENV=production befly sync"
     },
     "files": [
         "apis",

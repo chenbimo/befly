@@ -5,7 +5,7 @@
 
 import type { EnvConfig } from 'befly/types/env.js';
 
-const isDev = process.env.NODE_ENV === 'development';
+const isProd = process.env.NODE_ENV === 'production';
 
 /**
  * 项目自定义配置
@@ -13,14 +13,14 @@ const isDev = process.env.NODE_ENV === 'development';
  */
 export const Env: Partial<EnvConfig> = {
     // ========== 项目配置 ==========
-    APP_NAME: isDev ? '野蜂飞舞开发环境' : '野蜂飞舞正式环境',
+    APP_NAME: isProd ? '野蜂飞舞开发环境' : '野蜂飞舞正式环境',
     APP_PORT: 3000,
     APP_HOST: '127.0.0.1',
     DEV_EMAIL: 'dev@qq.com',
     DEV_PASSWORD: '111111',
 
     // ========== 日志配置 ==========
-    LOG_DEBUG: isDev ? 1 : 0,
+    LOG_DEBUG: isProd ? 1 : 0,
     LOG_EXCLUDE_FIELDS: 'password,token',
     LOG_TO_CONSOLE: 1,
 
@@ -39,6 +39,6 @@ export const Env: Partial<EnvConfig> = {
     REDIS_KEY_PREFIX: 'befly_demo',
 
     // ========== JWT 配置 ==========
-    JWT_SECRET: isDev ? 'befly-jwt-dev' : 'befly-jwt-prod',
+    JWT_SECRET: isProd ? 'befly-jwt-dev' : 'befly-jwt-prod',
     JWT_EXPIRES_IN: '7d'
 };
