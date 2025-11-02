@@ -44,7 +44,7 @@ export const RedisHelper = {
             const pkey = `${prefix}${key}`;
 
             if (ttl) {
-                return await client.setEx(pkey, ttl, data);
+                return await client.setex(pkey, ttl, data);
             }
             return await client.set(pkey, data);
         } catch (error: any) {
@@ -126,7 +126,7 @@ export const RedisHelper = {
         const key = `${prefix}time_id_counter:${timestamp}`;
 
         // 使用 INCRBY 一次性获取 N 个连续计数
-        const startCounter = await client.incrBy(key, count);
+        const startCounter = await client.incrby(key, count);
         await client.expire(key, 1);
 
         // 生成 ID 数组
@@ -151,7 +151,7 @@ export const RedisHelper = {
             const client = getClient();
             const pkey = `${prefix}${key}`;
             if (ttl) {
-                return await client.setEx(pkey, ttl, value);
+                return await client.setex(pkey, ttl, value);
             }
             return await client.set(pkey, value);
         } catch (error: any) {
