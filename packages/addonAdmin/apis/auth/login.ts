@@ -61,7 +61,7 @@ export default {
                 roleType: admin.roleType
             },
             {
-                expiresIn: '7d'
+                expiresIn: '30d'
             }
         );
 
