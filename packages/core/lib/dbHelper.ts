@@ -31,17 +31,124 @@ export class DbHelper {
     }
 
     /**
-     * 字段数组转下划线格式（私有方法）
+     * 验证 fields 格式并分类
+     * @returns { type: 'all' | 'include' | 'exclude', fields: string[] }
+     * @throws 如果 fields 格式非法
      */
-    private fieldsToSnake(fields: string[]): string[] {
-        if (!fields || !Array.isArray(fields)) return fields;
-        return fields.map((field) => {
-            // 保留通配符和特殊字段
-            if (field === '*' || field.includes('(') || field.includes(' ')) {
-                return field;
+    private validateAndClassifyFields(fields?: string[]): {
+        type: 'all' | 'include' | 'exclude';
+        fields: string[];
+    } {
+        // 情况1：空数组或 undefined，表示查询所有
+        if (!fields || fields.length === 0) {
+            return { type: 'all', fields: [] };
+        }
+
+        // 检测是否有星号（禁止）
+        if (fields.some((f) => f === '*')) {
+            throw new Error('fields 不支持 * 星号，请使用空数组 [] 或不传参数表示查询所有字段');
+        }
+
+        // 检测是否有空字符串或无效值
+        if (fields.some((f) => !f || typeof f !== 'string' || f.trim() === '')) {
+            throw new Error('fields 不能包含空字符串或无效值');
+        }
+
+        // 统计包含字段和排除字段
+        const includeFields = fields.filter((f) => !f.startsWith('!'));
+        const excludeFields = fields.filter((f) => f.startsWith('!'));
+
+        // 情况2：全部是包含字段
+        if (includeFields.length > 0 && excludeFields.length === 0) {
+            return { type: 'include', fields: includeFields };
+        }
+
+        // 情况3：全部是排除字段
+        if (excludeFields.length > 0 && includeFields.length === 0) {
+            // 去掉感叹号前缀
+            const cleanExcludeFields = excludeFields.map((f) => f.substring(1));
+            return { type: 'exclude', fields: cleanExcludeFields };
+        }
+
+        // 混用情况：报错
+        throw new Error('fields 不能同时包含普通字段和排除字段（! 开头）。只能使用以下3种方式之一：\n1. 空数组 [] 或不传（查询所有）\n2. 全部指定字段 ["id", "name"]\n3. 全部排除字段 ["!password", "!token"]');
+    }
+
+    /**
+     * 获取表的所有字段名（Redis 缓存）
+     * @param table - 表名（下划线格式）
+     * @returns 字段名数组（下划线格式）
+     */
+    private async getTableColumns(table: string): Promise<string[]> {
+        // 1. 先查 Redis 缓存
+        const cacheKey = `table:columns:${table}`;
+        let columns = await this.befly.redis.getObject<string[]>(cacheKey);
+
+        if (columns && columns.length > 0) {
+            return columns;
+        }
+
+        // 2. 缓存未命中，查询数据库
+        const sql = 'SHOW COLUMNS FROM ??';
+        const result = await this.executeWithConn(sql, [table]);
+
+        if (!result || result.length === 0) {
+            throw new Error(`表 ${table} 不存在或没有字段`);
+        }
+
+        columns = result.map((row: any) => row.Field);
+
+        // 3. 写入 Redis 缓存（1小时过期）
+        await this.befly.redis.setObject(cacheKey, columns, 3600);
+
+        return columns;
+    }
+
+    /**
+     * 字段数组转下划线格式（私有方法）
+     * 支持排除字段语法
+     */
+    private async fieldsToSnake(table: string, fields: string[]): Promise<string[]> {
+        if (!fields || !Array.isArray(fields)) return ['*'];
+
+        // 验证并分类字段
+        const { type, fields: classifiedFields } = this.validateAndClassifyFields(fields);
+
+        // 情况1：查询所有字段
+        if (type === 'all') {
+            return ['*'];
+        }
+
+        // 情况2：指定包含字段
+        if (type === 'include') {
+            return classifiedFields.map((field) => {
+                // 保留函数和特殊字段
+                if (field.includes('(') || field.includes(' ')) {
+                    return field;
+                }
+                return snakeCase(field);
+            });
+        }
+
+        // 情况3：排除字段
+        if (type === 'exclude') {
+            // 获取表的所有字段
+            const allColumns = await this.getTableColumns(table);
+
+            // 转换排除字段为下划线格式
+            const excludeSnakeFields = classifiedFields.map((f) => snakeCase(f));
+
+            // 过滤掉排除字段
+            const resultFields = allColumns.filter((col) => !excludeSnakeFields.includes(col));
+
+            if (resultFields.length === 0) {
+                throw new Error(`排除字段后没有剩余字段可查询。表: ${table}, 排除: ${excludeSnakeFields.join(', ')}`);
             }
-            return snakeCase(field);
-        });
+
+            return resultFields;
+        }
+
+        return ['*'];
     }
 
     /**
@@ -59,12 +166,15 @@ export class DbHelper {
     /**
      * 统一的查询参数预处理方法
      */
-    private prepareQueryOptions(options: QueryOptions) {
+    private async prepareQueryOptions(options: QueryOptions) {
         const cleanWhere = this.cleanFields(options.where);
+
+        // 处理 fields（支持排除语法）
+        const processedFields = await this.fieldsToSnake(snakeCase(options.table), options.fields || []);
 
         return {
             table: snakeCase(options.table),
-            fields: this.fieldsToSnake(options.fields || ['*']),
+            fields: processedFields,
             where: this.whereKeysToSnake(cleanWhere),
             orderBy: this.orderByToSnake(options.orderBy || []),
             page: options.page || 1,
@@ -240,7 +350,7 @@ export class DbHelper {
      * const activeCount = await db.getCount({ table: 'user', where: { state: 1 } });
      */
     async getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number> {
-        const { table, where } = this.prepareQueryOptions(options as QueryOptions);
+        const { table, where } = await this.prepareQueryOptions(options as QueryOptions);
 
         const builder = new SqlBuilder().select(['COUNT(*) as count']).from(table).where(this.addDefaultStateFilter(where));
 
@@ -260,7 +370,7 @@ export class DbHelper {
      * getOne({ table: 'user_profile', fields: ['user_id', 'user_name'] })
      */
     async getOne<T = any>(options: QueryOptions): Promise<T | null> {
-        const { table, fields, where } = this.prepareQueryOptions(options);
+        const { table, fields, where } = await this.prepareQueryOptions(options);
 
         const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where));
 
@@ -286,7 +396,7 @@ export class DbHelper {
      * getList({ table: 'userProfile', fields: ['userId', 'userName', 'createdAt'] })
      */
     async getList<T = any>(options: QueryOptions): Promise<ListResult<T>> {
-        const prepared = this.prepareQueryOptions(options);
+        const prepared = await this.prepareQueryOptions(options);
 
         // 参数上限校验
         if (prepared.page < 1 || prepared.page > 10000) {
@@ -356,7 +466,7 @@ export class DbHelper {
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
 
-        const prepared = this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
+        const prepared = await this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
 
         const builder = new SqlBuilder().select(prepared.fields).from(prepared.table).where(this.addDefaultStateFilter(prepared.where)).limit(MAX_LIMIT);
 
@@ -653,7 +763,7 @@ export class DbHelper {
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async exists(options: Omit<QueryOptions, 'fields' | 'orderBy' | 'page' | 'limit'>): Promise<boolean> {
-        const { table, where } = this.prepareQueryOptions({ ...options, page: 1, limit: 1 });
+        const { table, where } = await this.prepareQueryOptions({ ...options, page: 1, limit: 1 });
 
         // 使用 COUNT(1) 性能更好
         const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where)).limit(1);
