@@ -89,8 +89,8 @@ export class DbHelper {
         }
 
         // 2. 缓存未命中，查询数据库
-        const sql = 'SHOW COLUMNS FROM ??';
-        const result = await this.executeWithConn(sql, [table]);
+        const sql = `SHOW COLUMNS FROM \`${table}\``;
+        const result = await this.executeWithConn(sql);
 
         if (!result || result.length === 0) {
             throw new Error(`表 ${table} 不存在或没有字段`);
@@ -295,7 +295,7 @@ export class DbHelper {
     }
 
     /**
-     * 执行 SQL（使用 sql.unsafe，带慢查询日志）
+     * 执行 SQL（使用 sql.unsafe，带慢查询日志和错误处理）
      */
     private async executeWithConn(sqlStr: string, params?: any[]): Promise<any> {
         if (!this.sql) {
@@ -305,24 +305,45 @@ export class DbHelper {
         // 记录开始时间
         const startTime = Date.now();
 
-        // 使用 sql.unsafe 执行查询
-        let result;
-        if (params && params.length > 0) {
-            result = await this.sql.unsafe(sqlStr, params);
-        } else {
-            result = await this.sql.unsafe(sqlStr);
+        try {
+            // 使用 sql.unsafe 执行查询
+            let result;
+            if (params && params.length > 0) {
+                result = await this.sql.unsafe(sqlStr, params);
+            } else {
+                result = await this.sql.unsafe(sqlStr);
+            }
+
+            // 计算执行时间
+            const duration = Date.now() - startTime;
+
+            // 慢查询警告（超过 1000ms）
+            if (duration > 1000) {
+                const sqlPreview = sqlStr.length > 100 ? sqlStr.substring(0, 100) + '...' : sqlStr;
+                Logger.warn(`🐌 检测到慢查询 (${duration}ms): ${sqlPreview}`);
+            }
+
+            return result;
+        } catch (error: any) {
+            const duration = Date.now() - startTime;
+            const truncatedSql = sqlStr.length > 200 ? sqlStr.substring(0, 200) + '...' : sqlStr;
+            
+            Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            Logger.error('SQL 执行错误');
+            Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            Logger.error(`SQL 语句: ${truncatedSql}`);
+            Logger.error(`参数列表: ${JSON.stringify(params || [])}`);
+            Logger.error(`执行耗时: ${duration}ms`);
+            Logger.error(`错误信息: ${error.message}`);
+            Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            
+            const enhancedError: any = new Error(`SQL执行失败: ${error.message}`);
+            enhancedError.originalError = error;
+            enhancedError.sql = sqlStr;
+            enhancedError.params = params || [];
+            enhancedError.duration = duration;
+            throw enhancedError;
         }
-
-        // 计算执行时间
-        const duration = Date.now() - startTime;
-
-        // 慢查询警告（超过 1000ms）
-        if (duration > 1000) {
-            const sqlPreview = sqlStr.length > 100 ? sqlStr.substring(0, 100) + '...' : sqlStr;
-            Logger.warn(`🐌 检测到慢查询 (${duration}ms): ${sqlPreview}`);
-        }
-
-        return result;
     }
 
     /**
