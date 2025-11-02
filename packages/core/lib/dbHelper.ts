@@ -327,7 +327,7 @@ export class DbHelper {
         } catch (error: any) {
             const duration = Date.now() - startTime;
             const truncatedSql = sqlStr.length > 200 ? sqlStr.substring(0, 200) + '...' : sqlStr;
-            
+
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             Logger.error('SQL 执行错误');
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -336,7 +336,7 @@ export class DbHelper {
             Logger.error(`执行耗时: ${duration}ms`);
             Logger.error(`错误信息: ${error.message}`);
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            
+
             const enhancedError: any = new Error(`SQL执行失败: ${error.message}`);
             enhancedError.originalError = error;
             enhancedError.sql = sqlStr;
