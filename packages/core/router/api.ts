@@ -99,6 +99,12 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
             const result = await api.handler(appContext, ctx, req);
 
             // 11. 返回响应
+            // 🔥 新增：直接返回 Response 对象
+            if (result instanceof Response) {
+                return result;
+            }
+
+            // 12. 返回响应
             if (result && typeof result === 'object' && 'code' in result) {
                 // 处理 BigInt 序列化问题
                 const jsonString = JSON.stringify(result, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
