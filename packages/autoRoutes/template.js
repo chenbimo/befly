@@ -1,9 +1,11 @@
 // 模板文件：自动路由生成结果基模板
 // 说明：
-//   目录固定：src/views ；布局目录固定：src/layouts
+//   目录固定：src/views ；布局目录固定：src/layouts（支持 internal 子目录）
 //   仅识别 views/<name>/<name>.vue 结构；index 为根路径
 //   固定排除子目录：components
 //   不区分公开/私有路由，全部挂到对应布局（文件名后缀 *_n.vue 指定布局 n，默认 0）
+//   布局查找优先级：src/layouts/{n}.vue > src/layouts/internal/{n}.vue
+//   （用户自定义布局可以覆盖 internal 内置布局）
 
 // 在虚拟模块环境中，统一使用绝对形式 '/src/...'
 // 支持多级目录：新规则
@@ -28,7 +30,9 @@
 //   /src/views/admin_1/user_2/index.vue      => /admin/user (布局2，最内层目录)
 //   /src/views/admin_1/user_2/settings_3.vue => /admin/user/settings (布局3，文件优先)
 const viewFiles = import.meta.glob('/src/views/**/*.vue');
+// 同时扫描自定义布局和 internal 布局
 const layoutFiles = import.meta.glob('/src/layouts/*.vue');
+const internalLayoutFiles = import.meta.glob('/src/layouts/internal/*.vue');
 
 /**
  * 路径规范化：统一为正斜杠
@@ -231,8 +235,16 @@ function generateRoutes() {
     // 构建最终路由数组
     const finalRoutes = [];
     for (const layoutNum in layoutRoutes) {
-        const layoutPath = '/src/layouts/' + layoutNum + '.vue';
-        const layoutComponent = layoutFiles[layoutPath];
+        // 优先查找用户自定义布局，如果不存在则使用 internal 布局
+        const customLayoutPath = '/src/layouts/' + layoutNum + '.vue';
+        const internalLayoutPath = '/src/layouts/internal/' + layoutNum + '.vue';
+        
+        let layoutComponent = layoutFiles[customLayoutPath];
+        
+        // 如果自定义布局不存在，尝试使用 internal 布局
+        if (!layoutComponent) {
+            layoutComponent = internalLayoutFiles[internalLayoutPath];
+        }
 
         if (layoutComponent) {
             finalRoutes.push({
