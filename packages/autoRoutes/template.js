@@ -108,8 +108,12 @@ function buildRoute(pathDirs, fileName) {
         pathSegments.push(fileName);
     }
 
+    // 特殊处理：internal/index 作为根路径
+    if (pathSegments.length === 2 && pathSegments[0] === 'internal' && pathSegments[1] === 'index') {
+        pathSegments.length = 0; // 清空数组，使其成为根路径
+    }
     // 根目录 index 特殊处理：views/index.vue => []
-    if (pathSegments.length === 1 && pathSegments[0] === 'index') {
+    else if (pathSegments.length === 1 && pathSegments[0] === 'index') {
         pathSegments.pop();
     }
 
@@ -238,9 +242,9 @@ function generateRoutes() {
         // 优先查找用户自定义布局，如果不存在则使用 internal 布局
         const customLayoutPath = '/src/layouts/' + layoutNum + '.vue';
         const internalLayoutPath = '/src/layouts/internal/' + layoutNum + '.vue';
-        
+
         let layoutComponent = layoutFiles[customLayoutPath];
-        
+
         // 如果自定义布局不存在，尝试使用 internal 布局
         if (!layoutComponent) {
             layoutComponent = internalLayoutFiles[internalLayoutPath];
