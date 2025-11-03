@@ -35,6 +35,7 @@
     "dependencies": {
         "befly": "workspace:*",
         "es-toolkit": "^1.41.0",
+        "pacote": "^21.0.3",
         "pathe": "^1.1.2"
     },
     "devDependencies": {
