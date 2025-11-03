@@ -8,7 +8,7 @@
     },
     {
         "name": "人员管理",
-        "path": "/people",
+        "path": "/internal/people",
         "icon": "UserCircle",
         "sort": 2,
         "type": 1,
@@ -24,7 +24,7 @@
     },
     {
         "name": "权限设置",
-        "path": "/settings",
+        "path": "/internal/settings",
         "icon": "Settings",
         "sort": 3,
         "type": 1,
@@ -47,7 +47,7 @@
     },
     {
         "name": "字典管理",
-        "path": "/dict",
+        "path": "/internal/dict",
         "icon": "BookOpen",
         "sort": 6,
         "type": 1

@@ -11,8 +11,10 @@
         "dev": "NODE_ENV=development bun run main.ts",
         "start": "NODE_ENV=production bun run main.ts",
         "pm2": "bun --bun pm2 start pm2.config.cjs",
-        "sync:dev": "NODE_ENV=development befly sync",
-        "sync:prod": "NODE_ENV=production befly sync"
+        "sync:api:dev": "NODE_ENV=development befly sync:api",
+        "sync:api:prod": "NODE_ENV=production befly sync:api",
+        "sync:admin:dev": "NODE_ENV=development befly sync:admin",
+        "sync:admin:prod": "NODE_ENV=production befly sync:admin"
     },
     "files": [
         "apis",

@@ -1,7 +1,7 @@
 [
     {
         "name": "用户管理",
-        "path": "/user",
+        "path": "/internal/user",
         "icon": "User",
         "sort": 10,
         "type": 1,
