@@ -24,9 +24,6 @@ import type { SyncDbStats } from '../../types.js';
 // 全局 SQL 客户端实例
 let sql: SQL | null = null;
 
-// 全局 Redis 客户端实例
-let redis: RedisHelper | null = null;
-
 // 记录处理过的表名（用于清理缓存）
 const processedTables: string[] = [];
 
@@ -78,7 +75,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
         await ensureDbVersion(sql);
 
         // 初始化 Redis 连接（用于清理缓存）
-        redis = new RedisHelper();
+        await Database.connectRedis();
 
         // 阶段3：扫描表定义文件
         perfTracker.markPhase('扫描表文件');
@@ -169,8 +166,8 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
 
         perfTracker.finishPhase('同步处理');
 
-        // 阶段5：清理表字段缓存
-        if (redis && processedTables.length > 0) {
+        // 清理 Redis 缓存（如果有表被处理）
+        if (processedTables.length > 0) {
             perfTracker.markPhase('清理缓存');
             Logger.info(`🧹 清理 ${processedTables.length} 个表的字段缓存...`);
 
@@ -178,7 +175,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
             for (const tableName of processedTables) {
                 const cacheKey = `table:columns:${tableName}`;
                 try {
-                    await redis.del(cacheKey);
+                    await RedisHelper.del(cacheKey);
                     clearedCount++;
                 } catch (error: any) {
                     Logger.warn(`清理表 ${tableName} 的缓存失败:`, error.message);
@@ -215,12 +212,10 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
             }
         }
 
-        if (redis) {
-            try {
-                await redis?.close();
-            } catch (error: any) {
-                Logger.warn('关闭 Redis 连接时出错:', error.message);
-            }
+        try {
+            await Database.disconnectRedis();
+        } catch (error: any) {
+            Logger.warn('关闭 Redis 连接时出错:', error.message);
         }
     }
 };
