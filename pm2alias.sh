@@ -247,38 +247,5 @@ PM2 命令别名帮助
   pm2 startup                  - 开机自启动
   pm2 resurrect                - 恢复进程
 
-常用示例:
-  # 启动应用
-  pm2start befly
-  pm2start pm2.config.cjs
-
-  # 查看日志
-  pm2log                       # 所有日志
-  pm2log befly                 # befly 日志
-  pm2log befly --lines 100     # 最近 100 行
-  pm2log befly --err           # 错误日志
-
-  # 进程控制
-  pm2stop befly                # 停止
-  pm2restart befly             # 重启
-  pm2reload befly              # 重载（零停机）
-  pm2del befly                 # 删除
-  pm2scale befly 4             # 扩展到 4 个实例
-
-  # 部署
-  pm2deploy                    # 完整部署
-  pm2redeploy                  # 零停机重新部署
-
-  # 查看
-  pm2ls                        # 列表
-  pm2show befly                # 详情
-  pm2mon                       # 监控
-
-========================================
-提示: pm2log 支持所有 PM2 原生日志参数
-========================================
 EOF
 }
-
-# 打印加载成功信息
-echo "✅ PM2 别名已加载！输入 'pm2help' 查看所有可用命令"
