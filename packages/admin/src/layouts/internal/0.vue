@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { arrayToTree } from '../util';
+import { arrayToTree } from '@/utils';
 
 const router = useRouter();
 const route = useRoute();

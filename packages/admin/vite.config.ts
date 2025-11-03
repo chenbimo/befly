@@ -26,8 +26,8 @@ export default defineConfig({
                 }
             ],
             resolvers: [TinyVueSingleResolver],
-            // 自动导入 plugins 目录下的所有导出
-            dirs: ['./src/plugins'],
+            // 自动导入 plugins 目录下的所有导出（internal 优先）
+            dirs: ['./src/plugins/internal', './src/plugins'],
             dts: 'src/types/auto-imports.d.ts',
             eslintrc: {
                 enabled: false
@@ -36,7 +36,7 @@ export default defineConfig({
         // 自动导入 OpenTiny 组件
         Components({
             resolvers: [TinyVueSingleResolver],
-            dirs: ['src/components'],
+            dirs: ['src/components/internal', 'src/components'],
             dts: 'src/types/components.d.ts'
         })
     ],
@@ -52,7 +52,7 @@ export default defineConfig({
         preprocessorOptions: {
             scss: {
                 api: 'modern-compiler',
-                additionalData: `@use "@/styles/variables.scss" as *;`
+                additionalData: `@use "@/styles/internal/variables.scss" as *;`
             }
         }
     },

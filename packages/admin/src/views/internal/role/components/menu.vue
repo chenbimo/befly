@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { arrayToTree } from '../../../util';
+import { arrayToTree } from '@/utils';
 
 const $Prop = defineProps({
     modelValue: {
