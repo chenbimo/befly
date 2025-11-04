@@ -1,14 +1,15 @@
 /**
  * Sync Admin 命令 - 同步前端 admin 模板
- * 使用 pacote 下载 befly-admin 包并同步所有 internal 目录
+ * 下载 befly-admin 包并同步所有 internal 目录
  */
 
-import pacote from 'pacote';
-import { join } from 'pathe';
+import { join, relative } from 'pathe';
 import { tmpdir } from 'node:os';
 import { rm, readdir, mkdir, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { Logger } from '../util.js';
+import { Glob } from 'bun';
+import extract from 'fast-extract';
 
 /**
  * 递归复制目录
@@ -36,21 +37,20 @@ async function copyDir(source: string, target: string): Promise<void> {
 }
 
 /**
- * 递归查找所有 internal 目录
+ * 查找所有 internal 目录（使用 Bun.Glob 模糊匹配）
  */
 async function findInternalDirs(baseDir: string): Promise<string[]> {
+    const glob = new Glob('**/internal');
     const internalDirs: string[] = [];
-    const entries = await readdir(baseDir, { withFileTypes: true });
 
-    for (const entry of entries) {
-        if (!entry.isDirectory()) continue;
-
-        const fullPath = join(baseDir, entry.name);
-
-        if (entry.name === 'internal') {
-            internalDirs.push(fullPath);
-        } else if (entry.name !== 'node_modules') {
-            internalDirs.push(...(await findInternalDirs(fullPath)));
+    for await (const file of glob.scan({
+        cwd: baseDir,
+        onlyFiles: false,
+        absolute: true
+    })) {
+        // 过滤掉 node_modules 下的目录
+        if (!file.includes('node_modules')) {
+            internalDirs.push(file);
         }
     }
 
@@ -62,51 +62,55 @@ async function findInternalDirs(baseDir: string): Promise<string[]> {
  */
 export async function syncAdminCommand() {
     const tempDir = join(tmpdir(), `befly-admin-${Date.now()}`);
-    console.log('🔥[ tmpdir() ]-65', tmpdir());
+    const tarballPath = join(tempDir, 'package.tgz');
+    const extractDir = join(tempDir, 'extracted');
 
     try {
-        Logger.info('正在下载 befly-admin...');
+        await mkdir(tempDir, { recursive: true });
 
-        // 1. 下载 befly-admin（自动读取 .npmrc）
-        await pacote.extract('befly-admin', tempDir);
+        // 1. 获取并下载最新版本
+        Logger.info('正在获取 befly-admin 最新版本...');
+        const metaData = await fetch('https://registry.npmmirror.com/befly-admin/latest').then((res) => res.json());
 
-        Logger.info('正在同步 internal 目录...');
+        Logger.info(`正在下载 befly-admin@${metaData.version}...`);
+        await Bun.write(tarballPath, await fetch(metaData.dist.tarball).then((res) => res.arrayBuffer()));
 
-        // 2. 扫描所有 internal 目录
-        const internalDirs = await findInternalDirs(join(tempDir, 'src'));
+        // 2. 解压
+        Logger.info('正在解压...');
+        await extract(tarballPath, extractDir, { strip: 0 });
 
+        // 3. 扫描并同步 internal 目录
+        const srcDir = join(extractDir, 'package', 'src');
+        if (!existsSync(srcDir)) {
+            throw new Error('下载的包中没有 src 目录');
+        }
+
+        const internalDirs = await findInternalDirs(srcDir);
         if (internalDirs.length === 0) {
             throw new Error('未找到 internal 目录');
         }
 
-        // 3. 同步每个 internal 目录
+        Logger.info(`正在同步 ${internalDirs.length} 个目录...`);
+
         for (const sourceDir of internalDirs) {
-            const relativePath = sourceDir.replace(join(tempDir, 'src'), '');
+            const relativePath = relative(srcDir, sourceDir);
             const targetDir = join(process.cwd(), 'src', relativePath);
 
-            Logger.info(`同步: ${relativePath}`);
-
-            // 删除旧目录
             if (existsSync(targetDir)) {
                 await rm(targetDir, { recursive: true, force: true });
             }
 
-            // 复制新目录（使用自定义递归复制）
             await copyDir(sourceDir, targetDir);
-
-            // 验证复制结果
-            const copiedFiles = await readdir(targetDir);
-            Logger.debug(`  已复制 ${copiedFiles.length} 个项目`);
+            Logger.debug(`${relativePath} 已同步`);
         }
 
         // 4. 清理临时目录
         await rm(tempDir, { recursive: true, force: true });
 
-        Logger.info(`✅ sync:admin 同步成功（${internalDirs.length} 个目录）`);
+        Logger.info(`✅ sync:admin 同步成功`);
     } catch (error: any) {
         Logger.error(`❌ sync:admin 同步失败: ${error.message}`);
 
-        // 清理临时目录
         if (existsSync(tempDir)) {
             await rm(tempDir, { recursive: true, force: true });
         }

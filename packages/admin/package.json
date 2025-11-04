@@ -9,8 +9,8 @@
         "registry": "https://registry.npmjs.org"
     },
     "files": [
-        "src/",
-        "public/",
+        "src",
+        "public",
         "index.html",
         "vite.config.ts",
         "tsconfig.json",
