@@ -12,9 +12,7 @@
         "start": "NODE_ENV=production bun run main.ts",
         "pm2": "bun --bun pm2 start pm2.config.cjs",
         "sync:api:dev": "NODE_ENV=development befly sync:api",
-        "sync:api:prod": "NODE_ENV=production befly sync:api",
-        "sync:admin:dev": "NODE_ENV=development befly sync:admin",
-        "sync:admin:prod": "NODE_ENV=production befly sync:admin"
+        "sync:api:prod": "NODE_ENV=production befly sync:api"
     },
     "files": [
         "apis",
@@ -34,14 +32,10 @@
     "type": "module",
     "dependencies": {
         "@befly-addon/admin": "workspace:*",
-        "befly": "workspace:*",
-        "befly-cli": "workspace:*"
+        "befly": "workspace:*"
     },
     "engines": {
         "bun": ">=1.3.0"
     },
-    "gitHead": "96136321570fd1abf859e691d6ccbc69d7696c4b",
-    "devDependencies": {
-        "cross-env": "^10.1.0"
-    }
+    "gitHead": "96136321570fd1abf859e691d6ccbc69d7696c4b"
 }
