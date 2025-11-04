@@ -62,6 +62,7 @@ async function findInternalDirs(baseDir: string): Promise<string[]> {
  */
 export async function syncAdminCommand() {
     const tempDir = join(tmpdir(), `befly-admin-${Date.now()}`);
+    console.log('🔥[ tmpdir() ]-65', tmpdir());
 
     try {
         Logger.info('正在下载 befly-admin...');
