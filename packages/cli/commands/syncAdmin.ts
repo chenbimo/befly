@@ -6,9 +6,35 @@
 import pacote from 'pacote';
 import { join } from 'pathe';
 import { tmpdir } from 'node:os';
-import { rm, cp, readdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { rm, readdir, mkdir } from 'node:fs/promises';
+import { existsSync, statSync } from 'node:fs';
 import { Logger } from '../util.js';
+
+/**
+ * 递归复制目录（使用 Bun.write 确保文件正确写入）
+ */
+async function copyDir(source: string, target: string): Promise<void> {
+    // 创建目标目录
+    if (!existsSync(target)) {
+        await mkdir(target, { recursive: true });
+    }
+
+    const entries = await readdir(source, { withFileTypes: true });
+
+    for (const entry of entries) {
+        const sourcePath = join(source, entry.name);
+        const targetPath = join(target, entry.name);
+
+        if (entry.isDirectory()) {
+            // 递归复制子目录
+            await copyDir(sourcePath, targetPath);
+        } else {
+            // 复制文件（使用 Bun.file 确保正确读写）
+            const content = await Bun.file(sourcePath).arrayBuffer();
+            await Bun.write(targetPath, content);
+        }
+    }
+}
 
 /**
  * 递归查找所有 internal 目录
@@ -58,13 +84,19 @@ export async function syncAdminCommand() {
             const relativePath = sourceDir.replace(join(tempDir, 'src'), '');
             const targetDir = join(process.cwd(), 'src', relativePath);
 
+            Logger.info(`同步: ${relativePath}`);
+
             // 删除旧目录
             if (existsSync(targetDir)) {
                 await rm(targetDir, { recursive: true, force: true });
             }
 
-            // 复制新目录
-            await cp(sourceDir, targetDir, { recursive: true });
+            // 复制新目录（使用自定义递归复制）
+            await copyDir(sourceDir, targetDir);
+
+            // 验证复制结果
+            const copiedFiles = await readdir(targetDir);
+            Logger.debug(`  已复制 ${copiedFiles.length} 个项目`);
         }
 
         // 4. 清理临时目录
