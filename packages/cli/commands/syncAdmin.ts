@@ -6,12 +6,12 @@
 import pacote from 'pacote';
 import { join } from 'pathe';
 import { tmpdir } from 'node:os';
-import { rm, readdir, mkdir } from 'node:fs/promises';
-import { existsSync, statSync } from 'node:fs';
+import { rm, readdir, mkdir, copyFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { Logger } from '../util.js';
 
 /**
- * 递归复制目录（使用 Bun.write 确保文件正确写入）
+ * 递归复制目录
  */
 async function copyDir(source: string, target: string): Promise<void> {
     // 创建目标目录
@@ -29,9 +29,8 @@ async function copyDir(source: string, target: string): Promise<void> {
             // 递归复制子目录
             await copyDir(sourcePath, targetPath);
         } else {
-            // 复制文件（使用 Bun.file 确保正确读写）
-            const content = await Bun.file(sourcePath).arrayBuffer();
-            await Bun.write(targetPath, content);
+            // 复制文件
+            await copyFile(sourcePath, targetPath);
         }
     }
 }

@@ -8,6 +8,16 @@
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
+    "files": [
+        "src/",
+        "public/",
+        "index.html",
+        "vite.config.ts",
+        "tsconfig.json",
+        ".env.development",
+        ".env.production",
+        "README.md"
+    ],
     "scripts": {
         "dev": "vite",
         "build": "vue-tsc && vite build",
