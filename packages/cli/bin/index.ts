@@ -6,7 +6,7 @@
 import { Command } from 'commander';
 import { readFile } from 'node:fs/promises';
 import { join } from 'pathe';
-import { syncCommand } from '../commands/sync.js';
+import { syncAllCommand } from '../commands/syncAll.js';
 import { syncAdminCommand } from '../commands/syncAdmin.js';
 import { initCommand } from '../commands/init.js';
 import { Logger } from '../util.js';
@@ -57,7 +57,7 @@ program
             if (options.admin) {
                 await syncAdminCommand();
             } else if (options.api) {
-                await syncCommand();
+                await syncAllCommand();
             } else {
                 Logger.error('请指定同步目标: --api 或 --admin');
                 Logger.info('使用方法:');

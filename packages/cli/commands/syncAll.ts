@@ -14,7 +14,7 @@ import { ReportCollector } from '../report/collector.js';
 import { generateReportHTML } from '../report/generator.js';
 import type { SyncDbStats, SyncApiStats, SyncMenuStats, SyncDevStats, SyncOptions } from '../types.js';
 
-export async function syncCommand(options: SyncOptions = {}) {
+export async function syncAllCommand(options: SyncOptions = {}) {
     const collector = ReportCollector.getInstance();
     collector.reset();
 
