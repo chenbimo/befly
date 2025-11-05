@@ -157,10 +157,10 @@ export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
     }
 
     const entries = await readdir(dirPath);
-    
+
     // 过滤掉以 . 开头的文件和目录
-    const nonHiddenFiles = entries.filter(entry => !entry.startsWith('.'));
-    
+    const nonHiddenFiles = entries.filter((entry) => !entry.startsWith('.'));
+
     return nonHiddenFiles.length === 0;
 }
 
@@ -203,11 +203,11 @@ export function isInternalPath(filePath: string, baseDir: string): boolean {
 export function shouldExclude(filePath: string, baseDir: string): boolean {
     const rel = normalize(relative(baseDir, filePath));
     const parts = rel.split(sep);
-    
+
     if (parts.includes('node_modules')) {
         return true;
     }
-    
+
     return false;
 }
 
@@ -258,4 +258,3 @@ export async function downloadPackage(packageName: string, registry: string): Pr
         throw error;
     }
 }
-
