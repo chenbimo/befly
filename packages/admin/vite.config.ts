@@ -1,100 +1,41 @@
-import { fileURLToPath, URL } from 'node:url';
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
-import AutoImport from 'unplugin-auto-import/vite';
-import Components from 'unplugin-vue-components/vite';
-import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
-import autoRoutes from 'befly-auto-routes';
+import { createBeflyConfig } from 'befly-vite';
 
-// https://vite.dev/config/
-export default defineConfig({
-    plugins: [
-        vue(),
-        // Vue 响应式语法糖
-        ReactivityTransform(),
-        // 自动路由插件
-        autoRoutes({ debug: true }),
-        // 自动导入 Vue3 API 和组合式函数
-        AutoImport({
-            imports: [
-                'vue',
-                'vue-router',
-                'pinia',
-                {
-                    '@opentiny/vue': ['Modal', 'Notify', 'Loading', 'Message']
-                }
-            ],
-            resolvers: [TinyVueSingleResolver],
-            // 自动导入 plugins 目录下的所有导出（internal 优先）
-            dirs: ['./src/plugins/internal', './src/plugins'],
-            dts: 'src/types/auto-imports.d.ts',
-            eslintrc: {
-                enabled: false
-            }
-        }),
-        // 自动导入 OpenTiny 组件
-        Components({
-            resolvers: [TinyVueSingleResolver],
-            dirs: ['src/components/internal', 'src/components'],
-            dts: 'src/types/components.d.ts'
-        })
-    ],
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
-        }
-    },
-    define: {
-        'process.env': { TINY_MODE: 'pc' } // OpenTiny 需要的环境变量
-    },
-    css: {
-        preprocessorOptions: {
-            scss: {
-                api: 'modern-compiler',
-                additionalData: `@use "@/styles/internal/variables.scss" as *;`
-            }
-        }
-    },
-    server: {
-        port: 5173,
-        host: true,
-        open: false
-    },
-    logLevel: 'info',
-    customLogger: {
-        info: (msg) => {
-            // 过滤掉频繁的依赖优化信息
-            if (msg.includes('new dependencies optimized')) {
-                return;
-            }
-            console.info(msg);
-        },
-        warn: console.warn,
-        error: console.error
-    },
-    optimizeDeps: {
-        include: ['vue', 'vue-router', 'pinia', 'lucide-vue-next', 'axios', '@opentiny/vue'],
-        exclude: [],
-        // 禁用自动发现，减少频繁优化提示
-        noDiscovery: true,
-        // 增加缓存时间，避免重复优化
-        force: false,
-        esbuildOptions: {
-            target: 'esnext'
-        }
-    },
-    build: {
-        outDir: 'dist',
-        sourcemap: false,
-        chunkSizeWarningLimit: 1500,
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    'vue-vendor': ['vue', 'vue-router', 'pinia'],
-                    'opentiny-vendor': ['@opentiny/vue']
-                }
-            }
-        }
-    }
+/**
+ * Admin 项目 Vite 配置
+ * 使用 createBeflyConfig 自动集成 befly-vite 的默认配置
+ *
+ * 默认已包含：
+ * - Vue 3 + 响应式语法糖
+ * - 自动路由（befly-auto-routes）
+ * - 自动导入（Vue API、OpenTiny 组件等）
+ * - SCSS 支持 + variables.scss 全局注入
+ * - 开发服务器配置
+ * - 构建优化配置
+ *
+ * 如需覆盖，直接在下方配置对象中指定即可
+ */
+export default createBeflyConfig({
+    // 示例：覆盖服务器端口
+    // server: {
+    //     port: 3000
+    // },
+    // 示例：覆盖插件配置参数
+    // pluginConfigs: {
+    //     // 覆盖 autoRoutes 的 debug 参数
+    //     autoRoutes: {
+    //         debug: false
+    //     },
+    //     // 覆盖 AutoImport 的 dirs 参数
+    //     autoImport: {
+    //         dirs: ['./src/utils', './src/composables']
+    //     }
+    // },
+    // 示例：追加自定义插件
+    // extraPlugins: [
+    //     // 你的插件
+    // ],
+    // 示例：自定义构建输出目录
+    // build: {
+    //     outDir: 'build'
+    // }
 });

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { internalConfig } from '@/config/internal';
+import { $ConfigInternal } from '@/config/internal';
 
 /**
  * 全局状态管理
@@ -12,7 +12,7 @@ export const useGlobal = defineStore('global', () => {
     // ==================== 全局计算属性 ====================
     const computed = {
         /** 上传地址 */
-        uploadUrl: $computed(() => `${internalConfig.apiBaseUrl}/upload/local`),
+        uploadUrl: $computed(() => `${$ConfigInternal.apiBaseUrl}/upload/local`),
 
         /** 上传请求头（动态获取 token） */
         uploadHeaders: $computed(() => {
@@ -30,7 +30,7 @@ export const useGlobal = defineStore('global', () => {
          * @param title 标题文本
          */
         setPageTitle: (title?: string) => {
-            document.title = title ? `${title} - ${internalConfig.appTitle}` : internalConfig.appTitle;
+            document.title = title ? `${title} - ${$ConfigInternal.appTitle}` : $ConfigInternal.appTitle;
         }
     };
 
