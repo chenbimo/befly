@@ -9,7 +9,8 @@
  */
 
 import { snakeCase } from 'es-toolkit/string';
-import { Logger, parseRule } from '../../util.js';
+import { utils } from 'befly';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
 
@@ -83,7 +84,7 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = parseRule(fieldRule);
+        const parsed = utils.parseRule(fieldRule);
         const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
         const sqlType = getSqlType(fieldType, fieldMax);
 
@@ -113,7 +114,7 @@ export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: bo
     // 转换字段名为下划线格式
     const dbFieldName = snakeCase(fieldKey);
 
-    const parsed = parseRule(fieldRule);
+    const parsed = utils.parseRule(fieldRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
     const sqlType = getSqlType(fieldType, fieldMax);
 

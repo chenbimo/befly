@@ -9,7 +9,8 @@
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
 import { snakeCase } from 'es-toolkit/string';
-import { Logger, parseRule } from '../../util.js';
+import { utils } from 'befly';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
@@ -50,7 +51,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = parseRule(fieldRule);
+        const parsed = utils.parseRule(fieldRule);
         const { name: fieldName } = parsed;
         const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS '${fieldName}'`;
         if (IS_PLAN) {
@@ -87,7 +88,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = parseRule(fieldRule);
+        const parsed = utils.parseRule(fieldRule);
         if (parsed.index === 1) {
             const stmt = buildIndexSQL(tableName, `idx_${dbFieldName}`, dbFieldName, 'create');
             if (IS_PLAN) {

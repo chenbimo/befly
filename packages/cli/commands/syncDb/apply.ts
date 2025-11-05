@@ -6,7 +6,8 @@
  * - 应用表结构变更计划
  */
 
-import { Logger, parseRule } from '../../util.js';
+import { utils } from 'befly';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
@@ -32,7 +33,7 @@ const IS_PLAN = process.argv.includes('--plan');
  * @returns 变化数组
  */
 export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: string, colName: string): FieldChange[] {
-    const parsed = parseRule(newRule);
+    const parsed = utils.parseRule(newRule);
     const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
     const changes: FieldChange[] = [];
 

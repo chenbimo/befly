@@ -8,7 +8,8 @@
  */
 
 import { snakeCase } from 'es-toolkit/string';
-import { Logger, parseRule } from '../../util.js';
+import { utils } from 'befly';
+import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
@@ -71,7 +72,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     else if (c.type === 'comment') globalCount.nameChanges++;
                 }
 
-                const parsed = parseRule(fieldRule);
+                const parsed = utils.parseRule(fieldRule);
                 const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
 
                 if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
@@ -138,7 +139,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 changed = true;
             }
         } else {
-            const parsed = parseRule(fieldRule);
+            const parsed = utils.parseRule(fieldRule);
             const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
             const lenPart = isStringOrArrayType(fieldType) ? ` 长度:${parseInt(String(fieldMax))}` : '';
             Logger.info(`  + 新增字段 ${dbFieldName} (${fieldType}${lenPart})`);
@@ -163,7 +164,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = parseRule(fieldRule);
+        const parsed = utils.parseRule(fieldRule);
         const indexName = `idx_${dbFieldName}`;
         if (parsed.index === 1 && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName, fieldName: dbFieldName });
@@ -184,7 +185,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             const dbFieldName = snakeCase(fieldKey);
 
             if (existingColumns[dbFieldName]) {
-                const parsed = parseRule(fieldRule);
+                const parsed = utils.parseRule(fieldRule);
                 const { name: fieldName } = parsed;
                 const curr = existingColumns[dbFieldName].comment || '';
                 const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
