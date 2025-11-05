@@ -17,6 +17,7 @@
         ".env.development",
         ".env.production",
         ".gitignore",
+        "bunfig.toml",
         "README.md"
     ],
     "scripts": {

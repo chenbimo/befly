@@ -1,0 +1,11 @@
+[install]
+# 使用隔离模式
+linker = "isolated"
+
+
+# 提升类型定义和工具到根目录
+publicHoistPattern = [
+    "@types/*",    # 所有 TypeScript 类型
+    "typescript",  # TypeScript 编译器
+    "@opentiny/*",
+]
