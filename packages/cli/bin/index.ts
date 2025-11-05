@@ -1,54 +1,75 @@
 ﻿#!/usr/bin/env bun
 /**
  * Befly CLI - 命令行工具入口
- *
- * 使用方法：
- *   befly sync:api          # 同步后端（数据库、API、菜单等）
- *   befly sync:admin        # 同步前端 admin 模板
- *
- * 环境变量加载：
- * Bun 自动根据 NODE_ENV 加载对应的 .env 文件：
- * - NODE_ENV=development → .env.development
- * - NODE_ENV=production → .env.production
- * - NODE_ENV=test → .env.test
  */
 
+import { Command } from 'commander';
+import { readFile } from 'node:fs/promises';
+import { join } from 'pathe';
 import { syncCommand } from '../commands/sync.js';
 import { syncAdminCommand } from '../commands/syncAdmin.js';
+import { initCommand } from '../commands/init.js';
 import { Logger } from '../util.js';
 
-/**
- * 主函数
- */
-async function main() {
-    const args = process.argv.slice(2);
-    const command = args[0] || 'sync:api'; // 默认执行 sync:api
+const program = new Command();
 
-    // 打印环境信息
-    Logger.printEnv();
+// 读取版本号
+const packageJson = JSON.parse(await readFile(join(import.meta.dir, '..', 'package.json'), 'utf-8'));
 
-    try {
-        if (command === 'sync:api') {
-            // 同步后端
-            await syncCommand();
-        } else if (command === 'sync:admin') {
-            // 同步前端
-            await syncAdminCommand();
-        } else {
-            Logger.error(`未知命令: ${command}`);
-            Logger.info('可用命令:');
-            Logger.info('  befly sync:api    - 同步后端（数据库、API、菜单等）');
-            Logger.info('  befly sync:admin  - 同步前端 admin 模板');
+program.name('befly').description('Befly 框架命令行工具').version(packageJson.version, '-v, --version', '显示版本号');
+
+// init 命令
+program
+    .command('init')
+    .description('初始化项目')
+    .option('--admin', '初始化前端 admin 项目（befly-admin）')
+    .option('--api', '初始化后端 API 项目（befly-tpl）')
+    .action(async (options) => {
+        try {
+            if (options.admin) {
+                await initCommand('admin');
+            } else if (options.api) {
+                await initCommand('api');
+            } else {
+                Logger.error('请指定初始化类型: --api 或 --admin');
+                Logger.info('使用方法:');
+                Logger.info('  befly init --api    - 初始化后端项目');
+                Logger.info('  befly init --admin  - 初始化前端项目');
+                process.exit(1);
+            }
+            process.exit(0);
+        } catch (error: any) {
+            Logger.error('命令执行失败:', error.message || error);
             process.exit(1);
         }
+    });
 
-        // 命令执行成功，主动退出
-        process.exit(0);
-    } catch (error: any) {
-        Logger.error('命令执行失败:', error.message || error);
-        process.exit(1);
-    }
-}
+// sync 命令
+program
+    .command('sync')
+    .description('同步命令')
+    .option('--api', '同步后端（数据库、API、菜单等）')
+    .option('--admin', '同步前端 admin 模板')
+    .action(async (options) => {
+        Logger.printEnv();
 
-// 运行主函数
-main();
+        try {
+            if (options.admin) {
+                await syncAdminCommand();
+            } else if (options.api) {
+                await syncCommand();
+            } else {
+                Logger.error('请指定同步目标: --api 或 --admin');
+                Logger.info('使用方法:');
+                Logger.info('  befly sync --api    - 同步后端');
+                Logger.info('  befly sync --admin  - 同步前端');
+                process.exit(1);
+            }
+            process.exit(0);
+        } catch (error: any) {
+            Logger.error('命令执行失败:', error.message || error);
+            process.exit(1);
+        }
+    });
+
+program.parse();
