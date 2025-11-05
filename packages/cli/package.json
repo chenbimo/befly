@@ -33,7 +33,7 @@
     "author": "chenbimo",
     "license": "MIT",
     "dependencies": {
-        "befly": "workspace:*",
+        "befly": "^3.8.0",
         "es-toolkit": "^1.41.0",
         "fast-extract": "^1.7.4",
         "pathe": "^1.1.2"
