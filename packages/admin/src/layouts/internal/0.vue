@@ -3,7 +3,7 @@
         <!-- 顶部导航栏 -->
         <div class="layout-header">
             <div class="logo">
-                <h2>{{ import.meta.env.VITE_APP_TITLE }}</h2>
+                <h2>{{ global.data.appTitle }}</h2>
             </div>
             <div class="header-right">
                 <tiny-dropdown title="管理员" trigger="click" border type="info" @item-click="$Method.handleUserMenu">
@@ -40,6 +40,7 @@ import { arrayToTree } from '@/utils';
 
 const router = useRouter();
 const route = useRoute();
+const global = useGlobal();
 
 // 响应式数据
 const $Data = $ref({
