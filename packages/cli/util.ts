@@ -172,7 +172,8 @@ export function shouldExclude(filePath: string, baseDir: string): boolean {
  * 从 npm 下载包
  */
 export async function downloadPackage(packageName: string, registry: string): Promise<{ version: string; packageDir: string; cleanup: () => Promise<void> }> {
-    const tempDir = join(tmpdir(), `${packageName}-${Date.now()}`);
+    const cacheDir = join(tmpdir(), 'befly-cache');
+    const tempDir = join(cacheDir, `${packageName}-${Date.now()}`);
     const tarballPath = join(tempDir, 'package.tgz');
     const extractDir = join(tempDir, 'extracted');
 
