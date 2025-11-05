@@ -24,7 +24,7 @@
         "build": "vue-tsc && vite build",
         "preview": "vite preview",
         "type-check": "vue-tsc --noEmit",
-        "sync:admin": "befly sync:admin"
+        "sync:admin": "bunx befly sync:admin"
     },
     "dependencies": {
         "@opentiny/vue": "^3.27.0",
