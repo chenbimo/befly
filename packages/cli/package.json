@@ -1,6 +1,6 @@
 {
     "name": "befly-cli",
-    "version": "3.9.0",
+    "version": "3.9.1",
     "description": "Befly 框架命令行工具",
     "type": "module",
     "bin": {
@@ -33,7 +33,7 @@
     "author": "chenbimo",
     "license": "MIT",
     "dependencies": {
-        "befly": "^3.8.0",
+        "befly": "^3.8.1",
         "commander": "^14.0.2",
         "es-toolkit": "^1.41.0",
         "fast-extract": "^1.7.4",
