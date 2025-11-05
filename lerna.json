@@ -1,6 +1,6 @@
 {
     "$schema": "node_modules/lerna/schemas/lerna-schema.json",
-    "version": "3.9.0",
+    "version": "independent",
     "packages": ["packages/*"],
     "npmClient": "bun",
     "command": {
@@ -13,8 +13,7 @@
         "version": {
             "changelog": false,
             "createRelease": "none",
-            "push": false,
-            "exact": true
+            "push": false
         }
     }
 }
