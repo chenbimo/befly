@@ -16,6 +16,7 @@
         "tsconfig.json",
         ".env.development",
         ".env.production",
+        ".gitignore",
         "README.md"
     ],
     "scripts": {
