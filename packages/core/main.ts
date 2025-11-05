@@ -15,6 +15,7 @@ import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
 import { Addon } from './lib/addon.js';
 import { checkDefault } from './check.js';
+import * as utilFunctions from './util.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -80,4 +81,15 @@ export {
     Addon,
     coreDir,
     checkDefault
+};
+
+// 工具函数命名空间导出
+export const utils = {
+    keysToSnake: utilFunctions.keysToSnake,
+    keysToCamel: utilFunctions.keysToCamel,
+    arrayKeysToCamel: utilFunctions.arrayKeysToCamel,
+    pickFields: utilFunctions.pickFields,
+    fieldClear: utilFunctions.fieldClear,
+    calcPerfTime: utilFunctions.calcPerfTime,
+    parseRule: utilFunctions.parseRule
 };
