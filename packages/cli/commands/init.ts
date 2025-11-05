@@ -2,6 +2,7 @@
  * Init 命令 - 初始化项目
  */
 
+import chalk from 'chalk';
 import { Logger, downloadPackage, copyDirRecursive, isDirectoryEmpty } from '../util.js';
 
 /**
@@ -45,19 +46,19 @@ export async function initCommand(type: 'admin' | 'api') {
         // 4. 清理临时目录
         await cleanup();
 
-        Logger.info(`✅ ${currentConfig.description}初始化成功`);
-        Logger.info(`📦 版本: ${version}`);
-        Logger.info(`📁 复制了 ${result.copied} 个文件`);
+        Logger.success(`\n✅ ${currentConfig.description}初始化成功`);
+        Logger.info(`📦 版本: ${chalk.bold(version)}`);
+        Logger.info(`📁 复制了 ${chalk.bold(result.copied)} 个文件`);
         Logger.info('');
-        Logger.info('📝 下一步:');
+        Logger.info(chalk.bold('📝 下一步:'));
 
         if (type === 'admin') {
-            Logger.info('  1. bun install           # 安装依赖');
-            Logger.info('  2. bun run dev           # 启动开发服务器');
+            Logger.log(`  ${chalk.cyan('1.')} ${chalk.bold('bun install')}           ${chalk.gray('# 安装依赖')}`);
+            Logger.log(`  ${chalk.cyan('2.')} ${chalk.bold('bun run dev')}           ${chalk.gray('# 启动开发服务器')}`);
         } else {
-            Logger.info('  1. bun install           # 安装依赖');
-            Logger.info('  2. 配置 .env.development # 配置数据库等环境变量');
-            Logger.info('  3. bun run dev           # 启动开发服务器');
+            Logger.log(`  ${chalk.cyan('1.')} ${chalk.bold('bun install')}           ${chalk.gray('# 安装依赖')}`);
+            Logger.log(`  ${chalk.cyan('2.')} ${chalk.bold('配置 .env.development')} ${chalk.gray('# 配置数据库等环境变量')}`);
+            Logger.log(`  ${chalk.cyan('3.')} ${chalk.bold('bun run dev')}           ${chalk.gray('# 启动开发服务器')}`);
         }
     } catch (error: any) {
         Logger.error(`❌ 初始化失败: ${error.message}`);

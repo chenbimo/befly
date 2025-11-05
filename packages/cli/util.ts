@@ -9,6 +9,7 @@ import { readdir, mkdir, copyFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { Env } from 'befly';
 import extract from 'fast-extract';
+import chalk from 'chalk';
 
 export const projectDir = process.cwd();
 
@@ -28,35 +29,35 @@ export const Logger = {
      * 信息日志（蓝色）
      */
     info(...args: any[]) {
-        console.log('\x1b[34m%s\x1b[0m', ...args);
+        console.log(chalk.blue(...args));
     },
 
     /**
      * 成功日志（绿色）
      */
     success(...args: any[]) {
-        console.log('\x1b[32m%s\x1b[0m', ...args);
+        console.log(chalk.green(...args));
     },
 
     /**
      * 警告日志（黄色）
      */
     warn(...args: any[]) {
-        console.warn('\x1b[33m%s\x1b[0m', ...args);
+        console.warn(chalk.yellow(...args));
     },
 
     /**
      * 错误日志（红色）
      */
     error(...args: any[]) {
-        console.error('\x1b[31m%s\x1b[0m', ...args);
+        console.error(chalk.red(...args));
     },
 
     /**
      * 调试日志（灰色）
      */
     debug(...args: any[]) {
-        console.log('\x1b[90m%s\x1b[0m', ...args);
+        console.log(chalk.gray(...args));
     },
 
     /**
@@ -64,13 +65,13 @@ export const Logger = {
      * 用于命令开始时提示用户当前环境
      */
     printEnv() {
-        console.log('========================================');
-        console.log('开始执行完整同步流程');
-        console.log(`当前环境: ${Env.NODE_ENV || 'development'}`);
-        console.log(`项目名称: ${Env.APP_NAME || '-'}`);
-        console.log(`数据库地址: ${Env.DB_HOST || '-'}`);
-        console.log(`数据库名称: ${Env.DB_NAME || '-'}`);
-        console.log('========================================\n');
+        console.log(chalk.cyan('========================================'));
+        console.log(chalk.bold('开始执行完整同步流程'));
+        console.log(chalk.blue(`当前环境: ${chalk.bold(Env.NODE_ENV || 'development')}`));
+        console.log(chalk.blue(`项目名称: ${chalk.bold(Env.APP_NAME || '-')}`));
+        console.log(chalk.blue(`数据库地址: ${chalk.bold(Env.DB_HOST || '-')}`));
+        console.log(chalk.blue(`数据库名称: ${chalk.bold(Env.DB_NAME || '-')}`));
+        console.log(chalk.cyan('========================================\n'));
     }
 };
 

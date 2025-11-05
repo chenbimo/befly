@@ -6,6 +6,7 @@
 import { Command } from 'commander';
 import { readFile } from 'node:fs/promises';
 import { join } from 'pathe';
+import chalk from 'chalk';
 import { syncAllCommand } from '../commands/syncAll.js';
 import { syncAdminCommand } from '../commands/syncAdmin.js';
 import { initCommand } from '../commands/init.js';
@@ -30,8 +31,8 @@ program
             if (!template || !['admin', 'api'].includes(template)) {
                 Logger.error('请指定有效的模板类型');
                 Logger.info('使用方法:');
-                Logger.info('  befly init -t api      - 初始化后端项目');
-                Logger.info('  befly init -t admin    - 初始化前端项目');
+                Logger.log(`  ${chalk.cyan('befly init -t api')}      - 初始化后端项目`);
+                Logger.log(`  ${chalk.cyan('befly init -t admin')}    - 初始化前端项目`);
                 process.exit(1);
             }
 
@@ -57,8 +58,8 @@ program
             if (!target || !['admin', 'api'].includes(target)) {
                 Logger.error('请指定有效的同步目标');
                 Logger.info('使用方法:');
-                Logger.info('  befly sync -t api      - 同步后端');
-                Logger.info('  befly sync -t admin    - 同步前端');
+                Logger.log(`  ${chalk.cyan('befly sync -t api')}      - 同步后端`);
+                Logger.log(`  ${chalk.cyan('befly sync -t admin')}    - 同步前端`);
                 process.exit(1);
             }
 
