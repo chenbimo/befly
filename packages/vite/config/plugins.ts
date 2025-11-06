@@ -38,10 +38,7 @@ export const pluginConfigs = {
         resolvers: [
             TinyVueSingleResolver,
             // 自动导入图标组件
-            IconsResolver({
-                prefix: 'i', // 前缀：i-lucide:home
-                enabledCollections: ['lucide', 'mdi', 'carbon', 'ant-design']
-            })
+            IconsResolver({})
         ],
         vueTemplate: true,
         dirsScanOptions: {
@@ -63,10 +60,7 @@ export const pluginConfigs = {
         resolvers: [
             TinyVueSingleResolver,
             // 自动注册图标组件
-            IconsResolver({
-                prefix: 'i',
-                enabledCollections: ['lucide', 'mdi', 'carbon', 'ant-design']
-            })
+            IconsResolver({})
         ],
         dirs: ['src/components'],
         deep: true,
