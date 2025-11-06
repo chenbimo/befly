@@ -43,7 +43,7 @@ export const pluginConfigs = {
                 enabledCollections: ['lucide', 'mdi', 'carbon', 'ant-design']
             })
         ],
-        dirs: ['./src/plugins/internal', './src/plugins'],
+        dirs: ['./src/plugins', './src/config'],
         dts: 'src/types/auto-imports.d.ts',
         eslintrc: {
             enabled: false

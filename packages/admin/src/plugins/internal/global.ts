@@ -9,20 +9,6 @@ export const useGlobal = defineStore('global', () => {
     // ==================== 全局数据 ====================
     const data = $ref({});
 
-    // ==================== 全局计算属性 ====================
-    const computed = {
-        /** 上传地址 */
-        uploadUrl: $computed(() => `${$ConfigInternal.apiBaseUrl}/upload/local`),
-
-        /** 上传请求头（动态获取 token） */
-        uploadHeaders: $computed(() => {
-            const token = $Storage.local.get('token');
-            return {
-                authorization: token ? `Bearer ${token}` : ''
-            };
-        })
-    };
-
     // ==================== 全局方法 ====================
     const method = {
         /**
@@ -37,7 +23,6 @@ export const useGlobal = defineStore('global', () => {
     // ==================== 返回 ====================
     return {
         data,
-        computed,
         method
     };
 });
