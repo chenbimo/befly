@@ -2,6 +2,8 @@
 import { plugins, viteResolve, define, css, server, logLevel, build, optimizeDeps } from './config';
 
 export default defineConfig({
+    root: process.cwd(),
+    baseDir: './',
     plugins,
     resolve: viteResolve,
     define,
