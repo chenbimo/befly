@@ -23,7 +23,7 @@ export const pluginConfigs = {
         compiler: 'vue3',
         autoInstall: true,
         // 默认使用的图标集
-        defaultClass: 'icon',
+        defaultClass: 'icon-befly',
         defaultStyle: 'margin-right: 8px; vertical-align: middle;'
     },
     autoImport: {

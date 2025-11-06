@@ -21,7 +21,7 @@
             <tiny-tree-menu :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" :default-expanded-keys="$Data.expandedKeys" :default-expanded-keys-highlight="$Data.currentNodeKey" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
                 <template #default="{ data }">
                     <span class="menu-item">
-                        <Icon :name="data.icon || 'Squircle'" :size="16" style="margin-right: 8px; vertical-align: middle" />
+                        <i-lucide:square style="width: 16px; height: 16px; margin-right: 8px; vertical-align: middle" />
                         <span>{{ data.name }}</span>
                     </span>
                 </template>

@@ -4,7 +4,7 @@
             <div class="left">
                 <tiny-button type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
-                        <Icon name="Plus" :size="16" />
+                        <i-lucide:plus style="width: 16px; height: 16px" />
                     </template>
                     添加菜单
                 </tiny-button>
@@ -12,7 +12,7 @@
             <div class="right">
                 <tiny-button @click="$Method.handleRefresh">
                     <template #icon>
-                        <Icon name="RotateCw" :size="16" />
+                        <i-lucide:rotate-cw style="width: 16px; height: 16px" />
                     </template>
                     刷新
                 </tiny-button>
@@ -25,7 +25,7 @@
                 <tiny-grid-column field="path" title="路径" :width="200" />
                 <tiny-grid-column field="icon" title="图标" :width="100">
                     <template #default="{ row }">
-                        <Icon v-if="row.icon" :name="row.icon" :size="16" />
+                        <i-lucide:square v-if="row.icon" style="width: 16px; height: 16px" />
                         <span v-else>-</span>
                     </template>
                 </tiny-grid-column>
@@ -49,11 +49,11 @@
                             <template #dropdown>
                                 <tiny-dropdown-menu>
                                     <tiny-dropdown-item :item-data="{ command: 'upd' }">
-                                        <Icon name="Edit" />
+                                        <i-lucide:pencil style="width: 14px; height: 14px; margin-right: 6px" />
                                         编辑
                                     </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'del' }" divided>
-                                        <Icon name="Trash2" />
+                                        <i-lucide:trash-2 style="width: 14px; height: 14px; margin-right: 6px" />
                                         删除
                                     </tiny-dropdown-item>
                                 </tiny-dropdown-menu>

@@ -5,7 +5,7 @@
             <div class="toolbar-left">
                 <t-button theme="primary" @click="$Method.handleAdd">
                     <template #icon>
-                        <add-icon />
+                        <i-lucide:plus style="width: 16px; height: 16px" />
                     </template>
                     添加管理员
                 </t-button>
@@ -16,13 +16,13 @@
                     <t-select v-model="$Data.searchState" placeholder="状态" clearable style="width: 120px" :options="$Data.stateOptions" @change="$Method.handleSearch" />
                     <t-button theme="default" @click="$Method.handleSearch">
                         <template #icon>
-                            <search-icon />
+                            <i-lucide:search style="width: 16px; height: 16px" />
                         </template>
                         搜索
                     </t-button>
                     <t-button theme="default" @click="$Method.handleReset">
                         <template #icon>
-                            <refresh-icon />
+                            <i-lucide:rotate-cw style="width: 16px; height: 16px" />
                         </template>
                         重置
                     </t-button>
