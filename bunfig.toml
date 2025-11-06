@@ -8,16 +8,8 @@ publicHoistPattern = [
     "@types/*",         # 所有 TypeScript 类型
     "prettier",         # Prettier 格式化工具
     "typescript",       # TypeScript 编译器
-    "@opentiny/*",
     "simple-git-hooks",
     "lint-staged",
     "lerna",
     "ci-info",
 ]
-
-# 内部提升常用依赖
-hoistPattern = ["ci-info"]
-
-[install.cache]
-
-dir = "D:\\bunCache"

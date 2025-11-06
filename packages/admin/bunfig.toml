@@ -1,2 +1,5 @@
 [install]
-linker = "hoisted"
+linker = "isolated"
+
+# Array form
+publicHoistPattern = ["@types*", "*eslint*", "@opentiny/*", "befly-vite"]
