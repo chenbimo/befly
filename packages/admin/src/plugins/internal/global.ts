@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import { $ConfigInternal } from '@/config/internal';
 
 /**
  * 全局状态管理

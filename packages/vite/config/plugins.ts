@@ -43,7 +43,17 @@ export const pluginConfigs = {
                 enabledCollections: ['lucide', 'mdi', 'carbon', 'ant-design']
             })
         ],
-        dirs: ['./src/plugins', './src/config'],
+        vueTemplate: true,
+        dirsScanOptions: {
+            filePatterns: ['*.ts'], // Glob patterns for matching files
+            fileFilter: (file) => file.endsWith('.ts'), // Filter files
+            types: true // Enable auto import the types under the directories
+        },
+        dirs: [
+            //
+            './src/plugins/**',
+            './src/config/**'
+        ],
         dts: 'src/types/auto-imports.d.ts',
         eslintrc: {
             enabled: false
@@ -58,7 +68,9 @@ export const pluginConfigs = {
                 enabledCollections: ['lucide', 'mdi', 'carbon', 'ant-design']
             })
         ],
-        dirs: ['src/components/internal', 'src/components'],
+        dirs: ['src/components'],
+        deep: true,
+        version: 3,
         dts: 'src/types/components.d.ts'
     }
 };
