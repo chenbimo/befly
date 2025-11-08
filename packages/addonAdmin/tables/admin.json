@@ -1,14 +1,122 @@
 {
-    "name": "姓名|string|2|50|null|0|null",
-    "nickname": "昵称|string|2|50|null|0|null",
-    "email": "邮箱|string|5|100|null|1|^[\\w.-]+@[\\w.-]+\\.\\w+$",
-    "phone": "手机号|string|11|11|null|0|^1[3-9]\\d{9}$",
-    "username": "用户名|string|3|30|null|0|^[a-zA-Z0-9_]+$",
-    "password": "密码|string|6|500|null|0|null",
-    "avatar": "头像|string|0|500|null|0|null",
-    "roleId": "角色ID|number|1|999999999999999|null|1|null",
-    "roleCode": "角色编码|string|2|50|null|0|^[a-zA-Z0-9_]+$",
-    "roleType": "角色类型|string|4|5|user|1|^(admin|user)$",
-    "lastLoginTime": "最后登录时间|number|0|null|0|0|null",
-    "lastLoginIp": "最后登录IP|string|0|50|null|0|null"
+    "name": {
+        "name": "姓名",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "nickname": {
+        "name": "昵称",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "email": {
+        "name": "邮箱",
+        "type": "string",
+        "min": 5,
+        "max": 100,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "regexp": "^[\\w.-]+@[\\w.-]+\\.\\w+$"
+    },
+    "phone": {
+        "name": "手机号",
+        "type": "string",
+        "min": 11,
+        "max": 11,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": "^1[3-9]\\d{9}$"
+    },
+    "username": {
+        "name": "用户名",
+        "type": "string",
+        "min": 3,
+        "max": 30,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": "^[a-zA-Z0-9_]+$"
+    },
+    "password": {
+        "name": "密码",
+        "type": "string",
+        "min": 6,
+        "max": 500,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "avatar": {
+        "name": "头像",
+        "type": "string",
+        "min": 0,
+        "max": 500,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "roleId": {
+        "name": "角色ID",
+        "type": "number",
+        "min": 1,
+        "max": 999999999999999,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "regexp": null
+    },
+    "roleCode": {
+        "name": "角色编码",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": "^[a-zA-Z0-9_]+$"
+    },
+    "roleType": {
+        "name": "角色类型",
+        "type": "string",
+        "min": 4,
+        "max": 5,
+        "default": "user",
+        "index": true,
+        "unique": false,
+        "regexp": "^(admin|user)$"
+    },
+    "lastLoginTime": {
+        "name": "最后登录时间",
+        "type": "number",
+        "min": 0,
+        "max": null,
+        "default": 0,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "lastLoginIp": {
+        "name": "最后登录IP",
+        "type": "string",
+        "min": 0,
+        "max": 50,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    }
 }

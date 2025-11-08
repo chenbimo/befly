@@ -1,8 +1,62 @@
 {
-    "name": "字典名称|string|2|50|null|1|null",
-    "code": "字典代码|string|2|50|null|1|^[a-zA-Z0-9_]+$",
-    "value": "字典值|string|0|200|null|1|null",
-    "sort": "排序|number|0|9999|0|0|null",
-    "pid": "父级ID|number|0|999999999999999|0|1|null",
-    "description": "描述|string|0|200|null|0|null"
+    "name": {
+        "name": "字典名称",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "regexp": null
+    },
+    "code": {
+        "name": "字典代码",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "regexp": "^[a-zA-Z0-9_]+$"
+    },
+    "value": {
+        "name": "字典值",
+        "type": "string",
+        "min": 0,
+        "max": 200,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "regexp": null
+    },
+    "sort": {
+        "name": "排序",
+        "type": "number",
+        "min": 0,
+        "max": 9999,
+        "default": 0,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "pid": {
+        "name": "父级ID",
+        "type": "number",
+        "min": 0,
+        "max": 999999999999999,
+        "default": 0,
+        "index": true,
+        "unique": false,
+        "regexp": null
+    },
+    "description": {
+        "name": "描述",
+        "type": "string",
+        "min": 0,
+        "max": 200,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    }
 }

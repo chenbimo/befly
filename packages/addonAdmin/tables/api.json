@@ -1,8 +1,62 @@
 {
-    "name": "接口名称|string|2|100|null|1|null",
-    "path": "接口路径|string|1|200|null|1|null",
-    "method": "请求方法|string|3|10|POST|1|^(GET|POST|PUT|DELETE|PATCH)$",
-    "description": "接口描述|string|0|500|null|0|null",
-    "addonName": "所属插件|string|0|50|null|0|null",
-    "addonTitle": "插件标题|string|0|100|null|0|null"
+    "name": {
+        "name": "接口名称",
+        "type": "string",
+        "min": 2,
+        "max": 100,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "regexp": null
+    },
+    "path": {
+        "name": "接口路径",
+        "type": "string",
+        "min": 1,
+        "max": 200,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "regexp": null
+    },
+    "method": {
+        "name": "请求方法",
+        "type": "string",
+        "min": 3,
+        "max": 10,
+        "default": "POST",
+        "index": true,
+        "unique": false,
+        "regexp": "^(GET|POST|PUT|DELETE|PATCH)$"
+    },
+    "description": {
+        "name": "接口描述",
+        "type": "string",
+        "min": 0,
+        "max": 500,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "addonName": {
+        "name": "所属插件",
+        "type": "string",
+        "min": 0,
+        "max": 50,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    },
+    "addonTitle": {
+        "name": "插件标题",
+        "type": "string",
+        "min": 0,
+        "max": 100,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "regexp": null
+    }
 }
