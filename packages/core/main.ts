@@ -4,7 +4,7 @@
  */
 
 import { Env } from './env.js';
-import { Yes, No } from './util.js';
+import { Yes, No, keysToSnake, keysToCamel, arrayKeysToCamel, pickFields, fieldClear, calcPerfTime } from './util.js';
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
@@ -15,7 +15,6 @@ import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
 import { Addon } from './lib/addon.js';
 import { checkDefault } from './check.js';
-import * as utilFunctions from './util.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -85,10 +84,10 @@ export {
 
 // 工具函数命名空间导出
 export const utils = {
-    keysToSnake: utilFunctions.keysToSnake,
-    keysToCamel: utilFunctions.keysToCamel,
-    arrayKeysToCamel: utilFunctions.arrayKeysToCamel,
-    pickFields: utilFunctions.pickFields,
-    fieldClear: utilFunctions.fieldClear,
-    calcPerfTime: utilFunctions.calcPerfTime
+    keysToSnake,
+    keysToCamel,
+    arrayKeysToCamel,
+    pickFields,
+    fieldClear,
+    calcPerfTime
 };
