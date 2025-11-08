@@ -6,6 +6,7 @@
 import { relative, basename } from 'pathe';
 import { existsSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
+import { camelCase } from 'es-toolkit/string';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { corePluginDir, projectPluginDir, coreApiDir, projectApiDir } from '../paths.js';
@@ -190,8 +191,8 @@ export class Loader {
 
                         // 组件插件：addon{组件名}_{插件名}，都用小驼峰
                         // 例如：admin组件的db插件 → addonAdmin_db
-                        const addonCamelCase = addon.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-                        const fileNameCamelCase = fileName.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                        const addonCamelCase = camelCase(addon);
+                        const fileNameCamelCase = camelCase(fileName);
                         const pluginFullName = `addon${addonCamelCase.charAt(0).toUpperCase() + addonCamelCase.slice(1)}_${fileNameCamelCase}`;
 
                         // 检查是否已经加载了同名插件
@@ -260,7 +261,7 @@ export class Loader {
 
                     // 用户插件：app{插件名}，小驼峰
                     // 例如：custom_auth.ts → appCustomAuth
-                    const fileNameCamelCase = fileName.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                    const fileNameCamelCase = camelCase(fileName);
                     const pluginFullName = `app${fileNameCamelCase.charAt(0).toUpperCase() + fileNameCamelCase.slice(1)}`;
 
                     // 检查是否已经加载了同名插件
