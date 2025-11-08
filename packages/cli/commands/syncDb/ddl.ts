@@ -9,13 +9,12 @@
  */
 
 import { snakeCase } from 'es-toolkit/string';
-import { utils } from 'befly';
 import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
 import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
 
 import type { SQL } from 'bun';
-import type { ParsedFieldRule, AnyObject } from 'befly/types/common.js';
+import type { FieldDefinition, AnyObject } from 'befly/types/common.js';
 
 /**
  * 构建索引操作 SQL（统一使用在线策略）
@@ -77,15 +76,14 @@ export function buildSystemColumnDefs(): string[] {
  * @param fields - 字段定义对象
  * @returns 业务字段的列定义数组
  */
-export function buildBusinessColumnDefs(fields: Record<string, string>): string[] {
+export function buildBusinessColumnDefs(fields: Record<string, FieldDefinition>): string[] {
     const colDefs: string[] = [];
 
-    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+    for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = utils.parseRule(fieldRule);
-        const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
+        const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
         const sqlType = getSqlType(fieldType, fieldMax);
 
         // 使用公共函数处理默认值
@@ -106,16 +104,15 @@ export function buildBusinessColumnDefs(fields: Record<string, string>): string[
  * 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
  *
  * @param fieldKey - 字段键名
- * @param fieldRule - 字段规则字符串
+ * @param fieldDef - 字段定义对象
  * @param isAdd - 是否为添加字段（true）还是修改字段（false）
  * @returns DDL 子句
  */
-export function generateDDLClause(fieldKey: string, fieldRule: string, isAdd: boolean = false): string {
+export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string {
     // 转换字段名为下划线格式
     const dbFieldName = snakeCase(fieldKey);
 
-    const parsed = utils.parseRule(fieldRule);
-    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
+    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
     const sqlType = getSqlType(fieldType, fieldMax);
 
     // 使用公共函数处理默认值

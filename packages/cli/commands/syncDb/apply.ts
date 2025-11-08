@@ -6,7 +6,6 @@
  * - 应用表结构变更计划
  */
 
-import { utils } from 'befly';
 import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
@@ -14,6 +13,7 @@ import { executeDDLSafely, buildIndexSQL } from './ddl.js';
 import { rebuildSqliteTable } from './sqlite.js';
 import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from '../../types.js';
 import type { SQL } from 'bun';
+import type { FieldDefinition } from 'befly/types/common';
 
 // 是否为计划模式（从环境变量读取）
 const IS_PLAN = process.argv.includes('--plan');
@@ -28,13 +28,12 @@ const IS_PLAN = process.argv.includes('--plan');
  * - 默认值变化
  *
  * @param existingColumn - 现有列信息
- * @param newRule - 新的字段规则字符串
+ * @param fieldDef - 新的字段定义对象
  * @param colName - 列名（未使用，保留参数兼容性）
  * @returns 变化数组
  */
-export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: string, colName: string): FieldChange[] {
-    const parsed = utils.parseRule(newRule);
-    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
+export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: FieldDefinition, colName: string): FieldChange[] {
+    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
     const changes: FieldChange[] = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
@@ -98,7 +97,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, newRule: stri
  * @param plan - 表结构变更计划
  * @param globalCount - 全局统计对象（用于计数）
  */
-export async function applyTablePlan(sql: SQL, tableName: string, fields: Record<string, string>, plan: TablePlan, globalCount: Record<string, number>): Promise<void> {
+export async function applyTablePlan(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan, globalCount: Record<string, number>): Promise<void> {
     if (!plan || !plan.changed) return;
 
     // SQLite: 仅支持部分 ALTER；需要时走重建

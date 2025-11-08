@@ -1,10 +1,9 @@
 ﻿/**
  * 数据验证器 - Befly 项目专用
- * 内置 RegexAliases，直接使用 util.ts 中的 parseRule
+ * 内置 RegexAliases，支持对象格式的字段定义
  */
 
-import { parseRule } from '../util.js';
-import type { TableDefinition, FieldRule } from '../types/common.js';
+import type { TableDefinition, FieldDefinition } from '../types/common.js';
 import type { ValidationResult, ValidationError } from '../types/validator';
 
 /**
@@ -135,8 +134,8 @@ export class Validator {
             const value = data[fieldName];
             if (!(fieldName in data) || value === undefined || value === null || value === '') {
                 result.code = 1;
-                const ruleParts = parseRule(rules[fieldName] || '');
-                const fieldLabel = ruleParts.name || fieldName;
+                const fieldDef = rules[fieldName];
+                const fieldLabel = fieldDef?.name || fieldName;
                 result.fields[fieldName] = `${fieldLabel}(${fieldName})为必填项`;
             }
         }
@@ -158,7 +157,7 @@ export class Validator {
             }
 
             const value = data[fieldName];
-            const error = this.validateFieldValue(value, rule, fieldName);
+            const error = this.validateFieldValue(value, rules[fieldName], fieldName);
 
             if (error) {
                 result.code = 1;
@@ -190,21 +189,20 @@ export class Validator {
     /**
      * 验证单个字段的值
      */
-    private validateFieldValue(value: any, rule: FieldRule, fieldName: string): ValidationError {
-        const parsed = parseRule(rule);
-        let { name, type, min, max, regex } = parsed;
+    private validateFieldValue(value: any, fieldDef: FieldDefinition, fieldName: string): ValidationError {
+        let { name, type, min, max, regexp } = fieldDef;
 
-        regex = this.resolveRegexAlias(regex);
+        regexp = this.resolveRegexAlias(regexp);
 
         switch (type.toLowerCase()) {
             case 'number':
-                return this.validateNumber(value, name, min, max, regex, fieldName);
+                return this.validateNumber(value, name, min, max, regexp, fieldName);
             case 'string':
             case 'text':
-                return this.validateString(value, name, min, max, regex, fieldName);
+                return this.validateString(value, name, min, max, regexp, fieldName);
             case 'array_string':
             case 'array_text':
-                return this.validateArray(value, name, min, max, regex, fieldName);
+                return this.validateArray(value, name, min, max, regexp, fieldName);
             default:
                 return `字段 ${fieldName} 的类型 ${type} 不支持`;
         }
@@ -315,17 +313,16 @@ export class Validator {
     }
 
     /**
-     * 验证单个值
+     * 验证单个值（支持对象格式字段定义）
      */
-    validateSingleValue(value: any, rule: string): { valid: boolean; value: any; errors: string[] } {
-        const parsed = parseRule(rule);
-        let { name, type, min, max, regex, default: defaultValue } = parsed;
+    validateSingleValue(value: any, fieldDef: FieldDefinition): { valid: boolean; value: any; errors: string[] } {
+        let { name, type, min, max, regexp, default: defaultValue } = fieldDef;
 
-        regex = this.resolveRegexAlias(regex);
+        regexp = this.resolveRegexAlias(regexp);
 
         // 处理 undefined/null 值，使用默认值
         if (value === undefined || value === null) {
-            if (defaultValue !== 'null' && defaultValue !== null) {
+            if (defaultValue !== null) {
                 if ((type === 'array_string' || type === 'array_text') && typeof defaultValue === 'string') {
                     if (defaultValue === '[]') {
                         return { valid: true, value: [], errors: [] };
@@ -381,9 +378,9 @@ export class Validator {
                 if (max !== null && max > 0 && convertedValue > max) {
                     errors.push(`${name || '值'}不能大于${max}`);
                 }
-                if (regex && regex.trim() !== '' && regex !== 'null') {
+                if (regexp && regexp.trim() !== '') {
                     try {
-                        const regExp = new RegExp(regex);
+                        const regExp = new RegExp(regexp);
                         if (!regExp.test(String(convertedValue))) {
                             errors.push(`${name || '值'}格式不正确`);
                         }
@@ -404,9 +401,9 @@ export class Validator {
                 if (max !== null && max > 0 && convertedValue.length > max) {
                     errors.push(`${name || '值'}长度不能超过${max}个字符`);
                 }
-                if (regex && regex.trim() !== '' && regex !== 'null') {
+                if (regexp && regexp.trim() !== '') {
                     try {
-                        const regExp = new RegExp(regex);
+                        const regExp = new RegExp(regexp);
                         if (!regExp.test(convertedValue)) {
                             errors.push(`${name || '值'}格式不正确`);
                         }
@@ -427,9 +424,9 @@ export class Validator {
                 if (max !== null && max > 0 && convertedValue.length > max) {
                     errors.push(`${name || '值'}元素数量不能超过${max}个`);
                 }
-                if (regex && regex.trim() !== '' && regex !== 'null') {
+                if (regexp && regexp.trim() !== '') {
                     try {
-                        const regExp = new RegExp(regex);
+                        const regExp = new RegExp(regexp);
                         for (const item of convertedValue) {
                             if (!regExp.test(String(item))) {
                                 errors.push(`${name || '值'}的元素格式不正确`);
@@ -454,15 +451,15 @@ export class Validator {
      * 静态方法：快速验证
      */
     static validate(data: Record<string, any>, rules: TableDefinition, required?: string[]): ValidationResult;
-    static validate(value: any, rule: string): { valid: boolean; value: any; errors: string[] };
-    static validate(dataOrValue: any, rulesOrRule: any, required?: string[]): any {
+    static validate(value: any, fieldDef: FieldDefinition): { valid: boolean; value: any; errors: string[] };
+    static validate(dataOrValue: any, rulesOrFieldDef: any, required?: string[]): any {
         const validator = new Validator();
 
-        if (typeof rulesOrRule === 'string') {
-            return validator.validateSingleValue(dataOrValue, rulesOrRule);
+        if (rulesOrFieldDef && 'type' in rulesOrFieldDef) {
+            return validator.validateSingleValue(dataOrValue, rulesOrFieldDef);
         }
 
-        return validator.validate(dataOrValue, rulesOrRule, required || []);
+        return validator.validate(dataOrValue, rulesOrFieldDef, required || []);
     }
 
     /**

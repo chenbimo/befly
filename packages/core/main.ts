@@ -90,6 +90,5 @@ export const utils = {
     arrayKeysToCamel: utilFunctions.arrayKeysToCamel,
     pickFields: utilFunctions.pickFields,
     fieldClear: utilFunctions.fieldClear,
-    calcPerfTime: utilFunctions.calcPerfTime,
-    parseRule: utilFunctions.parseRule
+    calcPerfTime: utilFunctions.calcPerfTime
 };

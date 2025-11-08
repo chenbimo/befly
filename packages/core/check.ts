@@ -5,9 +5,9 @@
 
 import { basename } from 'pathe';
 import { Logger } from './lib/logger.js';
-import { parseRule } from './util.js';
 import { projectTableDir } from './paths.js';
 import { Addon } from './lib/addon.js';
+import type { FieldDefinition } from './types/common.d.ts';
 
 /**
  * 表文件信息接口
@@ -112,9 +112,9 @@ export const checkDefault = async function (): Promise<void> {
                 let fileRules = 0;
 
                 // 检查 table 中的每个验证规则
-                for (const [colKey, rule] of Object.entries(table)) {
-                    if (typeof rule !== 'string') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 规则必须为字符串`);
+                for (const [colKey, fieldDef] of Object.entries(table)) {
+                    if (typeof fieldDef !== 'object' || fieldDef === null || Array.isArray(fieldDef)) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 规则必须为对象`);
                         fileValid = false;
                         continue;
                     }
@@ -129,17 +129,9 @@ export const checkDefault = async function (): Promise<void> {
                         fileValid = false;
                     }
 
-                    // 使用 parseRule 解析字段规则
-                    let parsed;
-                    try {
-                        parsed = parseRule(rule);
-                    } catch (error: any) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段规则解析失败：${error.message}`);
-                        fileValid = false;
-                        continue;
-                    }
-
-                    const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regex: fieldRegx } = parsed;
+                    // 直接使用字段对象
+                    const field = fieldDef as FieldDefinition;
+                    const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regexp: fieldRegexp } = field;
 
                     // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
                     if (!FIELD_NAME_REGEX.test(fieldName)) {
@@ -171,18 +163,18 @@ export const checkDefault = async function (): Promise<void> {
                         }
                     }
 
-                    // 第6个值：是否创建索引必须为0或1
-                    if (fieldIndex !== 0 && fieldIndex !== 1) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为0或1`);
+                    // 第6个值：是否创建索引必须为布尔值
+                    if (typeof fieldIndex !== 'boolean') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为布尔值`);
                         fileValid = false;
                     }
 
-                    // 第7个值：必须为null或正则表达式（parseRule已经验证过了）
-                    // parseRule 已经将正则字符串转换为 RegExp 或 null，这里不需要再验证
+                    // 第7个值：必须为null或正则表达式
+                    // 对象格式中 regexp 已经是 RegExp | null，不需要再验证
 
                     // 第4个值与类型联动校验 + 默认值规则
                     if (fieldType === 'text') {
-                        // text：min/max 必须为 null，默认值必须为 'null'
+                        // text：min/max 必须为 null，默认值必须为 null
                         if (fieldMin !== null) {
                             Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
                             fileValid = false;
@@ -191,7 +183,7 @@ export const checkDefault = async function (): Promise<void> {
                             Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
                             fileValid = false;
                         }
-                        if (fieldDefault !== 'null') {
+                        if (fieldDefault !== null) {
                             Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
                             fileValid = false;
                         }
@@ -204,8 +196,8 @@ export const checkDefault = async function (): Promise<void> {
                             fileValid = false;
                         }
                     } else if (fieldType === 'number') {
-                        if (fieldDefault !== 'null' && typeof fieldDefault !== 'number') {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或null，当前为 "${fieldDefault}"`);
+                        if (fieldDefault !== null && typeof fieldDefault !== 'number') {
+                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或 null，当前为 "${fieldDefault}"`);
                             fileValid = false;
                         }
                     }

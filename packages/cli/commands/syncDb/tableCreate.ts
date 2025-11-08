@@ -9,13 +9,13 @@
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
 import { snakeCase } from 'es-toolkit/string';
-import { utils } from 'befly';
 import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
 
 import type { SQL } from 'bun';
+import type { FieldDefinition } from 'befly/types/common';
 
 // 是否为计划模式（从环境变量读取）
 const IS_PLAN = process.argv.includes('--plan');
@@ -27,7 +27,7 @@ const IS_PLAN = process.argv.includes('--plan');
  * @param tableName - 表名
  * @param fields - 字段定义对象
  */
-async function addPostgresComments(sql: SQL, tableName: string, fields: Record<string, string>): Promise<void> {
+async function addPostgresComments(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>): Promise<void> {
     // 系统字段注释
     const systemComments = [
         ['id', '主键ID'],
@@ -47,12 +47,11 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     }
 
     // 业务字段注释
-    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+    for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = utils.parseRule(fieldRule);
-        const { name: fieldName } = parsed;
+        const { name: fieldName } = fieldDef;
         const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS '${fieldName}'`;
         if (IS_PLAN) {
             Logger.info(`[计划] ${stmt}`);
@@ -70,7 +69,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
  * @param fields - 字段定义对象
  * @param systemIndexFields - 系统字段索引列表
  */
-async function createTableIndexes(sql: SQL, tableName: string, fields: Record<string, string>, systemIndexFields: string[]): Promise<void> {
+async function createTableIndexes(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[]): Promise<void> {
     const indexTasks: Promise<void>[] = [];
 
     // 系统字段索引
@@ -84,12 +83,11 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     }
 
     // 业务字段索引
-    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+    for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = utils.parseRule(fieldRule);
-        if (parsed.index === 1) {
+        if (fieldDef.index === true) {
             const stmt = buildIndexSQL(tableName, `idx_${dbFieldName}`, dbFieldName, 'create');
             if (IS_PLAN) {
                 Logger.info(`[计划] ${stmt}`);
@@ -113,7 +111,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
  * @param fields - 字段定义对象
  * @param systemIndexFields - 系统字段索引列表（可选，默认使用 ['created_at', 'updated_at', 'state']）
  */
-export async function createTable(sql: SQL, tableName: string, fields: Record<string, string>, systemIndexFields: string[] = ['created_at', 'updated_at', 'state']): Promise<void> {
+export async function createTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[] = ['created_at', 'updated_at', 'state']): Promise<void> {
     // 构建列定义
     const colDefs = [...buildSystemColumnDefs(), ...buildBusinessColumnDefs(fields)];
 

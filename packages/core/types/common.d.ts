@@ -21,9 +21,33 @@ export interface ValidationResult {
 }
 
 /**
- * 字段规则字符串
+ * 字段定义类型（对象格式）
+ */
+export interface FieldDefinition {
+    name: string; // 字段标签/描述
+    detail: string; // 字段详细说明
+    type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
+    min: number | null; // 最小值/最小长度
+    max: number | null; // 最大值/最大长度
+    default: any; // 默认值
+    index: boolean; // 是否创建索引
+    unique: boolean; // 是否唯一
+    comment: string; // 字段注释
+    nullable: boolean; // 是否允许为空
+    unsigned: boolean; // 是否无符号（仅number类型）
+    regexp: string | null; // 正则验证
+}
+
+/**
+ * 表定义类型（对象格式）
+ */
+export type TableDefinition = Record<string, FieldDefinition>;
+
+/**
+ * 字段规则字符串（已废弃，保留用于兼容）
  * 格式: "字段名|类型|最小值|最大值|默认值|是否索引|正则约束"
  *
+ * @deprecated 请使用 FieldDefinition 对象格式
  * @example
  * "用户名|string|2|50|null|1|^[a-zA-Z0-9_]+$"
  * "年龄|number|0|150|18|0|null"
@@ -31,12 +55,9 @@ export interface ValidationResult {
 export type FieldRule = string;
 
 /**
- * 表定义类型
- */
-export type TableDefinition = Record<string, FieldRule>;
-
-/**
- * 解析后的字段规则
+ * 解析后的字段规则（已废弃，保留用于兼容）
+ *
+ * @deprecated 请使用 FieldDefinition 对象格式
  */
 export interface ParsedFieldRule {
     name: string; // 字段名称

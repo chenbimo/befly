@@ -8,7 +8,6 @@
  */
 
 import { snakeCase } from 'es-toolkit/string';
-import { utils } from 'befly';
 import { Logger } from '../../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
@@ -18,6 +17,7 @@ import { compareFieldDefinition, applyTablePlan } from './apply.js';
 import { createTable } from './tableCreate.js';
 import type { TablePlan, ColumnInfo } from '../../types.js';
 import type { SQL } from 'bun';
+import type { FieldDefinition } from 'befly/types/common';
 
 // 是否为计划模式（从环境变量读取）
 const IS_PLAN = process.argv.includes('--plan');
@@ -43,7 +43,7 @@ const IS_PLAN = process.argv.includes('--plan');
  * @param globalCount - 全局统计对象（用于计数）
  * @returns 表结构变更计划
  */
-export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, string>, globalCount: Record<string, number>): Promise<TablePlan> {
+export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, globalCount: Record<string, number>): Promise<TablePlan> {
     const existingColumns = await getTableColumns(sql, tableName);
     const existingIndexes = await getTableIndexes(sql, tableName);
     let changed = false;
@@ -53,12 +53,12 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     const defaultClauses = [];
     const indexActions = [];
 
-    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+    for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         // 转换字段名为下划线格式（用于与数据库字段对比）
         const dbFieldName = snakeCase(fieldKey);
 
         if (existingColumns[dbFieldName]) {
-            const comparison = compareFieldDefinition(existingColumns[dbFieldName], fieldRule, dbFieldName);
+            const comparison = compareFieldDefinition(existingColumns[dbFieldName], fieldDef, dbFieldName);
             if (comparison.length > 0) {
                 for (const c of comparison) {
                     // 使用统一的日志格式函数和常量标签
@@ -72,8 +72,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     else if (c.type === 'comment') globalCount.nameChanges++;
                 }
 
-                const parsed = utils.parseRule(fieldRule);
-                const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
+                const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
 
                 if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
                     if (existingColumns[dbFieldName].length! > fieldMax) {
@@ -134,16 +133,15 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                         }
                     }
 
-                    if (!skipModify) modifyClauses.push(generateDDLClause(fieldKey, fieldRule, false));
+                    if (!skipModify) modifyClauses.push(generateDDLClause(fieldKey, fieldDef, false));
                 }
                 changed = true;
             }
         } else {
-            const parsed = utils.parseRule(fieldRule);
-            const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = parsed;
+            const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
             const lenPart = isStringOrArrayType(fieldType) ? ` 长度:${parseInt(String(fieldMax))}` : '';
             Logger.info(`  + 新增字段 ${dbFieldName} (${fieldType}${lenPart})`);
-            addClauses.push(generateDDLClause(fieldKey, fieldRule, true));
+            addClauses.push(generateDDLClause(fieldKey, fieldDef, true));
             changed = true;
             globalCount.addFields++;
         }
@@ -160,18 +158,17 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     }
 
     // 检查业务字段索引
-    for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+    for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const parsed = utils.parseRule(fieldRule);
         const indexName = `idx_${dbFieldName}`;
-        if (parsed.index === 1 && !existingIndexes[indexName]) {
-            indexActions.push({ action: 'create', indexName, fieldName: dbFieldName });
+        if (fieldDef.index === true && !existingIndexes[indexName]) {
+            indexActions.push({ action: 'create', indexName: indexName, fieldName: dbFieldName });
             changed = true;
             globalCount.indexCreate++;
-        } else if (!(parsed.index === 1) && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
-            indexActions.push({ action: 'drop', indexName, fieldName: dbFieldName });
+        } else if (!(fieldDef.index === true) && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
+            indexActions.push({ action: 'drop', indexName: indexName, fieldName: dbFieldName });
             changed = true;
             globalCount.indexDrop++;
         }
@@ -180,7 +177,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     // PG 列注释处理
     const commentActions = [];
     if (IS_PG) {
-        for (const [fieldKey, fieldRule] of Object.entries(fields)) {
+        for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             // 转换字段名为下划线格式
             const dbFieldName = snakeCase(fieldKey);
 
