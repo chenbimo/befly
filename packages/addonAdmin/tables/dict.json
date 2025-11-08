@@ -7,6 +7,9 @@
         "default": null,
         "index": true,
         "unique": false,
+        "comment": "字典名称",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "code": {
@@ -17,6 +20,9 @@
         "default": null,
         "index": true,
         "unique": false,
+        "comment": "字典代码",
+        "nullable": false,
+        "unsigned": true,
         "regexp": "^[a-zA-Z0-9_]+$"
     },
     "value": {
@@ -27,6 +33,9 @@
         "default": null,
         "index": true,
         "unique": false,
+        "comment": "字典值",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "sort": {
@@ -37,6 +46,9 @@
         "default": 0,
         "index": false,
         "unique": false,
+        "comment": "排序",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "pid": {
@@ -47,6 +59,9 @@
         "default": 0,
         "index": true,
         "unique": false,
+        "comment": "父级ID",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "description": {
@@ -57,6 +72,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "描述",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     }
 }

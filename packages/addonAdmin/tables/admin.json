@@ -7,6 +7,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "姓名",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "nickname": {
@@ -17,6 +20,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "昵称",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "email": {
@@ -27,6 +33,9 @@
         "default": null,
         "index": true,
         "unique": false,
+        "comment": "邮箱",
+        "nullable": false,
+        "unsigned": true,
         "regexp": "^[\\w.-]+@[\\w.-]+\\.\\w+$"
     },
     "phone": {
@@ -37,6 +46,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "手机号",
+        "nullable": false,
+        "unsigned": true,
         "regexp": "^1[3-9]\\d{9}$"
     },
     "username": {
@@ -47,6 +59,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "用户名",
+        "nullable": false,
+        "unsigned": true,
         "regexp": "^[a-zA-Z0-9_]+$"
     },
     "password": {
@@ -57,6 +72,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "密码",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "avatar": {
@@ -67,6 +85,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "头像",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "roleId": {
@@ -77,6 +98,9 @@
         "default": null,
         "index": true,
         "unique": false,
+        "comment": "角色ID",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "roleCode": {
@@ -87,6 +111,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "角色编码",
+        "nullable": false,
+        "unsigned": true,
         "regexp": "^[a-zA-Z0-9_]+$"
     },
     "roleType": {
@@ -97,6 +124,9 @@
         "default": "user",
         "index": true,
         "unique": false,
+        "comment": "角色类型",
+        "nullable": false,
+        "unsigned": true,
         "regexp": "^(admin|user)$"
     },
     "lastLoginTime": {
@@ -107,6 +137,9 @@
         "default": 0,
         "index": false,
         "unique": false,
+        "comment": "最后登录时间",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     },
     "lastLoginIp": {
@@ -117,6 +150,9 @@
         "default": null,
         "index": false,
         "unique": false,
+        "comment": "最后登录IP",
+        "nullable": false,
+        "unsigned": true,
         "regexp": null
     }
 }
