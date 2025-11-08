@@ -102,6 +102,134 @@ async function importWithTimeout(filePath: string, timeout: number = 3000): Prom
 }
 
 /**
+ * 扫描核心插件
+ */
+async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
+    const plugins: Plugin[] = [];
+    const glob = new Bun.Glob('*.ts');
+
+    for await (const file of glob.scan({
+        cwd: corePluginDir,
+        onlyFiles: true,
+        absolute: true
+    })) {
+        const fileName = basename(file).replace(/\.ts$/, '');
+        if (fileName.startsWith('_')) continue;
+
+        try {
+            const plugin = await importWithTimeout(file);
+            const pluginInstance = plugin.default;
+            pluginInstance.pluginName = fileName;
+            plugins.push(pluginInstance);
+            loadedPluginNames.add(fileName);
+        } catch (err: any) {
+            Logger.error(`核心插件 ${fileName} 导入失败`, err);
+            process.exit(1);
+        }
+    }
+
+    return plugins;
+}
+
+/**
+ * 扫描组件插件
+ */
+async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
+    const plugins: Plugin[] = [];
+    const glob = new Bun.Glob('*.ts');
+    const addons = Addon.scan();
+
+    for (const addon of addons) {
+        if (!Addon.dirExists(addon, 'plugins')) continue;
+
+        const addonPluginsDir = Addon.getDir(addon, 'plugins');
+        for await (const file of glob.scan({
+            cwd: addonPluginsDir,
+            onlyFiles: true,
+            absolute: true
+        })) {
+            const fileName = basename(file).replace(/\.ts$/, '');
+            if (fileName.startsWith('_')) continue;
+
+            const addonCamelCase = camelCase(addon);
+            const fileNameCamelCase = camelCase(fileName);
+            const pluginFullName = `addon${addonCamelCase.charAt(0).toUpperCase() + addonCamelCase.slice(1)}_${fileNameCamelCase}`;
+
+            if (loadedPluginNames.has(pluginFullName)) {
+                continue;
+            }
+
+            try {
+                const plugin = await importWithTimeout(file);
+                const pluginInstance = plugin.default;
+                pluginInstance.pluginName = pluginFullName;
+                plugins.push(pluginInstance);
+                loadedPluginNames.add(pluginFullName);
+            } catch (err: any) {
+                Logger.error(`组件${addon} ${fileName} 导入失败`, err);
+                process.exit(1);
+            }
+        }
+    }
+
+    return plugins;
+}
+
+/**
+ * 扫描用户插件
+ */
+async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
+    const plugins: Plugin[] = [];
+
+    if (!existsSync(projectPluginDir)) {
+        return plugins;
+    }
+
+    const glob = new Bun.Glob('*.ts');
+    for await (const file of glob.scan({
+        cwd: projectPluginDir,
+        onlyFiles: true,
+        absolute: true
+    })) {
+        const fileName = basename(file).replace(/\.ts$/, '');
+        if (fileName.startsWith('_')) continue;
+
+        const fileNameCamelCase = camelCase(fileName);
+        const pluginFullName = `app${fileNameCamelCase.charAt(0).toUpperCase() + fileNameCamelCase.slice(1)}`;
+
+        if (loadedPluginNames.has(pluginFullName)) {
+            continue;
+        }
+
+        try {
+            const plugin = await importWithTimeout(file);
+            const pluginInstance = plugin.default;
+            pluginInstance.pluginName = pluginFullName;
+            plugins.push(pluginInstance);
+            loadedPluginNames.add(pluginFullName);
+        } catch (err: any) {
+            Logger.error(`用户插件 ${fileName} 导入失败`, err);
+            process.exit(1);
+        }
+    }
+
+    return plugins;
+}
+
+/**
+ * 初始化单个插件
+ */
+async function initPlugin(befly: { pluginLists: Plugin[]; appContext: BeflyContext }, plugin: Plugin): Promise<void> {
+    befly.pluginLists.push(plugin);
+
+    if (typeof plugin?.onInit === 'function') {
+        befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
+    } else {
+        befly.appContext[plugin.pluginName] = {};
+    }
+}
+
+/**
  * 加载器类
  */
 export class Loader {
@@ -112,225 +240,64 @@ export class Loader {
     static async loadPlugins(befly: { pluginLists: Plugin[]; appContext: BeflyContext }): Promise<void> {
         try {
             const loadStartTime = Bun.nanoseconds();
+            const loadedPluginNames = new Set<string>();
 
-            const glob = new Bun.Glob('*.ts');
-            const corePlugins: Plugin[] = [];
-            const addonPlugins: Plugin[] = [];
-            const userPlugins: Plugin[] = [];
-            const loadedPluginNames = new Set<string>(); // 用于跟踪已加载的插件名称
-            let hadCorePluginError = false; // 核心插件错误（关键）
-            let hadAddonPluginError = false; // Addon 插件错误（警告）
-            let hadUserPluginError = false; // 用户插件错误（警告）
+            // 阶段1：扫描所有插件
+            const corePlugins = await scanCorePlugins(loadedPluginNames);
+            const addonPlugins = await scanAddonPlugins(loadedPluginNames);
+            const userPlugins = await scanUserPlugins(loadedPluginNames);
 
-            // 扫描核心插件目录
-            const corePluginsScanStart = Bun.nanoseconds();
-            for await (const file of glob.scan({
-                cwd: corePluginDir,
-                onlyFiles: true,
-                absolute: true
-            })) {
-                const fileName = basename(file).replace(/\.ts$/, '');
-                if (fileName.startsWith('_')) continue;
-
-                try {
-                    const plugin = await importWithTimeout(file);
-                    const pluginInstance = plugin.default;
-                    // 核心插件不带前缀
-                    pluginInstance.pluginName = fileName;
-                    corePlugins.push(pluginInstance);
-                    loadedPluginNames.add(fileName); // 记录已加载的核心插件名称
-                } catch (err: any) {
-                    hadCorePluginError = true;
-                    Logger.error(`核心插件 ${fileName} 导入失败`, error);
-                    process.exit(1);
-                }
-            }
-            const corePluginsScanTime = calcPerfTime(corePluginsScanStart);
-
+            // 阶段2：分层排序插件
             const sortedCorePlugins = sortPlugins(corePlugins);
             if (sortedCorePlugins === false) {
-                Logger.warn('核心插件依赖关系错误，请检查插件的 after 属性');
+                Logger.error('核心插件依赖关系错误，请检查插件的 dependencies 属性');
                 process.exit(1);
             }
 
-            // 初始化核心插件
-            const corePluginsInitStart = Bun.nanoseconds();
-            for (const plugin of sortedCorePlugins) {
-                try {
-                    befly.pluginLists.push(plugin);
-                    if (typeof plugin?.onInit === 'function') {
-                        const pluginInitStart = Bun.nanoseconds();
-                        befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
-                        const pluginInitTime = calcPerfTime(pluginInitStart);
-                    } else {
-                        befly.appContext[plugin.pluginName] = {};
-                    }
-                } catch (error: any) {
-                    hadCorePluginError = true;
-                    Logger.error(`核心插件 ${plugin.pluginName} 初始化失败`, error);
-                    process.exit(1);
-                }
-            }
-            const corePluginsInitTime = calcPerfTime(corePluginsInitStart);
-
-            // 扫描 addon 插件目录
-            const addons = Addon.scan();
-            if (addons.length > 0) {
-                const addonPluginsScanStart = Bun.nanoseconds();
-                for (const addon of addons) {
-                    if (!Addon.dirExists(addon, 'plugins')) continue;
-
-                    const addonPluginsDir = Addon.getDir(addon, 'plugins');
-                    for await (const file of glob.scan({
-                        cwd: addonPluginsDir,
-                        onlyFiles: true,
-                        absolute: true
-                    })) {
-                        const fileName = basename(file).replace(/\.ts$/, '');
-                        if (fileName.startsWith('_')) continue;
-
-                        // 组件插件：addon{组件名}_{插件名}，都用小驼峰
-                        // 例如：admin组件的db插件 → addonAdmin_db
-                        const addonCamelCase = camelCase(addon);
-                        const fileNameCamelCase = camelCase(fileName);
-                        const pluginFullName = `addon${addonCamelCase.charAt(0).toUpperCase() + addonCamelCase.slice(1)}_${fileNameCamelCase}`;
-
-                        // 检查是否已经加载了同名插件
-                        if (loadedPluginNames.has(pluginFullName)) {
-                            continue;
-                        }
-
-                        try {
-                            const importStart = Bun.nanoseconds();
-                            const plugin = await importWithTimeout(file);
-                            const importTime = calcPerfTime(importStart);
-                            const pluginInstance = plugin.default;
-                            pluginInstance.pluginName = pluginFullName;
-                            addonPlugins.push(pluginInstance);
-                            loadedPluginNames.add(pluginFullName);
-                        } catch (err: any) {
-                            hadAddonPluginError = true;
-                            Logger.error(`组件${addon} ${fileName} 导入失败`, error);
-                            process.exit(1);
-                        }
-                    }
-                }
-                const addonPluginsScanTime = calcPerfTime(addonPluginsScanStart);
-
-                const sortedAddonPlugins = sortPlugins(addonPlugins);
-                if (sortedAddonPlugins === false) {
-                    Logger.warn({
-                        level: 'WARNING',
-                        msg: '组件插件依赖关系错误，请检查插件的 after 属性'
-                    });
-                } else {
-                    // 初始化组件插件
-                    const addonPluginsInitStart = Bun.nanoseconds();
-                    for (const plugin of sortedAddonPlugins) {
-                        try {
-                            befly.pluginLists.push(plugin);
-
-                            if (typeof plugin?.onInit === 'function') {
-                                const pluginInitStart = Bun.nanoseconds();
-                                befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
-                                const pluginInitTime = calcPerfTime(pluginInitStart);
-                            } else {
-                                befly.appContext[plugin.pluginName] = {};
-                            }
-                        } catch (error: any) {
-                            hadAddonPluginError = true;
-                            Logger.error(`组件插件 ${plugin.pluginName} 初始化失败`, error);
-                        }
-                    }
-                    const addonPluginsInitTime = calcPerfTime(addonPluginsInitStart);
-                }
-            }
-
-            // 扫描用户插件目录
-            if (!existsSync(projectPluginDir)) {
-                // 项目插件目录不存在，跳过
-            } else {
-                const userPluginsScanStart = Bun.nanoseconds();
-                for await (const file of glob.scan({
-                    cwd: projectPluginDir,
-                    onlyFiles: true,
-                    absolute: true
-                })) {
-                    const fileName = basename(file).replace(/\.ts$/, '');
-                    if (fileName.startsWith('_')) continue;
-
-                    // 用户插件：app{插件名}，小驼峰
-                    // 例如：custom_auth.ts → appCustomAuth
-                    const fileNameCamelCase = camelCase(fileName);
-                    const pluginFullName = `app${fileNameCamelCase.charAt(0).toUpperCase() + fileNameCamelCase.slice(1)}`;
-
-                    // 检查是否已经加载了同名插件
-                    if (loadedPluginNames.has(pluginFullName)) {
-                        continue;
-                    }
-
-                    try {
-                        const plugin = await importWithTimeout(file);
-                        const pluginInstance = plugin.default;
-                        pluginInstance.pluginName = pluginFullName;
-                        userPlugins.push(pluginInstance);
-                        loadedPluginNames.add(pluginFullName);
-                    } catch (err: any) {
-                        hadUserPluginError = true;
-                        Logger.error(`用户插件 ${fileName} 导入失败`, error);
-                        process.exit(1);
-                    }
-                }
+            const sortedAddonPlugins = sortPlugins(addonPlugins);
+            if (sortedAddonPlugins === false) {
+                Logger.error('组件插件依赖关系错误，请检查插件的 dependencies 属性');
+                process.exit(1);
             }
 
             const sortedUserPlugins = sortPlugins(userPlugins);
             if (sortedUserPlugins === false) {
-                Logger.warn({
-                    level: 'WARNING',
-                    msg: '用户插件依赖关系错误，请检查插件的 after 属性'
-                });
-                // 用户插件错误不退出，只是跳过这些插件
-                return;
-            }
-
-            // 初始化用户插件
-            if (userPlugins.length > 0) {
-                const userPluginsInitStart = Bun.nanoseconds();
-                for (const plugin of sortedUserPlugins) {
-                    try {
-                        befly.pluginLists.push(plugin);
-
-                        if (typeof plugin?.onInit === 'function') {
-                            befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
-                        } else {
-                            befly.appContext[plugin.pluginName] = {};
-                        }
-                    } catch (error: any) {
-                        hadUserPluginError = true;
-                        Logger.error(`用户插件 ${plugin.pluginName} 初始化失败`, error);
-                    }
-                }
-                const userPluginsInitTime = calcPerfTime(userPluginsInitStart);
-            }
-
-            const totalLoadTime = calcPerfTime(loadStartTime);
-            const totalPluginCount = sortedCorePlugins.length + addonPlugins.length + sortedUserPlugins.length;
-
-            // 核心插件失败 → 关键错误，必须退出
-            if (hadCorePluginError) {
-                Logger.warn('核心插件加载失败，无法继续启动');
+                Logger.error('用户插件依赖关系错误，请检查插件的 dependencies 属性');
                 process.exit(1);
             }
 
-            // Addon 插件失败 → 警告，可以继续运行
-            if (hadAddonPluginError) {
-                Logger.warn('部分 Addon 插件加载失败，但不影响核心功能');
+            // 阶段3：分层初始化插件（核心 → 组件 → 用户）
+            // 3.1 初始化核心插件
+            for (const plugin of sortedCorePlugins) {
+                try {
+                    await initPlugin(befly, plugin);
+                } catch (error: any) {
+                    Logger.error(`核心插件 ${plugin.pluginName} 初始化失败`, error);
+                    process.exit(1);
+                }
             }
 
-            // 用户插件失败 → 警告，可以继续运行
-            if (hadUserPluginError) {
-                Logger.warn('部分用户插件加载失败，但不影响核心功能');
+            // 3.2 初始化组件插件
+            for (const plugin of sortedAddonPlugins) {
+                try {
+                    await initPlugin(befly, plugin);
+                } catch (error: any) {
+                    Logger.error(`组件插件 ${plugin.pluginName} 初始化失败`, error);
+                    process.exit(1);
+                }
             }
+
+            // 3.3 初始化用户插件
+            for (const plugin of sortedUserPlugins) {
+                try {
+                    await initPlugin(befly, plugin);
+                } catch (error: any) {
+                    Logger.error(`用户插件 ${plugin.pluginName} 初始化失败`, error);
+                    process.exit(1);
+                }
+            }
+
+            const totalLoadTime = calcPerfTime(loadStartTime);
         } catch (error: any) {
             Logger.error('加载插件时发生错误', error);
             process.exit(1);
