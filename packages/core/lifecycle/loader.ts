@@ -134,6 +134,7 @@ export class Loader {
                 try {
                     const plugin = await importWithTimeout(file);
                     const pluginInstance = plugin.default;
+                    // 核心插件不带前缀
                     pluginInstance.pluginName = fileName;
                     corePlugins.push(pluginInstance);
                     loadedPluginNames.add(fileName); // 记录已加载的核心插件名称
@@ -187,7 +188,11 @@ export class Loader {
                         const fileName = basename(file).replace(/\.ts$/, '');
                         if (fileName.startsWith('_')) continue;
 
-                        const pluginFullName = `${addon}.${fileName}`;
+                        // 组件插件：addon{组件名}_{插件名}，都用小驼峰
+                        // 例如：admin组件的db插件 → addonAdmin_db
+                        const addonCamelCase = addon.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                        const fileNameCamelCase = fileName.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                        const pluginFullName = `addon${addonCamelCase.charAt(0).toUpperCase() + addonCamelCase.slice(1)}_${fileNameCamelCase}`;
 
                         // 检查是否已经加载了同名插件
                         if (loadedPluginNames.has(pluginFullName)) {
@@ -253,16 +258,22 @@ export class Loader {
                     const fileName = basename(file).replace(/\.ts$/, '');
                     if (fileName.startsWith('_')) continue;
 
-                    // 检查是否已经加载了同名的核心插件
-                    if (loadedPluginNames.has(fileName)) {
+                    // 用户插件：app{插件名}，小驼峰
+                    // 例如：custom_auth.ts → appCustomAuth
+                    const fileNameCamelCase = fileName.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                    const pluginFullName = `app${fileNameCamelCase.charAt(0).toUpperCase() + fileNameCamelCase.slice(1)}`;
+
+                    // 检查是否已经加载了同名插件
+                    if (loadedPluginNames.has(pluginFullName)) {
                         continue;
                     }
 
                     try {
                         const plugin = await importWithTimeout(file);
                         const pluginInstance = plugin.default;
-                        pluginInstance.pluginName = fileName;
+                        pluginInstance.pluginName = pluginFullName;
                         userPlugins.push(pluginInstance);
+                        loadedPluginNames.add(pluginFullName);
                     } catch (err: any) {
                         hadUserPluginError = true;
                         Logger.error(`用户插件 ${fileName} 导入失败`, error);
