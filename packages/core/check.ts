@@ -131,6 +131,55 @@ export const checkDefault = async function (): Promise<void> {
 
                     // 直接使用字段对象
                     const field = fieldDef as FieldDefinition;
+
+                    // 检查必填字段：name, type, min, max
+                    if (!field.name || typeof field.name !== 'string') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 name 或类型错误`);
+                        fileValid = false;
+                        continue;
+                    }
+                    if (!field.type || typeof field.type !== 'string') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 type 或类型错误`);
+                        fileValid = false;
+                        continue;
+                    }
+                    if (field.min === undefined) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 min`);
+                        fileValid = false;
+                        continue;
+                    }
+                    if (field.max === undefined) {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 max`);
+                        fileValid = false;
+                        continue;
+                    }
+
+                    // 检查可选字段的类型
+                    if (field.detail !== undefined && typeof field.detail !== 'string') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 detail 类型错误，必须为字符串`);
+                        fileValid = false;
+                    }
+                    if (field.index !== undefined && typeof field.index !== 'boolean') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 index 类型错误，必须为布尔值`);
+                        fileValid = false;
+                    }
+                    if (field.unique !== undefined && typeof field.unique !== 'boolean') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 unique 类型错误，必须为布尔值`);
+                        fileValid = false;
+                    }
+                    if (field.nullable !== undefined && typeof field.nullable !== 'boolean') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 nullable 类型错误，必须为布尔值`);
+                        fileValid = false;
+                    }
+                    if (field.unsigned !== undefined && typeof field.unsigned !== 'boolean') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 unsigned 类型错误，必须为布尔值`);
+                        fileValid = false;
+                    }
+                    if (field.regexp !== undefined && field.regexp !== null && typeof field.regexp !== 'string') {
+                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 regexp 类型错误，必须为 null 或字符串`);
+                        fileValid = false;
+                    }
+
                     const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regexp: fieldRegexp } = field;
 
                     // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
@@ -163,15 +212,6 @@ export const checkDefault = async function (): Promise<void> {
                         }
                     }
 
-                    // 第6个值：是否创建索引必须为布尔值
-                    if (typeof fieldIndex !== 'boolean') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 索引标识 "${fieldIndex}" 格式错误，必须为布尔值`);
-                        fileValid = false;
-                    }
-
-                    // 第7个值：必须为null或正则表达式
-                    // 对象格式中 regexp 已经是 RegExp | null，不需要再验证
-
                     // 第4个值与类型联动校验 + 默认值规则
                     if (fieldType === 'text') {
                         // text：min/max 必须为 null，默认值必须为 null
@@ -196,7 +236,8 @@ export const checkDefault = async function (): Promise<void> {
                             fileValid = false;
                         }
                     } else if (fieldType === 'number') {
-                        if (fieldDefault !== null && typeof fieldDefault !== 'number') {
+                        // number 类型：default 如果存在，必须为 null 或 number
+                        if (fieldDefault !== undefined && fieldDefault !== null && typeof fieldDefault !== 'number') {
                             Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或 null，当前为 "${fieldDefault}"`);
                             fileValid = false;
                         }
