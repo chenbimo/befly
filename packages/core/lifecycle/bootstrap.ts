@@ -21,9 +21,9 @@ import type { Plugin } from '../types/plugin.js';
 export class Bootstrap {
     /**
      * 启动HTTP服务器
-     * @param befly - Befly实例（需要访问 apiRoutes, pluginLists, appContext, appOptions）
+     * @param befly - Befly实例（需要访问 apiRoutes, pluginLists, appContext）
      */
-    static async start(befly: { apiRoutes: Map<string, ApiRoute>; pluginLists: Plugin[]; appContext: BeflyContext; appOptions: any }): Promise<Server> {
+    static async start(befly: { apiRoutes: Map<string, ApiRoute>; pluginLists: Plugin[]; appContext: BeflyContext }): Promise<Server> {
         const startTime = Bun.nanoseconds();
 
         const server = Bun.serve({
@@ -32,8 +32,7 @@ export class Bootstrap {
             routes: {
                 '/': rootHandler,
                 '/api/*': apiHandler(befly.apiRoutes, befly.pluginLists, befly.appContext),
-                '/*': staticHandler,
-                ...(befly.appOptions.routes || {})
+                '/*': staticHandler
             },
             error: (error: Error) => {
                 Logger.error('服务启动时发生错误', error);

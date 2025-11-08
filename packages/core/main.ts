@@ -17,7 +17,7 @@ import { Addon } from './lib/addon.js';
 import { checkDefault } from './check.js';
 
 import type { Server } from 'bun';
-import type { BeflyContext, BeflyOptions } from './types/befly.js';
+import type { BeflyContext } from './types/befly.js';
 /**
  * Befly 框架核心类
  * 职责：管理应用上下文和生命周期
@@ -29,8 +29,8 @@ export class Befly {
     /** 应用上下文 */
     public appContext: BeflyContext;
 
-    constructor(options: BeflyOptions = {}) {
-        this.lifecycle = new Lifecycle(options);
+    constructor() {
+        this.lifecycle = new Lifecycle();
         this.appContext = {};
     }
 

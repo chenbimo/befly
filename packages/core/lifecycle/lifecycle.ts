@@ -15,7 +15,7 @@ import { Bootstrap } from './bootstrap.js';
 import type { Server } from 'bun';
 import type { Plugin } from '../types/plugin.js';
 import type { ApiRoute } from '../types/api.js';
-import type { BeflyContext, BeflyOptions } from '../types/befly.js';
+import type { BeflyContext } from '../types/befly.js';
 
 /**
  * 生命周期管理类
@@ -27,12 +27,7 @@ export class Lifecycle {
     /** 插件列表 */
     private pluginLists: Plugin[] = [];
 
-    /** 应用配置选项 */
-    private options: BeflyOptions;
-
-    constructor(options: BeflyOptions = {}) {
-        this.options = options;
-    }
+    constructor() {}
 
     /**
      * 启动完整的生命周期流程
@@ -56,8 +51,7 @@ export class Lifecycle {
         return await Bootstrap.start({
             apiRoutes: this.apiRoutes,
             pluginLists: this.pluginLists,
-            appContext,
-            appOptions: this.options
+            appContext
         });
     }
 
