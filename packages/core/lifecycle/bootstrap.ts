@@ -4,7 +4,7 @@
  */
 
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime, No } from '../util.js';
+import { calcPerfTime } from '../util.js';
 import { Env } from '../env.js';
 import { rootHandler } from '../router/root.js';
 import { apiHandler } from '../router/api.js';
@@ -22,17 +22,8 @@ export class Bootstrap {
     /**
      * 启动HTTP服务器
      * @param befly - Befly实例（需要访问 apiRoutes, pluginLists, appContext, appOptions）
-     * @param callback - 启动后的回调函数
      */
-    static async start(
-        befly: {
-            apiRoutes: Map<string, ApiRoute>;
-            pluginLists: Plugin[];
-            appContext: BeflyContext;
-            appOptions: any;
-        },
-        callback?: (server: Server) => void
-    ): Promise<Server> {
+    static async start(befly: { apiRoutes: Map<string, ApiRoute>; pluginLists: Plugin[]; appContext: BeflyContext; appOptions: any }): Promise<Server> {
         const startTime = Bun.nanoseconds();
 
         const server = Bun.serve({
@@ -46,17 +37,13 @@ export class Bootstrap {
             },
             error: (error: Error) => {
                 Logger.error('服务启动时发生错误', error);
-                return Response.json(No('内部服务器错误'));
+                return Response.json({ code: 1, msg: '内部服务器错误' });
             }
         });
 
         const finalStartupTime = calcPerfTime(startTime);
         Logger.info(`${Env.APP_NAME} 服务器启动成功! 服务器启动耗时: ${finalStartupTime}`);
         Logger.info(`服务器监听地址: http://${Env.APP_HOST}:${Env.APP_PORT}`);
-
-        if (callback && typeof callback === 'function') {
-            callback(server);
-        }
 
         return server;
     }

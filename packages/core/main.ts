@@ -36,10 +36,9 @@ export class Befly {
 
     /**
      * 启动服务器并注册优雅关闭处理
-     * @param callback - 启动完成后的回调函数
      */
-    async listen(callback?: (server: Server) => void): Promise<Server> {
-        const server = await this.lifecycle.start(this.appContext, callback);
+    async listen(): Promise<Server> {
+        const server = await this.lifecycle.start(this.appContext);
 
         const gracefulShutdown = async (signal: string) => {
             // 1. 停止接收新请求

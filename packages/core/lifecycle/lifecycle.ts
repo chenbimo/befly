@@ -37,9 +37,8 @@ export class Lifecycle {
     /**
      * 启动完整的生命周期流程
      * @param appContext - 应用上下文
-     * @param callback - 启动完成后的回调函数
      */
-    async start(appContext: BeflyContext, callback?: (server: Server) => void): Promise<Server> {
+    async start(appContext: BeflyContext): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
 
         // 1. 执行系统检查
@@ -54,15 +53,12 @@ export class Lifecycle {
         // 4. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
 
-        return await Bootstrap.start(
-            {
-                apiRoutes: this.apiRoutes,
-                pluginLists: this.pluginLists,
-                appContext,
-                appOptions: this.options
-            },
-            callback
-        );
+        return await Bootstrap.start({
+            apiRoutes: this.apiRoutes,
+            pluginLists: this.pluginLists,
+            appContext,
+            appOptions: this.options
+        });
     }
 
     /**
