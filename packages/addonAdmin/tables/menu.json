@@ -1,4 +1,4 @@
-{
+﻿{
     "name": {
         "name": "菜单名称",
         "type": "string",
@@ -7,7 +7,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "菜单名称",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -20,7 +20,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "路由路径",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -33,7 +33,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "图标名称",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -46,7 +46,7 @@
         "default": 0,
         "index": false,
         "unique": false,
-        "comment": "排序",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -59,7 +59,7 @@
         "default": 0,
         "index": true,
         "unique": false,
-        "comment": "父级ID",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -72,7 +72,7 @@
         "default": 1,
         "index": true,
         "unique": false,
-        "comment": "菜单类型",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": "^(1|2)$"

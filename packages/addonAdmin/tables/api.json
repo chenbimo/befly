@@ -1,4 +1,4 @@
-{
+﻿{
     "name": {
         "name": "接口名称",
         "type": "string",
@@ -7,7 +7,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "接口名称",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -20,7 +20,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "接口路径",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -33,7 +33,7 @@
         "default": "POST",
         "index": true,
         "unique": false,
-        "comment": "请求方法",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": "^(GET|POST|PUT|DELETE|PATCH)$"
@@ -46,7 +46,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "接口描述",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -59,7 +59,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "所属插件",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -72,7 +72,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "插件标题",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null

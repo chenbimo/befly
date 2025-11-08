@@ -1,4 +1,4 @@
-{
+﻿{
     "name": {
         "name": "角色名称",
         "type": "string",
@@ -7,7 +7,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "角色名称",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -20,7 +20,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "角色编码",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": "^[a-zA-Z0-9_]+$"
@@ -33,7 +33,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "角色描述",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -46,7 +46,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "菜单权限",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -59,7 +59,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "接口权限",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -72,7 +72,7 @@
         "default": 0,
         "index": false,
         "unique": false,
-        "comment": "排序",
+        "comment": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
