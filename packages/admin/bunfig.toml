@@ -1,5 +1,2 @@
 [install]
 linker = "isolated"
-
-# Array form
-publicHoistPattern = ["@types*", "*eslint*", "@opentiny/*", "befly-vite"]

@@ -1,41 +1,95 @@
-import { createBeflyConfig } from 'befly-vite';
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
+import AutoImport from 'unplugin-auto-import/vite';
+import Components from 'unplugin-vue-components/vite';
+import Icons from 'unplugin-icons/vite';
+import IconsResolver from 'unplugin-icons/resolver';
+import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
+import autoRoutes from 'befly-auto-routes';
+import { fileURLToPath } from 'node:url';
 
-/**
- * Admin 项目 Vite 配置
- * 使用 createBeflyConfig 自动集成 befly-vite 的默认配置
- *
- * 默认已包含：
- * - Vue 3 + 响应式语法糖
- * - 自动路由（befly-auto-routes）
- * - 自动导入（Vue API、OpenTiny 组件等）
- * - SCSS 支持 + variables.scss 全局注入
- * - 开发服务器配置
- * - 构建优化配置
- *
- * 如需覆盖，直接在下方配置对象中指定即可
- */
-export default createBeflyConfig({
-    // 示例：覆盖服务器端口
-    // server: {
-    //     port: 3000
-    // },
-    // 示例：覆盖插件配置参数
-    // pluginConfigs: {
-    //     // 覆盖 autoRoutes 的 debug 参数
-    //     autoRoutes: {
-    //         debug: false
-    //     },
-    //     // 覆盖 AutoImport 的 dirs 参数
-    //     autoImport: {
-    //         dirs: ['./src/utils', './src/composables']
-    //     }
-    // },
-    // 示例：追加自定义插件
-    // extraPlugins: [
-    //     // 你的插件
-    // ],
-    // 示例：自定义构建输出目录
-    // build: {
-    //     outDir: 'build'
-    // }
+export default defineConfig({
+    root: process.cwd(),
+    base: './',
+    plugins: [
+        vue(),
+        ReactivityTransform(),
+        autoRoutes({ debug: true }),
+        Icons({
+            compiler: 'vue3',
+            autoInstall: true,
+            defaultClass: 'icon-befly',
+            defaultStyle: 'margin-right: 8px; vertical-align: middle;'
+        }),
+        AutoImport({
+            imports: [
+                'vue',
+                'vue-router',
+                'pinia',
+                {
+                    '@opentiny/vue': ['Modal', 'Notify', 'Loading', 'Message']
+                }
+            ],
+            resolvers: [TinyVueSingleResolver, IconsResolver({})],
+            vueTemplate: true,
+            dirsScanOptions: {
+                filePatterns: ['*.ts'],
+                fileFilter: (file) => file.endsWith('.ts'),
+                types: true
+            },
+            dirs: ['./src/plugins/**', './src/config/**'],
+            dts: 'src/types/auto-imports.d.ts',
+            eslintrc: { enabled: false }
+        }),
+        Components({
+            resolvers: [TinyVueSingleResolver, IconsResolver({})],
+            dirs: ['src/components'],
+            deep: true,
+            version: 3,
+            dts: 'src/types/components.d.ts'
+        })
+    ],
+    resolve: {
+        alias: {
+            '@': fileURLToPath(new URL('./src', import.meta.url))
+        }
+    },
+    define: {
+        __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production')
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                additionalData: `@use "@/styles/variables.scss" as *;`,
+                api: 'modern-compiler'
+            }
+        }
+    },
+    server: {
+        host: '0.0.0.0',
+        port: 5600,
+        strictPort: true,
+        open: false
+    },
+    logLevel: 'info',
+    optimizeDeps: {
+        include: ['vue', 'vue-router', 'pinia', '@opentiny/vue', 'axios']
+    },
+    build: {
+        target: 'esnext',
+        outDir: 'dist',
+        assetsDir: 'assets',
+        sourcemap: false,
+        minify: 'esbuild',
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vue: ['vue', 'vue-router', 'pinia'],
+                    opentiny: ['@opentiny/vue']
+                }
+            }
+        }
+    }
 });
