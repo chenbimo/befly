@@ -1,10 +1,10 @@
-<template>
+﻿<template>
     <div class="page-admin page-table">
         <div class="main-tool">
             <div class="left">
                 <tiny-button type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
-                        <Icon name="Plus" :size="16" />
+                        <i-lucide:plus style="width: 16px; height: 16px" />
                     </template>
                     添加管理员
                 </tiny-button>
@@ -12,7 +12,14 @@
             <div class="right">
                 <tiny-button @click="$Method.handleRefresh">
                     <template #icon>
-                        <Icon name="RotateCw" :size="16" />
+                        <i-lucide:rotate-cw style="width: 16px; height: 16px" />
+                    </template>
+                </tiny-button>
+            </div>
+            <div class="right">
+                <tiny-button @click="$Method.handleRefresh">
+                    <template #icon>
+                        <i-lucide:rotate-cw style="width: 16px; height: 16px" />
                     </template>
                     刷新
                 </tiny-button>
@@ -39,15 +46,15 @@
                             <template #dropdown>
                                 <tiny-dropdown-menu>
                                     <tiny-dropdown-item :item-data="{ command: 'role' }">
-                                        <Icon name="User" />
+                                        <i-lucide:user style="width: 14px; height: 14px; margin-right: 6px" />
                                         分配角色
                                     </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'upd' }">
-                                        <Icon name="Edit" />
+                                        <i-lucide:pencil style="width: 14px; height: 14px; margin-right: 6px" />
                                         编辑
                                     </tiny-dropdown-item>
                                     <tiny-dropdown-item :item-data="{ command: 'del' }" divided>
-                                        <Icon name="Trash2" />
+                                        <i-lucide:trash-2 style="width: 14px; height: 14px; margin-right: 6px" />
                                         删除
                                     </tiny-dropdown-item>
                                 </tiny-dropdown-menu>

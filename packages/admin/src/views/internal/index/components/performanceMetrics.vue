@@ -1,14 +1,14 @@
 <template>
     <div class="section-block">
         <div class="section-header">
-            <Icon name="Zap" :size="20" />
+            <i-lucide:zap style="width: 20px; height: 20px" />
             <h2>性能指标</h2>
         </div>
         <div class="section-content">
             <div class="performance-grid">
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <Icon name="Clock" :size="18" />
+                        <i-lucide:clock style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">平均响应</div>
@@ -17,7 +17,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <Icon name="TrendingUp" :size="18" />
+                        <i-lucide:trending-up style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">QPS</div>
@@ -26,7 +26,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <Icon name="AlertCircle" :size="18" />
+                        <i-lucide:alert-circle style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">错误率</div>
@@ -35,7 +35,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <Icon name="Activity" :size="18" />
+                        <i-lucide:activity style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">活跃连接</div>
@@ -45,7 +45,7 @@
             </div>
             <!-- 最慢接口提示 -->
             <div v-if="performanceMetrics.slowestApi" class="perf-slowest">
-                <Icon name="AlertTriangle" :size="14" />
+                <i-lucide:alert-triangle style="width: 14px; height: 14px" />
                 <span>最慢接口: {{ performanceMetrics.slowestApi.path }} ({{ performanceMetrics.slowestApi.time }}ms)</span>
             </div>
         </div>

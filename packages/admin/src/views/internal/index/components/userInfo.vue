@@ -2,7 +2,7 @@
     <div class="section-block user-info-card">
         <div class="user-header">
             <div class="user-avatar">
-                <Icon name="User" :size="32" />
+                <i-lucide:user style="width: 32px; height: 32px" />
             </div>
             <div class="user-basic">
                 <div class="user-name">{{ $Data.userInfo.nickname || $Data.userInfo.name || $Data.userInfo.username || '未设置' }}</div>
@@ -11,15 +11,15 @@
         </div>
         <div class="user-details">
             <div class="detail-item">
-                <Icon name="Mail" :size="14" />
+                <i-lucide:mail style="width: 14px; height: 14px" />
                 <span>{{ $Data.userInfo.email || '未设置' }}</span>
             </div>
             <div v-if="$Data.userInfo.phone" class="detail-item">
-                <Icon name="Phone" :size="14" />
+                <i-lucide:phone style="width: 14px; height: 14px" />
                 <span>{{ $Data.userInfo.phone }}</span>
             </div>
             <div v-if="$Data.userInfo.lastLoginTime" class="detail-item">
-                <Icon name="Clock" :size="14" />
+                <i-lucide:clock style="width: 14px; height: 14px" />
                 <span>{{ $Method.formatTime($Data.userInfo.lastLoginTime) }}</span>
             </div>
         </div>
@@ -28,7 +28,7 @@
         <div v-if="$Data.userInfo.roleCode === 'dev'" class="user-actions">
             <tiny-button type="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
                 <template #icon>
-                    <Icon name="RotateCw" :size="14" />
+                    <i-lucide:rotate-cw style="width: 14px; height: 14px" />
                 </template>
                 刷新缓存
             </tiny-button>

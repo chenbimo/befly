@@ -1,14 +1,19 @@
 <template>
     <div class="section-block">
         <div class="section-header">
-            <Icon name="Settings" :size="20" />
+            <i-lucide:settings style="width: 20px; height: 20px" />
             <h2>服务状态</h2>
         </div>
         <div class="section-content">
             <div class="config-grid">
                 <div v-for="service in services" :key="service.name" class="config-card" :class="`config-${service.status}`">
                     <div class="config-icon">
-                        <Icon :name="getServiceIcon(service.name)" :size="20" />
+                        <i-lucide:database v-if="service.name === '数据库'" style="width: 20px; height: 20px" />
+                        <i-lucide:zap v-else-if="service.name === 'Redis'" style="width: 20px; height: 20px" />
+                        <i-lucide:hard-drive v-else-if="service.name === '文件系统'" style="width: 20px; height: 20px" />
+                        <i-lucide:mail v-else-if="service.name === '邮件服务'" style="width: 20px; height: 20px" />
+                        <i-lucide:cloud v-else-if="service.name === 'OSS存储'" style="width: 20px; height: 20px" />
+                        <i-lucide:circle v-else style="width: 20px; height: 20px" />
                     </div>
                     <div class="config-info">
                         <div class="config-name">{{ service.name }}</div>
@@ -18,7 +23,10 @@
                         </div>
                     </div>
                     <div class="config-badge">
-                        <Icon :name="getStatusIcon(service.status)" :size="32" />
+                        <i-lucide:check-circle v-if="service.status === 'running'" style="width: 32px; height: 32px" />
+                        <i-lucide:x-circle v-else-if="service.status === 'stopped'" style="width: 32px; height: 32px" />
+                        <i-lucide:alert-circle v-else-if="service.status === 'unconfigured'" style="width: 32px; height: 32px" />
+                        <i-lucide:circle v-else style="width: 32px; height: 32px" />
                     </div>
                 </div>
             </div>
@@ -59,26 +67,6 @@ const getStatusText = (status) => {
         unconfigured: '未配置'
     };
     return texts[status] || status;
-};
-
-const getServiceIcon = (name) => {
-    const icons = {
-        数据库: 'Database',
-        Redis: 'Zap',
-        文件系统: 'HardDrive',
-        邮件服务: 'Mail',
-        OSS存储: 'Cloud'
-    };
-    return icons[name] || 'Circle';
-};
-
-const getStatusIcon = (status) => {
-    const icons = {
-        running: 'CheckCircle',
-        stopped: 'XCircle',
-        unconfigured: 'AlertCircle'
-    };
-    return icons[status] || 'Circle';
 };
 </script>
 

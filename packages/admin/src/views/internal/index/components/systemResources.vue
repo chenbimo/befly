@@ -1,14 +1,14 @@
 <template>
     <div class="section-block">
         <div class="section-header">
-            <Icon name="Activity" :size="20" />
+            <i-lucide:activity style="width: 20px; height: 20px" />
             <h2>系统资源</h2>
         </div>
         <div class="section-content">
             <div class="resource-compact-list">
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <Icon name="Cpu" :size="16" />
+                        <i-lucide:cpu style="width: 16px; height: 16px" />
                         <span class="resource-label">CPU</span>
                         <span class="resource-value">{{ systemResources.cpu.usage }}%</span>
                         <span class="resource-desc">{{ systemResources.cpu.cores }}核心</span>
@@ -17,7 +17,7 @@
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <Icon name="HardDrive" :size="16" />
+                        <i-lucide:hard-drive style="width: 16px; height: 16px" />
                         <span class="resource-label">内存</span>
                         <span class="resource-value">{{ systemResources.memory.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.memory.used }}GB / {{ systemResources.memory.total }}GB</span>
@@ -26,7 +26,7 @@
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <Icon name="Disc" :size="16" />
+                        <i-lucide:disc style="width: 16px; height: 16px" />
                         <span class="resource-label">磁盘</span>
                         <span class="resource-value">{{ systemResources.disk.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.disk.used }}GB / {{ systemResources.disk.total }}GB</span>

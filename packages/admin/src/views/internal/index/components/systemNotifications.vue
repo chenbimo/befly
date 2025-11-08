@@ -1,14 +1,18 @@
 <template>
     <div class="section-block">
         <div class="section-header">
-            <Icon name="Bell" :size="20" />
+            <i-lucide:bell style="width: 20px; height: 20px" />
             <h2>系统通知</h2>
         </div>
         <div class="section-content">
             <div class="notification-compact-list">
                 <div v-for="notification in notifications" :key="notification.id" class="notification-compact-item">
                     <div class="notification-icon" :class="`type-${notification.type}`">
-                        <Icon :name="getNotificationIcon(notification.type)" :size="16" />
+                        <i-lucide:info v-if="notification.type === 'info'" style="width: 16px; height: 16px" />
+                        <i-lucide:check-circle v-else-if="notification.type === 'success'" style="width: 16px; height: 16px" />
+                        <i-lucide:alert-triangle v-else-if="notification.type === 'warning'" style="width: 16px; height: 16px" />
+                        <i-lucide:x-circle v-else-if="notification.type === 'error'" style="width: 16px; height: 16px" />
+                        <i-lucide:bell v-else style="width: 16px; height: 16px" />
                     </div>
                     <div class="notification-content">
                         <span class="notification-title">{{ notification.title }}</span>
@@ -29,16 +33,6 @@ const notifications = $ref([
     { id: 3, type: 'error', title: 'SSL证书即将过期 - 请及时更新证书', isRead: false, createdAt: Date.now() - 86400000 },
     { id: 4, type: 'success', title: '性能优化完成 - 响应速度提升30%', isRead: true, createdAt: Date.now() - 172800000 }
 ]);
-
-const getNotificationIcon = (type) => {
-    const iconMap = {
-        info: 'Info',
-        success: 'CheckCircle',
-        warning: 'AlertTriangle',
-        error: 'XCircle'
-    };
-    return iconMap[type] || 'Bell';
-};
 
 const formatTime = (timestamp) => {
     const date = new Date(timestamp);

@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header">
-            <Icon name="Package" :size="20" />
+            <i-lucide:package style="width: 20px; height: 20px" />
             <h2>已安装插件</h2>
         </div>
         <div class="section-content">
@@ -9,7 +9,7 @@
                 <div v-for="addon in addonList" :key="addon.name" class="addon-item">
                     <div class="addon-status-badge" :class="{ active: addon.enabled }"></div>
                     <div class="addon-icon">
-                        <Icon name="Box" :size="20" />
+                        <i-lucide:box style="width: 20px; height: 20px" />
                     </div>
                     <div class="addon-info">
                         <div class="addon-title">

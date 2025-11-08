@@ -3,7 +3,7 @@
         <tiny-form-item prop="username" label="用户名">
             <tiny-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
                 <template #prefix-icon>
-                    <Icon name="User" :size="18" />
+                    <i-lucide:user style="width: 18px; height: 18px" />
                 </template>
             </tiny-input>
         </tiny-form-item>
@@ -11,7 +11,7 @@
         <tiny-form-item prop="email" label="邮箱">
             <tiny-input v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
                 <template #prefix-icon>
-                    <Icon name="Mail" :size="18" />
+                    <i-lucide:mail style="width: 18px; height: 18px" />
                 </template>
             </tiny-input>
         </tiny-form-item>
@@ -19,7 +19,7 @@
         <tiny-form-item prop="password" label="密码">
             <tiny-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
-                    <Icon name="Lock" :size="18" />
+                    <i-lucide:lock style="width: 18px; height: 18px" />
                 </template>
             </tiny-input>
         </tiny-form-item>
@@ -27,7 +27,7 @@
         <tiny-form-item prop="nickname" label="昵称">
             <tiny-input v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
                 <template #prefix-icon>
-                    <Icon name="Smile" :size="18" />
+                    <i-lucide:smile style="width: 18px; height: 18px" />
                 </template>
             </tiny-input>
         </tiny-form-item>

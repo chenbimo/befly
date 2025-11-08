@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header">
-            <Icon name="Server" :size="20" />
+            <i-lucide:server style="width: 20px; height: 20px" />
             <h2>运行环境</h2>
         </div>
         <div class="section-content">

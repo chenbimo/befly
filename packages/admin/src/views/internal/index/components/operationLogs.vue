@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header">
-            <Icon name="List" :size="20" />
+            <i-lucide:list style="width: 20px; height: 20px" />
             <h2>操作日志</h2>
         </div>
         <div class="section-content">
