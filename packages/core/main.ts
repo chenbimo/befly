@@ -83,10 +83,10 @@ export {
 
 // 工具函数命名空间导出
 export const utils = {
-    keysToSnake,
-    keysToCamel,
-    arrayKeysToCamel,
-    pickFields,
-    fieldClear,
-    calcPerfTime
+    keysToSnake: keysToSnake,
+    keysToCamel: keysToCamel,
+    arrayKeysToCamel: arrayKeysToCamel,
+    pickFields: pickFields,
+    fieldClear: fieldClear,
+    calcPerfTime: calcPerfTime
 };

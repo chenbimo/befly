@@ -40,7 +40,7 @@ export class Lifecycle {
         await Checker.run();
 
         // 2. 加载插件
-        await Loader.loadPlugins({ pluginLists: this.pluginLists, appContext });
+        await Loader.loadPlugins({ pluginLists: this.pluginLists, appContext: appContext });
 
         // 3. 加载所有 API（addon + app）
         await this.loadAllApis();
@@ -51,7 +51,7 @@ export class Lifecycle {
         return await Bootstrap.start({
             apiRoutes: this.apiRoutes,
             pluginLists: this.pluginLists,
-            appContext
+            appContext: appContext
         });
     }
 
