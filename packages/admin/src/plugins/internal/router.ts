@@ -28,11 +28,11 @@ router.beforeEach(async (to, from, next) => {
 
     // 1. 未登录且访问受保护路由 → 跳转登录
     if (!token && isProtectedRoute) {
-        return next('/login');
+        return next('/internal/login');
     }
 
     // 2. 已登录访问登录页 → 跳转首页
-    if (token && to.path === '/login') {
+    if (token && to.path === '/internal/login') {
         return next('/');
     }
 

@@ -12,4 +12,5 @@ publicHoistPattern = [
     "lint-staged",
     "lerna",
     "ci-info",
+    "@opentiny/*",
 ]

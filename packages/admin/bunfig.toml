@@ -1,2 +1,4 @@
 [install]
 linker = "isolated"
+
+publicHoistPattern = ["@types*", "*eslint*", "@opentiny/*"]
