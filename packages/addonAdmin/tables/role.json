@@ -7,7 +7,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "",
+        "detail": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -20,7 +20,7 @@
         "default": null,
         "index": true,
         "unique": false,
-        "comment": "",
+        "detail": "",
         "nullable": false,
         "unsigned": true,
         "regexp": "^[a-zA-Z0-9_]+$"
@@ -33,7 +33,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "",
+        "detail": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -46,7 +46,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "",
+        "detail": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -59,7 +59,7 @@
         "default": null,
         "index": false,
         "unique": false,
-        "comment": "",
+        "detail": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
@@ -72,7 +72,7 @@
         "default": 0,
         "index": false,
         "unique": false,
-        "comment": "",
+        "detail": "",
         "nullable": false,
         "unsigned": true,
         "regexp": null
