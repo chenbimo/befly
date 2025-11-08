@@ -60,7 +60,7 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
     const result: Plugin[] = [];
     const visited = new Set<string>();
     const visiting = new Set<string>();
-    const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.name, p]));
+    const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.pluginName || p.name, p]));
     let isPass = true;
 
     const visit = (name: string): void => {
@@ -74,13 +74,13 @@ export const sortPlugins = (plugins: Plugin[]): Plugin[] | false => {
         if (!plugin) return;
 
         visiting.add(name);
-        (plugin.dependencies || []).forEach(visit);
+        (plugin.after || []).forEach(visit);
         visiting.delete(name);
         visited.add(name);
         result.push(plugin);
     };
 
-    plugins.forEach((p) => visit(p.name));
+    plugins.forEach((p) => visit(p.pluginName || p.name));
     return isPass ? result : false;
 };
 
@@ -250,19 +250,19 @@ export class Loader {
             // 阶段2：分层排序插件
             const sortedCorePlugins = sortPlugins(corePlugins);
             if (sortedCorePlugins === false) {
-                Logger.error('核心插件依赖关系错误，请检查插件的 dependencies 属性');
+                Logger.error('核心插件依赖关系错误，请检查插件的 after 属性');
                 process.exit(1);
             }
 
             const sortedAddonPlugins = sortPlugins(addonPlugins);
             if (sortedAddonPlugins === false) {
-                Logger.error('组件插件依赖关系错误，请检查插件的 dependencies 属性');
+                Logger.error('组件插件依赖关系错误，请检查插件的 after 属性');
                 process.exit(1);
             }
 
             const sortedUserPlugins = sortPlugins(userPlugins);
             if (sortedUserPlugins === false) {
-                Logger.error('用户插件依赖关系错误，请检查插件的 dependencies 属性');
+                Logger.error('用户插件依赖关系错误，请检查插件的 after 属性');
                 process.exit(1);
             }
 
