@@ -20,11 +20,36 @@ import type { BeflyContext } from '../types/befly.js';
  * API 自定义的同名字段可以覆盖这些默认值
  */
 const DEFAULT_API_FIELDS = {
-    id: 'ID|number|1|null|null|0|null',
-    page: '页码|number|1|9999|1|0|null',
-    limit: '每页数量|number|1|100|10|0|null',
-    keyword: '关键词|string|1|50|null|0|null',
-    state: '状态|number|0|2|1|1|null'
+    id: {
+        name: 'ID',
+        type: 'number',
+        min: 1,
+        max: null
+    },
+    page: {
+        name: '页码',
+        type: 'number',
+        min: 1,
+        max: 9999
+    },
+    limit: {
+        name: '每页数量',
+        type: 'number',
+        min: 1,
+        max: 100
+    },
+    keyword: {
+        name: '关键词',
+        type: 'string',
+        min: 1,
+        max: 50
+    },
+    state: {
+        name: '状态',
+        type: 'number',
+        min: 0,
+        max: 2
+    }
 } as const;
 
 /**
