@@ -24,7 +24,7 @@
     },
     {
         "name": "权限设置",
-        "path": "/internal/settings",
+        "path": "/internal",
         "icon": "Settings",
         "sort": 3,
         "type": 1,

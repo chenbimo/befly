@@ -107,7 +107,7 @@ function mergeMenuConfigs(projectMenus: MenuConfig[], coreMenus: MenuConfig[]): 
 
 /**
  * 收集配置文件中所有菜单的 path（最多2级）
- * 子级菜单自动追加父级路径前缀
+ * 子级菜单使用独立路径
  */
 function collectPaths(menus: MenuConfig[]): Set<string> {
     const paths = new Set<string>();
@@ -119,9 +119,8 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
         if (menu.children && menu.children.length > 0) {
             for (const child of menu.children) {
                 if (child.path) {
-                    // 子级菜单追加父级路径前缀
-                    const fullPath = menu.path + child.path;
-                    paths.add(fullPath);
+                    // 子级菜单使用独立路径
+                    paths.add(child.path);
                 }
             }
         }
@@ -132,7 +131,7 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
 
 /**
  * 同步菜单（两层结构：父级和子级）
- * 子级菜单路径自动追加父级路径前缀
+ * 子级菜单使用独立路径
  */
 async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: number; updated: number; createdList: MenuDetail[]; updatedList: MenuDetailWithDiff[] }> {
     const stats = {
@@ -225,15 +224,15 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                 });
             }
 
-            // 2. 同步子级菜单（自动追加父级路径前缀）
+            // 2. 同步子级菜单（使用独立路径）
             if (menu.children && menu.children.length > 0) {
                 for (const child of menu.children) {
-                    // 子级菜单完整路径 = 父级路径 + 子级路径
-                    const childFullPath = menu.path + child.path;
+                    // 子级菜单使用独立路径
+                    const childPath = child.path;
 
                     const existingChild = await helper.getOne({
                         table: 'addon_admin_menu',
-                        where: { path: childFullPath }
+                        where: { path: childPath }
                     });
 
                     if (existingChild) {
@@ -273,7 +272,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
 
                             stats.updatedList.push({
                                 name: child.name,
-                                path: childFullPath,
+                                path: childPath,
                                 icon: child.icon,
                                 sort: child.sort,
                                 type: child.type,
@@ -288,7 +287,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             data: {
                                 pid: parentId,
                                 name: child.name,
-                                path: childFullPath,
+                                path: childPath,
                                 icon: child.icon || '',
                                 sort: child.sort || 0,
                                 type: child.type || 1
@@ -297,7 +296,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                         stats.created++;
                         stats.createdList.push({
                             name: child.name,
-                            path: childFullPath,
+                            path: childPath,
                             icon: child.icon,
                             sort: child.sort,
                             type: child.type,
