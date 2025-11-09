@@ -43,7 +43,9 @@ export const CHANGE_TYPE_LABELS = {
     length: '长度',
     datatype: '类型',
     comment: '注释',
-    default: '默认值'
+    default: '默认值',
+    nullable: '可空约束',
+    unique: '唯一约束'
 } as const;
 
 /**
@@ -68,9 +70,24 @@ export const IS_SQLITE = DB === 'sqlite';
 
 // 字段类型映射（按方言）
 export const typeMapping = {
-    number: IS_SQLITE ? 'INTEGER' : 'BIGINT',
+    number: IS_SQLITE ? 'INTEGER' : IS_PG ? 'BIGINT' : 'BIGINT',
     string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
     text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT',
     array_string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
     array_text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT'
 };
+
+/**
+ * 获取完整的 SQL 类型（包含 UNSIGNED 修饰符）
+ * @param fieldType - 字段类型
+ * @param unsigned - 是否无符号（仅 MySQL number 类型有效）
+ * @returns SQL 类型字符串
+ */
+export function getFullSqlType(fieldType: string, unsigned: boolean = false): string {
+    const baseType = typeMapping[fieldType as keyof typeof typeMapping] || 'TEXT';
+    // 仅 MySQL 的 number 类型支持 UNSIGNED
+    if (IS_MYSQL && fieldType === 'number' && unsigned) {
+        return `${baseType} UNSIGNED`;
+    }
+    return baseType;
+}

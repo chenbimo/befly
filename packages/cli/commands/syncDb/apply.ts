@@ -33,7 +33,7 @@ const IS_PLAN = process.argv.includes('--plan');
  * @returns 变化数组
  */
 export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: FieldDefinition, colName: string): FieldChange[] {
-    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
+    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault, unique, nullable, unsigned } = fieldDef;
     const changes: FieldChange[] = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
@@ -59,12 +59,26 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
         }
     }
 
-    // 检查数据类型变化（按方言）
-    if (existingColumn.type.toLowerCase() !== typeMapping[fieldType].toLowerCase()) {
+    // 检查数据类型变化（包含 UNSIGNED 修饰符）
+    const expectedType = IS_MYSQL && fieldType === 'number' && unsigned ? `${typeMapping[fieldType].toLowerCase()} unsigned` : typeMapping[fieldType].toLowerCase();
+
+    const currentType = existingColumn.columnType?.toLowerCase() || existingColumn.type.toLowerCase();
+
+    if (currentType !== expectedType) {
         changes.push({
             type: 'datatype',
-            current: existingColumn.type,
-            expected: typeMapping[fieldType].toLowerCase()
+            current: currentType,
+            expected: expectedType
+        });
+    }
+
+    // 检查 nullable 变化
+    const expectedNullable = nullable === true;
+    if (existingColumn.nullable !== expectedNullable) {
+        changes.push({
+            type: 'nullable',
+            current: existingColumn.nullable,
+            expected: expectedNullable
         });
     }
 

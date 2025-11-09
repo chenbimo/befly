@@ -83,17 +83,21 @@ export function buildBusinessColumnDefs(fields: Record<string, FieldDefinition>)
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
-        const sqlType = getSqlType(fieldType, fieldMax);
+        const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault, unique, nullable, unsigned } = fieldDef;
+        const sqlType = getSqlType(fieldType, fieldMax, unsigned);
 
         // 使用公共函数处理默认值
         const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
         const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
+        // 构建约束
+        const uniqueSql = unique ? ' UNIQUE' : '';
+        const nullableSql = nullable ? ' NULL' : ' NOT NULL';
+
         if (IS_MYSQL) {
-            colDefs.push(`\`${dbFieldName}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`);
+            colDefs.push(`\`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldName)}"`);
         } else {
-            colDefs.push(`"${dbFieldName}" ${sqlType} NOT NULL${defaultSql}`);
+            colDefs.push(`"${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`);
         }
     }
 
@@ -112,23 +116,27 @@ export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, i
     // 转换字段名为下划线格式
     const dbFieldName = snakeCase(fieldKey);
 
-    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
-    const sqlType = getSqlType(fieldType, fieldMax);
+    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault, unique, nullable, unsigned } = fieldDef;
+    const sqlType = getSqlType(fieldType, fieldMax, unsigned);
 
     // 使用公共函数处理默认值
     const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
     const defaultSql = generateDefaultSql(actualDefault, fieldType);
 
+    // 构建约束
+    const uniqueSql = unique ? ' UNIQUE' : '';
+    const nullableSql = nullable ? ' NULL' : ' NOT NULL';
+
     if (IS_MYSQL) {
-        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${dbFieldName}\` ${sqlType} NOT NULL${defaultSql} COMMENT "${escapeComment(fieldName)}"`;
+        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldName)}"`;
     }
     if (IS_PG) {
-        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType} NOT NULL${defaultSql}`;
+        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
         // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
         return `ALTER COLUMN "${dbFieldName}" TYPE ${sqlType}`;
     }
     // SQLite 仅支持 ADD COLUMN（>=3.50.0：支持 IF NOT EXISTS）
-    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType} NOT NULL${defaultSql}`;
+    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
     return '';
 }
 

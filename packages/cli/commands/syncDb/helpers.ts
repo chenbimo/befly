@@ -118,20 +118,26 @@ export function isStringOrArrayType(fieldType: string): boolean {
  *
  * @param fieldType - 字段类型（number/string/text/array_string/array_text）
  * @param fieldMax - 最大长度（string/array_string 类型需要）
+ * @param unsigned - 是否无符号（仅 MySQL number 类型有效）
  * @returns SQL 类型字符串
  *
  * @example
  * getSqlType('string', 100) // => 'VARCHAR(100)'
- * getSqlType('number', null) // => 'BIGINT'
+ * getSqlType('number', null, true) // => 'BIGINT UNSIGNED'
  * getSqlType('text', null) // => 'MEDIUMTEXT'
  * getSqlType('array_string', 500) // => 'VARCHAR(500)'
  * getSqlType('array_text', null) // => 'MEDIUMTEXT'
  */
-export function getSqlType(fieldType: string, fieldMax: number | null): string {
+export function getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
     if (isStringOrArrayType(fieldType)) {
         return `${typeMapping[fieldType]}(${fieldMax})`;
     }
-    return typeMapping[fieldType] || 'TEXT';
+    // 使用 getFullSqlType 处理 UNSIGNED
+    const baseType = typeMapping[fieldType] || 'TEXT';
+    if (IS_MYSQL && fieldType === 'number' && unsigned) {
+        return `${baseType} UNSIGNED`;
+    }
+    return baseType;
 }
 
 /**

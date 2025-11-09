@@ -70,6 +70,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     else if (c.type === 'length') globalCount.maxChanges++;
                     else if (c.type === 'default') globalCount.defaultChanges++;
                     else if (c.type === 'comment') globalCount.nameChanges++;
+                    else if (c.type === 'nullable') globalCount.nullableChanges = (globalCount.nullableChanges || 0) + 1;
                 }
 
                 const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
