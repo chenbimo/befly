@@ -5,7 +5,8 @@
 
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
-import { Loader } from './loader.js';
+import { loadPlugins } from './loadPlugins.js';
+import { loadApis } from './loadApis.js';
 import { Checker } from './checker.js';
 import { Env } from '../env.js';
 import { calcPerfTime } from '../util.js';
@@ -40,10 +41,13 @@ export class Lifecycle {
         await Checker.run();
 
         // 2. 加载插件
-        await Loader.loadPlugins({ pluginLists: this.pluginLists, appContext: appContext });
+        await loadPlugins({
+            pluginLists: this.pluginLists,
+            appContext: appContext
+        });
 
-        // 3. 加载所有 API（addon + app）
-        await this.loadAllApis();
+        // 3. 加载所有 API
+        await loadApis(this.apiRoutes);
 
         // 4. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
@@ -53,42 +57,5 @@ export class Lifecycle {
             pluginLists: this.pluginLists,
             appContext: appContext
         });
-    }
-
-    /**
-     * 加载所有 API 路由
-     * 包括 core APIs、addon APIs 和 app APIs
-     */
-    private async loadAllApis(): Promise<void> {
-        // 1. 加载 Core APIs
-        try {
-            await Loader.loadApis('core', this.apiRoutes, { where: 'core' });
-        } catch (error: any) {
-            Logger.error(`核心 APIs 加载失败`, error);
-            throw error;
-        }
-
-        // 2. 加载 addon APIs
-        const addons = Addon.scan();
-
-        for (const addon of addons) {
-            const hasApis = Addon.dirExists(addon, 'apis');
-            if (hasApis) {
-                try {
-                    await Loader.loadApis(addon, this.apiRoutes, { where: 'addon', addonName: addon });
-                } catch (error: any) {
-                    Logger.error(`[组件 ${addon}] APIs 加载失败`, error);
-                    throw error;
-                }
-            }
-        }
-
-        // 3. 加载用户 APIs
-        try {
-            await Loader.loadApis('app', this.apiRoutes, { where: 'app' });
-        } catch (error: any) {
-            Logger.error(`用户 APIs 加载失败`, error);
-            throw error;
-        }
     }
 }

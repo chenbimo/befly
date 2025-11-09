@@ -39,6 +39,27 @@ export const No = <T = any>(msg: string = '', data: T | {} = {}, other: KeyValue
 };
 
 // ========================================
+// 动态导入工具
+// ========================================
+
+/**
+ * 带超时的动态导入函数
+ * @param filePath - 文件路径
+ * @param timeout - 超时时间（毫秒），默认 3000ms
+ * @returns 导入的模块
+ */
+export async function importWithTimeout(filePath: string, timeout: number = 3000): Promise<any> {
+    return Promise.race([
+        import(filePath),
+        new Promise((_, reject) =>
+            setTimeout(() => {
+                reject(new Error(`模块导入超时 (${timeout}ms)，可能存在死循环或模块依赖问题`));
+            }, timeout)
+        )
+    ]);
+}
+
+// ========================================
 // 字段转换工具（重新导出 lib/convert.ts）
 // ========================================
 
