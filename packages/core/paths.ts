@@ -89,3 +89,10 @@ export const projectApiDir = join(projectDir, 'apis');
  * @usage 存放用户业务表定义（JSON 格式）
  */
 export const projectTableDir = join(projectDir, 'tables');
+
+/**
+ * 项目组件目录
+ * @description {projectDir}/addons/
+ * @usage 存放本地组件（优先级高于 node_modules 中的组件）
+ */
+export const projectAddonsDir = join(projectDir, 'addons');

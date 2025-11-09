@@ -1,0 +1,80 @@
+﻿{
+    "name": {
+        "name": "角色名称",
+        "detail": "",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "nullable": false,
+        "unsigned": true,
+        "regexp": null
+    },
+    "code": {
+        "name": "角色编码",
+        "detail": "",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "default": null,
+        "index": true,
+        "unique": false,
+        "nullable": false,
+        "unsigned": true,
+        "regexp": "^[a-zA-Z0-9_]+$"
+    },
+    "description": {
+        "name": "角色描述",
+        "detail": "",
+        "type": "string",
+        "min": 0,
+        "max": 200,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "nullable": false,
+        "unsigned": true,
+        "regexp": null
+    },
+    "menus": {
+        "name": "菜单权限",
+        "detail": "",
+        "type": "array_text",
+        "min": null,
+        "max": null,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "nullable": false,
+        "unsigned": true,
+        "regexp": null
+    },
+    "apis": {
+        "name": "接口权限",
+        "detail": "",
+        "type": "array_text",
+        "min": null,
+        "max": null,
+        "default": null,
+        "index": false,
+        "unique": false,
+        "nullable": false,
+        "unsigned": true,
+        "regexp": null
+    },
+    "sort": {
+        "name": "排序",
+        "detail": "",
+        "type": "number",
+        "min": 0,
+        "max": 9999,
+        "default": 0,
+        "index": false,
+        "unique": false,
+        "nullable": false,
+        "unsigned": true,
+        "regexp": null
+    }
+}
