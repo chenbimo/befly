@@ -88,8 +88,8 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
             api.method = api.method || 'POST';
             api.auth = api.auth !== undefined ? api.auth : true;
 
-            // 合并默认字段：先设置默认字段，再用 API 自定义字段覆盖
-            api.fields = { ...DEFAULT_API_FIELDS, ...(api.fields || {}) };
+            // 合并默认字段：先设置自定义字段，再用默认字段覆盖（默认字段优先级更高）
+            api.fields = { ...(api.fields || {}), ...DEFAULT_API_FIELDS };
             api.required = api.required || [];
 
             // 验证可选属性的类型（如果提供了）
