@@ -58,7 +58,9 @@ const DEFAULT_API_FIELDS = {
  * @param displayName - 显示名称（用于日志）
  */
 async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>, routePrefix: string, displayName: string): Promise<void> {
+    console.log(`📂 开始扫描 [${displayName}] API 目录:`, apiDir);
     if (!existsSync(apiDir)) {
+        console.log(`⚠️  [${displayName}] API 目录不存在`);
         return;
     }
 
@@ -69,12 +71,15 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
         onlyFiles: true,
         absolute: true
     })) {
+        console.log(`📄 发现文件 [${displayName}]:`, file);
         const fileName = basename(file).replace(/\.ts$/, '');
         const apiPath = relative(apiDir, file).replace(/\.ts$/, '');
         if (apiPath.indexOf('_') !== -1) continue;
 
         try {
+            console.log(`🔄 尝试导入 [${displayName}]:`, file);
             const apiImport = await import(file);
+            console.log(`✅ 成功导入 [${displayName}]:`, apiPath);
             const api = apiImport.default;
             // 验证必填属性：name 和 handler
             if (typeof api.name !== 'string' || api.name.trim() === '') {
@@ -127,11 +132,17 @@ async function scanCoreApis(apiRoutes: Map<string, ApiRoute>): Promise<void> {
  */
 async function scanAddonApis(apiRoutes: Map<string, ApiRoute>): Promise<void> {
     const addons = Addon.scan();
+    console.log('🔍 扫描到的 addons:', addons);
 
     for (const addon of addons) {
-        if (!Addon.dirExists(addon, 'apis')) continue;
+        console.log('📦 检查 addon:', addon);
+        if (!Addon.dirExists(addon, 'apis')) {
+            console.log('⚠️  addon', addon, '没有 apis 目录');
+            continue;
+        }
 
         const addonApiDir = Addon.getDir(addon, 'apis');
+        console.log('📁 addon API 目录:', addonApiDir);
         await scanApisFromDir(addonApiDir, apiRoutes, `addon/${addon}`, `组件${addon}`);
     }
 }
