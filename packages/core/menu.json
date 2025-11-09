@@ -1,22 +1,22 @@
 [
     {
         "name": "首页",
-        "path": "/",
-        "icon": "Home",
+        "path": "/internal/index",
+        "icon": "",
         "sort": 1,
         "type": 1
     },
     {
         "name": "人员管理",
-        "path": "/internal/people",
-        "icon": "UserCircle",
+        "path": "_people",
+        "icon": "",
         "sort": 2,
         "type": 1,
         "children": [
             {
                 "name": "管理员管理",
-                "path": "/admin",
-                "icon": "Users",
+                "path": "/internal/admin",
+                "icon": "",
                 "sort": 2,
                 "type": 1
             }
@@ -24,22 +24,22 @@
     },
     {
         "name": "权限设置",
-        "path": "/internal",
-        "icon": "Settings",
+        "path": "_permission",
+        "icon": "",
         "sort": 3,
         "type": 1,
         "children": [
             {
                 "name": "菜单管理",
-                "path": "/menu",
-                "icon": "Menu",
+                "path": "/internal/menu",
+                "icon": "",
                 "sort": 4,
                 "type": 1
             },
             {
                 "name": "角色管理",
-                "path": "/role",
-                "icon": "Users",
+                "path": "/internal/role",
+                "icon": "",
                 "sort": 5,
                 "type": 1
             }
@@ -48,7 +48,7 @@
     {
         "name": "字典管理",
         "path": "/internal/dict",
-        "icon": "BookOpen",
+        "icon": "",
         "sort": 6,
         "type": 1
     }
