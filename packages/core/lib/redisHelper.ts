@@ -14,22 +14,22 @@ import { Database } from './database.js';
 const prefix = Env.REDIS_KEY_PREFIX ? `${Env.REDIS_KEY_PREFIX}:` : '';
 
 /**
- * 获取 Redis 客户端
- * @returns Redis 客户端实例
- * @throws 如果客户端未初始化
+ * Redis 助手类
  */
-function getClient(): RedisClient {
-    const client = Database.getRedis();
-    if (!client) {
-        throw new Error('Redis 客户端未初始化，请先调用 Database.connectRedis()');
-    }
-    return client;
-}
+export class RedisHelper {
+    private client: RedisClient;
 
-/**
- * Redis 助手对象
- */
-export const RedisHelper = {
+    /**
+     * 构造函数
+     */
+    constructor() {
+        const client = Database.getRedis();
+        if (!client) {
+            throw new Error('Redis 客户端未初始化，请先调用 Database.connectRedis()');
+        }
+        this.client = client;
+    }
+
     /**
      * 设置对象到 Redis
      * @param key - 键名
@@ -39,19 +39,18 @@ export const RedisHelper = {
      */
     async setObject<T = any>(key: string, obj: T, ttl: number | null = null): Promise<string | null> {
         try {
-            const client = getClient();
             const data = JSON.stringify(obj);
             const pkey = `${prefix}${key}`;
 
             if (ttl) {
-                return await client.setex(pkey, ttl, data);
+                return await this.client.setex(pkey, ttl, data);
             }
-            return await client.set(pkey, data);
+            return await this.client.set(pkey, data);
         } catch (error: any) {
             Logger.error('Redis setObject 错误', error);
             return null;
         }
-    },
+    }
 
     /**
      * 从 Redis 获取对象
@@ -60,15 +59,14 @@ export const RedisHelper = {
      */
     async getObject<T = any>(key: string): Promise<T | null> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            const data = await client.get(pkey);
+            const data = await this.client.get(pkey);
             return data ? JSON.parse(data) : null;
         } catch (error: any) {
             Logger.error('Redis getObject 错误', error);
             return null;
         }
-    },
+    }
 
     /**
      * 从 Redis 删除对象
@@ -76,13 +74,12 @@ export const RedisHelper = {
      */
     async delObject(key: string): Promise<void> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            await client.del(pkey);
+            await this.client.del(pkey);
         } catch (error: any) {
             Logger.error('Redis delObject 错误', error);
         }
-    },
+    }
 
     /**
      * 生成基于时间的唯一 ID
@@ -92,17 +89,16 @@ export const RedisHelper = {
      * @returns 唯一 ID (14位纯数字)
      */
     async genTimeID(): Promise<number> {
-        const client = getClient();
         const timestamp = Math.floor(Date.now() / 1000); // 秒级时间戳
         const key = `${prefix}time_id_counter:${timestamp}`;
 
-        const counter = await client.incr(key);
-        await client.expire(key, 1);
+        const counter = await this.client.incr(key);
+        await this.client.expire(key, 1);
 
         const counterSuffix = (counter % 10000).toString().padStart(4, '0');
 
         return Number(`${timestamp}${counterSuffix}`);
-    },
+    }
 
     /**
      * 批量生成基于时间的唯一 ID
@@ -121,13 +117,12 @@ export const RedisHelper = {
             throw new Error(`批量大小 ${count} 超过最大限制 ${MAX_BATCH_SIZE}`);
         }
 
-        const client = getClient();
         const timestamp = Math.floor(Date.now() / 1000); // 秒级时间戳
         const key = `${prefix}time_id_counter:${timestamp}`;
 
         // 使用 INCRBY 一次性获取 N 个连续计数
-        const startCounter = await client.incrby(key, count);
-        await client.expire(key, 1);
+        const startCounter = await this.client.incrby(key, count);
+        await this.client.expire(key, 1);
 
         // 生成 ID 数组
         const ids: number[] = [];
@@ -138,7 +133,7 @@ export const RedisHelper = {
         }
 
         return ids;
-    },
+    }
 
     /**
      * 设置字符串值
@@ -148,17 +143,16 @@ export const RedisHelper = {
      */
     async setString(key: string, value: string, ttl: number | null = null): Promise<string | null> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
             if (ttl) {
-                return await client.setex(pkey, ttl, value);
+                return await this.client.setex(pkey, ttl, value);
             }
-            return await client.set(pkey, value);
+            return await this.client.set(pkey, value);
         } catch (error: any) {
             Logger.error('Redis setString 错误', error);
             return null;
         }
-    },
+    }
 
     /**
      * 获取字符串值
@@ -166,14 +160,13 @@ export const RedisHelper = {
      */
     async getString(key: string): Promise<string | null> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.get(pkey);
+            return await this.client.get(pkey);
         } catch (error: any) {
             Logger.error('Redis getString 错误', error);
             return null;
         }
-    },
+    }
 
     /**
      * 检查键是否存在
@@ -181,14 +174,13 @@ export const RedisHelper = {
      */
     async exists(key: string): Promise<number> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.exists(pkey);
+            return await this.client.exists(pkey);
         } catch (error: any) {
             Logger.error('Redis exists 错误', error);
             return 0;
         }
-    },
+    }
 
     /**
      * 设置过期时间
@@ -197,14 +189,13 @@ export const RedisHelper = {
      */
     async expire(key: string, seconds: number): Promise<number> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.expire(pkey, seconds);
+            return await this.client.expire(pkey, seconds);
         } catch (error: any) {
             Logger.error('Redis expire 错误', error);
             return 0;
         }
-    },
+    }
 
     /**
      * 获取剩余过期时间
@@ -212,14 +203,13 @@ export const RedisHelper = {
      */
     async ttl(key: string): Promise<number> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.ttl(pkey);
+            return await this.client.ttl(pkey);
         } catch (error: any) {
             Logger.error('Redis ttl 错误', error);
             return -1;
         }
-    },
+    }
 
     /**
      * 向 Set 中添加一个或多个成员
@@ -231,14 +221,13 @@ export const RedisHelper = {
         try {
             if (members.length === 0) return 0;
 
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.sadd(pkey, ...members);
+            return await this.client.sadd(pkey, ...members);
         } catch (error: any) {
             Logger.error('Redis sadd 错误', error);
             return 0;
         }
-    },
+    }
 
     /**
      * 判断成员是否在 Set 中
@@ -248,14 +237,13 @@ export const RedisHelper = {
      */
     async sismember(key: string, member: string): Promise<number> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.sismember(pkey, member);
+            return await this.client.sismember(pkey, member);
         } catch (error: any) {
             Logger.error('Redis sismember 错误', error);
             return 0;
         }
-    },
+    }
 
     /**
      * 获取 Set 的成员数量
@@ -264,14 +252,13 @@ export const RedisHelper = {
      */
     async scard(key: string): Promise<number> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.scard(pkey);
+            return await this.client.scard(pkey);
         } catch (error: any) {
             Logger.error('Redis scard 错误', error);
             return 0;
         }
-    },
+    }
 
     /**
      * 获取 Set 的所有成员
@@ -280,14 +267,13 @@ export const RedisHelper = {
      */
     async smembers(key: string): Promise<string[]> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.smembers(pkey);
+            return await this.client.smembers(pkey);
         } catch (error: any) {
             Logger.error('Redis smembers 错误', error);
             return [];
         }
-    },
+    }
 
     /**
      * 删除键
@@ -296,14 +282,13 @@ export const RedisHelper = {
      */
     async del(key: string): Promise<number> {
         try {
-            const client = getClient();
             const pkey = `${prefix}${key}`;
-            return await client.del(pkey);
+            return await this.client.del(pkey);
         } catch (error: any) {
             Logger.error('Redis del 错误', error);
             return 0;
         }
-    },
+    }
 
     /**
      * 测试 Redis 连接
@@ -311,11 +296,10 @@ export const RedisHelper = {
      */
     async ping(): Promise<string> {
         try {
-            const client = getClient();
-            return await client.ping();
+            return await this.client.ping();
         } catch (error: any) {
             Logger.error('Redis ping 错误', error);
             throw error;
         }
     }
-};
+}
