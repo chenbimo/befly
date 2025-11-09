@@ -5,6 +5,7 @@
 
 import { basename } from 'pathe';
 import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { camelCase } from 'es-toolkit/string';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
@@ -60,7 +61,8 @@ async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         if (fileName.startsWith('_')) continue;
 
         try {
-            const pluginImport = await import(file);
+            const fileUrl = pathToFileURL(file).href;
+            const pluginImport = await import(fileUrl);
             const plugin = pluginImport.default;
             plugin.pluginName = fileName;
             plugins.push(plugin);
@@ -103,9 +105,10 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
             }
 
             try {
-                const plugin = require(file);
-                const pluginInstance = plugin.default;
-                pluginInstance.pluginName = pluginFullName;
+                const fileUrl = pathToFileURL(file).href;
+                const pluginImport = await import(fileUrl);
+                const plugin = pluginImport.default;
+                plugin.pluginName = pluginFullName;
                 plugins.push(pluginInstance);
                 loadedPluginNames.add(pluginFullName);
             } catch (err: any) {
@@ -145,9 +148,10 @@ async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         }
 
         try {
-            const plugin = require(file);
-            const pluginInstance = plugin.default;
-            pluginInstance.pluginName = pluginFullName;
+            const fileUrl = pathToFileURL(file).href;
+            const pluginImport = await import(fileUrl);
+            const plugin = pluginImport.default;
+            plugin.pluginName = pluginFullName;
             plugins.push(pluginInstance);
             loadedPluginNames.add(pluginFullName);
         } catch (err: any) {

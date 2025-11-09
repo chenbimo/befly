@@ -5,6 +5,7 @@
 
 import { relative, basename } from 'pathe';
 import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
@@ -62,6 +63,9 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
         return;
     }
 
+    const dd = await import('file:///D:/codes/befly/packages/tpl/node_modules/@befly-addon/admin/apis/role/apiDetail.ts');
+    console.log('🔥[ dd ]-7', dd);
+
     const glob = new Bun.Glob('**/*.ts');
 
     for await (const file of glob.scan({
@@ -74,7 +78,9 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
         if (apiPath.indexOf('_') !== -1) continue;
 
         try {
-            const apiImport = await import(file);
+            const fileUrl = pathToFileURL(file).href;
+            console.log('🔥[ fileUrl ]-79', fileUrl);
+            const apiImport = await import(fileUrl);
             const api = apiImport.default;
             // 验证必填属性：name 和 handler
             if (typeof api.name !== 'string' || api.name.trim() === '') {
