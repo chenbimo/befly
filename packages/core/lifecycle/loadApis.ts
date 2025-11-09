@@ -74,7 +74,8 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
         if (apiPath.indexOf('_') !== -1) continue;
 
         try {
-            const api = (await import(file)).default;
+            const apiImport = await import(file);
+            const api = apiImport.default;
             // 验证必填属性：name 和 handler
             if (typeof api.name !== 'string' || api.name.trim() === '') {
                 throw new Error(`接口 ${apiPath} 的 name 属性必须是非空字符串`);

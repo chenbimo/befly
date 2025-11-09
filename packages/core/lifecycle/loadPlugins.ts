@@ -60,10 +60,10 @@ async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         if (fileName.startsWith('_')) continue;
 
         try {
-            const plugin = await import(file);
-            const pluginInstance = plugin.default;
-            pluginInstance.pluginName = fileName;
-            plugins.push(pluginInstance);
+            const pluginImport = await import(file);
+            const plugin = pluginImport.default;
+            plugin.pluginName = fileName;
+            plugins.push(plugin);
             loadedPluginNames.add(fileName);
         } catch (err: any) {
             Logger.error(`核心插件 ${fileName} 导入失败`, err);
@@ -103,7 +103,7 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
             }
 
             try {
-                const plugin = await import(file);
+                const plugin = require(file);
                 const pluginInstance = plugin.default;
                 pluginInstance.pluginName = pluginFullName;
                 plugins.push(pluginInstance);
@@ -145,7 +145,7 @@ async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         }
 
         try {
-            const plugin = await import(file);
+            const plugin = require(file);
             const pluginInstance = plugin.default;
             pluginInstance.pluginName = pluginFullName;
             plugins.push(pluginInstance);

@@ -11,7 +11,6 @@ export default {
         try {
             // 从 Redis 缓存读取所有接口
             let allApis = await befly.redis.getObject<any[]>('apis:all');
-
             // 如果缓存不存在，从数据库查询
             if (!allApis || allApis.length === 0) {
                 befly.logger.info('接口缓存未命中，从数据库查询');
@@ -20,7 +19,6 @@ export default {
                     fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                     orderBy: ['addonName#ASC', 'path#ASC']
                 });
-
                 // 回写缓存
                 if (allApis.length > 0) {
                     await befly.redis.setObject('apis:all', allApis);
