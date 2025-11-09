@@ -7,7 +7,7 @@ import { basename } from 'pathe';
 import { existsSync } from 'node:fs';
 import { camelCase } from 'es-toolkit/string';
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime, importWithTimeout } from '../util.js';
+import { calcPerfTime } from '../util.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';
 import { Addon } from '../lib/addon.js';
 import type { Plugin } from '../types/plugin.js';
@@ -60,7 +60,7 @@ async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         if (fileName.startsWith('_')) continue;
 
         try {
-            const plugin = await importWithTimeout(file);
+            const plugin = await import(file);
             const pluginInstance = plugin.default;
             pluginInstance.pluginName = fileName;
             plugins.push(pluginInstance);
@@ -103,7 +103,7 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
             }
 
             try {
-                const plugin = await importWithTimeout(file);
+                const plugin = await import(file);
                 const pluginInstance = plugin.default;
                 pluginInstance.pluginName = pluginFullName;
                 plugins.push(pluginInstance);
@@ -145,7 +145,7 @@ async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         }
 
         try {
-            const plugin = await importWithTimeout(file);
+            const plugin = await import(file);
             const pluginInstance = plugin.default;
             pluginInstance.pluginName = pluginFullName;
             plugins.push(pluginInstance);

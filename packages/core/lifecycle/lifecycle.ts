@@ -46,7 +46,7 @@ export class Lifecycle {
             appContext: appContext
         });
 
-        // 3. 加载所有 API
+        // // 3. 加载所有 API
         await loadApis(this.apiRoutes);
 
         // 4. 启动 HTTP 服务器

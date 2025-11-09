@@ -7,7 +7,7 @@ import { relative, basename } from 'pathe';
 import { existsSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime, importWithTimeout } from '../util.js';
+import { calcPerfTime } from '../util.js';
 import { coreApiDir, projectApiDir } from '../paths.js';
 import { Addon } from '../lib/addon.js';
 import type { ApiRoute } from '../types/api.js';
@@ -74,8 +74,7 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
         if (apiPath.indexOf('_') !== -1) continue;
 
         try {
-            const api = (await importWithTimeout(file)).default;
-
+            const api = (await import(file)).default;
             // 验证必填属性：name 和 handler
             if (typeof api.name !== 'string' || api.name.trim() === '') {
                 throw new Error(`接口 ${apiPath} 的 name 属性必须是非空字符串`);
@@ -83,15 +82,12 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
             if (typeof api.handler !== 'function') {
                 throw new Error(`接口 ${apiPath} 的 handler 属性必须是函数`);
             }
-
             // 设置默认值
             api.method = api.method || 'POST';
             api.auth = api.auth !== undefined ? api.auth : true;
-
             // 合并默认字段：先设置自定义字段，再用默认字段覆盖（默认字段优先级更高）
             api.fields = { ...(api.fields || {}), ...DEFAULT_API_FIELDS };
             api.required = api.required || [];
-
             // 验证可选属性的类型（如果提供了）
             if (api.method && !['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].includes(api.method.toUpperCase())) {
                 throw new Error(`接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法`);
@@ -108,7 +104,6 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
             if (api.required && api.required.some((item: any) => typeof item !== 'string')) {
                 throw new Error(`接口 ${apiPath} 的 required 属性必须是字符串数组`);
             }
-
             // 构建路由
             api.route = `${api.method.toUpperCase()}/api/${routePrefix ? routePrefix + '/' : ''}${apiPath}`;
             apiRoutes.set(api.route, api);
