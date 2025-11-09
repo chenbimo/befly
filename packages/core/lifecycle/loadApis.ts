@@ -1,6 +1,6 @@
 /**
  * API 加载器
- * 负责扫描和加载所有 API 路由（核心、组件、用户）
+ * 负责扫描和加载所有 API 路由（组件、用户）
  */
 
 import { relative, basename, join } from 'pathe';
@@ -8,7 +8,7 @@ import { existsSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
-import { coreApiDir, projectApiDir } from '../paths.js';
+import { projectApiDir } from '../paths.js';
 import { Addon } from '../lib/addon.js';
 import type { ApiRoute } from '../types/api.js';
 
@@ -54,13 +54,11 @@ const DEFAULT_API_FIELDS = {
  * 扫描单个目录的 API 文件
  * @param apiDir - API 目录路径
  * @param apiRoutes - API 路由映射表
- * @param routePrefix - 路由前缀（如 'core', 'addon/admin', ''）
+ * @param routePrefix - 路由前缀（如 'addon/admin', ''）
  * @param displayName - 显示名称（用于日志）
  */
 async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>, routePrefix: string, displayName: string): Promise<void> {
-    console.log(`📂 开始扫描 [${displayName}] API 目录:`, apiDir);
     if (!existsSync(apiDir)) {
-        console.log(`⚠️  [${displayName}] API 目录不存在`);
         return;
     }
 
@@ -71,15 +69,12 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
         onlyFiles: true,
         absolute: true
     })) {
-        console.log(`📄 发现文件 [${displayName}]:`, file);
         const fileName = basename(file).replace(/\.ts$/, '');
         const apiPath = relative(apiDir, file).replace(/\.ts$/, '');
         if (apiPath.indexOf('_') !== -1) continue;
 
         try {
-            console.log(`🔄 尝试导入 [${displayName}]:`, file);
             const apiImport = await import(file);
-            console.log(`✅ 成功导入 [${displayName}]:`, apiPath);
             const api = apiImport.default;
             // 验证必填属性：name 和 handler
             if (typeof api.name !== 'string' || api.name.trim() === '') {
@@ -121,40 +116,6 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
 }
 
 /**
- * 扫描核心 APIs
- */
-async function scanCoreApis(apiRoutes: Map<string, ApiRoute>): Promise<void> {
-    await scanApisFromDir(coreApiDir, apiRoutes, 'core', '核心');
-}
-
-/**
- * 扫描组件 APIs
- */
-async function scanAddonApis(apiRoutes: Map<string, ApiRoute>): Promise<void> {
-    const addons = Addon.scan();
-    console.log('🔍 扫描到的 addons:', addons);
-
-    for (const addon of addons) {
-        console.log('📦 检查 addon:', addon);
-        if (!Addon.dirExists(addon, 'apis')) {
-            console.log('⚠️  addon', addon, '没有 apis 目录');
-            continue;
-        }
-
-        const addonApiDir = Addon.getDir(addon, 'apis');
-        console.log('📁 addon API 目录:', addonApiDir);
-        await scanApisFromDir(addonApiDir, apiRoutes, `addon/${addon}`, `组件${addon}`);
-    }
-}
-
-/**
- * 扫描用户 APIs
- */
-async function scanUserApis(apiRoutes: Map<string, ApiRoute>): Promise<void> {
-    await scanApisFromDir(projectApiDir, apiRoutes, '', '用户');
-}
-
-/**
  * 加载所有 API 路由
  * @param apiRoutes - API 路由映射表
  */
@@ -162,10 +123,16 @@ export async function loadApis(apiRoutes: Map<string, ApiRoute>): Promise<void> 
     try {
         const loadStartTime = Bun.nanoseconds();
 
-        // 扫描所有 APIs
-        await scanCoreApis(apiRoutes);
-        await scanAddonApis(apiRoutes);
-        await scanUserApis(apiRoutes);
+        // 1. 加载用户 APIs
+        await scanApisFromDir(projectApiDir, apiRoutes, '', '用户');
+
+        // 2. 加载组件 APIs
+        const addons = Addon.scan();
+        for (const addon of addons) {
+            if (!Addon.dirExists(addon, 'apis')) continue;
+            const addonApiDir = Addon.getDir(addon, 'apis');
+            await scanApisFromDir(addonApiDir, apiRoutes, `addon/${addon}`, `组件${addon}`);
+        }
 
         const totalLoadTime = calcPerfTime(loadStartTime);
     } catch (error: any) {

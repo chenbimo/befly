@@ -33,32 +33,33 @@ export class Addon {
                     }
                 });
                 localAddons.forEach((name) => addons.add(name));
-            } catch {
+            } catch (err) {
+                console.log(err);
                 // 忽略本地目录读取错误
             }
         }
 
         // 2. 扫描 node_modules/@befly-addon 目录
-        const beflyDir = join(projectDir, 'node_modules', '@befly-addon');
-        if (existsSync(beflyDir)) {
-            try {
-                const npmAddons = fs.readdirSync(beflyDir).filter((name) => {
-                    // 如果本地已存在，跳过 npm 包版本
-                    if (addons.has(name)) return false;
+        // const beflyDir = join(projectDir, 'node_modules', '@befly-addon');
+        // if (existsSync(beflyDir)) {
+        //     try {
+        //         const npmAddons = fs.readdirSync(beflyDir).filter((name) => {
+        //             // 如果本地已存在，跳过 npm 包版本
+        //             if (addons.has(name)) return false;
 
-                    const fullPath = join(beflyDir, name);
-                    try {
-                        const stat = statSync(fullPath);
-                        return stat.isDirectory();
-                    } catch {
-                        return false;
-                    }
-                });
-                npmAddons.forEach((name) => addons.add(name));
-            } catch {
-                // 忽略 npm 目录读取错误
-            }
-        }
+        //             const fullPath = join(beflyDir, name);
+        //             try {
+        //                 const stat = statSync(fullPath);
+        //                 return stat.isDirectory();
+        //             } catch {
+        //                 return false;
+        //             }
+        //         });
+        //         npmAddons.forEach((name) => addons.add(name));
+        //     } catch {
+        //         // 忽略 npm 目录读取错误
+        //     }
+        // }
 
         return Array.from(addons).sort();
     }
