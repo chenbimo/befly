@@ -105,7 +105,7 @@ export class Validator {
      * 检查参数有效性
      */
     private checkParams(data: any, rules: any, required: any, result: ValidationResult): boolean {
-        if (!data || typeof data !== 'object') {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
             result.code = 1;
             result.fields.error = '数据必须是对象格式';
             return false;
@@ -213,7 +213,7 @@ export class Validator {
      */
     private validateNumber(value: any, name: string, min: number | null, max: number | null, spec: string | null, fieldName: string): ValidationError {
         try {
-            if (typeof value !== 'number' || Number.isNaN(value)) {
+            if (typeof value !== 'number' || Number.isNaN(value) || !isFinite(value)) {
                 return `${name}(${fieldName})必须是数字`;
             }
 
