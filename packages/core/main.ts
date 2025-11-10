@@ -163,11 +163,7 @@ export {
     RedisHelper,
     coreDir,
     checkTable,
-    checkApi,
-    // Addon 工具函数
-    scanAddons,
-    getAddonDir,
-    addonDirExists
+    checkApi
 };
 
 // 工具函数命名空间导出

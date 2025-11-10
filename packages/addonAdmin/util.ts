@@ -2,7 +2,7 @@
  * Admin 插件通用工具函数
  */
 
-import { Logger, Addon } from 'befly';
+import { Logger } from 'befly';
 import type { BeflyContext } from 'befly/types/befly';
 import { readdirSync, statSync, readFileSync } from 'node:fs';
 import path from 'node:path';
