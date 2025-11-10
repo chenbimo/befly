@@ -6,7 +6,7 @@
 import { basename } from 'pathe';
 import { Logger } from './lib/logger.js';
 import { projectTableDir } from './paths.js';
-import { Addon } from './lib/addon.js';
+import { scanAddons, getAddonDir } from './util.js';
 import type { FieldDefinition } from './types/common.d.ts';
 
 /**
@@ -77,9 +77,9 @@ export const checkCore = async function (): Promise<boolean> {
         }
 
         // 收集 addon 表字段定义文件
-        const addons = Addon.scan();
+        const addons = scanAddons();
         for (const addonName of addons) {
-            const addonTablesDir = Addon.getDir(addonName, 'tables');
+            const addonTablesDir = getAddonDir(addonName, 'tables');
 
             for await (const file of tablesGlob.scan({
                 cwd: addonTablesDir,

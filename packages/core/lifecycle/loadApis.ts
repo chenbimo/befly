@@ -9,7 +9,7 @@ import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { projectApiDir } from '../paths.js';
-import { Addon } from '../lib/addon.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 
 /**
@@ -129,10 +129,10 @@ export async function loadApis(apiRoutes: Map<string, ApiRoute>): Promise<void> 
         await scanApisFromDir(projectApiDir, apiRoutes, '', '用户');
 
         // 2. 加载组件 APIs
-        const addons = Addon.scan();
+        const addons = scanAddons();
         for (const addon of addons) {
-            if (!Addon.dirExists(addon, 'apis')) continue;
-            const addonApiDir = Addon.getDir(addon, 'apis');
+            if (!addonDirExists(addon, 'apis')) continue;
+            const addonApiDir = getAddonDir(addon, 'apis');
             await scanApisFromDir(addonApiDir, apiRoutes, `addon/${addon}`, `组件${addon}`);
         }
 

@@ -2,7 +2,7 @@
  * 获取插件列表
  */
 
-import { Yes, Addon } from 'befly';
+import { Yes, scanAddons, getAddonDir } from 'befly';
 import { readFileSync } from 'node:fs';
 
 export default {
@@ -10,14 +10,14 @@ export default {
     handler: async (befly, ctx) => {
         const addonList: Array<{ name: string; title: string; version: string; description: string; enabled: boolean }> = [];
 
-        // 使用 Addon.scan() 扫描所有 addon
-        const addonNames = Addon.scan();
+        // 使用 scanAddons() 扫描所有 addon
+        const addonNames = scanAddons();
 
         for (const addonName of addonNames) {
             // addonName 格式: admin, demo 等
 
             // 读取插件配置文件
-            const configPath = Addon.getDir(addonName, 'addon.config.json');
+            const configPath = getAddonDir(addonName, 'addon.config.json');
 
             try {
                 const configContent = readFileSync(configPath, 'utf-8');

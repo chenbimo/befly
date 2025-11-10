@@ -9,7 +9,7 @@ import { camelCase } from 'es-toolkit/string';
 import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from '../util.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';
-import { Addon } from '../lib/addon.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
@@ -80,12 +80,12 @@ async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
 async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
     const plugins: Plugin[] = [];
     const glob = new Bun.Glob('*.ts');
-    const addons = Addon.scan();
+    const addons = scanAddons();
 
     for (const addon of addons) {
-        if (!Addon.dirExists(addon, 'plugins')) continue;
+        if (!addonDirExists(addon, 'plugins')) continue;
 
-        const addonPluginsDir = Addon.getDir(addon, 'plugins');
+        const addonPluginsDir = getAddonDir(addon, 'plugins');
         console.log('📦 扫描组件插件目录:', addon, addonPluginsDir);
         for await (const file of glob.scan({
             cwd: addonPluginsDir,

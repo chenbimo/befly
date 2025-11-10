@@ -17,7 +17,7 @@ import { staticHandler } from './router/static.js';
 import { coreDir } from './paths.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
-import { Addon } from './lib/addon.js';
+
 import { checkCore } from './check.js';
 
 import type { Server } from 'bun';
@@ -49,15 +49,15 @@ export class Befly {
     private async start(): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
 
+        // 1. 加载所有 API（动态导入必须在最前面）
+        await loadApis(this.apiRoutes);
+
         // 2. 执行表定义检查
         const checkResult = await checkCore();
         if (!checkResult) {
             Logger.error('表定义检查失败，程序退出');
             process.exit(1);
         }
-
-        // 1. 加载所有 API（必须在插件初始化之前）
-        await loadApis(this.apiRoutes);
 
         // 3. 加载插件
         await loadPlugins({
@@ -141,7 +141,6 @@ export {
     Database,
     DbHelper,
     RedisHelper,
-    Addon,
     coreDir,
     checkCore
 };
@@ -153,5 +152,8 @@ export const utils = {
     arrayKeysToCamel: arrayKeysToCamel,
     pickFields: pickFields,
     fieldClear: fieldClear,
-    calcPerfTime: calcPerfTime
+    calcPerfTime: calcPerfTime,
+    scanAddons: scanAddons,
+    getAddonDir: getAddonDir,
+    addonDirExists: addonDirExists
 };
