@@ -33,26 +33,20 @@ export default {
                 return Yes('菜单为空', []);
             }
 
-            // 4. 从 Redis 缓存读取所有菜单
-            let allMenus = await befly.redis.getObject<any[]>('menus:all');
-            let fromMenus = 'cache';
+            // 4. 从缓存获取所有菜单
+            let allMenus = await befly.cache.getMenus();
 
-            // 如果缓存不存在，从数据库查询并缓存
-            if (!allMenus || allMenus.length === 0) {
-                fromMenus = 'database';
+            // 如果缓存不存在，从数据库查询
+            if (allMenus.length === 0) {
                 allMenus = await befly.db.getAll({
                     table: 'addon_admin_menu',
                     fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                     orderBy: ['sort#ASC', 'id#ASC']
                 });
+            }
 
-                // 回写缓存
-                if (allMenus.length > 0) {
-                    await befly.redis.setObject('menus:all', allMenus);
-                    befly.logger.info(`已缓存 ${allMenus.length} 个菜单到 Redis`);
-                }
-            } else {
-                befly.logger.debug(`从 Redis 缓存读取 ${allMenus.length} 个菜单`);
+            if (allMenus.length === 0) {
+                return Yes('菜单为空', []);
             }
 
             // 5. 根据角色权限过滤菜单
@@ -60,7 +54,7 @@ export default {
             const authorizedMenus = allMenus.filter((menu: any) => menuIdSet.has(String(menu.id)));
 
             // 6. 返回一维数组（由前端构建树形结构）
-            return Yes('获取菜单成功', authorizedMenus, { from: fromMenus });
+            return Yes('获取菜单成功', authorizedMenus);
         } catch (error) {
             befly.logger.error('获取用户菜单失败:', error);
             return No('获取菜单失败');

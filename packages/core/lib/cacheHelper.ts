@@ -166,4 +166,65 @@ export class CacheHelper {
 
         Logger.info('========== 数据缓存完成 ==========\n');
     }
+
+    /**
+     * 获取缓存的所有接口
+     * @returns 接口列表
+     */
+    async getApis(): Promise<any[]> {
+        try {
+            const apis = await this.befly.redis.getObject<any[]>('apis:all');
+            return apis || [];
+        } catch (error: any) {
+            Logger.error('获取接口缓存失败:', error);
+            return [];
+        }
+    }
+
+    /**
+     * 获取缓存的所有菜单
+     * @returns 菜单列表
+     */
+    async getMenus(): Promise<any[]> {
+        try {
+            const menus = await this.befly.redis.getObject<any[]>('menus:all');
+            return menus || [];
+        } catch (error: any) {
+            Logger.error('获取菜单缓存失败:', error);
+            return [];
+        }
+    }
+
+    /**
+     * 获取角色的接口权限
+     * @param roleCode - 角色代码
+     * @returns 接口路径列表
+     */
+    async getRolePermissions(roleCode: string): Promise<string[]> {
+        try {
+            const redisKey = `role:apis:${roleCode}`;
+            const permissions = await this.befly.redis.smembers(redisKey);
+            return permissions || [];
+        } catch (error: any) {
+            Logger.error(`获取角色 ${roleCode} 权限缓存失败:`, error);
+            return [];
+        }
+    }
+
+    /**
+     * 检查角色是否有指定接口权限
+     * @param roleCode - 角色代码
+     * @param apiPath - 接口路径（格式：METHOD/path）
+     * @returns 是否有权限
+     */
+    async checkRolePermission(roleCode: string, apiPath: string): Promise<boolean> {
+        try {
+            const redisKey = `role:apis:${roleCode}`;
+            const result = await this.befly.redis.sismember(redisKey, apiPath);
+            return result === 1;
+        } catch (error: any) {
+            Logger.error(`检查角色 ${roleCode} 权限失败:`, error);
+            return false;
+        }
+    }
 }
