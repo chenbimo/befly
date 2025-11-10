@@ -9,7 +9,7 @@
 
 import { basename, resolve } from 'pathe';
 import { snakeCase } from 'es-toolkit/string';
-import { Env, Database, RedisHelper, Addon, checkDefault } from 'befly';
+import { Env, Database, RedisHelper, checkTable, utils } from 'befly';
 import { Logger, projectDir } from '../../util.js';
 
 // 导入模块化的功能
@@ -67,7 +67,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
 
         // 阶段1：验证表定义文件
         perfTracker.markPhase('表定义验证');
-        await checkDefault();
+        await checkTable();
 
         // 阶段2：建立数据库连接并检查版本
         perfTracker.markPhase('数据库连接');
@@ -86,11 +86,11 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
         ];
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
-        const addons = Addon.scan();
+        const addons = utils.scanAddons();
         for (const addon of addons) {
-            if (Addon.dirExists(addon, 'tables')) {
+            if (utils.addonDirExists(addon, 'tables')) {
                 directories.push({
-                    path: Addon.getDir(addon, 'tables'),
+                    path: utils.getAddonDir(addon, 'tables'),
                     type: 'addon',
                     addonName: addon
                 });

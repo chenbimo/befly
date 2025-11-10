@@ -12,7 +12,7 @@
  */
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
-import { Database, RedisHelper, Addon } from 'befly';
+import { Database, RedisHelper, utils } from 'befly';
 
 import { Logger, projectDir } from '../util.js';
 import { ReportCollector } from '../report/collector.js';
@@ -100,20 +100,20 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
         }
 
         // 2. 扫描组件 API (node_modules/@befly-addon/*)
-        const addonNames = Addon.scan();
+        const addonNames = utils.scanAddons();
 
         for (const addonName of addonNames) {
             // addonName 格式: admin, demo 等
 
             // 检查 apis 子目录是否存在
-            if (!Addon.dirExists(addonName, 'apis')) {
+            if (!utils.addonDirExists(addonName, 'apis')) {
                 continue;
             }
 
-            const addonApisDir = Addon.getDir(addonName, 'apis');
+            const addonApisDir = utils.getAddonDir(addonName, 'apis');
 
             // 读取 addon 配置
-            const addonConfigPath = Addon.getDir(addonName, 'addon.config.json');
+            const addonConfigPath = utils.getAddonDir(addonName, 'addon.config.json');
             let addonTitle = addonName;
             try {
                 const configFile = Bun.file(addonConfigPath);
