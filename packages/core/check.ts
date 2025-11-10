@@ -58,12 +58,6 @@ export const checkCore = async function (): Promise<boolean> {
     try {
         const tablesGlob = new Bun.Glob('*.json');
 
-        // 统计信息
-        let totalFiles = 0;
-        let totalRules = 0;
-        let validFiles = 0;
-        let invalidFiles = 0;
-
         // 收集所有表文件
         const allTableFiles: TableFileInfo[] = [];
 
@@ -73,7 +67,11 @@ export const checkCore = async function (): Promise<boolean> {
             absolute: true,
             onlyFiles: true
         })) {
-            allTableFiles.push({ file: file, type: 'project' });
+            allTableFiles.push({
+                file: file,
+                typeCode: 'project',
+                typeName: '项目'
+            });
         }
 
         // 收集 addon 表字段定义文件
@@ -86,47 +84,41 @@ export const checkCore = async function (): Promise<boolean> {
                 absolute: true,
                 onlyFiles: true
             })) {
-                allTableFiles.push({ file: file, type: 'addon', addonName: addonName });
+                allTableFiles.push({
+                    file: file,
+                    typeCode: 'addon',
+                    typeName: `组件${addonName}`,
+                    addonName: addonName
+                });
             }
         }
 
         // 合并进行验证逻辑
-        for (const { file, type, addonName } of allTableFiles) {
-            totalFiles++;
-            const fileName = basename(file);
-            const fileBaseName = basename(file, '.json');
-            const fileType = type === 'project' ? '项目' : `组件${addonName}`;
+        for (const item of allTableFiles) {
+            const fileName = basename(item.file);
+            const fileBaseName = basename(item.file, '.json');
 
             try {
                 // 1) 文件名小驼峰校验
                 if (!LOWER_CAMEL_CASE_REGEX.test(fileBaseName)) {
-                    Logger.warn(`${fileType}表 ${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
-                    // 命名不合规，记录错误并计为无效文件，继续下一个文件
-                    invalidFiles++;
+                    Logger.warn(`${item.typeName}表 ${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
                     continue;
                 }
 
-                // 读取并解析 JSON 文件
-                const table = await Bun.file(file).json();
-                let fileValid = true;
-                let fileRules = 0;
+                // 动态导入 JSON 文件
+                const tableModule = await import(item.file, { with: { type: 'json' } });
+                const table = tableModule.default;
 
                 // 检查 table 中的每个验证规则
                 for (const [colKey, fieldDef] of Object.entries(table)) {
                     if (typeof fieldDef !== 'object' || fieldDef === null || Array.isArray(fieldDef)) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 规则必须为对象`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 规则必须为对象`);
                         continue;
                     }
 
-                    // 验证规则格式
-                    fileRules++;
-                    totalRules++;
-
                     // 检查是否使用了保留字段
                     if (RESERVED_FIELDS.includes(colKey as any)) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件包含保留字段 ${colKey}，` + `不能在表定义中使用以下字段: ${RESERVED_FIELDS.join(', ')}`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件包含保留字段 ${colKey}，` + `不能在表定义中使用以下字段: ${RESERVED_FIELDS.join(', ')}`);
                     }
 
                     // 直接使用字段对象
@@ -134,81 +126,66 @@ export const checkCore = async function (): Promise<boolean> {
 
                     // 检查必填字段：name, type, min, max
                     if (!field.name || typeof field.name !== 'string') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 name 或类型错误`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 name 或类型错误`);
                         continue;
                     }
                     if (!field.type || typeof field.type !== 'string') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 type 或类型错误`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 type 或类型错误`);
                         continue;
                     }
                     if (field.min === undefined) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 min`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 min`);
                         continue;
                     }
                     if (field.max === undefined) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 缺少必填字段 max`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 max`);
                         continue;
                     }
 
                     // 检查可选字段的类型
                     if (field.detail !== undefined && typeof field.detail !== 'string') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 detail 类型错误，必须为字符串`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 detail 类型错误，必须为字符串`);
                     }
                     if (field.index !== undefined && typeof field.index !== 'boolean') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 index 类型错误，必须为布尔值`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 index 类型错误，必须为布尔值`);
                     }
                     if (field.unique !== undefined && typeof field.unique !== 'boolean') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 unique 类型错误，必须为布尔值`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 unique 类型错误，必须为布尔值`);
                     }
                     if (field.nullable !== undefined && typeof field.nullable !== 'boolean') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 nullable 类型错误，必须为布尔值`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 nullable 类型错误，必须为布尔值`);
                     }
                     if (field.unsigned !== undefined && typeof field.unsigned !== 'boolean') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 unsigned 类型错误，必须为布尔值`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 unsigned 类型错误，必须为布尔值`);
                     }
                     if (field.regexp !== undefined && field.regexp !== null && typeof field.regexp !== 'string') {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段 regexp 类型错误，必须为 null 或字符串`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 regexp 类型错误，必须为 null 或字符串`);
                     }
 
                     const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regexp: fieldRegexp } = field;
 
                     // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
                     if (!FIELD_NAME_REGEX.test(fieldName)) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
                     }
 
                     // 第2个值：字段类型必须为string,number,text,array_string,array_text之一
                     if (!FIELD_TYPES.includes(fieldType as any)) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
                     }
 
                     // 第3/4个值：需要是 null 或 数字
                     if (!(fieldMin === null || typeof fieldMin === 'number')) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
                     }
                     if (!(fieldMax === null || typeof fieldMax === 'number')) {
-                        Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
-                        fileValid = false;
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
                     }
 
                     // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
                     if (fieldMin !== null && fieldMax !== null) {
                         if (fieldMin > fieldMax) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
-                            fileValid = false;
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
                         }
                     }
 
@@ -216,55 +193,30 @@ export const checkCore = async function (): Promise<boolean> {
                     if (fieldType === 'text') {
                         // text：min/max 必须为 null，默认值必须为 null
                         if (fieldMin !== null) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
-                            fileValid = false;
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
                         }
                         if (fieldMax !== null) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
-                            fileValid = false;
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
                         }
                         if (fieldDefault !== null) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
-                            fileValid = false;
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
                         }
                     } else if (fieldType === 'string' || fieldType === 'array') {
                         if (fieldMax === null || typeof fieldMax !== 'number') {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
-                            fileValid = false;
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
                         } else if (fieldMax > MAX_VARCHAR_LENGTH) {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
-                            fileValid = false;
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         }
                     } else if (fieldType === 'number') {
                         // number 类型：default 如果存在，必须为 null 或 number
                         if (fieldDefault !== undefined && fieldDefault !== null && typeof fieldDefault !== 'number') {
-                            Logger.warn(`${fileType}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或 null，当前为 "${fieldDefault}"`);
-                            fileValid = false;
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或 null，当前为 "${fieldDefault}"`);
                         }
                     }
                 }
-
-                if (fileValid) {
-                    validFiles++;
-                    // Logger.info(`${fileType}表 ${fileName} 验证通过（${fileRules} 个字段）`);
-                } else {
-                    invalidFiles++;
-                }
             } catch (error: any) {
-                Logger.error(`${fileType}表 ${fileName} 解析失败`, error);
-                invalidFiles++;
+                Logger.error(`${item.typeName}表 ${fileName} 解析失败`, error);
             }
-        }
-
-        // 输出统计信息
-        // Logger.info(`  总文件数: ${totalFiles}`);
-        // Logger.info(`  总规则数: ${totalRules}`);
-        // Logger.info(`  通过文件: ${validFiles}`);
-        // Logger.info(`  失败文件: ${invalidFiles}`);
-
-        if (invalidFiles > 0) {
-            Logger.error('表定义检查失败，请修复上述错误后重试');
-            return false;
         }
 
         return true;

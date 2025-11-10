@@ -185,22 +185,22 @@ export const scanAddons = (): string[] => {
     const addons = new Set<string>();
 
     // 1. 扫描本地 addons 目录（优先级高）
-    if (existsSync(projectAddonsDir)) {
-        try {
-            const localAddons = fs.readdirSync(projectAddonsDir).filter((name) => {
-                const fullPath = join(projectAddonsDir, name);
-                try {
-                    const stat = statSync(fullPath);
-                    return stat.isDirectory() && !name.startsWith('_');
-                } catch {
-                    return false;
-                }
-            });
-            localAddons.forEach((name) => addons.add(name));
-        } catch (err) {
-            // 忽略本地目录读取错误
-        }
-    }
+    // if (existsSync(projectAddonsDir)) {
+    //     try {
+    //         const localAddons = fs.readdirSync(projectAddonsDir).filter((name) => {
+    //             const fullPath = join(projectAddonsDir, name);
+    //             try {
+    //                 const stat = statSync(fullPath);
+    //                 return stat.isDirectory() && !name.startsWith('_');
+    //             } catch {
+    //                 return false;
+    //             }
+    //         });
+    //         localAddons.forEach((name) => addons.add(name));
+    //     } catch (err) {
+    //         // 忽略本地目录读取错误
+    //     }
+    // }
 
     // 2. 扫描 node_modules/@befly-addon 目录
     const beflyDir = join(projectDir, 'node_modules', '@befly-addon');
@@ -236,10 +236,10 @@ export const scanAddons = (): string[] => {
  */
 export const getAddonDir = (name: string, subDir: string): string => {
     // 优先使用本地 addons 目录
-    const localPath = join(projectAddonsDir, name, subDir);
-    if (existsSync(localPath)) {
-        return localPath;
-    }
+    // const localPath = join(projectAddonsDir, name, subDir);
+    // if (existsSync(localPath)) {
+    //     return localPath;
+    // }
 
     // 降级使用 node_modules 目录
     return join(projectDir, 'node_modules', '@befly-addon', name, subDir);
