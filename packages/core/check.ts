@@ -54,7 +54,7 @@ const MAX_VARCHAR_LENGTH = 65535;
  * 检查表定义文件
  * @throws 当检查失败时抛出异常
  */
-export const checkDefault = async function (): Promise<void> {
+export const checkCore = async function (): Promise<boolean> {
     try {
         const tablesGlob = new Bun.Glob('*.json');
 
@@ -263,10 +263,13 @@ export const checkDefault = async function (): Promise<void> {
         // Logger.info(`  失败文件: ${invalidFiles}`);
 
         if (invalidFiles > 0) {
-            throw new Error('表定义检查失败，请修复上述错误后重试');
+            Logger.error('表定义检查失败，请修复上述错误后重试');
+            return false;
         }
+
+        return true;
     } catch (error: any) {
         Logger.error('数据表定义检查过程中出错', error);
-        throw error;
+        return false;
     }
 };

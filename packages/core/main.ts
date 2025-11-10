@@ -11,7 +11,6 @@ import { Jwt } from './lib/jwt.js';
 import { Database } from './lib/database.js';
 import { loadPlugins } from './lifecycle/loadPlugins.js';
 import { loadApis } from './lifecycle/loadApis.js';
-import { Checker } from './lifecycle/checker.js';
 import { rootHandler } from './router/root.js';
 import { apiHandler } from './router/api.js';
 import { staticHandler } from './router/static.js';
@@ -19,7 +18,7 @@ import { coreDir } from './paths.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
 import { Addon } from './lib/addon.js';
-import { checkDefault } from './check.js';
+import { checkCore } from './check.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext } from './types/befly.js';
@@ -50,17 +49,21 @@ export class Befly {
     private async start(): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
 
-        // 1. 执行系统检查
-        await Checker.run();
+        // 2. 执行表定义检查
+        const checkResult = await checkCore();
+        if (!checkResult) {
+            Logger.error('表定义检查失败，程序退出');
+            process.exit(1);
+        }
 
-        // 2. 加载插件
+        // 1. 加载所有 API（必须在插件初始化之前）
+        await loadApis(this.apiRoutes);
+
+        // 3. 加载插件
         await loadPlugins({
             pluginLists: this.pluginLists,
             appContext: this.appContext
         });
-
-        // 3. 加载所有 API
-        await loadApis(this.apiRoutes);
 
         // 4. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
@@ -140,7 +143,7 @@ export {
     RedisHelper,
     Addon,
     coreDir,
-    checkDefault
+    checkCore
 };
 
 // 工具函数命名空间导出
