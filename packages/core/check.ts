@@ -4,6 +4,7 @@
  */
 
 import { basename, relative } from 'pathe';
+import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from './lib/logger.js';
@@ -318,6 +319,27 @@ export const checkApi = async function (): Promise<boolean> {
         return true;
     } catch (error: any) {
         Logger.error('API 定义检查过程中出错', error);
+        return false;
+    }
+};
+
+/**
+ * 检查项目结构
+ */
+export const checkApp = async function (): Promise<boolean> {
+    try {
+        // 检查项目 apis 目录下是否存在名为 addon 的目录
+        if (existsSync(projectApiDir)) {
+            const addonDir = join(projectApiDir, 'addon');
+            if (existsSync(addonDir)) {
+                Logger.error('项目 apis 目录下不能存在名为 addon 的目录，addon 是保留名称，用于组件接口路由');
+                return false;
+            }
+        }
+
+        return true;
+    } catch (error: any) {
+        Logger.error('项目结构检查过程中出错', error);
         return false;
     }
 };
