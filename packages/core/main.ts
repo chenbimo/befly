@@ -62,22 +62,22 @@ export class Befly {
     private async start(): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
 
-        // 1. 加载所有 API（动态导入必须在最前面，避免 Bun 1.3.2 的崩溃 bug）
-        await loadApis(this.apiRoutes);
-
         // 2. 执行表定义检查
         const tableCheckResult = await checkTable();
         if (!tableCheckResult) {
-            Logger.error('表定义检查失败，程序退出');
+            Logger.error('Table 表定义检查失败，程序退出');
             process.exit(1);
         }
 
         // 3. 执行 API 定义检查
         const apiCheckResult = await checkApi();
         if (!apiCheckResult) {
-            Logger.error('API 定义检查失败，程序退出');
+            Logger.error('API 接口定义检查失败，程序退出');
             process.exit(1);
         }
+
+        // 1. 加载所有 API（动态导入必须在最前面，避免 Bun 1.3.2 的崩溃 bug）
+        await loadApis(this.apiRoutes);
 
         // 3. 加载插件
         await loadPlugins({
