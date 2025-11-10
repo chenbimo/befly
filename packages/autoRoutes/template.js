@@ -30,6 +30,8 @@
 //   /src/views/admin_1/user_2/index.vue      => /admin/user (布局2，最内层目录)
 //   /src/views/admin_1/user_2/settings_3.vue => /admin/user/settings (布局3，文件优先)
 const viewFiles = import.meta.glob('/src/views/**/*.vue');
+// 扫描 addon 的 views 目录（由插件动态注入）
+const addonViewFiles = import.meta.glob('/node_modules/@befly-addon/*/views/**/*.vue');
 // 同时扫描自定义布局和 internal 布局
 const layoutFiles = import.meta.glob('/src/layouts/*.vue');
 const internalLayoutFiles = import.meta.glob('/src/layouts/internal/*.vue');
@@ -150,9 +152,10 @@ function shouldExclude(normalizedPath, dirChain) {
  * 处理单个视图文件
  * @param {string} filePath - 文件路径
  * @param {Function} componentLoader - 组件加载函数
+ * @param {boolean} isAddon - 是否为 addon 页面
  * @returns {Object|null} - 路由配置对象或 null
  */
-function processViewFile(filePath, componentLoader) {
+function processViewFile(filePath, componentLoader, isAddon = false) {
     const normPath = normalizePath(filePath);
 
     // 只处理 .vue 文件
@@ -160,14 +163,27 @@ function processViewFile(filePath, componentLoader) {
         return null;
     }
 
-    // 提取相对于 views 的路径
-    const rootMarker = '/src/views/';
-    const idx = normPath.indexOf(rootMarker);
-    if (idx === -1) {
-        return null;
+    let relativePath, addonName;
+
+    if (isAddon) {
+        // Addon 页面：提取 addon 名称和相对路径
+        // 格式：/node_modules/@befly-addon/{addonName}/views/...
+        const addonMatch = normPath.match(/\/node_modules\/@befly-addon\/([^/]+)\/views\/(.+)$/);
+        if (!addonMatch) {
+            return null;
+        }
+        addonName = addonMatch[1];
+        relativePath = addonMatch[2];
+    } else {
+        // 项目页面：提取相对于 views 的路径
+        const rootMarker = '/src/views/';
+        const idx = normPath.indexOf(rootMarker);
+        if (idx === -1) {
+            return null;
+        }
+        relativePath = normPath.slice(idx + rootMarker.length);
     }
 
-    const relativePath = normPath.slice(idx + rootMarker.length);
     const parts = relativePath.split('/');
     const fileName = parts.pop();
 
@@ -194,7 +210,13 @@ function processViewFile(filePath, componentLoader) {
     const finalLayout = fileLayout !== '0' ? fileLayout : dirLayout;
 
     // 构建路由路径和名称
-    const { path, name } = buildRoute(pathDirs, cleanFileName);
+    let { path, name } = buildRoute(pathDirs, cleanFileName);
+
+    // Addon 页面：添加路由前缀 /addon/{addonName}/
+    if (isAddon) {
+        path = `/addon/${addonName}${path}`;
+        name = `addon-${addonName}-${name}`;
+    }
 
     return {
         path,
@@ -211,9 +233,9 @@ function processViewFile(filePath, componentLoader) {
 function generateRoutes() {
     const layoutRoutes = {};
 
-    // 处理所有视图文件
+    // 1. 处理项目视图文件
     for (const filePath in viewFiles) {
-        const route = processViewFile(filePath, viewFiles[filePath]);
+        const route = processViewFile(filePath, viewFiles[filePath], false);
 
         if (!route) {
             continue;
@@ -225,6 +247,31 @@ function generateRoutes() {
         }
 
         // 避免重复路径
+        const exists = layoutRoutes[route.layout].some((r) => r.path === route.path);
+        if (!exists) {
+            layoutRoutes[route.layout].push({
+                path: route.path,
+                name: route.name,
+                component: route.component,
+                meta: route.meta
+            });
+        }
+    }
+
+    // 2. 处理 addon 视图文件
+    for (const filePath in addonViewFiles) {
+        const route = processViewFile(filePath, addonViewFiles[filePath], true);
+
+        if (!route) {
+            continue;
+        }
+
+        // 按布局分组
+        if (!layoutRoutes[route.layout]) {
+            layoutRoutes[route.layout] = [];
+        }
+
+        // 避免重复路径（项目页面优先，允许覆盖 addon 页面）
         const exists = layoutRoutes[route.layout].some((r) => r.path === route.path);
         if (!exists) {
             layoutRoutes[route.layout].push({
@@ -272,7 +319,14 @@ if (typeof window !== 'undefined' && import.meta && import.meta.env && import.me
         // eslint-disable-next-line no-console
         console.log(
             '[auto-routes] 当前生成路由:',
-            finalRoutes.map((r) => ({ layout: r.name, children: r.children?.map((c) => ({ path: c.path, name: c.name, file: c.meta?.file })) }))
+            finalRoutes.map((r) => ({
+                layout: r.name,
+                children: r.children?.map((c) => ({
+                    path: c.path,
+                    name: c.name,
+                    file: c.meta?.file
+                }))
+            }))
         );
     }, 0);
 }

@@ -12,6 +12,7 @@
     "files": [
         "apis/",
         "tables/",
+        "views/",
         "addon.config.json",
         "util.ts",
         "README.md",
