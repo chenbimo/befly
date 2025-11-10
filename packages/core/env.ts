@@ -18,14 +18,14 @@ const coreEnv: EnvConfig = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     APP_NAME: isProd ? '野蜂飞舞正式环境' : '野蜂飞舞开发环境',
     APP_PORT: 3000,
-    APP_HOST: isProd ? '127.0.0.1' : '0.0.0.0',
+    APP_HOST: '127.0.0.1',
     DEV_EMAIL: 'dev@qq.com',
     DEV_PASSWORD: '123456',
     BODY_LIMIT: 10485760, // 10MB
     PARAMS_CHECK: false,
 
     // ========== 日志配置 ==========
-    LOG_DEBUG: isProd ? 0 : 1,
+    LOG_DEBUG: 0,
     LOG_EXCLUDE_FIELDS: 'password,token,secret',
     LOG_DIR: './logs',
     LOG_TO_CONSOLE: 1,
@@ -55,7 +55,7 @@ const coreEnv: EnvConfig = {
     REDIS_KEY_PREFIX: 'befly',
 
     // ========== JWT 配置 ==========
-    JWT_SECRET: isProd ? 'befly-dev-secret' : 'befly-prod-secret',
+    JWT_SECRET: 'befly-secret',
     JWT_EXPIRES_IN: '7d',
     JWT_ALGORITHM: 'HS256',
 
