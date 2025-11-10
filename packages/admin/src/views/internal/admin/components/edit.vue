@@ -112,13 +112,13 @@ const $Method = {
     onClose() {
         $Data.visible = false;
         setTimeout(() => {
-            $Emit('update:modelValue', false);
+            $Emit('up:modelValue', false);
         }, 300);
     },
 
     async onSubmit() {
         try {
-            const valid = await $From.form.validate();
+            const valid = await date$From.form.validate();
             if (!valid) return;
 
             const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/adminUpd' : '/addon/admin/adminIns', $Data.formData);

@@ -17,14 +17,14 @@ const redisPlugin: Plugin = {
     name: '_redis',
     after: ['_logger'],
 
-    async onInit(befly: BeflyContext): Promise<typeof RedisHelper | Record<string, never>> {
+    async onInit(befly: BeflyContext): Promise<RedisHelper | Record<string, never>> {
         try {
             if (Env.REDIS_ENABLE === 1) {
                 // 初始化 Redis 客户端（统一使用 database.ts 的连接管理）
                 await Database.connectRedis();
 
-                // 返回工具对象，向下游以相同 API 暴露
-                return RedisHelper;
+                // 返回 RedisHelper 实例
+                return new RedisHelper();
             } else {
                 Logger.warn('Redis 未启用，跳过初始化');
                 return {};
