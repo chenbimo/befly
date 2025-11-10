@@ -86,7 +86,6 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
         if (!addonDirExists(addon, 'plugins')) continue;
 
         const addonPluginsDir = getAddonDir(addon, 'plugins');
-        console.log('📦 扫描组件插件目录:', addon, addonPluginsDir);
         for await (const file of glob.scan({
             cwd: addonPluginsDir,
             onlyFiles: true,
@@ -104,7 +103,6 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
             }
 
             try {
-                console.log('🔌 加载组件插件:', addon, fileName, file);
                 const pluginImport = await import(file);
                 const plugin = pluginImport.default;
                 plugin.pluginName = pluginFullName;
