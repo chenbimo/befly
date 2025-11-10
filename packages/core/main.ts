@@ -4,7 +4,7 @@
  */
 
 import { Env } from './env.js';
-import { Yes, No, keysToSnake, keysToCamel, arrayKeysToCamel, pickFields, fieldClear, calcPerfTime } from './util.js';
+
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
@@ -17,8 +17,21 @@ import { staticHandler } from './router/static.js';
 import { coreDir } from './paths.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
-
 import { checkCore } from './check.js';
+import {
+    //
+    Yes,
+    No,
+    keysToSnake,
+    keysToCamel,
+    arrayKeysToCamel,
+    pickFields,
+    fieldClear,
+    calcPerfTime,
+    scanAddons,
+    getAddonDir,
+    addonDirExists
+} from './util.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext } from './types/befly.js';
@@ -49,15 +62,15 @@ export class Befly {
     private async start(): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
 
-        // 1. 加载所有 API（动态导入必须在最前面）
-        await loadApis(this.apiRoutes);
-
         // 2. 执行表定义检查
         const checkResult = await checkCore();
         if (!checkResult) {
             Logger.error('表定义检查失败，程序退出');
             process.exit(1);
         }
+
+        // 1. 加载所有 API（动态导入必须在最前面）
+        // await loadApis(this.apiRoutes);
 
         // 3. 加载插件
         await loadPlugins({
