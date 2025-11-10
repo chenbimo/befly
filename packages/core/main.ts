@@ -69,8 +69,8 @@ export class Befly {
             process.exit(1);
         }
 
-        // 1. 加载所有 API（动态导入必须在最前面）
-        // await loadApis(this.apiRoutes);
+        // 1. 加载所有 API（动态导入必须在最前面，避免 Bun 1.3.2 的崩溃 bug）
+        await loadApis(this.apiRoutes);
 
         // 3. 加载插件
         await loadPlugins({
@@ -155,7 +155,11 @@ export {
     DbHelper,
     RedisHelper,
     coreDir,
-    checkCore
+    checkCore,
+    // Addon 工具函数
+    scanAddons,
+    getAddonDir,
+    addonDirExists
 };
 
 // 工具函数命名空间导出
