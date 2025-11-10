@@ -1,6 +1,6 @@
 ﻿/**
  * Befly 框架主入口文件
- * 提供简洁的框架接口，核心逻辑已提取到 lifecycle 层
+ * 提供简洁的框架接口，核心逻辑已提取到 loader 层
  */
 
 import { Env } from './env.js';
@@ -9,8 +9,8 @@ import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
 import { Database } from './lib/database.js';
-import { loadPlugins } from './lifecycle/loadPlugins.js';
-import { loadApis } from './lifecycle/loadApis.js';
+import { loadPlugins } from './loader/loadPlugins.js';
+import { loadApis } from './loader/loadApis.js';
 import { rootHandler } from './router/root.js';
 import { apiHandler } from './router/api.js';
 import { staticHandler } from './router/static.js';
