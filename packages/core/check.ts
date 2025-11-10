@@ -3,10 +3,12 @@
  * 验证表定义文件的格式和规则
  */
 
-import { basename } from 'pathe';
+import { basename, relative } from 'pathe';
+import { existsSync } from 'node:fs';
+import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from './lib/logger.js';
-import { projectTableDir } from './paths.js';
-import { scanAddons, getAddonDir } from './util.js';
+import { projectTableDir, projectApiDir } from './paths.js';
+import { scanAddons, getAddonDir, addonDirExists } from './util.js';
 import type { FieldDefinition } from './types/common.d.ts';
 
 /**
@@ -222,6 +224,100 @@ export const checkTable = async function (): Promise<boolean> {
         return true;
     } catch (error: any) {
         Logger.error('数据表定义检查过程中出错', error);
+        return false;
+    }
+};
+
+/**
+ * 检查所有 API 定义
+ */
+export const checkApi = async function (): Promise<boolean> {
+    try {
+        const apiGlob = new Bun.Glob('**/*.ts');
+
+        // 收集所有 API 文件
+        const allApiFiles: Array<{ file: string; displayName: string }> = [];
+
+        // 收集项目 API 文件
+        if (existsSync(projectApiDir)) {
+            for await (const file of apiGlob.scan({
+                cwd: projectApiDir,
+                onlyFiles: true,
+                absolute: true
+            })) {
+                allApiFiles.push({
+                    file: file,
+                    displayName: '用户'
+                });
+            }
+        }
+
+        // 收集组件 API 文件
+        const addons = scanAddons();
+        for (const addon of addons) {
+            if (!addonDirExists(addon, 'apis')) continue;
+            const addonApiDir = getAddonDir(addon, 'apis');
+
+            for await (const file of apiGlob.scan({
+                cwd: addonApiDir,
+                onlyFiles: true,
+                absolute: true
+            })) {
+                allApiFiles.push({
+                    file: file,
+                    displayName: `组件${addon}`
+                });
+            }
+        }
+
+        // 合并进行验证逻辑
+        for (const item of allApiFiles) {
+            const fileName = basename(item.file).replace(/\.ts$/, '');
+            const apiPath = relative(item.displayName === '用户' ? projectApiDir : getAddonDir(item.displayName.replace('组件', ''), 'apis'), item.file).replace(/\.ts$/, '');
+
+            // 跳过以下划线开头的文件
+            if (apiPath.indexOf('_') !== -1) continue;
+
+            try {
+                // Windows 下路径需要转换为正斜杠格式
+                const filePath = item.file.replace(/\\/g, '/');
+                const apiImport = await import(filePath);
+                const api = apiImport.default;
+
+                // 验证必填属性：name 和 handler
+                if (typeof api.name !== 'string' || api.name.trim() === '') {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 name 属性必须是非空字符串`);
+                    continue;
+                }
+                if (typeof api.handler !== 'function') {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 handler 属性必须是函数`);
+                    continue;
+                }
+
+                // 验证可选属性的类型（如果提供了）
+                if (api.method && !['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].includes(api.method.toUpperCase())) {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法`);
+                }
+                if (api.auth !== undefined && typeof api.auth !== 'boolean') {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 auth 属性必须是布尔值 (true=需登录, false=公开)`);
+                }
+                if (api.fields && !isPlainObject(api.fields)) {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 fields 属性必须是对象`);
+                }
+                if (api.required && !Array.isArray(api.required)) {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 required 属性必须是数组`);
+                }
+                if (api.required && api.required.some((item: any) => typeof item !== 'string')) {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 required 属性必须是字符串数组`);
+                }
+            } catch (error: any) {
+                Logger.error(`[${item.displayName}] 接口 ${apiPath} 解析失败`, error);
+            }
+        }
+
+        return true;
+    } catch (error: any) {
+        Logger.error('API 定义检查过程中出错', error);
         return false;
     }
 };
