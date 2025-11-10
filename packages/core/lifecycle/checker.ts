@@ -25,7 +25,7 @@ export class Checker {
             // 先执行默认检查（有异常会自动抛出）
             await checkDefault();
 
-            const glob = new Bun.Glob('*.{ts}');
+            const glob = new Bun.Glob('*.ts');
 
             // 统计信息
             const stats = {

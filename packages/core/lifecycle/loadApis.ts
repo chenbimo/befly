@@ -74,7 +74,9 @@ async function scanApisFromDir(apiDir: string, apiRoutes: Map<string, ApiRoute>,
         if (apiPath.indexOf('_') !== -1) continue;
 
         try {
-            const apiImport = await import(file);
+            // Windows 路径需要转换为 file:// URL 格式
+            const fileUrl = new URL(`file:///${file.replace(/\\/g, '/')}`).href;
+            const apiImport = await import(fileUrl);
             const api = apiImport.default;
             // 验证必填属性：name 和 handler
             if (typeof api.name !== 'string' || api.name.trim() === '') {
