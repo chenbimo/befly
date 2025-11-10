@@ -17,7 +17,7 @@ import { staticHandler } from './router/static.js';
 import { coreDir } from './paths.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
-import { checkCore } from './check.js';
+import { checkTable } from './check.js';
 import {
     //
     Yes,
@@ -63,7 +63,7 @@ export class Befly {
         const serverStartTime = Bun.nanoseconds();
 
         // 2. 执行表定义检查
-        const checkResult = await checkCore();
+        const checkResult = await checkTable();
         if (!checkResult) {
             Logger.error('表定义检查失败，程序退出');
             process.exit(1);
@@ -155,7 +155,7 @@ export {
     DbHelper,
     RedisHelper,
     coreDir,
-    checkCore,
+    checkTable,
     // Addon 工具函数
     scanAddons,
     getAddonDir,
