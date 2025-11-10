@@ -9,6 +9,5 @@
     "keywords": ["admin", "backend", "management"],
     "entry": "index.ts",
     "enabled": true,
-    "views": true,
     "license": "MIT"
 }

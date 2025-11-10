@@ -43,7 +43,10 @@ function scanViewsDir(dir: string, addonName: string, result: Array<{ virtualPat
             const stat = statSync(fullPath);
 
             if (stat.isDirectory()) {
-                scanDir(fullPath, prefix ? `${prefix}/${file}` : file);
+                // 跳过 components 目录
+                if (file !== 'components') {
+                    scanDir(fullPath, prefix ? `${prefix}/${file}` : file);
+                }
             } else if (file.endsWith('.vue')) {
                 const relativePath = prefix ? `${prefix}/${file}` : file;
                 const virtualPath = `/node_modules/@befly-addon/${addonName}/views/${relativePath}`;
@@ -83,7 +86,10 @@ export default function autoRouter() {
             const addonViews = scanAddonViews(projectRoot);
             addonViewsCache = addonViews;
 
-            console.log('[auto-routes] 扫描到的 addon 页面:', addonViews);
+            // 开发模式下输出调试信息
+            if (process.env.NODE_ENV === 'development') {
+                console.log('[auto-routes] 扫描到的 addon 页面数量:', addonViews.length);
+            }
 
             // 生成 addon views 的导入语句
             const addonImports = addonViews.map((view) => `  '${view.virtualPath}': () => import('${view.realPath}')`).join(',\n');
