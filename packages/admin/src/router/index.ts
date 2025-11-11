@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import { routes } from 'vue-router/auto-routes';
+import { routes, handleHotUpdate } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
 
 /**
@@ -10,6 +10,11 @@ export const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
     routes: routes
 });
+
+// HMR 支持
+if (import.meta.hot) {
+    handleHotUpdate(router);
+}
 
 // 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
