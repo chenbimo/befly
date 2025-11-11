@@ -6,13 +6,18 @@
                 <h2>{{ $Config.appTitle }}</h2>
             </div>
             <div class="header-right">
-                <tiny-dropdown title="管理员" trigger="click" border type="info" @item-click="$Method.handleUserMenu">
-                    <template #dropdown>
-                        <tiny-dropdown-menu>
-                            <tiny-dropdown-item :item-data="{ value: 'logout' }" divided>退出登录</tiny-dropdown-item>
-                        </tiny-dropdown-menu>
-                    </template>
-                </tiny-dropdown>
+                <div class="user-info-bar">
+                    <tiny-user-head class="user-avatar" type="icon" min />
+                    <div class="user-text">
+                        <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
+                        <tiny-tag type="info" size="small">{{ $Data.userInfo.role || '超级管理员' }}</tiny-tag>
+                    </div>
+                    <tiny-button type="danger" circle @click="$Method.handleLogout">
+                        <template #icon>
+                            <i-lucide:log-out style="width: 16px; height: 16px" />
+                        </template>
+                    </tiny-button>
+                </div>
             </div>
         </div>
 
@@ -46,7 +51,11 @@ const global = useGlobal();
 const $Data = $ref({
     userMenus: [],
     expandedKeys: [],
-    currentNodeKey: 0
+    currentNodeKey: 0,
+    userInfo: {
+        nickname: '管理员',
+        role: '超级管理员'
+    }
 });
 
 // 方法
@@ -98,17 +107,17 @@ const $Method = {
         }
     },
 
-    // 处理用户菜单点击
-    handleUserMenu(data) {
-        const value = data.itemData?.value || data.value;
-        if (value === 'logout') {
-            $Storage.local.remove('token');
-            router.push('/login');
-            Modal.message({ message: '退出成功', status: 'success' });
-        } else if (value === 'clearCache') {
-            console.log('刷新缓存');
-            Modal.message({ message: '缓存刷新成功', status: 'success' });
-        }
+    // 处理退出登录
+    handleLogout() {
+        Modal.confirm({
+            message: '确定要退出登录吗？',
+            title: '确认',
+            onConfirm: () => {
+                $Storage.local.remove('token');
+                router.push('/internal/login');
+                Message.success('退出成功');
+            }
+        });
     }
 };
 
@@ -162,6 +171,30 @@ $Method.fetchUserMenus();
             display: flex;
             align-items: center;
             gap: 16px;
+
+            .user-info-bar {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                .user-avatar {
+                    width: 32px;
+                    height: 32px;
+                    flex-shrink: 0;
+                }
+
+                .user-text {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .user-name {
+                        font-size: 14px;
+                        font-weight: 500;
+                        color: $text-primary;
+                    }
+                }
+            }
         }
     }
 
