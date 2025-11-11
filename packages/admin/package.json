@@ -44,7 +44,6 @@
         "@rsbuild/plugin-sass": "^1.0.2",
         "@rsbuild/plugin-vue": "^1.0.1",
         "@vue-macros/reactivity-transform": "^3.1.1",
-        "@vue/compiler-sfc": "^3.5.22",
         "merge-anything": "^6.0.6",
         "unplugin-vue-router": "^0.10.8",
         "sass": "^1.93.3",
