@@ -6,22 +6,52 @@ import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
 import { fileURLToPath, URL } from 'node:url';
+import { readdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+// 动态扫描所有 @befly-addon 包的 views 目录
+function scanBeflyAddonViews() {
+    const addonBasePath = 'node_modules/@befly-addon';
+    const routesFolders: any[] = [];
+
+    if (!existsSync(addonBasePath)) {
+        console.warn(`[@befly-addon] 目录不存在: ${addonBasePath}`);
+        return routesFolders;
+    }
+
+    try {
+        const addonDirs = readdirSync(addonBasePath, { withFileTypes: true });
+
+        for (const dir of addonDirs) {
+            if (!dir.isDirectory()) continue;
+
+            const addonName = dir.name;
+            const viewsPath = join(addonBasePath, addonName, 'views');
+
+            if (existsSync(viewsPath)) {
+                routesFolders.push({
+                    src: viewsPath,
+                    path: `addon/${addonName}/`,
+                    exclude: (excluded: string[]) => {
+                        return [...excluded, '**/components/**'];
+                    }
+                });
+                console.log(`[VueRouter] 发现 addon: @befly-addon/${addonName}/views -> /addon/${addonName}/`);
+            }
+        }
+    } catch (error) {
+        console.error('扫描 @befly-addon 目录失败:', error);
+    }
+
+    return routesFolders;
+}
 
 export default defineConfig({
     // 插件配置
     plugins: [
         // VueRouter 必须在 Vue 插件之前
         VueRouter({
-            routesFolder: [
-                {
-                    src: 'node_modules/@befly-addon/admin/views',
-                    path: 'addon/admin/',
-                    // 排除 components 目录
-                    exclude: (excluded) => {
-                        return [...excluded, '**/components/**'];
-                    }
-                }
-            ],
+            routesFolder: scanBeflyAddonViews(),
             dts: './src/types/typed-router.d.ts',
             extensions: ['.vue'],
             importMode: 'async'
