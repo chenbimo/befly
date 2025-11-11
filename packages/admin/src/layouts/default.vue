@@ -11,11 +11,7 @@
                         <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
                         <tiny-tag type="info" size="small">{{ $Data.userInfo.role || '超级管理员' }}</tiny-tag>
                     </div>
-                    <tiny-button type="danger" circle @click="$Method.handleLogout">
-                        <template #icon>
-                            <i-lucide:log-out style="width: 16px; height: 16px" />
-                        </template>
-                    </tiny-button>
+                    <tiny-button size="medium" :icon="iconClose()" @click="$Method.handleLogout" />
                 </div>
             </div>
         </div>
@@ -41,6 +37,7 @@
 
 <script setup>
 import { arrayToTree } from '@/utils';
+import { iconClose } from '@opentiny/vue-icon';
 
 const router = useRouter();
 const route = useRoute();
@@ -186,7 +183,6 @@ $Method.fetchUserMenus();
                     display: flex;
                     flex-direction: column;
                     align-items: flex-start;
-                    gap: 4px;
 
                     .user-name {
                         font-size: 14px;
