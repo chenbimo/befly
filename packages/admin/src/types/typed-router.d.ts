@@ -22,7 +22,7 @@ declare module 'vue-router/auto-routes' {
     '/addon/admin/403/403': RouteRecordInfo<'/addon/admin/403/403', '/addon/admin/403/403', Record<never, never>, Record<never, never>>,
     '/addon/admin/admin/': RouteRecordInfo<'/addon/admin/admin/', '/addon/admin/admin', Record<never, never>, Record<never, never>>,
     '/addon/admin/dict/': RouteRecordInfo<'/addon/admin/dict/', '/addon/admin/dict', Record<never, never>, Record<never, never>>,
-    '/addon/admin/login/index_1': RouteRecordInfo<'/addon/admin/login/index_1', '/addon/admin/login/index_1', Record<never, never>, Record<never, never>>,
+    '/addon/admin/login/': RouteRecordInfo<'/addon/admin/login/', '/addon/admin/login', Record<never, never>, Record<never, never>>,
     '/addon/admin/menu/': RouteRecordInfo<'/addon/admin/menu/', '/addon/admin/menu', Record<never, never>, Record<never, never>>,
     '/addon/admin/news/detail/': RouteRecordInfo<'/addon/admin/news/detail/', '/addon/admin/news/detail', Record<never, never>, Record<never, never>>,
     '/addon/admin/news/detail/detail_2': RouteRecordInfo<'/addon/admin/news/detail/detail_2', '/addon/admin/news/detail/detail_2', Record<never, never>, Record<never, never>>,

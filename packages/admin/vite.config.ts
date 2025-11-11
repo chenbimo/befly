@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import VueRouter from 'unplugin-vue-router/vite';
 import { VueRouterAutoImports } from 'unplugin-vue-router';
 import Layouts from 'vite-plugin-vue-layouts-next';
+import VueDevTools from 'vite-plugin-vue-devtools';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import Icons from 'unplugin-icons/vite';
@@ -52,6 +53,9 @@ const routesFolders = scanBeflyAddonViews();
 export default defineConfig({
     // 插件配置
     plugins: [
+        // Vue DevTools（仅开发环境）
+        VueDevTools(),
+
         // VueRouter 必须在 Vue 插件之前
         VueRouter({
             routesFolder: routesFolders,
