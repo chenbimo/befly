@@ -39,6 +39,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
 // 组件内部数据
 const systemResources = $ref({
     cpu: { usage: 0, cores: 0 },

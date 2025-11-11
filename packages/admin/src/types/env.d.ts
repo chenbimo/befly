@@ -7,7 +7,7 @@ declare module '*.vue' {
 }
 
 // 自动路由模块声明
-declare module 'virtual:auto-routes' {
+declare module 'virtual:befly-auto-routes' {
     import type { RouteRecordRaw } from 'vue-router';
     const routes: RouteRecordRaw[];
     export default routes;

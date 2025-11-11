@@ -78,6 +78,9 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { Modal } from '@opentiny/vue';
+
 import EditDialog from './components/edit.vue';
 import RoleDialog from './components/role.vue';
 

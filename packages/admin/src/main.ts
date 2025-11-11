@@ -2,8 +2,8 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 
-// 引入全局样式
-import './styles/internal/index.scss';
+// 引入全局样式 - 临时禁用以排查路由问题
+// import './styles/internal/index.scss';
 
 // 引入路由实例
 import { router } from './plugins/internal/router';

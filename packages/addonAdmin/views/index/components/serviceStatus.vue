@@ -35,6 +35,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
 // 组件内部数据
 const services = $ref([]);
 

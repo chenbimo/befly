@@ -24,7 +24,11 @@
     </tiny-form>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { ref, shallowRef } from 'vue';
+import { useRouter } from 'vue-router';
+import { Modal } from '@opentiny/vue';
+
 const router = useRouter();
 
 // 表单引用

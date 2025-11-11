@@ -11,6 +11,9 @@
 </template>
 
 <script setup>
+import { ref, nextTick, shallowRef } from 'vue';
+import { Modal } from '@opentiny/vue';
+
 import { arrayToTree } from '@/utils';
 
 const $Prop = defineProps({

@@ -74,6 +74,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
 // 响应式数据
 const $Data = $ref({
     loading: false,

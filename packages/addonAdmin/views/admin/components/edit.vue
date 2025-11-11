@@ -34,6 +34,9 @@
 </template>
 
 <script setup>
+import { ref, shallowRef } from 'vue';
+import { Modal } from '@opentiny/vue';
+
 const $Prop = defineProps({
     modelValue: {
         type: Boolean,

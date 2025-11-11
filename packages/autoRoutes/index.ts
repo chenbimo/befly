@@ -20,9 +20,23 @@ function scanAddonViews(projectRoot: string): Array<{ virtualPath: string; realP
             const addonDir = join(nodeModulesAddonDir, addonName);
             const viewsDir = join(addonDir, 'views');
 
-            if (existsSync(viewsDir) && statSync(viewsDir).isDirectory()) {
-                scanViewsDir(viewsDir, addonName, addonViews);
+            // 优先使用 workspace 源码路径（monorepo 环境）
+            // 检查是否存在 packages/addon{AddonName}/views
+            const workspaceSourceDir = join(projectRoot, '..', `addon${addonName.charAt(0).toUpperCase()}${addonName.slice(1)}`, 'views');
+
+            let targetViewsDir = viewsDir;
+            if (existsSync(workspaceSourceDir) && statSync(workspaceSourceDir).isDirectory()) {
+                targetViewsDir = workspaceSourceDir;
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`[auto-routes] 使用 workspace 源码路径: ${workspaceSourceDir}`);
+                }
+            } else if (existsSync(viewsDir) && statSync(viewsDir).isDirectory()) {
+                targetViewsDir = viewsDir;
+            } else {
+                continue;
             }
+
+            scanViewsDir(targetViewsDir, addonName, addonViews);
         }
     } catch (error) {
         console.warn('[auto-routes] 扫描 addon views 失败:', error);

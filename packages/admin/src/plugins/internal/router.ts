@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import autoRoutes from 'virtual:befly-auto-routes';
+// 临时使用手动创建的routes，等待 vue-router/auto-routes 虚拟模块支持
+import { routes } from '@/router/routes';
 import { $Storage } from './storage';
 
 /**
@@ -8,8 +9,13 @@ import { $Storage } from './storage';
  */
 export const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
-    routes: autoRoutes
+    routes: routes
 });
+
+// HMR 支持 - 等待 unplugin-vue-router 虚拟模块支持后启用
+// if (import.meta.hot) {
+//     handleHotUpdate(router);
+// }
 
 // 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
@@ -23,11 +29,11 @@ router.beforeEach(async (to, from, next) => {
 
     const token = $Storage.local.get('token');
 
-    // 判断是否为公开路由：使用 layout0 的需要登录，其他 layout 为公开路由
-    const isProtectedRoute = to.matched.some((record) => record.name === 'layout0');
+    // 判断是否为公开路由：meta.public 为 true 表示公开路由
+    const isPublicRoute = to.meta?.public === true;
 
-    // 1. 未登录且访问受保护路由 → 跳转登录
-    if (!token && isProtectedRoute) {
+    // 1. 未登录且访问非公开路由 → 跳转登录
+    if (!token && !isPublicRoute) {
         return next('/internal/login');
     }
 

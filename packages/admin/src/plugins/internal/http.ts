@@ -56,7 +56,7 @@ request.interceptors.response.use(
             return Promise.reject(res.data);
         }
 
-        return res;
+        return res as any;
     },
     (error) => {
         Modal.message({ message: '网络连接失败', status: 'error' });

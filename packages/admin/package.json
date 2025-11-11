@@ -22,9 +22,9 @@
         "README.md"
     ],
     "scripts": {
-        "dev": "vite",
-        "build": "vue-tsc && vite build",
-        "preview": "vite preview",
+        "dev": "rsbuild dev",
+        "build": "rsbuild build",
+        "preview": "rsbuild preview",
         "type-check": "vue-tsc --noEmit",
         "sync:admin": "bunx befly sync:admin"
     },
@@ -36,22 +36,25 @@
         "vue-router": "^4.6.3"
     },
     "devDependencies": {
+        "@befly-addon/admin": "workspace:*",
         "@iconify-json/lucide": "^1.2.72",
         "@iconify/json": "^2.2.280",
         "@opentiny/unplugin-tiny-vue": "^1.0.0",
+        "@rsbuild/core": "^1.6.3",
+        "@rsbuild/plugin-sass": "^1.0.2",
+        "@rsbuild/plugin-vue": "^1.0.1",
+        "@rsbuild/plugin-sass": "^1.0.2",
         "@vitejs/plugin-vue": "^6.0.1",
         "@vue-macros/reactivity-transform": "^3.1.1",
         "@vue/compiler-sfc": "^3.5.22",
-        "befly-auto-routes": "workspace:*",
         "merge-anything": "^6.0.6",
+        "unplugin-vue-router": "^0.10.8",
         "sass": "^1.93.3",
         "typescript": "^5.9.3",
         "unplugin-auto-import": "^20.2.0",
         "unplugin-icons": "^0.22.0",
         "unplugin-vue-components": "^30.0.0",
-        "vite": "^7.2.0",
-        "vue-tsc": "^3.1.3",
-        "@befly-addon/admin": "workspace:*"
+        "vue-tsc": "^3.1.3"
     },
     "engines": {
         "node": ">=24.0.0",

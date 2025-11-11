@@ -6,7 +6,7 @@ import { defineStore } from 'pinia';
  */
 export const useGlobal = defineStore('global', () => {
     // ==================== 全局数据 ====================
-    const data = $ref({});
+    const data = ref({});
 
     // ==================== 全局方法 ====================
     const method = {

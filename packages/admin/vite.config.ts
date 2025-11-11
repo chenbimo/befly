@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'rolldown-vite';
 import vue from '@vitejs/plugin-vue';
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import AutoImport from 'unplugin-auto-import/vite';
@@ -6,6 +6,7 @@ import Components from 'unplugin-vue-components/vite';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
+import { federation } from '@module-federation/vite';
 import autoRoutes from 'befly-auto-routes';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +16,36 @@ export default defineConfig({
     plugins: [
         vue(),
         ReactivityTransform(),
+        federation({
+            name: 'adminHost',
+            remotes: {
+                addonAdmin: {
+                    type: 'module',
+                    name: 'addonAdmin',
+                    entry: 'http://localhost:5601/remoteEntry.js',
+                    entryGlobalName: 'addonAdmin',
+                    shareScope: 'default'
+                }
+            },
+            shared: {
+                vue: {
+                    singleton: true,
+                    requiredVersion: '^3.5.0'
+                },
+                'vue-router': {
+                    singleton: true,
+                    requiredVersion: '^4.6.0'
+                },
+                pinia: {
+                    singleton: true,
+                    requiredVersion: '^3.0.0'
+                },
+                '@opentiny/vue': {
+                    singleton: true,
+                    requiredVersion: '^3.27.0'
+                }
+            }
+        }),
         autoRoutes({ debug: true }),
         Icons({
             compiler: 'vue3',
@@ -52,7 +83,8 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            '@befly-addon/admin': fileURLToPath(new URL('../addonAdmin', import.meta.url))
         }
     },
     define: {
@@ -74,20 +106,31 @@ export default defineConfig({
     },
     logLevel: 'info',
     optimizeDeps: {
-        include: ['vue', 'vue-router', 'pinia', '@opentiny/vue', 'axios']
+        include: ['vue', 'vue-router', 'pinia', '@opentiny/vue', 'axios'],
+        // 强制预构建 addon 依赖
+        entries: ['src/**/*.vue', '../addonAdmin/views/**/*.vue']
     },
     build: {
-        target: 'esnext',
+        target: 'chrome89',
         outDir: 'dist',
         assetsDir: 'assets',
         sourcemap: false,
         minify: 'esbuild',
         chunkSizeWarningLimit: 1000,
+        modulePreload: {
+            polyfill: true
+        },
         rollupOptions: {
             output: {
-                manualChunks: {
-                    vue: ['vue', 'vue-router', 'pinia'],
-                    opentiny: ['@opentiny/vue']
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('vue') || id.includes('pinia')) {
+                            return 'vue';
+                        }
+                        if (id.includes('@opentiny/vue')) {
+                            return 'opentiny';
+                        }
+                    }
                 }
             }
         }

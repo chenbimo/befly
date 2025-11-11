@@ -74,6 +74,9 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { Modal } from '@opentiny/vue';
+
 import EditDialog from './components/edit.vue';
 
 // 响应式数据
