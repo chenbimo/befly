@@ -5,14 +5,7 @@ import { $Storage } from '@/plugins/storage';
 // 打印自动生成的路由信息
 console.log('=== 自动生成的路由列表 ===');
 console.log(`路由总数: ${routes.length}`);
-routes.forEach((route, index) => {
-    console.log(`${index + 1}. ${route.path}`, route.name ? `(name: ${String(route.name)})` : '');
-    if (route.children && route.children.length > 0) {
-        route.children.forEach((child, childIndex) => {
-            console.log(`   ${index + 1}.${childIndex + 1} ${child.path}`, child.name ? `(name: ${String(child.name)})` : '');
-        });
-    }
-});
+console.dir(routes);
 console.log('========================');
 
 /**

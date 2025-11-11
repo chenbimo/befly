@@ -15,7 +15,11 @@ export default defineConfig({
             routesFolder: [
                 {
                     src: 'node_modules/@befly-addon/admin/views',
-                    path: 'internal/'
+                    path: 'addon/admin/',
+                    // 排除 components 目录
+                    exclude: (excluded) => {
+                        return [...excluded, '**/components/**'];
+                    }
                 }
             ],
             dts: './src/types/typed-router.d.ts',
