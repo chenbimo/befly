@@ -24,13 +24,16 @@ export default defineConfig({
             // 包含 @befly-addon 包，使其被正常编译
             /node_modules\/@befly-addon\//
         ],
-        // 路径别名
-        alias: {
-            '@': './src'
-        },
         // 定义全局变量
         define: {
             __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production')
+        }
+    },
+
+    // 路径别名
+    resolve: {
+        alias: {
+            '@': './src'
         }
     },
 
