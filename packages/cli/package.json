@@ -33,7 +33,7 @@
     "author": "chenbimo",
     "license": "MIT",
     "dependencies": {
-        "befly": "^3.8.2",
+        "befly": "workspace:*",
         "chalk": "^5.6.2",
         "commander": "^14.0.2",
         "es-toolkit": "^1.41.0",
