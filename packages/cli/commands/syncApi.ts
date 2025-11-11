@@ -16,7 +16,7 @@ import { Database, RedisHelper, utils } from 'befly';
 
 import { Logger, projectDir } from '../util.js';
 
-import type { SyncApiOptions, ApiInfo, SyncApiStats } from '../types.js';
+import type { SyncApiOptions, ApiInfo } from '../types.js';
 
 /**
  * Glob 实例（模块级常量，复用）
@@ -155,9 +155,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 /**
  * 同步 API 数据到数据库
  */
-async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number; updated: number; createdList: any[]; updatedList: any[] }> {
-    const stats = { created: 0, updated: 0, createdList: [] as any[], updatedList: [] as any[] };
-
+async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
     for (const api of apis) {
         try {
             // 根据 path 查询是否存在
@@ -167,26 +165,10 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
             });
 
             if (existing) {
-                // 对比差异
-                const changes: { field: string; before: any; after: any }[] = [];
+                // 检查是否需要更新
+                const needUpdate = existing.name !== api.name || existing.method !== api.method || existing.description !== api.description || existing.addonName !== api.addonName || existing.addonTitle !== api.addonTitle;
 
-                if (existing.name !== api.name) {
-                    changes.push({ field: 'name', before: existing.name, after: api.name });
-                }
-                if (existing.method !== api.method) {
-                    changes.push({ field: 'method', before: existing.method, after: api.method });
-                }
-                if (existing.description !== api.description) {
-                    changes.push({ field: 'description', before: existing.description, after: api.description });
-                }
-                if (existing.addonName !== api.addonName) {
-                    changes.push({ field: 'addonName', before: existing.addonName, after: api.addonName });
-                }
-                if (existing.addonTitle !== api.addonTitle) {
-                    changes.push({ field: 'addonTitle', before: existing.addonTitle, after: api.addonTitle });
-                }
-
-                if (changes.length > 0) {
+                if (needUpdate) {
                     await helper.updData({
                         table: 'addon_admin_api',
                         where: { id: existing.id },
@@ -197,16 +179,6 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                             addonName: api.addonName,
                             addonTitle: api.addonTitle
                         }
-                    });
-                    stats.updated++;
-                    stats.updatedList.push({
-                        name: api.name,
-                        path: api.path,
-                        method: api.method,
-                        description: api.description,
-                        addonName: api.addonName,
-                        addonTitle: api.addonTitle,
-                        changes: changes
                     });
                 }
             } else {
@@ -221,67 +193,41 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number
                         addonTitle: api.addonTitle
                     }
                 });
-                stats.created++;
-                stats.createdList.push({
-                    name: api.name,
-                    path: api.path,
-                    method: api.method,
-                    description: api.description,
-                    addonName: api.addonName,
-                    addonTitle: api.addonTitle
-                });
             }
         } catch (error: any) {
             Logger.error(`同步接口 "${api.name}" 失败:`, error);
         }
     }
-
-    return stats;
 }
 
 /**
  * 删除配置中不存在的记录
  */
-async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<{ count: number; list: ApiDetail[] }> {
+async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<void> {
     const allRecords = await helper.getAll({
         table: 'addon_admin_api',
-        fields: ['id', 'path', 'name', 'method', 'description', 'addonName', 'addonTitle'],
-        where: { state$gte: 0 } // 查询所有状态（包括软删除的 state=0）
+        fields: ['id', 'path'],
+        where: { state$gte: 0 }
     });
-
-    const deletedList: ApiDetail[] = [];
-    let deletedCount = 0;
 
     for (const record of allRecords) {
         if (record.path && !apiPaths.has(record.path)) {
-            deletedList.push({
-                name: record.name || '',
-                path: record.path,
-                method: record.method || 'POST',
-                description: record.description || '',
-                addonName: record.addonName || '',
-                addonTitle: record.addonTitle || ''
-            });
-
             await helper.delForce({
                 table: 'addon_admin_api',
                 where: { id: record.id }
             });
-            deletedCount++;
         }
     }
-
-    return { count: deletedCount, list: deletedList };
 }
 
 /**
  * SyncApi 命令主函数
  */
-export async function syncApiCommand(options: SyncApiOptions = {}): Promise<SyncApiStats> {
+export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.info('[计划] 同步 API 接口到数据库（plan 模式不执行）');
-            return { totalApis: 0, created: 0, updated: 0, deleted: 0 };
+            return;
         }
 
         const projectRoot = process.cwd();
@@ -304,10 +250,10 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         const apiPaths = new Set(apis.map((api) => api.path));
 
         // 3. 同步 API 数据
-        const stats = await syncApis(helper, apis);
+        await syncApis(helper, apis);
 
         // 4. 删除文件中不存在的接口
-        const deleteResult = await deleteObsoleteRecords(helper, apiPaths);
+        await deleteObsoleteRecords(helper, apiPaths);
 
         // 5. 缓存接口数据到 Redis
         try {
@@ -322,13 +268,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         } catch (error: any) {
             // 忽略缓存错误
         }
-
-        return {
-            totalApis: apis.length,
-            created: stats.created,
-            updated: stats.updated,
-            deleted: deleteResult.count
-        };
     } catch (error: any) {
         Logger.error('API 同步失败:', error);
         process.exit(1);
