@@ -20,13 +20,15 @@ function scanBeflyAddonViews() {
     }
 
     try {
-        const addonDirs = readdirSync(addonBasePath, { withFileTypes: true });
+        const addonDirs = readdirSync(addonBasePath);
 
-        for (const dir of addonDirs) {
-            if (!dir.isDirectory()) continue;
+        for (const addonName of addonDirs) {
+            const addonPath = join(addonBasePath, addonName);
 
-            const addonName = dir.name;
-            const viewsPath = join(addonBasePath, addonName, 'views');
+            // 检查是否为目录（包括符号链接）
+            if (!existsSync(addonPath)) continue;
+
+            const viewsPath = join(addonPath, 'views');
 
             if (existsSync(viewsPath)) {
                 routesFolders.push({
@@ -43,12 +45,14 @@ function scanBeflyAddonViews() {
     return routesFolders;
 }
 
+const routesFolders = scanBeflyAddonViews();
+
 export default defineConfig({
     // 插件配置
     plugins: [
         // VueRouter 必须在 Vue 插件之前
         VueRouter({
-            routesFolder: scanBeflyAddonViews(),
+            routesFolder: routesFolders,
             dts: './src/types/typed-router.d.ts',
             extensions: ['.vue'],
             importMode: 'async',
