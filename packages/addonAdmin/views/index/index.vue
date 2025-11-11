@@ -38,10 +38,12 @@ import EnvironmentInfo from './components/environmentInfo.vue';
         gap: 12px;
         overflow-y: auto;
         min-width: 0;
+        background-color: #fff;
+        padding: 15px;
     }
 
     .dashboard-right {
-        width: 400px;
+        width: 300px;
         display: flex;
         flex-direction: column;
         gap: 12px;

@@ -132,6 +132,8 @@ $Method.fetchData();
 
 <style scoped lang="scss">
 .user-info-card {
+    background-color: #fff;
+    padding: 15px;
     .user-header {
         display: flex;
         align-items: center;
