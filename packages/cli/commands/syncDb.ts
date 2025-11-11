@@ -20,6 +20,10 @@ export async function syncDbCommand(options: SyncDbOptions): Promise<SyncDbStats
             process.env.SYNC_TABLE = options.table;
         }
 
+        if (options.force) {
+            process.env.SYNC_FORCE = '1';
+        }
+
         // 执行同步并返回统计
         const stats = await SyncDb();
         return stats;

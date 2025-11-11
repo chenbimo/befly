@@ -43,7 +43,7 @@ const IS_PLAN = process.argv.includes('--plan');
  * @param globalCount - 全局统计对象（用于计数）
  * @returns 表结构变更计划
  */
-export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, globalCount: Record<string, number>): Promise<TablePlan> {
+export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, globalCount: Record<string, number>, force: boolean = false): Promise<TablePlan> {
     const existingColumns = await getTableColumns(sql, tableName);
     const existingIndexes = await getTableIndexes(sql, tableName);
     let changed = false;
@@ -77,7 +77,11 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
                 if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].max) {
                     if (existingColumns[dbFieldName].max > fieldMax) {
-                        Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldMax} 已被跳过`);
+                        if (force) {
+                            Logger.warn(`[强制执行] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldMax}`);
+                        } else {
+                            Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldMax} 已被跳过（使用 --force 强制执行）`);
+                        }
                     }
                 }
 
@@ -124,7 +128,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     let skipModify = false;
                     if (hasLengthChange && isStringOrArrayType(fieldType) && existingColumns[dbFieldName].max) {
                         const isShrink = existingColumns[dbFieldName].max > fieldMax;
-                        if (isShrink) skipModify = true;
+                        if (isShrink && !force) skipModify = true;
                     }
 
                     if (hasTypeChange) {

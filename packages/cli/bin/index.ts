@@ -36,11 +36,12 @@ program
 program
     .command('sync')
     .description('同步后端数据')
-    .action(async () => {
+    .option('-f, --force', '允许强制执行危险变更（如长度收缩）')
+    .action(async (options) => {
         Logger.printEnv();
 
         try {
-            await syncAllCommand();
+            await syncAllCommand({ force: options.force || false });
             process.exit(0);
         } catch (error: any) {
             Logger.error('命令执行失败:', error.message || error);

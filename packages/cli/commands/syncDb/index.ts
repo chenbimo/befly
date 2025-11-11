@@ -151,8 +151,11 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
                 const tableDefinition = await Bun.file(file).json();
                 const existsTable = await tableExists(sql!, tableName);
 
+                // 读取 force 参数
+                const force = process.env.SYNC_FORCE === '1';
+
                 if (existsTable) {
-                    await modifyTable(sql!, tableName, tableDefinition, globalCount);
+                    await modifyTable(sql!, tableName, tableDefinition, globalCount, force);
                 } else {
                     await createTable(sql!, tableName, tableDefinition);
                     globalCount.createdTables++;

@@ -18,7 +18,7 @@ export async function syncAllCommand(options: SyncOptions = {}) {
 
         // 1. 同步数据库表结构
         Logger.info('📦 正在同步数据库...');
-        const dbStats = await syncDbCommand({ dryRun: false });
+        const dbStats = await syncDbCommand({ dryRun: false, force: options.force || false });
         Logger.info(`✓ 数据库同步完成 (处理 ${dbStats.processedTables} 个表)\n`);
 
         // 2. 同步接口（并缓存）
