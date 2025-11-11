@@ -46,9 +46,10 @@ async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
 /**
  * 为 addon 菜单的 path 添加前缀
  * 规则：
- * 1. 以 / 开头的路径：添加 /addon/{addonName} 前缀
- * 2. 以 _ 开头的路径（分组菜单）：保持不变
+ * 1. 所有路径必须以 / 开头
+ * 2. 所有路径都添加 /addon/{addonName} 前缀
  * 3. 递归处理所有层级的子菜单
+ * 4. 项目菜单不添加前缀
  */
 function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
     return menus.map((menu) => {
@@ -66,9 +67,7 @@ function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
 
         return newMenu;
     });
-}
-
-/**
+} /**
  * 合并菜单配置
  * 优先级：项目 menu.json > addon menu.json
  * 支持三级菜单结构：父级、子级、孙级
@@ -175,12 +174,10 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
  * 同步菜单（三层结构：父级、子级、孙级）
  * 子级菜单使用独立路径
  */
-async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: number; updated: number; createdList: any[]; updatedList: any[] }> {
+async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: number; updated: number }> {
     const stats = {
         created: 0,
-        updated: 0,
-        createdList: [] as any[],
-        updatedList: [] as any[]
+        updated: 0
     };
 
     for (const menu of menus) {
@@ -194,27 +191,12 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
             let parentId: number;
 
             if (existingParent) {
-                const changes: { field: string; before: any; after: any }[] = [];
-
-                if (existingParent.pid !== 0) {
-                    changes.push({ field: 'pid', before: existingParent.pid, after: 0 });
-                }
-                if (existingParent.name !== menu.name) {
-                    changes.push({ field: 'name', before: existingParent.name, after: menu.name });
-                }
-                if (existingParent.icon !== (menu.icon || '')) {
-                    changes.push({ field: 'icon', before: existingParent.icon, after: menu.icon || '' });
-                }
-                if (existingParent.sort !== (menu.sort || 0)) {
-                    changes.push({ field: 'sort', before: existingParent.sort, after: menu.sort || 0 });
-                }
-                if (existingParent.type !== (menu.type || 1)) {
-                    changes.push({ field: 'type', before: existingParent.type, after: menu.type || 1 });
-                }
-
                 parentId = existingParent.id;
 
-                if (changes.length > 0) {
+                // 检查是否需要更新
+                const needUpdate = existingParent.pid !== 0 || existingParent.name !== menu.name || existingParent.icon !== (menu.icon || '') || existingParent.sort !== (menu.sort || 0) || existingParent.type !== (menu.type || 1);
+
+                if (needUpdate) {
                     await helper.updData({
                         table: 'addon_admin_menu',
                         where: { id: existingParent.id },
@@ -227,16 +209,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                         }
                     });
                     stats.updated++;
-                    stats.updatedList.push({
-                        name: menu.name,
-                        path: menu.path || '',
-                        icon: menu.icon,
-                        sort: menu.sort,
-                        type: menu.type,
-                        addonName: '',
-                        addonTitle: '项目',
-                        changes: changes
-                    });
                 }
             } else {
                 parentId = await helper.insData({
@@ -251,15 +223,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                     }
                 });
                 stats.created++;
-                stats.createdList.push({
-                    name: menu.name,
-                    path: menu.path || '',
-                    icon: menu.icon,
-                    sort: menu.sort,
-                    type: menu.type,
-                    addonName: '',
-                    addonTitle: '项目'
-                });
             }
 
             // 2. 同步第二层菜单
@@ -274,27 +237,12 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                     let childId: number;
 
                     if (existingChild) {
-                        const changes: { field: string; before: any; after: any }[] = [];
-
-                        if (existingChild.pid !== parentId) {
-                            changes.push({ field: 'pid', before: existingChild.pid, after: parentId });
-                        }
-                        if (existingChild.name !== child.name) {
-                            changes.push({ field: 'name', before: existingChild.name, after: child.name });
-                        }
-                        if (existingChild.icon !== (child.icon || '')) {
-                            changes.push({ field: 'icon', before: existingChild.icon, after: child.icon || '' });
-                        }
-                        if (existingChild.sort !== (child.sort || 0)) {
-                            changes.push({ field: 'sort', before: existingChild.sort, after: child.sort || 0 });
-                        }
-                        if (existingChild.type !== (child.type || 1)) {
-                            changes.push({ field: 'type', before: existingChild.type, after: child.type || 1 });
-                        }
-
                         childId = existingChild.id;
 
-                        if (changes.length > 0) {
+                        // 检查是否需要更新
+                        const needUpdate = existingChild.pid !== parentId || existingChild.name !== child.name || existingChild.icon !== (child.icon || '') || existingChild.sort !== (child.sort || 0) || existingChild.type !== (child.type || 1);
+
+                        if (needUpdate) {
                             await helper.updData({
                                 table: 'addon_admin_menu',
                                 where: { id: existingChild.id },
@@ -307,16 +255,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                                 }
                             });
                             stats.updated++;
-                            stats.updatedList.push({
-                                name: child.name,
-                                path: childPath,
-                                icon: child.icon,
-                                sort: child.sort,
-                                type: child.type,
-                                addonName: '',
-                                addonTitle: '项目',
-                                changes: changes
-                            });
                         }
                     } else {
                         childId = await helper.insData({
@@ -331,15 +269,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             }
                         });
                         stats.created++;
-                        stats.createdList.push({
-                            name: child.name,
-                            path: childPath,
-                            icon: child.icon,
-                            sort: child.sort,
-                            type: child.type,
-                            addonName: '',
-                            addonTitle: '项目'
-                        });
                     }
 
                     // 3. 同步第三层菜单
@@ -352,25 +281,10 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             });
 
                             if (existingGrandChild) {
-                                const changes: { field: string; before: any; after: any }[] = [];
+                                // 检查是否需要更新
+                                const needUpdate = existingGrandChild.pid !== childId || existingGrandChild.name !== grandChild.name || existingGrandChild.icon !== (grandChild.icon || '') || existingGrandChild.sort !== (grandChild.sort || 0) || existingGrandChild.type !== (grandChild.type || 1);
 
-                                if (existingGrandChild.pid !== childId) {
-                                    changes.push({ field: 'pid', before: existingGrandChild.pid, after: childId });
-                                }
-                                if (existingGrandChild.name !== grandChild.name) {
-                                    changes.push({ field: 'name', before: existingGrandChild.name, after: grandChild.name });
-                                }
-                                if (existingGrandChild.icon !== (grandChild.icon || '')) {
-                                    changes.push({ field: 'icon', before: existingGrandChild.icon, after: grandChild.icon || '' });
-                                }
-                                if (existingGrandChild.sort !== (grandChild.sort || 0)) {
-                                    changes.push({ field: 'sort', before: existingGrandChild.sort, after: grandChild.sort || 0 });
-                                }
-                                if (existingGrandChild.type !== (grandChild.type || 1)) {
-                                    changes.push({ field: 'type', before: existingGrandChild.type, after: grandChild.type || 1 });
-                                }
-
-                                if (changes.length > 0) {
+                                if (needUpdate) {
                                     await helper.updData({
                                         table: 'addon_admin_menu',
                                         where: { id: existingGrandChild.id },
@@ -383,16 +297,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                                         }
                                     });
                                     stats.updated++;
-                                    stats.updatedList.push({
-                                        name: grandChild.name,
-                                        path: grandChildPath,
-                                        icon: grandChild.icon,
-                                        sort: grandChild.sort,
-                                        type: grandChild.type,
-                                        addonName: '',
-                                        addonTitle: '项目',
-                                        changes: changes
-                                    });
                                 }
                             } else {
                                 await helper.insData({
@@ -407,15 +311,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                                     }
                                 });
                                 stats.created++;
-                                stats.createdList.push({
-                                    name: grandChild.name,
-                                    path: grandChildPath,
-                                    icon: grandChild.icon,
-                                    sort: grandChild.sort,
-                                    type: grandChild.type,
-                                    addonName: '',
-                                    addonTitle: '项目'
-                                });
                             }
                         }
                     }
@@ -433,28 +328,17 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
 /**
  * 删除配置中不存在的菜单（强制删除）
  */
-async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<{ count: number; list: any[] }> {
+async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<number> {
     const allRecords = await helper.getAll({
         table: 'addon_admin_menu',
-        fields: ['id', 'path', 'name', 'icon', 'sort', 'type'],
-        where: { state$gte: 0 } // 查询所有状态（包括软删除的 state=0）
+        fields: ['id', 'path'],
+        where: { state$gte: 0 }
     });
 
-    const deletedList: any[] = [];
     let deletedCount = 0;
 
     for (const record of allRecords) {
         if (record.path && !configPaths.has(record.path)) {
-            deletedList.push({
-                name: record.name || '',
-                path: record.path,
-                icon: record.icon,
-                sort: record.sort,
-                type: record.type,
-                addonName: '',
-                addonTitle: '项目'
-            });
-
             await helper.delForce({
                 table: 'addon_admin_menu',
                 where: { id: record.id }
@@ -463,7 +347,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
         }
     }
 
-    return { count: deletedCount, list: deletedList };
+    return deletedCount;
 }
 
 /**
@@ -521,7 +405,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         const stats = await syncMenus(helper, mergedMenus);
 
         // 7. 删除文件中不存在的菜单（强制删除）
-        const deleteResult = await deleteObsoleteRecords(helper, configPaths);
+        const deletedCount = await deleteObsoleteRecords(helper, configPaths);
 
         // 8. 获取最终菜单数据
         const allMenusData = await helper.getAll({
@@ -553,7 +437,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
             childMenus: childCount,
             created: stats.created,
             updated: stats.updated,
-            deleted: deleteResult.count
+            deleted: deletedCount
         };
     } catch (error: any) {
         Logger.error('菜单同步失败:', error);

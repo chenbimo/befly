@@ -8,7 +8,7 @@
     },
     {
         "name": "人员管理",
-        "path": "_people",
+        "path": "/_people",
         "icon": "",
         "sort": 2,
         "type": 1,
@@ -24,7 +24,7 @@
     },
     {
         "name": "权限设置",
-        "path": "_permission",
+        "path": "/_permission",
         "icon": "",
         "sort": 3,
         "type": 1,
