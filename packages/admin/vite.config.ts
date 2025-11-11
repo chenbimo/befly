@@ -72,11 +72,7 @@ export default defineConfig({
 
         // API 自动导入
         AutoImport({
-            imports: [
-                'vue',
-                'pinia',
-                VueRouterAutoImports
-            ],
+            imports: ['vue', 'pinia', VueRouterAutoImports],
             dts: 'src/types/auto-imports.d.ts',
             dirs: ['src/utils', 'src/plugins'],
             vueTemplate: true
@@ -139,7 +135,9 @@ export default defineConfig({
     css: {
         preprocessorOptions: {
             scss: {
-                api: 'modern-compiler'
+                api: 'modern-compiler',
+                // 自动导入全局 SCSS 变量
+                additionalData: `@use "@/styles/variables.scss" as *;`
             }
         }
     },
