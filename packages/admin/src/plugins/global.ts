@@ -4,7 +4,9 @@
  */
 export const useGlobal = defineStore('global', () => {
     // ==================== 全局数据 ====================
-    const data = $ref({});
+    const data = $ref({
+        appTitle: $Config.appTitle
+    });
 
     // ==================== 全局方法 ====================
     const method = {
@@ -13,7 +15,7 @@ export const useGlobal = defineStore('global', () => {
          * @param title 标题文本
          */
         setPageTitle: (title?: string) => {
-            document.title = title ? `${title} - ${$ConfigInternal.appTitle}` : $ConfigInternal.appTitle;
+            document.title = title ? `${title} - ${$Config.appTitle}` : $Config.appTitle;
         }
     };
 

@@ -3,7 +3,7 @@
         <!-- 顶部导航栏 -->
         <div class="layout-header">
             <div class="logo">
-                <h2>{{ global.data.appTitle }}</h2>
+                <h2>{{ $Config.appTitle }}</h2>
             </div>
             <div class="header-right">
                 <tiny-dropdown title="管理员" trigger="click" border type="info" @item-click="$Method.handleUserMenu">
