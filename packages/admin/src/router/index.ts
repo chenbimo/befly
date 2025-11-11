@@ -1,11 +1,15 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { routes, handleHotUpdate } from 'vue-router/auto-routes';
+import { setupLayouts } from 'virtual:generated-layouts';
 import { $Storage } from '@/plugins/storage';
+
+// 应用布局系统
+const layoutRoutes = setupLayouts(routes);
 
 // 打印自动生成的路由信息
 console.log('=== 自动生成的路由列表 ===');
-console.log(`路由总数: ${routes.length}`);
-console.dir(routes);
+console.log(`路由总数: ${layoutRoutes.length}`);
+console.dir(layoutRoutes);
 console.log('========================');
 
 /**
@@ -14,7 +18,7 @@ console.log('========================');
  */
 export const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
-    routes: routes
+    routes: layoutRoutes
 });
 
 // HMR 支持

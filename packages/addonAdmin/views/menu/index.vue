@@ -166,6 +166,12 @@ const $Method = {
 $Method.initData();
 </script>
 
+<route lang="yaml">
+meta:
+    layout: default
+    title: 菜单管理
+</route>
+
 <style scoped lang="scss">
 // 样式继承自全局 page-table
 </style>

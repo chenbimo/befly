@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import VueRouter from 'unplugin-vue-router/vite';
 import { VueRouterAutoImports } from 'unplugin-vue-router';
+import Layouts from 'vite-plugin-vue-layouts-next';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import Icons from 'unplugin-icons/vite';
@@ -61,6 +62,12 @@ export default defineConfig({
             importMode: 'async',
             // 全局排除 components 目录
             exclude: ['**/components/**']
+        }),
+
+        // 布局系统
+        Layouts({
+            layoutsDirs: 'src/layouts',
+            defaultLayout: 'default'
         }),
 
         // Vue 插件
