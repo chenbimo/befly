@@ -169,6 +169,14 @@ export default defineConfig({
 
     // 优化依赖预构建
     optimizeDeps: {
-        include: ['vue', 'vue-router', 'pinia', '@opentiny/vue', 'axios']
+        include: [
+            'vue',
+            'vue-router',
+            'pinia',
+            'axios',
+            // OpenTiny Vue 组件（使用正则匹配所有子包）
+            '@opentiny/vue'
+            // 注意：unplugin-tiny-vue 会自动处理按需导入，无需手动列出所有组件
+        ]
     }
 });
