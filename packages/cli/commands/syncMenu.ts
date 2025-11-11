@@ -313,7 +313,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
 
         // 5. 收集配置文件中所有菜单的 path
         const configPaths = collectPaths(mergedMenus);
-        console.log('🔥[ configPaths ]-340', configPaths);
 
         // 6. 同步菜单
         const stats = await syncMenus(helper, mergedMenus);
