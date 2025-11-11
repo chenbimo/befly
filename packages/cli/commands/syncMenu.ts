@@ -76,70 +76,46 @@ function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
  * 支持三级菜单结构：父级、子级、孙级
  */
 function mergeMenuConfigs(allMenus: Array<{ menus: MenuConfig[]; addonName: string }>): MenuConfig[] {
-    const menuMap = new Map<string, MenuConfig>();
+    /**
+     * 递归合并指定层级的菜单（限制最多3层）
+     * @param menus 待合并的菜单数组
+     * @param depth 当前深度（1=父级, 2=子级, 3=孙级）
+     * @returns 合并后的菜单数组
+     */
+    function mergeLevel(menus: MenuConfig[], depth: number = 1): MenuConfig[] {
+        const menuMap = new Map<string, MenuConfig>();
 
-    // 按优先级从低到高合并（后面的覆盖前面的）
-    // 1. addon 菜单（优先级低）
-    // 2. 项目菜单（优先级最高）
-    for (const { menus } of allMenus) {
         for (const menu of menus) {
-            if (menu.path) {
+            if (!menu.path) continue;
+
+            const existing = menuMap.get(menu.path);
+            if (existing) {
+                // 合并子菜单
+                if (menu.children?.length > 0) {
+                    existing.children = existing.children || [];
+                    existing.children.push(...menu.children);
+                }
+            } else {
                 menuMap.set(menu.path, { ...menu });
             }
         }
-    }
 
-    // 转换为数组并处理子菜单
-    const result: MenuConfig[] = [];
-    for (const menu of menuMap.values()) {
-        const mergedMenu = { ...menu };
-
-        // 处理第二层子菜单合并
-        if (menu.children && menu.children.length > 0) {
-            const childMap = new Map<string, MenuConfig>();
-
-            // 按优先级合并子菜单
-            for (const { menus } of allMenus) {
-                const parentMenu = menus.find((m) => m.path === menu.path);
-                if (parentMenu?.children) {
-                    for (const child of parentMenu.children) {
-                        if (child.path) {
-                            childMap.set(child.path, { ...child });
-                        }
-                    }
+        // 递归处理子菜单（限制最多3层）
+        if (depth < 3) {
+            for (const menu of menuMap.values()) {
+                if (menu.children?.length > 0) {
+                    menu.children = mergeLevel(menu.children, depth + 1);
                 }
             }
-
-            // 处理第三层子菜单合并
-            const childrenArray = Array.from(childMap.values());
-            for (const child of childrenArray) {
-                if (child.children && child.children.length > 0) {
-                    const grandChildMap = new Map<string, MenuConfig>();
-
-                    // 按优先级合并第三层菜单
-                    for (const { menus } of allMenus) {
-                        const parentMenu = menus.find((m) => m.path === menu.path);
-                        const childMenu = parentMenu?.children?.find((c) => c.path === child.path);
-                        if (childMenu?.children) {
-                            for (const grandChild of childMenu.children) {
-                                if (grandChild.path) {
-                                    grandChildMap.set(grandChild.path, { ...grandChild });
-                                }
-                            }
-                        }
-                    }
-
-                    child.children = Array.from(grandChildMap.values());
-                }
-            }
-
-            mergedMenu.children = childrenArray;
         }
 
-        result.push(mergedMenu);
+        return Array.from(menuMap.values());
     }
 
-    return result;
+    // 收集所有菜单（扁平化）
+    const allFlatMenus = allMenus.flatMap(({ menus }) => menus);
+
+    return mergeLevel(allFlatMenus, 1);
 }
 
 /**
