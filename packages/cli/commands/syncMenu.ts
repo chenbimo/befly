@@ -3,20 +3,19 @@
  * 说明：根据 menu.json 配置文件增量同步菜单数据（最多2级：父级和子级）
  *
  * 流程：
- * 1. 读取 core/config/menu.json 和项目根目录的 menu.json 配置文件
- * 2. core 配置优先覆盖项目配置（根据 path 匹配）
+ * 1. 扫描项目根目录和所有 addon 的 menu.json 配置文件
+ * 2. 项目的 menu.json 优先级最高，可以覆盖 addon 的菜单配置
  * 3. 文件不存在或格式错误时默认为空数组
- * 4. 子级菜单自动追加父级路径作为前缀
- * 5. 根据菜单的 path 字段检查是否存在
- * 6. 存在则更新其他字段（name、icon、sort、type、pid）
- * 7. 不存在则新增菜单记录
- * 8. 强制删除配置中不存在的菜单记录
+ * 4. 根据菜单的 path 字段检查是否存在
+ * 5. 存在则更新其他字段（name、icon、sort、type、pid）
+ * 6. 不存在则新增菜单记录
+ * 7. 强制删除配置中不存在的菜单记录
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { Database, RedisHelper, coreDir } from 'befly';
+import { Database, RedisHelper, utils } from 'befly';
 import { Logger, projectDir } from '../util.js';
 
 import type { SyncMenuOptions, SyncMenuStats, MenuConfig } from '../types.js';
@@ -45,56 +44,94 @@ async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
 }
 
 /**
- * 合并菜单配置（core 优先覆盖项目）
- * 支持二级菜单结构：父级和子级
+ * 为 addon 菜单的 path 添加前缀
+ * 规则：
+ * 1. 以 / 开头的路径：添加 /addon/{addonName} 前缀
+ * 2. 以 _ 开头的路径（分组菜单）：保持不变
+ * 3. 递归处理所有层级的子菜单
  */
-function mergeMenuConfigs(projectMenus: MenuConfig[], coreMenus: MenuConfig[]): MenuConfig[] {
+function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
+    return menus.map((menu) => {
+        const newMenu = { ...menu };
+
+        // 处理当前菜单的 path
+        if (newMenu.path && newMenu.path.startsWith('/')) {
+            newMenu.path = `/addon/${addonName}${newMenu.path}`;
+        }
+
+        // 递归处理子菜单
+        if (newMenu.children && newMenu.children.length > 0) {
+            newMenu.children = addAddonPrefix(newMenu.children, addonName);
+        }
+
+        return newMenu;
+    });
+}
+
+/**
+ * 合并菜单配置
+ * 优先级：项目 menu.json > addon menu.json
+ * 支持三级菜单结构：父级、子级、孙级
+ */
+function mergeMenuConfigs(allMenus: Array<{ menus: MenuConfig[]; addonName: string }>): MenuConfig[] {
     const menuMap = new Map<string, MenuConfig>();
 
-    // 1. 先添加项目菜单
-    for (const menu of projectMenus) {
-        if (menu.path) {
-            menuMap.set(menu.path, { ...menu });
+    // 按优先级从低到高合并（后面的覆盖前面的）
+    // 1. addon 菜单（优先级低）
+    // 2. 项目菜单（优先级最高）
+    for (const { menus } of allMenus) {
+        for (const menu of menus) {
+            if (menu.path) {
+                menuMap.set(menu.path, { ...menu });
+            }
         }
     }
 
-    // 2. core 菜单覆盖同 path 的项目菜单
-    for (const menu of coreMenus) {
-        if (menu.path) {
-            menuMap.set(menu.path, { ...menu });
-        }
-    }
-
-    // 3. 转换为数组并处理子菜单
+    // 转换为数组并处理子菜单
     const result: MenuConfig[] = [];
     for (const menu of menuMap.values()) {
         const mergedMenu = { ...menu };
 
-        // 处理子菜单合并
+        // 处理第二层子菜单合并
         if (menu.children && menu.children.length > 0) {
             const childMap = new Map<string, MenuConfig>();
 
-            // 先添加项目的子菜单
-            const projectMenu = projectMenus.find((m) => m.path === menu.path);
-            if (projectMenu?.children) {
-                for (const child of projectMenu.children) {
-                    if (child.path) {
-                        childMap.set(child.path, { ...child });
+            // 按优先级合并子菜单
+            for (const { menus } of allMenus) {
+                const parentMenu = menus.find((m) => m.path === menu.path);
+                if (parentMenu?.children) {
+                    for (const child of parentMenu.children) {
+                        if (child.path) {
+                            childMap.set(child.path, { ...child });
+                        }
                     }
                 }
             }
 
-            // core 子菜单覆盖
-            const coreMenu = coreMenus.find((m) => m.path === menu.path);
-            if (coreMenu?.children) {
-                for (const child of coreMenu.children) {
-                    if (child.path) {
-                        childMap.set(child.path, { ...child });
+            // 处理第三层子菜单合并
+            const childrenArray = Array.from(childMap.values());
+            for (const child of childrenArray) {
+                if (child.children && child.children.length > 0) {
+                    const grandChildMap = new Map<string, MenuConfig>();
+
+                    // 按优先级合并第三层菜单
+                    for (const { menus } of allMenus) {
+                        const parentMenu = menus.find((m) => m.path === menu.path);
+                        const childMenu = parentMenu?.children?.find((c) => c.path === child.path);
+                        if (childMenu?.children) {
+                            for (const grandChild of childMenu.children) {
+                                if (grandChild.path) {
+                                    grandChildMap.set(grandChild.path, { ...grandChild });
+                                }
+                            }
+                        }
                     }
+
+                    child.children = Array.from(grandChildMap.values());
                 }
             }
 
-            mergedMenu.children = Array.from(childMap.values());
+            mergedMenu.children = childrenArray;
         }
 
         result.push(mergedMenu);
@@ -104,7 +141,7 @@ function mergeMenuConfigs(projectMenus: MenuConfig[], coreMenus: MenuConfig[]): 
 }
 
 /**
- * 收集配置文件中所有菜单的 path（最多2级）
+ * 收集配置文件中所有菜单的 path（最多3级）
  * 子级菜单使用独立路径
  */
 function collectPaths(menus: MenuConfig[]): Set<string> {
@@ -117,8 +154,15 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
         if (menu.children && menu.children.length > 0) {
             for (const child of menu.children) {
                 if (child.path) {
-                    // 子级菜单使用独立路径
                     paths.add(child.path);
+                }
+                // 第三层菜单
+                if (child.children && child.children.length > 0) {
+                    for (const grandChild of child.children) {
+                        if (grandChild.path) {
+                            paths.add(grandChild.path);
+                        }
+                    }
                 }
             }
         }
@@ -128,7 +172,7 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
 }
 
 /**
- * 同步菜单（两层结构：父级和子级）
+ * 同步菜单（三层结构：父级、子级、孙级）
  * 子级菜单使用独立路径
  */
 async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: number; updated: number; createdList: any[]; updatedList: any[] }> {
@@ -141,7 +185,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
 
     for (const menu of menus) {
         try {
-            // 1. 同步父级菜单
+            // 1. 同步第一层菜单
             const existingParent = await helper.getOne({
                 table: 'addon_admin_menu',
                 where: { path: menu.path || '' }
@@ -150,7 +194,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
             let parentId: number;
 
             if (existingParent) {
-                // 对比差异
                 const changes: { field: string; before: any; after: any }[] = [];
 
                 if (existingParent.pid !== 0) {
@@ -171,7 +214,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
 
                 parentId = existingParent.id;
 
-                // 只有存在差异时才执行更新
                 if (changes.length > 0) {
                     await helper.updData({
                         table: 'addon_admin_menu',
@@ -185,8 +227,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                         }
                     });
                     stats.updated++;
-
-                    // 记录更新的菜单
                     stats.updatedList.push({
                         name: menu.name,
                         path: menu.path || '',
@@ -222,19 +262,18 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                 });
             }
 
-            // 2. 同步子级菜单（使用独立路径）
+            // 2. 同步第二层菜单
             if (menu.children && menu.children.length > 0) {
                 for (const child of menu.children) {
-                    // 子级菜单使用独立路径
                     const childPath = child.path;
-
                     const existingChild = await helper.getOne({
                         table: 'addon_admin_menu',
                         where: { path: childPath }
                     });
 
+                    let childId: number;
+
                     if (existingChild) {
-                        // 对比差异
                         const changes: { field: string; before: any; after: any }[] = [];
 
                         if (existingChild.pid !== parentId) {
@@ -253,7 +292,8 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             changes.push({ field: 'type', before: existingChild.type, after: child.type || 1 });
                         }
 
-                        // 只有存在差异时才执行更新
+                        childId = existingChild.id;
+
                         if (changes.length > 0) {
                             await helper.updData({
                                 table: 'addon_admin_menu',
@@ -267,7 +307,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                                 }
                             });
                             stats.updated++;
-
                             stats.updatedList.push({
                                 name: child.name,
                                 path: childPath,
@@ -280,7 +319,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             });
                         }
                     } else {
-                        await helper.insData({
+                        childId = await helper.insData({
                             table: 'addon_admin_menu',
                             data: {
                                 pid: parentId,
@@ -301,6 +340,84 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
                             addonName: '',
                             addonTitle: '项目'
                         });
+                    }
+
+                    // 3. 同步第三层菜单
+                    if (child.children && child.children.length > 0) {
+                        for (const grandChild of child.children) {
+                            const grandChildPath = grandChild.path;
+                            const existingGrandChild = await helper.getOne({
+                                table: 'addon_admin_menu',
+                                where: { path: grandChildPath }
+                            });
+
+                            if (existingGrandChild) {
+                                const changes: { field: string; before: any; after: any }[] = [];
+
+                                if (existingGrandChild.pid !== childId) {
+                                    changes.push({ field: 'pid', before: existingGrandChild.pid, after: childId });
+                                }
+                                if (existingGrandChild.name !== grandChild.name) {
+                                    changes.push({ field: 'name', before: existingGrandChild.name, after: grandChild.name });
+                                }
+                                if (existingGrandChild.icon !== (grandChild.icon || '')) {
+                                    changes.push({ field: 'icon', before: existingGrandChild.icon, after: grandChild.icon || '' });
+                                }
+                                if (existingGrandChild.sort !== (grandChild.sort || 0)) {
+                                    changes.push({ field: 'sort', before: existingGrandChild.sort, after: grandChild.sort || 0 });
+                                }
+                                if (existingGrandChild.type !== (grandChild.type || 1)) {
+                                    changes.push({ field: 'type', before: existingGrandChild.type, after: grandChild.type || 1 });
+                                }
+
+                                if (changes.length > 0) {
+                                    await helper.updData({
+                                        table: 'addon_admin_menu',
+                                        where: { id: existingGrandChild.id },
+                                        data: {
+                                            pid: childId,
+                                            name: grandChild.name,
+                                            icon: grandChild.icon || '',
+                                            sort: grandChild.sort || 0,
+                                            type: grandChild.type || 1
+                                        }
+                                    });
+                                    stats.updated++;
+                                    stats.updatedList.push({
+                                        name: grandChild.name,
+                                        path: grandChildPath,
+                                        icon: grandChild.icon,
+                                        sort: grandChild.sort,
+                                        type: grandChild.type,
+                                        addonName: '',
+                                        addonTitle: '项目',
+                                        changes: changes
+                                    });
+                                }
+                            } else {
+                                await helper.insData({
+                                    table: 'addon_admin_menu',
+                                    data: {
+                                        pid: childId,
+                                        name: grandChild.name,
+                                        path: grandChildPath,
+                                        icon: grandChild.icon || '',
+                                        sort: grandChild.sort || 0,
+                                        type: grandChild.type || 1
+                                    }
+                                });
+                                stats.created++;
+                                stats.createdList.push({
+                                    name: grandChild.name,
+                                    path: grandChildPath,
+                                    icon: grandChild.icon,
+                                    sort: grandChild.sort,
+                                    type: grandChild.type,
+                                    addonName: '',
+                                    addonTitle: '项目'
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -359,22 +476,37 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
             return { totalMenus: 0, parentMenus: 0, childMenus: 0, created: 0, updated: 0, deleted: 0 };
         }
 
-        // 1. 读取两个配置文件
+        // 1. 扫描所有 addon 的 menu.json 配置文件
+        const allMenus: Array<{ menus: MenuConfig[]; addonName: string }> = [];
+
+        const addonNames = utils.scanAddons();
+
+        for (const addonName of addonNames) {
+            const addonMenuPath = utils.getAddonDir(addonName, 'menu.json');
+            if (existsSync(addonMenuPath)) {
+                const addonMenus = await readMenuConfig(addonMenuPath);
+                if (addonMenus.length > 0) {
+                    // 为 addon 菜单添加路径前缀
+                    const menusWithPrefix = addAddonPrefix(addonMenus, addonName);
+                    allMenus.push({ menus: menusWithPrefix, addonName: addonName });
+                }
+            }
+        }
+
+        // 2. 读取项目根目录的 menu.json（优先级最高，不添加前缀）
         const projectMenuPath = join(projectDir, 'menu.json');
-        const coreMenuPath = join(coreDir, 'menu.json');
-
         const projectMenus = await readMenuConfig(projectMenuPath);
-        const coreMenus = await readMenuConfig(coreMenuPath);
-
-        // 2. 合并菜单配置
-        const mergedMenus = mergeMenuConfigs(projectMenus, coreMenus);
+        if (projectMenus.length > 0) {
+            allMenus.push({ menus: projectMenus, addonName: 'project' });
+        } // 3. 合并菜单配置（项目配置优先）
+        const mergedMenus = mergeMenuConfigs(allMenus);
 
         // 连接数据库（SQL + Redis）
         await Database.connect();
 
         const helper = Database.getDbHelper();
 
-        // 3. 检查表是否存在
+        // 4. 检查表是否存在
         const exists = await helper.tableExists('addon_admin_menu');
 
         if (!exists) {
@@ -382,23 +514,23 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
             process.exit(1);
         }
 
-        // 4. 收集配置文件中所有菜单的 path
+        // 5. 收集配置文件中所有菜单的 path
         const configPaths = collectPaths(mergedMenus);
 
-        // 5. 同步菜单
+        // 6. 同步菜单
         const stats = await syncMenus(helper, mergedMenus);
 
-        // 6. 删除文件中不存在的菜单（强制删除）
+        // 7. 删除文件中不存在的菜单（强制删除）
         const deleteResult = await deleteObsoleteRecords(helper, configPaths);
 
-        // 7. 获取最终菜单数据
-        const allMenus = await helper.getAll({
+        // 8. 获取最终菜单数据
+        const allMenusData = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id', 'pid', 'name', 'path', 'type'],
             orderBy: ['pid#ASC', 'sort#ASC', 'id#ASC']
         });
 
-        // 5. 缓存菜单数据到 Redis
+        // 9. 缓存菜单数据到 Redis
         try {
             const menus = await helper.getAll({
                 table: 'addon_admin_menu',
@@ -412,11 +544,11 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
             // 忽略缓存错误
         }
 
-        const parentCount = allMenus.filter((m: any) => m.pid === 0).length;
-        const childCount = allMenus.filter((m: any) => m.pid !== 0).length;
+        const parentCount = allMenusData.filter((m: any) => m.pid === 0).length;
+        const childCount = allMenusData.filter((m: any) => m.pid !== 0).length;
 
         return {
-            totalMenus: allMenus.length,
+            totalMenus: allMenusData.length,
             parentMenus: parentCount,
             childMenus: childCount,
             created: stats.created,

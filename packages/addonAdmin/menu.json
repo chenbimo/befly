@@ -1,7 +1,7 @@
 [
     {
         "name": "首页",
-        "path": "/addon/admin",
+        "path": "/",
         "icon": "",
         "sort": 1,
         "type": 1
@@ -15,7 +15,7 @@
         "children": [
             {
                 "name": "管理员管理",
-                "path": "/addon/admin/admin",
+                "path": "/admin",
                 "icon": "",
                 "sort": 2,
                 "type": 1
@@ -31,14 +31,14 @@
         "children": [
             {
                 "name": "菜单管理",
-                "path": "/addon/admin/menu",
+                "path": "/menu",
                 "icon": "",
                 "sort": 4,
                 "type": 1
             },
             {
                 "name": "角色管理",
-                "path": "/addon/admin/role",
+                "path": "/role",
                 "icon": "",
                 "sort": 5,
                 "type": 1
@@ -47,7 +47,7 @@
     },
     {
         "name": "字典管理",
-        "path": "/addon/admin/dict",
+        "path": "/dict",
         "icon": "",
         "sort": 6,
         "type": 1
