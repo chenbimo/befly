@@ -38,7 +38,6 @@
     "devDependencies": {
         "@befly-addon/admin": "workspace:*",
         "@iconify-json/lucide": "^1.2.72",
-        "@iconify/json": "^2.2.280",
         "@opentiny/unplugin-tiny-vue": "^1.0.0",
         "@vitejs/plugin-vue": "^6.0.1",
         "sass": "^1.93.3",
