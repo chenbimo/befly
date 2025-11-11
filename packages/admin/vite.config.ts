@@ -31,10 +31,7 @@ function scanBeflyAddonViews() {
             if (existsSync(viewsPath)) {
                 routesFolders.push({
                     src: viewsPath,
-                    path: `addon/${addonName}/`,
-                    exclude: (excluded: string[]) => {
-                        return [...excluded, '**/components/**'];
-                    }
+                    path: `addon/${addonName}/`
                 });
                 console.log(`[VueRouter] 发现 addon: @befly-addon/${addonName}/views -> /addon/${addonName}/`);
             }
@@ -54,7 +51,9 @@ export default defineConfig({
             routesFolder: scanBeflyAddonViews(),
             dts: './src/types/typed-router.d.ts',
             extensions: ['.vue'],
-            importMode: 'async'
+            importMode: 'async',
+            // 全局排除 components 目录
+            exclude: ['**/components/**']
         }),
 
         // Vue 插件
