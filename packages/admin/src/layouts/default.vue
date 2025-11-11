@@ -7,7 +7,6 @@
             </div>
             <div class="header-right">
                 <div class="user-info-bar">
-                    <tiny-user-head class="user-avatar" type="icon" min />
                     <div class="user-text">
                         <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
                         <tiny-tag type="info" size="small">{{ $Data.userInfo.role || '超级管理员' }}</tiny-tag>
@@ -185,8 +184,9 @@ $Method.fetchUserMenus();
 
                 .user-text {
                     display: flex;
-                    align-items: center;
-                    gap: 8px;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 4px;
 
                     .user-name {
                         font-size: 14px;
