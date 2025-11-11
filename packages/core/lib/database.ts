@@ -141,7 +141,7 @@ export class Database {
             }
             // 创建临时 befly 上下文（仅用于 DbHelper）
             const ctx = befly || {
-                redis: RedisHelper,
+                redis: new RedisHelper(),
                 db: null as any,
                 tool: null as any,
                 logger: null as any
