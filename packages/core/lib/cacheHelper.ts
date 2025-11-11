@@ -227,4 +227,24 @@ export class CacheHelper {
             return false;
         }
     }
+
+    /**
+     * 删除角色的接口权限缓存
+     * @param roleCode - 角色代码
+     * @returns 是否删除成功
+     */
+    async deleteRolePermissions(roleCode: string): Promise<boolean> {
+        try {
+            const redisKey = `role:apis:${roleCode}`;
+            const result = await this.befly.redis.del(redisKey);
+            if (result > 0) {
+                Logger.info(`✅ 已删除角色 ${roleCode} 的权限缓存`);
+                return true;
+            }
+            return false;
+        } catch (error: any) {
+            Logger.error(`删除角色 ${roleCode} 权限缓存失败:`, error);
+            return false;
+        }
+    }
 }
