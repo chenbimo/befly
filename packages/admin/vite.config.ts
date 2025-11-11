@@ -6,6 +6,7 @@ import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
+import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
 import { fileURLToPath, URL } from 'node:url';
 import { readdirSync, existsSync } from 'node:fs';
@@ -69,6 +70,9 @@ export default defineConfig({
                 propsDestructure: true
             }
         }),
+
+        // Vue Reactivity Transform 支持
+        ReactivityTransform(),
 
         // API 自动导入
         AutoImport({
