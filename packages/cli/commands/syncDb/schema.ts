@@ -82,7 +82,7 @@ export async function getTableColumns(sql: SQL, tableName: string): Promise<{ [k
                 columns[row.COLUMN_NAME] = {
                     type: row.DATA_TYPE,
                     columnType: row.COLUMN_TYPE,
-                    length: row.CHARACTER_MAXIMUM_LENGTH,
+                    max: row.CHARACTER_MAXIMUM_LENGTH,
                     nullable: row.IS_NULLABLE === 'YES',
                     defaultValue: defaultValue,
                     comment: row.COLUMN_COMMENT
@@ -110,7 +110,7 @@ export async function getTableColumns(sql: SQL, tableName: string): Promise<{ [k
                 columns[row.column_name] = {
                     type: row.data_type,
                     columnType: row.data_type,
-                    length: row.character_maximum_length,
+                    max: row.character_maximum_length,
                     nullable: String(row.is_nullable).toUpperCase() === 'YES',
                     defaultValue: row.column_default,
                     comment: commentMap[row.column_name] ?? null
@@ -120,16 +120,16 @@ export async function getTableColumns(sql: SQL, tableName: string): Promise<{ [k
             const result = await sql.unsafe(`PRAGMA table_info(${tableName})`);
             for (const row of result) {
                 let baseType = String(row.type || '').toUpperCase();
-                let length = null;
+                let max = null;
                 const m = /^(\w+)\s*\((\d+)\)/.exec(baseType);
                 if (m) {
                     baseType = m[1];
-                    length = Number(m[2]);
+                    max = Number(m[2]);
                 }
                 columns[row.name] = {
                     type: baseType.toLowerCase(),
                     columnType: baseType.toLowerCase(),
-                    length: length,
+                    max: max,
                     nullable: row.notnull === 0,
                     defaultValue: row.dflt_value,
                     comment: null

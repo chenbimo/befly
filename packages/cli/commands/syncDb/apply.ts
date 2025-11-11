@@ -59,16 +59,21 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
         }
     }
 
-    // 检查数据类型变化（包含 UNSIGNED 修饰符）
-    const expectedType = IS_MYSQL && fieldType === 'number' && unsigned ? `${typeMapping[fieldType].toLowerCase()} unsigned` : typeMapping[fieldType].toLowerCase();
+    // 检查数据类型变化（只对比基础类型，忽略长度）
+    const expectedType = typeMapping[fieldType].toLowerCase();
+    const currentType = existingColumn.type.toLowerCase();
 
-    const currentType = existingColumn.columnType?.toLowerCase() || existingColumn.type.toLowerCase();
+    // MySQL number 类型检查 UNSIGNED 修饰符
+    const currentHasUnsigned = IS_MYSQL && existingColumn.columnType?.toLowerCase().includes('unsigned');
+    const expectedHasUnsigned = IS_MYSQL && fieldType === 'number' && unsigned;
 
-    if (currentType !== expectedType) {
+    if (currentType !== expectedType || (IS_MYSQL && fieldType === 'number' && currentHasUnsigned !== expectedHasUnsigned)) {
+        const currentFullType = IS_MYSQL && currentHasUnsigned ? `${currentType} unsigned` : currentType;
+        const expectedFullType = IS_MYSQL && expectedHasUnsigned ? `${expectedType} unsigned` : expectedType;
         changes.push({
             type: 'datatype',
-            current: currentType,
-            expected: expectedType
+            current: currentFullType,
+            expected: expectedFullType
         });
     }
 

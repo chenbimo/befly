@@ -29,21 +29,24 @@ export function quoteIdentifier(identifier: string): string {
 }
 
 /**
- * 处理默认值：将 'null' 字符串转换为对应类型的默认值
+ * 处理默认值：将 null 或 'null' 字符串转换为对应类型的默认值
  *
- * @param fieldDefault - 字段默认值（可能是 'null' 字符串）
+ * @param fieldDefault - 字段默认值（可能是 null 或 'null' 字符串）
  * @param fieldType - 字段类型（number/string/text/array）
  * @returns 实际默认值
  *
  * @example
- * resolveDefaultValue('null', 'string') // => ''
+ * resolveDefaultValue(null, 'string') // => ''
+ * resolveDefaultValue(null, 'number') // => 0
  * resolveDefaultValue('null', 'number') // => 0
- * resolveDefaultValue('null', 'array') // => '[]'
- * resolveDefaultValue('null', 'text') // => 'null'
+ * resolveDefaultValue(null, 'array') // => '[]'
+ * resolveDefaultValue(null, 'text') // => 'null'
  * resolveDefaultValue('admin', 'string') // => 'admin'
+ * resolveDefaultValue(0, 'number') // => 0
  */
 export function resolveDefaultValue(fieldDefault: any, fieldType: 'number' | 'string' | 'text' | 'array'): any {
-    if (fieldDefault !== 'null') {
+    // null 或字符串 'null' 都表示使用类型默认值
+    if (fieldDefault !== null && fieldDefault !== 'null') {
         return fieldDefault;
     }
 
