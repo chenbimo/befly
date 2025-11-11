@@ -18,9 +18,8 @@ import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Database, RedisHelper, coreDir } from 'befly';
 import { Logger, projectDir } from '../util.js';
-import { ReportCollector } from '../report/collector.js';
 
-import type { SyncMenuOptions, MenuConfig, SyncMenuStats, MenuDetail, MenuDetailWithDiff } from '../types.js';
+import type { SyncMenuOptions, SyncMenuStats, MenuConfig } from '../types.js';
 
 /**
  * 读取菜单配置文件
@@ -133,12 +132,12 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
  * 同步菜单（两层结构：父级和子级）
  * 子级菜单使用独立路径
  */
-async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: number; updated: number; createdList: MenuDetail[]; updatedList: MenuDetailWithDiff[] }> {
+async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: number; updated: number; createdList: any[]; updatedList: any[] }> {
     const stats = {
         created: 0,
         updated: 0,
-        createdList: [] as MenuDetail[],
-        updatedList: [] as MenuDetailWithDiff[]
+        createdList: [] as any[],
+        updatedList: [] as any[]
     };
 
     for (const menu of menus) {
@@ -318,14 +317,14 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
 /**
  * 删除配置中不存在的菜单（强制删除）
  */
-async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<{ count: number; list: MenuDetail[] }> {
+async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<{ count: number; list: any[] }> {
     const allRecords = await helper.getAll({
         table: 'addon_admin_menu',
         fields: ['id', 'path', 'name', 'icon', 'sort', 'type'],
         where: { state$gte: 0 } // 查询所有状态（包括软删除的 state=0）
     });
 
-    const deletedList: MenuDetail[] = [];
+    const deletedList: any[] = [];
     let deletedCount = 0;
 
     for (const record of allRecords) {
@@ -355,8 +354,6 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
  * SyncMenu 命令主函数
  */
 export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<SyncMenuStats> {
-    const collector = ReportCollector.getInstance();
-
     try {
         if (options.plan) {
             Logger.info('[计划] 同步菜单配置到数据库（plan 模式不执行）');
@@ -364,7 +361,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         }
 
         // 1. 读取两个配置文件
-        collector.startTimer('menu_scanning');
         const projectMenuPath = join(projectDir, 'menu.json');
         const coreMenuPath = join(coreDir, 'menu.json');
 
@@ -373,7 +369,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
 
         // 2. 合并菜单配置
         const mergedMenus = mergeMenuConfigs(projectMenus, coreMenus);
-        const scanningTime = collector.endTimer('menu_scanning');
 
         // 连接数据库（SQL + Redis）
         await Database.connect();
@@ -392,12 +387,10 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         const configPaths = collectPaths(mergedMenus);
 
         // 5. 同步菜单
-        collector.startTimer('menu_processing');
         const stats = await syncMenus(helper, mergedMenus);
 
         // 6. 删除文件中不存在的菜单（强制删除）
         const deleteResult = await deleteObsoleteRecords(helper, configPaths);
-        const processingTime = collector.endTimer('menu_processing');
 
         // 7. 获取最终菜单数据
         const allMenus = await helper.getAll({
@@ -407,7 +400,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         });
 
         // 8. 缓存菜单数据到 Redis
-        collector.startTimer('menu_caching');
         try {
             const menus = await helper.getAll({
                 table: 'addon_admin_menu',
@@ -419,28 +411,9 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         } catch (error: any) {
             // 忽略缓存错误
         }
-        const cachingTime = collector.endTimer('menu_caching');
 
-        // 9. 收集数据到 ReportCollector
         const parentCount = allMenus.filter((m: any) => m.pid === 0).length;
         const childCount = allMenus.filter((m: any) => m.pid !== 0).length;
-
-        collector.setMenuStats({
-            totalMenus: allMenus.length,
-            parentMenus: parentCount,
-            childMenus: childCount,
-            created: stats.created,
-            updated: stats.updated,
-            deleted: deleteResult.count
-        });
-
-        collector.setMenuByAction('created', stats.createdList);
-        collector.setMenuByAction('updated', stats.updatedList);
-        collector.setMenuByAction('deleted', deleteResult.list);
-
-        collector.setMenuTiming('scanning', scanningTime);
-        collector.setMenuTiming('processing', processingTime);
-        collector.setMenuTiming('caching', cachingTime);
 
         return {
             totalMenus: allMenus.length,
@@ -452,7 +425,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         };
     } catch (error: any) {
         Logger.error('菜单同步失败:', error);
-        collector.setStatus('error', error.message);
         process.exit(1);
     } finally {
         await Database?.disconnect();

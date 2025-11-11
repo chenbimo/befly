@@ -15,9 +15,8 @@ import { join, dirname, relative, basename } from 'pathe';
 import { Database, RedisHelper, utils } from 'befly';
 
 import { Logger, projectDir } from '../util.js';
-import { ReportCollector } from '../report/collector.js';
 
-import type { SyncApiOptions, ApiInfo, SyncApiStats, ApiDetail, ApiDetailWithDiff } from '../types.js';
+import type { SyncApiOptions, ApiInfo, SyncApiStats } from '../types.js';
 
 /**
  * Glob 实例（模块级常量，复用）
@@ -157,9 +156,8 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 /**
  * 同步 API 数据到数据库
  */
-async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number; updated: number; createdList: ApiDetail[]; updatedList: ApiDetailWithDiff[] }> {
-    const stats = { created: 0, updated: 0, createdList: [] as ApiDetail[], updatedList: [] as ApiDetailWithDiff[] };
-    const collector = ReportCollector.getInstance();
+async function syncApis(helper: any, apis: ApiInfo[]): Promise<{ created: number; updated: number; createdList: any[]; updatedList: any[] }> {
+    const stats = { created: 0, updated: 0, createdList: [] as any[], updatedList: [] as any[] };
 
     for (const api of apis) {
         try {
@@ -281,8 +279,6 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
  * SyncApi 命令主函数
  */
 export async function syncApiCommand(options: SyncApiOptions = {}): Promise<SyncApiStats> {
-    const collector = ReportCollector.getInstance();
-
     try {
         if (options.plan) {
             Logger.info('[计划] 同步 API 接口到数据库（plan 模式不执行）');
@@ -292,9 +288,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         const projectRoot = process.cwd();
 
         // 连接数据库（SQL + Redis）
-        collector.startTimer('api_connection');
         await Database.connect();
-        const connectionTime = collector.endTimer('api_connection');
 
         const helper = Database.getDbHelper();
 
@@ -307,21 +301,16 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         }
 
         // 2. 扫描所有 API 文件
-        collector.startTimer('api_scanning');
         const apis = await scanAllApis(projectRoot);
         const apiPaths = new Set(apis.map((api) => api.path));
-        const scanningTime = collector.endTimer('api_scanning');
 
         // 3. 同步 API 数据
-        collector.startTimer('api_processing');
         const stats = await syncApis(helper, apis);
 
         // 4. 删除文件中不存在的接口
         const deleteResult = await deleteObsoleteRecords(helper, apiPaths);
-        const processingTime = collector.endTimer('api_processing');
 
         // 5. 缓存接口数据到 Redis
-        collector.startTimer('api_caching');
         try {
             const apiList = await helper.getAll({
                 table: 'addon_admin_api',
@@ -333,53 +322,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         } catch (error: any) {
             // 忽略缓存错误
         }
-        const cachingTime = collector.endTimer('api_caching');
-
-        // 6. 收集详细数据到 ReportCollector
-        const projectApis: ApiDetail[] = [];
-        const addonApisMap: Record<string, ApiDetail[]> = {};
-
-        for (const api of apis) {
-            const apiDetail: ApiDetail = {
-                name: api.name,
-                path: api.path,
-                method: api.method,
-                description: api.description,
-                addonName: api.addonName,
-                addonTitle: api.addonTitle
-            };
-
-            if (api.addonName) {
-                if (!addonApisMap[api.addonName]) {
-                    addonApisMap[api.addonName] = [];
-                }
-                addonApisMap[api.addonName].push(apiDetail);
-            } else {
-                projectApis.push(apiDetail);
-            }
-        }
-
-        collector.setApiStats({
-            totalApis: apis.length,
-            projectApis: projectApis.length,
-            addonApis: apis.length - projectApis.length,
-            created: stats.created,
-            updated: stats.updated,
-            deleted: deleteResult.count
-        });
-
-        collector.setApiBySource('project', projectApis);
-        for (const [addonName, addonApis] of Object.entries(addonApisMap)) {
-            collector.setApiBySource(addonName, addonApis);
-        }
-
-        collector.setApiByAction('created', stats.createdList);
-        collector.setApiByAction('updated', stats.updatedList);
-        collector.setApiByAction('deleted', deleteResult.list);
-
-        collector.setApiTiming('scanning', scanningTime);
-        collector.setApiTiming('processing', processingTime);
-        collector.setApiTiming('caching', cachingTime);
 
         return {
             totalApis: apis.length,
@@ -389,7 +331,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
         };
     } catch (error: any) {
         Logger.error('API 同步失败:', error);
-        collector.setStatus('error', error.message);
         process.exit(1);
     } finally {
         await Database?.disconnect();
