@@ -83,7 +83,14 @@ export default defineConfig({
 
         // API 自动导入
         AutoImport({
-            imports: ['vue', 'pinia', VueRouterAutoImports],
+            imports: [
+                'vue',
+                'pinia',
+                VueRouterAutoImports,
+                {
+                    '@opentiny/vue': ['Modal', 'Notify', 'Message', 'MessageBox', 'Loading']
+                }
+            ],
             dts: 'src/types/auto-imports.d.ts',
             dirs: ['src/utils', 'src/plugins', 'src/config'],
             vueTemplate: true
