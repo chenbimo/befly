@@ -38,10 +38,10 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
     if (!IS_SQLITE && isStringOrArrayType(fieldType)) {
-        if (existingColumn.length !== fieldMax) {
+        if (existingColumn.max !== fieldMax) {
             changes.push({
                 type: 'length',
-                current: existingColumn.length,
+                current: existingColumn.max,
                 expected: fieldMax
             });
         }

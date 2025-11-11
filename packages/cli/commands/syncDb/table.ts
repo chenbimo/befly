@@ -75,9 +75,9 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
                 const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
 
-                if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
-                    if (existingColumns[dbFieldName].length! > fieldMax) {
-                        Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].length} -> ${fieldMax} 已被跳过`);
+                if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].max) {
+                    if (existingColumns[dbFieldName].max > fieldMax) {
+                        Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldMax} 已被跳过`);
                     }
                 }
 
@@ -122,9 +122,8 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 // 若不仅仅是默认值变化，继续生成修改子句
                 if (!onlyDefaultChanged) {
                     let skipModify = false;
-                    if (hasLengthChange && isStringOrArrayType(fieldType) && existingColumns[dbFieldName].length) {
-                        const oldLen = existingColumns[dbFieldName].length!;
-                        const isShrink = oldLen > fieldMax;
+                    if (hasLengthChange && isStringOrArrayType(fieldType) && existingColumns[dbFieldName].max) {
+                        const isShrink = existingColumns[dbFieldName].max > fieldMax;
                         if (isShrink) skipModify = true;
                     }
 
