@@ -1,6 +1,6 @@
 ﻿/**
  * SyncMenu 命令 - 同步菜单数据到数据库
- * 说明：根据 menu.json 配置文件增量同步菜单数据（最多2级：父级和子级）
+ * 说明：根据 menu.json 配置文件增量同步菜单数据（最多3级：父级、子级、孙级）
  *
  * 流程：
  * 1. 扫描项目根目录和所有 addon 的 menu.json 配置文件
@@ -39,6 +39,7 @@ async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
 
         return content.default;
     } catch (error: any) {
+        Logger.warn(`读取菜单配置失败 ${filePath}:`, error.message);
         return [];
     }
 }
@@ -56,7 +57,7 @@ function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
         const newMenu = { ...menu };
 
         // 处理当前菜单的 path
-        if (newMenu.path && newMenu.path.startsWith('/')) {
+        if (newMenu.path && newMenu.path.startsWith('/') && newMenu.path.length > 1) {
             newMenu.path = `/addon/${addonName}${newMenu.path}`;
         }
 
@@ -67,7 +68,9 @@ function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
 
         return newMenu;
     });
-} /**
+}
+
+/**
  * 合并菜单配置
  * 优先级：项目 menu.json > addon menu.json
  * 支持三级菜单结构：父级、子级、孙级
@@ -171,6 +174,65 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
 }
 
 /**
+ * 递归同步单个菜单（限制最多3层）
+ * @param helper 数据库帮助类
+ * @param menu 菜单配置
+ * @param pid 父级菜单ID
+ * @param existingMenuMap 现有菜单映射
+ * @param stats 统计信息
+ * @param depth 当前深度（1=父级, 2=子级, 3=孙级）
+ * @returns 菜单ID
+ */
+async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, existingMenuMap: Map<string, any>, stats: { created: number; updated: number }, depth: number = 1): Promise<number> {
+    const existing = existingMenuMap.get(menu.path || '');
+    let menuId: number;
+
+    if (existing) {
+        menuId = existing.id;
+
+        // 检查是否需要更新
+        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.icon !== (menu.icon || '') || existing.sort !== (menu.sort || 0) || existing.type !== (menu.type || 1);
+
+        if (needUpdate) {
+            await helper.updData({
+                table: 'addon_admin_menu',
+                where: { id: existing.id },
+                data: {
+                    pid: pid,
+                    name: menu.name,
+                    icon: menu.icon || '',
+                    sort: menu.sort || 0,
+                    type: menu.type || 1
+                }
+            });
+            stats.updated++;
+        }
+    } else {
+        menuId = await helper.insData({
+            table: 'addon_admin_menu',
+            data: {
+                pid: pid,
+                name: menu.name,
+                path: menu.path || '',
+                icon: menu.icon || '',
+                sort: menu.sort || 0,
+                type: menu.type || 1
+            }
+        });
+        stats.created++;
+    }
+
+    // 递归处理子菜单（限制最多3层）
+    if (depth < 3 && menu.children?.length > 0) {
+        for (const child of menu.children) {
+            await syncMenuRecursive(helper, child, menuId, existingMenuMap, stats, depth + 1);
+        }
+    }
+
+    return menuId;
+}
+
+/**
  * 同步菜单（三层结构：父级、子级、孙级）
  * 子级菜单使用独立路径
  */
@@ -180,142 +242,21 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
         updated: 0
     };
 
+    // 批量查询所有现有菜单，建立 path -> menu 的映射
+    const allExistingMenus = await helper.getAll({
+        table: 'addon_admin_menu',
+        fields: ['id', 'pid', 'name', 'path', 'icon', 'sort', 'type']
+    });
+    const existingMenuMap = new Map<string, any>();
+    for (const menu of allExistingMenus) {
+        if (menu.path) {
+            existingMenuMap.set(menu.path, menu);
+        }
+    }
+
     for (const menu of menus) {
         try {
-            // 1. 同步第一层菜单
-            const existingParent = await helper.getOne({
-                table: 'addon_admin_menu',
-                where: { path: menu.path || '' }
-            });
-
-            let parentId: number;
-
-            if (existingParent) {
-                parentId = existingParent.id;
-
-                // 检查是否需要更新
-                const needUpdate = existingParent.pid !== 0 || existingParent.name !== menu.name || existingParent.icon !== (menu.icon || '') || existingParent.sort !== (menu.sort || 0) || existingParent.type !== (menu.type || 1);
-
-                if (needUpdate) {
-                    await helper.updData({
-                        table: 'addon_admin_menu',
-                        where: { id: existingParent.id },
-                        data: {
-                            pid: 0,
-                            name: menu.name,
-                            icon: menu.icon || '',
-                            sort: menu.sort || 0,
-                            type: menu.type || 1
-                        }
-                    });
-                    stats.updated++;
-                }
-            } else {
-                parentId = await helper.insData({
-                    table: 'addon_admin_menu',
-                    data: {
-                        pid: 0,
-                        name: menu.name,
-                        path: menu.path || '',
-                        icon: menu.icon || '',
-                        sort: menu.sort || 0,
-                        type: menu.type || 1
-                    }
-                });
-                stats.created++;
-            }
-
-            // 2. 同步第二层菜单
-            if (menu.children && menu.children.length > 0) {
-                for (const child of menu.children) {
-                    const childPath = child.path;
-                    const existingChild = await helper.getOne({
-                        table: 'addon_admin_menu',
-                        where: { path: childPath }
-                    });
-
-                    let childId: number;
-
-                    if (existingChild) {
-                        childId = existingChild.id;
-
-                        // 检查是否需要更新
-                        const needUpdate = existingChild.pid !== parentId || existingChild.name !== child.name || existingChild.icon !== (child.icon || '') || existingChild.sort !== (child.sort || 0) || existingChild.type !== (child.type || 1);
-
-                        if (needUpdate) {
-                            await helper.updData({
-                                table: 'addon_admin_menu',
-                                where: { id: existingChild.id },
-                                data: {
-                                    pid: parentId,
-                                    name: child.name,
-                                    icon: child.icon || '',
-                                    sort: child.sort || 0,
-                                    type: child.type || 1
-                                }
-                            });
-                            stats.updated++;
-                        }
-                    } else {
-                        childId = await helper.insData({
-                            table: 'addon_admin_menu',
-                            data: {
-                                pid: parentId,
-                                name: child.name,
-                                path: childPath,
-                                icon: child.icon || '',
-                                sort: child.sort || 0,
-                                type: child.type || 1
-                            }
-                        });
-                        stats.created++;
-                    }
-
-                    // 3. 同步第三层菜单
-                    if (child.children && child.children.length > 0) {
-                        for (const grandChild of child.children) {
-                            const grandChildPath = grandChild.path;
-                            const existingGrandChild = await helper.getOne({
-                                table: 'addon_admin_menu',
-                                where: { path: grandChildPath }
-                            });
-
-                            if (existingGrandChild) {
-                                // 检查是否需要更新
-                                const needUpdate = existingGrandChild.pid !== childId || existingGrandChild.name !== grandChild.name || existingGrandChild.icon !== (grandChild.icon || '') || existingGrandChild.sort !== (grandChild.sort || 0) || existingGrandChild.type !== (grandChild.type || 1);
-
-                                if (needUpdate) {
-                                    await helper.updData({
-                                        table: 'addon_admin_menu',
-                                        where: { id: existingGrandChild.id },
-                                        data: {
-                                            pid: childId,
-                                            name: grandChild.name,
-                                            icon: grandChild.icon || '',
-                                            sort: grandChild.sort || 0,
-                                            type: grandChild.type || 1
-                                        }
-                                    });
-                                    stats.updated++;
-                                }
-                            } else {
-                                await helper.insData({
-                                    table: 'addon_admin_menu',
-                                    data: {
-                                        pid: childId,
-                                        name: grandChild.name,
-                                        path: grandChildPath,
-                                        icon: grandChild.icon || '',
-                                        sort: grandChild.sort || 0,
-                                        type: grandChild.type || 1
-                                    }
-                                });
-                                stats.created++;
-                            }
-                        }
-                    }
-                }
-            }
+            await syncMenuRecursive(helper, menu, 0, existingMenuMap, stats, 1);
         } catch (error: any) {
             Logger.error(`同步菜单 "${menu.name}" 失败:`, error.message || String(error));
             throw error;
@@ -407,25 +348,19 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         // 7. 删除文件中不存在的菜单（强制删除）
         const deletedCount = await deleteObsoleteRecords(helper, configPaths);
 
-        // 8. 获取最终菜单数据
+        // 8. 获取最终菜单数据（用于统计和缓存）
         const allMenusData = await helper.getAll({
             table: 'addon_admin_menu',
-            fields: ['id', 'pid', 'name', 'path', 'type'],
-            orderBy: ['pid#ASC', 'sort#ASC', 'id#ASC']
+            fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
+            orderBy: ['sort#ASC', 'id#ASC']
         });
 
         // 9. 缓存菜单数据到 Redis
         try {
-            const menus = await helper.getAll({
-                table: 'addon_admin_menu',
-                fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
-                orderBy: ['sort#ASC', 'id#ASC']
-            });
-
             const redisHelper = new RedisHelper();
-            await redisHelper.setObject('menus:all', menus);
+            await redisHelper.setObject('menus:all', allMenusData);
         } catch (error: any) {
-            // 忽略缓存错误
+            Logger.warn('Redis 缓存菜单数据失败:', error.message);
         }
 
         const parentCount = allMenusData.filter((m: any) => m.pid === 0).length;
