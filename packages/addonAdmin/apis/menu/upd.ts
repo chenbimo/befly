@@ -14,8 +14,7 @@ export default {
                     path: ctx.body.path,
                     icon: ctx.body.icon,
                     sort: ctx.body.sort,
-                    pid: ctx.body.pid,
-                    type: ctx.body.type
+                    pid: ctx.body.pid
                     // state 字段不在此处更新，需要禁用/启用时单独处理
                 }
             });

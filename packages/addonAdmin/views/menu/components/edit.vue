@@ -10,12 +10,6 @@
             <tiny-form-item label="图标" prop="icon">
                 <tiny-input v-model="$Data.formData.icon" placeholder="请输入图标名称，如：User" />
             </tiny-form-item>
-            <tiny-form-item label="菜单类型" prop="type">
-                <tiny-radio-group v-model="$Data.formData.type">
-                    <tiny-radio :label="0">目录</tiny-radio>
-                    <tiny-radio :label="1">菜单</tiny-radio>
-                </tiny-radio-group>
-            </tiny-form-item>
             <tiny-form-item label="排序" prop="sort">
                 <tiny-numeric v-model="$Data.formData.sort" :min="0" :max="9999" />
             </tiny-form-item>
@@ -66,8 +60,8 @@ const $Data = $ref({
         name: '',
         path: '',
         icon: '',
-        type: 1,
         sort: 0,
+        pid: 0,
         state: 1
     }
 });
@@ -75,8 +69,7 @@ const $Data = $ref({
 const $Data2 = $shallowRef({
     formRules: {
         name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
-        path: [{ required: true, message: '请输入菜单路径', trigger: 'blur' }],
-        type: [{ required: true, message: '请选择菜单类型', trigger: 'change' }]
+        path: [{ required: true, message: '请输入菜单路径', trigger: 'blur' }]
     }
 });
 
@@ -91,10 +84,9 @@ const $Method = {
         if ($Prop.actionType === 'upd' && $Prop.rowData) {
             $Data.formData.id = $Prop.rowData.id || 0;
             $Data.formData.name = $Prop.rowData.name || '';
-            $Data.formData.path = $Prop.rowData.path || '';
-            $Data.formData.icon = $Prop.rowData.icon || '';
-            $Data.formData.type = $Prop.rowData.type ?? 1;
-            $Data.formData.sort = $Prop.rowData.sort || 0;
+            $Data.formData.path = $Prop.rowData.path ?? '';
+            $Data.formData.icon = $Prop.rowData.icon ?? '';
+            $Data.formData.sort = $Prop.rowData.sort ?? 0;
             $Data.formData.state = $Prop.rowData.state ?? 1;
         } else {
             // 重置表单
@@ -102,7 +94,6 @@ const $Method = {
             $Data.formData.name = '';
             $Data.formData.path = '';
             $Data.formData.icon = '';
-            $Data.formData.type = 1;
             $Data.formData.sort = 0;
             $Data.formData.state = 1;
         }

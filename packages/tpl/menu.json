@@ -2,23 +2,17 @@
     {
         "name": "用户管理",
         "path": "/internal/user",
-        "icon": "User",
         "sort": 10,
-        "type": 1,
         "children": [
             {
                 "name": "用户列表",
                 "path": "/list",
-                "icon": "Minus",
-                "sort": 1,
-                "type": 1
+                "sort": 1
             },
             {
                 "name": "用户详情",
                 "path": "/detail",
-                "icon": "Minus",
-                "sort": 2,
-                "type": 1
+                "sort": 2
             }
         ]
     }

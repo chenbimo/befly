@@ -63,18 +63,5 @@
         "nullable": false,
         "unsigned": true,
         "regexp": null
-    },
-    "type": {
-        "name": "菜单类型",
-        "detail": "",
-        "type": "number",
-        "min": 1,
-        "max": 2,
-        "default": 1,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": "^(1|2)$"
     }
 }

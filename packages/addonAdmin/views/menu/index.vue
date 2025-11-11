@@ -29,12 +29,6 @@
                         <span v-else>-</span>
                     </template>
                 </tiny-grid-column>
-                <tiny-grid-column field="type" title="类型" :width="100">
-                    <template #default="{ row }">
-                        <tiny-tag v-if="row.type === 0" type="info">目录</tiny-tag>
-                        <tiny-tag v-else type="success">菜单</tiny-tag>
-                    </template>
-                </tiny-grid-column>
                 <tiny-grid-column field="sort" title="排序" :width="80" />
                 <tiny-grid-column field="state" title="状态" :width="100">
                     <template #default="{ row }">

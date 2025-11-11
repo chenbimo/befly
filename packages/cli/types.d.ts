@@ -38,7 +38,6 @@ export interface MenuConfig {
     path: string;
     icon?: string;
     sort?: number;
-    type?: number;
     children?: MenuConfig[];
 }
 

@@ -7,7 +7,7 @@
  * 2. 项目的 menu.json 优先级最高，可以覆盖 addon 的菜单配置
  * 3. 文件不存在或格式错误时默认为空数组
  * 4. 根据菜单的 path 字段检查是否存在
- * 5. 存在则更新其他字段（name、icon、sort、type、pid）
+ * 5. 存在则更新其他字段（name、sort、type、pid）
  * 6. 不存在则新增菜单记录
  * 7. 强制删除配置中不存在的菜单记录
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
@@ -191,7 +191,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
         menuId = existing.id;
 
         // 检查是否需要更新
-        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.icon !== (menu.icon || '') || existing.sort !== (menu.sort || 0) || existing.type !== (menu.type || 1);
+        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.sort !== (menu.sort || 0);
 
         if (needUpdate) {
             await helper.updData({
@@ -200,9 +200,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                 data: {
                     pid: pid,
                     name: menu.name,
-                    icon: menu.icon || '',
-                    sort: menu.sort || 0,
-                    type: menu.type || 1
+                    sort: menu.sort || 0
                 }
             });
             stats.updated++;
@@ -214,9 +212,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                 pid: pid,
                 name: menu.name,
                 path: menu.path || '',
-                icon: menu.icon || '',
-                sort: menu.sort || 0,
-                type: menu.type || 1
+                sort: menu.sort || 0
             }
         });
         stats.created++;
@@ -245,7 +241,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
     // 批量查询所有现有菜单，建立 path -> menu 的映射
     const allExistingMenus = await helper.getAll({
         table: 'addon_admin_menu',
-        fields: ['id', 'pid', 'name', 'path', 'icon', 'sort', 'type']
+        fields: ['id', 'pid', 'name', 'path', 'sort']
     });
     const existingMenuMap = new Map<string, any>();
     for (const menu of allExistingMenus) {
@@ -351,7 +347,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         // 8. 获取最终菜单数据（用于统计和缓存）
         const allMenusData = await helper.getAll({
             table: 'addon_admin_menu',
-            fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
+            fields: ['id', 'pid', 'name', 'path', 'sort'],
             orderBy: ['sort#ASC', 'id#ASC']
         });
 

@@ -40,7 +40,7 @@ export default {
             if (allMenus.length === 0) {
                 allMenus = await befly.db.getAll({
                     table: 'addon_admin_menu',
-                    fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
+                    fields: ['id', 'pid', 'name', 'path', 'icon', 'sort'],
                     orderBy: ['sort#ASC', 'id#ASC']
                 });
             }
