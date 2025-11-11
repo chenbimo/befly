@@ -28,14 +28,6 @@ if (import.meta.hot) {
 
 // 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
-    // 设置页面标题
-    const titlePrefix = 'Befly Admin';
-    if (to.meta?.title) {
-        document.title = `${titlePrefix} - ${to.meta.title}`;
-    } else {
-        document.title = titlePrefix;
-    }
-
     const token = $Storage.local.get('token');
 
     // 判断是否为公开路由：meta.public 为 true 表示公开路由

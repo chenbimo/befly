@@ -19,7 +19,6 @@ function scanBeflyAddonViews() {
     const routesFolders: any[] = [];
 
     if (!existsSync(addonBasePath)) {
-        console.warn(`[@befly-addon] 目录不存在: ${addonBasePath}`);
         return routesFolders;
     }
 
@@ -39,7 +38,6 @@ function scanBeflyAddonViews() {
                     src: viewsPath,
                     path: `addon/${addonName}/`
                 });
-                console.log(`[VueRouter] 发现 addon: @befly-addon/${addonName}/views -> /addon/${addonName}/`);
             }
         }
     } catch (error) {
