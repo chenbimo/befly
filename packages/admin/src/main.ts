@@ -6,7 +6,7 @@ import App from './App.vue';
 // import './styles/internal/index.scss';
 
 // 引入路由实例
-import { router } from './plugins/router';
+import { router } from './router';
 
 const app = createApp(App);
 

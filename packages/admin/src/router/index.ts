@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import { routes } from '@/router/auto-routes';
-import { $Storage } from './storage';
+import { routes } from 'vue-router/auto-routes';
+import { $Storage } from '@/plugins/storage';
 
 /**
  * 创建并导出路由实例

@@ -95,6 +95,10 @@ export default defineConfig({
     tools: {
         // Rspack 配置（等同于 webpack 配置）
         rspack: (config, { appendPlugins }) => {
+            // 添加虚拟模块解析支持
+            config.resolve = config.resolve || {};
+            config.resolve.alias = config.resolve.alias || {};
+
             //  VueRouter 插件必须在最前面
             appendPlugins([
                 VueRouter({
@@ -106,7 +110,8 @@ export default defineConfig({
                     ],
                     dts: './src/types/typed-router.d.ts',
                     extensions: ['.vue'],
-                    importMode: 'async'
+                    importMode: 'async',
+                    logs: true
                 }),
                 // 组件自动导入
                 Components({
