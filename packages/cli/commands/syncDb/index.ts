@@ -148,7 +148,8 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
 
                 processedCount++;
 
-                const tableDefinition = await Bun.file(file).json();
+                const tableDefinitionModule = await import(file, { with: { type: 'json' } });
+                const tableDefinition = tableDefinitionModule.default;
                 const existsTable = await tableExists(sql!, tableName);
 
                 // 读取 force 参数

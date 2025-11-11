@@ -115,9 +115,8 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
             const addonConfigPath = utils.getAddonDir(addonName, 'addon.config.json');
             let addonTitle = addonName;
             try {
-                const configFile = Bun.file(addonConfigPath);
-                const config = await configFile.json();
-                addonTitle = config.title || addonName;
+                const config = await import(addonConfigPath, { with: { type: 'json' } });
+                addonTitle = config.default.title || addonName;
             } catch (error) {
                 // 忽略配置读取错误
             }

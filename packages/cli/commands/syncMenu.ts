@@ -31,15 +31,14 @@ async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
             return [];
         }
 
-        const file = Bun.file(filePath);
-        const content = await file.json();
+        const content = await import(filePath, { with: { type: 'json' } });
 
         // 验证是否为数组
-        if (!Array.isArray(content)) {
+        if (!Array.isArray(content.default)) {
             return [];
         }
 
-        return content;
+        return content.default;
     } catch (error: any) {
         return [];
     }
