@@ -8,24 +8,15 @@ import { Logger, downloadPackage, copyDirRecursive, isDirectoryEmpty } from '../
 /**
  * Init 命令主函数
  */
-export async function initCommand(type: 'admin' | 'api') {
+export async function initCommand() {
     const targetDir = process.cwd();
 
     // 配置映射
-    const config = {
-        admin: {
-            packageName: 'befly-admin',
-            registry: 'https://registry.npmmirror.com/befly-admin/latest',
-            description: '前端 Admin 项目'
-        },
-        api: {
-            packageName: 'befly-tpl',
-            registry: 'https://registry.npmmirror.com/befly-tpl/latest',
-            description: '后端 API 项目'
-        }
+    const currentConfig = {
+        packageName: 'befly-tpl',
+        registry: 'https://registry.npmmirror.com/befly-tpl/latest',
+        description: '后端 API 项目'
     };
-
-    const currentConfig = config[type];
 
     try {
         // 1. 检查目录是否为空
@@ -51,15 +42,9 @@ export async function initCommand(type: 'admin' | 'api') {
         Logger.info(`📁 复制了 ${chalk.bold(result.copied)} 个文件`);
         Logger.info('');
         Logger.info(chalk.bold('📝 下一步:'));
-
-        if (type === 'admin') {
-            Logger.log(`  ${chalk.cyan('1.')} ${chalk.bold('bun install')}           ${chalk.gray('# 安装依赖')}`);
-            Logger.log(`  ${chalk.cyan('2.')} ${chalk.bold('bun run dev')}           ${chalk.gray('# 启动开发服务器')}`);
-        } else {
-            Logger.log(`  ${chalk.cyan('1.')} ${chalk.bold('bun install')}           ${chalk.gray('# 安装依赖')}`);
-            Logger.log(`  ${chalk.cyan('2.')} ${chalk.bold('配置 .env.development')} ${chalk.gray('# 配置数据库等环境变量')}`);
-            Logger.log(`  ${chalk.cyan('3.')} ${chalk.bold('bun run dev')}           ${chalk.gray('# 启动开发服务器')}`);
-        }
+        Logger.log(`  ${chalk.cyan('1.')} ${chalk.bold('bun install')}           ${chalk.gray('# 安装依赖')}`);
+        Logger.log(`  ${chalk.cyan('2.')} ${chalk.bold('配置 .env.development')} ${chalk.gray('# 配置数据库等环境变量')}`);
+        Logger.log(`  ${chalk.cyan('3.')} ${chalk.bold('bun run dev')}           ${chalk.gray('# 启动开发服务器')}`);
     } catch (error: any) {
         Logger.error(`❌ 初始化失败: ${error.message}`);
         throw error;

@@ -8,7 +8,6 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'pathe';
 import chalk from 'chalk';
 import { syncAllCommand } from '../commands/syncAll.js';
-import { syncAdminCommand } from '../commands/syncAdmin.js';
 import { initCommand } from '../commands/init.js';
 import { Logger } from '../util.js';
 
@@ -23,20 +22,9 @@ program.name('befly').description('Befly 框架命令行工具').version(package
 program
     .command('init')
     .description('初始化项目')
-    .option('-t, --template <type>', '选择项目模板 (admin|api)')
-    .action(async (options) => {
+    .action(async () => {
         try {
-            const template = options.template;
-
-            if (!template || !['admin', 'api'].includes(template)) {
-                Logger.error('请指定有效的模板类型');
-                Logger.info('使用方法:');
-                Logger.log(`  ${chalk.cyan('befly init -t api')}      - 初始化后端项目`);
-                Logger.log(`  ${chalk.cyan('befly init -t admin')}    - 初始化前端项目`);
-                process.exit(1);
-            }
-
-            await initCommand(template);
+            await initCommand();
             process.exit(0);
         } catch (error: any) {
             Logger.error('命令执行失败:', error.message || error);
@@ -47,28 +35,12 @@ program
 // sync 命令
 program
     .command('sync')
-    .description('同步命令')
-    .option('-t, --target <type>', '选择同步目标 (api|admin)')
-    .action(async (options) => {
+    .description('同步后端数据')
+    .action(async () => {
         Logger.printEnv();
 
         try {
-            const target = options.target;
-
-            if (!target || !['admin', 'api'].includes(target)) {
-                Logger.error('请指定有效的同步目标');
-                Logger.info('使用方法:');
-                Logger.log(`  ${chalk.cyan('befly sync -t api')}      - 同步后端`);
-                Logger.log(`  ${chalk.cyan('befly sync -t admin')}    - 同步前端`);
-                process.exit(1);
-            }
-
-            if (target === 'admin') {
-                await syncAdminCommand();
-            } else {
-                await syncAllCommand();
-            }
-
+            await syncAllCommand();
             process.exit(0);
         } catch (error: any) {
             Logger.error('命令执行失败:', error.message || error);
