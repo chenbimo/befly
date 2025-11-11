@@ -6,12 +6,12 @@
         "children": [
             {
                 "name": "用户列表",
-                "path": "/list",
+                "path": "/internal/user/list",
                 "sort": 1
             },
             {
                 "name": "用户详情",
-                "path": "/detail",
+                "path": "/internal/user/detail",
                 "sort": 2
             }
         ]

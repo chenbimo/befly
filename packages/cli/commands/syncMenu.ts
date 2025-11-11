@@ -48,7 +48,7 @@ async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
  * 为 addon 菜单的 path 添加前缀
  * 规则：
  * 1. 所有路径必须以 / 开头
- * 2. 所有路径都添加 /addon/{addonName} 前缀
+ * 2. 所有路径都添加 /addon/{addonName} 前缀（包括根路径 /）
  * 3. 递归处理所有层级的子菜单
  * 4. 项目菜单不添加前缀
  */
@@ -56,8 +56,8 @@ function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
     return menus.map((menu) => {
         const newMenu = { ...menu };
 
-        // 处理当前菜单的 path
-        if (newMenu.path && newMenu.path.startsWith('/') && newMenu.path.length > 1) {
+        // 处理当前菜单的 path（包括根路径 /）
+        if (newMenu.path && newMenu.path.startsWith('/')) {
             newMenu.path = `/addon/${addonName}${newMenu.path}`;
         }
 
@@ -337,6 +337,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
 
         // 5. 收集配置文件中所有菜单的 path
         const configPaths = collectPaths(mergedMenus);
+        console.log('🔥[ configPaths ]-340', configPaths);
 
         // 6. 同步菜单
         const stats = await syncMenus(helper, mergedMenus);
