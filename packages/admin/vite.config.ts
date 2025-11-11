@@ -85,7 +85,7 @@ export default defineConfig({
         AutoImport({
             imports: ['vue', 'pinia', VueRouterAutoImports],
             dts: 'src/types/auto-imports.d.ts',
-            dirs: ['src/utils', 'src/plugins'],
+            dirs: ['src/utils', 'src/plugins', 'src/config'],
             vueTemplate: true
         }),
 

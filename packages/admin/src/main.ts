@@ -1,5 +1,3 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
 import App from './App.vue';
 
 // 引入全局样式 - 临时禁用以排查路由问题

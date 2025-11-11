@@ -1,6 +1,3 @@
-import { defineStore } from 'pinia';
-import { $ConfigInternal } from '@/config/internal';
-
 /**
  * 全局状态管理
  * 集中管理所有全局数据，避免分散到多个 store 文件
