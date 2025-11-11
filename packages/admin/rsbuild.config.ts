@@ -2,8 +2,6 @@ import { defineConfig } from '@rsbuild/core';
 import { pluginVue } from '@rsbuild/plugin-vue';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import VueRouter from 'unplugin-vue-router/webpack';
-import { VueRouterAutoImports } from 'unplugin-vue-router';
-import AutoImport from 'unplugin-auto-import/rspack';
 import Components from 'unplugin-vue-components/rspack';
 import Icons from 'unplugin-icons/rspack';
 import IconsResolver from 'unplugin-icons/resolver';
@@ -96,34 +94,19 @@ export default defineConfig({
     // 工具配置
     tools: {
         // Rspack 配置（等同于 webpack 配置）
-        rspack: {
-            plugins: [
-                // 文件系统路由
+        rspack: (config, { appendPlugins }) => {
+            //  VueRouter 插件必须在最前面
+            appendPlugins([
                 VueRouter({
                     routesFolder: [
                         {
-                            src: 'd:/codes/befly/packages/addonAdmin/views',
+                            src: '../addonAdmin/views',
                             path: 'internal/'
                         }
                     ],
                     dts: './src/types/typed-router.d.ts',
                     extensions: ['.vue'],
-                    exclude: [],
                     importMode: 'async'
-                }),
-                // 自动导入
-                AutoImport({
-                    imports: ['vue', VueRouterAutoImports, 'vue-router', 'pinia', { '@opentiny/vue': ['Modal'] }],
-                    resolvers: [TinyVueSingleResolver, IconsResolver({})],
-                    vueTemplate: true,
-                    dirsScanOptions: {
-                        filePatterns: ['*.ts'],
-                        fileFilter: (file) => file.endsWith('.ts'),
-                        types: true
-                    },
-                    dirs: ['./src/plugins/**', './src/config/**'],
-                    dts: 'src/types/auto-imports.d.ts',
-                    eslintrc: { enabled: false }
                 }),
                 // 组件自动导入
                 Components({
@@ -140,7 +123,9 @@ export default defineConfig({
                     defaultClass: 'icon-befly',
                     defaultStyle: 'margin-right: 8px; vertical-align: middle;'
                 })
-            ]
+            ]);
+
+            return config;
         },
         // PostCSS 配置
         postcss: {

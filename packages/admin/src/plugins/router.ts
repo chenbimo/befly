@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-// 临时使用手动创建的routes，等待 vue-router/auto-routes 虚拟模块支持
-import { routes } from '@/router/routes';
+import { routes } from '@/router/routes'; // 使用自动生成的路由文件
 import { $Storage } from './storage';
 
 /**
@@ -12,10 +11,9 @@ export const router = createRouter({
     routes: routes
 });
 
-// HMR 支持 - 等待 unplugin-vue-router 虚拟模块支持后启用
-// if (import.meta.hot) {
-//     handleHotUpdate(router);
-// }
+// HMR 支持 - unplugin-vue-router 虚拟模块在 webpack/rspack 中不导出 routes
+// 这是 unplugin-vue-router 的设计限制，只有 Vite 中才可用
+// 我们使用自动生成脚本来实现类似功能
 
 // 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
