@@ -90,11 +90,10 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 const onlyDefaultChanged = comparison.every((c) => c.type === 'default');
                 const defaultChanged = comparison.some((c) => c.type === 'default');
 
-                // 严格限制：除 string/array 互转外，禁止任何字段类型变更；一旦发现，立即终止同步
+                // 严格限制：除 string/array 互转外，禁止任何字段类型变更
                 if (hasTypeChange) {
-                    const currentSqlType = String(existingColumns[dbFieldName].type || '').toLowerCase();
-                    const newSqlType = String(typeMapping[fieldType] || '').toLowerCase();
-                    const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${currentSqlType}`, `目标类型: ${newSqlType}`, `说明: 仅允许 string<->array 互相切换，其他类型变更需要手动处理`].join('\n');
+                    const typeChange = comparison.find((c) => c.type === 'datatype');
+                    const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange?.current}`, `目标类型: ${typeChange?.expected}`, `说明: 仅允许 string<->array 互相切换，其他类型变更需要手动处理`].join('\n');
                     throw new Error(errorMsg);
                 }
 

@@ -174,11 +174,12 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
             perfTracker.markPhase('清理缓存');
             Logger.info(`🧹 清理 ${processedTables.length} 个表的字段缓存...`);
 
+            const redisHelper = new RedisHelper();
             let clearedCount = 0;
             for (const tableName of processedTables) {
                 const cacheKey = `table:columns:${tableName}`;
                 try {
-                    await RedisHelper.del(cacheKey);
+                    await redisHelper.del(cacheKey);
                     clearedCount++;
                 } catch (error: any) {
                     Logger.warn(`清理表 ${tableName} 的缓存失败:`, error.message);

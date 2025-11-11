@@ -399,7 +399,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
             orderBy: ['pid#ASC', 'sort#ASC', 'id#ASC']
         });
 
-        // 8. 缓存菜单数据到 Redis
+        // 5. 缓存菜单数据到 Redis
         try {
             const menus = await helper.getAll({
                 table: 'addon_admin_menu',
@@ -407,7 +407,8 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
                 orderBy: ['sort#ASC', 'id#ASC']
             });
 
-            await RedisHelper.setObject('menus:all', menus);
+            const redisHelper = new RedisHelper();
+            await redisHelper.setObject('menus:all', menus);
         } catch (error: any) {
             // 忽略缓存错误
         }

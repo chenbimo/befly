@@ -318,7 +318,8 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<Sync
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
 
-            await RedisHelper.setObject('apis:all', apiList);
+            const redisHelper = new RedisHelper();
+            await redisHelper.setObject('apis:all', apiList);
         } catch (error: any) {
             // 忽略缓存错误
         }
