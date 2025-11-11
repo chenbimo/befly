@@ -103,7 +103,7 @@ export default defineConfig({
                             path: 'internal/'
                         }
                     ],
-                    dts: './src/typed-router.d.ts',
+                    dts: './src/types/typed-router.d.ts',
                     extensions: ['.vue'],
                     exclude: [],
                     importMode: 'async'

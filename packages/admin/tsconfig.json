@@ -29,6 +29,6 @@
         /* Type definitions */
         "types": ["vite/client", "node", "unplugin-vue-router/client"]
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/typed-router.d.ts"],
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/types/**/*.d.ts"],
     "exclude": ["node_modules", "dist"]
 }
