@@ -14,7 +14,7 @@ export default defineConfig({
         VueRouter({
             routesFolder: [
                 {
-                    src: '../addonAdmin/views',
+                    src: 'node_modules/@befly-addon/admin/views',
                     path: 'internal/'
                 }
             ],
