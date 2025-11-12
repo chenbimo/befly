@@ -24,8 +24,13 @@ if (import.meta.hot) {
 router.beforeEach(async (to, from, next) => {
     const token = $Storage.local.get('token');
 
+    // 0. 根路径重定向
+    if (to.path === '/') {
+        return next(token ? '/addon/admin' : '/addon/admin/login');
+    }
+
     // 1. 未登录且访问非公开路由 → 跳转登录
-    if (!token && to.meta?.public !== true) {
+    if (!token && to.meta?.public !== true && to.path !== '/addon/admin/login') {
         return next('/addon/admin/login');
     }
 
