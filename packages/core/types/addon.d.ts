@@ -42,9 +42,6 @@ export interface AddonConfig {
     /** 主入口文件路径（相对于 addon 目录），例如 "index.ts" */
     entry?: string;
 
-    /** 是否默认启用 */
-    enabled?: boolean;
-
     /** 依赖的其他 addon 或核心包 */
     dependencies?: Record<string, string>;
 

@@ -7,7 +7,6 @@
         <div class="section-content">
             <div class="addon-list">
                 <div v-for="addon in addonList" :key="addon.name" class="addon-item">
-                    <div class="addon-status-badge" :class="{ active: addon.enabled }"></div>
                     <div class="addon-icon">
                         <i-lucide:box style="width: 20px; height: 20px" />
                     </div>

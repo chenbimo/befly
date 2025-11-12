@@ -24,8 +24,8 @@ export function logSyncStats(stats: { created: number; updated: number }, delete
  * 获取插件列表
  * @returns 插件列表
  */
-export function getAddonList(): Array<{ name: string; title: string; version: string; description: string; enabled: boolean }> {
-    const addonList: Array<{ name: string; title: string; version: string; description: string; enabled: boolean }> = [];
+export function getAddonList(): Array<{ name: string; title: string; version: string; description: string }> {
+    const addonList: Array<{ name: string; title: string; version: string; description: string }> = [];
 
     // 获取 addons 目录路径
     const addonsDir = path.join(process.cwd(), 'addons');
@@ -53,8 +53,7 @@ export function getAddonList(): Array<{ name: string; title: string; version: st
                     name: config.name || addonName,
                     title: config.title || addonName,
                     version: config.version || '1.0.0',
-                    description: config.description || '',
-                    enabled: true
+                    description: config.description || ''
                 });
             } catch (error) {
                 // 配置文件不存在或解析失败，使用默认值
@@ -62,8 +61,7 @@ export function getAddonList(): Array<{ name: string; title: string; version: st
                     name: addonName,
                     title: addonName,
                     version: '1.0.0',
-                    description: '',
-                    enabled: true
+                    description: ''
                 });
             }
         }

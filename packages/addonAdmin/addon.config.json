@@ -8,6 +8,5 @@
     },
     "keywords": ["admin", "backend", "management"],
     "entry": "index.ts",
-    "enabled": true,
     "license": "MIT"
 }
