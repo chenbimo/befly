@@ -11,7 +11,7 @@ import { $Storage } from '@/plugins/storage';
  */
 function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
     return routes.map((route) => {
-        // 如果有子路由，递归处理
+        // 如果有子路由，递归处理子路由，但保持当前路由结构
         if (route.children && route.children.length > 0) {
             return {
                 ...route,
@@ -35,6 +35,10 @@ function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
             if (lastPart.startsWith('index_')) {
                 // index_1.vue → 去掉整个 /index_1
                 cleanPath = route.path.replace(/\/index_\d+$/, '');
+                // 防止变成空路径，至少保留 '/'
+                if (!cleanPath) {
+                    cleanPath = '/';
+                }
             } else {
                 // news_2.vue → 去掉 _2，保留 /news
                 cleanPath = route.path.replace(/_\d+$/, '');
@@ -50,7 +54,6 @@ function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
             component: layoutComponent,
             children: [
                 {
-                    path: '',
                     ...route,
                     path: ''
                 }
