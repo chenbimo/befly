@@ -46,6 +46,7 @@ const global = useGlobal();
 // 响应式数据
 const $Data = $ref({
     userMenus: [],
+    userMenusFlat: [], // 一维菜单数据
     expandedKeys: [],
     currentNodeKey: 0,
     userInfo: {
@@ -60,6 +61,8 @@ const $Method = {
     async fetchUserMenus() {
         try {
             const { data } = await $Http('/addon/admin/menu/all');
+            // 保存一维数据
+            $Data.userMenusFlat = data;
             // 将一维数组转换为树形结构（最多2级）
             $Data.userMenus = arrayToTree(data);
             console.log('🔥[ $Data.userMenus ]-65', $Data.userMenus);
@@ -69,31 +72,37 @@ const $Method = {
         }
     },
 
-    // 设置当前激活的菜单（2级菜单专用）
+    // 设置当前激活的菜单（从一维数据查找并构建父级链）
     setActiveMenu() {
         const currentPath = route.path;
         console.log('🔥[ currentPath ]-74', currentPath);
 
-        // 遍历父级菜单
-        for (const parent of $Data.userMenus) {
-            // 检查父级菜单
-            if (parent.path === currentPath) {
-                $Data.currentNodeKey = parent.id;
-                $Data.expandedKeys = [parent.id];
-                return;
-            }
+        // 在一维数据中查找当前路径对应的菜单
+        const currentMenu = $Data.userMenusFlat.find((menu) => menu.path === currentPath);
 
-            // 检查子级菜单
-            if (parent.children?.length) {
-                for (const child of parent.children) {
-                    if (child.path === currentPath) {
-                        $Data.currentNodeKey = child.id;
-                        $Data.expandedKeys = [parent.id];
-                        return;
-                    }
-                }
+        if (!currentMenu) {
+            return;
+        }
+
+        // 设置当前激活节点
+        $Data.currentNodeKey = currentMenu.id;
+
+        // 构建展开的父级链
+        const expandedKeys = [];
+        let menu = currentMenu;
+
+        // 向上查找所有父级
+        while (menu.pid) {
+            const parent = $Data.userMenusFlat.find((m) => m.id === menu.pid);
+            if (parent) {
+                expandedKeys.unshift(parent.id);
+                menu = parent;
+            } else {
+                break;
             }
         }
+
+        $Data.expandedKeys = expandedKeys;
     },
 
     // 处理菜单点击
