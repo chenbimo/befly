@@ -3,14 +3,6 @@ import type { RouteRecordRaw } from 'vue-router';
 import { routes, handleHotUpdate } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
 
-// 布局组件映射
-const layouts: Record<string, any> = {
-    default: () => import('@/layouts/default.vue'),
-    1: () => import('@/layouts/1.vue'),
-    2: () => import('@/layouts/2.vue')
-    // 可以继续添加其他数字布局
-};
-
 /**
  * 自定义布局处理函数
  * 根据文件名后缀判断使用哪个布局
@@ -49,8 +41,8 @@ function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
             }
         }
 
-        // 如果布局不存在，使用 default
-        const layoutComponent = layouts[layoutName] || layouts.default;
+        // 根据布局名称加载对应组件
+        const layoutComponent = layoutName === 'default' ? () => import('@/layouts/default.vue') : () => import(`@/layouts/${layoutName}.vue`);
 
         // 为路由添加布局包裹
         return {
