@@ -2,10 +2,10 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { routes, handleHotUpdate } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
-import { setupCustomLayouts } from '@befly-addon/admin/util';
+import { Layouts } from '@befly-addon/admin/util';
 
 // 应用自定义布局系统
-const layoutRoutes = setupCustomLayouts(routes);
+const layoutRoutes = Layouts(routes);
 
 /**
  * 创建并导出路由实例

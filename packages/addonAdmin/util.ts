@@ -7,7 +7,7 @@ import type { RouteRecordRaw } from 'vue-router';
  * @param inheritLayout - 继承的布局名称（来自父级目录）
  * @returns 处理后的路由配置
  */
-export function setupCustomLayouts(routes: RouteRecordRaw[], inheritLayout = ''): RouteRecordRaw[] {
+export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): RouteRecordRaw[] {
     const result: RouteRecordRaw[] = [];
 
     for (const route of routes) {
@@ -25,7 +25,7 @@ export function setupCustomLayouts(routes: RouteRecordRaw[], inheritLayout = '')
             result.push({
                 ...route,
                 path: cleanPath,
-                children: setupCustomLayouts(route.children, currentLayout)
+                children: Layouts(route.children, currentLayout)
             });
             continue;
         }
