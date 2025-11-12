@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import VueRouter from 'unplugin-vue-router/vite';
 import { VueRouterAutoImports } from 'unplugin-vue-router';
-import Layouts from 'vite-plugin-vue-layouts-next';
 import VueDevTools from 'vite-plugin-vue-devtools';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
@@ -58,7 +57,7 @@ export default defineConfig({
         UnoCSS(),
 
         // Vue DevTools（仅开发环境）
-        // VueDevTools(),
+        VueDevTools(),
 
         // VueRouter 必须在 Vue 插件之前
         VueRouter({
@@ -68,12 +67,6 @@ export default defineConfig({
             importMode: 'async',
             // 全局排除 components 目录
             exclude: ['**/components/**']
-        }),
-
-        // 布局系统
-        Layouts({
-            layoutsDirs: 'src/layouts',
-            defaultLayout: 'default'
         }),
 
         // Vue 插件
