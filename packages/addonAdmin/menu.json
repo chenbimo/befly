@@ -22,11 +22,6 @@
         "sort": 3,
         "children": [
             {
-                "name": "菜单管理",
-                "path": "/menu",
-                "sort": 4
-            },
-            {
                 "name": "角色管理",
                 "path": "/role",
                 "sort": 5
