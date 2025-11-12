@@ -124,7 +124,7 @@ const $Method = {
             const valid = await date$From.form.validate();
             if (!valid) return;
 
-            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/adminUpd' : '/addon/admin/adminIns', $Data.formData);
+            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', $Data.formData);
 
             Modal.message({
                 message: $Prop.actionType === 'upd' ? '编辑成功' : '添加成功',
