@@ -62,6 +62,7 @@ const $Method = {
             const { data } = await $Http('/addon/admin/menu/all');
             // 将一维数组转换为树形结构（最多2级）
             $Data.userMenus = arrayToTree(data);
+            console.log('🔥[ $Data.userMenus ]-65', $Data.userMenus);
             $Method.setActiveMenu();
         } catch (error) {
             console.error('获取用户菜单失败:', error);
@@ -71,6 +72,7 @@ const $Method = {
     // 设置当前激活的菜单（2级菜单专用）
     setActiveMenu() {
         const currentPath = route.path;
+        console.log('🔥[ currentPath ]-74', currentPath);
 
         // 遍历父级菜单
         for (const parent of $Data.userMenus) {
@@ -85,10 +87,8 @@ const $Method = {
             if (parent.children?.length) {
                 for (const child of parent.children) {
                     if (child.path === currentPath) {
-                        nextTick(() => {
-                            $Data.currentNodeKey = child.id;
-                            $Data.expandedKeys = [parent.id];
-                        });
+                        $Data.currentNodeKey = child.id;
+                        $Data.expandedKeys = [parent.id];
                         return;
                     }
                 }
