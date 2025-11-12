@@ -6,8 +6,9 @@ import { $Storage } from '@/plugins/storage';
 // 布局组件映射
 const layouts: Record<string, any> = {
     default: () => import('@/layouts/default.vue'),
-    n: () => import('@/layouts/n.vue')
-    // 可以继续添加其他布局: '1': () => import('@/layouts/1.vue')
+    1: () => import('@/layouts/1.vue'),
+    2: () => import('@/layouts/2.vue')
+    // 可以继续添加其他数字布局
 };
 
 /**
@@ -26,16 +27,26 @@ function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
             };
         }
 
-        // 提取路由路径中的布局标识（如 /addon/admin/login/index_n 中的 'n'）
+        // 提取路由路径中的布局标识
         const pathParts = route.path.split('/').filter(Boolean);
         const lastPart = pathParts[pathParts.length - 1] || '';
-        const match = lastPart.match(/_([a-z0-9]+)$/i);
+
+        // 匹配 _数字 格式（如 index_1, news_2）
+        const match = lastPart.match(/_(\d+)$/);
         const layoutName = match ? match[1] : 'default';
 
-        // 去掉路径中的布局后缀（如 /addon/admin/login/index_n → /addon/admin/login）
+        // 处理路径：
+        // 1. index_1 → 去掉 /index_1，保留父路径
+        // 2. news_2 → 去掉 _2，保留 /news
         let cleanPath = route.path;
         if (match) {
-            cleanPath = route.path.replace(/_[a-z0-9]+$/i, '');
+            if (lastPart.startsWith('index_')) {
+                // index_1.vue → 去掉整个 /index_1
+                cleanPath = route.path.replace(/\/index_\d+$/, '');
+            } else {
+                // news_2.vue → 去掉 _2，保留 /news
+                cleanPath = route.path.replace(/_\d+$/, '');
+            }
         }
 
         // 如果布局不存在，使用 default
