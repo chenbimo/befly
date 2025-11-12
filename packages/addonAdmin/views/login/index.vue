@@ -25,6 +25,11 @@
     </div>
 </template>
 
+<route lang="yaml">
+meta:
+    layout: none
+</route>
+
 <script setup>
 import { ref } from 'vue';
 
