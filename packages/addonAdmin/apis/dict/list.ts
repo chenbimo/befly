@@ -7,10 +7,7 @@ export default {
             fields: ['id', 'name', 'code', 'value', 'sort', 'pid', 'description', 'state', 'created_at', 'updated_at'],
             page: ctx.body.page,
             limit: ctx.body.limit,
-            orderBy: [
-                { field: 'sort', direction: 'ASC' },
-                { field: 'id', direction: 'ASC' }
-            ]
+            orderBy: ['sort#ASC', 'id#ASC']
         });
 
         return Yes('操作成功', result);

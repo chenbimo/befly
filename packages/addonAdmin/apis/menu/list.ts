@@ -6,10 +6,7 @@ export default {
             const menus = await befly.db.getAll({
                 table: 'addon_admin_menu',
                 fields: ['id', 'name', 'path', 'icon', 'sort', 'pid', 'state', 'created_at', 'updated_at'],
-                orderBy: [
-                    { field: 'sort', direction: 'ASC' },
-                    { field: 'id', direction: 'ASC' }
-                ]
+                orderBy: ['sort#ASC', 'id#ASC']
             });
 
             return Yes('操作成功', menus);
