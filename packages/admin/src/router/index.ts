@@ -6,12 +6,6 @@ import { $Storage } from '@/plugins/storage';
 // 应用布局系统
 const layoutRoutes = setupLayouts(routes);
 
-// 打印自动生成的路由信息
-console.log('=== 自动生成的路由列表 ===');
-console.log(`路由总数: ${layoutRoutes.length}`);
-console.dir(layoutRoutes);
-console.log('========================');
-
 /**
  * 创建并导出路由实例
  * 可直接在 main.ts 中使用 app.use(router)
@@ -30,17 +24,14 @@ if (import.meta.hot) {
 router.beforeEach(async (to, from, next) => {
     const token = $Storage.local.get('token');
 
-    // 判断是否为公开路由：meta.public 为 true 表示公开路由
-    const isPublicRoute = to.meta?.public === true;
-
     // 1. 未登录且访问非公开路由 → 跳转登录
-    if (!token && !isPublicRoute) {
-        return next('/internal/login');
+    if (!token && to.meta?.public !== true) {
+        return next('/addon/admin/login');
     }
 
     // 2. 已登录访问登录页 → 跳转首页
-    if (token && to.path === '/internal/login') {
-        return next('/');
+    if (token && to.path === '/addon/admin/login') {
+        return next('/addon/admin');
     }
 
     next();
