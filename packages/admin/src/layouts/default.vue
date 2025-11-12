@@ -70,9 +70,7 @@ const $Method = {
             const { data } = await $Http('/addon/admin/menu/all');
             // 保存一维数据
             $Data.userMenusFlat = data;
-            // 将一维数组转换为树形结构（最多2级）
             $Data.userMenus = arrayToTree(data);
-            console.log('🔥[ $Data.userMenus ]-65', $Data.userMenus);
             $Method.setActiveMenu();
         } catch (error) {
             console.error('获取用户菜单失败:', error);

@@ -58,7 +58,7 @@ export default defineConfig({
         UnoCSS(),
 
         // Vue DevTools（仅开发环境）
-        VueDevTools(),
+        // VueDevTools(),
 
         // VueRouter 必须在 Vue 插件之前
         VueRouter({
