@@ -40,11 +40,6 @@ export async function initCommand() {
         Logger.success(`\n✅ ${currentConfig.description}初始化成功`);
         Logger.info(`📦 版本: ${chalk.bold(version)}`);
         Logger.info(`📁 复制了 ${chalk.bold(result.copied)} 个文件`);
-        Logger.info('');
-        Logger.info(chalk.bold('📝 下一步:'));
-        Logger.log(`  ${chalk.cyan('1.')} ${chalk.bold('bun install')}           ${chalk.gray('# 安装依赖')}`);
-        Logger.log(`  ${chalk.cyan('2.')} ${chalk.bold('配置 .env.development')} ${chalk.gray('# 配置数据库等环境变量')}`);
-        Logger.log(`  ${chalk.cyan('3.')} ${chalk.bold('bun run dev')}           ${chalk.gray('# 启动开发服务器')}`);
     } catch (error: any) {
         Logger.error(`❌ 初始化失败: ${error.message}`);
         throw error;
