@@ -18,22 +18,22 @@ export async function syncAllCommand(options: SyncOptions = {}) {
 
         // 1. 同步数据库表结构
         Logger.info('📦 正在同步数据库...');
-        const dbStats = await syncDbCommand({ dryRun: false, force: options.force || false });
-        Logger.info(`✓ 数据库同步完成 (处理 ${dbStats.processedTables} 个表)\n`);
+        await syncDbCommand({ dryRun: false, force: options.force || false });
+        Logger.info(`✓ 数据库同步完成\n`);
 
         // 2. 同步接口（并缓存）
         Logger.info('🔌 正在同步接口...');
-        const apiStats = await syncApiCommand();
-        Logger.info(`✓ 接口同步完成 (总计 ${apiStats.totalApis} 个)\n`);
+        await syncApiCommand();
+        Logger.info(`✓ 接口同步完成\n`);
 
         // 3. 同步菜单（并缓存）
         Logger.info('📋 正在同步菜单...');
-        const menuStats = await syncMenuCommand();
-        Logger.info(`✓ 菜单同步完成 (总计 ${menuStats.totalMenus} 个)\n`);
+        await syncMenuCommand();
+        Logger.info(`✓ 菜单同步完成\n`);
 
         // 4. 同步开发管理员（并缓存角色权限）
         Logger.info('👤 正在同步开发账号...');
-        const devStats = await syncDevCommand();
+        await syncDevCommand();
         Logger.info(`✓ 开发账号同步完成\n`);
 
         // 输出总结
