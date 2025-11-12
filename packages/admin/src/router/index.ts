@@ -7,27 +7,39 @@ import { $Storage } from '@/plugins/storage';
  * 自定义布局处理函数
  * 根据文件名后缀判断使用哪个布局
  * @param routes - 原始路由配置
+ * @param inheritLayout - 继承的布局名称（来自父级目录）
  * @returns 处理后的路由配置
  */
-function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
+function setupCustomLayouts(routes: RouteRecordRaw[], inheritLayout = ''): RouteRecordRaw[] {
     const result: RouteRecordRaw[] = [];
 
     for (const route of routes) {
-        // 如果有子路由，递归处理
+        const currentPath = route.path || '';
+
+        // 检查当前路径是否有 _数字 格式
+        const pathMatch = currentPath.match(/_(\d+)$/);
+        const currentLayout = pathMatch ? pathMatch[1] : inheritLayout;
+
+        // 如果有子路由，递归处理（传递当前布局给子级）
         if (route.children && route.children.length > 0) {
+            // 清理路径：如果是 xxx_数字 格式，去掉 _数字
+            const cleanPath = pathMatch ? currentPath.replace(/_\d+$/, '') : currentPath;
+
             result.push({
                 ...route,
-                children: setupCustomLayouts(route.children)
+                path: cleanPath,
+                children: setupCustomLayouts(route.children, currentLayout)
             });
             continue;
         }
 
-        // 没有子路由的才是真正的页面路由，需要处理
-        const lastPart = route.path || '';
+        // 没有子路由的叶子节点，需要包裹布局
+        const lastPart = currentPath;
 
         // 匹配 _数字 格式（如 index_1, news_2）
         const match = lastPart.match(/_(\d+)$/);
-        const layoutName = match ? match[1] : 'default';
+        // 优先使用文件自己的布局，其次使用继承的布局，最后使用 default
+        const layoutName = match ? match[1] : currentLayout || 'default';
 
         // 计算清理后的路径
         let cleanPath: string;
