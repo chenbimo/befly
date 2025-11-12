@@ -5,7 +5,7 @@
             <h2>系统概览</h2>
         </div>
         <div class="section-content">
-            <tiny-row :flex="true" :gap="12">
+            <tiny-row :flex="true">
                 <tiny-col :xs="24" :sm="12" :md="12" :lg="12">
                     <div class="info-block">
                         <div class="stats-grid">
