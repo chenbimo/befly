@@ -302,6 +302,11 @@ export class DbHelper {
             throw new Error('数据库连接未初始化');
         }
 
+        // 强制类型检查：只接受字符串类型的 SQL
+        if (typeof sqlStr !== 'string') {
+            throw new Error(`executeWithConn 只接受字符串类型的 SQL，收到类型: ${typeof sqlStr}，值: ${JSON.stringify(sqlStr)}`);
+        }
+
         // 记录开始时间
         const startTime = Date.now();
 
@@ -327,29 +332,10 @@ export class DbHelper {
         } catch (error: any) {
             const duration = Date.now() - startTime;
 
-            // 安全地获取 SQL 字符串表示
-            let sqlDisplay: string;
-            if (typeof sqlStr === 'string') {
-                sqlDisplay = sqlStr.length > 200 ? sqlStr.substring(0, 200) + '...' : sqlStr;
-            } else if (sqlStr && typeof sqlStr === 'object') {
-                // 处理 postgres sql 模板或其他对象类型
-                try {
-                    sqlDisplay = JSON.stringify(sqlStr, null, 2);
-                    if (sqlDisplay.length > 500) {
-                        sqlDisplay = sqlDisplay.substring(0, 500) + '...';
-                    }
-                } catch {
-                    sqlDisplay = String(sqlStr);
-                }
-            } else {
-                sqlDisplay = String(sqlStr);
-            }
-
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             Logger.error('SQL 执行错误');
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            Logger.error(`SQL 类型: ${typeof sqlStr}`);
-            Logger.error(`SQL 内容:\n${sqlDisplay}`);
+            Logger.error(`SQL 语句: ${sqlStr.length > 200 ? sqlStr.substring(0, 200) + '...' : sqlStr}`);
             Logger.error(`参数列表: ${JSON.stringify(params || [])}`);
             Logger.error(`执行耗时: ${duration}ms`);
             Logger.error(`错误信息: ${error.message}`);

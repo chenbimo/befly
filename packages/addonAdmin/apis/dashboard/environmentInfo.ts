@@ -11,11 +11,8 @@ export default {
         // 获取数据库版本
         let databaseVersion = 'Unknown';
         try {
-            const versionResult = await befly.db.query({
-                sql: 'SELECT VERSION() as version',
-                type: 'one'
-            });
-            databaseVersion = versionResult.version || 'Unknown';
+            const versionResult = await befly.db.query('SELECT VERSION() as version');
+            databaseVersion = versionResult?.[0]?.version || 'Unknown';
         } catch (error) {
             // 忽略错误
         }
