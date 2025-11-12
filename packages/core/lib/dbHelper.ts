@@ -326,15 +326,36 @@ export class DbHelper {
             return result;
         } catch (error: any) {
             const duration = Date.now() - startTime;
-            const truncatedSql = sqlStr.length > 200 ? sqlStr.substring(0, 200) + '...' : sqlStr;
+
+            // 安全地获取 SQL 字符串表示
+            let sqlDisplay: string;
+            if (typeof sqlStr === 'string') {
+                sqlDisplay = sqlStr.length > 200 ? sqlStr.substring(0, 200) + '...' : sqlStr;
+            } else if (sqlStr && typeof sqlStr === 'object') {
+                // 处理 postgres sql 模板或其他对象类型
+                try {
+                    sqlDisplay = JSON.stringify(sqlStr, null, 2);
+                    if (sqlDisplay.length > 500) {
+                        sqlDisplay = sqlDisplay.substring(0, 500) + '...';
+                    }
+                } catch {
+                    sqlDisplay = String(sqlStr);
+                }
+            } else {
+                sqlDisplay = String(sqlStr);
+            }
 
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             Logger.error('SQL 执行错误');
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            Logger.error(`SQL 语句: ${truncatedSql}`);
+            Logger.error(`SQL 类型: ${typeof sqlStr}`);
+            Logger.error(`SQL 内容:\n${sqlDisplay}`);
             Logger.error(`参数列表: ${JSON.stringify(params || [])}`);
             Logger.error(`执行耗时: ${duration}ms`);
             Logger.error(`错误信息: ${error.message}`);
+            if (error.stack) {
+                Logger.error(`错误堆栈:\n${error.stack}`);
+            }
             Logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
             const enhancedError: any = new Error(`SQL执行失败: ${error.message}`);
