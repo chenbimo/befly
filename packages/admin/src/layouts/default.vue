@@ -43,8 +43,6 @@ const router = useRouter();
 const route = useRoute();
 const global = useGlobal();
 
-// TreeMenu 组件引用
-
 const $From = {
     treeMenuRef: null
 };
