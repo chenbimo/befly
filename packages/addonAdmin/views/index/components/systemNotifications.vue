@@ -1,6 +1,6 @@
 <template>
     <div class="section-block">
-        <div class="section-header">
+        <div class="section-header flex items-center gap-2">
             <i-lucide:bell style="width: 20px; height: 20px" />
             <h2>系统通知</h2>
         </div>

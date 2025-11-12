@@ -1,6 +1,6 @@
 <template>
     <div class="section-block">
-        <div class="section-header">
+        <div class="section-header flex items-center gap-2">
             <i-lucide:server style="width: 20px; height: 20px" />
             <h2>运行环境</h2>
         </div>

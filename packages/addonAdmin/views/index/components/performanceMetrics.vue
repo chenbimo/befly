@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
-        <div class="section-header">
-            <i-lucide:zap style="width: 20px; height: 20px" />
+        <div class="section-header flex items-center gap-2">
+            <i-lucide:activity style="width: 20px; height: 20px" />
             <h2>性能指标</h2>
         </div>
         <div class="section-content">

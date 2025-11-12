@@ -10,6 +10,7 @@ import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
+import UnoCSS from 'unocss/vite';
 import { fileURLToPath, URL } from 'node:url';
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -53,6 +54,9 @@ const routesFolders = scanBeflyAddonViews();
 export default defineConfig({
     // 插件配置
     plugins: [
+        // UnoCSS
+        UnoCSS(),
+
         // Vue DevTools（仅开发环境）
         VueDevTools(),
 
