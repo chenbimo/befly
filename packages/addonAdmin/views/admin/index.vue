@@ -4,7 +4,7 @@
             <div class="left">
                 <tiny-button type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
-                        <i-lucide:plus style="width: 16px; height: 16px" />
+                        <i-lucide:plus />
                     </template>
                     添加管理员
                 </tiny-button>
@@ -12,14 +12,14 @@
             <div class="right">
                 <tiny-button @click="$Method.handleRefresh">
                     <template #icon>
-                        <i-lucide:rotate-cw style="width: 16px; height: 16px" />
+                        <i-lucide:rotate-cw />
                     </template>
                 </tiny-button>
             </div>
             <div class="right">
                 <tiny-button @click="$Method.handleRefresh">
                     <template #icon>
-                        <i-lucide:rotate-cw style="width: 16px; height: 16px" />
+                        <i-lucide:rotate-cw />
                     </template>
                     刷新
                 </tiny-button>

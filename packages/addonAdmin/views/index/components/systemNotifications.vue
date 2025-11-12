@@ -8,11 +8,11 @@
             <div class="notification-compact-list">
                 <div v-for="notification in notifications" :key="notification.id" class="notification-compact-item">
                     <div class="notification-icon" :class="`type-${notification.type}`">
-                        <i-lucide:info v-if="notification.type === 'info'" style="width: 16px; height: 16px" />
-                        <i-lucide:check-circle v-else-if="notification.type === 'success'" style="width: 16px; height: 16px" />
-                        <i-lucide:alert-triangle v-else-if="notification.type === 'warning'" style="width: 16px; height: 16px" />
-                        <i-lucide:x-circle v-else-if="notification.type === 'error'" style="width: 16px; height: 16px" />
-                        <i-lucide:bell v-else style="width: 16px; height: 16px" />
+                        <i-lucide:info v-if="notification.type === 'info'" />
+                        <i-lucide:check-circle v-else-if="notification.type === 'success'" />
+                        <i-lucide:alert-triangle v-else-if="notification.type === 'warning'" />
+                        <i-lucide:x-circle v-else-if="notification.type === 'error'" />
+                        <i-lucide:bell v-else />
                     </div>
                     <div class="notification-content">
                         <span class="notification-title">{{ notification.title }}</span>

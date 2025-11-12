@@ -4,7 +4,7 @@
             <div class="left">
                 <tiny-button type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
-                        <i-lucide:plus style="width: 16px; height: 16px" />
+                        <i-lucide:plus />
                     </template>
                     添加菜单
                 </tiny-button>
@@ -12,7 +12,7 @@
             <div class="right">
                 <tiny-button @click="$Method.handleRefresh">
                     <template #icon>
-                        <i-lucide:rotate-cw style="width: 16px; height: 16px" />
+                        <i-lucide:rotate-cw />
                     </template>
                     刷新
                 </tiny-button>
@@ -25,7 +25,7 @@
                 <tiny-grid-column field="path" title="路径" :width="200" />
                 <tiny-grid-column field="icon" title="图标" :width="100">
                     <template #default="{ row }">
-                        <i-lucide:square v-if="row.icon" style="width: 16px; height: 16px" />
+                        <i-lucide:square v-if="row.icon" />
                         <span v-else>-</span>
                     </template>
                 </tiny-grid-column>

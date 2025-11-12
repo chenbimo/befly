@@ -21,7 +21,10 @@
             <tiny-tree-menu :ref="(el) => ($From.treeMenuRef = el)" :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" :default-expanded-keys="$Data.expandedKeys" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
                 <template #default="{ data }">
                     <span class="menu-item">
-                        <i-lucide:square style="width: 16px; height: 16px; margin-right: 8px; vertical-align: middle" />
+                        <!-- 根据路径和是否有子节点显示不同图标 -->
+                        <i-lucide:home v-if="data.path === '/addon/admin/'" />
+                        <i-lucide:folder v-else-if="data.children && data.children.length > 0" />
+                        <i-lucide:file-text v-else />
                         <span>{{ data.name }}</span>
                     </span>
                 </template>

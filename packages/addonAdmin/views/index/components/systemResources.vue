@@ -8,7 +8,7 @@
             <div class="resource-compact-list">
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:cpu style="width: 16px; height: 16px" />
+                        <i-lucide:cpu />
                         <span class="resource-label">CPU</span>
                         <span class="resource-value">{{ systemResources.cpu.usage }}%</span>
                         <span class="resource-desc">{{ systemResources.cpu.cores }}核心</span>
@@ -17,7 +17,7 @@
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:hard-drive style="width: 16px; height: 16px" />
+                        <i-lucide:hard-drive />
                         <span class="resource-label">内存</span>
                         <span class="resource-value">{{ systemResources.memory.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.memory.used }}GB / {{ systemResources.memory.total }}GB</span>
@@ -26,7 +26,7 @@
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:disc style="width: 16px; height: 16px" />
+                        <i-lucide:disc />
                         <span class="resource-label">磁盘</span>
                         <span class="resource-value">{{ systemResources.disk.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.disk.used }}GB / {{ systemResources.disk.total }}GB</span>
