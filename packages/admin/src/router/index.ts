@@ -10,46 +10,43 @@ import { $Storage } from '@/plugins/storage';
  * @returns 处理后的路由配置
  */
 function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
-    return routes.map((route) => {
-        // 如果有子路由，递归处理子路由，但保持当前路由结构
+    const result: RouteRecordRaw[] = [];
+
+    for (const route of routes) {
+        // 如果有子路由，递归处理
         if (route.children && route.children.length > 0) {
-            return {
+            result.push({
                 ...route,
                 children: setupCustomLayouts(route.children)
-            };
+            });
+            continue;
         }
 
-        // 提取路由路径中的布局标识
-        const pathParts = route.path.split('/').filter(Boolean);
-        const lastPart = pathParts[pathParts.length - 1] || '';
+        // 没有子路由的才是真正的页面路由，需要处理
+        const lastPart = route.path || '';
 
         // 匹配 _数字 格式（如 index_1, news_2）
         const match = lastPart.match(/_(\d+)$/);
         const layoutName = match ? match[1] : 'default';
 
-        // 处理路径：
-        // 1. index_1 → 去掉 /index_1，保留父路径
-        // 2. news_2 → 去掉 _2，保留 /news
-        let cleanPath = route.path;
-        if (match) {
-            if (lastPart.startsWith('index_')) {
-                // index_1.vue → 去掉整个 /index_1
-                cleanPath = route.path.replace(/\/index_\d+$/, '');
-                // 防止变成空路径，至少保留 '/'
-                if (!cleanPath) {
-                    cleanPath = '/';
-                }
-            } else {
-                // news_2.vue → 去掉 _2，保留 /news
-                cleanPath = route.path.replace(/_\d+$/, '');
-            }
+        // 计算清理后的路径
+        let cleanPath: string;
+        if (lastPart === 'index' || (lastPart.startsWith('index_') && match)) {
+            // index 或 index_数字 → 改为空路径（由父级路径表示）
+            cleanPath = '';
+        } else if (match) {
+            // xxx_数字 → 去掉 _数字 后缀
+            cleanPath = lastPart.replace(/_\d+$/, '');
+        } else {
+            // 其他 → 保持原样
+            cleanPath = lastPart;
         }
 
         // 根据布局名称加载对应组件
         const layoutComponent = layoutName === 'default' ? () => import('@/layouts/default.vue') : () => import(`@/layouts/${layoutName}.vue`);
 
-        // 为路由添加布局包裹
-        return {
+        // 包裹布局
+        result.push({
             path: cleanPath,
             component: layoutComponent,
             children: [
@@ -58,8 +55,10 @@ function setupCustomLayouts(routes: RouteRecordRaw[]): RouteRecordRaw[] {
                     path: ''
                 }
             ]
-        };
-    });
+        });
+    }
+
+    return result;
 }
 
 // 应用自定义布局系统
