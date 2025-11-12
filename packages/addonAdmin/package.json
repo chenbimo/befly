@@ -41,10 +41,5 @@
     "gitHead": "24b35d0ef83d78db3dea67784e052516d4a83fc5",
     "dependencies": {
         "befly": "workspace:*"
-    },
-    "devDependencies": {
-        "@module-federation/vite": "^1.9.0",
-        "@vitejs/plugin-vue": "^6.0.1",
-        "rolldown-vite": "^7.2.2"
     }
 }
