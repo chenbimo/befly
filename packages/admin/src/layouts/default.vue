@@ -18,7 +18,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" :default-expanded-keys="$Data.expandedKeys" :default-expanded-keys-highlight="$Data.currentNodeKey" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
+            <tiny-tree-menu :ref="(el) => ($From.treeMenuRef = el)" :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" :default-expanded-keys="$Data.expandedKeys" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
                 <template #default="{ data }">
                     <span class="menu-item">
                         <i-lucide:square style="width: 16px; height: 16px; margin-right: 8px; vertical-align: middle" />
@@ -42,6 +42,12 @@ import { iconClose } from '@opentiny/vue-icon';
 const router = useRouter();
 const route = useRoute();
 const global = useGlobal();
+
+// TreeMenu 组件引用
+
+const $From = {
+    treeMenuRef: null
+};
 
 // 响应式数据
 const $Data = $ref({
@@ -75,7 +81,6 @@ const $Method = {
     // 设置当前激活的菜单（从一维数据查找并构建父级链）
     setActiveMenu() {
         const currentPath = route.path;
-        console.log('🔥[ currentPath ]-74', currentPath);
 
         // 在一维数据中查找当前路径对应的菜单
         const currentMenu = $Data.userMenusFlat.find((menu) => menu.path === currentPath);
@@ -83,9 +88,6 @@ const $Method = {
         if (!currentMenu) {
             return;
         }
-
-        // 设置当前激活节点
-        $Data.currentNodeKey = currentMenu.id;
 
         // 构建展开的父级链
         const expandedKeys = [];
@@ -102,7 +104,14 @@ const $Method = {
             }
         }
 
-        $Data.expandedKeys = expandedKeys;
+        // 使用 nextTick 确保 DOM 更新后再设置高亮
+        nextTick(() => {
+            $Data.expandedKeys = expandedKeys;
+            // 使用 setCurrentKey 方法设置当前高亮节点
+            if ($From.treeMenuRef) {
+                $From.treeMenuRef.setCurrentKey(currentMenu.id);
+            }
+        });
     },
 
     // 处理菜单点击
