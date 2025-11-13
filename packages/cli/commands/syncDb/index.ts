@@ -101,14 +101,18 @@ export const SyncDb = async (): Promise<void> => {
                 const tableDefinitionModule = await import(file, { with: { type: 'json' } });
                 const tableDefinition = tableDefinitionModule.default;
 
-                // 为字段设置默认值：min=0, max=100
-                for (const [fieldKey, fieldDef] of Object.entries(tableDefinition)) {
-                    if (fieldDef.min === null || fieldDef.min === undefined) {
-                        fieldDef.min = 0;
-                    }
-                    if (fieldDef.max === null || fieldDef.max === undefined) {
-                        fieldDef.max = 100;
-                    }
+                // 为字段属性设置默认值
+                for (const fieldDef of Object.values(tableDefinition)) {
+                    fieldDef.detail = fieldDef.detail ?? '';
+                    fieldDef.min = fieldDef.min ?? 0;
+                    fieldDef.max = fieldDef.max ?? 100;
+                    fieldDef.default = fieldDef.default ?? null;
+                    fieldDef.index = fieldDef.index ?? false;
+                    fieldDef.unique = fieldDef.unique ?? false;
+                    fieldDef.comment = fieldDef.comment ?? '';
+                    fieldDef.nullable = fieldDef.nullable ?? false;
+                    fieldDef.unsigned = fieldDef.unsigned ?? true;
+                    fieldDef.regexp = fieldDef.regexp ?? null;
                 }
 
                 const existsTable = await tableExists(sql!, tableName);
