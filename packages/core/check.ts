@@ -127,7 +127,7 @@ export const checkTable = async function (): Promise<boolean> {
                     // 直接使用字段对象
                     const field = fieldDef as FieldDefinition;
 
-                    // 检查必填字段：name, type, min, max
+                    // 检查必填字段：name, type
                     if (!field.name || typeof field.name !== 'string') {
                         Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 name 或类型错误`);
                         continue;
@@ -136,16 +136,14 @@ export const checkTable = async function (): Promise<boolean> {
                         Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 type 或类型错误`);
                         continue;
                     }
-                    if (field.min === undefined) {
-                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 min`);
-                        continue;
-                    }
-                    if (field.max === undefined) {
-                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 缺少必填字段 max`);
-                        continue;
-                    }
 
                     // 检查可选字段的类型
+                    if (field.min !== undefined && !(field.min === null || typeof field.min === 'number')) {
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 min 类型错误，必须为 null 或数字`);
+                    }
+                    if (field.max !== undefined && !(field.max === null || typeof field.max === 'number')) {
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 max 类型错误，必须为 null 或数字`);
+                    }
                     if (field.detail !== undefined && typeof field.detail !== 'string') {
                         Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 detail 类型错误，必须为字符串`);
                     }
@@ -165,49 +163,41 @@ export const checkTable = async function (): Promise<boolean> {
                         Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段 regexp 类型错误，必须为 null 或字符串`);
                     }
 
-                    const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault, index: fieldIndex, regexp: fieldRegexp } = field;
+                    const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault } = field;
 
-                    // 第1个值：名称必须为中文、数字、字母、下划线、短横线、空格
+                    // 字段名称必须为中文、数字、字母、下划线、短横线、空格
                     if (!FIELD_NAME_REGEX.test(fieldName)) {
                         Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
                     }
 
-                    // 第2个值：字段类型必须为string,number,text,array_string,array_text之一
+                    // 字段类型必须为string,number,text,array_string,array_text之一
                     if (!FIELD_TYPES.includes(fieldType as any)) {
                         Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join('、')}之一`);
                     }
 
-                    // 第3/4个值：需要是 null 或 数字
-                    if (!(fieldMin === null || typeof fieldMin === 'number')) {
-                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 格式错误，必须为null或数字`);
-                    }
-                    if (!(fieldMax === null || typeof fieldMax === 'number')) {
-                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最大值 "${fieldMax}" 格式错误，必须为null或数字`);
-                    }
-
                     // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
-                    if (fieldMin !== null && fieldMax !== null) {
+                    if (fieldMin !== undefined && fieldMax !== undefined && fieldMin !== null && fieldMax !== null) {
                         if (fieldMin > fieldMax) {
                             Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
                         }
                     }
 
-                    // 第4个值与类型联动校验 + 默认值规则
+                    // 类型联动校验 + 默认值规则
                     if (fieldType === 'text') {
-                        // text：min/max 必须为 null，默认值必须为 null
-                        if (fieldMin !== null) {
-                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最小值必须为 null，当前为 "${fieldMin}"`);
+                        // text：min/max 应该为 null，默认值必须为 null
+                        if (fieldMin !== undefined && fieldMin !== null) {
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最小值应为 null，当前为 "${fieldMin}"`);
                         }
-                        if (fieldMax !== null) {
-                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度必须为 null，当前为 "${fieldMax}"`);
+                        if (fieldMax !== undefined && fieldMax !== null) {
+                            Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度应为 null，当前为 "${fieldMax}"`);
                         }
-                        if (fieldDefault !== null) {
+                        if (fieldDefault !== undefined && fieldDefault !== null) {
                             Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
                         }
-                    } else if (fieldType === 'string' || fieldType === 'array') {
-                        if (fieldMax === null || typeof fieldMax !== 'number') {
+                    } else if (fieldType === 'string' || fieldType === 'array_string') {
+                        if (fieldMax !== undefined && (fieldMax === null || typeof fieldMax !== 'number')) {
                             Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
-                        } else if (fieldMax > MAX_VARCHAR_LENGTH) {
+                        } else if (fieldMax !== undefined && fieldMax > MAX_VARCHAR_LENGTH) {
                             Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         }
                     } else if (fieldType === 'number') {
