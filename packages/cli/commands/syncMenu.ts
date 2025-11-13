@@ -18,7 +18,7 @@ import { existsSync } from 'node:fs';
 import { Database, RedisHelper, utils } from 'befly';
 import { Logger, projectDir } from '../util.js';
 
-import type { SyncMenuOptions, SyncMenuStats, MenuConfig } from '../types.js';
+import type { SyncMenuOptions, MenuConfig } from '../types.js';
 
 /**
  * 读取菜单配置文件
@@ -155,11 +155,10 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
  * @param menu 菜单配置
  * @param pid 父级菜单ID
  * @param existingMenuMap 现有菜单映射
- * @param stats 统计信息
  * @param depth 当前深度（1=父级, 2=子级, 3=孙级）
  * @returns 菜单ID
  */
-async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, existingMenuMap: Map<string, any>, stats: { created: number; updated: number }, depth: number = 1): Promise<number> {
+async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, existingMenuMap: Map<string, any>, depth: number = 1): Promise<number> {
     const existing = existingMenuMap.get(menu.path || '');
     let menuId: number;
 
@@ -179,7 +178,6 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                     sort: menu.sort || 0
                 }
             });
-            stats.updated++;
         }
     } else {
         menuId = await helper.insData({
@@ -191,13 +189,12 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                 sort: menu.sort || 0
             }
         });
-        stats.created++;
     }
 
     // 递归处理子菜单（限制最多3层）
     if (depth < 3 && menu.children?.length > 0) {
         for (const child of menu.children) {
-            await syncMenuRecursive(helper, child, menuId, existingMenuMap, stats, depth + 1);
+            await syncMenuRecursive(helper, child, menuId, existingMenuMap, depth + 1);
         }
     }
 
@@ -208,12 +205,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
  * 同步菜单（三层结构：父级、子级、孙级）
  * 子级菜单使用独立路径
  */
-async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: number; updated: number }> {
-    const stats = {
-        created: 0,
-        updated: 0
-    };
-
+async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
     // 批量查询所有现有菜单，建立 path -> menu 的映射
     const allExistingMenus = await helper.getAll({
         table: 'addon_admin_menu',
@@ -228,27 +220,23 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<{ created: n
 
     for (const menu of menus) {
         try {
-            await syncMenuRecursive(helper, menu, 0, existingMenuMap, stats, 1);
+            await syncMenuRecursive(helper, menu, 0, existingMenuMap, 1);
         } catch (error: any) {
             Logger.error(`同步菜单 "${menu.name}" 失败:`, error.message || String(error));
             throw error;
         }
     }
-
-    return stats;
 }
 
 /**
  * 删除配置中不存在的菜单（强制删除）
  */
-async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<number> {
+async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<void> {
     const allRecords = await helper.getAll({
         table: 'addon_admin_menu',
         fields: ['id', 'path'],
         where: { state$gte: 0 }
     });
-
-    let deletedCount = 0;
 
     for (const record of allRecords) {
         if (record.path && !configPaths.has(record.path)) {
@@ -256,21 +244,18 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
                 table: 'addon_admin_menu',
                 where: { id: record.id }
             });
-            deletedCount++;
         }
     }
-
-    return deletedCount;
 }
 
 /**
  * SyncMenu 命令主函数
  */
-export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<SyncMenuStats> {
+export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.info('[计划] 同步菜单配置到数据库（plan 模式不执行）');
-            return { totalMenus: 0, parentMenus: 0, childMenus: 0, created: 0, updated: 0, deleted: 0 };
+            return;
         }
 
         // 1. 扫描所有 addon 的 menu.json 配置文件
@@ -315,12 +300,12 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         const configPaths = collectPaths(mergedMenus);
 
         // 6. 同步菜单
-        const stats = await syncMenus(helper, mergedMenus);
+        await syncMenus(helper, mergedMenus);
 
         // 7. 删除文件中不存在的菜单（强制删除）
-        const deletedCount = await deleteObsoleteRecords(helper, configPaths);
+        await deleteObsoleteRecords(helper, configPaths);
 
-        // 8. 获取最终菜单数据（用于统计和缓存）
+        // 8. 获取最终菜单数据（用于缓存）
         const allMenusData = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id', 'pid', 'name', 'path', 'sort'],
@@ -334,18 +319,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<Sy
         } catch (error: any) {
             Logger.warn('Redis 缓存菜单数据失败:', error.message);
         }
-
-        const parentCount = allMenusData.filter((m: any) => m.pid === 0).length;
-        const childCount = allMenusData.filter((m: any) => m.pid !== 0).length;
-
-        return {
-            totalMenus: allMenusData.length,
-            parentMenus: parentCount,
-            childMenus: childCount,
-            created: stats.created,
-            updated: stats.updated,
-            deleted: deletedCount
-        };
     } catch (error: any) {
         Logger.error('菜单同步失败:', error);
         process.exit(1);
