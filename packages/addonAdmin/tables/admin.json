@@ -17,21 +17,21 @@
         "min": 5,
         "max": 100,
         "index": true,
-        "regexp": "^[\\w.-]+@[\\w.-]+\\.\\w+$"
+        "regexp": "@email"
     },
     "phone": {
         "name": "手机号",
         "type": "string",
         "min": 11,
         "max": 11,
-        "regexp": "^1[3-9]\\d{9}$"
+        "regexp": "@phone"
     },
     "username": {
         "name": "用户名",
         "type": "string",
         "min": 3,
         "max": 30,
-        "regexp": "^[a-zA-Z0-9_]+$"
+        "regexp": "@alphanumeric_"
     },
     "password": {
         "name": "密码",
@@ -57,7 +57,7 @@
         "type": "string",
         "min": 2,
         "max": 50,
-        "regexp": "^[a-zA-Z0-9_]+$"
+        "regexp": "@alphanumeric_"
     },
     "roleType": {
         "name": "角色类型",

@@ -12,7 +12,7 @@
         "min": 2,
         "max": 50,
         "index": true,
-        "regexp": "^[a-zA-Z0-9_]+$"
+        "regexp": "@alphanumeric_"
     },
     "description": {
         "name": "角色描述",
