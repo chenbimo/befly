@@ -76,18 +76,3 @@ export const typeMapping = {
     array_string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
     array_text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT'
 };
-
-/**
- * 获取完整的 SQL 类型（包含 UNSIGNED 修饰符）
- * @param fieldType - 字段类型
- * @param unsigned - 是否无符号（仅 MySQL number 类型有效）
- * @returns SQL 类型字符串
- */
-export function getFullSqlType(fieldType: string, unsigned: boolean = false): string {
-    const baseType = typeMapping[fieldType as keyof typeof typeMapping] || 'TEXT';
-    // 仅 MySQL 的 number 类型支持 UNSIGNED
-    if (IS_MYSQL && fieldType === 'number' && unsigned) {
-        return `${baseType} UNSIGNED`;
-    }
-    return baseType;
-}

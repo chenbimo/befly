@@ -135,7 +135,7 @@ export function getSqlType(fieldType: string, fieldMax: number | null, unsigned:
     if (isStringOrArrayType(fieldType)) {
         return `${typeMapping[fieldType]}(${fieldMax})`;
     }
-    // 使用 getFullSqlType 处理 UNSIGNED
+    // 处理 UNSIGNED 修饰符（仅 MySQL number 类型）
     const baseType = typeMapping[fieldType] || 'TEXT';
     if (IS_MYSQL && fieldType === 'number' && unsigned) {
         return `${baseType} UNSIGNED`;

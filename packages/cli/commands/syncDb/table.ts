@@ -53,7 +53,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
     const indexActions = [];
 
     for (const [fieldKey, fieldDef] of Object.entries(fields)) {
-        // 转换字段名为下划线格式（用于与数据库字段对比）
+        // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
         if (existingColumns[dbFieldName]) {

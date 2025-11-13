@@ -19,6 +19,24 @@ import type { FieldDefinition } from 'befly/types/common';
 const IS_PLAN = process.argv.includes('--plan');
 
 /**
+ * 构建 ALTER TABLE SQL 语句
+ *
+ * 根据数据库类型构建相应的 ALTER TABLE 语句：
+ * - MySQL: 添加 ALGORITHM=INSTANT, LOCK=NONE 优化参数
+ * - PostgreSQL/SQLite: 使用双引号标识符
+ *
+ * @param tableName - 表名
+ * @param clauses - SQL 子句数组
+ * @returns 完整的 ALTER TABLE 语句
+ */
+function buildAlterTableSQL(tableName: string, clauses: string[]): string {
+    if (IS_MYSQL) {
+        return `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}, ALGORITHM=INSTANT, LOCK=NONE`;
+    }
+    return `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
+}
+
+/**
  * 比较字段定义变化
  *
  * 对比现有列信息和新的字段规则，识别变化类型：
@@ -126,8 +144,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     } else {
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
-            const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-            const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
+            const stmt = buildAlterTableSQL(tableName, clauses);
             if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
             else if (IS_MYSQL) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
@@ -139,8 +156,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
         if (IS_SQLITE) {
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
         } else {
-            const suffix = IS_MYSQL ? ', ALGORITHM=INSTANT, LOCK=NONE' : '';
-            const stmt = IS_MYSQL ? `ALTER TABLE \`${tableName}\` ${plan.defaultClauses.join(', ')}${suffix}` : `ALTER TABLE "${tableName}" ${plan.defaultClauses.join(', ')}`;
+            const stmt = buildAlterTableSQL(tableName, plan.defaultClauses);
             if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
             else if (IS_MYSQL) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
