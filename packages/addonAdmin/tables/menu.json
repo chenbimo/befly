@@ -16,7 +16,6 @@
     "icon": {
         "name": "图标名称",
         "type": "string",
-        "min": 0,
         "max": 50
     },
     "sort": {

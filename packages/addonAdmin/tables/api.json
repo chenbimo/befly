@@ -25,19 +25,16 @@
     "description": {
         "name": "接口描述",
         "type": "string",
-        "min": 0,
         "max": 500
     },
     "addonName": {
         "name": "所属插件",
         "type": "string",
-        "min": 0,
         "max": 50
     },
     "addonTitle": {
         "name": "插件标题",
         "type": "string",
-        "min": 0,
         "max": 100
     }
 }

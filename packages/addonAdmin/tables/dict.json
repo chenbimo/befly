@@ -17,7 +17,6 @@
     "value": {
         "name": "字典值",
         "type": "string",
-        "min": 0,
         "max": 200,
         "index": true
     },
@@ -39,7 +38,6 @@
     "description": {
         "name": "描述",
         "type": "string",
-        "min": 0,
         "max": 200
     }
 }

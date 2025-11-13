@@ -17,7 +17,6 @@ import { ensureDbVersion } from './version.js';
 import { tableExists } from './schema.js';
 import { modifyTable } from './table.js';
 import { createTable } from './tableCreate.js';
-import { PerformanceTracker, ProgressLogger } from './state.js';
 import type { SQL } from 'bun';
 import type { SyncDbStats } from '../../types.js';
 
@@ -27,21 +26,6 @@ let sql: SQL | null = null;
 // 记录处理过的表名（用于清理缓存）
 const processedTables: string[] = [];
 
-// 全局统计对象
-const globalCount: Record<string, number> = {
-    processedTables: 0,
-    createdTables: 0,
-    modifiedTables: 0,
-    addFields: 0,
-    nameChanges: 0,
-    typeChanges: 0,
-    minChanges: 0,
-    maxChanges: 0,
-    defaultChanges: 0,
-    indexCreate: 0,
-    indexDrop: 0
-};
-
 /**
  * 主同步函数
  *
@@ -50,35 +34,23 @@ const globalCount: Record<string, number> = {
  * 2. 建立数据库连接并检查版本
  * 3. 扫描表定义文件（核心表、项目表、addon表）
  * 4. 对比并应用表结构变更
- * 5. 返回统计信息
  */
 export const SyncDb = async (): Promise<SyncDbStats> => {
-    const perfTracker = new PerformanceTracker();
-    const progressLogger = new ProgressLogger();
-
     try {
-        // 重置全局统计，避免多次调用累加
-        for (const k of Object.keys(globalCount)) {
-            if (typeof globalCount[k] === 'number') globalCount[k] = 0;
-        }
-
         // 清空处理记录
         processedTables.length = 0;
 
-        // 阶段1：验证表定义文件
-        perfTracker.markPhase('表定义验证');
+        // 验证表定义文件
         await checkTable();
 
-        // 阶段2：建立数据库连接并检查版本
-        perfTracker.markPhase('数据库连接');
+        // 建立数据库连接并检查版本
         sql = await Database.connectSql({ max: 1 });
         await ensureDbVersion(sql);
 
         // 初始化 Redis 连接（用于清理缓存）
         await Database.connectRedis();
 
-        // 阶段3：扫描表定义文件
-        perfTracker.markPhase('扫描表文件');
+        // 扫描表定义文件
         const tablesGlob = new Bun.Glob('*.json');
         const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string }> = [
             // 1. 项目表（无前缀）
@@ -97,26 +69,7 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
             }
         }
 
-        // 统计表文件总数
-        let totalTables = 0;
-        for (const dirConfig of directories) {
-            for await (const file of tablesGlob.scan({
-                cwd: dirConfig.path,
-                absolute: true,
-                onlyFiles: true
-            })) {
-                const fileName = basename(file, '.json');
-                if (!fileName.startsWith('_')) {
-                    totalTables++;
-                }
-            }
-        }
-        perfTracker.finishPhase('扫描表文件');
-
-        // 阶段4：处理表文件
-        perfTracker.markPhase('同步处理');
-        let processedCount = 0;
-
+        // 处理表文件
         for (const dirConfig of directories) {
             const { path: dir, type, addonName } = dirConfig;
             const dirType = type === 'addon' ? `组件${addonName}` : '项目';
@@ -146,64 +99,65 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
                     tableName = `addon_${addonNameSnake}_${tableName}`;
                 }
 
-                processedCount++;
-
                 const tableDefinitionModule = await import(file, { with: { type: 'json' } });
                 const tableDefinition = tableDefinitionModule.default;
+
+                // 为字段设置默认值：min=0, max=100
+                for (const [fieldKey, fieldDef] of Object.entries(tableDefinition)) {
+                    if (fieldDef.min === null || fieldDef.min === undefined) {
+                        fieldDef.min = 0;
+                    }
+                    if (fieldDef.max === null || fieldDef.max === undefined) {
+                        fieldDef.max = 100;
+                    }
+                }
+
                 const existsTable = await tableExists(sql!, tableName);
 
                 // 读取 force 参数
                 const force = process.env.SYNC_FORCE === '1';
 
                 if (existsTable) {
-                    await modifyTable(sql!, tableName, tableDefinition, globalCount, force);
+                    await modifyTable(sql!, tableName, tableDefinition, force);
                 } else {
                     await createTable(sql!, tableName, tableDefinition);
-                    globalCount.createdTables++;
                 }
-                globalCount.processedTables++;
 
                 // 记录处理过的表名（用于清理缓存）
                 processedTables.push(tableName);
             }
         }
 
-        perfTracker.finishPhase('同步处理');
-
         // 清理 Redis 缓存（如果有表被处理）
         if (processedTables.length > 0) {
-            perfTracker.markPhase('清理缓存');
             Logger.info(`🧹 清理 ${processedTables.length} 个表的字段缓存...`);
 
             const redisHelper = new RedisHelper();
-            let clearedCount = 0;
             for (const tableName of processedTables) {
                 const cacheKey = `table:columns:${tableName}`;
                 try {
                     await redisHelper.del(cacheKey);
-                    clearedCount++;
                 } catch (error: any) {
                     Logger.warn(`清理表 ${tableName} 的缓存失败:`, error.message);
                 }
             }
 
-            Logger.info(`✓ 已清理 ${clearedCount} 个表的字段缓存`);
-            perfTracker.finishPhase('清理缓存');
+            Logger.info(`✓ 已清理表字段缓存`);
         }
 
-        // 返回统计信息
+        // 返回空统计信息
         return {
-            processedTables: globalCount.processedTables,
-            createdTables: globalCount.createdTables,
-            modifiedTables: globalCount.modifiedTables,
-            addFields: globalCount.addFields,
-            nameChanges: globalCount.nameChanges,
-            typeChanges: globalCount.typeChanges,
-            minChanges: globalCount.minChanges,
-            maxChanges: globalCount.maxChanges,
-            defaultChanges: globalCount.defaultChanges,
-            indexCreate: globalCount.indexCreate,
-            indexDrop: globalCount.indexDrop
+            processedTables: 0,
+            createdTables: 0,
+            modifiedTables: 0,
+            addFields: 0,
+            nameChanges: 0,
+            typeChanges: 0,
+            minChanges: 0,
+            maxChanges: 0,
+            defaultChanges: 0,
+            indexCreate: 0,
+            indexDrop: 0
         };
     } catch (error: any) {
         Logger.error(`数据库同步失败`, error);

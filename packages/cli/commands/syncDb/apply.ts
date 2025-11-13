@@ -108,9 +108,8 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
  * @param tableName - 表名
  * @param fields - 字段定义对象
  * @param plan - 表结构变更计划
- * @param globalCount - 全局统计对象（用于计数）
  */
-export async function applyTablePlan(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan, globalCount: Record<string, number>): Promise<void> {
+export async function applyTablePlan(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan): Promise<void> {
     if (!plan || !plan.changed) return;
 
     // SQLite: 仅支持部分 ALTER；需要时走重建
@@ -177,7 +176,4 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
             else await sql.unsafe(stmt);
         }
     }
-
-    // 计数
-    globalCount.modifiedTables++;
 }

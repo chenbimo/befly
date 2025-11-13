@@ -40,10 +40,9 @@ const IS_PLAN = process.argv.includes('--plan');
  * @param sql - SQL 客户端实例
  * @param tableName - 表名
  * @param fields - 字段定义对象
- * @param globalCount - 全局统计对象（用于计数）
  * @returns 表结构变更计划
  */
-export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, globalCount: Record<string, number>, force: boolean = false): Promise<TablePlan> {
+export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, force: boolean = false): Promise<TablePlan> {
     const existingColumns = await getTableColumns(sql, tableName);
     const existingIndexes = await getTableIndexes(sql, tableName);
     let changed = false;
@@ -64,13 +63,6 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     // 使用统一的日志格式函数和常量标签
                     const changeLabel = CHANGE_TYPE_LABELS[c.type] || '未知';
                     logFieldChange(tableName, dbFieldName, c.type, c.current, c.expected, changeLabel);
-
-                    // 全量计数：全局累加
-                    if (c.type === 'datatype') globalCount.typeChanges++;
-                    else if (c.type === 'length') globalCount.maxChanges++;
-                    else if (c.type === 'default') globalCount.defaultChanges++;
-                    else if (c.type === 'comment') globalCount.nameChanges++;
-                    else if (c.type === 'nullable') globalCount.nullableChanges = (globalCount.nullableChanges || 0) + 1;
                 }
 
                 const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
@@ -146,7 +138,6 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             Logger.info(`  + 新增字段 ${dbFieldName} (${fieldType}${lenPart})`);
             addClauses.push(generateDDLClause(fieldKey, fieldDef, true));
             changed = true;
-            globalCount.addFields++;
         }
     }
 
@@ -156,7 +147,6 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         if (!existingIndexes[idxName]) {
             indexActions.push({ action: 'create', indexName: idxName, fieldName: sysField });
             changed = true;
-            globalCount.indexCreate++;
         }
     }
 
@@ -169,11 +159,9 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         if (fieldDef.index === true && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName: indexName, fieldName: dbFieldName });
             changed = true;
-            globalCount.indexCreate++;
         } else if (!(fieldDef.index === true) && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             indexActions.push({ action: 'drop', indexName: indexName, fieldName: dbFieldName });
             changed = true;
-            globalCount.indexDrop++;
         }
     }
 
@@ -204,7 +192,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
     // 将计划应用（包含 --plan 情况下仅输出）
     if (plan.changed) {
-        await applyTablePlan(sql, tableName, fields, plan, globalCount);
+        await applyTablePlan(sql, tableName, fields, plan);
     }
 
     return plan;
