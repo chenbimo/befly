@@ -38,7 +38,7 @@
         "commander": "^14.0.2",
         "es-toolkit": "^1.41.0",
         "fast-extract": "^1.7.4",
-        "pathe": "^1.1.2"
+        "pathe": "^2.0.3"
     },
     "devDependencies": {
         "@types/bun": "latest"
