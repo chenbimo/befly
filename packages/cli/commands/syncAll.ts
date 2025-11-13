@@ -3,6 +3,7 @@
  * 按顺序执行：syncDb → syncApi → syncMenu → syncDev
  */
 
+import { checkApp } from 'befly';
 import { Logger } from '../util.js';
 import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
@@ -13,6 +14,15 @@ import type { SyncOptions } from '../types.js';
 export async function syncAllCommand(options: SyncOptions = {}) {
     try {
         const startTime = Date.now();
+
+        // 0. 检查项目结构
+        Logger.info('🔍 正在检查项目结构...');
+        const checkResult = await checkApp();
+        if (!checkResult) {
+            Logger.error('项目结构检查失败，程序退出');
+            process.exit(1);
+        }
+        Logger.info(`✓ 项目结构检查完成\n`);
 
         Logger.info('开始执行同步任务...\n');
 
