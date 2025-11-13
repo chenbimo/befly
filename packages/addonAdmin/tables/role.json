@@ -5,12 +5,7 @@
         "type": "string",
         "min": 2,
         "max": 50,
-        "default": null,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "code": {
         "name": "角色编码",
@@ -18,11 +13,7 @@
         "type": "string",
         "min": 2,
         "max": 50,
-        "default": null,
         "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
         "regexp": "^[a-zA-Z0-9_]+$"
     },
     "description": {
@@ -30,39 +21,21 @@
         "detail": "",
         "type": "string",
         "min": 0,
-        "max": 200,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": 200
     },
     "menus": {
         "name": "菜单权限",
         "detail": "",
         "type": "array_text",
         "min": null,
-        "max": null,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": null
     },
     "apis": {
         "name": "接口权限",
         "detail": "",
         "type": "array_text",
         "min": null,
-        "max": null,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": null
     },
     "sort": {
         "name": "排序",
@@ -70,11 +43,6 @@
         "type": "number",
         "min": 0,
         "max": 9999,
-        "default": 0,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "default": 0
     }
 }

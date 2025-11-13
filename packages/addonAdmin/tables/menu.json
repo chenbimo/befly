@@ -5,12 +5,7 @@
         "type": "string",
         "min": 2,
         "max": 50,
-        "default": null,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "path": {
         "name": "路由路径",
@@ -18,25 +13,14 @@
         "type": "string",
         "min": 1,
         "max": 200,
-        "default": null,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "icon": {
         "name": "图标名称",
         "detail": "",
         "type": "string",
         "min": 0,
-        "max": 50,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": 50
     },
     "sort": {
         "name": "排序",
@@ -44,12 +28,7 @@
         "type": "number",
         "min": 0,
         "max": 9999,
-        "default": 0,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "default": 0
     },
     "pid": {
         "name": "父级ID",
@@ -58,10 +37,6 @@
         "min": 0,
         "max": 999999999999999,
         "default": 0,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     }
 }

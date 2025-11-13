@@ -5,12 +5,7 @@
         "type": "string",
         "min": 2,
         "max": 50,
-        "default": null,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "code": {
         "name": "字典代码",
@@ -18,11 +13,7 @@
         "type": "string",
         "min": 2,
         "max": 50,
-        "default": null,
         "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
         "regexp": "^[a-zA-Z0-9_]+$"
     },
     "value": {
@@ -31,12 +22,7 @@
         "type": "string",
         "min": 0,
         "max": 200,
-        "default": null,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "sort": {
         "name": "排序",
@@ -44,12 +30,7 @@
         "type": "number",
         "min": 0,
         "max": 9999,
-        "default": 0,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "default": 0
     },
     "pid": {
         "name": "父级ID",
@@ -58,23 +39,13 @@
         "min": 0,
         "max": 999999999999999,
         "default": 0,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "description": {
         "name": "描述",
         "detail": "",
         "type": "string",
         "min": 0,
-        "max": 200,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": 200
     }
 }

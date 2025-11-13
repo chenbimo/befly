@@ -5,12 +5,7 @@
         "type": "string",
         "min": 2,
         "max": 100,
-        "default": null,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "path": {
         "name": "接口路径",
@@ -18,12 +13,7 @@
         "type": "string",
         "min": 1,
         "max": 200,
-        "default": null,
-        "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "index": true
     },
     "method": {
         "name": "请求方法",
@@ -33,9 +23,6 @@
         "max": 10,
         "default": "POST",
         "index": true,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
         "regexp": "^(GET|POST|PUT|DELETE|PATCH)$"
     },
     "description": {
@@ -43,38 +30,20 @@
         "detail": "",
         "type": "string",
         "min": 0,
-        "max": 500,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": 500
     },
     "addonName": {
         "name": "所属插件",
         "detail": "",
         "type": "string",
         "min": 0,
-        "max": 50,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": 50
     },
     "addonTitle": {
         "name": "插件标题",
         "detail": "",
         "type": "string",
         "min": 0,
-        "max": 100,
-        "default": null,
-        "index": false,
-        "unique": false,
-        "nullable": false,
-        "unsigned": true,
-        "regexp": null
+        "max": 100
     }
 }
