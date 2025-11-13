@@ -1,6 +1,6 @@
 {
     "name": "befly-cli",
-    "version": "3.9.12",
+    "version": "3.9.13",
     "description": "Befly 框架命令行工具",
     "type": "module",
     "bin": {
