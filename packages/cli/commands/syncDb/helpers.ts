@@ -180,3 +180,21 @@ export function logFieldChange(tableName: string, fieldName: string, changeType:
 export function formatFieldList(fields: string[]): string {
     return fields.map((f) => quoteIdentifier(f)).join(', ');
 }
+
+/**
+ * 为字段定义应用默认值
+ *
+ * @param fieldDef - 字段定义对象
+ */
+export function applyFieldDefaults(fieldDef: any): void {
+    fieldDef.detail = fieldDef.detail ?? '';
+    fieldDef.min = fieldDef.min ?? 0;
+    fieldDef.max = fieldDef.max ?? 100;
+    fieldDef.default = fieldDef.default ?? null;
+    fieldDef.index = fieldDef.index ?? false;
+    fieldDef.unique = fieldDef.unique ?? false;
+    fieldDef.comment = fieldDef.comment ?? '';
+    fieldDef.nullable = fieldDef.nullable ?? false;
+    fieldDef.unsigned = fieldDef.unsigned ?? true;
+    fieldDef.regexp = fieldDef.regexp ?? null;
+}

@@ -65,14 +65,12 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     logFieldChange(tableName, dbFieldName, c.type, c.current, c.expected, changeLabel);
                 }
 
-                const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
-
-                if (isStringOrArrayType(fieldType) && existingColumns[dbFieldName].max) {
-                    if (existingColumns[dbFieldName].max > fieldMax) {
+                if (isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max) {
+                    if (existingColumns[dbFieldName].max > fieldDef.max) {
                         if (force) {
-                            Logger.warn(`[强制执行] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldMax}`);
+                            Logger.warn(`[强制执行] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max}`);
                         } else {
-                            Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldMax} 已被跳过（使用 --force 强制执行）`);
+                            Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max} 已被跳过（使用 --force 强制执行）`);
                         }
                     }
                 }
@@ -92,12 +90,12 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 // 默认值变化处理
                 if (defaultChanged) {
                     // 使用公共函数处理默认值
-                    const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
+                    const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
 
                     // 生成 SQL DEFAULT 值（不包含前导空格，因为要用于 ALTER COLUMN）
                     let v: string | null = null;
                     if (actualDefault !== 'null') {
-                        const defaultSql = generateDefaultSql(actualDefault, fieldType);
+                        const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
                         // 移除前导空格 ' DEFAULT ' -> 'DEFAULT '
                         v = defaultSql.trim().replace(/^DEFAULT\s+/, '');
                     }
@@ -107,7 +105,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                             defaultClauses.push(`ALTER COLUMN "${dbFieldName}" SET DEFAULT ${v}`);
                         } else if (IS_MYSQL && onlyDefaultChanged) {
                             // MySQL 的 TEXT/BLOB 不允许 DEFAULT，跳过 text 类型
-                            if (fieldType !== 'text') {
+                            if (fieldDef.type !== 'text') {
                                 defaultClauses.push(`ALTER COLUMN \`${dbFieldName}\` SET DEFAULT ${v}`);
                             }
                         }
@@ -117,14 +115,14 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 // 若不仅仅是默认值变化，继续生成修改子句
                 if (!onlyDefaultChanged) {
                     let skipModify = false;
-                    if (hasLengthChange && isStringOrArrayType(fieldType) && existingColumns[dbFieldName].max) {
-                        const isShrink = existingColumns[dbFieldName].max > fieldMax;
+                    if (hasLengthChange && isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max) {
+                        const isShrink = existingColumns[dbFieldName].max > fieldDef.max;
                         if (isShrink && !force) skipModify = true;
                     }
 
                     if (hasTypeChange) {
-                        if (IS_PG && isPgCompatibleTypeChange(existingColumns[dbFieldName].type, typeMapping[fieldType].toLowerCase())) {
-                            Logger.info(`[PG兼容类型变更] ${tableName}.${dbFieldName} ${existingColumns[dbFieldName].type} -> ${typeMapping[fieldType].toLowerCase()} 允许执行`);
+                        if (IS_PG && isPgCompatibleTypeChange(existingColumns[dbFieldName].type, typeMapping[fieldDef.type].toLowerCase())) {
+                            Logger.info(`[PG兼容类型变更] ${tableName}.${dbFieldName} ${existingColumns[dbFieldName].type} -> ${typeMapping[fieldDef.type].toLowerCase()} 允许执行`);
                         }
                     }
 
@@ -133,9 +131,8 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 changed = true;
             }
         } else {
-            const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault } = fieldDef;
-            const lenPart = isStringOrArrayType(fieldType) ? ` 长度:${parseInt(String(fieldMax))}` : '';
-            Logger.info(`  + 新增字段 ${dbFieldName} (${fieldType}${lenPart})`);
+            const lenPart = isStringOrArrayType(fieldDef.type) ? ` 长度:${parseInt(String(fieldDef.max))}` : '';
+            Logger.info(`  + 新增字段 ${dbFieldName} (${fieldDef.type}${lenPart})`);
             addClauses.push(generateDDLClause(fieldKey, fieldDef, true));
             changed = true;
         }
@@ -156,10 +153,10 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         const dbFieldName = snakeCase(fieldKey);
 
         const indexName = `idx_${dbFieldName}`;
-        if (fieldDef.index === true && !existingIndexes[indexName]) {
+        if (fieldDef.index && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName: indexName, fieldName: dbFieldName });
             changed = true;
-        } else if (!(fieldDef.index === true) && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
+        } else if (!fieldDef.index && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
             indexActions.push({ action: 'drop', indexName: indexName, fieldName: dbFieldName });
             changed = true;
         }
@@ -173,12 +170,12 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             const dbFieldName = snakeCase(fieldKey);
 
             if (existingColumns[dbFieldName]) {
-                const parsed = utils.parseRule(fieldRule);
-                const { name: fieldName } = parsed;
                 const curr = existingColumns[dbFieldName].comment || '';
-                const want = fieldName && fieldName !== 'null' ? String(fieldName) : '';
+                const want = fieldDef.name && fieldDef.name !== 'null' ? String(fieldDef.name) : '';
                 if (want !== curr) {
-                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS ${want ? `'${want}'` : 'NULL'}`);
+                    // 防止 SQL 注入：转义单引号
+                    const escapedWant = want.replace(/'/g, "''");
+                    commentActions.push(`COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS ${want ? `'${escapedWant}'` : 'NULL'}`);
                     changed = true;
                 }
             }

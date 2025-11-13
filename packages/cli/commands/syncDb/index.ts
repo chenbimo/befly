@@ -17,6 +17,7 @@ import { ensureDbVersion } from './version.js';
 import { tableExists } from './schema.js';
 import { modifyTable } from './table.js';
 import { createTable } from './tableCreate.js';
+import { applyFieldDefaults } from './helpers.js';
 import type { SQL } from 'bun';
 
 // 全局 SQL 客户端实例
@@ -51,7 +52,7 @@ export const SyncDb = async (): Promise<void> => {
 
         // 扫描表定义文件
         const tablesGlob = new Bun.Glob('*.json');
-        const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string }> = [
+        const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string; addonNameSnake?: string }> = [
             // 1. 项目表（无前缀）
             { path: resolve(projectDir, 'tables'), type: 'app' }
         ];
@@ -63,7 +64,8 @@ export const SyncDb = async (): Promise<void> => {
                 directories.push({
                     path: utils.getAddonDir(addon, 'tables'),
                     type: 'addon',
-                    addonName: addon
+                    addonName: addon,
+                    addonNameSnake: snakeCase(addon) // 提前转换，避免每个文件都转换
                 });
             }
         }
@@ -91,11 +93,9 @@ export const SyncDb = async (): Promise<void> => {
                 // - 项目表：{表名}
                 //   例如：user.json → user
                 let tableName = snakeCase(fileName);
-                if (type === 'addon' && addonName) {
-                    // addon 表，添加 {addonName}_ 前缀
-                    // 使用 snakeCase 统一转换（admin → admin）
-                    const addonNameSnake = snakeCase(addonName);
-                    tableName = `addon_${addonNameSnake}_${tableName}`;
+                if (type === 'addon' && dirConfig.addonNameSnake) {
+                    // addon 表，使用提前转换好的名称
+                    tableName = `addon_${dirConfig.addonNameSnake}_${tableName}`;
                 }
 
                 const tableDefinitionModule = await import(file, { with: { type: 'json' } });
@@ -103,16 +103,7 @@ export const SyncDb = async (): Promise<void> => {
 
                 // 为字段属性设置默认值
                 for (const fieldDef of Object.values(tableDefinition)) {
-                    fieldDef.detail = fieldDef.detail ?? '';
-                    fieldDef.min = fieldDef.min ?? 0;
-                    fieldDef.max = fieldDef.max ?? 100;
-                    fieldDef.default = fieldDef.default ?? null;
-                    fieldDef.index = fieldDef.index ?? false;
-                    fieldDef.unique = fieldDef.unique ?? false;
-                    fieldDef.comment = fieldDef.comment ?? '';
-                    fieldDef.nullable = fieldDef.nullable ?? false;
-                    fieldDef.unsigned = fieldDef.unsigned ?? true;
-                    fieldDef.regexp = fieldDef.regexp ?? null;
+                    applyFieldDefaults(fieldDef);
                 }
 
                 const existsTable = await tableExists(sql!, tableName);

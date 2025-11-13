@@ -32,17 +32,16 @@ const IS_PLAN = process.argv.includes('--plan');
  * @param colName - 列名（未使用，保留参数兼容性）
  * @returns 变化数组
  */
-export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: FieldDefinition, colName: string): FieldChange[] {
-    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault, unique, nullable, unsigned } = fieldDef;
+export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: FieldDefinition): FieldChange[] {
     const changes: FieldChange[] = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
-    if (!IS_SQLITE && isStringOrArrayType(fieldType)) {
-        if (existingColumn.max !== fieldMax) {
+    if (!IS_SQLITE && isStringOrArrayType(fieldDef.type)) {
+        if (existingColumn.max !== fieldDef.max) {
             changes.push({
                 type: 'length',
                 current: existingColumn.max,
-                expected: fieldMax
+                expected: fieldDef.max
             });
         }
     }
@@ -50,17 +49,17 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
     // 检查注释变化（MySQL/PG 支持列注释）
     if (!IS_SQLITE) {
         const currentComment = existingColumn.comment || '';
-        if (currentComment !== fieldName) {
+        if (currentComment !== fieldDef.name) {
             changes.push({
                 type: 'comment',
                 current: currentComment,
-                expected: fieldName
+                expected: fieldDef.name
             });
         }
     }
 
     // 检查数据类型变化（只对比基础类型）
-    const expectedType = typeMapping[fieldType].toLowerCase();
+    const expectedType = typeMapping[fieldDef.type].toLowerCase();
     const currentType = existingColumn.type.toLowerCase();
 
     if (currentType !== expectedType) {
@@ -72,7 +71,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
     }
 
     // 检查 nullable 变化
-    const expectedNullable = nullable === true;
+    const expectedNullable = fieldDef.nullable;
     if (existingColumn.nullable !== expectedNullable) {
         changes.push({
             type: 'nullable',
@@ -82,7 +81,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
     }
 
     // 使用公共函数处理默认值
-    const expectedDefault = resolveDefaultValue(fieldDefault, fieldType);
+    const expectedDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
 
     // 检查默认值变化
     if (String(existingColumn.defaultValue) !== String(expectedDefault)) {

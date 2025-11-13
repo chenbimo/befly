@@ -83,19 +83,18 @@ export function buildBusinessColumnDefs(fields: Record<string, FieldDefinition>)
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault, unique, nullable, unsigned } = fieldDef;
-        const sqlType = getSqlType(fieldType, fieldMax, unsigned);
+        const sqlType = getSqlType(fieldDef.type, fieldDef.max, fieldDef.unsigned);
 
         // 使用公共函数处理默认值
-        const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
-        const defaultSql = generateDefaultSql(actualDefault, fieldType);
+        const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
+        const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
 
         // 构建约束
-        const uniqueSql = unique ? ' UNIQUE' : '';
-        const nullableSql = nullable ? ' NULL' : ' NOT NULL';
+        const uniqueSql = fieldDef.unique ? ' UNIQUE' : '';
+        const nullableSql = fieldDef.nullable ? ' NULL' : ' NOT NULL';
 
         if (IS_MYSQL) {
-            colDefs.push(`\`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldName)}"`);
+            colDefs.push(`\`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`);
         } else {
             colDefs.push(`"${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`);
         }
@@ -116,19 +115,18 @@ export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, i
     // 转换字段名为下划线格式
     const dbFieldName = snakeCase(fieldKey);
 
-    const { name: fieldName, type: fieldType, max: fieldMax, default: fieldDefault, unique, nullable, unsigned } = fieldDef;
-    const sqlType = getSqlType(fieldType, fieldMax, unsigned);
+    const sqlType = getSqlType(fieldDef.type, fieldDef.max, fieldDef.unsigned);
 
     // 使用公共函数处理默认值
-    const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
-    const defaultSql = generateDefaultSql(actualDefault, fieldType);
+    const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
+    const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
 
     // 构建约束
-    const uniqueSql = unique ? ' UNIQUE' : '';
-    const nullableSql = nullable ? ' NULL' : ' NOT NULL';
+    const uniqueSql = fieldDef.unique ? ' UNIQUE' : '';
+    const nullableSql = fieldDef.nullable ? ' NULL' : ' NOT NULL';
 
     if (IS_MYSQL) {
-        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldName)}"`;
+        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`;
     }
     if (IS_PG) {
         if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
