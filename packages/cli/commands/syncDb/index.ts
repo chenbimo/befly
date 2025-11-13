@@ -18,7 +18,6 @@ import { tableExists } from './schema.js';
 import { modifyTable } from './table.js';
 import { createTable } from './tableCreate.js';
 import type { SQL } from 'bun';
-import type { SyncDbStats } from '../../types.js';
 
 // 全局 SQL 客户端实例
 let sql: SQL | null = null;
@@ -35,7 +34,7 @@ const processedTables: string[] = [];
  * 3. 扫描表定义文件（核心表、项目表、addon表）
  * 4. 对比并应用表结构变更
  */
-export const SyncDb = async (): Promise<SyncDbStats> => {
+export const SyncDb = async (): Promise<void> => {
     try {
         // 清空处理记录
         processedTables.length = 0;
@@ -144,21 +143,6 @@ export const SyncDb = async (): Promise<SyncDbStats> => {
 
             Logger.info(`✓ 已清理表字段缓存`);
         }
-
-        // 返回空统计信息
-        return {
-            processedTables: 0,
-            createdTables: 0,
-            modifiedTables: 0,
-            addFields: 0,
-            nameChanges: 0,
-            typeChanges: 0,
-            minChanges: 0,
-            maxChanges: 0,
-            defaultChanges: 0,
-            indexCreate: 0,
-            indexDrop: 0
-        };
     } catch (error: any) {
         Logger.error(`数据库同步失败`, error);
         process.exit(1);

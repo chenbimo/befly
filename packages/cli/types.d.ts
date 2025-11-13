@@ -70,23 +70,6 @@ export interface ApiInfo {
 // ==================== 统计信息类型 ====================
 
 /**
- * SyncDb 统计信息
- */
-export interface SyncDbStats {
-    processedTables: number;
-    createdTables: number;
-    modifiedTables: number;
-    addFields: number;
-    nameChanges: number;
-    typeChanges: number;
-    minChanges: number;
-    maxChanges: number;
-    defaultChanges: number;
-    indexCreate: number;
-    indexDrop: number;
-}
-
-/**
  * SyncMenu 统计信息
  */
 export interface SyncMenuStats {

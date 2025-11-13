@@ -7,9 +7,9 @@ import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../util.js';
 import { SyncDb } from './syncDb/index.js';
-import type { SyncDbOptions, SyncDbStats } from '../types.js';
+import type { SyncDbOptions } from '../types.js';
 
-export async function syncDbCommand(options: SyncDbOptions): Promise<SyncDbStats> {
+export async function syncDbCommand(options: SyncDbOptions): Promise<void> {
     try {
         // 设置环境变量
         if (options.dryRun) {
@@ -24,9 +24,8 @@ export async function syncDbCommand(options: SyncDbOptions): Promise<SyncDbStats
             process.env.SYNC_FORCE = '1';
         }
 
-        // 执行同步并返回统计
-        const stats = await SyncDb();
-        return stats;
+        // 执行同步
+        await SyncDb();
     } catch (error: any) {
         Logger.error('数据库同步失败:', error);
         process.exit(1);
