@@ -1,7 +1,6 @@
 ﻿{
     "name": {
         "name": "接口名称",
-        "detail": "",
         "type": "string",
         "min": 2,
         "max": 100,
@@ -9,7 +8,6 @@
     },
     "path": {
         "name": "接口路径",
-        "detail": "",
         "type": "string",
         "min": 1,
         "max": 200,
@@ -17,7 +15,6 @@
     },
     "method": {
         "name": "请求方法",
-        "detail": "",
         "type": "string",
         "min": 3,
         "max": 10,
@@ -27,21 +24,18 @@
     },
     "description": {
         "name": "接口描述",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 500
     },
     "addonName": {
         "name": "所属插件",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 50
     },
     "addonTitle": {
         "name": "插件标题",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 100

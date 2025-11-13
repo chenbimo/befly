@@ -1,7 +1,6 @@
 ﻿{
     "name": {
         "name": "字典名称",
-        "detail": "",
         "type": "string",
         "min": 2,
         "max": 50,
@@ -9,7 +8,6 @@
     },
     "code": {
         "name": "字典代码",
-        "detail": "",
         "type": "string",
         "min": 2,
         "max": 50,
@@ -18,7 +16,6 @@
     },
     "value": {
         "name": "字典值",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 200,
@@ -26,7 +23,6 @@
     },
     "sort": {
         "name": "排序",
-        "detail": "",
         "type": "number",
         "min": 0,
         "max": 9999,
@@ -34,7 +30,6 @@
     },
     "pid": {
         "name": "父级ID",
-        "detail": "",
         "type": "number",
         "min": 0,
         "max": 999999999999999,
@@ -43,7 +38,6 @@
     },
     "description": {
         "name": "描述",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 200

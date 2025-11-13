@@ -1,7 +1,6 @@
 ﻿{
     "name": {
         "name": "菜单名称",
-        "detail": "",
         "type": "string",
         "min": 2,
         "max": 50,
@@ -9,7 +8,6 @@
     },
     "path": {
         "name": "路由路径",
-        "detail": "",
         "type": "string",
         "min": 1,
         "max": 200,
@@ -17,14 +15,12 @@
     },
     "icon": {
         "name": "图标名称",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 50
     },
     "sort": {
         "name": "排序",
-        "detail": "",
         "type": "number",
         "min": 0,
         "max": 9999,
@@ -32,7 +28,6 @@
     },
     "pid": {
         "name": "父级ID",
-        "detail": "",
         "type": "number",
         "min": 0,
         "max": 999999999999999,

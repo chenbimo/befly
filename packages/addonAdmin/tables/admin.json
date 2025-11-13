@@ -1,21 +1,18 @@
 ﻿{
     "name": {
         "name": "姓名",
-        "detail": "",
         "type": "string",
         "min": 2,
         "max": 50
     },
     "nickname": {
         "name": "昵称",
-        "detail": "",
         "type": "string",
         "min": 2,
         "max": 50
     },
     "email": {
         "name": "邮箱",
-        "detail": "",
         "type": "string",
         "min": 5,
         "max": 100,
@@ -24,7 +21,6 @@
     },
     "phone": {
         "name": "手机号",
-        "detail": "",
         "type": "string",
         "min": 11,
         "max": 11,
@@ -32,7 +28,6 @@
     },
     "username": {
         "name": "用户名",
-        "detail": "",
         "type": "string",
         "min": 3,
         "max": 30,
@@ -40,21 +35,18 @@
     },
     "password": {
         "name": "密码",
-        "detail": "",
         "type": "string",
         "min": 6,
         "max": 500
     },
     "avatar": {
         "name": "头像",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 500
     },
     "roleId": {
         "name": "角色ID",
-        "detail": "",
         "type": "number",
         "min": 1,
         "max": 999999999999999,
@@ -62,7 +54,6 @@
     },
     "roleCode": {
         "name": "角色编码",
-        "detail": "",
         "type": "string",
         "min": 2,
         "max": 50,
@@ -70,7 +61,6 @@
     },
     "roleType": {
         "name": "角色类型",
-        "detail": "",
         "type": "string",
         "min": 4,
         "max": 5,
@@ -80,7 +70,6 @@
     },
     "lastLoginTime": {
         "name": "最后登录时间",
-        "detail": "",
         "type": "number",
         "min": 0,
         "max": null,
@@ -88,7 +77,6 @@
     },
     "lastLoginIp": {
         "name": "最后登录IP",
-        "detail": "",
         "type": "string",
         "min": 0,
         "max": 50
