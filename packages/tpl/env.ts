@@ -22,7 +22,7 @@ export const Env: Partial<EnvConfig> = {
     // ========== 日志配置 ==========
     LOG_DEBUG: isProd ? 0 : 1,
     LOG_EXCLUDE_FIELDS: 'password,token',
-    LOG_TO_CONSOLE: 1,
+    LOG_TO_CONSOLE: isProd ? 0 : 1,
 
     // ========== 数据库配置 ==========
     DB_TYPE: 'mysql',

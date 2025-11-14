@@ -22,7 +22,6 @@ const coreEnv: EnvConfig = {
     DEV_EMAIL: 'dev@qq.com',
     DEV_PASSWORD: '123456',
     BODY_LIMIT: 10485760, // 10MB
-    PARAMS_CHECK: false,
 
     // ========== 日志配置 ==========
     LOG_DEBUG: 0,
