@@ -15,7 +15,6 @@
 <script setup>
 import { useRouter, useRoute } from 'vue-router';
 import { Button as TinyButton } from '@opentiny/vue';
-import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
