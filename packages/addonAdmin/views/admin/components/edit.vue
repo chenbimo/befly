@@ -36,7 +36,6 @@
 <script setup>
 import { shallowRef } from 'vue';
 import { Button as TinyButton, DialogBox as TinyDialogBox, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Radio as TinyRadio, RadioGroup as TinyRadioGroup, Modal } from '@opentiny/vue';
-import { Modal } from '@opentiny/vue';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
