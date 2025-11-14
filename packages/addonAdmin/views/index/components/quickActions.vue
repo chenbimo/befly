@@ -1,17 +1,20 @@
 <template>
     <div class="section-block">
         <div class="section-content">
-            <tiny-button type="primary" size="large" @click="handleClearCache">
+            <TinyButton type="primary" size="large" @click="handleClearCache">
                 <template #prefix>
-                    <i-lucide:rotate-cw style="width: 18px; height: 18px" />
+                    <IconLucideRotateCw style="width: 18px; height: 18px" />
                 </template>
                 刷新缓存
-            </tiny-button>
+            </TinyButton>
         </div>
     </div>
 </template>
 
 <script setup>
+import { useRouter, useRoute } from 'vue-router';
+import { Button as TinyButton } from '@opentiny/vue';
+import IconLucideRotateCw from '~icons/lucide/rotate-cw';
 const handleClearCache = () => {
     console.log('刷新缓存');
 };

@@ -1,43 +1,48 @@
 <template>
-    <tiny-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="70px" label-position="left">
-        <tiny-form-item prop="username" label="用户名">
-            <tiny-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
+    <TinyForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="70px" label-position="left">
+        <TinyFormItem prop="username" label="用户名">
+            <TinyInput v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:user style="width: 18px; height: 18px" />
+                    <IconLucideUser style="width: 18px; height: 18px" />
                 </template>
-            </tiny-input>
-        </tiny-form-item>
+            </TinyInput>
+        </TinyFormItem>
 
-        <tiny-form-item prop="email" label="邮箱">
-            <tiny-input v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
+        <TinyFormItem prop="email" label="邮箱">
+            <TinyInput v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:mail style="width: 18px; height: 18px" />
+                    <IconLucideMail style="width: 18px; height: 18px" />
                 </template>
-            </tiny-input>
-        </tiny-form-item>
+            </TinyInput>
+        </TinyFormItem>
 
-        <tiny-form-item prop="password" label="密码">
-            <tiny-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
+        <TinyFormItem prop="password" label="密码">
+            <TinyInput v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:lock style="width: 18px; height: 18px" />
+                    <IconLucideLock style="width: 18px; height: 18px" />
                 </template>
-            </tiny-input>
-        </tiny-form-item>
+            </TinyInput>
+        </TinyFormItem>
 
-        <tiny-form-item prop="nickname" label="昵称">
-            <tiny-input v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
+        <TinyFormItem prop="nickname" label="昵称">
+            <TinyInput v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:smile style="width: 18px; height: 18px" />
+                    <IconLucideSmile style="width: 18px; height: 18px" />
                 </template>
-            </tiny-input>
-        </tiny-form-item>
+            </TinyInput>
+        </TinyFormItem>
 
-        <tiny-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.handleSubmit"> 注册 </tiny-button>
-    </tiny-form>
+        <TinyButton theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.handleSubmit"> 注册 </TinyButton>
+    </TinyForm>
 </template>
 
 <script setup>
-import { ref, shallowRef } from 'vue';
+import { shallowRef } from 'vue';
+import { Button as TinyButton, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput } from '@opentiny/vue';
+import IconLucideUser from '~icons/lucide/user';
+import IconLucideMail from '~icons/lucide/mail';
+import IconLucideLock from '~icons/lucide/lock';
+import IconLucideSmile from '~icons/lucide/smile';
 
 const emit = defineEmits(['success']);
 

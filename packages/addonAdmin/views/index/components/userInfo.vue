@@ -2,7 +2,7 @@
     <div class="section-block user-info-card">
         <div class="user-header">
             <div class="user-avatar">
-                <i-lucide:user style="width: 32px; height: 32px" />
+                <IconLucideUser style="width: 32px; height: 32px" />
             </div>
             <div class="user-basic">
                 <div class="user-name">{{ $Data.userInfo.nickname || $Data.userInfo.name || $Data.userInfo.username || '未设置' }}</div>
@@ -11,32 +11,38 @@
         </div>
         <div class="user-details">
             <div class="detail-item">
-                <i-lucide:mail style="width: 14px; height: 14px" />
+                <IconLucideMail style="width: 14px; height: 14px" />
                 <span>{{ $Data.userInfo.email || '未设置' }}</span>
             </div>
             <div v-if="$Data.userInfo.phone" class="detail-item">
-                <i-lucide:phone style="width: 14px; height: 14px" />
+                <IconLucidePhone style="width: 14px; height: 14px" />
                 <span>{{ $Data.userInfo.phone }}</span>
             </div>
             <div v-if="$Data.userInfo.lastLoginTime" class="detail-item">
-                <i-lucide:clock style="width: 14px; height: 14px" />
+                <IconLucideClock style="width: 14px; height: 14px" />
                 <span>{{ $Method.formatTime($Data.userInfo.lastLoginTime) }}</span>
             </div>
         </div>
 
         <!-- 仅 dev 角色显示刷新缓存按钮 -->
         <div v-if="$Data.userInfo.roleCode === 'dev'" class="user-actions">
-            <tiny-button type="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
+            <TinyButton type="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
                 <template #icon>
-                    <i-lucide:rotate-cw style="width: 14px; height: 14px" />
+                    <IconLucideRotateCw style="width: 14px; height: 14px" />
                 </template>
                 刷新缓存
-            </tiny-button>
+            </TinyButton>
         </div>
     </div>
 </template>
 
 <script setup>
+import IconLucidePhone from '~icons/lucide/phone';
+import IconLucideClock from '~icons/lucide/clock';
+import { Button as TinyButton } from '@opentiny/vue';
+import IconLucideUser from '~icons/lucide/user';
+import IconLucideMail from '~icons/lucide/mail';
+import IconLucideRotateCw from '~icons/lucide/rotate-cw';
 import { ref } from 'vue';
 
 // 响应式数据

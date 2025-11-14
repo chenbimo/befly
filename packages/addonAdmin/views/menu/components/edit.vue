@@ -1,35 +1,35 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
-        <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <tiny-form-item label="菜单名称" prop="name">
-                <tiny-input v-model="$Data.formData.name" placeholder="请输入菜单名称" />
-            </tiny-form-item>
-            <tiny-form-item label="菜单路径" prop="path">
-                <tiny-input v-model="$Data.formData.path" placeholder="请输入菜单路径，如：/user" />
-            </tiny-form-item>
-            <tiny-form-item label="图标" prop="icon">
-                <tiny-input v-model="$Data.formData.icon" placeholder="请输入图标名称，如：User" />
-            </tiny-form-item>
-            <tiny-form-item label="排序" prop="sort">
-                <tiny-numeric v-model="$Data.formData.sort" :min="0" :max="9999" />
-            </tiny-form-item>
-            <tiny-form-item label="状态" prop="state">
-                <tiny-radio-group v-model="$Data.formData.state">
-                    <tiny-radio :label="1">正常</tiny-radio>
-                    <tiny-radio :label="2">禁用</tiny-radio>
-                </tiny-radio-group>
-            </tiny-form-item>
-        </tiny-form>
+    <TinyDialogBox v-model:visible="$Data.visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
+        <TinyForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+            <TinyFormItem label="菜单名称" prop="name">
+                <TinyInput v-model="$Data.formData.name" placeholder="请输入菜单名称" />
+            </TinyFormItem>
+            <TinyFormItem label="菜单路径" prop="path">
+                <TinyInput v-model="$Data.formData.path" placeholder="请输入菜单路径，如：/user" />
+            </TinyFormItem>
+            <TinyFormItem label="图标" prop="icon">
+                <TinyInput v-model="$Data.formData.icon" placeholder="请输入图标名称，如：User" />
+            </TinyFormItem>
+            <TinyFormItem label="排序" prop="sort">
+                <TinyNumeric v-model="$Data.formData.sort" :min="0" :max="9999" />
+            </TinyFormItem>
+            <TinyFormItem label="状态" prop="state">
+                <TinyRadioGroup v-model="$Data.formData.state">
+                    <TinyRadio :label="1">正常</TinyRadio>
+                    <TinyRadio :label="2">禁用</TinyRadio>
+                </TinyRadioGroup>
+            </TinyFormItem>
+        </TinyForm>
         <template #footer>
-            <tiny-button @click="$Method.onClose">取消</tiny-button>
-            <tiny-button type="primary" @click="$Method.onSubmit">确定</tiny-button>
+            <TinyButton @click="$Method.onClose">取消</TinyButton>
+            <TinyButton type="primary" @click="$Method.onSubmit">确定</TinyButton>
         </template>
-    </tiny-dialog-box>
+    </TinyDialogBox>
 </template>
 
 <script setup>
-import { ref, watch, shallowRef } from 'vue';
-import { Modal } from '@opentiny/vue';
+import { watch, shallowRef } from 'vue';
+import { Button as TinyButton, DialogBox as TinyDialogBox, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Numeric as TinyNumeric, Radio as TinyRadio, RadioGroup as TinyRadioGroup, Modal } from '@opentiny/vue';
 
 const $Prop = defineProps({
     modelValue: {

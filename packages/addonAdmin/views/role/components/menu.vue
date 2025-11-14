@@ -1,18 +1,18 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
+    <TinyDialogBox v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <div class="comp-role-menu">
-            <tiny-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
+            <TinyTree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
         </div>
         <template #footer>
-            <tiny-button @click="$Method.onClose">取消</tiny-button>
-            <tiny-button type="primary" @click="$Method.onSubmit">保存</tiny-button>
+            <TinyButton @click="$Method.onClose">取消</TinyButton>
+            <TinyButton type="primary" @click="$Method.onSubmit">保存</TinyButton>
         </template>
-    </tiny-dialog-box>
+    </TinyDialogBox>
 </template>
 
 <script setup>
-import { ref, nextTick, shallowRef } from 'vue';
-import { Modal } from '@opentiny/vue';
+import { nextTick, shallowRef } from 'vue';
+import { Button as TinyButton, DialogBox as TinyDialogBox, Tree as TinyTree, Modal } from '@opentiny/vue';
 
 import { arrayToTree } from '@/utils';
 

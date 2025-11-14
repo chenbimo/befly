@@ -1,37 +1,37 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:activity style="width: 20px; height: 20px" />
+            <IconLucideActivity style="width: 20px; height: 20px" />
             <h2>系统资源</h2>
         </div>
         <div class="section-content">
             <div class="resource-compact-list">
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:cpu />
+                        <IconLucideCpu />
                         <span class="resource-label">CPU</span>
                         <span class="resource-value">{{ systemResources.cpu.usage }}%</span>
                         <span class="resource-desc">{{ systemResources.cpu.cores }}核心</span>
                     </div>
-                    <tiny-progress :percentage="systemResources.cpu.usage" :status="getProgressColor(systemResources.cpu.usage)" />
+                    <TinyProgress :percentage="systemResources.cpu.usage" :status="getProgressColor(systemResources.cpu.usage)" />
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:hard-drive />
+                        <IconLucideHardDrive />
                         <span class="resource-label">内存</span>
                         <span class="resource-value">{{ systemResources.memory.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.memory.used }}GB / {{ systemResources.memory.total }}GB</span>
                     </div>
-                    <tiny-progress :percentage="systemResources.memory.percentage" :status="getProgressColor(systemResources.memory.percentage)" />
+                    <TinyProgress :percentage="systemResources.memory.percentage" :status="getProgressColor(systemResources.memory.percentage)" />
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:disc />
+                        <IconLucideDisc />
                         <span class="resource-label">磁盘</span>
                         <span class="resource-value">{{ systemResources.disk.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.disk.used }}GB / {{ systemResources.disk.total }}GB</span>
                     </div>
-                    <tiny-progress :percentage="systemResources.disk.percentage" :status="getProgressColor(systemResources.disk.percentage)" />
+                    <TinyProgress :percentage="systemResources.disk.percentage" :status="getProgressColor(systemResources.disk.percentage)" />
                 </div>
             </div>
         </div>
@@ -39,6 +39,11 @@
 </template>
 
 <script setup>
+import IconLucideDisc from '~icons/lucide/disc';
+import { Progress as TinyProgress } from '@opentiny/vue';
+import IconLucideCpu from '~icons/lucide/cpu';
+import IconLucideHardDrive from '~icons/lucide/hard-drive';
+import IconLucideActivity from '~icons/lucide/activity';
 import { ref } from 'vue';
 
 // 组件内部数据

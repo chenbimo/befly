@@ -1,24 +1,24 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:bell style="width: 20px; height: 20px" />
+            <IconLucideBell style="width: 20px; height: 20px" />
             <h2>系统通知</h2>
         </div>
         <div class="section-content">
             <div class="notification-compact-list">
                 <div v-for="notification in notifications" :key="notification.id" class="notification-compact-item">
                     <div class="notification-icon" :class="`type-${notification.type}`">
-                        <i-lucide:info v-if="notification.type === 'info'" />
-                        <i-lucide:check-circle v-else-if="notification.type === 'success'" />
-                        <i-lucide:alert-triangle v-else-if="notification.type === 'warning'" />
-                        <i-lucide:x-circle v-else-if="notification.type === 'error'" />
-                        <i-lucide:bell v-else />
+                        <IconLucideInfo v-if="notification.type === 'info'" />
+                        <IconLucideCheckCircle v-else-if="notification.type === 'success'" />
+                        <IconLucideAlertTriangle v-else-if="notification.type === 'warning'" />
+                        <IconLucideXCircle v-else-if="notification.type === 'error'" />
+                        <IconLucideBell v-else />
                     </div>
                     <div class="notification-content">
                         <span class="notification-title">{{ notification.title }}</span>
                         <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
                     </div>
-                    <tiny-tag v-if="!notification.isRead" type="primary" size="small">新</tiny-tag>
+                    <TinyTag v-if="!notification.isRead" type="primary" size="small">新</TinyTag>
                 </div>
             </div>
         </div>
@@ -26,6 +26,14 @@
 </template>
 
 <script setup>
+import IconLucideBell from '~icons/lucide/bell';
+import IconLucideCheckCircle from '~icons/lucide/check-circle';
+import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
+import IconLucideXCircle from '~icons/lucide/x-circle';
+import { Tag as TinyTag } from '@opentiny/vue';
+import IconLucideInfo from '~icons/lucide/info';
+import IconLucideCheck from '~icons/lucide/check';
+import IconLucideX from '~icons/lucide/x';
 import { ref } from 'vue';
 
 // 组件内部数据

@@ -1,33 +1,35 @@
 <template>
-    <tiny-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
-        <tiny-form-item prop="account" label="账号">
-            <tiny-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
+    <TinyForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
+        <TinyFormItem prop="account" label="账号">
+            <TinyInput v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:user style="width: 18px; height: 18px" />
+                    <IconLucideUser style="width: 18px; height: 18px" />
                 </template>
-            </tiny-input>
-        </tiny-form-item>
+            </TinyInput>
+        </TinyFormItem>
 
-        <tiny-form-item prop="password" label="密码">
-            <tiny-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
+        <TinyFormItem prop="password" label="密码">
+            <TinyInput v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:lock style="width: 18px; height: 18px" />
+                    <IconLucideLock style="width: 18px; height: 18px" />
                 </template>
-            </tiny-input>
-        </tiny-form-item>
+            </TinyInput>
+        </TinyFormItem>
 
         <div class="form-footer">
             <a href="#" class="forgot-password">忘记密码？</a>
         </div>
 
-        <tiny-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </tiny-button>
-    </tiny-form>
+        <TinyButton theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </TinyButton>
+    </TinyForm>
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef } from 'vue';
-import { useRouter } from 'vue-router';
-import { Modal } from '@opentiny/vue';
+import { shallowRef } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { Button as TinyButton, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Modal } from '@opentiny/vue';
+import IconLucideUser from '~icons/lucide/user';
+import IconLucideLock from '~icons/lucide/lock';
 
 const router = useRouter();
 

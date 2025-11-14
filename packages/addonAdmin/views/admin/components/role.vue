@@ -1,22 +1,23 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Data.visible" title="分配角色" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="20vh" @close="$Method.onClose">
+    <TinyDialogBox v-model:visible="$Data.visible" title="分配角色" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="20vh" @close="$Method.onClose">
         <div class="role-dialog">
             <div class="user-info">
-                <tiny-tag type="info">{{ $Prop.rowData.username }}</tiny-tag>
+                <TinyTag type="info">{{ $Prop.rowData.username }}</TinyTag>
                 <span class="user-email">{{ $Prop.rowData.email }}</span>
             </div>
             <tiny-divider />
-            <tiny-select v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
+            <TinySelect v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
         </div>
         <template #footer>
-            <tiny-button @click="$Method.onClose">取消</tiny-button>
-            <tiny-button type="primary" @click="$Method.onSubmit">确定</tiny-button>
+            <TinyButton @click="$Method.onClose">取消</TinyButton>
+            <TinyButton type="primary" @click="$Method.onSubmit">确定</TinyButton>
         </template>
-    </tiny-dialog-box>
+    </TinyDialogBox>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { shallowRef } from 'vue';
+import { Button as TinyButton, DialogBox as TinyDialogBox, Select as TinySelect, Tag as TinyTag, Modal } from '@opentiny/vue';
 import { Modal } from '@opentiny/vue';
 
 const $Prop = defineProps({

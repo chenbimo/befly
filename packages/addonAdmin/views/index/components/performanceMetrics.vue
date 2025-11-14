@@ -1,14 +1,14 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:activity style="width: 20px; height: 20px" />
+            <IconLucideActivity style="width: 20px; height: 20px" />
             <h2>性能指标</h2>
         </div>
         <div class="section-content">
             <div class="performance-grid">
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:clock style="width: 18px; height: 18px" />
+                        <IconLucideClock style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">平均响应</div>
@@ -17,7 +17,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:trending-up style="width: 18px; height: 18px" />
+                        <IconLucideTrendingUp style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">QPS</div>
@@ -26,7 +26,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:alert-circle style="width: 18px; height: 18px" />
+                        <IconLucideAlertCircle style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">错误率</div>
@@ -35,7 +35,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:activity style="width: 18px; height: 18px" />
+                        <IconLucideActivity style="width: 18px; height: 18px" />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">活跃连接</div>
@@ -45,7 +45,7 @@
             </div>
             <!-- 最慢接口提示 -->
             <div v-if="performanceMetrics.slowestApi" class="perf-slowest">
-                <i-lucide:alert-triangle style="width: 14px; height: 14px" />
+                <IconLucideAlertTriangle style="width: 14px; height: 14px" />
                 <span>最慢接口: {{ performanceMetrics.slowestApi.path }} ({{ performanceMetrics.slowestApi.time }}ms)</span>
             </div>
         </div>
@@ -53,6 +53,11 @@
 </template>
 
 <script setup>
+import IconLucideActivity from '~icons/lucide/activity';
+import IconLucideTrendingUp from '~icons/lucide/trending-up';
+import IconLucideAlertCircle from '~icons/lucide/alert-circle';
+import IconLucideClock from '~icons/lucide/clock';
+import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
 import { ref } from 'vue';
 
 // 组件内部数据

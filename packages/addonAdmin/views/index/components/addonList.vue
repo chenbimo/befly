@@ -1,19 +1,19 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:package style="width: 20px; height: 20px" />
+            <IconLucidePackage style="width: 20px; height: 20px" />
             <h2>已安装插件</h2>
         </div>
         <div class="section-content">
             <div class="addon-list">
                 <div v-for="addon in addonList" :key="addon.name" class="addon-item">
                     <div class="addon-icon">
-                        <i-lucide:box style="width: 20px; height: 20px" />
+                        <IconLucideBox style="width: 20px; height: 20px" />
                     </div>
                     <div class="addon-info">
                         <div class="addon-title">
                             <span class="addon-name">{{ addon.title }}</span>
-                            <tiny-tag type="success" size="small">{{ addon.version }}</tiny-tag>
+                            <TinyTag type="success" size="small">{{ addon.version }}</TinyTag>
                         </div>
                         <div class="addon-desc">{{ addon.description }}</div>
                     </div>
@@ -24,6 +24,9 @@
 </template>
 
 <script setup>
+import IconLucideBox from '~icons/lucide/box';
+import { Tag as TinyTag } from '@opentiny/vue';
+import IconLucidePackage from '~icons/lucide/package';
 import { ref } from 'vue';
 
 // 组件内部数据

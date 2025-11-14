@@ -5,14 +5,16 @@
             <h1 class="error-title">无权限访问</h1>
             <p class="error-description">抱歉，您没有访问该页面的权限</p>
             <div class="error-actions">
-                <tiny-button type="primary" @click="$Method.goHome">返回首页</tiny-button>
-                <tiny-button @click="$Method.goBack">返回上一页</tiny-button>
+                <TinyButton type="primary" @click="$Method.goHome">返回首页</TinyButton>
+                <TinyButton @click="$Method.goBack">返回上一页</TinyButton>
             </div>
         </div>
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
+import { useRouter, useRoute } from 'vue-router';
+import { Button as TinyButton } from '@opentiny/vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();

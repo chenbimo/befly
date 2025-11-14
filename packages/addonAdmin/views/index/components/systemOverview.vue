@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:info style="width: 20px; height: 20px" />
+            <IconLucideInfo style="width: 20px; height: 20px" />
             <h2>系统概览</h2>
         </div>
         <div class="section-content">
@@ -10,21 +10,21 @@
                     <div class="info-block">
                         <div class="stats-grid">
                             <div class="stat-box stat-primary">
-                                <i-lucide:menu style="width: 24px; height: 24px" />
+                                <IconLucideMenu style="width: 24px; height: 24px" />
                                 <div class="stat-content">
                                     <div class="stat-value">{{ permissionStats.menuCount }}</div>
                                     <div class="stat-label">菜单总数</div>
                                 </div>
                             </div>
                             <div class="stat-box stat-success">
-                                <i-lucide:webhook style="width: 24px; height: 24px" />
+                                <IconLucideWebhook style="width: 24px; height: 24px" />
                                 <div class="stat-content">
                                     <div class="stat-value">{{ permissionStats.apiCount }}</div>
                                     <div class="stat-label">接口总数</div>
                                 </div>
                             </div>
                             <div class="stat-box stat-warning">
-                                <i-lucide:users style="width: 24px; height: 24px" />
+                                <IconLucideUsers style="width: 24px; height: 24px" />
                                 <div class="stat-content">
                                     <div class="stat-value">{{ permissionStats.roleCount }}</div>
                                     <div class="stat-label">角色总数</div>
@@ -39,6 +39,11 @@
 </template>
 
 <script setup>
+import IconLucideWebhook from '~icons/lucide/webhook';
+import IconLucideUsers from '~icons/lucide/users';
+import IconLucideUser from '~icons/lucide/user';
+import IconLucideMenu from '~icons/lucide/menu';
+import IconLucideInfo from '~icons/lucide/info';
 import { ref } from 'vue';
 
 // 组件内部数据

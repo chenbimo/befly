@@ -2,67 +2,67 @@
     <div class="page-role page-table">
         <div class="main-tool">
             <div class="left">
-                <tiny-button type="primary" @click="$Method.onAction('add', {})">
+                <TinyButton type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
-                        <i-lucide:plus />
+                        <IconLucidePlus />
                     </template>
                     添加角色
-                </tiny-button>
+                </TinyButton>
             </div>
             <div class="right">
-                <tiny-button @click="$Method.handleRefresh">
+                <TinyButton @click="$Method.handleRefresh">
                     <template #icon>
-                        <i-lucide:rotate-cw />
+                        <IconLucideRotateCw />
                     </template>
                     刷新
-                </tiny-button>
+                </TinyButton>
             </div>
         </div>
         <div class="main-table">
-            <tiny-grid :data="$Data.tableData" header-cell-class-name="custom-table-cell-class" size="small" height="100%" show-overflow="tooltip" border seq-serial>
-                <tiny-grid-column type="index" title="序号" align="center" :width="100" />
-                <tiny-grid-column field="name" title="角色名称" :width="150" />
-                <tiny-grid-column field="code" title="角色代码" :width="150" />
-                <tiny-grid-column field="description" title="描述" :min-width="150" />
-                <tiny-grid-column field="sort" title="排序" align="center" :width="80" />
-                <tiny-grid-column field="state" title="状态" align="center" :width="100">
+            <TinyGrid :data="$Data.tableData" header-cell-class-name="custom-table-cell-class" size="small" height="100%" show-overflow="tooltip" border seq-serial>
+                <TinyGridColumn type="index" title="序号" align="center" :width="100" />
+                <TinyGridColumn field="name" title="角色名称" :width="150" />
+                <TinyGridColumn field="code" title="角色代码" :width="150" />
+                <TinyGridColumn field="description" title="描述" :min-width="150" />
+                <TinyGridColumn field="sort" title="排序" align="center" :width="80" />
+                <TinyGridColumn field="state" title="状态" align="center" :width="100">
                     <template #default="{ row }">
-                        <tiny-tag v-if="row.state === 1" type="success">正常</tiny-tag>
-                        <tiny-tag v-else-if="row.state === 2" type="warning">禁用</tiny-tag>
-                        <tiny-tag v-else type="danger">已删除</tiny-tag>
+                        <TinyTag v-if="row.state === 1" type="success">正常</TinyTag>
+                        <TinyTag v-else-if="row.state === 2" type="warning">禁用</TinyTag>
+                        <TinyTag v-else type="danger">已删除</TinyTag>
                     </template>
-                </tiny-grid-column>
-                <tiny-grid-column title="操作" :width="120" align="center" fixed="right">
+                </TinyGridColumn>
+                <TinyGridColumn title="操作" :width="120" align="center" fixed="right">
                     <template #default="{ row }">
-                        <tiny-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
+                        <TinyDropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                             <template #dropdown>
-                                <tiny-dropdown-menu>
-                                    <tiny-dropdown-item :item-data="{ command: 'upd' }">
-                                        <i-lucide:pencil style="width: 14px; height: 14px; margin-right: 6px" />
+                                <TinyDropdownMenu>
+                                    <TinyDropdownItem :item-data="{ command: 'upd' }">
+                                        <IconLucidePencil style="width: 14px; height: 14px; margin-right: 6px" />
                                         编辑
-                                    </tiny-dropdown-item>
-                                    <tiny-dropdown-item :item-data="{ command: 'menu' }">
-                                        <i-lucide:settings style="width: 14px; height: 14px; margin-right: 6px" />
+                                    </TinyDropdownItem>
+                                    <TinyDropdownItem :item-data="{ command: 'menu' }">
+                                        <IconLucideSettings style="width: 14px; height: 14px; margin-right: 6px" />
                                         菜单权限
-                                    </tiny-dropdown-item>
-                                    <tiny-dropdown-item :item-data="{ command: 'api' }">
-                                        <i-lucide:code style="width: 14px; height: 14px; margin-right: 6px" />
+                                    </TinyDropdownItem>
+                                    <TinyDropdownItem :item-data="{ command: 'api' }">
+                                        <IconLucideCode style="width: 14px; height: 14px; margin-right: 6px" />
                                         接口权限
-                                    </tiny-dropdown-item>
-                                    <tiny-dropdown-item :item-data="{ command: 'del' }" divided>
-                                        <i-lucide:trash-2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                    </TinyDropdownItem>
+                                    <TinyDropdownItem :item-data="{ command: 'del' }" divided>
+                                        <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
                                         删除
-                                    </tiny-dropdown-item>
-                                </tiny-dropdown-menu>
+                                    </TinyDropdownItem>
+                                </TinyDropdownMenu>
                             </template>
-                        </tiny-dropdown>
+                        </TinyDropdown>
                     </template>
-                </tiny-grid-column>
-            </tiny-grid>
+                </TinyGridColumn>
+            </TinyGrid>
         </div>
 
         <div class="main-page">
-            <tiny-pager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
+            <TinyPager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
@@ -77,6 +77,13 @@
 </template>
 
 <script setup>
+import { Button as TinyButton, Grid as TinyGrid, GridColumn as TinyGridColumn, Tag as TinyTag, Dropdown as TinyDropdown, DropdownMenu as TinyDropdownMenu, DropdownItem as TinyDropdownItem, Pager as TinyPager, Modal } from '@opentiny/vue';
+import IconLucidePlus from '~icons/lucide/plus';
+import IconLucideRotateCw from '~icons/lucide/rotate-cw';
+import IconLucidePencil from '~icons/lucide/pencil';
+import IconLucideSettings from '~icons/lucide/settings';
+import IconLucideCode from '~icons/lucide/code';
+import IconLucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
 import MenuDialog from './components/menu.vue';
 import ApiDialog from './components/api.vue';

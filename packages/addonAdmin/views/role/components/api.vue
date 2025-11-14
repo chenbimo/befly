@@ -1,9 +1,9 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
+    <TinyDialogBox v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
         <div class="comp-role-api">
             <!-- 搜索框 -->
             <div class="search-box">
-                <tiny-search v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @update:modelValue="$Method.onSearch" />
+                <TinySearch v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @update:modelValue="$Method.onSearch" />
             </div>
 
             <!-- 接口分组列表 -->
@@ -11,9 +11,9 @@
                 <div v-for="group in $Data.filteredApiData" :key="group.name" class="api-group">
                     <div class="group-header">{{ group.title }}</div>
                     <div class="api-checkbox-list">
-                        <tiny-checkbox-group v-model="$Data.checkedApiIds">
-                            <tiny-checkbox v-for="api in group.apis" :key="api.id" :label="api.id"> {{ api.label }} </tiny-checkbox>
-                        </tiny-checkbox-group>
+                        <TinyCheckboxGroup v-model="$Data.checkedApiIds">
+                            <TinyCheckbox v-for="api in group.apis" :key="api.id" :label="api.id"> {{ api.label }} </TinyCheckbox>
+                        </TinyCheckboxGroup>
                     </div>
                 </div>
             </div>
@@ -21,20 +21,19 @@
 
         <template #footer>
             <div class="footer-left">
-                <tiny-button size="small" @click="$Method.onCheckAll">全选</tiny-button>
-                <tiny-button size="small" @click="$Method.onUncheckAll">取消全选</tiny-button>
+                <TinyButton size="small" @click="$Method.onCheckAll">全选</TinyButton>
+                <TinyButton size="small" @click="$Method.onUncheckAll">取消全选</TinyButton>
             </div>
             <div class="footer-right">
-                <tiny-button @click="$Method.onClose">取消</tiny-button>
-                <tiny-button type="primary" @click="$Method.onSubmit">保存</tiny-button>
+                <TinyButton @click="$Method.onClose">取消</TinyButton>
+                <TinyButton type="primary" @click="$Method.onSubmit">保存</TinyButton>
             </div>
         </template>
-    </tiny-dialog-box>
+    </TinyDialogBox>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Modal } from '@opentiny/vue';
+import { Button as TinyButton, DialogBox as TinyDialogBox, Search as TinySearch, Checkbox as TinyCheckbox, CheckboxGroup as TinyCheckboxGroup, Modal } from '@opentiny/vue';
 
 const $Prop = defineProps({
     modelValue: {

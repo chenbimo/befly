@@ -5,7 +5,7 @@
             <div class="toolbar-left">
                 <t-button theme="primary" @click="$Method.handleAdd">
                     <template #icon>
-                        <i-lucide:plus />
+                        <IconLucidePlus />
                     </template>
                     添加管理员
                 </t-button>
@@ -16,13 +16,13 @@
                     <t-select v-model="$Data.searchState" placeholder="状态" clearable style="width: 120px" :options="$Data.stateOptions" @change="$Method.handleSearch" />
                     <t-button theme="default" @click="$Method.handleSearch">
                         <template #icon>
-                            <i-lucide:search />
+                            <IconLucideSearch />
                         </template>
                         搜索
                     </t-button>
                     <t-button theme="default" @click="$Method.handleReset">
                         <template #icon>
-                            <i-lucide:rotate-cw />
+                            <IconLucideRotateCw />
                         </template>
                         重置
                     </t-button>
@@ -34,9 +34,9 @@
         <div class="table-wrapper">
             <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered stripe hover max-height="100%">
                 <template #state="{ row }">
-                    <tiny-tag v-if="row.state === 1" type="success">正常</tiny-tag>
-                    <tiny-tag v-else-if="row.state === 2" type="warning">禁用</tiny-tag>
-                    <tiny-tag v-else type="danger">已删除</tiny-tag>
+                    <TinyTag v-if="row.state === 1" type="success">正常</TinyTag>
+                    <TinyTag v-else-if="row.state === 2" type="warning">禁用</TinyTag>
+                    <TinyTag v-else type="danger">已删除</TinyTag>
                 </template>
 
                 <template #lastLoginTime="{ row }">
@@ -63,7 +63,7 @@
         <t-dialog v-model:visible="$Data.roleVisible" header="分配角色" width="600px" :on-confirm="$Method.handleRoleSubmit">
             <div class="role-dialog">
                 <div class="user-info">
-                    <tiny-tag type="primary">{{ $Data.currentUser.username }}</tiny-tag>
+                    <TinyTag type="primary">{{ $Data.currentUser.username }}</TinyTag>
                     <span class="user-email">{{ $Data.currentUser.email }}</span>
                 </div>
                 <t-divider />
@@ -74,7 +74,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { Tag as TinyTag, Modal } from '@opentiny/vue';
+import IconLucidePlus from '~icons/lucide/plus';
+import IconLucideSearch from '~icons/lucide/search';
+import IconLucideRotateCw from '~icons/lucide/rotate-cw';
 
 // 响应式数据
 const $Data = $ref({

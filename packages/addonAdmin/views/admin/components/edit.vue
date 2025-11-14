@@ -1,40 +1,41 @@
 <template>
-    <tiny-dialog-box v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <tiny-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <tiny-form-item label="用户名" prop="username">
-                <tiny-input v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
-            </tiny-form-item>
-            <tiny-form-item label="邮箱" prop="email">
-                <tiny-input v-model="$Data.formData.email" placeholder="请输入邮箱" />
-            </tiny-form-item>
-            <tiny-form-item v-if="$Prop.actionType === 'add'" label="密码" prop="password">
-                <tiny-input v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
-            </tiny-form-item>
-            <tiny-form-item label="姓名" prop="name">
-                <tiny-input v-model="$Data.formData.name" placeholder="请输入姓名" />
-            </tiny-form-item>
-            <tiny-form-item label="昵称" prop="nickname">
-                <tiny-input v-model="$Data.formData.nickname" placeholder="请输入昵称" />
-            </tiny-form-item>
-            <tiny-form-item label="手机号" prop="phone">
-                <tiny-input v-model="$Data.formData.phone" placeholder="请输入手机号" />
-            </tiny-form-item>
-            <tiny-form-item v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
-                <tiny-radio-group v-model="$Data.formData.state">
-                    <tiny-radio :label="1">正常</tiny-radio>
-                    <tiny-radio :label="2">禁用</tiny-radio>
-                </tiny-radio-group>
-            </tiny-form-item>
-        </tiny-form>
+    <TinyDialogBox v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+        <TinyForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+            <TinyFormItem label="用户名" prop="username">
+                <TinyInput v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
+            </TinyFormItem>
+            <TinyFormItem label="邮箱" prop="email">
+                <TinyInput v-model="$Data.formData.email" placeholder="请输入邮箱" />
+            </TinyFormItem>
+            <TinyFormItem v-if="$Prop.actionType === 'add'" label="密码" prop="password">
+                <TinyInput v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
+            </TinyFormItem>
+            <TinyFormItem label="姓名" prop="name">
+                <TinyInput v-model="$Data.formData.name" placeholder="请输入姓名" />
+            </TinyFormItem>
+            <TinyFormItem label="昵称" prop="nickname">
+                <TinyInput v-model="$Data.formData.nickname" placeholder="请输入昵称" />
+            </TinyFormItem>
+            <TinyFormItem label="手机号" prop="phone">
+                <TinyInput v-model="$Data.formData.phone" placeholder="请输入手机号" />
+            </TinyFormItem>
+            <TinyFormItem v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
+                <TinyRadioGroup v-model="$Data.formData.state">
+                    <TinyRadio :label="1">正常</TinyRadio>
+                    <TinyRadio :label="2">禁用</TinyRadio>
+                </TinyRadioGroup>
+            </TinyFormItem>
+        </TinyForm>
         <template #footer>
-            <tiny-button @click="$Method.onClose">取消</tiny-button>
-            <tiny-button type="primary" @click="$Method.onSubmit">确定</tiny-button>
+            <TinyButton @click="$Method.onClose">取消</TinyButton>
+            <TinyButton type="primary" @click="$Method.onSubmit">确定</TinyButton>
         </template>
-    </tiny-dialog-box>
+    </TinyDialogBox>
 </template>
 
 <script setup>
-import { ref, shallowRef } from 'vue';
+import { shallowRef } from 'vue';
+import { Button as TinyButton, DialogBox as TinyDialogBox, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Radio as TinyRadio, RadioGroup as TinyRadioGroup, Modal } from '@opentiny/vue';
 import { Modal } from '@opentiny/vue';
 
 const $Prop = defineProps({

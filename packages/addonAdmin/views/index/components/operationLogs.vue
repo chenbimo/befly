@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:file-text style="width: 20px; height: 20px" />
+            <IconLucideFileText style="width: 20px; height: 20px" />
             <h2>操作日志</h2>
         </div>
         <div class="section-content">
@@ -22,9 +22,9 @@
                         <span class="col-module">{{ log.module }}</span>
                         <span class="col-ip">{{ log.ip }}</span>
                         <span class="col-status">
-                            <tiny-tag :type="log.status === 'success' ? 'success' : 'danger'" size="small">
+                            <TinyTag :type="log.status === 'success' ? 'success' : 'danger'" size="small">
                                 {{ log.status === 'success' ? '成功' : '失败' }}
-                            </tiny-tag>
+                            </TinyTag>
                         </span>
                     </div>
                 </div>
@@ -34,6 +34,8 @@
 </template>
 
 <script setup>
+import { Tag as TinyTag } from '@opentiny/vue';
+import IconLucideFileText from '~icons/lucide/file-text';
 import { ref } from 'vue';
 
 // 组件内部数据
