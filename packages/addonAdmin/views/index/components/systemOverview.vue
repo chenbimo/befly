@@ -44,7 +44,6 @@ import IconLucideUsers from '~icons/lucide/users';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideMenu from '~icons/lucide/menu';
 import IconLucideInfo from '~icons/lucide/info';
-import { ref } from 'vue';
 
 // 组件内部数据
 const permissionStats = $ref({

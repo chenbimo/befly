@@ -46,7 +46,6 @@ import IconLucideAlertCircle from '~icons/lucide/alert-circle';
 import IconLucideDatabase from '~icons/lucide/database';
 import IconLucideMail from '~icons/lucide/mail';
 import IconLucideHardDrive from '~icons/lucide/hard-drive';
-import { ref } from 'vue';
 
 // 组件内部数据
 const services = $ref([]);

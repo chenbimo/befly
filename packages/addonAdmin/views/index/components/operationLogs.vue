@@ -36,7 +36,6 @@
 <script setup>
 import { Tag as TinyTag } from '@opentiny/vue';
 import IconLucideFileText from '~icons/lucide/file-text';
-import { ref } from 'vue';
 
 // 组件内部数据
 const operationLogs = $ref([

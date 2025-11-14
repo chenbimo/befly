@@ -34,7 +34,6 @@ import { Tag as TinyTag } from '@opentiny/vue';
 import IconLucideInfo from '~icons/lucide/info';
 import IconLucideCheck from '~icons/lucide/check';
 import IconLucideX from '~icons/lucide/x';
-import { ref } from 'vue';
 
 // 组件内部数据
 const notifications = $ref([

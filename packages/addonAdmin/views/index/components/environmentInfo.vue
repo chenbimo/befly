@@ -37,7 +37,6 @@
 
 <script setup>
 import IconLucideServer from '~icons/lucide/server';
-import { ref } from 'vue';
 
 // 组件内部数据
 const environmentInfo = $ref({

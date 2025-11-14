@@ -27,7 +27,6 @@
 import IconLucideBox from '~icons/lucide/box';
 import { Tag as TinyTag } from '@opentiny/vue';
 import IconLucidePackage from '~icons/lucide/package';
-import { ref } from 'vue';
 
 // 组件内部数据
 const addonList = $ref([]);
