@@ -9,7 +9,12 @@ export default {
     name: '管理员登录',
     auth: false,
     fields: {
-        account: '账号|string|3|100|null|1|null',
+        account: {
+            name: '账号',
+            type: 'string',
+            min: 3,
+            max: 100
+        },
         password: adminTable.password
     },
     required: ['account', 'password'],

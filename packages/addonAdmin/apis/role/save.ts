@@ -5,9 +5,15 @@
 import { Yes, No } from 'befly';
 
 export default {
-    name: '保存用户角色',
+    name: '角色保存',
     fields: {
-        roleCode: '角色编码|string|2|50|null|1|^[a-zA-Z0-9_]+$'
+        roleCode: {
+            name: '角色编码',
+            type: 'string',
+            min: 2,
+            max: 50,
+            regexp: '^[a-zA-Z0-9_]+$'
+        }
     },
     handler: async (befly, ctx) => {
         try {

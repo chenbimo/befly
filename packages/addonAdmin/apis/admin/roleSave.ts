@@ -5,10 +5,16 @@
 import { Yes, No } from 'befly';
 
 export default {
-    name: '保存管理员角色',
+    name: '管理员角色保存',
     fields: {
-        adminId: '@id',
-        roleCode: '角色编码|string|2|50|null|1|^[a-zA-Z0-9_]+$'
+        adminId: Fields._id,
+        roleCode: {
+            name: '角色编码',
+            type: 'string',
+            min: 2,
+            max: 50,
+            regexp: '^[a-zA-Z0-9_]+$'
+        }
     },
     handler: async (befly, ctx) => {
         // 查询角色是否存在（使用 roleCode 而非 roleId）
