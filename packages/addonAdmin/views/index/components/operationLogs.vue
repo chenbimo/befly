@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideFileText style="width: 20px; height: 20px" />
+            <IconLucideFileText />
             <h2>操作日志</h2>
         </div>
         <div class="section-content">

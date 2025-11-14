@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideBell style="width: 20px; height: 20px" />
+            <IconLucideBell />
             <h2>系统通知</h2>
         </div>
         <div class="section-content">

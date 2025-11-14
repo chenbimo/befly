@@ -40,7 +40,7 @@
                             <template #dropdown>
                                 <TinyDropdownMenu>
                                     <TinyDropdownItem :item-data="{ command: 'upd' }">
-                                        <IconLucidePencil style="width: 14px; height: 14px; margin-right: 6px" />
+                                        <IconLucidePencil />
                                         编辑
                                     </TinyDropdownItem>
                                     <TinyDropdownItem :item-data="{ command: 'del' }" divided>

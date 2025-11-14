@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideCheckCircle style="width: 20px; height: 20px" />
+            <IconLucideCheckCircle />
             <h2>服务状态</h2>
         </div>
         <div class="section-content">

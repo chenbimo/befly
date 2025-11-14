@@ -3,7 +3,7 @@
         <div class="section-content">
             <TinyButton type="primary" size="large" @click="handleClearCache">
                 <template #prefix>
-                    <IconLucideRotateCw style="width: 18px; height: 18px" />
+                    <IconLucideRotateCw />
                 </template>
                 刷新缓存
             </TinyButton>

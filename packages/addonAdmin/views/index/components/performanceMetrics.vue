@@ -1,14 +1,14 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideActivity style="width: 20px; height: 20px" />
+            <IconLucideActivity />
             <h2>性能指标</h2>
         </div>
         <div class="section-content">
             <div class="performance-grid">
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <IconLucideClock style="width: 18px; height: 18px" />
+                        <IconLucideClock />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">平均响应</div>
@@ -17,7 +17,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <IconLucideTrendingUp style="width: 18px; height: 18px" />
+                        <IconLucideTrendingUp />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">QPS</div>
@@ -26,7 +26,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <IconLucideAlertCircle style="width: 18px; height: 18px" />
+                        <IconLucideAlertCircle />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">错误率</div>
@@ -35,7 +35,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <IconLucideActivity style="width: 18px; height: 18px" />
+                        <IconLucideActivity />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">活跃连接</div>
@@ -45,7 +45,7 @@
             </div>
             <!-- 最慢接口提示 -->
             <div v-if="performanceMetrics.slowestApi" class="perf-slowest">
-                <IconLucideAlertTriangle style="width: 14px; height: 14px" />
+                <IconLucideAlertTriangle />
                 <span>最慢接口: {{ performanceMetrics.slowestApi.path }} ({{ performanceMetrics.slowestApi.time }}ms)</span>
             </div>
         </div>

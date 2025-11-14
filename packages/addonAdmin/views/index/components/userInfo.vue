@@ -2,7 +2,7 @@
     <div class="section-block user-info-card">
         <div class="user-header">
             <div class="user-avatar">
-                <IconLucideUser style="width: 32px; height: 32px" />
+                <IconLucideUser />
             </div>
             <div class="user-basic">
                 <div class="user-name">{{ $Data.userInfo.nickname || $Data.userInfo.name || $Data.userInfo.username || '未设置' }}</div>
@@ -11,15 +11,15 @@
         </div>
         <div class="user-details">
             <div class="detail-item">
-                <IconLucideMail style="width: 14px; height: 14px" />
+                <IconLucideMail />
                 <span>{{ $Data.userInfo.email || '未设置' }}</span>
             </div>
             <div v-if="$Data.userInfo.phone" class="detail-item">
-                <IconLucidePhone style="width: 14px; height: 14px" />
+                <IconLucidePhone />
                 <span>{{ $Data.userInfo.phone }}</span>
             </div>
             <div v-if="$Data.userInfo.lastLoginTime" class="detail-item">
-                <IconLucideClock style="width: 14px; height: 14px" />
+                <IconLucideClock />
                 <span>{{ $Method.formatTime($Data.userInfo.lastLoginTime) }}</span>
             </div>
         </div>
@@ -28,7 +28,7 @@
         <div v-if="$Data.userInfo.roleCode === 'dev'" class="user-actions">
             <TinyButton type="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
                 <template #icon>
-                    <IconLucideRotateCw style="width: 14px; height: 14px" />
+                    <IconLucideRotateCw />
                 </template>
                 刷新缓存
             </TinyButton>

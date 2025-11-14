@@ -1,7 +1,7 @@
 <template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideActivity style="width: 20px; height: 20px" />
+            <IconLucideActivity />
             <h2>系统资源</h2>
         </div>
         <div class="section-content">
