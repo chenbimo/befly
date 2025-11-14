@@ -58,6 +58,7 @@ import IconLucideTrendingUp from '~icons/lucide/trending-up';
 import IconLucideAlertCircle from '~icons/lucide/alert-circle';
 import IconLucideClock from '~icons/lucide/clock';
 import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
+import { $Http } from '@/plugins/http';
 
 // 组件内部数据
 const performanceMetrics = $ref({

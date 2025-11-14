@@ -87,6 +87,7 @@ import IconLucideTrash2 from '~icons/lucide/trash-2';
 
 import EditDialog from './components/edit.vue';
 import RoleDialog from './components/role.vue';
+import { $Http } from '@/plugins/http';
 
 // 响应式数据
 const $Data = $ref({

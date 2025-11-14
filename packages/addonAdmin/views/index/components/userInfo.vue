@@ -43,6 +43,7 @@ import { Button as TinyButton } from '@opentiny/vue';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideMail from '~icons/lucide/mail';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';
+import { $Http } from '@/plugins/http';
 
 // 响应式数据
 const $Data = $ref({

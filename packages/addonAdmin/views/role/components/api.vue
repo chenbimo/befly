@@ -34,6 +34,7 @@
 
 <script setup>
 import { Button as TinyButton, DialogBox as TinyDialogBox, Search as TinySearch, Checkbox as TinyCheckbox, CheckboxGroup as TinyCheckboxGroup, Modal } from '@opentiny/vue';
+import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
     modelValue: {

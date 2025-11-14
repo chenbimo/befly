@@ -44,6 +44,7 @@ import { Progress as TinyProgress } from '@opentiny/vue';
 import IconLucideCpu from '~icons/lucide/cpu';
 import IconLucideHardDrive from '~icons/lucide/hard-drive';
 import IconLucideActivity from '~icons/lucide/activity';
+import { $Http } from '@/plugins/http';
 
 // 组件内部数据
 const systemResources = $ref({

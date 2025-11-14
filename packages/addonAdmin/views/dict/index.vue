@@ -72,6 +72,7 @@ import IconLucidePencil from '~icons/lucide/pencil';
 import IconLucideTrash2 from '~icons/lucide/trash-2';
 
 import EditDialog from './components/edit.vue';
+import { $Http } from '@/plugins/http';
 
 import EditDialog from './components/edit.vue';
 

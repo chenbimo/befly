@@ -44,6 +44,7 @@ import IconLucideUsers from '~icons/lucide/users';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideMenu from '~icons/lucide/menu';
 import IconLucideInfo from '~icons/lucide/info';
+import { $Http } from '@/plugins/http';
 
 // 组件内部数据
 const permissionStats = $ref({

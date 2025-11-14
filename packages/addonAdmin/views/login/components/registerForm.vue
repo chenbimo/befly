@@ -43,6 +43,7 @@ import IconLucideUser from '~icons/lucide/user';
 import IconLucideMail from '~icons/lucide/mail';
 import IconLucideLock from '~icons/lucide/lock';
 import IconLucideSmile from '~icons/lucide/smile';
+import { $Http } from '@/plugins/http';
 
 const emit = defineEmits(['success']);
 

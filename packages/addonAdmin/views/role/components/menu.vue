@@ -15,6 +15,7 @@ import { nextTick, shallowRef } from 'vue';
 import { Button as TinyButton, DialogBox as TinyDialogBox, Tree as TinyTree, Modal } from '@opentiny/vue';
 
 import { arrayToTree } from '@/utils';
+import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
     modelValue: {

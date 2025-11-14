@@ -37,6 +37,7 @@
 
 <script setup>
 import IconLucideServer from '~icons/lucide/server';
+import { $Http } from '@/plugins/http';
 
 // 组件内部数据
 const environmentInfo = $ref({

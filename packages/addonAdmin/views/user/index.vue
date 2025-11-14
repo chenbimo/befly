@@ -78,6 +78,7 @@ import { Tag as TinyTag, Modal } from '@opentiny/vue';
 import IconLucidePlus from '~icons/lucide/plus';
 import IconLucideSearch from '~icons/lucide/search';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';
+import { $Http } from '@/plugins/http';
 
 // 响应式数据
 const $Data = $ref({
