@@ -7,7 +7,6 @@ import { Yes, No } from 'befly';
 export default {
     name: '管理员角色保存',
     fields: {
-        adminId: Fields._id,
         roleCode: {
             name: '角色编码',
             type: 'string',
@@ -33,7 +32,7 @@ export default {
         // 更新管理员的角色ID、角色编码和角色类型
         await befly.db.updData({
             table: 'addon_admin_admin',
-            where: { id: ctx.body.adminId },
+            where: { id: ctx.body.id },
             data: {
                 roleId: role.id,
                 roleCode: role.code,
