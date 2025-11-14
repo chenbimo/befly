@@ -21,7 +21,8 @@
         "addon.config.json",
         "util.ts",
         "README.md",
-        "package.json"
+        "package.json",
+        "menu.json"
     ],
     "keywords": [
         "befly",

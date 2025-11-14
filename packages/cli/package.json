@@ -12,8 +12,6 @@
     "files": [
         "bin/",
         "commands/",
-        "report/",
-        "util/",
         "README.md",
         "LICENSE",
         "package.json",

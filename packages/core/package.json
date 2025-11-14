@@ -40,13 +40,9 @@
     "files": [
         "lib/",
         "loader/",
-        "middleware/",
+        "plugins/",
         "router/",
         "types/",
-        ".gitignore",
-        ".npmignore",
-        ".bunignore",
-        ".editorconfig",
         ".npmrc",
         ".prettierignore",
         ".prettierrc",
@@ -56,11 +52,11 @@
         "main.ts",
         "check.ts",
         "env.ts",
-        "menu.json",
         "paths.ts",
         "util.ts",
         "package.json",
-        "README.md"
+        "README.md",
+        "LICENSE"
     ],
     "engines": {
         "bun": ">=1.3.0"
