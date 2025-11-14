@@ -128,8 +128,8 @@ async function initApi(apiRoutes: Map<string, ApiRoute>, apiInfo: { file: string
         // 设置默认值
         api.method = api.method || 'POST';
         api.auth = api.auth !== undefined ? api.auth : true;
-        // 合并默认字段：先设置自定义字段，再用默认字段覆盖（默认字段优先级更高）
-        api.fields = { ...(api.fields || {}), ...DEFAULT_API_FIELDS };
+        // 合并默认字段：默认字段作为基础，API 自定义字段优先级更高
+        api.fields = { ...DEFAULT_API_FIELDS, ...(api.fields || {}) };
         api.required = api.required || [];
 
         // 构建路由
