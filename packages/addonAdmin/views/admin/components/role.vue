@@ -18,7 +18,6 @@
 <script setup>
 import { shallowRef } from 'vue';
 import { Button as TinyButton, DialogBox as TinyDialogBox, Select as TinySelect, Tag as TinyTag, Modal } from '@opentiny/vue';
-import { Modal } from '@opentiny/vue';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
