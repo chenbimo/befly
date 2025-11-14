@@ -177,7 +177,7 @@ export class Database {
                 connectionTimeout: 30000,
                 idleTimeout: 0,
                 autoReconnect: true,
-                maxRetries: 0,
+                maxRetries: 3,
                 enableOfflineQueue: true,
                 enableAutoPipelining: true
             });
