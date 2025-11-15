@@ -53,6 +53,7 @@
 </template>
 
 <script setup>
+import { $ref } from 'vue-macros/macros';
 import IconLucideActivity from '~icons/lucide/activity';
 import IconLucideTrendingUp from '~icons/lucide/trending-up';
 import IconLucideAlertCircle from '~icons/lucide/alert-circle';

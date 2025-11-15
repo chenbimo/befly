@@ -11,7 +11,8 @@
 </template>
 
 <script setup>
-import { nextTick, shallowRef } from 'vue';
+import { $ref, $shallowRef } from 'vue-macros/macros';
+import { nextTick } from 'vue';
 import { Button as TinyButton, DialogBox as TinyDialogBox, Tree as TinyTree, Modal } from '@opentiny/vue';
 
 import { arrayToTree } from '@/utils';

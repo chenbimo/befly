@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { shallowRef } from 'vue';
+import { $ref, $shallowRef } from 'vue-macros/macros';
 import { Button as TinyButton, DialogBox as TinyDialogBox, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Radio as TinyRadio, RadioGroup as TinyRadioGroup, Modal } from '@opentiny/vue';
 import { $Http } from '@/plugins/http';
 

@@ -74,6 +74,7 @@
 </template>
 
 <script setup>
+import { $ref } from 'vue-macros/macros';
 import { Tag as TinyTag, Modal } from '@opentiny/vue';
 import IconLucidePlus from '~icons/lucide/plus';
 import IconLucideSearch from '~icons/lucide/search';

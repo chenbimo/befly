@@ -37,6 +37,7 @@
 </template>
 
 <script setup>
+import { $ref } from 'vue-macros/macros';
 import IconLucidePhone from '~icons/lucide/phone';
 import IconLucideClock from '~icons/lucide/clock';
 import { Button as TinyButton } from '@opentiny/vue';

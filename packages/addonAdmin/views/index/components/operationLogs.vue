@@ -34,6 +34,7 @@
 </template>
 
 <script setup>
+import { $ref } from 'vue-macros/macros';
 import { Tag as TinyTag } from '@opentiny/vue';
 import IconLucideFileText from '~icons/lucide/file-text';
 

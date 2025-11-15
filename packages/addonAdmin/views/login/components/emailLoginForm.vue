@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef } from 'vue';
+import { $ref, $shallowRef } from 'vue-macros/macros';
 import { useRouter, useRoute } from 'vue-router';
 import { Button as TinyButton, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Modal } from '@opentiny/vue';
 import IconLucideUser from '~icons/lucide/user';

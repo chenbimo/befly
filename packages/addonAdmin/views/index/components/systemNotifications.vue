@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+import { $ref } from 'vue-macros/macros';
 import IconLucideBell from '~icons/lucide/bell';
 import IconLucideCheckCircle from '~icons/lucide/check-circle';
 import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
