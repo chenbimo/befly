@@ -9,26 +9,43 @@
                 <div class="user-info-bar">
                     <div class="user-text">
                         <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
-                        <tiny-tag type="info" size="small">{{ $Data.userInfo.role || '超级管理员' }}</tiny-tag>
+                        <t-tag theme="primary" size="small" variant="light">{{ $Data.userInfo.role || '超级管理员' }}</t-tag>
                     </div>
-                    <tiny-button size="medium" :icon="iconClose()" @click="$Method.handleLogout" />
+                    <t-button variant="text" size="medium" @click="$Method.handleLogout">
+                        <template #icon>
+                            <CloseIcon />
+                        </template>
+                    </t-button>
                 </div>
             </div>
         </div>
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <tiny-tree-menu :ref="(el) => ($From.treeMenuRef = el)" :data="$Data.userMenus" :props="{ label: 'name' }" node-key="id" :node-height="40" :show-filter="false" :default-expanded-keys="$Data.expandedKeys" style="height: 100%" only-check-children width-adapt @node-click="$Method.onMenuClick">
-                <template #default="{ data }">
-                    <span class="menu-item">
-                        <!-- 根据路径和是否有子节点显示不同图标 -->
-                        <i-lucide:home v-if="data.path === '/addon/admin/'" />
-                        <i-lucide:folder v-else-if="data.children && data.children.length > 0" />
-                        <i-lucide:file-text v-else />
-                        <span>{{ data.name }}</span>
-                    </span>
+            <t-menu :value="$Data.currentMenuKey" :expanded="$Data.expandedKeys" style="height: 100%" @change="$Method.onMenuClick" @expand="(value) => ($Data.expandedKeys = value)">
+                <template v-for="menu in $Data.userMenus" :key="menu.id">
+                    <!-- 无子菜单 -->
+                    <t-menu-item v-if="!menu.children || menu.children.length === 0" :value="menu.path">
+                        <template #icon>
+                            <i-lucide:home v-if="menu.path === '/addon/admin/'" />
+                            <i-lucide:file-text v-else />
+                        </template>
+                        {{ menu.name }}
+                    </t-menu-item>
+                    <!-- 有子菜单 -->
+                    <t-submenu v-else :value="String(menu.id)" :title="menu.name">
+                        <template #icon>
+                            <i-lucide:folder />
+                        </template>
+                        <t-menu-item v-for="child in menu.children" :key="child.id" :value="child.path">
+                            <template #icon>
+                                <i-lucide:file-text />
+                            </template>
+                            {{ child.name }}
+                        </t-menu-item>
+                    </t-submenu>
                 </template>
-            </tiny-tree-menu>
+            </t-menu>
         </div>
 
         <!-- 内容区域 -->
@@ -40,7 +57,7 @@
 
 <script setup>
 import { arrayToTree } from '@/utils';
-import { iconClose } from '@opentiny/vue-icon';
+import { CloseIcon } from 'tdesign-icons-vue-next';
 
 const router = useRouter();
 const route = useRoute();
@@ -55,7 +72,7 @@ const $Data = $ref({
     userMenus: [],
     userMenusFlat: [], // 一维菜单数据
     expandedKeys: [],
-    currentNodeKey: 0,
+    currentMenuKey: '',
     userInfo: {
         nickname: '管理员',
         role: '超级管理员'
@@ -96,7 +113,7 @@ const $Method = {
         while (menu.pid) {
             const parent = $Data.userMenusFlat.find((m) => m.id === menu.pid);
             if (parent) {
-                expandedKeys.unshift(parent.id);
+                expandedKeys.unshift(String(parent.id));
                 menu = parent;
             } else {
                 break;
@@ -106,17 +123,14 @@ const $Method = {
         // 使用 nextTick 确保 DOM 更新后再设置高亮
         nextTick(() => {
             $Data.expandedKeys = expandedKeys;
-            // 使用 setCurrentKey 方法设置当前高亮节点
-            if ($From.treeMenuRef) {
-                $From.treeMenuRef.setCurrentKey(currentMenu.id);
-            }
+            $Data.currentMenuKey = currentPath;
         });
     },
 
     // 处理菜单点击
-    onMenuClick(data) {
-        if (data.path) {
-            router.push(data.path);
+    onMenuClick(path) {
+        if (path) {
+            router.push(path);
         }
     },
 
@@ -223,22 +237,6 @@ $Method.fetchUserMenus();
         padding: 16px 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         border: 1px solid #e8eaed;
-
-        .tiny-tree-menu:before {
-            display: none;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 2px 0;
-            transition: all 0.2s ease;
-
-            &:hover {
-                color: #0052d9;
-            }
-        }
     }
 
     .layout-main {

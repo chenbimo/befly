@@ -106,6 +106,7 @@ export default defineConfig({
         minify: 'esbuild',
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
+            external: ['vue-router'],
             output: {
                 chunkFileNames: 'assets/js/[name]-[hash].js',
                 entryFileNames: 'assets/js/[name]-[hash].js',
@@ -122,33 +123,14 @@ export default defineConfig({
                         return 'framework-pinia';
                     }
 
-                    // TinyVue 细粒度拆分
-                    if (id.includes('@opentiny/vue-renderless/src/grid')) {
-                        return 'tiny-grid';
+                    // TDesign Vue Next
+                    if (id.includes('node_modules/tdesign-vue-next/') || id.includes('node_modules/.bun/tdesign-vue-next')) {
+                        return 'tdesign';
                     }
-                    if (id.includes('@opentiny/vue-renderless/src/table')) {
-                        return 'tiny-table';
-                    }
-                    if (id.includes('@opentiny/vue-renderless/src/tree')) {
-                        return 'tiny-tree';
-                    }
-                    if (id.includes('@opentiny/vue-renderless/src/form')) {
-                        return 'tiny-form';
-                    }
-                    if (id.includes('node_modules/@opentiny/vue-renderless/')) {
-                        return 'tiny-renderless';
-                    }
-                    if (id.includes('node_modules/@opentiny/vue-theme/')) {
-                        return 'tiny-theme';
-                    }
-                    if (id.includes('node_modules/@opentiny/vue-locale/')) {
-                        return 'tiny-locale';
-                    }
-                    if (id.includes('node_modules/@opentiny/vue-common/')) {
-                        return 'tiny-common';
-                    }
-                    if (id.includes('node_modules/@opentiny/vue-icon/')) {
-                        return 'tiny-icon';
+
+                    // TDesign Icons
+                    if (id.includes('node_modules/tdesign-icons-vue-next/') || id.includes('node_modules/.bun/tdesign-icons-vue-next')) {
+                        return 'tdesign-icons';
                     }
 
                     // 工具库（独立文件）
@@ -161,7 +143,7 @@ export default defineConfig({
                         return 'lib-lodash';
                     }
 
-                    // echarts 及相关库（TinyVue 图表组件依赖）
+                    // echarts 及相关库
                     if (id.includes('node_modules/echarts/') || id.includes('node_modules/.bun/echarts')) {
                         return 'lib-echarts';
                     }
