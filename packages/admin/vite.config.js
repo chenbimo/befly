@@ -106,7 +106,6 @@ export default defineConfig({
         minify: 'esbuild',
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
-            external: ['vue-router'],
             output: {
                 chunkFileNames: 'assets/js/[name]-[hash].js',
                 entryFileNames: 'assets/js/[name]-[hash].js',
