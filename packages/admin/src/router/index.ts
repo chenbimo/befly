@@ -3,9 +3,45 @@ import { routes } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
 import { Layouts } from '@befly-addon/admin/util';
 import type { RouteRecordRaw } from 'vue-router';
+import type { LayoutConfig } from '@befly-addon/admin/util';
+
+/**
+ * 将布局配置转换为实际的路由配置
+ * 在这里执行实际的布局组件导入
+ */
+function applyLayouts(configs: LayoutConfig[]): RouteRecordRaw[] {
+    return configs.map((config) => {
+        // 根据布局名称加载对应的布局组件
+        const layoutComponent = config.layoutName === 'default' ? () => import('@/layouts/default.vue') : () => import(`@/layouts/${config.layoutName}.vue`);
+
+        // 如果有子配置，递归处理
+        if (config.children && config.children.length > 0) {
+            return {
+                path: config.path,
+                component: layoutComponent,
+                meta: config.meta,
+                children: applyLayouts(config.children)
+            };
+        }
+
+        // 叶子节点：包裹布局
+        return {
+            path: config.path,
+            component: layoutComponent,
+            meta: config.meta,
+            children: [
+                {
+                    path: '',
+                    component: config.component
+                }
+            ]
+        };
+    });
+}
 
 // 应用自定义布局系统
-const layoutRoutes = Layouts(routes);
+const layoutConfigs = Layouts(routes);
+const layoutRoutes = applyLayouts(layoutConfigs);
 
 // 添加根路径重定向
 const finalRoutes: RouteRecordRaw[] = [

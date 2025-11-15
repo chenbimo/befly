@@ -1,14 +1,27 @@
-import type { RouteRecordRaw } from 'vue-router';
+import type { RouteRecordRaw, Component } from 'vue-router';
+import { readdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+/**
+ * 布局配置接口
+ */
+export interface LayoutConfig {
+    path: string;
+    layoutName: string;
+    component: Component;
+    children?: LayoutConfig[];
+    meta?: Record<string, any>;
+}
 
 /**
  * 自定义布局处理函数
  * 根据文件名后缀判断使用哪个布局
  * @param routes - 原始路由配置
  * @param inheritLayout - 继承的布局名称（来自父级目录）
- * @returns 处理后的路由配置
+ * @returns 处理后的布局配置（不包含实际的布局组件导入）
  */
-export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): RouteRecordRaw[] {
-    const result: RouteRecordRaw[] = [];
+export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): LayoutConfig[] {
+    const result: LayoutConfig[] = [];
 
     for (const route of routes) {
         const currentPath = route.path || '';
@@ -23,9 +36,11 @@ export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): RouteReco
             const cleanPath = pathMatch ? currentPath.replace(/_\d+$/, '') : currentPath;
 
             result.push({
-                ...route,
                 path: cleanPath,
-                children: Layouts(route.children, currentLayout)
+                layoutName: currentLayout || 'default',
+                component: route.component!,
+                children: Layouts(route.children, currentLayout),
+                meta: route.meta
             });
             continue;
         }
@@ -51,21 +66,54 @@ export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): RouteReco
             cleanPath = lastPart;
         }
 
-        // 根据布局名称加载对应组件
-        const layoutComponent = layoutName === 'default' ? () => import('@/layouts/default.vue') : () => import(`@/layouts/${layoutName}.vue`);
-
-        // 包裹布局
+        // 返回布局配置（不执行实际导入）
         result.push({
             path: cleanPath,
-            component: layoutComponent,
-            children: [
-                {
-                    ...route,
-                    path: ''
-                }
-            ]
+            layoutName: layoutName,
+            component: route.component!,
+            meta: route.meta
         });
     }
 
     return result;
+}
+
+/**
+ * 扫描所有 @befly-addon 包的 views 目录
+ * 用于 unplugin-vue-router 的 routesFolder 配置
+ * @returns 路由文件夹配置数组
+ */
+export function scanBeflyAddonViews() {
+    // 使用绝对路径：基于项目根目录（process.cwd()）
+    const projectRoot = process.cwd();
+    const addonBasePath = join(projectRoot, 'node_modules', '@befly-addon');
+    const routesFolders: Array<{ src: string; path: string }> = [];
+
+    if (!existsSync(addonBasePath)) {
+        return routesFolders;
+    }
+
+    try {
+        const addonDirs = readdirSync(addonBasePath);
+
+        for (const addonName of addonDirs) {
+            const addonPath = join(addonBasePath, addonName);
+
+            // 检查是否为目录（包括符号链接）
+            if (!existsSync(addonPath)) continue;
+
+            const viewsPath = join(addonPath, 'views');
+
+            if (existsSync(viewsPath)) {
+                routesFolders.push({
+                    src: viewsPath,
+                    path: `addon/${addonName}/`
+                });
+            }
+        }
+    } catch (error) {
+        console.error('扫描 @befly-addon 目录失败:', error);
+    }
+
+    return routesFolders;
 }
