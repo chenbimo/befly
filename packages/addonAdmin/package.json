@@ -18,8 +18,8 @@
         "apis/",
         "tables/",
         "views/",
+        "util",
         "addon.config.json",
-        "util.ts",
         "README.md",
         "package.json",
         "menu.json"
