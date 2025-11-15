@@ -1,9 +1,9 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { routes } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
-import { Layouts } from '@befly-addon/admin/util';
+import { Layouts } from '@befly-addon/admin/utils/layouts';
 import type { RouteRecordRaw } from 'vue-router';
-import type { LayoutConfig } from '@befly-addon/admin/util';
+import type { LayoutConfig } from '@befly-addon/admin/utils/layouts';
 
 /**
  * 将布局配置转换为实际的路由配置
