@@ -2,61 +2,61 @@
     <div class="page-admin page-table">
         <div class="main-tool">
             <div class="left">
-                <t-button theme="primary" @click="$Method.onAction('add', {})">
+                <TButton theme="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
-                        <i-lucide:plus />
+                        <ILucidePlus />
                     </template>
                     添加管理员
-                </t-button>
+                </TButton>
             </div>
             <div class="right">
-                <t-button @click="$Method.handleRefresh">
+                <TButton @click="$Method.handleRefresh">
                     <template #icon>
-                        <i-lucide:rotate-cw />
+                        <ILucideRotateCw />
                     </template>
-                </t-button>
+                </TButton>
             </div>
             <div class="right">
-                <t-button @click="$Method.handleRefresh">
+                <TButton @click="$Method.handleRefresh">
                     <template #icon>
-                        <i-lucide:rotate-cw />
+                        <ILucideRotateCw />
                     </template>
                     刷新
-                </t-button>
+                </TButton>
             </div>
         </div>
 
         <div class="main-table">
-            <t-table :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
+            <TTable :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
                 <template #state="{ row }">
-                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
-                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
-                    <t-tag v-else theme="danger">已删除</t-tag>
+                    <TTag v-if="row.state === 1" theme="success">正常</TTag>
+                    <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
+                    <TTag v-else theme="danger">已删除</TTag>
                 </template>
                 <template #operation="{ row }">
-                    <t-dropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
-                        <t-button variant="text" size="small">操作</t-button>
-                        <t-dropdown-menu slot="dropdown">
-                            <t-dropdown-item value="role">
-                                <i-lucide:user />
+                    <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
+                        <TButton variant="text" size="small">操作</TButton>
+                        <TDropdownMenu slot="dropdown">
+                            <TDropdownItem value="role">
+                                <ILucideUser />
                                 分配角色
-                            </t-dropdown-item>
-                            <t-dropdown-item value="upd">
-                                <i-lucide:pencil />
+                            </TDropdownItem>
+                            <TDropdownItem value="upd">
+                                <ILucidePencil />
                                 编辑
-                            </t-dropdown-item>
-                            <t-dropdown-item value="del" :divider="true">
-                                <i-lucide:trash-2 style="width: 14px; height: 14px; margin-right: 6px" />
+                            </TDropdownItem>
+                            <TDropdownItem value="del" :divider="true">
+                                <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
                                 删除
-                            </t-dropdown-item>
-                        </t-dropdown-menu>
-                    </t-dropdown>
+                            </TDropdownItem>
+                        </TDropdownMenu>
+                    </TDropdown>
                 </template>
-            </t-table>
+            </TTable>
         </div>
 
         <div class="main-page">
-            <t-pagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
+            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
@@ -68,6 +68,12 @@
 </template>
 
 <script setup>
+import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
+import ILucidePlus from '~icons/lucide/plus';
+import ILucideRotateCw from '~icons/lucide/rotate-cw';
+import ILucideUser from '~icons/lucide/user';
+import ILucidePencil from '~icons/lucide/pencil';
+import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
 import RoleDialog from './components/role.vue';
 import { $Http } from '@/plugins/http';
