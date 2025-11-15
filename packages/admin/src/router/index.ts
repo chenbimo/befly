@@ -14,17 +14,8 @@ function applyLayouts(configs: LayoutConfig[]): RouteRecordRaw[] {
         // 根据布局名称加载对应的布局组件
         const layoutComponent = config.layoutName === 'default' ? () => import('@/layouts/default.vue') : () => import(`@/layouts/${config.layoutName}.vue`);
 
-        // 如果有子配置，递归处理
-        if (config.children && config.children.length > 0) {
-            return {
-                path: config.path,
-                component: layoutComponent,
-                meta: config.meta,
-                children: applyLayouts(config.children)
-            };
-        }
-
-        // 叶子节点：包裹布局
+        // 所有配置都是叶子节点（Layouts 函数已经扁平化处理）
+        // 直接包裹布局
         return {
             path: config.path,
             component: layoutComponent,

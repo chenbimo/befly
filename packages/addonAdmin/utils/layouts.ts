@@ -28,18 +28,21 @@ export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): LayoutCon
         const pathMatch = currentPath.match(/_(\d+)$/);
         const currentLayout = pathMatch ? pathMatch[1] : inheritLayout;
 
-        // 如果有子路由，递归处理（传递当前布局给子级）
+        // 如果有子路由，说明这是中间节点（目录），不包裹布局，只递归处理子路由
         if (route.children && route.children.length > 0) {
             // 清理路径：如果是 xxx_数字 格式，去掉 _数字
             const cleanPath = pathMatch ? currentPath.replace(/_\d+$/, '') : currentPath;
 
-            result.push({
-                path: cleanPath,
-                layoutName: currentLayout || 'default',
-                component: route.component!,
-                children: Layouts(route.children, currentLayout),
-                meta: route.meta
-            });
+            // 直接递归处理子路由，不添加当前层级到结果
+            const childConfigs = Layouts(route.children, currentLayout);
+
+            // 将子路由的路径前缀加上当前路径
+            for (const child of childConfigs) {
+                result.push({
+                    ...child,
+                    path: cleanPath ? `${cleanPath}/${child.path}`.replace(/\/+/g, '/') : child.path
+                });
+            }
             continue;
         }
 
