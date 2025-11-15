@@ -33,10 +33,10 @@
         "axios": "^1.13.2",
         "pinia": "^3.0.4",
         "vue": "^3.5.22",
-        "vue-router": "^4.6.3"
+        "vue-router": "^4.6.3",
+        "@befly-addon/admin": "workspace:*"
     },
     "devDependencies": {
-        "@befly-addon/admin": "workspace:*",
         "@iconify-json/lucide": "^1.2.72",
         "@unocss/preset-attributify": "^66.5.6",
         "@unocss/preset-uno": "^66.5.6",

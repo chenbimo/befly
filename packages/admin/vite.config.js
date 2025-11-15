@@ -156,7 +156,7 @@ export default defineConfig({
                     }
 
                     // befly-addon
-                    if (id.includes('@befly-addon/')) {
+                    if (id.includes('@befly-addon/') || id.includes('packages/addonAdmin/') || id.includes('packages\\addonAdmin\\')) {
                         return 'befly-addon';
                     }
 

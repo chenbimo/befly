@@ -11,4 +11,5 @@ publicHoistPattern = [
     "lerna",
     "ci-info",
     "@opentiny/*",
+    "vue-router",
 ]

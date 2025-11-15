@@ -25,7 +25,6 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
