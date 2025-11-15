@@ -11,7 +11,7 @@ import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
 import UnoCSS from 'unocss/vite';
 import { fileURLToPath, URL } from 'node:url';
-import { scanBeflyAddonViews } from '@befly-addon/admin';
+import { scanBeflyAddonViews } from '@befly-addon/admin/utils/scanBeflyAddonViews';
 
 const routesFolders = scanBeflyAddonViews();
 

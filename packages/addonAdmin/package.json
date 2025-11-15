@@ -8,10 +8,7 @@
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
-    "main": "./exports/index.ts",
-    "exports": {
-        ".": "./exports/index.ts"
-    },
+    "main": "addon.config.json",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
@@ -21,7 +18,8 @@
         "apis/",
         "tables/",
         "views/",
-        "exports/",
+        "utils/",
+        "types/",
         "addon.config.json",
         "README.md",
         "package.json",

@@ -1,15 +1,5 @@
-import type { RouteRecordRaw, Component } from 'vue-router';
-
-/**
- * 布局配置接口
- */
-export interface LayoutConfig {
-    path: string;
-    layoutName: string;
-    component: Component;
-    children?: LayoutConfig[];
-    meta?: Record<string, any>;
-}
+import type { RouteRecordRaw } from 'vue-router';
+import type { LayoutConfig } from '../types/layout';
 
 /**
  * 自定义布局处理函数
