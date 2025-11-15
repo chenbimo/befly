@@ -13,7 +13,7 @@
                         <span class="resource-value">{{ systemResources.cpu.usage }}%</span>
                         <span class="resource-desc">{{ systemResources.cpu.cores }}核心</span>
                     </div>
-                    <TinyProgress :percentage="systemResources.cpu.usage" :status="getProgressColor(systemResources.cpu.usage)" />
+                    <t-progress :percentage="systemResources.cpu.usage" :status="getProgressColor(systemResources.cpu.usage)" />
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
@@ -22,7 +22,7 @@
                         <span class="resource-value">{{ systemResources.memory.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.memory.used }}GB / {{ systemResources.memory.total }}GB</span>
                     </div>
-                    <TinyProgress :percentage="systemResources.memory.percentage" :status="getProgressColor(systemResources.memory.percentage)" />
+                    <t-progress :percentage="systemResources.memory.percentage" :status="getProgressColor(systemResources.memory.percentage)" />
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
@@ -31,7 +31,7 @@
                         <span class="resource-value">{{ systemResources.disk.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.disk.used }}GB / {{ systemResources.disk.total }}GB</span>
                     </div>
-                    <TinyProgress :percentage="systemResources.disk.percentage" :status="getProgressColor(systemResources.disk.percentage)" />
+                    <t-progress :percentage="systemResources.disk.percentage" :status="getProgressColor(systemResources.disk.percentage)" />
                 </div>
             </div>
         </div>

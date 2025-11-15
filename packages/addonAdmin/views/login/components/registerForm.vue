@@ -115,15 +115,15 @@ const $Method = {
     max-width: 450px;
 }
 
-.tiny-form-item {
+.t-form__item {
     width: 100%;
     margin-bottom: 1.2rem;
 
-    :deep(.tiny-form__controls) {
+    :deep(.t-form__controls) {
         width: 100%;
     }
 
-    :deep(.tiny-input) {
+    :deep(.t-input) {
         width: 100%;
         background: #f8f9fa;
         border: 1px solid #e0e0e0;
@@ -163,7 +163,7 @@ const $Method = {
         box-shadow: 0 3px 10px rgba(72, 177, 159, 0.3);
     }
 
-    :deep(.tiny-button__text) {
+    :deep(.t-button__text) {
         color: #fff;
     }
 }

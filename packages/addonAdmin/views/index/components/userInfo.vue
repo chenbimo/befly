@@ -77,22 +77,13 @@ const $Method = {
                     messages.push(`角色缓存: ${roles.count} 个`);
                 }
 
-                TinyMessage.success({
-                    message: `缓存刷新成功！${messages.join('，')}`,
-                    duration: 3000
-                });
+                MessagePlugin.success(`缓存刷新成功！${messages.join('，')}`);
             } else {
-                TinyMessage.warning({
-                    message: result.msg || '部分缓存刷新失败',
-                    duration: 3000
-                });
+                MessagePlugin.warning(result.msg || '部分缓存刷新失败');
             }
         } catch (error) {
             console.error('刷新缓存失败:', error);
-            TinyMessage.error({
-                message: '刷新缓存失败，请稍后重试',
-                duration: 3000
-            });
+            MessagePlugin.error('刷新缓存失败，请稍后重试');
         } finally {
             $Data.refreshing = false;
         }

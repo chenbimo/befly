@@ -14,14 +14,5 @@ meta:
 <style lang="scss" scoped>
 .page-home {
     padding: 20px;
-
-    h1 {
-        color: $primary-color;
-        margin-bottom: 16px;
-    }
-
-    p {
-        color: $text-color-secondary;
-    }
 }
 </style>

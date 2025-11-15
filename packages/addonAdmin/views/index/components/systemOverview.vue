@@ -5,35 +5,31 @@
             <h2>系统概览</h2>
         </div>
         <div class="section-content">
-            <tiny-row :flex="true">
-                <tiny-col :xs="24" :sm="12" :md="12" :lg="12">
-                    <div class="info-block">
-                        <div class="stats-grid">
-                            <div class="stat-box stat-primary">
-                                <i-lucide:menu />
-                                <div class="stat-content">
-                                    <div class="stat-value">{{ permissionStats.menuCount }}</div>
-                                    <div class="stat-label">菜单总数</div>
-                                </div>
-                            </div>
-                            <div class="stat-box stat-success">
-                                <i-lucide:webhook />
-                                <div class="stat-content">
-                                    <div class="stat-value">{{ permissionStats.apiCount }}</div>
-                                    <div class="stat-label">接口总数</div>
-                                </div>
-                            </div>
-                            <div class="stat-box stat-warning">
-                                <i-lucide:users />
-                                <div class="stat-content">
-                                    <div class="stat-value">{{ permissionStats.roleCount }}</div>
-                                    <div class="stat-label">角色总数</div>
-                                </div>
-                            </div>
+            <div class="info-block">
+                <div class="stats-grid">
+                    <div class="stat-box stat-primary">
+                        <i-lucide:menu />
+                        <div class="stat-content">
+                            <div class="stat-value">{{ permissionStats.menuCount }}</div>
+                            <div class="stat-label">菜单总数</div>
                         </div>
                     </div>
-                </tiny-col>
-            </tiny-row>
+                    <div class="stat-box stat-success">
+                        <i-lucide:webhook />
+                        <div class="stat-content">
+                            <div class="stat-value">{{ permissionStats.apiCount }}</div>
+                            <div class="stat-label">接口总数</div>
+                        </div>
+                    </div>
+                    <div class="stat-box stat-warning">
+                        <i-lucide:users />
+                        <div class="stat-content">
+                            <div class="stat-value">{{ permissionStats.roleCount }}</div>
+                            <div class="stat-label">角色总数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>

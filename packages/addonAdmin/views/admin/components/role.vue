@@ -5,7 +5,7 @@
                 <t-tag type="info">{{ $Prop.rowData.username }}</t-tag>
                 <span class="user-email">{{ $Prop.rowData.email }}</span>
             </div>
-            <tiny-divider />
+            <t-divider />
             <t-select v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
         </div>
         <template #footer>

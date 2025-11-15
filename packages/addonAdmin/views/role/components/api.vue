@@ -1,9 +1,13 @@
-<template>
+﻿<template>
     <t-dialog v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
         <div class="comp-role-api">
             <!-- 搜索框 -->
             <div class="search-box">
-                <TinySearch v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @update:modelValue="$Method.onSearch" />
+                <t-input v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @change="$Method.onSearch">
+                    <template #prefix-icon>
+                        <i-lucide:search />
+                    </template>
+                </t-input>
             </div>
 
             <!-- 接口分组列表 -->
@@ -11,9 +15,9 @@
                 <div v-for="group in $Data.filteredApiData" :key="group.name" class="api-group">
                     <div class="group-header">{{ group.title }}</div>
                     <div class="api-checkbox-list">
-                        <TinyCheckboxGroup v-model="$Data.checkedApiIds">
-                            <TinyCheckbox v-for="api in group.apis" :key="api.id" :label="api.id"> {{ api.label }} </TinyCheckbox>
-                        </TinyCheckboxGroup>
+                        <t-checkbox-group v-model="$Data.checkedApiIds">
+                            <t-checkbox v-for="api in group.apis" :key="api.id" :value="api.id"> {{ api.label }} </t-checkbox>
+                        </t-checkbox-group>
                     </div>
                 </div>
             </div>
@@ -241,18 +245,18 @@ $Method.initData();
                 padding: 16px;
                 background-color: $bg-color-container;
 
-                :deep(.tiny-checkbox-group) {
+                :deep(.t-checkbox-group) {
                     display: flex;
                     flex-wrap: wrap;
                     gap: 12px;
                     width: 100%;
                 }
 
-                :deep(.tiny-checkbox) {
+                :deep(.t-checkbox) {
                     flex: 0 0 calc(33.333% - 8px);
                     margin: 0;
 
-                    .tiny-checkbox__label {
+                    .t-checkbox__label {
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
@@ -264,7 +268,7 @@ $Method.initData();
 }
 
 // 底部操作栏布局
-:deep(.tiny-dialog-box__footer) {
+:deep(.t-dialog__footer) {
     display: flex;
     justify-content: space-between;
     align-items: center;
