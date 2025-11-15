@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
             <IconLucideActivity />
@@ -39,10 +39,6 @@
 </template>
 
 <script setup>
-import IconLucideDisc from '~icons/lucide/disc';
-import IconLucideCpu from '~icons/lucide/cpu';
-import IconLucideHardDrive from '~icons/lucide/hard-drive';
-import IconLucideActivity from '~icons/lucide/activity';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

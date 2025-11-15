@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
             <IconLucidePackage />
@@ -24,8 +24,6 @@
 </template>
 
 <script setup>
-import IconLucideBox from '~icons/lucide/box';
-import IconLucidePackage from '~icons/lucide/package';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

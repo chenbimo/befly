@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="user-manage">
         <!-- 上：过滤和操作栏 -->
         <div class="toolbar">
@@ -74,9 +74,6 @@
 </template>
 
 <script setup>
-import IconLucidePlus from '~icons/lucide/plus';
-import IconLucideSearch from '~icons/lucide/search';
-import IconLucideRotateCw from '~icons/lucide/rotate-cw';
 import { $Http } from '@/plugins/http';
 
 // 响应式数据

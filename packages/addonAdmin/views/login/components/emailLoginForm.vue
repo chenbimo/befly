@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <t-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
         <t-form-item prop="account" label="账号">
             <t-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
@@ -25,8 +25,6 @@
 </template>
 
 <script setup>
-import IconLucideUser from '~icons/lucide/user';
-import IconLucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
 import { $Storage } from '@/plugins/storage';
 

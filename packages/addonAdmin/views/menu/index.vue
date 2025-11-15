@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="page-menu page-table">
         <div class="main-tool">
             <div class="left">
@@ -57,11 +57,6 @@
 </template>
 
 <script setup>
-import IconLucidePlus from '~icons/lucide/plus';
-import IconLucideRotateCw from '~icons/lucide/rotate-cw';
-import IconLucideSquare from '~icons/lucide/square';
-import IconLucidePencil from '~icons/lucide/pencil';
-import IconLucideTrash2 from '~icons/lucide/trash-2';
 
 import EditDialog from './components/edit.vue';
 import { $Http } from '@/plugins/http';

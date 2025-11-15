@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
             <IconLucideCheckCircle />
@@ -35,17 +35,6 @@
 </template>
 
 <script setup>
-import IconLucideCheckCircle from '~icons/lucide/check-circle';
-import IconLucideZap from '~icons/lucide/zap';
-import IconLucideCloud from '~icons/lucide/cloud';
-import IconLucideCircle from '~icons/lucide/circle';
-import IconLucideXCircle from '~icons/lucide/x-circle';
-import IconLucideCheck from '~icons/lucide/check';
-import IconLucideX from '~icons/lucide/x';
-import IconLucideAlertCircle from '~icons/lucide/alert-circle';
-import IconLucideDatabase from '~icons/lucide/database';
-import IconLucideMail from '~icons/lucide/mail';
-import IconLucideHardDrive from '~icons/lucide/hard-drive';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block user-info-card">
         <div class="user-header">
             <div class="user-avatar">
@@ -37,11 +37,6 @@
 </template>
 
 <script setup>
-import IconLucidePhone from '~icons/lucide/phone';
-import IconLucideClock from '~icons/lucide/clock';
-import IconLucideUser from '~icons/lucide/user';
-import IconLucideMail from '~icons/lucide/mail';
-import IconLucideRotateCw from '~icons/lucide/rotate-cw';
 import { $Http } from '@/plugins/http';
 
 // 响应式数据

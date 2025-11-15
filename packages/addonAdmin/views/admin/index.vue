@@ -68,11 +68,6 @@
 </template>
 
 <script setup>
-import IconLucidePlus from '~icons/lucide/plus';
-import IconLucideRotateCw from '~icons/lucide/rotate-cw';
-import IconLucidePencil from '~icons/lucide/pencil';
-import IconLucideUser from '~icons/lucide/user';
-import IconLucideTrash2 from '~icons/lucide/trash-2';
 
 import EditDialog from './components/edit.vue';
 import RoleDialog from './components/role.vue';

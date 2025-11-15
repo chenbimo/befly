@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
             <IconLucideActivity />
@@ -53,11 +53,6 @@
 </template>
 
 <script setup>
-import IconLucideActivity from '~icons/lucide/activity';
-import IconLucideTrendingUp from '~icons/lucide/trending-up';
-import IconLucideAlertCircle from '~icons/lucide/alert-circle';
-import IconLucideClock from '~icons/lucide/clock';
-import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

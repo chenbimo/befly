@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
             <IconLucideInfo />
@@ -39,11 +39,6 @@
 </template>
 
 <script setup>
-import IconLucideWebhook from '~icons/lucide/webhook';
-import IconLucideUsers from '~icons/lucide/users';
-import IconLucideUser from '~icons/lucide/user';
-import IconLucideMenu from '~icons/lucide/menu';
-import IconLucideInfo from '~icons/lucide/info';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
             <IconLucideBell />
@@ -26,13 +26,6 @@
 </template>
 
 <script setup>
-import IconLucideBell from '~icons/lucide/bell';
-import IconLucideCheckCircle from '~icons/lucide/check-circle';
-import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
-import IconLucideXCircle from '~icons/lucide/x-circle';
-import IconLucideInfo from '~icons/lucide/info';
-import IconLucideCheck from '~icons/lucide/check';
-import IconLucideX from '~icons/lucide/x';
 
 // 组件内部数据
 const notifications = $ref([

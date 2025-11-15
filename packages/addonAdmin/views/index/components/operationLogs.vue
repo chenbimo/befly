@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
             <IconLucideFileText />
@@ -34,7 +34,6 @@
 </template>
 
 <script setup>
-import IconLucideFileText from '~icons/lucide/file-text';
 
 // 组件内部数据
 const operationLogs = $ref([

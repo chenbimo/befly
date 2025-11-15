@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <t-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="70px" label-position="left">
         <t-form-item prop="username" label="用户名">
             <t-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
@@ -37,10 +37,6 @@
 </template>
 
 <script setup>
-import IconLucideUser from '~icons/lucide/user';
-import IconLucideMail from '~icons/lucide/mail';
-import IconLucideLock from '~icons/lucide/lock';
-import IconLucideSmile from '~icons/lucide/smile';
 import { $Http } from '@/plugins/http';
 
 const emit = defineEmits(['success']);
