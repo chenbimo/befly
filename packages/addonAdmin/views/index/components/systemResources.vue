@@ -39,7 +39,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import IconLucideDisc from '~icons/lucide/disc';
 import { Progress as TinyProgress } from '@opentiny/vue';
 import IconLucideCpu from '~icons/lucide/cpu';

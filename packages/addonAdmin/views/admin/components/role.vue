@@ -16,7 +16,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import { Button as TinyButton, DialogBox as TinyDialogBox, Select as TinySelect, Tag as TinyTag, Modal } from '@opentiny/vue';
 import { $Http } from '@/plugins/http';
 

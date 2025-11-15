@@ -65,7 +65,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import { Button as TinyButton, Grid as TinyGrid, GridColumn as TinyGridColumn, Tag as TinyTag, Dropdown as TinyDropdown, DropdownMenu as TinyDropdownMenu, DropdownItem as TinyDropdownItem, Pager as TinyPager, Modal } from '@opentiny/vue';
 import IconLucidePlus from '~icons/lucide/plus';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';

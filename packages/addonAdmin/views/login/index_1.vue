@@ -26,7 +26,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import WelcomePanel from './components/welcomePanel.vue';
 import EmailLoginForm from './components/emailLoginForm.vue';
 import RegisterForm from './components/registerForm.vue';

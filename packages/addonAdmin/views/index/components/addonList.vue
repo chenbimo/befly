@@ -24,7 +24,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import IconLucideBox from '~icons/lucide/box';
 import { Tag as TinyTag } from '@opentiny/vue';
 import IconLucidePackage from '~icons/lucide/package';

@@ -35,7 +35,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import IconLucideCheckCircle from '~icons/lucide/check-circle';
 import IconLucideZap from '~icons/lucide/zap';
 import IconLucideCloud from '~icons/lucide/cloud';

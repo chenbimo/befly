@@ -39,7 +39,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import IconLucideWebhook from '~icons/lucide/webhook';
 import IconLucideUsers from '~icons/lucide/users';
 import IconLucideUser from '~icons/lucide/user';

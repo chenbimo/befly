@@ -37,7 +37,6 @@
 </template>
 
 <script setup>
-import { $ref, $shallowRef } from 'vue-macros/macros';
 import { Button as TinyButton, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput } from '@opentiny/vue';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideMail from '~icons/lucide/mail';

@@ -36,7 +36,6 @@
 </template>
 
 <script setup>
-import { $ref } from 'vue-macros/macros';
 import IconLucideServer from '~icons/lucide/server';
 import { $Http } from '@/plugins/http';
 

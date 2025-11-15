@@ -131,6 +131,6 @@ export default defineConfig({
 
     // 优化配置
     optimizeDeps: {
-        include: ['vue', 'vue-router', 'pinia', 'axios', '@opentiny/vue']
+        include: ['vue', 'vue-router', 'pinia', 'axios', '@opentiny/vue', 'vue-macros/macros']
     }
 });
