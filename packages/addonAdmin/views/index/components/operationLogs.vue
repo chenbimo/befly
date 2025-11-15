@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { Tag as TinyTag } from '@opentiny/vue';
+import { Tag as TinyTag } from '@opentiny/vue-tag';;
 import IconLucideFileText from '~icons/lucide/file-text';
 
 // 组件内部数据

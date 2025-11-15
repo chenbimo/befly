@@ -16,7 +16,11 @@
 </template>
 
 <script setup>
-import { Button as TinyButton, DialogBox as TinyDialogBox, Select as TinySelect, Tag as TinyTag, Modal } from '@opentiny/vue';
+import { Button as TinyButton } from '@opentiny/vue-button';
+import { DialogBox as TinyDialogBox } from '@opentiny/vue-dialog-box';
+import { Select as TinySelect } from '@opentiny/vue-select';
+import { Tag as TinyTag } from '@opentiny/vue-tag';
+import { Modal } from '@opentiny/vue-modal';;
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

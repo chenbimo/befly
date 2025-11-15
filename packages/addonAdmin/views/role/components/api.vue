@@ -33,7 +33,12 @@
 </template>
 
 <script setup>
-import { Button as TinyButton, DialogBox as TinyDialogBox, Search as TinySearch, Checkbox as TinyCheckbox, CheckboxGroup as TinyCheckboxGroup, Modal } from '@opentiny/vue';
+import { Button as TinyButton } from '@opentiny/vue-button';
+import { DialogBox as TinyDialogBox } from '@opentiny/vue-dialog-box';
+import { Search as TinySearch } from '@opentiny/vue-search';
+import { Checkbox as TinyCheckbox } from '@opentiny/vue-checkbox';
+import { CheckboxGroup as TinyCheckboxGroup } from '@opentiny/vue-checkbox-group';
+import { Modal } from '@opentiny/vue-modal';;
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

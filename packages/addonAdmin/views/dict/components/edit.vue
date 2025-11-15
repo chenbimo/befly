@@ -35,7 +35,15 @@
 
 <script setup>
 import { watch } from 'vue';
-import { Button as TinyButton, DialogBox as TinyDialogBox, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Numeric as TinyNumeric, Radio as TinyRadio, RadioGroup as TinyRadioGroup, Modal } from '@opentiny/vue';
+import { Button as TinyButton } from '@opentiny/vue-button';
+import { DialogBox as TinyDialogBox } from '@opentiny/vue-dialog-box';
+import { Form as TinyForm } from '@opentiny/vue-form';
+import { FormItem as TinyFormItem } from '@opentiny/vue-form-item';
+import { Input as TinyInput } from '@opentiny/vue-input';
+import { Numeric as TinyNumeric } from '@opentiny/vue-numeric';
+import { Radio as TinyRadio } from '@opentiny/vue-radio';
+import { RadioGroup as TinyRadioGroup } from '@opentiny/vue-radio-group';
+import { Modal } from '@opentiny/vue-modal';;
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

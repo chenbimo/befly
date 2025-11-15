@@ -8,7 +8,6 @@ import Components from 'unplugin-vue-components/vite';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
-import { TinyVueSingleResolver } from '@opentiny/unplugin-tiny-vue';
 import UnoCSS from 'unocss/vite';
 import { fileURLToPath, URL } from 'node:url';
 import { scanBeflyAddonViews } from '@befly-addon/admin/utils/scanBeflyAddonViews';
@@ -53,7 +52,10 @@ export default defineConfig({
                 'pinia',
                 VueRouterAutoImports,
                 {
-                    '@opentiny/vue': ['Modal', 'Notify', 'Message', 'MessageBox', 'Loading']
+                    '@opentiny/vue-modal': ['Modal', 'MessageBox'],
+                    '@opentiny/vue-notify': ['Notify'],
+                    '@opentiny/vue-message': ['Message'],
+                    '@opentiny/vue-loading': ['Loading']
                 }
             ],
             dts: 'src/types/auto-imports.d.ts',
@@ -63,7 +65,7 @@ export default defineConfig({
 
         // 组件自动导入
         Components({
-            resolvers: [TinyVueSingleResolver, IconsResolver({})],
+            resolvers: [IconsResolver({})],
             dirs: ['src/components'],
             deep: true,
             dts: 'src/types/components.d.ts'
@@ -101,18 +103,90 @@ export default defineConfig({
         assetsDir: 'assets',
         sourcemap: false,
         minify: 'esbuild',
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
                 chunkFileNames: 'assets/js/[name]-[hash].js',
                 entryFileNames: 'assets/js/[name]-[hash].js',
                 assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
-                manualChunks: {
-                    // Vue 核心
-                    'vue-vendor': ['vue', 'vue-router', 'pinia'],
-                    // UI 组件库
-                    'ui-vendor': ['@opentiny/vue'],
-                    // 工具库
-                    'utils-vendor': ['axios']
+                manualChunks: (id) => {
+                    // Vue 核心框架（独立文件）
+                    if (id.includes('node_modules/vue/') || id.includes('node_modules/@vue/')) {
+                        return 'framework-vue';
+                    }
+                    if (id.includes('node_modules/vue-router/')) {
+                        return 'framework-vue-router';
+                    }
+                    if (id.includes('node_modules/pinia/')) {
+                        return 'framework-pinia';
+                    }
+
+                    // TinyVue 细粒度拆分
+                    if (id.includes('@opentiny/vue-renderless/src/grid')) {
+                        return 'tiny-grid';
+                    }
+                    if (id.includes('@opentiny/vue-renderless/src/table')) {
+                        return 'tiny-table';
+                    }
+                    if (id.includes('@opentiny/vue-renderless/src/tree')) {
+                        return 'tiny-tree';
+                    }
+                    if (id.includes('@opentiny/vue-renderless/src/form')) {
+                        return 'tiny-form';
+                    }
+                    if (id.includes('node_modules/@opentiny/vue-renderless/')) {
+                        return 'tiny-renderless';
+                    }
+                    if (id.includes('node_modules/@opentiny/vue-theme/')) {
+                        return 'tiny-theme';
+                    }
+                    if (id.includes('node_modules/@opentiny/vue-locale/')) {
+                        return 'tiny-locale';
+                    }
+                    if (id.includes('node_modules/@opentiny/vue-common/')) {
+                        return 'tiny-common';
+                    }
+                    if (id.includes('node_modules/@opentiny/vue-icon/')) {
+                        return 'tiny-icon';
+                    }
+
+                    // 工具库（独立文件）
+                    if (id.includes('node_modules/axios/')) {
+                        return 'lib-axios';
+                    }
+
+                    // lodash-es 独立拆分（体积较大）
+                    if (id.includes('node_modules/lodash-es/') || id.includes('node_modules/.bun/lodash-es')) {
+                        return 'lib-lodash';
+                    }
+
+                    // echarts 及相关库（TinyVue 图表组件依赖）
+                    if (id.includes('node_modules/echarts/') || id.includes('node_modules/.bun/echarts')) {
+                        return 'lib-echarts';
+                    }
+                    if (id.includes('node_modules/zrender/') || id.includes('node_modules/.bun/zrender')) {
+                        return 'lib-zrender';
+                    }
+
+                    // Lucide 图标
+                    if (id.includes('node_modules/@iconify/') || id.includes('~icons/')) {
+                        return 'icons';
+                    }
+
+                    // Vue Macros
+                    if (id.includes('node_modules/@vue-macros/') || id.includes('node_modules/vue-macros/')) {
+                        return 'vue-macros';
+                    }
+
+                    // befly-addon
+                    if (id.includes('@befly-addon/')) {
+                        return 'befly-addon';
+                    }
+
+                    // 其他 node_modules 依赖
+                    if (id.includes('node_modules/')) {
+                        return 'vendor';
+                    }
                 }
             }
         }
@@ -131,6 +205,6 @@ export default defineConfig({
 
     // 优化配置
     optimizeDeps: {
-        include: ['vue', 'vue-router', 'pinia', 'axios', '@opentiny/vue', 'vue-macros/macros']
+        include: ['vue', 'vue-router', 'pinia', 'axios', 'vue-macros/macros']
     }
 });

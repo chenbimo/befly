@@ -26,7 +26,11 @@
 
 <script setup>
 import { useRouter, useRoute } from 'vue-router';
-import { Button as TinyButton, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Modal } from '@opentiny/vue';
+import { Button as TinyButton } from '@opentiny/vue-button';
+import { Form as TinyForm } from '@opentiny/vue-form';
+import { FormItem as TinyFormItem } from '@opentiny/vue-form-item';
+import { Input as TinyInput } from '@opentiny/vue-input';
+import { Modal } from '@opentiny/vue-modal';;
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';

@@ -12,7 +12,10 @@
 
 <script setup>
 import { nextTick } from 'vue';
-import { Button as TinyButton, DialogBox as TinyDialogBox, Tree as TinyTree, Modal } from '@opentiny/vue';
+import { Button as TinyButton } from '@opentiny/vue-button';
+import { DialogBox as TinyDialogBox } from '@opentiny/vue-dialog-box';
+import { Tree as TinyTree } from '@opentiny/vue-tree';
+import { Modal } from '@opentiny/vue-modal';;
 
 import { arrayToTree } from '@/utils';
 import { $Http } from '@/plugins/http';

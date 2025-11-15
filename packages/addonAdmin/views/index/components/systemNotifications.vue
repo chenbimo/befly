@@ -30,7 +30,7 @@ import IconLucideBell from '~icons/lucide/bell';
 import IconLucideCheckCircle from '~icons/lucide/check-circle';
 import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
 import IconLucideXCircle from '~icons/lucide/x-circle';
-import { Tag as TinyTag } from '@opentiny/vue';
+import { Tag as TinyTag } from '@opentiny/vue-tag';;
 import IconLucideInfo from '~icons/lucide/info';
 import IconLucideCheck from '~icons/lucide/check';
 import IconLucideX from '~icons/lucide/x';

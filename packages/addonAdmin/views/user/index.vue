@@ -74,7 +74,8 @@
 </template>
 
 <script setup>
-import { Tag as TinyTag, Modal } from '@opentiny/vue';
+import { Tag as TinyTag } from '@opentiny/vue-tag';
+import { Modal } from '@opentiny/vue-modal';;
 import IconLucidePlus from '~icons/lucide/plus';
 import IconLucideSearch from '~icons/lucide/search';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';
