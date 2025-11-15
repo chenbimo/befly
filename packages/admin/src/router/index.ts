@@ -1,11 +1,20 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { routes, handleHotUpdate } from 'vue-router/auto-routes';
+import { routes } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
 import { Layouts } from '@befly-addon/admin/util';
 
 // 应用自定义布局系统
 const layoutRoutes = Layouts(routes);
+
+// 添加根路径重定向
+const finalRoutes: RouteRecordRaw[] = [
+    {
+        path: '/',
+        redirect: '/addon/admin'
+    },
+    ...layoutRoutes
+];
 
 /**
  * 创建并导出路由实例
@@ -13,13 +22,8 @@ const layoutRoutes = Layouts(routes);
  */
 export const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
-    routes: layoutRoutes
+    routes: finalRoutes
 });
-
-// HMR 支持
-if (import.meta.hot) {
-    handleHotUpdate(router);
-}
 
 // 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
