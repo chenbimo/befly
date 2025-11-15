@@ -14,6 +14,9 @@ import { fileURLToPath, URL } from 'node:url';
 import { scanBeflyAddonViews } from '@befly-addon/admin/utils/scanBeflyAddonViews';
 
 export default defineConfig({
+    // 基础路径配置（支持二级目录部署）
+    base: './',
+
     // 插件配置
     plugins: [
         // UnoCSS
