@@ -31,8 +31,7 @@ function applyLayouts(configs: LayoutConfig[]): RouteRecordRaw[] {
 }
 
 // 应用自定义布局系统
-const layoutConfigs = Layouts(routes);
-const layoutRoutes = applyLayouts(layoutConfigs);
+const layoutRoutes = applyLayouts(Layouts(routes));
 
 // 添加根路径重定向
 const finalRoutes: RouteRecordRaw[] = [
