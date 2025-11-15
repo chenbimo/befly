@@ -68,15 +68,15 @@
 </template>
 
 <script setup>
-import { Button as TinyButton } from '@opentiny/vue-button';
-import { Grid as TinyGrid } from '@opentiny/vue-grid';
-import { GridColumn as TinyGridColumn } from '@opentiny/vue-grid-column';
-import { Tag as TinyTag } from '@opentiny/vue-tag';
-import { Dropdown as TinyDropdown } from '@opentiny/vue-dropdown';
-import { DropdownMenu as TinyDropdownMenu } from '@opentiny/vue-dropdown-menu';
-import { DropdownItem as TinyDropdownItem } from '@opentiny/vue-dropdown-item';
-import { Pager as TinyPager } from '@opentiny/vue-pager';
-import { Modal } from '@opentiny/vue-modal';;
+import TinyButton from '@opentiny/vue-button';
+import TinyGrid from '@opentiny/vue-grid';
+import TinyGridColumn from '@opentiny/vue-grid-column';
+import TinyTag from '@opentiny/vue-tag';
+import TinyDropdown from '@opentiny/vue-dropdown';
+import TinyDropdownMenu from '@opentiny/vue-dropdown-menu';
+import TinyDropdownItem from '@opentiny/vue-dropdown-item';
+import TinyPager from '@opentiny/vue-pager';
+import Modal from '@opentiny/vue-modal';
 import IconLucidePlus from '~icons/lucide/plus';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';
 import IconLucideSquare from '~icons/lucide/square';

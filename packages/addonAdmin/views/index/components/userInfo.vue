@@ -39,7 +39,7 @@
 <script setup>
 import IconLucidePhone from '~icons/lucide/phone';
 import IconLucideClock from '~icons/lucide/clock';
-import { Button as TinyButton } from '@opentiny/vue-button';;
+import TinyButton from '@opentiny/vue-button';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideMail from '~icons/lucide/mail';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';

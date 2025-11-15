@@ -30,15 +30,15 @@
 </template>
 
 <script setup>
-import { Button as TinyButton } from '@opentiny/vue-button';
-import { DialogBox as TinyDialogBox } from '@opentiny/vue-dialog-box';
-import { Form as TinyForm } from '@opentiny/vue-form';
-import { FormItem as TinyFormItem } from '@opentiny/vue-form-item';
-import { Input as TinyInput } from '@opentiny/vue-input';
-import { Numeric as TinyNumeric } from '@opentiny/vue-numeric';
-import { Radio as TinyRadio } from '@opentiny/vue-radio';
-import { RadioGroup as TinyRadioGroup } from '@opentiny/vue-radio-group';
-import { Modal } from '@opentiny/vue-modal';;
+import TinyButton from '@opentiny/vue-button';
+import TinyDialogBox from '@opentiny/vue-dialog-box';
+import TinyForm from '@opentiny/vue-form';
+import TinyFormItem from '@opentiny/vue-form-item';
+import TinyInput from '@opentiny/vue-input';
+import TinyNumeric from '@opentiny/vue-numeric';
+import TinyRadio from '@opentiny/vue-radio';
+import TinyRadioGroup from '@opentiny/vue-radio-group';
+import Modal from '@opentiny/vue-modal';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

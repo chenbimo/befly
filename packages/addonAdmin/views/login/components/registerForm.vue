@@ -37,10 +37,10 @@
 </template>
 
 <script setup>
-import { Button as TinyButton } from '@opentiny/vue-button';
-import { Form as TinyForm } from '@opentiny/vue-form';
-import { FormItem as TinyFormItem } from '@opentiny/vue-form-item';
-import { Input as TinyInput } from '@opentiny/vue-input';;
+import TinyButton from '@opentiny/vue-button';
+import TinyForm from '@opentiny/vue-form';
+import TinyFormItem from '@opentiny/vue-form-item';
+import TinyInput from '@opentiny/vue-input';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideMail from '~icons/lucide/mail';
 import IconLucideLock from '~icons/lucide/lock';

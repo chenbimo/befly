@@ -52,10 +52,10 @@ export default defineConfig({
                 'pinia',
                 VueRouterAutoImports,
                 {
-                    '@opentiny/vue-modal': ['Modal', 'MessageBox'],
-                    '@opentiny/vue-notify': ['Notify'],
-                    '@opentiny/vue-message': ['Message'],
-                    '@opentiny/vue-loading': ['Loading']
+                    '@opentiny/vue-modal': [['default', 'Modal'], ['default', 'MessageBox']],
+                    '@opentiny/vue-notify': [['default', 'Notify']],
+                    '@opentiny/vue-message': [['default', 'Message']],
+                    '@opentiny/vue-loading': [['default', 'Loading']]
                 }
             ],
             dts: 'src/types/auto-imports.d.ts',

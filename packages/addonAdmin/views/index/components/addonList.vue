@@ -25,7 +25,7 @@
 
 <script setup>
 import IconLucideBox from '~icons/lucide/box';
-import { Tag as TinyTag } from '@opentiny/vue-tag';;
+import TinyTag from '@opentiny/vue-tag';
 import IconLucidePackage from '~icons/lucide/package';
 import { $Http } from '@/plugins/http';
 

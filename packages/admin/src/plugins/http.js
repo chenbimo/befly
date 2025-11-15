@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Modal } from '@opentiny/vue-modal';;
+import Modal from '@opentiny/vue-modal';
 import { $Storage } from './storage';
 
 /**

@@ -42,5 +42,32 @@
     "gitHead": "24b35d0ef83d78db3dea67784e052516d4a83fc5",
     "dependencies": {
         "befly": "workspace:*"
+    },
+    "peerDependencies": {
+        "vue": "^3.0.0",
+        "vue-router": "^4.0.0",
+        "@opentiny/vue-button": "~3.27.0",
+        "@opentiny/vue-checkbox": "~3.27.0",
+        "@opentiny/vue-checkbox-group": "~3.27.0",
+        "@opentiny/vue-dialog-box": "~3.27.0",
+        "@opentiny/vue-dropdown": "~3.27.0",
+        "@opentiny/vue-dropdown-item": "~3.27.0",
+        "@opentiny/vue-dropdown-menu": "~3.27.0",
+        "@opentiny/vue-form": "~3.27.0",
+        "@opentiny/vue-form-item": "~3.27.0",
+        "@opentiny/vue-grid": "~3.27.0",
+        "@opentiny/vue-grid-column": "~3.27.0",
+        "@opentiny/vue-icon": "~3.27.0",
+        "@opentiny/vue-input": "~3.27.0",
+        "@opentiny/vue-modal": "~3.27.0",
+        "@opentiny/vue-numeric": "~3.27.0",
+        "@opentiny/vue-pager": "~3.27.0",
+        "@opentiny/vue-progress": "~3.27.0",
+        "@opentiny/vue-radio": "~3.27.0",
+        "@opentiny/vue-radio-group": "~3.27.0",
+        "@opentiny/vue-search": "~3.27.0",
+        "@opentiny/vue-select": "~3.27.0",
+        "@opentiny/vue-tag": "~3.27.0",
+        "@opentiny/vue-tree": "~3.27.0"
     }
 }

@@ -13,8 +13,8 @@
 </template>
 
 <script setup>
-import { useRouter, useRoute } from 'vue-router';
-import { Button as TinyButton } from '@opentiny/vue-button';;
+import { useRouter } from 'vue-router';
+import TinyButton from '@opentiny/vue-button';
 
 const router = useRouter();
 

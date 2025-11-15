@@ -9,8 +9,7 @@
 </template>
 
 <script setup>
-import { useRouter, useRoute } from 'vue-router';
-import { Modal } from '@opentiny/vue-modal';;
+import Modal from '@opentiny/vue-modal';
 // 新闻页面逻辑
 </script>
 
