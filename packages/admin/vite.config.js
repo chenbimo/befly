@@ -13,8 +13,6 @@ import UnoCSS from 'unocss/vite';
 import { fileURLToPath, URL } from 'node:url';
 import { scanBeflyAddonViews } from '@befly-addon/admin/utils/scanBeflyAddonViews';
 
-const routesFolders = scanBeflyAddonViews();
-
 export default defineConfig({
     // 插件配置
     plugins: [
@@ -26,7 +24,7 @@ export default defineConfig({
 
         // VueRouter 必须在 Vue 插件之前
         VueRouter({
-            routesFolder: routesFolders,
+            routesFolder: scanBeflyAddonViews(),
             dts: './src/types/typed-router.d.ts',
             extensions: ['.vue'],
             importMode: 'async',
