@@ -128,11 +128,6 @@ export default defineConfig({
                         return 'tdesign';
                     }
 
-                    // TDesign Icons
-                    if (id.includes('node_modules/tdesign-icons-vue-next/') || id.includes('node_modules/.bun/tdesign-icons-vue-next')) {
-                        return 'tdesign-icons';
-                    }
-
                     // 工具库（独立文件）
                     if (id.includes('node_modules/axios/')) {
                         return 'lib-axios';

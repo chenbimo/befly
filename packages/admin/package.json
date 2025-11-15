@@ -30,7 +30,6 @@
     },
     "dependencies": {
         "tdesign-vue-next": "^1.10.6",
-        "tdesign-icons-vue-next": "^0.3.6",
         "axios": "^1.13.2",
         "pinia": "^3.0.4",
         "vue": "^3.5.22",

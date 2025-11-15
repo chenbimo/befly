@@ -13,7 +13,7 @@
                     </div>
                     <t-button variant="text" size="medium" @click="$Method.handleLogout">
                         <template #icon>
-                            <CloseIcon />
+                            <i-lucide:x />
                         </template>
                     </t-button>
                 </div>
@@ -57,7 +57,6 @@
 
 <script setup>
 import { arrayToTree } from '@/utils';
-import { CloseIcon } from 'tdesign-icons-vue-next';
 
 const router = useRouter();
 const route = useRoute();
