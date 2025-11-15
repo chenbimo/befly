@@ -44,7 +44,9 @@ export default defineConfig({
         }),
 
         // Vue Reactivity Transform 支持
-        ReactivityTransform(),
+        ReactivityTransform({
+            exclude: []
+        }),
 
         // API 自动导入
         AutoImport({
