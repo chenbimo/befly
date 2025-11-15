@@ -11,7 +11,7 @@ export function scanBeflyAddonViews() {
     // 使用绝对路径：基于项目根目录（process.cwd()）
     const projectRoot = process.cwd();
     const addonBasePath = join(projectRoot, 'node_modules', '@befly-addon');
-    const routesFolders: Array<{ src: string; path: string }> = [];
+    const routesFolders = [];
 
     if (!existsSync(addonBasePath)) {
         return routesFolders;

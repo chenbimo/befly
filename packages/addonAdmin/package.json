@@ -19,7 +19,6 @@
         "tables/",
         "views/",
         "utils/",
-        "types/",
         "addon.config.json",
         "README.md",
         "package.json",

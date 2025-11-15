@@ -1,15 +1,22 @@
-import type { RouteRecordRaw } from 'vue-router';
-import type { LayoutConfig } from '../types/layout';
+/**
+ * 布局配置接口
+ * @typedef {Object} LayoutConfig
+ * @property {string} path - 路径
+ * @property {string} layoutName - 布局名称
+ * @property {import('vue-router').Component} component - 组件
+ * @property {LayoutConfig[]} [children] - 子配置
+ * @property {Record<string, any>} [meta] - 元信息
+ */
 
 /**
  * 自定义布局处理函数
  * 根据文件名后缀判断使用哪个布局
- * @param routes - 原始路由配置
- * @param inheritLayout - 继承的布局名称（来自父级目录）
- * @returns 处理后的布局配置（不包含实际的布局组件导入）
+ * @param {import('vue-router').RouteRecordRaw[]} routes - 原始路由配置
+ * @param {string} inheritLayout - 继承的布局名称（来自父级目录）
+ * @returns {LayoutConfig[]} 处理后的布局配置（不包含实际的布局组件导入）
  */
-export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): LayoutConfig[] {
-    const result: LayoutConfig[] = [];
+export function Layouts(routes, inheritLayout = '') {
+    const result = [];
 
     for (const route of routes) {
         const currentPath = route.path || '';
@@ -45,7 +52,7 @@ export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): LayoutCon
         const layoutName = match ? match[1] : currentLayout || 'default';
 
         // 计算清理后的路径
-        let cleanPath: string;
+        let cleanPath;
         if (lastPart === 'index' || (lastPart.startsWith('index_') && match)) {
             // index 或 index_数字 → 改为空路径（由父级路径表示）
             cleanPath = '';
@@ -61,7 +68,7 @@ export function Layouts(routes: RouteRecordRaw[], inheritLayout = ''): LayoutCon
         result.push({
             path: cleanPath,
             layoutName: layoutName,
-            component: route.component!,
+            component: route.component,
             meta: route.meta
         });
     }

@@ -24,7 +24,7 @@
     </TinyForm>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { $ref, $shallowRef } from 'vue-macros/macros';
 import { useRouter, useRoute } from 'vue-router';
 import { Button as TinyButton, Form as TinyForm, FormItem as TinyFormItem, Input as TinyInput, Modal } from '@opentiny/vue';

@@ -3,7 +3,10 @@ import { routes } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
 import { Layouts } from '@befly-addon/admin/utils/layouts';
 import type { RouteRecordRaw } from 'vue-router';
-import type { LayoutConfig } from '@befly-addon/admin/types/layout';
+
+/**
+ * @typedef {import('@befly-addon/admin/utils/layouts').LayoutConfig} LayoutConfig
+ */
 
 /**
  * 将布局配置转换为实际的路由配置
