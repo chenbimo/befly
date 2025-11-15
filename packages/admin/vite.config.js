@@ -69,7 +69,7 @@ export default defineConfig({
                 }),
                 IconsResolver({})
             ],
-            dirs: ['src/components'],
+            dirs: ['src/components', 'node_modules/@befly-addon/admin/views'],
             deep: true,
             dts: 'src/types/components.d.ts'
         }),
