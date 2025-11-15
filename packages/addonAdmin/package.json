@@ -1,6 +1,6 @@
 {
     "name": "@befly-addon/admin",
-    "version": "1.0.30",
+    "version": "1.0.31",
     "description": "Befly - 管理后台功能组件",
     "type": "module",
     "private": false,
@@ -44,8 +44,6 @@
         "befly": "workspace:*"
     },
     "peerDependencies": {
-        "vue": "^3.0.0",
-        "vue-router": "^4.0.0",
         "@opentiny/vue-button": "~3.27.0",
         "@opentiny/vue-checkbox": "~3.27.0",
         "@opentiny/vue-checkbox-group": "~3.27.0",
@@ -68,6 +66,8 @@
         "@opentiny/vue-search": "~3.27.0",
         "@opentiny/vue-select": "~3.27.0",
         "@opentiny/vue-tag": "~3.27.0",
-        "@opentiny/vue-tree": "~3.27.0"
+        "@opentiny/vue-tree": "~3.27.0",
+        "vue": "^3.0.0",
+        "vue-router": "^4.0.0"
     }
 }
