@@ -31,7 +31,7 @@ const $Method = {
     async handleLogin() {
         // 模拟登录
         $Storage.local.set('token', 'mock-token-123');
-        Modal.message({ message: '登录成功', status: 'success' });
+        MessagePlugin.success('登录成功');
         router.push('/');
     }
 };

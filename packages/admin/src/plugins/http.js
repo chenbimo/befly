@@ -1,5 +1,5 @@
 import axios from 'axios';
-import Modal from '@opentiny/vue-modal';
+import { MessagePlugin } from 'tdesign-vue-next';
 import { $Storage } from './storage';
 
 /**
@@ -49,17 +49,14 @@ request.interceptors.response.use(
 
         // 如果code不是0,说明业务失败
         if (res.code !== 0) {
-            Modal.message({
-                message: res.msg || '请求失败',
-                status: 'error'
-            });
+            MessagePlugin.error(res.msg || '请求失败');
             return Promise.reject(res.data);
         }
 
         return res;
     },
     (error) => {
-        Modal.message({ message: '网络连接失败', status: 'error' });
+        MessagePlugin.error('网络连接失败');
         return Promise.reject(error);
     }
 );

@@ -122,13 +122,13 @@ const $Method = {
 
     // 处理退出登录
     handleLogout() {
-        Modal.confirm({
-            message: '确定要退出登录吗？',
-            title: '确认',
+        DialogPlugin.confirm({
+            body: '确定要退出登录吗？',
+            header: '确认',
             onConfirm: () => {
                 $Storage.local.remove('token');
                 router.push('/internal/login');
-                Message.success('退出成功');
+                MessagePlugin.success('退出成功');
             }
         });
     }

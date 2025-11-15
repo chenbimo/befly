@@ -12,13 +12,10 @@
 </template>
 
 <script setup>
-// 无需导入，已自动导入：Modal, Message, Notify, MessageBox, Loading
+// 无需导入，已自动导入：MessagePlugin, DialogPlugin, NotificationPlugin, LoadingPlugin
 
 const testModal = () => {
-    Modal.message({
-        message: '这是一个成功提示',
-        status: 'success'
-    });
+    MessagePlugin.success('这是一个成功提示');
 };
 
 const testMessage = () => {
