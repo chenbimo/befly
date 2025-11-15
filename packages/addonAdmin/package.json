@@ -1,6 +1,6 @@
 {
     "name": "@befly-addon/admin",
-    "version": "1.0.33",
+    "version": "1.0.34",
     "description": "Befly - 管理后台功能组件",
     "type": "module",
     "private": false,
