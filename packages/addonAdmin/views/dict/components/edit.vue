@@ -1,49 +1,40 @@
 <template>
-    <TinyDialogBox v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑字典' : '添加字典'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <TinyForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <TinyFormItem label="字典名称" prop="name">
-                <TinyInput v-model="$Data.formData.name" placeholder="请输入字典名称" />
-            </TinyFormItem>
-            <TinyFormItem label="字典代码" prop="code">
-                <TinyInput v-model="$Data.formData.code" placeholder="请输入字典代码，如：gender" />
-            </TinyFormItem>
-            <TinyFormItem label="字典值" prop="value">
-                <TinyInput v-model="$Data.formData.value" placeholder="请输入字典值" />
-            </TinyFormItem>
-            <TinyFormItem label="父级ID" prop="pid">
-                <TinyNumeric v-model="$Data.formData.pid" :min="0" :max="999999999999999" />
-            </TinyFormItem>
-            <TinyFormItem label="排序" prop="sort">
-                <TinyNumeric v-model="$Data.formData.sort" :min="0" :max="9999" />
-            </TinyFormItem>
-            <TinyFormItem label="描述" prop="description">
-                <TinyInput v-model="$Data.formData.description" type="textarea" placeholder="请输入描述" :rows="3" />
-            </TinyFormItem>
-            <TinyFormItem label="状态" prop="state">
-                <TinyRadioGroup v-model="$Data.formData.state">
-                    <TinyRadio :label="1">正常</TinyRadio>
-                    <TinyRadio :label="2">禁用</TinyRadio>
-                </TinyRadioGroup>
-            </TinyFormItem>
-        </TinyForm>
+    <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑字典' : '添加字典'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+        <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+            <t-form-item label="字典名称" prop="name">
+                <t-input v-model="$Data.formData.name" placeholder="请输入字典名称" />
+            </t-form-item>
+            <t-form-item label="字典代码" prop="code">
+                <t-input v-model="$Data.formData.code" placeholder="请输入字典代码，如：gender" />
+            </t-form-item>
+            <t-form-item label="字典值" prop="value">
+                <t-input v-model="$Data.formData.value" placeholder="请输入字典值" />
+            </t-form-item>
+            <t-form-item label="父级ID" prop="pid">
+                <t-input-number v-model="$Data.formData.pid" :min="0" :max="999999999999999" />
+            </t-form-item>
+            <t-form-item label="排序" prop="sort">
+                <t-input-number v-model="$Data.formData.sort" :min="0" :max="9999" />
+            </t-form-item>
+            <t-form-item label="描述" prop="description">
+                <t-input v-model="$Data.formData.description" type="textarea" placeholder="请输入描述" :rows="3" />
+            </t-form-item>
+            <t-form-item label="状态" prop="state">
+                <t-radio-group v-model="$Data.formData.state">
+                    <t-radio :label="1">正常</t-radio>
+                    <t-radio :label="2">禁用</t-radio>
+                </t-radio-group>
+            </t-form-item>
+        </t-form>
         <template #footer>
-            <TinyButton @click="$Method.onClose">取消</TinyButton>
-            <TinyButton type="primary" @click="$Method.onSubmit">确定</TinyButton>
+            <t-button @click="$Method.onClose">取消</t-button>
+            <t-button type="primary" @click="$Method.onSubmit">确定</t-button>
         </template>
-    </TinyDialogBox>
+    </t-dialog>
 </template>
 
 <script setup>
 import { watch } from 'vue';
-import TinyButton from '@opentiny/vue-button';
-import TinyDialogBox from '@opentiny/vue-dialog-box';
-import TinyForm from '@opentiny/vue-form';
-import TinyFormItem from '@opentiny/vue-form-item';
-import TinyInput from '@opentiny/vue-input';
-import TinyNumeric from '@opentiny/vue-numeric';
-import TinyRadio from '@opentiny/vue-radio';
-import TinyRadioGroup from '@opentiny/vue-radio-group';
-import Modal from '@opentiny/vue-modal';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
@@ -137,7 +128,7 @@ const $Method = {
 
             const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/dictIns' : '/addon/admin/dictUpd', $Data.formData);
 
-            Modal.message({
+            MessagePlugin.info({
                 message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
                 status: 'success'
             });

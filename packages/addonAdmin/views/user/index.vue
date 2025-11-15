@@ -34,9 +34,9 @@
         <div class="table-wrapper">
             <t-table :data="$Data.userList" :columns="$Data.columns" row-key="id" :loading="$Data.loading" bordered stripe hover max-height="100%">
                 <template #state="{ row }">
-                    <TinyTag v-if="row.state === 1" type="success">正常</TinyTag>
-                    <TinyTag v-else-if="row.state === 2" type="warning">禁用</TinyTag>
-                    <TinyTag v-else type="danger">已删除</TinyTag>
+                    <t-tag v-if="row.state === 1" type="success">正常</t-tag>
+                    <t-tag v-else-if="row.state === 2" type="warning">禁用</t-tag>
+                    <t-tag v-else type="danger">已删除</t-tag>
                 </template>
 
                 <template #lastLoginTime="{ row }">
@@ -63,7 +63,7 @@
         <t-dialog v-model:visible="$Data.roleVisible" header="分配角色" width="600px" :on-confirm="$Method.handleRoleSubmit">
             <div class="role-dialog">
                 <div class="user-info">
-                    <TinyTag type="primary">{{ $Data.currentUser.username }}</TinyTag>
+                    <t-tag type="primary">{{ $Data.currentUser.username }}</t-tag>
                     <span class="user-email">{{ $Data.currentUser.email }}</span>
                 </div>
                 <t-divider />
@@ -74,8 +74,6 @@
 </template>
 
 <script setup>
-import TinyTag from '@opentiny/vue-tag';
-import Modal from '@opentiny/vue-modal';
 import IconLucidePlus from '~icons/lucide/plus';
 import IconLucideSearch from '~icons/lucide/search';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';

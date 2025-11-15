@@ -1,5 +1,5 @@
 <template>
-    <TinyDialogBox v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
+    <t-dialog v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
         <div class="comp-role-api">
             <!-- 搜索框 -->
             <div class="search-box">
@@ -21,24 +21,18 @@
 
         <template #footer>
             <div class="footer-left">
-                <TinyButton size="small" @click="$Method.onCheckAll">全选</TinyButton>
-                <TinyButton size="small" @click="$Method.onUncheckAll">取消全选</TinyButton>
+                <t-button size="small" @click="$Method.onCheckAll">全选</t-button>
+                <t-button size="small" @click="$Method.onUncheckAll">取消全选</t-button>
             </div>
             <div class="footer-right">
-                <TinyButton @click="$Method.onClose">取消</TinyButton>
-                <TinyButton type="primary" @click="$Method.onSubmit">保存</TinyButton>
+                <t-button @click="$Method.onClose">取消</t-button>
+                <t-button type="primary" @click="$Method.onSubmit">保存</t-button>
             </div>
         </template>
-    </TinyDialogBox>
+    </t-dialog>
 </template>
 
 <script setup>
-import TinyButton from '@opentiny/vue-button';
-import TinyDialogBox from '@opentiny/vue-dialog-box';
-import TinySearch from '@opentiny/vue-search';
-import TinyCheckbox from '@opentiny/vue-checkbox';
-import TinyCheckboxGroup from '@opentiny/vue-checkbox-group';
-import Modal from '@opentiny/vue-modal';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
@@ -113,7 +107,7 @@ const $Method = {
             $Data.apiData = Array.from(apiMap.values());
         } catch (error) {
             console.error('加载接口失败:', error);
-            Modal.message({ message: '加载接口失败', status: 'error' });
+            MessagePlugin.info({ message: '加载接口失败', status: 'error' });
         }
     },
 
@@ -173,21 +167,21 @@ const $Method = {
             });
 
             if (res.code === 0) {
-                Modal.message({
+                MessagePlugin.info({
                     message: '保存成功',
                     status: 'success'
                 });
                 $Data.visible = false;
                 $Emit('success');
             } else {
-                Modal.message({
+                MessagePlugin.info({
                     message: res.msg || '保存失败',
                     status: 'error'
                 });
             }
         } catch (error) {
             console.error('保存失败:', error);
-            Modal.message({
+            MessagePlugin.info({
                 message: '保存失败',
                 status: 'error'
             });

@@ -40,7 +40,6 @@
 
 <script setup>
 import IconLucideDisc from '~icons/lucide/disc';
-import TinyProgress from '@opentiny/vue-progress';
 import IconLucideCpu from '~icons/lucide/cpu';
 import IconLucideHardDrive from '~icons/lucide/hard-drive';
 import IconLucideActivity from '~icons/lucide/activity';

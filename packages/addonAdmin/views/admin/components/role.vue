@@ -1,26 +1,21 @@
 <template>
-    <TinyDialogBox v-model:visible="$Data.visible" title="分配角色" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="20vh" @close="$Method.onClose">
+    <t-dialog v-model:visible="$Data.visible" title="分配角色" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="20vh" @close="$Method.onClose">
         <div class="role-dialog">
             <div class="user-info">
-                <TinyTag type="info">{{ $Prop.rowData.username }}</TinyTag>
+                <t-tag type="info">{{ $Prop.rowData.username }}</t-tag>
                 <span class="user-email">{{ $Prop.rowData.email }}</span>
             </div>
             <tiny-divider />
-            <TinySelect v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
+            <t-select v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
         </div>
         <template #footer>
-            <TinyButton @click="$Method.onClose">取消</TinyButton>
-            <TinyButton type="primary" @click="$Method.onSubmit">确定</TinyButton>
+            <t-button @click="$Method.onClose">取消</t-button>
+            <t-button type="primary" @click="$Method.onSubmit">确定</t-button>
         </template>
-    </TinyDialogBox>
+    </t-dialog>
 </template>
 
 <script setup>
-import TinyButton from '@opentiny/vue-button';
-import TinyDialogBox from '@opentiny/vue-dialog-box';
-import TinySelect from '@opentiny/vue-select';
-import TinyTag from '@opentiny/vue-tag';
-import Modal from '@opentiny/vue-modal';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
@@ -78,7 +73,7 @@ const $Method = {
                 }));
         } catch (error) {
             console.error('加载角色列表失败:', error);
-            Modal.message({ message: '加载角色列表失败', status: 'error' });
+            MessagePlugin.info({ message: '加载角色列表失败', status: 'error' });
         }
     },
 
@@ -99,7 +94,7 @@ const $Method = {
     // 提交角色分配
     async onSubmit() {
         if (!$Data.checkedRoleCode) {
-            Modal.message({ message: '请选择角色', status: 'warning' });
+            MessagePlugin.info({ message: '请选择角色', status: 'warning' });
             return;
         }
 
@@ -110,15 +105,15 @@ const $Method = {
             });
 
             if (res.code === 0) {
-                Modal.message({ message: '角色分配成功', status: 'success' });
+                MessagePlugin.info({ message: '角色分配成功', status: 'success' });
                 $Method.onClose();
                 $Emit('success');
             } else {
-                Modal.message({ message: res.msg || '分配失败', status: 'error' });
+                MessagePlugin.info({ message: res.msg || '分配失败', status: 'error' });
             }
         } catch (error) {
             console.error('分配失败:', error);
-            Modal.message({ message: '分配失败', status: 'error' });
+            MessagePlugin.info({ message: '分配失败', status: 'error' });
         }
     }
 };

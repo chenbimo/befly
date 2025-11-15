@@ -1,22 +1,17 @@
 <template>
-    <TinyDialogBox v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
+    <t-dialog v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <div class="comp-role-menu">
-            <TinyTree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
+            <t-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
         </div>
         <template #footer>
-            <TinyButton @click="$Method.onClose">取消</TinyButton>
-            <TinyButton type="primary" @click="$Method.onSubmit">保存</TinyButton>
+            <t-button @click="$Method.onClose">取消</t-button>
+            <t-button type="primary" @click="$Method.onSubmit">保存</t-button>
         </template>
-    </TinyDialogBox>
+    </t-dialog>
 </template>
 
 <script setup>
 import { nextTick } from 'vue';
-import TinyButton from '@opentiny/vue-button';
-import TinyDialogBox from '@opentiny/vue-dialog-box';
-import TinyTree from '@opentiny/vue-tree';
-import Modal from '@opentiny/vue-modal';
-
 import { arrayToTree } from '@/utils';
 import { $Http } from '@/plugins/http';
 
@@ -73,7 +68,7 @@ const $Method = {
             $Data.menuTreeData = arrayToTree(menuList);
         } catch (error) {
             console.error('加载菜单失败:', error);
-            Modal.message({ message: '加载菜单失败', status: 'error' });
+            MessagePlugin.info({ message: '加载菜单失败', status: 'error' });
         }
     },
 
@@ -104,7 +99,7 @@ const $Method = {
     async onSubmit() {
         try {
             if (!$From.tree) {
-                Modal.message({ message: '菜单树未初始化', status: 'error' });
+                MessagePlugin.info({ message: '菜单树未初始化', status: 'error' });
                 return;
             }
 
@@ -119,21 +114,21 @@ const $Method = {
             });
 
             if (res.code === 0) {
-                Modal.message({
+                MessagePlugin.info({
                     message: '保存成功',
                     status: 'success'
                 });
                 $Data.visible = false;
                 $Emit('success');
             } else {
-                Modal.message({
+                MessagePlugin.info({
                     message: res.msg || '保存失败',
                     status: 'error'
                 });
             }
         } catch (error) {
             console.error('保存失败:', error);
-            Modal.message({
+            MessagePlugin.info({
                 message: '保存失败',
                 status: 'error'
             });

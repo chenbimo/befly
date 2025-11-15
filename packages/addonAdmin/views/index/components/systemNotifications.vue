@@ -18,7 +18,7 @@
                         <span class="notification-title">{{ notification.title }}</span>
                         <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
                     </div>
-                    <TinyTag v-if="!notification.isRead" type="primary" size="small">新</TinyTag>
+                    <t-tag v-if="!notification.isRead" type="primary" size="small">新</t-tag>
                 </div>
             </div>
         </div>
@@ -30,7 +30,6 @@ import IconLucideBell from '~icons/lucide/bell';
 import IconLucideCheckCircle from '~icons/lucide/check-circle';
 import IconLucideAlertTriangle from '~icons/lucide/alert-triangle';
 import IconLucideXCircle from '~icons/lucide/x-circle';
-import TinyTag from '@opentiny/vue-tag';
 import IconLucideInfo from '~icons/lucide/info';
 import IconLucideCheck from '~icons/lucide/check';
 import IconLucideX from '~icons/lucide/x';

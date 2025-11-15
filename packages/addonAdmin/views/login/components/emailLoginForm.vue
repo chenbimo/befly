@@ -1,36 +1,31 @@
 <template>
-    <TinyForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
-        <TinyFormItem prop="account" label="账号">
-            <TinyInput v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
+    <t-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
+        <t-form-item prop="account" label="账号">
+            <t-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
                 <template #prefix-icon>
                     <IconLucideUser />
                 </template>
-            </TinyInput>
-        </TinyFormItem>
+            </t-input>
+        </t-form-item>
 
-        <TinyFormItem prop="password" label="密码">
-            <TinyInput v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
+        <t-form-item prop="password" label="密码">
+            <t-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
                     <IconLucideLock />
                 </template>
-            </TinyInput>
-        </TinyFormItem>
+            </t-input>
+        </t-form-item>
 
         <div class="form-footer">
             <a href="#" class="forgot-password">忘记密码？</a>
         </div>
 
-        <TinyButton theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </TinyButton>
-    </TinyForm>
+        <t-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </t-button>
+    </t-form>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
-import TinyButton from '@opentiny/vue-button';
-import TinyForm from '@opentiny/vue-form';
-import TinyFormItem from '@opentiny/vue-form-item';
-import TinyInput from '@opentiny/vue-input';
-import Modal from '@opentiny/vue-modal';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
@@ -80,7 +75,7 @@ const $Method = {
                 $Storage.local.set('userInfo', res.data.userInfo);
             }
 
-            Modal.message({
+            MessagePlugin.info({
                 message: '登录成功',
                 status: 'success'
             });

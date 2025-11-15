@@ -13,7 +13,7 @@
                     <div class="addon-info">
                         <div class="addon-title">
                             <span class="addon-name">{{ addon.title }}</span>
-                            <TinyTag type="success" size="small">{{ addon.version }}</TinyTag>
+                            <t-tag type="success" size="small">{{ addon.version }}</t-tag>
                         </div>
                         <div class="addon-desc">{{ addon.description }}</div>
                     </div>
@@ -25,7 +25,6 @@
 
 <script setup>
 import IconLucideBox from '~icons/lucide/box';
-import TinyTag from '@opentiny/vue-tag';
 import IconLucidePackage from '~icons/lucide/package';
 import { $Http } from '@/plugins/http';
 

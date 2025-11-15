@@ -2,64 +2,64 @@
     <div class="page-menu page-table">
         <div class="main-tool">
             <div class="left">
-                <TinyButton type="primary" @click="$Method.onAction('add', {})">
+                <t-button type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
                         <IconLucidePlus />
                     </template>
                     添加菜单
-                </TinyButton>
+                </t-button>
             </div>
             <div class="right">
-                <TinyButton @click="$Method.handleRefresh">
+                <t-button @click="$Method.handleRefresh">
                     <template #icon>
                         <IconLucideRotateCw />
                     </template>
                     刷新
-                </TinyButton>
+                </t-button>
             </div>
         </div>
         <div class="main-table">
-            <TinyGrid :data="$Data.menuList" header-cell-class-name="custom-table-cell-class" size="small" height="100%" seq-serial>
-                <TinyGridColumn type="index" title="序号" :width="60" />
-                <TinyGridColumn field="name" title="菜单名称" />
-                <TinyGridColumn field="path" title="路径" :width="200" />
-                <TinyGridColumn field="icon" title="图标" :width="100">
+            <t-table :data="$Data.menuList" header-cell-class-name="custom-table-cell-class" size="small" height="100%" seq-serial>
+                <t-tableColumn type="index" title="序号" :width="60" />
+                <t-tableColumn field="name" title="菜单名称" />
+                <t-tableColumn field="path" title="路径" :width="200" />
+                <t-table-column field="icon" title="图标" :width="100">
                     <template #default="{ row }">
                         <IconLucideSquare v-if="row.icon" />
                         <span v-else>-</span>
                     </template>
-                </TinyGridColumn>
-                <TinyGridColumn field="sort" title="排序" :width="80" />
-                <TinyGridColumn field="state" title="状态" :width="100">
+                </t-table-column>
+                <t-tableColumn field="sort" title="排序" :width="80" />
+                <t-table-column field="state" title="状态" :width="100">
                     <template #default="{ row }">
-                        <TinyTag v-if="row.state === 1" type="success">正常</TinyTag>
-                        <TinyTag v-else-if="row.state === 2" type="warning">禁用</TinyTag>
-                        <TinyTag v-else type="danger">已删除</TinyTag>
+                        <t-tag v-if="row.state === 1" type="success">正常</t-tag>
+                        <t-tag v-else-if="row.state === 2" type="warning">禁用</t-tag>
+                        <t-tag v-else type="danger">已删除</t-tag>
                     </template>
-                </TinyGridColumn>
-                <TinyGridColumn title="操作" :width="120" align="right">
+                </t-table-column>
+                <t-table-column title="操作" :width="120" align="right">
                     <template #default="{ row }">
-                        <TinyDropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
+                        <t-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
                             <template #dropdown>
-                                <TinyDropdownMenu>
-                                    <TinyDropdownItem :item-data="{ command: 'upd' }">
+                                <t-dropdown-menu>
+                                    <t-dropdown-item :item-data="{ command: 'upd' }">
                                         <IconLucidePencil />
                                         编辑
-                                    </TinyDropdownItem>
-                                    <TinyDropdownItem :item-data="{ command: 'del' }" divided>
+                                    </t-dropdown-item>
+                                    <t-dropdown-item :item-data="{ command: 'del' }" divided>
                                         <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
                                         删除
-                                    </TinyDropdownItem>
-                                </TinyDropdownMenu>
+                                    </t-dropdown-item>
+                                </t-dropdown-menu>
                             </template>
-                        </TinyDropdown>
+                        </t-dropdown>
                     </template>
-                </TinyGridColumn>
-            </TinyGrid>
+                </t-table-column>
+            </t-table>
         </div>
 
         <div class="main-page">
-            <TinyPager :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
+            <t-pagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
@@ -68,15 +68,6 @@
 </template>
 
 <script setup>
-import TinyButton from '@opentiny/vue-button';
-import TinyGrid from '@opentiny/vue-grid';
-import TinyGridColumn from '@opentiny/vue-grid-column';
-import TinyTag from '@opentiny/vue-tag';
-import TinyDropdown from '@opentiny/vue-dropdown';
-import TinyDropdownMenu from '@opentiny/vue-dropdown-menu';
-import TinyDropdownItem from '@opentiny/vue-dropdown-item';
-import TinyPager from '@opentiny/vue-pager';
-import Modal from '@opentiny/vue-modal';
 import IconLucidePlus from '~icons/lucide/plus';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';
 import IconLucideSquare from '~icons/lucide/square';
@@ -118,7 +109,7 @@ const $Method = {
             $Data.pagerConfig.total = res.data.total || 0;
         } catch (error) {
             console.error('加载菜单列表失败:', error);
-            Modal.message({
+            MessagePlugin.info({
                 message: '加载数据失败',
                 status: 'error'
             });
@@ -127,7 +118,7 @@ const $Method = {
 
     // 删除菜单
     async apiMenuDel(row) {
-        Modal.confirm({
+        DialogPlugin.confirm({
             header: '确认删除',
             body: `确定要删除菜单"${row.name}" 吗？`,
             status: 'warning'
@@ -135,14 +126,14 @@ const $Method = {
             try {
                 const res = await $Http('/addon/admin/menu/del', { id: row.id });
                 if (res.code === 0) {
-                    Modal.message({ message: '删除成功', status: 'success' });
+                    MessagePlugin.info({ message: '删除成功', status: 'success' });
                     $Method.apiMenuList();
                 } else {
-                    Modal.message({ message: res.msg || '删除失败', status: 'error' });
+                    MessagePlugin.info({ message: res.msg || '删除失败', status: 'error' });
                 }
             } catch (error) {
                 console.error('删除失败:', error);
-                Modal.message({ message: '删除失败', status: 'error' });
+                MessagePlugin.info({ message: '删除失败', status: 'error' });
             }
         });
     },

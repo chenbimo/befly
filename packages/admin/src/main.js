@@ -1,5 +1,8 @@
 import App from './App.vue';
 
+// 引入 TDesign 样式
+import 'tdesign-vue-next/es/style/index.css';
+
 // 引入 UnoCSS 样式
 import 'virtual:uno.css';
 

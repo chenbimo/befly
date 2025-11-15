@@ -9,7 +9,6 @@
 </template>
 
 <script setup>
-import Modal from '@opentiny/vue-modal';
 // 新闻页面逻辑
 </script>
 

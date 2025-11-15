@@ -1,47 +1,39 @@
 <template>
-    <TinyDialogBox v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <TinyForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <TinyFormItem label="用户名" prop="username">
-                <TinyInput v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
-            </TinyFormItem>
-            <TinyFormItem label="邮箱" prop="email">
-                <TinyInput v-model="$Data.formData.email" placeholder="请输入邮箱" />
-            </TinyFormItem>
-            <TinyFormItem v-if="$Prop.actionType === 'add'" label="密码" prop="password">
-                <TinyInput v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
-            </TinyFormItem>
-            <TinyFormItem label="姓名" prop="name">
-                <TinyInput v-model="$Data.formData.name" placeholder="请输入姓名" />
-            </TinyFormItem>
-            <TinyFormItem label="昵称" prop="nickname">
-                <TinyInput v-model="$Data.formData.nickname" placeholder="请输入昵称" />
-            </TinyFormItem>
-            <TinyFormItem label="手机号" prop="phone">
-                <TinyInput v-model="$Data.formData.phone" placeholder="请输入手机号" />
-            </TinyFormItem>
-            <TinyFormItem v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
-                <TinyRadioGroup v-model="$Data.formData.state">
-                    <TinyRadio :label="1">正常</TinyRadio>
-                    <TinyRadio :label="2">禁用</TinyRadio>
-                </TinyRadioGroup>
-            </TinyFormItem>
-        </TinyForm>
+    <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+        <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+            <t-form-item label="用户名" prop="username">
+                <t-input v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
+            </t-form-item>
+            <t-form-item label="邮箱" prop="email">
+                <t-input v-model="$Data.formData.email" placeholder="请输入邮箱" />
+            </t-form-item>
+            <t-form-item v-if="$Prop.actionType === 'add'" label="密码" prop="password">
+                <t-input v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
+            </t-form-item>
+            <t-form-item label="姓名" prop="name">
+                <t-input v-model="$Data.formData.name" placeholder="请输入姓名" />
+            </t-form-item>
+            <t-form-item label="昵称" prop="nickname">
+                <t-input v-model="$Data.formData.nickname" placeholder="请输入昵称" />
+            </t-form-item>
+            <t-form-item label="手机号" prop="phone">
+                <t-input v-model="$Data.formData.phone" placeholder="请输入手机号" />
+            </t-form-item>
+            <t-form-item v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
+                <t-radio-group v-model="$Data.formData.state">
+                    <t-radio :label="1">正常</t-radio>
+                    <t-radio :label="2">禁用</t-radio>
+                </t-radio-group>
+            </t-form-item>
+        </t-form>
         <template #footer>
-            <TinyButton @click="$Method.onClose">取消</TinyButton>
-            <TinyButton type="primary" @click="$Method.onSubmit">确定</TinyButton>
+            <t-button @click="$Method.onClose">取消</t-button>
+            <t-button type="primary" @click="$Method.onSubmit">确定</t-button>
         </template>
-    </TinyDialogBox>
+    </t-dialog>
 </template>
 
 <script setup>
-import TinyButton from '@opentiny/vue-button';
-import TinyDialogBox from '@opentiny/vue-dialog-box';
-import TinyForm from '@opentiny/vue-form';
-import TinyFormItem from '@opentiny/vue-form-item';
-import TinyInput from '@opentiny/vue-input';
-import TinyRadio from '@opentiny/vue-radio';
-import TinyRadioGroup from '@opentiny/vue-radio-group';
-import Modal from '@opentiny/vue-modal';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
@@ -133,7 +125,7 @@ const $Method = {
 
             const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', $Data.formData);
 
-            Modal.message({
+            MessagePlugin.info({
                 message: $Prop.actionType === 'upd' ? '编辑成功' : '添加成功',
                 status: 'success'
             });
@@ -141,7 +133,7 @@ const $Method = {
             $Method.onClose();
         } catch (error) {
             console.error('提交失败:', error);
-            Modal.message({
+            MessagePlugin.info({
                 message: '提交失败',
                 status: 'error'
             });

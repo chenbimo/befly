@@ -1,43 +1,34 @@
 <template>
-    <TinyDialogBox v-model:visible="$Data.visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
-        <TinyForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <TinyFormItem label="菜单名称" prop="name">
-                <TinyInput v-model="$Data.formData.name" placeholder="请输入菜单名称" />
-            </TinyFormItem>
-            <TinyFormItem label="菜单路径" prop="path">
-                <TinyInput v-model="$Data.formData.path" placeholder="请输入菜单路径，如：/user" />
-            </TinyFormItem>
-            <TinyFormItem label="图标" prop="icon">
-                <TinyInput v-model="$Data.formData.icon" placeholder="请输入图标名称，如：User" />
-            </TinyFormItem>
-            <TinyFormItem label="排序" prop="sort">
-                <TinyNumeric v-model="$Data.formData.sort" :min="0" :max="9999" />
-            </TinyFormItem>
-            <TinyFormItem label="状态" prop="state">
-                <TinyRadioGroup v-model="$Data.formData.state">
-                    <TinyRadio :label="1">正常</TinyRadio>
-                    <TinyRadio :label="2">禁用</TinyRadio>
-                </TinyRadioGroup>
-            </TinyFormItem>
-        </TinyForm>
+    <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
+        <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+            <t-form-item label="菜单名称" prop="name">
+                <t-input v-model="$Data.formData.name" placeholder="请输入菜单名称" />
+            </t-form-item>
+            <t-form-item label="菜单路径" prop="path">
+                <t-input v-model="$Data.formData.path" placeholder="请输入菜单路径，如：/user" />
+            </t-form-item>
+            <t-form-item label="图标" prop="icon">
+                <t-input v-model="$Data.formData.icon" placeholder="请输入图标名称，如：User" />
+            </t-form-item>
+            <t-form-item label="排序" prop="sort">
+                <t-input-number v-model="$Data.formData.sort" :min="0" :max="9999" />
+            </t-form-item>
+            <t-form-item label="状态" prop="state">
+                <t-radio-group v-model="$Data.formData.state">
+                    <t-radio :label="1">正常</t-radio>
+                    <t-radio :label="2">禁用</t-radio>
+                </t-radio-group>
+            </t-form-item>
+        </t-form>
         <template #footer>
-            <TinyButton @click="$Method.onClose">取消</TinyButton>
-            <TinyButton type="primary" @click="$Method.onSubmit">确定</TinyButton>
+            <t-button @click="$Method.onClose">取消</t-button>
+            <t-button type="primary" @click="$Method.onSubmit">确定</t-button>
         </template>
-    </TinyDialogBox>
+    </t-dialog>
 </template>
 
 <script setup>
 import { watch } from 'vue';
-import TinyButton from '@opentiny/vue-button';
-import TinyDialogBox from '@opentiny/vue-dialog-box';
-import TinyForm from '@opentiny/vue-form';
-import TinyFormItem from '@opentiny/vue-form-item';
-import TinyInput from '@opentiny/vue-input';
-import TinyNumeric from '@opentiny/vue-numeric';
-import TinyRadio from '@opentiny/vue-radio';
-import TinyRadioGroup from '@opentiny/vue-radio-group';
-import Modal from '@opentiny/vue-modal';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
@@ -122,7 +113,7 @@ const $Method = {
 
             const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/menuIns' : '/addon/admin/menuUpd', $Data.formData);
 
-            Modal.message({
+            MessagePlugin.info({
                 message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
                 status: 'success'
             });

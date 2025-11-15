@@ -22,9 +22,9 @@
                         <span class="col-module">{{ log.module }}</span>
                         <span class="col-ip">{{ log.ip }}</span>
                         <span class="col-status">
-                            <TinyTag :type="log.status === 'success' ? 'success' : 'danger'" size="small">
+                            <t-tag :type="log.status === 'success' ? 'success' : 'danger'" size="small">
                                 {{ log.status === 'success' ? '成功' : '失败' }}
-                            </TinyTag>
+                            </t-tag>
                         </span>
                     </div>
                 </div>
@@ -34,7 +34,6 @@
 </template>
 
 <script setup>
-import TinyTag from '@opentiny/vue-tag';
 import IconLucideFileText from '~icons/lucide/file-text';
 
 // 组件内部数据

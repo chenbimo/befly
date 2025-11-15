@@ -5,6 +5,7 @@ import { VueRouterAutoImports } from 'unplugin-vue-router';
 import VueDevTools from 'vite-plugin-vue-devtools';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
+import { TDesignResolver } from 'unplugin-vue-components/resolvers';
 import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
@@ -47,19 +48,11 @@ export default defineConfig({
 
         // API 自动导入
         AutoImport({
-            imports: [
-                'vue',
-                'pinia',
-                VueRouterAutoImports,
-                {
-                    '@opentiny/vue-modal': [
-                        ['default', 'Modal'],
-                        ['default', 'MessageBox']
-                    ],
-                    '@opentiny/vue-notify': [['default', 'Notify']],
-                    '@opentiny/vue-message': [['default', 'Message']],
-                    '@opentiny/vue-loading': [['default', 'Loading']]
-                }
+            imports: ['vue', 'pinia', VueRouterAutoImports],
+            resolvers: [
+                TDesignResolver({
+                    library: 'vue-next'
+                })
             ],
             dts: 'src/types/auto-imports.d.ts',
             dirs: ['src/utils', 'src/plugins', 'src/config'],
@@ -68,7 +61,12 @@ export default defineConfig({
 
         // 组件自动导入
         Components({
-            resolvers: [IconsResolver({})],
+            resolvers: [
+                TDesignResolver({
+                    library: 'vue-next'
+                }),
+                IconsResolver({})
+            ],
             dirs: ['src/components'],
             deep: true,
             dts: 'src/types/components.d.ts'
@@ -215,26 +213,8 @@ export default defineConfig({
             'pinia',
             'axios',
             'vue-macros/macros',
-            // TinyVue 组件（只包含实际使用的组件）
-            '@opentiny/vue-button',
-            '@opentiny/vue-dialog-box',
-            '@opentiny/vue-dropdown',
-            '@opentiny/vue-dropdown-item',
-            '@opentiny/vue-dropdown-menu',
-            '@opentiny/vue-form',
-            '@opentiny/vue-form-item',
-            '@opentiny/vue-grid',
-            '@opentiny/vue-grid-column',
-            '@opentiny/vue-icon',
-            '@opentiny/vue-input',
-            '@opentiny/vue-modal',
-            '@opentiny/vue-numeric',
-            '@opentiny/vue-pager',
-            '@opentiny/vue-radio',
-            '@opentiny/vue-radio-group',
-            '@opentiny/vue-select',
-            '@opentiny/vue-tag',
-            '@opentiny/vue-tree'
+            // TDesign Vue Next（按需加载，无需预配置）
+            'tdesign-vue-next'
         ]
     }
 });

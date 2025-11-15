@@ -26,12 +26,12 @@
 
         <!-- 仅 dev 角色显示刷新缓存按钮 -->
         <div v-if="$Data.userInfo.roleCode === 'dev'" class="user-actions">
-            <TinyButton type="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
+            <t-button type="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
                 <template #icon>
                     <IconLucideRotateCw />
                 </template>
                 刷新缓存
-            </TinyButton>
+            </t-button>
         </div>
     </div>
 </template>
@@ -39,7 +39,6 @@
 <script setup>
 import IconLucidePhone from '~icons/lucide/phone';
 import IconLucideClock from '~icons/lucide/clock';
-import TinyButton from '@opentiny/vue-button';
 import IconLucideUser from '~icons/lucide/user';
 import IconLucideMail from '~icons/lucide/mail';
 import IconLucideRotateCw from '~icons/lucide/rotate-cw';
