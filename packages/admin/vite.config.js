@@ -77,7 +77,7 @@ export default defineConfig({
         // 图标
         Icons({
             compiler: 'vue3',
-            autoInstall: true,
+            autoInstall: false,
             defaultClass: 'icon-befly',
             defaultStyle: 'margin-right: 8px; vertical-align: middle;'
         })
@@ -208,6 +208,40 @@ export default defineConfig({
 
     // 优化配置
     optimizeDeps: {
-        include: ['vue', 'vue-router', 'pinia', 'axios', 'vue-macros/macros']
+        include: [
+            // Vue 核心框架
+            'vue',
+            'vue-router',
+            'pinia',
+            'axios',
+            'vue-macros/macros',
+            // TinyVue 组件（包含所有已安装的组件，避免运行时优化延迟）
+            '@opentiny/vue-button', // 按钮 ✅
+            '@opentiny/vue-checkbox', // 复选框 ✅
+            '@opentiny/vue-checkbox-group', // 复选框组 ✅
+            '@opentiny/vue-dialog-box', // 对话框 ✅
+            '@opentiny/vue-dropdown', // 下拉菜单 ✅
+            '@opentiny/vue-dropdown-item', // 下拉菜单项 ✅
+            '@opentiny/vue-dropdown-menu', // 下拉菜单容器 ✅
+            '@opentiny/vue-form', // 表单 ✅
+            '@opentiny/vue-form-item', // 表单项 ✅
+            '@opentiny/vue-grid', // 表格 ✅
+            '@opentiny/vue-grid-column', // 表格列 ✅
+            '@opentiny/vue-icon', // 图标 ✅
+            '@opentiny/vue-input', // 输入框 ✅
+            '@opentiny/vue-loading', // 加载中 ✅（AutoImport）
+            '@opentiny/vue-message', // 消息提示 ✅（AutoImport）
+            '@opentiny/vue-modal', // 模态框 ✅（AutoImport）
+            '@opentiny/vue-notify', // 通知 ✅（AutoImport）
+            '@opentiny/vue-numeric', // 数字输入 ✅
+            '@opentiny/vue-pager', // 分页 ✅
+            '@opentiny/vue-progress', // 进度条 ✅
+            '@opentiny/vue-radio', // 单选框 ✅
+            '@opentiny/vue-radio-group', // 单选框组 ✅
+            '@opentiny/vue-search', // 搜索框 ✅
+            '@opentiny/vue-select', // 选择器 ✅
+            '@opentiny/vue-tag', // 标签 ✅
+            '@opentiny/vue-tree' // 树形控件 ✅
+        ]
     }
 });
