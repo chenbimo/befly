@@ -2,7 +2,6 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import { routes } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
 import { Layouts } from '@befly-addon/admin/utils/layouts';
-import type { RouteRecordRaw } from 'vue-router';
 
 /**
  * @typedef {import('@befly-addon/admin/utils/layouts').LayoutConfig} LayoutConfig
@@ -11,8 +10,10 @@ import type { RouteRecordRaw } from 'vue-router';
 /**
  * 将布局配置转换为实际的路由配置
  * 在这里执行实际的布局组件导入
+ * @param {LayoutConfig[]} configs
+ * @returns {import('vue-router').RouteRecordRaw[]}
  */
-function applyLayouts(configs: LayoutConfig[]): RouteRecordRaw[] {
+function applyLayouts(configs) {
     return configs.map((config) => {
         // 根据布局名称加载对应的布局组件
         const layoutComponent = config.layoutName === 'default' ? () => import('@/layouts/default.vue') : () => import(`@/layouts/${config.layoutName}.vue`);
@@ -37,7 +38,7 @@ function applyLayouts(configs: LayoutConfig[]): RouteRecordRaw[] {
 const layoutRoutes = applyLayouts(Layouts(routes));
 
 // 添加根路径重定向
-const finalRoutes: RouteRecordRaw[] = [
+const finalRoutes = [
     {
         path: '/',
         redirect: '/addon/admin'
@@ -47,7 +48,7 @@ const finalRoutes: RouteRecordRaw[] = [
 
 /**
  * 创建并导出路由实例
- * 可直接在 main.ts 中使用 app.use(router)
+ * 可直接在 main.js 中使用 app.use(router)
  */
 export const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),

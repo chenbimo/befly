@@ -12,7 +12,7 @@
         "src",
         "public",
         "index.html",
-        "vite.config.ts",
+        "vite.config.js",
         "tsconfig.json",
         ".env",
         ".env.development",

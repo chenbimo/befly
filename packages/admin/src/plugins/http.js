@@ -1,16 +1,16 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import axios from 'axios';
 import { Modal } from '@opentiny/vue';
 import { $Storage } from './storage';
 
-// API 响应格式
-interface ApiResponse<T = any> {
-    code: 0 | 1;
-    msg: string;
-    data: T;
-}
+/**
+ * @typedef {Object} ApiResponse
+ * @property {0 | 1} code
+ * @property {string} msg
+ * @property {any} data
+ */
 
 // 创建 axios 实例
-const request: AxiosInstance = axios.create({
+const request = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: 10000,
     headers: {
@@ -44,7 +44,7 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-    (response: AxiosResponse<ApiResponse>) => {
+    (response) => {
         const res = response.data;
 
         // 如果code不是0,说明业务失败
@@ -56,7 +56,7 @@ request.interceptors.response.use(
             return Promise.reject(res.data);
         }
 
-        return res as any;
+        return res;
     },
     (error) => {
         Modal.message({ message: '网络连接失败', status: 'error' });
@@ -66,14 +66,15 @@ request.interceptors.response.use(
 
 /**
  * 统一的 HTTP 请求方法（仅支持 GET 和 POST）
- * @param url - 请求路径
- * @param data - 请求数据，默认为空对象
- * @param method - 请求方法，默认为 'post'，可选 'get' | 'post'
- * @param config - axios 请求配置
- * @returns Promise<ApiResponse<T>>
+ * @template T
+ * @param {string} url - 请求路径
+ * @param {any} [data={}] - 请求数据，默认为空对象
+ * @param {'get' | 'post'} [method='post'] - 请求方法，默认为 'post'，可选 'get' | 'post'
+ * @param {import('axios').AxiosRequestConfig} [config] - axios 请求配置
+ * @returns {Promise<ApiResponse>}
  */
-export function $Http<T = any>(url: string, data: any = {}, method: 'get' | 'post' = 'post', config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const methodLower = method.toLowerCase() as 'get' | 'post';
+export function $Http(url, data = {}, method = 'post', config) {
+    const methodLower = method.toLowerCase();
 
     // GET 请求将 data 作为 params
     if (methodLower === 'get') {
