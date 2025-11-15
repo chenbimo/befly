@@ -26,7 +26,6 @@
 </template>
 
 <script setup>
-
 // 组件内部数据
 const notifications = $ref([
     { id: 1, type: 'warning', title: '系统更新提醒 - v1.1.0 版本已发布', isRead: false, createdAt: Date.now() - 3600000 },
