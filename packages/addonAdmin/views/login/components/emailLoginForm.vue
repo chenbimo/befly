@@ -25,6 +25,7 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
 import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import ILucideUser from '~icons/lucide/user';
 import ILucideLock from '~icons/lucide/lock';

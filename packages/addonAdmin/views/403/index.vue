@@ -13,6 +13,7 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
 import { Button as TButton } from 'tdesign-vue-next';
 
 const router = useRouter();
