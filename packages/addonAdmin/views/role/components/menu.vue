@@ -1,11 +1,11 @@
-<template>
+﻿<template>
     <t-dialog v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <div class="comp-role-menu">
             <t-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
         </div>
         <template #footer>
             <t-button @click="$Method.onClose">取消</t-button>
-            <t-button type="primary" @click="$Method.onSubmit">保存</t-button>
+            <t-button theme="primary" @click="$Method.onSubmit">保存</t-button>
         </template>
     </t-dialog>
 </template>

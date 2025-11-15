@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑字典' : '添加字典'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
         <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
             <t-form-item label="字典名称" prop="name">
@@ -28,7 +28,7 @@
         </t-form>
         <template #footer>
             <t-button @click="$Method.onClose">取消</t-button>
-            <t-button type="primary" @click="$Method.onSubmit">确定</t-button>
+            <t-button theme="primary" @click="$Method.onSubmit">确定</t-button>
         </template>
     </t-dialog>
 </template>

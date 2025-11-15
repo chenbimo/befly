@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'add' ? '添加菜单' : '编辑菜单'" width="600px" :append-to-body="true" :show-footer="true" top="10vh">
         <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
             <t-form-item label="菜单名称" prop="name">
@@ -22,7 +22,7 @@
         </t-form>
         <template #footer>
             <t-button @click="$Method.onClose">取消</t-button>
-            <t-button type="primary" @click="$Method.onSubmit">确定</t-button>
+            <t-button theme="primary" @click="$Method.onSubmit">确定</t-button>
         </template>
     </t-dialog>
 </template>

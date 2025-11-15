@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <t-dialog v-model:visible="$Data.visible" title="分配角色" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="20vh" @close="$Method.onClose">
         <div class="role-dialog">
             <div class="user-info">
@@ -10,7 +10,7 @@
         </div>
         <template #footer>
             <t-button @click="$Method.onClose">取消</t-button>
-            <t-button type="primary" @click="$Method.onSubmit">确定</t-button>
+            <t-button theme="primary" @click="$Method.onSubmit">确定</t-button>
         </template>
     </t-dialog>
 </template>

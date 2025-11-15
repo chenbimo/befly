@@ -1,7 +1,7 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-content">
-            <t-button type="primary" size="large" @click="handleClearCache">
+            <t-button theme="primary" size="large" @click="handleClearCache">
                 <template #prefix>
                     <i-lucide:rotate-cw />
                 </template>

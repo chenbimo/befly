@@ -30,7 +30,7 @@
             </div>
             <div class="footer-right">
                 <t-button @click="$Method.onClose">取消</t-button>
-                <t-button type="primary" @click="$Method.onSubmit">保存</t-button>
+                <t-button theme="primary" @click="$Method.onSubmit">保存</t-button>
             </div>
         </template>
     </t-dialog>

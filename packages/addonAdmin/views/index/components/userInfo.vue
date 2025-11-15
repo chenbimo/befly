@@ -26,7 +26,7 @@
 
         <!-- 仅 dev 角色显示刷新缓存按钮 -->
         <div v-if="$Data.userInfo.roleCode === 'dev'" class="user-actions">
-            <t-button type="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
+            <t-button theme="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
                 <template #icon>
                     <i-lucide:rotate-cw />
                 </template>

@@ -2,7 +2,7 @@
     <div class="page-admin page-table">
         <div class="main-tool">
             <div class="left">
-                <t-button type="primary" @click="$Method.onAction('add', {})">
+                <t-button theme="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
                         <i-lucide:plus />
                     </template>
