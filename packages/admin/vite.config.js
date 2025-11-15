@@ -102,11 +102,18 @@ export default defineConfig({
         sourcemap: false,
         minify: 'esbuild',
         rollupOptions: {
-            external: ['vue', 'vue-router', 'pinia', '@opentiny/vue', 'axios', 'vue-macros/macros'],
             output: {
-                chunkFileNames: 'assets/[name]-[hash].js',
-                entryFileNames: 'assets/[name]-[hash].js',
-                assetFileNames: 'assets/[name]-[hash].[ext]'
+                chunkFileNames: 'assets/js/[name]-[hash].js',
+                entryFileNames: 'assets/js/[name]-[hash].js',
+                assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+                manualChunks: {
+                    // Vue 核心
+                    'vue-vendor': ['vue', 'vue-router', 'pinia'],
+                    // UI 组件库
+                    'ui-vendor': ['@opentiny/vue'],
+                    // 工具库
+                    'utils-vendor': ['axios']
+                }
             }
         }
     },
