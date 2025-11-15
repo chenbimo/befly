@@ -1,7 +1,7 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideServer />
+            <i-lucide:server />
             <h2>运行环境</h2>
         </div>
         <div class="section-content">

@@ -1,18 +1,18 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideBell />
+            <i-lucide:bell />
             <h2>系统通知</h2>
         </div>
         <div class="section-content">
             <div class="notification-compact-list">
                 <div v-for="notification in notifications" :key="notification.id" class="notification-compact-item">
                     <div class="notification-icon" :class="`type-${notification.type}`">
-                        <IconLucideInfo v-if="notification.type === 'info'" />
-                        <IconLucideCheckCircle v-else-if="notification.type === 'success'" />
-                        <IconLucideAlertTriangle v-else-if="notification.type === 'warning'" />
-                        <IconLucideXCircle v-else-if="notification.type === 'error'" />
-                        <IconLucideBell v-else />
+                        <i-lucide:info v-if="notification.type === 'info'" />
+                        <i-lucide:check-circle v-else-if="notification.type === 'success'" />
+                        <i-lucide:alert-triangle v-else-if="notification.type === 'warning'" />
+                        <i-lucide:x-circle v-else-if="notification.type === 'error'" />
+                        <i-lucide:bell v-else />
                     </div>
                     <div class="notification-content">
                         <span class="notification-title">{{ notification.title }}</span>

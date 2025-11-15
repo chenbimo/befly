@@ -4,7 +4,7 @@
             <div class="left">
                 <t-button type="primary" @click="$Method.onAction('add', {})">
                     <template #icon>
-                        <IconLucidePlus />
+                        <i-lucide:plus />
                     </template>
                     添加菜单
                 </t-button>
@@ -12,7 +12,7 @@
             <div class="right">
                 <t-button @click="$Method.handleRefresh">
                     <template #icon>
-                        <IconLucideRotateCw />
+                        <i-lucide:rotate-cw />
                     </template>
                     刷新
                 </t-button>
@@ -21,7 +21,7 @@
         <div class="main-table">
             <t-table :data="$Data.menuList" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
                 <template #icon="{ row }">
-                    <IconLucideSquare v-if="row.icon" />
+                    <i-lucide:square v-if="row.icon" />
                     <span v-else>-</span>
                 </template>
                 <template #state="{ row }">
@@ -34,11 +34,11 @@
                         <t-button variant="text" size="small">操作</t-button>
                         <t-dropdown-menu slot="dropdown">
                             <t-dropdown-item value="upd">
-                                <IconLucidePencil />
+                                <i-lucide:pencil />
                                 编辑
                             </t-dropdown-item>
                             <t-dropdown-item value="del" :divider="true">
-                                <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                <i-lucide:trash-2 style="width: 14px; height: 14px; margin-right: 6px" />
                                 删除
                             </t-dropdown-item>
                         </t-dropdown-menu>

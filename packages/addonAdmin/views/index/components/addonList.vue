@@ -1,14 +1,14 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucidePackage />
+            <i-lucide:package />
             <h2>已安装插件</h2>
         </div>
         <div class="section-content">
             <div class="addon-list">
                 <div v-for="addon in addonList" :key="addon.name" class="addon-item">
                     <div class="addon-icon">
-                        <IconLucideBox />
+                        <i-lucide:box />
                     </div>
                     <div class="addon-info">
                         <div class="addon-title">

@@ -1,7 +1,7 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideInfo />
+            <i-lucide:info />
             <h2>系统概览</h2>
         </div>
         <div class="section-content">
@@ -10,21 +10,21 @@
                     <div class="info-block">
                         <div class="stats-grid">
                             <div class="stat-box stat-primary">
-                                <IconLucideMenu />
+                                <i-lucide:menu />
                                 <div class="stat-content">
                                     <div class="stat-value">{{ permissionStats.menuCount }}</div>
                                     <div class="stat-label">菜单总数</div>
                                 </div>
                             </div>
                             <div class="stat-box stat-success">
-                                <IconLucideWebhook />
+                                <i-lucide:webhook />
                                 <div class="stat-content">
                                     <div class="stat-value">{{ permissionStats.apiCount }}</div>
                                     <div class="stat-label">接口总数</div>
                                 </div>
                             </div>
                             <div class="stat-box stat-warning">
-                                <IconLucideUsers />
+                                <i-lucide:users />
                                 <div class="stat-content">
                                     <div class="stat-value">{{ permissionStats.roleCount }}</div>
                                     <div class="stat-label">角色总数</div>

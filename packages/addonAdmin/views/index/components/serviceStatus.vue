@@ -1,19 +1,19 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <IconLucideCheckCircle />
+            <i-lucide:check-circle />
             <h2>服务状态</h2>
         </div>
         <div class="section-content">
             <div class="config-grid">
                 <div v-for="service in services" :key="service.name" class="config-card" :class="`config-${service.status}`">
                     <div class="config-icon">
-                        <IconLucideDatabase v-if="service.name === '数据库'" style="width: 20px; height: 20px" />
-                        <IconLucideZap v-else-if="service.name === 'Redis'" style="width: 20px; height: 20px" />
-                        <IconLucideHardDrive v-else-if="service.name === '文件系统'" style="width: 20px; height: 20px" />
-                        <IconLucideMail v-else-if="service.name === '邮件服务'" style="width: 20px; height: 20px" />
-                        <IconLucideCloud v-else-if="service.name === 'OSS存储'" style="width: 20px; height: 20px" />
-                        <IconLucideCircle v-else style="width: 20px; height: 20px" />
+                        <i-lucide:database v-if="service.name === '数据库'" style="width: 20px; height: 20px" />
+                        <i-lucide:zap v-else-if="service.name === 'Redis'" style="width: 20px; height: 20px" />
+                        <i-lucide:hard-drive v-else-if="service.name === '文件系统'" style="width: 20px; height: 20px" />
+                        <i-lucide:mail v-else-if="service.name === '邮件服务'" style="width: 20px; height: 20px" />
+                        <i-lucide:cloud v-else-if="service.name === 'OSS存储'" style="width: 20px; height: 20px" />
+                        <i-lucide:circle v-else style="width: 20px; height: 20px" />
                     </div>
                     <div class="config-info">
                         <div class="config-name">{{ service.name }}</div>
@@ -23,10 +23,10 @@
                         </div>
                     </div>
                     <div class="config-badge">
-                        <IconLucideCheckCircle v-if="service.status === 'running'" style="width: 32px; height: 32px" />
-                        <IconLucideXCircle v-else-if="service.status === 'stopped'" style="width: 32px; height: 32px" />
-                        <IconLucideAlertCircle v-else-if="service.status === 'unconfigured'" style="width: 32px; height: 32px" />
-                        <IconLucideCircle v-else style="width: 32px; height: 32px" />
+                        <i-lucide:check-circle v-if="service.status === 'running'" style="width: 32px; height: 32px" />
+                        <i-lucide:x-circle v-else-if="service.status === 'stopped'" style="width: 32px; height: 32px" />
+                        <i-lucide:alert-circle v-else-if="service.status === 'unconfigured'" style="width: 32px; height: 32px" />
+                        <i-lucide:circle v-else style="width: 32px; height: 32px" />
                     </div>
                 </div>
             </div>

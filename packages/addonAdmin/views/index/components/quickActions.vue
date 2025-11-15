@@ -3,7 +3,7 @@
         <div class="section-content">
             <t-button type="primary" size="large" @click="handleClearCache">
                 <template #prefix>
-                    <IconLucideRotateCw />
+                    <i-lucide:rotate-cw />
                 </template>
                 刷新缓存
             </t-button>

@@ -3,7 +3,7 @@
         <t-form-item prop="username" label="用户名">
             <t-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
                 <template #prefix-icon>
-                    <IconLucideUser />
+                    <i-lucide:user />
                 </template>
             </t-input>
         </t-form-item>
@@ -11,7 +11,7 @@
         <t-form-item prop="email" label="邮箱">
             <t-input v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
                 <template #prefix-icon>
-                    <IconLucideMail />
+                    <i-lucide:mail />
                 </template>
             </t-input>
         </t-form-item>
@@ -19,7 +19,7 @@
         <t-form-item prop="password" label="密码">
             <t-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
-                    <IconLucideLock />
+                    <i-lucide:lock />
                 </template>
             </t-input>
         </t-form-item>
@@ -27,7 +27,7 @@
         <t-form-item prop="nickname" label="昵称">
             <t-input v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
                 <template #prefix-icon>
-                    <IconLucideSmile />
+                    <i-lucide:smile />
                 </template>
             </t-input>
         </t-form-item>
