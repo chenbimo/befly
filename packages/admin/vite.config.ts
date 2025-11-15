@@ -101,14 +101,11 @@ export default defineConfig({
         sourcemap: false,
         minify: 'esbuild',
         rollupOptions: {
+            external: ['vue', 'vue-router', 'pinia', '@opentiny/vue', 'axios', 'vue-macros/macros'],
             output: {
                 chunkFileNames: 'assets/[name]-[hash].js',
                 entryFileNames: 'assets/[name]-[hash].js',
-                assetFileNames: 'assets/[name]-[hash].[ext]',
-                manualChunks: {
-                    vue: ['vue', 'vue-router', 'pinia'],
-                    opentiny: ['@opentiny/vue']
-                }
+                assetFileNames: 'assets/[name]-[hash].[ext]'
             }
         }
     },
