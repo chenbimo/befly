@@ -19,42 +19,31 @@
             </div>
         </div>
         <div class="main-table">
-            <t-table :data="$Data.menuList" header-cell-class-name="custom-table-cell-class" size="small" height="100%" seq-serial>
-                <t-tableColumn type="index" title="序号" :width="60" />
-                <t-tableColumn field="name" title="菜单名称" />
-                <t-tableColumn field="path" title="路径" :width="200" />
-                <t-table-column field="icon" title="图标" :width="100">
-                    <template #default="{ row }">
-                        <IconLucideSquare v-if="row.icon" />
-                        <span v-else>-</span>
-                    </template>
-                </t-table-column>
-                <t-tableColumn field="sort" title="排序" :width="80" />
-                <t-table-column field="state" title="状态" :width="100">
-                    <template #default="{ row }">
-                        <t-tag v-if="row.state === 1" type="success">正常</t-tag>
-                        <t-tag v-else-if="row.state === 2" type="warning">禁用</t-tag>
-                        <t-tag v-else type="danger">已删除</t-tag>
-                    </template>
-                </t-table-column>
-                <t-table-column title="操作" :width="120" align="right">
-                    <template #default="{ row }">
-                        <t-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
-                            <template #dropdown>
-                                <t-dropdown-menu>
-                                    <t-dropdown-item :item-data="{ command: 'upd' }">
-                                        <IconLucidePencil />
-                                        编辑
-                                    </t-dropdown-item>
-                                    <t-dropdown-item :item-data="{ command: 'del' }" divided>
-                                        <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
-                                        删除
-                                    </t-dropdown-item>
-                                </t-dropdown-menu>
-                            </template>
-                        </t-dropdown>
-                    </template>
-                </t-table-column>
+            <t-table :data="$Data.menuList" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
+                <template #icon="{ row }">
+                    <IconLucideSquare v-if="row.icon" />
+                    <span v-else>-</span>
+                </template>
+                <template #state="{ row }">
+                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
+                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
+                    <t-tag v-else theme="danger">已删除</t-tag>
+                </template>
+                <template #operation="{ row }">
+                    <t-dropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
+                        <t-button variant="text" size="small">操作</t-button>
+                        <t-dropdown-menu slot="dropdown">
+                            <t-dropdown-item value="upd">
+                                <IconLucidePencil />
+                                编辑
+                            </t-dropdown-item>
+                            <t-dropdown-item value="del" :divider="true">
+                                <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                删除
+                            </t-dropdown-item>
+                        </t-dropdown-menu>
+                    </t-dropdown>
+                </template>
             </t-table>
         </div>
 
@@ -80,6 +69,15 @@ import { $Http } from '@/plugins/http';
 // 响应式数据
 const $Data = $ref({
     menuList: [],
+    columns: [
+        { colKey: 'index', title: '序号', width: 60, align: 'center' },
+        { colKey: 'name', title: '菜单名称' },
+        { colKey: 'path', title: '路径', width: 200 },
+        { colKey: 'icon', title: '图标', width: 100 },
+        { colKey: 'sort', title: '排序', width: 80 },
+        { colKey: 'state', title: '状态', width: 100 },
+        { colKey: 'operation', title: '操作', width: 120, align: 'right' }
+    ],
     pagerConfig: {
         currentPage: 1,
         pageSize: 30,

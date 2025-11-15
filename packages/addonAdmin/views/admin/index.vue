@@ -27,41 +27,31 @@
         </div>
 
         <div class="main-table">
-            <t-table :data="$Data.tableData" header-cell-class-name="custom-table-cell-class" size="small" height="100%" seq-serial>
-                <t-tableColumn type="index" title="序号" :width="60" />
-                <t-tableColumn field="username" title="用户名" />
-                <t-tableColumn field="email" title="邮箱" :width="200" />
-                <t-tableColumn field="nickname" title="昵称" :width="150" />
-                <t-tableColumn field="roleCode" title="角色" :width="120" />
-                <t-table-column field="state" title="状态" :width="100">
-                    <template #default="{ row }">
-                        <t-tag v-if="row.state === 1" type="success">正常</t-tag>
-                        <t-tag v-else-if="row.state === 2" type="warning">禁用</t-tag>
-                        <t-tag v-else type="danger">已删除</t-tag>
-                    </template>
-                </t-table-column>
-                <t-table-column title="操作" :width="120" align="right">
-                    <template #default="{ row }">
-                        <t-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
-                            <template #dropdown>
-                                <t-dropdown-menu>
-                                    <t-dropdown-item :item-data="{ command: 'role' }">
-                                        <IconLucideUser />
-                                        分配角色
-                                    </t-dropdown-item>
-                                    <t-dropdown-item :item-data="{ command: 'upd' }">
-                                        <IconLucidePencil />
-                                        编辑
-                                    </t-dropdown-item>
-                                    <t-dropdown-item :item-data="{ command: 'del' }" divided>
-                                        <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
-                                        删除
-                                    </t-dropdown-item>
-                                </t-dropdown-menu>
-                            </template>
-                        </t-dropdown>
-                    </template>
-                </t-table-column>
+            <t-table :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
+                <template #state="{ row }">
+                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
+                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
+                    <t-tag v-else theme="danger">已删除</t-tag>
+                </template>
+                <template #operation="{ row }">
+                    <t-dropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
+                        <t-button variant="text" size="small">操作</t-button>
+                        <t-dropdown-menu slot="dropdown">
+                            <t-dropdown-item value="role">
+                                <IconLucideUser />
+                                分配角色
+                            </t-dropdown-item>
+                            <t-dropdown-item value="upd">
+                                <IconLucidePencil />
+                                编辑
+                            </t-dropdown-item>
+                            <t-dropdown-item value="del" :divider="true">
+                                <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                删除
+                            </t-dropdown-item>
+                        </t-dropdown-menu>
+                    </t-dropdown>
+                </template>
             </t-table>
         </div>
 
@@ -91,6 +81,15 @@ import { $Http } from '@/plugins/http';
 // 响应式数据
 const $Data = $ref({
     tableData: [],
+    columns: [
+        { colKey: 'index', title: '序号', width: 60, align: 'center' },
+        { colKey: 'username', title: '用户名' },
+        { colKey: 'email', title: '邮箱', width: 200 },
+        { colKey: 'nickname', title: '昵称', width: 150 },
+        { colKey: 'roleCode', title: '角色', width: 120 },
+        { colKey: 'state', title: '状态', width: 100 },
+        { colKey: 'operation', title: '操作', width: 120, align: 'right' }
+    ],
     pagerConfig: {
         currentPage: 1,
         pageSize: 30,

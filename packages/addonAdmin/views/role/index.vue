@@ -19,45 +19,35 @@
             </div>
         </div>
         <div class="main-table">
-            <t-table :data="$Data.tableData" header-cell-class-name="custom-table-cell-class" size="small" height="100%" show-overflow="tooltip" border seq-serial>
-                <t-tableColumn type="index" title="序号" align="center" :width="100" />
-                <t-tableColumn field="name" title="角色名称" :width="150" />
-                <t-tableColumn field="code" title="角色代码" :width="150" />
-                <t-tableColumn field="description" title="描述" :min-width="150" />
-                <t-tableColumn field="sort" title="排序" align="center" :width="80" />
-                <t-table-column field="state" title="状态" align="center" :width="100">
-                    <template #default="{ row }">
-                        <t-tag v-if="row.state === 1" type="success">正常</t-tag>
-                        <t-tag v-else-if="row.state === 2" type="warning">禁用</t-tag>
-                        <t-tag v-else type="danger">已删除</t-tag>
-                    </template>
-                </t-table-column>
-                <t-table-column title="操作" :width="120" align="center" fixed="right">
-                    <template #default="{ row }">
-                        <t-dropdown title="操作" trigger="click" size="small" border visible-arrow @item-click="(data) => $Method.onAction(data.itemData.command, row)">
-                            <template #dropdown>
-                                <t-dropdown-menu>
-                                    <t-dropdown-item :item-data="{ command: 'upd' }">
-                                        <IconLucidePencil />
-                                        编辑
-                                    </t-dropdown-item>
-                                    <t-dropdown-item :item-data="{ command: 'menu' }">
-                                        <IconLucideSettings />
-                                        菜单权限
-                                    </t-dropdown-item>
-                                    <t-dropdown-item :item-data="{ command: 'api' }">
-                                        <IconLucideCode />
-                                        接口权限
-                                    </t-dropdown-item>
-                                    <t-dropdown-item :item-data="{ command: 'del' }" divided>
-                                        <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
-                                        删除
-                                    </t-dropdown-item>
-                                </t-dropdown-menu>
-                            </template>
-                        </t-dropdown>
-                    </template>
-                </t-table-column>
+            <t-table :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id" bordered>
+                <template #state="{ row }">
+                    <t-tag v-if="row.state === 1" theme="success">正常</t-tag>
+                    <t-tag v-else-if="row.state === 2" theme="warning">禁用</t-tag>
+                    <t-tag v-else theme="danger">已删除</t-tag>
+                </template>
+                <template #operation="{ row }">
+                    <t-dropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
+                        <t-button variant="text" size="small">操作</t-button>
+                        <t-dropdown-menu slot="dropdown">
+                            <t-dropdown-item value="upd">
+                                <IconLucidePencil />
+                                编辑
+                            </t-dropdown-item>
+                            <t-dropdown-item value="menu">
+                                <IconLucideSettings />
+                                菜单权限
+                            </t-dropdown-item>
+                            <t-dropdown-item value="api">
+                                <IconLucideCode />
+                                接口权限
+                            </t-dropdown-item>
+                            <t-dropdown-item value="del" :divider="true">
+                                <IconLucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                删除
+                            </t-dropdown-item>
+                        </t-dropdown-menu>
+                    </t-dropdown>
+                </template>
             </t-table>
         </div>
 
@@ -91,6 +81,15 @@ import { $Http } from '@/plugins/http';
 // 响应式数据
 const $Data = $ref({
     tableData: [],
+    columns: [
+        { colKey: 'index', title: '序号', width: 100, align: 'center' },
+        { colKey: 'name', title: '角色名称', width: 150 },
+        { colKey: 'code', title: '角色代码', width: 150 },
+        { colKey: 'description', title: '描述', minWidth: 150, ellipsis: true },
+        { colKey: 'sort', title: '排序', width: 80, align: 'center' },
+        { colKey: 'state', title: '状态', width: 100, align: 'center' },
+        { colKey: 'operation', title: '操作', width: 120, align: 'center', fixed: 'right' }
+    ],
     pagerConfig: {
         currentPage: 1,
         pageSize: 30,
