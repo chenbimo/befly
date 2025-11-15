@@ -1,21 +1,22 @@
 ﻿<template>
-    <t-dialog v-model:visible="$Data.visible" title="分配角色" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="20vh" @close="$Method.onClose">
+    <TDialog v-model:visible="$Data.visible" title="分配角色" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="20vh" @close="$Method.onClose">
         <div class="role-dialog">
             <div class="user-info">
-                <t-tag type="info">{{ $Prop.rowData.username }}</t-tag>
+                <TTag type="info">{{ $Prop.rowData.username }}</TTag>
                 <span class="user-email">{{ $Prop.rowData.email }}</span>
             </div>
-            <t-divider />
-            <t-select v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
+            <TDivider />
+            <TSelect v-model="$Data.checkedRoleCode" :options="$Data.roleOptions" placeholder="请选择角色" />
         </div>
         <template #footer>
-            <t-button @click="$Method.onClose">取消</t-button>
-            <t-button theme="primary" @click="$Method.onSubmit">确定</t-button>
+            <TButton @click="$Method.onClose">取消</TButton>
+            <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
         </template>
-    </t-dialog>
+    </TDialog>
 </template>
 
 <script setup>
+import { Dialog as TDialog, Tag as TTag, Divider as TDivider, Select as TSelect, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

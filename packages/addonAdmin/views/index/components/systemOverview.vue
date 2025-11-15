@@ -1,28 +1,28 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:info />
+            <ILucideInfo />
             <h2>系统概览</h2>
         </div>
         <div class="section-content">
             <div class="info-block">
                 <div class="stats-grid">
                     <div class="stat-box stat-primary">
-                        <i-lucide:menu />
+                        <ILucideMenu />
                         <div class="stat-content">
                             <div class="stat-value">{{ permissionStats.menuCount }}</div>
                             <div class="stat-label">菜单总数</div>
                         </div>
                     </div>
                     <div class="stat-box stat-success">
-                        <i-lucide:webhook />
+                        <ILucideWebhook />
                         <div class="stat-content">
                             <div class="stat-value">{{ permissionStats.apiCount }}</div>
                             <div class="stat-label">接口总数</div>
                         </div>
                     </div>
                     <div class="stat-box stat-warning">
-                        <i-lucide:users />
+                        <ILucideUsers />
                         <div class="stat-content">
                             <div class="stat-value">{{ permissionStats.roleCount }}</div>
                             <div class="stat-label">角色总数</div>
@@ -35,6 +35,10 @@
 </template>
 
 <script setup>
+import ILucideInfo from '~icons/lucide/info';
+import ILucideMenu from '~icons/lucide/menu';
+import ILucideWebhook from '~icons/lucide/webhook';
+import ILucideUsers from '~icons/lucide/users';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

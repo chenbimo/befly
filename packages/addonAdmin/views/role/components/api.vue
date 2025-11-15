@@ -1,13 +1,13 @@
 ﻿<template>
-    <t-dialog v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
+    <TDialog v-model:visible="$Data.visible" title="接口权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
         <div class="comp-role-api">
             <!-- 搜索框 -->
             <div class="search-box">
-                <t-input v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @change="$Method.onSearch">
+                <TInput v-model="$Data.searchText" placeholder="搜索接口名称或路径" clearable @change="$Method.onSearch">
                     <template #prefix-icon>
-                        <i-lucide:search />
+                        <ILucideSearch />
                     </template>
-                </t-input>
+                </TInput>
             </div>
 
             <!-- 接口分组列表 -->
@@ -15,9 +15,9 @@
                 <div v-for="group in $Data.filteredApiData" :key="group.name" class="api-group">
                     <div class="group-header">{{ group.title }}</div>
                     <div class="api-checkbox-list">
-                        <t-checkbox-group v-model="$Data.checkedApiIds">
-                            <t-checkbox v-for="api in group.apis" :key="api.id" :value="api.id"> {{ api.label }} </t-checkbox>
-                        </t-checkbox-group>
+                        <TCheckboxGroup v-model="$Data.checkedApiIds">
+                            <TCheckbox v-for="api in group.apis" :key="api.id" :value="api.id"> {{ api.label }} </TCheckbox>
+                        </TCheckboxGroup>
                     </div>
                 </div>
             </div>
@@ -25,18 +25,20 @@
 
         <template #footer>
             <div class="footer-left">
-                <t-button size="small" @click="$Method.onCheckAll">全选</t-button>
-                <t-button size="small" @click="$Method.onUncheckAll">取消全选</t-button>
+                <TButton size="small" @click="$Method.onCheckAll">全选</TButton>
+                <TButton size="small" @click="$Method.onUncheckAll">取消全选</TButton>
             </div>
             <div class="footer-right">
-                <t-button @click="$Method.onClose">取消</t-button>
-                <t-button theme="primary" @click="$Method.onSubmit">保存</t-button>
+                <TButton @click="$Method.onClose">取消</TButton>
+                <TButton theme="primary" @click="$Method.onSubmit">保存</TButton>
             </div>
         </template>
-    </t-dialog>
+    </TDialog>
 </template>
 
 <script setup>
+import { Dialog as TDialog, Input as TInput, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import ILucideSearch from '~icons/lucide/search';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

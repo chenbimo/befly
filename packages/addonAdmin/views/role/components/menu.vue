@@ -1,17 +1,18 @@
 ﻿<template>
-    <t-dialog v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
+    <TDialog v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <div class="comp-role-menu">
-            <t-tree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
+            <TTree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
         </div>
         <template #footer>
-            <t-button @click="$Method.onClose">取消</t-button>
-            <t-button theme="primary" @click="$Method.onSubmit">保存</t-button>
+            <TButton @click="$Method.onClose">取消</TButton>
+            <TButton theme="primary" @click="$Method.onSubmit">保存</TButton>
         </template>
-    </t-dialog>
+    </TDialog>
 </template>
 
 <script setup>
 import { nextTick } from 'vue';
+import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { arrayToTree } from '@/utils';
 import { $Http } from '@/plugins/http';
 

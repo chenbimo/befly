@@ -1,24 +1,24 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:bell />
+            <ILucideBell />
             <h2>系统通知</h2>
         </div>
         <div class="section-content">
             <div class="notification-compact-list">
                 <div v-for="notification in notifications" :key="notification.id" class="notification-compact-item">
                     <div class="notification-icon" :class="`type-${notification.type}`">
-                        <i-lucide:info v-if="notification.type === 'info'" />
-                        <i-lucide:check-circle v-else-if="notification.type === 'success'" />
-                        <i-lucide:alert-triangle v-else-if="notification.type === 'warning'" />
-                        <i-lucide:x-circle v-else-if="notification.type === 'error'" />
-                        <i-lucide:bell v-else />
+                        <ILucideInfo v-if="notification.type === 'info'" />
+                        <ILucideCheckCircle v-else-if="notification.type === 'success'" />
+                        <ILucideAlertTriangle v-else-if="notification.type === 'warning'" />
+                        <ILucideXCircle v-else-if="notification.type === 'error'" />
+                        <ILucideBell v-else />
                     </div>
                     <div class="notification-content">
                         <span class="notification-title">{{ notification.title }}</span>
                         <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
                     </div>
-                    <t-tag v-if="!notification.isRead" type="primary" size="small">新</t-tag>
+                    <TTag v-if="!notification.isRead" type="primary" size="small">新</TTag>
                 </div>
             </div>
         </div>
@@ -26,6 +26,13 @@
 </template>
 
 <script setup>
+import { Tag as TTag } from 'tdesign-vue-next';
+import ILucideBell from '~icons/lucide/bell';
+import ILucideInfo from '~icons/lucide/info';
+import ILucideCheckCircle from '~icons/lucide/check-circle';
+import ILucideAlertTriangle from '~icons/lucide/alert-triangle';
+import ILucideXCircle from '~icons/lucide/x-circle';
+
 // 组件内部数据
 const notifications = $ref([
     { id: 1, type: 'warning', title: '系统更新提醒 - v1.1.0 版本已发布', isRead: false, createdAt: Date.now() - 3600000 },

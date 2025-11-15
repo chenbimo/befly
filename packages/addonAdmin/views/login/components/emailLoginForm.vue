@@ -1,30 +1,33 @@
 ﻿<template>
-    <t-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
-        <t-form-item prop="account" label="账号">
-            <t-input v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
+    <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
+        <TFormItem prop="account" label="账号">
+            <TInput v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:user />
+                    <ILucideUser />
                 </template>
-            </t-input>
-        </t-form-item>
+            </TInput>
+        </TFormItem>
 
-        <t-form-item prop="password" label="密码">
-            <t-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
+        <TFormItem prop="password" label="密码">
+            <TInput v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:lock />
+                    <ILucideLock />
                 </template>
-            </t-input>
-        </t-form-item>
+            </TInput>
+        </TFormItem>
 
         <div class="form-footer">
             <a href="#" class="forgot-password">忘记密码？</a>
         </div>
 
-        <t-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </t-button>
-    </t-form>
+        <TButton theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </TButton>
+    </TForm>
 </template>
 
 <script setup>
+import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import ILucideUser from '~icons/lucide/user';
+import ILucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
 import { $Storage } from '@/plugins/storage';
 

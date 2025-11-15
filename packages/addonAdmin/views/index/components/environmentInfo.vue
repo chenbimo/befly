@@ -1,7 +1,7 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:server />
+            <ILucideServer />
             <h2>运行环境</h2>
         </div>
         <div class="section-content">
@@ -36,6 +36,7 @@
 </template>
 
 <script setup>
+import ILucideServer from '~icons/lucide/server';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

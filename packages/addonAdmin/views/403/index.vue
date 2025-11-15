@@ -5,14 +5,16 @@
             <h1 class="error-title">无权限访问</h1>
             <p class="error-description">抱歉，您没有访问该页面的权限</p>
             <div class="error-actions">
-                <t-button theme="primary" @click="$Method.goHome">返回首页</t-button>
-                <t-button @click="$Method.goBack">返回上一页</t-button>
+                <TButton theme="primary" @click="$Method.goHome">返回首页</TButton>
+                <TButton @click="$Method.goBack">返回上一页</TButton>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
+import { Button as TButton } from 'tdesign-vue-next';
+
 const router = useRouter();
 
 const $Method = {

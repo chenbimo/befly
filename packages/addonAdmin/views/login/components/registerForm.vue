@@ -1,42 +1,47 @@
 ﻿<template>
-    <t-form :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="70px" label-position="left">
-        <t-form-item prop="username" label="用户名">
-            <t-input v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
+    <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="70px" label-position="left">
+        <TFormItem prop="username" label="用户名">
+            <TInput v-model="$Data.formData.username" placeholder="请输入用户名" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:user />
+                    <ILucideUser />
                 </template>
-            </t-input>
-        </t-form-item>
+            </TInput>
+        </TFormItem>
 
-        <t-form-item prop="email" label="邮箱">
-            <t-input v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
+        <TFormItem prop="email" label="邮箱">
+            <TInput v-model="$Data.formData.email" placeholder="请输入邮箱" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:mail />
+                    <ILucideMail />
                 </template>
-            </t-input>
-        </t-form-item>
+            </TInput>
+        </TFormItem>
 
-        <t-form-item prop="password" label="密码">
-            <t-input v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
+        <TFormItem prop="password" label="密码">
+            <TInput v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:lock />
+                    <ILucideLock />
                 </template>
-            </t-input>
-        </t-form-item>
+            </TInput>
+        </TFormItem>
 
-        <t-form-item prop="nickname" label="昵称">
-            <t-input v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
+        <TFormItem prop="nickname" label="昵称">
+            <TInput v-model="$Data.formData.nickname" placeholder="请输入昵称（选填）" size="large" clearable>
                 <template #prefix-icon>
-                    <i-lucide:smile />
+                    <ILucideSmile />
                 </template>
-            </t-input>
-        </t-form-item>
+            </TInput>
+        </TFormItem>
 
-        <t-button theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.handleSubmit"> 注册 </t-button>
-    </t-form>
+        <TButton theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.handleSubmit"> 注册 </TButton>
+    </TForm>
 </template>
 
 <script setup>
+import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import ILucideUser from '~icons/lucide/user';
+import ILucideMail from '~icons/lucide/mail';
+import ILucideLock from '~icons/lucide/lock';
+import ILucideSmile from '~icons/lucide/smile';
 import { $Http } from '@/plugins/http';
 
 const emit = defineEmits(['success']);

@@ -1,14 +1,14 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:activity />
+            <ILucideActivity />
             <h2>性能指标</h2>
         </div>
         <div class="section-content">
             <div class="performance-grid">
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:clock />
+                        <ILucideClock />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">平均响应</div>
@@ -17,7 +17,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:trending-up />
+                        <ILucideTrendingUp />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">QPS</div>
@@ -26,7 +26,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:alert-circle />
+                        <ILucideAlertCircle />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">错误率</div>
@@ -35,7 +35,7 @@
                 </div>
                 <div class="perf-metric">
                     <div class="perf-icon">
-                        <i-lucide:activity />
+                        <ILucideActivity />
                     </div>
                     <div class="perf-info">
                         <div class="perf-label">活跃连接</div>
@@ -45,7 +45,7 @@
             </div>
             <!-- 最慢接口提示 -->
             <div v-if="performanceMetrics.slowestApi" class="perf-slowest">
-                <i-lucide:alert-triangle />
+                <ILucideAlertTriangle />
                 <span>最慢接口: {{ performanceMetrics.slowestApi.path }} ({{ performanceMetrics.slowestApi.time }}ms)</span>
             </div>
         </div>
@@ -53,6 +53,11 @@
 </template>
 
 <script setup>
+import ILucideActivity from '~icons/lucide/activity';
+import ILucideClock from '~icons/lucide/clock';
+import ILucideTrendingUp from '~icons/lucide/trending-up';
+import ILucideAlertCircle from '~icons/lucide/alert-circle';
+import ILucideAlertTriangle from '~icons/lucide/alert-triangle';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据

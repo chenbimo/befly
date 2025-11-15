@@ -1,40 +1,41 @@
 ﻿<template>
-    <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑字典' : '添加字典'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <t-form-item label="字典名称" prop="name">
-                <t-input v-model="$Data.formData.name" placeholder="请输入字典名称" />
-            </t-form-item>
-            <t-form-item label="字典代码" prop="code">
-                <t-input v-model="$Data.formData.code" placeholder="请输入字典代码，如：gender" />
-            </t-form-item>
-            <t-form-item label="字典值" prop="value">
-                <t-input v-model="$Data.formData.value" placeholder="请输入字典值" />
-            </t-form-item>
-            <t-form-item label="父级ID" prop="pid">
-                <t-input-number v-model="$Data.formData.pid" :min="0" :max="999999999999999" />
-            </t-form-item>
-            <t-form-item label="排序" prop="sort">
-                <t-input-number v-model="$Data.formData.sort" :min="0" :max="9999" />
-            </t-form-item>
-            <t-form-item label="描述" prop="description">
-                <t-input v-model="$Data.formData.description" type="textarea" placeholder="请输入描述" :rows="3" />
-            </t-form-item>
-            <t-form-item label="状态" prop="state">
-                <t-radio-group v-model="$Data.formData.state">
-                    <t-radio :label="1">正常</t-radio>
-                    <t-radio :label="2">禁用</t-radio>
-                </t-radio-group>
-            </t-form-item>
-        </t-form>
+    <TDialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑字典' : '添加字典'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+        <TForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+            <TFormItem label="字典名称" prop="name">
+                <TInput v-model="$Data.formData.name" placeholder="请输入字典名称" />
+            </TFormItem>
+            <TFormItem label="字典代码" prop="code">
+                <TInput v-model="$Data.formData.code" placeholder="请输入字典代码，如：gender" />
+            </TFormItem>
+            <TFormItem label="字典值" prop="value">
+                <TInput v-model="$Data.formData.value" placeholder="请输入字典值" />
+            </TFormItem>
+            <TFormItem label="父级ID" prop="pid">
+                <TInputNumber v-model="$Data.formData.pid" :min="0" :max="999999999999999" />
+            </TFormItem>
+            <TFormItem label="排序" prop="sort">
+                <TInputNumber v-model="$Data.formData.sort" :min="0" :max="9999" />
+            </TFormItem>
+            <TFormItem label="描述" prop="description">
+                <TInput v-model="$Data.formData.description" type="textarea" placeholder="请输入描述" :rows="3" />
+            </TFormItem>
+            <TFormItem label="状态" prop="state">
+                <TRadioGroup v-model="$Data.formData.state">
+                    <TRadio :label="1">正常</TRadio>
+                    <TRadio :label="2">禁用</TRadio>
+                </TRadioGroup>
+            </TFormItem>
+        </TForm>
         <template #footer>
-            <t-button @click="$Method.onClose">取消</t-button>
-            <t-button theme="primary" @click="$Method.onSubmit">确定</t-button>
+            <TButton @click="$Method.onClose">取消</TButton>
+            <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
         </template>
-    </t-dialog>
+    </TDialog>
 </template>
 
 <script setup>
 import { watch } from 'vue';
+import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, InputNumber as TInputNumber, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

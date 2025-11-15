@@ -1,17 +1,20 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-content">
-            <t-button theme="primary" size="large" @click="handleClearCache">
+            <TButton theme="primary" size="large" @click="handleClearCache">
                 <template #prefix>
-                    <i-lucide:rotate-cw />
+                    <ILucideRotateCw />
                 </template>
                 刷新缓存
-            </t-button>
+            </TButton>
         </div>
     </div>
 </template>
 
 <script setup>
+import { Button as TButton } from 'tdesign-vue-next';
+import ILucideRotateCw from '~icons/lucide/rotate-cw';
+
 const handleClearCache = () => {
     console.log('刷新缓存');
 };

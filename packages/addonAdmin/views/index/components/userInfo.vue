@@ -2,7 +2,7 @@
     <div class="section-block user-info-card">
         <div class="user-header">
             <div class="user-avatar">
-                <i-lucide:user />
+                <ILucideUser />
             </div>
             <div class="user-basic">
                 <div class="user-name">{{ $Data.userInfo.nickname || $Data.userInfo.name || $Data.userInfo.username || '未设置' }}</div>
@@ -11,32 +11,38 @@
         </div>
         <div class="user-details">
             <div class="detail-item">
-                <i-lucide:mail />
+                <ILucideMail />
                 <span>{{ $Data.userInfo.email || '未设置' }}</span>
             </div>
             <div v-if="$Data.userInfo.phone" class="detail-item">
-                <i-lucide:phone />
+                <ILucidePhone />
                 <span>{{ $Data.userInfo.phone }}</span>
             </div>
             <div v-if="$Data.userInfo.lastLoginTime" class="detail-item">
-                <i-lucide:clock />
+                <ILucideClock />
                 <span>{{ $Method.formatTime($Data.userInfo.lastLoginTime) }}</span>
             </div>
         </div>
 
         <!-- 仅 dev 角色显示刷新缓存按钮 -->
         <div v-if="$Data.userInfo.roleCode === 'dev'" class="user-actions">
-            <t-button theme="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
+            <TButton theme="primary" size="mini" :loading="$Data.refreshing" @click="$Method.handleRefreshCache">
                 <template #icon>
-                    <i-lucide:rotate-cw />
+                    <ILucideRotateCw />
                 </template>
                 刷新缓存
-            </t-button>
+            </TButton>
         </div>
     </div>
 </template>
 
 <script setup>
+import { Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import ILucideUser from '~icons/lucide/user';
+import ILucideMail from '~icons/lucide/mail';
+import ILucidePhone from '~icons/lucide/phone';
+import ILucideClock from '~icons/lucide/clock';
+import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import { $Http } from '@/plugins/http';
 
 // 响应式数据

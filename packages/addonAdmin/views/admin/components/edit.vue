@@ -1,39 +1,40 @@
 ﻿<template>
-    <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <t-form-item label="用户名" prop="username">
-                <t-input v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
-            </t-form-item>
-            <t-form-item label="邮箱" prop="email">
-                <t-input v-model="$Data.formData.email" placeholder="请输入邮箱" />
-            </t-form-item>
-            <t-form-item v-if="$Prop.actionType === 'add'" label="密码" prop="password">
-                <t-input v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
-            </t-form-item>
-            <t-form-item label="姓名" prop="name">
-                <t-input v-model="$Data.formData.name" placeholder="请输入姓名" />
-            </t-form-item>
-            <t-form-item label="昵称" prop="nickname">
-                <t-input v-model="$Data.formData.nickname" placeholder="请输入昵称" />
-            </t-form-item>
-            <t-form-item label="手机号" prop="phone">
-                <t-input v-model="$Data.formData.phone" placeholder="请输入手机号" />
-            </t-form-item>
-            <t-form-item v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
-                <t-radio-group v-model="$Data.formData.state">
-                    <t-radio :label="1">正常</t-radio>
-                    <t-radio :label="2">禁用</t-radio>
-                </t-radio-group>
-            </t-form-item>
-        </t-form>
+    <TDialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+        <TForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+            <TFormItem label="用户名" prop="username">
+                <TInput v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
+            </TFormItem>
+            <TFormItem label="邮箱" prop="email">
+                <TInput v-model="$Data.formData.email" placeholder="请输入邮箱" />
+            </TFormItem>
+            <TFormItem v-if="$Prop.actionType === 'add'" label="密码" prop="password">
+                <TInput v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
+            </TFormItem>
+            <TFormItem label="姓名" prop="name">
+                <TInput v-model="$Data.formData.name" placeholder="请输入姓名" />
+            </TFormItem>
+            <TFormItem label="昵称" prop="nickname">
+                <TInput v-model="$Data.formData.nickname" placeholder="请输入昵称" />
+            </TFormItem>
+            <TFormItem label="手机号" prop="phone">
+                <TInput v-model="$Data.formData.phone" placeholder="请输入手机号" />
+            </TFormItem>
+            <TFormItem v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
+                <TRadioGroup v-model="$Data.formData.state">
+                    <TRadio :label="1">正常</TRadio>
+                    <TRadio :label="2">禁用</TRadio>
+                </TRadioGroup>
+            </TFormItem>
+        </TForm>
         <template #footer>
-            <t-button @click="$Method.onClose">取消</t-button>
-            <t-button theme="primary" @click="$Method.onSubmit">确定</t-button>
+            <TButton @click="$Method.onClose">取消</TButton>
+            <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
         </template>
-    </t-dialog>
+    </TDialog>
 </template>
 
 <script setup>
+import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

@@ -1,35 +1,36 @@
 ﻿<template>
-    <t-dialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '更新角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+    <TDialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '更新角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
         <div class="comp-role-edit">
-            <t-form :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-                <t-form-item label="角色名称" prop="name">
-                    <t-input v-model="$Data.formData.name" placeholder="请输入角色名称" />
-                </t-form-item>
-                <t-form-item label="角色代码" prop="code">
-                    <t-input v-model="$Data.formData.code" placeholder="请输入角色代码，如：admin" />
-                </t-form-item>
-                <t-form-item label="角色描述" prop="description">
-                    <t-input v-model="$Data.formData.description" type="textarea" placeholder="请输入角色描述" :rows="3" />
-                </t-form-item>
-                <t-form-item label="排序" prop="sort">
-                    <t-input-number v-model="$Data.formData.sort" :min="0" :max="9999" />
-                </t-form-item>
-                <t-form-item label="状态" prop="state">
-                    <t-radio-group v-model="$Data.formData.state">
-                        <t-radio :label="1">正常</t-radio>
-                        <t-radio :label="2">禁用</t-radio>
-                    </t-radio-group>
-                </t-form-item>
-            </t-form>
+            <TForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+                <TFormItem label="角色名称" prop="name">
+                    <TInput v-model="$Data.formData.name" placeholder="请输入角色名称" />
+                </TFormItem>
+                <TFormItem label="角色代码" prop="code">
+                    <TInput v-model="$Data.formData.code" placeholder="请输入角色代码，如：admin" />
+                </TFormItem>
+                <TFormItem label="角色描述" prop="description">
+                    <TInput v-model="$Data.formData.description" type="textarea" placeholder="请输入角色描述" :rows="3" />
+                </TFormItem>
+                <TFormItem label="排序" prop="sort">
+                    <TInputNumber v-model="$Data.formData.sort" :min="0" :max="9999" />
+                </TFormItem>
+                <TFormItem label="状态" prop="state">
+                    <TRadioGroup v-model="$Data.formData.state">
+                        <TRadio :label="1">正常</TRadio>
+                        <TRadio :label="2">禁用</TRadio>
+                    </TRadioGroup>
+                </TFormItem>
+            </TForm>
         </div>
         <template #footer>
-            <t-button @click="$Method.onClose">取消</t-button>
-            <t-button theme="primary" @click="$Method.onSubmit">确定</t-button>
+            <TButton @click="$Method.onClose">取消</TButton>
+            <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
         </template>
-    </t-dialog>
+    </TDialog>
 </template>
 
 <script setup>
+import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, InputNumber as TInputNumber, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

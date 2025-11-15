@@ -1,37 +1,37 @@
 ﻿<template>
     <div class="section-block">
         <div class="section-header flex items-center gap-2">
-            <i-lucide:activity />
+            <ILucideActivity />
             <h2>系统资源</h2>
         </div>
         <div class="section-content">
             <div class="resource-compact-list">
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:cpu />
+                        <ILucideCpu />
                         <span class="resource-label">CPU</span>
                         <span class="resource-value">{{ systemResources.cpu.usage }}%</span>
                         <span class="resource-desc">{{ systemResources.cpu.cores }}核心</span>
                     </div>
-                    <t-progress :percentage="systemResources.cpu.usage" :status="getProgressColor(systemResources.cpu.usage)" />
+                    <TProgress :percentage="systemResources.cpu.usage" :status="getProgressColor(systemResources.cpu.usage)" />
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:hard-drive />
+                        <ILucideHardDrive />
                         <span class="resource-label">内存</span>
                         <span class="resource-value">{{ systemResources.memory.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.memory.used }}GB / {{ systemResources.memory.total }}GB</span>
                     </div>
-                    <t-progress :percentage="systemResources.memory.percentage" :status="getProgressColor(systemResources.memory.percentage)" />
+                    <TProgress :percentage="systemResources.memory.percentage" :status="getProgressColor(systemResources.memory.percentage)" />
                 </div>
                 <div class="resource-compact-item">
                     <div class="resource-compact-header">
-                        <i-lucide:disc />
+                        <ILucideDisc />
                         <span class="resource-label">磁盘</span>
                         <span class="resource-value">{{ systemResources.disk.percentage }}%</span>
                         <span class="resource-desc">{{ systemResources.disk.used }}GB / {{ systemResources.disk.total }}GB</span>
                     </div>
-                    <t-progress :percentage="systemResources.disk.percentage" :status="getProgressColor(systemResources.disk.percentage)" />
+                    <TProgress :percentage="systemResources.disk.percentage" :status="getProgressColor(systemResources.disk.percentage)" />
                 </div>
             </div>
         </div>
@@ -39,6 +39,11 @@
 </template>
 
 <script setup>
+import { Progress as TProgress } from 'tdesign-vue-next';
+import ILucideActivity from '~icons/lucide/activity';
+import ILucideCpu from '~icons/lucide/cpu';
+import ILucideHardDrive from '~icons/lucide/hard-drive';
+import ILucideDisc from '~icons/lucide/disc';
 import { $Http } from '@/plugins/http';
 
 // 组件内部数据
