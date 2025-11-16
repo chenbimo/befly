@@ -113,24 +113,44 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 16px;
-    background: #f5f7fa;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-color-page);
 
-    // 工具栏
+    // 搜索栏区域
+    .main-search {
+        height: var(--search-height);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        background: var(--bg-color-container);
+        border-bottom: 1px solid var(--border-color);
+
+        .search-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-left: auto;
+        }
+    }
+
+    // 工具栏（兼容旧代码）
     .main-tool {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 56px;
+        height: var(--search-height);
+        flex-shrink: 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0 10px;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid #e8eaed;
+        padding: 0 16px;
+        background: var(--bg-color-container);
+        border-bottom: 1px solid var(--border-color);
 
         .left,
         .toolbar-left {
@@ -153,40 +173,84 @@ body {
         }
     }
 
-    // 表格区域
-    .main-table {
-        position: absolute;
-        top: 72px;
-        left: 0;
-        right: 0;
-        bottom: 72px;
+    // 主内容区域（包含表格和详情）
+    .main-content {
+        flex: 1;
+        display: flex;
         overflow: hidden;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid #e8eaed;
 
-        .custom-table-cell-class {
-            background-color: #f5f7fa !important;
-            font-weight: 600;
-            color: #1f2329;
+        // 表格区域
+        .main-table {
+            flex: 1;
+            overflow: hidden;
+            background: var(--bg-color-container);
+            border-right: 1px solid var(--border-color);
+
+            .custom-table-cell-class {
+                background-color: var(--bg-color-page) !important;
+                font-weight: 600;
+                color: var(--text-primary);
+            }
+        }
+
+        // 详情侧栏（默认隐藏）
+        .main-detail {
+            width: 0;
+            overflow: hidden;
+            background: var(--bg-color-container);
+            transition: width var(--transition-duration);
+
+            &.visible {
+                width: var(--detail-width);
+                border-left: 1px solid var(--border-color);
+            }
+
+            .detail-header {
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 16px;
+                border-bottom: 1px solid var(--border-color);
+
+                .detail-title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                }
+            }
+
+            .detail-content {
+                padding: 16px;
+                overflow-y: auto;
+                height: calc(100% - 56px);
+            }
         }
     }
 
-    // 分页器
+    // 兼容旧版独立表格区域（未使用 main-content 包裹时）
+    & > .main-table {
+        flex: 1;
+        overflow: hidden;
+        background: var(--bg-color-container);
+
+        .custom-table-cell-class {
+            background-color: var(--bg-color-page) !important;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+    }
+
+    // 分页栏
     .main-page {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 56px;
-        padding: 0 20px;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid #e8eaed;
+        height: var(--pagination-height);
+        flex-shrink: 0;
+        padding: 0 16px;
+        background: var(--bg-color-container);
+        border-top: 1px solid var(--border-color);
         display: flex;
         align-items: center;
+
         .tiny-pager {
             width: 100%;
         }
