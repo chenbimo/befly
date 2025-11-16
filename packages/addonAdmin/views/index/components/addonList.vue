@@ -50,10 +50,10 @@ fetchData();
 
     .addon-item {
         position: relative;
-        background: $bg-color-container;
-        border: 1px solid $border-color;
-        border-left: 3px solid $primary-color;
-        border-radius: $border-radius-small;
+        background: var(--bg-color-container);
+        border: 1px solid var(--border-color);
+        border-left: 3px solid var(--primary-color);
+        border-radius: var(--border-radius-small);
         padding: 10px 12px;
         display: flex;
         align-items: center;
@@ -61,7 +61,7 @@ fetchData();
         transition: all 0.3s;
 
         &:hover {
-            border-left-color: $success-color;
+            border-left-color: var(--success-color);
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
             transform: translateY(-2px);
         }
@@ -73,20 +73,26 @@ fetchData();
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: $text-disabled;
+            background: var(--text-disabled);
             transition: all 0.3s;
 
-            &.active {
-                background: $success-color;
-                box-shadow: 0 0 0 2px rgba($success-color, 0.2);
-            }
+            &::after {
+                content: '';
+                position: absolute;
+                top: -2px;
+                right: -2px;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--success-color);
+                box-shadow: 0 0 0 2px rgba(var(--success-color-rgb), 0.2);
         }
 
         .addon-icon {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, $primary-color, #764ba2);
-            border-radius: $border-radius-small;
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            border-radius: var(--border-radius-small);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -108,13 +114,13 @@ fetchData();
                 .addon-name {
                     font-size: 14px;
                     font-weight: 600;
-                    color: $text-primary;
+                    color: var(--text-primary);
                 }
             }
 
             .addon-desc {
                 font-size: 14px;
-                color: $text-secondary;
+                color: var(--text-secondary);
                 line-height: 1.3;
                 overflow: hidden;
                 text-overflow: ellipsis;

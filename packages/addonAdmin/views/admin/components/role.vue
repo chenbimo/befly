@@ -131,7 +131,7 @@ $Method.initData();
         margin-bottom: 16px;
 
         .user-email {
-            color: $text-secondary;
+            color: var(--text-secondary);
         }
     }
 }

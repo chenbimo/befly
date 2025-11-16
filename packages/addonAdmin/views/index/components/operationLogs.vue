@@ -80,8 +80,8 @@ const formatTime = (timestamp) => {
     }
 
     .operation-row {
-        padding: 10px 12px;
-        background: $bg-color-container;
+        padding: 6px 12px;
+        background: var(--bg-color-container);
         border-radius: 6px;
         border: 1px solid var(--border-color);
         font-size: 14px;

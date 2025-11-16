@@ -243,9 +243,11 @@ $Method.initData();
                 }
             }
 
-            .api-checkbox-list {
-                padding: 16px;
-                background-color: $bg-color-container;
+            .api-item {
+                padding: 8px 16px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+                background-color: var(--bg-color-container);
 
                 :deep(.t-checkbox-group) {
                     display: flex;

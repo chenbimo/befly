@@ -31,39 +31,29 @@ const $Method = {
 <style scoped lang="scss">
 .error-page {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: $bg-color-page;
+    background: var(--bg-color-page);
 
-    .error-content {
-        text-align: center;
-
-        .error-code {
-            font-size: 120px;
-            font-weight: bold;
-            color: #ff6b6b;
-            margin-bottom: 20px;
-        }
-
-        .error-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: $text-primary;
-            margin-bottom: 12px;
-        }
-
-        .error-description {
-            font-size: 14px;
-            color: $text-secondary;
-            margin-bottom: 30px;
-        }
-
-        .error-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
+    .error-code {
+        font-size: 120px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0;
     }
-}
+
+    .error-message {
+        font-size: 24px;
+        color: var(--text-primary);
+        margin: 20px 0;
+    }
+
+    .error-description {
+        font-size: 16px;
+        color: var(--text-secondary);
 </style>
