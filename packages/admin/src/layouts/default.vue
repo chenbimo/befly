@@ -22,7 +22,7 @@
 
         <!-- 菜单栏 -->
         <div class="layout-menu">
-            <t-menu :value="$Data.currentMenuKey" :expanded="$Data.expandedKeys" style="height: 100%" @change="$Method.onMenuClick" @expand="(value) => ($Data.expandedKeys = value)">
+            <t-menu v-model:value="$Data.currentMenuKey" v-model:expanded="$Data.expandedKeys" style="height: 100%" @change="$Method.onMenuClick">
                 <template v-for="menu in $Data.userMenus" :key="menu.id">
                     <!-- 无子菜单 -->
                     <t-menu-item v-if="!menu.children || menu.children.length === 0" :value="menu.path">
@@ -124,11 +124,9 @@ const $Method = {
             }
         }
 
-        // 使用 nextTick 确保 DOM 更新后再设置高亮
-        nextTick(() => {
-            $Data.expandedKeys = expandedKeys;
-            $Data.currentMenuKey = currentPath;
-        });
+        // 设置展开的父级和当前激活的菜单
+        $Data.expandedKeys = expandedKeys;
+        $Data.currentMenuKey = currentPath;
     },
 
     // 处理菜单点击
