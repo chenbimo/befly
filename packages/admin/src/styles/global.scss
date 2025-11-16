@@ -189,6 +189,32 @@ body {
                 font-weight: 600;
                 color: var(--text-primary);
             }
+
+            // 覆盖 TDesign 默认选中行样式
+            :deep(.t-table) {
+                // 单选框选中样式
+                .t-table__row--selected {
+                    background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+
+                    &:hover {
+                        background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                    }
+                }
+
+                // 行高亮样式（active-row）
+                .t-table__row--active {
+                    background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+
+                    &:hover {
+                        background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                    }
+                }
+
+                // 普通行悬停样式
+                .t-table__row:hover {
+                    background-color: var(--bg-color-hover);
+                }
+            }
         }
 
         // 详情侧栏（默认隐藏）
@@ -214,6 +240,28 @@ body {
             background-color: var(--bg-color-page) !important;
             font-weight: 600;
             color: var(--text-primary);
+        }
+
+        :deep(.t-table) {
+            .t-table__row--selected {
+                background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+
+                &:hover {
+                    background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                }
+            }
+
+            .t-table__row--active {
+                background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+
+                &:hover {
+                    background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                }
+            }
+
+            .t-table__row:hover {
+                background-color: var(--bg-color-hover);
+            }
         }
     }
 

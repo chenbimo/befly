@@ -21,7 +21,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" row-key="id" :selected-row-keys="$Data.selectedRowKeys" @select-change="$Method.onSelectChange">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" row-key="id" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" theme="success">正常</TTag>
                         <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
@@ -140,7 +140,8 @@ const $Data = $ref({
     actionType: 'add',
     rowData: {},
     currentRow: null,
-    selectedRowKeys: []
+    selectedRowKeys: [],
+    activeRowKeys: []
 });
 
 // 方法
@@ -159,13 +160,15 @@ const $Method = {
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
-            // 自动选择第一行
+            // 自动选中并高亮第一行
             if ($Data.tableData.length > 0) {
                 $Data.currentRow = $Data.tableData[0];
                 $Data.selectedRowKeys = [$Data.tableData[0].id];
+                $Data.activeRowKeys = [$Data.tableData[0].id];
             } else {
                 $Data.currentRow = null;
                 $Data.selectedRowKeys = [];
+                $Data.activeRowKeys = [];
             }
         } catch (error) {
             console.error('加载管理员列表失败:', error);
@@ -216,15 +219,35 @@ const $Method = {
         $Method.apiAdminList();
     },
 
-    // 选中行变化
+    // 单选变化
     onSelectChange(value, { selectedRowData }) {
         $Data.selectedRowKeys = value;
+        $Data.activeRowKeys = value;
         // 更新当前选中的行数据
         if (selectedRowData && selectedRowData.length > 0) {
             $Data.currentRow = selectedRowData[0];
         } else if ($Data.tableData.length > 0) {
             // 如果取消选中，默认显示第一行
             $Data.currentRow = $Data.tableData[0];
+            $Data.selectedRowKeys = [$Data.tableData[0].id];
+            $Data.activeRowKeys = [$Data.tableData[0].id];
+        } else {
+            $Data.currentRow = null;
+        }
+    },
+
+    // 高亮行变化
+    onActiveChange(value, { activeRowData }) {
+        $Data.activeRowKeys = value;
+        $Data.selectedRowKeys = value;
+        // 更新当前高亮的行数据
+        if (activeRowData && activeRowData.length > 0) {
+            $Data.currentRow = activeRowData[0];
+        } else if ($Data.tableData.length > 0) {
+            // 如果取消高亮，默认显示第一行
+            $Data.currentRow = $Data.tableData[0];
+            $Data.selectedRowKeys = [$Data.tableData[0].id];
+            $Data.activeRowKeys = [$Data.tableData[0].id];
         } else {
             $Data.currentRow = null;
         }
