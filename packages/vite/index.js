@@ -15,49 +15,56 @@ import { createInspectPlugin } from './plugins/inspect.js';
  * 默认分包策略
  */
 function defaultManualChunks(id) {
-    // Vue 核心框架
-    if (id.includes('node_modules/vue/') || id.includes('node_modules/@vue/')) {
-        return 'framework-vue';
+    // Vue 生态系统 - 使用更严格的匹配确保独立打包
+    // 注意：必须在 befly-addon 之前判断，因为 addon 会引用这些库
+
+    // vue-router（优先级最高）
+    if (id.match(/node_modules[\/\\]vue-router[\/\\]/)) {
+        return 'vue-router';
     }
-    if (id.includes('node_modules/vue-router/')) {
-        return 'framework-vue-router';
+
+    // pinia
+    if (id.match(/node_modules[\/\\]pinia[\/\\]/)) {
+        return 'pinia';
     }
-    if (id.includes('node_modules/pinia/')) {
-        return 'framework-pinia';
+
+    // vue 核心和运行时（@vue/* 包）
+    if (id.match(/node_modules[\/\\](vue[\/\\]|@vue[\/\\])/)) {
+        return 'vue';
     }
 
     // TDesign Vue Next
-    if (id.includes('node_modules/tdesign-vue-next/') || id.includes('node_modules/.bun/tdesign-vue-next')) {
+    if (id.includes('tdesign-vue-next')) {
         return 'tdesign';
     }
 
     // 工具库
-    if (id.includes('node_modules/axios/')) {
-        return 'lib-axios';
+    if (id.match(/node_modules[\/\\]axios[\/\\]/)) {
+        return 'axios';
     }
-    if (id.includes('node_modules/lodash-es/') || id.includes('node_modules/.bun/lodash-es')) {
-        return 'lib-lodash';
+    if (id.match(/node_modules[\/\\]lodash-es[\/\\]/)) {
+        return 'lodash';
     }
 
     // echarts
-    if (id.includes('node_modules/echarts/') || id.includes('node_modules/.bun/echarts')) {
-        return 'lib-echarts';
+    if (id.match(/node_modules[\/\\]echarts[\/\\]/)) {
+        return 'echarts';
     }
-    if (id.includes('node_modules/zrender/') || id.includes('node_modules/.bun/zrender')) {
-        return 'lib-zrender';
+    if (id.match(/node_modules[\/\\]zrender[\/\\]/)) {
+        return 'zrender';
     }
 
     // 图标
-    if (id.includes('node_modules/@iconify/') || id.includes('~icons/')) {
+    if (id.includes('/@iconify/') || id.includes('~icons/')) {
         return 'icons';
     }
 
     // Vue Macros
-    if (id.includes('node_modules/@vue-macros/') || id.includes('node_modules/vue-macros/')) {
+    if (id.match(/node_modules[\/\\](@vue-macros|vue-macros)[\/\\]/)) {
         return 'vue-macros';
     }
 
-    // befly-addon
+    // befly-addon（必须在 Vue 判断之后）
     if (id.includes('@befly-addon/') || id.includes('packages/addonAdmin/') || id.includes('packages\\addonAdmin\\')) {
         return 'befly-addon';
     }
@@ -119,12 +126,36 @@ export function createBeflyViteConfig(options = {}) {
             sourcemap: false,
             minify: 'esbuild',
             chunkSizeWarningLimit: 1000,
+            commonjsOptions: {
+                include: [/node_modules/],
+                transformMixedEsModules: true
+            },
             rollupOptions: {
                 output: {
                     chunkFileNames: 'assets/js/[name]-[hash].js',
                     entryFileNames: 'assets/js/[name]-[hash].js',
                     assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
-                    manualChunks: manualChunks || defaultManualChunks
+                    manualChunks(id) {
+                        // 最高优先级：框架库必须单独打包
+                        if (id.includes('node_modules')) {
+                            // vue-router
+                            if (id.includes('/vue-router/')) return 'vue-router';
+                            // pinia
+                            if (id.includes('/pinia/')) return 'pinia';
+                            // vue 核心（包括 @vue/*）
+                            if (id.includes('/vue/') || id.includes('/@vue/')) return 'vue';
+                            // tdesign
+                            if (id.includes('/tdesign-vue-next/')) return 'tdesign';
+                            // axios
+                            if (id.includes('/axios/')) return 'axios';
+                            // 其他第三方库
+                            return 'vendor';
+                        }
+                        // befly-addon（workspace 包）
+                        if (id.includes('@befly-addon/') || id.includes('/addonAdmin/')) {
+                            return 'befly-addon';
+                        }
+                    }
                 }
             }
         },
