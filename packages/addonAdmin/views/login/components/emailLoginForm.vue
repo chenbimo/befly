@@ -1,32 +1,33 @@
 ﻿<template>
-    <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" label-width="90px" label-position="left" :show-message="false">
-        <TFormItem prop="account" label="账号">
-            <TInput v-model="$Data.formData.account" placeholder="请输入用户名或邮箱" size="large" clearable>
+    <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :show-message="false">
+        <TFormItem prop="account">
+            <TInput v-model="$Data.formData.account" placeholder="用户名或邮箱" size="large" clearable @keyup.enter="$Method.apiLogin">
                 <template #prefix-icon>
                     <ILucideUser />
                 </template>
             </TInput>
         </TFormItem>
 
-        <TFormItem prop="password" label="密码">
-            <TInput v-model="$Data.formData.password" type="password" placeholder="请输入密码" size="large" clearable>
+        <TFormItem prop="password">
+            <TInput v-model="$Data.formData.password" type="password" placeholder="密码" size="large" clearable @keyup.enter="$Method.apiLogin">
                 <template #prefix-icon>
                     <ILucideLock />
                 </template>
             </TInput>
         </TFormItem>
 
-        <div class="form-footer">
-            <a href="#" class="forgot-password">忘记密码？</a>
+        <div class="form-options">
+            <TCheckbox v-model="$Data.rememberMe">记住我</TCheckbox>
+            <a href="#" class="link-text">忘记密码？</a>
         </div>
 
-        <TButton theme="primary" class="auth-btn" size="large" :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </TButton>
+        <TButton theme="primary" class="login-btn" size="large" block :loading="$Data.loading" @click="$Method.apiLogin"> 登录 </TButton>
     </TForm>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, MessagePlugin } from 'tdesign-vue-next';
 import ILucideUser from '~icons/lucide/user';
 import ILucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
@@ -42,6 +43,7 @@ const $From = $shallowRef({
 // 数据定义
 const $Data = $ref({
     loading: false,
+    rememberMe: false,
     formData: {
         account: '',
         password: ''
@@ -95,72 +97,60 @@ const $Method = {
 <style scoped lang="scss">
 .login-form {
     width: 100%;
-    max-width: 450px;
-}
 
-.t-form__item {
-    width: 100%;
-    margin-bottom: 1.2rem;
-
-    :deep(.t-form__controls) {
-        width: 100%;
+    :deep(.t-form__item) {
+        margin-bottom: 1.25rem;
     }
 
     :deep(.t-input) {
-        width: 100%;
-        background: #f8f9fa;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
+        border-radius: 8px;
         transition: all 0.3s;
 
         &:hover {
-            border-color: #48b19f;
+            border-color: #667eea;
         }
 
         &:focus-within {
-            border-color: #48b19f;
-            background: #fff;
-        }
-
-        input {
-            padding: 0.75rem 1rem;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
     }
 }
 
-.form-footer {
-    width: 100%;
+.form-options {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1rem;
-}
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
 
-.forgot-password {
-    font-size: 0.8rem;
-    color: #888;
-    text-decoration: none;
+    .link-text {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.3s;
 
-    &:hover {
-        color: #48b19f;
+        &:hover {
+            color: #764ba2;
+        }
     }
 }
 
-.auth-btn {
-    width: 100% !important;
-    max-width: 100%;
-    height: 44px;
-    border-radius: 6px;
-    background: #48b19f;
-    border: none;
-    font-size: 0.95rem;
+.login-btn {
+    height: 48px;
+    border-radius: 8px;
+    font-size: 1rem;
     font-weight: 600;
-    margin-top: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
     transition: all 0.3s;
 
     &:hover {
-        background: #3a9d8f;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(72, 177, 159, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    &:active {
+        transform: translateY(0);
     }
 
     :deep(.t-button__text) {

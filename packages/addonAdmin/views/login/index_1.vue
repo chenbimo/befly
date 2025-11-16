@@ -1,189 +1,225 @@
 <template>
-    <div class="auth-container" :class="{ 'sign-up-mode': $Data.isSignUp }">
-        <!-- 左侧欢迎区域 -->
-        <div class="left-panel">
-            <WelcomePanel :is-sign-up="$Data.isSignUp" @toggle="$Method.toggleMode" />
+    <div class="login-container">
+        <!-- 左侧装饰区域 -->
+        <div class="left-section">
+            <div class="bg-decoration">
+                <div class="circle circle-1"></div>
+                <div class="circle circle-2"></div>
+                <div class="circle circle-3"></div>
+            </div>
+            <div class="welcome-content">
+                <h1 class="brand-title">Befly</h1>
+                <p class="brand-subtitle">轻量级业务快速开发框架</p>
+            </div>
         </div>
 
-        <!-- 右侧表单区域 -->
-        <div class="right-panel">
-            <!-- 登录表单 -->
-            <div class="form-container sign-in-form" :class="{ active: !$Data.isSignUp }">
-                <h2 class="form-title">登录到 Befly</h2>
+        <!-- 右侧登录区域 -->
+        <div class="right-section">
+            <div class="login-box">
+                <div class="login-header">
+                    <h2 class="login-title">欢迎回来</h2>
+                    <p class="login-subtitle">请登录您的账户</p>
+                </div>
 
-                <!-- 邮箱登录 -->
                 <EmailLoginForm />
-            </div>
 
-            <!-- 注册表单 -->
-            <div class="form-container sign-up-form" :class="{ active: $Data.isSignUp }">
-                <h2 class="form-title">注册账号</h2>
-
-                <RegisterForm @success="$Method.handleRegisterSuccess" />
+                <div class="login-footer">
+                    <p class="copyright">© 2024 Befly. All rights reserved.</p>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import WelcomePanel from './components/welcomePanel.vue';
 import EmailLoginForm from './components/emailLoginForm.vue';
-import RegisterForm from './components/registerForm.vue';
-
-// 数据定义
-const $Data = $ref({
-    isSignUp: false
-});
-
-// 方法定义
-const $Method = {
-    // 切换登录/注册模式
-    toggleMode() {
-        $Data.isSignUp = !$Data.isSignUp;
-    },
-
-    // 注册成功后切换到登录模式
-    handleRegisterSuccess() {
-        $Data.isSignUp = false;
-    }
-};
 </script>
 
 <style scoped lang="scss">
-.auth-container {
+.login-container {
     display: flex;
     width: 100%;
     min-height: 100vh;
-    overflow: hidden;
+    background: #f5f7fa;
+}
+
+// 左侧装饰区域
+.left-section {
+    flex: 1;
     position: relative;
-    background: #fff;
-}
-
-// 青色滑动背景块
-.left-panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #48b19f 0%, #3a9d8f 100%);
-    color: #fff;
-    z-index: 5;
-    transition: transform 0.5s ease-in-out;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
 }
 
-// 表单区域容器（全屏背景）
-.right-panel {
+.bg-decoration {
     position: absolute;
     width: 100%;
     height: 100%;
-    top: 0;
-    left: 0;
-    z-index: 1;
-}
+    overflow: hidden;
 
-// 注册模式下青色块移动到右侧
-.auth-container.sign-up-mode {
-    .left-panel {
-        transform: translateX(100%);
-    }
-}
+    .circle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        animation: float 20s infinite ease-in-out;
 
-// 表单容器（跟随颜色区域滑动）
-.form-container {
-    position: absolute;
-    width: 50%;
-    height: 100%;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 2rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.5s ease-in-out;
+        &.circle-1 {
+            width: 400px;
+            height: 400px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
 
-    &.active {
-        opacity: 1;
-        pointer-events: all;
-    }
-}
+        &.circle-2 {
+            width: 300px;
+            height: 300px;
+            bottom: -50px;
+            right: -50px;
+            animation-delay: 7s;
+        }
 
-// 登录模式：登录表单在右侧
-.auth-container:not(.sign-up-mode) {
-    .sign-in-form {
-        right: 0;
-    }
-
-    .sign-up-form {
-        left: 0;
-    }
-}
-
-// 注册模式：注册表单在左侧，登录表单在右侧
-.auth-container.sign-up-mode {
-    .sign-in-form {
-        right: -50%;
-    }
-
-    .sign-up-form {
-        left: 0;
-    }
-}
-
-.form-title {
-    font-size: 1.8rem;
-    color: #333;
-    margin-bottom: 1.5rem;
-    font-weight: 600;
-    text-align: center;
-    width: 100%;
-}
-
-// 响应式设计
-@media (max-width: 968px) {
-    .auth-container {
-        flex-direction: column;
-    }
-
-    .left-panel,
-    .right-panel {
-        flex: none;
-        width: 100%;
-    }
-
-    .left-panel {
-        order: 1 !important;
-        position: relative;
-        min-height: 200px;
-    }
-
-    .right-panel {
-        order: 2 !important;
-        min-height: 500px;
-    }
-
-    .form-container {
-        width: 100%;
-        padding: 2rem 1rem;
-        position: static;
-    }
-
-    .auth-container.sign-up-mode {
-        .left-panel {
-            transform: none;
+        &.circle-3 {
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            right: 10%;
+            animation-delay: 14s;
         }
     }
 }
 
-@media (max-width: 576px) {
-    .form-title {
-        font-size: 1.5rem;
-        margin-bottom: 1.5rem;
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-20px) scale(1.05);
+    }
+}
+
+.welcome-content {
+    position: relative;
+    z-index: 1;
+    color: #fff;
+    text-align: center;
+    padding: 2rem;
+}
+
+.brand-title {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.brand-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 3rem;
+    opacity: 0.95;
+}
+
+// 右侧登录区域
+.right-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    padding: 3rem 2.5rem;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+.login-footer {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.copyright {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+// 响应式设计
+@media (max-width: 1024px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .left-section {
+        min-height: 300px;
+        flex: none;
+    }
+
+    .brand-title {
+        font-size: 3rem;
+    }
+
+    .right-section {
+        flex: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .left-section {
+        min-height: 200px;
+    }
+
+    .brand-title {
+        font-size: 2.5rem;
+    }
+
+    .brand-subtitle {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .login-box {
+        padding: 2rem 1.5rem;
+    }
+
+    .login-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .right-section {
+        padding: 1rem;
+    }
+
+    .login-box {
+        padding: 1.5rem 1rem;
+        border-radius: 12px;
     }
 }
 </style>
