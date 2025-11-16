@@ -11,6 +11,8 @@ import IconsResolver from 'unplugin-icons/resolver';
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import UnoCSS from 'unocss/vite';
 import { analyzer } from 'vite-bundle-analyzer';
+import { compression } from 'vite-plugin-compression2';
+import Inspect from 'vite-plugin-inspect';
 import { fileURLToPath, URL } from 'node:url';
 import { scanBeflyAddonViews } from '@befly-addon/admin/utils/scanBeflyAddonViews';
 
@@ -93,6 +95,20 @@ export default defineConfig({
             brotliOptions: {},
             openAnalyzer: false,
             summary: true
+        }),
+
+        // Vite 插件转换分析（开发环境）
+        Inspect({
+            build: true,
+            outputDir: '.vite-inspect'
+        }),
+
+        // 文件压缩（仅构建时生成 .gz 和 .br 文件）
+        compression({
+            include: /\.(html|xml|css|json|js|mjs|svg)$/i,
+            threshold: 10240,
+            algorithms: ['gzip', 'brotliCompress'],
+            deleteOriginalAssets: false
         })
     ],
 
