@@ -26,6 +26,5 @@ import EnvironmentInfo from './components/environmentInfo.vue';
     background-color: #fff;
     padding: 15px;
     border: 1px solid #e8eaed;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 </style>
