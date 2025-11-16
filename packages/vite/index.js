@@ -108,9 +108,6 @@ export function createBeflyViteConfig(options = {}) {
         },
 
         server: {
-            port: 5600,
-            host: '0.0.0.0',
-            strictPort: true,
             open: false,
             hmr: true
         },
@@ -151,6 +148,9 @@ export function createBeflyViteConfig(options = {}) {
 
 // 导出 UnoCSS 配置创建函数
 export { createUnoConfig } from './configs/uno.config.js';
+
+// 导出工具函数
+export { scanBeflyAddonViews } from './utils/scanBeflyAddonViews.js';
 
 // 导出所有插件创建函数（供高级用户自定义）
 export { createVuePlugins } from './plugins/vue.js';

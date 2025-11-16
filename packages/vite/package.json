@@ -12,12 +12,14 @@
     "exports": {
         ".": "./index.js",
         "./configs/*": "./configs/*.js",
-        "./plugins/*": "./plugins/*.js"
+        "./plugins/*": "./plugins/*.js",
+        "./utils/*": "./utils/*.js"
     },
     "files": [
         "index.js",
         "configs/",
         "plugins/",
+        "utils/",
         "README.md"
     ],
     "keywords": [
