@@ -14,45 +14,77 @@
                     <template #icon>
                         <ILucideRotateCw />
                     </template>
-                </TButton>
-            </div>
-            <div class="right">
-                <TButton @click="$Method.handleRefresh">
-                    <template #icon>
-                        <ILucideRotateCw />
-                    </template>
                     刷新
                 </TButton>
             </div>
         </div>
 
-        <div class="main-table">
-            <TTable :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
-                <template #state="{ row }">
-                    <TTag v-if="row.state === 1" theme="success">正常</TTag>
-                    <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
-                    <TTag v-else theme="danger">已删除</TTag>
-                </template>
-                <template #operation="{ row }">
-                    <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
-                        <TButton variant="text" size="small">操作</TButton>
-                        <TDropdownMenu slot="dropdown">
-                            <TDropdownItem value="role">
-                                <ILucideUser />
-                                分配角色
-                            </TDropdownItem>
-                            <TDropdownItem value="upd">
-                                <ILucidePencil />
-                                编辑
-                            </TDropdownItem>
-                            <TDropdownItem value="del" :divider="true">
-                                <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
-                                删除
-                            </TDropdownItem>
-                        </TDropdownMenu>
-                    </TDropdown>
-                </template>
-            </TTable>
+        <div class="main-content">
+            <div class="main-table">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id" bordered @row-click="$Method.onRowClick">
+                    <template #state="{ row }">
+                        <TTag v-if="row.state === 1" theme="success">正常</TTag>
+                        <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
+                        <TTag v-else theme="danger">已删除</TTag>
+                    </template>
+                    <template #operation="{ row }">
+                        <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
+                            <TButton variant="text" size="small">操作</TButton>
+                            <TDropdownMenu slot="dropdown">
+                                <TDropdownItem value="role">
+                                    <ILucideUser />
+                                    分配角色
+                                </TDropdownItem>
+                                <TDropdownItem value="upd">
+                                    <ILucidePencil />
+                                    编辑
+                                </TDropdownItem>
+                                <TDropdownItem value="del" :divider="true">
+                                    <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                    删除
+                                </TDropdownItem>
+                            </TDropdownMenu>
+                        </TDropdown>
+                    </template>
+                </TTable>
+            </div>
+
+            <div class="main-detail">
+                <div class="detail-content">
+                    <div v-if="$Data.currentRow">
+                        <div style="margin-bottom: 16px">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px">ID</div>
+                            <div>{{ $Data.currentRow.id }}</div>
+                        </div>
+                        <div style="margin-bottom: 16px">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px">用户名</div>
+                            <div>{{ $Data.currentRow.username }}</div>
+                        </div>
+                        <div style="margin-bottom: 16px">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px">邮箱</div>
+                            <div>{{ $Data.currentRow.email }}</div>
+                        </div>
+                        <div style="margin-bottom: 16px">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px">昵称</div>
+                            <div>{{ $Data.currentRow.nickname || '-' }}</div>
+                        </div>
+                        <div style="margin-bottom: 16px">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px">角色</div>
+                            <div>{{ $Data.currentRow.roleCode || '-' }}</div>
+                        </div>
+                        <div style="margin-bottom: 16px">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px">状态</div>
+                            <TTag v-if="$Data.currentRow.state === 1" theme="success">正常</TTag>
+                            <TTag v-else-if="$Data.currentRow.state === 2" theme="warning">禁用</TTag>
+                            <TTag v-else theme="danger">已删除</TTag>
+                        </div>
+                    </div>
+                    <div v-else style="text-align: center; padding: 48px 0; color: var(--text-placeholder)">
+                        <div style="font-size: 48px; margin-bottom: 8px">📋</div>
+                        <div>暂无数据</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="main-page">
@@ -100,7 +132,8 @@ const $Data = $ref({
     editVisible: false,
     roleVisible: false,
     actionType: 'add',
-    rowData: {}
+    rowData: {},
+    currentRow: null
 });
 
 // 方法
@@ -118,6 +151,13 @@ const $Method = {
             });
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
+
+            // 自动选择第一行
+            if ($Data.tableData.length > 0) {
+                $Data.currentRow = $Data.tableData[0];
+            } else {
+                $Data.currentRow = null;
+            }
         } catch (error) {
             console.error('加载管理员列表失败:', error);
             MessagePlugin.info({
@@ -158,6 +198,18 @@ const $Method = {
     onPageChange({ currentPage }) {
         $Data.pagerConfig.currentPage = currentPage;
         $Method.apiAdminList();
+    },
+
+    // 每页条数改变
+    handleSizeChange({ pageSize }) {
+        $Data.pagerConfig.pageSize = pageSize;
+        $Data.pagerConfig.currentPage = 1;
+        $Method.apiAdminList();
+    },
+
+    // 行点击
+    onRowClick({ row }) {
+        $Data.currentRow = row;
     },
 
     // 操作菜单点击

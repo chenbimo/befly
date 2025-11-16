@@ -195,35 +195,13 @@ body {
 
         // 详情侧栏（默认隐藏）
         .main-detail {
-            width: 0;
-            overflow: hidden;
             background: var(--bg-color-container);
-            transition: width var(--transition-duration);
-
-            &.visible {
-                width: var(--detail-width);
-                border-left: 1px solid var(--border-color);
-            }
-
-            .detail-header {
-                height: 56px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 16px;
-                border-bottom: 1px solid var(--border-color);
-
-                .detail-title {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-            }
+            width: var(--detail-width);
 
             .detail-content {
                 padding: 16px;
                 overflow-y: auto;
-                height: calc(100% - 56px);
+                height: 100%;
             }
         }
     }
