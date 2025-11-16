@@ -21,7 +21,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id" bordered @row-click="$Method.onRowClick">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" row-key="id" :selected-row-keys="$Data.selectedRowKeys" @select-change="$Method.onSelectChange">
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" theme="success">正常</TTag>
                         <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
@@ -114,6 +114,12 @@ import { $Http } from '@/plugins/http';
 const $Data = $ref({
     tableData: [],
     columns: [
+        {
+            colKey: 'row-select',
+            type: 'single',
+            width: 50,
+            checkProps: { allowUncheck: true }
+        },
         { colKey: 'index', title: '序号', width: 60, align: 'center' },
         { colKey: 'username', title: '用户名' },
         { colKey: 'email', title: '邮箱', width: 200 },
@@ -133,7 +139,8 @@ const $Data = $ref({
     roleVisible: false,
     actionType: 'add',
     rowData: {},
-    currentRow: null
+    currentRow: null,
+    selectedRowKeys: []
 });
 
 // 方法
@@ -155,8 +162,10 @@ const $Method = {
             // 自动选择第一行
             if ($Data.tableData.length > 0) {
                 $Data.currentRow = $Data.tableData[0];
+                $Data.selectedRowKeys = [$Data.tableData[0].id];
             } else {
                 $Data.currentRow = null;
+                $Data.selectedRowKeys = [];
             }
         } catch (error) {
             console.error('加载管理员列表失败:', error);
@@ -207,9 +216,18 @@ const $Method = {
         $Method.apiAdminList();
     },
 
-    // 行点击
-    onRowClick({ row }) {
-        $Data.currentRow = row;
+    // 选中行变化
+    onSelectChange(value, { selectedRowData }) {
+        $Data.selectedRowKeys = value;
+        // 更新当前选中的行数据
+        if (selectedRowData && selectedRowData.length > 0) {
+            $Data.currentRow = selectedRowData[0];
+        } else if ($Data.tableData.length > 0) {
+            // 如果取消选中，默认显示第一行
+            $Data.currentRow = $Data.tableData[0];
+        } else {
+            $Data.currentRow = null;
+        }
     },
 
     // 操作菜单点击
