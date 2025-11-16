@@ -73,25 +73,25 @@ fetchData();
         justify-content: space-between;
         align-items: center;
         padding: 10px 12px;
-        background: $bg-color-container;
+        background: var(--bg-color-container);
         border-radius: 6px;
-        border: 1px solid $border-color;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
 
         &:hover {
-            background: rgba($primary-color, 0.03);
-            border-color: rgba($primary-color, 0.2);
+            background: rgba(var(--primary-color-rgb), 0.03);
+            border-color: rgba(var(--primary-color-rgb), 0.2);
         }
 
         .env-label {
             font-size: 14px;
-            color: $text-secondary;
+            color: var(--text-secondary);
             font-weight: 500;
         }
 
         .env-value {
             font-size: 14px;
-            color: $text-primary;
+            color: var(--text-primary);
             font-weight: 600;
             text-align: right;
         }

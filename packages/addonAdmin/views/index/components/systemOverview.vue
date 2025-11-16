@@ -93,13 +93,13 @@ fetchData();
             justify-content: space-between;
             align-items: center;
             padding: 10px 12px;
-            background: rgba(0, 82, 217, 0.02);
+            background: rgba(var(--primary-color-rgb), 0.02);
             border-radius: var(--border-radius-small);
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
 
             &:hover {
-                background: rgba(0, 82, 217, 0.05);
+                background: rgba(var(--primary-color-rgb), 0.05);
                 border-color: var(--primary-color);
             }
 
@@ -128,7 +128,7 @@ fetchData();
     gap: 10px;
 
     .stat-box {
-        background: rgba(0, 82, 217, 0.02);
+        background: rgba(var(--primary-color-rgb), 0.02);
         border: 1px solid var(--border-color);
         border-radius: 6px;
         padding: 12px;
@@ -138,7 +138,7 @@ fetchData();
         transition: all 0.3s;
 
         &:hover {
-            background: rgba(0, 82, 217, 0.05);
+            background: rgba(var(--primary-color-rgb), 0.05);
             border-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -161,7 +161,7 @@ fetchData();
 
         &.stat-primary {
             border-color: var(--primary-color);
-            background: linear-gradient(135deg, rgba(0, 82, 217, 0.05), white);
+            background: linear-gradient(135deg, rgba(var(--primary-color-rgb), 0.05), white);
 
             .stat-value {
                 color: var(--primary-color);
@@ -170,7 +170,7 @@ fetchData();
 
         &.stat-success {
             border-color: var(--success-color);
-            background: linear-gradient(135deg, rgba(0, 168, 112, 0.05), white);
+            background: linear-gradient(135deg, rgba(var(--success-color-rgb), 0.05), white);
 
             .stat-value {
                 color: var(--success-color);
@@ -179,7 +179,7 @@ fetchData();
 
         &.stat-warning {
             border-color: var(--warning-color);
-            background: linear-gradient(135deg, rgba(237, 123, 47, 0.05), white);
+            background: linear-gradient(135deg, rgba(var(--warning-color-rgb), 0.05), white);
 
             .stat-value {
                 color: var(--warning-color);

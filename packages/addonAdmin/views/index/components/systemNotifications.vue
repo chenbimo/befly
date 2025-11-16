@@ -69,13 +69,13 @@ const formatTime = (timestamp) => {
         align-items: center;
         gap: var(--spacing-sm);
         padding: var(--spacing-sm) var(--spacing-md);
-        background: rgba(0, 82, 217, 0.02);
+        background: rgba(var(--primary-color-rgb), 0.02);
         border-radius: var(--border-radius-small);
         border: 1px solid var(--border-color);
-        transition: all 0.2s ease;
+        transition: all 0.2s;
 
         &:hover {
-            background: rgba(0, 82, 217, 0.05);
+            background: rgba(var(--primary-color-rgb), 0.05);
             border-color: var(--primary-color);
         }
 
@@ -89,22 +89,22 @@ const formatTime = (timestamp) => {
             flex-shrink: 0;
 
             &.type-info {
-                background: rgba(0, 82, 217, 0.1);
+                background: rgba(var(--primary-color-rgb), 0.1);
                 color: var(--primary-color);
             }
 
             &.type-success {
-                background: rgba(0, 168, 112, 0.1);
+                background: rgba(var(--success-color-rgb), 0.1);
                 color: var(--success-color);
             }
 
             &.type-warning {
-                background: rgba(237, 123, 47, 0.1);
+                background: rgba(var(--warning-color-rgb), 0.1);
                 color: var(--warning-color);
             }
 
             &.type-error {
-                background: rgba(227, 77, 89, 0.1);
+                background: rgba(var(--error-color-rgb), 0.1);
                 color: var(--error-color);
             }
         }

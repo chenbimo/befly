@@ -7,6 +7,13 @@
     --error-color: #e34d59;
     --info-color: #0052d9;
 
+    // 主题色 RGB 格式（用于 rgba）
+    --primary-color-rgb: 0, 82, 217;
+    --success-color-rgb: 0, 168, 112;
+    --warning-color-rgb: 237, 123, 47;
+    --error-color-rgb: 227, 77, 89;
+    --info-color-rgb: 0, 82, 217;
+
     // 文本颜色
     --text-primary: #1f2329;
     --text-secondary: #646a73;

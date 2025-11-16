@@ -88,7 +88,7 @@ const getStatusText = (status) => {
     gap: 10px;
 
     .config-card {
-        background: rgba(0, 82, 217, 0.02);
+        background: rgba(var(--primary-color-rgb), 0.02);
         border: 1px solid var(--border-color);
         border-radius: 6px;
         padding: 12px;
@@ -100,7 +100,7 @@ const getStatusText = (status) => {
         transition: all 0.3s;
 
         &:hover {
-            background: rgba(0, 82, 217, 0.05);
+            background: rgba(var(--primary-color-rgb), 0.05);
             border-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

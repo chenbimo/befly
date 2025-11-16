@@ -74,31 +74,38 @@ const getProgressColor = (percentage) => {
 </script>
 
 <style scoped lang="scss">
-.resources-grid {
+.resource-compact-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-md);
 
-    .resource-item {
-        text-align: center;
-        padding: 20px;
-        border-radius: 8px;
-        transition: all 0.3s;
-
-        .resource-icon {
-            font-size: 32px;
+    .resource-compact-item {
+        .resource-compact-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 8px;
-            color: var(--text-secondary);
-        }
 
-        .resource-label {
-            font-size: 14px;
-            margin-bottom: 4px;
-            color: var(--primary-color);
-        }
+            .resource-label {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text-secondary);
+                min-width: 50px;
+            }
 
-        .resource-value {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text-placeholder);
+            .resource-value {
+                font-size: 16px;
+                font-weight: 700;
+                color: var(--primary-color);
+                min-width: 60px;
+            }
+
+            .resource-desc {
+                font-size: 14px;
+                color: var(--text-placeholder);
+                flex: 1;
+            }
+        }
+    }
+}
 </style>

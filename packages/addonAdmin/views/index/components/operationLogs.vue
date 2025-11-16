@@ -65,7 +65,7 @@ const formatTime = (timestamp) => {
 
     .operation-header {
         padding: 10px 12px;
-        background: linear-gradient(135deg, rgba(0, 82, 217, 0.05) 0%, rgba(0, 82, 217, 0.02) 100%);
+        background: linear-gradient(135deg, rgba(var(--primary-color-rgb), 0.05) 0%, rgba(var(--primary-color-rgb), 0.02) 100%);
         border-radius: 6px;
         font-size: 14px;
         font-weight: 600;
@@ -88,8 +88,8 @@ const formatTime = (timestamp) => {
         transition: all 0.2s ease;
 
         &:hover {
-            background: rgba(0, 82, 217, 0.02);
-            border-color: rgba(0, 82, 217, 0.2);
+            background: rgba(var(--primary-color-rgb), 0.02);
+            border-color: rgba(var(--primary-color-rgb), 0.2);
         }
 
         .col-time {
