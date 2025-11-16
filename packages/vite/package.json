@@ -1,6 +1,6 @@
 {
     "name": "befly-vite",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Befly Vite 配置预设和插件集合",
     "type": "module",
     "private": false,
@@ -33,10 +33,10 @@
     "homepage": "https://chensuiyi.me",
     "license": "Apache-2.0",
     "dependencies": {
-        "@vitejs/plugin-vue": "^6.0.1",
-        "@vue-macros/reactivity-transform": "^3.1.1",
         "@unocss/preset-attributify": "^66.5.6",
         "@unocss/preset-uno": "^66.5.6",
+        "@vitejs/plugin-vue": "^6.0.1",
+        "@vue-macros/reactivity-transform": "^3.1.1",
         "unocss": "^66.5.6",
         "unplugin-auto-import": "^20.2.0",
         "unplugin-icons": "^22.5.0",
