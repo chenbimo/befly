@@ -40,7 +40,7 @@ import EmailLoginForm from './components/emailLoginForm.vue';
     display: flex;
     width: 100%;
     min-height: 100vh;
-    background: #f5f7fa;
+    background: var(--login-bg);
 }
 
 // 左侧装饰区域
@@ -50,7 +50,7 @@ import EmailLoginForm from './components/emailLoginForm.vue';
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--login-left-gradient-start) 0%, var(--login-left-gradient-end) 100%);
     overflow: hidden;
 }
 
@@ -63,7 +63,7 @@ import EmailLoginForm from './components/emailLoginForm.vue';
     .circle {
         position: absolute;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--login-circle-bg);
         animation: float 20s infinite ease-in-out;
 
         &.circle-1 {
@@ -115,13 +115,13 @@ import EmailLoginForm from './components/emailLoginForm.vue';
     font-weight: 700;
     margin-bottom: 1rem;
     letter-spacing: 2px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    color: var(--login-brand-title);
 }
 
 .brand-subtitle {
     font-size: 1.25rem;
     margin-bottom: 3rem;
-    opacity: 0.95;
+    color: var(--login-brand-subtitle);
 }
 
 // 右侧登录区域
@@ -136,9 +136,10 @@ import EmailLoginForm from './components/emailLoginForm.vue';
 .login-box {
     width: 100%;
     max-width: 440px;
-    background: #fff;
+    background: var(--login-card-bg);
+    border: 1px solid var(--login-card-border);
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 40px var(--login-card-shadow);
     padding: 3rem 2.5rem;
 }
 
@@ -150,13 +151,13 @@ import EmailLoginForm from './components/emailLoginForm.vue';
 .login-title {
     font-size: 2rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--login-title);
     margin-bottom: 0.5rem;
 }
 
 .login-subtitle {
     font-size: 1rem;
-    color: #6b7280;
+    color: var(--login-subtitle);
 }
 
 .login-footer {
@@ -166,7 +167,7 @@ import EmailLoginForm from './components/emailLoginForm.vue';
 
 .copyright {
     font-size: 0.875rem;
-    color: #9ca3af;
+    color: var(--login-subtitle);
 }
 
 // 响应式设计

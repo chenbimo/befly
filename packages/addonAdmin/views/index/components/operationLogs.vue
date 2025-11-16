@@ -65,11 +65,11 @@ const formatTime = (timestamp) => {
 
     .operation-header {
         padding: 10px 12px;
-        background: linear-gradient(135deg, rgba($primary-color, 0.05) 0%, rgba($primary-color, 0.02) 100%);
+        background: linear-gradient(135deg, rgba(0, 82, 217, 0.05) 0%, rgba(0, 82, 217, 0.02) 100%);
         border-radius: 6px;
         font-size: 14px;
         font-weight: 600;
-        color: $text-secondary;
+        color: var(--text-secondary);
         margin-bottom: 6px;
     }
 
@@ -83,17 +83,17 @@ const formatTime = (timestamp) => {
         padding: 10px 12px;
         background: $bg-color-container;
         border-radius: 6px;
-        border: 1px solid $border-color;
+        border: 1px solid var(--border-color);
         font-size: 14px;
         transition: all 0.2s ease;
 
         &:hover {
-            background: rgba($primary-color, 0.02);
-            border-color: rgba($primary-color, 0.2);
+            background: rgba(0, 82, 217, 0.02);
+            border-color: rgba(0, 82, 217, 0.2);
         }
 
         .col-time {
-            color: $text-secondary;
+            color: var(--text-secondary);
             font-size: 14px;
         }
 
@@ -101,7 +101,7 @@ const formatTime = (timestamp) => {
         .col-action,
         .col-module,
         .col-ip {
-            color: $text-primary;
+            color: var(--text-primary);
         }
 
         .col-action {

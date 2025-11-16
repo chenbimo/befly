@@ -134,12 +134,12 @@ const $Method = {
     font-size: 0.875rem;
 
     .link-text {
-        color: #667eea;
+        color: var(--login-link);
         text-decoration: none;
         transition: color 0.3s;
 
         &:hover {
-            color: #764ba2;
+            color: var(--login-link-hover);
         }
     }
 }
@@ -150,13 +150,13 @@ const $Method = {
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 600;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--login-btn-gradient-start) 0%, var(--login-btn-gradient-end) 100%);
     border: none;
     transition: all 0.3s;
 
     &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 8px 20px var(--login-btn-shadow);
     }
 
     &:active {

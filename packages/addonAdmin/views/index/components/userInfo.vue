@@ -136,12 +136,12 @@ $Method.fetchData();
         align-items: center;
         gap: 12px;
         padding-bottom: 12px;
-        border-bottom: 1px solid $border-color;
+        border-bottom: 1px solid var(--border-color);
 
         .user-avatar {
             width: 48px;
             height: 48px;
-            background: linear-gradient(135deg, $primary-color, #764ba2);
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -157,7 +157,7 @@ $Method.fetchData();
             .user-name {
                 font-size: 16px;
                 font-weight: 600;
-                color: $text-primary;
+                color: var(--text-primary);
                 margin-bottom: 4px;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -166,7 +166,7 @@ $Method.fetchData();
 
             .user-role {
                 font-size: 12px;
-                color: $text-secondary;
+                color: var(--text-secondary);
             }
         }
     }
@@ -182,7 +182,7 @@ $Method.fetchData();
             align-items: center;
             gap: 8px;
             font-size: 12px;
-            color: $text-secondary;
+            color: var(--text-secondary);
 
             span {
                 overflow: hidden;
@@ -195,7 +195,7 @@ $Method.fetchData();
     .user-actions {
         margin-top: 16px;
         padding-top: 12px;
-        border-top: 1px solid $border-color;
+        border-top: 1px solid var(--border-color);
         display: flex;
         justify-content: center;
     }

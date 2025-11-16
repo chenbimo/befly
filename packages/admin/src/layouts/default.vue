@@ -152,9 +152,6 @@ $Method.fetchUserMenus();
 
 <style scoped lang="scss">
 .layout-0-wrapper {
-    $menu-width: 240px;
-    $head-height: 64px;
-    $gap: 16px;
     position: absolute;
     top: 0;
     left: 0;
@@ -165,10 +162,10 @@ $Method.fetchUserMenus();
 
     .layout-header {
         position: absolute;
-        top: $gap;
-        left: $gap;
-        right: $gap;
-        height: $head-height;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        height: 64px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -217,7 +214,7 @@ $Method.fetchUserMenus();
                     .user-name {
                         font-size: 14px;
                         font-weight: 500;
-                        color: $text-primary;
+                        color: var(--text-primary);
                     }
                 }
             }
@@ -226,10 +223,10 @@ $Method.fetchUserMenus();
 
     .layout-menu {
         position: absolute;
-        top: calc($head-height + $gap * 2);
-        left: $gap;
-        bottom: $gap;
-        width: $menu-width;
+        top: 96px;
+        left: 16px;
+        bottom: 16px;
+        width: 240px;
         background: #ffffff;
         border-radius: 8px;
         z-index: 99;
@@ -238,12 +235,12 @@ $Method.fetchUserMenus();
         border: 1px solid #e8eaed;
     }
 
-    .layout-main {
+    .layout-content {
         position: absolute;
-        top: calc($head-height + $gap * 2);
-        left: calc($menu-width + $gap * 2);
-        right: $gap;
-        bottom: $gap;
+        top: 96px;
+        left: 272px;
+        right: 16px;
+        bottom: 16px;
         background: #f5f7fa;
     }
 }

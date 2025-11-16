@@ -74,12 +74,12 @@ fetchData();
         gap: 6px;
         padding-bottom: 8px;
         margin-bottom: 12px;
-        border-bottom: 2px solid $primary-color;
+        border-bottom: 2px solid var(--primary-color);
 
         .info-title {
             font-size: 14px;
             font-weight: 600;
-            color: $text-primary;
+            color: var(--text-primary);
         }
     }
 
@@ -93,29 +93,29 @@ fetchData();
             justify-content: space-between;
             align-items: center;
             padding: 10px 12px;
-            background: rgba($primary-color, 0.02);
-            border-radius: $border-radius-small;
-            border: 1px solid $border-color;
+            background: rgba(0, 82, 217, 0.02);
+            border-radius: var(--border-radius-small);
+            border: 1px solid var(--border-color);
             transition: all 0.2s ease;
 
             &:hover {
-                background: rgba($primary-color, 0.05);
-                border-color: $primary-color;
+                background: rgba(0, 82, 217, 0.05);
+                border-color: var(--primary-color);
             }
 
             .label {
                 font-size: 14px;
-                color: $text-secondary;
+                color: var(--text-secondary);
                 font-weight: 500;
             }
 
             .value {
                 font-size: 14px;
-                color: $text-primary;
+                color: var(--text-primary);
                 font-weight: 600;
 
                 &.highlight {
-                    color: $primary-color;
+                    color: var(--primary-color);
                 }
             }
         }
@@ -128,8 +128,8 @@ fetchData();
     gap: 10px;
 
     .stat-box {
-        background: rgba($primary-color, 0.02);
-        border: 1px solid $border-color;
+        background: rgba(0, 82, 217, 0.02);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
         padding: 12px;
         display: flex;
@@ -138,8 +138,8 @@ fetchData();
         transition: all 0.3s;
 
         &:hover {
-            background: rgba($primary-color, 0.05);
-            border-color: $primary-color;
+            background: rgba(0, 82, 217, 0.05);
+            border-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
@@ -155,34 +155,34 @@ fetchData();
 
             .stat-label {
                 font-size: 14px;
-                color: $text-secondary;
+                color: var(--text-secondary);
             }
         }
 
         &.stat-primary {
-            border-color: $primary-color;
+            border-color: var(--primary-color);
             background: linear-gradient(135deg, rgba(0, 82, 217, 0.05), white);
 
             .stat-value {
-                color: $primary-color;
+                color: var(--primary-color);
             }
         }
 
         &.stat-success {
-            border-color: $success-color;
-            background: linear-gradient(135deg, rgba(82, 196, 26, 0.05), white);
+            border-color: var(--success-color);
+            background: linear-gradient(135deg, rgba(0, 168, 112, 0.05), white);
 
             .stat-value {
-                color: $success-color;
+                color: var(--success-color);
             }
         }
 
         &.stat-warning {
-            border-color: $warning-color;
-            background: linear-gradient(135deg, rgba(250, 173, 20, 0.05), white);
+            border-color: var(--warning-color);
+            background: linear-gradient(135deg, rgba(237, 123, 47, 0.05), white);
 
             .stat-value {
-                color: $warning-color;
+                color: var(--warning-color);
             }
         }
     }

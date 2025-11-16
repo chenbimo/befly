@@ -160,15 +160,6 @@ export function createBeflyViteConfig(options = {}) {
             }
         },
 
-        css: {
-            preprocessorOptions: {
-                scss: {
-                    api: 'modern-compiler',
-                    additionalData: `@use "@/styles/variables.scss" as *;`
-                }
-            }
-        },
-
         optimizeDeps: {
             include: ['vue', 'vue-router', 'pinia', 'axios', 'tdesign-vue-next']
         }

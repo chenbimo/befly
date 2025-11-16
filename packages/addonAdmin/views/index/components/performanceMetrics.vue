@@ -86,22 +86,22 @@ fetchData();
 .performance-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-sm;
-    margin-bottom: $spacing-sm;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
 
     .perf-metric {
         display: flex;
         align-items: center;
-        gap: $spacing-sm;
-        padding: $spacing-sm $spacing-md;
-        background: rgba($primary-color, 0.02);
-        border-radius: $border-radius;
-        border: 1px solid $border-color;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: rgba(0, 82, 217, 0.02);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
 
         &:hover {
-            background: rgba($primary-color, 0.05);
-            border-color: $primary-color;
+            background: rgba(0, 82, 217, 0.05);
+            border-color: var(--primary-color);
         }
 
         .perf-icon {
@@ -110,9 +110,9 @@ fetchData();
             justify-content: center;
             width: 36px;
             height: 36px;
-            border-radius: $border-radius-small;
-            background: linear-gradient(135deg, rgba($success-color, 0.1) 0%, rgba($success-color, 0.05) 100%);
-            color: $success-color;
+            border-radius: var(--border-radius-small);
+            background: linear-gradient(135deg, rgba(0, 168, 112, 0.1) 0%, rgba(0, 168, 112, 0.05) 100%);
+            color: var(--success-color);
             flex-shrink: 0;
         }
 
@@ -121,14 +121,14 @@ fetchData();
 
             .perf-label {
                 font-size: 14px;
-                color: $text-secondary;
+                color: var(--text-secondary);
                 margin-bottom: 2px;
             }
 
             .perf-value {
                 font-size: 16px;
                 font-weight: 700;
-                color: $primary-color;
+                color: var(--primary-color);
             }
         }
     }
@@ -138,12 +138,12 @@ fetchData();
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: $spacing-sm $spacing-md;
-    background: rgba($warning-color, 0.05);
-    border-radius: $border-radius-small;
-    border: 1px solid rgba($warning-color, 0.2);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(237, 123, 47, 0.05);
+    border-radius: var(--border-radius-small);
+    border: 1px solid rgba(237, 123, 47, 0.2);
     font-size: 14px;
-    color: $warning-color;
+    color: var(--warning-color);
 
     span {
         flex: 1;

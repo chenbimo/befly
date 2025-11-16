@@ -88,8 +88,8 @@ const getStatusText = (status) => {
     gap: 10px;
 
     .config-card {
-        background: rgba($primary-color, 0.02);
-        border: 1px solid $border-color;
+        background: rgba(0, 82, 217, 0.02);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
         padding: 12px;
         display: flex;
@@ -100,8 +100,8 @@ const getStatusText = (status) => {
         transition: all 0.3s;
 
         &:hover {
-            background: rgba($primary-color, 0.05);
-            border-color: $primary-color;
+            background: rgba(0, 82, 217, 0.05);
+            border-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
@@ -134,7 +134,7 @@ const getStatusText = (status) => {
 
                 .latency {
                     margin-left: 4px;
-                    color: $text-placeholder;
+                    color: var(--text-placeholder);
                 }
             }
         }
@@ -147,44 +147,44 @@ const getStatusText = (status) => {
         }
 
         &.config-running {
-            border-color: $success-color;
+            border-color: var(--success-color);
             background: linear-gradient(135deg, rgba(82, 196, 26, 0.05), white);
 
             .config-icon {
                 background: rgba(82, 196, 26, 0.1);
-                color: $success-color;
+                color: var(--success-color);
             }
 
             .config-name {
-                color: $success-color;
+                color: var(--success-color);
             }
         }
 
         &.config-unconfigured {
-            border-color: $warning-color;
+            border-color: var(--warning-color);
             background: linear-gradient(135deg, rgba(250, 173, 20, 0.05), white);
 
             .config-icon {
                 background: rgba(250, 173, 20, 0.1);
-                color: $warning-color;
+                color: var(--warning-color);
             }
 
             .config-name {
-                color: $warning-color;
+                color: var(--warning-color);
             }
         }
 
         &.config-stopped {
-            border-color: $error-color;
+            border-color: var(--error-color);
             background: linear-gradient(135deg, rgba(255, 77, 79, 0.05), white);
 
             .config-icon {
                 background: rgba(255, 77, 79, 0.1);
-                color: $error-color;
+                color: var(--error-color);
             }
 
             .config-name {
-                color: $error-color;
+                color: var(--error-color);
             }
         }
     }

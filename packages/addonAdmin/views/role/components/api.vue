@@ -214,8 +214,8 @@ $Method.initData();
 
         .api-group {
             margin-bottom: 16px;
-            border: 1px solid $border-color;
-            border-radius: $border-radius-small;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-small);
             overflow: hidden;
 
             &:last-child {
@@ -224,10 +224,10 @@ $Method.initData();
 
             .group-header {
                 padding: 12px 16px;
-                background-color: $bg-color-hover;
+                background-color: var(--bg-color-hover);
                 font-weight: 500;
-                font-size: $font-size-sm;
-                color: $text-primary;
+                font-size: var(--font-size-sm);
+                color: var(--text-primary);
                 display: flex;
                 align-items: center;
                 gap: 8px;
@@ -237,7 +237,7 @@ $Method.initData();
                     width: 8px;
                     height: 8px;
                     border-radius: 50%;
-                    background-color: $primary-color;
+                    background-color: var(--primary-color);
                     opacity: 0.3;
                     flex-shrink: 0;
                 }

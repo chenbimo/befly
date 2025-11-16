@@ -1,75 +1,71 @@
-// 全局 SCSS 变量
-// 可以在任何 .vue 或 .scss 文件中直接使用
+// CSS 原生变量（支持运行时动态修改）
+:root {
+    // 主题色
+    --primary-color: #0052d9;
+    --success-color: #00a870;
+    --warning-color: #ed7b2f;
+    --error-color: #e34d59;
+    --info-color: #0052d9;
 
-// 主题色
-$primary-color: #0052d9;
-$success-color: #00a870;
-$warning-color: #ed7b2f;
-$error-color: #e34d59;
-$info-color: #0052d9;
+    // 文本颜色
+    --text-primary: #1f2329;
+    --text-secondary: #646a73;
+    --text-placeholder: #8f959e;
+    --text-disabled: #c9cdd4;
 
-// 文本颜色
-$text-primary: #1f2329;
-$text-secondary: #646a73;
-$text-placeholder: #8f959e;
-$text-disabled: #c9cdd4;
+    // 背景色
+    --bg-color-page: #f5f7fa;
+    --bg-color-container: #ffffff;
+    --bg-color-overlay: rgba(0, 0, 0, 0.6);
+    --bg-color-hover: #f5f7fa;
 
-// 背景色
-$bg-color-page: #f5f7fa;
-$bg-color-container: #ffffff;
-$bg-color-overlay: rgba(0, 0, 0, 0.6);
-$bg-color-hover: #f5f7fa;
+    // 边框
+    --border-color: #e8eaed;
+    --border-color-light: #f0f1f3;
+    --border-radius: 8px;
+    --border-radius-small: 4px;
+    --border-radius-large: 12px;
 
-// 边框
-$border-color: #e8eaed;
-$border-color-light: #f0f1f3;
-$border-radius: 8px;
-$border-radius-small: 4px;
-$border-radius-large: 12px;
+    // 间距
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
 
-// 间距
-$spacing-xs: 4px;
-$spacing-sm: 8px;
-$spacing-md: 16px;
-$spacing-lg: 24px;
-$spacing-xl: 32px;
+    // 阴影
+    --shadow-small: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-large: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
 
-// 阴影
-$shadow-small: 0 2px 8px rgba(0, 0, 0, 0.04);
-$shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
-$shadow-large: 0 8px 24px rgba(0, 0, 0, 0.12);
-$shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+    // 动画时间
+    --transition-fast: 0.15s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.5s;
 
-// 动画时间
-$transition-fast: 0.15s;
-$transition-normal: 0.3s;
-$transition-slow: 0.5s;
+    // 字体大小
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-md: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
 
-// 字体大小
-$font-size-xs: 12px;
-$font-size-sm: 14px;
-$font-size-md: 16px;
-$font-size-lg: 18px;
-$font-size-xl: 20px;
-
-// 布局尺寸
-$header-height: 64px;
-$aside-width: 240px;
-$footer-height: 48px;
-
-// 响应式断点
-$breakpoint-xs: 480px;
-$breakpoint-sm: 768px;
-$breakpoint-md: 992px;
-$breakpoint-lg: 1200px;
-$breakpoint-xl: 1600px;
-
-// 首页专用变量
-$dashboard-section-bg: #ffffff;
-$dashboard-section-border: #e8eaed;
-$dashboard-section-radius: 8px;
-$dashboard-section-padding: 16px;
-$dashboard-section-gap: 16px;
-$dashboard-header-font-size: 16px;
-$dashboard-content-font-size: 14px;
-$dashboard-min-font-size: 14px;
+    // 登录页配色
+    --login-bg: #f5f7fa;
+    --login-left-gradient-start: #f8f9fa;
+    --login-left-gradient-end: #e9ecef;
+    --login-circle-bg: rgba(0, 0, 0, 0.03);
+    --login-brand-title: #2c3e50;
+    --login-brand-subtitle: #6c757d;
+    --login-card-bg: #ffffff;
+    --login-card-border: #e9ecef;
+    --login-card-shadow: rgba(0, 0, 0, 0.08);
+    --login-title: #2c3e50;
+    --login-subtitle: #6c757d;
+    --login-link: #495057;
+    --login-link-hover: #2c3e50;
+    --login-btn-gradient-start: #495057;
+    --login-btn-gradient-end: #343a40;
+    --login-btn-shadow: rgba(52, 58, 64, 0.3);
+}

@@ -62,21 +62,21 @@ const formatTime = (timestamp) => {
 .notification-compact-list {
     display: flex;
     flex-direction: column;
-    gap: $spacing-xs;
+    gap: var(--spacing-xs);
 
     .notification-compact-item {
         display: flex;
         align-items: center;
-        gap: $spacing-sm;
-        padding: $spacing-sm $spacing-md;
-        background: rgba($primary-color, 0.02);
-        border-radius: $border-radius-small;
-        border: 1px solid $border-color;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: rgba(0, 82, 217, 0.02);
+        border-radius: var(--border-radius-small);
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
 
         &:hover {
-            background: rgba($primary-color, 0.05);
-            border-color: $primary-color;
+            background: rgba(0, 82, 217, 0.05);
+            border-color: var(--primary-color);
         }
 
         .notification-icon {
@@ -85,40 +85,40 @@ const formatTime = (timestamp) => {
             justify-content: center;
             width: 32px;
             height: 32px;
-            border-radius: $border-radius-small;
+            border-radius: var(--border-radius-small);
             flex-shrink: 0;
 
             &.type-info {
-                background: rgba($primary-color, 0.1);
-                color: $primary-color;
+                background: rgba(0, 82, 217, 0.1);
+                color: var(--primary-color);
             }
 
             &.type-success {
-                background: rgba($success-color, 0.1);
-                color: $success-color;
+                background: rgba(0, 168, 112, 0.1);
+                color: var(--success-color);
             }
 
             &.type-warning {
-                background: rgba($warning-color, 0.1);
-                color: $warning-color;
+                background: rgba(237, 123, 47, 0.1);
+                color: var(--warning-color);
             }
 
             &.type-error {
-                background: rgba($error-color, 0.1);
-                color: $error-color;
+                background: rgba(227, 77, 89, 0.1);
+                color: var(--error-color);
             }
         }
 
         .notification-content {
             display: flex;
             align-items: center;
-            gap: $spacing-sm;
+            gap: var(--spacing-sm);
             flex: 1;
             min-width: 0;
 
             .notification-title {
                 font-size: 14px;
-                color: $text-primary;
+                color: var(--text-primary);
                 font-weight: 500;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -128,7 +128,7 @@ const formatTime = (timestamp) => {
 
             .notification-time {
                 font-size: 14px;
-                color: $text-placeholder;
+                color: var(--text-placeholder);
                 flex-shrink: 0;
             }
         }
