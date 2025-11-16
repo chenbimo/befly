@@ -227,7 +227,6 @@ $Method.fetchUserMenus();
         background: var(--bg-color-container);
         border-right: 1px solid var(--border-color);
         z-index: 99;
-        padding: var(--spacing-md);
         overflow-y: auto;
     }
 
