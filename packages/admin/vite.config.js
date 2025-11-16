@@ -10,6 +10,7 @@ import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite';
 import UnoCSS from 'unocss/vite';
+import { analyzer } from 'vite-bundle-analyzer';
 import { fileURLToPath, URL } from 'node:url';
 import { scanBeflyAddonViews } from '@befly-addon/admin/utils/scanBeflyAddonViews';
 
@@ -80,6 +81,18 @@ export default defineConfig({
             autoInstall: false,
             defaultClass: 'icon-befly',
             defaultStyle: 'margin-right: 8px; vertical-align: middle;'
+        }),
+
+        // 打包分析（仅在构建时启用）
+        analyzer({
+            analyzerMode: 'static',
+            fileName: 'bundle-report',
+            reportTitle: '打包分析',
+            defaultSizes: 'gzip',
+            gzipOptions: {},
+            brotliOptions: {},
+            openAnalyzer: false,
+            summary: true
         })
     ],
 
