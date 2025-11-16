@@ -49,8 +49,13 @@
         </div>
 
         <!-- 内容区域 -->
-        <div class="layout-main">
+        <div class="layout-content">
             <RouterView />
+        </div>
+
+        <!-- 底部分页栏 -->
+        <div class="layout-footer">
+            <span>© 2024 Befly. All rights reserved.</span>
         </div>
     </div>
 </template>
@@ -157,23 +162,21 @@ $Method.fetchUserMenus();
     left: 0;
     height: 100vh;
     width: 100vw;
-    background: #f5f7fa;
+    background: var(--bg-color-page);
     overflow: hidden;
 
     .layout-header {
         position: absolute;
-        top: 16px;
-        left: 16px;
-        right: 16px;
-        height: 64px;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--header-height);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 15px;
-        background: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid #e8eaed;
+        padding: 0 var(--spacing-lg);
+        background: var(--bg-color-container);
+        border-bottom: 1px solid var(--border-color);
         z-index: 100;
 
         .logo {
@@ -181,9 +184,9 @@ $Method.fetchUserMenus();
                 margin: 0;
                 font-size: 22px;
                 font-weight: 700;
-                color: #1f2329;
+                color: var(--text-primary);
                 letter-spacing: 0.5px;
-                background: linear-gradient(135deg, #0052d9 0%, #0084f4 100%);
+                background: linear-gradient(135deg, var(--primary-color) 0%, #0084f4 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
@@ -193,18 +196,12 @@ $Method.fetchUserMenus();
         .header-right {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: var(--spacing-md);
 
             .user-info-bar {
                 display: flex;
                 align-items: center;
-                gap: 12px;
-
-                .user-avatar {
-                    width: 32px;
-                    height: 32px;
-                    flex-shrink: 0;
-                }
+                gap: var(--spacing-sm);
 
                 .user-text {
                     display: flex;
@@ -212,7 +209,7 @@ $Method.fetchUserMenus();
                     align-items: flex-start;
 
                     .user-name {
-                        font-size: 14px;
+                        font-size: var(--font-size-sm);
                         font-weight: 500;
                         color: var(--text-primary);
                     }
@@ -223,25 +220,41 @@ $Method.fetchUserMenus();
 
     .layout-menu {
         position: absolute;
-        top: 96px;
-        left: 16px;
-        bottom: 16px;
-        width: 240px;
-        background: #ffffff;
-        border-radius: 8px;
+        top: var(--header-height);
+        left: 0;
+        bottom: var(--footer-height);
+        width: var(--sidebar-width);
+        background: var(--bg-color-container);
+        border-right: 1px solid var(--border-color);
         z-index: 99;
-        padding: 16px 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid #e8eaed;
+        padding: var(--spacing-md);
+        overflow-y: auto;
     }
 
     .layout-content {
         position: absolute;
-        top: 96px;
-        left: 272px;
-        right: 16px;
-        bottom: 16px;
-        background: #f5f7fa;
+        top: var(--header-height);
+        left: var(--sidebar-width);
+        right: 0;
+        bottom: var(--footer-height);
+        background: var(--bg-color-page);
+        overflow-y: auto;
+    }
+
+    .layout-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--footer-height);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-color-container);
+        border-top: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+        z-index: 98;
     }
 }
 </style>
