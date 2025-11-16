@@ -1,5 +1,5 @@
 ﻿<template>
-    <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :show-message="false">
+    <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :show-message="false" label-width="0">
         <TFormItem prop="account">
             <TInput v-model="$Data.formData.account" placeholder="用户名或邮箱" size="large" clearable @keyup.enter="$Method.apiLogin">
                 <template #prefix-icon>
@@ -102,7 +102,12 @@ const $Method = {
         margin-bottom: 1.25rem;
     }
 
+    :deep(.t-form__controls) {
+        width: 100%;
+    }
+
     :deep(.t-input) {
+        width: 100%;
         border-radius: 8px;
         transition: all 0.3s;
 
@@ -114,6 +119,10 @@ const $Method = {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
+    }
+
+    :deep(.t-input__wrap) {
+        width: 100%;
     }
 }
 
@@ -136,6 +145,7 @@ const $Method = {
 }
 
 .login-btn {
+    width: 100%;
     height: 48px;
     border-radius: 8px;
     font-size: 1rem;
