@@ -141,4 +141,5 @@ fetchData();
     border: 1px solid rgba(var(--warning-color-rgb), 0.2);
     font-size: 13px;
     color: var(--warning-color);
+}
 </style>
