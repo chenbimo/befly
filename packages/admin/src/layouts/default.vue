@@ -207,7 +207,6 @@ $Method.fetchUserMenus();
                     display: flex;
                     flex-direction: column;
                     align-items: flex-start;
-                    gap: 4px;
 
                     .user-name {
                         font-size: var(--font-size-sm);
