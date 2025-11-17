@@ -68,9 +68,9 @@
                         </div>
                         <div style="margin-bottom: 16px">
                             <div style="color: var(--text-secondary); margin-bottom: 4px">状态</div>
-                            <TTag v-if="$Data.currentRow.state === 1" theme="success">正常</TTag>
-                            <TTag v-else-if="$Data.currentRow.state === 2" theme="warning">禁用</TTag>
-                            <TTag v-else theme="danger">已删除</TTag>
+                            <TTag v-if="$Data.currentRow.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
+                            <TTag v-else-if="$Data.currentRow.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
+                            <TTag v-else-if="$Data.currentRow.state === 0" shape="round" theme="danger" variant="light-outline">已删除</TTag>
                         </div>
                     </div>
                     <div v-else style="text-align: center; padding: 48px 0; color: var(--text-placeholder)">
