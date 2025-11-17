@@ -11,12 +11,12 @@
                         <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
                         <t-tag theme="primary" size="small" variant="light">{{ $Data.userInfo.role || '超级管理员' }}</t-tag>
                     </div>
+                    <t-button class="logout-btn" theme="danger" shape="square" @click="$Method.handleLogout">
+                        <template #icon>
+                            <i-lucide:log-out style="color: #fff" />
+                        </template>
+                    </t-button>
                 </div>
-                <t-button class="logout-btn" theme="danger" shape="square" @click="$Method.handleLogout">
-                    <template #icon>
-                        <i-lucide:log-out style="color: #fff" />
-                    </template>
-                </t-button>
             </div>
         </div>
 
@@ -195,7 +195,7 @@ $Method.fetchUserMenus();
             .user-info-bar {
                 display: flex;
                 align-items: center;
-                padding: var(--spacing-xs) var(--spacing-md);
+                padding: var(--spacing-xs) var(--spacing-sm);
                 background: var(--bg-color-container);
                 border: 1px solid var(--border-color);
                 border-radius: var(--border-radius-small);
@@ -211,15 +211,9 @@ $Method.fetchUserMenus();
                         color: var(--text-primary);
                     }
                 }
-            }
-
-            .logout-btn {
-                color: var(--text-secondary);
-                transition: all var(--transition-fast);
-
-                &:hover {
-                    color: var(--error-color);
-                    background: rgba(var(--error-color-rgb), 0.08);
+                .logout-btn {
+                    color: var(--text-secondary);
+                    margin-left: var(--spacing-md);
                 }
             }
         }
