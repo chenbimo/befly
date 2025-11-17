@@ -6,7 +6,6 @@
                     <template #icon>
                         <ILucidePlus />
                     </template>
-                    添加字典
                 </TButton>
             </div>
             <div class="right">
@@ -14,7 +13,6 @@
                     <template #icon>
                         <ILucideRotateCw />
                     </template>
-                    刷新
                 </TButton>
             </div>
         </div>
