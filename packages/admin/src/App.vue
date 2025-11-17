@@ -1,12 +1,19 @@
 <template>
-    <div id="app">
-        <RouterView />
-    </div>
+    <ConfigProvider :global-config="globalConfig">
+        <div id="app">
+            <RouterView />
+        </div>
+    </ConfigProvider>
 </template>
 
 <script setup>
-// 自动导入的 API，无需手动引入
-// import { RouterView } from 'vue-router'
+import { ConfigProvider } from 'tdesign-vue-next';
+
+const globalConfig = {
+    dialog: {
+        closeOnOverlayClick: false
+    }
+};
 </script>
 
 <style scoped>
