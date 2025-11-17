@@ -3,5 +3,8 @@ import { fileURLToPath } from 'node:url';
 
 export default createBeflyViteConfig({
     root: fileURLToPath(new URL('.', import.meta.url)),
-    scanViews: scanBeflyAddonViews
+    scanViews: scanBeflyAddonViews,
+    optimizeDeps: {
+        include: ['befly-util']
+    }
 });

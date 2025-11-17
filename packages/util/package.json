@@ -1,18 +1,29 @@
 {
     "name": "befly-util",
     "version": "0.1.0",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
-        "./src/*": {
-            "import": "./src/*.ts"
+        ".": {
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.mts"
         },
-        "./types/*": {
-            "types": "./types/*.ts"
+        "./*": {
+            "import": "./dist/*.mjs",
+            "types": "./dist/*.d.mts"
         }
     },
     "files": [
-        "src",
-        "types",
-        "tests",
-        "package.json"
-    ]
+        "dist",
+        "package.json",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsdown",
+        "test": "bun test tests"
+    },
+    "devDependencies": {
+        "tsdown": "^0.16.4"
+    }
 }

@@ -36,7 +36,7 @@
 <script setup>
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
-import { fieldClear } from 'befly-util/src/fieldClear';
+import { fieldClear } from 'befly-util/fieldClear';
 
 const $Prop = defineProps({
     modelValue: {
