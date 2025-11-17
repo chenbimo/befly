@@ -19,11 +19,11 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" row-key="id" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" row-key="id" :selected-row-keys="$Data.selectedRowKeys" active-row-type="single" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
-                        <TTag v-if="row.state === 1" shape="round" theme="success" variant="outline">正常</TTag>
-                        <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="outline">禁用</TTag>
-                        <TTag v-else-if="row.state === 0" shape="round" theme="danger" variant="outline">删除</TTag>
+                        <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
+                        <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
+                        <TTag v-else-if="row.state === 0" shape="round" theme="danger" variant="light-outline">删除</TTag>
                     </template>
                     <template #operation="{ row }">
                         <TDropdown trigger="click" placement="bottom-right" @click="(data) => $Method.onAction(data.value, row)">
@@ -107,15 +107,16 @@ const $Data = $ref({
             colKey: 'row-select',
             type: 'single',
             width: 50,
+            fixed: 'left',
             checkProps: { allowUncheck: true }
         },
-        { colKey: 'index', title: '序号', width: 60, align: 'center' },
-        { colKey: 'username', title: '用户名' },
+        { colKey: 'username', title: '用户名', width: 150, fixed: 'left' },
+        { colKey: 'id', title: '序号', width: 150, align: 'center' },
         { colKey: 'email', title: '邮箱', width: 200 },
         { colKey: 'nickname', title: '昵称', width: 150 },
         { colKey: 'roleCode', title: '角色', width: 120 },
         { colKey: 'state', title: '状态', width: 100 },
-        { colKey: 'operation', title: '操作', width: 120, align: 'right' }
+        { colKey: 'operation', title: '操作', width: 80, align: 'center', fixed: 'right' }
     ],
     pagerConfig: {
         currentPage: 1,
