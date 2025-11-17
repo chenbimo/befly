@@ -173,7 +173,7 @@ $Method.fetchUserMenus();
         align-items: center;
         justify-content: space-between;
         padding: 0 var(--spacing-md) 0 var(--spacing-lg);
-        background: var(--bg-color-container);
+        background: var(--bg-color-page);
         border-bottom: 1px solid var(--border-color);
         z-index: 100;
 
@@ -184,10 +184,6 @@ $Method.fetchUserMenus();
                 font-weight: 700;
                 color: var(--text-primary);
                 letter-spacing: 0.5px;
-                background: linear-gradient(135deg, var(--primary-color) 0%, #0084f4 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
             }
         }
 
@@ -200,8 +196,9 @@ $Method.fetchUserMenus();
                 display: flex;
                 align-items: center;
                 padding: var(--spacing-xs) var(--spacing-md);
-                background: var(--bg-color-page);
-                border-radius: var(--border-radius);
+                background: var(--bg-color-container);
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius-small);
 
                 .user-text {
                     display: flex;
@@ -218,11 +215,11 @@ $Method.fetchUserMenus();
 
             .logout-btn {
                 color: var(--text-secondary);
-                transition: all 0.2s;
+                transition: all var(--transition-fast);
 
                 &:hover {
                     color: var(--error-color);
-                    background: var(--error-color-1);
+                    background: rgba(var(--error-color-rgb), 0.08);
                 }
             }
         }
