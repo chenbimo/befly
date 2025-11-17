@@ -1,7 +1,7 @@
 ﻿<template>
     <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :show-message="false" label-width="0">
         <TFormItem prop="account">
-            <TInput v-model="$Data.formData.account" placeholder="用户名或邮箱" size="large" clearable @keyup.enter="$Method.apiLogin">
+            <TInput v-model="$Data.formData.account" placeholder="用户名或邮箱" size="large" clearable @enter="$Method.apiLogin">
                 <template #prefix-icon>
                     <ILucideUser />
                 </template>
@@ -9,7 +9,7 @@
         </TFormItem>
 
         <TFormItem prop="password">
-            <TInput v-model="$Data.formData.password" type="password" placeholder="密码" size="large" clearable @keyup.enter="$Method.apiLogin">
+            <TInput v-model="$Data.formData.password" type="password" placeholder="密码" size="large" clearable @enter="$Method.apiLogin">
                 <template #prefix-icon>
                     <ILucideLock />
                 </template>
