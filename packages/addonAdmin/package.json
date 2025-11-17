@@ -42,6 +42,7 @@
     },
     "gitHead": "24b35d0ef83d78db3dea67784e052516d4a83fc5",
     "dependencies": {
-        "befly": "workspace:*"
+        "befly": "workspace:*",
+        "befly-util": "workspace:*"
     }
 }
