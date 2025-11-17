@@ -6,15 +6,13 @@
                     <template #icon>
                         <ILucidePlus />
                     </template>
-                    添加管理员
                 </TButton>
             </div>
             <div class="right">
-                <TButton @click="$Method.handleRefresh">
+                <TButton shape="circle" @click="$Method.handleRefresh">
                     <template #icon>
                         <ILucideRotateCw />
                     </template>
-                    刷新
                 </TButton>
             </div>
         </div>
@@ -23,20 +21,20 @@
             <div class="main-table">
                 <TTable :data="$Data.tableData" :columns="$Data.columns" row-key="id" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
-                        <TTag v-if="row.state === 1" theme="success">正常</TTag>
-                        <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
-                        <TTag v-else theme="danger">已删除</TTag>
+                        <TTag v-if="row.state === 1" shape="round" theme="success" variant="outline">正常</TTag>
+                        <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="outline">禁用</TTag>
+                        <TTag v-else-if="row.state === 0" shape="round" theme="danger" variant="outline">删除</TTag>
                     </template>
                     <template #operation="{ row }">
-                        <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
-                            <TButton variant="text" size="small">操作</TButton>
+                        <TDropdown trigger="click" placement="bottom-right" @click="(data) => $Method.onAction(data.value, row)">
+                            <TButton theme="primary" size="small">操作</TButton>
                             <TDropdownMenu slot="dropdown">
                                 <TDropdownItem value="upd">
                                     <ILucidePencil />
                                     编辑
                                 </TDropdownItem>
                                 <TDropdownItem value="del" :divider="true">
-                                    <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                    <ILucideTrash2 />
                                     删除
                                 </TDropdownItem>
                             </TDropdownMenu>

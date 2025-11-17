@@ -8,6 +8,6 @@ export function createIconsPlugin() {
         compiler: 'vue3',
         autoInstall: false,
         defaultClass: 'icon-befly',
-        defaultStyle: 'margin-right: 8px; vertical-align: middle;'
+        defaultStyle: 'vertical-align: middle;'
     });
 }
