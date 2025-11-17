@@ -11,7 +11,9 @@ export default {
         name: adminTable.name,
         nickname: adminTable.nickname,
         email: adminTable.email,
-        phone: adminTable.phone
+        phone: adminTable.phone,
+        roleId: adminTable.roleId,
+        state: adminTable.state
     },
     required: ['id'],
     handler: async (befly, ctx) => {

@@ -19,6 +19,9 @@
             <TFormItem label="手机号" prop="phone">
                 <TInput v-model="$Data.formData.phone" placeholder="请输入手机号" />
             </TFormItem>
+            <TFormItem label="角色" prop="roleId">
+                <TSelect v-model="$Data.formData.roleId" :options="$Data.roleOptions" placeholder="请选择角色" />
+            </TFormItem>
             <TFormItem v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
                 <TRadioGroup v-model="$Data.formData.state">
                     <TRadio :label="1">正常</TRadio>
@@ -34,7 +37,18 @@
 </template>
 
 <script setup>
-import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import {
+    //
+    Dialog as TDialog,
+    Form as TForm,
+    FormItem as TFormItem,
+    Input as TInput,
+    Select as TSelect,
+    RadioGroup as TRadioGroup,
+    Radio as TRadio,
+    Button as TButton,
+    MessagePlugin
+} from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 import { fieldClear } from 'befly-util/fieldClear';
 
@@ -62,6 +76,7 @@ const $From = $shallowRef({
 
 const $Data = $ref({
     visible: false,
+    roleOptions: [],
     formData: {
         id: 0,
         username: '',
@@ -70,6 +85,7 @@ const $Data = $ref({
         name: '',
         nickname: '',
         phone: '',
+        roleId: 0,
         state: 1
     }
 });
@@ -85,6 +101,7 @@ const $Data2 = $shallowRef({
             { required: true, message: '请输入密码', trigger: 'blur' },
             { min: 6, message: '密码至少6位', trigger: 'blur' }
         ],
+        roleId: [{ required: true, message: '请选择角色', trigger: 'change' }],
         name: [{ min: 2, max: 50, message: '姓名长度在 2 到 50 个字符', trigger: 'blur' }],
         nickname: [{ min: 2, max: 50, message: '昵称长度在 2 到 50 个字符', trigger: 'blur' }],
         phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }]
@@ -95,15 +112,10 @@ const $Data2 = $shallowRef({
 const $Method = {
     async initData() {
         $Method.onShow();
+        await $Method.loadRoles();
         if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
-            // 编辑模式：复制数据
-            $Data.formData.id = $Prop.rowData.id || 0;
-            $Data.formData.username = $Prop.rowData.username || '';
-            $Data.formData.email = $Prop.rowData.email || '';
-            $Data.formData.name = $Prop.rowData.name || '';
-            $Data.formData.nickname = $Prop.rowData.nickname || '';
-            $Data.formData.phone = $Prop.rowData.phone || '';
-            $Data.formData.state = $Prop.rowData.state ?? 1;
+            // 编辑模式：直接赋值
+            $Data.formData = { ...$Prop.rowData };
         }
     },
 
@@ -120,12 +132,28 @@ const $Method = {
         }, 300);
     },
 
+    async loadRoles() {
+        try {
+            const result = await $Http('/addon/admin/role/list');
+            const roleList = result.lists || [];
+            $Data.roleOptions = roleList
+                .filter((role) => role.state === 1)
+                .map((role) => ({
+                    label: role.name,
+                    value: role.id
+                }));
+        } catch (error) {
+            MessagePlugin.error(error.msg || '加载角色列表失败');
+        }
+    },
+
     async onSubmit() {
         try {
             const valid = await $From.form.validate();
             if (!valid) return;
 
-            const submitData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id'] }) : $Data.formData;
+            const submitData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : fieldClear($Data.formData, { omitKeys: ['password'] });
+
             await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', submitData);
 
             MessagePlugin.success($Prop.actionType === 'upd' ? '编辑成功' : '添加成功');
