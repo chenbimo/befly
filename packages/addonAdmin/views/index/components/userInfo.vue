@@ -56,7 +56,7 @@ const $Method = {
     // 获取数据
     async fetchData() {
         try {
-            const { data } = await $Http('/addon/admin/admin/info');
+            const { data } = await $Http('/addon/admin/admin/detail');
             Object.assign($Data.userInfo, data);
         } catch (error) {
             console.error('获取用户信息失败:', error);

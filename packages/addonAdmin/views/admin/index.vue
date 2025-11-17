@@ -31,10 +31,6 @@
                         <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
                             <TButton variant="text" size="small">操作</TButton>
                             <TDropdownMenu slot="dropdown">
-                                <TDropdownItem value="role">
-                                    <ILucideUser />
-                                    分配角色
-                                </TDropdownItem>
                                 <TDropdownItem value="upd">
                                     <ILucidePencil />
                                     编辑
@@ -93,9 +89,6 @@
 
         <!-- 编辑对话框组件 -->
         <EditDialog v-if="$Data.editVisible" v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiAdminList" />
-
-        <!-- 角色分配对话框组件 -->
-        <RoleDialog v-if="$Data.roleVisible" v-model="$Data.roleVisible" :row-data="$Data.rowData" @success="$Method.apiAdminList" />
     </div>
 </template>
 
@@ -103,11 +96,9 @@
 import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
 import ILucidePlus from '~icons/lucide/plus';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucideUser from '~icons/lucide/user';
 import ILucidePencil from '~icons/lucide/pencil';
 import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
-import RoleDialog from './components/role.vue';
 import { $Http } from '@/plugins/http';
 
 // 响应式数据
@@ -136,7 +127,6 @@ const $Data = $ref({
         layout: 'total, prev, pager, next, jumper'
     },
     editVisible: false,
-    roleVisible: false,
     actionType: 'add',
     rowData: {},
     currentRow: null,
@@ -259,8 +249,6 @@ const $Method = {
         $Data.rowData = rowData;
         if (command === 'add' || command === 'upd') {
             $Data.editVisible = true;
-        } else if (command === 'role') {
-            $Data.roleVisible = true;
         } else if (command === 'del') {
             $Method.apiAdminDel(rowData);
         }

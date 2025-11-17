@@ -134,9 +134,8 @@ const $Method = {
 
     async loadRoles() {
         try {
-            const result = await $Http('/addon/admin/role/list');
-            const roleList = result.lists || [];
-            $Data.roleOptions = roleList
+            const result = await $Http('/addon/admin/role/all');
+            $Data.roleOptions = result
                 .filter((role) => role.state === 1)
                 .map((role) => ({
                     label: role.name,
