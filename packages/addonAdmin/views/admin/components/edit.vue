@@ -1,37 +1,40 @@
 ﻿<template>
-    <TDialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <TForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <TFormItem label="用户名" prop="username">
-                <TInput v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
-            </TFormItem>
-            <TFormItem label="邮箱" prop="email">
-                <TInput v-model="$Data.formData.email" placeholder="请输入邮箱" />
-            </TFormItem>
-            <TFormItem v-if="$Prop.actionType === 'add'" label="密码" prop="password">
-                <TInput v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
-            </TFormItem>
-            <TFormItem label="姓名" prop="name">
-                <TInput v-model="$Data.formData.name" placeholder="请输入姓名" />
-            </TFormItem>
-            <TFormItem label="昵称" prop="nickname">
-                <TInput v-model="$Data.formData.nickname" placeholder="请输入昵称" />
-            </TFormItem>
-            <TFormItem label="手机号" prop="phone">
-                <TInput v-model="$Data.formData.phone" placeholder="请输入手机号" />
-            </TFormItem>
-            <TFormItem label="角色" prop="roleId">
-                <TSelect v-model="$Data.formData.roleId" :options="$Data.roleOptions" placeholder="请选择角色" />
-            </TFormItem>
-            <TFormItem v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
-                <TRadioGroup v-model="$Data.formData.state">
-                    <TRadio :label="1">正常</TRadio>
-                    <TRadio :label="2">禁用</TRadio>
-                </TRadioGroup>
-            </TFormItem>
-        </TForm>
+    <TDialog v-model:visible="$Data.visible" :header="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+        <div class="dialog-wrapper">
+            <TForm :model="$Data.formData" label-width="80px" label-position="left" label-align="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
+                <TFormItem label="角色" prop="roleId">
+                    <TSelect v-model="$Data.formData.roleId" :options="$Data.roleOptions" placeholder="请选择角色" />
+                </TFormItem>
+                <TFormItem label="用户名" prop="username">
+                    <TInput v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
+                </TFormItem>
+                <TFormItem label="邮箱" prop="email">
+                    <TInput v-model="$Data.formData.email" placeholder="请输入邮箱" />
+                </TFormItem>
+                <TFormItem v-if="$Prop.actionType === 'add'" label="密码" prop="password">
+                    <TInput v-model="$Data.formData.password" type="password" placeholder="请输入密码，至少6位" />
+                </TFormItem>
+                <TFormItem label="昵称" prop="nickname">
+                    <TInput v-model="$Data.formData.nickname" placeholder="请输入昵称" />
+                </TFormItem>
+                <TFormItem label="手机号" prop="phone">
+                    <TInput v-model="$Data.formData.phone" placeholder="请输入手机号" />
+                </TFormItem>
+                <TFormItem v-if="$Prop.actionType === 'upd'" label="状态" prop="state">
+                    <TRadioGroup v-model="$Data.formData.state">
+                        <TRadio :label="1">正常</TRadio>
+                        <TRadio :label="2">禁用</TRadio>
+                    </TRadioGroup>
+                </TFormItem>
+            </TForm>
+        </div>
         <template #footer>
-            <TButton @click="$Method.onClose">取消</TButton>
-            <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
+            <div class="dialog-footer">
+                <t-space>
+                    <TButton theme="default" @click="$Method.onClose">取消</TButton>
+                    <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
+                </t-space>
+            </div>
         </template>
     </TDialog>
 </template>

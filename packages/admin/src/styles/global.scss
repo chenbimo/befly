@@ -103,6 +103,17 @@ body {
 //     }
 // }
 
+.dialog-wrapper {
+    background-color: var(--bg-color-page);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+}
+.dialog-footer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
 // 数据列表页面通用布局样式
 .page-table {
     position: absolute;

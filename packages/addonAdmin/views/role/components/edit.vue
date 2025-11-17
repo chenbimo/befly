@@ -1,5 +1,5 @@
 ﻿<template>
-    <TDialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '更新角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
+    <TDialog v-model:visible="$Data.visible" :header="$Prop.actionType === 'upd' ? '更新角色' : '添加角色'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
         <div class="comp-role-edit">
             <TForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
                 <TFormItem label="角色名称" prop="name">
@@ -30,7 +30,18 @@
 </template>
 
 <script setup>
-import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, InputNumber as TInputNumber, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import {
+    //
+    Dialog as TDialog,
+    Form as TForm,
+    FormItem as TFormItem,
+    Input as TInput,
+    InputNumber as TInputNumber,
+    RadioGroup as TRadioGroup,
+    Radio as TRadio,
+    Button as TButton,
+    MessagePlugin
+} from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
