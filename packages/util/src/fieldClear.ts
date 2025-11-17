@@ -13,16 +13,16 @@ function isArray(val: unknown): val is any[] {
 }
 
 export function fieldClear<T = any>(data: T | T[], options: FieldClearOptions = {}): FieldClearResult<T> {
-    const { pick, omit, keepValues, excludeValues } = options;
+    const { pickKeys, omitKeys, keepValues, excludeValues } = options;
 
     const filterObj = (obj: Record<string, any>) => {
         let result: Record<string, any> = {};
         let keys = Object.keys(obj);
-        if (pick && pick.length) {
-            keys = keys.filter((k) => pick.includes(k));
+        if (pickKeys && pickKeys.length) {
+            keys = keys.filter((k) => pickKeys.includes(k));
         }
-        if (omit && omit.length) {
-            keys = keys.filter((k) => !omit.includes(k));
+        if (omitKeys && omitKeys.length) {
+            keys = keys.filter((k) => !omitKeys.includes(k));
         }
         for (const key of keys) {
             const value = obj[key];

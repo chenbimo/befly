@@ -28,6 +28,7 @@
     },
     "dependencies": {
         "@befly-addon/admin": "workspace:*",
+        "befly-util": "workspace:*",
         "axios": "^1.13.2",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.10.6",

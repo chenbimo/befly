@@ -4,7 +4,7 @@ import type { FieldClearOptions } from '../types/fieldClear';
 
 test('对象 pick/omit', () => {
     const obj = { a: 1, b: 2, c: 3 };
-    const options: FieldClearOptions = { pick: ['a', 'c'] };
+    const options: FieldClearOptions = { pickKeys: ['a', 'c'] };
     expect(fieldClear(obj, options)).toEqual({ a: 1, c: 3 });
 });
 

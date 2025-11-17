@@ -36,6 +36,7 @@
 <script setup>
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
+import { fieldClear } from 'befly-util/src/fieldClear';
 
 const $Prop = defineProps({
     modelValue: {
@@ -124,7 +125,8 @@ const $Method = {
             const valid = await $From.form.validate();
             if (!valid) return;
 
-            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', $Data.formData);
+            const submitData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id'] }) : $Data.formData;
+            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', submitData);
 
             MessagePlugin.info({
                 message: $Prop.actionType === 'upd' ? '编辑成功' : '添加成功',

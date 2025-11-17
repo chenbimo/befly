@@ -1,8 +1,8 @@
 // fieldClear 类型定义
 
 export interface FieldClearOptions {
-    pick?: string[]; // 只保留这些字段
-    omit?: string[]; // 排除这些字段
+    pickKeys?: string[]; // 只保留这些字段
+    omitKeys?: string[]; // 排除这些字段
     keepValues?: any[]; // 只保留这些值
     excludeValues?: any[]; // 排除这些值
 }
