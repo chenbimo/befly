@@ -6,24 +6,23 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "import": "./dist/index.mjs",
-            "types": "./dist/index.d.mts"
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
         },
-        "./*": {
-            "import": "./dist/*.mjs",
-            "types": "./dist/*.d.mts"
-        }
+        "./*": "./dist/*.js"
     },
     "files": [
         "dist",
+        "types",
         "package.json",
         "README.md"
     ],
     "scripts": {
-        "build": "tsdown",
-        "test": "bun test tests"
+        "build": "tsc",
+        "test": "bun test"
     },
     "devDependencies": {
-        "tsdown": "^0.16.4"
+        "@types/bun": "latest",
+        "typescript": "^5.7.2"
     }
 }
