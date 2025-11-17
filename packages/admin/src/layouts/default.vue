@@ -27,19 +27,19 @@
                     <!-- 无子菜单 -->
                     <t-menu-item v-if="!menu.children || menu.children.length === 0" :value="menu.path">
                         <template #icon>
-                            <i-lucide:home v-if="menu.path === '/addon/admin/'" />
-                            <i-lucide:file-text v-else />
+                            <i-lucide:home v-if="menu.path === '/addon/admin/'" style="margin-right: 8px" />
+                            <i-lucide:file-text v-else style="margin-right: 8px" />
                         </template>
                         {{ menu.name }}
                     </t-menu-item>
                     <!-- 有子菜单 -->
                     <t-submenu v-else :value="String(menu.id)" :title="menu.name">
                         <template #icon>
-                            <i-lucide:folder />
+                            <i-lucide:folder style="margin-right: 8px" />
                         </template>
                         <t-menu-item v-for="child in menu.children" :key="child.id" :value="child.path">
                             <template #icon>
-                                <i-lucide:file-text />
+                                <i-lucide:file-text style="margin-right: 8px" />
                             </template>
                             {{ child.name }}
                         </t-menu-item>
