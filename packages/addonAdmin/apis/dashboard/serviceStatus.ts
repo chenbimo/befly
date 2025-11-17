@@ -1,8 +1,4 @@
-﻿/**
- * 获取服务状态
- */
-
-import { Yes, Env } from 'befly';
+﻿import { Yes, Env } from 'befly';
 
 export default {
     name: '获取服务状态',

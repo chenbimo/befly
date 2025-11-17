@@ -1,8 +1,4 @@
-﻿/**
- * 获取更新日志
- */
-
-import { Yes } from 'befly';
+﻿import { Yes } from 'befly';
 
 export default {
     name: '获取更新日志',

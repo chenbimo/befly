@@ -1,8 +1,4 @@
-﻿/**
- * 发送短信验证码接口
- */
-
-import { Yes, Env } from 'befly';
+﻿import { Yes, Env } from 'befly';
 import adminTable from '../../tables/admin.json';
 
 export default {

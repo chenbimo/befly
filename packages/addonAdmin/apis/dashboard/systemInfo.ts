@@ -1,8 +1,4 @@
-﻿/**
- * 获取系统信息
- */
-
-import { Yes, Env } from 'befly';
+﻿import { Yes, Env } from 'befly';
 
 export default {
     name: '获取系统信息',

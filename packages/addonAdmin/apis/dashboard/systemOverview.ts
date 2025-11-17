@@ -1,8 +1,4 @@
-﻿/**
- * 获取系统概览数据
- */
-
-import { Yes } from 'befly';
+﻿import { Yes } from 'befly';
 
 export default {
     name: '获取系统概览数据',

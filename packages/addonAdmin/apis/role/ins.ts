@@ -1,9 +1,6 @@
 ﻿import { Yes, No } from 'befly';
 import adminRoleTable from '../../tables/role.json';
 
-/**
- * 创建角色
- */
 export default {
     name: '创建角色',
     fields: adminRoleTable,

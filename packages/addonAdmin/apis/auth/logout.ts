@@ -1,8 +1,4 @@
-﻿/**
- * 退出登录接口
- */
-
-import { Yes } from 'befly';
+﻿import { Yes } from 'befly';
 
 export default {
     name: '退出登录',

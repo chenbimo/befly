@@ -7,14 +7,7 @@ import adminTable from '../../tables/admin.json';
 
 export default {
     name: '更新管理员',
-    fields: {
-        name: adminTable.name,
-        nickname: adminTable.nickname,
-        email: adminTable.email,
-        phone: adminTable.phone,
-        roleId: adminTable.roleId,
-        state: adminTable.state
-    },
+    fields: adminTable,
     required: ['id'],
     handler: async (befly, ctx) => {
         const { id, ...updateData } = ctx.body;

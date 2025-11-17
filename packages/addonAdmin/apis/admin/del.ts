@@ -1,8 +1,4 @@
-﻿/**
- * 删除管理员
- */
-
-import { Yes, No } from 'befly';
+﻿import { Yes, No } from 'befly';
 
 export default {
     name: '删除管理员',

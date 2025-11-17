@@ -1,8 +1,4 @@
-﻿/**
- * 获取权限统计信息
- */
-
-import { Yes } from 'befly';
+﻿import { Yes } from 'befly';
 
 export default {
     name: '获取权限统计',

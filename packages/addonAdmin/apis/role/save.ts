@@ -1,8 +1,4 @@
-﻿/**
- * 保存用户的角色（单角色模式）
- */
-
-import { Yes, No } from 'befly';
+﻿import { Yes, No } from 'befly';
 
 export default {
     name: '角色保存',

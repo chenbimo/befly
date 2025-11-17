@@ -1,8 +1,4 @@
-﻿/**
- * 获取角色的接口权限
- */
-
-import { Yes, No } from 'befly';
+﻿import { Yes, No } from 'befly';
 
 export default {
     name: '获取角色接口权限',

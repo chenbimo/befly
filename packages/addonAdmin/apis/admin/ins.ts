@@ -1,8 +1,4 @@
-﻿/**
- * 添加管理员
- */
-
-import { Yes, No, Cipher } from 'befly';
+﻿import { Yes, No, Cipher } from 'befly';
 import adminTable from '../../tables/admin.json';
 
 export default {

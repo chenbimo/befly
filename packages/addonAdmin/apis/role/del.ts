@@ -1,8 +1,4 @@
-﻿/**
- * 删除角色
- */
-
-import { Yes, No } from 'befly';
+﻿import { Yes, No } from 'befly';
 
 export default {
     name: '删除角色',

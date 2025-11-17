@@ -1,8 +1,4 @@
-﻿/**
- * 获取系统资源使用情况
- */
-
-import os from 'node:os';
+﻿import os from 'node:os';
 import fs from 'node:fs';
 import { Yes } from 'befly';
 import { promisify } from 'node:util';

@@ -1,8 +1,4 @@
-﻿/**
- * 获取角色的菜单权限
- */
-
-import { Yes, No } from 'befly';
+﻿import { Yes, No } from 'befly';
 
 export default {
     name: '获取角色菜单权限',

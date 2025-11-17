@@ -1,8 +1,4 @@
-﻿/**
- * 保存角色的接口权限
- */
-
-import { Yes, No } from 'befly';
+﻿import { Yes, No } from 'befly';
 import adminRoleTable from '../../tables/role.json';
 
 export default {

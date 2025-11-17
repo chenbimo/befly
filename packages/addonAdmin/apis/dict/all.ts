@@ -1,8 +1,5 @@
 ﻿import { Yes, No } from 'befly';
 
-/**
- * 获取所有字典（不分页）
- */
 export default {
     name: '获取所有字典',
     handler: async (befly, ctx) => {
