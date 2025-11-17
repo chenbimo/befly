@@ -7,6 +7,11 @@ export default {
             table: 'addon_admin_admin',
             page: ctx.body.page || 1,
             limit: ctx.body.limit || 10,
+            where: {
+                roleCode: {
+                    $ne: 'dev'
+                }
+            },
             orderBy: ['createdAt#DESC']
         });
 

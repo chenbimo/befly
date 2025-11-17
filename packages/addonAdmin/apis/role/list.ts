@@ -6,6 +6,11 @@ export default {
         const roles = await befly.db.getList({
             limit: 30,
             table: 'addon_admin_role',
+            where: {
+                code: {
+                    $ne: 'dev'
+                }
+            },
             orderBy: ['sort#ASC', 'id#ASC']
         });
 
