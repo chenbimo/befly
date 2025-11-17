@@ -47,17 +47,25 @@ request.interceptors.response.use(
     (response) => {
         const res = response.data;
 
-        // 如果code不是0,说明业务失败
+        // 如果code不是0,说明业务失败（不显示提示，由业务层处理）
         if (res.code !== 0) {
-            MessagePlugin.error(res.msg || '请求失败');
-            return Promise.reject(res.data);
+            return Promise.reject({
+                code: res.code,
+                msg: res.msg || '请求失败',
+                data: res.data
+            });
         }
 
+        // 成功时返回 data
         return res;
     },
     (error) => {
         MessagePlugin.error('网络连接失败');
-        return Promise.reject(error);
+        return Promise.reject({
+            code: -1,
+            msg: '网络连接失败',
+            error: error
+        });
     }
 );
 
@@ -68,7 +76,7 @@ request.interceptors.response.use(
  * @param {any} [data={}] - 请求数据，默认为空对象
  * @param {'get' | 'post'} [method='post'] - 请求方法，默认为 'post'，可选 'get' | 'post'
  * @param {import('axios').AxiosRequestConfig} [config] - axios 请求配置
- * @returns {Promise<ApiResponse>}
+ * @returns {Promise<any>} 成功返回 data，失败抛出 {code, msg, data} 对象
  */
 export function $Http(url, data = {}, method = 'post', config) {
     const methodLower = method.toLowerCase();
