@@ -1,0 +1,17 @@
+{
+    "name": "@befly/util",
+    "version": "0.1.0",
+    "exports": {
+        "./src/*": {
+            "import": "./src/*.ts"
+        },
+        "./types/*": {
+            "types": "./types/*.ts"
+        }
+    },
+    "files": [
+        "src",
+        "types",
+        "tests"
+    ]
+}

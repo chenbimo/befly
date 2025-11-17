@@ -3,7 +3,6 @@ logs
 *.log
 npm-debug.log*
 esdata
-tests
 data
 .cache
 lab
@@ -11,7 +10,6 @@ labs
 cache
 .VSCodeCounter
 oclif.manifest.json
-dist
 report.html
 dist-ssr
 *.local
