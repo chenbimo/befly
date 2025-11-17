@@ -29,15 +29,13 @@
     "dependencies": {
         "@befly-addon/admin": "workspace:*",
         "befly-util": "workspace:*",
+        "befly-vite": "workspace:*",
         "axios": "^1.13.2",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.10.6",
         "vue": "^3.5.22",
-        "vue-router": "^4.6.3"
-    },
-    "devDependencies": {
+        "vue-router": "^4.6.3",
         "@iconify-json/lucide": "^1.2.72",
-        "befly-vite": "workspace:*",
         "vite": "^7.2.2"
     },
     "engines": {
