@@ -38,7 +38,16 @@ export function fieldClear<T = any>(data: T | T[], options: FieldClearOptions = 
     };
 
     if (isArray(data)) {
-        return (data as any[]).map((item) => (isObject(item) ? filterObj(item) : item)) as FieldClearResult<T>;
+        return (data as any[])
+            .map((item) => (isObject(item) ? filterObj(item) : item))
+            .filter((item) => {
+                if (isObject(item)) {
+                    // 只保留有内容的对象
+                    return Object.keys(item).length > 0;
+                }
+                // 原始值直接保留
+                return true;
+            }) as FieldClearResult<T>;
     }
     if (isObject(data)) {
         return filterObj(data as Record<string, any>) as FieldClearResult<T>;

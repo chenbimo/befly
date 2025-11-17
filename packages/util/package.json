@@ -12,6 +12,7 @@
     "files": [
         "src",
         "types",
-        "tests"
+        "tests",
+        "package.json"
     ]
 }

@@ -1,39 +1,98 @@
+import { test, expect } from 'bun:test';
 import { arrayToTree } from '../src/arrayToTree';
 import type { ArrayToTreeOptions } from '../types/arrayToTree';
 
-// 默认场景测试
-const flat = [
-    { id: 1, pid: 0, name: 'A' },
-    { id: 2, pid: 1, name: 'B' },
-    { id: 3, pid: 1, name: 'C' },
-    { id: 4, pid: 2, name: 'D' }
-];
-console.log('默认树:', JSON.stringify(arrayToTree(flat)));
+test('默认字段树结构', () => {
+    const flat = [
+        { id: 1, pid: 0, name: 'A' },
+        { id: 2, pid: 1, name: 'B' },
+        { id: 3, pid: 1, name: 'C' },
+        { id: 4, pid: 2, name: 'D' }
+    ];
+    expect(arrayToTree(flat)).toEqual([
+        {
+            id: 1,
+            pid: 0,
+            name: 'A',
+            children: [
+                {
+                    id: 2,
+                    pid: 1,
+                    name: 'B',
+                    children: [{ id: 4, pid: 2, name: 'D' }]
+                },
+                { id: 3, pid: 1, name: 'C' }
+            ]
+        }
+    ]);
+});
 
-// 自定义字段测试
-const custom = [
-    { key: 'a', parent: null, label: 'A' },
-    { key: 'b', parent: 'a', label: 'B' },
-    { key: 'c', parent: 'a', label: 'C' },
-    { key: 'd', parent: 'b', label: 'D' }
-];
-const customOptions: ArrayToTreeOptions<(typeof custom)[0]> = {
-    idField: 'key',
-    pidField: 'parent',
-    childrenField: 'nodes',
-    rootPid: null
-};
-console.log('自定义字段树:', JSON.stringify(arrayToTree(custom, customOptions)));
+test('自定义字段树结构', () => {
+    const custom = [
+        { key: 'a', parent: null, label: 'A' },
+        { key: 'b', parent: 'a', label: 'B' },
+        { key: 'c', parent: 'a', label: 'C' },
+        { key: 'd', parent: 'b', label: 'D' }
+    ];
+    const options: ArrayToTreeOptions<(typeof custom)[0]> = {
+        idField: 'key',
+        pidField: 'parent',
+        childrenField: 'nodes',
+        rootPid: null
+    };
+    expect(arrayToTree(custom, options)).toEqual([
+        {
+            key: 'a',
+            parent: null,
+            label: 'A',
+            nodes: [
+                {
+                    key: 'b',
+                    parent: 'a',
+                    label: 'B',
+                    nodes: [{ key: 'd', parent: 'b', label: 'D' }]
+                },
+                { key: 'c', parent: 'a', label: 'C' }
+            ]
+        }
+    ]);
+});
 
-// mapFn 测试
-const mapOptions: ArrayToTreeOptions<(typeof custom)[0]> = {
-    ...customOptions,
-    mapFn: (node) => ({ ...node, extra: true })
-};
-console.log('mapFn 树:', JSON.stringify(arrayToTree(custom, mapOptions)));
+test('mapFn 节点转换', () => {
+    const custom = [
+        { key: 'a', parent: null, label: 'A' },
+        { key: 'b', parent: 'a', label: 'B' },
+        { key: 'c', parent: 'a', label: 'C' },
+        { key: 'd', parent: 'b', label: 'D' }
+    ];
+    const options: ArrayToTreeOptions<(typeof custom)[0]> = {
+        idField: 'key',
+        pidField: 'parent',
+        childrenField: 'nodes',
+        rootPid: null,
+        mapFn: (node) => ({ ...node, extra: true })
+    };
+    expect(arrayToTree(custom, options)).toEqual([
+        {
+            key: 'a',
+            parent: null,
+            label: 'A',
+            extra: true,
+            nodes: [
+                {
+                    key: 'b',
+                    parent: 'a',
+                    label: 'B',
+                    extra: true,
+                    nodes: [{ key: 'd', parent: 'b', label: 'D', extra: true }]
+                },
+                { key: 'c', parent: 'a', label: 'C', extra: true }
+            ]
+        }
+    ]);
+});
 
-// 空数组测试
-console.log('空数组:', arrayToTree([], {}));
-
-// 单节点测试
-console.log('单节点:', arrayToTree([{ id: 1, pid: 0 }], {}));
+test('空数组和单节点', () => {
+    expect(arrayToTree([], {})).toEqual([]);
+    expect(arrayToTree([{ id: 1, pid: 0 }], {})).toEqual([{ id: 1, pid: 0 }]);
+});
