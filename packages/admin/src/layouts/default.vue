@@ -11,12 +11,12 @@
                         <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
                         <t-tag theme="primary" size="small" variant="light">{{ $Data.userInfo.role || '超级管理员' }}</t-tag>
                     </div>
-                    <t-button variant="text" size="medium" @click="$Method.handleLogout">
-                        <template #icon>
-                            <i-lucide:x />
-                        </template>
-                    </t-button>
                 </div>
+                <t-button class="logout-btn" theme="danger" shape="square" @click="$Method.handleLogout">
+                    <template #icon>
+                        <i-lucide:log-out style="color: #fff" />
+                    </template>
+                </t-button>
             </div>
         </div>
 
@@ -172,7 +172,7 @@ $Method.fetchUserMenus();
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 var(--spacing-lg);
+        padding: 0 var(--spacing-md) 0 var(--spacing-lg);
         background: var(--bg-color-container);
         border-bottom: 1px solid var(--border-color);
         z-index: 100;
@@ -199,18 +199,31 @@ $Method.fetchUserMenus();
             .user-info-bar {
                 display: flex;
                 align-items: center;
-                gap: var(--spacing-sm);
+                padding: var(--spacing-xs) var(--spacing-md);
+                background: var(--bg-color-page);
+                border-radius: var(--border-radius);
 
                 .user-text {
                     display: flex;
                     flex-direction: column;
                     align-items: flex-start;
+                    gap: 4px;
 
                     .user-name {
                         font-size: var(--font-size-sm);
                         font-weight: 500;
                         color: var(--text-primary);
                     }
+                }
+            }
+
+            .logout-btn {
+                color: var(--text-secondary);
+                transition: all 0.2s;
+
+                &:hover {
+                    color: var(--error-color);
+                    background: var(--error-color-1);
                 }
             }
         }
