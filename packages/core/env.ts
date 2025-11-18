@@ -19,9 +19,9 @@ const coreEnv: EnvConfig = {
     APP_NAME: isProd ? '野蜂飞舞正式环境' : '野蜂飞舞开发环境',
     APP_PORT: 3000,
     APP_HOST: '127.0.0.1',
-    DEV_EMAIL: 'dev@qq.com',
+    DEV_EMAIL: '',
     DEV_PASSWORD: '123456',
-    BODY_LIMIT: 10485760, // 10MB
+    BODY_LIMIT: 10 * 1024 * 1024, // 10MB
 
     // ========== 日志配置 ==========
     LOG_DEBUG: 0,
@@ -34,7 +34,7 @@ const coreEnv: EnvConfig = {
     TZ: 'Asia/Shanghai',
 
     // ========== 数据库配置 ==========
-    DB_ENABLE: 1,
+    DB_ENABLE: 0,
     DB_TYPE: 'mysql',
     DB_HOST: '127.0.0.1',
     DB_PORT: 3306,
@@ -45,7 +45,7 @@ const coreEnv: EnvConfig = {
     DB_POOL_MAX: 10,
 
     // ========== Redis 配置 ==========
-    REDIS_ENABLE: 1,
+    REDIS_ENABLE: 0,
     REDIS_HOST: '127.0.0.1',
     REDIS_PORT: 6379,
     REDIS_USERNAME: '',
@@ -64,17 +64,7 @@ const coreEnv: EnvConfig = {
     CORS_ALLOWED_HEADERS: 'Content-Type, Authorization, authorization, token',
     CORS_EXPOSE_HEADERS: 'Content-Range, X-Content-Range, Authorization, authorization, token',
     CORS_MAX_AGE: 86400,
-    CORS_ALLOW_CREDENTIALS: 'true',
-
-    // ========== 邮件配置 ==========
-    MAIL_HOST: '',
-    MAIL_PORT: 587,
-    MAIL_POOL: 'true',
-    MAIL_SECURE: 'false',
-    MAIL_USER: '',
-    MAIL_PASS: '',
-    MAIL_SENDER: '',
-    MAIL_ADDRESS: ''
+    CORS_ALLOW_CREDENTIALS: 'true'
 };
 
 /**

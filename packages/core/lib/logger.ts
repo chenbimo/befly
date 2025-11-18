@@ -31,14 +31,6 @@ function formatDate(): string {
  * 日志器类
  */
 export class Logger {
-    /** 日志配置（直接使用 Env） */
-    private static readonly config = {
-        logDir: Env.LOG_DIR || 'logs',
-        maxFileSize: Env.LOG_MAX_SIZE || 50 * 1024 * 1024,
-        enableDebug: Env.LOG_DEBUG === 1,
-        toConsole: Env.LOG_TO_CONSOLE === 1
-    };
-
     /** 当前使用的日志文件缓存 */
     private static currentFiles: Map<string, string> = new Map();
 
@@ -48,8 +40,8 @@ export class Logger {
      * @param message - 日志消息
      */
     static async log(level: LogLevel, message: LogMessage): Promise<void> {
-        // debug 日志特殊处理：仅当 enableDebug 为 true 时才记录
-        if (level === 'debug' && !this.config.enableDebug) return;
+        // debug 日志特殊处理：仅当 LOG_DEBUG=1 时才记录
+        if (level === 'debug' && Env.LOG_DEBUG !== 1) return;
 
         // 格式化消息
         const timestamp = formatDate();
@@ -67,7 +59,7 @@ export class Logger {
         const logMessage = `[${timestamp}] ${levelStr} - ${content}`;
 
         // 控制台输出
-        if (this.config.toConsole) {
+        if (Env.LOG_TO_CONSOLE === 1) {
             console.log(logMessage);
         }
 
@@ -99,7 +91,7 @@ export class Logger {
             if (currentLogFile) {
                 try {
                     const stats = await stat(currentLogFile);
-                    if (stats.size >= this.config.maxFileSize) {
+                    if (stats.size >= Env.LOG_MAX_SIZE) {
                         this.currentFiles.delete(prefix);
                         currentLogFile = undefined;
                     }
@@ -112,7 +104,7 @@ export class Logger {
             // 查找或创建新文件
             if (!currentLogFile) {
                 const glob = new Bun.Glob(`${prefix}.*.log`);
-                const files = await Array.fromAsync(glob.scan(this.config.logDir));
+                const files = await Array.fromAsync(glob.scan(Env.LOG_DIR || 'logs'));
 
                 // 按索引排序并查找可用文件
                 const getIndex = (f: string) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0');
@@ -120,10 +112,10 @@ export class Logger {
 
                 let foundFile = false;
                 for (let i = files.length - 1; i >= 0; i--) {
-                    const filePath = join(this.config.logDir, files[i]);
+                    const filePath = join(Env.LOG_DIR || 'logs', files[i]);
                     try {
                         const stats = await stat(filePath);
-                        if (stats.size < this.config.maxFileSize) {
+                        if (stats.size < Env.LOG_MAX_SIZE) {
                             currentLogFile = filePath;
                             foundFile = true;
                             break;
@@ -136,7 +128,7 @@ export class Logger {
                 // 没有可用文件,创建新文件
                 if (!foundFile) {
                     const maxIndex = files.length > 0 ? Math.max(...files.map(getIndex)) : -1;
-                    currentLogFile = join(this.config.logDir, `${prefix}.${maxIndex + 1}.log`);
+                    currentLogFile = join(Env.LOG_DIR || 'logs', `${prefix}.${maxIndex + 1}.log`);
                 }
 
                 this.currentFiles.set(prefix, currentLogFile);
