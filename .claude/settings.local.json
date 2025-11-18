@@ -1,12 +1,7 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(cat:*)",
-      "Bash(for pkg in packages/*/)",
-      "Bash(then grep -E '(\"\"\"\"name\"\"\"\"|\"\"\"\"description\"\"\"\"|\"\"\"\"version\"\"\"\")' \"$pkg/package.json\")",
-      "Bash(npm run dev:*)"
-    ],
-    "deny": [],
-    "ask": []
-  }
+    "permissions": {
+        "allow": ["Bash(cat:*)", "Bash(for pkg in packages/*/)", "Bash(then grep -E '(\"\"\"\"name\"\"\"\"|\"\"\"\"description\"\"\"\"|\"\"\"\"version\"\"\"\")' \"$pkg/package.json\")", "Bash(npm run dev:*)"],
+        "deny": [],
+        "ask": []
+    }
 }

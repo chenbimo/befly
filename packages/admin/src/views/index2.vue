@@ -57,9 +57,7 @@
                     <div class="line-chart">
                         <div class="chart-line"></div>
                         <div class="chart-grid"></div>
-                        <div class="chart-labels">
-                            <span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span><span>8月</span><span>9月</span><span>10月</span><span>11月</span><span>12月</span>
-                        </div>
+                        <div class="chart-labels"><span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span><span>8月</span><span>9月</span><span>10月</span><span>11月</span><span>12月</span></div>
                     </div>
                 </div>
             </div>
@@ -69,15 +67,15 @@
                 <div class="chart-container">
                     <div class="bar-chart">
                         <div class="bar-group">
-                            <div class="bar" style="height: 65%; background: #3498db;">
+                            <div class="bar" style="height: 65%; background: #3498db">
                                 <div class="bar-label">实物商品</div>
                                 <div class="bar-value">65%</div>
                             </div>
-                            <div class="bar" style="height: 25%; background: #e74c3c;">
+                            <div class="bar" style="height: 25%; background: #e74c3c">
                                 <div class="bar-label">虚拟商品</div>
                                 <div class="bar-value">25%</div>
                             </div>
-                            <div class="bar" style="height: 10%; background: #9b59b6;">
+                            <div class="bar" style="height: 10%; background: #9b59b6">
                                 <div class="bar-label">服务</div>
                                 <div class="bar-value">10%</div>
                             </div>
@@ -179,7 +177,9 @@ h1 {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     display: flex;
     align-items: center;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
 
     &:hover {
         transform: translateY(-5px);
@@ -293,9 +293,7 @@ h1 {
         left: 0;
         right: 0;
         bottom: 0;
-        background-image:
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-            linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+        background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
         background-size: 40px 40px;
     }
 
@@ -323,7 +321,8 @@ h1 {
 }
 
 @keyframes lineMove {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0);
     }
     50% {
