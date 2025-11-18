@@ -28,15 +28,16 @@
     },
     "dependencies": {
         "@befly-addon/admin": "workspace:*",
+        "@iconify-json/lucide": "^1.2.72",
+        "axios": "^1.13.2",
         "befly-util": "workspace:*",
         "befly-vite": "workspace:*",
-        "axios": "^1.13.2",
+        "echarts": "^6.0.0",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.10.6",
+        "vite": "^7.2.2",
         "vue": "^3.5.22",
-        "vue-router": "^4.6.3",
-        "@iconify-json/lucide": "^1.2.72",
-        "vite": "^7.2.2"
+        "vue-router": "^4.6.3"
     },
     "engines": {
         "node": ">=24.0.0",
