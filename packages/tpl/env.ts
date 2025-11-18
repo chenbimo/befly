@@ -11,7 +11,4 @@ const isProd = process.env.NODE_ENV === 'production';
  * 项目自定义配置
  * 只需要配置需要覆盖的字段
  */
-export const Env: Partial<EnvConfig> = {
-    // ========== 项目配置 ==========
-    APP_NAME: isProd ? '野蜂飞舞正式环境' : '野蜂飞舞开发环境'
-};
+export const Env: Partial<EnvConfig> = {};

@@ -22,16 +22,15 @@ const coreEnv: EnvConfig = {
     DEV_EMAIL: '',
     DEV_PASSWORD: '123456',
     BODY_LIMIT: 10 * 1024 * 1024, // 10MB
+    // ========== 时区配置 ==========
+    TZ: 'Asia/Shanghai',
 
     // ========== 日志配置 ==========
-    LOG_DEBUG: 0,
+    LOG_DEBUG: 1,
     LOG_EXCLUDE_FIELDS: 'password,token,secret',
     LOG_DIR: './logs',
     LOG_TO_CONSOLE: 1,
-    LOG_MAX_SIZE: 52428800, // 50MB
-
-    // ========== 时区配置 ==========
-    TZ: 'Asia/Shanghai',
+    LOG_MAX_SIZE: 10 * 1024 * 1024, // 10MB
 
     // ========== 数据库配置 ==========
     DB_ENABLE: 0,
@@ -39,9 +38,8 @@ const coreEnv: EnvConfig = {
     DB_HOST: '127.0.0.1',
     DB_PORT: 3306,
     DB_USER: 'root',
-    DB_PASS: '',
+    DB_PASS: 'root',
     DB_NAME: 'befly_demo',
-    DB_DEBUG: 0,
     DB_POOL_MAX: 10,
 
     // ========== Redis 配置 ==========
@@ -51,7 +49,7 @@ const coreEnv: EnvConfig = {
     REDIS_USERNAME: '',
     REDIS_PASSWORD: '',
     REDIS_DB: 0,
-    REDIS_KEY_PREFIX: 'befly',
+    REDIS_KEY_PREFIX: 'befly_demo',
 
     // ========== JWT 配置 ==========
     JWT_SECRET: 'befly-secret',

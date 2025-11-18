@@ -30,7 +30,6 @@ export interface EnvConfig {
     DB_USER: string;
     DB_PASS: string;
     DB_NAME: string;
-    DB_DEBUG: number;
     DB_POOL_MAX: number;
 
     // ========== Redis 配置 ==========
