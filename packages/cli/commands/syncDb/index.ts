@@ -8,6 +8,7 @@
  */
 
 import { basename, resolve } from 'pathe';
+import { existsSync } from 'node:fs';
 import { snakeCase } from 'es-toolkit/string';
 import { Env, Database, RedisHelper, checkTable, utils } from 'befly';
 import { Logger, projectDir } from '../../util.js';
@@ -52,10 +53,13 @@ export const SyncDb = async (): Promise<void> => {
 
         // 扫描表定义文件
         const tablesGlob = new Bun.Glob('*.json');
-        const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string; addonNameSnake?: string }> = [
-            // 1. 项目表（无前缀）
-            { path: resolve(projectDir, 'tables'), type: 'app' }
-        ];
+        const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string; addonNameSnake?: string }> = [];
+
+        // 1. 项目表（无前缀）- 如果 tables 目录存在
+        const projectTablesDir = resolve(projectDir, 'tables');
+        if (existsSync(projectTablesDir)) {
+            directories.push({ path: projectTablesDir, type: 'app' });
+        }
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
         const addons = utils.scanAddons();

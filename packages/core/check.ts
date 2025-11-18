@@ -65,23 +65,30 @@ export const checkTable = async function (): Promise<boolean> {
         const allTableFiles: TableFileInfo[] = [];
         let hasError = false;
 
-        // 收集项目表字段定义文件
-        for await (const file of tablesGlob.scan({
-            cwd: projectTableDir,
-            absolute: true,
-            onlyFiles: true
-        })) {
-            allTableFiles.push({
-                file: file,
-                typeCode: 'project',
-                typeName: '项目'
-            });
+        // 收集项目表字段定义文件（如果目录存在）
+        if (existsSync(projectTableDir)) {
+            for await (const file of tablesGlob.scan({
+                cwd: projectTableDir,
+                absolute: true,
+                onlyFiles: true
+            })) {
+                allTableFiles.push({
+                    file: file,
+                    typeCode: 'project',
+                    typeName: '项目'
+                });
+            }
         }
 
         // 收集 addon 表字段定义文件
         const addons = scanAddons();
         for (const addonName of addons) {
             const addonTablesDir = getAddonDir(addonName, 'tables');
+
+            // 检查 addon tables 目录是否存在
+            if (!existsSync(addonTablesDir)) {
+                continue;
+            }
 
             for await (const file of tablesGlob.scan({
                 cwd: addonTablesDir,
