@@ -5,8 +5,6 @@
 
 import type { EnvConfig } from 'befly/types/env.js';
 
-const isProd = process.env.NODE_ENV === 'production';
-
 /**
  * 项目自定义配置
  * 只需要配置需要覆盖的字段
