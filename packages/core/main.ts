@@ -120,7 +120,7 @@ export class Befly {
         });
 
         const finalStartupTime = calcPerfTime(startTime);
-        Logger.info(`${Env.APP_NAME} 服务器启动成功! `);
+        Logger.info(`${Env.APP_NAME} 启动成功! `);
         Logger.info(`服务器启动耗时: ${finalStartupTime}`);
         Logger.info(`服务器监听地址: http://${Env.APP_HOST}:${Env.APP_PORT}`);
 
