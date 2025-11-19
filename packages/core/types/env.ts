@@ -23,7 +23,7 @@ export interface EnvConfig {
     TZ: string;
 
     // ========== 数据库配置 ==========
-    DB_ENABLE: number;
+    DATABASE_ENABLE: number;
     DB_TYPE: string;
     DB_HOST: string;
     DB_PORT: number;
@@ -33,7 +33,6 @@ export interface EnvConfig {
     DB_POOL_MAX: number;
 
     // ========== Redis 配置 ==========
-    REDIS_ENABLE: number;
     REDIS_HOST: string;
     REDIS_PORT: number;
     REDIS_USERNAME: string;

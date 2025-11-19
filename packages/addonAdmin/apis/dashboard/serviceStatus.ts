@@ -25,7 +25,7 @@ export default {
         }
 
         // Redis 状态
-        if (Env.REDIS_ENABLE === 1 && befly.redis) {
+        if (Env.DATABASE_ENABLE === 1 && befly.redis) {
             try {
                 const startTime = Date.now();
                 await befly.redis.ping();

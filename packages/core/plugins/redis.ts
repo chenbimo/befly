@@ -19,7 +19,7 @@ const redisPlugin: Plugin = {
 
     async onInit(befly: BeflyContext): Promise<RedisHelper | Record<string, never>> {
         try {
-            if (Env.REDIS_ENABLE === 1) {
+            if (Env.DATABASE_ENABLE === 1) {
                 // 初始化 Redis 客户端（统一使用 database.ts 的连接管理）
                 await Database.connectRedis();
 

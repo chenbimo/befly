@@ -33,7 +33,7 @@ const coreEnv: EnvConfig = {
     LOG_MAX_SIZE: 10 * 1024 * 1024, // 10MB
 
     // ========== 数据库配置 ==========
-    DB_ENABLE: 0,
+    DATABASE_ENABLE: 0,
     DB_TYPE: 'mysql',
     DB_HOST: '127.0.0.1',
     DB_PORT: 3306,
@@ -43,7 +43,6 @@ const coreEnv: EnvConfig = {
     DB_POOL_MAX: 10,
 
     // ========== Redis 配置 ==========
-    REDIS_ENABLE: 0,
     REDIS_HOST: '127.0.0.1',
     REDIS_PORT: 6379,
     REDIS_USERNAME: '',
