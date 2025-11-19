@@ -1,6 +1,6 @@
 {
     "name": "befly-tpl",
-    "version": "3.9.33",
+    "version": "3.9.34",
     "description": "Befly 3.0 TypeScript Template",
     "private": false,
     "publishConfig": {
