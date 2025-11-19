@@ -154,22 +154,29 @@ export class Validator {
      */
     private validateNumber(value: any, name: string, min: number | null, max: number | null, spec: string | null, fieldName: string): ValidationError {
         try {
-            if (typeof value !== 'number' || Number.isNaN(value) || !isFinite(value)) {
+            // 允许数字类型的字符串
+            let numValue = value;
+            if (typeof value === 'string') {
+                numValue = Number(value);
+                if (Number.isNaN(numValue) || !isFinite(numValue)) {
+                    return `${name}(${fieldName})必须是数字`;
+                }
+            } else if (typeof numValue !== 'number' || Number.isNaN(numValue) || !isFinite(numValue)) {
                 return `${name}(${fieldName})必须是数字`;
             }
 
-            if (min !== null && value < min) {
+            if (min !== null && numValue < min) {
                 return `${name}(${fieldName})不能小于${min}`;
             }
 
-            if (max !== null && max > 0 && value > max) {
+            if (max !== null && max > 0 && numValue > max) {
                 return `${name}(${fieldName})不能大于${max}`;
             }
 
             if (spec && spec.trim() !== '') {
                 try {
                     const regExp = new RegExp(spec);
-                    if (!regExp.test(String(value))) {
+                    if (!regExp.test(String(numValue))) {
                         return `${name}(${fieldName})格式不正确`;
                     }
                 } catch (error: any) {
