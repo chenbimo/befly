@@ -240,12 +240,12 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
 
         const helper = Database.getDbHelper();
 
-        // 1. 检查表是否存在
+        // 1. 检查表是否存在（addon_admin_api 来自 addon-admin 组件）
         const exists = await helper.tableExists('addon_admin_api');
 
         if (!exists) {
-            Logger.error(`表 addon_admin_api 不存在，请先运行 befly syncDb 同步数据库`);
-            process.exit(1);
+            Logger.info('表 addon_admin_api 不存在，跳过 API 同步（需要安装 addon-admin 组件）');
+            return;
         }
 
         // 2. 扫描所有 API 文件

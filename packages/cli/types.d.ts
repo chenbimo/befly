@@ -82,15 +82,6 @@ export interface SyncMenuStats {
 }
 
 /**
- * SyncDev 统计信息
- */
-export interface SyncDevStats {
-    adminCount: number;
-    roleCount: number;
-    cachedRoles: number;
-}
-
-/**
  * SyncApi 统计信息
  */
 export interface SyncApiStats {
@@ -391,21 +382,6 @@ export interface MenuDetailWithDiff extends MenuDetail {
         before: any;
         after: any;
     }[];
-}
-
-/**
- * 开发账号同步报告
- */
-export interface DevReport {
-    stats: SyncDevStats;
-    details: {
-        admins: AdminDetail[];
-        roles: RoleDetail[];
-    };
-    timing: {
-        processing: number;
-        caching: number;
-    };
 }
 
 /**

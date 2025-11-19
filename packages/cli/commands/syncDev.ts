@@ -14,15 +14,15 @@ import type { SyncDevOptions, SyncDevStats } from '../types.js';
 /**
  * SyncDev 命令主函数
  */
-export async function syncDevCommand(options: SyncDevOptions = {}): Promise<SyncDevStats> {
+export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.info('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
-            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
+            return;
         }
 
         if (!Env.DEV_PASSWORD) {
-            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
+            return;
         }
 
         // 连接数据库（SQL + Redis）
@@ -33,19 +33,19 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
         // 检查 addon_admin_admin 表是否存在
         const existAdmin = await helper.tableExists('addon_admin_admin');
         if (!existAdmin) {
-            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
+            return;
         }
 
         // 检查 addon_admin_role 表是否存在
         const existRole = await helper.tableExists('addon_admin_role');
         if (!existRole) {
-            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
+            return;
         }
 
         // 检查 addon_admin_menu 表是否存在
         const existMenu = await helper.tableExists('addon_admin_menu');
         if (!existMenu) {
-            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
+            return;
         }
 
         // 查询所有菜单 ID
@@ -55,7 +55,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
         });
 
         if (!allMenus || !Array.isArray(allMenus)) {
-            return { adminCount: 0, roleCount: 0, cachedRoles: 0 };
+            return;
         }
 
         const menuIds = allMenus.length > 0 ? allMenus.map((m: any) => m.id).join(',') : '';
@@ -129,7 +129,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
             where: { email: Env.DEV_EMAIL }
         });
 
-        let isNew = false;
         if (existing) {
             // 更新现有账号
             await helper.updData({
@@ -143,11 +142,9 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
                 table: 'addon_admin_admin',
                 data: devData
             });
-            isNew = true;
         }
 
         // 缓存角色权限数据到 Redis
-        let cachedRolesCount = 0;
         try {
             // 检查必要的表是否存在
             const apiTableExists = await helper.tableExists('addon_admin_api');
@@ -190,32 +187,12 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<Sync
                     await redis.del(redisKey);
 
                     // 批量添加到 Set（使用扩展运算符展开数组）
-                    const result = await redis.sadd(redisKey, ...roleApiPaths);
-
-                    if (result > 0) {
-                        cachedRolesCount++;
-                    }
+                    await redis.sadd(redisKey, ...roleApiPaths);
                 }
             }
         } catch (error: any) {
             // 忽略缓存错误
         }
-
-        // 获取统计数据
-        const allAdmins = await helper.getAll({
-            table: 'addon_admin_admin',
-            fields: ['id']
-        });
-        const allRoles = await helper.getAll({
-            table: 'addon_admin_role',
-            fields: ['id']
-        });
-
-        return {
-            adminCount: allAdmins.length,
-            roleCount: allRoles.length,
-            cachedRoles: cachedRolesCount
-        };
     } catch (error: any) {
         Logger.error('开发管理员同步失败:', error);
         process.exit(1);
