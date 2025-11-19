@@ -35,7 +35,7 @@ const dbPlugin: Plugin = {
 
                 return dbManager;
             } else {
-                Logger.warn('数据库未启用（DB_ENABLE≠1），跳过初始化');
+                Logger.warn('数据库未启用，跳过初始化');
                 return {};
             }
         } catch (error: any) {
