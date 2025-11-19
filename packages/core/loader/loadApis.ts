@@ -12,6 +12,8 @@ import { projectApiDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 
+const API_GLOB_PATTERN = '**/*.{ts,js}';
+
 /**
  * API 默认字段定义
  * 这些字段会自动合并到所有 API 的 fields 中
@@ -60,14 +62,17 @@ async function scanUserApis(): Promise<Array<{ file: string; routePrefix: string
         return apis;
     }
 
-    const glob = new Bun.Glob('**/*.ts');
+    const glob = new Bun.Glob(API_GLOB_PATTERN);
 
     for await (const file of glob.scan({
         cwd: projectApiDir,
         onlyFiles: true,
         absolute: true
     })) {
-        const apiPath = relative(projectApiDir, file).replace(/\.ts$/, '');
+        if (file.endsWith('.d.ts')) {
+            continue;
+        }
+        const apiPath = relative(projectApiDir, file).replace(/\.(ts|js)$/, '');
         if (apiPath.indexOf('_') !== -1) continue;
 
         apis.push({
@@ -85,7 +90,7 @@ async function scanUserApis(): Promise<Array<{ file: string; routePrefix: string
  */
 async function scanAddonApis(): Promise<Array<{ file: string; routePrefix: string; displayName: string }>> {
     const apis: Array<{ file: string; routePrefix: string; displayName: string }> = [];
-    const glob = new Bun.Glob('**/*.ts');
+    const glob = new Bun.Glob(API_GLOB_PATTERN);
     const addons = scanAddons();
 
     for (const addon of addons) {
@@ -97,7 +102,10 @@ async function scanAddonApis(): Promise<Array<{ file: string; routePrefix: strin
             onlyFiles: true,
             absolute: true
         })) {
-            const apiPath = relative(addonApiDir, file).replace(/\.ts$/, '');
+            if (file.endsWith('.d.ts')) {
+                continue;
+            }
+            const apiPath = relative(addonApiDir, file).replace(/\.(ts|js)$/, '');
             if (apiPath.indexOf('_') !== -1) continue;
 
             apis.push({
@@ -117,7 +125,7 @@ async function scanAddonApis(): Promise<Array<{ file: string; routePrefix: strin
 async function initApi(apiRoutes: Map<string, ApiRoute>, apiInfo: { file: string; routePrefix: string; displayName: string }): Promise<void> {
     const { file, routePrefix, displayName } = apiInfo;
     const apiDir = routePrefix === '' ? projectApiDir : getAddonDir(routePrefix.replace('addon/', ''), 'apis');
-    const apiPath = relative(apiDir, file).replace(/\.ts$/, '');
+    const apiPath = relative(apiDir, file).replace(/\.(ts|js)$/, '');
 
     try {
         // Windows 下路径需要转换为正斜杠格式

@@ -255,7 +255,7 @@ export const checkTable = async function (): Promise<boolean> {
  */
 export const checkApi = async function (): Promise<boolean> {
     try {
-        const apiGlob = new Bun.Glob('**/*.ts');
+        const apiGlob = new Bun.Glob('**/*.{ts,js}');
 
         // 收集所有 API 文件
         const allApiFiles: Array<{ file: string; displayName: string }> = [];
@@ -267,6 +267,9 @@ export const checkApi = async function (): Promise<boolean> {
                 onlyFiles: true,
                 absolute: true
             })) {
+                if (file.endsWith('.d.ts')) {
+                    continue;
+                }
                 allApiFiles.push({
                     file: file,
                     displayName: '用户'
@@ -285,6 +288,9 @@ export const checkApi = async function (): Promise<boolean> {
                 onlyFiles: true,
                 absolute: true
             })) {
+                if (file.endsWith('.d.ts')) {
+                    continue;
+                }
                 allApiFiles.push({
                     file: file,
                     displayName: `组件${addon}`
@@ -294,8 +300,8 @@ export const checkApi = async function (): Promise<boolean> {
 
         // 合并进行验证逻辑
         for (const item of allApiFiles) {
-            const fileName = basename(item.file).replace(/\.ts$/, '');
-            const apiPath = relative(item.displayName === '用户' ? projectApiDir : getAddonDir(item.displayName.replace('组件', ''), 'apis'), item.file).replace(/\.ts$/, '');
+            const fileName = basename(item.file).replace(/\.(ts|js)$/, '');
+            const apiPath = relative(item.displayName === '用户' ? projectApiDir : getAddonDir(item.displayName.replace('组件', ''), 'apis'), item.file).replace(/\.(ts|js)$/, '');
 
             // 跳过以下划线开头的文件
             if (apiPath.indexOf('_') !== -1) continue;

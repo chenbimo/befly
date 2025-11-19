@@ -49,14 +49,15 @@ function sortPlugins(plugins: Plugin[]): Plugin[] | false {
  */
 async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
     const plugins: Plugin[] = [];
-    const glob = new Bun.Glob('*.ts');
+    const glob = new Bun.Glob('*.{ts,js}');
 
     for await (const file of glob.scan({
         cwd: corePluginDir,
         onlyFiles: true,
         absolute: true
     })) {
-        const fileName = basename(file).replace(/\.ts$/, '');
+        if (file.endsWith('.d.ts')) continue;
+        const fileName = basename(file).replace(/\.(ts|js)$/, '');
         if (fileName.startsWith('_')) continue;
 
         try {
@@ -79,7 +80,7 @@ async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
  */
 async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
     const plugins: Plugin[] = [];
-    const glob = new Bun.Glob('*.ts');
+    const glob = new Bun.Glob('*.{ts,js}');
     const addons = scanAddons();
 
     for (const addon of addons) {
@@ -91,7 +92,8 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
             onlyFiles: true,
             absolute: true
         })) {
-            const fileName = basename(file).replace(/\.ts$/, '');
+            if (file.endsWith('.d.ts')) continue;
+            const fileName = basename(file).replace(/\.(ts|js)$/, '');
             if (fileName.startsWith('_')) continue;
 
             const addonCamelCase = camelCase(addon);
@@ -103,10 +105,11 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
             }
 
             try {
-                const pluginImport = await import(file);
+                const normalizedFilePath = file.replace(/\\/g, '/');
+                const pluginImport = await import(normalizedFilePath);
                 const plugin = pluginImport.default;
                 plugin.pluginName = pluginFullName;
-                plugins.push(pluginInstance);
+                plugins.push(plugin);
                 loadedPluginNames.add(pluginFullName);
             } catch (err: any) {
                 Logger.error(`组件${addon} ${fileName} 导入失败`, err);
@@ -128,13 +131,14 @@ async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         return plugins;
     }
 
-    const glob = new Bun.Glob('*.ts');
+    const glob = new Bun.Glob('*.{ts,js}');
     for await (const file of glob.scan({
         cwd: projectPluginDir,
         onlyFiles: true,
         absolute: true
     })) {
-        const fileName = basename(file).replace(/\.ts$/, '');
+        if (file.endsWith('.d.ts')) continue;
+        const fileName = basename(file).replace(/\.(ts|js)$/, '');
         if (fileName.startsWith('_')) continue;
 
         const fileNameCamelCase = camelCase(fileName);
@@ -145,10 +149,11 @@ async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         }
 
         try {
-            const pluginImport = await import(file);
+            const normalizedFilePath = file.replace(/\\/g, '/');
+            const pluginImport = await import(normalizedFilePath);
             const plugin = pluginImport.default;
             plugin.pluginName = pluginFullName;
-            plugins.push(pluginInstance);
+            plugins.push(plugin);
             loadedPluginNames.add(pluginFullName);
         } catch (err: any) {
             Logger.error(`用户插件 ${fileName} 导入失败`, err);

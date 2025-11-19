@@ -1,7 +1,7 @@
 ﻿/**
  * 环境变量配置
  * 根据 NODE_ENV 自动切换开发/生产环境配置
- * 项目可通过创建 env.ts 文件覆盖这些配置
+ * 项目可通过创建 env.ts 或 env.js 文件覆盖这些配置
  */
 
 import { existsSync } from 'node:fs';
@@ -22,6 +22,7 @@ const coreEnv: EnvConfig = {
     DEV_EMAIL: '',
     DEV_PASSWORD: '123456',
     BODY_LIMIT: 10 * 1024 * 1024, // 10MB
+    DATABASE_ENABLE: 0,
     // ========== 时区配置 ==========
     TZ: 'Asia/Shanghai',
 
@@ -33,7 +34,6 @@ const coreEnv: EnvConfig = {
     LOG_MAX_SIZE: 10 * 1024 * 1024, // 10MB
 
     // ========== 数据库配置 ==========
-    DATABASE_ENABLE: 0,
     DB_TYPE: 'mysql',
     DB_HOST: '127.0.0.1',
     DB_PORT: 3306,
@@ -69,11 +69,19 @@ const coreEnv: EnvConfig = {
  */
 async function loadProjectEnv(): Promise<Partial<EnvConfig>> {
     try {
-        // 尝试从项目根目录加载 env.ts
-        const projectEnvPath = process.cwd() + '/env.ts';
+        // 尝试从项目根目录加载 env.ts 或 env.js
+        const projectEnvPathTs = process.cwd() + '/env.ts';
+        const projectEnvPathJs = process.cwd() + '/env.js';
+
+        let projectEnvPath = '';
+        if (existsSync(projectEnvPathTs)) {
+            projectEnvPath = projectEnvPathTs;
+        } else if (existsSync(projectEnvPathJs)) {
+            projectEnvPath = projectEnvPathJs;
+        }
 
         // 检查文件是否存在
-        if (!existsSync(projectEnvPath)) {
+        if (!projectEnvPath) {
             return {};
         }
 
