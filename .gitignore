@@ -27,6 +27,7 @@ AGENTS.md
 .temp
 temp
 tempDocs
+dist
 
 # 临时文件目录（保留目录结构）
 temp/*
