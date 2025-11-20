@@ -1,9 +1,11 @@
 import { describe, expect, test, beforeAll, afterAll } from 'bun:test';
-import { join } from 'pathe';
-import { mkdirSync, rmdirSync, writeFileSync, rmSync } from 'node:fs';
+import { join, resolve } from 'pathe';
+import { mkdirSync, rmdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { scanAddons, getAddonDir, addonDirExists } from '../src/addonHelper';
 
-const TEST_DIR = join(process.cwd(), 'temp_test_addonHelper');
+// Use absolute path to workspace root temp dir
+const WORKSPACE_ROOT = resolve(__dirname, '../../..');
+const TEST_DIR = join(WORKSPACE_ROOT, 'temp', 'test-addons-util');
 const NODE_MODULES_DIR = join(TEST_DIR, 'node_modules');
 const BEFLY_ADDON_DIR = join(NODE_MODULES_DIR, '@befly-addon');
 // const LOCAL_ADDONS_DIR = join(TEST_DIR, 'addons');
@@ -11,9 +13,10 @@ const BEFLY_ADDON_DIR = join(NODE_MODULES_DIR, '@befly-addon');
 describe('addonHelper', () => {
     beforeAll(() => {
         // Setup test directories
-        if (!require('fs').existsSync(TEST_DIR)) {
-            mkdirSync(TEST_DIR, { recursive: true });
+        if (existsSync(TEST_DIR)) {
+            rmSync(TEST_DIR, { recursive: true, force: true });
         }
+        mkdirSync(TEST_DIR, { recursive: true });
         mkdirSync(BEFLY_ADDON_DIR, { recursive: true });
         // mkdirSync(LOCAL_ADDONS_DIR, { recursive: true });
 
