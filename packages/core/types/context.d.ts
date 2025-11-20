@@ -2,6 +2,8 @@
  * 请求上下文类型定义
  */
 
+import type { ApiRoute } from './api.js';
+
 /**
  * 请求上下文接口
  */
@@ -14,4 +16,14 @@ export interface RequestContext {
     request: Request;
     /** 请求开始时间（毫秒） */
     startTime: number;
+    /** 当前请求的 API 路由对象 */
+    api?: ApiRoute;
+    /** 响应对象（如果设置了此属性，将直接返回该响应） */
+    response?: Response;
+    /** 原始处理结果（未转换为 Response 对象前） */
+    result?: any;
+    /** 请求唯一 ID */
+    requestId?: string;
+    /** CORS 响应头 */
+    corsHeaders?: Record<string, string>;
 }

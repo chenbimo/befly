@@ -13,7 +13,8 @@ export type PluginInitFunction = (befly: BeflyContext) => Promise<any> | any;
 /**
  * 插件请求处理钩子函数类型
  */
-export type PluginGetHook = (befly: BeflyContext, ctx: RequestContext, req: Request) => Promise<void> | void;
+export type Next = () => Promise<void>;
+export type PluginRequestHook = (befly: BeflyContext, ctx: RequestContext, next: Next) => Promise<void> | void;
 
 /**
  * 插件配置类型
@@ -28,8 +29,11 @@ export interface Plugin {
     /** 插件初始化函数 */
     onInit?: PluginInitFunction;
 
-    /** 请求处理钩子（在每个 API 请求时执行） */
-    onGet?: PluginGetHook;
+    /** 插件请求处理钩子（在每个 API 请求时执行） */
+    onRequest?: PluginRequestHook;
+
+    /** 插件配置 */
+    config?: Record<string, any>;
 
     /** 插件描述 */
     description?: string;

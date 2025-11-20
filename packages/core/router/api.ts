@@ -3,10 +3,8 @@
  * 处理 /api/* 路径的请求
  */
 
-import { Logger } from '../lib/logger.js';
 import { No } from '../response.js';
-import { setCorsOptions, handleOptionsRequest, authenticate, parseGetParams, parsePostParams, checkPermission, validateParams, executePluginHooks, logRequest } from '../lib/middleware.js';
-import { Env } from '../env.js';
+import { compose } from '../lib/compose.js';
 import type { RequestContext } from '../types/context.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Plugin } from '../types/plugin.js';
@@ -19,113 +17,71 @@ import type { BeflyContext } from '../types/befly.js';
  * @param appContext - 应用上下文
  */
 export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin[], appContext: BeflyContext) {
+    // 过滤并提取所有插件的 onRequest 钩子
+    const middleware = pluginLists
+        .filter(p => p.onRequest)
+        .map(p => p.onRequest!);
+
+    // 组合中间件链
+    const fn = compose(middleware);
+
     return async (req: Request): Promise<Response> => {
-        const corsOptions = setCorsOptions(req);
-        let ctx: RequestContext | null = null;
-        let api: ApiRoute | undefined;
-        let apiPath = '';
+        // 1. 创建请求上下文
+        const ctx: RequestContext = {
+            body: {},
+            user: {},
+            request: req,
+            startTime: Date.now(),
+            corsHeaders: {}
+        };
 
-        try {
-            // 1. OPTIONS预检请求
-            if (req.method === 'OPTIONS') {
-                return handleOptionsRequest(corsOptions);
-            }
+        // 2. 获取API路由
+        const url = new URL(req.url);
+        const apiPath = `${req.method}${url.pathname}`;
+        const api = apiRoutes.get(apiPath);
 
-            // 2. 创建请求上下文
-            ctx = {
-                body: {},
-                user: {},
-                request: req,
-                startTime: Date.now()
-            };
+        // 注意：即使 api 不存在，也需要执行插件链（以便处理 CORS OPTIONS 请求或 404 响应）
+        // 如果是 OPTIONS 请求，通常不需要 api 对象
+        if (api) {
+            ctx.api = api;
+        }
 
-            // 3. 获取API路由
-            const url = new URL(req.url);
-            apiPath = `${req.method}${url.pathname}`;
-            api = apiRoutes.get(apiPath);
-
-            if (!api) {
-                return Response.json(No('接口不存在'), {
-                    headers: corsOptions.headers
-                });
-            }
-
-            // 4. 用户认证
-            await authenticate(ctx);
-
-            // 5. 参数解析
-            if (req.method === 'GET') {
-                parseGetParams(api, ctx);
-            } else if (req.method === 'POST') {
-                const parseSuccess = await parsePostParams(api, ctx);
-                if (!parseSuccess) {
-                    return Response.json(No('无效的请求参数格式'), {
-                        headers: corsOptions.headers
+        // 3. 执行插件链（洋葱模型）
+        // 错误处理已由 errorHandler 插件接管
+        await fn(appContext, ctx, async () => {
+            // 核心执行器：执行 API handler
+            // 如果没有找到 API 且没有被前面的插件拦截（如 CORS），则返回 404
+            if (!ctx.api) {
+                // 只有非 OPTIONS 请求才报 404（OPTIONS 请求通常由 cors 插件处理并返回）
+                if (req.method !== 'OPTIONS') {
+                    ctx.response = Response.json(No('接口不存在'), {
+                        headers: ctx.corsHeaders
                     });
                 }
+                return;
             }
 
-            // 6. 执行插件钩子
-            await executePluginHooks(pluginLists, appContext, ctx);
-
-            // 7. 记录请求日志
-            logRequest(apiPath, ctx);
-
-            // 8. 权限验证（使用 Redis Set SISMEMBER 直接判断，提升性能）
-            let hasPermission = false;
-            if (api.auth === true && ctx.user?.roleCode && ctx.user.roleCode !== 'dev') {
-                // 使用 Redis SISMEMBER 直接判断接口是否在角色权限集合中（O(1)复杂度）
-                const roleApisKey = `role:apis:${ctx.user.roleCode}`;
-                const isMember = await appContext.redis.sismember(roleApisKey, apiPath);
-                hasPermission = isMember === 1;
+            if (ctx.api.handler) {
+                const result = await ctx.api.handler(appContext, ctx, req);
+                
+                if (result instanceof Response) {
+                    ctx.response = result;
+                } else {
+                    // 将结果存入 ctx.result，由 responseFormatter 插件统一处理
+                    ctx.result = result;
+                }
             }
+        });
 
-            const permissionResult = checkPermission(api, ctx, hasPermission);
-            if (permissionResult.code !== 0) {
-                return Response.json(permissionResult, {
-                    headers: corsOptions.headers
-                });
-            }
-
-            // 9. 参数验证
-            const validateResult = validateParams(api, ctx);
-            if (validateResult.code !== 0) {
-                return Response.json(No('无效的请求参数格式', validateResult.fields), {
-                    headers: corsOptions.headers
-                });
-            }
-
-            // 10. 执行API处理器
-            const result = await api.handler(appContext, ctx, req);
-
-            // 11. 返回响应
-            // 🔥 新增：直接返回 Response 对象
-            if (result instanceof Response) {
-                return result;
-            }
-
-            // 12. 返回响应
-            if (result && typeof result === 'object' && 'code' in result) {
-                // 处理 BigInt 序列化问题
-                const jsonString = JSON.stringify(result, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
-                return new Response(jsonString, {
-                    headers: {
-                        ...corsOptions.headers,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            } else {
-                return new Response(result, {
-                    headers: corsOptions.headers
-                });
-            }
-        } catch (error: any) {
-            // 记录详细的错误日志
-            Logger.error(api ? `接口 [${api.name}] 执行失败` : '处理接口请求时发生错误', error);
-
-            return Response.json(No('内部服务器错误'), {
-                headers: corsOptions.headers
-            });
+        // 4. 返回响应
+        if (ctx.response) {
+            return ctx.response;
         }
+
+        // 兜底响应（理论上不应执行到这里，responseFormatter 会处理）
+        return Response.json(No('No response generated'), {
+            headers: ctx.corsHeaders
+        });
     };
 }
+

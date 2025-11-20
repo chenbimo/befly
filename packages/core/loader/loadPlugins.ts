@@ -17,7 +17,7 @@ import type { BeflyContext } from '../types/befly.js';
 /**
  * 统一导入并注册插件
  */
-async function importAndRegisterPlugins(files: Array<{ filePath: string; fileName: string }>, loadedPluginNames: Set<string>, nameGenerator: (fileName: string, filePath: string) => string, errorLabelGenerator: (fileName: string, filePath: string) => string): Promise<Plugin[]> {
+async function importAndRegisterPlugins(files: Array<{ filePath: string; fileName: string }>, loadedPluginNames: Set<string>, nameGenerator: (fileName: string, filePath: string) => string, errorLabelGenerator: (fileName: string, filePath: string) => string, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
     const plugins: Plugin[] = [];
 
     for (const { filePath, fileName } of files) {
@@ -32,6 +32,12 @@ async function importAndRegisterPlugins(files: Array<{ filePath: string; fileNam
             const pluginImport = await import(normalizedFilePath);
             const plugin = pluginImport.default;
             plugin.pluginName = pluginName;
+
+            // 注入配置
+            if (pluginsConfig && pluginsConfig[pluginName]) {
+                plugin.config = pluginsConfig[pluginName];
+            }
+
             plugins.push(plugin);
             loadedPluginNames.add(pluginName);
         } catch (err: any) {
@@ -78,20 +84,21 @@ function sortPlugins(plugins: Plugin[]): Plugin[] | false {
 /**
  * 扫描核心插件
  */
-async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
+async function scanCorePlugins(loadedPluginNames: Set<string>, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
     const files = await scanFiles(corePluginDir, '*.{ts,js}');
     return importAndRegisterPlugins(
         files,
         loadedPluginNames,
         (fileName) => camelCase(fileName),
-        (fileName) => `核心插件 ${fileName}`
+        (fileName) => `核心插件 ${fileName}`,
+        pluginsConfig
     );
 }
 
 /**
  * 扫描组件插件
  */
-async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
+async function scanAddonPlugins(loadedPluginNames: Set<string>, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
     const plugins: Plugin[] = [];
     const addons = scanAddons();
 
@@ -109,7 +116,8 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
                 const fileNameCamel = camelCase(fileName);
                 return `addon_${addonNameCamel}_${fileNameCamel}`;
             },
-            (fileName) => `组件${addon} ${fileName}`
+            (fileName) => `组件${addon} ${fileName}`,
+            pluginsConfig
         );
         plugins.push(...addonPlugins);
     }
@@ -120,7 +128,7 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
 /**
  * 扫描用户插件
  */
-async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
+async function scanUserPlugins(loadedPluginNames: Set<string>, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
     if (!existsSync(projectPluginDir)) {
         return [];
     }
@@ -130,7 +138,8 @@ async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         files,
         loadedPluginNames,
         (fileName) => `app_${camelCase(fileName)}`,
-        (fileName) => `用户插件 ${fileName}`
+        (fileName) => `用户插件 ${fileName}`,
+        pluginsConfig
     );
 }
 
@@ -171,15 +180,15 @@ async function processPluginGroup(befly: { pluginLists: Plugin[]; appContext: Be
  * 加载所有插件
  * @param befly - Befly实例（需要访问 pluginLists 和 appContext）
  */
-export async function loadPlugins(befly: { pluginLists: Plugin[]; appContext: BeflyContext }): Promise<void> {
+export async function loadPlugins(befly: { pluginLists: Plugin[]; appContext: BeflyContext; pluginsConfig?: Record<string, Record<string, any>> }): Promise<void> {
     try {
         const loadStartTime = Bun.nanoseconds();
         const loadedPluginNames = new Set<string>();
 
         // 阶段1：扫描所有插件
-        const corePlugins = await scanCorePlugins(loadedPluginNames);
-        const addonPlugins = await scanAddonPlugins(loadedPluginNames);
-        const userPlugins = await scanUserPlugins(loadedPluginNames);
+        const corePlugins = await scanCorePlugins(loadedPluginNames, befly.pluginsConfig);
+        const addonPlugins = await scanAddonPlugins(loadedPluginNames, befly.pluginsConfig);
+        const userPlugins = await scanUserPlugins(loadedPluginNames, befly.pluginsConfig);
 
         // 阶段2 & 3：分层排序与初始化
         await processPluginGroup(befly, corePlugins, '核心插件');

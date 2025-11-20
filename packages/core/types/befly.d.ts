@@ -15,6 +15,14 @@ import type { Cipher } from '../lib/cipher.js';
 import type { CacheHelper } from '../lib/cacheHelper.js';
 
 /**
+ * Befly 构造函数选项
+ */
+export interface BeflyOptions {
+    /** 插件配置 */
+    plugins?: Record<string, Record<string, any>>;
+}
+
+/**
  * Befly 应用上下文
  * 包含所有插件挂载的实例
  */

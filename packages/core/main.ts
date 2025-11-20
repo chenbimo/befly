@@ -22,7 +22,7 @@ import { Yes, No } from './response.js';
 import { calcPerfTime } from 'befly-util';
 
 import type { Server } from 'bun';
-import type { BeflyContext } from './types/befly.js';
+import type { BeflyContext, BeflyOptions } from './types/befly.js';
 import type { Plugin } from './types/plugin.js';
 import type { ApiRoute } from './types/api.js';
 /**
@@ -39,8 +39,12 @@ export class Befly {
     /** 应用上下文 */
     public appContext: BeflyContext;
 
-    constructor() {
+    /** 构造函数选项 */
+    private options: BeflyOptions;
+
+    constructor(options: BeflyOptions = {}) {
         this.appContext = {};
+        this.options = options;
     }
 
     /**
@@ -77,7 +81,8 @@ export class Befly {
         // 5. 加载插件
         await loadPlugins({
             pluginLists: this.pluginLists,
-            appContext: this.appContext
+            appContext: this.appContext,
+            pluginsConfig: this.options.plugins
         });
 
         // 4. 启动 HTTP 服务器
