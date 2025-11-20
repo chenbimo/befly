@@ -12,6 +12,44 @@ import type { Database } from 'bun:sqlite';
 import type { DbHelper } from '../lib/dbHelper.js';
 import type { RedisHelper } from '../lib/redisHelper.js';
 import type { Cipher } from '../lib/cipher.js';
+import type { CacheHelper } from '../lib/cacheHelper.js';
+
+/**
+ * Befly 应用上下文
+ * 包含所有插件挂载的实例
+ */
+export interface BeflyContext extends KeyValue {
+    // ========== 核心插件（带下划线前缀） ==========
+    /** 数据库助手 (db 插件) */
+    _db?: DbHelper;
+
+    /** Redis 助手 (redis 插件) */
+    _redis?: RedisHelper;
+
+    /** 日志器 (logger 插件) */
+    _logger?: typeof Logger;
+
+    /** 缓存助手 (cache 插件) */
+    _cache?: CacheHelper;
+
+    // ========== 核心插件便捷访问（无前缀） ==========
+    /** 数据库助手便捷访问 */
+    db?: DbHelper;
+
+    /** Redis 助手便捷访问 */
+    redis?: RedisHelper;
+
+    /** 日志器便捷访问 */
+    logger?: typeof Logger;
+
+    /** 缓存助手便捷访问 */
+    cache?: CacheHelper;
+
+    // ========== 动态插件 ==========
+    /** 组件插件：addon_{addonName}_{pluginName} */
+    /** 项目插件：app_{pluginName} */
+    [key: string]: any;
+}
 
 /**
  * Befly 应用选项

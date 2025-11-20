@@ -14,9 +14,7 @@ import type { BeflyContext } from '../types/befly.js';
  * Redis 插件
  */
 const redisPlugin: Plugin = {
-    name: '_redis',
-    after: ['_logger'],
-
+    after: ['logger'],
     async onInit(befly: BeflyContext): Promise<RedisHelper | Record<string, never>> {
         try {
             if (Env.DATABASE_ENABLE === 1) {

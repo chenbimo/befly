@@ -14,13 +14,65 @@ import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
 /**
+ * 扫描指定目录下的插件文件
+ */
+async function scanPluginFiles(dir: string): Promise<Array<{ filePath: string; fileName: string }>> {
+    const glob = new Bun.Glob('*.{ts,js}');
+    const files: Array<{ filePath: string; fileName: string }> = [];
+
+    for await (const file of glob.scan({
+        cwd: dir,
+        onlyFiles: true,
+        absolute: true
+    })) {
+        if (file.endsWith('.d.ts')) continue;
+        const fileName = basename(file).replace(/\.(ts|js)$/, '');
+        if (fileName.startsWith('_')) continue;
+
+        files.push({ filePath: file, fileName: fileName });
+    }
+
+    return files;
+}
+
+/**
+ * 统一导入并注册插件
+ */
+async function importAndRegisterPlugins(files: Array<{ filePath: string; fileName: string }>, loadedPluginNames: Set<string>, nameGenerator: (fileName: string, filePath: string) => string, errorLabelGenerator: (fileName: string, filePath: string) => string): Promise<Plugin[]> {
+    const plugins: Plugin[] = [];
+
+    for (const { filePath, fileName } of files) {
+        const pluginName = nameGenerator(fileName, filePath);
+
+        if (loadedPluginNames.has(pluginName)) {
+            continue;
+        }
+
+        try {
+            const normalizedFilePath = filePath.replace(/\\/g, '/');
+            const pluginImport = await import(normalizedFilePath);
+            const plugin = pluginImport.default;
+            plugin.pluginName = pluginName;
+            plugins.push(plugin);
+            loadedPluginNames.add(pluginName);
+        } catch (err: any) {
+            const label = errorLabelGenerator(fileName, filePath);
+            Logger.error(`${label} 导入失败`, err);
+            process.exit(1);
+        }
+    }
+
+    return plugins;
+}
+
+/**
  * 排序插件（根据依赖关系）
  */
 function sortPlugins(plugins: Plugin[]): Plugin[] | false {
     const result: Plugin[] = [];
     const visited = new Set<string>();
     const visiting = new Set<string>();
-    const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.pluginName || p.name, p]));
+    const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.pluginName, p]));
     let isPass = true;
 
     const visit = (name: string): void => {
@@ -40,7 +92,7 @@ function sortPlugins(plugins: Plugin[]): Plugin[] | false {
         result.push(plugin);
     };
 
-    plugins.forEach((p) => visit(p.pluginName || p.name));
+    plugins.forEach((p) => visit(p.pluginName));
     return isPass ? result : false;
 }
 
@@ -48,31 +100,13 @@ function sortPlugins(plugins: Plugin[]): Plugin[] | false {
  * 扫描核心插件
  */
 async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
-    const plugins: Plugin[] = [];
-    const glob = new Bun.Glob('*.{ts,js}');
-
-    for await (const file of glob.scan({
-        cwd: corePluginDir,
-        onlyFiles: true,
-        absolute: true
-    })) {
-        if (file.endsWith('.d.ts')) continue;
-        const fileName = basename(file).replace(/\.(ts|js)$/, '');
-        if (fileName.startsWith('_')) continue;
-
-        try {
-            const pluginImport = await import(file);
-            const plugin = pluginImport.default;
-            plugin.pluginName = fileName;
-            plugins.push(plugin);
-            loadedPluginNames.add(fileName);
-        } catch (err: any) {
-            Logger.error(`核心插件 ${fileName} 导入失败`, err);
-            process.exit(1);
-        }
-    }
-
-    return plugins;
+    const files = await scanPluginFiles(corePluginDir);
+    return importAndRegisterPlugins(
+        files,
+        loadedPluginNames,
+        (fileName) => camelCase(fileName),
+        (fileName) => `核心插件 ${fileName}`
+    );
 }
 
 /**
@@ -80,42 +114,25 @@ async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
  */
 async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
     const plugins: Plugin[] = [];
-    const glob = new Bun.Glob('*.{ts,js}');
     const addons = scanAddons();
 
     for (const addon of addons) {
         if (!addonDirExists(addon, 'plugins')) continue;
 
         const addonPluginsDir = getAddonDir(addon, 'plugins');
-        for await (const file of glob.scan({
-            cwd: addonPluginsDir,
-            onlyFiles: true,
-            absolute: true
-        })) {
-            if (file.endsWith('.d.ts')) continue;
-            const fileName = basename(file).replace(/\.(ts|js)$/, '');
-            if (fileName.startsWith('_')) continue;
+        const files = await scanPluginFiles(addonPluginsDir);
 
-            const addonCamelCase = camelCase(addon);
-            const fileNameCamelCase = camelCase(fileName);
-            const pluginFullName = `addon${addonCamelCase.charAt(0).toUpperCase() + addonCamelCase.slice(1)}_${fileNameCamelCase}`;
-
-            if (loadedPluginNames.has(pluginFullName)) {
-                continue;
-            }
-
-            try {
-                const normalizedFilePath = file.replace(/\\/g, '/');
-                const pluginImport = await import(normalizedFilePath);
-                const plugin = pluginImport.default;
-                plugin.pluginName = pluginFullName;
-                plugins.push(plugin);
-                loadedPluginNames.add(pluginFullName);
-            } catch (err: any) {
-                Logger.error(`组件${addon} ${fileName} 导入失败`, err);
-                process.exit(1);
-            }
-        }
+        const addonPlugins = await importAndRegisterPlugins(
+            files,
+            loadedPluginNames,
+            (fileName) => {
+                const addonNameCamel = camelCase(addon);
+                const fileNameCamel = camelCase(fileName);
+                return `addon_${addonNameCamel}_${fileNameCamel}`;
+            },
+            (fileName) => `组件${addon} ${fileName}`
+        );
+        plugins.push(...addonPlugins);
     }
 
     return plugins;
@@ -125,43 +142,17 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
  * 扫描用户插件
  */
 async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
-    const plugins: Plugin[] = [];
-
     if (!existsSync(projectPluginDir)) {
-        return plugins;
+        return [];
     }
 
-    const glob = new Bun.Glob('*.{ts,js}');
-    for await (const file of glob.scan({
-        cwd: projectPluginDir,
-        onlyFiles: true,
-        absolute: true
-    })) {
-        if (file.endsWith('.d.ts')) continue;
-        const fileName = basename(file).replace(/\.(ts|js)$/, '');
-        if (fileName.startsWith('_')) continue;
-
-        const fileNameCamelCase = camelCase(fileName);
-        const pluginFullName = `app${fileNameCamelCase.charAt(0).toUpperCase() + fileNameCamelCase.slice(1)}`;
-
-        if (loadedPluginNames.has(pluginFullName)) {
-            continue;
-        }
-
-        try {
-            const normalizedFilePath = file.replace(/\\/g, '/');
-            const pluginImport = await import(normalizedFilePath);
-            const plugin = pluginImport.default;
-            plugin.pluginName = pluginFullName;
-            plugins.push(plugin);
-            loadedPluginNames.add(pluginFullName);
-        } catch (err: any) {
-            Logger.error(`用户插件 ${fileName} 导入失败`, err);
-            process.exit(1);
-        }
-    }
-
-    return plugins;
+    const files = await scanPluginFiles(projectPluginDir);
+    return importAndRegisterPlugins(
+        files,
+        loadedPluginNames,
+        (fileName) => `app_${camelCase(fileName)}`,
+        (fileName) => `用户插件 ${fileName}`
+    );
 }
 
 /**
@@ -174,6 +165,26 @@ async function initPlugin(befly: { pluginLists: Plugin[]; appContext: BeflyConte
         befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
     } else {
         befly.appContext[plugin.pluginName] = {};
+    }
+}
+
+/**
+ * 处理插件组（排序与初始化）
+ */
+async function processPluginGroup(befly: { pluginLists: Plugin[]; appContext: BeflyContext }, plugins: Plugin[], groupName: string): Promise<void> {
+    const sortedPlugins = sortPlugins(plugins);
+    if (sortedPlugins === false) {
+        Logger.error(`${groupName}依赖关系错误，请检查插件的 after 属性`);
+        process.exit(1);
+    }
+
+    for (const plugin of sortedPlugins) {
+        try {
+            await initPlugin(befly, plugin);
+        } catch (error: any) {
+            Logger.error(`${groupName} ${plugin.pluginName} 初始化失败`, error);
+            process.exit(1);
+        }
     }
 }
 
@@ -191,55 +202,10 @@ export async function loadPlugins(befly: { pluginLists: Plugin[]; appContext: Be
         const addonPlugins = await scanAddonPlugins(loadedPluginNames);
         const userPlugins = await scanUserPlugins(loadedPluginNames);
 
-        // 阶段2：分层排序插件
-        const sortedCorePlugins = sortPlugins(corePlugins);
-        if (sortedCorePlugins === false) {
-            Logger.error('核心插件依赖关系错误，请检查插件的 after 属性');
-            process.exit(1);
-        }
-
-        const sortedAddonPlugins = sortPlugins(addonPlugins);
-        if (sortedAddonPlugins === false) {
-            Logger.error('组件插件依赖关系错误，请检查插件的 after 属性');
-            process.exit(1);
-        }
-
-        const sortedUserPlugins = sortPlugins(userPlugins);
-        if (sortedUserPlugins === false) {
-            Logger.error('用户插件依赖关系错误，请检查插件的 after 属性');
-            process.exit(1);
-        }
-
-        // 阶段3：分层初始化插件（核心 → 组件 → 用户）
-        // 3.1 初始化核心插件
-        for (const plugin of sortedCorePlugins) {
-            try {
-                await initPlugin(befly, plugin);
-            } catch (error: any) {
-                Logger.error(`核心插件 ${plugin.pluginName} 初始化失败`, error);
-                process.exit(1);
-            }
-        }
-
-        // 3.2 初始化组件插件
-        for (const plugin of sortedAddonPlugins) {
-            try {
-                await initPlugin(befly, plugin);
-            } catch (error: any) {
-                Logger.error(`组件插件 ${plugin.pluginName} 初始化失败`, error);
-                process.exit(1);
-            }
-        }
-
-        // 3.3 初始化用户插件
-        for (const plugin of sortedUserPlugins) {
-            try {
-                await initPlugin(befly, plugin);
-            } catch (error: any) {
-                Logger.error(`用户插件 ${plugin.pluginName} 初始化失败`, error);
-                process.exit(1);
-            }
-        }
+        // 阶段2 & 3：分层排序与初始化
+        await processPluginGroup(befly, corePlugins, '核心插件');
+        await processPluginGroup(befly, addonPlugins, '组件插件');
+        await processPluginGroup(befly, userPlugins, '用户插件');
 
         const totalLoadTime = calcPerfTime(loadStartTime);
     } catch (error: any) {

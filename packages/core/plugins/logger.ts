@@ -11,9 +11,7 @@ import type { BeflyContext } from '../types/befly.js';
  * 日志插件
  */
 const loggerPlugin: Plugin = {
-    name: '_logger',
     after: [],
-
     async onInit(befly: BeflyContext): Promise<typeof Logger> {
         try {
             return Logger;

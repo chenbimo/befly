@@ -14,9 +14,7 @@ import type { BeflyContext } from '../types/befly.js';
  * 数据库插件
  */
 const dbPlugin: Plugin = {
-    name: '_db',
-    after: ['_redis'],
-
+    after: ['redis'],
     async onInit(befly: BeflyContext): Promise<DbHelper | Record<string, never>> {
         let sql: any = null;
 
