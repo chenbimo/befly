@@ -30,8 +30,7 @@ import {
     calcPerfTime,
     scanAddons,
     getAddonDir,
-    addonDirExists,
-    scanFiles
+    addonDirExists
 } from './util.js';
 
 import type { Server } from 'bun';
@@ -186,6 +185,5 @@ export const utils = {
     calcPerfTime: calcPerfTime,
     scanAddons: scanAddons,
     getAddonDir: getAddonDir,
-    addonDirExists: addonDirExists,
-    scanFiles: scanFiles
+    addonDirExists: addonDirExists
 };

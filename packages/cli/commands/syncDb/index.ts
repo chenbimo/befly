@@ -7,10 +7,11 @@
  * - 提供统计信息和错误处理
  */
 
-import { resolve } from 'pathe';
+import { basename, resolve } from 'pathe';
 import { existsSync } from 'node:fs';
 import { snakeCase } from 'es-toolkit/string';
 import { Env, Database, RedisHelper, checkTable, utils } from 'befly';
+import { scanFiles } from 'befly-util';
 import { Logger, projectDir } from '../../util.js';
 
 // 导入模块化的功能
@@ -78,7 +79,7 @@ export const SyncDb = async (): Promise<void> => {
             const { path: dir, type, addonName } = dirConfig;
             const dirType = type === 'addon' ? `组件${addonName}` : '项目';
 
-            const files = await utils.scanFiles(dir, '*.json');
+            const files = await scanFiles(dir, '*.json');
 
             for (const { filePath: file, fileName } of files) {
                 // 确定表名：

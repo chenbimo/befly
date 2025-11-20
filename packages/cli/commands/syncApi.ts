@@ -13,6 +13,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
 import { Database, RedisHelper, utils } from 'befly';
+import { scanFiles } from 'befly-util';
 
 import { Logger, projectDir } from '../util.js';
 
@@ -74,7 +75,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
         // 扫描项目 API 文件
         const projectApiFiles: string[] = [];
         try {
-            const files = await utils.scanFiles(projectApisDir);
+            const files = await scanFiles(projectApisDir);
             for (const { filePath } of files) {
                 projectApiFiles.push(filePath);
             }
@@ -115,7 +116,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
             // 扫描 addon API 文件
             const addonApiFiles: string[] = [];
             try {
-                const files = await utils.scanFiles(addonApisDir);
+                const files = await scanFiles(addonApisDir);
                 for (const { filePath } of files) {
                     addonApiFiles.push(filePath);
                 }

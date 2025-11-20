@@ -12,8 +12,6 @@ import type { Plugin } from './types/plugin.js';
 // 文件扫描工具
 // ========================================
 
-export { scanFiles, type ScanFileResult } from 'befly-util';
-
 // ========================================
 // API 响应工具
 // ========================================

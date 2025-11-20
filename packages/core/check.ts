@@ -9,7 +9,8 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from './lib/logger.js';
 import { projectTableDir, projectApiDir, projectDir } from './paths.js';
-import { scanAddons, getAddonDir, addonDirExists, scanFiles } from './util.js';
+import { scanAddons, getAddonDir, addonDirExists } from './util.js';
+import { scanFiles } from 'befly-util';
 import type { FieldDefinition } from './types/common.d.ts';
 
 /**
