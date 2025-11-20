@@ -18,9 +18,7 @@ import type { BeflyContext } from '../types/befly.js';
  */
 export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin[], appContext: BeflyContext) {
     // 过滤并提取所有插件的 onRequest 钩子
-    const middleware = pluginLists
-        .filter(p => p.onRequest)
-        .map(p => p.onRequest!);
+    const middleware = pluginLists.filter((p) => p.onRequest).map((p) => p.onRequest!);
 
     // 组合中间件链
     const fn = compose(middleware);
@@ -63,7 +61,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
 
             if (ctx.api.handler) {
                 const result = await ctx.api.handler(appContext, ctx, req);
-                
+
                 if (result instanceof Response) {
                     ctx.response = result;
                 } else {
@@ -84,4 +82,3 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin
         });
     };
 }
-

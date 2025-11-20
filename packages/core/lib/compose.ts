@@ -1,4 +1,3 @@
-
 import type { BeflyContext } from '../types/befly.js';
 import type { RequestContext } from '../types/context.js';
 import type { PluginRequestHook, Next } from '../types/plugin.js';
