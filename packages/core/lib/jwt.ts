@@ -4,13 +4,28 @@
  */
 
 import { createHmac } from 'crypto';
-import { Env } from '../env.js';
 import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtAlgorithm, JwtHeader, JwtDecoded } from '../types/jwt';
+import type { AuthConfig } from '../types/befly';
 
 /**
  * JWT 工具类
  */
 export class Jwt {
+    /** 默认配置 */
+    private static config: AuthConfig = {
+        secret: 'befly-secret',
+        expiresIn: '7d',
+        algorithm: 'HS256'
+    };
+
+    /**
+     * 配置 JWT
+     * @param config - JWT 配置
+     */
+    static configure(config: AuthConfig) {
+        this.config = { ...this.config, ...config };
+    }
+
     /** 算法映射 */
     private static readonly ALGORITHMS: Record<JwtAlgorithm, string> = {
         HS256: 'sha256',
@@ -94,23 +109,15 @@ export class Jwt {
     }
 
     /**
-     * 签名 JWT token
-     * @param payload - JWT载荷数据
-     * @param options - 签名选项（自动使用 Env.JWT_SECRET）
-     * @returns JWT token字符串
+     * 签名生成 Token
+     * @param payload - 数据载荷
+     * @param options - 签名选项
+     * @returns Token 字符串
      */
-    static sign(payload: JwtPayload, options?: JwtSignOptions): string {
-        if (!payload || typeof payload !== 'object') {
-            throw new Error('载荷必须是非空对象');
-        }
-
-        const secret = options?.secret || Env.JWT_SECRET;
-        if (!secret) {
-            throw new Error('JWT密钥未配置');
-        }
-
-        const opts = options || {};
-        const algorithm = (opts.algorithm || Env.JWT_ALGORITHM || 'HS256') as JwtAlgorithm;
+    static async sign(payload: JwtPayload, options: JwtSignOptions = {}): Promise<string> {
+        const secret = options.secret || this.config.secret || 'befly-secret';
+        const expiresIn = options.expiresIn || this.config.expiresIn || '7d';
+        const algorithm = (options.algorithm || this.config.algorithm || 'HS256') as JwtAlgorithm;
 
         const now = Math.floor(Date.now() / 1000);
 
@@ -125,22 +132,18 @@ export class Jwt {
         // 创建 payload
         const jwtPayload: JwtPayload = { ...payload, iat: now };
 
-        if (opts.expiresIn) {
-            const expSeconds = Jwt.parseExpiration(opts.expiresIn);
-            jwtPayload.exp = now + expSeconds;
-        } else {
-            // 使用默认过期时间
-            const defaultExpiry = Env.JWT_EXPIRES_IN || '7d';
-            const expSeconds = Jwt.parseExpiration(defaultExpiry);
+        if (expiresIn) {
+            const expSeconds = Jwt.parseExpiration(expiresIn);
             jwtPayload.exp = now + expSeconds;
         }
-        if (opts.issuer) jwtPayload.iss = opts.issuer;
-        if (opts.audience) jwtPayload.aud = opts.audience;
-        if (opts.subject) jwtPayload.sub = opts.subject;
-        if (opts.notBefore) {
-            jwtPayload.nbf = typeof opts.notBefore === 'number' ? opts.notBefore : now + Jwt.parseExpiration(opts.notBefore);
+
+        if (options.issuer) jwtPayload.iss = options.issuer;
+        if (options.audience) jwtPayload.aud = options.audience;
+        if (options.subject) jwtPayload.sub = options.subject;
+        if (options.notBefore) {
+            jwtPayload.nbf = typeof options.notBefore === 'number' ? options.notBefore : now + Jwt.parseExpiration(options.notBefore);
         }
-        if (opts.jwtId) jwtPayload.jti = opts.jwtId;
+        if (options.jwtId) jwtPayload.jti = options.jwtId;
 
         const encodedPayload = Jwt.base64UrlEncode(JSON.stringify(jwtPayload));
 
@@ -152,78 +155,66 @@ export class Jwt {
     }
 
     /**
-     * 验证 JWT token
-     * @param token - JWT token字符串
-     * @param options - 验证选项（自动使用 Env.JWT_SECRET）
-     * @returns 解码后的载荷数据
+     * 验证 Token
+     * @param token - Token 字符串
+     * @param options - 验证选项
+     * @returns 解码后的载荷
      */
-    static verify(token: string, options?: JwtVerifyOptions): JwtPayload {
+    static async verify<T = JwtPayload>(token: string, options: JwtVerifyOptions = {}): Promise<T> {
         if (!token || typeof token !== 'string') {
             throw new Error('Token必须是非空字符串');
         }
 
-        const secret = options?.secret || Env.JWT_SECRET;
-        if (!secret) {
-            throw new Error('JWT密钥未配置');
-        }
-
-        const opts = options || {};
+        const secret = options.secret || this.config.secret || 'befly-secret';
+        const algorithm = (options.algorithm || this.config.algorithm || 'HS256') as JwtAlgorithm;
 
         const parts = token.split('.');
         if (parts.length !== 3) {
-            throw new Error('JWT格式无效');
+            throw new Error('Token 格式无效');
         }
 
+        const [headerB64, payloadB64, signature] = parts;
+
+        // 验证签名
+        const data = `${headerB64}.${payloadB64}`;
+        const expectedSignature = Jwt.createSignature(algorithm, secret, data);
+
+        if (!Jwt.constantTimeCompare(signature, expectedSignature)) {
+            throw new Error('Token 签名无效');
+        }
+
+        // 解码 payload
+        const payloadStr = Jwt.base64UrlDecode(payloadB64);
+        let payload: JwtPayload;
         try {
-            // 解析 header 和 payload
-            const header = JSON.parse(Jwt.base64UrlDecode(parts[0])) as JwtHeader;
-            const payload = JSON.parse(Jwt.base64UrlDecode(parts[1])) as JwtPayload;
-            const signature = parts[2];
-
-            // 验证算法
-            if (!Jwt.ALGORITHMS[header.alg]) {
-                throw new Error(`不支持的算法: ${header.alg}`);
-            }
-
-            // 验证签名
-            const data = `${parts[0]}.${parts[1]}`;
-            const expectedSignature = Jwt.createSignature(header.alg, secret, data);
-
-            if (!Jwt.constantTimeCompare(signature, expectedSignature)) {
-                throw new Error('Token签名无效');
-            }
-
-            // 验证时间
-            const now = Math.floor(Date.now() / 1000);
-
-            if (!opts.ignoreExpiration && payload.exp && payload.exp < now) {
-                throw new Error('Token已过期 (expired)');
-            }
-            if (!opts.ignoreNotBefore && payload.nbf && payload.nbf > now) {
-                throw new Error('Token尚未生效');
-            }
-
-            // 验证 issuer、audience、subject
-            if (opts.issuer && payload.iss !== opts.issuer) {
-                throw new Error('Token发行者无效');
-            }
-            if (opts.audience) {
-                const audiences = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-                if (!audiences.includes(opts.audience)) {
-                    throw new Error('Token受众无效');
-                }
-            }
-            if (opts.subject && payload.sub !== opts.subject) {
-                throw new Error('Token主题无效');
-            }
-
-            return payload;
-        } catch (error: any) {
-            if (error.message.includes('JWT') || error.message.includes('Token') || error.message.includes('无效') || error.message.includes('过期') || error.message.includes('不支持')) {
-                throw error;
-            }
-            throw new Error('Token验证失败: ' + error.message);
+            payload = JSON.parse(payloadStr);
+        } catch (e) {
+            throw new Error('Token 载荷无效');
         }
+
+        // 验证过期时间
+        if (!options.ignoreExpiration) {
+            const now = Math.floor(Date.now() / 1000);
+            if (payload.exp && payload.exp < now) {
+                throw new Error('Token 已过期');
+            }
+        }
+
+        // 验证其他声明
+        if (options.issuer && payload.iss !== options.issuer) {
+            throw new Error('Token issuer 无效');
+        }
+        if (options.audience && payload.aud !== options.audience) {
+            throw new Error('Token audience 无效');
+        }
+        if (options.subject && payload.sub !== options.subject) {
+            throw new Error('Token subject 无效');
+        }
+        if (options.jwtId && payload.jti !== options.jwtId) {
+            throw new Error('Token jwtId 无效');
+        }
+
+        return payload as T;
     }
 
     /**
@@ -341,14 +332,14 @@ export class Jwt {
     /**
      * 创建用户 token（快捷方法）
      */
-    static create(payload: JwtPayload): string {
+    static async create(payload: JwtPayload): Promise<string> {
         return this.sign(payload);
     }
 
     /**
      * 检查 token（快捷方法）
      */
-    static check(token: string): JwtPayload {
+    static async check(token: string): Promise<JwtPayload> {
         return this.verify(token);
     }
 
@@ -362,64 +353,64 @@ export class Jwt {
     /**
      * 签名用户认证 token
      */
-    static signUserToken(userInfo: JwtPayload, options?: JwtSignOptions): string {
+    static async signUserToken(userInfo: JwtPayload, options?: JwtSignOptions): Promise<string> {
         return this.sign(userInfo, options);
     }
 
     /**
      * 签名 API 访问 token
      */
-    static signAPIToken(payload: JwtPayload, options?: JwtSignOptions): string {
+    static async signAPIToken(payload: JwtPayload, options?: JwtSignOptions): Promise<string> {
         return this.sign(payload, { audience: 'api', expiresIn: '1h', ...options });
     }
 
     /**
      * 签名刷新 token
      */
-    static signRefreshToken(payload: JwtPayload, options?: JwtSignOptions): string {
+    static async signRefreshToken(payload: JwtPayload, options?: JwtSignOptions): Promise<string> {
         return this.sign(payload, { audience: 'refresh', expiresIn: '30d', ...options });
     }
 
     /**
      * 签名临时 token (用于重置密码等)
      */
-    static signTempToken(payload: JwtPayload, options?: JwtSignOptions): string {
+    static async signTempToken(payload: JwtPayload, options?: JwtSignOptions): Promise<string> {
         return this.sign(payload, { audience: 'temporary', expiresIn: '15m', ...options });
     }
 
     /**
      * 验证用户认证 token
      */
-    static verifyUserToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+    static async verifyUserToken(token: string, options?: JwtVerifyOptions): Promise<JwtPayload> {
         return this.verify(token, options);
     }
 
     /**
      * 验证 API 访问 token
      */
-    static verifyAPIToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+    static async verifyAPIToken(token: string, options?: JwtVerifyOptions): Promise<JwtPayload> {
         return this.verify(token, { audience: 'api', ...options });
     }
 
     /**
      * 验证刷新 token
      */
-    static verifyRefreshToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+    static async verifyRefreshToken(token: string, options?: JwtVerifyOptions): Promise<JwtPayload> {
         return this.verify(token, { audience: 'refresh', ...options });
     }
 
     /**
      * 验证临时 token
      */
-    static verifyTempToken(token: string, options?: JwtVerifyOptions): JwtPayload {
+    static async verifyTempToken(token: string, options?: JwtVerifyOptions): Promise<JwtPayload> {
         return this.verify(token, { audience: 'temporary', ...options });
     }
 
     /**
      * 验证 token 并检查权限
      */
-    static verifyWithPermissions(token: string, requiredPermissions: string | string[], options?: JwtVerifyOptions): JwtPayload {
-        const payload = this.verify(token, options);
+    static async verifyWithPermissions(token: string, requiredPermissions: string | string[], options?: JwtVerifyOptions): Promise<JwtPayload> {
+        const payload = await this.verify(token, options);
 
         if (!payload.permissions) {
             throw new Error('Token中不包含权限信息');
@@ -438,8 +429,8 @@ export class Jwt {
     /**
      * 验证 token 并检查角色
      */
-    static verifyWithRoles(token: string, requiredRoles: string | string[], options?: JwtVerifyOptions): JwtPayload {
-        const payload = this.verify(token, options);
+    static async verifyWithRoles(token: string, requiredRoles: string | string[], options?: JwtVerifyOptions): Promise<JwtPayload> {
+        const payload = await this.verify(token, options);
 
         if (!payload.role && !payload.roles) {
             throw new Error('Token中不包含角色信息');
@@ -460,7 +451,7 @@ export class Jwt {
     /**
      * 软验证 token (忽略过期时间)
      */
-    static verifySoft(token: string, options?: JwtVerifyOptions): JwtPayload {
+    static async verifySoft(token: string, options?: JwtVerifyOptions): Promise<JwtPayload> {
         return this.verify(token, { ignoreExpiration: true, ...options });
     }
 }

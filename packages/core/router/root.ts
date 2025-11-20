@@ -3,7 +3,6 @@
  * 处理 / 路径的请求
  */
 
-import { Env } from '../env.js';
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
 import { No } from '../response.js';
@@ -18,9 +17,9 @@ export async function rootHandler(req: Request): Promise<Response> {
         return Response.json(
             {
                 code: 0,
-                msg: `${Env.APP_NAME} 接口服务已启动`,
+                msg: `Befly 接口服务已启动`,
                 data: {
-                    mode: Env.NODE_ENV,
+                    mode: process.env.NODE_ENV || 'development',
                     timestamp: Date.now()
                 }
             },

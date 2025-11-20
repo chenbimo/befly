@@ -3,7 +3,7 @@
  * 整合所有请求处理中间件
  */
 
-import { Env } from '../env.js';
+import type { CorsConfig } from '../types/befly.js';
 
 // ========================================
 // CORS 中间件
@@ -15,23 +15,28 @@ export interface CorsResult {
 
 /**
  * 设置 CORS 选项
- * 根据环境变量或请求头动态设置跨域配置
- *
- * 注意：Access-Control-Allow-Origin 只能返回单个源，不能用逗号分隔多个源
- * 如果配置了多个允许的源，需要根据请求的 Origin 动态返回匹配的源
+ * 根据配置或请求头动态设置跨域配置
  *
  * @param req - 请求对象
+ * @param config - CORS 配置
  * @returns CORS 配置对象
  */
-export const setCorsOptions = (req: Request): CorsResult => {
+export const setCorsOptions = (req: Request, config: CorsConfig = {}): CorsResult => {
+    const origin = config.origin || '*';
+    const methods = config.methods || 'GET, POST, PUT, DELETE, OPTIONS';
+    const allowedHeaders = config.allowedHeaders || 'Content-Type, Authorization, authorization, token';
+    const exposedHeaders = config.exposedHeaders || 'Content-Range, X-Content-Range, Authorization, authorization, token';
+    const maxAge = config.maxAge || 86400;
+    const credentials = config.credentials || 'true';
+
     return {
         headers: {
-            'Access-Control-Allow-Origin': Env.CORS_ALLOWED_ORIGIN === '*' ? req.headers.get('origin') : Env.CORS_ALLOWED_ORIGIN,
-            'Access-Control-Allow-Methods': Env.CORS_ALLOWED_METHODS,
-            'Access-Control-Allow-Headers': Env.CORS_ALLOWED_HEADERS,
-            'Access-Control-Expose-Headers': Env.CORS_EXPOSE_HEADERS,
-            'Access-Control-Max-Age': Env.CORS_MAX_AGE || 86400,
-            'Access-Control-Allow-Credentials': Env.CORS_ALLOW_CREDENTIALS || 'true'
+            'Access-Control-Allow-Origin': origin === '*' ? req.headers.get('origin') || '*' : origin,
+            'Access-Control-Allow-Methods': methods,
+            'Access-Control-Allow-Headers': allowedHeaders,
+            'Access-Control-Expose-Headers': exposedHeaders,
+            'Access-Control-Max-Age': String(maxAge),
+            'Access-Control-Allow-Credentials': credentials
         }
     };
 };

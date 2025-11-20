@@ -1,60 +1,61 @@
 ﻿import { describe, test, expect, beforeAll } from 'bun:test';
 import { Jwt } from '../lib/jwt';
-import { Env } from '../env.js';
 
 beforeAll(() => {
-    Env.JWT_SECRET = 'test-secret';
-    Env.JWT_ALGORITHM = 'HS256';
-    Env.JWT_EXPIRES_IN = '7d';
+    Jwt.configure({
+        secret: 'test-secret',
+        algorithm: 'HS256',
+        expiresIn: '7d'
+    });
 });
 
 describe('JWT - 签名和验证', () => {
-    test('签名创建 token', () => {
-        const token = Jwt.sign({ userId: 1, name: 'test' });
+    test('签名创建 token', async () => {
+        const token = await Jwt.sign({ userId: 1, name: 'test' });
         expect(typeof token).toBe('string');
         expect(token.split('.').length).toBe(3);
     });
 
-    test('验证有效 token', () => {
-        const token = Jwt.sign({ userId: 123, email: 'test@test.com' });
-        const decoded = Jwt.verify(token);
+    test('验证有效 token', async () => {
+        const token = await Jwt.sign({ userId: 123, email: 'test@test.com' });
+        const decoded = await Jwt.verify(token);
         expect(decoded.userId).toBe(123);
         expect(decoded.email).toBe('test@test.com');
     });
 
-    test('验证过期 token 抛出错误', () => {
-        const token = Jwt.sign({ userId: 1 }, { expiresIn: '-1s' });
-        expect(() => Jwt.verify(token)).toThrow('Token已过期');
+    test('验证过期 token 抛出错误', async () => {
+        const token = await Jwt.sign({ userId: 1 }, { expiresIn: '-1s' });
+        expect(Jwt.verify(token)).rejects.toThrow('Token 已过期');
     });
 
-    test('忽略过期验证', () => {
-        const token = Jwt.sign({ userId: 1 }, { expiresIn: '-1s' });
-        const decoded = Jwt.verify(token, { ignoreExpiration: true });
+    test('忽略过期验证', async () => {
+        const token = await Jwt.sign({ userId: 1 }, { expiresIn: '-1s' });
+        const decoded = await Jwt.verify(token, { ignoreExpiration: true });
         expect(decoded.userId).toBe(1);
     });
 
-    test('自定义密钥', () => {
+    test('自定义密钥', async () => {
         const secret = 'custom-secret';
-        const token = Jwt.sign({ userId: 1 }, { secret });
-        const decoded = Jwt.verify(token, { secret });
+        const token = await Jwt.sign({ userId: 1 }, { secret });
+        const decoded = await Jwt.verify(token, { secret });
         expect(decoded.userId).toBe(1);
     });
 
-    test('密钥不匹配验证失败', () => {
-        const token = Jwt.sign({ userId: 1 }, { secret: 'secret1' });
-        expect(() => Jwt.verify(token, { secret: 'secret2' })).toThrow('Token签名无效');
+    test('密钥不匹配验证失败', async () => {
+        const token = await Jwt.sign({ userId: 1 }, { secret: 'secret1' });
+        expect(Jwt.verify(token, { secret: 'secret2' })).rejects.toThrow('Token 签名无效');
     });
 });
 
 describe('JWT - 解码', () => {
-    test('解码不验证签名', () => {
-        const token = Jwt.sign({ userId: 456 });
+    test('解码不验证签名', async () => {
+        const token = await Jwt.sign({ userId: 456 });
         const decoded = Jwt.decode(token);
         expect(decoded.userId).toBe(456);
     });
 
-    test('解码完整信息', () => {
-        const token = Jwt.sign({ userId: 1 });
+    test('解码完整信息', async () => {
+        const token = await Jwt.sign({ userId: 1 });
         const decoded = Jwt.decode(token, true);
         expect(decoded.header).toBeDefined();
         expect(decoded.payload).toBeDefined();
@@ -63,25 +64,25 @@ describe('JWT - 解码', () => {
 });
 
 describe('JWT - 时间相关', () => {
-    test('获取剩余时间', () => {
-        const token = Jwt.sign({ userId: 1 }, { expiresIn: '1h' });
+    test('获取剩余时间', async () => {
+        const token = await Jwt.sign({ userId: 1 }, { expiresIn: '1h' });
         const remaining = Jwt.getTimeToExpiry(token);
         expect(remaining).toBeGreaterThan(3500);
     });
 
-    test('检查是否过期', () => {
-        const valid = Jwt.sign({ userId: 1 }, { expiresIn: '1h' });
+    test('检查是否过期', async () => {
+        const valid = await Jwt.sign({ userId: 1 }, { expiresIn: '1h' });
         expect(Jwt.isExpired(valid)).toBe(false);
 
-        const expired = Jwt.sign({ userId: 1 }, { expiresIn: '-1s' });
+        const expired = await Jwt.sign({ userId: 1 }, { expiresIn: '-1s' });
         expect(Jwt.isExpired(expired)).toBe(true);
     });
 
-    test('检查即将过期', () => {
-        const longToken = Jwt.sign({ userId: 1 }, { expiresIn: '1h' });
+    test('检查即将过期', async () => {
+        const longToken = await Jwt.sign({ userId: 1 }, { expiresIn: '1h' });
         expect(Jwt.isNearExpiry(longToken, 300)).toBe(false);
 
-        const shortToken = Jwt.sign({ userId: 1 }, { expiresIn: '2m' });
+        const shortToken = await Jwt.sign({ userId: 1 }, { expiresIn: '2m' });
         expect(Jwt.isNearExpiry(shortToken, 300)).toBe(true);
     });
 });
@@ -107,14 +108,14 @@ describe('JWT - 权限检查', () => {
 });
 
 describe('JWT - 快捷方法', () => {
-    test('create 和 check', () => {
-        const token = Jwt.create({ userId: 789 });
-        const decoded = Jwt.check(token);
+    test('create 和 check', async () => {
+        const token = await Jwt.create({ userId: 789 });
+        const decoded = await Jwt.check(token);
         expect(decoded.userId).toBe(789);
     });
 
-    test('parse 方法', () => {
-        const token = Jwt.create({ userId: 1 });
+    test('parse 方法', async () => {
+        const token = await Jwt.create({ userId: 1 });
         const decoded = Jwt.parse(token);
         expect(decoded.userId).toBe(1);
     });

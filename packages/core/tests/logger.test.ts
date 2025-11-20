@@ -1,6 +1,5 @@
 ﻿import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
 import { Logger } from '../lib/logger';
-import { Env } from '../env.js';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -10,9 +9,11 @@ beforeAll(() => {
     if (!existsSync(testLogDir)) {
         mkdirSync(testLogDir, { recursive: true });
     }
-    Env.LOG_DIR = testLogDir;
-    Env.LOG_TO_CONSOLE = 0;
-    Env.LOG_DEBUG = 1;
+    Logger.configure({
+        dir: testLogDir,
+        console: 0,
+        debug: 1
+    });
 });
 
 afterAll(() => {

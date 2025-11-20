@@ -15,11 +15,86 @@ import type { Cipher } from '../lib/cipher.js';
 import type { CacheHelper } from '../lib/cacheHelper.js';
 
 /**
+ * 日志配置
+ */
+export interface LoggerConfig {
+    debug?: number;
+    excludeFields?: string;
+    dir?: string;
+    console?: number;
+    maxSize?: number;
+}
+
+/**
+ * 数据库配置
+ */
+export interface DatabaseConfig {
+    enable?: number;
+    type?: string;
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    database?: string;
+    poolMax?: number;
+}
+
+/**
+ * Redis 配置
+ */
+export interface RedisConfig {
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    db?: number;
+    prefix?: string;
+}
+
+/**
+ * JWT 配置
+ */
+export interface AuthConfig {
+    secret?: string;
+    expiresIn?: string | number;
+    algorithm?: string;
+}
+
+/**
+ * CORS 配置
+ */
+export interface CorsConfig {
+    origin?: string;
+    methods?: string;
+    allowedHeaders?: string;
+    exposedHeaders?: string;
+    maxAge?: number;
+    credentials?: string;
+}
+
+/**
  * Befly 构造函数选项
  */
 export interface BeflyOptions {
+    // ========== 核心参数 ==========
+    nodeEnv?: string;
+    appName?: string;
+    appPort?: number;
+    appHost?: string;
+    devEmail?: string;
+    devPassword?: string;
+    bodyLimit?: number;
+    tz?: string;
+
     /** 插件配置 */
-    plugins?: Record<string, Record<string, any>>;
+    plugins?: {
+        logger?: LoggerConfig;
+        db?: DatabaseConfig;
+        redis?: RedisConfig;
+        auth?: AuthConfig;
+        cors?: CorsConfig;
+        [key: string]: any;
+    };
 }
 
 /**

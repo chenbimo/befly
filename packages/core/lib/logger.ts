@@ -6,8 +6,8 @@
 import { join } from 'pathe';
 import { appendFile, stat } from 'node:fs/promises';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Env } from '../env.js';
 import type { LogLevel } from '../types/common.js';
+import type { LoggerConfig } from '../types/befly.js';
 
 /**
  * 日志上下文存储
@@ -45,6 +45,23 @@ export class Logger {
     /** 当前使用的日志文件缓存 */
     private static currentFiles: Map<string, string> = new Map();
 
+    /** 日志配置 */
+    private static config: LoggerConfig = {
+        debug: 1,
+        excludeFields: 'password,token,secret',
+        dir: './logs',
+        console: 1,
+        maxSize: 10 * 1024 * 1024
+    };
+
+    /**
+     * 配置日志器
+     * @param config - 日志配置
+     */
+    static configure(config: LoggerConfig) {
+        this.config = { ...this.config, ...config };
+    }
+
     /**
      * 记录日志
      * @param level - 日志级别
@@ -52,7 +69,7 @@ export class Logger {
      */
     static async log(level: LogLevel, message: LogMessage): Promise<void> {
         // debug 日志特殊处理：仅当 LOG_DEBUG=1 时才记录
-        if (level === 'debug' && Env.LOG_DEBUG !== 1) return;
+        if (level === 'debug' && this.config.debug !== 1) return;
 
         // 格式化消息
         const timestamp = formatDate();
@@ -75,7 +92,7 @@ export class Logger {
         const logMessage = `[${timestamp}]${requestId} ${levelStr} - ${content}`;
 
         // 控制台输出
-        if (Env.LOG_TO_CONSOLE === 1) {
+        if (this.config.console === 1) {
             console.log(logMessage);
         }
 
@@ -98,6 +115,7 @@ export class Logger {
      */
     static async writeToFile(message: string, level: LogLevel = 'info'): Promise<void> {
         try {
+            const logDir = this.config.dir || './logs';
             // 确定文件前缀
             const prefix = level === 'debug' ? 'debug' : new Date().toISOString().split('T')[0];
 
@@ -107,7 +125,7 @@ export class Logger {
             if (currentLogFile) {
                 try {
                     const stats = await stat(currentLogFile);
-                    if (stats.size >= Env.LOG_MAX_SIZE) {
+                    if (stats.size >= (this.config.maxSize || 10 * 1024 * 1024)) {
                         this.currentFiles.delete(prefix);
                         currentLogFile = undefined;
                     }
@@ -120,7 +138,7 @@ export class Logger {
             // 查找或创建新文件
             if (!currentLogFile) {
                 const glob = new Bun.Glob(`${prefix}.*.log`);
-                const files = await Array.fromAsync(glob.scan(Env.LOG_DIR || 'logs'));
+                const files = await Array.fromAsync(glob.scan(this.config.dir || 'logs'));
 
                 // 按索引排序并查找可用文件
                 const getIndex = (f: string) => parseInt(f.match(/\.(\d+)\.log$/)?.[1] || '0');
@@ -128,10 +146,11 @@ export class Logger {
 
                 let foundFile = false;
                 for (let i = files.length - 1; i >= 0; i--) {
-                    const filePath = join(Env.LOG_DIR || 'logs', files[i]);
+                    const filePath = join(this.config.dir || 'logs', files[i]);
                     try {
                         const stats = await stat(filePath);
-                        if (stats.size < Env.LOG_MAX_SIZE) {
+                        // 检查文件大小
+                        if (stats.size < (this.config.maxSize || 10 * 1024 * 1024)) {
                             currentLogFile = filePath;
                             foundFile = true;
                             break;
@@ -144,7 +163,7 @@ export class Logger {
                 // 没有可用文件,创建新文件
                 if (!foundFile) {
                     const maxIndex = files.length > 0 ? Math.max(...files.map(getIndex)) : -1;
-                    currentLogFile = join(Env.LOG_DIR || 'logs', `${prefix}.${maxIndex + 1}.log`);
+                    currentLogFile = join(this.config.dir || 'logs', `${prefix}.${maxIndex + 1}.log`);
                 }
 
                 this.currentFiles.set(prefix, currentLogFile);
@@ -209,19 +228,5 @@ export class Logger {
      */
     static clearCache(): void {
         this.currentFiles.clear();
-    }
-
-    /**
-     * 打印当前运行环境
-     * 用于命令开始时提示用户当前环境
-     */
-    static printEnv(): void {
-        console.log('========================================');
-        console.log('开始执行完整同步流程');
-        console.log(`当前环境: ${Env.NODE_ENV || 'development'}`);
-        console.log(`项目名称: ${Env.APP_NAME}`);
-        console.log(`数据库地址: ${Env.DB_HOST}`);
-        console.log(`数据库名称: ${Env.DB_NAME}`);
-        console.log('========================================\n');
     }
 }

@@ -3,7 +3,6 @@
  * 初始化数据库连接和 SQL 管理器
  */
 
-import { Env } from '../env.js';
 import { Logger } from '../lib/logger.js';
 import { Database } from '../lib/database.js';
 import { DbHelper } from '../lib/dbHelper.js';
@@ -15,18 +14,18 @@ import type { BeflyContext } from '../types/befly.js';
  */
 const dbPlugin: Plugin = {
     after: ['redis'],
-    async onInit(befly: BeflyContext): Promise<DbHelper | Record<string, never>> {
+    async onInit(this: Plugin, befly: BeflyContext): Promise<DbHelper | Record<string, never>> {
         let sql: any = null;
+        const config = this.config || {};
 
         try {
-            if (Env.DATABASE_ENABLE === 1) {
+            // 默认启用，除非显式禁用
+            if (config.enable !== 0) {
                 // 创建 Bun SQL 客户端（内置连接池），并确保连接验证成功后再继续
-                // 从环境变量读取连接超时配置
-                const connectionTimeout = Env.DB_CONNECTION_TIMEOUT ? parseInt(Env.DB_CONNECTION_TIMEOUT) : 30000;
+                // 从配置读取连接超时配置
+                // const connectionTimeout = config.connectionTimeout ? parseInt(config.connectionTimeout) : 30000;
 
-                sql = await Database.connectSql({
-                    connectionTimeout
-                });
+                sql = await Database.connectSql(config);
 
                 // 创建数据库管理器实例，直接传入 sql 对象
                 const dbManager = new DbHelper(befly, sql);

@@ -1,30 +1,51 @@
 import type { Plugin } from '../types/plugin.js';
-import { Env } from '../env.js';
+import { setCorsOptions } from '../lib/middleware.js';
 
 const plugin: Plugin = {
     pluginName: 'cors',
     after: ['errorHandler'],
+    // 默认配置
     config: {
-        allowOrigin: Env.CORS_ALLOWED_ORIGIN,
-        allowMethods: Env.CORS_ALLOWED_METHODS,
-        allowHeaders: Env.CORS_ALLOWED_HEADERS,
-        exposeHeaders: Env.CORS_EXPOSE_HEADERS,
-        maxAge: Env.CORS_MAX_AGE || 86400,
-        allowCredentials: Env.CORS_ALLOW_CREDENTIALS || 'true'
+        origin: '*',
+        methods: 'GET, POST, PUT, DELETE, OPTIONS',
+        allowedHeaders: 'Content-Type, Authorization, authorization, token',
+        exposedHeaders: 'Content-Range, X-Content-Range, Authorization, authorization, token',
+        maxAge: 86400,
+        credentials: 'true'
     },
     onRequest: async (befly, ctx, next) => {
         const req = ctx.request;
-        const config = plugin.config || {};
+        // this.config 会包含默认值和用户传入的配置（如果 loadPlugins 正确合并了的话）
+        // loadPlugins 目前是直接覆盖 plugin.config。
+        // 所以我们需要手动合并，或者依赖 loadPlugins 的行为。
+        // 这里的 plugin 对象是单例，this.config 在 loadPlugins 中被赋值。
+        // 如果用户没传，this.config 就是上面的默认值。
+        // 如果用户传了，this.config 就是用户的配置。
+        // 为了支持部分覆盖，我们需要在 onInit 中做合并，或者在这里做合并。
+        // 简单起见，我们在 onRequest 中合并。
+
+        // 注意：由于 plugin 对象是导出的对象，this 指向它。
+        // 但是 loadPlugins 中是 plugin.config = pluginsConfig[pluginName]。
+        // 这会覆盖掉上面的 config 属性。
+        // 所以我们应该在 onInit 中处理合并，或者不定义默认 config 属性，而是写在代码里。
+
+        // 更好的做法：
+        const defaultConfig = {
+            origin: '*',
+            methods: 'GET, POST, PUT, DELETE, OPTIONS',
+            allowedHeaders: 'Content-Type, Authorization, authorization, token',
+            exposedHeaders: 'Content-Range, X-Content-Range, Authorization, authorization, token',
+            maxAge: 86400,
+            credentials: 'true'
+        };
+
+        // @ts-ignore
+        const userConfig = plugin.config || {};
+        const config = { ...defaultConfig, ...userConfig };
 
         // 设置 CORS 响应头
-        const headers: Record<string, string> = {
-            'Access-Control-Allow-Origin': config.allowOrigin === '*' ? req.headers.get('origin') || '*' : config.allowOrigin,
-            'Access-Control-Allow-Methods': config.allowMethods,
-            'Access-Control-Allow-Headers': config.allowHeaders,
-            'Access-Control-Expose-Headers': config.exposeHeaders,
-            'Access-Control-Max-Age': String(config.maxAge),
-            'Access-Control-Allow-Credentials': String(config.allowCredentials)
-        };
+        const corsResult = setCorsOptions(req, config);
+        const headers = corsResult.headers;
 
         ctx.corsHeaders = headers;
 

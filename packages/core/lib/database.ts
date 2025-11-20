@@ -4,11 +4,10 @@
  */
 
 import { SQL, RedisClient } from 'bun';
-import { Env } from '../env.js';
 import { Logger } from './logger.js';
 import { DbHelper } from './dbHelper.js';
 import { RedisHelper } from './redisHelper.js';
-import type { BeflyContext } from '../types/befly.js';
+import type { BeflyContext, DatabaseConfig, RedisConfig } from '../types/befly.js';
 import type { SqlClientOptions } from '../types/database.js';
 
 /**
@@ -26,31 +25,31 @@ export class Database {
 
     /**
      * 连接 SQL 数据库
-     * @param options - SQL 客户端配置选项
+     * @param config - 数据库配置
      * @returns SQL 客户端实例
      */
-    static async connectSql(options: SqlClientOptions = {}): Promise<SQL> {
+    static async connectSql(config: DatabaseConfig): Promise<SQL> {
         // 构建数据库连接字符串
-        const type = Env.DB_TYPE || '';
-        const host = Env.DB_HOST || '';
-        const port = Env.DB_PORT;
-        const user = encodeURIComponent(Env.DB_USER || '');
-        const password = encodeURIComponent(Env.DB_PASS || '');
-        const database = encodeURIComponent(Env.DB_NAME || '');
+        const type = config.type || 'mysql';
+        const host = config.host || '127.0.0.1';
+        const port = config.port || 3306;
+        const user = encodeURIComponent(config.username || 'root');
+        const password = encodeURIComponent(config.password || 'root');
+        const database = encodeURIComponent(config.database || 'befly_demo');
 
         let finalUrl: string;
         if (type === 'sqlite') {
             finalUrl = database;
         } else {
             if (!host || !database) {
-                throw new Error('数据库配置不完整，请检查环境变量');
+                throw new Error('数据库配置不完整，请检查配置参数');
             }
             finalUrl = `${type}://${user}:${password}@${host}:${port}/${database}`;
         }
 
         let sql: SQL;
 
-        if (Env.DB_TYPE === 'sqlite') {
+        if (type === 'sqlite') {
             sql = new SQL(finalUrl);
         } else {
             sql = new SQL({
@@ -66,10 +65,10 @@ export class Database {
 
             const healthCheckPromise = (async () => {
                 let version = '';
-                if (Env.DB_TYPE === 'sqlite') {
+                if (type === 'sqlite') {
                     const v = await sql`SELECT sqlite_version() AS version`;
                     version = v?.[0]?.version;
-                } else if (Env.DB_TYPE === 'postgresql' || Env.DB_TYPE === 'postgres') {
+                } else if (type === 'postgresql' || type === 'postgres') {
                     const v = await sql`SELECT version() AS version`;
                     version = v?.[0]?.version;
                 } else {

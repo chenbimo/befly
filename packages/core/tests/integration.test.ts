@@ -4,7 +4,6 @@ import { Jwt } from '../lib/jwt';
 import { Validator } from '../lib/validator';
 import { SqlBuilder } from '../lib/sqlBuilder';
 import { Xml } from '../lib/xml';
-import { Env } from '../env.js';
 import { keysToCamel, keysToSnake } from 'befly-util';
 
 describe('Integration - 密码验证流程', () => {
@@ -28,12 +27,14 @@ describe('Integration - 密码验证流程', () => {
 
 describe('Integration - JWT + 权限验证', () => {
     beforeAll(() => {
-        Env.JWT_SECRET = 'test-integration-secret';
-        Env.JWT_ALGORITHM = 'HS256';
-        Env.JWT_EXPIRES_IN = '1h';
+        Jwt.configure({
+            secret: 'test-integration-secret',
+            algorithm: 'HS256',
+            expiresIn: '1h'
+        });
     });
 
-    test('用户登录：JWT 签名 + 权限检查', () => {
+    test('用户登录：JWT 签名 + 权限检查', async () => {
         // 1. 用户登录生成 token
         const payload = {
             userId: 123,
@@ -42,12 +43,12 @@ describe('Integration - JWT + 权限验证', () => {
             permissions: ['read', 'write', 'delete']
         };
 
-        const token = Jwt.sign(payload);
+        const token = await Jwt.sign(payload);
         expect(token).toBeDefined();
         expect(typeof token).toBe('string');
 
         // 2. 验证 token
-        const verified = Jwt.verify(token);
+        const verified = await Jwt.verify(token);
         expect(verified.userId).toBe(123);
         expect(verified.username).toBe('john');
 

@@ -4,30 +4,27 @@
  */
 
 import { RedisClient } from 'bun';
-import { Env } from '../env.js';
 import { Logger } from '../lib/logger.js';
 import { Database } from './database.js';
-
-/**
- * Redis 键前缀
- */
-const prefix = Env.REDIS_KEY_PREFIX ? `${Env.REDIS_KEY_PREFIX}:` : '';
 
 /**
  * Redis 助手类
  */
 export class RedisHelper {
     private client: RedisClient;
+    private prefix: string;
 
     /**
      * 构造函数
+     * @param prefix - Key 前缀
      */
-    constructor() {
+    constructor(prefix: string = '') {
         const client = Database.getRedis();
         if (!client) {
             throw new Error('Redis 客户端未初始化，请先调用 Database.connectRedis()');
         }
         this.client = client;
+        this.prefix = prefix ? `${prefix}:` : '';
     }
 
     /**
@@ -40,7 +37,7 @@ export class RedisHelper {
     async setObject<T = any>(key: string, obj: T, ttl: number | null = null): Promise<string | null> {
         try {
             const data = JSON.stringify(obj);
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
 
             if (ttl) {
                 return await this.client.setex(pkey, ttl, data);

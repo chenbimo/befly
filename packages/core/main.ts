@@ -3,8 +3,6 @@
  * 提供简洁的框架接口，核心逻辑已提取到 loader 层
  */
 
-import { Env } from './env.js';
-
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
@@ -97,14 +95,17 @@ export class Befly {
      */
     private async startServer(): Promise<Server> {
         const startTime = Bun.nanoseconds();
+        const port = this.options.appPort || 3000;
+        const host = this.options.appHost || '127.0.0.1';
+        const appName = this.options.appName || 'Befly App';
 
         const server = Bun.serve({
-            port: Env.APP_PORT,
-            hostname: Env.APP_HOST,
+            port: port,
+            hostname: host,
             routes: {
                 '/': rootHandler,
                 '/api/*': apiHandler(this.apiRoutes, this.pluginLists, this.appContext),
-                '/*': staticHandler
+                '/*': staticHandler(this.options.plugins?.cors)
             },
             error: (error: Error) => {
                 Logger.error('服务启动时发生错误', error);
@@ -113,9 +114,9 @@ export class Befly {
         });
 
         const finalStartupTime = calcPerfTime(startTime);
-        Logger.info(`${Env.APP_NAME} 启动成功! `);
+        Logger.info(`${appName} 启动成功! `);
         Logger.info(`服务器启动耗时: ${finalStartupTime}`);
-        Logger.info(`服务器监听地址: http://${Env.APP_HOST}:${Env.APP_PORT}`);
+        Logger.info(`服务器监听地址: http://${host}:${port}`);
 
         return server;
     }
@@ -153,7 +154,6 @@ export class Befly {
 // 核心类和工具导出
 export {
     // 配置
-    Env,
     Logger,
     Cipher,
     Jwt,
