@@ -1,4 +1,5 @@
-import { createBeflyViteConfig, scanBeflyViews } from 'befly-vite';
+import { createBeflyViteConfig } from 'befly-vite';
+import { scanBeflyViews } from 'befly-util';
 import { fileURLToPath } from 'node:url';
 
 export default createBeflyViteConfig({

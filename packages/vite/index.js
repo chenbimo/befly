@@ -171,9 +171,6 @@ export function createBeflyViteConfig(options = {}) {
 // 导出 UnoCSS 配置创建函数
 export { createUnoConfig } from './configs/uno.config.js';
 
-// 导出工具函数
-export { scanBeflyViews } from './utils/scanBeflyViews.js';
-
 // 导出所有插件创建函数（供高级用户自定义）
 export { createVuePlugins } from './plugins/vue.js';
 export { createRouterPlugin } from './plugins/router.js';

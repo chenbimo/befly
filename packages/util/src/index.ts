@@ -8,3 +8,4 @@ export * from './pickFields';
 export * from './calcPerfTime';
 export * from './addonHelper';
 export * from './layouts';
+export * from './scanViews';
