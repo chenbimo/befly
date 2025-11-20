@@ -6,6 +6,7 @@ export interface FieldClearOptions {
     omitKeys?: string[]; // 排除这些字段
     keepValues?: any[]; // 只保留这些值
     excludeValues?: any[]; // 排除这些值
+    keepMap?: Record<string, any>; // 强制保留的键值对（优先级最高，忽略 excludeValues）
 }
 
 export type FieldClearResult<T> = T extends Array<infer U> ? Array<FieldClearResult<U>> : T extends object ? { [K in keyof T]?: T[K] } : T;
@@ -19,7 +20,7 @@ function isArray(val: unknown): val is any[] {
 }
 
 export function fieldClear<T = any>(data: T | T[], options: FieldClearOptions = {}): FieldClearResult<T> {
-    const { pickKeys, omitKeys, keepValues, excludeValues } = options;
+    const { pickKeys, omitKeys, keepValues, excludeValues, keepMap } = options;
 
     const filterObj = (obj: Record<string, any>) => {
         let result: Record<string, any> = {};
@@ -32,9 +33,21 @@ export function fieldClear<T = any>(data: T | T[], options: FieldClearOptions = 
         }
         for (const key of keys) {
             const value = obj[key];
+
+            // 1. 优先检查 keepMap
+            if (keepMap && key in keepMap) {
+                if (Object.is(keepMap[key], value)) {
+                    result[key] = value;
+                    continue;
+                }
+            }
+
+            // 2. 检查 keepValues (只保留指定值)
             if (keepValues && keepValues.length && !keepValues.includes(value)) {
                 continue;
             }
+
+            // 3. 检查 excludeValues (排除指定值)
             if (excludeValues && excludeValues.length && excludeValues.includes(value)) {
                 continue;
             }

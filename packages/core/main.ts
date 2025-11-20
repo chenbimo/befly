@@ -22,7 +22,6 @@ import {
     //
     Yes,
     No,
-    fieldClear,
     scanAddons,
     getAddonDir,
     addonDirExists
@@ -172,7 +171,6 @@ export {
 
 // 工具函数命名空间导出
 export const utils = {
-    fieldClear: fieldClear,
     scanAddons: scanAddons,
     getAddonDir: getAddonDir,
     addonDirExists: addonDirExists

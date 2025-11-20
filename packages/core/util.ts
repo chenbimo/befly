@@ -52,35 +52,6 @@ export const No = <T = any>(msg: string = '', data: T | {} = {}, other: KeyValue
 // 对象操作工具
 // ========================================
 
-/**
- * 字段清理
- */
-export const fieldClear = <T extends Record<string, any> = any>(data: T, excludeValues: any[] = [null, undefined], keepValues: Record<string, any> = {}): Partial<T> => {
-    if (!data || !isPlainObject(data)) {
-        return {};
-    }
-
-    const result: any = {};
-
-    for (const [key, value] of Object.entries(data)) {
-        if (key in keepValues) {
-            if (Object.is(keepValues[key], value)) {
-                result[key] = value;
-                continue;
-            }
-        }
-
-        const shouldExclude = excludeValues.some((excludeVal) => Object.is(excludeVal, value));
-        if (shouldExclude) {
-            continue;
-        }
-
-        result[key] = value;
-    }
-
-    return result;
-};
-
 // ========================================
 // 日期时间工具
 // ========================================

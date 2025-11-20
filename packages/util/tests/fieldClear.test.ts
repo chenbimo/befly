@@ -26,3 +26,14 @@ test('空对象和空数组', () => {
 test('原始值直接返回', () => {
     expect(fieldClear(123, {})).toBe(123);
 });
+
+test('should support keepMap to force keep values', () => {
+    const obj = { a: 1, b: null, c: 0 };
+    const options: FieldClearOptions = {
+        excludeValues: [null, 0],
+        keepMap: { c: 0 }
+    };
+    // c=0 is in excludeValues but also in keepMap, so it should be kept
+    // b=null is in excludeValues and NOT in keepMap, so it should be excluded
+    expect(fieldClear(obj, options)).toEqual({ a: 1, c: 0 });
+});

@@ -1,5 +1,5 @@
 ﻿import { describe, test, expect } from 'bun:test';
-import { keysToCamel, keysToSnake, arrayKeysToCamel, fieldClear, calcPerfTime } from '../util';
+import { keysToCamel, keysToSnake, arrayKeysToCamel, calcPerfTime, fieldClear } from 'befly-util';
 
 describe('Util - keysToCamel', () => {
     test('转换对象键名为驼峰', () => {
@@ -64,7 +64,7 @@ describe('Util - arrayKeysToCamel', () => {
 
 describe('Util - fieldClear', () => {
     test('移除 null 和 undefined', () => {
-        const result = fieldClear({ a: 1, b: null, c: undefined, d: 'test' });
+        const result = fieldClear({ a: 1, b: null, c: undefined, d: 'test' }, { excludeValues: [null, undefined] });
         expect(result.a).toBe(1);
         expect(result.b).toBeUndefined();
         expect(result.c).toBeUndefined();
@@ -72,7 +72,7 @@ describe('Util - fieldClear', () => {
     });
 
     test('保留指定值', () => {
-        const result = fieldClear({ a: 1, b: null, c: 0 }, [null, undefined], { c: 0 });
+        const result = fieldClear({ a: 1, b: null, c: 0 }, { excludeValues: [null, undefined], keepMap: { c: 0 } });
         expect(result.a).toBe(1);
         expect(result.b).toBeUndefined();
         expect(result.c).toBe(0);
