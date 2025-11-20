@@ -22,12 +22,7 @@ import {
     //
     Yes,
     No,
-    keysToSnake,
-    keysToCamel,
-    arrayKeysToCamel,
-    pickFields,
     fieldClear,
-    calcPerfTime,
     scanAddons,
     getAddonDir,
     addonDirExists
@@ -177,12 +172,7 @@ export {
 
 // 工具函数命名空间导出
 export const utils = {
-    keysToSnake: keysToSnake,
-    keysToCamel: keysToCamel,
-    arrayKeysToCamel: arrayKeysToCamel,
-    pickFields: pickFields,
     fieldClear: fieldClear,
-    calcPerfTime: calcPerfTime,
     scanAddons: scanAddons,
     getAddonDir: getAddonDir,
     addonDirExists: addonDirExists

@@ -9,7 +9,7 @@ import { Logger } from './logger.js';
 import { Jwt } from './jwt.js';
 import { Xml } from './xml.js';
 import { Validator } from './validator.js';
-import { pickFields } from '../util.js';
+import { pickFields } from 'befly-util';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 import type { Plugin } from '../types/plugin.js';

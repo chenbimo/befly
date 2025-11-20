@@ -7,7 +7,7 @@ import { basename } from 'pathe';
 import { existsSync } from 'node:fs';
 import { camelCase } from 'es-toolkit/string';
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime } from '../util.js';
+import { calcPerfTime } from 'befly-util';
 import { scanFiles } from 'befly-util';
 import { corePluginDir, projectPluginDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';

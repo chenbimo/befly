@@ -7,7 +7,7 @@ import { relative, basename, join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime } from '../util.js';
+import { calcPerfTime } from 'befly-util';
 import { scanFiles } from 'befly-util';
 import { projectApiDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';

@@ -5,7 +5,8 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, fieldClear } from '../util.js';
+import { fieldClear } from '../util.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake } from 'befly-util';
 import { Logger } from '../lib/logger.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
