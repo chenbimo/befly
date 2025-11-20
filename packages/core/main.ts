@@ -18,12 +18,8 @@ import { coreDir } from './paths.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
 import { checkTable, checkApi, checkApp } from './check.js';
-import {
-    //
-    Yes,
-    No
-} from './response.js';
-import { scanAddons, getAddonDir, addonDirExists, calcPerfTime } from 'befly-util';
+import { Yes, No } from './response.js';
+import { calcPerfTime } from 'befly-util';
 
 import type { Server } from 'bun';
 import type { BeflyContext } from './types/befly.js';
@@ -165,11 +161,4 @@ export {
     checkTable,
     checkApi,
     checkApp
-};
-
-// 工具函数命名空间导出
-export const utils = {
-    scanAddons: scanAddons,
-    getAddonDir: getAddonDir,
-    addonDirExists: addonDirExists
 };

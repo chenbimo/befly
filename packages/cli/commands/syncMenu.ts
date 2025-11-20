@@ -15,7 +15,8 @@
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { Database, RedisHelper, utils } from 'befly';
+import { Database, RedisHelper } from 'befly';
+import { scanAddons, getAddonDir } from 'befly-util';
 import { Logger, projectDir } from '../util.js';
 
 import type { SyncMenuOptions, MenuConfig } from '../types.js';
@@ -261,10 +262,10 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         // 1. 扫描所有 addon 的 menu.json 配置文件
         const allMenus: Array<{ menus: MenuConfig[]; addonName: string }> = [];
 
-        const addonNames = utils.scanAddons();
+        const addonNames = scanAddons();
 
         for (const addonName of addonNames) {
-            const addonMenuPath = utils.getAddonDir(addonName, 'menu.json');
+            const addonMenuPath = getAddonDir(addonName, 'menu.json');
             if (existsSync(addonMenuPath)) {
                 const addonMenus = await readMenuConfig(addonMenuPath);
                 if (addonMenus.length > 0) {

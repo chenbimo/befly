@@ -10,8 +10,8 @@
 import { basename, resolve } from 'pathe';
 import { existsSync } from 'node:fs';
 import { snakeCase } from 'es-toolkit/string';
-import { Env, Database, RedisHelper, checkTable, utils } from 'befly';
-import { scanFiles } from 'befly-util';
+import { Env, Database, RedisHelper, checkTable } from 'befly';
+import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 import { Logger, projectDir } from '../../util.js';
 
 // 导入模块化的功能
@@ -62,11 +62,11 @@ export const SyncDb = async (): Promise<void> => {
         }
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
-        const addons = utils.scanAddons();
+        const addons = scanAddons();
         for (const addon of addons) {
-            if (utils.addonDirExists(addon, 'tables')) {
+            if (addonDirExists(addon, 'tables')) {
                 directories.push({
-                    path: utils.getAddonDir(addon, 'tables'),
+                    path: getAddonDir(addon, 'tables'),
                     type: 'addon',
                     addonName: addon,
                     addonNameSnake: snakeCase(addon) // 提前转换，避免每个文件都转换
