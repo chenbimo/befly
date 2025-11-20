@@ -27,4 +27,3 @@ export const No = <T = any>(msg: string = '', data: T | {} = {}, other: KeyValue
         data: data
     };
 };
-

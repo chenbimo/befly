@@ -33,9 +33,7 @@
         "isolatedModules": true,
 
         // 输出
-        "declaration": true,
-        "declarationMap": true,
-        "sourceMap": true,
+        "noEmit": true,
         "removeComments": false,
         "importHelpers": false,
 
@@ -45,7 +43,7 @@
         "checkJs": false,
 
         // Bun 特定
-        "types": ["bun-types"],
+        "types": ["bun"],
 
         // 路径
         "baseUrl": ".",
