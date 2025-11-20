@@ -10,8 +10,7 @@ import { camelCase } from 'es-toolkit/string';
  * keysToCamel({ created_at: 1697452800000 }) // { createdAt: 1697452800000 }
  */
 export const keysToCamel = (obj) => {
-    if (!obj || !isPlainObject(obj))
-        return obj;
+    if (!obj || !isPlainObject(obj)) return obj;
     const result = {};
     for (const [key, value] of Object.entries(obj)) {
         const camelKey = camelCase(key);

@@ -12,7 +12,6 @@ import { keysToCamel } from './keysToCamel.js';
  * // [{ userId: 1, userName: 'John' }, { userId: 2, userName: 'Jane' }]
  */
 export const arrayKeysToCamel = (arr) => {
-    if (!arr || !Array.isArray(arr))
-        return arr;
+    if (!arr || !Array.isArray(arr)) return arr;
     return arr.map((item) => keysToCamel(item));
 };

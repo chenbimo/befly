@@ -10,8 +10,7 @@ import { snakeCase } from 'es-toolkit/string';
  * keysToSnake({ createdAt: 1697452800000 }) // { created_at: 1697452800000 }
  */
 export const keysToSnake = (obj) => {
-    if (!obj || !isPlainObject(obj))
-        return obj;
+    if (!obj || !isPlainObject(obj)) return obj;
     const result = {};
     for (const [key, value] of Object.entries(obj)) {
         const snakeKey = snakeCase(key);
