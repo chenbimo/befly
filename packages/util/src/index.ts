@@ -7,3 +7,4 @@ export * from './arrayKeysToCamel';
 export * from './pickFields';
 export * from './calcPerfTime';
 export * from './addonHelper';
+export * from './layouts';
