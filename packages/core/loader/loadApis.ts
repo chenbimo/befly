@@ -12,8 +12,6 @@ import { projectApiDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
 
-const API_GLOB_PATTERN = '**/*.{ts,js}';
-
 /**
  * API 默认字段定义
  * 这些字段会自动合并到所有 API 的 fields 中
@@ -53,99 +51,56 @@ const DEFAULT_API_FIELDS = {
 } as const;
 
 /**
- * 扫描用户 API 文件
+ * 扫描指定目录下的 API 文件
  */
-async function scanUserApis(): Promise<Array<{ file: string; routePrefix: string; displayName: string }>> {
-    const apis: Array<{ file: string; routePrefix: string; displayName: string }> = [];
+async function scanApiFiles(dir: string): Promise<Array<{ filePath: string; apiPath: string }>> {
+    if (!existsSync(dir)) return [];
 
-    if (!existsSync(projectApiDir)) {
-        return apis;
-    }
-
-    const glob = new Bun.Glob(API_GLOB_PATTERN);
+    const glob = new Bun.Glob('**/*.{ts,js}');
+    const files: Array<{ filePath: string; apiPath: string }> = [];
 
     for await (const file of glob.scan({
-        cwd: projectApiDir,
+        cwd: dir,
         onlyFiles: true,
         absolute: true
     })) {
-        if (file.endsWith('.d.ts')) {
-            continue;
-        }
-        const apiPath = relative(projectApiDir, file).replace(/\.(ts|js)$/, '');
-        if (apiPath.indexOf('_') !== -1) continue;
+        if (file.endsWith('.d.ts')) continue;
 
-        apis.push({
-            file: file,
-            routePrefix: '',
-            displayName: '用户'
-        });
+        const apiPath = relative(dir, file).replace(/\.(ts|js)$/, '');
+        // 检查路径中是否包含下划线开头的目录或文件
+        if (apiPath.split(/[\\/]/).some((part) => part.startsWith('_'))) continue;
+
+        files.push({ filePath: file, apiPath });
     }
-
-    return apis;
+    return files;
 }
 
 /**
- * 扫描组件 API 文件
+ * 处理 API 组（导入与初始化）
  */
-async function scanAddonApis(): Promise<Array<{ file: string; routePrefix: string; displayName: string }>> {
-    const apis: Array<{ file: string; routePrefix: string; displayName: string }> = [];
-    const glob = new Bun.Glob(API_GLOB_PATTERN);
-    const addons = scanAddons();
+async function processApiGroup(apiRoutes: Map<string, ApiRoute>, files: Array<{ filePath: string; apiPath: string }>, routePrefix: string, displayNameGenerator: (apiPath: string) => string): Promise<void> {
+    for (const { filePath, apiPath } of files) {
+        try {
+            // Windows 下路径需要转换为正斜杠格式
+            const normalizedFilePath = filePath.replace(/\\/g, '/');
+            const apiImport = await import(normalizedFilePath);
+            const api = apiImport.default;
 
-    for (const addon of addons) {
-        if (!addonDirExists(addon, 'apis')) continue;
+            // 设置默认值
+            api.method = api.method || 'POST';
+            api.auth = api.auth !== undefined ? api.auth : true;
+            // 合并默认字段：默认字段作为基础，API 自定义字段优先级更高
+            api.fields = { ...DEFAULT_API_FIELDS, ...(api.fields || {}) };
+            api.required = api.required || [];
 
-        const addonApiDir = getAddonDir(addon, 'apis');
-        for await (const file of glob.scan({
-            cwd: addonApiDir,
-            onlyFiles: true,
-            absolute: true
-        })) {
-            if (file.endsWith('.d.ts')) {
-                continue;
-            }
-            const apiPath = relative(addonApiDir, file).replace(/\.(ts|js)$/, '');
-            if (apiPath.indexOf('_') !== -1) continue;
-
-            apis.push({
-                file: file,
-                routePrefix: `addon/${addon}`,
-                displayName: `组件${addon}`
-            });
+            // 构建路由
+            api.route = `${api.method.toUpperCase()}/api/${routePrefix ? routePrefix + '/' : ''}${apiPath}`;
+            apiRoutes.set(api.route, api);
+        } catch (error: any) {
+            const label = displayNameGenerator(apiPath);
+            Logger.error(`[${label}] 接口 ${apiPath} 加载失败`, error);
+            process.exit(1);
         }
-    }
-
-    return apis;
-}
-
-/**
- * 初始化单个 API
- */
-async function initApi(apiRoutes: Map<string, ApiRoute>, apiInfo: { file: string; routePrefix: string; displayName: string }): Promise<void> {
-    const { file, routePrefix, displayName } = apiInfo;
-    const apiDir = routePrefix === '' ? projectApiDir : getAddonDir(routePrefix.replace('addon/', ''), 'apis');
-    const apiPath = relative(apiDir, file).replace(/\.(ts|js)$/, '');
-
-    try {
-        // Windows 下路径需要转换为正斜杠格式
-        const filePath = file.replace(/\\/g, '/');
-        const apiImport = await import(filePath);
-        const api = apiImport.default;
-
-        // 设置默认值
-        api.method = api.method || 'POST';
-        api.auth = api.auth !== undefined ? api.auth : true;
-        // 合并默认字段：默认字段作为基础，API 自定义字段优先级更高
-        api.fields = { ...DEFAULT_API_FIELDS, ...(api.fields || {}) };
-        api.required = api.required || [];
-
-        // 构建路由
-        api.route = `${api.method.toUpperCase()}/api/${routePrefix ? routePrefix + '/' : ''}${apiPath}`;
-        apiRoutes.set(api.route, api);
-    } catch (error: any) {
-        Logger.error(`[${displayName}] 接口 ${apiPath} 加载失败`, error);
-        process.exit(1);
     }
 }
 
@@ -157,21 +112,20 @@ export async function loadApis(apiRoutes: Map<string, ApiRoute>): Promise<void> 
     try {
         const loadStartTime = Bun.nanoseconds();
 
-        // 阶段1：扫描所有 API
-        const userApis = await scanUserApis();
-        const addonApis = await scanAddonApis();
+        // 1. 加载用户 API
+        const userApiFiles = await scanApiFiles(projectApiDir);
+        await processApiGroup(apiRoutes, userApiFiles, '', () => '用户');
 
-        // 阶段2：初始化所有 API（用户 → 组件）
-        // 2.1 初始化用户 APIs
-        for (const apiInfo of userApis) {
-            await initApi(apiRoutes, apiInfo);
+        // 2. 加载组件 API
+        const addons = scanAddons();
+        for (const addon of addons) {
+            if (!addonDirExists(addon, 'apis')) continue;
+
+            const addonApiDir = getAddonDir(addon, 'apis');
+            const addonApiFiles = await scanApiFiles(addonApiDir);
+
+            await processApiGroup(apiRoutes, addonApiFiles, `addon/${addon}`, () => `组件${addon}`);
         }
-
-        // 2.2 初始化组件 APIs
-        for (const apiInfo of addonApis) {
-            await initApi(apiRoutes, apiInfo);
-        }
-
         const totalLoadTime = calcPerfTime(loadStartTime);
     } catch (error: any) {
         Logger.error('加载 API 时发生错误', error);
