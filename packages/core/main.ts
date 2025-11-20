@@ -21,11 +21,9 @@ import { checkTable, checkApi, checkApp } from './check.js';
 import {
     //
     Yes,
-    No,
-    scanAddons,
-    getAddonDir,
-    addonDirExists
-} from './util.js';
+    No
+} from './response.js';
+import { scanAddons, getAddonDir, addonDirExists } from 'befly-util';
 
 import type { Server } from 'bun';
 import type { BeflyContext } from './types/befly.js';

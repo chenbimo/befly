@@ -9,14 +9,15 @@
         "registry": "https://registry.npmjs.org"
     },
     "main": "main.ts",
-    "types": "./types/index.d.ts",
+    "types": "main.ts",
     "exports": {
         ".": {
+            "types": "./main.ts",
             "default": "./main.ts"
         },
         "./types": {
-            "types": "./types/index.d.ts",
-            "default": "./types/index.d.ts"
+            "types": "./types/index.ts",
+            "default": "./types/index.ts"
         }
     },
     "scripts": {

@@ -10,7 +10,7 @@ import { Logger } from '../lib/logger.js';
 import { calcPerfTime } from 'befly-util';
 import { scanFiles } from 'befly-util';
 import { projectApiDir } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
+import { scanAddons, getAddonDir, addonDirExists } from 'befly-util';
 import type { ApiRoute } from '../types/api.js';
 
 /**

@@ -5,7 +5,7 @@ import { Validator } from '../lib/validator';
 import { SqlBuilder } from '../lib/sqlBuilder';
 import { Xml } from '../lib/xml';
 import { Env } from '../env.js';
-import { keysToCamel, keysToSnake } from '../util';
+import { keysToCamel, keysToSnake } from 'befly-util';
 
 describe('Integration - 密码验证流程', () => {
     test('用户注册：密码加密 + 验证', async () => {
