@@ -19,10 +19,7 @@ export type PluginGetHook = (befly: BeflyContext, ctx: RequestContext, req: Requ
  * 插件配置类型
  */
 export interface Plugin {
-    /** 插件名称 */
-    name: string;
-
-    /** 插件名称（运行时动态添加，与 name 相同） */
+    /** 插件名称（运行时动态添加，由文件名生成） */
     pluginName?: string;
 
     /** 依赖的插件列表（在这些插件之后执行） */

@@ -3,9 +3,12 @@
  * 验证 fields 的3种写法：空数组、全部包含、全部排除
  */
 
-import { Befly } from 'befly';
+import { Befly, Env } from 'befly';
 
 async function testFieldsExclude() {
+    // 强制启用数据库
+    Env.DATABASE_ENABLE = 1;
+
     // 创建 Befly 实例
     const befly = new Befly();
 
