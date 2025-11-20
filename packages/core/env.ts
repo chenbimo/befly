@@ -23,7 +23,6 @@ const coreEnv: EnvConfig = {
     DEV_PASSWORD: '123456',
     BODY_LIMIT: 10 * 1024 * 1024, // 10MB
     DATABASE_ENABLE: 0,
-    // ========== 时区配置 ==========
     TZ: 'Asia/Shanghai',
 
     // ========== 日志配置 ==========
