@@ -5,10 +5,7 @@
 
 import { join, parse, dirname, relative, normalize, sep } from 'pathe';
 import { existsSync, readFileSync } from 'node:fs';
-import { readdir, mkdir, copyFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { Env } from 'befly';
-import extract from 'fast-extract';
 import chalk from 'chalk';
 
 export const projectDir = process.cwd();
@@ -107,46 +104,6 @@ export function getPackageVersion(dir: string): string {
 }
 
 /**
- * 检查目录是否为空或只包含隐藏文件
- */
-export async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
-    if (!existsSync(dirPath)) {
-        return true;
-    }
-
-    const entries = await readdir(dirPath);
-
-    // 过滤掉以 . 开头的文件和目录
-    const nonHiddenFiles = entries.filter((entry) => !entry.startsWith('.'));
-
-    return nonHiddenFiles.length === 0;
-}
-
-/**
- * 递归复制目录
- */
-export async function copyDirRecursive(source: string, target: string): Promise<{ copied: number }> {
-    let copied = 0;
-    const entries = await readdir(source, { withFileTypes: true });
-
-    for (const entry of entries) {
-        const sourcePath = join(source, entry.name);
-        const targetPath = join(target, entry.name);
-
-        if (entry.isDirectory()) {
-            await mkdir(targetPath, { recursive: true });
-            const result = await copyDirRecursive(sourcePath, targetPath);
-            copied += result.copied;
-        } else {
-            await copyFile(sourcePath, targetPath);
-            copied++;
-        }
-    }
-
-    return { copied: copied };
-}
-
-/**
  * 判断路径是否在 internal 目录内
  */
 export function isInternalPath(filePath: string, baseDir: string): boolean {
@@ -167,53 +124,4 @@ export function shouldExclude(filePath: string, baseDir: string): boolean {
     }
 
     return false;
-}
-
-/**
- * 从 npm 下载包
- */
-export async function downloadPackage(packageName: string, registry: string): Promise<{ version: string; packageDir: string; cleanup: () => Promise<void> }> {
-    const cacheDir = join(tmpdir(), 'befly-cache');
-    const tempDir = join(cacheDir, `${packageName}-${Date.now()}`);
-    const tarballPath = join(tempDir, 'package.tgz');
-    const extractDir = join(tempDir, 'extracted');
-
-    try {
-        await mkdir(tempDir, { recursive: true });
-
-        // 获取并下载最新版本
-        Logger.info(`正在获取 ${packageName} 最新版本...`);
-        const metaData = await fetch(registry).then((res) => res.json());
-
-        Logger.info(`正在下载 ${packageName}@${metaData.version}...`);
-        await Bun.write(tarballPath, await fetch(metaData.dist.tarball).then((res) => res.arrayBuffer()));
-
-        // 解压
-        Logger.info('正在解压...');
-        await extract(tarballPath, extractDir, { strip: 0 });
-
-        const packageDir = join(extractDir, 'package');
-        if (!existsSync(packageDir)) {
-            throw new Error('下载的包结构异常');
-        }
-
-        // 返回清理函数
-        const cleanup = async () => {
-            if (existsSync(tempDir)) {
-                await rm(tempDir, { recursive: true, force: true });
-            }
-        };
-
-        return {
-            version: metaData.version,
-            packageDir: packageDir,
-            cleanup: cleanup
-        };
-    } catch (error) {
-        // 清理临时目录
-        if (existsSync(tempDir)) {
-            await rm(tempDir, { recursive: true, force: true });
-        }
-        throw error;
-    }
 }

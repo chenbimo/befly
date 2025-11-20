@@ -8,7 +8,6 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'pathe';
 import chalk from 'chalk';
 import { syncAllCommand } from '../commands/syncAll.js';
-import { initCommand } from '../commands/init.js';
 import { Logger } from '../util.js';
 
 const program = new Command();
@@ -17,20 +16,6 @@ const program = new Command();
 const packageJson = JSON.parse(await readFile(join(import.meta.dir, '..', 'package.json'), 'utf-8'));
 
 program.name('befly').description('Befly 框架命令行工具').version(packageJson.version, '-v, --version', '显示版本号');
-
-// init 命令
-program
-    .command('init')
-    .description('初始化项目')
-    .action(async () => {
-        try {
-            await initCommand();
-            process.exit(0);
-        } catch (error: any) {
-            Logger.error('命令执行失败:', error.message || error);
-            process.exit(1);
-        }
-    });
 
 // sync 命令
 program
