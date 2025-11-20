@@ -1,4 +1,5 @@
 import type { Plugin } from '../types/plugin.js';
+import { logContextStorage } from '../lib/logger.js';
 
 const plugin: Plugin = {
     pluginName: 'requestId',
@@ -14,7 +15,10 @@ const plugin: Plugin = {
         }
         ctx.corsHeaders['X-Request-ID'] = requestId;
 
-        await next();
+        // 在 AsyncLocalStorage 上下文中执行后续中间件
+        await logContextStorage.run({ requestId }, async () => {
+            await next();
+        });
     }
 };
 export default plugin;

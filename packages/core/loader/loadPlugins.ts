@@ -53,16 +53,31 @@ async function importAndRegisterPlugins(files: Array<{ filePath: string; fileNam
 /**
  * 排序插件（根据依赖关系）
  */
-function sortPlugins(plugins: Plugin[]): Plugin[] | false {
+export function sortPlugins(plugins: Plugin[]): Plugin[] | false {
     const result: Plugin[] = [];
     const visited = new Set<string>();
     const visiting = new Set<string>();
     const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.pluginName, p]));
     let isPass = true;
 
+    // 检查依赖是否存在
+    for (const plugin of plugins) {
+        if (plugin.after) {
+            for (const dep of plugin.after) {
+                if (!pluginMap[dep]) {
+                    Logger.error(`插件 ${plugin.pluginName} 依赖的插件 ${dep} 未找到`);
+                    isPass = false;
+                }
+            }
+        }
+    }
+
+    if (!isPass) return false;
+
     const visit = (name: string): void => {
         if (visited.has(name)) return;
         if (visiting.has(name)) {
+            Logger.error(`插件循环依赖: ${name}`);
             isPass = false;
             return;
         }

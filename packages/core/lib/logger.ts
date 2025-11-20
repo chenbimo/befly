@@ -5,8 +5,19 @@
 
 import { join } from 'pathe';
 import { appendFile, stat } from 'node:fs/promises';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { Env } from '../env.js';
 import type { LogLevel } from '../types/common.js';
+
+/**
+ * 日志上下文存储
+ */
+export interface LogContext {
+    requestId?: string;
+    [key: string]: any;
+}
+
+export const logContextStorage = new AsyncLocalStorage<LogContext>();
 
 /**
  * 日志消息类型
@@ -56,7 +67,12 @@ export class Logger {
 
         // 格式化日志消息
         const levelStr = level.toUpperCase().padStart(5);
-        const logMessage = `[${timestamp}] ${levelStr} - ${content}`;
+
+        // 获取上下文中的 requestId
+        const store = logContextStorage.getStore();
+        const requestId = store?.requestId ? ` [${store.requestId}]` : '';
+
+        const logMessage = `[${timestamp}]${requestId} ${levelStr} - ${content}`;
 
         // 控制台输出
         if (Env.LOG_TO_CONSOLE === 1) {

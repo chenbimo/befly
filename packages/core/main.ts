@@ -21,6 +21,8 @@ import { checkTable, checkApi, checkApp } from './check.js';
 import { Yes, No } from './response.js';
 import { calcPerfTime } from 'befly-util';
 
+export { loadPlugins } from './loader/loadPlugins.js';
+
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
 import type { Plugin } from './types/plugin.js';

@@ -84,6 +84,12 @@ export interface ApiRoute<T = any, R = any> {
     /** 必填字段（可选，默认 []） */
     required?: string[];
 
+    /** 缓存配置（可选，单位：秒） */
+    cache?: number;
+
+    /** 限流配置（可选，格式：次数/秒，如 "10/60" 表示 60秒内10次） */
+    rateLimit?: string;
+
     /** 路由路径（运行时生成） */
     route?: string;
 }

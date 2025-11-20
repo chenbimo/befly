@@ -8,6 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'pathe';
 import chalk from 'chalk';
 import { syncAllCommand } from '../commands/syncAll.js';
+import { listPluginsCommand } from '../commands/listPlugins.js';
 import { Logger } from '../util.js';
 
 const program = new Command();
@@ -28,6 +29,19 @@ program
         try {
             await syncAllCommand({ force: options.force || false });
             process.exit(0);
+        } catch (error: any) {
+            Logger.error('命令执行失败:', error.message || error);
+            process.exit(1);
+        }
+    });
+
+// plugin list 命令
+program
+    .command('plugin list')
+    .description('列出当前项目加载的所有插件')
+    .action(async () => {
+        try {
+            await listPluginsCommand();
         } catch (error: any) {
             Logger.error('命令执行失败:', error.message || error);
             process.exit(1);
