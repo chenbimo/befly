@@ -19,11 +19,6 @@ import { Logger, projectDir } from '../util.js';
 import type { SyncApiOptions, ApiInfo } from '../types.js';
 
 /**
- * Glob 实例（模块级常量，复用）
- */
-const apiGlob = new Bun.Glob('**/*.{ts,js}');
-
-/**
  * 从 API 文件中提取接口信息
  */
 async function extractApiInfo(filePath: string, apiRoot: string, type: 'app' | 'addon', addonName: string = '', addonTitle: string = ''): Promise<ApiInfo | null> {
@@ -79,15 +74,9 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
         // 扫描项目 API 文件
         const projectApiFiles: string[] = [];
         try {
-            for await (const file of apiGlob.scan({
-                cwd: projectApisDir,
-                absolute: true,
-                onlyFiles: true
-            })) {
-                if (file.endsWith('.d.ts')) {
-                    continue;
-                }
-                projectApiFiles.push(file);
+            const files = await utils.scanFiles(projectApisDir);
+            for (const { filePath } of files) {
+                projectApiFiles.push(filePath);
             }
         } catch (error: any) {
             Logger.warn(`扫描项目 API 目录失败: ${projectApisDir}`, error.message);
@@ -126,15 +115,9 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
             // 扫描 addon API 文件
             const addonApiFiles: string[] = [];
             try {
-                for await (const file of apiGlob.scan({
-                    cwd: addonApisDir,
-                    absolute: true,
-                    onlyFiles: true
-                })) {
-                    if (file.endsWith('.d.ts')) {
-                        continue;
-                    }
-                    addonApiFiles.push(file);
+                const files = await utils.scanFiles(addonApisDir);
+                for (const { filePath } of files) {
+                    addonApiFiles.push(filePath);
                 }
             } catch (error: any) {
                 Logger.warn(`扫描 addon API 目录失败: ${addonApisDir}`, error.message);

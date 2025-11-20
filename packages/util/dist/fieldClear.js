@@ -33,13 +33,13 @@ export function fieldClear(data, options = {}) {
         return data
             .map((item) => (isObject(item) ? filterObj(item) : item))
             .filter((item) => {
-                if (isObject(item)) {
-                    // 只保留有内容的对象
-                    return Object.keys(item).length > 0;
-                }
-                // 原始值直接保留
-                return true;
-            });
+            if (isObject(item)) {
+                // 只保留有内容的对象
+                return Object.keys(item).length > 0;
+            }
+            // 原始值直接保留
+            return true;
+        });
     }
     if (isObject(data)) {
         return filterObj(data);

@@ -28,5 +28,8 @@
     "devDependencies": {
         "@types/bun": "latest",
         "typescript": "^5.7.2"
+    },
+    "dependencies": {
+        "pathe": "^2.0.3"
     }
 }

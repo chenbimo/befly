@@ -9,7 +9,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from './lib/logger.js';
 import { projectTableDir, projectApiDir, projectDir } from './paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from './util.js';
+import { scanAddons, getAddonDir, addonDirExists, scanFiles } from './util.js';
 import type { FieldDefinition } from './types/common.d.ts';
 
 /**
@@ -22,6 +22,8 @@ interface TableFileInfo {
     type: 'project' | 'addon';
     /** 如果是 addon 类型，记录 addon 名称 */
     addonName?: string;
+    /** 类型名称（用于日志） */
+    typeName: string;
 }
 
 /**
@@ -59,22 +61,17 @@ const MAX_VARCHAR_LENGTH = 65535;
  */
 export const checkTable = async function (): Promise<boolean> {
     try {
-        const tablesGlob = new Bun.Glob('*.json');
-
         // 收集所有表文件
         const allTableFiles: TableFileInfo[] = [];
         let hasError = false;
 
         // 收集项目表字段定义文件（如果目录存在）
         if (existsSync(projectTableDir)) {
-            for await (const file of tablesGlob.scan({
-                cwd: projectTableDir,
-                absolute: true,
-                onlyFiles: true
-            })) {
+            const files = await scanFiles(projectTableDir, '*.json', false);
+            for (const { filePath } of files) {
                 allTableFiles.push({
-                    file: file,
-                    typeCode: 'project',
+                    file: filePath,
+                    type: 'project',
                     typeName: '项目'
                 });
             }
@@ -90,14 +87,11 @@ export const checkTable = async function (): Promise<boolean> {
                 continue;
             }
 
-            for await (const file of tablesGlob.scan({
-                cwd: addonTablesDir,
-                absolute: true,
-                onlyFiles: true
-            })) {
+            const files = await scanFiles(addonTablesDir, '*.json', false);
+            for (const { filePath } of files) {
                 allTableFiles.push({
-                    file: file,
-                    typeCode: 'addon',
+                    file: filePath,
+                    type: 'addon',
                     typeName: `组件${addonName}`,
                     addonName: addonName
                 });
@@ -255,24 +249,17 @@ export const checkTable = async function (): Promise<boolean> {
  */
 export const checkApi = async function (): Promise<boolean> {
     try {
-        const apiGlob = new Bun.Glob('**/*.{ts,js}');
-
         // 收集所有 API 文件
-        const allApiFiles: Array<{ file: string; displayName: string }> = [];
+        const allApiFiles: Array<{ file: string; displayName: string; apiPath: string }> = [];
 
         // 收集项目 API 文件
         if (existsSync(projectApiDir)) {
-            for await (const file of apiGlob.scan({
-                cwd: projectApiDir,
-                onlyFiles: true,
-                absolute: true
-            })) {
-                if (file.endsWith('.d.ts')) {
-                    continue;
-                }
+            const files = await scanFiles(projectApiDir);
+            for (const { filePath, relativePath } of files) {
                 allApiFiles.push({
-                    file: file,
-                    displayName: '用户'
+                    file: filePath,
+                    displayName: '用户',
+                    apiPath: relativePath
                 });
             }
         }
@@ -283,28 +270,19 @@ export const checkApi = async function (): Promise<boolean> {
             if (!addonDirExists(addon, 'apis')) continue;
             const addonApiDir = getAddonDir(addon, 'apis');
 
-            for await (const file of apiGlob.scan({
-                cwd: addonApiDir,
-                onlyFiles: true,
-                absolute: true
-            })) {
-                if (file.endsWith('.d.ts')) {
-                    continue;
-                }
+            const files = await scanFiles(addonApiDir);
+            for (const { filePath, relativePath } of files) {
                 allApiFiles.push({
-                    file: file,
-                    displayName: `组件${addon}`
+                    file: filePath,
+                    displayName: `组件${addon}`,
+                    apiPath: relativePath
                 });
             }
         }
 
         // 合并进行验证逻辑
         for (const item of allApiFiles) {
-            const fileName = basename(item.file).replace(/\.(ts|js)$/, '');
-            const apiPath = relative(item.displayName === '用户' ? projectApiDir : getAddonDir(item.displayName.replace('组件', ''), 'apis'), item.file).replace(/\.(ts|js)$/, '');
-
-            // 跳过以下划线开头的文件
-            if (apiPath.indexOf('_') !== -1) continue;
+            const { apiPath } = item;
 
             try {
                 // Windows 下路径需要转换为正斜杠格式

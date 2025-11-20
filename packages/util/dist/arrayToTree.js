@@ -7,7 +7,8 @@ export function arrayToTree(items, options = {}) {
         // 用 Object.is 判断，兼容 null/undefined/0
         if (Object.is(pid, rootPid)) {
             let node = { ...item };
-            if (mapFn) node = mapFn(node);
+            if (mapFn)
+                node = mapFn(node);
             const children = arrayToTree(items, {
                 ...options,
                 rootPid: node[idField]

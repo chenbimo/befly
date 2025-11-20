@@ -7,7 +7,7 @@ import { relative, basename, join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { isPlainObject } from 'es-toolkit/compat';
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime } from '../util.js';
+import { calcPerfTime, scanFiles } from '../util.js';
 import { projectApiDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { ApiRoute } from '../types/api.js';
@@ -51,35 +51,10 @@ const DEFAULT_API_FIELDS = {
 } as const;
 
 /**
- * 扫描指定目录下的 API 文件
- */
-async function scanApiFiles(dir: string): Promise<Array<{ filePath: string; apiPath: string }>> {
-    if (!existsSync(dir)) return [];
-
-    const glob = new Bun.Glob('**/*.{ts,js}');
-    const files: Array<{ filePath: string; apiPath: string }> = [];
-
-    for await (const file of glob.scan({
-        cwd: dir,
-        onlyFiles: true,
-        absolute: true
-    })) {
-        if (file.endsWith('.d.ts')) continue;
-
-        const apiPath = relative(dir, file).replace(/\.(ts|js)$/, '');
-        // 检查路径中是否包含下划线开头的目录或文件
-        if (apiPath.split(/[\\/]/).some((part) => part.startsWith('_'))) continue;
-
-        files.push({ filePath: file, apiPath });
-    }
-    return files;
-}
-
-/**
  * 处理 API 组（导入与初始化）
  */
-async function processApiGroup(apiRoutes: Map<string, ApiRoute>, files: Array<{ filePath: string; apiPath: string }>, routePrefix: string, displayNameGenerator: (apiPath: string) => string): Promise<void> {
-    for (const { filePath, apiPath } of files) {
+async function processApiGroup(apiRoutes: Map<string, ApiRoute>, files: Array<{ filePath: string; relativePath: string }>, routePrefix: string, displayNameGenerator: (apiPath: string) => string): Promise<void> {
+    for (const { filePath, relativePath } of files) {
         try {
             // Windows 下路径需要转换为正斜杠格式
             const normalizedFilePath = filePath.replace(/\\/g, '/');
@@ -94,11 +69,11 @@ async function processApiGroup(apiRoutes: Map<string, ApiRoute>, files: Array<{ 
             api.required = api.required || [];
 
             // 构建路由
-            api.route = `${api.method.toUpperCase()}/api/${routePrefix ? routePrefix + '/' : ''}${apiPath}`;
+            api.route = `${api.method.toUpperCase()}/api/${routePrefix ? routePrefix + '/' : ''}${relativePath}`;
             apiRoutes.set(api.route, api);
         } catch (error: any) {
-            const label = displayNameGenerator(apiPath);
-            Logger.error(`[${label}] 接口 ${apiPath} 加载失败`, error);
+            const label = displayNameGenerator(relativePath);
+            Logger.error(`[${label}] 接口 ${relativePath} 加载失败`, error);
             process.exit(1);
         }
     }
@@ -113,7 +88,7 @@ export async function loadApis(apiRoutes: Map<string, ApiRoute>): Promise<void> 
         const loadStartTime = Bun.nanoseconds();
 
         // 1. 加载用户 API
-        const userApiFiles = await scanApiFiles(projectApiDir);
+        const userApiFiles = await scanFiles(projectApiDir);
         await processApiGroup(apiRoutes, userApiFiles, '', () => '用户');
 
         // 2. 加载组件 API
@@ -122,7 +97,7 @@ export async function loadApis(apiRoutes: Map<string, ApiRoute>): Promise<void> 
             if (!addonDirExists(addon, 'apis')) continue;
 
             const addonApiDir = getAddonDir(addon, 'apis');
-            const addonApiFiles = await scanApiFiles(addonApiDir);
+            const addonApiFiles = await scanFiles(addonApiDir);
 
             await processApiGroup(apiRoutes, addonApiFiles, `addon/${addon}`, () => `组件${addon}`);
         }

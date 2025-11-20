@@ -7,33 +7,11 @@ import { basename } from 'pathe';
 import { existsSync } from 'node:fs';
 import { camelCase } from 'es-toolkit/string';
 import { Logger } from '../lib/logger.js';
-import { calcPerfTime } from '../util.js';
+import { calcPerfTime, scanFiles } from '../util.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
-
-/**
- * 扫描指定目录下的插件文件
- */
-async function scanPluginFiles(dir: string): Promise<Array<{ filePath: string; fileName: string }>> {
-    const glob = new Bun.Glob('*.{ts,js}');
-    const files: Array<{ filePath: string; fileName: string }> = [];
-
-    for await (const file of glob.scan({
-        cwd: dir,
-        onlyFiles: true,
-        absolute: true
-    })) {
-        if (file.endsWith('.d.ts')) continue;
-        const fileName = basename(file).replace(/\.(ts|js)$/, '');
-        if (fileName.startsWith('_')) continue;
-
-        files.push({ filePath: file, fileName: fileName });
-    }
-
-    return files;
-}
 
 /**
  * 统一导入并注册插件
@@ -100,7 +78,7 @@ function sortPlugins(plugins: Plugin[]): Plugin[] | false {
  * 扫描核心插件
  */
 async function scanCorePlugins(loadedPluginNames: Set<string>): Promise<Plugin[]> {
-    const files = await scanPluginFiles(corePluginDir);
+    const files = await scanFiles(corePluginDir, '*.{ts,js}');
     return importAndRegisterPlugins(
         files,
         loadedPluginNames,
@@ -120,7 +98,7 @@ async function scanAddonPlugins(loadedPluginNames: Set<string>): Promise<Plugin[
         if (!addonDirExists(addon, 'plugins')) continue;
 
         const addonPluginsDir = getAddonDir(addon, 'plugins');
-        const files = await scanPluginFiles(addonPluginsDir);
+        const files = await scanFiles(addonPluginsDir, '*.{ts,js}');
 
         const addonPlugins = await importAndRegisterPlugins(
             files,
@@ -146,7 +124,7 @@ async function scanUserPlugins(loadedPluginNames: Set<string>): Promise<Plugin[]
         return [];
     }
 
-    const files = await scanPluginFiles(projectPluginDir);
+    const files = await scanFiles(projectPluginDir, '*.{ts,js}');
     return importAndRegisterPlugins(
         files,
         loadedPluginNames,

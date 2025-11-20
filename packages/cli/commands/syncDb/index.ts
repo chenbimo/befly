@@ -7,7 +7,7 @@
  * - 提供统计信息和错误处理
  */
 
-import { basename, resolve } from 'pathe';
+import { resolve } from 'pathe';
 import { existsSync } from 'node:fs';
 import { snakeCase } from 'es-toolkit/string';
 import { Env, Database, RedisHelper, checkTable, utils } from 'befly';
@@ -52,7 +52,6 @@ export const SyncDb = async (): Promise<void> => {
         await Database.connectRedis();
 
         // 扫描表定义文件
-        const tablesGlob = new Bun.Glob('*.json');
         const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string; addonNameSnake?: string }> = [];
 
         // 1. 项目表（无前缀）- 如果 tables 目录存在
@@ -79,18 +78,9 @@ export const SyncDb = async (): Promise<void> => {
             const { path: dir, type, addonName } = dirConfig;
             const dirType = type === 'addon' ? `组件${addonName}` : '项目';
 
-            for await (const file of tablesGlob.scan({
-                cwd: dir,
-                absolute: true,
-                onlyFiles: true
-            })) {
-                const fileName = basename(file, '.json');
+            const files = await utils.scanFiles(dir, '*.json');
 
-                // 跳过以下划线开头的文件（这些是公共字段规则，不是表定义）
-                if (fileName.startsWith('_')) {
-                    continue;
-                }
-
+            for (const { filePath: file, fileName } of files) {
                 // 确定表名：
                 // - addon 表：{addonName}_{表名}
                 //   例如：admin addon 的 user.json → admin_user

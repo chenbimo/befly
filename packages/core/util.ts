@@ -1,14 +1,18 @@
 ﻿import fs from 'node:fs';
 import { join } from 'pathe';
-import { readdirSync, statSync, readFileSync, existsSync } from 'node:fs';
-import { isEmpty, isPlainObject } from 'es-toolkit/compat';
-import { snakeCase, camelCase, kebabCase } from 'es-toolkit/string';
-import { Env } from './env.js';
+import { readdirSync, statSync, existsSync } from 'node:fs';
+import { isPlainObject } from 'es-toolkit/compat';
+import { snakeCase, camelCase } from 'es-toolkit/string';
 import { Logger } from './lib/logger.js';
-import { projectDir, projectAddonsDir } from './paths.js';
+import { projectDir } from './paths.js';
 import type { KeyValue } from './types/common.js';
-import type { JwtPayload, JwtSignOptions, JwtVerifyOptions } from './types/jwt';
 import type { Plugin } from './types/plugin.js';
+
+// ========================================
+// 文件扫描工具
+// ========================================
+
+export { scanFiles, type ScanFileResult } from 'befly-util';
 
 // ========================================
 // API 响应工具
