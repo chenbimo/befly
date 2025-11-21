@@ -18,7 +18,9 @@ import { existsSync } from 'node:fs';
 import { Database } from '../lib/database.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir } from 'befly-util';
-import { Logger, projectDir } from './util.js';
+import { Logger } from '../lib/logger.js';
+
+const projectDir = process.cwd();
 
 import type { SyncMenuOptions, MenuConfig } from '../types.js';
 
@@ -41,7 +43,7 @@ async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
 
         return content.default;
     } catch (error: any) {
-        Logger.warn(`读取菜单配置失败 ${filePath}:`, error.message);
+        Logger.warn(`读取菜单配置失败 ${filePath}: ${error.message}`);
         return [];
     }
 }
@@ -224,7 +226,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
         try {
             await syncMenuRecursive(helper, menu, 0, existingMenuMap, 1);
         } catch (error: any) {
-            Logger.error(`同步菜单 "${menu.name}" 失败:`, error.message || String(error));
+            Logger.error(`同步菜单 "${menu.name}" 失败`, error.message || String(error));
             throw error;
         }
     }
@@ -256,7 +258,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
 export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<void> {
     try {
         if (options.plan) {
-            Logger.info('[计划] 同步菜单配置到数据库（plan 模式不执行）');
+            Logger.debug('[计划] 同步菜单配置到数据库（plan 模式不执行）');
             return;
         }
 
@@ -294,7 +296,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         const exists = await helper.tableExists('addon_admin_menu');
 
         if (!exists) {
-            Logger.info('表 addon_admin_menu 不存在，跳过菜单同步（需要安装 addon-admin 组件）');
+            Logger.debug('表 addon_admin_menu 不存在，跳过菜单同步（需要安装 addon-admin 组件）');
             return;
         }
 
@@ -319,10 +321,10 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
             const redisHelper = new RedisHelper();
             await redisHelper.setObject('menus:all', allMenusData);
         } catch (error: any) {
-            Logger.warn('Redis 缓存菜单数据失败:', error.message);
+            Logger.warn(`Redis 缓存菜单数据失败: ${error.message}`);
         }
     } catch (error: any) {
-        Logger.error('菜单同步失败:', error);
+        Logger.error('菜单同步失败', error);
         throw error;
     } finally {
         await Database?.disconnect();

@@ -20,6 +20,7 @@ import { Yes, No } from './response.js';
 import { calcPerfTime } from 'befly-util';
 import { defaultOptions } from './config/defaults.js';
 import { syncAllCommand } from './sync/syncAll.js';
+import { defu } from 'defu';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';

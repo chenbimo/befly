@@ -14,7 +14,9 @@ import { Database } from '../../lib/database.js';
 import { RedisHelper } from '../../lib/redisHelper.js';
 import { checkTable } from '../../check.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
-import { Logger, projectDir } from '../util.js';
+import { Logger } from '../../lib/logger.js';
+
+const projectDir = process.cwd();
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -121,7 +123,7 @@ export const SyncDb = async (): Promise<void> => {
 
         // 清理 Redis 缓存（如果有表被处理）
         if (processedTables.length > 0) {
-            Logger.info(`🧹 清理 ${processedTables.length} 个表的字段缓存...`);
+            Logger.debug(`🧹 清理 ${processedTables.length} 个表的字段缓存...`);
 
             const redisHelper = new RedisHelper();
             for (const tableName of processedTables) {
@@ -129,11 +131,11 @@ export const SyncDb = async (): Promise<void> => {
                 try {
                     await redisHelper.del(cacheKey);
                 } catch (error: any) {
-                    Logger.warn(`清理表 ${tableName} 的缓存失败:`, error.message);
+                    Logger.warn(`清理表 ${tableName} 的缓存失败: ${error.message}`);
                 }
             }
 
-            Logger.info(`✓ 已清理表字段缓存`);
+            Logger.debug(`✓ 已清理表字段缓存`);
         }
     } catch (error: any) {
         Logger.error(`数据库同步失败`, error);
@@ -143,14 +145,14 @@ export const SyncDb = async (): Promise<void> => {
             try {
                 await Database.disconnectSql();
             } catch (error: any) {
-                Logger.warn('关闭数据库连接时出错:', error.message);
+                Logger.warn(`关闭数据库连接时出错: ${error.message}`);
             }
         }
 
         try {
             await Database.disconnectRedis();
         } catch (error: any) {
-            Logger.warn('关闭 Redis 连接时出错:', error.message);
+            Logger.warn(`关闭 Redis 连接时出错: ${error.message}`);
         }
     }
 };

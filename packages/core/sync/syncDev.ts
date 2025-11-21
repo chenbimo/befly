@@ -9,7 +9,7 @@
 
 import { Database } from '../lib/database.js';
 import { Cipher } from '../lib/cipher.js';
-import { Logger } from './util.js';
+import { Logger } from '../lib/logger.js';
 import type { SyncDevOptions, SyncDevStats } from './types.js';
 
 /**
@@ -18,7 +18,7 @@ import type { SyncDevOptions, SyncDevStats } from './types.js';
 export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void> {
     try {
         if (options.plan) {
-            Logger.info('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
+            Logger.debug('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
             return;
         }
 
@@ -198,7 +198,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             // 忽略缓存错误
         }
     } catch (error: any) {
-        Logger.error('同步开发者管理员失败:', error);
+        Logger.error('同步开发者管理员失败', error);
         throw error;
     } finally {
         await Database?.disconnect();

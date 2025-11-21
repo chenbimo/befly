@@ -6,7 +6,7 @@
  * - 应用表结构变更计划
  */
 
-import { Logger } from '../util.js';
+import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
@@ -132,12 +132,12 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     // SQLite: 仅支持部分 ALTER；需要时走重建
     if (IS_SQLITE) {
         if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
-            if (IS_PLAN) Logger.info(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
+            if (IS_PLAN) Logger.debug(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
             else await rebuildSqliteTable(sql, tableName, fields);
         } else {
             for (const c of plan.addClauses) {
                 const stmt = `ALTER TABLE "${tableName}" ${c}`;
-                if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+                if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
                 else await sql.unsafe(stmt);
             }
         }
@@ -145,7 +145,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
             const stmt = buildAlterTableSQL(tableName, clauses);
-            if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+            if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
             else if (IS_MYSQL) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
         }
@@ -157,7 +157,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
         } else {
             const stmt = buildAlterTableSQL(tableName, plan.defaultClauses);
-            if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
+            if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
             else if (IS_MYSQL) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
         }
@@ -167,17 +167,17 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     for (const act of plan.indexActions) {
         const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
         if (IS_PLAN) {
-            Logger.info(`[计划] ${stmt}`);
+            Logger.debug(`[计划] ${stmt}`);
         } else {
             try {
                 await sql.unsafe(stmt);
                 if (act.action === 'create') {
-                    Logger.info(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+                    Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
                 } else {
-                    Logger.info(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+                    Logger.debug(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
                 }
             } catch (error: any) {
-                Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败:`, error);
+                Logger.error(`${act.action === 'create' ? '创建' : '删除'}索引失败`, error);
                 Logger.warn(`表名: ${tableName}, 索引名: ${act.indexName}, 字段: ${act.fieldName}`);
                 throw error;
             }

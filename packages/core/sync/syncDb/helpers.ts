@@ -8,7 +8,7 @@
  */
 
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
-import { Logger } from '../util.js';
+import { Logger } from '../../lib/logger.js';
 
 /**
  * 根据数据库类型引用标识符
@@ -168,7 +168,7 @@ export function escapeComment(str: string): string {
  * @param changeLabel - 变更类型的中文标签
  */
 export function logFieldChange(tableName: string, fieldName: string, changeType: string, oldValue: any, newValue: any, changeLabel: string): void {
-    Logger.info(`  ~ 修改 ${fieldName} ${changeLabel}: ${oldValue} -> ${newValue}`);
+    Logger.debug(`  ~ 修改 ${fieldName} ${changeLabel}: ${oldValue} -> ${newValue}`);
 }
 
 /**

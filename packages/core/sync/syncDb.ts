@@ -4,7 +4,7 @@
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { Logger } from './util.js';
+import { Logger } from '../lib/logger.js';
 import { SyncDb } from './syncDb/index.js';
 import type { SyncDbOptions } from './types.js';
 
@@ -26,7 +26,7 @@ export async function syncDbCommand(options: SyncDbOptions): Promise<void> {
         // 执行同步
         await SyncDb();
     } catch (error: any) {
-        Logger.error('数据库同步失败:', error);
+        Logger.error('数据库同步失败', error);
         throw error;
     }
 }

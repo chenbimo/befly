@@ -16,7 +16,9 @@ import { Database } from '../lib/database.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 
-import { Logger, projectDir } from './util.js';
+import { Logger } from '../lib/logger.js';
+
+const projectDir = process.cwd();
 
 import type { SyncApiOptions, ApiInfo } from './types.js';
 
@@ -81,7 +83,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
                 projectApiFiles.push(filePath);
             }
         } catch (error: any) {
-            Logger.warn(`扫描项目 API 目录失败: ${projectApisDir}`, error.message);
+            Logger.warn(`扫描项目 API 目录失败: ${projectApisDir} - ${error.message}`);
         }
 
         for (const filePath of projectApiFiles) {
@@ -122,7 +124,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
                     addonApiFiles.push(filePath);
                 }
             } catch (error: any) {
-                Logger.warn(`扫描 addon API 目录失败: ${addonApisDir}`, error.message);
+                Logger.warn(`扫描 addon API 目录失败: ${addonApisDir} - ${error.message}`);
             }
 
             for (const filePath of addonApiFiles) {
@@ -214,7 +216,7 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
 export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void> {
     try {
         if (options.plan) {
-            Logger.info('[计划] 同步 API 接口到数据库（plan 模式不执行）');
+            Logger.debug('[计划] 同步 API 接口到数据库（plan 模式不执行）');
             return;
         }
 
@@ -229,7 +231,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         const exists = await helper.tableExists('addon_admin_api');
 
         if (!exists) {
-            Logger.info('表 addon_admin_api 不存在，跳过 API 同步（需要安装 addon-admin 组件）');
+            Logger.debug('表 addon_admin_api 不存在，跳过 API 同步（需要安装 addon-admin 组件）');
             return;
         }
 

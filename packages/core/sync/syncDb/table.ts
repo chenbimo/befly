@@ -8,7 +8,7 @@
  */
 
 import { snakeCase } from 'es-toolkit/string';
-import { Logger } from '../util.js';
+import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
@@ -122,7 +122,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
                     if (hasTypeChange) {
                         if (IS_PG && isPgCompatibleTypeChange(existingColumns[dbFieldName].type, typeMapping[fieldDef.type].toLowerCase())) {
-                            Logger.info(`[PG兼容类型变更] ${tableName}.${dbFieldName} ${existingColumns[dbFieldName].type} -> ${typeMapping[fieldDef.type].toLowerCase()} 允许执行`);
+                            Logger.debug(`[PG兼容类型变更] ${tableName}.${dbFieldName} ${existingColumns[dbFieldName].type} -> ${typeMapping[fieldDef.type].toLowerCase()} 允许执行`);
                         }
                     }
 
@@ -132,7 +132,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             }
         } else {
             const lenPart = isStringOrArrayType(fieldDef.type) ? ` 长度:${parseInt(String(fieldDef.max))}` : '';
-            Logger.info(`  + 新增字段 ${dbFieldName} (${fieldDef.type}${lenPart})`);
+            Logger.debug(`  + 新增字段 ${dbFieldName} (${fieldDef.type}${lenPart})`);
             addClauses.push(generateDDLClause(fieldKey, fieldDef, true));
             changed = true;
         }

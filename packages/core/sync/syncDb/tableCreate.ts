@@ -9,7 +9,7 @@
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
 import { snakeCase } from 'es-toolkit/string';
-import { Logger } from '../util.js';
+import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
@@ -40,7 +40,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     for (const [name, comment] of systemComments) {
         const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${comment}'`;
         if (IS_PLAN) {
-            Logger.info(`[计划] ${stmt}`);
+            Logger.debug(`[计划] ${stmt}`);
         } else {
             await sql.unsafe(stmt);
         }
@@ -54,7 +54,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
         const { name: fieldName } = fieldDef;
         const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS '${fieldName}'`;
         if (IS_PLAN) {
-            Logger.info(`[计划] ${stmt}`);
+            Logger.debug(`[计划] ${stmt}`);
         } else {
             await sql.unsafe(stmt);
         }
@@ -76,7 +76,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     for (const sysField of systemIndexFields) {
         const stmt = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
         if (IS_PLAN) {
-            Logger.info(`[计划] ${stmt}`);
+            Logger.debug(`[计划] ${stmt}`);
         } else {
             indexTasks.push(sql.unsafe(stmt));
         }
@@ -90,7 +90,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
         if (fieldDef.index === true) {
             const stmt = buildIndexSQL(tableName, `idx_${dbFieldName}`, dbFieldName, 'create');
             if (IS_PLAN) {
-                Logger.info(`[计划] ${stmt}`);
+                Logger.debug(`[计划] ${stmt}`);
             } else {
                 indexTasks.push(sql.unsafe(stmt));
             }
@@ -128,7 +128,7 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
         )`;
 
     if (IS_PLAN) {
-        Logger.info(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
+        Logger.debug(`[计划] ${createSQL.replace(/\n+/g, ' ')}`);
     } else {
         await sql.unsafe(createSQL);
     }
