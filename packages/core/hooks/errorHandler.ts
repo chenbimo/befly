@@ -1,10 +1,10 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { Logger } from '../lib/logger.js';
 import { No } from '../response.js';
 
-const plugin: Plugin = {
-    pluginName: 'errorHandler',
-    onRequest: async (befly, ctx, next) => {
+const hook: Hook = {
+    name: 'errorHandler',
+    handler: async (befly, ctx, next) => {
         try {
             await next();
         } catch (err: any) {
@@ -20,4 +20,4 @@ const plugin: Plugin = {
         }
     }
 };
-export default plugin;
+export default hook;

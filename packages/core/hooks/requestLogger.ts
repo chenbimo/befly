@@ -1,4 +1,4 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { Logger } from '../lib/logger.js';
 import type { RequestContext } from '../types/context.js';
 
@@ -11,10 +11,10 @@ function logRequest(apiPath: string, ctx: RequestContext): void {
     Logger.info(`[${ctx.request.method}] ${apiPath} ${user} ${duration}ms`);
 }
 
-const plugin: Plugin = {
-    pluginName: 'requestLogger',
+const hook: Hook = {
+    name: 'requestLogger',
     after: ['parser'],
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         if (ctx.api) {
             const apiPath = `${ctx.request.method}${new URL(ctx.request.url).pathname}`;
             logRequest(apiPath, ctx);
@@ -22,4 +22,4 @@ const plugin: Plugin = {
         await next();
     }
 };
-export default plugin;
+export default hook;

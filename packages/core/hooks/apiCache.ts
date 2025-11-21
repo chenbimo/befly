@@ -1,4 +1,4 @@
-import type { BeflyPlugin } from '../types';
+import type { Hook } from '../types/hook.js';
 import { Logger } from '../lib/logger';
 
 /**
@@ -9,19 +9,12 @@ import { Logger } from '../lib/logger';
  * 2. 仅缓存 GET 请求或明确配置了 cache 的接口
  * 3. 缓存键生成规则：api_cache:{route}:{md5(body)}
  */
-export default {
+const hook: Hook = {
     name: 'apiCache',
     // 必须在解析器之后，但在业务逻辑之前
     after: ['parser', 'auth'],
 
-    init: (befly) => {
-        // 确保 Redis 插件已加载
-        if (!befly.redis) {
-            Logger.warn('ApiCache plugin requires Redis plugin to be loaded first.');
-        }
-    },
-
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         const { api } = ctx;
 
         // 1. 检查是否启用缓存
@@ -59,17 +52,25 @@ export default {
         // 4. 执行后续逻辑
         await next();
 
-        // 5. 写入缓存
-        // 只有成功响应（code === 0）才缓存
-        if (ctx.result && ctx.result.code === 0) {
+        // 5. 记录需要缓存
+        ctx.cache = {
+            key: cacheKey,
+            ttl: api.cache
+        };
+
+        await next();
+
+        // 6. 响应后写入缓存 (在 responseFormatter 之后，或者在业务逻辑返回后)
+        // 注意：这里 next() 返回后，ctx.result 应该已经被业务逻辑填充
+        if (ctx.result !== undefined && ctx.cache) {
             try {
-                // 异步写入，不阻塞响应
-                befly.redis.set(cacheKey, JSON.stringify(ctx.result), 'EX', api.cache).catch((e) => {
-                    Logger.warn(`[ApiCache] Redis set error: ${e.message}`);
-                });
-            } catch (e) {
-                Logger.warn(`[ApiCache] Serialize error: ${e.message}`);
+                const cacheValue = JSON.stringify(ctx.result);
+                await befly.redis.setex(ctx.cache.key, ctx.cache.ttl, cacheValue);
+            } catch (err) {
+                Logger.error('[ApiCache] Set cache error:', err);
             }
         }
     }
-} as BeflyPlugin;
+};
+
+export default hook;

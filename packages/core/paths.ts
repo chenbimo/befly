@@ -40,6 +40,16 @@ export const coreCheckDir = join(__dirname, 'checks');
 export const corePluginDir = join(__dirname, 'plugins');
 
 /**
+ * Core 框架钩子目录
+ * @description packages/core/hooks/
+ * @usage 存放内置钩子（auth, cors, parser 等）
+ */
+export const coreHookDir = join(__dirname, 'hooks');
+
+/**
+ * Core 框架 API 目录
+
+/**
  * Core 框架 API 目录
  * @description packages/core/apis/
  * @usage 存放框架级别的 API 接口
@@ -75,6 +85,16 @@ export const projectCheckDir = join(projectDir, 'checks');
  * @usage 存放用户自定义插件
  */
 export const projectPluginDir = join(projectDir, 'plugins');
+
+/**
+ * 项目钩子目录
+ * @description {projectDir}/hooks/
+ * @usage 存放用户自定义钩子
+ */
+export const projectHookDir = join(projectDir, 'hooks');
+
+/**
+ * 项目 API 目录
 
 /**
  * 项目 API 目录

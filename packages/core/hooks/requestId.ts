@@ -1,10 +1,10 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { logContextStorage } from '../lib/logger.js';
 
-const plugin: Plugin = {
-    pluginName: 'requestId',
+const hook: Hook = {
+    name: 'requestId',
     after: ['errorHandler'],
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         // 生成唯一请求 ID
         const requestId = crypto.randomUUID();
         ctx.requestId = requestId;
@@ -21,4 +21,4 @@ const plugin: Plugin = {
         });
     }
 };
-export default plugin;
+export default hook;

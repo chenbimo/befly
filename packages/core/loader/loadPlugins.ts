@@ -1,9 +1,8 @@
 /**
- * 插件加载器
+ * 插件和钩子加载器
  * 负责扫描和初始化所有插件（核心、组件、用户）
  */
 
-import { basename } from 'pathe';
 import { existsSync } from 'node:fs';
 import { camelCase } from 'es-toolkit/string';
 import { Logger } from '../lib/logger.js';
@@ -12,34 +11,50 @@ import { scanFiles } from 'befly-util';
 import { corePluginDir, projectPluginDir } from '../paths.js';
 import { scanAddons, getAddonDir, addonDirExists } from 'befly-util';
 import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import type { BeflyContext } from '../types/befly.js';
 
+// ==================== 通用工具函数 ====================
+
 /**
- * 统一导入并注册插件
+ * 统一导入并注册模块（插件或钩子）
  */
-async function importAndRegisterPlugins(files: Array<{ filePath: string; fileName: string }>, loadedPluginNames: Set<string>, nameGenerator: (fileName: string, filePath: string) => string, errorLabelGenerator: (fileName: string, filePath: string) => string, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
-    const plugins: Plugin[] = [];
+export async function importAndRegister<T extends Plugin | Hook>(files: Array<{ filePath: string; fileName: string }>, loadedNames: Set<string>, nameGenerator: (fileName: string, filePath: string) => string, errorLabelGenerator: (fileName: string, filePath: string) => string, config?: Record<string, Record<string, any>>): Promise<T[]> {
+    const items: T[] = [];
 
     for (const { filePath, fileName } of files) {
-        const pluginName = nameGenerator(fileName, filePath);
+        const name = nameGenerator(fileName, filePath);
 
-        if (loadedPluginNames.has(pluginName)) {
+        if (loadedNames.has(name)) {
             continue;
         }
 
         try {
             const normalizedFilePath = filePath.replace(/\\/g, '/');
-            const pluginImport = await import(normalizedFilePath);
-            const plugin = pluginImport.default;
-            plugin.pluginName = pluginName;
+            const moduleImport = await import(normalizedFilePath);
+            const item = moduleImport.default;
 
-            // 注入配置
-            if (pluginsConfig && pluginsConfig[pluginName]) {
-                plugin.config = pluginsConfig[pluginName];
+            // 兼容直接导出函数的情况
+            if (typeof item === 'function') {
+                // 如果是函数，包装成对象
+                // 注意：这里无法获取 after 依赖，除非函数上有静态属性
+                // 假设直接导出函数没有依赖
+                // @ts-ignore
+                items.push({
+                    name: name,
+                    handler: item,
+                    config: config?.[name] || {}
+                });
+            } else {
+                item.name = name;
+                // 注入配置
+                if (config && config[name]) {
+                    item.config = config[name];
+                }
+                items.push(item);
             }
 
-            plugins.push(plugin);
-            loadedPluginNames.add(pluginName);
+            loadedNames.add(name);
         } catch (err: any) {
             const label = errorLabelGenerator(fileName, filePath);
             Logger.error(`${label} 导入失败`, err);
@@ -47,25 +62,25 @@ async function importAndRegisterPlugins(files: Array<{ filePath: string; fileNam
         }
     }
 
-    return plugins;
+    return items;
 }
 
 /**
- * 排序插件（根据依赖关系）
+ * 排序模块（根据依赖关系）
  */
-export function sortPlugins(plugins: Plugin[]): Plugin[] | false {
-    const result: Plugin[] = [];
+export function sortModules<T extends { name?: string; after?: string[] }>(modules: T[]): T[] | false {
+    const result: T[] = [];
     const visited = new Set<string>();
     const visiting = new Set<string>();
-    const pluginMap: Record<string, Plugin> = Object.fromEntries(plugins.map((p) => [p.pluginName, p]));
+    const moduleMap: Record<string, T> = Object.fromEntries(modules.map((m) => [m.name!, m]));
     let isPass = true;
 
     // 检查依赖是否存在
-    for (const plugin of plugins) {
-        if (plugin.after) {
-            for (const dep of plugin.after) {
-                if (!pluginMap[dep]) {
-                    Logger.error(`插件 ${plugin.pluginName} 依赖的插件 ${dep} 未找到`);
+    for (const module of modules) {
+        if (module.after) {
+            for (const dep of module.after) {
+                if (!moduleMap[dep]) {
+                    Logger.error(`模块 ${module.name} 依赖的模块 ${dep} 未找到`);
                     isPass = false;
                 }
             }
@@ -77,142 +92,93 @@ export function sortPlugins(plugins: Plugin[]): Plugin[] | false {
     const visit = (name: string): void => {
         if (visited.has(name)) return;
         if (visiting.has(name)) {
-            Logger.error(`插件循环依赖: ${name}`);
+            Logger.error(`模块循环依赖: ${name}`);
             isPass = false;
             return;
         }
 
-        const plugin = pluginMap[name];
-        if (!plugin) return;
+        const module = moduleMap[name];
+        if (!module) return;
 
         visiting.add(name);
-        (plugin.after || []).forEach(visit);
+        (module.after || []).forEach(visit);
         visiting.delete(name);
         visited.add(name);
-        result.push(plugin);
+        result.push(module);
     };
 
-    plugins.forEach((p) => visit(p.pluginName));
+    modules.forEach((m) => visit(m.name!));
     return isPass ? result : false;
 }
 
-/**
- * 扫描核心插件
- */
-async function scanCorePlugins(loadedPluginNames: Set<string>, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
-    const files = await scanFiles(corePluginDir, '*.{ts,js}');
-    return importAndRegisterPlugins(
+// ==================== 插件加载逻辑 ====================
+
+async function scanPlugins(dir: string, type: 'core' | 'addon' | 'user', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Plugin[]> {
+    if (!existsSync(dir)) return [];
+
+    const files = await scanFiles(dir, '*.{ts,js}');
+    return importAndRegister<Plugin>(
         files,
-        loadedPluginNames,
-        (fileName) => camelCase(fileName),
-        (fileName) => `核心插件 ${fileName}`,
-        pluginsConfig
+        loadedNames,
+        (fileName) => {
+            const name = camelCase(fileName);
+            if (type === 'core') return name;
+            if (type === 'addon') return `addon_${camelCase(addonName!)}_${name}`;
+            return `app_${name}`;
+        },
+        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '用户'}插件 ${fileName}`,
+        config
     );
 }
 
-/**
- * 扫描组件插件
- */
-async function scanAddonPlugins(loadedPluginNames: Set<string>, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
-    const plugins: Plugin[] = [];
-    const addons = scanAddons();
-
-    for (const addon of addons) {
-        if (!addonDirExists(addon, 'plugins')) continue;
-
-        const addonPluginsDir = getAddonDir(addon, 'plugins');
-        const files = await scanFiles(addonPluginsDir, '*.{ts,js}');
-
-        const addonPlugins = await importAndRegisterPlugins(
-            files,
-            loadedPluginNames,
-            (fileName) => {
-                const addonNameCamel = camelCase(addon);
-                const fileNameCamel = camelCase(fileName);
-                return `addon_${addonNameCamel}_${fileNameCamel}`;
-            },
-            (fileName) => `组件${addon} ${fileName}`,
-            pluginsConfig
-        );
-        plugins.push(...addonPlugins);
-    }
-
-    return plugins;
-}
-
-/**
- * 扫描用户插件
- */
-async function scanUserPlugins(loadedPluginNames: Set<string>, pluginsConfig?: Record<string, Record<string, any>>): Promise<Plugin[]> {
-    if (!existsSync(projectPluginDir)) {
-        return [];
-    }
-
-    const files = await scanFiles(projectPluginDir, '*.{ts,js}');
-    return importAndRegisterPlugins(
-        files,
-        loadedPluginNames,
-        (fileName) => `app_${camelCase(fileName)}`,
-        (fileName) => `用户插件 ${fileName}`,
-        pluginsConfig
-    );
-}
-
-/**
- * 初始化单个插件
- */
 async function initPlugin(befly: { pluginLists: Plugin[]; appContext: BeflyContext }, plugin: Plugin): Promise<void> {
     befly.pluginLists.push(plugin);
 
-    if (typeof plugin?.onInit === 'function') {
-        befly.appContext[plugin.pluginName] = await plugin?.onInit(befly.appContext);
+    if (typeof plugin.handler === 'function') {
+        befly.appContext[plugin.name!] = await plugin.handler(befly.appContext);
     } else {
-        befly.appContext[plugin.pluginName] = {};
+        befly.appContext[plugin.name!] = {};
     }
 }
 
-/**
- * 处理插件组（排序与初始化）
- */
-async function processPluginGroup(befly: { pluginLists: Plugin[]; appContext: BeflyContext }, plugins: Plugin[], groupName: string): Promise<void> {
-    const sortedPlugins = sortPlugins(plugins);
-    if (sortedPlugins === false) {
-        Logger.error(`${groupName}依赖关系错误，请检查插件的 after 属性`);
-        process.exit(1);
-    }
+export async function loadPlugins(befly: { pluginLists: Plugin[]; appContext: BeflyContext; pluginsConfig?: Record<string, any> }): Promise<void> {
+    try {
+        const loadedNames = new Set<string>();
+        const allPlugins: Plugin[] = [];
 
-    for (const plugin of sortedPlugins) {
-        try {
-            await initPlugin(befly, plugin);
-        } catch (error: any) {
-            Logger.error(`${groupName} ${plugin.pluginName} 初始化失败`, error);
+        // 1. 核心插件
+        allPlugins.push(...(await scanPlugins(corePluginDir, 'core', loadedNames, befly.pluginsConfig)));
+
+        // 2. 组件插件
+        const addons = scanAddons();
+        for (const addon of addons) {
+            const dir = getAddonDir(addon, 'plugins');
+            allPlugins.push(...(await scanPlugins(dir, 'addon', loadedNames, befly.pluginsConfig, addon)));
+        }
+
+        // 3. 用户插件
+        allPlugins.push(...(await scanPlugins(projectPluginDir, 'user', loadedNames, befly.pluginsConfig)));
+
+        // 4. 排序与初始化
+        const sortedPlugins = sortModules(allPlugins);
+        if (sortedPlugins === false) {
+            Logger.error('插件依赖关系错误，请检查 after 属性');
             process.exit(1);
         }
-    }
-}
 
-/**
- * 加载所有插件
- * @param befly - Befly实例（需要访问 pluginLists 和 appContext）
- */
-export async function loadPlugins(befly: { pluginLists: Plugin[]; appContext: BeflyContext; pluginsConfig?: Record<string, Record<string, any>> }): Promise<void> {
-    try {
-        const loadStartTime = Bun.nanoseconds();
-        const loadedPluginNames = new Set<string>();
-
-        // 阶段1：扫描所有插件
-        const corePlugins = await scanCorePlugins(loadedPluginNames, befly.pluginsConfig);
-        const addonPlugins = await scanAddonPlugins(loadedPluginNames, befly.pluginsConfig);
-        const userPlugins = await scanUserPlugins(loadedPluginNames, befly.pluginsConfig);
-
-        // 阶段2 & 3：分层排序与初始化
-        await processPluginGroup(befly, corePlugins, '核心插件');
-        await processPluginGroup(befly, addonPlugins, '组件插件');
-        await processPluginGroup(befly, userPlugins, '用户插件');
-
-        const totalLoadTime = calcPerfTime(loadStartTime);
+        for (const plugin of sortedPlugins) {
+            try {
+                await initPlugin(befly, plugin);
+            } catch (error: any) {
+                Logger.error(`插件 ${plugin.name} 初始化失败`, error);
+                process.exit(1);
+            }
+        }
     } catch (error: any) {
         Logger.error('加载插件时发生错误', error);
         process.exit(1);
     }
 }
+
+// ==================== 钩子加载逻辑 ====================
+// 已移动到 loadHooks.ts

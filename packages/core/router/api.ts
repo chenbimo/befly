@@ -7,18 +7,18 @@ import { No } from '../response.js';
 import { compose } from '../lib/compose.js';
 import type { RequestContext } from '../types/context.js';
 import type { ApiRoute } from '../types/api.js';
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import type { BeflyContext } from '../types/befly.js';
 
 /**
  * API处理器工厂函数
  * @param apiRoutes - API路由映射表
- * @param pluginLists - 插件列表
+ * @param hookLists - 钩子列表
  * @param appContext - 应用上下文
  */
-export function apiHandler(apiRoutes: Map<string, ApiRoute>, pluginLists: Plugin[], appContext: BeflyContext) {
-    // 过滤并提取所有插件的 onRequest 钩子
-    const middleware = pluginLists.filter((p) => p.onRequest).map((p) => p.onRequest!);
+export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], appContext: BeflyContext) {
+    // 提取所有钩子的处理函数
+    const middleware = hookLists.map((h) => h.handler);
 
     // 组合中间件链
     const fn = compose(middleware);

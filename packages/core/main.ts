@@ -8,6 +8,7 @@ import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
 import { Database } from './lib/database.js';
 import { loadPlugins } from './loader/loadPlugins.js';
+import { loadHooks } from './loader/loadHooks.js';
 import { loadApis } from './loader/loadApis.js';
 import { rootHandler } from './router/root.js';
 import { apiHandler } from './router/api.js';
@@ -25,6 +26,7 @@ import { defu } from 'defu';
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
 import type { Plugin } from './types/plugin.js';
+import type { Hook } from './types/hook.js';
 import type { ApiRoute } from './types/api.js';
 /**
  * Befly 框架核心类
@@ -36,6 +38,9 @@ export class Befly {
 
     /** 插件列表 */
     private pluginLists: Plugin[] = [];
+
+    /** 钩子列表 */
+    private hookLists: Hook[] = [];
 
     /** 应用上下文 */
     public appContext: BeflyContext;
@@ -101,7 +106,13 @@ export class Befly {
             pluginsConfig: this.config.plugins
         });
 
-        // 4. 启动 HTTP 服务器
+        // 6. 加载钩子
+        await loadHooks({
+            hookLists: this.hookLists,
+            pluginsConfig: this.config.plugins
+        });
+
+        // 7. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
 
         return await this.startServer();
@@ -122,7 +133,7 @@ export class Befly {
             hostname: host,
             routes: {
                 '/': rootHandler,
-                '/api/*': apiHandler(this.apiRoutes, this.pluginLists, this.appContext),
+                '/api/*': apiHandler(this.apiRoutes, this.hookLists, this.appContext),
                 '/*': staticHandler(this.options.plugins?.cors)
             },
             error: (error: Error) => {

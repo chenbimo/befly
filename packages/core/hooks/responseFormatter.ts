@@ -1,10 +1,10 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { No } from '../response.js';
 
-const plugin: Plugin = {
-    pluginName: 'responseFormatter',
+const hook: Hook = {
+    name: 'responseFormatter',
     after: ['requestId'],
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         await next();
 
         // 如果已经有 response，直接返回
@@ -43,4 +43,4 @@ const plugin: Plugin = {
         }
     }
 };
-export default plugin;
+export default hook;

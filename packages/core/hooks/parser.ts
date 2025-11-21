@@ -1,4 +1,4 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { isPlainObject, isEmpty } from 'es-toolkit/compat';
 import { pickFields } from 'befly-util';
 import { Xml } from '../lib/xml.js';
@@ -50,10 +50,10 @@ async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promise<bool
     return false;
 }
 
-const plugin: Plugin = {
-    pluginName: 'parser',
+const hook: Hook = {
+    name: 'parser',
     after: ['auth'],
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();
 
         if (ctx.request.method === 'GET') {

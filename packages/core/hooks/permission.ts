@@ -1,4 +1,4 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { No, Yes } from '../response.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
@@ -30,10 +30,10 @@ function checkPermission(api: ApiRoute, ctx: RequestContext, hasPermission: bool
     return No('无权访问', null, { code: 403 });
 }
 
-const plugin: Plugin = {
-    pluginName: 'permission',
+const hook: Hook = {
+    name: 'permission',
     after: ['auth'],
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();
 
         let hasPermission = false;
@@ -56,4 +56,4 @@ const plugin: Plugin = {
         await next();
     }
 };
-export default plugin;
+export default hook;

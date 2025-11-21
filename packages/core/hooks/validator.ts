@@ -1,4 +1,4 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { Validator } from '../lib/validator.js';
 import { No, Yes } from '../response.js';
 import type { ApiRoute } from '../types/api.js';
@@ -21,10 +21,10 @@ function validateParams(api: ApiRoute, ctx: RequestContext) {
     return Yes('验证通过');
 }
 
-const plugin: Plugin = {
-    pluginName: 'validator',
+const hook: Hook = {
+    name: 'validator',
     after: ['parser'],
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();
 
         const validateResult = validateParams(ctx.api, ctx);
@@ -37,4 +37,4 @@ const plugin: Plugin = {
         await next();
     }
 };
-export default plugin;
+export default hook;

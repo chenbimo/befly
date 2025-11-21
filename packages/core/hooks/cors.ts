@@ -1,8 +1,8 @@
-import type { Plugin } from '../types/plugin.js';
+import type { Hook } from '../types/hook.js';
 import { setCorsOptions } from '../lib/middleware.js';
 
-const plugin: Plugin = {
-    pluginName: 'cors',
+const hook: Hook = {
+    name: 'cors',
     after: ['errorHandler'],
     // 默认配置
     config: {
@@ -13,7 +13,7 @@ const plugin: Plugin = {
         maxAge: 86400,
         credentials: 'true'
     },
-    onRequest: async (befly, ctx, next) => {
+    handler: async (befly, ctx, next) => {
         const req = ctx.request;
         // this.config 会包含默认值和用户传入的配置（如果 loadPlugins 正确合并了的话）
         // loadPlugins 目前是直接覆盖 plugin.config。
@@ -61,4 +61,4 @@ const plugin: Plugin = {
         await next();
     }
 };
-export default plugin;
+export default hook;
