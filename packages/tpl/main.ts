@@ -1,12 +1,15 @@
-import { Befly } from 'befly';
-import { Env } from './env.js';
+import { Befly, sync } from 'befly';
 
-const app = new Befly({
+export const app = new Befly({
     plugins: {
         cors: {
-            allowOrigin: Env.CORS_ALLOWED_ORIGIN,
-            allowMethods: Env.CORS_ALLOWED_METHODS
+            origin: process.env.CORS_ALLOWED_ORIGIN,
+            methods: process.env.CORS_ALLOWED_METHODS
         }
     }
 });
-await app.listen();
+
+if (import.meta.main) {
+    await sync();
+    await app.listen();
+}

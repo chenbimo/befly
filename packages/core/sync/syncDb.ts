@@ -2,12 +2,11 @@
  * SyncDb 命令 - 同步数据库表结构
  */
 
-import { Command } from 'commander';
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { Logger } from '../util.js';
+import { Logger } from './util.js';
 import { SyncDb } from './syncDb/index.js';
-import type { SyncDbOptions } from '../types.js';
+import type { SyncDbOptions } from './types.js';
 
 export async function syncDbCommand(options: SyncDbOptions): Promise<void> {
     try {
@@ -28,6 +27,6 @@ export async function syncDbCommand(options: SyncDbOptions): Promise<void> {
         await SyncDb();
     } catch (error: any) {
         Logger.error('数据库同步失败:', error);
-        process.exit(1);
+        throw error;
     }
 }

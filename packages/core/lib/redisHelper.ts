@@ -87,7 +87,7 @@ export class RedisHelper {
      */
     async genTimeID(): Promise<number> {
         const timestamp = Math.floor(Date.now() / 1000); // 秒级时间戳
-        const key = `${prefix}time_id_counter:${timestamp}`;
+        const key = `${this.prefix}time_id_counter:${timestamp}`;
 
         const counter = await this.client.incr(key);
         await this.client.expire(key, 1);
@@ -115,7 +115,7 @@ export class RedisHelper {
         }
 
         const timestamp = Math.floor(Date.now() / 1000); // 秒级时间戳
-        const key = `${prefix}time_id_counter:${timestamp}`;
+        const key = `${this.prefix}time_id_counter:${timestamp}`;
 
         // 使用 INCRBY 一次性获取 N 个连续计数
         const startCounter = await this.client.incrby(key, count);

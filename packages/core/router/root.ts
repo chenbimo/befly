@@ -36,7 +36,7 @@ export async function rootHandler(req: Request): Promise<Response> {
         let errorDetail = {};
 
         // 开发环境返回详细错误信息
-        if (Env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development') {
             errorDetail = {
                 type: error.constructor?.name || 'Error',
                 message: error.message,

@@ -7,9 +7,10 @@
  * - 表名: addon_admin_admin
  */
 
-import { Database, Cipher, Env } from 'befly';
-import { Logger } from '../util.js';
-import type { SyncDevOptions, SyncDevStats } from '../types.js';
+import { Database } from '../lib/database.js';
+import { Cipher } from '../lib/cipher.js';
+import { Logger } from './util.js';
+import type { SyncDevOptions, SyncDevStats } from './types.js';
 
 /**
  * SyncDev 命令主函数
@@ -21,7 +22,10 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             return;
         }
 
-        if (!Env.DEV_PASSWORD) {
+        const devPassword = process.env.DEV_PASSWORD;
+        const devEmail = process.env.DEV_EMAIL || 'dev@qq.com';
+
+        if (!devPassword) {
             return;
         }
 
@@ -109,13 +113,13 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         }
 
         // 使用 bcrypt 加密密码
-        const hashed = await Cipher.hashPassword(Env.DEV_PASSWORD);
+        const hashed = await Cipher.hashPassword(devPassword);
 
         // 准备开发管理员数据
         const devData = {
             name: '开发者',
             nickname: '开发者',
-            email: Env.DEV_EMAIL,
+            email: devEmail,
             username: 'dev',
             password: hashed,
             roleId: devRole.id,
@@ -126,14 +130,14 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         // 查询现有账号
         const existing = await helper.getOne({
             table: 'addon_admin_admin',
-            where: { email: Env.DEV_EMAIL }
+            where: { email: devEmail }
         });
 
         if (existing) {
             // 更新现有账号
             await helper.updData({
                 table: 'addon_admin_admin',
-                where: { email: Env.DEV_EMAIL },
+                where: { email: devEmail },
                 data: devData
             });
         } else {
@@ -194,8 +198,8 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             // 忽略缓存错误
         }
     } catch (error: any) {
-        Logger.error('开发管理员同步失败:', error);
-        process.exit(1);
+        Logger.error('同步开发者管理员失败:', error);
+        throw error;
     } finally {
         await Database?.disconnect();
     }

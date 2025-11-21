@@ -18,6 +18,8 @@ import { RedisHelper } from './lib/redisHelper.js';
 import { checkTable, checkApi, checkApp } from './check.js';
 import { Yes, No } from './response.js';
 import { calcPerfTime } from 'befly-util';
+import { defaultOptions } from './config/defaults.js';
+import { defu } from 'defu';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -37,12 +39,17 @@ export class Befly {
     /** 应用上下文 */
     public appContext: BeflyContext;
 
+    /** 最终配置（合并默认值后） */
+    public config: BeflyOptions;
+
     /** 构造函数选项 */
     private options: BeflyOptions;
 
     constructor(options: BeflyOptions = {}) {
         this.appContext = {};
         this.options = options;
+        // 合并配置：用户配置 > 默认配置
+        this.config = defu(options, defaultOptions);
     }
 
     /**
@@ -80,7 +87,7 @@ export class Befly {
         await loadPlugins({
             pluginLists: this.pluginLists,
             appContext: this.appContext,
-            pluginsConfig: this.options.plugins
+            pluginsConfig: this.config.plugins
         });
 
         // 4. 启动 HTTP 服务器
@@ -95,9 +102,9 @@ export class Befly {
      */
     private async startServer(): Promise<Server> {
         const startTime = Bun.nanoseconds();
-        const port = this.options.appPort || 3000;
-        const host = this.options.appHost || '127.0.0.1';
-        const appName = this.options.appName || 'Befly App';
+        const port = this.config.appPort || 3000;
+        const host = this.config.appHost || '127.0.0.1';
+        const appName = this.config.appName || 'Befly App';
 
         const server = Bun.serve({
             port: port,
@@ -167,3 +174,7 @@ export {
     checkApi,
     checkApp
 };
+
+import { syncAllCommand } from './sync/syncAll.js';
+
+export const sync = syncAllCommand;

@@ -1,4 +1,4 @@
-﻿import { Yes, Env } from 'befly';
+﻿import { Yes } from 'befly';
 
 export default {
     name: '获取服务状态',
@@ -25,7 +25,7 @@ export default {
         }
 
         // Redis 状态
-        if (Env.DATABASE_ENABLE === 1 && befly.redis) {
+        if (befly.redis) {
             try {
                 const startTime = Date.now();
                 await befly.redis.ping();

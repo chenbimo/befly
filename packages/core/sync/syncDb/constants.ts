@@ -8,8 +8,6 @@
  * - 系统字段定义
  */
 
-import { Env } from 'befly';
-
 /**
  * 数据库版本要求
  */
@@ -63,7 +61,7 @@ export const MYSQL_TABLE_CONFIG = {
 } as const;
 
 // 数据库类型判断
-export const DB = (Env.DB_TYPE || 'mysql').toLowerCase();
+export const DB = (process.env.DB_TYPE || 'mysql').toLowerCase();
 export const IS_MYSQL = DB === 'mysql';
 export const IS_PG = DB === 'postgresql' || DB === 'postgres';
 export const IS_SQLITE = DB === 'sqlite';

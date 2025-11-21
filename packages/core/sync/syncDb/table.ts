@@ -8,7 +8,7 @@
  */
 
 import { snakeCase } from 'es-toolkit/string';
-import { Logger } from '../../util.js';
+import { Logger } from '../util.js';
 import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
 import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
 import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';

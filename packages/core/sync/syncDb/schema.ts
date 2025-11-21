@@ -7,7 +7,6 @@
  * - 获取表的索引信息
  */
 
-import { Env } from 'befly';
 import { IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
 import type { ColumnInfo, IndexInfo } from '../../types.js';
 import type { SQL } from 'bun';
@@ -24,7 +23,7 @@ export async function tableExists(sql: SQL, tableName: string): Promise<boolean>
 
     try {
         if (IS_MYSQL) {
-            const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}`;
+            const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${process.env.DB_NAME} AND TABLE_NAME = ${tableName}`;
             return (res[0]?.count || 0) > 0;
         }
 
@@ -67,7 +66,7 @@ export async function getTableColumns(sql: SQL, tableName: string): Promise<{ [k
             const result = await sql`
                 SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
                 FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = ${Env.DB_NAME} AND TABLE_NAME = ${tableName}
+                WHERE TABLE_SCHEMA = ${process.env.DB_NAME} AND TABLE_NAME = ${tableName}
                 ORDER BY ORDINAL_POSITION
             `;
             for (const row of result) {
@@ -158,7 +157,7 @@ export async function getTableIndexes(sql: SQL, tableName: string): Promise<Inde
             const result = await sql`
                 SELECT INDEX_NAME, COLUMN_NAME
                 FROM information_schema.STATISTICS
-                WHERE TABLE_SCHEMA = ${Env.DB_NAME}
+                WHERE TABLE_SCHEMA = ${process.env.DB_NAME}
                     AND TABLE_NAME = ${tableName}
                     AND INDEX_NAME != 'PRIMARY'
                 ORDER BY INDEX_NAME

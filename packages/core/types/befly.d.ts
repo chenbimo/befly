@@ -18,10 +18,15 @@ import type { CacheHelper } from '../lib/cacheHelper.js';
  * 日志配置
  */
 export interface LoggerConfig {
+    /** 是否开启调试模式 (0: 关闭, 1: 开启) @default 1 */
     debug?: number;
+    /** 日志排除字段 (逗号分隔) @default 'password,token,secret' */
     excludeFields?: string;
+    /** 日志目录 @default './logs' */
     dir?: string;
+    /** 是否输出到控制台 (0: 关闭, 1: 开启) @default 1 */
     console?: number;
+    /** 单个日志文件最大大小 (字节) @default 10485760 (10MB) */
     maxSize?: number;
 }
 
@@ -29,13 +34,21 @@ export interface LoggerConfig {
  * 数据库配置
  */
 export interface DatabaseConfig {
+    /** 是否启用数据库 (0: 关闭, 1: 开启) @default 0 */
     enable?: number;
+    /** 数据库类型 ('mysql' | 'postgres' | 'sqlite') @default 'sqlite' */
     type?: string;
+    /** 数据库主机 @default '127.0.0.1' */
     host?: string;
+    /** 数据库端口 @default 3306 */
     port?: number;
+    /** 数据库用户名 @default 'root' */
     username?: string;
+    /** 数据库密码 @default '' */
     password?: string;
+    /** 数据库名称 @default 'befly' */
     database?: string;
+    /** 连接池最大连接数 @default 1 */
     poolMax?: number;
 }
 
@@ -43,11 +56,17 @@ export interface DatabaseConfig {
  * Redis 配置
  */
 export interface RedisConfig {
+    /** Redis 主机 @default '127.0.0.1' */
     host?: string;
+    /** Redis 端口 @default 6379 */
     port?: number;
+    /** Redis 用户名 @default '' */
     username?: string;
+    /** Redis 密码 @default '' */
     password?: string;
+    /** Redis 数据库索引 @default 0 */
     db?: number;
+    /** Redis Key 前缀 @default 'befly:' */
     prefix?: string;
 }
 
@@ -55,8 +74,11 @@ export interface RedisConfig {
  * JWT 配置
  */
 export interface AuthConfig {
+    /** JWT 密钥 @default 'befly-secret' */
     secret?: string;
+    /** 过期时间 @default '7d' */
     expiresIn?: string | number;
+    /** 签名算法 @default 'HS256' */
     algorithm?: string;
 }
 
@@ -64,11 +86,17 @@ export interface AuthConfig {
  * CORS 配置
  */
 export interface CorsConfig {
+    /** 允许的来源 @default '*' */
     origin?: string;
+    /** 允许的方法 @default 'GET,HEAD,PUT,PATCH,POST,DELETE' */
     methods?: string;
+    /** 允许的头 @default 'Content-Type,Authorization' */
     allowedHeaders?: string;
+    /** 暴露的头 @default '' */
     exposedHeaders?: string;
+    /** 预检请求缓存时间 (秒) @default 86400 */
     maxAge?: number;
+    /** 是否允许凭证 @default 'true' */
     credentials?: string;
 }
 
@@ -77,21 +105,34 @@ export interface CorsConfig {
  */
 export interface BeflyOptions {
     // ========== 核心参数 ==========
+    /** 运行环境 ('development' | 'production') @default 'development' */
     nodeEnv?: string;
+    /** 应用名称 @default 'Befly App' */
     appName?: string;
+    /** 应用端口 @default 3000 */
     appPort?: number;
+    /** 应用主机 @default '0.0.0.0' */
     appHost?: string;
+    /** 开发者邮箱 (用于 syncDev) @default 'dev@qq.com' */
     devEmail?: string;
+    /** 开发者密码 (用于 syncDev) */
     devPassword?: string;
+    /** 请求体大小限制 (字节) @default 1048576 (1MB) */
     bodyLimit?: number;
+    /** 时区 @default 'Asia/Shanghai' */
     tz?: string;
 
     /** 插件配置 */
     plugins?: {
+        /** 日志插件配置 */
         logger?: LoggerConfig;
+        /** 数据库插件配置 */
         db?: DatabaseConfig;
+        /** Redis 插件配置 */
         redis?: RedisConfig;
+        /** 认证插件配置 */
         auth?: AuthConfig;
+        /** CORS 插件配置 */
         cors?: CorsConfig;
         [key: string]: any;
     };

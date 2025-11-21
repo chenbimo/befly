@@ -15,9 +15,10 @@
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { Database, RedisHelper } from 'befly';
+import { Database } from '../lib/database.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir } from 'befly-util';
-import { Logger, projectDir } from '../util.js';
+import { Logger, projectDir } from './util.js';
 
 import type { SyncMenuOptions, MenuConfig } from '../types.js';
 
@@ -322,7 +323,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         }
     } catch (error: any) {
         Logger.error('菜单同步失败:', error);
-        process.exit(1);
+        throw error;
     } finally {
         await Database?.disconnect();
     }

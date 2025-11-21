@@ -3,13 +3,13 @@
  * 按顺序执行：syncDb → syncApi → syncMenu → syncDev
  */
 
-import { checkApp } from 'befly';
-import { Logger } from '../util.js';
+import { checkApp } from '../check.js';
+import { Logger } from './util.js';
 import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
-import type { SyncOptions } from '../types.js';
+import type { SyncOptions } from './types.js';
 
 export async function syncAllCommand(options: SyncOptions = {}) {
     try {
@@ -20,7 +20,7 @@ export async function syncAllCommand(options: SyncOptions = {}) {
         const checkResult = await checkApp();
         if (!checkResult) {
             Logger.error('项目结构检查失败，程序退出');
-            process.exit(1);
+            throw new Error('项目结构检查失败');
         }
         Logger.info(`✓ 项目结构检查完成\n`);
 
@@ -53,6 +53,6 @@ export async function syncAllCommand(options: SyncOptions = {}) {
         Logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     } catch (error: any) {
         Logger.error('同步过程中发生错误:', error);
-        process.exit(1);
+        throw error;
     }
 }

@@ -10,7 +10,8 @@
  */
 export interface SyncDbOptions {
     table?: string;
-    dryRun: boolean;
+    dryRun?: boolean;
+    force?: boolean;
 }
 
 /**
@@ -18,9 +19,9 @@ export interface SyncDbOptions {
  */
 export interface SyncOptions {
     table?: string;
-    force: boolean;
-    dryRun: boolean;
-    drop: boolean;
+    force?: boolean;
+    dryRun?: boolean;
+    drop?: boolean;
 }
 
 /**

@@ -12,12 +12,13 @@
  */
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
-import { Database, RedisHelper } from 'befly';
+import { Database } from '../lib/database.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 
-import { Logger, projectDir } from '../util.js';
+import { Logger, projectDir } from './util.js';
 
-import type { SyncApiOptions, ApiInfo } from '../types.js';
+import type { SyncApiOptions, ApiInfo } from './types.js';
 
 /**
  * 从 API 文件中提取接口信息
@@ -57,8 +58,8 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'app' | '
             addonTitle: addonTitle || addonName
         };
     } catch (error: any) {
-        Logger.error(`解析 API 文件失败: ${filePath}`, error);
-        return null;
+        Logger.error('同步 API 失败:', error);
+        throw error;
     }
 }
 
@@ -257,7 +258,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         }
     } catch (error: any) {
         Logger.error('API 同步失败:', error);
-        process.exit(1);
+        throw error;
     } finally {
         await Database?.disconnect();
     }

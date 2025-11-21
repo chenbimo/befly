@@ -54,14 +54,13 @@ export class Database {
         } else {
             sql = new SQL({
                 url: finalUrl,
-                max: options.max ?? 1,
-                bigint: false,
-                ...options
+                max: config.poolMax ?? 1,
+                bigint: false
             });
         }
 
         try {
-            const timeout = options.connectionTimeout ?? 30000;
+            const timeout = 30000;
 
             const healthCheckPromise = (async () => {
                 let version = '';
@@ -156,21 +155,26 @@ export class Database {
 
     /**
      * 连接 Redis
+     * @param config - Redis 配置
      * @returns Redis 客户端实例
      */
-    static async connectRedis(): Promise<RedisClient> {
+    static async connectRedis(config: RedisConfig = {}): Promise<RedisClient> {
         try {
             // 构建 Redis URL
-            const { REDIS_HOST, REDIS_PORT, REDIS_USERNAME, REDIS_PASSWORD, REDIS_DB } = Env;
+            const host = config.host || '127.0.0.1';
+            const port = config.port || 6379;
+            const username = config.username || '';
+            const password = config.password || '';
+            const db = config.db || 0;
 
             let auth = '';
-            if (REDIS_USERNAME && REDIS_PASSWORD) {
-                auth = `${REDIS_USERNAME}:${REDIS_PASSWORD}@`;
-            } else if (REDIS_PASSWORD) {
-                auth = `:${REDIS_PASSWORD}@`;
+            if (username && password) {
+                auth = `${username}:${password}@`;
+            } else if (password) {
+                auth = `:${password}@`;
             }
 
-            const url = `redis://${auth}${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}`;
+            const url = `redis://${auth}${host}:${port}/${db}`;
 
             const redis = new RedisClient(url, {
                 connectionTimeout: 30000,

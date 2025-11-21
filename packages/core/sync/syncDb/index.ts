@@ -10,9 +10,11 @@
 import { basename, resolve } from 'pathe';
 import { existsSync } from 'node:fs';
 import { snakeCase } from 'es-toolkit/string';
-import { Env, Database, RedisHelper, checkTable } from 'befly';
+import { Database } from '../../lib/database.js';
+import { RedisHelper } from '../../lib/redisHelper.js';
+import { checkTable } from '../../check.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
-import { Logger, projectDir } from '../../util.js';
+import { Logger, projectDir } from '../util.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';
@@ -135,7 +137,7 @@ export const SyncDb = async (): Promise<void> => {
         }
     } catch (error: any) {
         Logger.error(`数据库同步失败`, error);
-        process.exit(1);
+        throw error;
     } finally {
         if (sql) {
             try {
@@ -152,11 +154,3 @@ export const SyncDb = async (): Promise<void> => {
         }
     }
 };
-
-// 如果直接运行此脚本（Bun 支持 import.meta.main）
-if (import.meta.main) {
-    SyncDb().catch((error) => {
-        Logger.error('数据库同步失败', error);
-        process.exit(1);
-    });
-}
