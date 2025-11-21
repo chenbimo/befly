@@ -9,6 +9,4 @@ export const app = new Befly({
     }
 });
 
-if (import.meta.main) {
-    await app.listen();
-}
+await app.listen();
