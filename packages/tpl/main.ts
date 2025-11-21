@@ -1,4 +1,4 @@
-import { Befly, sync } from 'befly';
+import { Befly } from 'befly';
 
 export const app = new Befly({
     plugins: {
@@ -10,6 +10,5 @@ export const app = new Befly({
 });
 
 if (import.meta.main) {
-    await sync();
     await app.listen();
 }

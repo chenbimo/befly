@@ -19,7 +19,7 @@ import { checkTable, checkApi, checkApp } from './check.js';
 import { Yes, No } from './response.js';
 import { calcPerfTime } from 'befly-util';
 import { defaultOptions } from './config/defaults.js';
-import { defu } from 'defu';
+import { syncAllCommand } from './sync/syncAll.js';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -58,6 +58,16 @@ export class Befly {
      */
     private async start(): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
+
+        // 0. 自动同步 (默认开启)
+        if (this.config.autoSync !== 0) {
+            try {
+                await syncAllCommand();
+            } catch (error) {
+                Logger.error('自动同步失败，程序退出');
+                process.exit(1);
+            }
+        }
 
         // 1. 加载所有 API（动态导入必须在最前面，避免 Bun 1.3.2 的崩溃 bug）
         await loadApis(this.apiRoutes);
@@ -174,7 +184,3 @@ export {
     checkApi,
     checkApp
 };
-
-import { syncAllCommand } from './sync/syncAll.js';
-
-export const sync = syncAllCommand;

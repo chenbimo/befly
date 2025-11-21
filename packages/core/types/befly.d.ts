@@ -180,13 +180,16 @@ export interface BeflyContext extends KeyValue {
  */
 export interface BeflyOptions {
     /** 应用名称 */
-    name?: string;
+    appName?: string;
 
     /** 监听主机 */
-    host?: string;
+    appHost?: string;
 
     /** 监听端口 */
-    port?: number;
+    appPort?: number;
+
+    /** 是否自动同步 (0: 关闭, 1: 开启) @default 1 */
+    autoSync?: number;
 
     /** 是否启用 CORS */
     cors?: boolean | CorsOptions;
