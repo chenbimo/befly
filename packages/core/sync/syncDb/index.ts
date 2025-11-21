@@ -15,8 +15,7 @@ import { RedisHelper } from '../../lib/redisHelper.js';
 import { checkTable } from '../../check.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 import { Logger } from '../../lib/logger.js';
-
-const projectDir = process.cwd();
+import { projectDir } from '../../paths.js';
 
 // 导入模块化的功能
 import { ensureDbVersion } from './version.js';

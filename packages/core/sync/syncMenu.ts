@@ -19,8 +19,7 @@ import { Database } from '../lib/database.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir } from 'befly-util';
 import { Logger } from '../lib/logger.js';
-
-const projectDir = process.cwd();
+import { projectDir } from '../paths.js';
 
 import type { SyncMenuOptions, MenuConfig } from '../types.js';
 

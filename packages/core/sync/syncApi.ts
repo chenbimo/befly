@@ -17,8 +17,7 @@ import { RedisHelper } from '../lib/redisHelper.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 
 import { Logger } from '../lib/logger.js';
-
-const projectDir = process.cwd();
+import { projectDir } from '../paths.js';
 
 import type { SyncApiOptions, ApiInfo } from './types.js';
 
@@ -220,8 +219,6 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
             return;
         }
 
-        const projectRoot = process.cwd();
-
         // 连接数据库（SQL + Redis）
         await Database.connect();
 
@@ -236,7 +233,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         }
 
         // 2. 扫描所有 API 文件
-        const apis = await scanAllApis(projectRoot);
+        const apis = await scanAllApis(projectDir);
         const apiPaths = new Set(apis.map((api) => api.path));
 
         // 3. 同步 API 数据
