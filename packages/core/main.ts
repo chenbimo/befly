@@ -75,42 +75,42 @@ export class Befly {
             }
         }
 
-        // 1. 加载所有 API（动态导入必须在最前面，避免 Bun 1.3.2 的崩溃 bug）
-        await loadApis(this.apiRoutes);
-
-        // 2. 执行项目结构检查
+        // 1. 执行项目结构检查
         const appCheckResult = await checkApp();
         if (!appCheckResult) {
             Logger.error('项目结构检查失败，程序退出');
             process.exit(1);
         }
 
-        // 3. 执行表定义检查
+        // 2. 执行表定义检查
         const tableCheckResult = await checkTable();
         if (!tableCheckResult) {
             Logger.error('表定义检查失败，程序退出');
             process.exit(1);
         }
 
-        // 4. 执行 API 定义检查
+        // 3. 执行 API 定义检查
         const apiCheckResult = await checkApi();
         if (!apiCheckResult) {
             Logger.error('API 定义检查失败，程序退出');
             process.exit(1);
         }
 
-        // 5. 加载插件
+        // 4. 加载插件
         await loadPlugins({
             pluginLists: this.pluginLists,
             appContext: this.appContext,
             pluginsConfig: this.config.plugins
         });
 
-        // 6. 加载钩子
+        // 5. 加载钩子
         await loadHooks({
             hookLists: this.hookLists,
             pluginsConfig: this.config.plugins
         });
+
+        // 6. 加载所有 API
+        await loadApis(this.apiRoutes);
 
         // 7. 启动 HTTP 服务器
         const totalStartupTime = calcPerfTime(serverStartTime);
