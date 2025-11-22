@@ -22,7 +22,6 @@ function validateParams(api: ApiRoute, ctx: RequestContext) {
 }
 
 const hook: Hook = {
-    name: 'validator',
     after: ['parser'],
     handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();

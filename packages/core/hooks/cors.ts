@@ -2,7 +2,6 @@ import type { Hook } from '../types/hook.js';
 import { setCorsOptions } from '../lib/middleware.js';
 
 const hook: Hook = {
-    name: 'cors',
     after: ['errorHandler'],
     // 默认配置
     config: {

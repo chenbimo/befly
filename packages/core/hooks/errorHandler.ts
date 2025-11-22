@@ -3,7 +3,6 @@ import { Logger } from '../lib/logger.js';
 import { No } from '../response.js';
 
 const hook: Hook = {
-    name: 'errorHandler',
     handler: async (befly, ctx, next) => {
         try {
             await next();

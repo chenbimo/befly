@@ -51,7 +51,6 @@ async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promise<bool
 }
 
 const hook: Hook = {
-    name: 'parser',
     after: ['auth'],
     handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();

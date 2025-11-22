@@ -12,7 +12,6 @@ function logRequest(apiPath: string, ctx: RequestContext): void {
 }
 
 const hook: Hook = {
-    name: 'requestLogger',
     after: ['parser'],
     handler: async (befly, ctx, next) => {
         if (ctx.api) {

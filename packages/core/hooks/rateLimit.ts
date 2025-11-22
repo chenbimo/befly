@@ -11,7 +11,6 @@ import { No } from '../response';
  * 3. 针对每个用户(userId)或IP进行限制
  */
 const hook: Hook = {
-    name: 'rateLimit',
     // 必须在 auth 之后（获取 userId），但在业务逻辑之前
     after: ['auth'],
 

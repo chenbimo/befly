@@ -2,7 +2,6 @@ import type { Hook } from '../types/hook.js';
 import { Jwt } from '../lib/jwt.js';
 
 const hook: Hook = {
-    name: 'auth',
     after: ['cors'],
     handler: async (befly, ctx, next) => {
         // 初始化配置（如果有）

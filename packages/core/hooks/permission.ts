@@ -31,7 +31,6 @@ function checkPermission(api: ApiRoute, ctx: RequestContext, hasPermission: bool
 }
 
 const hook: Hook = {
-    name: 'permission',
     after: ['auth'],
     handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();

@@ -2,7 +2,6 @@ import type { Hook } from '../types/hook.js';
 import { logContextStorage } from '../lib/logger.js';
 
 const hook: Hook = {
-    name: 'requestId',
     after: ['errorHandler'],
     handler: async (befly, ctx, next) => {
         // 生成唯一请求 ID

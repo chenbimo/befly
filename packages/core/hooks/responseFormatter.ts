@@ -2,7 +2,6 @@ import type { Hook } from '../types/hook.js';
 import { No } from '../response.js';
 
 const hook: Hook = {
-    name: 'responseFormatter',
     after: ['requestId'],
     handler: async (befly, ctx, next) => {
         await next();
