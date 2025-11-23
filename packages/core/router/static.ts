@@ -5,7 +5,7 @@
 
 import { join } from 'pathe';
 import { projectDir } from '../paths.js';
-import { No } from '../response.js';
+import { No } from '../utils/response.js';
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
 import type { CorsConfig } from '../types/befly.js';

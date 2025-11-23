@@ -2,7 +2,7 @@ import type { Hook } from '../types/hook.js';
 import { isPlainObject, isEmpty } from 'es-toolkit/compat';
 import { pickFields } from 'befly-util';
 import { Xml } from '../lib/xml.js';
-import { No } from '../response.js';
+import { No } from '../utils/response.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 

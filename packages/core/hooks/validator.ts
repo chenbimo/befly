@@ -1,6 +1,6 @@
 import type { Hook } from '../types/hook.js';
 import { Validator } from '../lib/validator.js';
-import { No, Yes } from '../response.js';
+import { No, Yes } from '../utils/response.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 

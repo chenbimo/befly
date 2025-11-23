@@ -1,5 +1,5 @@
 import type { Hook } from '../types/hook.js';
-import { No } from '../response.js';
+import { No } from '../utils/response.js';
 
 const hook: Hook = {
     after: ['requestId'],

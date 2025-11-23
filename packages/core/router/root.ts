@@ -5,7 +5,7 @@
 
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
-import { No } from '../response.js';
+import { No } from '../utils/response.js';
 
 /**
  * 根路径处理器

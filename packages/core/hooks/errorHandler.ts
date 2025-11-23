@@ -1,6 +1,6 @@
 import type { Hook } from '../types/hook.js';
 import { Logger } from '../lib/logger.js';
-import { No } from '../response.js';
+import { No } from '../utils/response.js';
 
 const hook: Hook = {
     handler: async (befly, ctx, next) => {

@@ -3,7 +3,7 @@
  * 处理 /api/* 路径的请求
  */
 
-import { No } from '../response.js';
+import { No } from '../utils/response.js';
 import { compose } from '../lib/compose.js';
 import type { RequestContext } from '../types/context.js';
 import type { ApiRoute } from '../types/api.js';
