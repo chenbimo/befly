@@ -8,7 +8,7 @@ import { scanFiles } from 'befly-util';
 /**
  * 检查所有 API 定义
  */
-export async function checkApi(): Promise<boolean> {
+export async function checkApi(): Promise<void> {
     try {
         // 收集所有 API 文件
         const allApiFiles: Array<{ file: string; displayName: string; apiPath: string }> = [];
@@ -81,10 +81,8 @@ export async function checkApi(): Promise<boolean> {
                 Logger.error(`[${item.displayName}] 接口 ${apiPath} 解析失败`, error);
             }
         }
-
-        return true;
     } catch (error: any) {
         Logger.error('API 定义检查过程中出错', error);
-        return false;
+        throw error;
     }
 }

@@ -64,32 +64,13 @@ export class Befly {
      * 启动完整的生命周期流程
      * @returns HTTP 服务器实例
      */
-    private async start(): Promise<Server> {
+    public async start(): Promise<Server> {
         const serverStartTime = Bun.nanoseconds();
 
-        // 0. 自动同步 (默认开启)
-        if (this.config.autoSync !== 0) {
-            try {
-                await syncAllCommand();
-            } catch (error) {
-                Logger.error('自动同步失败，程序退出');
-                process.exit(1);
-            }
-        }
-
         // 1. 执行启动检查
-        if (!(await checkApp())) {
-            Logger.error('项目结构检查失败，程序退出');
-            process.exit(1);
-        }
-        if (!(await checkTable())) {
-            Logger.error('表结构检查失败，程序退出');
-            process.exit(1);
-        }
-        if (!(await checkApi())) {
-            Logger.error('API 定义检查失败，程序退出');
-            process.exit(1);
-        }
+        await checkApp();
+        await checkTable();
+        await checkApi();
 
         // 4. 加载插件
         await loadPlugins({
@@ -107,18 +88,10 @@ export class Befly {
         // 6. 加载所有 API
         await loadApis(this.apiRoutes);
 
-        // 7. 启动 HTTP 服务器
-        const totalStartupTime = calcPerfTime(serverStartTime);
+        // 7. 自动同步 (默认开启)
+        await syncAllCommand();
 
-        return await this.startServer();
-    }
-
-    /**
-     * 启动 HTTP 服务器
-     * @returns HTTP 服务器实例
-     */
-    private async startServer(): Promise<Server> {
-        const startTime = Bun.nanoseconds();
+        // 8. 启动 HTTP 服务器
         const port = this.config.appPort || 3000;
         const host = this.config.appHost || '127.0.0.1';
         const appName = this.config.appName || 'Befly App';
@@ -137,31 +110,23 @@ export class Befly {
             }
         });
 
-        const finalStartupTime = calcPerfTime(startTime);
+        const finalStartupTime = calcPerfTime(serverStartTime);
         Logger.info(`${appName} 启动成功! `);
         Logger.info(`服务器启动耗时: ${finalStartupTime}`);
         Logger.info(`服务器监听地址: http://${host}:${port}`);
 
-        return server;
-    }
-
-    /**
-     * 启动服务器并注册优雅关闭处理
-     */
-    async listen(): Promise<Server> {
-        const server = await this.start();
-
+        // 9. 注册优雅关闭处理
         const gracefulShutdown = async (signal: string) => {
-            // 1. 停止接收新请求
+            // 停止接收新请求
             server.stop(true);
             Logger.info('HTTP 服务器已停止');
 
-            // 2. 关闭数据库连接
+            // 关闭数据库连接
             try {
                 await Database.disconnect();
                 Logger.info('数据库连接已关闭');
             } catch (error: any) {
-                Logger.err('关闭数据库连接时出错:', error);
+                Logger.error('关闭数据库连接时出错:', error);
             }
 
             Logger.info('服务器已优雅关闭');

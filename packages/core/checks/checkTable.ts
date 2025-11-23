@@ -53,7 +53,7 @@ const MAX_VARCHAR_LENGTH = 65535;
  * 检查表定义文件
  * @throws 当检查失败时抛出异常
  */
-export async function checkTable(): Promise<boolean> {
+export async function checkTable(): Promise<void> {
     try {
         // 收集所有表文件
         const allTableFiles: TableFileInfo[] = [];
@@ -231,9 +231,11 @@ export async function checkTable(): Promise<boolean> {
             }
         }
 
-        return !hasError;
+        if (hasError) {
+            throw new Error('表结构检查失败');
+        }
     } catch (error: any) {
         Logger.error('数据表定义检查过程中出错', error);
-        return false;
+        throw error;
     }
 }
