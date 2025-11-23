@@ -93,13 +93,9 @@ export class Befly {
             await syncAllCommand();
 
             // 8. 启动 HTTP 服务器
-            const port = this.config.appPort || 3000;
-            const host = this.config.appHost || '127.0.0.1';
-            const appName = this.config.appName || 'Befly App';
-
             const server = Bun.serve({
-                port: port,
-                hostname: host,
+                port: this.config.appPort,
+                hostname: this.config.appHost,
                 routes: {
                     '/': rootHandler,
                     '/api/*': apiHandler(this.apiRoutes, this.hookLists, this.appContext),
@@ -112,9 +108,9 @@ export class Befly {
             });
 
             const finalStartupTime = calcPerfTime(serverStartTime);
-            Logger.info(`${appName} 启动成功! `);
+            Logger.info(`${this.config.appName} 启动成功! `);
             Logger.info(`服务器启动耗时: ${finalStartupTime}`);
-            Logger.info(`服务器监听地址: http://${host}:${port}`);
+            Logger.info(`服务器监听地址: http://${this.config.appHost}:${this.config.appPort}`);
 
             // 9. 注册优雅关闭处理
             const gracefulShutdown = async (signal: string) => {
