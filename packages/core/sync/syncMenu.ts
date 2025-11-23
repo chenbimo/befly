@@ -21,7 +21,7 @@ import { scanAddons, getAddonDir } from 'befly-util';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 
-import type { SyncMenuOptions, MenuConfig } from '../types.js';
+import type { SyncMenuOptions, MenuConfig, BeflyOptions } from '../types/index.js';
 
 /**
  * 读取菜单配置文件
@@ -254,7 +254,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
 /**
  * SyncMenu 命令主函数
  */
-export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<void> {
+export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.debug('[计划] 同步菜单配置到数据库（plan 模式不执行）');

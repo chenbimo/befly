@@ -24,6 +24,7 @@ import { modifyTable } from './table.js';
 import { createTable } from './tableCreate.js';
 import { applyFieldDefaults } from './helpers.js';
 import type { SQL } from 'bun';
+import type { BeflyOptions, SyncDbOptions } from '../../types/index.js';
 
 // 全局 SQL 客户端实例
 let sql: SQL | null = null;
@@ -40,7 +41,7 @@ const processedTables: string[] = [];
  * 3. 扫描表定义文件（核心表、项目表、addon表）
  * 4. 对比并应用表结构变更
  */
-export const SyncDb = async (): Promise<void> => {
+export const SyncDb = async (config: BeflyOptions, options: SyncDbOptions = {}): Promise<void> => {
     try {
         // 清空处理记录
         processedTables.length = 0;
@@ -96,6 +97,11 @@ export const SyncDb = async (): Promise<void> => {
                     tableName = `addon_${dirConfig.addonNameSnake}_${tableName}`;
                 }
 
+                // 如果指定了表名，则只同步该表
+                if (options.table && options.table !== tableName) {
+                    continue;
+                }
+
                 const tableDefinitionModule = await import(file, { with: { type: 'json' } });
                 const tableDefinition = tableDefinitionModule.default;
 
@@ -104,13 +110,14 @@ export const SyncDb = async (): Promise<void> => {
                     applyFieldDefaults(fieldDef);
                 }
 
-                const existsTable = await tableExists(sql!, tableName);
+                const dbName = config.plugins?.db?.database;
+                const existsTable = await tableExists(sql!, tableName, dbName);
 
                 // 读取 force 参数
-                const force = process.env.SYNC_FORCE === '1';
+                const force = options.force || false;
 
                 if (existsTable) {
-                    await modifyTable(sql!, tableName, tableDefinition, force);
+                    await modifyTable(sql!, tableName, tableDefinition, force, dbName);
                 } else {
                     await createTable(sql!, tableName, tableDefinition);
                 }

@@ -19,7 +19,7 @@ import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 
-import type { SyncApiOptions, ApiInfo } from '../types.js';
+import type { SyncApiOptions, ApiInfo, BeflyOptions } from '../types/index.js';
 
 /**
  * 从 API 文件中提取接口信息
@@ -212,7 +212,7 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
 /**
  * SyncApi 命令主函数
  */
-export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void> {
+export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.debug('[计划] 同步 API 接口到数据库（plan 模式不执行）');

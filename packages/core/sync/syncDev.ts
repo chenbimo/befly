@@ -10,20 +10,20 @@
 import { Database } from '../lib/database.js';
 import { Cipher } from '../lib/cipher.js';
 import { Logger } from '../lib/logger.js';
-import type { SyncDevOptions, SyncDevStats } from '../types.js';
+import type { SyncDevOptions, SyncDevStats, BeflyOptions } from '../types/index.js';
 
 /**
  * SyncDev 命令主函数
  */
-export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void> {
+export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.debug('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
             return;
         }
 
-        const devPassword = process.env.DEV_PASSWORD;
-        const devEmail = process.env.DEV_EMAIL || 'dev@qq.com';
+        const devPassword = config.devPassword;
+        const devEmail = config.devEmail || 'dev@qq.com';
 
         if (!devPassword) {
             return;

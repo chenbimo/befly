@@ -85,7 +85,7 @@ export class Befly {
             await loadApis(this.apiRoutes);
 
             // 7. 自动同步 (默认开启)
-            await syncAllCommand();
+            await syncAllCommand(this.config);
 
             // 8. 启动 HTTP 服务器
             const server = Bun.serve({

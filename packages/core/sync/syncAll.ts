@@ -9,9 +9,9 @@ import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
-import type { SyncOptions } from '../types.js';
+import type { SyncOptions, BeflyOptions } from '../types/index.js';
 
-export async function syncAllCommand(options: SyncOptions = {}) {
+export async function syncAllCommand(config: BeflyOptions, options: SyncOptions = {}) {
     try {
         const startTime = Date.now();
 
@@ -28,22 +28,22 @@ export async function syncAllCommand(options: SyncOptions = {}) {
 
         // 1. 同步数据库表结构
         Logger.debug('📦 正在同步数据库...');
-        await syncDbCommand({ dryRun: false, force: options.force || false });
+        await syncDbCommand(config, { dryRun: false, force: options.force || false });
         Logger.debug(`✓ 数据库同步完成\n`);
 
         // 2. 同步接口（并缓存）
         Logger.debug('🔌 正在同步接口...');
-        await syncApiCommand();
+        await syncApiCommand(config);
         Logger.debug(`✓ 接口同步完成\n`);
 
         // 3. 同步菜单（并缓存）
         Logger.debug('📋 正在同步菜单...');
-        await syncMenuCommand();
+        await syncMenuCommand(config);
         Logger.debug(`✓ 菜单同步完成\n`);
 
         // 4. 同步开发管理员（并缓存角色权限）
         Logger.debug('👤 正在同步开发账号...');
-        await syncDevCommand();
+        await syncDevCommand(config);
         Logger.debug(`✓ 开发账号同步完成\n`);
 
         // 输出总结

@@ -16,14 +16,16 @@ import type { SQL } from 'bun';
  *
  * @param sql - SQL 客户端实例
  * @param tableName - 表名
+ * @param dbName - 数据库名称
  * @returns 表是否存在
  */
-export async function tableExists(sql: SQL, tableName: string): Promise<boolean> {
+export async function tableExists(sql: SQL, tableName: string, dbName?: string): Promise<boolean> {
     if (!sql) throw new Error('SQL 客户端未初始化');
+    const database = dbName || process.env.DB_NAME;
 
     try {
         if (IS_MYSQL) {
-            const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${process.env.DB_NAME} AND TABLE_NAME = ${tableName}`;
+            const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${database} AND TABLE_NAME = ${tableName}`;
             return (res[0]?.count || 0) > 0;
         }
 
@@ -56,17 +58,19 @@ export async function tableExists(sql: SQL, tableName: string): Promise<boolean>
  *
  * @param sql - SQL 客户端实例
  * @param tableName - 表名
+ * @param dbName - 数据库名称
  * @returns 列信息对象，键为列名，值为列详情
  */
-export async function getTableColumns(sql: SQL, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
+export async function getTableColumns(sql: SQL, tableName: string, dbName?: string): Promise<{ [key: string]: ColumnInfo }> {
     const columns: { [key: string]: ColumnInfo } = {};
+    const database = dbName || process.env.DB_NAME;
 
     try {
         if (IS_MYSQL) {
             const result = await sql`
                 SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
                 FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = ${process.env.DB_NAME} AND TABLE_NAME = ${tableName}
+                WHERE TABLE_SCHEMA = ${database} AND TABLE_NAME = ${tableName}
                 ORDER BY ORDINAL_POSITION
             `;
             for (const row of result) {
@@ -147,17 +151,19 @@ export async function getTableColumns(sql: SQL, tableName: string): Promise<{ [k
  *
  * @param sql - SQL 客户端实例
  * @param tableName - 表名
+ * @param dbName - 数据库名称
  * @returns 索引信息对象，键为索引名，值为列名数组
  */
-export async function getTableIndexes(sql: SQL, tableName: string): Promise<IndexInfo> {
+export async function getTableIndexes(sql: SQL, tableName: string, dbName?: string): Promise<IndexInfo> {
     const indexes: IndexInfo = {};
+    const database = dbName || process.env.DB_NAME;
 
     try {
         if (IS_MYSQL) {
             const result = await sql`
                 SELECT INDEX_NAME, COLUMN_NAME
                 FROM information_schema.STATISTICS
-                WHERE TABLE_SCHEMA = ${process.env.DB_NAME}
+                WHERE TABLE_SCHEMA = ${database}
                     AND TABLE_NAME = ${tableName}
                     AND INDEX_NAME != 'PRIMARY'
                 ORDER BY INDEX_NAME
