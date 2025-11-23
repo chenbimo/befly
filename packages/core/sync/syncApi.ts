@@ -19,7 +19,7 @@ import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 
-import type { SyncApiOptions, ApiInfo } from './types.js';
+import type { SyncApiOptions, ApiInfo } from '../types.js';
 
 /**
  * 从 API 文件中提取接口信息

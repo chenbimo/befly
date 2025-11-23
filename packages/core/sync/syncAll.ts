@@ -9,7 +9,7 @@ import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
-import type { SyncOptions } from './types.js';
+import type { SyncOptions } from '../types.js';
 
 export async function syncAllCommand(options: SyncOptions = {}) {
     try {

@@ -10,7 +10,7 @@
 import { Database } from '../lib/database.js';
 import { Cipher } from '../lib/cipher.js';
 import { Logger } from '../lib/logger.js';
-import type { SyncDevOptions, SyncDevStats } from './types.js';
+import type { SyncDevOptions, SyncDevStats } from '../types.js';
 
 /**
  * SyncDev 命令主函数

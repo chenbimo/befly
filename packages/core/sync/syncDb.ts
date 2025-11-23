@@ -6,7 +6,7 @@ import { join } from 'pathe';
 import { existsSync } from 'node:fs';
 import { Logger } from '../lib/logger.js';
 import { SyncDb } from './syncDb/index.js';
-import type { SyncDbOptions } from './types.js';
+import type { SyncDbOptions } from '../types.js';
 
 export async function syncDbCommand(options: SyncDbOptions): Promise<void> {
     try {
