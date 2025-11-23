@@ -1,5 +1,4 @@
 import type { Hook } from '../types/hook.js';
-import { No, Yes } from '../utils/response.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 
@@ -9,25 +8,25 @@ import type { RequestContext } from '../types/context.js';
 function checkPermission(api: ApiRoute, ctx: RequestContext, hasPermission: boolean) {
     // 1. 接口无需权限
     if (api.auth === false) {
-        return Yes('无需权限');
+        return { code: 0, msg: '无需权限' };
     }
 
     // 2. 用户未登录
     if (!ctx.user || !ctx.user.userId) {
-        return No('未登录', null, { code: 401 });
+        return { code: 401, msg: '未登录', data: null };
     }
 
     // 3. 开发者权限（最高权限）
     if (ctx.user.roleCode === 'dev') {
-        return Yes('开发者权限');
+        return { code: 0, msg: '开发者权限' };
     }
 
     // 4. 角色权限检查
     if (hasPermission) {
-        return Yes('有权限');
+        return { code: 0, msg: '有权限' };
     }
 
-    return No('无权访问', null, { code: 403 });
+    return { code: 403, msg: '无权访问', data: null };
 }
 
 const hook: Hook = {

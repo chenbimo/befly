@@ -1,5 +1,4 @@
 import type { Hook } from '../types/hook.js';
-import { No } from '../utils/response.js';
 
 const hook: Hook = {
     after: ['requestId'],
@@ -13,7 +12,25 @@ const hook: Hook = {
 
         // 如果有 result，格式化为 JSON 响应
         if (ctx.result !== undefined) {
-            const result = ctx.result;
+            let result = ctx.result;
+
+            // 1. 如果是字符串，自动包裹为成功响应
+            if (typeof result === 'string') {
+                result = {
+                    code: 0,
+                    msg: result,
+                    data: {}
+                };
+            }
+            // 2. 如果是对象，自动补充 code: 0
+            else if (result && typeof result === 'object') {
+                if (!('code' in result)) {
+                    result = {
+                        code: 0,
+                        ...result
+                    };
+                }
+            }
 
             // 处理 BigInt 序列化问题
             if (result && typeof result === 'object') {
@@ -36,9 +53,12 @@ const hook: Hook = {
         // 如果既没有 response 也没有 result，且不是 OPTIONS 请求，则返回 404
         // (OPTIONS 请求通常由 cors 插件处理并返回 204)
         if (ctx.request.method !== 'OPTIONS' && !ctx.response) {
-            ctx.response = Response.json(No('No response generated'), {
-                headers: ctx.corsHeaders
-            });
+            ctx.response = Response.json(
+                { code: 1, msg: 'No response generated' },
+                {
+                    headers: ctx.corsHeaders
+                }
+            );
         }
     }
 };

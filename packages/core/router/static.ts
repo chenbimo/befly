@@ -5,7 +5,6 @@
 
 import { join } from 'pathe';
 import { projectDir } from '../paths.js';
-import { No } from '../utils/response.js';
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
 import type { CorsConfig } from '../types/befly.js';
@@ -54,10 +53,13 @@ export function staticHandler(corsConfig: CorsConfig = {}) {
             // 可以在这里根据 error.code 或 error.message 进行更细粒度的错误处理
             // 例如：权限不足、文件系统错误等
 
-            return Response.json(No(errorMessage, errorDetail), {
-                status: 500,
-                headers: corsOptions.headers
-            });
+            return Response.json(
+                { code: 1, msg: errorMessage, data: errorDetail },
+                {
+                    status: 500,
+                    headers: corsOptions.headers
+                }
+            );
         }
     };
 }
@@ -88,10 +90,13 @@ export async function staticHandler(req: Request): Promise<Response> {
                 }
             });
         } else {
-            return Response.json(No('文件未找到'), {
-                status: 404,
-                headers: corsOptions.headers
-            });
+            return Response.json(
+                { code: 1, msg: '文件未找到' },
+                {
+                    status: 404,
+                    headers: corsOptions.headers
+                }
+            );
         }
     } catch (error: any) {
         // 记录详细的错误日志
@@ -120,9 +125,12 @@ export async function staticHandler(req: Request): Promise<Response> {
             };
         }
 
-        return Response.json(No(errorMessage, errorDetail), {
-            status: 500,
-            headers: corsOptions.headers
-        });
+        return Response.json(
+            { code: 1, msg: errorMessage, data: errorDetail },
+            {
+                status: 500,
+                headers: corsOptions.headers
+            }
+        );
     }
 }

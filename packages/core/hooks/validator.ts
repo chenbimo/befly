@@ -1,6 +1,5 @@
 import type { Hook } from '../types/hook.js';
 import { Validator } from '../lib/validator.js';
-import { No, Yes } from '../utils/response.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 
@@ -9,7 +8,7 @@ import type { RequestContext } from '../types/context.js';
  */
 function validateParams(api: ApiRoute, ctx: RequestContext) {
     if (!api.fields) {
-        return Yes('无需验证');
+        return { code: 0, msg: '无需验证' };
     }
 
     const result = Validator.validate(ctx.body, api.fields, api.required || []);
@@ -18,7 +17,7 @@ function validateParams(api: ApiRoute, ctx: RequestContext) {
         return result;
     }
 
-    return Yes('验证通过');
+    return { code: 0, msg: '验证通过' };
 }
 
 const hook: Hook = {
@@ -28,9 +27,12 @@ const hook: Hook = {
 
         const validateResult = validateParams(ctx.api, ctx);
         if (validateResult.code !== 0) {
-            ctx.response = Response.json(No('无效的请求参数格式', validateResult.fields), {
-                headers: ctx.corsHeaders
-            });
+            ctx.response = Response.json(
+                { code: 1, msg: '无效的请求参数格式', data: validateResult.fields },
+                {
+                    headers: ctx.corsHeaders
+                }
+            );
             return;
         }
         await next();

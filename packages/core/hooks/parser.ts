@@ -2,7 +2,6 @@ import type { Hook } from '../types/hook.js';
 import { isPlainObject, isEmpty } from 'es-toolkit/compat';
 import { pickFields } from 'befly-util';
 import { Xml } from '../lib/xml.js';
-import { No } from '../utils/response.js';
 import type { ApiRoute } from '../types/api.js';
 import type { RequestContext } from '../types/context.js';
 
@@ -60,13 +59,16 @@ const hook: Hook = {
         } else if (ctx.request.method === 'POST') {
             const parseSuccess = await parsePostParams(ctx.api, ctx);
             if (!parseSuccess) {
-                ctx.response = Response.json(No('无效的请求参数格式'), {
-                    headers: ctx.corsHeaders
-                });
+                ctx.response = Response.json(
+                    { code: 1, msg: '无效的请求参数格式' },
+                    {
+                        headers: ctx.corsHeaders
+                    }
+                );
                 return;
             }
         }
         await next();
     }
 };
-export default plugin;
+export default hook;

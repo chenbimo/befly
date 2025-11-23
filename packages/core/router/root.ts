@@ -5,7 +5,6 @@
 
 import { setCorsOptions } from '../lib/middleware.js';
 import { Logger } from '../lib/logger.js';
-import { No } from '../utils/response.js';
 
 /**
  * 根路径处理器
@@ -44,9 +43,12 @@ export async function rootHandler(req: Request): Promise<Response> {
             };
         }
 
-        return Response.json(No(errorMessage, errorDetail), {
-            status: 500,
-            headers: corsOptions.headers
-        });
+        return Response.json(
+            { code: 1, msg: errorMessage, data: errorDetail },
+            {
+                status: 500,
+                headers: corsOptions.headers
+            }
+        );
     }
 }

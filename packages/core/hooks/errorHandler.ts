@@ -1,6 +1,5 @@
 import type { Hook } from '../types/hook.js';
 import { Logger } from '../lib/logger.js';
-import { No } from '../utils/response.js';
 
 const hook: Hook = {
     handler: async (befly, ctx, next) => {
@@ -12,10 +11,13 @@ const hook: Hook = {
             Logger.error(`Request Error: ${apiPath}`, err);
 
             // 设置错误响应
-            ctx.response = Response.json(No('Internal Server Error'), {
-                headers: ctx.corsHeaders,
-                status: 500
-            });
+            ctx.response = Response.json(
+                { code: 1, msg: 'Internal Server Error' },
+                {
+                    headers: ctx.corsHeaders,
+                    status: 500
+                }
+            );
         }
     }
 };

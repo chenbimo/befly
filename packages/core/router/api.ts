@@ -3,7 +3,6 @@
  * 处理 /api/* 路径的请求
  */
 
-import { No } from '../utils/response.js';
 import { compose } from '../lib/compose.js';
 import type { RequestContext } from '../types/context.js';
 import type { ApiRoute } from '../types/api.js';
@@ -52,9 +51,12 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
             if (!ctx.api) {
                 // 只有非 OPTIONS 请求才报 404（OPTIONS 请求通常由 cors 插件处理并返回）
                 if (req.method !== 'OPTIONS') {
-                    ctx.response = Response.json(No('接口不存在'), {
-                        headers: ctx.corsHeaders
-                    });
+                    ctx.response = Response.json(
+                        { code: 1, msg: '接口不存在' },
+                        {
+                            headers: ctx.corsHeaders
+                        }
+                    );
                 }
                 return;
             }
@@ -77,8 +79,11 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
         }
 
         // 兜底响应（理论上不应执行到这里，responseFormatter 会处理）
-        return Response.json(No('No response generated'), {
-            headers: ctx.corsHeaders
-        });
+        return Response.json(
+            { code: 1, msg: 'No response generated' },
+            {
+                headers: ctx.corsHeaders
+            }
+        );
     };
 }

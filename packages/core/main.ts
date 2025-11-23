@@ -19,7 +19,6 @@ import { RedisHelper } from './lib/redisHelper.js';
 import { checkApp } from './checks/checkApp.js';
 import { checkTable } from './checks/checkTable.js';
 import { checkApi } from './checks/checkApi.js';
-import { Yes, No } from './utils/response.js';
 import { calcPerfTime } from 'befly-util';
 import { defaultOptions } from './config/defaults.js';
 import { syncAllCommand } from './sync/syncAll.js';
@@ -143,8 +142,6 @@ export {
     Logger,
     Cipher,
     Jwt,
-    Yes,
-    No,
     Database,
     DbHelper,
     RedisHelper,

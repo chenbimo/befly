@@ -1,6 +1,5 @@
 import type { Hook } from '../types/hook.js';
-import { Logger } from '../lib/logger';
-import { No } from '../response';
+import { Logger } from '../lib/logger.js';
 
 /**
  * 接口限流插件
@@ -49,7 +48,13 @@ const hook: Hook = {
 
             // 6. 判断是否超限
             if (current > limitCount) {
-                return No('请求过于频繁，请稍后再试', null, { code: 429 });
+                ctx.response = Response.json(
+                    { code: 429, msg: '请求过于频繁，请稍后再试', data: null },
+                    {
+                        headers: ctx.corsHeaders
+                    }
+                );
+                return;
             }
 
             return next();

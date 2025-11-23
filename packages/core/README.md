@@ -55,7 +55,6 @@ bun run main.ts
 
 ```typescript
 // apis/user/hello.ts
-import { Yes } from 'befly';
 import type { ApiRoute } from 'befly';
 
 export default {
@@ -63,9 +62,12 @@ export default {
     auth: false, // 公开接口
     fields: {},
     handler: async (befly, ctx) => {
-        return Yes('Hello, Befly!', {
-            timestamp: Date.now()
-        });
+        return {
+            msg: 'Hello, Befly!',
+            data: {
+                timestamp: Date.now()
+            }
+        };
     }
 } as ApiRoute;
 ```
@@ -77,7 +79,6 @@ export default {
 ### TypeScript 全面支持
 
 ```typescript
-import { Yes } from 'befly';
 import type { ApiRoute, BeflyContext } from 'befly';
 import type { User } from './types/models';
 
@@ -97,7 +98,7 @@ export default {
             where: { id }
         });
 
-        return Yes('查询成功', user);
+        return { msg: '查询成功', data: user };
     }
 } as ApiRoute;
 ```
