@@ -22,7 +22,6 @@ import { checkApi } from './checks/checkApi.js';
 import { calcPerfTime } from 'befly-util';
 import { defaultOptions } from './config/defaults.js';
 import { syncAllCommand } from './sync/syncAll.js';
-import { defu } from 'defu';
 
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
@@ -51,8 +50,18 @@ export class Befly {
 
     constructor(options: BeflyOptions = {}) {
         this.appContext = {};
-        // 合并配置：用户配置 > 默认配置
-        this.config = defu(options, defaultOptions);
+        // 合并配置：用户配置 > 默认配置（最多 2 级）
+        this.config = { ...defaultOptions };
+        for (const key in options) {
+            const value = options[key as keyof BeflyOptions];
+            if (value !== undefined && value !== null) {
+                if (typeof value === 'object' && !Array.isArray(value)) {
+                    this.config[key as keyof BeflyOptions] = { ...defaultOptions[key as keyof typeof defaultOptions], ...value } as any;
+                } else {
+                    this.config[key as keyof BeflyOptions] = value as any;
+                }
+            }
+        }
     }
 
     /**
