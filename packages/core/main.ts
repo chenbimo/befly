@@ -65,78 +65,83 @@ export class Befly {
      * @returns HTTP 服务器实例
      */
     public async start(): Promise<Server> {
-        const serverStartTime = Bun.nanoseconds();
+        try {
+            const serverStartTime = Bun.nanoseconds();
 
-        // 1. 执行启动检查
-        await checkApp();
-        await checkTable();
-        await checkApi();
+            // 1. 执行启动检查
+            await checkApp();
+            await checkTable();
+            await checkApi();
 
-        // 4. 加载插件
-        await loadPlugins({
-            pluginLists: this.pluginLists,
-            appContext: this.appContext,
-            pluginsConfig: this.config.plugins
-        });
+            // 4. 加载插件
+            await loadPlugins({
+                pluginLists: this.pluginLists,
+                appContext: this.appContext,
+                pluginsConfig: this.config.plugins
+            });
 
-        // 5. 加载钩子
-        await loadHooks({
-            hookLists: this.hookLists,
-            pluginsConfig: this.config.plugins
-        });
+            // 5. 加载钩子
+            await loadHooks({
+                hookLists: this.hookLists,
+                pluginsConfig: this.config.plugins
+            });
 
-        // 6. 加载所有 API
-        await loadApis(this.apiRoutes);
+            // 6. 加载所有 API
+            await loadApis(this.apiRoutes);
 
-        // 7. 自动同步 (默认开启)
-        await syncAllCommand();
+            // 7. 自动同步 (默认开启)
+            await syncAllCommand();
 
-        // 8. 启动 HTTP 服务器
-        const port = this.config.appPort || 3000;
-        const host = this.config.appHost || '127.0.0.1';
-        const appName = this.config.appName || 'Befly App';
+            // 8. 启动 HTTP 服务器
+            const port = this.config.appPort || 3000;
+            const host = this.config.appHost || '127.0.0.1';
+            const appName = this.config.appName || 'Befly App';
 
-        const server = Bun.serve({
-            port: port,
-            hostname: host,
-            routes: {
-                '/': rootHandler,
-                '/api/*': apiHandler(this.apiRoutes, this.hookLists, this.appContext),
-                '/*': staticHandler(this.options.plugins?.cors)
-            },
-            error: (error: Error) => {
-                Logger.error('服务启动时发生错误', error);
-                return Response.json({ code: 1, msg: '内部服务器错误' });
-            }
-        });
+            const server = Bun.serve({
+                port: port,
+                hostname: host,
+                routes: {
+                    '/': rootHandler,
+                    '/api/*': apiHandler(this.apiRoutes, this.hookLists, this.appContext),
+                    '/*': staticHandler(this.options.plugins?.cors)
+                },
+                error: (error: Error) => {
+                    Logger.error('服务启动时发生错误', error);
+                    return Response.json({ code: 1, msg: '内部服务器错误' });
+                }
+            });
 
-        const finalStartupTime = calcPerfTime(serverStartTime);
-        Logger.info(`${appName} 启动成功! `);
-        Logger.info(`服务器启动耗时: ${finalStartupTime}`);
-        Logger.info(`服务器监听地址: http://${host}:${port}`);
+            const finalStartupTime = calcPerfTime(serverStartTime);
+            Logger.info(`${appName} 启动成功! `);
+            Logger.info(`服务器启动耗时: ${finalStartupTime}`);
+            Logger.info(`服务器监听地址: http://${host}:${port}`);
 
-        // 9. 注册优雅关闭处理
-        const gracefulShutdown = async (signal: string) => {
-            // 停止接收新请求
-            server.stop(true);
-            Logger.info('HTTP 服务器已停止');
+            // 9. 注册优雅关闭处理
+            const gracefulShutdown = async (signal: string) => {
+                // 停止接收新请求
+                server.stop(true);
+                Logger.info('HTTP 服务器已停止');
 
-            // 关闭数据库连接
-            try {
-                await Database.disconnect();
-                Logger.info('数据库连接已关闭');
-            } catch (error: any) {
-                Logger.error('关闭数据库连接时出错:', error);
-            }
+                // 关闭数据库连接
+                try {
+                    await Database.disconnect();
+                    Logger.info('数据库连接已关闭');
+                } catch (error: any) {
+                    Logger.error('关闭数据库连接时出错:', error);
+                }
 
-            Logger.info('服务器已优雅关闭');
-            process.exit(0);
-        };
+                Logger.info('服务器已优雅关闭');
+                process.exit(0);
+            };
 
-        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+            process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+            process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-        return server;
+            return server;
+        } catch (error: any) {
+            Logger.error('Befly 启动失败', error);
+            process.exit(1);
+        }
     }
 }
 
