@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs';
 import { snakeCase } from 'es-toolkit/string';
 import { Database } from '../../lib/database.js';
 import { RedisHelper } from '../../lib/redisHelper.js';
-import { checkTable } from '../../check.js';
+import checkTable from '../../checks/checkTable.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 import { Logger } from '../../lib/logger.js';
 import { projectDir } from '../../paths.js';
