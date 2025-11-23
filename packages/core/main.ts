@@ -50,12 +50,8 @@ export class Befly {
     /** 最终配置（合并默认值后） */
     public config: BeflyOptions;
 
-    /** 构造函数选项 */
-    private options: BeflyOptions;
-
     constructor(options: BeflyOptions = {}) {
         this.appContext = {};
-        this.options = options;
         // 合并配置：用户配置 > 默认配置
         this.config = defu(options, defaultOptions);
     }
@@ -99,7 +95,7 @@ export class Befly {
                 routes: {
                     '/': rootHandler,
                     '/api/*': apiHandler(this.apiRoutes, this.hookLists, this.appContext),
-                    '/*': staticHandler(this.options.plugins?.cors)
+                    '/*': staticHandler(this.config.plugins?.cors)
                 },
                 error: (error: Error) => {
                     Logger.error('服务启动时发生错误', error);
