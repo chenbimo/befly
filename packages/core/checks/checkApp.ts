@@ -6,7 +6,7 @@ import { projectApiDir, projectDir } from '../paths.js';
 /**
  * 检查项目结构
  */
-export default async function (): Promise<boolean> {
+export async function checkApp(): Promise<boolean> {
     try {
         // 检查项目 apis 目录下是否存在名为 addon 的目录
         if (existsSync(projectApiDir)) {

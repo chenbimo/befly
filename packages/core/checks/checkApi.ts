@@ -8,7 +8,7 @@ import { scanFiles } from 'befly-util';
 /**
  * 检查所有 API 定义
  */
-export default async function (): Promise<boolean> {
+export async function checkApi(): Promise<boolean> {
     try {
         // 收集所有 API 文件
         const allApiFiles: Array<{ file: string; displayName: string; apiPath: string }> = [];

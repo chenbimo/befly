@@ -1,4 +1,4 @@
-﻿import type { KeyValue } from './types/common.js';
+import type { KeyValue } from '../types/common.js';
 
 // ========================================
 // API 响应工具

@@ -16,7 +16,9 @@ import { staticHandler } from './router/static.js';
 import { coreDir } from './paths.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
-import { runChecks } from './check.js';
+import { checkApp } from './checks/checkApp.js';
+import { checkTable } from './checks/checkTable.js';
+import { checkApi } from './checks/checkApi.js';
 import { Yes, No } from './response.js';
 import { calcPerfTime } from 'befly-util';
 import { defaultOptions } from './config/defaults.js';
@@ -76,9 +78,16 @@ export class Befly {
         }
 
         // 1. 执行启动检查
-        const checkResult = await runChecks();
-        if (!checkResult) {
-            Logger.error('启动检查失败，程序退出');
+        if (!(await checkApp())) {
+            Logger.error('项目结构检查失败，程序退出');
+            process.exit(1);
+        }
+        if (!(await checkTable())) {
+            Logger.error('表结构检查失败，程序退出');
+            process.exit(1);
+        }
+        if (!(await checkApi())) {
+            Logger.error('API 定义检查失败，程序退出');
             process.exit(1);
         }
 

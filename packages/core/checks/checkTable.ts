@@ -53,7 +53,7 @@ const MAX_VARCHAR_LENGTH = 65535;
  * 检查表定义文件
  * @throws 当检查失败时抛出异常
  */
-export default async function (): Promise<boolean> {
+export async function checkTable(): Promise<boolean> {
     try {
         // 收集所有表文件
         const allTableFiles: TableFileInfo[] = [];
