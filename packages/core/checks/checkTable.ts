@@ -1,9 +1,15 @@
-import { basename } from 'pathe';
+// 内部依赖
 import { existsSync } from 'node:fs';
+
+// 外部依赖
+import { basename } from 'pathe';
+import { scanAddons, getAddonDir, scanFiles } from 'befly-util';
+
+// 相对导入
 import { Logger } from '../lib/logger.js';
 import { projectTableDir } from '../paths.js';
-import { scanAddons, getAddonDir } from 'befly-util';
-import { scanFiles } from 'befly-util';
+
+// 类型导入
 import type { FieldDefinition } from '../types/common.js';
 
 /**

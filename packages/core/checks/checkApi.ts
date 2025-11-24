@@ -1,9 +1,13 @@
+// 内部依赖
 import { existsSync } from 'node:fs';
+
+// 外部依赖
 import { isPlainObject } from 'es-toolkit/compat';
+import { scanAddons, getAddonDir, addonDirExists, scanFiles } from 'befly-util';
+
+// 相对导入
 import { Logger } from '../lib/logger.js';
 import { projectApiDir } from '../paths.js';
-import { scanAddons, getAddonDir, addonDirExists } from 'befly-util';
-import { scanFiles } from 'befly-util';
 
 /**
  * 检查所有 API 定义
@@ -62,7 +66,7 @@ export async function checkApi(): Promise<void> {
                 }
 
                 // 验证可选属性的类型（如果提供了）
-                if (api.method && !['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].includes(api.method.toUpperCase())) {
+                if (api.method && !['GET', 'POST'].includes(api.method.toUpperCase())) {
                     Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法`);
                 }
                 if (api.auth !== undefined && typeof api.auth !== 'boolean') {

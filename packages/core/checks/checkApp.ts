@@ -1,5 +1,8 @@
+// 内部依赖
 import { join } from 'node:path';
 import { existsSync, mkdirSync } from 'node:fs';
+
+// 相对导入
 import { Logger } from '../lib/logger.js';
 import { projectApiDir, projectDir } from '../paths.js';
 
