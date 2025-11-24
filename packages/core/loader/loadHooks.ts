@@ -3,16 +3,20 @@
  * 负责扫描和初始化所有钩子（核心、组件、项目）
  */
 
+// 内部依赖
 import { existsSync } from 'node:fs';
 
+// 外部依赖
 import { camelCase } from 'es-toolkit/string';
 import { scanFiles, scanAddons, getAddonDir } from 'befly-util';
 
+// 相对导入
 import { Logger } from '../lib/logger.js';
 import { coreHookDir, projectHookDir } from '../paths.js';
 import { sortModules } from '../util.js';
 import { importAndRegister } from './loadPlugins.js';
 
+// 类型导入
 import type { Hook } from '../types/hook.js';
 
 async function scanHooks(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Hook[]> {
