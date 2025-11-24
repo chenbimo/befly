@@ -19,7 +19,15 @@ import type { BeflyContext } from '../types/befly.js';
 /**
  * 统一导入并注册模块（插件或钩子）
  */
-export async function importAndRegister<T extends Plugin | Hook>(files: Array<{ filePath: string; fileName: string }>, loadedNames: Set<string>, nameGenerator: (fileName: string, filePath: string) => string, errorLabelGenerator: (fileName: string, filePath: string) => string, config?: Record<string, Record<string, any>>): Promise<T[]> {
+export async function importAndRegister<T extends Plugin | Hook>(
+    //
+    files: Array<{ filePath: string; fileName: string }>,
+    loadedNames: Set<string>,
+    nameGenerator: (fileName: string, filePath: string) => string,
+    errorLabelGenerator: (fileName: string, filePath: string) => string,
+    config?: Record<string, Record<string, any>>
+): Promise<T[]> {
+    //
     const items: T[] = [];
 
     for (const { filePath, fileName } of files) {
@@ -113,7 +121,15 @@ export function sortModules<T extends { name?: string; after?: string[] }>(modul
 
 // ==================== 插件加载逻辑 ====================
 
-async function scanPlugins(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Plugin[]> {
+async function scanPlugins(
+    //
+    dir: string,
+    type: 'core' | 'addon' | 'app',
+    loadedNames: Set<string>,
+    config?: Record<string, any>,
+    addonName?: string
+): Promise<Plugin[]> {
+    //
     if (!existsSync(dir)) return [];
 
     const files = await scanFiles(dir, '*.{ts,js}');
@@ -151,20 +167,27 @@ export async function loadPlugins(befly: {
         const loadedNames = new Set<string>();
         const allPlugins: Plugin[] = [];
 
-        // 1. 核心插件
-        allPlugins.push(...(await scanPlugins(corePluginDir, 'core', loadedNames, befly.pluginsConfig)));
+        // 1. 扫描核心插件
+        const corePlugins = await scanPlugins(corePluginDir, 'core', loadedNames, befly.pluginsConfig);
 
-        // 2. 组件插件
+        // 2. 扫描组件插件
+        const addonPlugins: Plugin[] = [];
         const addons = scanAddons();
         for (const addon of addons) {
             const dir = getAddonDir(addon, 'plugins');
-            allPlugins.push(...(await scanPlugins(dir, 'addon', loadedNames, befly.pluginsConfig, addon)));
+            const plugins = await scanPlugins(dir, 'addon', loadedNames, befly.pluginsConfig, addon);
+            addonPlugins.push(...plugins);
         }
 
-        // 3. 项目插件
-        allPlugins.push(...(await scanPlugins(projectPluginDir, 'app', loadedNames, befly.pluginsConfig)));
+        // 3. 扫描项目插件
+        const appPlugins = await scanPlugins(projectPluginDir, 'app', loadedNames, befly.pluginsConfig);
 
-        // 4. 排序与初始化
+        // 4. 合并所有插件
+        allPlugins.push(...corePlugins);
+        allPlugins.push(...addonPlugins);
+        allPlugins.push(...appPlugins);
+
+        // 5. 排序与初始化
         const sortedPlugins = sortModules(allPlugins);
         if (sortedPlugins === false) {
             Logger.error('插件依赖关系错误，请检查 after 属性');
