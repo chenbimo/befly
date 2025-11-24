@@ -1,5 +1,5 @@
 import { describe, it, expect, mock } from 'bun:test';
-import { sortModules } from '../../loader/loadPlugins';
+import { sortModules } from '../../util';
 import type { Plugin } from '../../types/plugin';
 import { Logger } from '../../lib/logger';
 

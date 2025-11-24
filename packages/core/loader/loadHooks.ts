@@ -20,23 +20,22 @@ export async function loadHooks(befly: {
     pluginsConfig?: Record<string, any>;
 }): Promise<void> {
     try {
-        const loadedNames = new Set<string>();
         const allHooks: Hook[] = [];
 
         // 1. 扫描核心钩子
-        const coreHooks = await scanModules<Hook>(coreHookDir, 'core', loadedNames, '钩子', befly.pluginsConfig);
+        const coreHooks = await scanModules<Hook>(coreHookDir, 'core', '钩子', befly.pluginsConfig);
 
         // 2. 扫描组件钩子
         const addonHooks: Hook[] = [];
         const addons = scanAddons();
         for (const addon of addons) {
             const dir = getAddonDir(addon, 'hooks');
-            const hooks = await scanModules<Hook>(dir, 'addon', loadedNames, '钩子', befly.pluginsConfig, addon);
+            const hooks = await scanModules<Hook>(dir, 'addon', '钩子', befly.pluginsConfig, addon);
             addonHooks.push(...hooks);
         }
 
         // 3. 扫描项目钩子
-        const appHooks = await scanModules<Hook>(projectHookDir, 'app', loadedNames, '钩子', befly.pluginsConfig);
+        const appHooks = await scanModules<Hook>(projectHookDir, 'app', '钩子', befly.pluginsConfig);
 
         // 4. 合并所有钩子
         allHooks.push(...coreHooks);
