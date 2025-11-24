@@ -1,64 +1,65 @@
-import type { Hook } from '../types/hook.js';
+// 外部依赖
 import { isPlainObject, isEmpty } from 'es-toolkit/compat';
 import { pickFields } from 'befly-util';
+
+// 相对导入
 import { Xml } from '../lib/xml.js';
-import type { ApiRoute } from '../types/api.js';
-import type { RequestContext } from '../types/context.js';
+
+// 类型导入
+import type { Hook } from '../types/hook.js';
 
 /**
- * 解析GET请求参数
+ * 请求参数解析中间件
+ * - GET 请求：解析 URL 查询参数
+ * - POST 请求：解析 JSON 或 XML 请求体
+ * - 根据 API 定义的 fields 过滤字段
  */
-function parseGetParams(api: ApiRoute, ctx: RequestContext): void {
-    const url = new URL(ctx.request.url);
-
-    if (isPlainObject(api.fields) && !isEmpty(api.fields)) {
-        ctx.body = pickFields(Object.fromEntries(url.searchParams), Object.keys(api.fields));
-    } else {
-        ctx.body = Object.fromEntries(url.searchParams);
-    }
-}
-
-/**
- * 解析POST请求参数
- */
-async function parsePostParams(api: ApiRoute, ctx: RequestContext): Promise<boolean> {
-    const contentType = ctx.request.headers.get('content-type') || '';
-
-    try {
-        if (contentType.includes('application/json')) {
-            const body = await ctx.request.json();
-            if (isPlainObject(api.fields) && !isEmpty(api.fields)) {
-                ctx.body = pickFields(body, Object.keys(api.fields));
-            } else {
-                ctx.body = body;
-            }
-            return true;
-        } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
-            const text = await ctx.request.text();
-            const body = await Xml.parse(text);
-            if (isPlainObject(api.fields) && !isEmpty(api.fields)) {
-                ctx.body = pickFields(body, Object.keys(api.fields));
-            } else {
-                ctx.body = body;
-            }
-            return true;
-        }
-    } catch (e) {
-        return false;
-    }
-    return false;
-}
-
 const hook: Hook = {
     after: ['auth'],
     handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();
 
+        // GET 请求：解析查询参数
         if (ctx.request.method === 'GET') {
-            parseGetParams(ctx.api, ctx);
+            const url = new URL(ctx.request.url);
+            if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                ctx.body = pickFields(Object.fromEntries(url.searchParams), Object.keys(ctx.api.fields));
+            } else {
+                ctx.body = Object.fromEntries(url.searchParams);
+            }
         } else if (ctx.request.method === 'POST') {
-            const parseSuccess = await parsePostParams(ctx.api, ctx);
-            if (!parseSuccess) {
+            // POST 请求：解析请求体
+            const contentType = ctx.request.headers.get('content-type') || '';
+            try {
+                // JSON 格式
+                if (contentType.includes('application/json')) {
+                    const body = await ctx.request.json();
+                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                        ctx.body = pickFields(body, Object.keys(ctx.api.fields));
+                    } else {
+                        ctx.body = body;
+                    }
+                } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
+                    // XML 格式
+                    const text = await ctx.request.text();
+                    const body = await Xml.parse(text);
+                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                        ctx.body = pickFields(body, Object.keys(ctx.api.fields));
+                    } else {
+                        ctx.body = body;
+                    }
+                } else {
+                    // 不支持的 Content-Type
+                    ctx.response = Response.json(
+                        { code: 1, msg: '无效的请求参数格式' },
+                        {
+                            headers: ctx.corsHeaders
+                        }
+                    );
+                    return;
+                }
+            } catch (e) {
+                // 解析失败
                 ctx.response = Response.json(
                     { code: 1, msg: '无效的请求参数格式' },
                     {
