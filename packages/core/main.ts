@@ -3,26 +3,38 @@
  * 提供简洁的框架接口，核心逻辑已提取到 loader 层
  */
 
+// ========== 核心库 ==========
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
 import { Database } from './lib/database.js';
+import { DbHelper } from './lib/dbHelper.js';
+import { RedisHelper } from './lib/redisHelper.js';
+
+// ========== 加载器 ==========
 import { loadPlugins } from './loader/loadPlugins.js';
 import { loadHooks } from './loader/loadHooks.js';
 import { loadApis } from './loader/loadApis.js';
+
+// ========== 路由处理 ==========
 import { rootHandler } from './router/root.js';
 import { apiHandler } from './router/api.js';
 import { staticHandler } from './router/static.js';
-import { coreDir } from './paths.js';
-import { DbHelper } from './lib/dbHelper.js';
-import { RedisHelper } from './lib/redisHelper.js';
+
+// ========== 启动检查 ==========
 import { checkApp } from './checks/checkApp.js';
 import { checkTable } from './checks/checkTable.js';
 import { checkApi } from './checks/checkApi.js';
-import { calcPerfTime } from 'befly-util';
-import { defaultOptions } from './config.js';
+
+// ========== 同步命令 ==========
 import { syncAllCommand } from './sync/syncAll.js';
 
+// ========== 配置和工具 ==========
+import { coreDir } from './paths.js';
+import { defaultOptions } from './config.js';
+import { calcPerfTime } from 'befly-util';
+
+// ========== 类型定义 ==========
 import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
 import type { Plugin } from './types/plugin.js';
