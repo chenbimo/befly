@@ -4,13 +4,16 @@
  */
 
 import { existsSync } from 'node:fs';
+
 import { camelCase } from 'es-toolkit/string';
+import { scanFiles, scanAddons, getAddonDir } from 'befly-util';
+
 import { Logger } from '../lib/logger.js';
-import { scanFiles } from 'befly-util';
 import { coreHookDir, projectHookDir } from '../paths.js';
-import { scanAddons, getAddonDir } from 'befly-util';
+import { sortModules } from '../util.js';
+import { importAndRegister } from './loadPlugins.js';
+
 import type { Hook } from '../types/hook.js';
-import { importAndRegister, sortModules } from './loadPlugins.js';
 
 async function scanHooks(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Hook[]> {
     if (!existsSync(dir)) return [];
