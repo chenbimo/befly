@@ -1,6 +1,6 @@
 /**
  * 钩子加载器
- * 负责扫描和初始化所有钩子（核心、组件、用户）
+ * 负责扫描和初始化所有钩子（核心、组件、项目）
  */
 
 import { existsSync } from 'node:fs';
@@ -12,7 +12,7 @@ import { scanAddons, getAddonDir } from 'befly-util';
 import type { Hook } from '../types/hook.js';
 import { importAndRegister, sortModules } from './loadPlugins.js';
 
-async function scanHooks(dir: string, type: 'core' | 'addon' | 'user', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Hook[]> {
+async function scanHooks(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Hook[]> {
     if (!existsSync(dir)) return [];
 
     const files = await scanFiles(dir, '*.{ts,js}');
@@ -25,7 +25,7 @@ async function scanHooks(dir: string, type: 'core' | 'addon' | 'user', loadedNam
             if (type === 'addon') return `addon_${camelCase(addonName!)}_${name}`;
             return `app_${name}`;
         },
-        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '用户'}钩子 ${fileName}`,
+        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目'}钩子 ${fileName}`,
         config
     );
 }
@@ -45,8 +45,8 @@ export async function loadHooks(befly: { hookLists: Hook[]; pluginsConfig?: Reco
             allHooks.push(...(await scanHooks(dir, 'addon', loadedNames, befly.pluginsConfig, addon)));
         }
 
-        // 3. 用户钩子
-        allHooks.push(...(await scanHooks(projectHookDir, 'user', loadedNames, befly.pluginsConfig)));
+        // 3. 项目钩子
+        allHooks.push(...(await scanHooks(projectHookDir, 'app', loadedNames, befly.pluginsConfig)));
 
         // 4. 排序
         const sortedHooks = sortModules(allHooks);

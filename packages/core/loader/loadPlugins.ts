@@ -1,6 +1,6 @@
 /**
- * 插件和钩子加载器
- * 负责扫描和初始化所有插件（核心、组件、用户）
+ * 插件加载器
+ * 负责扫描和初始化所有插件（核心、组件、项目）
  */
 
 import { existsSync } from 'node:fs';
@@ -113,7 +113,7 @@ export function sortModules<T extends { name?: string; after?: string[] }>(modul
 
 // ==================== 插件加载逻辑 ====================
 
-async function scanPlugins(dir: string, type: 'core' | 'addon' | 'user', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Plugin[]> {
+async function scanPlugins(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Plugin[]> {
     if (!existsSync(dir)) return [];
 
     const files = await scanFiles(dir, '*.{ts,js}');
@@ -126,7 +126,7 @@ async function scanPlugins(dir: string, type: 'core' | 'addon' | 'user', loadedN
             if (type === 'addon') return `addon_${camelCase(addonName!)}_${name}`;
             return `app_${name}`;
         },
-        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '用户'}插件 ${fileName}`,
+        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目'}插件 ${fileName}`,
         config
     );
 }
@@ -141,7 +141,12 @@ async function initPlugin(befly: { pluginLists: Plugin[]; appContext: BeflyConte
     }
 }
 
-export async function loadPlugins(befly: { pluginLists: Plugin[]; appContext: BeflyContext; pluginsConfig?: Record<string, any> }): Promise<void> {
+export async function loadPlugins(befly: {
+    //
+    pluginLists: Plugin[];
+    appContext: BeflyContext;
+    pluginsConfig?: Record<string, any>;
+}): Promise<void> {
     try {
         const loadedNames = new Set<string>();
         const allPlugins: Plugin[] = [];
@@ -156,8 +161,8 @@ export async function loadPlugins(befly: { pluginLists: Plugin[]; appContext: Be
             allPlugins.push(...(await scanPlugins(dir, 'addon', loadedNames, befly.pluginsConfig, addon)));
         }
 
-        // 3. 用户插件
-        allPlugins.push(...(await scanPlugins(projectPluginDir, 'user', loadedNames, befly.pluginsConfig)));
+        // 3. 项目插件
+        allPlugins.push(...(await scanPlugins(projectPluginDir, 'app', loadedNames, befly.pluginsConfig)));
 
         // 4. 排序与初始化
         const sortedPlugins = sortModules(allPlugins);
