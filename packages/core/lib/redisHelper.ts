@@ -56,7 +56,7 @@ export class RedisHelper {
      */
     async getObject<T = any>(key: string): Promise<T | null> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             const data = await this.client.get(pkey);
             return data ? JSON.parse(data) : null;
         } catch (error: any) {
@@ -71,7 +71,7 @@ export class RedisHelper {
      */
     async delObject(key: string): Promise<void> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             await this.client.del(pkey);
         } catch (error: any) {
             Logger.error('Redis delObject 错误', error);
@@ -140,7 +140,7 @@ export class RedisHelper {
      */
     async setString(key: string, value: string, ttl: number | null = null): Promise<string | null> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             if (ttl) {
                 return await this.client.setex(pkey, ttl, value);
             }
@@ -157,7 +157,7 @@ export class RedisHelper {
      */
     async getString(key: string): Promise<string | null> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.get(pkey);
         } catch (error: any) {
             Logger.error('Redis getString 错误', error);
@@ -171,7 +171,7 @@ export class RedisHelper {
      */
     async exists(key: string): Promise<number> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.exists(pkey);
         } catch (error: any) {
             Logger.error('Redis exists 错误', error);
@@ -186,7 +186,7 @@ export class RedisHelper {
      */
     async expire(key: string, seconds: number): Promise<number> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.expire(pkey, seconds);
         } catch (error: any) {
             Logger.error('Redis expire 错误', error);
@@ -200,7 +200,7 @@ export class RedisHelper {
      */
     async ttl(key: string): Promise<number> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.ttl(pkey);
         } catch (error: any) {
             Logger.error('Redis ttl 错误', error);
@@ -218,7 +218,7 @@ export class RedisHelper {
         try {
             if (members.length === 0) return 0;
 
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.sadd(pkey, ...members);
         } catch (error: any) {
             Logger.error('Redis sadd 错误', error);
@@ -234,7 +234,7 @@ export class RedisHelper {
      */
     async sismember(key: string, member: string): Promise<number> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.sismember(pkey, member);
         } catch (error: any) {
             Logger.error('Redis sismember 错误', error);
@@ -249,7 +249,7 @@ export class RedisHelper {
      */
     async scard(key: string): Promise<number> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.scard(pkey);
         } catch (error: any) {
             Logger.error('Redis scard 错误', error);
@@ -264,7 +264,7 @@ export class RedisHelper {
      */
     async smembers(key: string): Promise<string[]> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.smembers(pkey);
         } catch (error: any) {
             Logger.error('Redis smembers 错误', error);
@@ -279,7 +279,7 @@ export class RedisHelper {
      */
     async del(key: string): Promise<number> {
         try {
-            const pkey = `${prefix}${key}`;
+            const pkey = `${this.prefix}${key}`;
             return await this.client.del(pkey);
         } catch (error: any) {
             Logger.error('Redis del 错误', error);

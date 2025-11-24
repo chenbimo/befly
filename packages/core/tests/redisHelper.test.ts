@@ -6,12 +6,15 @@
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
 import { Database } from '../lib/database.js';
 import { RedisHelper } from '../lib/redisHelper.js';
+import { defaultOptions } from '../config.js';
 
 let redis: RedisHelper;
 
 beforeAll(async () => {
-    await Database.connectRedis();
-    redis = new RedisHelper();
+    // 使用项目默认配置连接 Redis
+    await Database.connectRedis(defaultOptions.redis);
+    // 使用项目配置的 prefix
+    redis = new RedisHelper(defaultOptions.redis.prefix);
 });
 
 afterAll(async () => {
