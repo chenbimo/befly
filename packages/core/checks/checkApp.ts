@@ -29,5 +29,3 @@ export async function checkApp(): Promise<void> {
         throw error;
     }
 }
-
-export default checkApp;

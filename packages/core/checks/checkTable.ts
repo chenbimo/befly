@@ -245,5 +245,3 @@ export async function checkTable(): Promise<void> {
         throw error;
     }
 }
-
-export default checkTable;

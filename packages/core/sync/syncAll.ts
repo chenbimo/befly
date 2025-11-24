@@ -3,7 +3,7 @@
  * 按顺序执行：syncDb → syncApi → syncMenu → syncDev
  */
 
-import checkApp from '../checks/checkApp.js';
+import { checkApp } from '../checks/checkApp.js';
 import { Logger } from '../lib/logger.js';
 import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
