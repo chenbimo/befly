@@ -3,14 +3,16 @@
  * 处理 / 路径的请求
  */
 
-import { setCorsOptions } from '../lib/middleware.js';
+// 相对导入
 import { Logger } from '../lib/logger.js';
+import { setCorsOptions } from '../util.js';
 
 /**
  * 根路径处理器
  */
 export async function rootHandler(req: Request): Promise<Response> {
-    const corsOptions = setCorsOptions(req);
+    // 设置 CORS 响应头
+    const corsHeaders = setCorsOptions(req);
 
     try {
         return Response.json(
@@ -23,7 +25,7 @@ export async function rootHandler(req: Request): Promise<Response> {
                 }
             },
             {
-                headers: corsOptions.headers
+                headers: corsHeaders
             }
         );
     } catch (error: any) {
@@ -47,7 +49,7 @@ export async function rootHandler(req: Request): Promise<Response> {
             { code: 1, msg: errorMessage, data: errorDetail },
             {
                 status: 500,
-                headers: corsOptions.headers
+                headers: corsHeaders
             }
         );
     }
