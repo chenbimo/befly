@@ -30,8 +30,8 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
         const ctx: RequestContext = {
             body: {},
             user: {},
-            request: req,
-            startTime: Date.now(),
+            req: req,
+            now: Date.now(),
             corsHeaders: {}
         };
 

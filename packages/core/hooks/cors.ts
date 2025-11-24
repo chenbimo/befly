@@ -21,7 +21,7 @@ const hook: Hook = {
         credentials: 'true'
     },
     handler: async (befly, ctx, next) => {
-        const req = ctx.request;
+        const req = ctx.req;
 
         // 合并默认配置和用户配置
         const defaultConfig: CorsConfig = {

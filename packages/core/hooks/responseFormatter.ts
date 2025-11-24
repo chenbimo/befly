@@ -50,9 +50,8 @@ const hook: Hook = {
             return;
         }
 
-        // 如果既没有 response 也没有 result，且不是 OPTIONS 请求，则返回 404
-        // (OPTIONS 请求通常由 cors 插件处理并返回 204)
-        if (ctx.request.method !== 'OPTIONS' && !ctx.response) {
+        // 如果还没有响应，且不是 OPTIONS 请求，则设置默认 JSON 响应
+        if (ctx.req.method !== 'OPTIONS' && !ctx.response) {
             ctx.response = Response.json(
                 { code: 1, msg: 'No response generated' },
                 {

@@ -12,10 +12,10 @@ const hook: Hook = {
     after: ['parser'],
     handler: async (befly, ctx, next) => {
         if (ctx.api) {
-            const apiPath = `${ctx.request.method}${new URL(ctx.request.url).pathname}`;
-            const duration = Date.now() - ctx.startTime;
+            const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
+            const duration = Date.now() - ctx.now;
             const user = ctx.user?.userId ? `[User:${ctx.user.userId}]` : '[Guest]';
-            Logger.info(`[${ctx.request.method}] ${apiPath} ${user} ${duration}ms`);
+            Logger.info(`[${ctx.req.method}] ${apiPath} ${user} ${duration}ms`);
         }
         await next();
     }

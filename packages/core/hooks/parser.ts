@@ -20,20 +20,20 @@ const hook: Hook = {
         if (!ctx.api) return next();
 
         // GET 请求：解析查询参数
-        if (ctx.request.method === 'GET') {
-            const url = new URL(ctx.request.url);
+        if (ctx.req.method === 'GET') {
+            const url = new URL(ctx.req.url);
             if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                 ctx.body = pickFields(Object.fromEntries(url.searchParams), Object.keys(ctx.api.fields));
             } else {
                 ctx.body = Object.fromEntries(url.searchParams);
             }
-        } else if (ctx.request.method === 'POST') {
+        } else if (ctx.req.method === 'POST') {
             // POST 请求：解析请求体
-            const contentType = ctx.request.headers.get('content-type') || '';
+            const contentType = ctx.req.headers.get('content-type') || '';
             try {
                 // JSON 格式
                 if (contentType.includes('application/json')) {
-                    const body = await ctx.request.json();
+                    const body = await ctx.req.json();
                     if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(body, Object.keys(ctx.api.fields));
                     } else {
@@ -41,7 +41,7 @@ const hook: Hook = {
                     }
                 } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
                     // XML 格式
-                    const text = await ctx.request.text();
+                    const text = await ctx.req.text();
                     const body = await Xml.parse(text);
                     if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(body, Object.keys(ctx.api.fields));

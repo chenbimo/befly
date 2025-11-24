@@ -32,7 +32,9 @@ const hook: Hook = {
         // 4. 角色权限检查
         let hasPermission = false;
         if (ctx.user.roleCode && befly.redis) {
-            const apiPath = `${ctx.request.method}${new URL(ctx.request.url).pathname}`;
+        } else {
+            // 验证角色权限
+            const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
             const roleApisKey = `role:apis:${ctx.user.roleCode}`;
             const isMember = await befly.redis.sismember(roleApisKey, apiPath);
             hasPermission = isMember === 1;

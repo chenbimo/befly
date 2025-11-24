@@ -6,8 +6,8 @@ const hook: Hook = {
         try {
             await next();
         } catch (err: any) {
-            // 记录错误日志
-            const apiPath = ctx.api ? `${ctx.request.method}${new URL(ctx.request.url).pathname}` : ctx.request.url;
+            // 记录错误信息
+            const apiPath = ctx.api ? `${ctx.req.method}${new URL(ctx.req.url).pathname}` : ctx.req.url;
             Logger.error(`Request Error: ${apiPath}`, err);
 
             // 设置错误响应

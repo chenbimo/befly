@@ -13,9 +13,9 @@ export interface RequestContext {
     /** 用户信息 */
     user: Record<string, any>;
     /** 原始请求对象 */
-    request: Request;
+    req: Request;
     /** 请求开始时间（毫秒） */
-    startTime: number;
+    now: number;
     /** 当前请求的 API 路由对象 */
     api?: ApiRoute;
     /** 响应对象（如果设置了此属性，将直接返回该响应） */
