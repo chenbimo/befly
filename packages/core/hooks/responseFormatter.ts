@@ -1,3 +1,7 @@
+// 相对导入
+import { JsonResponse } from '../util.js';
+
+// 类型导入
 import type { Hook } from '../types/hook.js';
 
 const hook: Hook = {
@@ -52,12 +56,7 @@ const hook: Hook = {
 
         // 如果还没有响应，且不是 OPTIONS 请求，则设置默认 JSON 响应
         if (ctx.req.method !== 'OPTIONS' && !ctx.response) {
-            ctx.response = Response.json(
-                { code: 1, msg: 'No response generated' },
-                {
-                    headers: ctx.corsHeaders
-                }
-            );
+            ctx.response = JsonResponse(ctx, 'No response generated');
         }
     }
 };

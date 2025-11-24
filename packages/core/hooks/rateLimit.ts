@@ -1,5 +1,9 @@
-import type { Hook } from '../types/hook.js';
+// 相对导入
 import { Logger } from '../lib/logger.js';
+import { JsonResponse } from '../util.js';
+
+// 类型导入
+import type { Hook } from '../types/hook.js';
 
 /**
  * 接口限流插件
@@ -48,16 +52,7 @@ const hook: Hook = {
 
             // 6. 判断是否超限
             if (current > limitCount) {
-                ctx.response = Response.json(
-                    {
-                        code: 429,
-                        msg: '请求过于频繁，请稍后再试',
-                        data: null
-                    },
-                    {
-                        headers: ctx.corsHeaders
-                    }
-                );
+                ctx.response = JsonResponse(ctx, '请求过于频繁，请稍后再试', 429);
                 return;
             }
 

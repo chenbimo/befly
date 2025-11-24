@@ -1,3 +1,6 @@
+// 相对导入
+import { JsonResponse } from '../util.js';
+
 // 类型导入
 import type { Hook } from '../types/hook.js';
 
@@ -20,7 +23,7 @@ const hook: Hook = {
 
         // 2. 用户未登录
         if (!ctx.user || !ctx.user.userId) {
-            ctx.response = Response.json({ code: 401, msg: '未登录', data: null }, { headers: ctx.corsHeaders });
+            ctx.response = JsonResponse(ctx, '未登录', 401);
             return;
         }
 
@@ -41,16 +44,7 @@ const hook: Hook = {
         }
 
         if (!hasPermission) {
-            ctx.response = Response.json(
-                {
-                    code: 403,
-                    msg: '无权访问',
-                    data: null
-                },
-                {
-                    headers: ctx.corsHeaders
-                }
-            );
+            ctx.response = JsonResponse(ctx, '无权访问', 403);
             return;
         }
 

@@ -4,7 +4,7 @@
  */
 
 // 相对导入
-import { compose } from '../util.js';
+import { compose, JsonResponse } from '../util.js';
 
 // 类型导入
 import type { RequestContext } from '../types/context.js';
@@ -54,15 +54,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
             if (!ctx.api) {
                 // 只有非 OPTIONS 请求才报 404（OPTIONS 请求通常由 cors 插件处理并返回）
                 if (req.method !== 'OPTIONS') {
-                    ctx.response = Response.json(
-                        {
-                            code: 1,
-                            msg: '接口不存在'
-                        },
-                        {
-                            headers: ctx.corsHeaders
-                        }
-                    );
+                    ctx.response = JsonResponse(ctx, '接口不存在');
                 }
                 return;
             }
@@ -85,14 +77,6 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
         }
 
         // 兜底响应（理论上不应执行到这里，responseFormatter 会处理）
-        return Response.json(
-            {
-                code: 1,
-                msg: 'No response generated'
-            },
-            {
-                headers: ctx.corsHeaders
-            }
-        );
+        return JsonResponse(ctx, 'No response generated');
     };
 }

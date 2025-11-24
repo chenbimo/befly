@@ -20,6 +20,27 @@ import type { RequestContext } from './types/context.js';
 import type { PluginRequestHook, Next } from './types/plugin.js';
 
 /**
+ * 创建 JSON 响应（用于 Hook 中）
+ * @param ctx - 请求上下文
+ * @param msg - 消息
+ * @param code - 状态码（默认 1）
+ * @param data - 数据（可选）
+ * @returns Response 对象
+ */
+export function JsonResponse(ctx: RequestContext, msg: string, code: number = 1, data?: any): Response {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data ?? null
+        },
+        {
+            headers: ctx.corsHeaders
+        }
+    );
+}
+
+/**
  * 设置 CORS 响应头
  * @param req - 请求对象
  * @param config - CORS 配置（可选）

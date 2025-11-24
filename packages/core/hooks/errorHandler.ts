@@ -1,5 +1,9 @@
-import type { Hook } from '../types/hook.js';
+// 相对导入
 import { Logger } from '../lib/logger.js';
+import { JsonResponse } from '../util.js';
+
+// 类型导入
+import type { Hook } from '../types/hook.js';
 
 const hook: Hook = {
     handler: async (befly, ctx, next) => {
@@ -11,16 +15,7 @@ const hook: Hook = {
             Logger.error(`Request Error: ${apiPath}`, err);
 
             // 设置错误响应
-            ctx.response = Response.json(
-                {
-                    code: 1,
-                    msg: '内部服务错误'
-                },
-                {
-                    headers: ctx.corsHeaders,
-                    status: 500
-                }
-            );
+            ctx.response = JsonResponse(ctx, '内部服务错误');
         }
     }
 };
