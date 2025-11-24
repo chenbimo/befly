@@ -3,105 +3,16 @@
  * 负责扫描和初始化所有插件（核心、组件、项目）
  */
 
-import { existsSync } from 'node:fs';
-
-import { camelCase } from 'es-toolkit/string';
-import { calcPerfTime, scanFiles, scanAddons, getAddonDir, addonDirExists } from 'befly-util';
+import { scanAddons, getAddonDir } from 'befly-util';
 
 import { Logger } from '../lib/logger.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';
-import { sortModules } from '../util.js';
+import { sortModules, scanModules } from '../util.js';
 
 import type { Plugin } from '../types/plugin.js';
-import type { Hook } from '../types/hook.js';
 import type { BeflyContext } from '../types/befly.js';
 
-// ==================== 通用工具函数 ====================
-
-/**
- * 统一导入并注册模块（插件或钩子）
- */
-export async function importAndRegister<T extends Plugin | Hook>(
-    //
-    files: Array<{ filePath: string; fileName: string }>,
-    loadedNames: Set<string>,
-    nameGenerator: (fileName: string, filePath: string) => string,
-    errorLabelGenerator: (fileName: string, filePath: string) => string,
-    config?: Record<string, Record<string, any>>
-): Promise<T[]> {
-    //
-    const items: T[] = [];
-
-    for (const { filePath, fileName } of files) {
-        const name = nameGenerator(fileName, filePath);
-
-        if (loadedNames.has(name)) {
-            continue;
-        }
-
-        try {
-            const normalizedFilePath = filePath.replace(/\\/g, '/');
-            const moduleImport = await import(normalizedFilePath);
-            const item = moduleImport.default;
-
-            // 兼容直接导出函数的情况
-            if (typeof item === 'function') {
-                // 如果是函数，包装成对象
-                // 注意：这里无法获取 after 依赖，除非函数上有静态属性
-                // 假设直接导出函数没有依赖
-                // @ts-ignore
-                items.push({
-                    name: name,
-                    handler: item,
-                    config: config?.[name] || {}
-                });
-            } else {
-                item.name = name;
-                // 注入配置
-                if (config && config[name]) {
-                    item.config = config[name];
-                }
-                items.push(item);
-            }
-
-            loadedNames.add(name);
-        } catch (err: any) {
-            const label = errorLabelGenerator(fileName, filePath);
-            Logger.error(`${label} 导入失败`, err);
-            process.exit(1);
-        }
-    }
-
-    return items;
-}
-
 // ==================== 插件加载逻辑 ====================
-
-async function scanPlugins(
-    //
-    dir: string,
-    type: 'core' | 'addon' | 'app',
-    loadedNames: Set<string>,
-    config?: Record<string, any>,
-    addonName?: string
-): Promise<Plugin[]> {
-    //
-    if (!existsSync(dir)) return [];
-
-    const files = await scanFiles(dir, '*.{ts,js}');
-    return importAndRegister<Plugin>(
-        files,
-        loadedNames,
-        (fileName) => {
-            const name = camelCase(fileName);
-            if (type === 'core') return name;
-            if (type === 'addon') return `addon_${camelCase(addonName!)}_${name}`;
-            return `app_${name}`;
-        },
-        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目'}插件 ${fileName}`,
-        config
-    );
-}
 
 async function initPlugin(befly: { pluginLists: Plugin[]; appContext: BeflyContext }, plugin: Plugin): Promise<void> {
     befly.pluginLists.push(plugin);
@@ -124,19 +35,19 @@ export async function loadPlugins(befly: {
         const allPlugins: Plugin[] = [];
 
         // 1. 扫描核心插件
-        const corePlugins = await scanPlugins(corePluginDir, 'core', loadedNames, befly.pluginsConfig);
+        const corePlugins = await scanModules<Plugin>(corePluginDir, 'core', loadedNames, '插件', befly.pluginsConfig);
 
         // 2. 扫描组件插件
         const addonPlugins: Plugin[] = [];
         const addons = scanAddons();
         for (const addon of addons) {
             const dir = getAddonDir(addon, 'plugins');
-            const plugins = await scanPlugins(dir, 'addon', loadedNames, befly.pluginsConfig, addon);
+            const plugins = await scanModules<Plugin>(dir, 'addon', loadedNames, '插件', befly.pluginsConfig, addon);
             addonPlugins.push(...plugins);
         }
 
         // 3. 扫描项目插件
-        const appPlugins = await scanPlugins(projectPluginDir, 'app', loadedNames, befly.pluginsConfig);
+        const appPlugins = await scanModules<Plugin>(projectPluginDir, 'app', loadedNames, '插件', befly.pluginsConfig);
 
         // 4. 合并所有插件
         allPlugins.push(...corePlugins);

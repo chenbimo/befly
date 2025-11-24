@@ -3,59 +3,47 @@
  * 负责扫描和初始化所有钩子（核心、组件、项目）
  */
 
-// 内部依赖
-import { existsSync } from 'node:fs';
-
 // 外部依赖
-import { camelCase } from 'es-toolkit/string';
-import { scanFiles, scanAddons, getAddonDir } from 'befly-util';
+import { scanAddons, getAddonDir } from 'befly-util';
 
 // 相对导入
 import { Logger } from '../lib/logger.js';
 import { coreHookDir, projectHookDir } from '../paths.js';
-import { sortModules } from '../util.js';
-import { importAndRegister } from './loadPlugins.js';
+import { sortModules, scanModules } from '../util.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
 
-async function scanHooks(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, config?: Record<string, any>, addonName?: string): Promise<Hook[]> {
-    if (!existsSync(dir)) return [];
-
-    const files = await scanFiles(dir, '*.{ts,js}');
-    return importAndRegister<Hook>(
-        files,
-        loadedNames,
-        (fileName) => {
-            const name = camelCase(fileName);
-            if (type === 'core') return name;
-            if (type === 'addon') return `addon_${camelCase(addonName!)}_${name}`;
-            return `app_${name}`;
-        },
-        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目'}钩子 ${fileName}`,
-        config
-    );
-}
-
-export async function loadHooks(befly: { hookLists: Hook[]; pluginsConfig?: Record<string, any> }): Promise<void> {
+export async function loadHooks(befly: {
+    //
+    hookLists: Hook[];
+    pluginsConfig?: Record<string, any>;
+}): Promise<void> {
     try {
         const loadedNames = new Set<string>();
         const allHooks: Hook[] = [];
 
-        // 1. 核心钩子
-        allHooks.push(...(await scanHooks(coreHookDir, 'core', loadedNames, befly.pluginsConfig)));
+        // 1. 扫描核心钩子
+        const coreHooks = await scanModules<Hook>(coreHookDir, 'core', loadedNames, '钩子', befly.pluginsConfig);
 
-        // 2. 组件钩子
+        // 2. 扫描组件钩子
+        const addonHooks: Hook[] = [];
         const addons = scanAddons();
         for (const addon of addons) {
             const dir = getAddonDir(addon, 'hooks');
-            allHooks.push(...(await scanHooks(dir, 'addon', loadedNames, befly.pluginsConfig, addon)));
+            const hooks = await scanModules<Hook>(dir, 'addon', loadedNames, '钩子', befly.pluginsConfig, addon);
+            addonHooks.push(...hooks);
         }
 
-        // 3. 项目钩子
-        allHooks.push(...(await scanHooks(projectHookDir, 'app', loadedNames, befly.pluginsConfig)));
+        // 3. 扫描项目钩子
+        const appHooks = await scanModules<Hook>(projectHookDir, 'app', loadedNames, '钩子', befly.pluginsConfig);
 
-        // 4. 排序
+        // 4. 合并所有钩子
+        allHooks.push(...coreHooks);
+        allHooks.push(...addonHooks);
+        allHooks.push(...appHooks);
+
+        // 5. 排序
         const sortedHooks = sortModules(allHooks);
         if (sortedHooks === false) {
             Logger.error('钩子依赖关系错误，请检查 after 属性');
