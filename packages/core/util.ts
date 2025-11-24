@@ -17,21 +17,27 @@ import type { Plugin } from './types/plugin.js';
 import type { Hook } from './types/hook.js';
 
 /**
- * 统一导入并注册模块（插件或钩子）
- * @param files - 文件列表
+ * 扫描并加载模块（插件或钩子）
+ * @param dir - 目录路径
+ * @param type - 模块类型
  * @param loadedNames - 已加载的模块名称集合
- * @param nameGenerator - 名称生成器函数
- * @param errorLabelGenerator - 错误标签生成器函数
+ * @param moduleLabel - 模块标签（如"插件"、"钩子"）
  * @param config - 配置对象
+ * @param addonName - 组件名称（仅 type='addon' 时需要）
  * @returns 模块列表
  */
-export async function importAndRegister<T extends Plugin | Hook>(files: Array<{ filePath: string; fileName: string }>, loadedNames: Set<string>, nameGenerator: (fileName: string, filePath: string) => string, errorLabelGenerator: (fileName: string, filePath: string) => string, config?: Record<string, Record<string, any>>): Promise<T[]> {
+export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, moduleLabel: string, config?: Record<string, any>, addonName?: string): Promise<T[]> {
+    if (!existsSync(dir)) return [];
+
     const items: T[] = [];
+    const files = await scanFiles(dir, '*.{ts,js}');
 
     for (const { filePath, fileName } of files) {
-        const name = nameGenerator(fileName, filePath);
+        // 生成模块名称
+        const name = camelCase(fileName);
+        const moduleName = type === 'core' ? name : type === 'addon' ? `addon_${camelCase(addonName!)}_${name}` : `app_${name}`;
 
-        if (loadedNames.has(name)) {
+        if (loadedNames.has(moduleName)) {
             continue;
         }
 
@@ -42,60 +48,30 @@ export async function importAndRegister<T extends Plugin | Hook>(files: Array<{ 
 
             // 兼容直接导出函数的情况
             if (typeof item === 'function') {
-                // 如果是函数，包装成对象
-                // 注意：这里无法获取 after 依赖，除非函数上有静态属性
-                // 假设直接导出函数没有依赖
                 // @ts-ignore
                 items.push({
-                    name: name,
+                    name: moduleName,
                     handler: item,
-                    config: config?.[name] || {}
+                    config: config?.[moduleName] || {}
                 });
             } else {
-                item.name = name;
+                item.name = moduleName;
                 // 注入配置
-                if (config && config[name]) {
-                    item.config = config[name];
+                if (config && config[moduleName]) {
+                    item.config = config[moduleName];
                 }
                 items.push(item);
             }
 
-            loadedNames.add(name);
+            loadedNames.add(moduleName);
         } catch (err: any) {
-            const label = errorLabelGenerator(fileName, filePath);
-            Logger.error(`${label} 导入失败`, err);
+            const typeLabel = type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目';
+            Logger.error(`${typeLabel}${moduleLabel} ${fileName} 导入失败`, err);
             process.exit(1);
         }
     }
 
     return items;
-}
-
-/**
- * 扫描并加载模块（插件或钩子）
- * @param dir - 目录路径
- * @param type - 模块类型
- * @param loadedNames - 已加载的模块名称集合
- * @param config - 配置对象
- * @param addonName - 组件名称（仅 type='addon' 时需要）
- * @returns 模块列表
- */
-export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'core' | 'addon' | 'app', loadedNames: Set<string>, moduleLabel: string, config?: Record<string, any>, addonName?: string): Promise<T[]> {
-    if (!existsSync(dir)) return [];
-
-    const files = await scanFiles(dir, '*.{ts,js}');
-    return importAndRegister<T>(
-        files,
-        loadedNames,
-        (fileName) => {
-            const name = camelCase(fileName);
-            if (type === 'core') return name;
-            if (type === 'addon') return `addon_${camelCase(addonName!)}_${name}`;
-            return `app_${name}`;
-        },
-        (fileName) => `${type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目'}${moduleLabel} ${fileName}`,
-        config
-    );
 }
 
 /**
