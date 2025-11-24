@@ -15,7 +15,9 @@ import { Logger } from './lib/logger.js';
 // 类型导入
 import type { Plugin } from './types/plugin.js';
 import type { Hook } from './types/hook.js';
-import type { CorsConfig } from './types/befly.js';
+import type { CorsConfig, BeflyContext } from './types/befly.js';
+import type { RequestContext } from './types/context.js';
+import type { PluginRequestHook, Next } from './types/plugin.js';
 
 /**
  * 设置 CORS 响应头
@@ -32,6 +34,32 @@ export function setCorsOptions(req: Request, config: CorsConfig = {}): Record<st
         'Access-Control-Expose-Headers': config.exposedHeaders || 'Content-Range, X-Content-Range, Authorization, authorization, token',
         'Access-Control-Max-Age': String(config.maxAge || 86400),
         'Access-Control-Allow-Credentials': config.credentials || 'true'
+    };
+}
+
+/**
+ * 组合中间件函数
+ * 基于 koa-compose 实现
+ * @param middleware - 中间件函数数组
+ * @returns 组合后的中间件函数
+ */
+export function compose(middleware: PluginRequestHook[]) {
+    return function (befly: BeflyContext, ctx: RequestContext, next?: Next) {
+        let index = -1;
+        return dispatch(0);
+
+        function dispatch(i: number): Promise<void> {
+            if (i <= index) return Promise.reject(new Error('next() called multiple times'));
+            index = i;
+            let fn = middleware[i];
+            if (i === middleware.length) fn = next as PluginRequestHook;
+            if (!fn) return Promise.resolve();
+            try {
+                return Promise.resolve(fn(befly, ctx, dispatch.bind(null, i + 1)));
+            } catch (err) {
+                return Promise.reject(err);
+            }
+        }
     };
 }
 

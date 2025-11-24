@@ -3,7 +3,10 @@
  * 处理 /api/* 路径的请求
  */
 
-import { compose } from '../lib/compose.js';
+// 相对导入
+import { compose } from '../util.js';
+
+// 类型导入
 import type { RequestContext } from '../types/context.js';
 import type { ApiRoute } from '../types/api.js';
 import type { Hook } from '../types/hook.js';
