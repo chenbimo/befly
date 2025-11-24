@@ -23,7 +23,11 @@ const hook: Hook = {
 
         if (result.code !== 0) {
             ctx.response = Response.json(
-                { code: 1, msg: '无效的请求参数格式', data: result.fields },
+                {
+                    code: 1,
+                    msg: '无效的请求参数格式',
+                    data: result.fields
+                },
                 {
                     headers: ctx.corsHeaders
                 }

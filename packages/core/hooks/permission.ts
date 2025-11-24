@@ -41,7 +41,16 @@ const hook: Hook = {
         }
 
         if (!hasPermission) {
-            ctx.response = Response.json({ code: 403, msg: '无权访问', data: null }, { headers: ctx.corsHeaders });
+            ctx.response = Response.json(
+                {
+                    code: 403,
+                    msg: '无权访问',
+                    data: null
+                },
+                {
+                    headers: ctx.corsHeaders
+                }
+            );
             return;
         }
 

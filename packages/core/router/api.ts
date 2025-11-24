@@ -55,7 +55,10 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
                 // 只有非 OPTIONS 请求才报 404（OPTIONS 请求通常由 cors 插件处理并返回）
                 if (req.method !== 'OPTIONS') {
                     ctx.response = Response.json(
-                        { code: 1, msg: '接口不存在' },
+                        {
+                            code: 1,
+                            msg: '接口不存在'
+                        },
                         {
                             headers: ctx.corsHeaders
                         }
@@ -83,7 +86,10 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
 
         // 兜底响应（理论上不应执行到这里，responseFormatter 会处理）
         return Response.json(
-            { code: 1, msg: 'No response generated' },
+            {
+                code: 1,
+                msg: 'No response generated'
+            },
             {
                 headers: ctx.corsHeaders
             }

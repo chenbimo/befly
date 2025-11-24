@@ -12,7 +12,10 @@ const hook: Hook = {
 
             // 设置错误响应
             ctx.response = Response.json(
-                { code: 1, msg: 'Internal Server Error' },
+                {
+                    code: 1,
+                    msg: '内部服务错误'
+                },
                 {
                     headers: ctx.corsHeaders,
                     status: 500

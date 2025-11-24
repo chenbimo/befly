@@ -51,7 +51,10 @@ const hook: Hook = {
                 } else {
                     // 不支持的 Content-Type
                     ctx.response = Response.json(
-                        { code: 1, msg: '无效的请求参数格式' },
+                        {
+                            code: 1,
+                            msg: '无效的请求参数格式'
+                        },
                         {
                             headers: ctx.corsHeaders
                         }
@@ -61,7 +64,10 @@ const hook: Hook = {
             } catch (e) {
                 // 解析失败
                 ctx.response = Response.json(
-                    { code: 1, msg: '无效的请求参数格式' },
+                    {
+                        code: 1,
+                        msg: '无效的请求参数格式'
+                    },
                     {
                         headers: ctx.corsHeaders
                     }

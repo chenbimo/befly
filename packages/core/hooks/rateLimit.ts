@@ -49,7 +49,11 @@ const hook: Hook = {
             // 6. 判断是否超限
             if (current > limitCount) {
                 ctx.response = Response.json(
-                    { code: 429, msg: '请求过于频繁，请稍后再试', data: null },
+                    {
+                        code: 429,
+                        msg: '请求过于频繁，请稍后再试',
+                        data: null
+                    },
                     {
                         headers: ctx.corsHeaders
                     }
