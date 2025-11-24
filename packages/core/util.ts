@@ -46,22 +46,12 @@ export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'c
             const moduleImport = await import(normalizedFilePath);
             const item = moduleImport.default;
 
-            // 兼容直接导出函数的情况
-            if (typeof item === 'function') {
-                // @ts-ignore
-                items.push({
-                    name: moduleName,
-                    handler: item,
-                    config: config?.[moduleName] || {}
-                });
-            } else {
-                item.name = moduleName;
-                // 注入配置
-                if (config && config[moduleName]) {
-                    item.config = config[moduleName];
-                }
-                items.push(item);
+            item.name = moduleName;
+            // 注入配置
+            if (config && config[moduleName]) {
+                item.config = config[moduleName];
             }
+            items.push(item);
 
             loadedNames.add(moduleName);
         } catch (err: any) {
