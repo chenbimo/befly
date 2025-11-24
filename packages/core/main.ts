@@ -20,7 +20,7 @@ import { checkApp } from './checks/checkApp.js';
 import { checkTable } from './checks/checkTable.js';
 import { checkApi } from './checks/checkApi.js';
 import { calcPerfTime } from 'befly-util';
-import { defaultOptions } from './config/defaults.js';
+import { defaultOptions } from './config.js';
 import { syncAllCommand } from './sync/syncAll.js';
 
 import type { Server } from 'bun';
@@ -81,13 +81,13 @@ export class Befly {
             await loadPlugins({
                 pluginLists: this.pluginLists,
                 appContext: this.appContext,
-                pluginsConfig: this.config.plugins
+                pluginsConfig: this.config as any
             });
 
             // 5. 加载钩子
             await loadHooks({
                 hookLists: this.hookLists,
-                pluginsConfig: this.config.plugins
+                pluginsConfig: this.config as any
             });
 
             // 6. 加载所有 API
@@ -103,7 +103,7 @@ export class Befly {
                 routes: {
                     '/': rootHandler,
                     '/api/*': apiHandler(this.apiRoutes, this.hookLists, this.appContext),
-                    '/*': staticHandler(this.config.plugins?.cors)
+                    '/*': staticHandler(this.config.cors)
                 },
                 error: (error: Error) => {
                     Logger.error('服务启动时发生错误', error);

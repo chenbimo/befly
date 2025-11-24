@@ -101,7 +101,7 @@ export interface CorsConfig {
 }
 
 /**
- * Befly 构造函数选项
+ * Befly 构造函数选项（最多 2 级结构）
  */
 export interface BeflyOptions {
     // ========== 核心参数 ==========
@@ -122,20 +122,19 @@ export interface BeflyOptions {
     /** 时区 @default 'Asia/Shanghai' */
     tz?: string;
 
-    /** 插件配置 */
-    plugins?: {
-        /** 日志插件配置 */
-        logger?: LoggerConfig;
-        /** 数据库插件配置 */
-        db?: DatabaseConfig;
-        /** Redis 插件配置 */
-        redis?: RedisConfig;
-        /** 认证插件配置 */
-        auth?: AuthConfig;
-        /** CORS 插件配置 */
-        cors?: CorsConfig;
-        [key: string]: any;
-    };
+    // ========== 插件配置 ==========
+    /** 日志插件配置 */
+    logger?: LoggerConfig;
+    /** 数据库插件配置 */
+    db?: DatabaseConfig;
+    /** Redis 插件配置 */
+    redis?: RedisConfig;
+    /** 认证插件配置 */
+    auth?: AuthConfig;
+    /** CORS 插件配置 */
+    cors?: CorsConfig;
+    /** 其他插件配置 */
+    [key: string]: any;
 }
 
 /**
@@ -173,50 +172,6 @@ export interface BeflyContext extends KeyValue {
     /** 组件插件：addon_{addonName}_{pluginName} */
     /** 项目插件：app_{pluginName} */
     [key: string]: any;
-}
-
-/**
- * Befly 应用选项
- */
-export interface BeflyOptions {
-    /** 应用名称 */
-    appName?: string;
-
-    /** 监听主机 */
-    appHost?: string;
-
-    /** 监听端口 */
-    appPort?: number;
-
-    /** 是否自动同步 (0: 关闭, 1: 开启) @default 1 */
-    autoSync?: number;
-
-    /** 是否启用 CORS */
-    cors?: boolean | CorsOptions;
-
-    /** 静态文件目录 */
-    staticDir?: string;
-
-    /** 上传文件目录 */
-    uploadDir?: string;
-
-    /** 最大请求体大小 */
-    maxBodySize?: number;
-
-    /** 自定义配置 */
-    [key: string]: any;
-}
-
-/**
- * CORS 配置选项
- */
-export interface CorsOptions {
-    origin?: string | string[] | boolean;
-    methods?: string[];
-    allowedHeaders?: string[];
-    exposedHeaders?: string[];
-    credentials?: boolean;
-    maxAge?: number;
 }
 
 /**
