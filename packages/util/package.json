@@ -2,16 +2,9 @@
     "name": "befly-util",
     "version": "1.0.0",
     "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
     "exports": {
-        ".": {
-            "bun": "./src/index.ts",
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        },
-        "./*.js": "./dist/*.js",
         "./*": {
+            "bun": "./src/*.ts",
             "import": "./dist/*.js",
             "types": "./dist/*.d.ts"
         }
