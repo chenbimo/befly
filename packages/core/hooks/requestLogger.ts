@@ -5,7 +5,7 @@ import { Logger } from '../lib/logger.js';
 import type { Hook } from '../types/hook.js';
 
 /**
- * 请求日志记录中间件
+ * 请求日志记录钩子
  * 记录请求方法、路径、用户信息和响应时间
  */
 const hook: Hook = {

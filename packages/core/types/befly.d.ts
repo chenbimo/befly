@@ -246,9 +246,9 @@ export interface Befly {
     handleRequest(request: Request): Promise<Response>;
 
     /**
-     * 注册中间件
+     * 注册钩子
      */
-    use(middleware: Function): void;
+    use(hook: Function): void;
 
     /**
      * 获取配置

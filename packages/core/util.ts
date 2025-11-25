@@ -59,10 +59,10 @@ export function setCorsOptions(req: Request, config: CorsConfig = {}): Record<st
 }
 
 /**
- * 组合中间件函数
+ * 组合钩子函数
  * 基于 koa-compose 实现
- * @param middleware - 中间件函数数组
- * @returns 组合后的中间件函数
+ * @param middleware - 钩子函数数组
+ * @returns 组合后的钩子函数
  */
 export function compose(middleware: PluginRequestHook[]) {
     return function (befly: BeflyContext, ctx: RequestContext, next?: Next) {
@@ -78,9 +78,9 @@ export function compose(middleware: PluginRequestHook[]) {
             try {
                 return Promise.resolve(fn(befly, ctx, dispatch.bind(null, i + 1)));
             } catch (err) {
-                // 记录是哪个中间件出错
-                const middlewareName = (fn as any).name || `middleware[${i}]`;
-                Logger.error(`中间件执行失败: ${middlewareName}`, err);
+                // 记录是哪个钩子出错
+                const hookName = (fn as any).name || `hook[${i}]`;
+                Logger.error(`钩子执行失败: ${hookName}`, err);
                 return Promise.reject(err);
             }
         }

@@ -6,7 +6,7 @@ import { JsonResponse } from '../util.js';
 import type { Hook } from '../types/hook.js';
 
 /**
- * 参数验证中间件
+ * 参数验证钩子
  * 根据 API 定义的 fields 和 required 验证请求参数
  */
 const hook: Hook = {

@@ -10,7 +10,7 @@ import { JsonResponse } from '../util.js';
 import type { Hook } from '../types/hook.js';
 
 /**
- * 请求参数解析中间件
+ * 请求参数解析钩子
  * - GET 请求：解析 URL 查询参数
  * - POST 请求：解析 JSON 或 XML 请求体
  * - 根据 API 定义的 fields 过滤字段

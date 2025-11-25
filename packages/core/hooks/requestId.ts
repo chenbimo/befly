@@ -15,7 +15,7 @@ const hook: Hook = {
         }
         ctx.corsHeaders['X-Request-ID'] = requestId;
 
-        // 在 AsyncLocalStorage 上下文中执行后续中间件
+        // 在 AsyncLocalStorage 上下文中执行后续钩子
         await logContextStorage.run({ requestId }, async () => {
             await next();
         });

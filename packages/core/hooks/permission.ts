@@ -5,7 +5,7 @@ import { JsonResponse } from '../util.js';
 import type { Hook } from '../types/hook.js';
 
 /**
- * 权限检查中间件
+ * 权限检查钩子
  * - 接口无需权限（auth=false）：直接通过
  * - 用户未登录：返回 401
  * - 开发者角色（dev）：最高权限，直接通过

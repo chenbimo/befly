@@ -22,7 +22,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
     // 提取所有钩子的处理函数
     const middleware = hookLists.map((h) => h.handler);
 
-    // 组合中间件链
+    // 组合钩子链
     const fn = compose(middleware);
 
     return async (req: Request): Promise<Response> => {

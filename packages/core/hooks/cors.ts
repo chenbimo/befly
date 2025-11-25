@@ -6,7 +6,7 @@ import type { Hook } from '../types/hook.js';
 import type { CorsConfig } from '../types/befly.js';
 
 /**
- * CORS 跨域处理中间件
+ * CORS 跨域处理钩子
  * 设置跨域响应头并处理 OPTIONS 预检请求
  */
 const hook: Hook = {
