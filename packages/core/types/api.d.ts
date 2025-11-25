@@ -35,7 +35,7 @@ export type AuthType = boolean | 'admin' | 'user' | string[];
 /**
  * API 处理器函数类型
  */
-export type ApiHandler<T = any, R = any> = (befly: BeflyContext, ctx: RequestContext, req?: Request) => Promise<Response | R> | Response | R;
+export type ApiHandler<T = any, R = any> = (befly: BeflyContext, ctx: RequestContext) => Promise<Response | R> | Response | R;
 
 /**
  * 字段规则定义

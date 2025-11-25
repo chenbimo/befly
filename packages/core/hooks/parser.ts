@@ -18,7 +18,7 @@ import type { Hook } from '../types/hook.js';
 const hook: Hook = {
     order: 4,
     handler: async (befly, ctx) => {
-        if (!ctx.api) return next();
+        if (!ctx.api) return;
 
         // GET 请求：解析查询参数
         if (ctx.req.method === 'GET') {

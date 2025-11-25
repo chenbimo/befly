@@ -14,22 +14,22 @@ import type { Hook } from '../types/hook.js';
 const hook: Hook = {
     order: 6,
     handler: async (befly, ctx) => {
-        if (!ctx.api) return next();
+        if (!ctx.api) return;
 
         // 1. 接口无需权限
         if (ctx.api.auth === false) {
-            return next();
+            return;
         }
 
         // 2. 用户未登录
         if (!ctx.user || !ctx.user.userId) {
-            ctx.response = JsonResponse(ctx, '未登录', 401);
+            ctx.response = JsonResponse(ctx, '未登录');
             return;
         }
 
         // 3. 开发者权限（最高权限）
         if (ctx.user.roleCode === 'dev') {
-            return next();
+            return;
         }
 
         // 4. 角色权限检查
@@ -43,7 +43,7 @@ const hook: Hook = {
         }
 
         if (!hasPermission) {
-            ctx.response = JsonResponse(ctx, '无权访问', 403);
+            ctx.response = JsonResponse(ctx, '无权访问');
             return;
         }
     }

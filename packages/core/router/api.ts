@@ -62,7 +62,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
                     ctx.response = JsonResponse(ctx, '接口不存在');
                 }
             } else if (ctx.api.handler) {
-                const result = await ctx.api.handler(appContext, ctx, req);
+                const result = await ctx.api.handler(appContext, ctx);
 
                 if (result instanceof Response) {
                     ctx.response = result;

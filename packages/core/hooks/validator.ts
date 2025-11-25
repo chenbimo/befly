@@ -12,11 +12,11 @@ import type { Hook } from '../types/hook.js';
 const hook: Hook = {
     order: 5,
     handler: async (befly, ctx) => {
-        if (!ctx.api) return next();
+        if (!ctx.api) return;
 
         // 无需验证
         if (!ctx.api.fields) {
-            return next();
+            return;
         }
 
         // 验证参数
