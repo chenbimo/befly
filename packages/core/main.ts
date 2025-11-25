@@ -16,7 +16,6 @@ import { RedisHelper } from './lib/redisHelper.js';
 import { loadPlugins } from './loader/loadPlugins.js';
 import { loadHooks } from './loader/loadHooks.js';
 import { loadApis } from './loader/loadApis.js';
-import { rootHandler } from './router/root.js';
 import { apiHandler } from './router/api.js';
 import { staticHandler } from './router/static.js';
 import { checkApp } from './checks/checkApp.js';
@@ -96,7 +95,7 @@ export class Befly {
                 port: this.config.appPort,
                 hostname: this.config.appHost,
                 routes: {
-                    '/': rootHandler,
+                    '/': () => Response.json({ code: 0, msg: `${this.config.appName} 接口服务已启动` }),
                     '/api/*': apiHandler(this.apis, this.hooks, this.context),
                     '/*': staticHandler(this.config)
                 },
