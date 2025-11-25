@@ -12,18 +12,6 @@ import { sortModules, scanModules } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
-// ==================== 插件加载逻辑 ====================
-
-async function initPlugin(befly: { pluginLists: Plugin[]; appContext: BeflyContext }, plugin: Plugin): Promise<void> {
-    befly.pluginLists.push(plugin);
-
-    if (typeof plugin.handler === 'function') {
-        befly.appContext[plugin.name!] = await plugin.handler(befly.appContext);
-    } else {
-        befly.appContext[plugin.name!] = {};
-    }
-}
-
 export async function loadPlugins(befly: {
     //
     pluginLists: Plugin[];
@@ -70,7 +58,13 @@ export async function loadPlugins(befly: {
 
         for (const plugin of sortedPlugins) {
             try {
-                await initPlugin(befly, plugin);
+                befly.pluginLists.push(plugin);
+
+                if (typeof plugin.handler === 'function') {
+                    befly.appContext[plugin.name!] = await plugin.handler(befly.appContext);
+                } else {
+                    befly.appContext[plugin.name!] = {};
+                }
             } catch (error: any) {
                 Logger.error(`插件 ${plugin.name} 初始化失败`, error);
                 process.exit(1);
