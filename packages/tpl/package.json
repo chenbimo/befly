@@ -15,6 +15,7 @@
     "files": [
         "apis",
         "tables",
+        "tests",
         "main.ts",
         ".npmrc",
         "bunfig.toml",
