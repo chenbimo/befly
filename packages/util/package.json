@@ -18,7 +18,8 @@
     },
     "files": [
         "dist",
-        "types",
+        "src",
+        "tests",
         "package.json",
         "README.md"
     ],
