@@ -15,15 +15,14 @@
         "preview": "vite preview"
     },
     "files": [
-        "apis/",
-        "tables/",
-        "views/",
-        "utils/",
-        "styles/",
+        "apis",
+        "styles",
+        "tables",
+        "views",
         "addon.config.json",
-        "README.md",
+        "menu.json",
         "package.json",
-        "menu.json"
+        "README.md"
     ],
     "keywords": [
         "befly",
