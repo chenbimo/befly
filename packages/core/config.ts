@@ -7,7 +7,7 @@ import type { BeflyOptions } from './types/befly.js';
 export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
     // ========== 核心参数 ==========
     nodeEnv: 'development',
-    appName: 'Befly App',
+    appName: 'Befly',
     appPort: 3000,
     appHost: '127.0.0.1',
     devEmail: 'dev@qq.com',

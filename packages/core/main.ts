@@ -4,7 +4,7 @@
  */
 
 // ========== 外部依赖 ==========
-import { calcPerfTime } from 'befly-util';
+import { calcPerfTime } from 'befly-util/calcPerfTime';
 
 // ========== 相对导入 ==========
 import { Logger } from './lib/logger.js';
