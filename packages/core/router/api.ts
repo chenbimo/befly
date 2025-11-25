@@ -59,7 +59,16 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
             // 5. 执行 API handler
             if (!ctx.api) {
                 if (req.method !== 'OPTIONS') {
-                    ctx.response = JsonResponse(ctx, '接口不存在');
+                    ctx.response = Response.json(
+                        {
+                            code: 1,
+                            msg: '接口不存在',
+                            data: null
+                        },
+                        {
+                            headers: ctx.corsHeaders
+                        }
+                    );
                 }
             } else if (ctx.api.handler) {
                 const result = await ctx.api.handler(appContext, ctx);
@@ -71,59 +80,18 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
                 }
             }
 
-            // 6. 格式化 result 为 response
-            if (!ctx.response && ctx.result !== undefined) {
-                let result = ctx.result;
-
-                // 如果是字符串，自动包裹为成功响应
-                if (typeof result === 'string') {
-                    result = {
-                        code: 0,
-                        msg: result,
-                        data: {}
-                    };
-                }
-                // 如果是对象，自动补充 code: 0
-                else if (result && typeof result === 'object') {
-                    if (!('code' in result)) {
-                        result = {
-                            code: 0,
-                            ...result
-                        };
-                    }
-                }
-
-                // 处理 BigInt 序列化问题
-                if (result && typeof result === 'object') {
-                    const jsonString = JSON.stringify(result, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
-                    ctx.response = new Response(jsonString, {
-                        headers: {
-                            ...ctx.corsHeaders,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                } else {
-                    // 简单类型直接返回
-                    ctx.response = Response.json(result, {
-                        headers: ctx.corsHeaders
-                    });
-                }
-            }
-
-            // 7. 记录请求日志
-            if (ctx.api && ctx.requestId) {
-                const duration = Date.now() - ctx.now;
-                const user = ctx.user?.userId ? `[User:${ctx.user.userId}]` : '[Guest]';
-                Logger.info(`[${ctx.requestId}] ${apiPath} ${user} ${duration}ms`);
-            }
-
-            // 8. 返回响应
-            return ctx.response || JsonResponse(ctx, 'No response generated');
+            // 6. 返回响应（自动处理 response/result/日志）
+            return JsonResponse(ctx);
         } catch (err: any) {
             // 全局错误处理
             const errorPath = ctx.api ? apiPath : req.url;
             Logger.error(`Request Error: ${errorPath}`, err);
-            return JsonResponse(ctx, '内部服务错误');
+            ctx.result = {
+                code: 1,
+                msg: '内部服务错误',
+                data: null
+            };
+            return JsonResponse(ctx);
         }
     };
 }

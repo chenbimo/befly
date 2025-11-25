@@ -9,7 +9,7 @@ import { join } from 'pathe';
 // 相对导入
 import { projectDir } from '../paths.js';
 import { Logger } from '../lib/logger.js';
-import { JsonResponse, setCorsOptions } from '../util.js';
+import { setCorsOptions } from '../util.js';
 
 // 类型导入
 import type { CorsConfig } from '../types/befly.js';
@@ -44,13 +44,31 @@ export function staticHandler(corsConfig: CorsConfig = {}) {
                     }
                 });
             } else {
-                return JsonResponse('文件未找到', 1, null, corsHeaders);
+                return Response.json(
+                    {
+                        code: 1,
+                        msg: '文件未找到',
+                        data: null
+                    },
+                    {
+                        headers: corsHeaders
+                    }
+                );
             }
         } catch (error: any) {
             // 记录详细的错误日志
             Logger.error('静态文件处理失败', error);
 
-            return JsonResponse('文件读取失败', 1, {}, corsHeaders);
+            return Response.json(
+                {
+                    code: 1,
+                    msg: '文件读取失败',
+                    data: null
+                },
+                {
+                    headers: corsHeaders
+                }
+            );
         }
     };
 }

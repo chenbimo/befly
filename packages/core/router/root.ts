@@ -5,7 +5,7 @@
 
 // 相对导入
 import { Logger } from '../lib/logger.js';
-import { JsonResponse, setCorsOptions } from '../util.js';
+import { setCorsOptions } from '../util.js';
 
 /**
  * 根路径处理器
@@ -15,19 +15,32 @@ export async function rootHandler(req: Request): Promise<Response> {
     const corsHeaders = setCorsOptions(req);
 
     try {
-        return JsonResponse(
-            'Befly 接口服务已启动',
-            0,
+        return Response.json(
             {
-                mode: process.env.NODE_ENV || 'development',
-                timestamp: Date.now()
+                code: 0,
+                msg: 'Befly 接口服务已启动',
+                data: {
+                    mode: process.env.NODE_ENV || 'development',
+                    timestamp: Date.now()
+                }
             },
-            corsHeaders
+            {
+                headers: corsHeaders
+            }
         );
     } catch (error: any) {
         // 记录详细的错误日志
         Logger.error('根路径处理失败', error);
 
-        return JsonResponse('服务异常', 1, {}, corsHeaders);
+        return Response.json(
+            {
+                code: 1,
+                msg: '服务异常',
+                data: null
+            },
+            {
+                headers: corsHeaders
+            }
+        );
     }
 }

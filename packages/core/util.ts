@@ -20,41 +20,72 @@ import type { RequestContext } from './types/context.js';
 import type { PluginRequestHook, Next } from './types/plugin.js';
 
 /**
- * 创建 JSON 响应
- * @param msgOrCtx - 消息字符串或请求上下文
- * @param codeOrMsg - code 或消息（取决于第一个参数）
- * @param dataOrCode - data 或 code
- * @param headers - 响应头（可选）
+ * 创建 JSON 响应（专用于 API 响应）
+ * 内部自动处理：
+ * 1. 如果 ctx.response 已存在，直接返回
+ * 2. 如果 ctx.result 存在，格式化为响应
+ * 3. 否则返回默认错误响应
+ * 4. 记录请求日志
+ * @param ctx - 请求上下文
  * @returns Response 对象
  */
-export function JsonResponse(msgOrCtx: string | RequestContext, codeOrMsg?: number | string, dataOrCode?: any, headers?: Record<string, string>): Response {
-    // 重载 1: JsonResponse(msg, code, data, headers)
-    if (typeof msgOrCtx === 'string') {
-        const msg = msgOrCtx;
-        const code = typeof codeOrMsg === 'number' ? codeOrMsg : 1;
-        const data = dataOrCode ?? null;
-        return Response.json(
-            {
-                code: code,
-                msg: msg,
-                data: data
-            },
-            {
-                headers: headers || {}
-            }
-        );
+export function JsonResponse(ctx: RequestContext): Response {
+    // 记录请求日志
+    if (ctx.api && ctx.requestId) {
+        const duration = Date.now() - ctx.now;
+        const user = ctx.user?.userId ? `[User:${ctx.user.userId}]` : '[Guest]';
+        Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms`);
     }
 
-    // 重载 2: JsonResponse(ctx, msg, code, data)
-    const ctx = msgOrCtx;
-    const msg = codeOrMsg as string;
-    const code = typeof dataOrCode === 'number' ? dataOrCode : 1;
-    const data = headers ?? null;
+    // 1. 如果已经有 response，直接返回
+    if (ctx.response) {
+        return ctx.response;
+    }
+
+    // 2. 如果有 result，格式化为响应
+    if (ctx.result !== undefined) {
+        let result = ctx.result;
+
+        // 如果是字符串，自动包裹为成功响应
+        if (typeof result === 'string') {
+            result = {
+                code: 0,
+                msg: result,
+                data: {}
+            };
+        }
+        // 如果是对象，自动补充 code: 0
+        else if (result && typeof result === 'object') {
+            if (!('code' in result)) {
+                result = {
+                    code: 0,
+                    ...result
+                };
+            }
+        }
+
+        // 处理 BigInt 序列化问题
+        if (result && typeof result === 'object') {
+            const jsonString = JSON.stringify(result, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
+            return new Response(jsonString, {
+                headers: {
+                    ...ctx.corsHeaders,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } else {
+            return Response.json(result, {
+                headers: ctx.corsHeaders
+            });
+        }
+    }
+
+    // 3. 默认响应：没有生成响应
     return Response.json(
         {
-            code: code,
-            msg: msg,
-            data: data
+            code: 1,
+            msg: 'No response generated',
+            data: null
         },
         {
             headers: ctx.corsHeaders
