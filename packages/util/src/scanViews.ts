@@ -7,7 +7,7 @@ import { join } from 'node:path';
  * 注意:此函数只能在 vite.config.js 中使用(Node.js 环境),不能在浏览器中使用
  * @returns 路由文件夹配置数组
  */
-export function scanBeflyViews() {
+export function scanViews() {
     // 使用绝对路径：基于项目根目录（process.cwd()）
     const projectRoot = process.cwd();
     const addonBasePath = join(projectRoot, 'node_modules', '@befly-addon');
