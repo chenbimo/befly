@@ -144,7 +144,6 @@ export const SyncDb = async (config: BeflyOptions, options: SyncDbOptions = {}):
             Logger.debug(`✓ 已清理表字段缓存`);
         }
     } catch (error: any) {
-        Logger.error(`数据库同步失败`, error);
         throw error;
     } finally {
         if (sql) {

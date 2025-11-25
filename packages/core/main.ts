@@ -133,7 +133,7 @@ export class Befly {
 
             return server;
         } catch (error: any) {
-            Logger.error('Befly 启动失败', error);
+            Logger.error('项目启动失败', error);
             process.exit(1);
         }
     }

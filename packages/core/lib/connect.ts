@@ -88,9 +88,6 @@ export class Connect {
             this.sqlClient = sql;
             return sql;
         } catch (error: any) {
-            console.log(finalUrl);
-            Logger.error('数据库连接测试失败', error);
-
             try {
                 await sql?.close();
             } catch (cleanupError) {}

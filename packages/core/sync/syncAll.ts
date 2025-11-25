@@ -17,11 +17,7 @@ export async function syncAllCommand(config: BeflyOptions, options: SyncOptions 
 
         // 0. 检查项目结构
         Logger.debug('🔍 正在检查项目结构...');
-        const checkResult = await checkApp();
-        if (!checkResult) {
-            Logger.error('项目结构检查失败，程序退出');
-            throw new Error('项目结构检查失败');
-        }
+        await checkApp();
         Logger.debug(`✓ 项目结构检查完成\n`);
 
         Logger.debug('开始执行同步任务...\n');
