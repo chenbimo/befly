@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '获取更新日志',
     handler: async (befly, ctx) => {
         // 更新日志数据（实际项目中可以从配置文件或数据库读取）

@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '获取配置状态',
     handler: async (befly, ctx) => {
         const status = {

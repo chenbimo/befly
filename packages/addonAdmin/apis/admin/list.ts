@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '获取管理员列表',
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({

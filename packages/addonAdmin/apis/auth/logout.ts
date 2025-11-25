@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '退出登录',
     handler: async (befly, ctx) => {
         // JWT token 是无状态的,前端删除 token 即可

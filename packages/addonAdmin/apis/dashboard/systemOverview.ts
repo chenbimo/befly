@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '获取系统概览数据',
     handler: async (befly, ctx) => {
         // 权限统计

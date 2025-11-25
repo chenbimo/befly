@@ -1,5 +1,4 @@
-﻿import { Field } from 'befly';
-export default {
+﻿export default {
     name: '删除字典',
     handler: async (befly, ctx) => {
         try {

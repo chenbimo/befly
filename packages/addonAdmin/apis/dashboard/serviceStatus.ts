@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '获取服务状态',
     handler: async (befly, ctx) => {
         const services = [];

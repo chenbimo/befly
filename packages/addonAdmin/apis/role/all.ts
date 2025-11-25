@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '获取所有角色',
     handler: async (befly, ctx) => {
         const roles = await befly.db.getAll({

@@ -1,5 +1,4 @@
-﻿import { Yes } from 'befly';
-import os from 'node:os';
+﻿import os from 'node:os';
 
 export default {
     name: '获取运行环境信息',

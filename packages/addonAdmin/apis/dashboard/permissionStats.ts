@@ -1,6 +1,4 @@
-﻿import { Yes } from 'befly';
-
-export default {
+﻿export default {
     name: '获取权限统计',
     handler: async (befly, ctx) => {
         // 统计菜单数量
