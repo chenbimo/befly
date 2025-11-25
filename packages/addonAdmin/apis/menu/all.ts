@@ -7,7 +7,6 @@
  * 4. 仅返回状态为启用的菜单
  */
 
-
 export default {
     name: '获取用户菜单',
     handler: async (befly, ctx) => {

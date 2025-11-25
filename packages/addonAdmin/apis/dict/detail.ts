@@ -1,5 +1,4 @@
-﻿
-export default {
+﻿export default {
     name: '获取字典详情',
     handler: async (befly, ctx) => {
         try {

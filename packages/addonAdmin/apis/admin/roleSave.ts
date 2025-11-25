@@ -1,5 +1,4 @@
-﻿
-export default {
+﻿export default {
     name: '管理员角色保存',
     fields: {
         roleCode: {

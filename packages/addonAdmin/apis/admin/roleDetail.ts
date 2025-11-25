@@ -1,5 +1,4 @@
-﻿
-export default {
+﻿export default {
     name: '获取管理员角色',
     handler: async (befly, ctx) => {
         // 查询管理员信息（框架自动转换为小驼峰）

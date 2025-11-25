@@ -1,5 +1,4 @@
-﻿
-export default {
+﻿export default {
     name: '角色保存',
     fields: {
         roleCode: {

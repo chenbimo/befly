@@ -1,5 +1,4 @@
-﻿
-export default {
+﻿export default {
     name: '获取角色接口权限',
     handler: async (befly, ctx) => {
         // 查询角色信息

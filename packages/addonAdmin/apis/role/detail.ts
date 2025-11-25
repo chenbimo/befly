@@ -1,5 +1,4 @@
-﻿
-export default {
+﻿export default {
     name: '获取用户角色',
     handler: async (befly, ctx) => {
         let roleInfo = null;

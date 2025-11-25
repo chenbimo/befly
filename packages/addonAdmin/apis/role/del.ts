@@ -1,5 +1,4 @@
-﻿
-export default {
+﻿export default {
     name: '删除角色',
     handler: async (befly, ctx) => {
         try {

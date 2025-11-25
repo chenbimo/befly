@@ -8,7 +8,6 @@
  *  - role: 角色完整信息（包含 menus 和 apis 权限）
  */
 
-
 export default {
     name: '获取用户信息',
     handler: async (befly, ctx) => {
