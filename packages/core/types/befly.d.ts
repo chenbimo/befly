@@ -146,30 +146,17 @@ export interface BeflyOptions {
  * 包含所有插件挂载的实例
  */
 export interface BeflyContext extends KeyValue {
-    // ========== 核心插件（带下划线前缀） ==========
-    /** 数据库助手 (db 插件) */
-    _db?: DbHelper;
-
-    /** Redis 助手 (redis 插件) */
-    _redis?: RedisHelper;
-
-    /** 日志器 (logger 插件) */
-    _logger?: typeof Logger;
-
-    /** 缓存助手 (cache 插件) */
-    _cache?: CacheHelper;
-
-    // ========== 核心插件便捷访问（无前缀） ==========
-    /** 数据库助手便捷访问 */
+    // ========== 核心插件 ==========
+    /** 数据库助手 */
     db?: DbHelper;
 
-    /** Redis 助手便捷访问 */
+    /** Redis 助手 */
     redis?: RedisHelper;
 
-    /** 日志器便捷访问 */
+    /** 日志器 */
     logger?: typeof Logger;
 
-    /** 缓存助手便捷访问 */
+    /** 缓存助手 */
     cache?: CacheHelper;
 
     // ========== 动态插件 ==========

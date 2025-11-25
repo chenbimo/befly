@@ -60,11 +60,10 @@ export async function loadPlugins(befly: {
             try {
                 befly.pluginLists.push(plugin);
 
-                if (typeof plugin.handler === 'function') {
-                    befly.appContext[plugin.name!] = await plugin.handler(befly.appContext);
-                } else {
-                    befly.appContext[plugin.name!] = {};
-                }
+                const pluginInstance = typeof plugin.handler === 'function' ? await plugin.handler(befly.appContext) : {};
+
+                // 直接挂载到 befly 下
+                (befly.appContext as any)[plugin.name!] = pluginInstance;
             } catch (error: any) {
                 Logger.error(`插件 ${plugin.name} 初始化失败`, error);
                 process.exit(1);
