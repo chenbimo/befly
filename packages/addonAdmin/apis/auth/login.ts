@@ -1,5 +1,4 @@
-﻿import { Jwt } from 'befly';
-import adminTable from '../../tables/admin.json';
+﻿import adminTable from '../../tables/admin.json';
 
 export default {
     name: '管理员登录',
@@ -54,7 +53,7 @@ export default {
         });
 
         // 生成 JWT Token（包含核心身份信息）
-        const token = await Jwt.sign(
+        const token = await befly.jwt.sign(
             {
                 id: admin.id,
                 nickname: admin.nickname,

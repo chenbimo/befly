@@ -168,6 +168,9 @@ export interface BeflyContext extends KeyValue {
     /** 加密解密 */
     cipher?: typeof Cipher;
 
+    /** JWT 令牌 */
+    jwt?: typeof Jwt;
+
     /** 项目配置 */
     config?: BeflyOptions;
 
