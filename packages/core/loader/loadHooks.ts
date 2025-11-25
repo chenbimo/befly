@@ -11,17 +11,13 @@ import { scanModules } from '../util.js';
 // 类型导入
 import type { Hook } from '../types/hook.js';
 
-export async function loadHooks(befly: {
-    //
-    hookLists: Hook[];
-    pluginsConfig?: Record<string, any>;
-}): Promise<void> {
+export async function loadHooks(pluginsConfig: Record<string, any> | undefined, hookLists: Hook[]): Promise<void> {
     try {
         // 1. 扫描核心钩子
-        const coreHooks = await scanModules<Hook>(coreHookDir, 'core', '钩子', befly.pluginsConfig);
+        const coreHooks = await scanModules<Hook>(coreHookDir, 'core', '钩子', pluginsConfig);
 
         // 2. 过滤禁用的钩子
-        const disableHooks = (befly as any).config?.disableHooks || [];
+        const disableHooks = (pluginsConfig as any)?.disableHooks || [];
         const enabledHooks = coreHooks.filter((hook) => !disableHooks.includes(hook.name));
 
         if (disableHooks.length > 0) {
@@ -35,7 +31,7 @@ export async function loadHooks(befly: {
             return orderA - orderB;
         });
 
-        befly.hookLists.push(...sortedHooks);
+        hookLists.push(...sortedHooks);
     } catch (error: any) {
         Logger.error('加载钩子时发生错误', error);
         process.exit(1);

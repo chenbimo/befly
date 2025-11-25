@@ -82,17 +82,10 @@ export class Befly {
             await checkApi();
 
             // 4. 加载插件
-            await loadPlugins({
-                pluginLists: this.pluginLists,
-                appContext: this.appContext,
-                pluginsConfig: this.config as any
-            });
+            await loadPlugins(this.config as any, this.pluginLists, this.appContext);
 
             // 5. 加载钩子
-            await loadHooks({
-                hookLists: this.hookLists,
-                pluginsConfig: this.config as any
-            });
+            await loadHooks(this.config as any, this.hookLists);
 
             // 6. 加载所有 API
             await loadApis(this.apiRoutes);
