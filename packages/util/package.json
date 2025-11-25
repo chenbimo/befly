@@ -17,11 +17,12 @@
         "README.md"
     ],
     "scripts": {
-        "build": "tsc",
+        "build": "rimraf dist && tsc",
         "test": "bun test"
     },
     "devDependencies": {
         "@types/bun": "latest",
+        "rimraf": "^6.1.2",
         "typescript": "^5.7.2"
     },
     "dependencies": {
