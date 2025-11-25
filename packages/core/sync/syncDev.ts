@@ -7,9 +7,12 @@
  * - 表名: addon_admin_admin
  */
 
-import { Database } from '../lib/database.js';
-import { Cipher } from '../lib/cipher.js';
+import { scanAddons, getAddonDir, normalizeModuleForSync } from 'befly-util';
+
 import { Logger } from '../lib/logger.js';
+import { Cipher } from '../lib/cipher.js';
+import { Connect } from '../lib/connect.js';
+import { DbHelper } from '../lib/dbHelper.js';
 import type { SyncDevOptions, SyncDevStats, BeflyOptions } from '../types/index.js';
 
 /**
@@ -30,9 +33,9 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         }
 
         // 连接数据库（SQL + Redis）
-        await Database.connect();
+        await Connect.connect();
 
-        const helper = Database.getDbHelper();
+        const helper = Connect.getDbHelper();
 
         // 检查 addon_admin_admin 表是否存在
         const existAdmin = await helper.tableExists('addon_admin_admin');
@@ -167,7 +170,7 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
                     fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
                 });
 
-                const redis = Database.getRedis();
+                const redis = Connect.getRedis();
 
                 // 为每个角色缓存接口权限
                 for (const role of roles) {

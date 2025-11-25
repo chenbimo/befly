@@ -3,29 +3,22 @@
  * 测试 Redis 操作功能
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
-import { Database } from '../lib/database.js';
-import { RedisHelper } from '../lib/redisHelper.js';
+import { describe, expect, it, beforeAll, afterAll } from 'bun:test';
+import { RedisClient } from 'bun';
+
 import { defaultOptions } from '../config.js';
+import { Connect } from '../lib/connect.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 
 let redis: RedisHelper;
 
 beforeAll(async () => {
-    // 使用项目默认配置连接 Redis
-    await Database.connectRedis(defaultOptions.redis);
-    // 使用项目配置的 prefix
-    redis = new RedisHelper(defaultOptions.redis.prefix);
-});
+    // 连接 Redis
+    await Connect.connectRedis(defaultOptions.redis);
 
 afterAll(async () => {
-    // 清理测试数据
-    await redis.del('test:string');
-    await redis.del('test:object');
-    await redis.del('test:set');
-    await redis.del('test:ttl');
-    await redis.del('test:expire');
-
-    await Database.disconnectRedis();
+    // 断开 Redis 连接
+    await Connect.disconnectRedis();
 });
 
 describe('RedisHelper - 字符串操作', () => {

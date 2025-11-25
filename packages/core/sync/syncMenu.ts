@@ -15,7 +15,7 @@
 
 import { join } from 'pathe';
 import { existsSync } from 'node:fs';
-import { Database } from '../lib/database.js';
+import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir } from 'befly-util';
 import { Logger } from '../lib/logger.js';
@@ -287,9 +287,9 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
         const mergedMenus = mergeMenuConfigs(allMenus);
 
         // 连接数据库（SQL + Redis）
-        await Database.connect();
+        await Connect.connect();
 
-        const helper = Database.getDbHelper();
+        const helper = Connect.getDbHelper();
 
         // 4. 检查表是否存在（addon_admin_menu 来自 addon-admin 组件）
         const exists = await helper.tableExists('addon_admin_menu');

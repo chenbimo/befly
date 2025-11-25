@@ -14,7 +14,7 @@ import type { SqlClientOptions } from '../types/database.js';
  * 数据库连接管理器
  * 使用静态方法管理全局单例连接
  */
-export class Database {
+export class Connect {
     private static sqlClient: SQL | null = null;
     private static redisClient: RedisClient | null = null;
     private static dbHelper: DbHelper | null = null;
@@ -123,7 +123,7 @@ export class Database {
      */
     static getSql(): SQL {
         if (!this.sqlClient) {
-            throw new Error('SQL 客户端未连接，请先调用 Database.connectSql()');
+            throw new Error('SQL 客户端未连接，请先调用 Connect.connectSql()');
         }
         return this.sqlClient;
     }
@@ -135,7 +135,7 @@ export class Database {
     static getDbHelper(befly?: BeflyContext): DbHelper {
         if (!this.dbHelper) {
             if (!this.sqlClient) {
-                throw new Error('SQL 客户端未连接，请先调用 Database.connectSql()');
+                throw new Error('SQL 客户端未连接，请先调用 Connect.connectSql()');
             }
             // 创建临时 befly 上下文（仅用于 DbHelper）
             const ctx = befly || {
@@ -215,7 +215,7 @@ export class Database {
      */
     static getRedis(): RedisClient {
         if (!this.redisClient) {
-            throw new Error('Redis 客户端未连接，请先调用 Database.connectRedis()');
+            throw new Error('Redis 客户端未连接，请先调用 Connect.connectRedis()');
         }
         return this.redisClient;
     }

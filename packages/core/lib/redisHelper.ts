@@ -3,9 +3,10 @@
  * 提供 Redis 操作的便捷方法
  */
 
-import { RedisClient } from 'bun';
-import { Logger } from '../lib/logger.js';
-import { Database } from './database.js';
+import { SQL, RedisClient } from 'bun';
+import { Logger } from './logger.js';
+import { Connect } from './connect.js';
+import type { KeyValue } from '../types/common.js';
 
 /**
  * Redis 助手类
@@ -19,9 +20,9 @@ export class RedisHelper {
      * @param prefix - Key 前缀
      */
     constructor(prefix: string = '') {
-        const client = Database.getRedis();
+        const client = Connect.getRedis();
         if (!client) {
-            throw new Error('Redis 客户端未初始化，请先调用 Database.connectRedis()');
+            throw new Error('Redis 客户端未初始化，请先调用 Connect.connectRedis()');
         }
         this.client = client;
         this.prefix = prefix ? `${prefix}:` : '';

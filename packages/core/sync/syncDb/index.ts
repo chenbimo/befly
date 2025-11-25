@@ -10,7 +10,7 @@
 import { basename, resolve } from 'pathe';
 import { existsSync } from 'node:fs';
 import { snakeCase } from 'es-toolkit/string';
-import { Database } from '../../lib/database.js';
+import { Connect } from '../../lib/connect.js';
 import { RedisHelper } from '../../lib/redisHelper.js';
 import { checkTable } from '../../checks/checkTable.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
@@ -50,11 +50,11 @@ export const SyncDb = async (config: BeflyOptions, options: SyncDbOptions = {}):
         await checkTable();
 
         // 建立数据库连接并检查版本
-        sql = await Database.connectSql({ max: 1 });
+        sql = await Connect.connectSql({ max: 1 });
         await ensureDbVersion(sql);
 
         // 初始化 Redis 连接（用于清理缓存）
-        await Database.connectRedis();
+        await Connect.connectRedis();
 
         // 扫描表定义文件
         const directories: Array<{ path: string; type: 'app' | 'addon'; addonName?: string; addonNameSnake?: string }> = [];
@@ -149,14 +149,14 @@ export const SyncDb = async (config: BeflyOptions, options: SyncDbOptions = {}):
     } finally {
         if (sql) {
             try {
-                await Database.disconnectSql();
+                await Connect.disconnectSql();
             } catch (error: any) {
                 Logger.warn(`关闭数据库连接时出错: ${error.message}`);
             }
         }
 
         try {
-            await Database.disconnectRedis();
+            await Connect.disconnectRedis();
         } catch (error: any) {
             Logger.warn(`关闭 Redis 连接时出错: ${error.message}`);
         }

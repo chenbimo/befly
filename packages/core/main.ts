@@ -10,7 +10,7 @@ import { calcPerfTime } from 'befly-util';
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
 import { Jwt } from './lib/jwt.js';
-import { Database } from './lib/database.js';
+import { Connect } from './lib/connect.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
 import { loadPlugins } from './loader/loadPlugins.js';
@@ -118,7 +118,7 @@ export class Befly {
 
                 // 关闭数据库连接
                 try {
-                    await Database.disconnect();
+                    await Connect.disconnect();
                     Logger.info('数据库连接已关闭');
                 } catch (error: any) {
                     Logger.error('关闭数据库连接时出错:', error);

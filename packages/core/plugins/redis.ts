@@ -4,8 +4,8 @@
  */
 
 import { Logger } from '../lib/logger.js';
+import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { Database } from '../lib/database.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
@@ -20,8 +20,8 @@ const redisPlugin: Plugin = {
             // 默认启用，除非显式禁用 (这里假设只要配置了 redis 插件就启用，或者检查 enable 字段)
             // 为了兼容性，如果 config 为空，可能意味着使用默认值连接本地 redis
 
-            // 初始化 Redis 客户端（统一使用 database.ts 的连接管理）
-            await Database.connectRedis(config);
+            // 初始化 Redis 客户端（统一使用 connect.ts 的连接管理）
+            await Connect.connectRedis(config);
 
             // 返回 RedisHelper 实例
             return new RedisHelper(config.prefix);

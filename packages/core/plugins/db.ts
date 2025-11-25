@@ -4,7 +4,7 @@
  */
 
 import { Logger } from '../lib/logger.js';
-import { Database } from '../lib/database.js';
+import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -25,7 +25,7 @@ const dbPlugin: Plugin = {
                 // 从配置读取连接超时配置
                 // const connectionTimeout = config.connectionTimeout ? parseInt(config.connectionTimeout) : 30000;
 
-                sql = await Database.connectSql(config);
+                sql = await Connect.connectSql(config);
 
                 // 创建数据库管理器实例，直接传入 sql 对象
                 const dbManager = new DbHelper(befly, sql);
