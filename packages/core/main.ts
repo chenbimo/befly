@@ -47,15 +47,13 @@ export class Befly {
     private hooks: Hook[] = [];
 
     /** 应用上下文 */
-    public context: BeflyContext;
+    public context: BeflyContext = {};
 
     /** 最终配置（合并默认值后） */
-    public config: BeflyOptions;
+    public config: BeflyOptions = { ...defaultOptions };
 
     constructor(options: BeflyOptions = {}) {
-        this.context = {};
-        // 合并配置：用户配置 > 默认配置（最多 2 级）
-        this.config = { ...defaultOptions };
+        // 合并用户配置：用户配置 > 默认配置（最多 2 级）
         for (const key in options) {
             const value = options[key as keyof BeflyOptions];
             if (value !== undefined && value !== null) {
@@ -100,7 +98,7 @@ export class Befly {
                 routes: {
                     '/': rootHandler,
                     '/api/*': apiHandler(this.apis, this.hooks, this.context),
-                    '/*': staticHandler(this.config.cors)
+                    '/*': staticHandler(this.config)
                 },
                 error: (error: Error) => {
                     Logger.error('服务启动时发生错误', error);

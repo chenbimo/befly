@@ -12,16 +12,16 @@ import { Logger } from '../lib/logger.js';
 import { setCorsOptions } from '../util.js';
 
 // 类型导入
-import type { CorsConfig } from '../types/befly.js';
+import type { BeflyOptions } from '../types/befly.js';
 
 /**
  * 静态文件处理器工厂
- * @param corsConfig - CORS 配置
+ * @param config - Befly 配置
  */
-export function staticHandler(corsConfig: CorsConfig = {}) {
+export function staticHandler(config: BeflyOptions) {
     return async (req: Request): Promise<Response> => {
         // 设置 CORS 响应头
-        const corsHeaders = setCorsOptions(req, corsConfig);
+        const corsHeaders = setCorsOptions(req, config.cors);
 
         const url = new URL(req.url);
         const filePath = join(projectDir, 'public', url.pathname);
