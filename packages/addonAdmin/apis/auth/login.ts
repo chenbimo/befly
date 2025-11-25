@@ -1,4 +1,4 @@
-﻿import { Cipher, Jwt } from 'befly';
+﻿import { Jwt } from 'befly';
 import adminTable from '../../tables/admin.json';
 
 export default {
@@ -29,7 +29,7 @@ export default {
 
         // 验证密码
         try {
-            const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
+            const isValid = await befly.cipher.verifyPassword(ctx.body.password, admin.password);
             if (!isValid) {
                 return befly.tool.No('账号或密码错误2');
             }

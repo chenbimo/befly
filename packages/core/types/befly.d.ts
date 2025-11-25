@@ -165,6 +165,9 @@ export interface BeflyContext extends KeyValue {
         No: (msg: string, data?: any, other?: Record<string, any>) => { code: 1; msg: string; data: any };
     };
 
+    /** 加密解密 */
+    cipher?: typeof Cipher;
+
     /** 项目配置 */
     config?: BeflyOptions;
 
