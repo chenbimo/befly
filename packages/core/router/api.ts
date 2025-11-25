@@ -71,7 +71,53 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
                 }
             }
 
-            // 6. 返回响应
+            // 6. 格式化 result 为 response
+            if (!ctx.response && ctx.result !== undefined) {
+                let result = ctx.result;
+
+                // 如果是字符串，自动包裹为成功响应
+                if (typeof result === 'string') {
+                    result = {
+                        code: 0,
+                        msg: result,
+                        data: {}
+                    };
+                }
+                // 如果是对象，自动补充 code: 0
+                else if (result && typeof result === 'object') {
+                    if (!('code' in result)) {
+                        result = {
+                            code: 0,
+                            ...result
+                        };
+                    }
+                }
+
+                // 处理 BigInt 序列化问题
+                if (result && typeof result === 'object') {
+                    const jsonString = JSON.stringify(result, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
+                    ctx.response = new Response(jsonString, {
+                        headers: {
+                            ...ctx.corsHeaders,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } else {
+                    // 简单类型直接返回
+                    ctx.response = Response.json(result, {
+                        headers: ctx.corsHeaders
+                    });
+                }
+            }
+
+            // 7. 记录请求日志
+            if (ctx.api && ctx.requestId) {
+                const duration = Date.now() - ctx.now;
+                const user = ctx.user?.userId ? `[User:${ctx.user.userId}]` : '[Guest]';
+                Logger.info(`[${ctx.requestId}] ${apiPath} ${user} ${duration}ms`);
+            }
+
+            // 8. 返回响应
             return ctx.response || JsonResponse(ctx, 'No response generated');
         } catch (err: any) {
             // 全局错误处理
