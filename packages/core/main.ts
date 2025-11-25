@@ -38,22 +38,22 @@ import type { ApiRoute } from './types/api.js';
  */
 export class Befly {
     /** API 路由映射表 */
-    private apiRoutes: Map<string, ApiRoute> = new Map();
+    private apis: Map<string, ApiRoute> = new Map();
 
     /** 插件列表 */
-    private pluginLists: Plugin[] = [];
+    private plugins: Plugin[] = [];
 
     /** 钩子列表 */
-    private hookLists: Hook[] = [];
+    private hooks: Hook[] = [];
 
     /** 应用上下文 */
-    public appContext: BeflyContext;
+    public context: BeflyContext;
 
     /** 最终配置（合并默认值后） */
     public config: BeflyOptions;
 
     constructor(options: BeflyOptions = {}) {
-        this.appContext = {};
+        this.context = {};
         // 合并配置：用户配置 > 默认配置（最多 2 级）
         this.config = { ...defaultOptions };
         for (const key in options) {
@@ -82,13 +82,13 @@ export class Befly {
             await checkApi();
 
             // 4. 加载插件
-            await loadPlugins(this.config as any, this.pluginLists, this.appContext);
+            await loadPlugins(this.config as any, this.plugins, this.context);
 
             // 5. 加载钩子
-            await loadHooks(this.config as any, this.hookLists);
+            await loadHooks(this.config as any, this.hooks);
 
             // 6. 加载所有 API
-            await loadApis(this.apiRoutes);
+            await loadApis(this.apis);
 
             // 7. 自动同步 (默认开启)
             await syncAllCommand(this.config);
@@ -99,7 +99,7 @@ export class Befly {
                 hostname: this.config.appHost,
                 routes: {
                     '/': rootHandler,
-                    '/api/*': apiHandler(this.apiRoutes, this.hookLists, this.appContext),
+                    '/api/*': apiHandler(this.apis, this.hooks, this.context),
                     '/*': staticHandler(this.config.cors)
                 },
                 error: (error: Error) => {

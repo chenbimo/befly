@@ -12,7 +12,7 @@ import { sortModules, scanModules } from '../util.js';
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
-export async function loadPlugins(pluginsConfig: Record<string, any> | undefined, pluginLists: Plugin[], appContext: BeflyContext): Promise<void> {
+export async function loadPlugins(pluginsConfig: Record<string, any> | undefined, plugins: Plugin[], context: BeflyContext): Promise<void> {
     try {
         const allPlugins: Plugin[] = [];
 
@@ -53,12 +53,12 @@ export async function loadPlugins(pluginsConfig: Record<string, any> | undefined
 
         for (const plugin of sortedPlugins) {
             try {
-                pluginLists.push(plugin);
+                plugins.push(plugin);
 
-                const pluginInstance = typeof plugin.handler === 'function' ? await plugin.handler(appContext) : {};
+                const pluginInstance = typeof plugin.handler === 'function' ? await plugin.handler(context) : {};
 
                 // 直接挂载到 befly 下
-                (appContext as any)[plugin.name!] = pluginInstance;
+                (context as any)[plugin.name!] = pluginInstance;
             } catch (error: any) {
                 Logger.error(`插件 ${plugin.name} 初始化失败`, error);
                 process.exit(1);

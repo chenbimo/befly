@@ -11,7 +11,7 @@ import { scanModules } from '../util.js';
 // 类型导入
 import type { Hook } from '../types/hook.js';
 
-export async function loadHooks(pluginsConfig: Record<string, any> | undefined, hookLists: Hook[]): Promise<void> {
+export async function loadHooks(pluginsConfig: Record<string, any> | undefined, hooks: Hook[]): Promise<void> {
     try {
         // 1. 扫描核心钩子
         const coreHooks = await scanModules<Hook>(coreHookDir, 'core', '钩子', pluginsConfig);
@@ -31,7 +31,7 @@ export async function loadHooks(pluginsConfig: Record<string, any> | undefined, 
             return orderA - orderB;
         });
 
-        hookLists.push(...sortedHooks);
+        hooks.push(...sortedHooks);
     } catch (error: any) {
         Logger.error('加载钩子时发生错误', error);
         process.exit(1);

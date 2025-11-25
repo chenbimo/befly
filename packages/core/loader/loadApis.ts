@@ -58,9 +58,9 @@ const DEFAULT_API_FIELDS = {
 
 /**
  * 加载所有 API 路由
- * @param apiRoutes - API 路由映射表
+ * @param apis - API 路由映射表
  */
-export async function loadApis(apiRoutes: Map<string, ApiRoute>): Promise<void> {
+export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
     try {
         const loadStartTime = Bun.nanoseconds();
 
@@ -120,7 +120,7 @@ export async function loadApis(apiRoutes: Map<string, ApiRoute>): Promise<void> 
 
                 // 构建路由
                 api.route = `${api.method.toUpperCase()}/api/${apiFile.routePrefix ? apiFile.routePrefix + '/' : ''}${apiFile.relativePath}`;
-                apiRoutes.set(api.route, api);
+                apis.set(api.route, api);
             } catch (error: any) {
                 Logger.error(`[${apiFile.typeName}] 接口 ${apiFile.relativePath} 加载失败`, error);
                 process.exit(1);

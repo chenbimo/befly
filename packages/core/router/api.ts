@@ -15,11 +15,11 @@ import type { BeflyContext } from '../types/befly.js';
 
 /**
  * API处理器工厂函数
- * @param apiRoutes - API路由映射表
- * @param hookLists - 钩子列表
- * @param appContext - 应用上下文
+ * @param apis - API路由映射表
+ * @param hooks - 钩子列表
+ * @param context - 应用上下文
  */
-export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], appContext: BeflyContext) {
+export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: BeflyContext) {
     return async (req: Request): Promise<Response> => {
         // 1. 生成请求 ID
         const requestId = crypto.randomUUID();
@@ -40,15 +40,15 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
             corsHeaders: {
                 'X-Request-ID': requestId
             },
-            api: apiRoutes.get(apiPath),
+            api: apis.get(apiPath),
             response: undefined,
             result: undefined
         };
 
         try {
             // 4. 串联执行所有钩子
-            for (const hook of hookLists) {
-                await hook.handler(appContext, ctx);
+            for (const hook of hooks) {
+                await hook.handler(context, ctx);
 
                 // 如果钩子已经设置了 response，停止执行
                 if (ctx.response) {
@@ -71,7 +71,7 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
                     );
                 }
             } else if (ctx.api.handler) {
-                const result = await ctx.api.handler(appContext, ctx);
+                const result = await ctx.api.handler(context, ctx);
 
                 if (result instanceof Response) {
                     ctx.response = result;

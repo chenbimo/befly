@@ -170,13 +170,13 @@ export interface BeflyContext extends KeyValue {
  */
 export interface Befly {
     /** API 路由映射 */
-    apiRoutes: Map<string, ApiRoute>;
+    apis: Map<string, ApiRoute>;
 
     /** 插件列表 */
-    pluginLists: Plugin[];
+    plugins: Plugin[];
 
     /** 应用上下文 */
-    appContext: KeyValue;
+    context: KeyValue;
 
     /** 应用选项 */
     appOptions: BeflyOptions;
