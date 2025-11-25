@@ -53,8 +53,16 @@ export async function loadPlugins(befly: {
         allPlugins.push(...addonPlugins);
         allPlugins.push(...appPlugins);
 
-        // 5. 排序与初始化
-        const sortedPlugins = sortModules(allPlugins);
+        // 5. 过滤禁用的插件
+        const disablePlugins = (befly as any).config?.disablePlugins || [];
+        const enabledPlugins = allPlugins.filter((plugin) => !disablePlugins.includes(plugin.name));
+
+        if (disablePlugins.length > 0) {
+            Logger.info(`禁用插件: ${disablePlugins.join(', ')}`);
+        }
+
+        // 6. 排序与初始化
+        const sortedPlugins = sortModules(enabledPlugins);
         if (sortedPlugins === false) {
             Logger.error('插件依赖关系错误，请检查 after 属性');
             process.exit(1);

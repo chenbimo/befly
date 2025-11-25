@@ -21,6 +21,9 @@ export interface Hook {
     /** 依赖的钩子列表（在这些钩子之后执行） */
     after?: string[];
 
+    /** 执行顺序（数字越小越先执行，同级别时使用） */
+    order?: number;
+
     /** 钩子处理函数 */
     handler: HookHandler;
 

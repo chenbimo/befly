@@ -12,7 +12,8 @@ import type { Hook } from '../types/hook.js';
  * - 其他角色：检查 Redis 中的角色权限集合
  */
 const hook: Hook = {
-    after: ['auth'],
+    after: ['parser'],
+    order: 20,
     handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();
 
@@ -35,7 +36,6 @@ const hook: Hook = {
         // 4. 角色权限检查
         let hasPermission = false;
         if (ctx.user.roleCode && befly.redis) {
-        } else {
             // 验证角色权限
             const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
             const roleApisKey = `role:apis:${ctx.user.roleCode}`;

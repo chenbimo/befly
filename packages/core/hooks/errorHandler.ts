@@ -6,6 +6,7 @@ import { JsonResponse } from '../util.js';
 import type { Hook } from '../types/hook.js';
 
 const hook: Hook = {
+    order: 1,
     handler: async (befly, ctx, next) => {
         try {
             await next();

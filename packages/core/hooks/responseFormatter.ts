@@ -6,6 +6,7 @@ import type { Hook } from '../types/hook.js';
 
 const hook: Hook = {
     after: ['requestId'],
+    order: 100,
     handler: async (befly, ctx, next) => {
         await next();
 

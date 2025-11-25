@@ -16,6 +16,10 @@ export interface RequestContext {
     req: Request;
     /** 请求开始时间（毫秒） */
     now: number;
+    /** 客户端 IP 地址 */
+    ip?: string;
+    /** API 路由路径（如 POST/api/user/login） */
+    route?: string;
     /** 当前请求的 API 路由对象 */
     api?: ApiRoute;
     /** 响应对象（如果设置了此属性，将直接返回该响应） */

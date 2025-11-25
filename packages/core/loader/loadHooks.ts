@@ -42,8 +42,16 @@ export async function loadHooks(befly: {
         allHooks.push(...addonHooks);
         allHooks.push(...appHooks);
 
-        // 5. 排序
-        const sortedHooks = sortModules(allHooks);
+        // 5. 过滤禁用的钩子
+        const disableHooks = (befly as any).config?.disableHooks || [];
+        const enabledHooks = allHooks.filter((hook) => !disableHooks.includes(hook.name));
+
+        if (disableHooks.length > 0) {
+            Logger.info(`禁用钩子: ${disableHooks.join(', ')}`);
+        }
+
+        // 6. 排序
+        const sortedHooks = sortModules(enabledHooks);
         if (sortedHooks === false) {
             Logger.error('钩子依赖关系错误，请检查 after 属性');
             process.exit(1);

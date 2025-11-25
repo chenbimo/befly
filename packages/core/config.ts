@@ -61,5 +61,11 @@ export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
         exposedHeaders: '',
         maxAge: 86400,
         credentials: 'true'
-    }
+    },
+
+    // ========== 禁用配置 ==========
+    /** 禁用的钩子列表 */
+    disableHooks: [],
+    /** 禁用的插件列表 */
+    disablePlugins: []
 };

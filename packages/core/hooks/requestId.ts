@@ -3,6 +3,7 @@ import { logContextStorage } from '../lib/logger.js';
 
 const hook: Hook = {
     after: ['errorHandler'],
+    order: 3,
     handler: async (befly, ctx, next) => {
         // 生成唯一请求 ID
         const requestId = crypto.randomUUID();

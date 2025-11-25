@@ -27,17 +27,20 @@ export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], 
 
     return async (req: Request): Promise<Response> => {
         // 1. 创建请求上下文
+        const url = new URL(req.url);
+        const apiPath = `${req.method}${url.pathname}`;
+
         const ctx: RequestContext = {
             body: {},
             user: {},
             req: req,
             now: Date.now(),
-            corsHeaders: {}
+            corsHeaders: {},
+            ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown',
+            route: apiPath
         };
 
         // 2. 获取API路由
-        const url = new URL(req.url);
-        const apiPath = `${req.method}${url.pathname}`;
         const api = apiRoutes.get(apiPath);
 
         // 注意：即使 api 不存在，也需要执行插件链（以便处理 CORS OPTIONS 请求或 404 响应）

@@ -11,15 +11,7 @@ import type { CorsConfig } from '../types/befly.js';
  */
 const hook: Hook = {
     after: ['errorHandler'],
-    // 默认配置
-    config: {
-        origin: '*',
-        methods: 'GET, POST, PUT, DELETE, OPTIONS',
-        allowedHeaders: 'Content-Type, Authorization, authorization, token',
-        exposedHeaders: 'Content-Range, X-Content-Range, Authorization, authorization, token',
-        maxAge: 86400,
-        credentials: 'true'
-    },
+    order: 2,
     handler: async (befly, ctx, next) => {
         const req = ctx.req;
 
@@ -33,8 +25,7 @@ const hook: Hook = {
             credentials: 'true'
         };
 
-        // @ts-ignore
-        const userConfig = plugin.config || {};
+        const userConfig = (hook as any).config || {};
         const config = { ...defaultConfig, ...userConfig };
 
         // 设置 CORS 响应头

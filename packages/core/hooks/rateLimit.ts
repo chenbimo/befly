@@ -15,7 +15,8 @@ import type { Hook } from '../types/hook.js';
  */
 const hook: Hook = {
     // 必须在 auth 之后（获取 userId），但在业务逻辑之前
-    after: ['auth'],
+    after: ['parser'],
+    order: 25,
 
     handler: async (befly, ctx, next) => {
         const { api } = ctx;
@@ -37,8 +38,9 @@ const hook: Hook = {
 
         // 3. 生成 Key
         // 优先使用 userId，否则使用 IP
-        const identifier = ctx.user?.userId || ctx.ip;
-        const key = `rate_limit:${ctx.route}:${identifier}`;
+        const identifier = ctx.user?.userId || ctx.ip || 'unknown';
+        const apiPath = ctx.route || `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
+        const key = `rate_limit:${apiPath}:${identifier}`;
 
         try {
             // 4. 执行限流逻辑 (使用 Redis INCR)

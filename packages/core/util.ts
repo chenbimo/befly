@@ -78,6 +78,9 @@ export function compose(middleware: PluginRequestHook[]) {
             try {
                 return Promise.resolve(fn(befly, ctx, dispatch.bind(null, i + 1)));
             } catch (err) {
+                // 记录是哪个中间件出错
+                const middlewareName = (fn as any).name || `middleware[${i}]`;
+                Logger.error(`中间件执行失败: ${middlewareName}`, err);
                 return Promise.reject(err);
             }
         }
@@ -126,11 +129,11 @@ export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'c
 }
 
 /**
- * 排序模块（根据依赖关系）
+ * 排序模块（根据依赖关系和 order）
  * @param modules - 待排序的模块列表
  * @returns 排序后的模块列表，如果存在循环依赖或依赖不存在则返回 false
  */
-export function sortModules<T extends { name?: string; after?: string[] }>(modules: T[]): T[] | false {
+export function sortModules<T extends { name?: string; after?: string[]; order?: number }>(modules: T[]): T[] | false {
     const result: T[] = [];
     const visited = new Set<string>();
     const visiting = new Set<string>();
@@ -170,5 +173,15 @@ export function sortModules<T extends { name?: string; after?: string[] }>(modul
     };
 
     modules.forEach((m) => visit(m.name!));
+
+    // 按 order 进行二次排序（稳定排序，保持依赖顺序）
+    if (isPass) {
+        result.sort((a, b) => {
+            const orderA = a.order ?? 999;
+            const orderB = b.order ?? 999;
+            return orderA - orderB;
+        });
+    }
+
     return isPass ? result : false;
 }

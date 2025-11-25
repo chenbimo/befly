@@ -11,6 +11,7 @@ import type { Hook } from '../types/hook.js';
  */
 const hook: Hook = {
     after: ['parser'],
+    order: 15,
     handler: async (befly, ctx, next) => {
         if (!ctx.api) return next();
 

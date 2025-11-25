@@ -133,6 +133,10 @@ export interface BeflyOptions {
     auth?: AuthConfig;
     /** CORS 插件配置 */
     cors?: CorsConfig;
+    /** 禁用的钩子列表 */
+    disableHooks?: string[];
+    /** 禁用的插件列表 */
+    disablePlugins?: string[];
     /** 其他插件配置 */
     [key: string]: any;
 }
