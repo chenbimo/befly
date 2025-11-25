@@ -165,6 +165,9 @@ export interface BeflyContext extends KeyValue {
         No: (msg: string, data?: any, other?: Record<string, any>) => { code: 1; msg: string; data: any };
     };
 
+    /** 项目配置 */
+    config?: BeflyOptions;
+
     // ========== 动态插件 ==========
     /** 组件插件：addon_{addonName}_{pluginName} */
     /** 项目插件：app_{pluginName} */

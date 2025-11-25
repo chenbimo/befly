@@ -28,6 +28,9 @@ export interface Plugin {
     after?: string[];
 
     /** 插件初始化函数 */
+    handler?: (context: BeflyContext, config?: Record<string, any>) => any | Promise<any>;
+
+    /** @deprecated use handler instead */
     onInit?: PluginInitFunction;
 
     /** 插件配置 */
