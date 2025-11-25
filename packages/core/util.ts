@@ -84,7 +84,7 @@ export function JsonResponse(ctx: RequestContext): Response {
     return Response.json(
         {
             code: 1,
-            msg: 'No response generated',
+            msg: '未生成响应',
             data: null
         },
         {
