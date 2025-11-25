@@ -33,7 +33,16 @@ export function JsonResponse(msgOrCtx: string | RequestContext, codeOrMsg?: numb
         const msg = msgOrCtx;
         const code = typeof codeOrMsg === 'number' ? codeOrMsg : 1;
         const data = dataOrCode ?? null;
-        return Response.json({ code: code, msg: msg, data: data }, { headers: headers || {} });
+        return Response.json(
+            {
+                code: code,
+                msg: msg,
+                data: data
+            },
+            {
+                headers: headers || {}
+            }
+        );
     }
 
     // 重载 2: JsonResponse(ctx, msg, code, data)
@@ -41,7 +50,16 @@ export function JsonResponse(msgOrCtx: string | RequestContext, codeOrMsg?: numb
     const msg = codeOrMsg as string;
     const code = typeof dataOrCode === 'number' ? dataOrCode : 1;
     const data = headers ?? null;
-    return Response.json({ code: code, msg: msg, data: data }, { headers: ctx.corsHeaders });
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data
+        },
+        {
+            headers: ctx.corsHeaders
+        }
+    );
 }
 
 /**
@@ -59,35 +77,6 @@ export function setCorsOptions(req: Request, config: CorsConfig = {}): Record<st
         'Access-Control-Expose-Headers': config.exposedHeaders || 'Content-Range, X-Content-Range, Authorization, authorization, token',
         'Access-Control-Max-Age': String(config.maxAge || 86400),
         'Access-Control-Allow-Credentials': config.credentials || 'true'
-    };
-}
-
-/**
- * 组合钩子函数
- * 基于 koa-compose 实现
- * @param middleware - 钩子函数数组
- * @returns 组合后的钩子函数
- */
-export function compose(middleware: PluginRequestHook[]) {
-    return function (befly: BeflyContext, ctx: RequestContext, next?: Next) {
-        let index = -1;
-        return dispatch(0);
-
-        function dispatch(i: number): Promise<void> {
-            if (i <= index) return Promise.reject(new Error('next() called multiple times'));
-            index = i;
-            let fn = middleware[i];
-            if (i === middleware.length) fn = next as PluginRequestHook;
-            if (!fn) return Promise.resolve();
-            try {
-                return Promise.resolve(fn(befly, ctx, dispatch.bind(null, i + 1)));
-            } catch (err) {
-                // 记录是哪个钩子出错
-                const hookName = (fn as any).name || `hook[${i}]`;
-                Logger.error(`钩子执行失败: ${hookName}`, err);
-                return Promise.reject(err);
-            }
-        }
     };
 }
 
