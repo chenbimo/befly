@@ -2,9 +2,8 @@ import type { Hook } from '../types/hook.js';
 import { Jwt } from '../lib/jwt.js';
 
 const hook: Hook = {
-    after: ['cors'],
-    order: 5,
-    handler: async (befly, ctx, next) => {
+    order: 3,
+    handler: async (befly, ctx) => {
         // 初始化配置（如果有）
         // 注意：Hook 没有 onInit，如果需要初始化，可以在 handler 首次执行时做，或者保留 Plugin 机制专门做初始化
         // 这里 auth 插件原本有 onInit 来配置 Jwt，现在需要迁移
@@ -24,7 +23,6 @@ const hook: Hook = {
         } else {
             ctx.user = {};
         }
-        await next();
     }
 };
 export default hook;

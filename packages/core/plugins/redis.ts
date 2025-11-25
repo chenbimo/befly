@@ -14,7 +14,7 @@ import type { BeflyContext } from '../types/befly.js';
  */
 const redisPlugin: Plugin = {
     after: ['logger'],
-    async onInit(this: Plugin, befly: BeflyContext): Promise<RedisHelper | Record<string, never>> {
+    async handler(this: Plugin, befly: BeflyContext): Promise<RedisHelper | Record<string, never>> {
         const config = this.config || {};
         try {
             // 默认启用，除非显式禁用 (这里假设只要配置了 redis 插件就启用，或者检查 enable 字段)

@@ -1,14 +1,20 @@
 // 相对导入
 import { JsonResponse } from '../util.js';
+import { Logger } from '../lib/logger.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
 
 const hook: Hook = {
-    after: ['requestId'],
-    order: 100,
-    handler: async (befly, ctx, next) => {
-        await next();
+    order: 99,
+    handler: async (befly, ctx) => {
+        // 记录请求日志（在最后格式化之前）
+        if (ctx.api && ctx.requestId) {
+            const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
+            const duration = Date.now() - ctx.now;
+            const user = ctx.user?.userId ? `[User:${ctx.user.userId}]` : '[Guest]';
+            Logger.info(`[${ctx.requestId}] ${apiPath} ${user} ${duration}ms`);
+        }
 
         // 如果已经有 response，直接返回
         if (ctx.response) {

@@ -10,9 +10,8 @@ import type { Hook } from '../types/hook.js';
  * 根据 API 定义的 fields 和 required 验证请求参数
  */
 const hook: Hook = {
-    after: ['parser'],
-    order: 15,
-    handler: async (befly, ctx, next) => {
+    order: 5,
+    handler: async (befly, ctx) => {
         if (!ctx.api) return next();
 
         // 无需验证
@@ -27,8 +26,6 @@ const hook: Hook = {
             ctx.response = JsonResponse(ctx, '无效的请求参数格式', 1, result.fields);
             return;
         }
-
-        await next();
     }
 };
 export default hook;

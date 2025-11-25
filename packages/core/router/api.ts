@@ -4,7 +4,8 @@
  */
 
 // 相对导入
-import { compose, JsonResponse } from '../util.js';
+import { JsonResponse } from '../util.js';
+import { Logger } from '../lib/logger.js';
 
 // 类型导入
 import type { RequestContext } from '../types/context.js';
@@ -19,67 +20,64 @@ import type { BeflyContext } from '../types/befly.js';
  * @param appContext - 应用上下文
  */
 export function apiHandler(apiRoutes: Map<string, ApiRoute>, hookLists: Hook[], appContext: BeflyContext) {
-    // 提取所有钩子的处理函数
-    const middleware = hookLists.map((h) => h.handler);
-
-    // 组合钩子链
-    const fn = compose(middleware);
-
     return async (req: Request): Promise<Response> => {
-        // 1. 创建请求上下文
+        // 1. 生成请求 ID
+        const requestId = crypto.randomUUID();
+
+        // 2. 创建请求上下文
         const url = new URL(req.url);
         const apiPath = `${req.method}${url.pathname}`;
+        const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
 
         const ctx: RequestContext = {
             body: {},
             user: {},
             req: req,
             now: Date.now(),
-            corsHeaders: {},
-            ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown',
-            route: apiPath
+            ip: clientIp,
+            route: apiPath,
+            requestId: requestId,
+            corsHeaders: {
+                'X-Request-ID': requestId
+            },
+            api: apiRoutes.get(apiPath),
+            response: undefined,
+            result: undefined
         };
 
-        // 2. 获取API路由
-        const api = apiRoutes.get(apiPath);
+        try {
+            // 4. 串联执行所有钩子
+            for (const hook of hookLists) {
+                await hook.handler(appContext, ctx);
 
-        // 注意：即使 api 不存在，也需要执行插件链（以便处理 CORS OPTIONS 请求或 404 响应）
-        // 如果是 OPTIONS 请求，通常不需要 api 对象
-        if (api) {
-            ctx.api = api;
-        }
+                // 如果钩子已经设置了 response，停止执行
+                if (ctx.response) {
+                    return ctx.response;
+                }
+            }
 
-        // 3. 执行插件链（洋葱模型）
-        // 错误处理已由 errorHandler 插件接管
-        await fn(appContext, ctx, async () => {
-            // 核心执行器：执行 API handler
-            // 如果没有找到 API 且没有被前面的插件拦截（如 CORS），则返回 404
+            // 5. 执行 API handler
             if (!ctx.api) {
-                // 只有非 OPTIONS 请求才报 404（OPTIONS 请求通常由 cors 插件处理并返回）
                 if (req.method !== 'OPTIONS') {
                     ctx.response = JsonResponse(ctx, '接口不存在');
                 }
-                return;
-            }
-
-            if (ctx.api.handler) {
+            } else if (ctx.api.handler) {
                 const result = await ctx.api.handler(appContext, ctx, req);
 
                 if (result instanceof Response) {
                     ctx.response = result;
                 } else {
-                    // 将结果存入 ctx.result，由 responseFormatter 插件统一处理
                     ctx.result = result;
                 }
             }
-        });
 
-        // 4. 返回响应
-        if (ctx.response) {
-            return ctx.response;
+            // 6. 返回响应
+            return ctx.response || JsonResponse(ctx, 'No response generated');
+        } catch (err: any) {
+            // 全局错误处理
+            const errorPath = ctx.api ? apiPath : req.url;
+            Logger.error(`Request Error: ${errorPath}`, err);
+            return JsonResponse(ctx, '内部服务错误');
         }
-
-        // 兜底响应（理论上不应执行到这里，responseFormatter 会处理）
-        return JsonResponse(ctx, 'No response generated');
     };
 }

@@ -1,15 +1,12 @@
 /**
  * 钩子加载器
- * 负责扫描和初始化所有钩子（核心、组件、项目）
+ * 只加载核心钩子
  */
-
-// 外部依赖
-import { scanAddons, getAddonDir } from 'befly-util';
 
 // 相对导入
 import { Logger } from '../lib/logger.js';
-import { coreHookDir, projectHookDir } from '../paths.js';
-import { sortModules, scanModules } from '../util.js';
+import { coreHookDir } from '../paths.js';
+import { scanModules } from '../util.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
@@ -20,42 +17,23 @@ export async function loadHooks(befly: {
     pluginsConfig?: Record<string, any>;
 }): Promise<void> {
     try {
-        const allHooks: Hook[] = [];
-
         // 1. 扫描核心钩子
         const coreHooks = await scanModules<Hook>(coreHookDir, 'core', '钩子', befly.pluginsConfig);
 
-        // 2. 扫描组件钩子
-        const addonHooks: Hook[] = [];
-        const addons = scanAddons();
-        for (const addon of addons) {
-            const dir = getAddonDir(addon, 'hooks');
-            const hooks = await scanModules<Hook>(dir, 'addon', '钩子', befly.pluginsConfig, addon);
-            addonHooks.push(...hooks);
-        }
-
-        // 3. 扫描项目钩子
-        const appHooks = await scanModules<Hook>(projectHookDir, 'app', '钩子', befly.pluginsConfig);
-
-        // 4. 合并所有钩子
-        allHooks.push(...coreHooks);
-        allHooks.push(...addonHooks);
-        allHooks.push(...appHooks);
-
-        // 5. 过滤禁用的钩子
+        // 2. 过滤禁用的钩子
         const disableHooks = (befly as any).config?.disableHooks || [];
-        const enabledHooks = allHooks.filter((hook) => !disableHooks.includes(hook.name));
+        const enabledHooks = coreHooks.filter((hook) => !disableHooks.includes(hook.name));
 
         if (disableHooks.length > 0) {
             Logger.info(`禁用钩子: ${disableHooks.join(', ')}`);
         }
 
-        // 6. 排序
-        const sortedHooks = sortModules(enabledHooks);
-        if (sortedHooks === false) {
-            Logger.error('钩子依赖关系错误，请检查 after 属性');
-            process.exit(1);
-        }
+        // 3. 按 order 排序
+        const sortedHooks = enabledHooks.sort((a, b) => {
+            const orderA = a.order ?? 999;
+            const orderB = b.order ?? 999;
+            return orderA - orderB;
+        });
 
         befly.hookLists.push(...sortedHooks);
     } catch (error: any) {

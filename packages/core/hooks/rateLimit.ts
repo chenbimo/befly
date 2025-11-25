@@ -14,16 +14,13 @@ import type { Hook } from '../types/hook.js';
  * 3. 针对每个用户(userId)或IP进行限制
  */
 const hook: Hook = {
-    // 必须在 auth 之后（获取 userId），但在业务逻辑之前
-    after: ['parser'],
-    order: 25,
-
-    handler: async (befly, ctx, next) => {
+    order: 7,
+    handler: async (befly, ctx) => {
         const { api } = ctx;
 
         // 1. 检查配置
         if (!api || !api.rateLimit || !befly.redis) {
-            return next();
+            return;
         }
 
         // 2. 解析配置 "10/60" -> count=10, seconds=60
@@ -33,7 +30,7 @@ const hook: Hook = {
 
         if (isNaN(limitCount) || isNaN(limitSeconds)) {
             Logger.warn(`[RateLimit] Invalid config: ${api.rateLimit}`);
-            return next();
+            return;
         }
 
         // 3. 生成 Key
@@ -57,12 +54,9 @@ const hook: Hook = {
                 ctx.response = JsonResponse(ctx, '请求过于频繁，请稍后再试', 429);
                 return;
             }
-
-            return next();
         } catch (err) {
             Logger.error('[RateLimit] Redis error:', err);
             // Redis 故障时，默认放行，避免阻塞业务
-            return next();
         }
     }
 };

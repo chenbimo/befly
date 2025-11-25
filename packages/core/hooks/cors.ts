@@ -10,9 +10,8 @@ import type { CorsConfig } from '../types/befly.js';
  * 设置跨域响应头并处理 OPTIONS 预检请求
  */
 const hook: Hook = {
-    after: ['errorHandler'],
     order: 2,
-    handler: async (befly, ctx, next) => {
+    handler: async (befly, ctx) => {
         const req = ctx.req;
 
         // 合并默认配置和用户配置
@@ -41,8 +40,6 @@ const hook: Hook = {
             });
             return;
         }
-
-        await next();
     }
 };
 export default hook;

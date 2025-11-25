@@ -11,8 +11,8 @@ import type { BeflyContext } from '../types/befly.js';
  * 缓存插件
  */
 const cachePlugin: Plugin = {
-    after: ['db', 'redis'],
-    async onInit(befly: BeflyContext): Promise<CacheHelper> {
+    after: [],
+    async handler(befly: BeflyContext): Promise<CacheHelper> {
         return new CacheHelper(befly);
     }
 };

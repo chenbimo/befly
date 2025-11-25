@@ -12,7 +12,7 @@ import type { BeflyContext } from '../types/befly.js';
  */
 const loggerPlugin: Plugin = {
     after: [],
-    async onInit(this: Plugin, befly: BeflyContext): Promise<typeof Logger> {
+    async handler(this: Plugin, befly: BeflyContext): Promise<typeof Logger> {
         try {
             // 配置 Logger
             if (this.config) {

@@ -20,24 +20,28 @@ import type { RequestContext } from './types/context.js';
 import type { PluginRequestHook, Next } from './types/plugin.js';
 
 /**
- * 创建 JSON 响应（用于 Hook 中）
- * @param ctx - 请求上下文
- * @param msg - 消息
- * @param code - 状态码（默认 1）
- * @param data - 数据（可选）
+ * 创建 JSON 响应
+ * @param msgOrCtx - 消息字符串或请求上下文
+ * @param codeOrMsg - code 或消息（取决于第一个参数）
+ * @param dataOrCode - data 或 code
+ * @param headers - 响应头（可选）
  * @returns Response 对象
  */
-export function JsonResponse(ctx: RequestContext, msg: string, code: number = 1, data?: any): Response {
-    return Response.json(
-        {
-            code: code,
-            msg: msg,
-            data: data ?? null
-        },
-        {
-            headers: ctx.corsHeaders
-        }
-    );
+export function JsonResponse(msgOrCtx: string | RequestContext, codeOrMsg?: number | string, dataOrCode?: any, headers?: Record<string, string>): Response {
+    // 重载 1: JsonResponse(msg, code, data, headers)
+    if (typeof msgOrCtx === 'string') {
+        const msg = msgOrCtx;
+        const code = typeof codeOrMsg === 'number' ? codeOrMsg : 1;
+        const data = dataOrCode ?? null;
+        return Response.json({ code: code, msg: msg, data: data }, { headers: headers || {} });
+    }
+
+    // 重载 2: JsonResponse(ctx, msg, code, data)
+    const ctx = msgOrCtx;
+    const msg = codeOrMsg as string;
+    const code = typeof dataOrCode === 'number' ? dataOrCode : 1;
+    const data = headers ?? null;
+    return Response.json({ code: code, msg: msg, data: data }, { headers: ctx.corsHeaders });
 }
 
 /**
@@ -129,11 +133,11 @@ export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'c
 }
 
 /**
- * 排序模块（根据依赖关系和 order）
+ * 排序模块（根据依赖关系）
  * @param modules - 待排序的模块列表
  * @returns 排序后的模块列表，如果存在循环依赖或依赖不存在则返回 false
  */
-export function sortModules<T extends { name?: string; after?: string[]; order?: number }>(modules: T[]): T[] | false {
+export function sortModules<T extends { name?: string; after?: string[] }>(modules: T[]): T[] | false {
     const result: T[] = [];
     const visited = new Set<string>();
     const visiting = new Set<string>();
@@ -173,15 +177,6 @@ export function sortModules<T extends { name?: string; after?: string[]; order?:
     };
 
     modules.forEach((m) => visit(m.name!));
-
-    // 按 order 进行二次排序（稳定排序，保持依赖顺序）
-    if (isPass) {
-        result.sort((a, b) => {
-            const orderA = a.order ?? 999;
-            const orderB = b.order ?? 999;
-            return orderA - orderB;
-        });
-    }
 
     return isPass ? result : false;
 }

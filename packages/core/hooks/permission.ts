@@ -12,9 +12,8 @@ import type { Hook } from '../types/hook.js';
  * - 其他角色：检查 Redis 中的角色权限集合
  */
 const hook: Hook = {
-    after: ['parser'],
-    order: 20,
-    handler: async (befly, ctx, next) => {
+    order: 6,
+    handler: async (befly, ctx) => {
         if (!ctx.api) return next();
 
         // 1. 接口无需权限
@@ -47,8 +46,6 @@ const hook: Hook = {
             ctx.response = JsonResponse(ctx, '无权访问', 403);
             return;
         }
-
-        await next();
     }
 };
 export default hook;

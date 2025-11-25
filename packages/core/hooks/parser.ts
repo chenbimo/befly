@@ -16,9 +16,8 @@ import type { Hook } from '../types/hook.js';
  * - 根据 API 定义的 fields 过滤字段
  */
 const hook: Hook = {
-    after: ['auth'],
-    order: 10,
-    handler: async (befly, ctx, next) => {
+    order: 4,
+    handler: async (befly, ctx) => {
         if (!ctx.api) return next();
 
         // GET 请求：解析查询参数
@@ -61,7 +60,6 @@ const hook: Hook = {
                 return;
             }
         }
-        await next();
     }
 };
 export default hook;

@@ -13,8 +13,8 @@ import type { BeflyContext } from '../types/befly.js';
  * 数据库插件
  */
 const dbPlugin: Plugin = {
-    after: ['redis'],
-    async onInit(this: Plugin, befly: BeflyContext): Promise<DbHelper | Record<string, never>> {
+    after: ['logger'],
+    async handler(this: Plugin, befly: BeflyContext): Promise<DbHelper | Record<string, never>> {
         let sql: any = null;
         const config = this.config || {};
 
