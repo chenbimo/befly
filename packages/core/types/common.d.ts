@@ -129,35 +129,6 @@ export interface LoggerConfig {
 }
 
 /**
- * 环境变量类型
- */
-export interface EnvConfig {
-    // 服务配置
-    appName: string;
-    appHost: string;
-    appPort: number;
-
-    // 数据库配置
-    mysqlHost: string;
-    mysqlPort: number;
-    mysqlUsername: string;
-    mysqlPassword: string;
-    mysqlDatabase: string;
-
-    // Redis 配置
-    redisHost?: string;
-    redisPort?: number;
-    redisPassword?: string;
-
-    // JWT 配置
-    jwtSecret: string;
-    jwtExpires?: string;
-
-    // 其他配置
-    [key: string]: any;
-}
-
-/**
  * 工具函数返回类型
  */
 export interface ToolResponse<T = any> {

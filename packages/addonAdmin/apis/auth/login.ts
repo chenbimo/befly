@@ -1,4 +1,4 @@
-﻿import { Yes, No, Cipher, Jwt } from 'befly';
+﻿import { Cipher, Jwt } from 'befly';
 import adminTable from '../../tables/admin.json';
 
 export default {

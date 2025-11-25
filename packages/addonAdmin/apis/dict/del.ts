@@ -1,4 +1,4 @@
-﻿import { Field, Yes, No } from 'befly';
+﻿import { Field } from 'befly';
 export default {
     name: '删除字典',
     handler: async (befly, ctx) => {

@@ -1,5 +1,4 @@
-﻿import { Yes, Env } from 'befly';
-import adminTable from '../../tables/admin.json';
+﻿import adminTable from '../../tables/admin.json';
 
 export default {
     name: '发送短信验证码',
@@ -24,7 +23,7 @@ export default {
         }
 
         // 开发环境下返回验证码(生产环境应该删除)
-        const isDev = Env.NODE_ENV === 'development';
+        const isDev = befly.config.nodeEnv === 'development';
 
         return befly.tool.Yes('验证码已发送', isDev ? { code } : null);
     }
