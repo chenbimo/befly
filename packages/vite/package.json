@@ -16,10 +16,10 @@
         "./utils/*": "./utils/*.js"
     },
     "files": [
-        "index.js",
         "configs/",
         "plugins/",
-        "utils/",
+        "index.js",
+        "package.json",
         "README.md"
     ],
     "keywords": [
