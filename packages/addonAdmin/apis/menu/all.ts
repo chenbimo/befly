@@ -7,7 +7,6 @@
  * 4. 仅返回状态为启用的菜单
  */
 
-import { Yes, No } from 'befly';
 
 export default {
     name: '获取用户菜单',
@@ -20,7 +19,7 @@ export default {
             });
 
             if (!role) {
-                return No('角色不存在', []);
+                return befly.tool.No('角色不存在', []);
             }
 
             // 3. 解析菜单ID列表（逗号分隔的字符串）
@@ -30,7 +29,7 @@ export default {
                 .filter((id: number) => !isNaN(id));
 
             if (menuIds.length === 0) {
-                return Yes('菜单为空', []);
+                return befly.tool.Yes('菜单为空', []);
             }
 
             // 4. 从缓存获取所有菜单
@@ -46,7 +45,7 @@ export default {
             }
 
             if (allMenus.length === 0) {
-                return Yes('菜单为空', []);
+                return befly.tool.Yes('菜单为空', []);
             }
 
             // 5. 根据角色权限过滤菜单
@@ -54,10 +53,10 @@ export default {
             const authorizedMenus = allMenus.filter((menu: any) => menuIdSet.has(String(menu.id)));
 
             // 6. 返回一维数组（由前端构建树形结构）
-            return Yes('获取菜单成功', authorizedMenus);
+            return befly.tool.Yes('获取菜单成功', authorizedMenus);
         } catch (error) {
             befly.logger.error('获取用户菜单失败:', error);
-            return No('获取菜单失败');
+            return befly.tool.No('获取菜单失败');
         }
     }
 };

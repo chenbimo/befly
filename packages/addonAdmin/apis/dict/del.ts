@@ -10,10 +10,10 @@ export default {
                 }
             });
 
-            return Yes('操作成功');
+            return befly.tool.Yes('操作成功');
         } catch (error) {
             befly.logger.error('删除字典失败:', error);
-            return No('操作失败');
+            return befly.tool.No('操作失败');
         }
     }
 };

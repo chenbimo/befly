@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-import adminMenuTable from '../../tables/menu.json';
+﻿import adminMenuTable from '../../tables/menu.json';
 
 export default {
     name: '创建菜单',
@@ -11,10 +10,10 @@ export default {
                 data: ctx.body
             });
 
-            return Yes('操作成功', { id: menuId });
+            return befly.tool.Yes('操作成功', { id: menuId });
         } catch (error) {
             befly.logger.error('创建菜单失败:', error);
-            return No('操作失败');
+            return befly.tool.No('操作失败');
         }
     }
 };

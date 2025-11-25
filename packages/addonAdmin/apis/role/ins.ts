@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-import adminRoleTable from '../../tables/role.json';
+﻿import adminRoleTable from '../../tables/role.json';
 
 export default {
     name: '创建角色',
@@ -12,7 +11,7 @@ export default {
         });
 
         if (existing) {
-            return No('角色代码已存在');
+            return befly.tool.No('角色代码已存在');
         }
 
         const roleId = await befly.db.insData({
@@ -31,6 +30,6 @@ export default {
         // 增量缓存角色权限到 Redis Set
         await befly.cache.cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || '');
 
-        return Yes('操作成功', { id: roleId });
+        return befly.tool.Yes('操作成功', { id: roleId });
     }
 };

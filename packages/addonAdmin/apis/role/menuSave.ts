@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-import adminRoleTable from '../../tables/role.json';
+﻿import adminRoleTable from '../../tables/role.json';
 
 export default {
     name: '保存角色菜单权限',
@@ -14,7 +13,7 @@ export default {
         });
 
         if (!role) {
-            return No('角色不存在');
+            return befly.tool.No('角色不存在');
         }
 
         // 将数组转为逗号分隔的字符串存储
@@ -29,6 +28,6 @@ export default {
             }
         });
 
-        return Yes('操作成功');
+        return befly.tool.Yes('操作成功');
     }
 };

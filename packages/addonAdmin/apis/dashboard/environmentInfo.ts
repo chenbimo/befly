@@ -27,7 +27,7 @@ export default {
             }
         }
 
-        return Yes('获取成功', {
+        return befly.tool.Yes('获取成功', {
             os: `${os.type()} ${os.arch()}`,
             server: `${os.platform()} ${os.release()}`,
             nodeVersion: process.version,

@@ -18,7 +18,7 @@ export default {
             table: 'addon_admin_role'
         });
 
-        return Yes('获取成功', {
+        return befly.tool.Yes('获取成功', {
             menuCount: menuCount,
             apiCount: apiCount,
             roleCount: roleCount

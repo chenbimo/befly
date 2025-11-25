@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '获取所有字典',
     handler: async (befly, ctx) => {
@@ -13,10 +12,10 @@ export default {
                 ]
             });
 
-            return Yes('操作成功', dicts);
+            return befly.tool.Yes('操作成功', dicts);
         } catch (error) {
             befly.logger.error('获取所有字典失败:', error);
-            return No('操作失败');
+            return befly.tool.No('操作失败');
         }
     }
 };

@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-import adminRoleTable from '../../tables/role.json';
+﻿import adminRoleTable from '../../tables/role.json';
 
 export default {
     name: '更新角色',
@@ -15,7 +14,7 @@ export default {
         });
 
         if (existing.total > 0) {
-            return No('角色代码已被其他角色使用');
+            return befly.tool.No('角色代码已被其他角色使用');
         }
 
         await befly.db.updData({
@@ -35,6 +34,6 @@ export default {
         // 增量更新角色权限缓存（先删除再重建）
         await befly.cache.cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || '');
 
-        return Yes('操作成功');
+        return befly.tool.Yes('操作成功');
     }
 };

@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '获取角色接口权限',
     handler: async (befly, ctx) => {
@@ -10,7 +9,7 @@ export default {
         });
 
         if (!role) {
-            return No('角色不存在');
+            return befly.tool.No('角色不存在');
         }
 
         // 解析接口ID列表（逗号分隔的字符串转为数组）
@@ -21,6 +20,6 @@ export default {
                   .filter((id: number) => !isNaN(id))
             : [];
 
-        return Yes('操作成功', { apiIds });
+        return befly.tool.Yes('操作成功', { apiIds });
     }
 };

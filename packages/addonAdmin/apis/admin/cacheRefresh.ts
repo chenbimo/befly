@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 刷新全部缓存接口
  *
  * 功能：
@@ -12,7 +12,6 @@
  * - 缓存出现异常需要重建
  */
 
-import { Yes, No } from 'befly';
 
 export default {
     name: '刷新全部缓存',
@@ -88,13 +87,13 @@ export default {
             const allSuccess = results.apis.success && results.menus.success && results.roles.success;
 
             if (allSuccess) {
-                return Yes('全部缓存刷新成功', results);
+                return befly.tool.Yes('全部缓存刷新成功', results);
             } else {
-                return No('部分缓存刷新失败', results);
+                return befly.tool.No('部分缓存刷新失败', results);
             }
         } catch (error: any) {
             befly.logger.error('刷新全部缓存失败:', error);
-            return No('刷新全部缓存失败', { error: error.message });
+            return befly.tool.No('刷新全部缓存失败', { error: error.message });
         }
     }
 };

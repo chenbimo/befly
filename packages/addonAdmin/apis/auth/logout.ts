@@ -14,6 +14,6 @@ export default {
             await befly.redis.set(key, '1', 'EX', 7 * 24 * 60 * 60); // 7天
         }
 
-        return Yes('退出成功');
+        return befly.tool.Yes('退出成功');
     }
 };

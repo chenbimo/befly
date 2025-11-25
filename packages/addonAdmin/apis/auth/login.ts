@@ -24,23 +24,23 @@ export default {
         });
 
         if (!admin) {
-            return No('账号或密码错误1');
+            return befly.tool.No('账号或密码错误1');
         }
 
         // 验证密码
         try {
             const isValid = await Cipher.verifyPassword(ctx.body.password, admin.password);
             if (!isValid) {
-                return No('账号或密码错误2');
+                return befly.tool.No('账号或密码错误2');
             }
         } catch (error) {
             befly.logger.error('密码验证失败', error);
-            return No('密码格式错误，请重新设置密码');
+            return befly.tool.No('密码格式错误，请重新设置密码');
         }
 
         // 检查账号状态（state=1 表示正常，state=2 表示禁用）
         if (admin.state === 2) {
-            return No('账号已被禁用');
+            return befly.tool.No('账号已被禁用');
         }
 
         // 更新最后登录信息
@@ -69,7 +69,7 @@ export default {
         // 返回用户信息（不包含密码）
         const { password: _, ...userWithoutPassword } = admin;
 
-        return Yes('登录成功', {
+        return befly.tool.Yes('登录成功', {
             token,
             userInfo: userWithoutPassword
         });

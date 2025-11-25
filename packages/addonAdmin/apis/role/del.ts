@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '删除角色',
     handler: async (befly, ctx) => {
@@ -11,7 +10,7 @@ export default {
             });
 
             if (adminList.total > 0) {
-                return No('该角色已分配给用户，无法删除');
+                return befly.tool.No('该角色已分配给用户，无法删除');
             }
 
             // 获取角色信息（用于删除缓存）
@@ -31,10 +30,10 @@ export default {
                 await befly.cache.deleteRolePermissions(befly, role.code);
             }
 
-            return Yes('操作成功');
+            return befly.tool.Yes('操作成功');
         } catch (error) {
             befly.logger.error('删除角色失败:', error);
-            return No('操作失败');
+            return befly.tool.No('操作失败');
         }
     }
 };

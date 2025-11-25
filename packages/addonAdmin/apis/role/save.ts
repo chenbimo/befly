@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '角色保存',
     fields: {
@@ -20,7 +19,7 @@ export default {
             });
 
             if (!role) {
-                return No('角色不存在');
+                return befly.tool.No('角色不存在');
             }
 
             // 根据角色编码判断角色类型（硬编码规则）
@@ -37,10 +36,10 @@ export default {
                 }
             });
 
-            return Yes('操作成功');
+            return befly.tool.Yes('操作成功');
         } catch (error) {
             befly.logger.error('保存用户角色失败:', error);
-            return No('操作失败');
+            return befly.tool.No('操作失败');
         }
     }
 };

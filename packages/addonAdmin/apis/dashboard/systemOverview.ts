@@ -19,7 +19,7 @@ export default {
             where: { state: 1 }
         });
 
-        return Yes('获取成功', {
+        return befly.tool.Yes('获取成功', {
             menuCount,
             roleCount,
             apiCount

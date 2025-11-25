@@ -159,6 +159,12 @@ export interface BeflyContext extends KeyValue {
     /** 缓存助手 */
     cache?: CacheHelper;
 
+    /** 工具函数 */
+    tool?: {
+        Yes: (msg: string, data?: any, other?: Record<string, any>) => { code: 0; msg: string; data: any };
+        No: (msg: string, data?: any, other?: Record<string, any>) => { code: 1; msg: string; data: any };
+    };
+
     // ========== 动态插件 ==========
     /** 组件插件：addon_{addonName}_{pluginName} */
     /** 项目插件：app_{pluginName} */

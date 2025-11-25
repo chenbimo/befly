@@ -18,7 +18,7 @@ export default {
         });
 
         if (existingAdmin) {
-            return No('该邮箱已被注册');
+            return befly.tool.No('该邮箱已被注册');
         }
 
         // 加密密码
@@ -35,7 +35,7 @@ export default {
             }
         });
 
-        return Yes('注册成功', {
+        return befly.tool.Yes('注册成功', {
             id: adminId,
             name: ctx.body.name,
             email: ctx.body.email

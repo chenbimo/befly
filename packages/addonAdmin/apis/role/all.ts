@@ -1,4 +1,4 @@
-import { Yes } from 'befly';
+﻿import { Yes } from 'befly';
 
 export default {
     name: '获取所有角色',
@@ -13,6 +13,6 @@ export default {
             orderBy: ['sort#ASC', 'id#ASC']
         });
 
-        return Yes('操作成功', roles);
+        return befly.tool.Yes('操作成功', roles);
     }
 };

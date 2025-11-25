@@ -26,7 +26,7 @@ export default {
         const limit = ctx.body.limit || 5;
         const lists = changelog.slice(0, limit);
 
-        return Yes('获取成功', {
+        return befly.tool.Yes('获取成功', {
             lists: lists
         });
     }

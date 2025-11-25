@@ -14,7 +14,7 @@ export default {
             });
 
             if (existingByUsername) {
-                return No('用户名已被使用');
+                return befly.tool.No('用户名已被使用');
             }
         }
 
@@ -25,7 +25,7 @@ export default {
         });
 
         if (existingByEmail) {
-            return No('邮箱已被使用');
+            return befly.tool.No('邮箱已被使用');
         }
 
         // 加密密码
@@ -47,7 +47,7 @@ export default {
             }
         });
 
-        return Yes('添加成功', {
+        return befly.tool.Yes('添加成功', {
             id: adminId,
             username: ctx.body.username,
             email: ctx.body.email

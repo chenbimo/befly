@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-import adminDictTable from '../../tables/dict.json';
+﻿import adminDictTable from '../../tables/dict.json';
 
 export default {
     name: '添加字典',
@@ -18,10 +17,10 @@ export default {
                 }
             });
 
-            return Yes('操作成功', { id: dictId });
+            return befly.tool.Yes('操作成功', { id: dictId });
         } catch (error) {
             befly.logger.error('添加字典失败:', error);
-            return No('操作失败');
+            return befly.tool.No('操作失败');
         }
     }
 };

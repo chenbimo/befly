@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-import adminMenuTable from '../../tables/menu.json';
+﻿import adminMenuTable from '../../tables/menu.json';
 
 export default {
     name: '更新菜单',
@@ -19,10 +18,10 @@ export default {
                 }
             });
 
-            return Yes('操作成功');
+            return befly.tool.Yes('操作成功');
         } catch (error) {
             befly.logger.error('更新菜单失败:', error);
-            return No('操作失败');
+            return befly.tool.No('操作失败');
         }
     }
 };

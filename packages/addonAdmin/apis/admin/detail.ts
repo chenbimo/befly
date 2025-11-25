@@ -8,7 +8,6 @@
  *  - role: 角色完整信息（包含 menus 和 apis 权限）
  */
 
-import { Yes, No } from 'befly';
 
 export default {
     name: '获取用户信息',
@@ -17,7 +16,7 @@ export default {
         const userId = ctx.user?.id;
 
         if (!userId) {
-            return No('未授权');
+            return befly.tool.No('未授权');
         }
 
         // 查询用户信息（框架自动转换为小驼峰）
@@ -27,7 +26,7 @@ export default {
         });
 
         if (!admin) {
-            return No('用户不存在');
+            return befly.tool.No('用户不存在');
         }
 
         // 查询角色信息（使用 roleCode 而非 roleId，框架自动转换为小驼峰）
@@ -42,7 +41,7 @@ export default {
         // 返回用户信息（不包含密码，字段已是小驼峰格式）
         const { password: _, ...userWithoutPassword } = admin;
 
-        return Yes('获取成功', {
+        return befly.tool.Yes('获取成功', {
             ...userWithoutPassword,
             role: roleInfo
         });

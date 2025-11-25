@@ -72,6 +72,6 @@ export default {
             responseTime: '-'
         });
 
-        return Yes('获取成功', { services });
+        return befly.tool.Yes('获取成功', { services });
     }
 };

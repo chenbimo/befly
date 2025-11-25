@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '删除管理员',
     fields: {},
@@ -12,12 +11,12 @@ export default {
         });
 
         if (!admin) {
-            return No('管理员不存在');
+            return befly.tool.No('管理员不存在');
         }
 
         // 不能删除 dev 角色的管理员
         if (admin.roleCode === 'dev') {
-            return No('不能删除开发者账号');
+            return befly.tool.No('不能删除开发者账号');
         }
 
         // 删除管理员
@@ -26,6 +25,6 @@ export default {
             where: { id: ctx.body.id }
         });
 
-        return Yes('删除成功');
+        return befly.tool.Yes('删除成功');
     }
 };

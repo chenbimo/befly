@@ -2,7 +2,6 @@
  * 更新管理员信息
  */
 
-import { Yes, No } from 'befly';
 import adminTable from '../../tables/admin.json';
 
 export default {
@@ -19,7 +18,7 @@ export default {
         });
 
         if (!admin) {
-            return No('管理员不存在');
+            return befly.tool.No('管理员不存在');
         }
 
         // 如果更新邮箱，检查是否重复
@@ -30,7 +29,7 @@ export default {
             });
 
             if (existingAdmin) {
-                return No('邮箱已被使用');
+                return befly.tool.No('邮箱已被使用');
             }
         }
 
@@ -41,6 +40,6 @@ export default {
             where: { id }
         });
 
-        return Yes('更新成功');
+        return befly.tool.Yes('更新成功');
     }
 };

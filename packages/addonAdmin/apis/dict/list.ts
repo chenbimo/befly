@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-export default {
+﻿export default {
     name: '获取字典列表',
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({
@@ -10,6 +9,6 @@ export default {
             orderBy: ['sort#ASC', 'id#ASC']
         });
 
-        return Yes('操作成功', result);
+        return befly.tool.Yes('操作成功', result);
     }
 };

@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '获取管理员角色',
     handler: async (befly, ctx) => {
@@ -10,7 +9,7 @@ export default {
         });
 
         if (!admin) {
-            return No('管理员不存在');
+            return befly.tool.No('管理员不存在');
         }
 
         // 如果有角色编码，查询角色详细信息（使用 roleCode 而非 roleId）
@@ -22,7 +21,7 @@ export default {
             });
         }
 
-        return Yes('操作成功', {
+        return befly.tool.Yes('操作成功', {
             roleId: admin.roleId,
             roleCode: admin.roleCode,
             role: roleInfo

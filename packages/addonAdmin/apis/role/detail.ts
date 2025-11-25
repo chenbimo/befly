@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '获取用户角色',
     handler: async (befly, ctx) => {
@@ -11,7 +10,7 @@ export default {
             });
         }
 
-        return Yes('操作成功', {
+        return befly.tool.Yes('操作成功', {
             roleId: ctx.body.id,
             roleCode: ctx.body.id,
             role: roleInfo

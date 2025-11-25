@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '获取角色菜单权限',
     handler: async (befly, ctx) => {
@@ -10,7 +9,7 @@ export default {
         });
 
         if (!role) {
-            return No('角色不存在');
+            return befly.tool.No('角色不存在');
         }
 
         // 解析菜单ID列表（逗号分隔的字符串转为数组）
@@ -21,6 +20,6 @@ export default {
                   .filter((id: number) => !isNaN(id))
             : [];
 
-        return Yes('操作成功', menuIds);
+        return befly.tool.Yes('操作成功', menuIds);
     }
 };

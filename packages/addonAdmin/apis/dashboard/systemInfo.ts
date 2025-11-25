@@ -12,7 +12,7 @@ export default {
         // 环境
         const environment = Env.NODE_ENV || 'development';
 
-        return Yes('获取成功', {
+        return befly.tool.Yes('获取成功', {
             environment: environment,
             startTime: startTime,
             uptime: uptime

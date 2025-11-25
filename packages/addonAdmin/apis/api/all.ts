@@ -1,5 +1,4 @@
-﻿import { Yes, No } from 'befly';
-
+﻿
 export default {
     name: '获取所有接口',
     handler: async (befly, ctx) => {
@@ -16,10 +15,10 @@ export default {
                 });
             }
 
-            return Yes('操作成功', { lists: allApis });
+            return befly.tool.Yes('操作成功', { lists: allApis });
         } catch (error: any) {
             befly.logger.error('获取接口列表失败:', error);
-            return No('获取接口列表失败');
+            return befly.tool.No('获取接口列表失败');
         }
     }
 };

@@ -15,6 +15,6 @@ export default {
             orderBy: ['createdAt#DESC']
         });
 
-        return Yes('获取成功', result);
+        return befly.tool.Yes('获取成功', result);
     }
 };

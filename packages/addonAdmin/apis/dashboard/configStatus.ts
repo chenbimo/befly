@@ -45,6 +45,6 @@ export default {
             status.oss.message = '已配置';
         }
 
-        return Yes('获取成功', status);
+        return befly.tool.Yes('获取成功', status);
     }
 };

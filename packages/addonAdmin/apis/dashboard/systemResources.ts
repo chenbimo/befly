@@ -95,7 +95,7 @@ export default {
             diskTotal = 0;
         }
 
-        return Yes('获取成功', {
+        return befly.tool.Yes('获取成功', {
             cpu: {
                 usage: cpuUsage,
                 cores: cpuCount

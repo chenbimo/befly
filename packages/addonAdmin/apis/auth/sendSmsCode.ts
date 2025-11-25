@@ -26,6 +26,6 @@ export default {
         // 开发环境下返回验证码(生产环境应该删除)
         const isDev = Env.NODE_ENV === 'development';
 
-        return Yes('验证码已发送', isDev ? { code } : null);
+        return befly.tool.Yes('验证码已发送', isDev ? { code } : null);
     }
 };
