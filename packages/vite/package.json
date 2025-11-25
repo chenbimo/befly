@@ -1,6 +1,6 @@
 {
     "name": "befly-vite",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "Befly Vite 配置预设和插件集合",
     "type": "module",
     "private": false,
@@ -37,7 +37,7 @@
         "@unocss/preset-uno": "^66.5.6",
         "@vitejs/plugin-vue": "^6.0.1",
         "@vue-macros/reactivity-transform": "^3.1.1",
-        "befly-util": "1.0.1",
+        "befly-util": "^1.0.2",
         "sass": "^1.94.0",
         "unocss": "^66.5.6",
         "unplugin-auto-import": "^20.2.0",
