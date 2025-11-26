@@ -106,11 +106,11 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
             const addonApisDir = getAddonDir(addonName, 'apis');
 
             // 读取 addon 配置
-            const addonConfigPath = getAddonDir(addonName, 'addon.config.json');
+            const addonConfigPath = getAddonDir(addonName, 'addon.config.js');
             let addonTitle = addonName;
             try {
-                const config = await import(addonConfigPath, { with: { type: 'json' } });
-                addonTitle = config.default.title || addonName;
+                const config = await import(addonConfigPath);
+                addonTitle = config.default?.title || addonName;
             } catch (error) {
                 // 忽略配置读取错误
             }

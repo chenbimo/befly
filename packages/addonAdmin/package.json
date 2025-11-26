@@ -8,7 +8,7 @@
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
-    "main": "addon.config.json",
+    "main": "addon.config.js",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
@@ -19,8 +19,7 @@
         "styles",
         "tables",
         "views",
-        "addon.config.json",
-        "menu.json",
+        "addon.config.js",
         "package.json",
         "README.md"
     ],

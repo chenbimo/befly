@@ -1,15 +1,16 @@
 ﻿/**
  * SyncMenu 命令 - 同步菜单数据到数据库
- * 说明：根据 menu.json 配置文件增量同步菜单数据（最多3级：父级、子级、孙级）
+ * 说明：根据配置文件增量同步菜单数据（最多3级：父级、子级、孙级）
  *
  * 流程：
- * 1. 扫描项目根目录和所有 addon 的 menu.json 配置文件
- * 2. 项目的 menu.json 优先级最高，可以覆盖 addon 的菜单配置
- * 3. 文件不存在或格式错误时默认为空数组
- * 4. 根据菜单的 path 字段检查是否存在
- * 5. 存在则更新其他字段（name、sort、type、pid）
- * 6. 不存在则新增菜单记录
- * 7. 强制删除配置中不存在的菜单记录
+ * 1. 扫描所有 addon 的 addon.config.js 配置文件（menus 字段）
+ * 2. 扫描项目根目录的 app.config.js 配置文件（menus 字段）
+ * 3. 项目的 app.config.js 优先级最高，可以覆盖 addon 的菜单配置
+ * 4. 文件不存在或格式错误时默认为空数组
+ * 5. 根据菜单的 path 字段检查是否存在
+ * 6. 存在则更新其他字段（name、sort、type、pid）
+ * 7. 不存在则新增菜单记录
+ * 8. 强制删除配置中不存在的菜单记录
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
@@ -22,30 +23,6 @@ import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 
 import type { SyncMenuOptions, MenuConfig, BeflyOptions } from '../types/index.js';
-
-/**
- * 读取菜单配置文件
- * 如果文件不存在或不是数组格式，返回空数组
- */
-async function readMenuConfig(filePath: string): Promise<MenuConfig[]> {
-    try {
-        if (!existsSync(filePath)) {
-            return [];
-        }
-
-        const content = await import(filePath, { with: { type: 'json' } });
-
-        // 验证是否为数组
-        if (!Array.isArray(content.default)) {
-            return [];
-        }
-
-        return content.default;
-    } catch (error: any) {
-        Logger.warn(`读取菜单配置失败 ${filePath}: ${error.message}`);
-        return [];
-    }
-}
 
 /**
  * 为 addon 菜单的 path 添加前缀
@@ -75,7 +52,7 @@ function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
 
 /**
  * 合并菜单配置
- * 优先级：项目 menu.json > addon menu.json
+ * 优先级：项目 app.config.js > addon addon.config.js
  * 支持三级菜单结构：父级、子级、孙级
  */
 function mergeMenuConfigs(allMenus: Array<{ menus: MenuConfig[]; addonName: string }>): MenuConfig[] {
@@ -261,29 +238,44 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
             return;
         }
 
-        // 1. 扫描所有 addon 的 menu.json 配置文件
+        // 1. 扫描所有 addon 的配置文件
         const allMenus: Array<{ menus: MenuConfig[]; addonName: string }> = [];
 
         const addonNames = scanAddons();
 
         for (const addonName of addonNames) {
-            const addonMenuPath = getAddonDir(addonName, 'menu.json');
-            if (existsSync(addonMenuPath)) {
-                const addonMenus = await readMenuConfig(addonMenuPath);
-                if (addonMenus.length > 0) {
-                    // 为 addon 菜单添加路径前缀
-                    const menusWithPrefix = addAddonPrefix(addonMenus, addonName);
-                    allMenus.push({ menus: menusWithPrefix, addonName: addonName });
+            const addonConfigPath = getAddonDir(addonName, 'addon.config.js');
+            if (existsSync(addonConfigPath)) {
+                try {
+                    const addonConfig = await import(addonConfigPath);
+                    const addonMenus = addonConfig.default?.menus || [];
+                    if (Array.isArray(addonMenus) && addonMenus.length > 0) {
+                        // 为 addon 菜单添加路径前缀
+                        const menusWithPrefix = addAddonPrefix(addonMenus, addonName);
+                        allMenus.push({ menus: menusWithPrefix, addonName: addonName });
+                    }
+                } catch (error: any) {
+                    Logger.warn(`读取 addon 配置失败 ${addonConfigPath}: ${error.message}`);
                 }
             }
         }
 
-        // 2. 读取项目根目录的 menu.json（优先级最高，不添加前缀）
-        const projectMenuPath = join(projectDir, 'menu.json');
-        const projectMenus = await readMenuConfig(projectMenuPath);
-        if (projectMenus.length > 0) {
-            allMenus.push({ menus: projectMenus, addonName: 'project' });
-        } // 3. 合并菜单配置（项目配置优先）
+        // 2. 加载项目配置（app.config.js）
+        const appConfigPath = join(projectDir, 'app.config.js');
+        if (existsSync(appConfigPath)) {
+            try {
+                const appConfig = await import(appConfigPath);
+                const appMenus = appConfig.default?.menus || [];
+                if (Array.isArray(appMenus) && appMenus.length > 0) {
+                    // 项目菜单不添加前缀，直接添加
+                    allMenus.push({ menus: appMenus, addonName: 'app' });
+                }
+            } catch (error: any) {
+                Logger.warn(`读取项目配置失败 ${appConfigPath}: ${error.message}`);
+            }
+        }
+
+        // 3. 合并菜单配置
         const mergedMenus = mergeMenuConfigs(allMenus);
 
         // 连接数据库（SQL + Redis）
@@ -326,6 +318,6 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
         Logger.error('菜单同步失败', error);
         throw error;
     } finally {
-        await Database?.disconnect();
+        await Connect.disconnect();
     }
 }
