@@ -15,6 +15,7 @@
  */
 
 import { join } from 'pathe';
+import { cloneDeep } from 'es-toolkit';
 import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir, scanConfig } from 'befly-util';
@@ -22,6 +23,18 @@ import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 
 import type { SyncMenuOptions, MenuConfig, BeflyOptions } from '../types/index.js';
+
+/**
+ * 递归转换菜单路径
+ * @param menu 菜单对象（会被修改）
+ * @param transform 路径转换函数
+ */
+function transformMenuPaths(menu: MenuConfig, transform: (path: string) => string): void {
+    if (menu.path && menu.path.startsWith('/')) {
+        menu.path = transform(menu.path);
+    }
+    menu.children?.forEach((child) => transformMenuPaths(child, transform));
+}
 
 /**
  * 为 addon 菜单的 path 添加前缀
@@ -33,19 +46,9 @@ import type { SyncMenuOptions, MenuConfig, BeflyOptions } from '../types/index.j
  */
 function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
     return menus.map((menu) => {
-        const newMenu = { ...menu };
-
-        // 处理当前菜单的 path（包括根路径 /）
-        if (newMenu.path && newMenu.path.startsWith('/')) {
-            newMenu.path = `/addon/${addonName}${newMenu.path}`;
-        }
-
-        // 递归处理子菜单
-        if (newMenu.children && newMenu.children.length > 0) {
-            newMenu.children = addAddonPrefix(newMenu.children, addonName);
-        }
-
-        return newMenu;
+        const cloned = cloneDeep(menu);
+        transformMenuPaths(cloned, (path) => `/addon/${addonName}${path}`);
+        return cloned;
     });
 }
 
