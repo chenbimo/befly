@@ -229,19 +229,15 @@ export class Connect {
     static async connect(config?: BeflyOptions, options?: { sql?: SqlClientOptions; redis?: boolean }): Promise<void> {
         try {
             // 如果 sql 参数不是 false，则连接 SQL
-            if (options?.sql !== false) {
-                // 优先级：options.sql > config.db > 跳过
-                const sqlConfig = options?.sql || config?.db;
-                if (sqlConfig) {
-                    await this.connectSql(sqlConfig);
-                }
+            // 优先级：options.sql > config.db > 跳过
+            const sqlConfig = options?.db || {};
+            if (sqlConfig) {
+                await this.connectSql(sqlConfig);
             }
 
             // 如果 redis 参数不是 false，则连接 Redis
-            if (options?.redis !== false) {
-                const redisConfig = config?.redis || {};
-                await this.connectRedis(redisConfig);
-            }
+            const redisConfig = config?.redis || {};
+            await this.connectRedis(redisConfig);
         } catch (error: any) {
             Logger.error('数据库初始化失败', error);
             await this.disconnect();

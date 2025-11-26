@@ -25,13 +25,13 @@ export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
 
     // ========== 数据库配置 ==========
     db: {
-        type: 'sqlite',
+        type: 'mysql',
         host: '127.0.0.1',
         port: 3306,
         username: 'root',
-        password: '',
-        database: 'befly',
-        poolMax: 1
+        password: 'root',
+        database: 'befly_demo',
+        poolMax: 10
     },
 
     // ========== Redis 配置 ==========
@@ -41,7 +41,7 @@ export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
         username: '',
         password: '',
         db: 0,
-        prefix: 'befly:'
+        prefix: 'befly_demo:'
     },
 
     // ========== 认证配置 ==========
