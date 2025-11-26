@@ -8,7 +8,7 @@ export * from './arrayKeysToCamel.js';
 export * from './arrayToTree.js';
 export * from './calcPerfTime.js';
 export * from './configTypes.js';
-export * from './mergeConfig.js';
+export * from './scanConfig.js';
 export * from './fieldClear.js';
 export * from './keysToCamel.js';
 export * from './keysToSnake.js';

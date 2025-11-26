@@ -3,9 +3,9 @@
  * 说明：根据配置文件增量同步菜单数据（最多3级：父级、子级、孙级）
  *
  * 流程：
- * 1. 扫描所有 addon 的 package.json 配置文件（befly.menus 字段）
- * 2. 扫描项目根目录的 package.json 配置文件（befly.menus 字段）
- * 3. 项目的 package.json 优先级最高，可以覆盖 addon 的菜单配置
+ * 1. 扫描所有 addon 的 addon.config.js/ts 配置文件
+ * 2. 扫描项目根目录的 app.config.js/ts 配置文件
+ * 3. 项目的 app.config 优先级最高，可以覆盖 addon 的菜单配置
  * 4. 文件不存在或格式错误时默认为空数组
  * 5. 根据菜单的 path 字段检查是否存在
  * 6. 存在则更新其他字段（name、sort、type、pid）
@@ -238,40 +238,49 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
             return;
         }
 
-        // 1. 扫描所有 addon 的配置文件
+        // 1. 扫描所有 addon 的配置文件（addon.config.js/ts）
         const allMenus: Array<{ menus: MenuConfig[]; addonName: string }> = [];
 
         const addonNames = scanAddons();
 
         for (const addonName of addonNames) {
-            const addonPackageJsonPath = getAddonDir(addonName, 'package.json');
-            if (existsSync(addonPackageJsonPath)) {
+            // 尝试读取 addon.config.js 或 addon.config.ts
+            const addonConfigJs = getAddonDir(addonName, 'addon.config.js');
+            const addonConfigTs = getAddonDir(addonName, 'addon.config.ts');
+            const addonConfigPath = existsSync(addonConfigJs) ? addonConfigJs : existsSync(addonConfigTs) ? addonConfigTs : null;
+
+            if (addonConfigPath) {
                 try {
-                    const packageJson = await import(addonPackageJsonPath, { with: { type: 'json' } });
-                    const addonMenus = packageJson.default?.befly?.menus || [];
+                    const addonConfig = await import(addonConfigPath);
+                    const resolvedConfig = await (addonConfig.default || addonConfig);
+                    const addonMenus = resolvedConfig?.menus || [];
                     if (Array.isArray(addonMenus) && addonMenus.length > 0) {
                         // 为 addon 菜单添加路径前缀
                         const menusWithPrefix = addAddonPrefix(addonMenus, addonName);
                         allMenus.push({ menus: menusWithPrefix, addonName: addonName });
                     }
                 } catch (error: any) {
-                    Logger.warn(`读取 addon 配置失败 ${addonPackageJsonPath}: ${error.message}`);
+                    Logger.warn(`读取 addon 配置失败 ${addonConfigPath}: ${error.message}`);
                 }
             }
         }
 
-        // 2. 加载项目配置（package.json 的 befly.menus 字段）
-        const packageJsonPath = join(projectDir, 'package.json');
-        if (existsSync(packageJsonPath)) {
+        // 2. 加载项目配置（app.config.js/ts）
+        const appConfigJs = join(projectDir, 'app.config.js');
+        const appConfigTs = join(projectDir, 'app.config.ts');
+        const appConfigPath = existsSync(appConfigJs) ? appConfigJs : existsSync(appConfigTs) ? appConfigTs : null;
+
+        if (appConfigPath) {
             try {
-                const packageJson = await import(packageJsonPath, { with: { type: 'json' } });
-                const appMenus = packageJson.default?.befly?.menus || [];
+                const appConfig = await import(appConfigPath);
+                const resolvedConfig = await (appConfig.default || appConfig);
+                const appMenus = resolvedConfig?.menus || [];
                 if (Array.isArray(appMenus) && appMenus.length > 0) {
                     // 项目菜单不添加前缀，直接添加
                     allMenus.push({ menus: appMenus, addonName: 'app' });
                 }
             } catch (error: any) {
-                Logger.warn(`读取项目配置失败 ${packageJsonPath}: ${error.message}`);
+                Logger.warn(`读取项目配置失败 ${appConfigPath}: ${error.message}`);
             }
         }
 

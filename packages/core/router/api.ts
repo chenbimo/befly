@@ -35,6 +35,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
             req: req,
             now: Date.now(),
             ip: clientIp,
+            headers: req.headers,
             route: apiPath,
             requestId: requestId,
             corsHeaders: {

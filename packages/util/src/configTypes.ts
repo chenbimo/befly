@@ -2,14 +2,18 @@
  * 加载配置选项
  */
 export interface LoadConfigOptions {
-    /** 目录数组：要搜索的目录路径 */
+    /** 当前工作目录，默认 process.cwd() */
+    cwd?: string;
+    /** 目录数组：要搜索的目录路径（相对于 cwd） */
     dirs: string[];
     /** 文件数组：要匹配的文件名 */
     files: string[];
-    /** 是否必须找到至少一个配置文件，默认 false */
-    required?: boolean;
     /** 文件扩展名，默认 ['.js', '.ts', '.json'] */
     extensions?: string[];
+    /** 加载模式：'first' = 返回第一个找到的配置（默认），'all' = 合并所有配置 */
+    mode?: 'all' | 'first';
+    /** 指定要提取的字段路径数组，如 ['menus', 'database.host']，为空则返回完整对象 */
+    paths?: string[];
 }
 
 /**

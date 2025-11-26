@@ -18,6 +18,8 @@ export interface RequestContext {
     now: number;
     /** 客户端 IP 地址 */
     ip: string;
+    /** 请求头 */
+    headers: Headers;
     /** API 路由路径（如 POST/api/user/login） */
     route: string;
     /** 请求唯一 ID */

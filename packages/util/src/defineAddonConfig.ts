@@ -2,7 +2,7 @@ import { join, basename } from 'pathe';
 
 import { mergeAndConcat } from 'merge-anything';
 
-import { mergeConfig } from './mergeConfig.js';
+import { scanConfig } from './scanConfig.js';
 
 /**
  * Addon 配置定义函数
@@ -30,11 +30,10 @@ export async function defineAddonConfig(metaDirname: string, addonConfig: Record
         // 2. 从当前执行目录的 config 目录查找配置
         const projectConfigDir = join(process.cwd(), 'config');
 
-        // 3. 使用 mergeConfig 加载项目配置
-        const projectConfig = await mergeConfig({
+        // 3. 使用 scanConfig 加载项目配置
+        const projectConfig = await scanConfig({
             dirs: [projectConfigDir],
-            files: [`addon.${addonName}.config`],
-            required: false
+            files: [addonName]
         });
 
         // 4. 合并 addon 配置和项目配置（项目配置优先级更高）
