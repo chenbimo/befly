@@ -1,4 +1,6 @@
-export default {
+import { defineAddonConfig } from 'befly-util';
+
+export default defineAddonConfig(import.meta.dirname, {
     menus: [
         {
             name: '首页',
@@ -35,4 +37,4 @@ export default {
             sort: 6
         }
     ]
-};
+});

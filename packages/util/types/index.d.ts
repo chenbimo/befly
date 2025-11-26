@@ -1,7 +1,7 @@
 /**
  * Befly Util 统一导出
  */
-export * from './addonConfigMerge.js';
+export * from './defineAddonConfig.js';
 export * from './addonHelper.js';
 export * from './arrayKeysToCamel.js';
 export * from './arrayToTree.js';
