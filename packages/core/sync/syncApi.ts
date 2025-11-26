@@ -220,7 +220,7 @@ export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptio
         }
 
         // 连接数据库（SQL + Redis）
-        await Connect.connect();
+        await Connect.connect(config);
 
         const helper = Connect.getDbHelper();
 

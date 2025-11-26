@@ -13,7 +13,6 @@ export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
     devEmail: 'dev@qq.com',
     bodyLimit: 1048576, // 1MB
     tz: 'Asia/Shanghai',
-    dbCache: 0,
 
     // ========== 日志配置 ==========
     logger: {
@@ -26,7 +25,6 @@ export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
 
     // ========== 数据库配置 ==========
     db: {
-        enable: 0,
         type: 'sqlite',
         host: '127.0.0.1',
         port: 3306,

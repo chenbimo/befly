@@ -7,7 +7,7 @@ import { SQL, RedisClient } from 'bun';
 import { Logger } from './logger.js';
 import { DbHelper } from './dbHelper.js';
 import { RedisHelper } from './redisHelper.js';
-import type { BeflyContext, DatabaseConfig, RedisConfig } from '../types/befly.js';
+import type { BeflyContext, BeflyOptions, DatabaseConfig, RedisConfig } from '../types/befly.js';
 import type { SqlClientOptions } from '../types/database.js';
 
 /**
@@ -223,16 +223,24 @@ export class Connect {
 
     /**
      * 连接所有数据库（SQL + Redis）
-     * @param options - 配置选项
+     * @param config - Befly 配置对象（可选）
+     * @param options - 连接选项
      */
-    static async connect(options?: { sql?: SqlClientOptions; redis?: boolean }): Promise<void> {
+    static async connect(config?: BeflyOptions, options?: { sql?: SqlClientOptions; redis?: boolean }): Promise<void> {
         try {
+            // 如果 sql 参数不是 false，则连接 SQL
             if (options?.sql !== false) {
-                await this.connectSql(options?.sql);
+                // 优先级：options.sql > config.db > 跳过
+                const sqlConfig = options?.sql || config?.db;
+                if (sqlConfig) {
+                    await this.connectSql(sqlConfig);
+                }
             }
 
+            // 如果 redis 参数不是 false，则连接 Redis
             if (options?.redis !== false) {
-                await this.connectRedis();
+                const redisConfig = config?.redis || {};
+                await this.connectRedis(redisConfig);
             }
         } catch (error: any) {
             Logger.error('数据库初始化失败', error);

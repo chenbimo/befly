@@ -299,7 +299,7 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
         const mergedMenus = mergeMenuConfigs(allMenus);
 
         // 连接数据库（SQL + Redis）
-        await Connect.connect();
+        await Connect.connect(config);
 
         const helper = Connect.getDbHelper();
 
