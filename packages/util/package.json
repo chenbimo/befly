@@ -6,17 +6,18 @@
         ".": {
             "bun": "./src/index.ts",
             "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
+            "types": "./types/index.d.ts"
         },
         "./*": {
             "bun": "./src/*.ts",
             "import": "./dist/*.js",
-            "types": "./dist/*.d.ts"
+            "types": "./types/*.d.ts"
         }
     },
     "files": [
         "dist",
         "src",
+        "types",
         "tests",
         "package.json",
         "README.md"
@@ -32,6 +33,7 @@
     },
     "dependencies": {
         "es-toolkit": "^1.41.0",
+        "merge-anything": "^6.0.6",
         "pathe": "^2.0.3"
     },
     "gitHead": "1f260d2b3b193e5c5e46fa031d31543f75499fd5"
