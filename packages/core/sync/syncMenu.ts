@@ -15,10 +15,9 @@
  */
 
 import { join } from 'pathe';
-import { existsSync } from 'node:fs';
 import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { scanAddons, getAddonDir } from 'befly-util';
+import { scanAddons, getAddonDir, scanConfig } from 'befly-util';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 
@@ -229,6 +228,58 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
 }
 
 /**
+ * 加载所有菜单配置（addon + 项目）
+ * @returns 菜单配置数组
+ */
+async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; addonName: string }>> {
+    const allMenus: Array<{ menus: MenuConfig[]; addonName: string }> = [];
+
+    // 1. 加载所有 addon 配置
+    const addonNames = scanAddons();
+
+    for (const addonName of addonNames) {
+        try {
+            const addonDir = getAddonDir(addonName, '');
+            const addonConfigData = await scanConfig({
+                dirs: [addonDir],
+                files: ['addon.config'],
+                mode: 'first',
+                paths: ['menus']
+            });
+
+            const addonMenus = addonConfigData?.menus || [];
+            if (Array.isArray(addonMenus) && addonMenus.length > 0) {
+                // 为 addon 菜单添加路径前缀
+                const menusWithPrefix = addAddonPrefix(addonMenus, addonName);
+                allMenus.push({ menus: menusWithPrefix, addonName: addonName });
+            }
+        } catch (error: any) {
+            Logger.warn(`读取 addon 配置失败 ${addonName}: ${error.message}`);
+        }
+    }
+
+    // 2. 加载项目配置
+    try {
+        const appConfigData = await scanConfig({
+            dirs: [projectDir],
+            files: ['app.config'],
+            mode: 'first',
+            paths: ['menus']
+        });
+
+        const appMenus = appConfigData?.menus || [];
+        if (Array.isArray(appMenus) && appMenus.length > 0) {
+            // 项目菜单不添加前缀
+            allMenus.push({ menus: appMenus, addonName: 'app' });
+        }
+    } catch (error: any) {
+        Logger.warn(`读取项目配置失败: ${error.message}`);
+    }
+
+    return allMenus;
+}
+
+/**
  * SyncMenu 命令主函数
  */
 export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOptions = {}): Promise<void> {
@@ -238,53 +289,10 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
             return;
         }
 
-        // 1. 扫描所有 addon 的配置文件（addon.config.js/ts）
-        const allMenus: Array<{ menus: MenuConfig[]; addonName: string }> = [];
+        // 1. 加载所有菜单配置（addon + 项目）
+        const allMenus = await loadMenuConfigs();
 
-        const addonNames = scanAddons();
-
-        for (const addonName of addonNames) {
-            // 尝试读取 addon.config.js 或 addon.config.ts
-            const addonConfigJs = getAddonDir(addonName, 'addon.config.js');
-            const addonConfigTs = getAddonDir(addonName, 'addon.config.ts');
-            const addonConfigPath = existsSync(addonConfigJs) ? addonConfigJs : existsSync(addonConfigTs) ? addonConfigTs : null;
-
-            if (addonConfigPath) {
-                try {
-                    const addonConfig = await import(addonConfigPath);
-                    const resolvedConfig = await (addonConfig.default || addonConfig);
-                    const addonMenus = resolvedConfig?.menus || [];
-                    if (Array.isArray(addonMenus) && addonMenus.length > 0) {
-                        // 为 addon 菜单添加路径前缀
-                        const menusWithPrefix = addAddonPrefix(addonMenus, addonName);
-                        allMenus.push({ menus: menusWithPrefix, addonName: addonName });
-                    }
-                } catch (error: any) {
-                    Logger.warn(`读取 addon 配置失败 ${addonConfigPath}: ${error.message}`);
-                }
-            }
-        }
-
-        // 2. 加载项目配置（app.config.js/ts）
-        const appConfigJs = join(projectDir, 'app.config.js');
-        const appConfigTs = join(projectDir, 'app.config.ts');
-        const appConfigPath = existsSync(appConfigJs) ? appConfigJs : existsSync(appConfigTs) ? appConfigTs : null;
-
-        if (appConfigPath) {
-            try {
-                const appConfig = await import(appConfigPath);
-                const resolvedConfig = await (appConfig.default || appConfig);
-                const appMenus = resolvedConfig?.menus || [];
-                if (Array.isArray(appMenus) && appMenus.length > 0) {
-                    // 项目菜单不添加前缀，直接添加
-                    allMenus.push({ menus: appMenus, addonName: 'app' });
-                }
-            } catch (error: any) {
-                Logger.warn(`读取项目配置失败 ${appConfigPath}: ${error.message}`);
-            }
-        }
-
-        // 3. 合并菜单配置
+        // 2. 合并菜单配置
         const mergedMenus = mergeMenuConfigs(allMenus);
 
         // 连接数据库（SQL + Redis）
@@ -292,7 +300,7 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
 
         const helper = Connect.getDbHelper();
 
-        // 4. 检查表是否存在（addon_admin_menu 来自 addon-admin 组件）
+        // 3. 检查表是否存在（addon_admin_menu 来自 addon-admin 组件）
         const exists = await helper.tableExists('addon_admin_menu');
 
         if (!exists) {
@@ -300,23 +308,23 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
             return;
         }
 
-        // 5. 收集配置文件中所有菜单的 path
+        // 4. 收集配置文件中所有菜单的 path
         const configPaths = collectPaths(mergedMenus);
 
-        // 6. 同步菜单
+        // 5. 同步菜单
         await syncMenus(helper, mergedMenus);
 
-        // 7. 删除文件中不存在的菜单（强制删除）
+        // 6. 删除文件中不存在的菜单（强制删除）
         await deleteObsoleteRecords(helper, configPaths);
 
-        // 8. 获取最终菜单数据（用于缓存）
+        // 7. 获取最终菜单数据（用于缓存）
         const allMenusData = await helper.getAll({
             table: 'addon_admin_menu',
             fields: ['id', 'pid', 'name', 'path', 'sort'],
             orderBy: ['sort#ASC', 'id#ASC']
         });
 
-        // 9. 缓存菜单数据到 Redis
+        // 8. 缓存菜单数据到 Redis
         try {
             const redisHelper = new RedisHelper();
             await redisHelper.setObject('menus:all', allMenusData);
