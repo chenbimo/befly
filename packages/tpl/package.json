@@ -34,26 +34,5 @@
     "engines": {
         "bun": ">=1.3.0"
     },
-    "befly": {
-        "menus": [
-            {
-                "name": "用户管理",
-                "path": "/internal/user",
-                "sort": 10,
-                "children": [
-                    {
-                        "name": "用户列表",
-                        "path": "/internal/user/list",
-                        "sort": 1
-                    },
-                    {
-                        "name": "用户详情",
-                        "path": "/internal/user/detail",
-                        "sort": 2
-                    }
-                ]
-            }
-        ]
-    },
     "gitHead": "1f260d2b3b193e5c5e46fa031d31543f75499fd5"
 }

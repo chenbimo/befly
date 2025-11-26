@@ -2,11 +2,13 @@
  * Befly Util 统一导出
  */
 
+export * from './addonConfigMerge.js';
 export * from './addonHelper.js';
 export * from './arrayKeysToCamel.js';
 export * from './arrayToTree.js';
 export * from './calcPerfTime.js';
-export * from './configMerge.js';
+export * from './configTypes.js';
+export * from './mergeConfig.js';
 export * from './fieldClear.js';
 export * from './keysToCamel.js';
 export * from './keysToSnake.js';
