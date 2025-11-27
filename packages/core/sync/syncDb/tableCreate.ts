@@ -10,15 +10,12 @@
  */
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
-import { IS_MYSQL, IS_PG, MYSQL_TABLE_CONFIG } from './constants.js';
+import { IS_MYSQL, IS_PG, IS_PLAN, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
 
 import type { SQL } from 'bun';
 import type { FieldDefinition } from 'befly/types/common';
-
-// 是否为计划模式（从环境变量读取）
-const IS_PLAN = process.argv.includes('--plan');
 
 /**
  * 为 PostgreSQL 表添加列注释

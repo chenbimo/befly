@@ -9,18 +9,14 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
-import { IS_MYSQL, IS_PG, IS_SQLITE, SYSTEM_INDEX_FIELDS, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
-import { quoteIdentifier, logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType, getSqlType } from './helpers.js';
-import { buildIndexSQL, generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
+import { IS_MYSQL, IS_PG, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
+import { logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from './helpers.js';
+import { generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
 import { getTableColumns, getTableIndexes } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
-import { createTable } from './tableCreate.js';
-import type { TablePlan, ColumnInfo } from '../../types.js';
+import type { TablePlan } from '../../types.js';
 import type { SQL } from 'bun';
 import type { FieldDefinition } from 'befly/types/common';
-
-// 是否为计划模式（从环境变量读取）
-const IS_PLAN = process.argv.includes('--plan');
 
 /**
  * 同步表结构（对比和应用变更）
@@ -33,143 +29,13 @@ const IS_PLAN = process.argv.includes('--plan');
  *
  * @param sql - SQL 客户端实例
  * @param tableName - 表名
- * @param tableDefinition - 表定义（JSON）
+ * @param fields - 字段定义
  * @param force - 是否强制同步（删除多余字段）
  * @param dbName - 数据库名称
  */
-export async function modifyTable(sql: SQL, tableName: string, tableDefinition: TablePlan, force: boolean, dbName?: string): Promise<void> {
-    try {
-        // 1. 获取现有表结构
-        const currentColumns = await getTableColumns(sql, tableName, dbName);
-        const currentIndexes = await getTableIndexes(sql, tableName, dbName);
-
-        // 2. 对比字段变化
-        const changes: string[] = [];
-        const processedColumns = new Set<string>();
-        const processedIndexes = new Set<string>();
-        const newColumns: string[] = []; // 记录新增的列名，用于后续添加索引
-
-        // 遍历定义中的字段
-        for (const [fieldName, fieldDef] of Object.entries(tableDefinition)) {
-            const snakeFieldName = snakeCase(fieldName);
-            processedColumns.add(snakeFieldName);
-
-            // 检查字段是否存在
-            if (!currentColumns[snakeFieldName]) {
-                // 新增字段
-                changes.push(generateDDLClause('ADD_COLUMN', tableName, snakeFieldName, fieldDef));
-                logFieldChange(tableName, snakeFieldName, 'add', '新增字段');
-                newColumns.push(snakeFieldName);
-            } else {
-                // 修改字段
-                const currentDef = currentColumns[snakeFieldName];
-                const diff = compareFieldDefinition(fieldDef, currentDef);
-                if (diff) {
-                    changes.push(generateDDLClause('MODIFY_COLUMN', tableName, snakeFieldName, fieldDef));
-                    logFieldChange(tableName, snakeFieldName, 'modify', `修改字段: ${diff}`);
-                }
-            }
-        }
-
-        // 检查多余字段（仅在 force 模式下删除）
-        if (force) {
-            for (const colName of Object.keys(currentColumns)) {
-                if (!processedColumns.has(colName)) {
-                    changes.push(generateDDLClause('DROP_COLUMN', tableName, colName));
-                    logFieldChange(tableName, colName, 'drop', '删除多余字段');
-                }
-            }
-        }
-
-        // 3. 对比索引变化
-        // 自动为 _id, _at 结尾的字段添加索引
-        // 以及 unique=true 的字段
-        const expectedIndexes: { [key: string]: string[] } = {};
-
-        for (const [fieldName, fieldDef] of Object.entries(tableDefinition)) {
-            const snakeFieldName = snakeCase(fieldName);
-
-            // 唯一索引
-            if (fieldDef.unique) {
-                const indexName = `uk_${tableName}_${snakeFieldName}`;
-                expectedIndexes[indexName] = [snakeFieldName];
-            }
-            // 普通索引 (index=true 或 _id/_at 结尾)
-            else if (fieldDef.index || snakeFieldName.endsWith('_id') || snakeFieldName.endsWith('_at')) {
-                // 排除主键 id
-                if (snakeFieldName === 'id') continue;
-
-                // 排除大文本类型
-                if (['text', 'longtext', 'json'].includes(fieldDef.type || '')) continue;
-
-                const indexName = `idx_${tableName}_${snakeFieldName}`;
-                expectedIndexes[indexName] = [snakeFieldName];
-            }
-        }
-
-        // 检查新增/修改索引
-        for (const [indexName, columns] of Object.entries(expectedIndexes)) {
-            processedIndexes.add(indexName);
-
-            const currentIndex = currentIndexes[indexName];
-            if (!currentIndex) {
-                // 新增索引
-                changes.push(buildIndexSQL('ADD', tableName, indexName, columns, indexName.startsWith('uk_')));
-                logFieldChange(tableName, indexName, 'add_index', `新增索引 (${columns.join(',')})`);
-            } else {
-                // 索引存在，检查是否一致
-                const isSame = currentIndex.length === columns.length && currentIndex.every((col, i) => col === columns[i]);
-
-                if (!isSame) {
-                    // 修改索引（先删后加）
-                    changes.push(buildIndexSQL('DROP', tableName, indexName));
-                    changes.push(buildIndexSQL('ADD', tableName, indexName, columns, indexName.startsWith('uk_')));
-                    logFieldChange(tableName, indexName, 'modify_index', `修改索引 (${columns.join(',')})`);
-                }
-            }
-        }
-
-        // 检查多余索引（仅在 force 模式下删除）
-        if (force) {
-            for (const indexName of Object.keys(currentIndexes)) {
-                // 跳过系统索引
-                if (SYSTEM_INDEX_FIELDS.includes(indexName)) continue;
-
-                if (!processedIndexes.has(indexName)) {
-                    changes.push(buildIndexSQL('DROP', tableName, indexName));
-                    logFieldChange(tableName, indexName, 'drop_index', '删除多余索引');
-                }
-            }
-        }
-
-        // 4. 执行变更
-        if (changes.length > 0) {
-            if (IS_PLAN) {
-                // 计划模式：只输出 SQL
-                Logger.info(`[PLAN] 表 ${tableName} 变更 SQL:`);
-                for (const sqlStr of changes) {
-                    console.log(sqlStr + ';');
-                }
-            } else {
-                // 执行模式
-                Logger.info(`正在同步表 ${tableName} 结构...`);
-                for (const sqlStr of changes) {
-                    try {
-                        await sql.unsafe(sqlStr);
-                    } catch (error: any) {
-                        Logger.warn(`执行 SQL 失败: ${sqlStr} - ${error.message}`);
-                        // 继续执行后续变更
-                    }
-                }
-            }
-        }
-    } catch (error: any) {
-        throw new Error(`同步表结构失败 [${tableName}]: ${error.message}`);
-    }
-}
-export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, force: boolean = false): Promise<TablePlan> {
-    const existingColumns = await getTableColumns(sql, tableName);
-    const existingIndexes = await getTableIndexes(sql, tableName);
+export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, force: boolean = false, dbName?: string): Promise<TablePlan> {
+    const existingColumns = await getTableColumns(sql, tableName, dbName);
+    const existingIndexes = await getTableIndexes(sql, tableName, dbName);
     let changed = false;
 
     const addClauses = [];

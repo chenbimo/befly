@@ -6,11 +6,9 @@
  */
 
 import { Logger } from '../../lib/logger.js';
+import { IS_PLAN } from './constants.js';
 import { createTable } from './tableCreate.js';
 import type { SQL } from 'bun';
-
-// 是否为计划模式（从环境变量读取）
-const IS_PLAN = process.argv.includes('--plan');
 
 /**
  * SQLite 重建表迁移（简化版）
