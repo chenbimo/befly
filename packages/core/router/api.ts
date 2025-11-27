@@ -3,6 +3,9 @@
  * 处理 /api/* 路径的请求
  */
 
+// 外部依赖
+import { genShortId } from 'befly-util';
+
 // 相对导入
 import { FinalResponse } from '../util.js';
 import { Logger } from '../lib/logger.js';
@@ -22,7 +25,7 @@ import type { BeflyContext } from '../types/befly.js';
 export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: BeflyContext) {
     return async (req: Request): Promise<Response> => {
         // 1. 生成请求 ID
-        const requestId = crypto.randomUUID();
+        const requestId = genShortId();
 
         // 2. 创建请求上下文
         const url = new URL(req.url);

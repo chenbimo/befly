@@ -7,6 +7,7 @@ export * from './arrayKeysToCamel.js';
 export * from './arrayToTree.js';
 export * from './calcPerfTime.js';
 export * from './configTypes.js';
+export * from './genShortId.js';
 export * from './scanConfig.js';
 export * from './fieldClear.js';
 export * from './keysToCamel.js';
