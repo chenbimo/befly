@@ -56,6 +56,11 @@ export async function scanConfig(options: LoadConfigOptions): Promise<Record<str
                             // JS/TS 文件使用动态导入
                             const module = await import(filePath);
                             data = module.default || module;
+
+                            // 处理 async 函数导出（如 defineAddonConfig）
+                            if (data instanceof Promise) {
+                                data = await data;
+                            }
                         }
 
                         // 验证配置数据
