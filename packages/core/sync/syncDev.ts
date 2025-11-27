@@ -25,10 +25,8 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
             return;
         }
 
-        const devPassword = config.devPassword;
-        const devEmail = config.devEmail || 'dev@qq.com';
-
-        if (!devPassword) {
+        if (!config.devPassword) {
+            // 未配置开发者密码，跳过同步
             return;
         }
 
@@ -40,18 +38,21 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         // 检查 addon_admin_admin 表是否存在
         const existAdmin = await helper.tableExists('addon_admin_admin');
         if (!existAdmin) {
+            Logger.debug('[SyncDev] 表 addon_admin_admin 不存在，跳过开发者账号同步');
             return;
         }
 
         // 检查 addon_admin_role 表是否存在
         const existRole = await helper.tableExists('addon_admin_role');
         if (!existRole) {
+            Logger.debug('[SyncDev] 表 addon_admin_role 不存在，跳过开发者账号同步');
             return;
         }
 
         // 检查 addon_admin_menu 表是否存在
         const existMenu = await helper.tableExists('addon_admin_menu');
         if (!existMenu) {
+            Logger.debug('[SyncDev] 表 addon_admin_menu 不存在，跳过开发者账号同步');
             return;
         }
 
@@ -62,6 +63,7 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         });
 
         if (!allMenus || !Array.isArray(allMenus)) {
+            Logger.debug('[SyncDev] 菜单数据为空，跳过开发者账号同步');
             return;
         }
 
@@ -116,13 +118,13 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         }
 
         // 使用 bcrypt 加密密码
-        const hashed = await Cipher.hashPassword(devPassword);
+        const hashed = await Cipher.hashPassword(config.devPassword);
 
         // 准备开发管理员数据
         const devData = {
             name: '开发者',
             nickname: '开发者',
-            email: devEmail,
+            email: config.devEmail,
             username: 'dev',
             password: hashed,
             roleId: devRole.id,
@@ -133,14 +135,14 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         // 查询现有账号
         const existing = await helper.getOne({
             table: 'addon_admin_admin',
-            where: { email: devEmail }
+            where: { email: config.devEmail }
         });
 
         if (existing) {
             // 更新现有账号
             await helper.updData({
                 table: 'addon_admin_admin',
-                where: { email: devEmail },
+                where: { email: config.devEmail },
                 data: devData
             });
         } else {

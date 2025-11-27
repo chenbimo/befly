@@ -11,6 +11,7 @@ export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
     appPort: 3000,
     appHost: '127.0.0.1',
     devEmail: 'dev@qq.com',
+    devPassword: 'beflydev123456',
     bodyLimit: 1048576, // 1MB
     tz: 'Asia/Shanghai',
 
