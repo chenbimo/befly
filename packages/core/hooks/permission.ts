@@ -22,7 +22,7 @@ const hook: Hook = {
         }
 
         // 2. 用户未登录
-        if (!ctx.user || !ctx.user.userId) {
+        if (!ctx.user || !ctx.user.id) {
             ctx.response = ErrorResponse(ctx, '未登录');
             return;
         }
