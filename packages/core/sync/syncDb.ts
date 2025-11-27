@@ -118,7 +118,7 @@ export async function syncDbCommand(config: BeflyOptions, options: SyncDbOptions
                 if (existsTable) {
                     await modifyTable(sql!, tableName, tableDefinition, force, dbName);
                 } else {
-                    await createTable(sql!, tableName, tableDefinition);
+                    await createTable(sql!, tableName, tableDefinition, ['created_at', 'updated_at', 'state'], dbName);
                 }
 
                 // 记录处理过的表名（用于清理缓存）

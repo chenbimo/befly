@@ -13,6 +13,7 @@ import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, IS_PLAN, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
+import { getTableIndexes } from './schema.js';
 
 import type { SQL } from 'bun';
 import type { FieldDefinition } from 'befly/types/common';
@@ -65,13 +66,25 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
  * @param tableName - 表名
  * @param fields - 字段定义对象
  * @param systemIndexFields - 系统字段索引列表
+ * @param dbName - 数据库名称（用于检查索引是否存在）
  */
-async function createTableIndexes(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[]): Promise<void> {
+async function createTableIndexes(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[], dbName?: string): Promise<void> {
     const indexTasks: Promise<void>[] = [];
+
+    // 获取现有索引（MySQL 不支持 IF NOT EXISTS，需要先检查）
+    let existingIndexes: Record<string, string[]> = {};
+    if (IS_MYSQL) {
+        existingIndexes = await getTableIndexes(sql, tableName, dbName);
+    }
 
     // 系统字段索引
     for (const sysField of systemIndexFields) {
-        const stmt = buildIndexSQL(tableName, `idx_${sysField}`, sysField, 'create');
+        const indexName = `idx_${sysField}`;
+        // MySQL 跳过已存在的索引
+        if (IS_MYSQL && existingIndexes[indexName]) {
+            continue;
+        }
+        const stmt = buildIndexSQL(tableName, indexName, sysField, 'create');
         if (IS_PLAN) {
             Logger.debug(`[计划] ${stmt}`);
         } else {
@@ -85,7 +98,12 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
         const dbFieldName = snakeCase(fieldKey);
 
         if (fieldDef.index === true) {
-            const stmt = buildIndexSQL(tableName, `idx_${dbFieldName}`, dbFieldName, 'create');
+            const indexName = `idx_${dbFieldName}`;
+            // MySQL 跳过已存在的索引
+            if (IS_MYSQL && existingIndexes[indexName]) {
+                continue;
+            }
+            const stmt = buildIndexSQL(tableName, indexName, dbFieldName, 'create');
             if (IS_PLAN) {
                 Logger.debug(`[计划] ${stmt}`);
             } else {
@@ -107,8 +125,9 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
  * @param tableName - 表名
  * @param fields - 字段定义对象
  * @param systemIndexFields - 系统字段索引列表（可选，默认使用 ['created_at', 'updated_at', 'state']）
+ * @param dbName - 数据库名称（用于检查索引是否存在）
  */
-export async function createTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[] = ['created_at', 'updated_at', 'state']): Promise<void> {
+export async function createTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[] = ['created_at', 'updated_at', 'state'], dbName?: string): Promise<void> {
     // 构建列定义
     const colDefs = [...buildSystemColumnDefs(), ...buildBusinessColumnDefs(fields)];
 
@@ -139,5 +158,5 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
     }
 
     // 创建索引
-    await createTableIndexes(sql, tableName, fields, systemIndexFields);
+    await createTableIndexes(sql, tableName, fields, systemIndexFields, dbName);
 }
