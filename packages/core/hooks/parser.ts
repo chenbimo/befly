@@ -4,7 +4,7 @@ import { pickFields } from 'befly-util';
 
 // 相对导入
 import { Xml } from '../lib/xml.js';
-import { JsonResponse } from '../util.js';
+import { ErrorResponse } from '../util.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
@@ -51,12 +51,12 @@ const hook: Hook = {
                     }
                 } else {
                     // 不支持的 Content-Type
-                    ctx.response = JsonResponse(ctx, '无效的请求参数格式');
+                    ctx.response = ErrorResponse(ctx, '无效的请求参数格式');
                     return;
                 }
             } catch (e) {
                 // 解析失败
-                ctx.response = JsonResponse(ctx, '无效的请求参数格式');
+                ctx.response = ErrorResponse(ctx, '无效的请求参数格式');
                 return;
             }
         }

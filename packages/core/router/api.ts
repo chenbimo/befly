@@ -4,7 +4,7 @@
  */
 
 // 相对导入
-import { JsonResponse } from '../util.js';
+import { FinalResponse } from '../util.js';
 import { Logger } from '../lib/logger.js';
 
 // 类型导入
@@ -82,7 +82,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
             }
 
             // 6. 返回响应（自动处理 response/result/日志）
-            return JsonResponse(ctx);
+            return FinalResponse(ctx);
         } catch (err: any) {
             // 全局错误处理
             const errorPath = ctx.api ? apiPath : req.url;
@@ -92,7 +92,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
                 msg: '内部服务错误',
                 data: null
             };
-            return JsonResponse(ctx);
+            return FinalResponse(ctx);
         }
     };
 }

@@ -1,6 +1,6 @@
 // 相对导入
 import { Validator } from '../lib/validator.js';
-import { JsonResponse } from '../util.js';
+import { ErrorResponse } from '../util.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
@@ -23,7 +23,7 @@ const hook: Hook = {
         const result = Validator.validate(ctx.body, ctx.api.fields, ctx.api.required || []);
 
         if (result.code !== 0) {
-            ctx.response = JsonResponse(ctx, '无效的请求参数格式', 1, result.fields);
+            ctx.response = ErrorResponse(ctx, '无效的请求参数格式', 1, result.fields);
             return;
         }
     }

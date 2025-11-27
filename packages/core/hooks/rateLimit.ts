@@ -1,6 +1,6 @@
 // 相对导入
 import { Logger } from '../lib/logger.js';
-import { JsonResponse } from '../util.js';
+import { ErrorResponse } from '../util.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
@@ -51,7 +51,7 @@ const hook: Hook = {
 
             // 6. 判断是否超限
             if (current > limitCount) {
-                ctx.response = JsonResponse(ctx, '请求过于频繁，请稍后再试');
+                ctx.response = ErrorResponse(ctx, '请求过于频繁，请稍后再试');
                 return;
             }
         } catch (err) {
