@@ -204,6 +204,6 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         Logger.error('同步开发者管理员失败', error);
         throw error;
     } finally {
-        await Database?.disconnect();
+        await Connect.disconnect();
     }
 }

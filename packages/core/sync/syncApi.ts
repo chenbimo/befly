@@ -259,6 +259,6 @@ export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptio
         Logger.error('API 同步失败:', error);
         throw error;
     } finally {
-        await Database?.disconnect();
+        await Connect.disconnect();
     }
 }

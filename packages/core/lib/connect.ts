@@ -19,6 +19,11 @@ export class Connect {
     private static redisClient: RedisClient | null = null;
     private static dbHelper: DbHelper | null = null;
 
+    // 连接统计信息
+    private static sqlConnectedAt: number | null = null;
+    private static redisConnectedAt: number | null = null;
+    private static sqlPoolMax: number = 1;
+
     // ========================================
     // SQL 连接管理
     // ========================================
@@ -85,9 +90,13 @@ export class Connect {
 
             const version = await Promise.race([healthCheckPromise, timeoutPromise]);
 
+            Logger.debug(`[Connect] SQL 连接成功, 版本: ${version}`);
             this.sqlClient = sql;
+            this.sqlConnectedAt = Date.now();
+            this.sqlPoolMax = config.poolMax ?? 1;
             return sql;
         } catch (error: any) {
+            Logger.error('[Connect] SQL 连接失败', error);
             try {
                 await sql?.close();
             } catch (cleanupError) {}
@@ -103,10 +112,12 @@ export class Connect {
         if (this.sqlClient) {
             try {
                 await this.sqlClient.close();
+                Logger.debug('[Connect] SQL 连接已关闭');
             } catch (error: any) {
-                Logger.error('关闭 SQL 连接时出错', error);
+                Logger.error('[Connect] 关闭 SQL 连接时出错', error);
             }
             this.sqlClient = null;
+            this.sqlConnectedAt = null;
         }
 
         if (this.dbHelper) {
@@ -184,10 +195,12 @@ export class Connect {
 
             await redis.ping();
 
+            Logger.debug(`[Connect] Redis 连接成功 ${host}:${port}/${db}`);
             this.redisClient = redis;
+            this.redisConnectedAt = Date.now();
             return redis;
         } catch (error: any) {
-            Logger.error('Redis 连接失败', error);
+            Logger.error('[Connect] Redis 连接失败', error);
             throw new Error(`Redis 连接失败: ${error.message}`);
         }
     }
@@ -199,8 +212,10 @@ export class Connect {
         if (this.redisClient) {
             try {
                 this.redisClient.close();
+                Logger.debug('[Connect] Redis 连接已关闭');
+                this.redisConnectedAt = null;
             } catch (error: any) {
-                Logger.error('关闭 Redis 连接时出错', error);
+                Logger.error('[Connect] 关闭 Redis 连接时出错', error);
             }
             this.redisClient = null;
         }
@@ -263,6 +278,38 @@ export class Connect {
         };
     }
 
+    /**
+     * 获取连接状态详细信息（用于监控和调试）
+     */
+    static getStatus(): {
+        sql: {
+            connected: boolean;
+            connectedAt: number | null;
+            uptime: number | null;
+            poolMax: number;
+        };
+        redis: {
+            connected: boolean;
+            connectedAt: number | null;
+            uptime: number | null;
+        };
+    } {
+        const now = Date.now();
+        return {
+            sql: {
+                connected: this.sqlClient !== null,
+                connectedAt: this.sqlConnectedAt,
+                uptime: this.sqlConnectedAt ? now - this.sqlConnectedAt : null,
+                poolMax: this.sqlPoolMax
+            },
+            redis: {
+                connected: this.redisClient !== null,
+                connectedAt: this.redisConnectedAt,
+                uptime: this.redisConnectedAt ? now - this.redisConnectedAt : null
+            }
+        };
+    }
+
     // ========================================
     // 测试辅助方法
     // ========================================
@@ -288,5 +335,8 @@ export class Connect {
         this.sqlClient = null;
         this.redisClient = null;
         this.dbHelper = null;
+        this.sqlConnectedAt = null;
+        this.redisConnectedAt = null;
+        this.sqlPoolMax = 1;
     }
 }

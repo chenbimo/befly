@@ -3,7 +3,7 @@
  * 测试 Redis 操作功能
  */
 
-import { describe, expect, it, beforeAll, afterAll } from 'bun:test';
+import { describe, expect, it, test, beforeAll, afterAll } from 'bun:test';
 import { RedisClient } from 'bun';
 
 import { defaultOptions } from '../config.js';
@@ -15,6 +15,8 @@ let redis: RedisHelper;
 beforeAll(async () => {
     // 连接 Redis
     await Connect.connectRedis(defaultOptions.redis);
+    redis = new RedisHelper();
+});
 
 afterAll(async () => {
     // 断开 Redis 连接
@@ -95,11 +97,15 @@ describe('RedisHelper - 对象操作', () => {
 
 describe('RedisHelper - Set 操作', () => {
     test('sadd - 添加成员到 Set', async () => {
-        const count = await redis.sadd('test:set', ['member1', 'member2', 'member3']);
+        // 先清除，确保测试隔离
+        await redis.del('test:set:sadd');
+        const count = await redis.sadd('test:set:sadd', ['member1', 'member2', 'member3']);
         expect(count).toBeGreaterThan(0);
+        await redis.del('test:set:sadd');
     });
 
     test('sismember - 检查成员是否存在', async () => {
+        await redis.del('test:set');
         await redis.sadd('test:set', ['member1']);
 
         const exists = await redis.sismember('test:set', 'member1');
