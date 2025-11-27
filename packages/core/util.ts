@@ -86,6 +86,13 @@ import type { PluginRequestHook, Next } from './types/plugin.js';
  * @returns Response 对象
  */
 export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1, data: any = null): Response {
+    // 记录拦截日志
+    if (ctx.requestId) {
+        const duration = Date.now() - ctx.now;
+        const user = ctx.user?.userId ? `[User:${ctx.user.userId}]` : '[Guest]';
+        Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms [${msg}]`);
+    }
+
     return Response.json(
         {
             code: code,
