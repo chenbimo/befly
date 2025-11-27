@@ -122,7 +122,6 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
 
         // 准备开发管理员数据
         const devData = {
-            name: '开发者',
             nickname: '开发者',
             email: config.devEmail,
             username: 'dev',
