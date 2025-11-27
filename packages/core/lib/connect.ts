@@ -90,7 +90,6 @@ export class Connect {
 
             const version = await Promise.race([healthCheckPromise, timeoutPromise]);
 
-            Logger.debug(`[Connect] SQL 连接成功, 版本: ${version}`);
             this.sqlClient = sql;
             this.sqlConnectedAt = Date.now();
             this.sqlPoolMax = config.poolMax ?? 1;
@@ -112,7 +111,6 @@ export class Connect {
         if (this.sqlClient) {
             try {
                 await this.sqlClient.close();
-                Logger.debug('[Connect] SQL 连接已关闭');
             } catch (error: any) {
                 Logger.error('[Connect] 关闭 SQL 连接时出错', error);
             }
@@ -195,7 +193,6 @@ export class Connect {
 
             await redis.ping();
 
-            Logger.debug(`[Connect] Redis 连接成功 ${host}:${port}/${db}`);
             this.redisClient = redis;
             this.redisConnectedAt = Date.now();
             return redis;
@@ -212,7 +209,6 @@ export class Connect {
         if (this.redisClient) {
             try {
                 this.redisClient.close();
-                Logger.debug('[Connect] Redis 连接已关闭');
                 this.redisConnectedAt = null;
             } catch (error: any) {
                 Logger.error('[Connect] 关闭 Redis 连接时出错', error);

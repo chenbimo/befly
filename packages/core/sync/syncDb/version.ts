@@ -33,7 +33,6 @@ export async function ensureDbVersion(sql: SQL): Promise<void> {
         if (!Number.isFinite(majorVersion) || majorVersion < DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR) {
             throw new Error(`此脚本仅支持 MySQL ${DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR}.0+，当前版本: ${version}`);
         }
-        Logger.debug(`MySQL 版本: ${version}`);
         return;
     }
 
@@ -43,7 +42,6 @@ export async function ensureDbVersion(sql: SQL): Promise<void> {
             throw new Error('无法获取 PostgreSQL 版本信息');
         }
         const versionText = r[0].version;
-        Logger.debug(`PostgreSQL 版本: ${versionText}`);
         const m = /PostgreSQL\s+(\d+)/i.exec(versionText);
         const major = m ? parseInt(m[1], 10) : NaN;
         if (!Number.isFinite(major) || major < DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR) {
@@ -58,7 +56,6 @@ export async function ensureDbVersion(sql: SQL): Promise<void> {
             throw new Error('无法获取 SQLite 版本信息');
         }
         const version = r[0].version;
-        Logger.debug(`SQLite 版本: ${version}`);
         // 强制最低版本：SQLite ≥ 3.50.0
         const [maj, min, patch] = String(version)
             .split('.')
