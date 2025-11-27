@@ -35,7 +35,7 @@ const hook: Hook = {
 
         // 3. 生成 Key
         // 优先使用 userId，否则使用 IP
-        const identifier = ctx.user?.userId || ctx.ip || 'unknown';
+        const identifier = ctx.user?.id || ctx.ip || 'unknown';
         const apiPath = ctx.route || `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
         const key = `rate_limit:${apiPath}:${identifier}`;
 

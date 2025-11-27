@@ -89,7 +89,7 @@ export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1
     // 记录拦截日志
     if (ctx.requestId) {
         const duration = Date.now() - ctx.now;
-        const user = ctx.user?.userId ? `[User:${ctx.user.id}]` : '[Guest]';
+        const user = ctx.user?.id ? `[User:${ctx.user.id}]` : '[Guest]';
         Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms [${msg}]`);
     }
 
@@ -115,7 +115,7 @@ export function FinalResponse(ctx: RequestContext): Response {
     // 记录请求日志
     if (ctx.api && ctx.requestId) {
         const duration = Date.now() - ctx.now;
-        const user = ctx.user?.userId ? `[User:${ctx.user.id}]` : '[Guest]';
+        const user = ctx.user?.id ? `[User:${ctx.user.id}]` : '[Guest]';
         Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms`);
     }
 
