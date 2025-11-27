@@ -24,6 +24,7 @@ import { checkApi } from './checks/checkApi.js';
 import { syncAllCommand } from './sync/syncAll.js';
 import { coreDir } from './paths.js';
 import { defaultOptions } from './config.js';
+import { isPrimaryProcess, getProcessRole } from './util.js';
 
 // ========== 类型导入 ==========
 import type { Server } from 'bun';
@@ -87,8 +88,10 @@ export class Befly {
             // 6. 加载所有 API
             await loadApis(this.apis);
 
-            // 7. 自动同步 (默认开启)
-            await syncAllCommand(this.config);
+            // 7. 自动同步 (仅主进程执行，避免集群模式下重复执行)
+            if (isPrimaryProcess()) {
+                await syncAllCommand(this.config);
+            }
 
             // 8. 启动 HTTP 服务器
             const server = Bun.serve({
@@ -106,7 +109,11 @@ export class Befly {
             });
 
             const finalStartupTime = calcPerfTime(serverStartTime);
-            Logger.info(`${this.config.appName} 启动成功! `);
+            const processRole = getProcessRole();
+            const roleLabel = processRole.role === 'primary' ? '主进程' : `工作进程 #${processRole.instanceId}`;
+            const envLabel = processRole.env === 'standalone' ? '' : ` [${processRole.env}]`;
+
+            Logger.info(`${this.config.appName} 启动成功! (${roleLabel}${envLabel})`);
             Logger.info(`服务器启动耗时: ${finalStartupTime}`);
             Logger.info(`服务器监听地址: http://${this.config.appHost}:${this.config.appPort}`);
 
