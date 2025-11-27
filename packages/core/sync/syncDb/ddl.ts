@@ -11,7 +11,8 @@
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
 import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
-import { quoteIdentifier, resolveDefaultValue, generateDefaultSql, getSqlType, escapeComment } from './helpers.js';
+import { quoteIdentifier, escapeComment } from './helpers.js';
+import { resolveDefaultValue, generateDefaultSql, getSqlType } from './types.js';
 
 import type { SQL } from 'bun';
 import type { FieldDefinition, AnyObject } from 'befly/types/common.js';
