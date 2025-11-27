@@ -47,8 +47,7 @@ export function staticHandler(config: BeflyOptions) {
                 return Response.json(
                     {
                         code: 1,
-                        msg: '文件未找到',
-                        data: null
+                        msg: '文件未找到'
                     },
                     {
                         headers: corsHeaders
@@ -62,8 +61,7 @@ export function staticHandler(config: BeflyOptions) {
             return Response.json(
                 {
                     code: 1,
-                    msg: '文件读取失败',
-                    data: null
+                    msg: '文件读取失败'
                 },
                 {
                     headers: corsHeaders

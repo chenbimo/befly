@@ -63,8 +63,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
                     ctx.response = Response.json(
                         {
                             code: 1,
-                            msg: '接口不存在',
-                            data: null
+                            msg: '接口不存在'
                         },
                         {
                             headers: ctx.corsHeaders
@@ -89,8 +88,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
             Logger.error(`请求错误: ${errorPath}`, err);
             ctx.result = {
                 code: 1,
-                msg: '内部服务错误',
-                data: null
+                msg: '内部服务错误'
             };
             return FinalResponse(ctx);
         }

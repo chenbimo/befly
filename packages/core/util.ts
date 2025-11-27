@@ -125,8 +125,7 @@ export function FinalResponse(ctx: RequestContext): Response {
         if (typeof result === 'string') {
             result = {
                 code: 0,
-                msg: result,
-                data: {}
+                msg: result
             };
         }
         // 如果是对象，自动补充 code: 0
@@ -159,8 +158,7 @@ export function FinalResponse(ctx: RequestContext): Response {
     return Response.json(
         {
             code: 1,
-            msg: '未生成响应',
-            data: null
+            msg: '未生成响应'
         },
         {
             headers: ctx.corsHeaders
