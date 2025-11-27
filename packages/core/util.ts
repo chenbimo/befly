@@ -77,16 +77,30 @@ import type { RequestContext } from './types/context.js';
 import type { PluginRequestHook, Next } from './types/plugin.js';
 
 /**
- * 创建 JSON 响应（专用于 API 响应）
- * 内部自动处理：
- * 1. 如果 ctx.response 已存在，直接返回
- * 2. 如果 ctx.result 存在，格式化为响应
- * 3. 否则返回默认错误响应
- * 4. 记录请求日志
+ * 创建 JSON 响应
+ * - 钩子中使用：JsonResponse(ctx, '错误消息') 或 JsonResponse(ctx, '错误消息', 1, data)
+ * - API 结尾使用：JsonResponse(ctx) 自动从 ctx.result 生成响应
  * @param ctx - 请求上下文
+ * @param msg - 错误消息（可选，传入时直接生成错误响应）
+ * @param code - 错误码，默认 1
+ * @param data - 附加数据，默认 null
  * @returns Response 对象
  */
-export function JsonResponse(ctx: RequestContext): Response {
+export function JsonResponse(ctx: RequestContext, msg?: string, code: number = 1, data: any = null): Response {
+    // 如果传入 msg，直接生成错误响应（用于钩子）
+    if (msg !== undefined) {
+        return Response.json(
+            {
+                code: code,
+                msg: msg,
+                data: data
+            },
+            {
+                headers: ctx.corsHeaders
+            }
+        );
+    }
+
     // 记录请求日志
     if (ctx.api && ctx.requestId) {
         const duration = Date.now() - ctx.now;
