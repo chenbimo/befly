@@ -28,6 +28,7 @@ AGENTS.md
 temp
 tempDocs
 dist
+packages/cli
 
 # 临时文件目录（保留目录结构）
 temp/*

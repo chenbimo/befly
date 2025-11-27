@@ -110,7 +110,7 @@ export const SyncDb = async (config: BeflyOptions, options: SyncDbOptions = {}):
                     applyFieldDefaults(fieldDef);
                 }
 
-                const dbName = config.plugins?.db?.database;
+                const dbName = config.db?.database;
                 const existsTable = await tableExists(sql!, tableName, dbName);
 
                 // 读取 force 参数

@@ -120,10 +120,10 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
     const tableQuoted = quoteIdentifier(tableName);
     const { ENGINE, CHARSET, COLLATE } = MYSQL_TABLE_CONFIG;
     const createSQL = IS_MYSQL
-        ? `CREATE TABLE IF NOT EXISTS ${tableQuoted} (
+        ? `CREATE TABLE ${tableQuoted} (
             ${cols}
         ) ENGINE=${ENGINE} DEFAULT CHARSET=${CHARSET} COLLATE=${COLLATE}`
-        : `CREATE TABLE IF NOT EXISTS ${tableQuoted} (
+        : `CREATE TABLE ${tableQuoted} (
             ${cols}
         )`;
 
