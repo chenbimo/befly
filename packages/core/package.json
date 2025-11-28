@@ -71,7 +71,9 @@
         "es-toolkit": "^1.42.0",
         "fast-jwt": "^6.0.2",
         "fast-xml-parser": "^5.3.2",
-        "pathe": "^2.0.3"
+        "pathe": "^2.0.3",
+        "pino": "^10.1.0",
+        "pino-roll": "^4.0.0"
     },
     "gitHead": "495f5661f3fad19c1d2d6d27926c10fec926fee4",
     "devDependencies": {

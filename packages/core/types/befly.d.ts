@@ -18,15 +18,13 @@ import type { CacheHelper } from '../lib/cacheHelper.js';
  * 日志配置
  */
 export interface LoggerConfig {
-    /** 是否开启调试模式 (0: 关闭, 1: 开启) @default 1 */
+    /** 是否开启调试模式 (0: 关闭, 1: 开启) @default 0 */
     debug?: number;
-    /** 日志排除字段 (逗号分隔) @default 'password,token,secret' */
-    excludeFields?: string;
     /** 日志目录 @default './logs' */
     dir?: string;
     /** 是否输出到控制台 (0: 关闭, 1: 开启) @default 1 */
     console?: number;
-    /** 单个日志文件最大大小 (字节) @default 10485760 (10MB) */
+    /** 单个日志文件最大大小 (MB) @default 10 */
     maxSize?: number;
 }
 

@@ -1,4 +1,4 @@
-﻿import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
+﻿import { describe, test, expect, beforeAll, afterAll, afterEach } from 'bun:test';
 import { Logger } from '../lib/logger';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -16,57 +16,60 @@ beforeAll(() => {
     });
 });
 
-afterAll(() => {
+afterAll(async () => {
+    // 延迟清理，等待 pino-roll 完成写入
+    await new Promise(resolve => setTimeout(resolve, 500));
     if (existsSync(testLogDir)) {
         rmSync(testLogDir, { recursive: true, force: true });
     }
 });
 
 describe('Logger - 基本功能', () => {
-    test('记录 info 日志', async () => {
-        await Logger.log('info', 'Test info message');
+    test('记录 info 日志', () => {
+        Logger.info('Test info message');
         expect(true).toBe(true);
     });
 
-    test('记录 warn 日志', async () => {
-        await Logger.log('warn', 'Test warning');
+    test('记录 warn 日志', () => {
+        Logger.warn('Test warning');
         expect(true).toBe(true);
     });
 
-    test('记录 error 日志', async () => {
-        await Logger.log('error', 'Test error');
+    test('记录 error 日志', () => {
+        Logger.error('Test error');
         expect(true).toBe(true);
     });
 
-    test('记录 debug 日志', async () => {
-        await Logger.log('debug', 'Test debug');
+    test('记录 debug 日志', () => {
+        Logger.debug('Test debug');
         expect(true).toBe(true);
     });
 
-    test('记录 success 日志', async () => {
-        await Logger.success('Test success');
+    test('记录 success 日志', () => {
+        Logger.success('Test success');
         expect(true).toBe(true);
     });
 });
 
-describe('Logger - 不同类型消息', () => {
-    test('记录字符串', async () => {
-        await Logger.log('info', 'String message');
+describe('Logger - 带对象参数', () => {
+    test('info 带对象', () => {
+        Logger.info('User action', { userId: 1, action: 'login' });
         expect(true).toBe(true);
     });
 
-    test('记录数字', async () => {
-        await Logger.log('info', 12345);
+    test('warn 带对象', () => {
+        Logger.warn('Rate limit warning', { ip: '127.0.0.1', count: 100 });
         expect(true).toBe(true);
     });
 
-    test('记录对象', async () => {
-        await Logger.log('info', { userId: 1, action: 'test' });
+    test('error 带 Error 对象', () => {
+        const err = new Error('Something went wrong');
+        Logger.error('Request failed', err);
         expect(true).toBe(true);
     });
 
-    test('记录数组', async () => {
-        await Logger.log('info', ['item1', 'item2']);
+    test('debug 带对象', () => {
+        Logger.debug('Debug data', { key: 'value', nested: { a: 1 } });
         expect(true).toBe(true);
     });
 });
@@ -89,6 +92,28 @@ describe('Logger - 便捷方法', () => {
 
     test('debug 方法', () => {
         Logger.debug('Debug test');
+        expect(true).toBe(true);
+    });
+});
+
+describe('Logger - 字符串拼接兼容', () => {
+    test('warn 带字符串参数', () => {
+        Logger.warn('⚠️ 缓存异常:', 'Connection refused');
+        expect(true).toBe(true);
+    });
+
+    test('error 带字符串参数', () => {
+        Logger.error('SQL 执行失败', 'Table not found');
+        expect(true).toBe(true);
+    });
+
+    test('info 带字符串参数', () => {
+        Logger.info('用户登录:', 'admin');
+        expect(true).toBe(true);
+    });
+
+    test('debug 带字符串参数', () => {
+        Logger.debug('当前状态:', 'running');
         expect(true).toBe(true);
     });
 });
