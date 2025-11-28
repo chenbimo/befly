@@ -7,7 +7,7 @@
  * - 类型判断工具
  */
 
-import { IS_MYSQL, typeMapping } from './constants.js';
+import { isMySQL, getTypeMapping } from './constants.js';
 
 /**
  * 判断是否为字符串或数组类型（需要长度参数）
@@ -42,12 +42,13 @@ export function isStringOrArrayType(fieldType: string): boolean {
  * getSqlType('array_text', null) // => 'MEDIUMTEXT'
  */
 export function getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
+    const typeMapping = getTypeMapping();
     if (isStringOrArrayType(fieldType)) {
         return `${typeMapping[fieldType]}(${fieldMax})`;
     }
     // 处理 UNSIGNED 修饰符（仅 MySQL number 类型）
     const baseType = typeMapping[fieldType] || 'TEXT';
-    if (IS_MYSQL && fieldType === 'number' && unsigned) {
+    if (isMySQL() && fieldType === 'number' && unsigned) {
         return `${baseType} UNSIGNED`;
     }
     return baseType;

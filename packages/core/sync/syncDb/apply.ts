@@ -7,7 +7,7 @@
  */
 
 import { Logger } from '../../lib/logger.js';
-import { IS_MYSQL, IS_PG, IS_SQLITE, IS_PLAN, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
+import { isMySQL, isPG, isSQLite, IS_PLAN, CHANGE_TYPE_LABELS, getTypeMapping } from './constants.js';
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
 import { rebuildSqliteTable } from './sqlite.js';
@@ -27,7 +27,7 @@ import type { FieldDefinition } from 'befly/types/common';
  * @returns 完整的 ALTER TABLE 语句
  */
 function buildAlterTableSQL(tableName: string, clauses: string[]): string {
-    if (IS_MYSQL) {
+    if (isMySQL()) {
         return `ALTER TABLE \`${tableName}\` ${clauses.join(', ')}, ALGORITHM=INSTANT, LOCK=NONE`;
     }
     return `ALTER TABLE "${tableName}" ${clauses.join(', ')}`;
@@ -51,7 +51,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
     const changes: FieldChange[] = [];
 
     // 检查长度变化（string和array类型） - SQLite 不比较长度
-    if (!IS_SQLITE && isStringOrArrayType(fieldDef.type)) {
+    if (!isSQLite() && isStringOrArrayType(fieldDef.type)) {
         if (existingColumn.max !== fieldDef.max) {
             changes.push({
                 type: 'length',
@@ -62,7 +62,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
     }
 
     // 检查注释变化（MySQL/PG 支持列注释）
-    if (!IS_SQLITE) {
+    if (!isSQLite()) {
         const currentComment = existingColumn.comment || '';
         if (currentComment !== fieldDef.name) {
             changes.push({
@@ -74,6 +74,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
     }
 
     // 检查数据类型变化（只对比基础类型）
+    const typeMapping = getTypeMapping();
     const expectedType = typeMapping[fieldDef.type].toLowerCase();
     const currentType = existingColumn.type.toLowerCase();
 
@@ -127,7 +128,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     if (!plan || !plan.changed) return;
 
     // SQLite: 仅支持部分 ALTER；需要时走重建
-    if (IS_SQLITE) {
+    if (isSQLite()) {
         if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
             if (IS_PLAN) Logger.debug(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
             else await rebuildSqliteTable(sql, tableName, fields);
@@ -143,19 +144,19 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
         if (clauses.length > 0) {
             const stmt = buildAlterTableSQL(tableName, clauses);
             if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
-            else if (IS_MYSQL) await executeDDLSafely(sql, stmt);
+            else if (isMySQL()) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
         }
     }
 
     // 默认值专用 ALTER（SQLite 不支持）
     if (plan.defaultClauses.length > 0) {
-        if (IS_SQLITE) {
+        if (isSQLite()) {
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
         } else {
             const stmt = buildAlterTableSQL(tableName, plan.defaultClauses);
             if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
-            else if (IS_MYSQL) await executeDDLSafely(sql, stmt);
+            else if (isMySQL()) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
         }
     }
@@ -182,7 +183,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     }
 
     // PG 列注释
-    if (IS_PG && plan.commentActions && plan.commentActions.length > 0) {
+    if (isPG() && plan.commentActions && plan.commentActions.length > 0) {
         for (const stmt of plan.commentActions) {
             if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
             else await sql.unsafe(stmt);

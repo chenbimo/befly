@@ -10,10 +10,10 @@
  */
 
 import { describe, test, expect, beforeAll, mock } from 'bun:test';
+import { setDbType } from '../sync/syncDb/constants.js';
 
-// 设置环境变量模拟 MySQL 环境
-process.env.DB_TYPE = 'mysql';
-process.env.DB_NAME = 'test_db';
+// 设置数据库类型为 MySQL
+setDbType('mysql');
 
 let tableExists: any;
 let getTableColumns: any;

@@ -23,6 +23,7 @@ import { tableExists } from './syncDb/schema.js';
 import { modifyTable } from './syncDb/table.js';
 import { createTable } from './syncDb/tableCreate.js';
 import { applyFieldDefaults } from './syncDb/helpers.js';
+import { setDbType } from './syncDb/constants.js';
 import type { SQL } from 'bun';
 import type { BeflyOptions, SyncDbOptions } from '../types/index.js';
 
@@ -45,6 +46,10 @@ export async function syncDbCommand(config: BeflyOptions, options: SyncDbOptions
     try {
         // 清空处理记录
         processedTables.length = 0;
+
+        // 设置数据库类型（从配置获取）
+        const dbType = config.db?.type || 'mysql';
+        setDbType(dbType);
 
         // 验证表定义文件
         await checkTable();

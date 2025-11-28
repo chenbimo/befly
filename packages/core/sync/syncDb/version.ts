@@ -6,7 +6,7 @@
  */
 
 import { Logger } from '../../lib/logger.js';
-import { DB_VERSION_REQUIREMENTS, IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
+import { DB_VERSION_REQUIREMENTS, isMySQL, isPG, isSQLite } from './constants.js';
 import type { SQL } from 'bun';
 
 /**
@@ -23,7 +23,7 @@ import type { SQL } from 'bun';
 export async function ensureDbVersion(sql: SQL): Promise<void> {
     if (!sql) throw new Error('SQL 客户端未初始化');
 
-    if (IS_MYSQL) {
+    if (isMySQL()) {
         const r = await sql`SELECT VERSION() AS version`;
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error('无法获取 MySQL 版本信息');
@@ -36,7 +36,7 @@ export async function ensureDbVersion(sql: SQL): Promise<void> {
         return;
     }
 
-    if (IS_PG) {
+    if (isPG()) {
         const r = await sql`SELECT version() AS version`;
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error('无法获取 PostgreSQL 版本信息');
@@ -50,7 +50,7 @@ export async function ensureDbVersion(sql: SQL): Promise<void> {
         return;
     }
 
-    if (IS_SQLITE) {
+    if (isSQLite()) {
         const r = await sql`SELECT sqlite_version() AS version`;
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error('无法获取 SQLite 版本信息');

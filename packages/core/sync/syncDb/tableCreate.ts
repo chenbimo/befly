@@ -10,7 +10,7 @@
  */
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
-import { IS_MYSQL, IS_PG, IS_PLAN, MYSQL_TABLE_CONFIG } from './constants.js';
+import { isMySQL, isPG, IS_PLAN, MYSQL_TABLE_CONFIG } from './constants.js';
 import { quoteIdentifier } from './helpers.js';
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from './ddl.js';
 import { getTableIndexes } from './schema.js';
@@ -73,7 +73,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
 
     // 获取现有索引（MySQL 不支持 IF NOT EXISTS，需要先检查）
     let existingIndexes: Record<string, string[]> = {};
-    if (IS_MYSQL) {
+    if (isMySQL()) {
         existingIndexes = await getTableIndexes(sql, tableName, dbName);
     }
 
@@ -81,7 +81,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     for (const sysField of systemIndexFields) {
         const indexName = `idx_${sysField}`;
         // MySQL 跳过已存在的索引
-        if (IS_MYSQL && existingIndexes[indexName]) {
+        if (isMySQL() && existingIndexes[indexName]) {
             continue;
         }
         const stmt = buildIndexSQL(tableName, indexName, sysField, 'create');
@@ -100,7 +100,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
         if (fieldDef.index === true) {
             const indexName = `idx_${dbFieldName}`;
             // MySQL 跳过已存在的索引
-            if (IS_MYSQL && existingIndexes[indexName]) {
+            if (isMySQL() && existingIndexes[indexName]) {
                 continue;
             }
             const stmt = buildIndexSQL(tableName, indexName, dbFieldName, 'create');
@@ -135,7 +135,7 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
     const cols = colDefs.join(',\n            ');
     const tableQuoted = quoteIdentifier(tableName);
     const { ENGINE, CHARSET, COLLATE } = MYSQL_TABLE_CONFIG;
-    const createSQL = IS_MYSQL
+    const createSQL = isMySQL()
         ? `CREATE TABLE ${tableQuoted} (
             ${cols}
         ) ENGINE=${ENGINE} DEFAULT CHARSET=${CHARSET} COLLATE=${COLLATE}`
@@ -150,9 +150,9 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
     }
 
     // PostgreSQL: 添加列注释
-    if (IS_PG && !IS_PLAN) {
+    if (isPG() && !IS_PLAN) {
         await addPostgresComments(sql, tableName, fields);
-    } else if (IS_PG && IS_PLAN) {
+    } else if (isPG() && IS_PLAN) {
         // 计划模式也要输出注释语句
         await addPostgresComments(sql, tableName, fields);
     }

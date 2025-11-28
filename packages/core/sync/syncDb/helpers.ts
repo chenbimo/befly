@@ -7,7 +7,7 @@
  * - 字段默认值应用
  */
 
-import { IS_MYSQL, IS_PG } from './constants.js';
+import { isMySQL, isPG } from './constants.js';
 import { Logger } from '../../lib/logger.js';
 
 // 从 types.ts 重新导出，保持向后兼容
@@ -26,8 +26,8 @@ export { isStringOrArrayType, getSqlType, resolveDefaultValue, generateDefaultSq
  * // SQLite: user_table
  */
 export function quoteIdentifier(identifier: string): string {
-    if (IS_MYSQL) return `\`${identifier}\``;
-    if (IS_PG) return `"${identifier}"`;
+    if (isMySQL()) return `\`${identifier}\``;
+    if (isPG()) return `"${identifier}"`;
     return identifier; // SQLite 无需引用
 }
 

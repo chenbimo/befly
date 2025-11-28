@@ -7,7 +7,7 @@
  * - 获取表的索引信息
  */
 
-import { IS_MYSQL, IS_PG, IS_SQLITE } from './constants.js';
+import { isMySQL, isPG, isSQLite } from './constants.js';
 import type { ColumnInfo, IndexInfo } from '../../types.js';
 import type { SQL } from 'bun';
 
@@ -19,22 +19,21 @@ import type { SQL } from 'bun';
  * @param dbName - 数据库名称
  * @returns 表是否存在
  */
-export async function tableExists(sql: SQL, tableName: string, dbName?: string): Promise<boolean> {
+export async function tableExists(sql: SQL, tableName: string, dbName: string): Promise<boolean> {
     if (!sql) throw new Error('SQL 客户端未初始化');
-    const database = dbName || process.env.DB_NAME;
 
     try {
-        if (IS_MYSQL) {
-            const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${database} AND TABLE_NAME = ${tableName}`;
+        if (isMySQL()) {
+            const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${dbName} AND TABLE_NAME = ${tableName}`;
             return (res[0]?.count || 0) > 0;
         }
 
-        if (IS_PG) {
+        if (isPG()) {
             const res = await sql`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
             return (res[0]?.count || 0) > 0;
         }
 
-        if (IS_SQLITE) {
+        if (isSQLite()) {
             const res = await sql`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
             return res.length > 0;
         }
@@ -61,16 +60,15 @@ export async function tableExists(sql: SQL, tableName: string, dbName?: string):
  * @param dbName - 数据库名称
  * @returns 列信息对象，键为列名，值为列详情
  */
-export async function getTableColumns(sql: SQL, tableName: string, dbName?: string): Promise<{ [key: string]: ColumnInfo }> {
+export async function getTableColumns(sql: SQL, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
     const columns: { [key: string]: ColumnInfo } = {};
-    const database = dbName || process.env.DB_NAME;
 
     try {
-        if (IS_MYSQL) {
+        if (isMySQL()) {
             const result = await sql`
                 SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
                 FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = ${database} AND TABLE_NAME = ${tableName}
+                WHERE TABLE_SCHEMA = ${dbName} AND TABLE_NAME = ${tableName}
                 ORDER BY ORDINAL_POSITION
             `;
             for (const row of result) {
@@ -91,7 +89,7 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName?: stri
                     comment: row.COLUMN_COMMENT
                 };
             }
-        } else if (IS_PG) {
+        } else if (isPG()) {
             const result = await sql`
                 SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
                 FROM information_schema.columns
@@ -119,7 +117,7 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName?: stri
                     comment: commentMap[row.column_name] ?? null
                 };
             }
-        } else if (IS_SQLITE) {
+        } else if (isSQLite()) {
             const result = await sql.unsafe(`PRAGMA table_info(${tableName})`);
             for (const row of result) {
                 let baseType = String(row.type || '').toUpperCase();
@@ -154,16 +152,15 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName?: stri
  * @param dbName - 数据库名称
  * @returns 索引信息对象，键为索引名，值为列名数组
  */
-export async function getTableIndexes(sql: SQL, tableName: string, dbName?: string): Promise<IndexInfo> {
+export async function getTableIndexes(sql: SQL, tableName: string, dbName: string): Promise<IndexInfo> {
     const indexes: IndexInfo = {};
-    const database = dbName || process.env.DB_NAME;
 
     try {
-        if (IS_MYSQL) {
+        if (isMySQL()) {
             const result = await sql`
                 SELECT INDEX_NAME, COLUMN_NAME
                 FROM information_schema.STATISTICS
-                WHERE TABLE_SCHEMA = ${database}
+                WHERE TABLE_SCHEMA = ${dbName}
                     AND TABLE_NAME = ${tableName}
                     AND INDEX_NAME != 'PRIMARY'
                 ORDER BY INDEX_NAME
@@ -172,7 +169,7 @@ export async function getTableIndexes(sql: SQL, tableName: string, dbName?: stri
                 if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
                 indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
             }
-        } else if (IS_PG) {
+        } else if (isPG()) {
             const result = await sql`
                 SELECT indexname, indexdef
                 FROM pg_indexes
@@ -185,7 +182,7 @@ export async function getTableIndexes(sql: SQL, tableName: string, dbName?: stri
                     indexes[row.indexname] = [col];
                 }
             }
-        } else if (IS_SQLITE) {
+        } else if (isSQLite()) {
             const list = await sql.unsafe(`PRAGMA index_list(${tableName})`);
             for (const idx of list) {
                 const info = await sql.unsafe(`PRAGMA index_info(${idx.name})`);

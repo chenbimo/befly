@@ -10,7 +10,7 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
-import { IS_MYSQL, IS_PG, typeMapping } from './constants.js';
+import { isMySQL, isPG, getTypeMapping } from './constants.js';
 import { quoteIdentifier, escapeComment } from './helpers.js';
 import { resolveDefaultValue, generateDefaultSql, getSqlType } from './types.js';
 
@@ -31,7 +31,7 @@ export function buildIndexSQL(tableName: string, indexName: string, fieldName: s
     const indexQuoted = quoteIdentifier(indexName);
     const fieldQuoted = quoteIdentifier(fieldName);
 
-    if (IS_MYSQL) {
+    if (isMySQL()) {
         const parts = [];
         if (action === 'create') {
             parts.push(`ADD INDEX ${indexQuoted} (${fieldQuoted})`);
@@ -44,7 +44,7 @@ export function buildIndexSQL(tableName: string, indexName: string, fieldName: s
         return `ALTER TABLE ${tableQuoted} ${parts.join(', ')}`;
     }
 
-    if (IS_PG) {
+    if (isPG()) {
         if (action === 'create') {
             // 始终使用 CONCURRENTLY
             return `CREATE INDEX CONCURRENTLY IF NOT EXISTS ${indexQuoted} ON ${tableQuoted}(${fieldQuoted})`;
@@ -65,7 +65,7 @@ export function buildIndexSQL(tableName: string, indexName: string, fieldName: s
  * @returns 系统字段的列定义数组
  */
 export function buildSystemColumnDefs(): string[] {
-    if (IS_MYSQL) {
+    if (isMySQL()) {
         return ['`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT COMMENT "主键ID"', '`created_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "创建时间"', '`updated_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "更新时间"', '`deleted_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "删除时间"', '`state` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "状态字段"'];
     }
     return ['"id" INTEGER PRIMARY KEY', '"created_at" INTEGER NOT NULL DEFAULT 0', '"updated_at" INTEGER NOT NULL DEFAULT 0', '"deleted_at" INTEGER NOT NULL DEFAULT 0', '"state" INTEGER NOT NULL DEFAULT 0'];
@@ -94,7 +94,7 @@ export function buildBusinessColumnDefs(fields: Record<string, FieldDefinition>)
         const uniqueSql = fieldDef.unique ? ' UNIQUE' : '';
         const nullableSql = fieldDef.nullable ? ' NULL' : ' NOT NULL';
 
-        if (IS_MYSQL) {
+        if (isMySQL()) {
             colDefs.push(`\`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`);
         } else {
             colDefs.push(`"${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`);
@@ -126,10 +126,10 @@ export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, i
     const uniqueSql = fieldDef.unique ? ' UNIQUE' : '';
     const nullableSql = fieldDef.nullable ? ' NULL' : ' NOT NULL';
 
-    if (IS_MYSQL) {
+    if (isMySQL()) {
         return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`;
     }
-    if (IS_PG) {
+    if (isPG()) {
         if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
         // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
         return `ALTER COLUMN "${dbFieldName}" TYPE ${sqlType}`;

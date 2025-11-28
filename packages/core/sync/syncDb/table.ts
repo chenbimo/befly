@@ -9,7 +9,7 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
-import { IS_MYSQL, IS_PG, CHANGE_TYPE_LABELS, typeMapping } from './constants.js';
+import { isMySQL, isPG, CHANGE_TYPE_LABELS, getTypeMapping } from './constants.js';
 import { logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from './helpers.js';
 import { generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
 import { getTableColumns, getTableIndexes } from './schema.js';
@@ -92,9 +92,9 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     }
 
                     if (v !== null && v !== '') {
-                        if (IS_PG) {
+                        if (isPG()) {
                             defaultClauses.push(`ALTER COLUMN "${dbFieldName}" SET DEFAULT ${v}`);
-                        } else if (IS_MYSQL && onlyDefaultChanged) {
+                        } else if (isMySQL() && onlyDefaultChanged) {
                             // MySQL 的 TEXT/BLOB 不允许 DEFAULT，跳过 text 类型
                             if (fieldDef.type !== 'text') {
                                 defaultClauses.push(`ALTER COLUMN \`${dbFieldName}\` SET DEFAULT ${v}`);
@@ -112,7 +112,8 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     }
 
                     if (hasTypeChange) {
-                        if (IS_PG && isPgCompatibleTypeChange(existingColumns[dbFieldName].type, typeMapping[fieldDef.type].toLowerCase())) {
+                        const typeMapping = getTypeMapping();
+                        if (isPG() && isPgCompatibleTypeChange(existingColumns[dbFieldName].type, typeMapping[fieldDef.type].toLowerCase())) {
                             Logger.debug(`[PG兼容类型变更] ${tableName}.${dbFieldName} ${existingColumns[dbFieldName].type} -> ${typeMapping[fieldDef.type].toLowerCase()} 允许执行`);
                         }
                     }
@@ -155,7 +156,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
     // PG 列注释处理
     const commentActions = [];
-    if (IS_PG) {
+    if (isPG()) {
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             // 转换字段名为下划线格式
             const dbFieldName = snakeCase(fieldKey);

@@ -63,17 +63,66 @@ export const MYSQL_TABLE_CONFIG = {
 // 是否为计划模式（仅输出 SQL 不执行）
 export const IS_PLAN = process.argv.includes('--plan');
 
-// 数据库类型判断
-export const DB = (process.env.DB_TYPE || 'mysql').toLowerCase();
-export const IS_MYSQL = DB === 'mysql';
-export const IS_PG = DB === 'postgresql' || DB === 'postgres';
-export const IS_SQLITE = DB === 'sqlite';
+// 数据库类型（运行时设置，默认 mysql）
+let _dbType: string = 'mysql';
 
-// 字段类型映射（按方言）
-export const typeMapping = {
-    number: IS_SQLITE ? 'INTEGER' : IS_PG ? 'BIGINT' : 'BIGINT',
-    string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
-    text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT',
-    array_string: IS_SQLITE ? 'TEXT' : IS_PG ? 'character varying' : 'VARCHAR',
-    array_text: IS_MYSQL ? 'MEDIUMTEXT' : 'TEXT'
+/**
+ * 设置数据库类型（由 syncDbCommand 调用）
+ * @param dbType - 数据库类型（mysql/postgresql/postgres/sqlite）
+ */
+export function setDbType(dbType: string): void {
+    _dbType = (dbType || 'mysql').toLowerCase();
+}
+
+/**
+ * 获取当前数据库类型
+ */
+export function getDbType(): string {
+    return _dbType;
+}
+
+// 数据库类型判断（getter 函数，运行时动态计算）
+export function isMySQL(): boolean {
+    return _dbType === 'mysql';
+}
+
+export function isPG(): boolean {
+    return _dbType === 'postgresql' || _dbType === 'postgres';
+}
+
+export function isSQLite(): boolean {
+    return _dbType === 'sqlite';
+}
+
+// 兼容旧代码的静态别名（通过 getter 实现动态获取）
+export const DB_TYPE = {
+    get current(): string {
+        return _dbType;
+    },
+    get IS_MYSQL(): boolean {
+        return isMySQL();
+    },
+    get IS_PG(): boolean {
+        return isPG();
+    },
+    get IS_SQLITE(): boolean {
+        return isSQLite();
+    }
 };
+
+/**
+ * 获取字段类型映射（根据当前数据库类型）
+ */
+export function getTypeMapping(): Record<string, string> {
+    const isSqlite = isSQLite();
+    const isPg = isPG();
+    const isMysql = isMySQL();
+
+    return {
+        number: isSqlite ? 'INTEGER' : isPg ? 'BIGINT' : 'BIGINT',
+        string: isSqlite ? 'TEXT' : isPg ? 'character varying' : 'VARCHAR',
+        text: isMysql ? 'MEDIUMTEXT' : 'TEXT',
+        array_string: isSqlite ? 'TEXT' : isPg ? 'character varying' : 'VARCHAR',
+        array_text: isMysql ? 'MEDIUMTEXT' : 'TEXT'
+    };
+}

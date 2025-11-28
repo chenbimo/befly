@@ -31,18 +31,6 @@
             status.redis.message = '连接失败';
         }
 
-        // 检查邮件配置
-        if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
-            status.email.status = 'ok';
-            status.email.message = '已配置';
-        }
-
-        // 检查 OSS 配置
-        if (process.env.OSS_ACCESS_KEY && process.env.OSS_SECRET_KEY) {
-            status.oss.status = 'ok';
-            status.oss.message = '已配置';
-        }
-
         return befly.tool.Yes('获取成功', status);
     }
 };

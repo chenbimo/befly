@@ -6,9 +6,10 @@
  */
 
 import { describe, test, expect, beforeAll } from 'bun:test';
+import { setDbType } from '../sync/syncDb/constants.js';
 
-// 设置环境变量模拟 MySQL 环境
-process.env.DB_TYPE = 'mysql';
+// 设置数据库类型为 MySQL
+setDbType('mysql');
 
 let compareFieldDefinition: any;
 
