@@ -9,7 +9,6 @@ import { calcPerfTime } from 'befly-util';
 // ========== 相对导入 ==========
 import { Logger } from './lib/logger.js';
 import { Cipher } from './lib/cipher.js';
-import { Jwt } from './lib/jwt.js';
 import { Connect } from './lib/connect.js';
 import { DbHelper } from './lib/dbHelper.js';
 import { RedisHelper } from './lib/redisHelper.js';
@@ -151,7 +150,6 @@ export {
     // 配置
     Logger,
     Cipher,
-    Jwt,
     Database,
     DbHelper,
     RedisHelper,

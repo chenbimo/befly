@@ -1,6 +1,6 @@
-﻿import { describe, test, expect, beforeAll } from 'bun:test';
+﻿import { describe, test, expect } from 'bun:test';
 import { Cipher } from '../lib/cipher';
-import { Jwt } from '../lib/jwt';
+import { Jwt } from '../plugins/jwt';
 import { Validator } from '../lib/validator';
 import { SqlBuilder } from '../lib/sqlBuilder';
 import { Xml } from '../lib/xml';
@@ -26,15 +26,13 @@ describe('Integration - 密码验证流程', () => {
 });
 
 describe('Integration - JWT + 权限验证', () => {
-    beforeAll(() => {
-        Jwt.configure({
-            secret: 'test-integration-secret',
-            algorithm: 'HS256',
-            expiresIn: '1h'
-        });
+    const jwt = new Jwt({
+        secret: 'test-integration-secret',
+        algorithm: 'HS256',
+        expiresIn: '1h'
     });
 
-    test('用户登录：JWT 签名 + 权限检查', async () => {
+    test('用户登录：JWT 签名 + 验证', () => {
         // 1. 用户登录生成 token
         const payload = {
             userId: 123,
@@ -43,26 +41,16 @@ describe('Integration - JWT + 权限验证', () => {
             permissions: ['read', 'write', 'delete']
         };
 
-        const token = await Jwt.sign(payload);
+        const token = jwt.sign(payload);
         expect(token).toBeDefined();
         expect(typeof token).toBe('string');
 
         // 2. 验证 token
-        const verified = await Jwt.verify(token);
+        const verified = jwt.verify(token);
         expect(verified.userId).toBe(123);
         expect(verified.username).toBe('john');
-
-        // 3. 检查角色
-        expect(Jwt.hasRole(verified, 'admin')).toBe(true);
-        expect(Jwt.hasRole(verified, 'guest')).toBe(false);
-
-        // 4. 检查权限
-        expect(Jwt.hasPermission(verified, 'write')).toBe(true);
-        expect(Jwt.hasPermission(verified, 'admin')).toBe(false);
-
-        // 5. 检查所有权限
-        expect(Jwt.hasAllPermissions(verified, ['read', 'write'])).toBe(true);
-        expect(Jwt.hasAllPermissions(verified, ['read', 'admin'])).toBe(false);
+        expect(verified.roles).toContain('admin');
+        expect(verified.permissions).toContain('write');
     });
 });
 
