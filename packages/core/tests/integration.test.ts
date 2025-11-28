@@ -1,6 +1,6 @@
 ﻿import { describe, test, expect } from 'bun:test';
 import { Cipher } from '../lib/cipher';
-import { Jwt } from '../plugins/jwt';
+import { Jwt } from '../lib/jwt';
 import { Validator } from '../lib/validator';
 import { SqlBuilder } from '../lib/sqlBuilder';
 import { Xml } from '../lib/xml';

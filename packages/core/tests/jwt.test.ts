@@ -1,5 +1,5 @@
 ﻿import { describe, test, expect } from 'bun:test';
-import { Jwt } from '../plugins/jwt';
+import { Jwt } from '../lib/jwt';
 
 const jwt = new Jwt({
     secret: 'test-secret',
