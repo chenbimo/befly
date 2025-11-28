@@ -1,9 +1,9 @@
 ﻿import { describe, test, expect } from 'bun:test';
+import { XMLParser } from 'fast-xml-parser';
 import { Cipher } from '../lib/cipher';
 import { Jwt } from '../lib/jwt';
 import { Validator } from '../lib/validator';
 import { SqlBuilder } from '../lib/sqlBuilder';
-import { Xml } from '../lib/xml';
 import { keysToCamel, keysToSnake } from 'befly-util';
 
 describe('Integration - 密码验证流程', () => {
@@ -121,11 +121,11 @@ describe('Integration - 数据验证 + SQL 构建', () => {
 
 describe('Integration - XML 解析 + 数据转换', () => {
     test('XML API 响应：解析 + 字段转换', () => {
-        const xml = new Xml();
+        const xmlParser = new XMLParser();
 
         // 1. 解析 XML 响应
         const xmlData = '<response><user_id>123</user_id><user_name>John</user_name><is_active>true</is_active></response>';
-        const parsed = xml.parse(xmlData) as any;
+        const parsed = xmlParser.parse(xmlData).response as any;
 
         expect(parsed.user_id).toBe(123);
         expect(parsed.user_name).toBe('John');

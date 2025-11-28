@@ -1,13 +1,15 @@
 // 外部依赖
 import { isPlainObject, isEmpty } from 'es-toolkit/compat';
 import { pickFields } from 'befly-util';
+import { XMLParser } from 'fast-xml-parser';
 
 // 相对导入
-import { Xml } from '../lib/xml.js';
 import { ErrorResponse } from '../util.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
+
+const xmlParser = new XMLParser();
 
 /**
  * 请求参数解析钩子
@@ -43,7 +45,7 @@ const hook: Hook = {
                 } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
                     // XML 格式
                     const text = await ctx.req.text();
-                    const body = await Xml.parse(text);
+                    const body = xmlParser.parse(text);
                     if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(body, Object.keys(ctx.api.fields));
                     } else {
