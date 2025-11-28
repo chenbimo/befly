@@ -71,7 +71,7 @@
         "es-toolkit": "^1.41.0",
         "pathe": "^2.0.3"
     },
-    "gitHead": "7743abf863a96c5cbaf8c250fa1eb056acad578e",
+    "gitHead": "495f5661f3fad19c1d2d6d27926c10fec926fee4",
     "devDependencies": {
         "typescript": "^5.9.3"
     }
