@@ -18,7 +18,7 @@ beforeAll(() => {
 
 afterAll(async () => {
     // 延迟清理，等待 pino-roll 完成写入
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     if (existsSync(testLogDir)) {
         rmSync(testLogDir, { recursive: true, force: true });
     }
