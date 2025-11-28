@@ -68,7 +68,7 @@
     "dependencies": {
         "befly-util": "^1.0.6",
         "chalk": "^5.6.2",
-        "es-toolkit": "^1.41.0",
+        "es-toolkit": "^1.42.0",
         "pathe": "^2.0.3"
     },
     "gitHead": "495f5661f3fad19c1d2d6d27926c10fec926fee4",

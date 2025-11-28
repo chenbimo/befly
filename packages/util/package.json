@@ -32,7 +32,7 @@
         "typescript": "^5.7.2"
     },
     "dependencies": {
-        "es-toolkit": "^1.41.0",
+        "es-toolkit": "^1.42.0",
         "merge-anything": "^6.0.6",
         "pathe": "^2.0.3"
     },
