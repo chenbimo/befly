@@ -153,8 +153,6 @@ export class CacheHelper {
      * 缓存所有数据
      */
     async cacheAll(): Promise<void> {
-        Logger.info('========== 开始缓存数据到 Redis ==========');
-
         // 1. 缓存接口
         await this.cacheApis();
 
@@ -163,8 +161,6 @@ export class CacheHelper {
 
         // 3. 缓存角色权限
         await this.cacheRolePermissions();
-
-        Logger.info('========== 数据缓存完成 ==========\n');
     }
 
     /**
