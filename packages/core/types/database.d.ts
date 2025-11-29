@@ -4,12 +4,78 @@
 
 import type { SqlValue } from 'befly-shared/types';
 import type { WhereConditions } from './common';
+import type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, TypedWhereConditions } from './table';
 
 // 重新导出 WhereOperator 和 WhereConditions，供其他模块使用
 export type { WhereOperator, WhereConditions } from './index';
 
+// 重新导出表类型工具
+export type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, SystemFields, BaseTable, InsertType, UpdateType, SelectType, TypedWhereConditions } from './table';
+
+// ============================================
+// 泛型查询选项（类型安全版本）
+// ============================================
+
 /**
- * 查询选项
+ * 泛型查询选项 - 支持类型推断
+ * @template K - 表名类型
+ */
+export interface TypedQueryOptions<K extends TableName> {
+    /** 表名 */
+    table: K;
+    /** 查询字段（表字段的子集） */
+    fields?: (keyof TableType<K>)[] | string[];
+    /** WHERE 条件（类型安全） */
+    where?: TypedWhereConditions<TableType<K>> | WhereConditions;
+    /** 排序（格式：["字段#ASC", "字段#DESC"]） */
+    orderBy?: string[];
+    /** 页码（从 1 开始） */
+    page?: number;
+    /** 每页数量 */
+    limit?: number;
+}
+
+/**
+ * 泛型插入选项 - 支持类型推断
+ * @template K - 表名类型
+ */
+export interface TypedInsertOptions<K extends TableName> {
+    /** 表名 */
+    table: K;
+    /** 插入数据（ID、时间戳、state 会自动生成） */
+    data: TableInsertType<K> | Record<string, any>;
+}
+
+/**
+ * 泛型更新选项 - 支持类型推断
+ * @template K - 表名类型
+ */
+export interface TypedUpdateOptions<K extends TableName> {
+    /** 表名 */
+    table: K;
+    /** 更新数据（updated_at 会自动更新） */
+    data: TableUpdateType<K> | Record<string, any>;
+    /** WHERE 条件 */
+    where: TypedWhereConditions<TableType<K>> | WhereConditions;
+}
+
+/**
+ * 泛型删除选项 - 支持类型推断
+ * @template K - 表名类型
+ */
+export interface TypedDeleteOptions<K extends TableName> {
+    /** 表名 */
+    table: K;
+    /** WHERE 条件 */
+    where: TypedWhereConditions<TableType<K>> | WhereConditions;
+}
+
+// ============================================
+// 兼容旧版查询选项（非类型安全版本）
+// ============================================
+
+/**
+ * 查询选项（兼容旧版，不进行类型检查）
  */
 export interface QueryOptions {
     /** 表名 */
@@ -27,7 +93,7 @@ export interface QueryOptions {
 }
 
 /**
- * 插入选项
+ * 插入选项（兼容旧版）
  */
 export interface InsertOptions {
     /** 表名 */
@@ -37,7 +103,7 @@ export interface InsertOptions {
 }
 
 /**
- * 更新选项
+ * 更新选项（兼容旧版）
  */
 export interface UpdateOptions {
     /** 表名 */
@@ -49,7 +115,7 @@ export interface UpdateOptions {
 }
 
 /**
- * 删除选项
+ * 删除选项（兼容旧版）
  */
 export interface DeleteOptions {
     /** 表名 */
@@ -148,17 +214,161 @@ export interface SyncStats {
 
 /**
  * DbHelper 接口（前向声明）
+ * 支持两种使用方式：
+ * 1. 类型安全模式：使用 TypedQueryOptions 等泛型接口，获得完整类型推断
+ * 2. 兼容模式：使用 QueryOptions 等非泛型接口，行为与之前一致
  */
 export interface DbHelper {
+    // ============================================
+    // 类型安全方法（推荐）
+    // ============================================
+
+    /**
+     * 查询记录数（类型安全版本）
+     * @template K - 表名类型
+     */
+    getCount<K extends TableName>(options: Omit<TypedQueryOptions<K>, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number>;
+
+    /**
+     * 查询单条数据（类型安全版本）
+     * @template K - 表名类型
+     * @returns 返回类型自动推断为对应表的记录类型
+     */
+    getOne<K extends TableName>(options: TypedQueryOptions<K>): Promise<TableType<K> | null>;
+
+    /**
+     * 查询列表（类型安全版本）
+     * @template K - 表名类型
+     * @returns 返回类型自动推断为对应表的记录列表
+     */
+    getList<K extends TableName>(options: TypedQueryOptions<K>): Promise<ListResult<TableType<K>>>;
+
+    /**
+     * 查询所有数据（类型安全版本）
+     * @template K - 表名类型
+     * @returns 返回类型自动推断为对应表的记录数组
+     */
+    getAll<K extends TableName>(options: Omit<TypedQueryOptions<K>, 'page' | 'limit'>): Promise<TableType<K>[]>;
+
+    /**
+     * 插入数据（类型安全版本）
+     * @template K - 表名类型
+     */
+    insData<K extends TableName>(options: TypedInsertOptions<K>): Promise<number>;
+
+    /**
+     * 更新数据（类型安全版本）
+     * @template K - 表名类型
+     */
+    updData<K extends TableName>(options: TypedUpdateOptions<K>): Promise<number>;
+
+    /**
+     * 删除数据（类型安全版本）
+     * @template K - 表名类型
+     */
+    delData<K extends TableName>(options: TypedDeleteOptions<K>): Promise<number>;
+
+    // ============================================
+    // 兼容旧版方法（手动指定返回类型）
+    // ============================================
+
+    /**
+     * 查询记录数（兼容版本）
+     */
     getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number>;
+
+    /**
+     * 查询单条数据（兼容版本，需手动指定泛型）
+     * @template T - 返回类型
+     */
     getOne<T = any>(options: QueryOptions): Promise<T | null>;
+
+    /**
+     * 查询列表（兼容版本，需手动指定泛型）
+     * @template T - 列表项类型
+     */
     getList<T = any>(options: QueryOptions): Promise<ListResult<T>>;
+
+    /**
+     * 查询所有数据（兼容版本，需手动指定泛型）
+     * @template T - 返回类型
+     */
     getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]>;
+
+    /**
+     * 插入数据（兼容版本）
+     */
     insData(options: InsertOptions): Promise<number>;
+
+    /**
+     * 更新数据（兼容版本）
+     */
     updData(options: UpdateOptions): Promise<number>;
+
+    /**
+     * 删除数据（兼容版本）
+     */
     delData(options: DeleteOptions): Promise<number>;
+
+    // ============================================
+    // 通用方法
+    // ============================================
+
+    /**
+     * 执行事务
+     * @template T - 事务返回类型
+     */
     trans<T = any>(callback: TransactionCallback<T>): Promise<T>;
+
+    /**
+     * 执行原始 SQL
+     */
     query(sql: string, params?: any[]): Promise<any>;
+
+    /**
+     * 检查数据是否存在
+     */
+    exists(options: Omit<QueryOptions, 'fields' | 'orderBy' | 'page' | 'limit'>): Promise<boolean>;
+
+    /**
+     * 检查表是否存在
+     */
+    tableExists(tableName: string): Promise<boolean>;
+
+    /**
+     * 批量插入数据
+     */
+    insBatch(table: string, dataList: Record<string, any>[]): Promise<number[]>;
+
+    /**
+     * 禁用数据（设置 state=2）
+     */
+    disableData(options: Omit<DeleteOptions, 'hard'>): Promise<number>;
+
+    /**
+     * 启用数据（设置 state=1）
+     */
+    enableData(options: Omit<DeleteOptions, 'hard'>): Promise<number>;
+
+    /**
+     * 硬删除数据（物理删除）
+     */
+    delForce(options: Omit<DeleteOptions, 'hard'>): Promise<number>;
+
+    /**
+     * 自增字段
+     */
+    increment(table: string, field: string, where: WhereConditions, value?: number): Promise<number>;
+
+    /**
+     * 自减字段
+     */
+    decrement(table: string, field: string, where: WhereConditions, value?: number): Promise<number>;
+
+    /**
+     * 查询单个字段值
+     */
+    getFieldValue<T = any>(options: Omit<QueryOptions, 'fields'> & { field: string }): Promise<T | null>;
 }
 
 /**

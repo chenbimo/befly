@@ -13,6 +13,7 @@ export * from './jwt.js';
 export * from './logger.js';
 export * from './plugin.js';
 export * from './redis.js';
+export * from './table.js';
 export * from './tool.js';
 export * from './validator.js';
 export * from './sync.js';
