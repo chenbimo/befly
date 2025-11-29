@@ -37,12 +37,14 @@ bunx befly init
 
 ```typescript
 // main.ts
-import { Server } from 'befly';
+import { Befly } from 'befly';
 
-await Server({
-    name: 'My API',
-    port: 3000
+const app = new Befly({
+    appName: 'My API',
+    appPort: 3000
 });
+
+await app.start();
 ```
 
 运行项目：
@@ -55,7 +57,7 @@ bun run main.ts
 
 ```typescript
 // apis/user/hello.ts
-import type { ApiRoute } from 'befly';
+import type { ApiRoute } from 'befly/types/index';
 
 export default {
     name: '问候接口',
@@ -79,7 +81,7 @@ export default {
 ### TypeScript 全面支持
 
 ```typescript
-import type { ApiRoute, BeflyContext } from 'befly';
+import type { ApiRoute, BeflyContext } from 'befly/types/index';
 import type { User } from './types/models';
 
 export default {

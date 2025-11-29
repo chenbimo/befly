@@ -15,10 +15,7 @@
             "types": "./main.ts",
             "default": "./main.ts"
         },
-        "./types": {
-            "types": "./types/index.ts",
-            "default": "./types/index.ts"
-        }
+        "./*": "./*"
     },
     "scripts": {
         "bundler": "bun build ./main.ts --outfile ./main.single.ts --minify --target bun"

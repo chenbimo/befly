@@ -144,14 +144,3 @@ export class Befly {
         }
     }
 }
-
-// 核心类和工具导出
-export {
-    // 配置
-    Logger,
-    Cipher,
-    Database,
-    DbHelper,
-    RedisHelper,
-    coreDir
-};
