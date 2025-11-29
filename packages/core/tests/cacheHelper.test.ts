@@ -159,11 +159,7 @@ describe('CacheHelper', () => {
 
             // 验证批量添加调用
             expect(mockRedis.sadd).toHaveBeenCalledTimes(2);
-            expect(mockRedis.sadd).toHaveBeenCalledWith('role:apis:admin', [
-                'POST/api/login',
-                'GET/api/user/list',
-                'POST/api/user/del'
-            ]);
+            expect(mockRedis.sadd).toHaveBeenCalledWith('role:apis:admin', ['POST/api/login', 'GET/api/user/list', 'POST/api/user/del']);
             expect(mockRedis.sadd).toHaveBeenCalledWith('role:apis:user', ['POST/api/login']);
         });
 

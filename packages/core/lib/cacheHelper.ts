@@ -90,19 +90,10 @@ export class CacheHelper {
      * 优化：使用 Promise.all 利用 Bun Redis 自动 pipeline 特性
      */
     async cacheRolePermissions(): Promise<void> {
-        await CacheHelper.cacheRolePermissionsWithHelper(this.befly.db, this.befly.redis);
-    }
-
-    /**
-     * 静态方法：缓存角色权限（供外部直接调用）
-     * @param db - DbHelper 实例
-     * @param redis - RedisHelper 实例
-     */
-    static async cacheRolePermissionsWithHelper(db: any, redis: any): Promise<void> {
         try {
             // 检查表是否存在
-            const apiTableExists = await db.tableExists('addon_admin_api');
-            const roleTableExists = await db.tableExists('addon_admin_role');
+            const apiTableExists = await this.befly.db.tableExists('addon_admin_api');
+            const roleTableExists = await this.befly.db.tableExists('addon_admin_role');
 
             if (!apiTableExists || !roleTableExists) {
                 Logger.warn('⚠️ 接口或角色表不存在，跳过角色权限缓存');
@@ -111,11 +102,11 @@ export class CacheHelper {
 
             // 并行查询角色和接口（利用自动 pipeline）
             const [roles, allApis] = await Promise.all([
-                db.getAll({
+                this.befly.db.getAll({
                     table: 'addon_admin_role',
                     fields: ['id', 'code', 'apis']
                 }),
-                db.getAll({
+                this.befly.db.getAll({
                     table: 'addon_admin_api',
                     fields: ['id', 'path', 'method']
                 })
@@ -158,11 +149,11 @@ export class CacheHelper {
             }
 
             // 批量删除旧缓存（利用自动 pipeline）
-            const deletePromises = cacheOperations.map((op) => redis.del(`role:apis:${op.roleCode}`));
+            const deletePromises = cacheOperations.map((op) => this.befly.redis.del(`role:apis:${op.roleCode}`));
             await Promise.all(deletePromises);
 
             // 批量添加新缓存（利用自动 pipeline）
-            const addPromises = cacheOperations.map((op) => redis.sadd(`role:apis:${op.roleCode}`, op.apiPaths));
+            const addPromises = cacheOperations.map((op) => this.befly.redis.sadd(`role:apis:${op.roleCode}`, op.apiPaths));
             const results = await Promise.all(addPromises);
 
             // 统计成功缓存的角色数

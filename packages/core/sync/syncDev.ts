@@ -157,8 +157,9 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
 
         // 缓存角色权限数据到 Redis（复用 CacheHelper 逻辑）
         try {
-            const redis = new RedisHelper();
-            await CacheHelper.cacheRolePermissionsWithHelper(helper, redis);
+            const tempBefly = { db: helper, redis: new RedisHelper() } as any;
+            const cacheHelper = new CacheHelper(tempBefly);
+            await cacheHelper.cacheRolePermissions();
         } catch (error: any) {
             // 忽略缓存错误
         }
