@@ -1,6 +1,9 @@
 /**
- * Befly Util 统一导出
+ * Befly Shared 统一导出
+ * 跨包共享的工具函数、常量、类型定义
  */
+export * from './types.js';
+export * from './redisKeys.js';
 export * from './defineAddonConfig.js';
 export * from './addonHelper.js';
 export * from './arrayKeysToCamel.js';

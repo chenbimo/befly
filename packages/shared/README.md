@@ -1,11 +1,98 @@
 ﻿# Befly Shared
 
-Befly 框架的共享模块，包含跨包共享的工具函数、常量和配置。
+Befly 框架的共享模块，包含跨包共享的工具函数、常量、类型定义和配置。
 
 ## 安装
 
 ```bash
 bun add befly-shared
+```
+
+## 类型定义
+
+### 响应类型
+
+```typescript
+import type { ResponseResult, PaginatedResult, ValidationResult } from 'befly-shared';
+
+// API 响应
+const result: ResponseResult<{ id: number }> = {
+    code: 0,
+    msg: '操作成功',
+    data: { id: 1 }
+};
+
+// 分页响应
+const list: PaginatedResult<User> = {
+    code: 0,
+    msg: '查询成功',
+    data: users,
+    total: 100,
+    page: 1,
+    limit: 10,
+    pages: 10
+};
+```
+
+### 常量
+
+```typescript
+import { ApiCode, ErrorMessages } from 'befly-shared';
+
+// 响应码
+ApiCode.SUCCESS      // 0
+ApiCode.FAIL         // 1
+ApiCode.UNAUTHORIZED // 401
+ApiCode.FORBIDDEN    // 403
+ApiCode.NOT_FOUND    // 404
+ApiCode.SERVER_ERROR // 500
+
+// 错误消息
+ErrorMessages.UNAUTHORIZED   // '请先登录'
+ErrorMessages.FORBIDDEN      // '无访问权限'
+ErrorMessages.TOKEN_EXPIRED  // 'Token 已过期'
+```
+
+### 配置类型
+
+```typescript
+import type { DatabaseConfig, RedisConfig } from 'befly-shared';
+
+const dbConfig: DatabaseConfig = {
+    type: 'mysql',
+    host: 'localhost',
+    port: 3306,
+    user: 'root',
+    password: 'password',
+    database: 'befly'
+};
+
+const redisConfig: RedisConfig = {
+    host: 'localhost',
+    port: 6379,
+    password: 'password',
+    db: 0
+};
+```
+
+### Redis 键和 TTL
+
+```typescript
+import { RedisKeys, RedisTTL } from 'befly-shared';
+
+// 生成 Redis 键
+RedisKeys.apisAll()           // 'befly:apis:all'
+RedisKeys.menusAll()          // 'befly:menus:all'
+RedisKeys.roleInfo('admin')   // 'befly:role:info:admin'
+RedisKeys.roleApis('admin')   // 'befly:role:apis:admin'
+RedisKeys.tableColumns('user') // 'befly:table:columns:user'
+
+// TTL 配置（秒）
+RedisTTL.tableColumns  // 3600 (1小时)
+RedisTTL.roleApis      // 86400 (24小时)
+RedisTTL.roleInfo      // 86400 (24小时)
+RedisTTL.apisAll       // null (永久)
+RedisTTL.menusAll      // null (永久)
 ```
 
 ## 配置管理
