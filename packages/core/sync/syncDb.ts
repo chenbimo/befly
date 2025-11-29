@@ -15,6 +15,7 @@ import { RedisHelper } from '../lib/redisHelper.js';
 import { checkTable } from '../checks/checkTable.js';
 import { scanFiles } from 'befly-shared/scanFiles';
 import { scanAddons, addonDirExists, getAddonDir } from 'befly-shared/addonHelper';
+import { RedisKeys } from 'befly-shared/redisKeys';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 
