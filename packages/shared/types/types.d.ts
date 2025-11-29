@@ -254,19 +254,19 @@ export type ApiCodeType = (typeof ApiCode)[keyof typeof ApiCode];
  */
 export declare const ErrorMessages: {
     /** 未授权 */
-    readonly UNAUTHORIZED: "请先登录";
+    readonly UNAUTHORIZED: '请先登录';
     /** 禁止访问 */
-    readonly FORBIDDEN: "无访问权限";
+    readonly FORBIDDEN: '无访问权限';
     /** 未找到 */
-    readonly NOT_FOUND: "资源不存在";
+    readonly NOT_FOUND: '资源不存在';
     /** 服务器错误 */
-    readonly SERVER_ERROR: "服务器错误";
+    readonly SERVER_ERROR: '服务器错误';
     /** 参数错误 */
-    readonly INVALID_PARAMS: "参数错误";
+    readonly INVALID_PARAMS: '参数错误';
     /** Token 过期 */
-    readonly TOKEN_EXPIRED: "Token 已过期";
+    readonly TOKEN_EXPIRED: 'Token 已过期';
     /** Token 无效 */
-    readonly TOKEN_INVALID: "Token 无效";
+    readonly TOKEN_INVALID: 'Token 无效';
 };
 /**
  * 错误消息类型

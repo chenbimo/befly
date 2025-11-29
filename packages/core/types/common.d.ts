@@ -6,28 +6,7 @@
 // ============================================
 // 从 befly-shared 重新导出共享类型
 // ============================================
-export type {
-    ApiCodeType,
-    DatabaseConfig,
-    DatabaseType,
-    ErrorMessageType,
-    FieldDefinition,
-    FieldType,
-    HttpMethod,
-    KeyValue,
-    MenuItem,
-    OrderDirection,
-    PaginatedResult,
-    PermissionItem,
-    RedisConfig,
-    ResponseResult,
-    RoleInfo,
-    SqlParams,
-    SqlValue,
-    TableDefinition,
-    UserInfo,
-    ValidationResult
-} from 'befly-shared';
+export type { ApiCodeType, DatabaseConfig, DatabaseType, ErrorMessageType, FieldDefinition, FieldType, HttpMethod, KeyValue, MenuItem, OrderDirection, PaginatedResult, PermissionItem, RedisConfig, ResponseResult, RoleInfo, SqlParams, SqlValue, TableDefinition, UserInfo, ValidationResult } from 'befly-shared';
 
 export { ApiCode, ErrorMessages } from 'befly-shared';
 
