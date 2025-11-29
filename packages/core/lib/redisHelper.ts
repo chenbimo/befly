@@ -308,9 +308,7 @@ export class RedisHelper {
         }
 
         try {
-            const results = await Promise.all(
-                items.map((item) => this.sadd(item.key, item.members))
-            );
+            const results = await Promise.all(items.map((item) => this.sadd(item.key, item.members)));
             return results.reduce((sum, count) => sum + count, 0);
         } catch (error: any) {
             Logger.error('Redis saddBatch 错误', error);
@@ -329,9 +327,7 @@ export class RedisHelper {
         }
 
         try {
-            const results = await Promise.all(
-                items.map((item) => this.sismember(item.key, item.member))
-            );
+            const results = await Promise.all(items.map((item) => this.sismember(item.key, item.member)));
             return results.map((r) => r > 0);
         } catch (error: any) {
             Logger.error('Redis sismemberBatch 错误', error);
@@ -383,17 +379,13 @@ export class RedisHelper {
      * @param items - 键值对数组 [{ key, value, ttl? }]
      * @returns 成功设置的数量
      */
-    async setBatch<T = any>(
-        items: Array<{ key: string; value: T; ttl?: number | null }>
-    ): Promise<number> {
+    async setBatch<T = any>(items: Array<{ key: string; value: T; ttl?: number | null }>): Promise<number> {
         if (items.length === 0) {
             return 0;
         }
 
         try {
-            const results = await Promise.all(
-                items.map((item) => this.setObject(item.key, item.value, item.ttl ?? null))
-            );
+            const results = await Promise.all(items.map((item) => this.setObject(item.key, item.value, item.ttl ?? null)));
             return results.filter((r) => r !== null).length;
         } catch (error: any) {
             Logger.error('Redis setBatch 错误', error);
@@ -450,9 +442,7 @@ export class RedisHelper {
         }
 
         try {
-            const results = await Promise.all(
-                items.map((item) => this.expire(item.key, item.seconds))
-            );
+            const results = await Promise.all(items.map((item) => this.expire(item.key, item.seconds)));
             return results.filter((r) => r > 0).length;
         } catch (error: any) {
             Logger.error('Redis expireBatch 错误', error);

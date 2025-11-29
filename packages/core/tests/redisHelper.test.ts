@@ -219,11 +219,7 @@ describe('RedisHelper - 键操作', () => {
         await redis.setString('test:ttlBatch:2', 'value2', 120);
         // test:ttlBatch:3 不存在
 
-        const results = await redis.ttlBatch([
-            'test:ttlBatch:1',
-            'test:ttlBatch:2',
-            'test:ttlBatch:3'
-        ]);
+        const results = await redis.ttlBatch(['test:ttlBatch:1', 'test:ttlBatch:2', 'test:ttlBatch:3']);
         expect(results.length).toBe(3);
         expect(results[0]).toBeGreaterThan(0);
         expect(results[0]).toBeLessThanOrEqual(60);
@@ -391,11 +387,7 @@ describe('RedisHelper - 键操作', () => {
         await redis.setString('test:existsBatch:2', 'value2');
         // test:existsBatch:3 不存在
 
-        const results = await redis.existsBatch([
-            'test:existsBatch:1',
-            'test:existsBatch:2',
-            'test:existsBatch:3'
-        ]);
+        const results = await redis.existsBatch(['test:existsBatch:1', 'test:existsBatch:2', 'test:existsBatch:3']);
         expect(results).toEqual([true, true, false]);
 
         // 清理
