@@ -1,11 +1,12 @@
 ﻿/**
  * 数据验证器 - Befly 项目专用
  * 内置 RegexAliases，支持对象格式的字段定义
+ * 使用正则缓存优化性能
  */
 
 import type { TableDefinition, FieldDefinition } from '../types/common.js';
 import type { ValidationResult, ValidationError } from '../types/validator';
-import { RegexAliases } from './regexAliases.js';
+import { RegexAliases, getCompiledRegex } from 'befly-shared';
 
 /**
  * 验证器类（Befly 项目专用）
@@ -175,7 +176,7 @@ export class Validator {
 
             if (spec && spec.trim() !== '') {
                 try {
-                    const regExp = new RegExp(spec);
+                    const regExp = getCompiledRegex(spec);
                     if (!regExp.test(String(numValue))) {
                         return `${name}(${fieldName})格式不正确`;
                     }
@@ -209,7 +210,7 @@ export class Validator {
 
             if (spec && spec.trim() !== '') {
                 try {
-                    const regExp = new RegExp(spec);
+                    const regExp = getCompiledRegex(spec);
                     if (!regExp.test(value)) {
                         return `${name}(${fieldName})格式不正确`;
                     }
@@ -243,7 +244,7 @@ export class Validator {
 
             if (spec && spec.trim() !== '') {
                 try {
-                    const regExp = new RegExp(spec);
+                    const regExp = getCompiledRegex(spec);
                     for (const item of value) {
                         if (!regExp.test(String(item))) {
                             return `${name}(${fieldName})中的元素"${item}"格式不正确`;
@@ -328,7 +329,7 @@ export class Validator {
                 }
                 if (regexp && regexp.trim() !== '') {
                     try {
-                        const regExp = new RegExp(regexp);
+                        const regExp = getCompiledRegex(regexp);
                         if (!regExp.test(String(convertedValue))) {
                             errors.push(`${name || '值'}格式不正确`);
                         }
@@ -351,7 +352,7 @@ export class Validator {
                 }
                 if (regexp && regexp.trim() !== '') {
                     try {
-                        const regExp = new RegExp(regexp);
+                        const regExp = getCompiledRegex(regexp);
                         if (!regExp.test(convertedValue)) {
                             errors.push(`${name || '值'}格式不正确`);
                         }
@@ -374,7 +375,7 @@ export class Validator {
                 }
                 if (regexp && regexp.trim() !== '') {
                     try {
-                        const regExp = new RegExp(regexp);
+                        const regExp = getCompiledRegex(regexp);
                         for (const item of convertedValue) {
                             if (!regExp.test(String(item))) {
                                 errors.push(`${name || '值'}的元素格式不正确`);

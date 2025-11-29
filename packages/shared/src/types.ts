@@ -130,6 +130,52 @@ export interface UserInfo {
 }
 
 // ============================================
+// 请求上下文类型（基础版）
+// ============================================
+
+/**
+ * 请求上下文基础接口
+ * 用于跨包共享的最小上下文定义
+ */
+export interface BaseRequestContext {
+    /** 请求体参数 */
+    body: Record<string, any>;
+    /** 用户信息 */
+    user: Record<string, any>;
+    /** 请求开始时间（毫秒） */
+    now: number;
+    /** 客户端 IP 地址 */
+    ip: string;
+    /** API 路由路径（如 POST/api/user/login） */
+    route: string;
+    /** 请求唯一 ID */
+    requestId: string;
+}
+
+// ============================================
+// API 路由类型（基础版）
+// ============================================
+
+/**
+ * API 路由基础配置
+ * 用于跨包共享的最小路由定义
+ */
+export interface BaseApiRoute {
+    /** 接口名称（必填） */
+    name: string;
+    /** HTTP 方法（可选，默认 POST） */
+    method?: HttpMethod;
+    /** 认证类型（可选，默认 true） */
+    auth?: boolean;
+    /** 字段定义（验证规则） */
+    fields?: TableDefinition;
+    /** 必填字段 */
+    required?: string[];
+    /** 路由路径（运行时生成） */
+    route?: string;
+}
+
+// ============================================
 // 数据库相关类型
 // ============================================
 

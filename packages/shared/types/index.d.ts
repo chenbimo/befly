@@ -4,6 +4,7 @@
  */
 export * from './types.js';
 export * from './redisKeys.js';
+export * from './regex.js';
 export * from './defineAddonConfig.js';
 export * from './addonHelper.js';
 export * from './arrayKeysToCamel.js';

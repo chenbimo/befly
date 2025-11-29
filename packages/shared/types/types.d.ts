@@ -104,6 +104,42 @@ export interface UserInfo {
     [key: string]: any;
 }
 /**
+ * 请求上下文基础接口
+ * 用于跨包共享的最小上下文定义
+ */
+export interface BaseRequestContext {
+    /** 请求体参数 */
+    body: Record<string, any>;
+    /** 用户信息 */
+    user: Record<string, any>;
+    /** 请求开始时间（毫秒） */
+    now: number;
+    /** 客户端 IP 地址 */
+    ip: string;
+    /** API 路由路径（如 POST/api/user/login） */
+    route: string;
+    /** 请求唯一 ID */
+    requestId: string;
+}
+/**
+ * API 路由基础配置
+ * 用于跨包共享的最小路由定义
+ */
+export interface BaseApiRoute {
+    /** 接口名称（必填） */
+    name: string;
+    /** HTTP 方法（可选，默认 POST） */
+    method?: HttpMethod;
+    /** 认证类型（可选，默认 true） */
+    auth?: boolean;
+    /** 字段定义（验证规则） */
+    fields?: TableDefinition;
+    /** 必填字段 */
+    required?: string[];
+    /** 路由路径（运行时生成） */
+    route?: string;
+}
+/**
  * SQL 值类型
  */
 export type SqlValue = string | number | boolean | null | Date;
@@ -218,19 +254,19 @@ export type ApiCodeType = (typeof ApiCode)[keyof typeof ApiCode];
  */
 export declare const ErrorMessages: {
     /** 未授权 */
-    readonly UNAUTHORIZED: '请先登录';
+    readonly UNAUTHORIZED: "请先登录";
     /** 禁止访问 */
-    readonly FORBIDDEN: '无访问权限';
+    readonly FORBIDDEN: "无访问权限";
     /** 未找到 */
-    readonly NOT_FOUND: '资源不存在';
+    readonly NOT_FOUND: "资源不存在";
     /** 服务器错误 */
-    readonly SERVER_ERROR: '服务器错误';
+    readonly SERVER_ERROR: "服务器错误";
     /** 参数错误 */
-    readonly INVALID_PARAMS: '参数错误';
+    readonly INVALID_PARAMS: "参数错误";
     /** Token 过期 */
-    readonly TOKEN_EXPIRED: 'Token 已过期';
+    readonly TOKEN_EXPIRED: "Token 已过期";
     /** Token 无效 */
-    readonly TOKEN_INVALID: 'Token 无效';
+    readonly TOKEN_INVALID: "Token 无效";
 };
 /**
  * 错误消息类型

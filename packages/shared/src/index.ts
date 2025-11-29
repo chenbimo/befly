@@ -8,6 +8,7 @@ export * from './types.js';
 
 // 常量配置
 export * from './redisKeys.js';
+export * from './regex.js';
 
 // 工具函数
 export * from './defineAddonConfig.js';

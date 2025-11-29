@@ -1,47 +1,39 @@
 ﻿/**
  * Befly 框架通用类型定义
+ * 从 befly-shared 重新导出共享类型，并添加 core 专用类型
  */
 
-/**
- * 响应结果类型
- */
-export interface ResponseResult<T = any> {
-    code: number;
-    msg: string;
-    data?: T;
-    error?: any;
-}
+// ============================================
+// 从 befly-shared 重新导出共享类型
+// ============================================
+export type {
+    ApiCodeType,
+    DatabaseConfig,
+    DatabaseType,
+    ErrorMessageType,
+    FieldDefinition,
+    FieldType,
+    HttpMethod,
+    KeyValue,
+    MenuItem,
+    OrderDirection,
+    PaginatedResult,
+    PermissionItem,
+    RedisConfig,
+    ResponseResult,
+    RoleInfo,
+    SqlParams,
+    SqlValue,
+    TableDefinition,
+    UserInfo,
+    ValidationResult
+} from 'befly-shared';
 
-/**
- * 验证结果类型
- */
-export interface ValidationResult {
-    code: 0 | 1;
-    fields: Record<string, any>;
-}
+export { ApiCode, ErrorMessages } from 'befly-shared';
 
-/**
- * 字段定义类型（对象格式）
- */
-export interface FieldDefinition {
-    name: string; // 字段标签/描述
-    detail: string; // 字段详细说明
-    type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
-    min: number | null; // 最小值/最小长度
-    max: number | null; // 最大值/最大长度
-    default: any; // 默认值
-    index: boolean; // 是否创建索引
-    unique: boolean; // 是否唯一
-    comment: string; // 字段注释
-    nullable: boolean; // 是否允许为空
-    unsigned: boolean; // 是否无符号（仅number类型）
-    regexp: string | null; // 正则验证
-}
-
-/**
- * 表定义类型（对象格式）
- */
-export type TableDefinition = Record<string, FieldDefinition>;
+// ============================================
+// Core 专用类型（不适合放在 shared 中的类型）
+// ============================================
 
 /**
  * 字段规则字符串（已废弃，保留用于兼容）
@@ -60,25 +52,14 @@ export type FieldRule = string;
  * @deprecated 请使用 FieldDefinition 对象格式
  */
 export interface ParsedFieldRule {
-    name: string; // 字段名称
+    name: string;
     type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
-    min: number | null; // 最小值
-    max: number | null; // 最大值
-    default: any; // 默认值
-    index: 0 | 1; // 是否索引
-    regex: string | null; // 正则约束
+    min: number | null;
+    max: number | null;
+    default: any;
+    index: 0 | 1;
+    regex: string | null;
 }
-
-/**
- * SQL 查询参数类型
- */
-export type SqlValue = string | number | boolean | null | Date;
-export type SqlParams = SqlValue[];
-
-/**
- * 排序方向
- */
-export type OrderDirection = 'ASC' | 'DESC' | 'asc' | 'desc';
 
 /**
  * 比较运算符
@@ -89,28 +70,6 @@ export type ComparisonOperator = '=' | '>' | '<' | '>=' | '<=' | '!=' | '<>' | '
  * JOIN 类型
  */
 export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
-
-/**
- * 数据库配置类型
- */
-export interface DatabaseConfig {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    database: string;
-    connectionLimit?: number;
-}
-
-/**
- * Redis 配置类型
- */
-export interface RedisConfig {
-    host: string;
-    port: number;
-    password?: string;
-    db?: number;
-}
 
 /**
  * 日志级别
@@ -144,21 +103,6 @@ export interface PaginationParams {
     page: number;
     limit: number;
 }
-
-/**
- * 分页结果
- */
-export interface PaginatedResult<T = any> {
-    total: number;
-    page: number;
-    limit: number;
-    data: T[];
-}
-
-/**
- * 通用键值对
- */
-export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * 可选字段

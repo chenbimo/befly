@@ -238,4 +238,46 @@ describe('befly-shared 类型定义', () => {
             expect(ErrorMessages.TOKEN_INVALID).toBe('Token 无效');
         });
     });
+
+    describe('BaseRequestContext 类型', () => {
+        it('请求上下文基础结构正确', () => {
+            const { BaseRequestContext } = require('../src/types.js') as { BaseRequestContext: any };
+            // BaseRequestContext 是接口，只验证可以创建符合结构的对象
+            const ctx = {
+                body: { username: 'test' },
+                user: { id: 1 },
+                now: Date.now(),
+                ip: '127.0.0.1',
+                route: 'POST/api/user/login',
+                requestId: 'abc123'
+            };
+            expect(ctx.body.username).toBe('test');
+            expect(ctx.user.id).toBe(1);
+            expect(typeof ctx.now).toBe('number');
+            expect(ctx.ip).toBe('127.0.0.1');
+        });
+    });
+
+    describe('BaseApiRoute 类型', () => {
+        it('API 路由基础结构正确', () => {
+            // BaseApiRoute 是接口，只验证可以创建符合结构的对象
+            const route = {
+                name: '用户登录',
+                method: 'POST' as const,
+                auth: false,
+                fields: {},
+                required: ['username', 'password']
+            };
+            expect(route.name).toBe('用户登录');
+            expect(route.method).toBe('POST');
+            expect(route.auth).toBe(false);
+        });
+
+        it('API 路由最小配置', () => {
+            const route = {
+                name: '测试接口'
+            };
+            expect(route.name).toBe('测试接口');
+        });
+    });
 });

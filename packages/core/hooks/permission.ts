@@ -1,6 +1,6 @@
 // 相对导入
 import { ErrorResponse } from '../util.js';
-import { RedisKeys } from '../lib/redisKeys.js';
+import { RedisKeys } from 'befly-shared';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';

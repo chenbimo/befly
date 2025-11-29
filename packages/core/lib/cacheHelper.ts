@@ -4,7 +4,7 @@
  */
 
 import { Logger } from './logger.js';
-import { RedisKeys } from './redisKeys.js';
+import { RedisKeys } from 'befly-shared';
 
 import type { BeflyContext } from '../types/befly.js';
 
