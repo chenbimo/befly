@@ -4,6 +4,7 @@
  */
 
 import { Logger } from './logger.js';
+import { RedisKeys } from './redisKeys.js';
 
 import type { BeflyContext } from '../types/befly.js';
 
@@ -41,12 +42,12 @@ export class CacheHelper {
             });
 
             // 缓存到 Redis
-            const result = await this.befly.redis.setObject('apis:all', apiList);
+            const result = await this.befly.redis.setObject(RedisKeys.apisAll(), apiList);
 
             if (result === null) {
                 Logger.warn('⚠️ 接口缓存失败');
             } else {
-                Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
+                Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: ${RedisKeys.apisAll()})`);
             }
         } catch (error: any) {
             Logger.error({ err: error }, '⚠️ 接口缓存异常');
@@ -73,12 +74,12 @@ export class CacheHelper {
             });
 
             // 缓存到 Redis
-            const result = await this.befly.redis.setObject('menus:all', menus);
+            const result = await this.befly.redis.setObject(RedisKeys.menusAll(), menus);
 
             if (result === null) {
                 Logger.warn('⚠️ 菜单缓存失败');
             } else {
-                Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: menus:all)`);
+                Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: ${RedisKeys.menusAll()})`);
             }
         } catch (error: any) {
             Logger.warn({ err: error }, '⚠️ 菜单缓存异常');
@@ -149,11 +150,11 @@ export class CacheHelper {
             }
 
             // 批量删除旧缓存（利用自动 pipeline）
-            const deletePromises = cacheOperations.map((op) => this.befly.redis.del(`role:apis:${op.roleCode}`));
+            const deletePromises = cacheOperations.map((op) => this.befly.redis.del(RedisKeys.roleApis(op.roleCode)));
             await Promise.all(deletePromises);
 
             // 批量添加新缓存（利用自动 pipeline）
-            const addPromises = cacheOperations.map((op) => this.befly.redis.sadd(`role:apis:${op.roleCode}`, op.apiPaths));
+            const addPromises = cacheOperations.map((op) => this.befly.redis.sadd(RedisKeys.roleApis(op.roleCode), op.apiPaths));
             const results = await Promise.all(addPromises);
 
             // 统计成功缓存的角色数
@@ -185,7 +186,7 @@ export class CacheHelper {
      */
     async getApis(): Promise<any[]> {
         try {
-            const apis = await this.befly.redis.getObject<any[]>('apis:all');
+            const apis = await this.befly.redis.getObject<any[]>(RedisKeys.apisAll());
             return apis || [];
         } catch (error: any) {
             Logger.error({ err: error }, '获取接口缓存失败');
@@ -199,7 +200,7 @@ export class CacheHelper {
      */
     async getMenus(): Promise<any[]> {
         try {
-            const menus = await this.befly.redis.getObject<any[]>('menus:all');
+            const menus = await this.befly.redis.getObject<any[]>(RedisKeys.menusAll());
             return menus || [];
         } catch (error: any) {
             Logger.error({ err: error }, '获取菜单缓存失败');
@@ -214,8 +215,7 @@ export class CacheHelper {
      */
     async getRolePermissions(roleCode: string): Promise<string[]> {
         try {
-            const redisKey = `role:apis:${roleCode}`;
-            const permissions = await this.befly.redis.smembers(redisKey);
+            const permissions = await this.befly.redis.smembers(RedisKeys.roleApis(roleCode));
             return permissions || [];
         } catch (error: any) {
             Logger.error({ err: error, roleCode: roleCode }, '获取角色权限缓存失败');
@@ -231,8 +231,7 @@ export class CacheHelper {
      */
     async checkRolePermission(roleCode: string, apiPath: string): Promise<boolean> {
         try {
-            const redisKey = `role:apis:${roleCode}`;
-            const result = await this.befly.redis.sismember(redisKey, apiPath);
+            const result = await this.befly.redis.sismember(RedisKeys.roleApis(roleCode), apiPath);
             return result === 1;
         } catch (error: any) {
             Logger.error({ err: error, roleCode: roleCode }, '检查角色权限失败');
@@ -247,8 +246,7 @@ export class CacheHelper {
      */
     async deleteRolePermissions(roleCode: string): Promise<boolean> {
         try {
-            const redisKey = `role:apis:${roleCode}`;
-            const result = await this.befly.redis.del(redisKey);
+            const result = await this.befly.redis.del(RedisKeys.roleApis(roleCode));
             if (result > 0) {
                 Logger.info(`✅ 已删除角色 ${roleCode} 的权限缓存`);
                 return true;

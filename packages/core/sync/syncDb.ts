@@ -134,14 +134,8 @@ export async function syncDbCommand(config: BeflyOptions, options: SyncDbOptions
         // 清理 Redis 缓存（如果有表被处理）
         if (processedTables.length > 0) {
             const redisHelper = new RedisHelper();
-            for (const tableName of processedTables) {
-                const cacheKey = `table:columns:${tableName}`;
-                try {
-                    await redisHelper.del(cacheKey);
-                } catch (error: any) {
-                    Logger.warn(`清理表 ${tableName} 的缓存失败: ${error.message}`);
-                }
-            }
+            const cacheKeys = processedTables.map((tableName) => RedisKeys.tableColumns(tableName));
+            await redisHelper.delBatch(cacheKeys);
         }
     } catch (error: any) {
         Logger.error({ err: error }, '数据库同步失败');

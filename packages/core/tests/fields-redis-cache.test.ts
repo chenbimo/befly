@@ -2,6 +2,8 @@
  * 验证 Redis 缓存的字段查询功能
  */
 
+import { RedisKeys, RedisTTL } from 'befly-util';
+
 console.log('\n========== Redis 缓存验证 ==========\n');
 
 // 模拟 Redis 缓存逻辑
@@ -38,7 +40,7 @@ async function queryDatabase(table: string): Promise<string[]> {
 // 模拟 getTableColumns 方法
 async function getTableColumns(redis: MockRedis, table: string): Promise<string[]> {
     // 1. 先查 Redis 缓存
-    const cacheKey = `table:columns:${table}`;
+    const cacheKey = RedisKeys.tableColumns(table);
     let columns = await redis.getObject<string[]>(cacheKey);
 
     if (columns && columns.length > 0) {
@@ -48,8 +50,8 @@ async function getTableColumns(redis: MockRedis, table: string): Promise<string[
     // 2. 缓存未命中，查询数据库
     columns = await queryDatabase(table);
 
-    // 3. 写入 Redis 缓存（1小时过期）
-    await redis.setObject(cacheKey, columns, 3600);
+    // 3. 写入 Redis 缓存
+    await redis.setObject(cacheKey, columns, RedisTTL.tableColumns);
 
     return columns;
 }

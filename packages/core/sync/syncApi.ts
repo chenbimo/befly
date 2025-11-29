@@ -15,7 +15,7 @@ import { join, dirname, relative, basename } from 'pathe';
 import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { RedisHelper } from '../lib/redisHelper.js';
+import { RedisKeys } from '../lib/redisKeys.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 
 import { Logger } from '../lib/logger.js';
@@ -253,7 +253,7 @@ export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptio
             });
 
             const redisHelper = new RedisHelper();
-            await redisHelper.setObject('apis:all', apiList);
+            await redisHelper.setObject(RedisKeys.apisAll(), apiList);
         } catch (error: any) {
             // 忽略缓存错误
         }

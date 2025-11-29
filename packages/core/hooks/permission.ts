@@ -1,5 +1,6 @@
 // 相对导入
 import { ErrorResponse } from '../util.js';
+import { RedisKeys } from '../lib/redisKeys.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
@@ -37,7 +38,7 @@ const hook: Hook = {
         if (ctx.user.roleCode && befly.redis) {
             // 验证角色权限
             const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
-            const roleApisKey = `role:apis:${ctx.user.roleCode}`;
+            const roleApisKey = RedisKeys.roleApis(ctx.user.roleCode);
             const isMember = await befly.redis.sismember(roleApisKey, apiPath);
             hasPermission = isMember === 1;
         }

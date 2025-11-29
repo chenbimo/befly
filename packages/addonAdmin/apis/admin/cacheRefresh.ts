@@ -4,13 +4,15 @@
  * 功能：
  * 1. 刷新接口缓存（apis:all）
  * 2. 刷新菜单缓存（menus:all）
- * 3. 刷新角色权限缓存（role:{code}）
+ * 3. 刷新角色权限缓存（role:info:{code}）
  *
  * 使用场景：
  * - 执行数据库同步后
  * - 手动修改配置需要立即生效
  * - 缓存出现异常需要重建
  */
+
+import { RedisKeys } from 'befly-util';
 
 export default {
     name: '刷新全部缓存',
@@ -30,7 +32,7 @@ export default {
                     orderBy: ['addonName#ASC', 'path#ASC']
                 });
 
-                await befly.redis.setObject('apis:all', apis);
+                await befly.redis.setObject(RedisKeys.apisAll(), apis);
                 results.apis = { success: true, count: apis.length };
             } catch (error: any) {
                 befly.logger.error({ err: error }, '刷新接口缓存失败');
@@ -45,7 +47,7 @@ export default {
                     orderBy: ['sort#ASC', 'id#ASC']
                 });
 
-                await befly.redis.setObject('menus:all', menus);
+                await befly.redis.setObject(RedisKeys.menusAll(), menus);
 
                 const parentCount = menus.filter((m: any) => m.pid === 0).length;
                 const childCount = menus.filter((m: any) => m.pid !== 0).length;
@@ -69,14 +71,15 @@ export default {
                     orderBy: ['id#ASC']
                 });
 
-                // 为每个角色单独缓存
-                let cachedCount = 0;
-                for (const role of roles) {
-                    await befly.redis.setObject(`role:${role.code}`, role);
-                    cachedCount++;
-                }
+                // 使用 setBatch 批量缓存所有角色（利用 Bun Redis auto-pipeline）
+                await befly.redis.setBatch(
+                    roles.map((role: any) => ({
+                        key: RedisKeys.roleInfo(role.code),
+                        value: role
+                    }))
+                );
 
-                results.roles = { success: true, count: cachedCount };
+                results.roles = { success: true, count: roles.length };
             } catch (error: any) {
                 befly.logger.error({ err: error }, '刷新角色缓存失败');
                 results.roles = { success: false, error: error.message };

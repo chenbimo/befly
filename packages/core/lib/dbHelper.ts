@@ -5,8 +5,9 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel, arrayKeysToCamel, keysToSnake, fieldClear } from 'befly-util';
-import { Logger } from '../lib/logger.js';
+import { keysToCamel, arrayKeysToCamel, keysToSnake, fieldClear, RedisTTL } from 'befly-util';
+import { Logger } from './logger.js';
+import { RedisKeys } from './redisKeys.js';
 import type { WhereConditions } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
@@ -81,7 +82,7 @@ export class DbHelper {
      */
     private async getTableColumns(table: string): Promise<string[]> {
         // 1. 先查 Redis 缓存
-        const cacheKey = `table:columns:${table}`;
+        const cacheKey = RedisKeys.tableColumns(table);
         let columns = await this.befly.redis.getObject<string[]>(cacheKey);
 
         if (columns && columns.length > 0) {
@@ -98,8 +99,8 @@ export class DbHelper {
 
         columns = result.map((row: any) => row.Field);
 
-        // 3. 写入 Redis 缓存（1小时过期）
-        await this.befly.redis.setObject(cacheKey, columns, 3600);
+        // 3. 写入 Redis 缓存
+        await this.befly.redis.setObject(cacheKey, columns, RedisTTL.tableColumns);
 
         return columns;
     }

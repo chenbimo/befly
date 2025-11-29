@@ -4,6 +4,7 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 import { CacheHelper } from '../lib/cacheHelper.js';
 import { Logger, setMockLogger } from '../lib/logger.js';
+import { RedisKeys } from '../lib/redisKeys.js';
 
 import type { BeflyContext } from '../types/befly.js';
 
@@ -79,7 +80,7 @@ describe('CacheHelper', () => {
 
             await cacheHelper.cacheApis();
 
-            expect(mockRedis.setObject).toHaveBeenCalledWith('apis:all', apis);
+            expect(mockRedis.setObject).toHaveBeenCalledWith(RedisKeys.apisAll(), apis);
         });
 
         it('缓存失败时记录警告', async () => {
@@ -118,7 +119,7 @@ describe('CacheHelper', () => {
 
             await cacheHelper.cacheMenus();
 
-            expect(mockRedis.setObject).toHaveBeenCalledWith('menus:all', menus);
+            expect(mockRedis.setObject).toHaveBeenCalledWith(RedisKeys.menusAll(), menus);
         });
     });
 
@@ -159,8 +160,12 @@ describe('CacheHelper', () => {
 
             // 验证批量添加调用
             expect(mockRedis.sadd).toHaveBeenCalledTimes(2);
-            expect(mockRedis.sadd).toHaveBeenCalledWith('role:apis:admin', ['POST/api/login', 'GET/api/user/list', 'POST/api/user/del']);
-            expect(mockRedis.sadd).toHaveBeenCalledWith('role:apis:user', ['POST/api/login']);
+            expect(mockRedis.sadd).toHaveBeenCalledWith(RedisKeys.roleApis('admin'), [
+                'POST/api/login',
+                'GET/api/user/list',
+                'POST/api/user/del'
+            ]);
+            expect(mockRedis.sadd).toHaveBeenCalledWith(RedisKeys.roleApis('user'), ['POST/api/login']);
         });
 
         it('无有效角色时不执行缓存', async () => {
@@ -245,7 +250,7 @@ describe('CacheHelper', () => {
 
             const result = await cacheHelper.getRolePermissions('admin');
 
-            expect(mockRedis.smembers).toHaveBeenCalledWith('role:apis:admin');
+            expect(mockRedis.smembers).toHaveBeenCalledWith(RedisKeys.roleApis('admin'));
             expect(result).toEqual(permissions);
         });
 
@@ -264,7 +269,7 @@ describe('CacheHelper', () => {
 
             const result = await cacheHelper.checkRolePermission('admin', 'POST/api/login');
 
-            expect(mockRedis.sismember).toHaveBeenCalledWith('role:apis:admin', 'POST/api/login');
+            expect(mockRedis.sismember).toHaveBeenCalledWith(RedisKeys.roleApis('admin'), 'POST/api/login');
             expect(result).toBe(true);
         });
 
@@ -283,7 +288,7 @@ describe('CacheHelper', () => {
 
             const result = await cacheHelper.deleteRolePermissions('admin');
 
-            expect(mockRedis.del).toHaveBeenCalledWith('role:apis:admin');
+            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis('admin'));
             expect(result).toBe(true);
         });
 

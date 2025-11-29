@@ -19,6 +19,7 @@ import { cloneDeep } from 'es-toolkit';
 import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
+import { RedisKeys } from '../lib/redisKeys.js';
 import { scanAddons, getAddonDir, scanConfig } from 'befly-util';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
@@ -331,7 +332,7 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
         // 8. 缓存菜单数据到 Redis
         try {
             const redisHelper = new RedisHelper();
-            await redisHelper.setObject('menus:all', allMenusData);
+            await redisHelper.setObject(RedisKeys.menusAll(), allMenusData);
         } catch (error: any) {
             Logger.warn({ err: error }, 'Redis 缓存菜单数据失败');
         }
