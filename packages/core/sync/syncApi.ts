@@ -13,6 +13,8 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, basename } from 'pathe';
 import { Connect } from '../lib/connect.js';
+import { DbHelper } from '../lib/dbHelper.js';
+import { RedisHelper } from '../lib/redisHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
 
@@ -222,7 +224,7 @@ export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptio
         // 连接数据库（SQL + Redis）
         await Connect.connect(config);
 
-        const helper = Connect.getDbHelper();
+        const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
 
         // 1. 检查表是否存在（addon_admin_api 来自 addon-admin 组件）
         const exists = await helper.tableExists('addon_admin_api');

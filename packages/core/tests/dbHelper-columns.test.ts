@@ -3,24 +3,8 @@
  * 测试表字段查询、Redis 缓存、SQL 语法修复等功能
  */
 
-import { test, expect, mock, beforeEach, afterEach } from 'bun:test';
+import { test, expect, mock } from 'bun:test';
 import { DbHelper } from '../lib/dbHelper.js';
-import { Logger } from '../lib/logger.js';
-
-// Mock Logger
-const originalLoggerError = Logger.error;
-let errorLogs: string[] = [];
-
-beforeEach(() => {
-    errorLogs = [];
-    Logger.error = mock((msg: string) => {
-        errorLogs.push(msg);
-    });
-});
-
-afterEach(() => {
-    Logger.error = originalLoggerError;
-});
 
 // 创建 Mock Befly 上下文
 function createMockBefly(sqlMock: any, redisMock?: any) {

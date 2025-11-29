@@ -47,12 +47,6 @@ describe('sync 模块连接管理', () => {
         });
     });
 
-    describe('Connect.getDbHelper', () => {
-        test('未连接时应该抛出错误', () => {
-            expect(() => Connect.getDbHelper()).toThrow('SQL 客户端未连接');
-        });
-    });
-
     describe('Mock 连接测试', () => {
         test('__setMockSql 应该设置 mock SQL 客户端', () => {
             const mockSql = { close: async () => {} } as any;

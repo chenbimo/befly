@@ -4,10 +4,10 @@
  */
 
 import { SQL, RedisClient } from 'bun';
+
 import { Logger } from './logger.js';
-import { DbHelper } from './dbHelper.js';
-import { RedisHelper } from './redisHelper.js';
-import type { BeflyContext, BeflyOptions, DatabaseConfig, RedisConfig } from '../types/befly.js';
+
+import type { BeflyOptions, DatabaseConfig, RedisConfig } from '../types/befly.js';
 import type { SqlClientOptions } from '../types/database.js';
 
 /**
@@ -17,7 +17,6 @@ import type { SqlClientOptions } from '../types/database.js';
 export class Connect {
     private static sqlClient: SQL | null = null;
     private static redisClient: RedisClient | null = null;
-    private static dbHelper: DbHelper | null = null;
 
     // 连接统计信息
     private static sqlConnectedAt: number | null = null;
@@ -117,10 +116,6 @@ export class Connect {
             this.sqlClient = null;
             this.sqlConnectedAt = null;
         }
-
-        if (this.dbHelper) {
-            this.dbHelper = null;
-        }
     }
 
     /**
@@ -132,27 +127,6 @@ export class Connect {
             throw new Error('SQL 客户端未连接，请先调用 Connect.connectSql()');
         }
         return this.sqlClient;
-    }
-
-    /**
-     * 获取 DbHelper 实例
-     * @throws 如果未连接则抛出错误
-     */
-    static getDbHelper(befly?: BeflyContext): DbHelper {
-        if (!this.dbHelper) {
-            if (!this.sqlClient) {
-                throw new Error('SQL 客户端未连接，请先调用 Connect.connectSql()');
-            }
-            // 创建临时 befly 上下文（仅用于 DbHelper）
-            const ctx = befly || {
-                redis: new RedisHelper(),
-                db: null as any,
-                tool: null as any,
-                logger: null as any
-            };
-            this.dbHelper = new DbHelper(ctx, this.sqlClient);
-        }
-        return this.dbHelper;
     }
 
     // ========================================
@@ -330,7 +304,6 @@ export class Connect {
     static __reset(): void {
         this.sqlClient = null;
         this.redisClient = null;
-        this.dbHelper = null;
         this.sqlConnectedAt = null;
         this.redisConnectedAt = null;
         this.sqlPoolMax = 1;

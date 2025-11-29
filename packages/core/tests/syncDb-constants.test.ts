@@ -108,25 +108,25 @@ describe('MYSQL_TABLE_CONFIG', () => {
     });
 });
 
-describe('typeMapping (MySQL)', () => {
+describe('getTypeMapping (MySQL)', () => {
     test('number 映射为 BIGINT', () => {
-        expect(constants.typeMapping.number).toBe('BIGINT');
+        expect(constants.getTypeMapping().number).toBe('BIGINT');
     });
 
     test('string 映射为 VARCHAR', () => {
-        expect(constants.typeMapping.string).toBe('VARCHAR');
+        expect(constants.getTypeMapping().string).toBe('VARCHAR');
     });
 
     test('text 映射为 MEDIUMTEXT', () => {
-        expect(constants.typeMapping.text).toBe('MEDIUMTEXT');
+        expect(constants.getTypeMapping().text).toBe('MEDIUMTEXT');
     });
 
     test('array_string 映射为 VARCHAR', () => {
-        expect(constants.typeMapping.array_string).toBe('VARCHAR');
+        expect(constants.getTypeMapping().array_string).toBe('VARCHAR');
     });
 
     test('array_text 映射为 MEDIUMTEXT', () => {
-        expect(constants.typeMapping.array_text).toBe('MEDIUMTEXT');
+        expect(constants.getTypeMapping().array_text).toBe('MEDIUMTEXT');
     });
 });
 
@@ -137,15 +137,15 @@ describe('IS_PLAN', () => {
 });
 
 describe('数据库类型判断 (MySQL)', () => {
-    test('IS_MYSQL 为 true', () => {
-        expect(constants.IS_MYSQL).toBe(true);
+    test('isMySQL 为 true', () => {
+        expect(constants.isMySQL()).toBe(true);
     });
 
-    test('IS_PG 为 false', () => {
-        expect(constants.IS_PG).toBe(false);
+    test('isPG 为 false', () => {
+        expect(constants.isPG()).toBe(false);
     });
 
-    test('IS_SQLITE 为 false', () => {
-        expect(constants.IS_SQLITE).toBe(false);
+    test('isSQLite 为 false', () => {
+        expect(constants.isSQLite()).toBe(false);
     });
 });

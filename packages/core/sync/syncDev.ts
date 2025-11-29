@@ -13,6 +13,8 @@ import { Logger } from '../lib/logger.js';
 import { Cipher } from '../lib/cipher.js';
 import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
+import { RedisHelper } from '../lib/redisHelper.js';
+
 import type { SyncDevOptions, SyncDevStats, BeflyOptions } from '../types/index.js';
 
 /**
@@ -33,7 +35,7 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         // 连接数据库（SQL + Redis）
         await Connect.connect(config);
 
-        const helper = Connect.getDbHelper();
+        const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
 
         // 检查 addon_admin_admin 表是否存在
         const existAdmin = await helper.tableExists('addon_admin_admin');

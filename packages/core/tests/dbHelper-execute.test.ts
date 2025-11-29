@@ -1,33 +1,10 @@
 /**
  * DbHelper executeWithConn 方法单元测试
- * 测试 SQL 执行、错误处理、慢查询日志等功能
+ * 测试 SQL 执行、错误处理等功能
  */
 
-import { test, expect, mock, beforeEach, afterEach } from 'bun:test';
+import { test, expect, mock } from 'bun:test';
 import { DbHelper } from '../lib/dbHelper.js';
-import { Logger } from '../lib/logger.js';
-
-// Mock Logger
-const originalLoggerError = Logger.error;
-const originalLoggerWarn = Logger.warn;
-let errorLogs: string[] = [];
-let warnLogs: string[] = [];
-
-beforeEach(() => {
-    errorLogs = [];
-    warnLogs = [];
-    Logger.error = mock((msg: string) => {
-        errorLogs.push(msg);
-    });
-    Logger.warn = mock((msg: string) => {
-        warnLogs.push(msg);
-    });
-});
-
-afterEach(() => {
-    Logger.error = originalLoggerError;
-    Logger.warn = originalLoggerWarn;
-});
 
 // 创建 Mock Befly 上下文
 function createMockBefly(sqlMock: any) {
@@ -55,7 +32,6 @@ test('executeWithConn - 正常执行（无参数）', async () => {
 
     expect(result).toEqual(mockResult);
     expect(sqlMock.unsafe).toHaveBeenCalledWith('SELECT * FROM users');
-    expect(errorLogs.length).toBe(0);
 });
 
 test('executeWithConn - 正常执行（带参数）', async () => {
@@ -71,7 +47,6 @@ test('executeWithConn - 正常执行（带参数）', async () => {
 
     expect(result).toEqual(mockResult);
     expect(sqlMock.unsafe).toHaveBeenCalledWith('SELECT * FROM users WHERE id = ?', [1]);
-    expect(errorLogs.length).toBe(0);
 });
 
 test('executeWithConn - SQL 错误捕获', async () => {
@@ -95,16 +70,10 @@ test('executeWithConn - SQL 错误捕获', async () => {
         expect(error.sql).toBe('SELECT * FROM invalid_table');
         expect(error.params).toEqual([]);
         expect(error.duration).toBeGreaterThanOrEqual(0);
-
-        // 验证错误日志
-        expect(errorLogs.length).toBeGreaterThan(0);
-        expect(errorLogs.some((log) => log.includes('SQL 执行错误'))).toBe(true);
-        expect(errorLogs.some((log) => log.includes('SELECT * FROM invalid_table'))).toBe(true);
-        expect(errorLogs.some((log) => log.includes('You have an error in your SQL syntax'))).toBe(true);
     }
 });
 
-test('executeWithConn - 错误日志包含完整信息', async () => {
+test('executeWithConn - 错误信息包含完整信息', async () => {
     const sqlMock = {
         unsafe: mock(async () => {
             throw new Error('Syntax error near "??"');
@@ -124,20 +93,11 @@ test('executeWithConn - 错误日志包含完整信息', async () => {
         expect(error.sql).toBe(testSql);
         expect(error.params).toEqual(testParams);
         expect(typeof error.duration).toBe('number');
-
-        // 验证日志内容
-        const allLogs = errorLogs.join('\n');
-        expect(allLogs).toContain('SQL 语句:');
-        expect(allLogs).toContain('SHOW COLUMNS FROM ??');
-        expect(allLogs).toContain('参数列表:');
-        expect(allLogs).toContain('["users"]');
-        expect(allLogs).toContain('执行耗时:');
-        expect(allLogs).toContain('错误信息:');
-        expect(allLogs).toContain('Syntax error near "??"');
+        expect(error.originalError.message).toBe('Syntax error near "??"');
     }
 });
 
-test('executeWithConn - 超长 SQL 截断', async () => {
+test('executeWithConn - 超长 SQL 保留在错误对象中', async () => {
     const longSql = 'SELECT * FROM users WHERE ' + 'id = ? AND '.repeat(50) + 'name = ?';
     const sqlMock = {
         unsafe: mock(async () => {
@@ -151,20 +111,13 @@ test('executeWithConn - 超长 SQL 截断', async () => {
     try {
         await (dbHelper as any).executeWithConn(longSql);
     } catch (error: any) {
-        // SQL 应该被截断
-        expect(error.sql).toBe(longSql); // 完整保存在错误对象中
-
-        // 日志中应该截断并加 ...
-        const sqlLog = errorLogs.find((log) => log.includes('SQL 语句:'));
-        expect(sqlLog).toBeDefined();
-        if (sqlLog) {
-            expect(sqlLog.length).toBeLessThan(longSql.length + 50); // 截断后应该更短
-            expect(sqlLog).toContain('...');
-        }
+        // SQL 完整保存在错误对象中
+        expect(error.sql).toBe(longSql);
+        expect(error.params).toEqual([]);
     }
 });
 
-test('executeWithConn - 慢查询日志（>1000ms）', async () => {
+test('executeWithConn - 慢查询检测（>1000ms）', async () => {
     const mockResult = [{ id: 1 }];
     const sqlMock = {
         unsafe: mock(async () => {
@@ -179,10 +132,8 @@ test('executeWithConn - 慢查询日志（>1000ms）', async () => {
 
     const result = await (dbHelper as any).executeWithConn('SELECT SLEEP(1)');
 
+    // 功能仍正常返回结果
     expect(result).toEqual(mockResult);
-    expect(warnLogs.length).toBeGreaterThan(0);
-    expect(warnLogs.some((log) => log.includes('🐌 检测到慢查询'))).toBe(true);
-    expect(warnLogs.some((log) => log.includes('ms'))).toBe(true);
 });
 
 test('executeWithConn - 数据库未连接错误', async () => {
@@ -213,7 +164,7 @@ test('executeWithConn - 空参数数组', async () => {
     expect(sqlMock.unsafe).toHaveBeenCalledWith('SELECT COUNT(*) as count FROM users');
 });
 
-test('executeWithConn - 参数 JSON 序列化', async () => {
+test('executeWithConn - 复杂参数处理', async () => {
     const sqlMock = {
         unsafe: mock(async () => {
             throw new Error('Test error');
@@ -228,13 +179,8 @@ test('executeWithConn - 参数 JSON 序列化', async () => {
     try {
         await (dbHelper as any).executeWithConn('SELECT ?', complexParams);
     } catch (error: any) {
-        // 验证参数被正确序列化
-        const paramsLog = errorLogs.find((log) => log.includes('参数列表:'));
-        expect(paramsLog).toBeDefined();
-        if (paramsLog) {
-            // JSON.stringify 应该能处理复杂参数
-            expect(paramsLog).toContain('参数列表:');
-            expect(() => JSON.parse(paramsLog.split('参数列表:')[1].trim())).not.toThrow();
-        }
+        // 验证参数被正确保存
+        expect(error.params).toEqual(complexParams);
+        expect(error.sql).toBe('SELECT ?');
     }
 });

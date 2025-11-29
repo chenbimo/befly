@@ -17,6 +17,7 @@
 import { join } from 'pathe';
 import { cloneDeep } from 'es-toolkit';
 import { Connect } from '../lib/connect.js';
+import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { scanAddons, getAddonDir, scanConfig } from 'befly-util';
 import { Logger } from '../lib/logger.js';
@@ -301,7 +302,7 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
         // 连接数据库（SQL + Redis）
         await Connect.connect(config);
 
-        const helper = Connect.getDbHelper();
+        const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
 
         // 3. 检查表是否存在（addon_admin_menu 来自 addon-admin 组件）
         const exists = await helper.tableExists('addon_admin_menu');
