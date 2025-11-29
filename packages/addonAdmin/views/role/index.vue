@@ -16,41 +16,57 @@
                 </TButton>
             </div>
         </div>
-        <div class="main-table">
-            <TTable :data="$Data.tableData" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id" bordered>
-                <template #state="{ row }">
-                    <TTag v-if="row.state === 1" theme="success">正常</TTag>
-                    <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
-                    <TTag v-else theme="danger">已删除</TTag>
-                </template>
-                <template #operation="{ row }">
-                    <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
-                        <TButton variant="text" size="small">操作</TButton>
-                        <TDropdownMenu slot="dropdown">
-                            <TDropdownItem value="upd">
-                                <ILucidePencil />
-                                编辑
-                            </TDropdownItem>
-                            <TDropdownItem value="menu">
-                                <ILucideSettings />
-                                菜单权限
-                            </TDropdownItem>
-                            <TDropdownItem value="api">
-                                <ILucideCode />
-                                接口权限
-                            </TDropdownItem>
-                            <TDropdownItem value="del" :divider="true">
-                                <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
-                                删除
-                            </TDropdownItem>
-                        </TDropdownMenu>
-                    </TDropdown>
-                </template>
-            </TTable>
+        <div class="main-content">
+            <div class="main-table">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id" active-row-type="single" :active-row-keys="$Data.activeRowKeys" @active-change="$Method.onActiveChange">
+                    <template #state="{ row }">
+                        <TTag v-if="row.state === 1" theme="success">正常</TTag>
+                        <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
+                        <TTag v-else theme="danger">已删除</TTag>
+                    </template>
+                    <template #operation="{ row }">
+                        <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
+                            <TButton variant="text" size="small">操作</TButton>
+                            <TDropdownMenu slot="dropdown">
+                                <TDropdownItem value="upd">
+                                    <ILucidePencil />
+                                    编辑
+                                </TDropdownItem>
+                                <TDropdownItem value="menu">
+                                    <ILucideSettings />
+                                    菜单权限
+                                </TDropdownItem>
+                                <TDropdownItem value="api">
+                                    <ILucideCode />
+                                    接口权限
+                                </TDropdownItem>
+                                <TDropdownItem value="del" :divider="true">
+                                    <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                    删除
+                                </TDropdownItem>
+                            </TDropdownMenu>
+                        </TDropdown>
+                    </template>
+                </TTable>
+            </div>
+
+            <div class="main-detail">
+                <DetailPanel
+                    :data="$Data.currentRow"
+                    :fields="[
+                        { key: 'id', label: 'ID' },
+                        { key: 'name', label: '角色名称' },
+                        { key: 'code', label: '角色代码' },
+                        { key: 'description', label: '描述' },
+                        { key: 'sort', label: '排序' },
+                        { key: 'state', label: '状态' }
+                    ]"
+                />
+            </div>
         </div>
 
         <div class="main-page">
-            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
+            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.limit" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @page-size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
@@ -75,23 +91,28 @@ import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
 import MenuDialog from './components/menu.vue';
 import ApiDialog from './components/api.vue';
+import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
+import { withDefaultColumns } from '@/utils';
 
 // 响应式数据
 const $Data = $ref({
     tableData: [],
-    columns: [
+    loading: false,
+    activeRowKeys: [],
+    currentRow: null,
+    columns: withDefaultColumns([
         { colKey: 'index', title: '序号', width: 100, align: 'center' },
         { colKey: 'name', title: '角色名称', width: 150 },
         { colKey: 'code', title: '角色代码', width: 150 },
-        { colKey: 'description', title: '描述', minWidth: 150, ellipsis: true },
+        { colKey: 'description', title: '描述', minWidth: 150 },
         { colKey: 'sort', title: '排序', width: 80, align: 'center' },
-        { colKey: 'state', title: '状态', width: 100, align: 'center' },
-        { colKey: 'operation', title: '操作', width: 120, align: 'center', fixed: 'right' }
-    ],
+        { colKey: 'state', title: '状态', width: 100, align: 'center', ellipsis: false },
+        { colKey: 'operation', title: '操作', width: 120, align: 'center', fixed: 'right', ellipsis: false }
+    ]),
     pagerConfig: {
         currentPage: 1,
-        pageSize: 30,
+        limit: 30,
         total: 0,
         align: 'right',
         layout: 'total, prev, pager, next, jumper'
@@ -110,6 +131,7 @@ const $Method = {
     },
     // 加载角色列表
     async apiRoleList() {
+        $Data.loading = true;
         try {
             const res = await $Http('/addon/admin/role/list', {
                 page: $Data.pagerConfig.currentPage,
@@ -117,12 +139,20 @@ const $Method = {
             });
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
+
+            // 自动选中并高亮第一行
+            if ($Data.tableData.length > 0) {
+                $Data.currentRow = $Data.tableData[0];
+                $Data.activeRowKeys = [$Data.tableData[0].id];
+            } else {
+                $Data.currentRow = null;
+                $Data.activeRowKeys = [];
+            }
         } catch (error) {
             console.error('加载角色列表失败:', error);
-            MessagePlugin.info({
-                message: '加载数据失败',
-                status: 'error'
-            });
+            MessagePlugin.error('加载数据失败');
+        } finally {
+            $Data.loading = false;
         }
     },
 
@@ -130,20 +160,20 @@ const $Method = {
     async apiRoleDel(row) {
         DialogPlugin.confirm({
             header: '确认删除',
-            body: `确定要删除角色"${row.name}" 吗？`,
+            body: `确定要删除角色“${row.name}” 吗？`,
             status: 'warning'
         }).then(async () => {
             try {
                 const res = await $Http('/addon/admin/role/del', { id: row.id });
                 if (res.code === 0) {
-                    MessagePlugin.info({ message: '删除成功', status: 'success' });
+                    MessagePlugin.success('删除成功');
                     $Method.apiRoleList();
                 } else {
-                    MessagePlugin.info({ message: res.msg || '删除失败', status: 'error' });
+                    MessagePlugin.error(res.msg || '删除失败');
                 }
             } catch (error) {
                 console.error('删除失败:', error);
-                MessagePlugin.info({ message: '删除失败', status: 'error' });
+                MessagePlugin.error('删除失败');
             }
         });
     },
@@ -157,6 +187,28 @@ const $Method = {
     onPageChange({ currentPage }) {
         $Data.pagerConfig.currentPage = currentPage;
         $Method.apiRoleList();
+    },
+
+    // 每页条数改变
+    handleSizeChange({ pageSize }) {
+        $Data.pagerConfig.limit = pageSize;
+        $Data.pagerConfig.currentPage = 1;
+        $Method.apiRoleList();
+    },
+
+    // 高亮行变化（点击行选中）
+    onActiveChange(value, { activeRowData }) {
+        $Data.activeRowKeys = value;
+        // 更新当前高亮的行数据
+        if (activeRowData && activeRowData.length > 0) {
+            $Data.currentRow = activeRowData[0];
+        } else if ($Data.tableData.length > 0) {
+            // 如果取消高亮，默认显示第一行
+            $Data.currentRow = $Data.tableData[0];
+            $Data.activeRowKeys = [$Data.tableData[0].id];
+        } else {
+            $Data.currentRow = null;
+        }
     },
 
     // 操作菜单点击

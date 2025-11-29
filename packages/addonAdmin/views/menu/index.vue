@@ -1,93 +1,75 @@
 ﻿<template>
     <div class="page-menu page-table">
         <div class="main-tool">
-            <div class="left">
-                <TButton theme="primary" @click="$Method.onAction('add', {})">
-                    <template #icon>
-                        <ILucidePlus />
-                    </template>
-                    添加菜单
-                </TButton>
-            </div>
+            <div class="left"></div>
             <div class="right">
-                <TButton @click="$Method.handleRefresh">
+                <TButton shape="circle" @click="$Method.handleRefresh">
                     <template #icon>
                         <ILucideRotateCw />
                     </template>
-                    刷新
                 </TButton>
             </div>
         </div>
-        <div class="main-table">
-            <TTable :data="$Data.menuList" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
-                <template #icon="{ row }">
-                    <ILucideSquare v-if="row.icon" />
-                    <span v-else>-</span>
-                </template>
-                <template #state="{ row }">
-                    <TTag v-if="row.state === 1" theme="success">正常</TTag>
-                    <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
-                    <TTag v-else theme="danger">已删除</TTag>
-                </template>
-                <template #operation="{ row }">
-                    <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
-                        <TButton variant="text" size="small">操作</TButton>
-                        <TDropdownMenu slot="dropdown">
-                            <TDropdownItem value="upd">
-                                <ILucidePencil />
-                                编辑
-                            </TDropdownItem>
-                            <TDropdownItem value="del" :divider="true">
-                                <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
-                                删除
-                            </TDropdownItem>
-                        </TDropdownMenu>
-                    </TDropdown>
-                </template>
-            </TTable>
-        </div>
 
-        <div class="main-page">
-            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
-        </div>
+        <div class="main-content">
+            <div class="main-table">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" row-key="id" :tree="{ childrenKey: 'children', treeNodeColumnIndex: 0, defaultExpandAll: true }" :selected-row-keys="$Data.selectedRowKeys" active-row-type="single" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                    <template #state="{ row }">
+                        <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
+                        <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
+                        <TTag v-else-if="row.state === 0" shape="round" theme="danger" variant="light-outline">删除</TTag>
+                    </template>
+                </TTable>
+            </div>
 
-        <!-- 编辑对话框组件 -->
-        <EditDialog v-if="$Data.editVisible" v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiMenuList" />
+            <div class="main-detail">
+                <DetailPanel
+                    :data="$Data.currentRow"
+                    :fields="[
+                        { key: 'id', label: 'ID' },
+                        { key: 'name', label: '菜单名称' },
+                        { key: 'path', label: '路由路径' },
+                        { key: 'icon', label: '图标' },
+                        { key: 'sort', label: '排序' },
+                        { key: 'pid', label: '父级ID', default: '顶级菜单' },
+                        { key: 'state', label: '状态' }
+                    ]"
+                />
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
-import ILucidePlus from '~icons/lucide/plus';
+import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from 'tdesign-vue-next';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucideSquare from '~icons/lucide/square';
-import ILucidePencil from '~icons/lucide/pencil';
-import ILucideTrash2 from '~icons/lucide/trash-2';
-import EditDialog from './components/edit.vue';
+import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
+import { withDefaultColumns } from '@/utils';
 
 // 响应式数据
 const $Data = $ref({
-    menuList: [],
-    columns: [
-        { colKey: 'index', title: '序号', width: 60, align: 'center' },
-        { colKey: 'name', title: '菜单名称' },
-        { colKey: 'path', title: '路径', width: 200 },
-        { colKey: 'icon', title: '图标', width: 100 },
-        { colKey: 'sort', title: '排序', width: 80 },
-        { colKey: 'state', title: '状态', width: 100 },
-        { colKey: 'operation', title: '操作', width: 120, align: 'right' }
-    ],
-    pagerConfig: {
-        currentPage: 1,
-        pageSize: 30,
-        total: 0,
-        align: 'right',
-        layout: 'total, prev, pager, next, jumper'
-    },
-    editVisible: false,
-    actionType: 'add',
-    rowData: {}
+    tableData: [],
+    loading: false,
+    columns: withDefaultColumns([
+        {
+            colKey: 'row-select',
+            type: 'single',
+            width: 50,
+            fixed: 'left',
+            checkProps: { allowUncheck: true },
+            ellipsis: false
+        },
+        { colKey: 'name', title: '菜单名称', width: 200, fixed: 'left' },
+        { colKey: 'id', title: '序号', width: 100, align: 'center' },
+        { colKey: 'path', title: '路由路径', width: 250 },
+        { colKey: 'icon', title: '图标', width: 120 },
+        { colKey: 'sort', title: '排序', width: 80, align: 'center' },
+        { colKey: 'state', title: '状态', width: 100, ellipsis: false }
+    ]),
+    currentRow: null,
+    selectedRowKeys: [],
+    activeRowKeys: []
 });
 
 // 方法
@@ -96,44 +78,67 @@ const $Method = {
         await $Method.apiMenuList();
     },
 
-    // 加载菜单列表
+    // 加载菜单列表（树形结构）
     async apiMenuList() {
+        $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/menu/list', {
-                page: $Data.pagerConfig.currentPage,
-                limit: $Data.pagerConfig.pageSize
-            });
-            $Data.menuList = res.data.lists || [];
-            $Data.pagerConfig.total = res.data.total || 0;
+            const res = await $Http('/addon/admin/menu/list');
+            // 构建树形结构
+            $Data.tableData = $Method.buildTree(res.data || []);
+
+            // 自动选中并高亮第一行
+            if ($Data.tableData.length > 0) {
+                $Data.currentRow = $Data.tableData[0];
+                $Data.selectedRowKeys = [$Data.tableData[0].id];
+                $Data.activeRowKeys = [$Data.tableData[0].id];
+            } else {
+                $Data.currentRow = null;
+                $Data.selectedRowKeys = [];
+                $Data.activeRowKeys = [];
+            }
         } catch (error) {
             console.error('加载菜单列表失败:', error);
-            MessagePlugin.info({
-                message: '加载数据失败',
-                status: 'error'
-            });
+            MessagePlugin.error('加载数据失败');
+        } finally {
+            $Data.loading = false;
         }
     },
 
-    // 删除菜单
-    async apiMenuDel(row) {
-        DialogPlugin.confirm({
-            header: '确认删除',
-            body: `确定要删除菜单"${row.name}" 吗？`,
-            status: 'warning'
-        }).then(async () => {
-            try {
-                const res = await $Http('/addon/admin/menu/del', { id: row.id });
-                if (res.code === 0) {
-                    MessagePlugin.info({ message: '删除成功', status: 'success' });
-                    $Method.apiMenuList();
-                } else {
-                    MessagePlugin.info({ message: res.msg || '删除失败', status: 'error' });
-                }
-            } catch (error) {
-                console.error('删除失败:', error);
-                MessagePlugin.info({ message: '删除失败', status: 'error' });
+    // 构建树形结构
+    buildTree(list) {
+        const map = {};
+        const roots = [];
+
+        // 先创建所有节点的映射
+        for (const item of list) {
+            map[item.id] = { ...item, children: [] };
+        }
+
+        // 构建树形结构
+        for (const item of list) {
+            const node = map[item.id];
+            if (item.pid === 0) {
+                roots.push(node);
+            } else if (map[item.pid]) {
+                map[item.pid].children.push(node);
+            } else {
+                roots.push(node);
             }
-        });
+        }
+
+        // 移除空的 children 数组
+        const removeEmptyChildren = (nodes) => {
+            for (const node of nodes) {
+                if (node.children.length === 0) {
+                    delete node.children;
+                } else {
+                    removeEmptyChildren(node.children);
+                }
+            }
+        };
+        removeEmptyChildren(roots);
+
+        return roots;
     },
 
     // 刷新
@@ -141,32 +146,39 @@ const $Method = {
         $Method.apiMenuList();
     },
 
-    // 分页改变
-    onPageChange({ currentPage }) {
-        $Data.pagerConfig.currentPage = currentPage;
-        $Method.apiMenuList();
+    // 单选变化
+    onSelectChange(value, { selectedRowData }) {
+        $Data.selectedRowKeys = value;
+        $Data.activeRowKeys = value;
+        if (selectedRowData && selectedRowData.length > 0) {
+            $Data.currentRow = selectedRowData[0];
+        } else if ($Data.tableData.length > 0) {
+            $Data.currentRow = $Data.tableData[0];
+            $Data.selectedRowKeys = [$Data.tableData[0].id];
+            $Data.activeRowKeys = [$Data.tableData[0].id];
+        } else {
+            $Data.currentRow = null;
+        }
     },
 
-    // 操作菜单点击
-    onAction(command, rowData) {
-        $Data.actionType = command;
-        $Data.rowData = rowData;
-        if (command === 'add' || command === 'upd') {
-            $Data.editVisible = true;
-        } else if (command === 'del') {
-            $Method.apiMenuDel(rowData);
+    // 高亮行变化
+    onActiveChange(value, { activeRowData }) {
+        $Data.activeRowKeys = value;
+        $Data.selectedRowKeys = value;
+        if (activeRowData && activeRowData.length > 0) {
+            $Data.currentRow = activeRowData[0];
+        } else if ($Data.tableData.length > 0) {
+            $Data.currentRow = $Data.tableData[0];
+            $Data.selectedRowKeys = [$Data.tableData[0].id];
+            $Data.activeRowKeys = [$Data.tableData[0].id];
+        } else {
+            $Data.currentRow = null;
         }
     }
 };
 
 $Method.initData();
 </script>
-
-<route lang="yaml">
-meta:
-    layout: default
-    title: 菜单管理
-</route>
 
 <style scoped lang="scss">
 // 样式继承自全局 page-table

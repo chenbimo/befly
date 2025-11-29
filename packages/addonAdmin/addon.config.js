@@ -27,7 +27,17 @@ export default defineAddonConfig(import.meta.dirname, {
                 {
                     name: '角色管理',
                     path: '/role',
-                    sort: 5
+                    sort: 1
+                },
+                {
+                    name: '菜单列表',
+                    path: '/menu',
+                    sort: 2
+                },
+                {
+                    name: '接口列表',
+                    path: '/api',
+                    sort: 3
                 }
             ]
         },

@@ -16,33 +16,51 @@
                 </TButton>
             </div>
         </div>
-        <div class="main-table">
-            <TTable :data="$Data.dictList" :columns="$Data.columns" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id">
-                <template #state="{ row }">
-                    <TTag v-if="row.state === 1" theme="success">正常</TTag>
-                    <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
-                    <TTag v-else theme="danger">已删除</TTag>
-                </template>
-                <template #operation="{ row }">
-                    <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
-                        <TButton variant="text" size="small">操作</TButton>
-                        <TDropdownMenu slot="dropdown">
-                            <TDropdownItem value="upd">
-                                <ILucidePencil />
-                                编辑
-                            </TDropdownItem>
-                            <TDropdownItem value="del" :divider="true">
-                                <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
-                                删除
-                            </TDropdownItem>
-                        </TDropdownMenu>
-                    </TDropdown>
-                </template>
-            </TTable>
+        <div class="main-content">
+            <div class="main-table">
+                <TTable :data="$Data.dictList" :columns="$Data.columns" :loading="$Data.loading" header-cell-class-name="custom-table-cell-class" size="small" height="100%" row-key="id" active-row-type="single" :active-row-keys="$Data.activeRowKeys" @active-change="$Method.onActiveChange">
+                    <template #state="{ row }">
+                        <TTag v-if="row.state === 1" theme="success">正常</TTag>
+                        <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
+                        <TTag v-else theme="danger">已删除</TTag>
+                    </template>
+                    <template #operation="{ row }">
+                        <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
+                            <TButton variant="text" size="small">操作</TButton>
+                            <TDropdownMenu slot="dropdown">
+                                <TDropdownItem value="upd">
+                                    <ILucidePencil />
+                                    编辑
+                                </TDropdownItem>
+                                <TDropdownItem value="del" :divider="true">
+                                    <ILucideTrash2 style="width: 14px; height: 14px; margin-right: 6px" />
+                                    删除
+                                </TDropdownItem>
+                            </TDropdownMenu>
+                        </TDropdown>
+                    </template>
+                </TTable>
+            </div>
+
+            <div class="main-detail">
+                <DetailPanel
+                    :data="$Data.currentRow"
+                    :fields="[
+                        { key: 'id', label: 'ID' },
+                        { key: 'name', label: '字典名称' },
+                        { key: 'code', label: '字典代码' },
+                        { key: 'value', label: '字典值' },
+                        { key: 'pid', label: '父级ID', default: '顶级' },
+                        { key: 'sort', label: '排序' },
+                        { key: 'description', label: '描述' },
+                        { key: 'state', label: '状态' }
+                    ]"
+                />
+            </div>
         </div>
 
         <div class="main-page">
-            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
+            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.limit" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @page-size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
@@ -57,25 +75,30 @@ import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import ILucidePencil from '~icons/lucide/pencil';
 import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
+import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
+import { withDefaultColumns } from '@/utils';
 
 // 响应式数据
 const $Data = $ref({
     dictList: [],
-    columns: [
+    loading: false,
+    activeRowKeys: [],
+    currentRow: null,
+    columns: withDefaultColumns([
         { colKey: 'index', title: '序号', width: 60, align: 'center' },
         { colKey: 'name', title: '字典名称' },
         { colKey: 'code', title: '字典代码', width: 150 },
         { colKey: 'value', title: '字典值', width: 200 },
         { colKey: 'pid', title: '父级ID', width: 100 },
         { colKey: 'sort', title: '排序', width: 80 },
-        { colKey: 'description', title: '描述', ellipsis: true },
-        { colKey: 'state', title: '状态', width: 100 },
-        { colKey: 'operation', title: '操作', width: 120, align: 'right' }
-    ],
+        { colKey: 'description', title: '描述' },
+        { colKey: 'state', title: '状态', width: 100, ellipsis: false },
+        { colKey: 'operation', title: '操作', width: 120, align: 'right', ellipsis: false }
+    ]),
     pagerConfig: {
         currentPage: 1,
-        pageSize: 30,
+        limit: 30,
         total: 0,
         align: 'right',
         layout: 'total, prev, pager, next, jumper'
@@ -93,19 +116,28 @@ const $Method = {
 
     // 加载字典列表
     async apiDictList() {
+        $Data.loading = true;
         try {
             const res = await $Http('/addon/admin/dict/list', {
                 page: $Data.pagerConfig.currentPage,
-                limit: $Data.pagerConfig.pageSize
+                limit: $Data.pagerConfig.limit
             });
             $Data.dictList = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
+
+            // 自动选中并高亮第一行
+            if ($Data.dictList.length > 0) {
+                $Data.currentRow = $Data.dictList[0];
+                $Data.activeRowKeys = [$Data.dictList[0].id];
+            } else {
+                $Data.currentRow = null;
+                $Data.activeRowKeys = [];
+            }
         } catch (error) {
             console.error('加载字典列表失败:', error);
-            MessagePlugin.info({
-                message: '加载数据失败',
-                status: 'error'
-            });
+            MessagePlugin.error('加载数据失败');
+        } finally {
+            $Data.loading = false;
         }
     },
 
@@ -113,20 +145,20 @@ const $Method = {
     async apiDictDel(row) {
         DialogPlugin.confirm({
             header: '确认删除',
-            body: `确定要删除字典"${row.name}" 吗？`,
+            body: `确定要删除字典“${row.name}” 吗？`,
             status: 'warning'
         }).then(async () => {
             try {
                 const res = await $Http('/addon/admin/dict/del', { id: row.id });
                 if (res.code === 0) {
-                    MessagePlugin.info({ message: '删除成功', status: 'success' });
+                    MessagePlugin.success('删除成功');
                     $Method.apiDictList();
                 } else {
-                    MessagePlugin.info({ message: res.msg || '删除失败', status: 'error' });
+                    MessagePlugin.error(res.msg || '删除失败');
                 }
             } catch (error) {
                 console.error('删除失败:', error);
-                MessagePlugin.info({ message: '删除失败', status: 'error' });
+                MessagePlugin.error('删除失败');
             }
         });
     },
@@ -140,6 +172,28 @@ const $Method = {
     onPageChange({ currentPage }) {
         $Data.pagerConfig.currentPage = currentPage;
         $Method.apiDictList();
+    },
+
+    // 每页条数改变
+    handleSizeChange({ pageSize }) {
+        $Data.pagerConfig.limit = pageSize;
+        $Data.pagerConfig.currentPage = 1;
+        $Method.apiDictList();
+    },
+
+    // 高亮行变化（点击行选中）
+    onActiveChange(value, { activeRowData }) {
+        $Data.activeRowKeys = value;
+        // 更新当前高亮的行数据
+        if (activeRowData && activeRowData.length > 0) {
+            $Data.currentRow = activeRowData[0];
+        } else if ($Data.dictList.length > 0) {
+            // 如果取消高亮，默认显示第一行
+            $Data.currentRow = $Data.dictList[0];
+            $Data.activeRowKeys = [$Data.dictList[0].id];
+        } else {
+            $Data.currentRow = null;
+        }
     },
 
     // 操作菜单点击

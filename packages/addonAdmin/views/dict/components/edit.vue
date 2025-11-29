@@ -28,7 +28,7 @@
         </TForm>
         <template #footer>
             <TButton @click="$Method.onClose">取消</TButton>
-            <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
+            <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">确定</TButton>
         </template>
     </TDialog>
 </template>
@@ -62,6 +62,7 @@ const $From = $shallowRef({
 
 const $Data = $ref({
     visible: false,
+    submitting: false,
     formData: {
         id: 0,
         name: '',
@@ -127,16 +128,17 @@ const $Method = {
             const valid = await $From.form.validate();
             if (!valid) return;
 
+            $Data.submitting = true;
             const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/dictIns' : '/addon/admin/dictUpd', $Data.formData);
 
-            MessagePlugin.info({
-                message: $Prop.actionType === 'add' ? '添加成功' : '编辑成功',
-                status: 'success'
-            });
+            MessagePlugin.success($Prop.actionType === 'add' ? '添加成功' : '编辑成功');
             $Method.onClose();
             $Emit('success');
         } catch (error) {
             console.error('提交失败:', error);
+            MessagePlugin.error('提交失败');
+        } finally {
+            $Data.submitting = false;
         }
     }
 };

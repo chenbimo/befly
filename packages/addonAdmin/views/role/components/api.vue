@@ -30,7 +30,7 @@
             </div>
             <div class="footer-right">
                 <TButton @click="$Method.onClose">取消</TButton>
-                <TButton theme="primary" @click="$Method.onSubmit">保存</TButton>
+                <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">保存</TButton>
             </div>
         </template>
     </TDialog>
@@ -56,6 +56,7 @@ const $Emit = defineEmits(['update:modelValue', 'success']);
 
 const $Data = $ref({
     visible: false,
+    submitting: false,
     apiData: [],
     filteredApiData: [],
     searchText: '',
@@ -113,7 +114,7 @@ const $Method = {
             $Data.apiData = Array.from(apiMap.values());
         } catch (error) {
             console.error('加载接口失败:', error);
-            MessagePlugin.info({ message: '加载接口失败', status: 'error' });
+            MessagePlugin.error('加载接口失败');
         }
     },
 
@@ -167,30 +168,25 @@ const $Method = {
     // 提交表单
     async onSubmit() {
         try {
+            $Data.submitting = true;
+
             const res = await $Http('/addon/admin/role/apiSave', {
                 roleId: $Prop.rowData.id,
                 apiIds: $Data.checkedApiIds
             });
 
             if (res.code === 0) {
-                MessagePlugin.info({
-                    message: '保存成功',
-                    status: 'success'
-                });
+                MessagePlugin.success('保存成功');
                 $Data.visible = false;
                 $Emit('success');
             } else {
-                MessagePlugin.info({
-                    message: res.msg || '保存失败',
-                    status: 'error'
-                });
+                MessagePlugin.error(res.msg || '保存失败');
             }
         } catch (error) {
             console.error('保存失败:', error);
-            MessagePlugin.info({
-                message: '保存失败',
-                status: 'error'
-            });
+            MessagePlugin.error('保存失败');
+        } finally {
+            $Data.submitting = false;
         }
     }
 };

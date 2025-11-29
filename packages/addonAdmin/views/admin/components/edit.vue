@@ -32,7 +32,7 @@
             <div class="dialog-footer">
                 <t-space>
                     <TButton theme="default" @click="$Method.onClose">取消</TButton>
-                    <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
+                    <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">确定</TButton>
                 </t-space>
             </div>
         </template>
@@ -79,6 +79,7 @@ const $From = $shallowRef({
 
 const $Data = $ref({
     visible: false,
+    submitting: false,
     roleOptions: [],
     formData: {
         id: 0,
@@ -154,6 +155,7 @@ const $Method = {
             const valid = await $From.form.validate();
             if (!valid) return;
 
+            $Data.submitting = true;
             const submitData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : fieldClear($Data.formData, { omitKeys: ['password'] });
 
             await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', submitData);
@@ -163,6 +165,8 @@ const $Method = {
             $Method.onClose();
         } catch (error) {
             MessagePlugin.error(error.msg || '提交失败');
+        } finally {
+            $Data.submitting = false;
         }
     }
 };

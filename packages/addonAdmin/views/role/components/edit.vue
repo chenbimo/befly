@@ -24,7 +24,7 @@
         </div>
         <template #footer>
             <TButton @click="$Method.onClose">取消</TButton>
-            <TButton theme="primary" @click="$Method.onSubmit">确定</TButton>
+            <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">确定</TButton>
         </template>
     </TDialog>
 </template>
@@ -70,6 +70,7 @@ const $Computed = {};
 
 const $Data = $ref({
     visible: false,
+    submitting: false,
     formData: {
         id: 0,
         name: '',
@@ -116,20 +117,17 @@ const $Method = {
             const valid = await $From.form.validate();
             if (!valid) return;
 
+            $Data.submitting = true;
             const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/roleUpd' : '/addon/admin/roleIns', $Data.formData);
 
-            MessagePlugin.info({
-                message: $Prop.actionType === 'upd' ? '更新成功' : '添加成功',
-                status: 'success'
-            });
+            MessagePlugin.success($Prop.actionType === 'upd' ? '更新成功' : '添加成功');
             $Data.visible = false;
             $Emit('success');
         } catch (error) {
             console.error('提交失败:', error);
-            MessagePlugin.info({
-                message: '提交失败',
-                status: 'error'
-            });
+            MessagePlugin.error('提交失败');
+        } finally {
+            $Data.submitting = false;
         }
     }
 };

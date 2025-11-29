@@ -19,7 +19,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" row-key="id" :selected-row-keys="$Data.selectedRowKeys" active-row-type="single" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" row-key="id" :selected-row-keys="$Data.selectedRowKeys" active-row-type="single" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
                         <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
@@ -44,45 +44,22 @@
             </div>
 
             <div class="main-detail">
-                <div class="detail-content">
-                    <div v-if="$Data.currentRow">
-                        <div style="margin-bottom: 16px">
-                            <div style="color: var(--text-secondary); margin-bottom: 4px">ID</div>
-                            <div>{{ $Data.currentRow.id }}</div>
-                        </div>
-                        <div style="margin-bottom: 16px">
-                            <div style="color: var(--text-secondary); margin-bottom: 4px">用户名</div>
-                            <div>{{ $Data.currentRow.username }}</div>
-                        </div>
-                        <div style="margin-bottom: 16px">
-                            <div style="color: var(--text-secondary); margin-bottom: 4px">邮箱</div>
-                            <div>{{ $Data.currentRow.email }}</div>
-                        </div>
-                        <div style="margin-bottom: 16px">
-                            <div style="color: var(--text-secondary); margin-bottom: 4px">昵称</div>
-                            <div>{{ $Data.currentRow.nickname || '-' }}</div>
-                        </div>
-                        <div style="margin-bottom: 16px">
-                            <div style="color: var(--text-secondary); margin-bottom: 4px">角色</div>
-                            <div>{{ $Data.currentRow.roleCode || '-' }}</div>
-                        </div>
-                        <div style="margin-bottom: 16px">
-                            <div style="color: var(--text-secondary); margin-bottom: 4px">状态</div>
-                            <TTag v-if="$Data.currentRow.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
-                            <TTag v-else-if="$Data.currentRow.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
-                            <TTag v-else-if="$Data.currentRow.state === 0" shape="round" theme="danger" variant="light-outline">已删除</TTag>
-                        </div>
-                    </div>
-                    <div v-else style="text-align: center; padding: 48px 0; color: var(--text-placeholder)">
-                        <div style="font-size: 48px; margin-bottom: 8px">📋</div>
-                        <div>暂无数据</div>
-                    </div>
-                </div>
+                <DetailPanel
+                    :data="$Data.currentRow"
+                    :fields="[
+                        { key: 'id', label: 'ID' },
+                        { key: 'username', label: '用户名' },
+                        { key: 'email', label: '邮箱' },
+                        { key: 'nickname', label: '昵称' },
+                        { key: 'roleCode', label: '角色' },
+                        { key: 'state', label: '状态' }
+                    ]"
+                />
             </div>
         </div>
 
         <div class="main-page">
-            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.pageSize" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @size-change="$Method.handleSizeChange" />
+            <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.limit" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @page-size-change="$Method.handleSizeChange" />
         </div>
 
         <!-- 编辑对话框组件 -->
@@ -97,30 +74,34 @@ import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import ILucidePencil from '~icons/lucide/pencil';
 import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
+import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
+import { withDefaultColumns } from '@/utils';
 
 // 响应式数据
 const $Data = $ref({
     tableData: [],
-    columns: [
+    loading: false,
+    columns: withDefaultColumns([
         {
             colKey: 'row-select',
             type: 'single',
             width: 50,
             fixed: 'left',
-            checkProps: { allowUncheck: true }
+            checkProps: { allowUncheck: true },
+            ellipsis: false
         },
         { colKey: 'username', title: '用户名', width: 150, fixed: 'left' },
         { colKey: 'id', title: '序号', width: 150, align: 'center' },
         { colKey: 'email', title: '邮箱', width: 200 },
         { colKey: 'nickname', title: '昵称', width: 150 },
         { colKey: 'roleCode', title: '角色', width: 120 },
-        { colKey: 'state', title: '状态', width: 100 },
-        { colKey: 'operation', title: '操作', width: 80, align: 'center', fixed: 'right' }
-    ],
+        { colKey: 'state', title: '状态', width: 100, ellipsis: false },
+        { colKey: 'operation', title: '操作', width: 80, align: 'center', fixed: 'right', ellipsis: false }
+    ]),
     pagerConfig: {
         currentPage: 1,
-        pageSize: 30,
+        limit: 30,
         total: 0,
         align: 'right',
         layout: 'total, prev, pager, next, jumper'
@@ -141,10 +122,11 @@ const $Method = {
 
     // 加载管理员列表
     async apiAdminList() {
+        $Data.loading = true;
         try {
             const res = await $Http('/addon/admin/admin/list', {
                 page: $Data.pagerConfig.currentPage,
-                limit: $Data.pagerConfig.pageSize
+                limit: $Data.pagerConfig.limit
             });
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
@@ -161,10 +143,9 @@ const $Method = {
             }
         } catch (error) {
             console.error('加载管理员列表失败:', error);
-            MessagePlugin.info({
-                message: '加载数据失败',
-                status: 'error'
-            });
+            MessagePlugin.error('加载数据失败');
+        } finally {
+            $Data.loading = false;
         }
     },
 
@@ -172,20 +153,20 @@ const $Method = {
     async apiAdminDel(row) {
         DialogPlugin.confirm({
             header: '确认删除',
-            body: `确定要删除管理员"${row.username}" 吗？`,
+            body: `确定要删除管理员“${row.username}” 吗？`,
             status: 'warning'
         }).then(async () => {
             try {
                 const res = await $Http('/addon/admin/admin/del', { id: row.id });
                 if (res.code === 0) {
-                    MessagePlugin.info({ message: '删除成功', status: 'success' });
+                    MessagePlugin.success('删除成功');
                     $Method.apiAdminList();
                 } else {
-                    MessagePlugin.info({ message: res.msg || '删除失败', status: 'error' });
+                    MessagePlugin.error(res.msg || '删除失败');
                 }
             } catch (error) {
                 console.error('删除失败:', error);
-                MessagePlugin.info({ message: '删除失败', status: 'error' });
+                MessagePlugin.error('删除失败');
             }
         });
     },
@@ -203,7 +184,7 @@ const $Method = {
 
     // 每页条数改变
     handleSizeChange({ pageSize }) {
-        $Data.pagerConfig.pageSize = pageSize;
+        $Data.pagerConfig.limit = pageSize;
         $Data.pagerConfig.currentPage = 1;
         $Method.apiAdminList();
     },

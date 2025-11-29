@@ -23,3 +23,27 @@ export function arrayToTree(items, pid = 0) {
 
     return tree;
 }
+
+/**
+ * 表格列默认配置
+ * 统一设置超出显示省略号等通用配置
+ */
+const defaultColumnConfig = {
+    ellipsis: true,
+    ellipsisTitle: true
+};
+
+/**
+ * 为表格列添加默认配置
+ * @param {Array} columns - 列配置数组
+ * @returns {Array} 添加默认配置后的列数组
+ */
+export function withDefaultColumns(columns) {
+    return columns.map((col) => ({
+        ...defaultColumnConfig,
+        ...col
+    }));
+}
+
+// 导出组合式函数
+export { useTablePage } from './useTablePage.js';

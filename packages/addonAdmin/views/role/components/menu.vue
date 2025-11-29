@@ -5,7 +5,7 @@
         </div>
         <template #footer>
             <TButton @click="$Method.onClose">取消</TButton>
-            <TButton theme="primary" @click="$Method.onSubmit">保存</TButton>
+            <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">保存</TButton>
         </template>
     </TDialog>
 </template>
@@ -36,6 +36,7 @@ const $From = $shallowRef({
 
 const $Data = $ref({
     visible: false,
+    submitting: false,
     menuTreeData: [],
     menuTreeCheckedKeys: []
 });
@@ -69,7 +70,7 @@ const $Method = {
             $Data.menuTreeData = arrayToTree(menuList);
         } catch (error) {
             console.error('加载菜单失败:', error);
-            MessagePlugin.info({ message: '加载菜单失败', status: 'error' });
+            MessagePlugin.error('加载菜单失败');
         }
     },
 
@@ -100,9 +101,11 @@ const $Method = {
     async onSubmit() {
         try {
             if (!$From.tree) {
-                MessagePlugin.info({ message: '菜单树未初始化', status: 'error' });
+                MessagePlugin.error('菜单树未初始化');
                 return;
             }
+
+            $Data.submitting = true;
 
             // 获取选中的节点（包括半选中的父节点）
             const checkedKeys = $From.tree.getCheckedKeys();
@@ -115,24 +118,17 @@ const $Method = {
             });
 
             if (res.code === 0) {
-                MessagePlugin.info({
-                    message: '保存成功',
-                    status: 'success'
-                });
+                MessagePlugin.success('保存成功');
                 $Data.visible = false;
                 $Emit('success');
             } else {
-                MessagePlugin.info({
-                    message: res.msg || '保存失败',
-                    status: 'error'
-                });
+                MessagePlugin.error(res.msg || '保存失败');
             }
         } catch (error) {
             console.error('保存失败:', error);
-            MessagePlugin.info({
-                message: '保存失败',
-                status: 'error'
-            });
+            MessagePlugin.error('保存失败');
+        } finally {
+            $Data.submitting = false;
         }
     }
 };

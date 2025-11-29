@@ -12,6 +12,15 @@ import { ConfigProvider } from 'tdesign-vue-next';
 const globalConfig = {
     dialog: {
         closeOnOverlayClick: false
+    },
+    table: {
+        // 表格默认配置
+        size: 'medium',
+        bordered: false,
+        stripe: false,
+        showHeader: true,
+        // 列默认配置（需要在每个列上单独设置）
+        cellEmptyContent: '-'
     }
 };
 </script>
