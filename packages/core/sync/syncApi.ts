@@ -15,8 +15,9 @@ import { join, dirname, relative, basename } from 'pathe';
 import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { RedisKeys } from 'befly-shared';
-import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-shared';
+import { RedisKeys } from 'befly-shared/redisKeys';
+import { scanFiles } from 'befly-shared/scanFiles';
+import { scanAddons, addonDirExists, getAddonDir } from 'befly-shared/addonHelper';
 
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';

@@ -5,7 +5,7 @@
 
 import { test, expect, mock } from 'bun:test';
 import { DbHelper } from '../lib/dbHelper.js';
-import { RedisKeys } from 'befly-shared';
+import { RedisKeys } from 'befly-shared/redisKeys';
 
 // 创建 Mock Befly 上下文
 function createMockBefly(sqlMock: any, redisMock?: any) {

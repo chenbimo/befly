@@ -1,6 +1,6 @@
 // 外部依赖
 import { isPlainObject, isEmpty } from 'es-toolkit/compat';
-import { pickFields } from 'befly-shared';
+import { pickFields } from 'befly-shared/pickFields';
 import { XMLParser } from 'fast-xml-parser';
 
 // 相对导入

@@ -6,7 +6,7 @@
 import { SQL, RedisClient } from 'bun';
 import { Logger } from './logger.js';
 import { Connect } from './connect.js';
-import type { KeyValue } from 'befly-shared';
+import type { KeyValue } from 'befly-shared/types';
 
 /**
  * Redis 助手类

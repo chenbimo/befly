@@ -3,7 +3,7 @@
  * 负责扫描和初始化所有插件（核心、组件、项目）
  */
 
-import { scanAddons, getAddonDir } from 'befly-shared';
+import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
 
 import { Logger } from '../lib/logger.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';

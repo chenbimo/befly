@@ -13,7 +13,7 @@ bun add befly-shared
 ### 响应类型
 
 ```typescript
-import type { ResponseResult, PaginatedResult, ValidationResult } from 'befly-shared';
+import type { ResponseResult, PaginatedResult, ValidationResult } from 'befly-shared/types';
 
 // API 响应
 const result: ResponseResult<{ id: number }> = {
@@ -37,7 +37,7 @@ const list: PaginatedResult<User> = {
 ### 常量
 
 ```typescript
-import { ApiCode, ErrorMessages } from 'befly-shared';
+import { ApiCode, ErrorMessages } from 'befly-shared/types';
 
 // 响应码
 ApiCode.SUCCESS; // 0
@@ -56,7 +56,7 @@ ErrorMessages.TOKEN_EXPIRED; // 'Token 已过期'
 ### 配置类型
 
 ```typescript
-import type { DatabaseConfig, RedisConfig } from 'befly-shared';
+import type { DatabaseConfig, RedisConfig } from 'befly-shared/types';
 
 const dbConfig: DatabaseConfig = {
     type: 'mysql',
@@ -78,7 +78,7 @@ const redisConfig: RedisConfig = {
 ### Redis 键和 TTL
 
 ```typescript
-import { RedisKeys, RedisTTL } from 'befly-shared';
+import { RedisKeys, RedisTTL } from 'befly-shared/redisKeys';
 
 // 生成 Redis 键
 RedisKeys.apisAll(); // 'befly:apis:all'
@@ -113,7 +113,7 @@ RedisTTL.menusAll; // null (永久)
 **示例：**
 
 ```typescript
-import { mergeConfig } from 'befly-shared';
+import { mergeConfig } from 'befly-shared/scanConfig';
 
 const config = await mergeConfig({
     dirs: ['/path/to/config1', '/path/to/config2'],
@@ -135,7 +135,7 @@ Addon 配置自动合并函数，自动读取 addon 的 `addon.config.js` 和项
 **示例：**
 
 ```typescript
-import { addonConfigMerge } from 'befly-shared';
+import { addonConfigMerge } from 'befly-shared/scanConfig';
 
 // 在 @befly-addon/admin 包根目录文件中调用
 const config = await addonConfigMerge();
@@ -160,7 +160,7 @@ const config = await addonConfigMerge();
 **示例：**
 
 ```typescript
-import { keysToCamel } from 'befly-shared';
+import { keysToCamel } from 'befly-shared/keysToCamel';
 
 keysToCamel({ user_id: 123, user_name: 'John' });
 // { userId: 123, userName: 'John' }
@@ -179,7 +179,7 @@ keysToCamel({ user_id: 123, user_name: 'John' });
 **示例：**
 
 ```typescript
-import { keysToSnake } from 'befly-shared';
+import { keysToSnake } from 'befly-shared/keysToSnake';
 
 keysToSnake({ userId: 123, userName: 'John' });
 // { user_id: 123, user_name: 'John' }
@@ -198,7 +198,7 @@ keysToSnake({ userId: 123, userName: 'John' });
 **示例：**
 
 ```typescript
-import { arrayKeysToCamel } from 'befly-shared';
+import { arrayKeysToCamel } from 'befly-shared/arrayKeysToCamel';
 
 arrayKeysToCamel([
     { user_id: 1, user_name: 'John' },
@@ -228,7 +228,7 @@ arrayKeysToCamel([
 **示例：**
 
 ```typescript
-import { arrayToTree } from 'befly-shared';
+import { arrayToTree } from 'befly-shared/arrayToTree';
 
 const items = [
     { id: 1, pid: 0, name: '根节点' },
@@ -267,7 +267,7 @@ const tree = arrayToTree(items);
 **示例：**
 
 ```typescript
-import { fieldClear } from 'befly-shared';
+import { fieldClear } from 'befly-shared/fieldClear';
 
 // 只保留指定字段
 fieldClear({ id: 1, name: 'John', age: 30 }, { pickKeys: ['id', 'name'] });
@@ -296,7 +296,7 @@ fieldClear({ id: 1, name: null, age: undefined }, { excludeValues: [null, undefi
 **示例：**
 
 ```typescript
-import { pickFields } from 'befly-shared';
+import { pickFields } from 'befly-shared/pickFields';
 
 pickFields({ id: 1, name: 'John', age: 30 }, ['id', 'name']);
 // { id: 1, name: 'John' }
@@ -319,7 +319,7 @@ pickFields({ id: 1, name: 'John', age: 30 }, ['id', 'name']);
 **示例：**
 
 ```typescript
-import { scanFiles } from 'befly-shared';
+import { scanFiles } from 'befly-shared/scanFiles';
 
 const files = await scanFiles('/path/to/dir', '**/*.ts');
 // [
@@ -339,7 +339,7 @@ const files = await scanFiles('/path/to/dir', '**/*.ts');
 **示例：**
 
 ```typescript
-import { scanViews } from 'befly-shared';
+import { scanViews } from 'befly-shared/scanViews';
 
 // 在 vite.config.js 中使用
 export default defineConfig({
@@ -364,7 +364,7 @@ export default defineConfig({
 **示例：**
 
 ```typescript
-import { scanAddons } from 'befly-shared';
+import { scanAddons } from 'befly-shared/addonHelper';
 
 const addons = scanAddons();
 // ['admin', 'blog', 'shop']
@@ -386,7 +386,7 @@ const addons = scanAddons();
 **示例：**
 
 ```typescript
-import { layouts } from 'befly-shared';
+import { layouts } from 'befly-shared/layouts';
 
 // 根据文件名后缀判断布局：
 // - index.vue -> 默认布局
@@ -410,7 +410,7 @@ import { layouts } from 'befly-shared';
 **示例：**
 
 ```typescript
-import { calcPerfTime } from 'befly-shared';
+import { calcPerfTime } from 'befly-shared/calcPerfTime';
 
 const start = Bun.nanoseconds();
 // ... 执行操作 ...
@@ -434,7 +434,7 @@ const duration = calcPerfTime(start);
 所有类型定义自动生成到 `types/` 目录下，可直接导入使用：
 
 ```typescript
-import type { LoadConfigOptions, MergeConfigOptions } from 'befly-shared';
+import type { LoadConfigOptions, MergeConfigOptions } from 'befly-shared/configTypes';
 ```
 
 ## License

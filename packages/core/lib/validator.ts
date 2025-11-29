@@ -5,8 +5,8 @@
  */
 
 import type { ValidationResult, ValidationError } from '../types/validator';
-import { RegexAliases, getCompiledRegex } from 'befly-shared';
-import type { TableDefinition, FieldDefinition } from 'befly-shared';
+import { RegexAliases, getCompiledRegex } from 'befly-shared/regex';
+import type { TableDefinition, FieldDefinition } from 'befly-shared/types';
 
 /**
  * 验证器类（Befly 项目专用）

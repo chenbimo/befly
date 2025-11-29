@@ -4,7 +4,7 @@
  */
 
 import type { WhereConditions, OrderByField } from '../types/common.js';
-import type { SqlValue } from 'befly-shared';
+import type { SqlValue } from 'befly-shared/types';
 
 /**
  * SQL 构建器类

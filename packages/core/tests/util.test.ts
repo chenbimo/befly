@@ -1,5 +1,9 @@
 ﻿import { describe, test, expect } from 'bun:test';
-import { keysToCamel, keysToSnake, arrayKeysToCamel, calcPerfTime, fieldClear } from 'befly-shared';
+import { keysToCamel } from 'befly-shared/keysToCamel';
+import { keysToSnake } from 'befly-shared/keysToSnake';
+import { arrayKeysToCamel } from 'befly-shared/arrayKeysToCamel';
+import { calcPerfTime } from 'befly-shared/calcPerfTime';
+import { fieldClear } from 'befly-shared/fieldClear';
 
 describe('Util - keysToCamel', () => {
     test('转换对象键名为驼峰', () => {

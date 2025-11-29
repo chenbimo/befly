@@ -3,7 +3,7 @@
  * Core 专用类型，befly-shared 的类型请直接从 befly-shared 导入
  */
 
-import type { SqlValue } from 'befly-shared';
+import type { SqlValue } from 'befly-shared/types';
 
 // ============================================
 // Core 专用类型（不适合放在 shared 中的类型）

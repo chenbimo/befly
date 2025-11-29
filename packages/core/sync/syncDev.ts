@@ -7,7 +7,7 @@
  * - 表名: addon_admin_admin
  */
 
-import { scanAddons, getAddonDir, normalizeModuleForSync } from 'befly-shared';
+import { scanAddons, getAddonDir, normalizeModuleForSync } from 'befly-shared/addonHelper';
 
 import { Logger } from '../lib/logger.js';
 import { Cipher } from '../lib/cipher.js';

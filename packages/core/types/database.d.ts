@@ -2,7 +2,7 @@
  * 数据库相关类型定义
  */
 
-import type { SqlValue } from 'befly-shared';
+import type { SqlValue } from 'befly-shared/types';
 import type { WhereConditions } from './common';
 
 // 重新导出 WhereOperator 和 WhereConditions，供其他模块使用

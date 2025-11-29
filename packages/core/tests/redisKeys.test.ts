@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test } from 'bun:test';
-import { RedisKeys, RedisTTL } from 'befly-shared';
+import { RedisKeys, RedisTTL } from 'befly-shared/redisKeys';
 
 describe('RedisKeys - Key 生成函数', () => {
     test('apisAll - 返回固定的接口缓存键', () => {

@@ -14,7 +14,7 @@ import { scanConfig } from './scanConfig.js';
  * @example
  * ```ts
  * // 在 packages/addonAdmin/addon.config.js 中
- * import { defineAddonConfig } from 'befly-shared';
+ * import { defineAddonConfig } from 'befly-shared/defineAddonConfig';
  *
  * export default defineAddonConfig(import.meta.dirname, {
  *     menus: [...]
