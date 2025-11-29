@@ -68,10 +68,10 @@ export default {
 
         // 定义类型安全的查询条件
         const where: TypedWhereConditions<UserTable> = {
-            state: 1,                              // 精确匹配
-            roleId$in: [1, 2, 3],                  // IN 数组（必须是 number[]）
-            email$like: '%@gmail.com',             // LIKE 匹配（必须是 string）
-            lastLoginAt$gte: Date.now() - 86400000, // 大于等于（必须是 number）
+            state: 1, // 精确匹配
+            roleId$in: [1, 2, 3], // IN 数组（必须是 number[]）
+            email$like: '%@gmail.com', // LIKE 匹配（必须是 string）
+            lastLoginAt$gte: Date.now() - 86400000 // 大于等于（必须是 number）
             // roleId$in: 'invalid',               // ❌ 类型错误：应为 number[]
             // email$like: 123,                    // ❌ 类型错误：应为 string
         };
@@ -88,9 +88,9 @@ export default {
 
         if (user) {
             // 有完整的类型提示
-            const email = user.email;           // string
-            const createdAt = user.createdAt;   // number（系统字段）
-            const nickname = user.nickname;     // string | null
+            const email = user.email; // string
+            const createdAt = user.createdAt; // number（系统字段）
+            const nickname = user.nickname; // string | null
         }
 
         // ----------------------------------------
@@ -118,14 +118,8 @@ export default {
 
         const complexWhere: TypedWhereConditions<UserTable> = {
             state: 1,
-            $or: [
-                { email$like: '%@gmail.com' },
-                { email$like: '%@qq.com' }
-            ],
-            $and: [
-                { roleId$in: [1, 2] },
-                { lastLoginAt$notNull: true }
-            ]
+            $or: [{ email$like: '%@gmail.com' }, { email$like: '%@qq.com' }],
+            $and: [{ roleId$in: [1, 2] }, { lastLoginAt$notNull: true }]
         };
 
         const activeUsers = await befly.db.getAll<UserTable>({
@@ -141,10 +135,10 @@ export default {
         const rangeWhere: TypedWhereConditions<UserTable> = {
             state: 1,
             createdAt$between: [
-                Date.now() - 7 * 86400000,  // 7天前
-                Date.now()                   // 现在
+                Date.now() - 7 * 86400000, // 7天前
+                Date.now() // 现在
             ],
-            roleId$between: [1, 10]          // 角色 ID 1-10
+            roleId$between: [1, 10] // 角色 ID 1-10
         };
 
         return befly.tool.Yes('类型安全示例', {

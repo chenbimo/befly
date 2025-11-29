@@ -200,14 +200,12 @@ type NullConditions<T> = {
  * };
  * ```
  */
-export type TypedWhereConditions<T> =
-    & Partial<T>                    // 精确匹配
-    & CompareConditions<T>          // 比较操作符
-    & ArrayConditions<T>            // 数组操作符
-    & StringConditions<T>           // 字符串操作符
-    & RangeConditions<T>            // 范围操作符
-    & NullConditions<T>             // 空值操作符
-    & {
+export type TypedWhereConditions<T> = Partial<T> & // 精确匹配
+    CompareConditions<T> & // 比较操作符
+    ArrayConditions<T> & // 数组操作符
+    StringConditions<T> & // 字符串操作符
+    RangeConditions<T> & // 范围操作符
+    NullConditions<T> & { // 空值操作符
         /** OR 条件组 */
         $or?: TypedWhereConditions<T>[];
         /** AND 条件组 */
