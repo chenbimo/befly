@@ -14,6 +14,7 @@ import { Cipher } from '../lib/cipher.js';
 import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
+import { CacheHelper } from '../lib/cacheHelper.js';
 
 import type { SyncDevOptions, SyncDevStats, BeflyOptions } from '../types/index.js';
 
@@ -154,52 +155,10 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
             });
         }
 
-        // 缓存角色权限数据到 Redis
+        // 缓存角色权限数据到 Redis（复用 CacheHelper 逻辑）
         try {
-            // 检查必要的表是否存在
-            const apiTableExists = await helper.tableExists('addon_admin_api');
-            const roleTableExists = await helper.tableExists('addon_admin_role');
-
-            if (apiTableExists && roleTableExists) {
-                // 查询所有角色
-                const roles = await helper.getAll({
-                    table: 'addon_admin_role',
-                    fields: ['id', 'code', 'apis']
-                });
-
-                // 查询所有接口
-                const allApis = await helper.getAll({
-                    table: 'addon_admin_api',
-                    fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
-                });
-
-                const redis = Connect.getRedis();
-
-                // 为每个角色缓存接口权限
-                for (const role of roles) {
-                    if (!role.apis) continue;
-
-                    // 解析角色的接口 ID 列表
-                    const apiIds = role.apis
-                        .split(',')
-                        .map((id: string) => parseInt(id.trim()))
-                        .filter((id: number) => !isNaN(id));
-
-                    // 根据 ID 过滤出接口路径
-                    const roleApiPaths = allApis.filter((api: any) => apiIds.includes(api.id)).map((api: any) => `${api.method}${api.path}`);
-
-                    if (roleApiPaths.length === 0) continue;
-
-                    // 使用 Redis Set 缓存角色权限
-                    const redisKey = `role:apis:${role.code}`;
-
-                    // 先删除旧数据
-                    await redis.del(redisKey);
-
-                    // 批量添加到 Set（使用扩展运算符展开数组）
-                    await redis.sadd(redisKey, ...roleApiPaths);
-                }
-            }
+            const redis = new RedisHelper();
+            await CacheHelper.cacheRolePermissionsWithHelper(helper, redis);
         } catch (error: any) {
             // 忽略缓存错误
         }

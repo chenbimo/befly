@@ -4,6 +4,7 @@
  */
 
 import { Logger } from './logger.js';
+
 import type { BeflyContext } from '../types/befly.js';
 
 /**
@@ -26,15 +27,15 @@ export class CacheHelper {
     async cacheApis(): Promise<void> {
         try {
             // 检查表是否存在
-            const tableExists = await this.befly.db.tableExists('core_api');
+            const tableExists = await this.befly.db.tableExists('addon_admin_api');
             if (!tableExists) {
                 Logger.warn('⚠️ 接口表不存在，跳过接口缓存');
                 return;
             }
 
-            // 从数据库查询所有接口（与 apiAll.ts 保持一致）
+            // 从数据库查询所有接口
             const apiList = await this.befly.db.getAll({
-                table: 'core_api',
+                table: 'addon_admin_api',
                 fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
@@ -58,7 +59,7 @@ export class CacheHelper {
     async cacheMenus(): Promise<void> {
         try {
             // 检查表是否存在
-            const tableExists = await this.befly.db.tableExists('core_menu');
+            const tableExists = await this.befly.db.tableExists('addon_admin_menu');
             if (!tableExists) {
                 Logger.warn('⚠️ 菜单表不存在，跳过菜单缓存');
                 return;
@@ -66,7 +67,7 @@ export class CacheHelper {
 
             // 从数据库查询所有菜单
             const menus = await this.befly.db.getAll({
-                table: 'core_menu',
+                table: 'addon_admin_menu',
                 fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
@@ -86,62 +87,88 @@ export class CacheHelper {
 
     /**
      * 缓存所有角色的接口权限到 Redis
+     * 优化：使用 Promise.all 利用 Bun Redis 自动 pipeline 特性
      */
     async cacheRolePermissions(): Promise<void> {
+        await CacheHelper.cacheRolePermissionsWithHelper(this.befly.db, this.befly.redis);
+    }
+
+    /**
+     * 静态方法：缓存角色权限（供外部直接调用）
+     * @param db - DbHelper 实例
+     * @param redis - RedisHelper 实例
+     */
+    static async cacheRolePermissionsWithHelper(db: any, redis: any): Promise<void> {
         try {
             // 检查表是否存在
-            const apiTableExists = await this.befly.db.tableExists('core_api');
-            const roleTableExists = await this.befly.db.tableExists('core_role');
+            const apiTableExists = await db.tableExists('addon_admin_api');
+            const roleTableExists = await db.tableExists('addon_admin_role');
 
             if (!apiTableExists || !roleTableExists) {
                 Logger.warn('⚠️ 接口或角色表不存在，跳过角色权限缓存');
                 return;
             }
 
-            // 查询所有角色
-            const roles = await this.befly.db.getAll({
-                table: 'core_role',
-                fields: ['id', 'code', 'apis']
-            });
+            // 并行查询角色和接口（利用自动 pipeline）
+            const [roles, allApis] = await Promise.all([
+                db.getAll({
+                    table: 'addon_admin_role',
+                    fields: ['id', 'code', 'apis']
+                }),
+                db.getAll({
+                    table: 'addon_admin_api',
+                    fields: ['id', 'path', 'method']
+                })
+            ]);
 
-            // 查询所有接口（用于权限映射）
-            const allApis = await this.befly.db.getAll({
-                table: 'core_api',
-                fields: ['id', 'name', 'path', 'method', 'description', 'addonName']
-            });
+            // 构建接口 ID -> 路径的映射（避免重复过滤）
+            const apiMap = new Map<number, string>();
+            for (const api of allApis) {
+                apiMap.set(api.id, `${api.method}${api.path}`);
+            }
 
-            // 为每个角色缓存接口权限
-            let cachedRoles = 0;
+            // 收集需要缓存的角色权限
+            const cacheOperations: Array<{ roleCode: string; apiPaths: string[] }> = [];
+
             for (const role of roles) {
                 if (!role.apis) continue;
 
-                // 解析角色的接口 ID 列表
-                const apiIds = role.apis
-                    .split(',')
-                    .map((id: string) => parseInt(id.trim()))
-                    .filter((id: number) => !isNaN(id));
+                // 解析角色的接口 ID 列表并映射到路径
+                const apiPaths: string[] = [];
+                const apiIds = role.apis.split(',');
 
-                // 根据 ID 过滤出接口路径
-                const roleApiPaths = allApis.filter((api: any) => apiIds.includes(api.id)).map((api: any) => `${api.method}${api.path}`);
+                for (const idStr of apiIds) {
+                    const id = parseInt(idStr.trim());
+                    if (!isNaN(id)) {
+                        const path = apiMap.get(id);
+                        if (path) {
+                            apiPaths.push(path);
+                        }
+                    }
+                }
 
-                if (roleApiPaths.length === 0) continue;
-
-                // 使用 Redis Set 缓存角色权限（性能优化：SADD + SISMEMBER）
-                const redisKey = `role:apis:${role.code}`;
-
-                // 先删除旧数据
-                await this.befly.redis.del(redisKey);
-
-                // 批量添加到 Set
-                const result = await this.befly.redis.sadd(redisKey, roleApiPaths);
-
-                if (result > 0) {
-                    cachedRoles++;
-                    Logger.debug(`   └ 角色 ${role.code}: ${result} 个接口`);
+                if (apiPaths.length > 0) {
+                    cacheOperations.push({ roleCode: role.code, apiPaths: apiPaths });
                 }
             }
 
-            Logger.info(`✅ 已缓存 ${cachedRoles} 个角色的接口权限`);
+            if (cacheOperations.length === 0) {
+                Logger.info('✅ 没有需要缓存的角色权限');
+                return;
+            }
+
+            // 批量删除旧缓存（利用自动 pipeline）
+            const deletePromises = cacheOperations.map((op) => redis.del(`role:apis:${op.roleCode}`));
+            await Promise.all(deletePromises);
+
+            // 批量添加新缓存（利用自动 pipeline）
+            const addPromises = cacheOperations.map((op) => redis.sadd(`role:apis:${op.roleCode}`, op.apiPaths));
+            const results = await Promise.all(addPromises);
+
+            // 统计成功缓存的角色数
+            const cachedRoles = results.filter((r) => r > 0).length;
+
+            Logger.info(`✅ 已缓存 ${cachedRoles} 个角色的接口权限（共 ${cacheOperations.reduce((sum, op) => sum + op.apiPaths.length, 0)} 个接口）`);
         } catch (error: any) {
             Logger.warn({ err: error }, '⚠️ 角色权限缓存异常');
         }

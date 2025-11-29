@@ -8,6 +8,7 @@ import { join } from 'pathe';
 import type { LoggerConfig } from '../types/logger.js';
 
 let instance: pino.Logger | null = null;
+let mockInstance: pino.Logger | null = null;
 let config: LoggerConfig = {
     debug: 0,
     dir: './logs',
@@ -24,9 +25,20 @@ export function configure(cfg: LoggerConfig): void {
 }
 
 /**
+ * 设置 Mock Logger（用于测试）
+ * @param mock - Mock pino 实例，传 null 清除 mock
+ */
+export function setMockLogger(mock: pino.Logger | null): void {
+    mockInstance = mock;
+}
+
+/**
  * 获取 pino 日志实例
  */
 export function getLogger(): pino.Logger {
+    // 优先返回 mock 实例（用于测试）
+    if (mockInstance) return mockInstance;
+
     if (instance) return instance;
 
     const level = config.debug === 1 ? 'debug' : 'info';
@@ -78,5 +90,6 @@ export const Logger = {
     get debug() {
         return getLogger().debug.bind(getLogger());
     },
-    configure: configure
+    configure: configure,
+    setMock: setMockLogger
 };
