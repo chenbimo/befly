@@ -5,6 +5,7 @@
 import type { Plugin } from './plugin.js';
 import type { ApiRoute, HttpMethod } from './api.js';
 import type { KeyValue } from './common.js';
+import type { LoggerConfig } from './logger.js';
 import type { Logger } from '../lib/logger.js';
 import type { Jwt } from '../lib/jwt.js';
 import type { Validator } from '../lib/validator.js';
@@ -14,19 +15,7 @@ import type { RedisHelper } from '../lib/redisHelper.js';
 import type { Cipher } from '../lib/cipher.js';
 import type { CacheHelper } from '../lib/cacheHelper.js';
 
-/**
- * 日志配置
- */
-export interface LoggerConfig {
-    /** 是否开启调试模式 (0: 关闭, 1: 开启) @default 0 */
-    debug?: number;
-    /** 日志目录 @default './logs' */
-    dir?: string;
-    /** 是否输出到控制台 (0: 关闭, 1: 开启) @default 1 */
-    console?: number;
-    /** 单个日志文件最大大小 (MB) @default 10 */
-    maxSize?: number;
-}
+export type { LoggerConfig };
 
 /**
  * 数据库配置
