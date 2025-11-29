@@ -59,7 +59,7 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'app' | '
             addonTitle: addonTitle || addonName
         };
     } catch (error: any) {
-        Logger.error('同步 API 失败:', error);
+        Logger.error({ err: error }, '同步 API 失败');
         throw error;
     }
 }
@@ -136,7 +136,7 @@ async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
 
         return apis;
     } catch (error: any) {
-        Logger.error(`接口扫描失败:`, error);
+        Logger.error({ err: error }, '接口扫描失败');
         return apis;
     }
 }
@@ -184,7 +184,7 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
                 });
             }
         } catch (error: any) {
-            Logger.error(`同步接口 "${api.name}" 失败:`, error);
+            Logger.error({ err: error, api: api.name }, '同步接口失败');
         }
     }
 }
@@ -256,7 +256,7 @@ export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptio
             // 忽略缓存错误
         }
     } catch (error: any) {
-        Logger.error('API 同步失败:', error);
+        Logger.error({ err: error }, 'API 同步失败');
         throw error;
     } finally {
         await Connect.disconnect();

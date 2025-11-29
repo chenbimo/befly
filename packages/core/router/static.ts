@@ -55,8 +55,7 @@ export function staticHandler(config: BeflyOptions) {
                 );
             }
         } catch (error: any) {
-            // 记录详细的错误日志
-            Logger.error('静态文件处理失败', error);
+            Logger.error({ err: error }, '静态文件处理失败');
 
             return Response.json(
                 {

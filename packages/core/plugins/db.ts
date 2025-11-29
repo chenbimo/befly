@@ -26,14 +26,14 @@ const dbPlugin: Plugin = {
 
             return dbManager;
         } catch (error: any) {
-            Logger.error('数据库初始化失败', error);
+            Logger.error({ err: error }, '数据库初始化失败');
 
             // 清理资源
             if (sql) {
                 try {
                     await sql.close();
                 } catch (cleanupError: any) {
-                    Logger.error('清理连接池失败:', cleanupError);
+                    Logger.error({ err: cleanupError }, '清理连接池失败');
                 }
             }
 

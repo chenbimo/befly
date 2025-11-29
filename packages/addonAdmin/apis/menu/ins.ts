@@ -11,8 +11,8 @@ export default {
             });
 
             return befly.tool.Yes('操作成功', { id: menuId });
-        } catch (error) {
-            befly.logger.error('创建菜单失败:', error);
+        } catch (error: any) {
+            befly.logger.error({ err: error }, '创建菜单失败');
             return befly.tool.No('操作失败');
         }
     }

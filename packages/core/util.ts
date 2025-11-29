@@ -224,7 +224,7 @@ export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'c
             items.push(item);
         } catch (err: any) {
             const typeLabel = type === 'core' ? '核心' : type === 'addon' ? `组件${addonName}` : '项目';
-            Logger.error(`${typeLabel}${moduleLabel} ${fileName} 导入失败`, err);
+            Logger.error({ err: err, module: fileName }, `${typeLabel}${moduleLabel} 导入失败`);
             process.exit(1);
         }
     }
@@ -249,7 +249,7 @@ export function sortModules<T extends { name?: string; after?: string[] }>(modul
         if (module.after) {
             for (const dep of module.after) {
                 if (!moduleMap[dep]) {
-                    Logger.error(`模块 ${module.name} 依赖的模块 ${dep} 未找到`);
+                    Logger.error({ module: module.name, dependency: dep }, '依赖的模块未找到');
                     isPass = false;
                 }
             }
@@ -261,7 +261,7 @@ export function sortModules<T extends { name?: string; after?: string[] }>(modul
     const visit = (name: string): void => {
         if (visited.has(name)) return;
         if (visiting.has(name)) {
-            Logger.error(`模块循环依赖: ${name}`);
+            Logger.error({ module: name }, '模块循环依赖');
             isPass = false;
             return;
         }

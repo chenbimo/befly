@@ -88,7 +88,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
         } catch (err: any) {
             // 全局错误处理
             const errorPath = ctx.api ? apiPath : req.url;
-            Logger.error(`请求错误: ${errorPath}`, err);
+            Logger.error({ err: err, path: errorPath }, '请求错误');
             ctx.result = {
                 code: 1,
                 msg: '内部服务错误'

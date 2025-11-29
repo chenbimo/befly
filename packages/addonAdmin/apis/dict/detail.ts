@@ -11,8 +11,8 @@
             });
 
             return befly.tool.Yes('操作成功', dict);
-        } catch (error) {
-            befly.logger.error('获取字典详情失败:', error);
+        } catch (error: any) {
+            befly.logger.error({ err: error }, '获取字典详情失败');
             return befly.tool.No('操作失败');
         }
     }

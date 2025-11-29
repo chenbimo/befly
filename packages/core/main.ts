@@ -102,7 +102,7 @@ export class Befly {
                     '/*': staticHandler(this.config)
                 },
                 error: (error: Error) => {
-                    Logger.error('服务启动时发生错误', error);
+                    Logger.error({ err: error }, '服务启动时发生错误');
                     return Response.json({ code: 1, msg: '内部服务器错误' });
                 }
             });
@@ -127,7 +127,7 @@ export class Befly {
                     await Connect.disconnect();
                     Logger.info('数据库连接已关闭');
                 } catch (error: any) {
-                    Logger.error('关闭数据库连接时出错:', error);
+                    Logger.error({ err: error }, '关闭数据库连接时出错');
                 }
 
                 Logger.info('服务器已优雅关闭');
@@ -139,7 +139,7 @@ export class Befly {
 
             return server;
         } catch (error: any) {
-            Logger.error('项目启动失败', error);
+            Logger.error({ err: error }, '项目启动失败');
             process.exit(1);
         }
     }

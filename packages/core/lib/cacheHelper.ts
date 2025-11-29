@@ -48,7 +48,7 @@ export class CacheHelper {
                 Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: apis:all)`);
             }
         } catch (error: any) {
-            Logger.error('⚠️ 接口缓存异常:', error);
+            Logger.error({ err: error }, '⚠️ 接口缓存异常');
         }
     }
 
@@ -80,8 +80,7 @@ export class CacheHelper {
                 Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: menus:all)`);
             }
         } catch (error: any) {
-            const errorMessage = error?.message || error?.toString?.() || String(error);
-            Logger.warn('⚠️ 菜单缓存异常:', errorMessage);
+            Logger.warn({ err: error }, '⚠️ 菜单缓存异常');
         }
     }
 
@@ -144,8 +143,7 @@ export class CacheHelper {
 
             Logger.info(`✅ 已缓存 ${cachedRoles} 个角色的接口权限`);
         } catch (error: any) {
-            const errorMessage = error?.message || error?.toString?.() || String(error);
-            Logger.warn('⚠️ 角色权限缓存异常:', errorMessage);
+            Logger.warn({ err: error }, '⚠️ 角色权限缓存异常');
         }
     }
 
@@ -172,7 +170,7 @@ export class CacheHelper {
             const apis = await this.befly.redis.getObject<any[]>('apis:all');
             return apis || [];
         } catch (error: any) {
-            Logger.error('获取接口缓存失败:', error);
+            Logger.error({ err: error }, '获取接口缓存失败');
             return [];
         }
     }
@@ -186,7 +184,7 @@ export class CacheHelper {
             const menus = await this.befly.redis.getObject<any[]>('menus:all');
             return menus || [];
         } catch (error: any) {
-            Logger.error('获取菜单缓存失败:', error);
+            Logger.error({ err: error }, '获取菜单缓存失败');
             return [];
         }
     }
@@ -202,7 +200,7 @@ export class CacheHelper {
             const permissions = await this.befly.redis.smembers(redisKey);
             return permissions || [];
         } catch (error: any) {
-            Logger.error(`获取角色 ${roleCode} 权限缓存失败:`, error);
+            Logger.error({ err: error, roleCode: roleCode }, '获取角色权限缓存失败');
             return [];
         }
     }
@@ -219,7 +217,7 @@ export class CacheHelper {
             const result = await this.befly.redis.sismember(redisKey, apiPath);
             return result === 1;
         } catch (error: any) {
-            Logger.error(`检查角色 ${roleCode} 权限失败:`, error);
+            Logger.error({ err: error, roleCode: roleCode }, '检查角色权限失败');
             return false;
         }
     }
@@ -239,7 +237,7 @@ export class CacheHelper {
             }
             return false;
         } catch (error: any) {
-            Logger.error(`删除角色 ${roleCode} 权限缓存失败:`, error);
+            Logger.error({ err: error, roleCode: roleCode }, '删除角色权限缓存失败');
             return false;
         }
     }

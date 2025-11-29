@@ -122,14 +122,14 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 api.route = `${api.method.toUpperCase()}/api/${apiFile.routePrefix ? apiFile.routePrefix + '/' : ''}${apiFile.relativePath}`;
                 apis.set(api.route, api);
             } catch (error: any) {
-                Logger.error(`[${apiFile.typeName}] 接口 ${apiFile.relativePath} 加载失败`, error);
+                Logger.error({ err: error, api: apiFile.relativePath, type: apiFile.typeName }, '接口加载失败');
                 process.exit(1);
             }
         }
 
         const totalLoadTime = calcPerfTime(loadStartTime);
     } catch (error: any) {
-        Logger.error('加载 API 时发生错误', error);
+        Logger.error({ err: error }, '加载 API 时发生错误');
         process.exit(1);
     }
 }

@@ -10,7 +10,7 @@
 
             return befly.tool.Yes('操作成功', menus);
         } catch (error) {
-            befly.logger.error('获取菜单列表失败:', error);
+            befly.logger.error({ err: error }, '获取菜单列表失败');
             return befly.tool.No('操作失败');
         }
     }

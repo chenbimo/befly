@@ -23,8 +23,8 @@
             // 这里暂时不处理，由管理员在角色管理界面手动调整
 
             return befly.tool.Yes('操作成功');
-        } catch (error) {
-            befly.logger.error('删除菜单失败:', error);
+        } catch (error: any) {
+            befly.logger.error({ err: error }, '删除菜单失败');
             return befly.tool.No('操作失败');
         }
     }

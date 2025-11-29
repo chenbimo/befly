@@ -41,7 +41,7 @@ export async function loadPlugins(config: Record<string, any> | undefined, plugi
         const enabledPlugins = allPlugins.filter((plugin) => !disablePlugins.includes(plugin.name));
 
         if (disablePlugins.length > 0) {
-            Logger.info(`禁用插件: ${disablePlugins.join(', ')}`);
+            Logger.info({ plugins: disablePlugins }, '禁用插件');
         }
 
         // 6. 排序与初始化
@@ -60,12 +60,12 @@ export async function loadPlugins(config: Record<string, any> | undefined, plugi
                 // 直接挂载到 befly 下
                 (context as any)[plugin.name!] = pluginInstance;
             } catch (error: any) {
-                Logger.error(`插件 ${plugin.name} 初始化失败`, error);
+                Logger.error({ err: error, plugin: plugin.name }, '插件初始化失败');
                 process.exit(1);
             }
         }
     } catch (error: any) {
-        Logger.error('加载插件时发生错误', error);
+        Logger.error({ err: error }, '加载插件时发生错误');
         process.exit(1);
     }
 }

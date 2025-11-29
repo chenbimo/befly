@@ -32,8 +32,8 @@ export default {
             if (!isValid) {
                 return befly.tool.No('账号或密码错误2');
             }
-        } catch (error) {
-            befly.logger.error('密码验证失败', error);
+        } catch (error: any) {
+            befly.logger.error({ err: error }, '密码验证失败');
             return befly.tool.No('密码格式错误，请重新设置密码');
         }
 

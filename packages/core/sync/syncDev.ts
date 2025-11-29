@@ -202,7 +202,7 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
             // 忽略缓存错误
         }
     } catch (error: any) {
-        Logger.error('同步开发者管理员失败', error);
+        Logger.error({ err: error }, '同步开发者管理员失败');
         throw error;
     } finally {
         await Connect.disconnect();

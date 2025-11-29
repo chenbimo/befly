@@ -21,7 +21,7 @@ export async function loadHooks(pluginsConfig: Record<string, any> | undefined, 
         const enabledHooks = coreHooks.filter((hook) => !disableHooks.includes(hook.name));
 
         if (disableHooks.length > 0) {
-            Logger.info(`禁用钩子: ${disableHooks.join(', ')}`);
+            Logger.info({ hooks: disableHooks }, '禁用钩子');
         }
 
         // 3. 按 order 排序
@@ -33,7 +33,7 @@ export async function loadHooks(pluginsConfig: Record<string, any> | undefined, 
 
         hooks.push(...sortedHooks);
     } catch (error: any) {
-        Logger.error('加载钩子时发生错误', error);
+        Logger.error({ err: error }, '加载钩子时发生错误');
         process.exit(1);
     }
 }

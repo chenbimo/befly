@@ -13,7 +13,7 @@
 
             return befly.tool.Yes('操作成功', dicts);
         } catch (error) {
-            befly.logger.error('获取所有字典失败:', error);
+            befly.logger.error({ err: error }, '获取所有字典失败');
             return befly.tool.No('操作失败');
         }
     }

@@ -507,12 +507,12 @@ export class DbHelper {
 
         // 警告日志：返回数据超过警告阈值
         if (result.length >= WARNING_LIMIT) {
-            Logger.warn(`⚠️ getAll 从表 \`${options.table}\` 返回了 ${result.length} 行数据，建议使用 getList 分页查询以获得更好的性能。`);
+            Logger.warn({ table: options.table, count: result.length }, 'getAll 返回数据过多，建议使用 getList 分页查询');
         }
 
         // 如果达到上限，额外警告
         if (result.length >= MAX_LIMIT) {
-            Logger.warn(`🚨 getAll 达到了最大限制 (${MAX_LIMIT})，可能还有更多数据。请使用 getList 分页查询。`);
+            Logger.warn({ table: options.table, limit: MAX_LIMIT }, 'getAll 达到最大限制，可能还有更多数据');
         }
 
         // 字段名转换：下划线 → 小驼峰
@@ -625,8 +625,7 @@ export class DbHelper {
             await this.executeWithConn(sql, params);
             return ids;
         } catch (error: any) {
-            // 批量插入失败，记录错误
-            Logger.error(`表 \`${table}\` 批量插入失败`, error);
+            Logger.error({ err: error, table: table }, '批量插入失败');
             throw error;
         }
     }
@@ -759,7 +758,7 @@ export class DbHelper {
                 await conn.query('COMMIT');
                 committed = true;
             } catch (commitError: any) {
-                Logger.error('事务提交失败，正在回滚', commitError);
+                Logger.error({ err: commitError }, '事务提交失败，正在回滚');
                 await conn.query('ROLLBACK');
                 throw new Error(`事务提交失败: ${commitError.message}`);
             }
@@ -772,7 +771,7 @@ export class DbHelper {
                     await conn.query('ROLLBACK');
                     Logger.warn('事务已回滚');
                 } catch (rollbackError: any) {
-                    Logger.error('事务回滚失败', rollbackError);
+                    Logger.error({ err: rollbackError }, '事务回滚失败');
                 }
             }
             throw error;

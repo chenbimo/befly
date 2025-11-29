@@ -14,7 +14,7 @@
                 responseTime: `${responseTime}ms`
             });
         } catch (error) {
-            befly.logger.error('数据库状态检测失败:', error);
+            befly.logger.error({ err: error }, '数据库状态检测失败');
             services.push({
                 name: '数据库',
                 status: 'stopped',
@@ -34,7 +34,7 @@
                     responseTime: `${responseTime}ms`
                 });
             } catch (error) {
-                befly.logger.error('Redis状态检测失败:', error);
+                befly.logger.error({ err: error }, 'Redis状态检测失败');
                 services.push({
                     name: 'Redis',
                     status: 'stopped',

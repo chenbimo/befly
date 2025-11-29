@@ -33,7 +33,7 @@ export default {
                 await befly.redis.setObject('apis:all', apis);
                 results.apis = { success: true, count: apis.length };
             } catch (error: any) {
-                befly.logger.error('刷新接口缓存失败:', error);
+                befly.logger.error({ err: error }, '刷新接口缓存失败');
                 results.apis = { success: false, error: error.message };
             }
 
@@ -57,7 +57,7 @@ export default {
                     childCount: childCount
                 };
             } catch (error: any) {
-                befly.logger.error('刷新菜单缓存失败:', error);
+                befly.logger.error({ err: error }, '刷新菜单缓存失败');
                 results.menus = { success: false, error: error.message };
             }
 
@@ -78,7 +78,7 @@ export default {
 
                 results.roles = { success: true, count: cachedCount };
             } catch (error: any) {
-                befly.logger.error('刷新角色缓存失败:', error);
+                befly.logger.error({ err: error }, '刷新角色缓存失败');
                 results.roles = { success: false, error: error.message };
             }
 
@@ -91,7 +91,7 @@ export default {
                 return befly.tool.No('部分缓存刷新失败', results);
             }
         } catch (error: any) {
-            befly.logger.error('刷新全部缓存失败:', error);
+            befly.logger.error({ err: error }, '刷新全部缓存失败');
             return befly.tool.No('刷新全部缓存失败', { error: error.message });
         }
     }

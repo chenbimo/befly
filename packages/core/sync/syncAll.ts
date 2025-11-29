@@ -32,9 +32,9 @@ export async function syncAllCommand(config: BeflyOptions, options: SyncOptions 
 
         // 输出总结
         const totalTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-        Logger.info(`同步完成 (耗时 ${totalTimeSeconds}s)`);
+        Logger.info({ duration: totalTimeSeconds }, '同步完成');
     } catch (error: any) {
-        Logger.error('同步过程中发生错误', error);
+        Logger.error({ err: error }, '同步过程中发生错误');
         throw error;
     }
 }

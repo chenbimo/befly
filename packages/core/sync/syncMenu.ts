@@ -204,7 +204,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
         try {
             await syncMenuRecursive(helper, menu, 0, existingMenuMap, 1);
         } catch (error: any) {
-            Logger.error(`同步菜单 "${menu.name}" 失败`, error.message || String(error));
+            Logger.error({ err: error, menu: menu.name }, '同步菜单失败');
             throw error;
         }
     }
@@ -257,7 +257,7 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; addonName
                 allMenus.push({ menus: menusWithPrefix, addonName: addonName });
             }
         } catch (error: any) {
-            Logger.warn(`读取 addon 配置失败 ${addonName}: ${error.message}`);
+            Logger.warn({ err: error, addon: addonName }, '读取 addon 配置失败');
         }
     }
 
@@ -276,7 +276,7 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; addonName
             allMenus.push({ menus: appMenus, addonName: 'app' });
         }
     } catch (error: any) {
-        Logger.warn(`读取项目配置失败: ${error.message}`);
+        Logger.warn({ err: error }, '读取项目配置失败');
     }
 
     return allMenus;
@@ -332,10 +332,10 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
             const redisHelper = new RedisHelper();
             await redisHelper.setObject('menus:all', allMenusData);
         } catch (error: any) {
-            Logger.warn(`Redis 缓存菜单数据失败: ${error.message}`);
+            Logger.warn({ err: error }, 'Redis 缓存菜单数据失败');
         }
     } catch (error: any) {
-        Logger.error('菜单同步失败', error);
+        Logger.error({ err: error }, '菜单同步失败');
         throw error;
     } finally {
         await Connect.disconnect();

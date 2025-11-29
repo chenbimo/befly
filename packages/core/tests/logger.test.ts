@@ -24,96 +24,69 @@ afterAll(async () => {
     }
 });
 
-describe('Logger - 基本功能', () => {
-    test('记录 info 日志', () => {
+describe('Logger - 纯字符串消息', () => {
+    test('info(msg)', () => {
         Logger.info('Test info message');
         expect(true).toBe(true);
     });
 
-    test('记录 warn 日志', () => {
+    test('warn(msg)', () => {
         Logger.warn('Test warning');
         expect(true).toBe(true);
     });
 
-    test('记录 error 日志', () => {
+    test('error(msg)', () => {
         Logger.error('Test error');
         expect(true).toBe(true);
     });
 
-    test('记录 debug 日志', () => {
+    test('debug(msg)', () => {
         Logger.debug('Test debug');
         expect(true).toBe(true);
     });
-
-    test('记录 success 日志', () => {
-        Logger.success('Test success');
-        expect(true).toBe(true);
-    });
 });
 
-describe('Logger - 带对象参数', () => {
-    test('info 带对象', () => {
-        Logger.info('User action', { userId: 1, action: 'login' });
+describe('Logger - 对象 + 消息 (pino 原生格式)', () => {
+    test('info(obj, msg)', () => {
+        Logger.info({ userId: 1, action: 'login' }, 'User action');
         expect(true).toBe(true);
     });
 
-    test('warn 带对象', () => {
-        Logger.warn('Rate limit warning', { ip: '127.0.0.1', count: 100 });
+    test('warn(obj, msg)', () => {
+        Logger.warn({ ip: '127.0.0.1', count: 100 }, 'Rate limit warning');
         expect(true).toBe(true);
     });
 
-    test('error 带 Error 对象', () => {
+    test('error(obj, msg)', () => {
         const err = new Error('Something went wrong');
-        Logger.error('Request failed', err);
+        Logger.error({ err: err }, 'Request failed');
         expect(true).toBe(true);
     });
 
-    test('debug 带对象', () => {
-        Logger.debug('Debug data', { key: 'value', nested: { a: 1 } });
-        expect(true).toBe(true);
-    });
-});
-
-describe('Logger - 便捷方法', () => {
-    test('info 方法', () => {
-        Logger.info('Info test');
-        expect(true).toBe(true);
-    });
-
-    test('warn 方法', () => {
-        Logger.warn('Warn test');
-        expect(true).toBe(true);
-    });
-
-    test('error 方法', () => {
-        Logger.error('Error test');
-        expect(true).toBe(true);
-    });
-
-    test('debug 方法', () => {
-        Logger.debug('Debug test');
+    test('debug(obj, msg)', () => {
+        Logger.debug({ key: 'value', nested: { a: 1 } }, 'Debug data');
         expect(true).toBe(true);
     });
 });
 
-describe('Logger - 字符串拼接兼容', () => {
-    test('warn 带字符串参数', () => {
-        Logger.warn('⚠️ 缓存异常:', 'Connection refused');
+describe('Logger - 仅对象', () => {
+    test('info(obj)', () => {
+        Logger.info({ event: 'startup', port: 3000 });
         expect(true).toBe(true);
     });
 
-    test('error 带字符串参数', () => {
-        Logger.error('SQL 执行失败', 'Table not found');
+    test('warn(obj)', () => {
+        Logger.warn({ type: 'deprecation', feature: 'oldApi' });
         expect(true).toBe(true);
     });
 
-    test('info 带字符串参数', () => {
-        Logger.info('用户登录:', 'admin');
+    test('error(obj)', () => {
+        Logger.error({ code: 500, message: 'Internal error' });
         expect(true).toBe(true);
     });
 
-    test('debug 带字符串参数', () => {
-        Logger.debug('当前状态:', 'running');
+    test('debug(obj)', () => {
+        Logger.debug({ query: 'SELECT * FROM users', duration: 15 });
         expect(true).toBe(true);
     });
 });

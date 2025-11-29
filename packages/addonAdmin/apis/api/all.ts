@@ -16,7 +16,7 @@
 
             return befly.tool.Yes('操作成功', { lists: allApis });
         } catch (error: any) {
-            befly.logger.error('获取接口列表失败:', error);
+            befly.logger.error({ err: error }, '获取接口列表失败');
             return befly.tool.No('获取接口列表失败');
         }
     }

@@ -144,7 +144,7 @@ export async function syncDbCommand(config: BeflyOptions, options: SyncDbOptions
             }
         }
     } catch (error: any) {
-        Logger.error('数据库同步失败', error);
+        Logger.error({ err: error }, '数据库同步失败');
         throw error;
     } finally {
         if (sql) {

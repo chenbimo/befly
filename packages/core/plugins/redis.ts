@@ -26,7 +26,7 @@ const redisPlugin: Plugin = {
             // 返回 RedisHelper 实例
             return new RedisHelper(config.prefix);
         } catch (error: any) {
-            Logger.error('Redis 初始化失败', error);
+            Logger.error({ err: error }, 'Redis 初始化失败');
 
             // 插件内禁止直接退出进程，抛出异常交由主流程统一处理
             throw error;
