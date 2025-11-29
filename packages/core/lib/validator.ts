@@ -4,9 +4,9 @@
  * 使用正则缓存优化性能
  */
 
-import type { TableDefinition, FieldDefinition } from '../types/common.js';
 import type { ValidationResult, ValidationError } from '../types/validator';
 import { RegexAliases, getCompiledRegex } from 'befly-shared';
+import type { TableDefinition, FieldDefinition } from 'befly-shared';
 
 /**
  * 验证器类（Befly 项目专用）

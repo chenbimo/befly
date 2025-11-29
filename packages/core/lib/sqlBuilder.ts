@@ -3,7 +3,8 @@
  * 提供链式 API 构建 SQL 查询
  */
 
-import type { WhereConditions, SqlValue, OrderByField } from '../types/common.js';
+import type { WhereConditions, OrderByField } from '../types/common.js';
+import type { SqlValue } from 'befly-shared';
 
 /**
  * SQL 构建器类

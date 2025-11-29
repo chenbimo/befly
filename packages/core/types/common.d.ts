@@ -1,14 +1,9 @@
 ﻿/**
  * Befly 框架通用类型定义
- * 从 befly-shared 重新导出共享类型，并添加 core 专用类型
+ * Core 专用类型，befly-shared 的类型请直接从 befly-shared 导入
  */
 
-// ============================================
-// 从 befly-shared 重新导出共享类型
-// ============================================
-export type { ApiCodeType, DatabaseConfig, DatabaseType, ErrorMessageType, FieldDefinition, FieldType, HttpMethod, KeyValue, MenuItem, OrderDirection, PaginatedResult, PermissionItem, RedisConfig, ResponseResult, RoleInfo, SqlParams, SqlValue, TableDefinition, UserInfo, ValidationResult } from 'befly-shared';
-
-export { ApiCode, ErrorMessages } from 'befly-shared';
+import type { SqlValue } from 'befly-shared';
 
 // ============================================
 // Core 专用类型（不适合放在 shared 中的类型）

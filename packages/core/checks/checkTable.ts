@@ -10,7 +10,7 @@ import { Logger } from '../lib/logger.js';
 import { projectTableDir } from '../paths.js';
 
 // 类型导入
-import type { FieldDefinition } from '../types/common.js';
+import type { FieldDefinition } from 'befly-shared';
 
 /**
  * 表文件信息接口
