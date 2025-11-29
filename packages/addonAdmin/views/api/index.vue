@@ -57,7 +57,6 @@
                 </DetailPanel>
             </div>
         </div>
-
     </div>
 </template>
 
@@ -140,10 +139,7 @@ const $Method = {
             return;
         }
         const keyword = $Data.searchKeyword.toLowerCase();
-        $Data.tableData = $Data.allData.filter(item =>
-            item.name?.toLowerCase().includes(keyword) ||
-            item.path?.toLowerCase().includes(keyword)
-        );
+        $Data.tableData = $Data.allData.filter((item) => item.name?.toLowerCase().includes(keyword) || item.path?.toLowerCase().includes(keyword));
     },
 
     // 单选变化

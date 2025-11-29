@@ -9,10 +9,7 @@ export default {
             // 构建查询条件
             const where: Record<string, any> = {};
             if (keyword) {
-                where.$or = [
-                    { name: { $like: `%${keyword}%` } },
-                    { path: { $like: `%${keyword}%` } }
-                ];
+                where.$or = [{ name: { $like: `%${keyword}%` } }, { path: { $like: `%${keyword}%` } }];
             }
 
             const result = await befly.db.getList({
