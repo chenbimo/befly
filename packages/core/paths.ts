@@ -48,9 +48,6 @@ export const coreHookDir = join(__dirname, 'hooks');
 
 /**
  * Core 框架 API 目录
-
-/**
- * Core 框架 API 目录
  * @description packages/core/apis/
  * @usage 存放框架级别的 API 接口
  */
@@ -92,9 +89,6 @@ export const projectPluginDir = join(projectDir, 'plugins');
  * @usage 存放用户自定义钩子
  */
 export const projectHookDir = join(projectDir, 'hooks');
-
-/**
- * 项目 API 目录
 
 /**
  * 项目 API 目录
