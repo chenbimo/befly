@@ -8,7 +8,7 @@
  * @example
  * ```ts
  * // 在 packages/addonAdmin/addon.config.js 中
- * import { defineAddonConfig } from 'befly-util';
+ * import { defineAddonConfig } from 'befly-shared';
  *
  * export default defineAddonConfig(import.meta.dirname, {
  *     menus: [...]

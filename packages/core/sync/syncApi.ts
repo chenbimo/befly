@@ -16,7 +16,7 @@ import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { RedisKeys } from '../lib/redisKeys.js';
-import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
+import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-shared';
 
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';

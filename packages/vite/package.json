@@ -37,7 +37,7 @@
         "@unocss/preset-uno": "^66.5.9",
         "@vitejs/plugin-vue": "^6.0.2",
         "@vue-macros/reactivity-transform": "^3.1.1",
-        "befly-util": "^1.0.7",
+        "befly-shared": "^1.0.7",
         "sass": "^1.94.2",
         "unocss": "^66.5.9",
         "unplugin-auto-import": "^20.3.0",

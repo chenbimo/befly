@@ -53,7 +53,7 @@ import {
     MessagePlugin
 } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
-import { fieldClear } from 'befly-util/fieldClear';
+import { fieldClear } from 'befly-shared/fieldClear';
 
 const $Prop = defineProps({
     modelValue: {

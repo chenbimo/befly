@@ -2,7 +2,7 @@
  * 验证 Redis 缓存的字段查询功能
  */
 
-import { RedisKeys, RedisTTL } from 'befly-util';
+import { RedisKeys, RedisTTL } from 'befly-shared';
 
 console.log('\n========== Redis 缓存验证 ==========\n');
 

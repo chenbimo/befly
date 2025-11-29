@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 
 // 外部依赖
 import { basename } from 'pathe';
-import { scanAddons, getAddonDir, scanFiles } from 'befly-util';
+import { scanAddons, getAddonDir, scanFiles } from 'befly-shared';
 
 // 相对导入
 import { Logger } from '../lib/logger.js';

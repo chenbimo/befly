@@ -13,7 +13,7 @@ import { snakeCase } from 'es-toolkit/string';
 import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { checkTable } from '../checks/checkTable.js';
-import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-util';
+import { scanFiles, scanAddons, addonDirExists, getAddonDir } from 'befly-shared';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 

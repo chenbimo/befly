@@ -1,11 +1,11 @@
-# Befly Util
+﻿# Befly Shared
 
-Befly 框架的通用工具函数库。
+Befly 框架的共享模块，包含跨包共享的工具函数、常量和配置。
 
 ## 安装
 
 ```bash
-bun add befly-util
+bun add befly-shared
 ```
 
 ## 配置管理
@@ -26,7 +26,7 @@ bun add befly-util
 **示例：**
 
 ```typescript
-import { mergeConfig } from 'befly-util';
+import { mergeConfig } from 'befly-shared';
 
 const config = await mergeConfig({
     dirs: ['/path/to/config1', '/path/to/config2'],
@@ -48,7 +48,7 @@ Addon 配置自动合并函数，自动读取 addon 的 `addon.config.js` 和项
 **示例：**
 
 ```typescript
-import { addonConfigMerge } from 'befly-util';
+import { addonConfigMerge } from 'befly-shared';
 
 // 在 @befly-addon/admin 包根目录文件中调用
 const config = await addonConfigMerge();
@@ -73,7 +73,7 @@ const config = await addonConfigMerge();
 **示例：**
 
 ```typescript
-import { keysToCamel } from 'befly-util';
+import { keysToCamel } from 'befly-shared';
 
 keysToCamel({ user_id: 123, user_name: 'John' });
 // { userId: 123, userName: 'John' }
@@ -92,7 +92,7 @@ keysToCamel({ user_id: 123, user_name: 'John' });
 **示例：**
 
 ```typescript
-import { keysToSnake } from 'befly-util';
+import { keysToSnake } from 'befly-shared';
 
 keysToSnake({ userId: 123, userName: 'John' });
 // { user_id: 123, user_name: 'John' }
@@ -111,7 +111,7 @@ keysToSnake({ userId: 123, userName: 'John' });
 **示例：**
 
 ```typescript
-import { arrayKeysToCamel } from 'befly-util';
+import { arrayKeysToCamel } from 'befly-shared';
 
 arrayKeysToCamel([
     { user_id: 1, user_name: 'John' },
@@ -141,7 +141,7 @@ arrayKeysToCamel([
 **示例：**
 
 ```typescript
-import { arrayToTree } from 'befly-util';
+import { arrayToTree } from 'befly-shared';
 
 const items = [
     { id: 1, pid: 0, name: '根节点' },
@@ -180,7 +180,7 @@ const tree = arrayToTree(items);
 **示例：**
 
 ```typescript
-import { fieldClear } from 'befly-util';
+import { fieldClear } from 'befly-shared';
 
 // 只保留指定字段
 fieldClear({ id: 1, name: 'John', age: 30 }, { pickKeys: ['id', 'name'] });
@@ -209,7 +209,7 @@ fieldClear({ id: 1, name: null, age: undefined }, { excludeValues: [null, undefi
 **示例：**
 
 ```typescript
-import { pickFields } from 'befly-util';
+import { pickFields } from 'befly-shared';
 
 pickFields({ id: 1, name: 'John', age: 30 }, ['id', 'name']);
 // { id: 1, name: 'John' }
@@ -232,7 +232,7 @@ pickFields({ id: 1, name: 'John', age: 30 }, ['id', 'name']);
 **示例：**
 
 ```typescript
-import { scanFiles } from 'befly-util';
+import { scanFiles } from 'befly-shared';
 
 const files = await scanFiles('/path/to/dir', '**/*.ts');
 // [
@@ -252,7 +252,7 @@ const files = await scanFiles('/path/to/dir', '**/*.ts');
 **示例：**
 
 ```typescript
-import { scanViews } from 'befly-util';
+import { scanViews } from 'befly-shared';
 
 // 在 vite.config.js 中使用
 export default defineConfig({
@@ -277,7 +277,7 @@ export default defineConfig({
 **示例：**
 
 ```typescript
-import { scanAddons } from 'befly-util';
+import { scanAddons } from 'befly-shared';
 
 const addons = scanAddons();
 // ['admin', 'blog', 'shop']
@@ -299,7 +299,7 @@ const addons = scanAddons();
 **示例：**
 
 ```typescript
-import { layouts } from 'befly-util';
+import { layouts } from 'befly-shared';
 
 // 根据文件名后缀判断布局：
 // - index.vue -> 默认布局
@@ -323,7 +323,7 @@ import { layouts } from 'befly-util';
 **示例：**
 
 ```typescript
-import { calcPerfTime } from 'befly-util';
+import { calcPerfTime } from 'befly-shared';
 
 const start = Bun.nanoseconds();
 // ... 执行操作 ...
@@ -347,7 +347,7 @@ const duration = calcPerfTime(start);
 所有类型定义自动生成到 `types/` 目录下，可直接导入使用：
 
 ```typescript
-import type { LoadConfigOptions, MergeConfigOptions } from 'befly-util';
+import type { LoadConfigOptions, MergeConfigOptions } from 'befly-shared';
 ```
 
 ## License

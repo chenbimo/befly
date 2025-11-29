@@ -1,10 +1,10 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { routes } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
-import { Layouts } from 'befly-util/layouts';
+import { Layouts } from 'befly-shared/layouts';
 
 /**
- * @typedef {import('befly-util').LayoutConfig} LayoutConfig
+ * @typedef {import('befly-shared').LayoutConfig} LayoutConfig
  */
 
 /**

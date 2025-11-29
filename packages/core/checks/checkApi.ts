@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 
 // 外部依赖
 import { isPlainObject } from 'es-toolkit/compat';
-import { scanAddons, getAddonDir, addonDirExists, scanFiles } from 'befly-util';
+import { scanAddons, getAddonDir, addonDirExists, scanFiles } from 'befly-shared';
 
 // 相对导入
 import { Logger } from '../lib/logger.js';

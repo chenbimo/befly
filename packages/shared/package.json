@@ -1,5 +1,5 @@
 {
-    "name": "befly-util",
+    "name": "befly-shared",
     "version": "1.0.7",
     "type": "module",
     "exports": {

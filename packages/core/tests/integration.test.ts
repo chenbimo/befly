@@ -4,7 +4,7 @@ import { Cipher } from '../lib/cipher';
 import { Jwt } from '../lib/jwt';
 import { Validator } from '../lib/validator';
 import { SqlBuilder } from '../lib/sqlBuilder';
-import { keysToCamel, keysToSnake } from 'befly-util';
+import { keysToCamel, keysToSnake } from 'befly-shared';
 
 describe('Integration - 密码验证流程', () => {
     test('用户注册：密码加密 + 验证', async () => {

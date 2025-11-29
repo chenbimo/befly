@@ -1,4 +1,4 @@
-import { defineAddonConfig } from 'befly-util';
+import { defineAddonConfig } from 'befly-shared';
 
 export default defineAddonConfig(import.meta.dirname, {
     menus: [

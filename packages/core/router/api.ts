@@ -4,7 +4,7 @@
  */
 
 // 外部依赖
-import { genShortId } from 'befly-util';
+import { genShortId } from 'befly-shared';
 
 // 相对导入
 import { FinalResponse } from '../util.js';

@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { arrayToTree } from 'befly-util/arrayToTree';
+import { arrayToTree } from 'befly-shared/arrayToTree';
 
 const router = useRouter();
 const route = useRoute();

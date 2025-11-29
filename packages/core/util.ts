@@ -64,7 +64,7 @@ export function isPrimaryProcess(): boolean {
 
 // 外部依赖
 import { camelCase } from 'es-toolkit/string';
-import { scanFiles } from 'befly-util';
+import { scanFiles } from 'befly-shared';
 
 // 相对导入
 import { Logger } from './lib/logger.js';
