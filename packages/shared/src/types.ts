@@ -254,7 +254,7 @@ export const ApiCode = {
     /** 未找到 */
     NOT_FOUND: 404,
     /** 服务器错误 */
-    SERVER_ERROR: 500,
+    SERVER_ERROR: 500
 } as const;
 
 /**
@@ -283,7 +283,7 @@ export const ErrorMessages = {
     /** Token 过期 */
     TOKEN_EXPIRED: 'Token 已过期',
     /** Token 无效 */
-    TOKEN_INVALID: 'Token 无效',
+    TOKEN_INVALID: 'Token 无效'
 } as const;
 
 /**

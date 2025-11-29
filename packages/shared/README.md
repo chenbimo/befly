@@ -40,17 +40,17 @@ const list: PaginatedResult<User> = {
 import { ApiCode, ErrorMessages } from 'befly-shared';
 
 // 响应码
-ApiCode.SUCCESS      // 0
-ApiCode.FAIL         // 1
-ApiCode.UNAUTHORIZED // 401
-ApiCode.FORBIDDEN    // 403
-ApiCode.NOT_FOUND    // 404
-ApiCode.SERVER_ERROR // 500
+ApiCode.SUCCESS; // 0
+ApiCode.FAIL; // 1
+ApiCode.UNAUTHORIZED; // 401
+ApiCode.FORBIDDEN; // 403
+ApiCode.NOT_FOUND; // 404
+ApiCode.SERVER_ERROR; // 500
 
 // 错误消息
-ErrorMessages.UNAUTHORIZED   // '请先登录'
-ErrorMessages.FORBIDDEN      // '无访问权限'
-ErrorMessages.TOKEN_EXPIRED  // 'Token 已过期'
+ErrorMessages.UNAUTHORIZED; // '请先登录'
+ErrorMessages.FORBIDDEN; // '无访问权限'
+ErrorMessages.TOKEN_EXPIRED; // 'Token 已过期'
 ```
 
 ### 配置类型
@@ -81,18 +81,18 @@ const redisConfig: RedisConfig = {
 import { RedisKeys, RedisTTL } from 'befly-shared';
 
 // 生成 Redis 键
-RedisKeys.apisAll()           // 'befly:apis:all'
-RedisKeys.menusAll()          // 'befly:menus:all'
-RedisKeys.roleInfo('admin')   // 'befly:role:info:admin'
-RedisKeys.roleApis('admin')   // 'befly:role:apis:admin'
-RedisKeys.tableColumns('user') // 'befly:table:columns:user'
+RedisKeys.apisAll(); // 'befly:apis:all'
+RedisKeys.menusAll(); // 'befly:menus:all'
+RedisKeys.roleInfo('admin'); // 'befly:role:info:admin'
+RedisKeys.roleApis('admin'); // 'befly:role:apis:admin'
+RedisKeys.tableColumns('user'); // 'befly:table:columns:user'
 
 // TTL 配置（秒）
-RedisTTL.tableColumns  // 3600 (1小时)
-RedisTTL.roleApis      // 86400 (24小时)
-RedisTTL.roleInfo      // 86400 (24小时)
-RedisTTL.apisAll       // null (永久)
-RedisTTL.menusAll      // null (永久)
+RedisTTL.tableColumns; // 3600 (1小时)
+RedisTTL.roleApis; // 86400 (24小时)
+RedisTTL.roleInfo; // 86400 (24小时)
+RedisTTL.apisAll; // null (永久)
+RedisTTL.menusAll; // null (永久)
 ```
 
 ## 配置管理

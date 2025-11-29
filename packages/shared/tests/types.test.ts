@@ -3,20 +3,7 @@
  */
 import { describe, expect, it } from 'bun:test';
 
-import {
-    ApiCode,
-    ErrorMessages,
-    type DatabaseConfig,
-    type FieldDefinition,
-    type HttpMethod,
-    type MenuItem,
-    type PaginatedResult,
-    type RedisConfig,
-    type ResponseResult,
-    type RoleInfo,
-    type UserInfo,
-    type ValidationResult
-} from '../src/types.js';
+import { ApiCode, ErrorMessages, type DatabaseConfig, type FieldDefinition, type HttpMethod, type MenuItem, type PaginatedResult, type RedisConfig, type ResponseResult, type RoleInfo, type UserInfo, type ValidationResult } from '../src/types.js';
 
 describe('befly-shared 类型定义', () => {
     describe('ResponseResult 类型', () => {
