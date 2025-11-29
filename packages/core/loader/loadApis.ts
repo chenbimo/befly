@@ -9,7 +9,6 @@ import { existsSync } from 'node:fs';
 // 外部依赖
 import { relative, basename, join } from 'pathe';
 import { isPlainObject } from 'es-toolkit/compat';
-import { calcPerfTime } from 'befly-shared/calcPerfTime';
 import { scanFiles } from 'befly-shared/scanFiles';
 import { scanAddons, getAddonDir, addonDirExists } from 'befly-shared/addonHelper';
 
@@ -64,8 +63,6 @@ const DEFAULT_API_FIELDS = {
  */
 export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
     try {
-        const loadStartTime = Bun.nanoseconds();
-
         // 1. 扫描项目 API
         const projectApiFiles = await scanFiles(projectApiDir);
         const projectApiList = projectApiFiles.map((file) => ({
@@ -128,8 +125,6 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 process.exit(1);
             }
         }
-
-        const totalLoadTime = calcPerfTime(loadStartTime);
     } catch (error: any) {
         Logger.error({ err: error }, '加载 API 时发生错误');
         process.exit(1);
