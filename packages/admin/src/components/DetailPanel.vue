@@ -114,7 +114,7 @@ function formatValue(value, field) {
 }
 
 .detail-item {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     padding: var(--spacing-sm) 0;
     border-bottom: 1px solid var(--border-color-light);
 
