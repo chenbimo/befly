@@ -243,6 +243,7 @@ $Method.fetchUserMenus();
                 border-right: none;
                 background: transparent;
 
+                // 子菜单项（非父级的菜单项）
                 .t-menu__item {
                     margin: 2px var(--spacing-sm);
                     border-radius: var(--border-radius);
@@ -272,14 +273,44 @@ $Method.fetchUserMenus();
                     }
                 }
 
+                // 父级菜单样式（有子菜单的）
                 .t-submenu {
-                    .t-submenu__header {
+                    // 父级菜单的 header（不显示指示条）
+                    > .t-menu__item,
+                    > .t-submenu__header {
                         margin: 2px var(--spacing-sm);
                         border-radius: var(--border-radius);
+                        transition: all var(--transition-fast);
+                        position: relative;
+
+                        &:hover {
+                            background-color: var(--bg-color-hover);
+                        }
+
+                        // 父级菜单不显示指示条和背景
+                        &::before {
+                            display: none !important;
+                        }
+
+                        &.t-is-active {
+                            background-color: transparent !important;
+                        }
+                    }
+
+                    // 展开且有子菜单选中时的父级 - 只显示蓝色文字
+                    &.t-is-active > .t-menu__item,
+                    &.t-is-opened > .t-menu__item {
+                        color: var(--primary-color);
+                        background-color: transparent !important;
+                        font-weight: var(--font-weight-medium);
+
+                        &::before {
+                            display: none !important;
+                        }
                     }
 
                     // 子菜单项样式
-                    .t-menu__item {
+                    .t-submenu__content .t-menu__item {
                         padding-left: 32px !important;
                     }
                 }

@@ -619,14 +619,38 @@ body {
         }
     }
 
-    // 子菜单项缩进
+    // 子菜单样式
     .t-submenu {
         .t-submenu__header {
             height: var(--menu-item-height);
             line-height: var(--menu-item-height);
         }
 
-        .t-menu__item {
+        // 父级菜单项（submenu 的直接子元素）- 不显示指示条
+        > .t-menu__item {
+            &::before {
+                display: none !important;
+            }
+
+            &.t-is-active {
+                background-color: transparent !important;
+            }
+        }
+
+        // 父级选中或展开时只显示蓝色文字
+        &.t-is-active > .t-menu__item,
+        &.t-is-opened > .t-menu__item {
+            color: var(--primary-color) !important;
+            background-color: transparent !important;
+            font-weight: var(--font-weight-medium);
+
+            &::before {
+                display: none !important;
+            }
+        }
+
+        // 子菜单内容区的菜单项
+        .t-submenu__content .t-menu__item {
             padding-left: 24px !important;
         }
     }
