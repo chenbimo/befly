@@ -208,13 +208,13 @@ $Method.fetchUserMenus();
             display: flex;
             align-items: center;
             gap: var(--spacing-sm);
-            padding: var(--spacing-lg) var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-md);
             border-bottom: 1px solid var(--border-color-light);
 
             .logo-icon {
-                width: 40px;
-                height: 40px;
-                min-width: 40px;
+                width: 36px;
+                height: 36px;
+                min-width: 36px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -224,7 +224,7 @@ $Method.fetchUserMenus();
 
             h2 {
                 margin: 0;
-                font-size: var(--font-size-lg);
+                font-size: var(--font-size-md);
                 font-weight: var(--font-weight-semibold);
                 color: var(--text-primary);
                 white-space: nowrap;
@@ -236,7 +236,7 @@ $Method.fetchUserMenus();
         .sidebar-menu {
             flex: 1;
             overflow-y: auto;
-            padding: var(--spacing-sm) 0;
+            padding: var(--spacing-xs) 0;
 
             :deep(.t-menu) {
                 border-right: none;
@@ -246,6 +246,7 @@ $Method.fetchUserMenus();
                     margin: 2px var(--spacing-sm);
                     border-radius: var(--border-radius);
                     transition: all var(--transition-fast);
+                    position: relative;
 
                     &:hover {
                         background-color: var(--bg-color-hover);
@@ -255,6 +256,18 @@ $Method.fetchUserMenus();
                         background-color: var(--primary-color-light);
                         color: var(--primary-color);
                         font-weight: var(--font-weight-medium);
+
+                        &::before {
+                            content: '';
+                            position: absolute;
+                            left: 0;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            width: var(--menu-active-indicator);
+                            height: 60%;
+                            background-color: var(--primary-color);
+                            border-radius: 0 2px 2px 0;
+                        }
                     }
                 }
 
@@ -262,6 +275,12 @@ $Method.fetchUserMenus();
                     .t-submenu__header {
                         margin: 2px var(--spacing-sm);
                         border-radius: var(--border-radius);
+                    }
+
+                    // 子菜单项样式
+                    .t-menu__item {
+                        padding-left: 40px !important;
+                        font-size: var(--font-size-xs);
                     }
                 }
 

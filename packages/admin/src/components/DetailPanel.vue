@@ -106,6 +106,7 @@ function formatValue(value, field) {
 .detail-panel {
     height: 100%;
     overflow: auto;
+    background: var(--bg-color-container);
 }
 
 .detail-content {
@@ -114,8 +115,12 @@ function formatValue(value, field) {
 
 .detail-item {
     margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px dashed var(--border-color-light);
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--border-color-light);
+
+    &:first-child {
+        padding-top: 0;
+    }
 
     &:last-child {
         margin-bottom: 0;
@@ -125,17 +130,16 @@ function formatValue(value, field) {
 }
 
 .detail-label {
-    color: var(--text-placeholder);
-    margin-bottom: var(--spacing-xs);
+    color: var(--text-secondary);
+    margin-bottom: 6px;
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .detail-value {
     color: var(--text-primary);
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     word-break: break-all;
     line-height: 1.5;
 }

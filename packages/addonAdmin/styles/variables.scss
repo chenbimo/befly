@@ -120,10 +120,16 @@
     --footer-height: 40px;
     --search-height: 52px;
     --pagination-height: 52px;
-    --detail-width: 280px;
+    --detail-width: 260px;
     --detail-bg: #fafbfc;
-    --layout-gap: 16px;
-    --card-radius: 8px;
+    --layout-gap: 12px;
+    --card-radius: 10px;
+
+    // ============================================
+    // 菜单样式
+    // ============================================
+    --menu-item-height: 40px;
+    --menu-active-indicator: 3px;
 
     // ============================================
     // 登录页配色

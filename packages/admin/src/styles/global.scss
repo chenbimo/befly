@@ -177,19 +177,19 @@ body {
 
         .search-left {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-sm);
             align-items: center;
         }
 
         .search-right {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-sm);
             align-items: center;
             margin-left: auto;
         }
     }
 
-    // 工具栏（兼容旧代码）
+    // 工具栏
     .main-tool {
         height: var(--search-height);
         flex-shrink: 0;
@@ -204,20 +204,20 @@ body {
         .left,
         .toolbar-left {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-sm);
             align-items: center;
         }
 
         .right,
         .toolbar-right {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-sm);
             align-items: center;
         }
 
         .toolbar-search {
             display: flex;
-            gap: 12px;
+            gap: var(--spacing-sm);
             align-items: center;
         }
     }
@@ -404,14 +404,21 @@ body {
                 }
             }
 
+            // 单元格内容垂直居中
+            td {
+                vertical-align: middle;
+            }
+
             // 单选框样式优化
             .t-radio__input {
                 border-color: var(--border-color-dark);
+                border-width: 2px;
             }
 
             .t-radio.t-is-checked .t-radio__input {
                 border-color: var(--primary-color);
                 background-color: var(--primary-color);
+                box-shadow: 0 0 0 2px rgba(0, 82, 217, 0.15);
             }
         }
     }
@@ -426,6 +433,11 @@ body {
         box-shadow: var(--shadow-1);
         display: flex;
         align-items: center;
+
+        // 分页文字样式
+        .t-pagination__total {
+            color: var(--text-secondary);
+        }
 
         .tiny-pager {
             width: 100%;
@@ -450,6 +462,7 @@ body {
 .t-button {
     transition: all var(--transition-fast);
     font-weight: var(--font-weight-medium);
+    border-radius: var(--border-radius);
 
     .t-button__suffix:not(:empty) {
         margin-left: 2px;
@@ -457,10 +470,23 @@ body {
 
     // 主按钮增强
     &.t-button--theme-primary {
-        box-shadow: 0 2px 4px rgba(0, 82, 217, 0.2);
+        box-shadow: 0 2px 4px rgba(0, 82, 217, 0.15);
 
         &:hover {
-            box-shadow: 0 4px 8px rgba(0, 82, 217, 0.25);
+            box-shadow: 0 4px 8px rgba(0, 82, 217, 0.2);
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    // 圆形按钮优化
+    &.t-button--shape-circle,
+    &.t-button--shape-square {
+        &:hover {
+            background-color: var(--bg-color-hover);
         }
     }
 }
@@ -505,8 +531,22 @@ body {
 // 下拉菜单样式
 .t-dropdown__menu {
     box-shadow: var(--shadow-2);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color-light);
     border-radius: var(--border-radius);
+    padding: var(--spacing-xs);
+
+    .t-dropdown__item {
+        border-radius: var(--border-radius-small);
+        margin: 2px 0;
+
+        &:hover {
+            background-color: var(--bg-color-hover);
+        }
+
+        svg {
+            margin-right: var(--spacing-xs);
+        }
+    }
 }
 
 // 分页器样式
@@ -516,17 +556,34 @@ body {
 
         &.t-pagination__btn--current {
             font-weight: var(--font-weight-semibold);
+            background-color: var(--primary-color);
+            color: #fff;
         }
+    }
+
+    .t-pagination__total {
+        color: var(--text-secondary);
     }
 }
 
 // 对话框样式
 .t-dialog {
-    border-radius: var(--border-radius-large);
+    border-radius: var(--card-radius);
     box-shadow: var(--shadow-3);
 
     .t-dialog__header {
         font-weight: var(--font-weight-semibold);
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color-light);
+    }
+
+    .t-dialog__body {
+        padding: var(--spacing-lg);
+    }
+
+    .t-dialog__footer {
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-top: 1px solid var(--border-color-light);
     }
 }
 
@@ -540,6 +597,8 @@ body {
     .t-menu__item {
         font-size: var(--font-size-sm);
         position: relative;
+        height: var(--menu-item-height);
+        line-height: var(--menu-item-height);
 
         &.t-is-active {
             background-color: var(--primary-color-light) !important;
@@ -552,7 +611,7 @@ body {
                 left: 0;
                 top: 50%;
                 transform: translateY(-50%);
-                width: 3px;
+                width: var(--menu-active-indicator);
                 height: 60%;
                 background-color: var(--primary-color);
                 border-radius: 0 2px 2px 0;
@@ -564,9 +623,24 @@ body {
         }
     }
 
+    // 子菜单项缩进
     .t-submenu {
-        .t-menu__item {
-            padding-left: 28px !important;
+        .t-submenu__header {
+            height: var(--menu-item-height);
+            line-height: var(--menu-item-height);
         }
+
+        .t-menu__item {
+            padding-left: 44px !important;
+            font-size: var(--font-size-xs);
+        }
+    }
+}
+
+// 分页器样式增强
+.t-pagination {
+    .t-pagination__total {
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
     }
 }
