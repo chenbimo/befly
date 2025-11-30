@@ -155,11 +155,11 @@ const $Method = {
             if (!valid) return;
 
             $Data.submitting = true;
-            const submitData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : fieldClear($Data.formData, { omitKeys: ['password'] });
+            const formData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : fieldClear($Data.formData, { omitKeys: ['password'] });
 
-            await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', submitData);
+            const result = await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', formData);
 
-            MessagePlugin.success($Prop.actionType === 'upd' ? '编辑成功' : '添加成功');
+            MessagePlugin.success(result.msg);
             $Emit('success');
             $Method.onClose();
         } catch (error) {

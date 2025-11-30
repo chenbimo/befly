@@ -42,6 +42,7 @@ import {
     Button as TButton,
     MessagePlugin
 } from 'tdesign-vue-next';
+import { fieldClear } from 'befly-shared/fieldClear';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({
@@ -118,11 +119,12 @@ const $Method = {
             if (!valid) return;
 
             $Data.submitting = true;
-            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/roleUpd' : '/addon/admin/roleIns', $Data.formData);
+            const formData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : $Data.formData;
+            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/role/upd' : '/addon/admin/role/ins', formData);
 
-            MessagePlugin.success($Prop.actionType === 'upd' ? '更新成功' : '添加成功');
-            $Data.visible = false;
+            MessagePlugin.success(res.msg);
             $Emit('success');
+            $Method.onClose();
         } catch (error) {
             console.error('提交失败:', error);
             MessagePlugin.error('提交失败');
