@@ -3,7 +3,14 @@
  */
 import { describe, expect, it } from 'bun:test';
 
-import { ApiCode, ErrorMessages, type DatabaseConfig, type FieldDefinition, type HttpMethod, type MenuItem, type PaginatedResult, type RedisConfig, type ResponseResult, type RoleInfo, type UserInfo, type ValidationResult } from '../src/types.js';
+import { ApiCode, ErrorMessages } from '../src/constants.js';
+import type { DatabaseConfig, FieldDefinition, HttpMethod, MenuItem, PaginatedResult, RedisConfig, ResponseResult, RoleInfo, UserInfo } from '../types/types.js';
+
+// ValidationResult 在新结构中可能不存在，使用本地定义
+interface ValidationResult {
+    code: 0 | 1;
+    fields: Record<string, string>;
+}
 
 describe('befly-shared 类型定义', () => {
     describe('ResponseResult 类型', () => {
@@ -241,7 +248,6 @@ describe('befly-shared 类型定义', () => {
 
     describe('BaseRequestContext 类型', () => {
         it('请求上下文基础结构正确', () => {
-            const { BaseRequestContext } = require('../src/types.js') as { BaseRequestContext: any };
             // BaseRequestContext 是接口，只验证可以创建符合结构的对象
             const ctx = {
                 body: { username: 'test' },

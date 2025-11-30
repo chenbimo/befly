@@ -18,6 +18,7 @@
         "./*": "./*"
     },
     "scripts": {
+        "test": "bun test",
         "bundler": "bun build ./main.ts --outfile ./main.single.ts --minify --target bun"
     },
     "keywords": [

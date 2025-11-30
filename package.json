@@ -12,6 +12,11 @@
         "packages/*"
     ],
     "scripts": {
+        "test": "bun --filter '*' test",
+        "test:core": "bun --filter 'befly' test",
+        "test:shared": "bun --filter 'befly-shared' test",
+        "test:bail": "bun --filter '*' test --bail",
+        "test:coverage": "bun --filter '*' test --coverage",
         "r": "lerna publish"
     },
     "devDependencies": {
