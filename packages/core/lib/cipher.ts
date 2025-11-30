@@ -4,7 +4,8 @@
  */
 
 import { createSign } from 'node:crypto';
-import type { EncodingType, HashAlgorithm, PasswordHashOptions } from '../types/crypto';
+
+import type { EncodingType, HashAlgorithm, PasswordHashOptions } from 'befly-shared/types';
 
 /**
  * 加密工具类

@@ -1,4 +1,13 @@
-﻿/**
+/**
+ * 日志相关类型定义
+ */
+
+/**
+ * 日志级别
+ */
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+/**
  * 日志配置
  */
 export interface LoggerConfig {

@@ -5,7 +5,7 @@
 import { createSigner, createVerifier, createDecoder } from 'fast-jwt';
 
 import type { AuthConfig } from '../types/befly.js';
-import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtDecoded, JwtHeader } from '../types/jwt.js';
+import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtDecoded, JwtHeader } from 'befly-shared/types';
 
 interface FastJwtComplete {
     header: JwtHeader;

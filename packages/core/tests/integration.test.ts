@@ -57,8 +57,6 @@ describe('Integration - JWT + 权限验证', () => {
 
 describe('Integration - 数据验证 + SQL 构建', () => {
     test('API 请求：验证数据 + 构建查询', () => {
-        const validator = new Validator();
-
         // 1. 验证用户输入
         const userData = {
             email: 'test@example.com',
@@ -72,7 +70,7 @@ describe('Integration - 数据验证 + SQL 构建', () => {
             username: { name: '用户名', type: 'string', min: 2, max: 20 }
         };
 
-        const validationResult = validator.validate(userData, rules, ['email', 'username']);
+        const validationResult = Validator.validate(userData, rules, ['email', 'username']);
         expect(validationResult.code).toBe(0);
 
         // 2. 验证通过后构建 SQL 查询
@@ -86,8 +84,6 @@ describe('Integration - 数据验证 + SQL 构建', () => {
     });
 
     test('数据插入：验证 + 字段转换 + SQL 构建', () => {
-        const validator = new Validator();
-
         // 1. 验证数据
         const newUser = {
             userName: 'jane',
@@ -101,7 +97,7 @@ describe('Integration - 数据验证 + SQL 构建', () => {
             userAge: { name: '年龄', type: 'number', min: 0, max: 150 }
         };
 
-        const validationResult = validator.validate(newUser, rules, ['userName', 'userEmail']);
+        const validationResult = Validator.validate(newUser, rules, ['userName', 'userEmail']);
         expect(validationResult.code).toBe(0);
 
         // 2. 字段转换（驼峰转下划线）

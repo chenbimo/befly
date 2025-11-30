@@ -1,9 +1,7 @@
 ﻿/**
  * Befly 框架通用类型定义
- * Core 专用类型，befly-shared 的类型请直接从 befly-shared 导入
+ * Core 专用类型，通用类型请直接从 befly-shared/types 导入
  */
-
-import type { SqlValue } from 'befly-shared/types';
 
 // ============================================
 // Core 专用类型（不适合放在 shared 中的类型）
@@ -46,36 +44,12 @@ export type ComparisonOperator = '=' | '>' | '<' | '>=' | '<=' | '!=' | '<>' | '
 export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
 
 /**
- * 日志级别
- */
-export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-
-/**
- * 日志配置
- */
-export interface LoggerConfig {
-    level?: LogLevel;
-    transport?: {
-        target: string;
-        options?: Record<string, any>;
-    };
-}
-
-/**
  * 工具函数返回类型
  */
 export interface ToolResponse<T = any> {
     success: boolean;
     data?: T;
     error?: string;
-}
-
-/**
- * 分页参数
- */
-export interface PaginationParams {
-    page: number;
-    limit: number;
 }
 
 /**
@@ -87,16 +61,6 @@ export type Optional<T> = T | null | undefined;
  * 深度可选
  */
 export type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
-
-/**
- * 保留字段（系统自动管理）
- */
-export type ReservedFields = 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'state';
-
-/**
- * 排除保留字段
- */
-export type ExcludeReserved<T> = Omit<T, ReservedFields>;
 
 /**
  * 数据库记录基础类型

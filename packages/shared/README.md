@@ -10,6 +10,23 @@ bun add befly-shared
 
 ## 类型定义
 
+所有类型统一从 `befly-shared/types` 导入，按功能分类：
+
+| 分类   | 类型                                                                          |
+| ------ | ----------------------------------------------------------------------------- |
+| 验证   | `ValidateResult`, `SingleResult`, `FieldDefinition`, `FieldRules`             |
+| API    | `ResponseResult`, `PaginatedResult`, `ApiCode`, `ErrorMessages`               |
+| 数据库 | `DatabaseConfig`, `SqlValue`, `WhereConditions`                               |
+| 上下文 | `RequestContext`, `ApiRoute`                                                  |
+| 菜单   | `MenuItem`, `MenuTree`                                                        |
+| 加密   | `EncodingType`, `HashAlgorithm`, `PasswordHashOptions`                        |
+| JWT    | `JwtPayload`, `JwtSignOptions`, `JwtVerifyOptions`, `JwtDecoded`, `JwtHeader` |
+| 日志   | `LogLevel`, `LoggerConfig`                                                    |
+| 工具   | `DateFormat`, `PaginationParams`, `PaginationResult`                          |
+| 表     | `SystemFields`, `BaseTable`, `InsertType`, `UpdateType`, `SelectType`         |
+| Addon  | `AddonAuthor`, `AddonConfig`                                                  |
+| 通用   | `ReservedFields`, `ExcludeReserved`                                           |
+
 ### 响应类型
 
 ```typescript

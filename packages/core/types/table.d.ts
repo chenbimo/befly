@@ -1,50 +1,11 @@
 /**
  * 表类型定义 - 用于增强 DbHelper 泛型推断
+ *
+ * 基础类型（SystemFields, BaseTable, InsertType, UpdateType, SelectType）
+ * 请直接从 befly-shared/types 导入
  */
 
-// ============================================
-// 基础表类型
-// ============================================
-
-/**
- * 系统字段（所有表都有的字段）
- */
-export interface SystemFields {
-    /** 主键 ID（雪花 ID） */
-    id: number;
-    /** 状态：0=已删除, 1=正常, 2=禁用 */
-    state: number;
-    /** 创建时间（毫秒时间戳） */
-    createdAt: number;
-    /** 更新时间（毫秒时间戳） */
-    updatedAt: number;
-    /** 删除时间（毫秒时间戳，软删除时设置） */
-    deletedAt: number | null;
-}
-
-/**
- * 基础表类型（包含系统字段）
- */
-export type BaseTable<T extends Record<string, any>> = T & SystemFields;
-
-// ============================================
-// 表操作类型工具
-// ============================================
-
-/**
- * 插入类型：排除系统自动生成的字段
- */
-export type InsertType<T> = Omit<T, keyof SystemFields>;
-
-/**
- * 更新类型：所有字段可选，排除不可修改的系统字段
- */
-export type UpdateType<T> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>;
-
-/**
- * 查询结果类型：完整的表记录
- */
-export type SelectType<T> = T;
+import type { BaseTable, InsertType, UpdateType } from 'befly-shared/types';
 
 // ============================================
 // 数据库表映射接口
@@ -205,7 +166,8 @@ export type TypedWhereConditions<T> = Partial<T> & // 精确匹配
     ArrayConditions<T> & // 数组操作符
     StringConditions<T> & // 字符串操作符
     RangeConditions<T> & // 范围操作符
-    NullConditions<T> & { // 空值操作符
+    NullConditions<T> & {
+        // 空值操作符
         /** OR 条件组 */
         $or?: TypedWhereConditions<T>[];
         /** AND 条件组 */
