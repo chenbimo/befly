@@ -83,9 +83,10 @@ import type { PluginRequestHook, Next } from './types/plugin.js';
  * @param msg - 错误消息
  * @param code - 错误码，默认 1
  * @param data - 附加数据，默认 null
+ * @param detail - 详细信息，用于标记具体提示位置，默认 null
  * @returns Response 对象
  */
-export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1, data: any = null): Response {
+export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1, data: any = null, detail: any = null): Response {
     // 记录拦截日志
     if (ctx.requestId) {
         const duration = Date.now() - ctx.now;
@@ -97,7 +98,8 @@ export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1
         {
             code: code,
             msg: msg,
-            data: data
+            data: data,
+            detail: detail
         },
         {
             headers: ctx.corsHeaders

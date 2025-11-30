@@ -23,7 +23,7 @@ const hook: Hook = {
         const result = Validator.validate(ctx.body, ctx.api.fields, ctx.api.required || []);
 
         if (result.code !== 0) {
-            ctx.response = ErrorResponse(ctx, '无效的请求参数格式', 1, result.fields);
+            ctx.response = ErrorResponse(ctx, result.firstError || '参数验证失败', 1, null, result.fieldErrors);
             return;
         }
     }
