@@ -43,19 +43,7 @@
             </div>
 
             <div class="main-detail">
-                <DetailPanel
-                    :data="$Data.currentRow"
-                    :fields="[
-                        { key: 'id', label: 'ID' },
-                        { key: 'name', label: '字典名称' },
-                        { key: 'code', label: '字典代码' },
-                        { key: 'value', label: '字典值' },
-                        { key: 'pid', label: '父级ID', default: '顶级' },
-                        { key: 'sort', label: '排序' },
-                        { key: 'description', label: '描述' },
-                        { key: 'state', label: '状态' }
-                    ]"
-                />
+                <DetailPanel :data="$Data.currentRow" :fields="$Data.columns" />
             </div>
         </div>
 

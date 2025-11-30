@@ -23,18 +23,7 @@
             </div>
 
             <div class="main-detail">
-                <DetailPanel
-                    :data="$Data.currentRow"
-                    :fields="[
-                        { key: 'id', label: 'ID' },
-                        { key: 'name', label: '菜单名称' },
-                        { key: 'path', label: '路由路径' },
-                        { key: 'icon', label: '图标' },
-                        { key: 'sort', label: '排序' },
-                        { key: 'pid', label: '父级ID', default: '顶级菜单' },
-                        { key: 'state', label: '状态' }
-                    ]"
-                />
+                <DetailPanel :data="$Data.currentRow" :fields="$Data.columns" />
             </div>
         </div>
     </div>

@@ -47,16 +47,7 @@
             </div>
 
             <div class="main-detail">
-                <DetailPanel
-                    :data="$Data.currentRow"
-                    :fields="[
-                        { key: 'id', label: 'ID' },
-                        { key: 'username', label: '用户名' },
-                        { key: 'nickname', label: '昵称' },
-                        { key: 'roleCode', label: '角色' },
-                        { key: 'state', label: '状态' }
-                    ]"
-                />
+                <DetailPanel :data="$Data.currentRow" :fields="$Data.columns" />
             </div>
         </div>
 

@@ -51,17 +51,7 @@
             </div>
 
             <div class="main-detail">
-                <DetailPanel
-                    :data="$Data.currentRow"
-                    :fields="[
-                        { key: 'id', label: 'ID' },
-                        { key: 'name', label: '角色名称' },
-                        { key: 'code', label: '角色代码' },
-                        { key: 'description', label: '描述' },
-                        { key: 'sort', label: '排序' },
-                        { key: 'state', label: '状态' }
-                    ]"
-                />
+                <DetailPanel :data="$Data.currentRow" :fields="$Data.columns" />
             </div>
         </div>
 
@@ -102,7 +92,7 @@ const $Data = $ref({
     activeRowKeys: [],
     currentRow: null,
     columns: withDefaultColumns([
-        { colKey: 'index', title: '序号', width: 100, align: 'center' },
+        { colKey: 'id', title: 'ID', width: 80, align: 'center' },
         { colKey: 'name', title: '角色名称', width: 150 },
         { colKey: 'code', title: '角色代码', width: 150 },
         { colKey: 'description', title: '描述', minWidth: 150 },

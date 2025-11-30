@@ -2,7 +2,7 @@
     <div class="detail-panel">
         <div class="detail-content">
             <div v-if="data">
-                <div v-for="field in fields" :key="field.key" class="detail-item">
+                <div v-for="field in normalizedFields" :key="field.key" class="detail-item">
                     <div class="detail-label">{{ field.label }}</div>
                     <div class="detail-value">
                         <!-- 状态字段特殊处理 -->
@@ -31,9 +31,10 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { Tag as TTag } from 'tdesign-vue-next';
 
-defineProps({
+const props = defineProps({
     /**
      * 当前行数据
      */
@@ -42,12 +43,21 @@ defineProps({
         default: null
     },
     /**
-     * 字段配置
-     * @example [{ key: 'id', label: 'ID' }, { key: 'name', label: '名称', default: '-' }]
+     * 字段配置，支持两种格式：
+     * 1. fields 格式: [{ key: 'id', label: 'ID' }]
+     * 2. columns 格式: [{ colKey: 'id', title: 'ID' }]
+     * 自动过滤 row-select、operation 等非数据列
      */
     fields: {
         type: Array,
         required: true
+    },
+    /**
+     * 需要过滤的列 key
+     */
+    excludeKeys: {
+        type: Array,
+        default: () => ['row-select', 'operation', 'index']
     },
     /**
      * 空数据时的提示文字
@@ -56,6 +66,23 @@ defineProps({
         type: String,
         default: '暂无数据'
     }
+});
+
+/**
+ * 标准化字段配置，支持 columns 和 fields 两种格式
+ */
+const normalizedFields = computed(() => {
+    return props.fields
+        .filter((item) => {
+            const key = item.colKey || item.key;
+            return key && !props.excludeKeys.includes(key);
+        })
+        .map((item) => ({
+            key: item.colKey || item.key,
+            label: item.title || item.label,
+            default: item.default,
+            formatter: item.formatter
+        }));
 });
 
 /**

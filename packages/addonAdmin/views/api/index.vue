@@ -36,17 +36,7 @@
             </div>
 
             <div class="main-detail">
-                <DetailPanel
-                    :data="$Data.currentRow"
-                    :fields="[
-                        { key: 'id', label: 'ID' },
-                        { key: 'name', label: '接口名称' },
-                        { key: 'path', label: '接口路径' },
-                        { key: 'method', label: '请求方法' },
-                        { key: 'addonName', label: '所属组件', default: '项目' },
-                        { key: 'description', label: '接口描述' }
-                    ]"
-                >
+                <DetailPanel :data="$Data.currentRow" :fields="$Data.columns">
                     <template #method="{ value }">
                         <TTag v-if="value === 'GET'" shape="round" theme="success" variant="light-outline">GET</TTag>
                         <TTag v-else-if="value === 'POST'" shape="round" theme="primary" variant="light-outline">POST</TTag>
