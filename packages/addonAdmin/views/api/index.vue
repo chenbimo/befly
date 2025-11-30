@@ -20,7 +20,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" row-key="id" :selected-row-keys="$Data.selectedRowKeys" active-row-type="single" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                <TTable v-bind="withTableProps()" :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
                     <template #method="{ row }">
                         <TTag v-if="row.method === 'GET'" shape="round" theme="success" variant="light-outline">GET</TTag>
                         <TTag v-else-if="row.method === 'POST'" shape="round" theme="primary" variant="light-outline">POST</TTag>
@@ -65,7 +65,7 @@ import { Button as TButton, Table as TTable, Tag as TTag, Input as TInput, Messa
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import ILucideSearch from '~icons/lucide/search';
 import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from '@/utils';
+import { withDefaultColumns, withTableProps } from '@/utils';
 import DetailPanel from '@/components/DetailPanel.vue';
 
 // 响应式数据

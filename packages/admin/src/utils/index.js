@@ -45,5 +45,53 @@ export function withDefaultColumns(columns) {
     }));
 }
 
+/**
+ * 表格通用属性配置
+ * 统一管理 height、row-key、active-row-type 等通用配置
+ */
+const defaultTableProps = {
+    rowKey: 'id',
+    height: '100%',
+    activeRowType: 'single'
+};
+
+/**
+ * 生成表格通用属性
+ * @param {Object} overrides - 覆盖或扩展的属性
+ * @returns {Object} 合并后的表格属性
+ */
+export function withTableProps(overrides = {}) {
+    return {
+        ...defaultTableProps,
+        ...overrides
+    };
+}
+
+/**
+ * 树形表格默认配置
+ */
+const defaultTreeConfig = {
+    childrenKey: 'children',
+    treeNodeColumnIndex: 0,
+    defaultExpandAll: true
+};
+
+/**
+ * 生成树形表格通用属性
+ * @param {Object} treeOverrides - 树形配置覆盖
+ * @param {Object} tableOverrides - 表格属性覆盖
+ * @returns {Object} 合并后的树形表格属性
+ */
+export function withTreeTableProps(treeOverrides = {}, tableOverrides = {}) {
+    return {
+        ...defaultTableProps,
+        ...tableOverrides,
+        tree: {
+            ...defaultTreeConfig,
+            ...treeOverrides
+        }
+    };
+}
+
 // 导出组合式函数
 export { useTablePage } from './useTablePage.js';

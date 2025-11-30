@@ -3,7 +3,7 @@
         <div class="dialog-wrapper">
             <TForm :model="$Data.formData" label-width="80px" label-position="left" label-align="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
                 <TFormItem label="角色" prop="roleId">
-                    <TSelect v-model="$Data.formData.roleId" :options="$Data.roleOptions" placeholder="请选择角色" />
+                    <TSelect v-model="$Data.formData.roleId" :options="$Data.allRoleLists" placeholder="请选择角色" />
                 </TFormItem>
                 <TFormItem label="用户名" prop="username">
                     <TInput v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
@@ -80,7 +80,7 @@ const $From = $shallowRef({
 const $Data = $ref({
     visible: false,
     submitting: false,
-    roleOptions: [],
+    allRoleLists: [],
     formData: {
         id: 0,
         username: '',
@@ -116,7 +116,7 @@ const $Data2 = $shallowRef({
 const $Method = {
     async initData() {
         $Method.onShow();
-        await $Method.loadRoles();
+       $Data.allRoleLists = await $Http('/addon/admin/role/all')
         if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
             // 编辑模式：直接赋值
             $Data.formData = { ...$Prop.rowData };
@@ -134,20 +134,6 @@ const $Method = {
         setTimeout(() => {
             $Emit('update:modelValue', false);
         }, 300);
-    },
-
-    async loadRoles() {
-        try {
-            const result = await $Http('/addon/admin/role/all');
-            $Data.roleOptions = result
-                .filter((role) => role.state === 1)
-                .map((role) => ({
-                    label: role.name,
-                    value: role.id
-                }));
-        } catch (error) {
-            MessagePlugin.error(error.msg || '加载角色列表失败');
-        }
     },
 
     async onSubmit() {
