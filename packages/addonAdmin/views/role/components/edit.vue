@@ -16,8 +16,8 @@
                 </TFormItem>
                 <TFormItem label="状态" prop="state">
                     <TRadioGroup v-model="$Data.formData.state">
-                        <TRadio :label="1">正常</TRadio>
-                        <TRadio :label="2">禁用</TRadio>
+                        <TRadio :value="1">正常</TRadio>
+                        <TRadio :value="2">禁用</TRadio>
                     </TRadioGroup>
                 </TFormItem>
             </TForm>
