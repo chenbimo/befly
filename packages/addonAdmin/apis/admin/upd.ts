@@ -21,18 +21,6 @@ export default {
             return befly.tool.No('管理员不存在');
         }
 
-        // 如果更新邮箱，检查是否重复
-        if (updateData.email && updateData.email !== admin.email) {
-            const existingAdmin = await befly.db.getOne({
-                table: 'addon_admin_admin',
-                where: { email: updateData.email }
-            });
-
-            if (existingAdmin) {
-                return befly.tool.No('邮箱已被使用');
-            }
-        }
-
         // 更新管理员信息
         await befly.db.updData({
             table: 'addon_admin_admin',

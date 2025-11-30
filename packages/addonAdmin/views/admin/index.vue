@@ -49,7 +49,6 @@
                     :fields="[
                         { key: 'id', label: 'ID' },
                         { key: 'username', label: '用户名' },
-                        { key: 'email', label: '邮箱' },
                         { key: 'nickname', label: '昵称' },
                         { key: 'roleCode', label: '角色' },
                         { key: 'state', label: '状态' }
@@ -93,7 +92,6 @@ const $Data = $ref({
         },
         { colKey: 'username', title: '用户名', width: 150, fixed: 'left' },
         { colKey: 'id', title: '序号', width: 150, align: 'center' },
-        { colKey: 'email', title: '邮箱', width: 200 },
         { colKey: 'nickname', title: '昵称', width: 150 },
         { colKey: 'roleCode', title: '角色', width: 120 },
         { colKey: 'state', title: '状态', width: 100, ellipsis: false },

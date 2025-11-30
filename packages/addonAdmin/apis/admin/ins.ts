@@ -3,7 +3,7 @@
 export default {
     name: '添加管理员',
     fields: adminTable,
-    required: ['username', 'email', 'password', 'roleId'],
+    required: ['username', 'password', 'roleId'],
     handler: async (befly, ctx) => {
         // 检查用户名是否已存在
         if (ctx.body.username) {
@@ -17,16 +17,6 @@ export default {
             }
         }
 
-        // 检查邮箱是否已存在
-        const existingByEmail = await befly.db.getOne({
-            table: 'addon_admin_admin',
-            where: { email: ctx.body.email }
-        });
-
-        if (existingByEmail) {
-            return befly.tool.No('邮箱已被使用');
-        }
-
         // 加密密码
         const hashedPassword = await befly.cipher.hashPassword(ctx.body.password);
 
@@ -35,11 +25,9 @@ export default {
             table: 'addon_admin_admin',
             data: {
                 username: ctx.body.username,
-                email: ctx.body.email,
                 password: hashedPassword,
                 name: ctx.body.name,
                 nickname: ctx.body.nickname,
-                phone: ctx.body.phone,
                 roleId: ctx.body.roleId || 0,
                 roleCode: ctx.body.roleCode || '',
                 roleType: ctx.body.roleType || 'user'
@@ -48,8 +36,7 @@ export default {
 
         return befly.tool.Yes('添加成功', {
             id: adminId,
-            username: ctx.body.username,
-            email: ctx.body.email
+            username: ctx.body.username
         });
     }
 };

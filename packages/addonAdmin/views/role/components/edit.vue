@@ -126,8 +126,7 @@ const $Method = {
             $Emit('success');
             $Method.onClose();
         } catch (error) {
-            console.error('提交失败:', error);
-            MessagePlugin.error('提交失败');
+            MessagePlugin.error(error.msg || '提交失败');
         } finally {
             $Data.submitting = false;
         }
