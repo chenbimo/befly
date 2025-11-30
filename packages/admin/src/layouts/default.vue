@@ -1,5 +1,5 @@
 <template>
-    <div class="layout-wrapper" :class="{ 'sidebar-collapsed': $Data.isCollapsed }">
+    <div class="layout-wrapper">
         <!-- 左侧边栏：Logo + 菜单 + 底部操作 -->
         <div class="layout-sidebar">
             <!-- Logo 区域 -->
@@ -7,12 +7,12 @@
                 <div class="logo-icon">
                     <i-lucide:box style="width: 24px; height: 24px; color: var(--primary-color)" />
                 </div>
-                <h2 v-show="!$Data.isCollapsed">{{ $Config.appTitle }}</h2>
+                <h2>{{ $Config.appTitle }}</h2>
             </div>
 
             <!-- 菜单区域 -->
             <div class="sidebar-menu">
-                <t-menu v-model:value="$Data.currentMenuKey" v-model:expanded="$Data.expandedKeys" :collapsed="$Data.isCollapsed" width="220px" @change="$Method.onMenuClick">
+                <t-menu v-model:value="$Data.currentMenuKey" v-model:expanded="$Data.expandedKeys" width="220px" @change="$Method.onMenuClick">
                     <template v-for="menu in $Data.userMenus" :key="menu.id">
                         <!-- 无子菜单 -->
                         <t-menu-item v-if="!menu.children || menu.children.length === 0" :value="menu.path">
@@ -40,18 +40,12 @@
 
             <!-- 底部操作区域 -->
             <div class="sidebar-footer">
-                <!-- 折叠按钮 -->
-                <div class="footer-item collapse-btn" @click="$Method.toggleCollapse">
-                    <i-lucide:panel-left-close v-if="!$Data.isCollapsed" style="width: 18px; height: 18px" />
-                    <i-lucide:panel-left-open v-else style="width: 18px; height: 18px" />
-                    <span v-show="!$Data.isCollapsed">收起菜单</span>
-                </div>
                 <div class="footer-item" @click="$Method.handleSettings">
                     <i-lucide:settings style="width: 18px; height: 18px" />
-                    <span v-show="!$Data.isCollapsed">系统设置</span>
+                    <span>系统设置</span>
                 </div>
                 <div class="footer-user">
-                    <t-upload v-show="!$Data.isCollapsed" :action="$Config.uploadUrl" :headers="{ Authorization: $Storage.local.get('token') }" :show-upload-list="false" accept="image/*" @success="$Method.onAvatarUploadSuccess">
+                    <t-upload :action="$Config.uploadUrl" :headers="{ Authorization: $Storage.local.get('token') }" :show-upload-list="false" accept="image/*" @success="$Method.onAvatarUploadSuccess">
                         <div class="user-avatar" :class="{ 'has-avatar': $Data.userInfo.avatar }">
                             <img v-if="$Data.userInfo.avatar" :src="$Data.userInfo.avatar" alt="avatar" />
                             <i-lucide:user v-else style="width: 16px; height: 16px; color: #fff" />
@@ -60,15 +54,11 @@
                             </div>
                         </div>
                     </t-upload>
-                    <div v-show="$Data.isCollapsed" class="user-avatar">
-                        <img v-if="$Data.userInfo.avatar" :src="$Data.userInfo.avatar" alt="avatar" />
-                        <i-lucide:user v-else style="width: 16px; height: 16px; color: #fff" />
-                    </div>
-                    <div v-show="!$Data.isCollapsed" class="user-info">
+                    <div class="user-info">
                         <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
                         <span class="user-role">{{ $Data.userInfo.role || '超级管理员' }}</span>
                     </div>
-                    <t-button v-show="!$Data.isCollapsed" theme="default" variant="text" size="small" @click="$Method.handleLogout">
+                    <t-button theme="default" variant="text" size="small" @click="$Method.handleLogout">
                         <template #icon>
                             <i-lucide:log-out style="width: 16px; height: 16px" />
                         </template>
@@ -101,7 +91,6 @@ const $Data = $ref({
     userMenusFlat: [], // 一维菜单数据
     expandedKeys: [],
     currentMenuKey: '',
-    isCollapsed: false, // 菜单折叠状态
     userInfo: {
         nickname: '管理员',
         role: '超级管理员',
@@ -180,13 +169,6 @@ const $Method = {
         router.push('/addon/admin/settings');
     },
 
-    // 切换菜单折叠状态
-    toggleCollapse() {
-        $Data.isCollapsed = !$Data.isCollapsed;
-        // 保存折叠状态到本地存储
-        $Storage.local.set('sidebarCollapsed', $Data.isCollapsed);
-    },
-
     // 头像上传成功
     onAvatarUploadSuccess(res) {
         if (res.response?.code === 0 && res.response?.data?.url) {
@@ -194,18 +176,9 @@ const $Method = {
             MessagePlugin.success('头像上传成功');
             // TODO: 可以调用接口保存用户头像
         }
-    },
-
-    // 初始化折叠状态
-    initCollapsedState() {
-        const collapsed = $Storage.local.get('sidebarCollapsed');
-        if (collapsed !== null) {
-            $Data.isCollapsed = collapsed;
-        }
     }
 };
 
-$Method.initCollapsedState();
 $Method.fetchUserMenus();
 </script>
 
@@ -219,30 +192,6 @@ $Method.fetchUserMenus();
     gap: var(--layout-gap);
     overflow: hidden;
 
-    // 折叠状态
-    &.sidebar-collapsed {
-        .layout-sidebar {
-            width: 64px;
-
-            .sidebar-logo {
-                padding: var(--spacing-md);
-                justify-content: center;
-            }
-
-            .sidebar-footer {
-                .footer-item {
-                    justify-content: center;
-                    padding: var(--spacing-sm);
-                }
-
-                .footer-user {
-                    justify-content: center;
-                    padding: var(--spacing-sm);
-                }
-            }
-        }
-    }
-
     // 左侧边栏
     .layout-sidebar {
         width: var(--sidebar-width);
@@ -253,7 +202,6 @@ $Method.fetchUserMenus();
         border-radius: var(--border-radius-large);
         box-shadow: var(--shadow-1);
         overflow: hidden;
-        transition: width var(--transition-normal);
 
         // Logo 区域
         .sidebar-logo {
@@ -262,7 +210,6 @@ $Method.fetchUserMenus();
             gap: var(--spacing-sm);
             padding: var(--spacing-lg) var(--spacing-md);
             border-bottom: 1px solid var(--border-color-light);
-            transition: all var(--transition-normal);
 
             .logo-icon {
                 width: 40px;
@@ -348,10 +295,6 @@ $Method.fetchUserMenus();
                     font-size: var(--font-size-sm);
                     white-space: nowrap;
                 }
-
-                &.collapse-btn {
-                    color: var(--text-placeholder);
-                }
             }
 
             .footer-user {
@@ -362,7 +305,6 @@ $Method.fetchUserMenus();
                 margin-top: var(--spacing-xs);
                 background: var(--bg-color-secondarycontainer);
                 border-radius: var(--border-radius);
-                transition: all var(--transition-fast);
 
                 .user-avatar {
                     width: 32px;
