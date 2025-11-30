@@ -153,10 +153,11 @@ const $Method = {
 
     // 处理退出登录
     handleLogout() {
-        DialogPlugin.confirm({
+        const dialog = DialogPlugin.confirm({
             body: '确定要退出登录吗？',
             header: '确认',
             onConfirm: () => {
+                dialog.destroy();
                 $Storage.local.remove('token');
                 router.push('/internal/login');
                 MessagePlugin.success('退出成功');
