@@ -1,6 +1,8 @@
 /* 全局基础样式 */
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -9,6 +11,11 @@ body {
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'PingFang SC', 'Microsoft YaHei';
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+    background: var(--bg-color-page);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 #app {
@@ -16,23 +23,24 @@ body {
     min-height: 100vh;
 }
 
-/* 滚动条样式 */
+/* 滚动条样式 - 更精致 */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f5f5f5;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #d9d9d9;
-    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+    transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #bfbfbf;
+    background: rgba(0, 0, 0, 0.25);
 }
 
 .tiny-dialog-box {
@@ -118,26 +126,54 @@ body {
     justify-content: center;
 }
 
+// 通用卡片样式
+.section-block {
+    background: var(--bg-color-container);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-1);
+    padding: var(--spacing-md);
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 1px solid var(--border-color-light);
+
+        h2 {
+            font-size: var(--font-size-md);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        svg {
+            width: 18px;
+            height: 18px;
+            color: var(--primary-color);
+        }
+    }
+}
+
 // 数据列表页面通用布局样式
 .page-table {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    background: var(--bg-color-page);
+    gap: var(--layout-gap);
+    overflow: hidden;
 
-    // 搜索栏区域
+    // 搜索栏区域（卡片样式）
     .main-search {
         height: var(--search-height);
         flex-shrink: 0;
         display: flex;
         align-items: center;
-        padding: 0 16px;
+        padding: 0 var(--spacing-md);
         background: var(--bg-color-container);
-        border-bottom: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
 
         .search-left {
             display: flex;
@@ -160,9 +196,10 @@ body {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0 16px;
+        padding: 0 var(--spacing-md);
         background: var(--bg-color-container);
-        border-bottom: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
 
         .left,
         .toolbar-left {
@@ -190,55 +227,115 @@ body {
         flex: 1;
         display: flex;
         overflow: hidden;
+        gap: var(--layout-gap);
+        min-height: 0;
 
         // 表格区域
         .main-table {
             flex: 1;
             overflow: hidden;
             background: var(--bg-color-container);
-            border-right: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow-1);
+            display: flex;
+            flex-direction: column;
 
-            // 表格头部样式
+            // 表格头部样式 - 增强对比度
             .custom-table-cell-class {
-                background-color: var(--bg-color-page) !important;
-                font-weight: 600;
+                background-color: var(--table-header-bg) !important;
+                font-weight: var(--font-weight-semibold);
                 color: var(--text-primary);
+                font-size: var(--font-size-sm);
             }
 
-            // 覆盖 TDesign 默认选中行样式
+            // 覆盖 TDesign 默认表格样式
             :deep(.t-table) {
-                // 单选框选中样式
+                flex: 1;
+                border: none !important;
+
+                // 表格边框优化
+                &.t-table--bordered {
+                    border: none !important;
+                }
+
+                // 表头样式 - 增强对比
+                .t-table__header th {
+                    background-color: var(--table-header-bg) !important;
+                    border-bottom: 2px solid var(--border-color) !important;
+                    color: var(--table-header-text);
+                    font-weight: var(--font-weight-semibold);
+                    font-size: var(--font-size-sm);
+                }
+
+                // 单选框选中样式 - 更明显的蓝色
                 .t-table__row--selected {
-                    background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+                    background-color: var(--table-row-selected) !important;
+
+                    td {
+                        background-color: var(--table-row-selected) !important;
+                    }
 
                     &:hover {
-                        background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                        background-color: var(--table-row-active) !important;
+
+                        td {
+                            background-color: var(--table-row-active) !important;
+                        }
                     }
                 }
 
                 // 行高亮样式（active-row）
                 .t-table__row--active {
-                    background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+                    background-color: var(--table-row-selected) !important;
+
+                    td {
+                        background-color: var(--table-row-selected) !important;
+                    }
 
                     &:hover {
-                        background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                        background-color: var(--table-row-active) !important;
+
+                        td {
+                            background-color: var(--table-row-active) !important;
+                        }
                     }
                 }
 
                 // 普通行悬停样式
                 .t-table__row:hover {
-                    background-color: var(--bg-color-hover);
+                    td {
+                        background-color: var(--table-row-hover) !important;
+                    }
+                }
+
+                // 单元格边框
+                td {
+                    border-bottom: 1px solid var(--border-color-light) !important;
+                    font-size: var(--font-size-sm);
+                }
+
+                // 单选框样式优化
+                .t-radio__input {
+                    border-color: var(--border-color-dark);
+                }
+
+                .t-radio.t-is-checked .t-radio__input {
+                    border-color: var(--primary-color);
+                    background-color: var(--primary-color);
                 }
             }
         }
 
-        // 详情侧栏（默认隐藏）
+        // 详情侧栏 - 卡片样式
         .main-detail {
             background: var(--bg-color-container);
             width: var(--detail-width);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow-1);
+            overflow: hidden;
 
             .detail-content {
-                padding: 16px;
+                padding: var(--spacing-md);
                 overflow-y: auto;
                 height: 100%;
             }
@@ -250,43 +347,83 @@ body {
         flex: 1;
         overflow: hidden;
         background: var(--bg-color-container);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
 
         .custom-table-cell-class {
-            background-color: var(--bg-color-page) !important;
-            font-weight: 600;
-            color: var(--text-primary);
+            background-color: var(--table-header-bg) !important;
+            font-weight: var(--font-weight-semibold);
+            color: var(--table-header-text);
+            font-size: var(--font-size-sm);
         }
 
         :deep(.t-table) {
+            .t-table__header th {
+                background-color: var(--table-header-bg) !important;
+                border-bottom: 2px solid var(--border-color) !important;
+                color: var(--table-header-text);
+                font-weight: var(--font-weight-semibold);
+                font-size: var(--font-size-sm);
+            }
+
             .t-table__row--selected {
-                background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+                background-color: var(--table-row-selected) !important;
+
+                td {
+                    background-color: var(--table-row-selected) !important;
+                }
 
                 &:hover {
-                    background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                    background-color: var(--table-row-active) !important;
+
+                    td {
+                        background-color: var(--table-row-active) !important;
+                    }
                 }
             }
 
             .t-table__row--active {
-                background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+                background-color: var(--table-row-selected) !important;
+
+                td {
+                    background-color: var(--table-row-selected) !important;
+                }
 
                 &:hover {
-                    background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+                    background-color: var(--table-row-active) !important;
+
+                    td {
+                        background-color: var(--table-row-active) !important;
+                    }
                 }
             }
 
             .t-table__row:hover {
-                background-color: var(--bg-color-hover);
+                td {
+                    background-color: var(--table-row-hover) !important;
+                }
+            }
+
+            // 单选框样式优化
+            .t-radio__input {
+                border-color: var(--border-color-dark);
+            }
+
+            .t-radio.t-is-checked .t-radio__input {
+                border-color: var(--primary-color);
+                background-color: var(--primary-color);
             }
         }
     }
 
-    // 分页栏
+    // 分页栏 - 卡片样式
     .main-page {
         height: var(--pagination-height);
         flex-shrink: 0;
-        padding: 0 16px;
+        padding: 0 var(--spacing-md);
         background: var(--bg-color-container);
-        border-top: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
         display: flex;
         align-items: center;
 
@@ -295,10 +432,141 @@ body {
         }
     }
 }
+
+// 自定义工具栏
 .custom-toolbar {
-    padding: 0 10px;
+    padding: 0 var(--spacing-sm);
     display: flex;
     align-items: center;
-    height: 52px;
+    height: var(--search-height);
     justify-content: space-between;
+}
+
+// ============================================
+// TDesign 组件样式覆盖
+// ============================================
+
+// 按钮样式优化
+.t-button {
+    transition: all var(--transition-fast);
+    font-weight: var(--font-weight-medium);
+
+    .t-button__suffix:not(:empty) {
+        margin-left: 2px;
+    }
+
+    // 主按钮增强
+    &.t-button--theme-primary {
+        box-shadow: 0 2px 4px rgba(0, 82, 217, 0.2);
+
+        &:hover {
+            box-shadow: 0 4px 8px rgba(0, 82, 217, 0.25);
+        }
+    }
+}
+
+// 标签样式优化 - 更鲜明的配色
+.t-tag {
+    font-weight: var(--font-weight-medium);
+
+    &.t-tag--success {
+        &.t-tag--light-outline {
+            color: #00a870;
+            border-color: rgba(0, 168, 112, 0.4);
+            background-color: rgba(0, 168, 112, 0.08);
+        }
+    }
+
+    &.t-tag--warning {
+        &.t-tag--light-outline {
+            color: #ed7b2f;
+            border-color: rgba(237, 123, 47, 0.4);
+            background-color: rgba(237, 123, 47, 0.08);
+        }
+    }
+
+    &.t-tag--danger {
+        &.t-tag--light-outline {
+            color: #e34d59;
+            border-color: rgba(227, 77, 89, 0.4);
+            background-color: rgba(227, 77, 89, 0.08);
+        }
+    }
+
+    &.t-tag--primary {
+        &.t-tag--light-outline {
+            color: var(--primary-color);
+            border-color: rgba(0, 82, 217, 0.4);
+            background-color: rgba(0, 82, 217, 0.08);
+        }
+    }
+}
+
+// 下拉菜单样式
+.t-dropdown__menu {
+    box-shadow: var(--shadow-2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+// 分页器样式
+.t-pagination {
+    .t-pagination__btn {
+        border-radius: var(--border-radius-small);
+
+        &.t-pagination__btn--current {
+            font-weight: var(--font-weight-semibold);
+        }
+    }
+}
+
+// 对话框样式
+.t-dialog {
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-3);
+
+    .t-dialog__header {
+        font-weight: var(--font-weight-semibold);
+    }
+}
+
+// 表单样式
+.tiny-form--label-left .tiny-form-item__label {
+    padding-left: 0 !important;
+}
+
+// 菜单样式覆盖
+.t-menu {
+    .t-menu__item {
+        font-size: var(--font-size-sm);
+        position: relative;
+
+        &.t-is-active {
+            background-color: var(--primary-color-light) !important;
+            color: var(--primary-color) !important;
+            font-weight: var(--font-weight-medium);
+
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 60%;
+                background-color: var(--primary-color);
+                border-radius: 0 2px 2px 0;
+            }
+        }
+
+        &:hover:not(.t-is-active) {
+            background-color: var(--bg-color-hover) !important;
+        }
+    }
+
+    .t-submenu {
+        .t-menu__item {
+            padding-left: 28px !important;
+        }
+    }
 }

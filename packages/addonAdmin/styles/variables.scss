@@ -1,87 +1,147 @@
+// ============================================
 // CSS 原生变量（支持运行时动态修改）
+// 基于 TDesign 设计规范优化
+// ============================================
+
 :root {
-    // 主题色
+    // ============================================
+    // 品牌色 - 基于 TDesign 官方色板优化
+    // ============================================
     --primary-color: #0052d9;
-    --success-color: #00a870;
-    --warning-color: #ed7b2f;
-    --error-color: #e34d59;
+    --primary-color-hover: #366ef4;
+    --primary-color-active: #0034b5;
+    --primary-color-light: #ecf2fe;
+    --primary-color-focus: rgba(0, 82, 217, 0.2);
+
+    // 功能色
+    --success-color: #2ba471;
+    --success-color-hover: #56c08d;
+    --success-color-light: #e8f8f2;
+    --warning-color: #e37318;
+    --warning-color-hover: #fa9550;
+    --warning-color-light: #fef3e6;
+    --error-color: #d54941;
+    --error-color-hover: #e6635a;
+    --error-color-light: #fdecee;
     --info-color: #0052d9;
 
-    // 主题色 RGB 格式（用于 rgba）
+    // RGB 格式（用于 rgba）
     --primary-color-rgb: 0, 82, 217;
-    --success-color-rgb: 0, 168, 112;
-    --warning-color-rgb: 237, 123, 47;
-    --error-color-rgb: 227, 77, 89;
-    --info-color-rgb: 0, 82, 217;
+    --success-color-rgb: 43, 164, 113;
+    --warning-color-rgb: 227, 115, 24;
+    --error-color-rgb: 213, 73, 65;
 
-    // 文本颜色
-    --text-primary: #1f2329;
-    --text-secondary: #646a73;
-    --text-placeholder: #8f959e;
+    // ============================================
+    // 文本颜色 - 增强层次对比
+    // ============================================
+    --text-primary: #1d2129;
+    --text-secondary: #4e5969;
+    --text-placeholder: #86909c;
     --text-disabled: #c9cdd4;
+    --text-anti: #ffffff;
 
-    // 背景色
-    --bg-color-page: #f5f7fa;
+    // ============================================
+    // 背景色 - 增强层次区分
+    // ============================================
+    --bg-color-page: #e8ecf4;
     --bg-color-container: #ffffff;
-    --bg-color-overlay: rgba(0, 0, 0, 0.6);
-    --bg-color-hover: #f5f7fa;
+    --bg-color-container-hover: #f7f8fa;
+    --bg-color-secondarycontainer: #f7f8fa;
+    --bg-color-overlay: rgba(0, 0, 0, 0.55);
+    --bg-color-hover: rgba(0, 0, 0, 0.04);
+    --bg-color-active: rgba(0, 82, 217, 0.1);
 
-    // 边框
-    --border-color: #e8eaed;
-    --border-color-light: #f0f1f3;
-    --border-radius: 8px;
-    --border-radius-small: 4px;
-    --border-radius-large: 12px;
+    // 表格专用背景色 - 增强对比
+    --table-header-bg: #f2f3f5;
+    --table-header-text: #1d2129;
+    --table-row-stripe: #fafbfc;
+    --table-row-hover: rgba(0, 82, 217, 0.06);
+    --table-row-selected: rgba(0, 82, 217, 0.12);
+    --table-row-active: rgba(0, 82, 217, 0.15);
 
+    // ============================================
+    // 边框色 - 更柔和的分隔线
+    // ============================================
+    --border-color: #e5e6eb;
+    --border-color-light: #f2f3f5;
+    --border-color-dark: #c9cdd4;
+    --border-radius: 6px;
+    --border-radius-small: 3px;
+    --border-radius-large: 10px;
+
+    // ============================================
+    // 阴影 - 更精致的层次感
+    // ============================================
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06);
+    --shadow-3: 0 4px 8px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.08);
+    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    // 兼容旧变量
+    --shadow-small: var(--shadow-1);
+    --shadow-medium: var(--shadow-2);
+    --shadow-large: var(--shadow-3);
+    --shadow-card: var(--shadow-1);
+
+    // ============================================
     // 间距
+    // ============================================
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
     --spacing-xl: 32px;
 
-    // 阴影
-    --shadow-small: 0 2px 8px rgba(0, 0, 0, 0.04);
-    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-large: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+    // ============================================
+    // 动画
+    // ============================================
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.35s ease;
+    --transition-duration: 0.25s;
 
-    // 动画时间
-    --transition-fast: 0.15s;
-    --transition-normal: 0.3s;
-    --transition-slow: 0.5s;
-
-    // 字体大小
+    // ============================================
+    // 字体
+    // ============================================
     --font-size-xs: 12px;
-    --font-size-sm: 14px;
-    --font-size-md: 16px;
-    --font-size-lg: 18px;
-    --font-size-xl: 20px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 18px;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
 
+    // ============================================
     // 布局尺寸
-    --header-height: 64px;
-    --sidebar-width: 240px;
-    --footer-height: 48px;
-    --search-height: 56px;
-    --pagination-height: 56px;
+    // ============================================
+    --header-height: 56px;
+    --sidebar-width: 220px;
+    --footer-height: 40px;
+    --search-height: 52px;
+    --pagination-height: 52px;
     --detail-width: 280px;
-    --transition-duration: 0.3s;
+    --detail-bg: #fafbfc;
+    --layout-gap: 16px;
+    --card-radius: 12px;
 
+    // ============================================
     // 登录页配色
-    --login-bg: #f5f7fa;
+    // ============================================
+    --login-bg: var(--bg-color-page);
     --login-left-gradient-start: #f8f9fa;
     --login-left-gradient-end: #e9ecef;
     --login-circle-bg: rgba(0, 0, 0, 0.03);
-    --login-brand-title: #2c3e50;
-    --login-brand-subtitle: #6c757d;
+    --login-brand-title: #1f2329;
+    --login-brand-subtitle: #5c6066;
     --login-card-bg: #ffffff;
-    --login-card-border: #e9ecef;
-    --login-card-shadow: rgba(0, 0, 0, 0.08);
-    --login-title: #2c3e50;
-    --login-subtitle: #6c757d;
-    --login-link: #495057;
-    --login-link-hover: #2c3e50;
-    --login-btn-gradient-start: #495057;
-    --login-btn-gradient-end: #343a40;
-    --login-btn-shadow: rgba(52, 58, 64, 0.3);
+    --login-card-border: var(--border-color-light);
+    --login-card-shadow: var(--shadow-2);
+    --login-title: #1f2329;
+    --login-subtitle: #5c6066;
+    --login-link: #5c6066;
+    --login-link-hover: var(--primary-color);
+    --login-btn-gradient-start: var(--primary-color);
+    --login-btn-gradient-end: var(--primary-color-active);
+    --login-btn-shadow: rgba(0, 82, 217, 0.25);
 }

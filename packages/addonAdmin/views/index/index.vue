@@ -20,11 +20,18 @@ import EnvironmentInfo from './components/environmentInfo.vue';
 .dashboard-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--layout-gap);
     overflow-y: auto;
     height: 100%;
-    background-color: #fff;
-    padding: 15px;
-    border: 1px solid #e8eaed;
+    padding: 0;
+
+    // 每个组件都是独立的卡片
+    :deep(.section-block) {
+        background: var(--bg-color-container);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-1);
+        padding: var(--spacing-md);
+        border: none;
+    }
 }
 </style>

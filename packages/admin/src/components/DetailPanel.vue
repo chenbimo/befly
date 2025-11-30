@@ -109,41 +109,50 @@ function formatValue(value, field) {
 }
 
 .detail-content {
-    padding: 16px;
+    padding: var(--spacing-md);
 }
 
 .detail-item {
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px dashed var(--border-color-light);
 
     &:last-child {
         margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
     }
 }
 
 .detail-label {
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-    font-size: 12px;
+    color: var(--text-placeholder);
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .detail-value {
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     word-break: break-all;
+    line-height: 1.5;
 }
 
 .detail-empty {
     text-align: center;
-    padding: 48px 0;
+    padding: var(--spacing-xl) 0;
     color: var(--text-placeholder);
 }
 
 .empty-icon {
-    font-size: 48px;
-    margin-bottom: 8px;
+    font-size: 40px;
+    margin-bottom: var(--spacing-sm);
+    opacity: 0.5;
 }
 
 .empty-text {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 </style>
