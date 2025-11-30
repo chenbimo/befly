@@ -369,6 +369,11 @@ export interface DbHelper {
      * 查询单个字段值
      */
     getFieldValue<T = any>(options: Omit<QueryOptions, 'fields'> & { field: string }): Promise<T | null>;
+
+    /**
+     * 清理数据或 where 条件（默认排除 null 和 undefined）
+     */
+    cleanFields<T extends Record<string, any>>(data: T, excludeValues?: any[], keepValues?: Record<string, any>): Partial<T>;
 }
 
 /**

@@ -7,9 +7,11 @@
 
 export * from './api.js';
 export * from './befly.js';
+export * from './cache.js';
 export * from './common.js';
 export * from './context.js';
 export * from './database.js';
+export * from './hook.js';
 export * from './plugin.js';
 export * from './redis.js';
 export * from './table.js';
