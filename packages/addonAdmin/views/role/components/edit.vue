@@ -9,7 +9,7 @@
                     <TInput v-model="$Data.formData.code" placeholder="请输入角色代码，如：admin" />
                 </TFormItem>
                 <TFormItem label="角色描述" prop="description">
-                    <TInput v-model="$Data.formData.description" type="textarea" placeholder="请输入角色描述" :rows="3" />
+                    <TInput v-model="$Data.formData.description" placeholder="请输入角色描述" />
                 </TFormItem>
                 <TFormItem label="排序" prop="sort">
                     <TInputNumber v-model="$Data.formData.sort" :min="0" :max="9999" />
