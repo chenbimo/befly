@@ -17,6 +17,17 @@ export default {
             }
         }
 
+        // 查询角色信息
+        const role = await befly.db.getOne({
+            table: 'addon_admin_role',
+            where: { id: ctx.body.roleId },
+            columns: ['code']
+        });
+
+        if (!role?.code) {
+            return befly.tool.No('角色不存在');
+        }
+
         // 加密密码
         const hashedPassword = await befly.cipher.hashPassword(ctx.body.password);
 
@@ -26,11 +37,9 @@ export default {
             data: {
                 username: ctx.body.username,
                 password: hashedPassword,
-                name: ctx.body.name,
                 nickname: ctx.body.nickname,
-                roleId: ctx.body.roleId || 0,
-                roleCode: ctx.body.roleCode || '',
-                roleType: ctx.body.roleType || 'user'
+                roleId: ctx.body.roleId,
+                roleCode: role.code
             }
         });
 

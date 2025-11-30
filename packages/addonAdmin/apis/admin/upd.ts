@@ -17,7 +17,7 @@ export default {
             where: { id }
         });
 
-        if (!admin) {
+        if (!admin?.id) {
             return befly.tool.No('管理员不存在');
         }
 

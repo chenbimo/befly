@@ -83,7 +83,6 @@ const $Data = $ref({
         id: null,
         username: '',
         password: '',
-        name: '',
         nickname: '',
         roleId: null,
         state: 1
@@ -98,7 +97,6 @@ const $Data2 = $shallowRef({
             { min: 6, message: '密码至少6位', trigger: 'blur' }
         ],
         roleId: [{ required: true, message: '请选择角色', trigger: 'change' }],
-        name: [{ min: 2, max: 50, message: '姓名长度在 2 到 50 个字符', trigger: 'blur' }],
         nickname: [{ min: 2, max: 50, message: '昵称长度在 2 到 50 个字符', trigger: 'blur' }]
     }
 });
