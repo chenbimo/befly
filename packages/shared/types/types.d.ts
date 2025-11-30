@@ -3,12 +3,15 @@
  * 这些类型可以在 core、tpl、admin 等多个包中复用
  */
 
+// 常量（从 constants 导出）
+export { ApiCode, ErrorMessages } from './constants';
+export type { ApiCodeType, ErrorMessageType } from './constants';
+
 // 验证相关
 export type { FieldType, FieldDefinition, TableDefinition, ValidateResult, SingleResult } from './validate';
 
 // API 相关
-export type { HttpMethod, ResponseResult, PaginatedResult, BaseApiRoute, ApiCodeType, ErrorMessageType } from './api';
-export { ApiCode, ErrorMessages } from './api';
+export type { HttpMethod, ResponseResult, PaginatedResult, BaseApiRoute } from './api';
 
 // 数据库相关
 export type { SqlValue, SqlParams, OrderDirection, DatabaseType, DatabaseConfig, RedisConfig } from './database';

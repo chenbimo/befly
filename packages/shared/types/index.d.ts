@@ -2,7 +2,14 @@
  * Befly Shared 统一导出
  * 跨包共享的工具函数、常量、类型定义
  */
+
+// 常量（运行时）
+export * from './constants.js';
+
+// 类型定义
 export * from './types.js';
+
+// Redis 键和正则
 export * from './redisKeys.js';
 export * from './regex.js';
 export * from './defineAddonConfig.js';

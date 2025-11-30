@@ -3,10 +3,10 @@
  * 跨包共享的工具函数、常量、类型定义
  */
 
-// 类型定义
-export * from './types.js';
+// 常量（运行时）
+export * from './constants.js';
 
-// 常量配置
+// Redis 键和正则
 export * from './redisKeys.js';
 export * from './regex.js';
 
