@@ -279,8 +279,7 @@ $Method.fetchUserMenus();
 
                     // 子菜单项样式
                     .t-menu__item {
-                        padding-left: 40px !important;
-                        font-size: var(--font-size-xs);
+                        padding-left: 32px !important;
                     }
                 }
 
