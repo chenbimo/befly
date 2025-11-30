@@ -73,6 +73,10 @@ body {
     padding-left: 0 !important;
 }
 
+.t-button .t-button__suffix:not(:empty) {
+    margin-left: 2px;
+}
+
 // 首页组件通用样式 - 临时注释未定义变量
 // .section-block {
 //     background: $dashboard-section-bg;

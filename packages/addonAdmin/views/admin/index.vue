@@ -27,7 +27,10 @@
                     </template>
                     <template #operation="{ row }">
                         <TDropdown trigger="click" placement="bottom-right" @click="(data) => $Method.onAction(data.value, row)">
-                            <TButton theme="primary" size="small">操作</TButton>
+                            <TButton theme="primary" size="small">
+                                操作
+                                <template #suffix> <t-icon name="chevron-down" size="16" /></template>
+                            </TButton>
                             <TDropdownMenu slot="dropdown">
                                 <TDropdownItem value="upd">
                                     <ILucidePencil />
