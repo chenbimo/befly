@@ -28,7 +28,9 @@ export const RegexAliases = {
     /** 字母和数字 */
     alphanumeric: '^[a-zA-Z0-9]+$',
     /** 字母、数字和下划线 */
-    alphanumericUnderscore: '^[a-zA-Z0-9_]+$',
+    alphanumeric_: '^[a-zA-Z0-9_]+$',
+    /** 字母、数字、下划线和短横线 */
+    alphanumericDash_: '^[a-zA-Z0-9_-]+$',
     /** 小写字母 */
     lowercase: '^[a-z]+$',
     /** 大写字母 */
