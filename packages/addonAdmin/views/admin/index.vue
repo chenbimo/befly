@@ -98,7 +98,7 @@ const $Data = $ref({
         { colKey: 'nickname', title: '昵称', width: 150 },
         { colKey: 'roleCode', title: '角色', width: 120 },
         { colKey: 'state', title: '状态', width: 100, ellipsis: false },
-        { colKey: 'operation', title: '操作', width: 80, align: 'center', fixed: 'right', ellipsis: false }
+        { colKey: 'operation', title: '操作', width: 100, align: 'center', fixed: 'right', ellipsis: false }
     ]),
     pagerConfig: {
         currentPage: 1,
