@@ -116,7 +116,7 @@ const $Data2 = $shallowRef({
 const $Method = {
     async initData() {
         $Method.onShow();
-       $Data.allRoleLists = await $Http('/addon/admin/role/all')
+        $Data.allRoleLists = await $Http('/addon/admin/role/all');
         if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
             // 编辑模式：直接赋值
             $Data.formData = { ...$Prop.rowData };
