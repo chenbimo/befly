@@ -34,15 +34,63 @@ const defaultColumnConfig = {
 };
 
 /**
+ * 常用字段默认宽度映射
+ * 根据 colKey 自动设置宽度，页面可覆盖
+ */
+const columnWidthMap = {
+    'row-select': 50,
+    id: 150,
+    index: 60,
+    state: 100,
+    operation: 100,
+    username: 150,
+    nickname: 150,
+    name: 150,
+    title: 150,
+    code: 150,
+    roleCode: 120,
+    path: 250,
+    icon: 120,
+    value: 200,
+    description: 200,
+    createdAt: 170,
+    updatedAt: 170,
+    deletedAt: 170,
+    email: 200,
+    phone: 130,
+    sort: 80,
+    pid: 80
+};
+
+/**
+ * 特定字段的默认配置
+ * 某些字段需要特殊的 ellipsis、align 等配置
+ */
+const columnDefaultProps = {
+    'row-select': { ellipsis: false },
+    id: { align: 'center' },
+    index: { align: 'center' },
+    state: { ellipsis: false, align: 'center' },
+    operation: { ellipsis: false, align: 'center', fixed: 'right' },
+    sort: { align: 'center' }
+};
+
+/**
  * 为表格列添加默认配置
  * @param {Array} columns - 列配置数组
  * @returns {Array} 添加默认配置后的列数组
  */
 export function withDefaultColumns(columns) {
-    return columns.map((col) => ({
-        ...defaultColumnConfig,
-        ...col
-    }));
+    return columns.map((col) => {
+        const defaultWidth = columnWidthMap[col.colKey];
+        const defaultProps = columnDefaultProps[col.colKey] || {};
+        return {
+            ...defaultColumnConfig,
+            ...(defaultWidth && !col.width ? { width: defaultWidth } : {}),
+            ...defaultProps,
+            ...col
+        };
+    });
 }
 
 /**

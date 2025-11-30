@@ -92,13 +92,13 @@ const $Data = $ref({
     activeRowKeys: [],
     currentRow: null,
     columns: withDefaultColumns([
-        { colKey: 'id', title: 'ID', width: 80, align: 'center' },
-        { colKey: 'name', title: '角色名称', width: 150 },
-        { colKey: 'code', title: '角色代码', width: 150 },
+        { colKey: 'id', title: 'ID' },
+        { colKey: 'name', title: '角色名称' },
+        { colKey: 'code', title: '角色代码' },
         { colKey: 'description', title: '描述', minWidth: 150 },
-        { colKey: 'sort', title: '排序', width: 80, align: 'center' },
-        { colKey: 'state', title: '状态', width: 100, align: 'center', ellipsis: false },
-        { colKey: 'operation', title: '操作', width: 120, align: 'center', fixed: 'right', ellipsis: false }
+        { colKey: 'sort', title: '排序' },
+        { colKey: 'state', title: '状态' },
+        { colKey: 'operation', title: '操作', width: 120 }
     ]),
     pagerConfig: {
         currentPage: 1,

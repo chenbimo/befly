@@ -76,20 +76,13 @@ const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        {
-            colKey: 'row-select',
-            type: 'single',
-            width: 50,
-            fixed: 'left',
-            checkProps: { allowUncheck: true },
-            ellipsis: false
-        },
-        { colKey: 'username', title: '用户名', width: 150, fixed: 'left' },
-        { colKey: 'id', title: '序号', width: 150, align: 'center' },
-        { colKey: 'nickname', title: '昵称', width: 150 },
-        { colKey: 'roleCode', title: '角色', width: 120 },
-        { colKey: 'state', title: '状态', width: 100, ellipsis: false },
-        { colKey: 'operation', title: '操作', width: 100, align: 'center', fixed: 'right', ellipsis: false }
+        { colKey: 'row-select', type: 'single', fixed: 'left', checkProps: { allowUncheck: true } },
+        { colKey: 'username', title: '用户名', fixed: 'left' },
+        { colKey: 'id', title: '序号' },
+        { colKey: 'nickname', title: '昵称' },
+        { colKey: 'roleCode', title: '角色' },
+        { colKey: 'state', title: '状态' },
+        { colKey: 'operation', title: '操作' }
     ]),
     pagerConfig: {
         currentPage: 1,

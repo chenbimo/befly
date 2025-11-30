@@ -41,20 +41,13 @@ const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        {
-            colKey: 'row-select',
-            type: 'single',
-            width: 50,
-            fixed: 'left',
-            checkProps: { allowUncheck: true },
-            ellipsis: false
-        },
+        { colKey: 'row-select', type: 'single', fixed: 'left', checkProps: { allowUncheck: true } },
         { colKey: 'name', title: '菜单名称', width: 200, fixed: 'left' },
-        { colKey: 'id', title: '序号', width: 100, align: 'center' },
-        { colKey: 'path', title: '路由路径', width: 250 },
-        { colKey: 'icon', title: '图标', width: 120 },
-        { colKey: 'sort', title: '排序', width: 80, align: 'center' },
-        { colKey: 'state', title: '状态', width: 100, ellipsis: false }
+        { colKey: 'id', title: '序号', width: 100 },
+        { colKey: 'path', title: '路由路径' },
+        { colKey: 'icon', title: '图标' },
+        { colKey: 'sort', title: '排序' },
+        { colKey: 'state', title: '状态' }
     ]),
     currentRow: null,
     selectedRowKeys: [],

@@ -74,15 +74,15 @@ const $Data = $ref({
     activeRowKeys: [],
     currentRow: null,
     columns: withDefaultColumns([
-        { colKey: 'index', title: '序号', width: 60, align: 'center' },
+        { colKey: 'index', title: '序号' },
         { colKey: 'name', title: '字典名称' },
-        { colKey: 'code', title: '字典代码', width: 150 },
-        { colKey: 'value', title: '字典值', width: 200 },
+        { colKey: 'code', title: '字典代码' },
+        { colKey: 'value', title: '字典值' },
         { colKey: 'pid', title: '父级ID', width: 100 },
-        { colKey: 'sort', title: '排序', width: 80 },
+        { colKey: 'sort', title: '排序' },
         { colKey: 'description', title: '描述' },
-        { colKey: 'state', title: '状态', width: 100, ellipsis: false },
-        { colKey: 'operation', title: '操作', width: 120, align: 'right', ellipsis: false }
+        { colKey: 'state', title: '状态' },
+        { colKey: 'operation', title: '操作', width: 120 }
     ]),
     pagerConfig: {
         currentPage: 1,
