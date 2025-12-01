@@ -364,79 +364,77 @@ body {
             font-size: var(--font-size-sm);
         }
 
-        :deep(.t-table) {
-            .t-table__header th {
-                background-color: var(--table-header-bg) !important;
-                border-bottom: 2px solid var(--border-color) !important;
-                color: var(--table-header-text);
-                font-weight: var(--font-weight-semibold);
-                font-size: var(--font-size-sm);
-            }
+        .t-table__header th {
+            background-color: var(--table-header-bg) !important;
+            border-bottom: 2px solid var(--border-color) !important;
+            color: var(--table-header-text);
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+        }
 
-            .t-table__row--selected {
+        .t-table__row--selected {
+            background-color: var(--table-row-selected) !important;
+
+            td {
                 background-color: var(--table-row-selected) !important;
+            }
+
+            &:hover {
+                background-color: var(--table-row-active) !important;
 
                 td {
-                    background-color: var(--table-row-selected) !important;
-                }
-
-                &:hover {
                     background-color: var(--table-row-active) !important;
-
-                    td {
-                        background-color: var(--table-row-active) !important;
-                    }
                 }
             }
+        }
 
-            .t-table__row--active {
+        .t-table__row--active {
+            td {
+                background-color: var(--table-row-selected) !important;
+            }
+
+            &:hover {
+                background-color: var(--table-row-active) !important;
+
                 td {
-                    background-color: var(--table-row-selected) !important;
-                }
-
-                &:hover {
                     background-color: var(--table-row-active) !important;
-
-                    td {
-                        background-color: var(--table-row-active) !important;
-                    }
                 }
             }
+        }
 
-            // 普通行样式
-            .t-table__row {
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-            }
+        // 普通行样式
+        .t-table__row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
 
-            // 普通行悬停样式（非选中行）
-            .t-table__row:not(.t-table__row--active):hover {
-                td {
-                    background-color: var(--table-row-hover) !important;
-                }
-            }
-
-            // 确保 tbody 中的 tr 也有 hover 效果
-            tbody tr:not(.t-table__row--active):hover td {
+        // 普通行悬停样式（非选中行）
+        .t-table__row:not(.t-table__row--active):hover {
+            td {
                 background-color: var(--table-row-hover) !important;
             }
+        }
 
-            // 单元格内容垂直居中
-            td {
-                vertical-align: middle;
-            }
+        // 确保 tbody 中的 tr 也有 hover 效果
+        tbody tr:not(.t-table__row--active):hover td {
+            background-color: var(--table-row-hover) !important;
+        }
 
-            // 单选框样式优化
-            .t-radio__input {
-                border-color: var(--border-color-dark);
-                border-width: 2px;
-            }
+        // 单元格内容垂直居中
+        td {
+            vertical-align: middle;
+        }
 
-            .t-radio.t-is-checked .t-radio__input {
-                border-color: var(--primary-color);
-                background-color: var(--primary-color);
-                box-shadow: 0 0 0 2px rgba(0, 82, 217, 0.15);
-            }
+        // 单选框样式优化
+        .t-radio__input {
+            border-color: var(--border-color-dark);
+            border-width: 2px;
+        }
+
+        .t-radio.t-is-checked .t-radio__input {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 82, 217, 0.15);
         }
     }
 
