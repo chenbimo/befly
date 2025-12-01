@@ -43,10 +43,6 @@ app.component('TTable', {
             type: [String, Number],
             default: '100%'
         },
-        headerCellClassName: {
-            type: String,
-            default: 'custom-table-cell-class'
-        },
         selectOnRowClick: {
             type: Boolean,
             default: true

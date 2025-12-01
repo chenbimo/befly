@@ -34,13 +34,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
+    background: #d9d9d9;
     border-radius: 3px;
     transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.25);
+    background: #bfbfbf;
 }
 
 .tiny-dialog-box {
@@ -240,15 +240,6 @@ body {
             display: flex;
             flex-direction: column;
             flex: 1;
-            // 表格头部样式 - 增强对比度
-            .custom-table-cell-class {
-                background-color: var(--table-header-bg) !important;
-                font-weight: var(--font-weight-semibold);
-                color: var(--text-primary);
-                font-size: var(--font-size-sm);
-            }
-
-            // 覆盖 TDesign 默认表格样式
 
             // 表格边框优化
             &.t-table--bordered {
@@ -286,18 +277,11 @@ body {
 
     // 兼容旧版独立表格区域（未使用 main-content 包裹时）
     .main-table {
-        flex: 1;
+        flex: 1 1 100%;
         overflow: hidden;
         background: var(--bg-color-container);
         border-radius: var(--card-radius);
         box-shadow: var(--shadow-1);
-
-        .custom-table-cell-class {
-            background-color: var(--table-header-bg) !important;
-            font-weight: var(--font-weight-semibold);
-            color: var(--table-header-text);
-            font-size: var(--font-size-sm);
-        }
 
         .t-table__header th {
             background-color: var(--table-header-bg) !important;
@@ -307,69 +291,9 @@ body {
             font-size: var(--font-size-sm);
         }
 
-        .t-table__row--selected {
-            background-color: var(--table-row-selected) !important;
-
-            td {
-                background-color: var(--table-row-selected) !important;
-            }
-
-            &:hover {
-                background-color: var(--table-row-active) !important;
-
-                td {
-                    background-color: var(--table-row-active) !important;
-                }
-            }
-        }
-
-        .t-table__row--active {
-            td {
-                background-color: var(--table-row-selected) !important;
-            }
-
-            &:hover {
-                background-color: var(--table-row-active) !important;
-
-                td {
-                    background-color: var(--table-row-active) !important;
-                }
-            }
-        }
-
-        // 普通行样式
-        .t-table__row {
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        // 普通行悬停样式（非选中行）
-        .t-table__row:not(.t-table__row--active):hover {
-            td {
-                background-color: var(--table-row-hover) !important;
-            }
-        }
-
         // 确保 tbody 中的 tr 也有 hover 效果
         tbody tr:not(.t-table__row--active):hover td {
             background-color: var(--table-row-hover) !important;
-        }
-
-        // 单元格内容垂直居中
-        td {
-            vertical-align: middle;
-        }
-
-        // 单选框样式优化
-        .t-radio__input {
-            border-color: var(--border-color-dark);
-            border-width: 2px;
-        }
-
-        .t-radio.t-is-checked .t-radio__input {
-            border-color: var(--primary-color);
-            background-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(0, 82, 217, 0.15);
         }
     }
 
@@ -389,15 +313,6 @@ body {
             color: var(--text-secondary);
         }
     }
-}
-
-// 自定义工具栏
-.custom-toolbar {
-    padding: 0 var(--spacing-sm);
-    display: flex;
-    align-items: center;
-    height: var(--search-height);
-    justify-content: space-between;
 }
 
 .t-dialog--default {
