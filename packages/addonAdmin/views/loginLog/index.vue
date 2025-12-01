@@ -1,14 +1,7 @@
 <template>
     <div class="page-login-log page-table">
         <div class="main-tool">
-            <div class="left">
-                <TButton theme="danger" @click="$Method.onClear">
-                    <template #icon>
-                        <ILucideTrash2 />
-                    </template>
-                    清空日志
-                </TButton>
-            </div>
+            <div class="left"></div>
             <div class="right">
                 <TButton shape="circle" @click="$Method.handleRefresh">
                     <template #icon>
@@ -30,13 +23,6 @@
                     </template>
                     <template #deviceType="{ row }">
                         <TTag shape="round" variant="light-outline">{{ row.deviceType || 'desktop' }}</TTag>
-                    </template>
-                    <template #operation="{ row }">
-                        <TButton theme="danger" size="small" variant="text" @click="$Method.onDel(row)">
-                            <template #icon>
-                                <ILucideTrash2 />
-                            </template>
-                        </TButton>
                     </template>
                 </TTable>
             </div>
@@ -64,9 +50,8 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
+import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucideTrash2 from '~icons/lucide/trash-2';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
 import { withDefaultColumns } from '@/utils';
@@ -83,8 +68,7 @@ const $Data = $ref({
         { colKey: 'osName', title: '操作系统' },
         { colKey: 'deviceType', title: '设备类型' },
         { colKey: 'loginTime', title: '登录时间' },
-        { colKey: 'loginResult', title: '登录结果' },
-        { colKey: 'operation', title: '操作' }
+        { colKey: 'loginResult', title: '登录结果' }
     ]),
     // 详情面板显示更多字段
     detailFields: [
@@ -139,55 +123,10 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            console.error('加载登录日志失败:', error);
             MessagePlugin.error('加载数据失败');
         } finally {
             $Data.loading = false;
         }
-    },
-
-    // 删除日志
-    async onDel(row) {
-        DialogPlugin.confirm({
-            header: '确认删除',
-            body: `确定要删除该条登录日志吗？`,
-            theme: 'warning'
-        }).then(async () => {
-            try {
-                const res = await $Http('/addon/admin/loginLog/del', { id: row.id });
-                if (res.code === 0) {
-                    MessagePlugin.success('删除成功');
-                    $Method.apiLoginLogList();
-                } else {
-                    MessagePlugin.error(res.msg || '删除失败');
-                }
-            } catch (error) {
-                console.error('删除失败:', error);
-                MessagePlugin.error('删除失败');
-            }
-        });
-    },
-
-    // 清空日志
-    async onClear() {
-        DialogPlugin.confirm({
-            header: '确认清空',
-            body: '确定要清空所有登录日志吗？此操作不可恢复！',
-            theme: 'danger'
-        }).then(async () => {
-            try {
-                const res = await $Http('/addon/admin/loginLog/clear');
-                if (res.code === 0) {
-                    MessagePlugin.success('清空成功');
-                    $Method.apiLoginLogList();
-                } else {
-                    MessagePlugin.error(res.msg || '清空失败');
-                }
-            } catch (error) {
-                console.error('清空失败:', error);
-                MessagePlugin.error('清空失败');
-            }
-        });
     },
 
     // 刷新
