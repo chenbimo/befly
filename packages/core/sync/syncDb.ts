@@ -58,7 +58,7 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
         await checkTable();
 
         // 建立数据库连接并检查版本
-        sql = await Connect.connectSql({ max: 1 });
+        sql = await Connect.connectSql();
         await ensureDbVersion(sql);
 
         // 初始化 Redis 连接（用于清理缓存）
@@ -117,7 +117,7 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
                     applyFieldDefaults(fieldDef);
                 }
 
-                const dbName = config.db?.database;
+                const dbName = beflyConfig.db?.database;
                 const existsTable = await tableExists(sql!, tableName, dbName);
 
                 // 读取 force 参数

@@ -1,18 +1,18 @@
 ﻿/**
  * 数据库连接管理器
  * 统一管理 SQL 和 Redis 连接
+ * 配置从 beflyConfig 全局对象获取
  */
 
 import { SQL, RedisClient } from 'bun';
 
-import { Logger } from './logger.js';
 import { beflyConfig } from '../befly.config.js';
-
-import type { DatabaseConfig, RedisConfig } from '../types/befly.js';
+import { Logger } from './logger.js';
 
 /**
  * 数据库连接管理器
  * 使用静态方法管理全局单例连接
+ * 所有配置从 beflyConfig 自动获取
  */
 export class Connect {
     private static sqlClient: SQL | null = null;
@@ -29,10 +29,12 @@ export class Connect {
 
     /**
      * 连接 SQL 数据库
-     * @param config - 数据库配置
+     * 配置从 beflyConfig.db 获取
      * @returns SQL 客户端实例
      */
-    static async connectSql(config: DatabaseConfig): Promise<SQL> {
+    static async connectSql(): Promise<SQL> {
+        const config = beflyConfig.db || {};
+
         // 构建数据库连接字符串
         const type = config.type || 'mysql';
         const host = config.host || '127.0.0.1';
@@ -135,10 +137,12 @@ export class Connect {
 
     /**
      * 连接 Redis
-     * @param config - Redis 配置
+     * 配置从 beflyConfig.redis 获取
      * @returns Redis 客户端实例
      */
-    static async connectRedis(config: RedisConfig = {}): Promise<RedisClient> {
+    static async connectRedis(): Promise<RedisClient> {
+        const config = beflyConfig.redis || {};
+
         try {
             // 构建 Redis URL
             const host = config.host || '127.0.0.1';
@@ -208,17 +212,15 @@ export class Connect {
 
     /**
      * 连接所有数据库（SQL + Redis）
-     * 自动从全局 config 获取配置
+     * 配置从 beflyConfig 自动获取
      */
     static async connect(): Promise<void> {
         try {
             // 连接 SQL
-            const dbConfig = beflyConfig.db || {};
-            await this.connectSql(dbConfig);
+            await this.connectSql();
 
             // 连接 Redis
-            const redisConfig = beflyConfig.redis || {};
-            await this.connectRedis(redisConfig);
+            await this.connectRedis();
         } catch (error: any) {
             Logger.error({ err: error }, '数据库初始化失败');
             await this.disconnect();

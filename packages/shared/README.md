@@ -79,7 +79,7 @@ const dbConfig: DatabaseConfig = {
     type: 'mysql',
     host: 'localhost',
     port: 3306,
-    user: 'root',
+    username: 'root',
     password: 'password',
     database: 'befly'
 };
@@ -88,9 +88,12 @@ const redisConfig: RedisConfig = {
     host: 'localhost',
     port: 6379,
     password: 'password',
-    db: 0
+    db: 0,
+    prefix: 'befly:'
 };
 ```
+
+> **注意**：这些类型主要用于类型检查和文档，实际连接时框架会自动从 `beflyConfig` 获取配置。
 
 ### Redis 键和 TTL
 

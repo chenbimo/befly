@@ -212,15 +212,16 @@ export const beflyConfig = {
         type: 'mysql',
         host: '127.0.0.1',
         port: 3306,
-        user: 'root',
-        pass: 'password',
-        name: 'my_database'
+        username: 'root',
+        password: 'password',
+        database: 'my_database'
     },
 
     // Redis 配置
     redis: {
         host: '127.0.0.1',
-        port: 6379
+        port: 6379,
+        prefix: 'befly:'
     },
 
     // CORS 跨域配置
@@ -236,6 +237,31 @@ export const beflyConfig = {
         }
     }
 };
+```
+
+### 数据库连接
+
+框架会自动从 `beflyConfig` 获取配置并建立连接，无需手动传参：
+
+```typescript
+import { Connect } from 'befly/lib/connect';
+
+// 连接 SQL 数据库（配置自动从 beflyConfig.db 获取）
+await Connect.connectSql();
+
+// 连接 Redis（配置自动从 beflyConfig.redis 获取）
+await Connect.connectRedis();
+
+// 同时连接 SQL 和 Redis
+await Connect.connect();
+
+// 获取连接状态
+const status = Connect.getStatus();
+console.log(status.sql.connected); // true/false
+console.log(status.redis.connected); // true/false
+
+// 断开连接
+await Connect.disconnect();
 ```
 
 ### 配置文件迁移指南

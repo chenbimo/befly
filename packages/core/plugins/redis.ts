@@ -19,7 +19,7 @@ const redisPlugin: Plugin = {
         const redisConfig = beflyConfig.redis || {};
         try {
             // 初始化 Redis 客户端
-            await Connect.connectRedis(redisConfig);
+            await Connect.connectRedis();
 
             // 返回 RedisHelper 实例
             return new RedisHelper(redisConfig.prefix);
