@@ -45,6 +45,11 @@ export default defineAddonConfig(import.meta.dirname, {
             name: '字典管理',
             path: '/dict',
             sort: 6
+        },
+        {
+            name: '登录日志',
+            path: '/loginLog',
+            sort: 7
         }
     ]
 });
