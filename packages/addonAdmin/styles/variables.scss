@@ -11,7 +11,7 @@
     --primary-color-hover: #366ef4;
     --primary-color-active: #0034b5;
     --primary-color-light: #ecf2fe;
-    --primary-color-focus: rgba(0, 82, 217, 0.2);
+    --primary-color-focus: #ccdcf9;
 
     // 功能色
     --success-color: #2ba471;
@@ -24,12 +24,6 @@
     --error-color-hover: #e6635a;
     --error-color-light: #fdecee;
     --info-color: #0052d9;
-
-    // RGB 格式（用于 rgba）
-    --primary-color-rgb: 0, 82, 217;
-    --success-color-rgb: 43, 164, 113;
-    --warning-color-rgb: 227, 115, 24;
-    --error-color-rgb: 213, 73, 65;
 
     // ============================================
     // 文本颜色 - 增强层次对比
@@ -47,17 +41,17 @@
     --bg-color-container: #ffffff;
     --bg-color-container-hover: #f7f8fa;
     --bg-color-secondarycontainer: #f7f8fa;
-    --bg-color-overlay: rgba(0, 0, 0, 0.55);
-    --bg-color-hover: rgba(0, 0, 0, 0.04);
-    --bg-color-active: rgba(0, 82, 217, 0.1);
+    --bg-color-overlay: #8a8a8a;
+    --bg-color-hover: #f5f5f5;
+    --bg-color-active: #e6effc;
 
     // 表格专用背景色 - 增强对比
     --table-header-bg: #e3e3e3;
     --table-header-text: #1d2129;
     --table-row-stripe: #fafbfc;
-    --table-row-hover: rgba(0, 82, 217, 0.04);
-    --table-row-selected: rgba(0, 82, 217, 0.08);
-    --table-row-active: rgba(0, 82, 217, 0.1);
+    --table-row-hover: #f0f5ff;
+    --table-row-selected: #e6effc;
+    --table-row-active: #dce8fa;
 
     // ============================================
     // 边框色 - 更柔和的分隔线
@@ -72,10 +66,10 @@
     // ============================================
     // 阴影 - 更精致的层次感
     // ============================================
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06);
-    --shadow-3: 0 4px 8px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.08);
-    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-1: 0 1px 2px #f0f0f0, 0 1px 2px #ebebeb;
+    --shadow-2: 0 2px 4px #f0f0f0, 0 4px 8px #ebebeb;
+    --shadow-3: 0 4px 8px #e8e8e8, 0 8px 16px #e0e0e0;
+    --shadow-inset: inset 0 1px 2px #f2f2f2;
 
     // 兼容旧变量
     --shadow-small: var(--shadow-1);
@@ -137,7 +131,7 @@
     --login-bg: var(--bg-color-page);
     --login-left-gradient-start: #f8f9fa;
     --login-left-gradient-end: #e9ecef;
-    --login-circle-bg: rgba(0, 0, 0, 0.03);
+    --login-circle-bg: #f5f5f5;
     --login-brand-title: #1f2329;
     --login-brand-subtitle: #5c6066;
     --login-card-bg: #ffffff;
@@ -149,5 +143,5 @@
     --login-link-hover: var(--primary-color);
     --login-btn-gradient-start: var(--primary-color);
     --login-btn-gradient-end: var(--primary-color-active);
-    --login-btn-shadow: rgba(0, 82, 217, 0.25);
+    --login-btn-shadow: #b3c9ed;
 }
