@@ -14,8 +14,6 @@ import type { SyncOptions } from '../types/index.js';
 
 export async function syncAllCommand(options: SyncOptions = {}) {
     try {
-        const startTime = Date.now();
-
         // 0. 检查项目结构
         await checkApp();
 
@@ -30,10 +28,6 @@ export async function syncAllCommand(options: SyncOptions = {}) {
 
         // 4. 同步开发管理员（并缓存角色权限）
         await syncDevCommand();
-
-        // 输出总结
-        const totalTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-        Logger.info({ duration: totalTimeSeconds }, '同步完成');
     } catch (error: any) {
         Logger.error({ err: error }, '同步过程中发生错误');
         throw error;
