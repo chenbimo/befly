@@ -171,15 +171,15 @@ const $Method = {
     },
 
     // 高亮行变化
-    onActiveChange(value, { activeRowData }) {
+    onActiveChange(value, context) {
         // 禁止取消高亮：如果新值为空，保持当前选中
         if (value.length === 0 && $Data.activeRowKeys.length > 0) {
             return;
         }
         $Data.activeRowKeys = value;
         // 更新当前高亮的行数据
-        if (activeRowData && activeRowData.length > 0) {
-            $Data.currentRow = activeRowData[0];
+        if (context.activeRowList && context.activeRowList.length > 0) {
+            $Data.currentRow = context.activeRowList[0].row;
         }
     },
 
