@@ -9,7 +9,7 @@
                 </TButton>
             </div>
             <div class="right">
-                <TButton @click="$Method.handleRefresh">
+                <TButton shape="circle" @click="$Method.handleRefresh">
                     <template #icon>
                         <ILucideRotateCw />
                     </template>
@@ -18,15 +18,18 @@
         </div>
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" @active-change="$Method.onActiveChange">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" row-key="id" height="calc(100vh - 94px)" active-row-type="single" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
-                        <TTag v-if="row.state === 1" theme="success">正常</TTag>
-                        <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
-                        <TTag v-else theme="danger">已删除</TTag>
+                        <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
+                        <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
+                        <TTag v-else shape="round" theme="danger" variant="light-outline">已删除</TTag>
                     </template>
                     <template #operation="{ row }">
-                        <TDropdown trigger="click" min-column-width="120" @click="(data) => $Method.onAction(data.value, row)">
-                            <TButton variant="text" size="small">操作</TButton>
+                        <TDropdown trigger="click" placement="bottom-right" @click="(data) => $Method.onAction(data.value, row)">
+                            <TButton theme="primary" size="small">
+                                操作
+                                <template #suffix> <t-icon name="chevron-down" size="16" /></template>
+                            </TButton>
                             <TDropdownMenu slot="dropdown">
                                 <TDropdownItem value="upd">
                                     <ILucidePencil />
@@ -95,10 +98,10 @@ const $Data = $ref({
         { colKey: 'id', title: 'ID' },
         { colKey: 'name', title: '角色名称' },
         { colKey: 'code', title: '角色代码' },
-        { colKey: 'description', title: '描述', minWidth: 150 },
+        { colKey: 'description', title: '描述' },
         { colKey: 'sort', title: '排序' },
         { colKey: 'state', title: '状态' },
-        { colKey: 'operation', title: '操作', width: 120 }
+        { colKey: 'operation', title: '操作' }
     ]),
     pagerConfig: {
         currentPage: 1,
@@ -186,18 +189,16 @@ const $Method = {
         $Method.apiRoleList();
     },
 
-    // 高亮行变化（点击行选中）
-    onActiveChange(value, { activeRowData }) {
+    // 高亮行变化
+    onActiveChange(value, context) {
+        // 禁止取消高亮：如果新值为空，保持当前选中
+        if (value.length === 0 && $Data.activeRowKeys.length > 0) {
+            return;
+        }
         $Data.activeRowKeys = value;
         // 更新当前高亮的行数据
-        if (activeRowData && activeRowData.length > 0) {
-            $Data.currentRow = activeRowData[0];
-        } else if ($Data.tableData.length > 0) {
-            // 如果取消高亮，默认显示第一行
-            $Data.currentRow = $Data.tableData[0];
-            $Data.activeRowKeys = [$Data.tableData[0].id];
-        } else {
-            $Data.currentRow = null;
+        if (context.activeRowList && context.activeRowList.length > 0) {
+            $Data.currentRow = context.activeRowList[0].row;
         }
     },
 

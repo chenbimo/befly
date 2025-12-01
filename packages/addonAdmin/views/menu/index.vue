@@ -13,7 +13,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable v-bind="withTreeTableProps()" :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                <TTable v-bind="withTreeTableProps()" :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" row-key="id" height="calc(100vh - 94px)" active-row-type="single" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
                         <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
@@ -41,16 +41,14 @@ const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: 'row-select', type: 'single', fixed: 'left', checkProps: { allowUncheck: true } },
-        { colKey: 'name', title: '菜单名称', width: 200, fixed: 'left' },
-        { colKey: 'id', title: '序号', width: 100 },
+        { colKey: 'name', title: '菜单名称', fixed: 'left' },
+        { colKey: 'id', title: '序号' },
         { colKey: 'path', title: '路由路径' },
         { colKey: 'icon', title: '图标' },
         { colKey: 'sort', title: '排序' },
         { colKey: 'state', title: '状态' }
     ]),
     currentRow: null,
-    selectedRowKeys: [],
     activeRowKeys: []
 });
 
@@ -68,14 +66,12 @@ const $Method = {
             // 构建树形结构
             $Data.tableData = $Method.buildTree(res.data || []);
 
-            // 自动选中并高亮第一行
+            // 自动高亮第一行
             if ($Data.tableData.length > 0) {
                 $Data.currentRow = $Data.tableData[0];
-                $Data.selectedRowKeys = [$Data.tableData[0].id];
                 $Data.activeRowKeys = [$Data.tableData[0].id];
             } else {
                 $Data.currentRow = null;
-                $Data.selectedRowKeys = [];
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
@@ -128,33 +124,16 @@ const $Method = {
         $Method.apiMenuList();
     },
 
-    // 单选变化
-    onSelectChange(value, { selectedRowData }) {
-        $Data.selectedRowKeys = value;
-        $Data.activeRowKeys = value;
-        if (selectedRowData && selectedRowData.length > 0) {
-            $Data.currentRow = selectedRowData[0];
-        } else if ($Data.tableData.length > 0) {
-            $Data.currentRow = $Data.tableData[0];
-            $Data.selectedRowKeys = [$Data.tableData[0].id];
-            $Data.activeRowKeys = [$Data.tableData[0].id];
-        } else {
-            $Data.currentRow = null;
-        }
-    },
-
     // 高亮行变化
-    onActiveChange(value, { activeRowData }) {
+    onActiveChange(value, context) {
+        // 禁止取消高亮：如果新值为空，保持当前选中
+        if (value.length === 0 && $Data.activeRowKeys.length > 0) {
+            return;
+        }
         $Data.activeRowKeys = value;
-        $Data.selectedRowKeys = value;
-        if (activeRowData && activeRowData.length > 0) {
-            $Data.currentRow = activeRowData[0];
-        } else if ($Data.tableData.length > 0) {
-            $Data.currentRow = $Data.tableData[0];
-            $Data.selectedRowKeys = [$Data.tableData[0].id];
-            $Data.activeRowKeys = [$Data.tableData[0].id];
-        } else {
-            $Data.currentRow = null;
+        // 更新当前高亮的行数据
+        if (context.activeRowList && context.activeRowList.length > 0) {
+            $Data.currentRow = context.activeRowList[0].row;
         }
     }
 };

@@ -20,7 +20,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" row-key="id" height="calc(100vh - 94px)" active-row-type="single" @active-change="$Method.onActiveChange">
                     <template #method="{ row }">
                         <TTag v-if="row.method === 'GET'" shape="round" theme="success" variant="light-outline">GET</TTag>
                         <TTag v-else-if="row.method === 'POST'" shape="round" theme="primary" variant="light-outline">POST</TTag>
@@ -65,22 +65,13 @@ const $Data = $ref({
     loading: false,
     searchKeyword: '',
     columns: withDefaultColumns([
-        {
-            colKey: 'row-select',
-            type: 'single',
-            width: 50,
-            fixed: 'left',
-            checkProps: { allowUncheck: true },
-            ellipsis: false
-        },
-        { colKey: 'name', title: '接口名称', width: 200, fixed: 'left' },
-        { colKey: 'id', title: '序号', width: 80, align: 'center' },
-        { colKey: 'path', title: '接口路径', width: 350 },
-        { colKey: 'method', title: '请求方法', width: 100, align: 'center', ellipsis: false },
-        { colKey: 'addonName', title: '所属组件', width: 120, ellipsis: false }
+        { colKey: 'name', title: '接口名称' },
+        { colKey: 'id', title: '序号' },
+        { colKey: 'path', title: '接口路径' },
+        { colKey: 'method', title: '请求方法' },
+        { colKey: 'addonName', title: '所属组件' }
     ]),
     currentRow: null,
-    selectedRowKeys: [],
     activeRowKeys: []
 });
 
@@ -99,14 +90,12 @@ const $Method = {
             $Data.allData = list;
             $Data.tableData = list;
 
-            // 自动选中并高亮第一行
+            // 自动高亮第一行
             if ($Data.tableData.length > 0) {
                 $Data.currentRow = $Data.tableData[0];
-                $Data.selectedRowKeys = [$Data.tableData[0].id];
                 $Data.activeRowKeys = [$Data.tableData[0].id];
             } else {
                 $Data.currentRow = null;
-                $Data.selectedRowKeys = [];
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
@@ -132,33 +121,16 @@ const $Method = {
         $Data.tableData = $Data.allData.filter((item) => item.name?.toLowerCase().includes(keyword) || item.path?.toLowerCase().includes(keyword));
     },
 
-    // 单选变化
-    onSelectChange(value, { selectedRowData }) {
-        $Data.selectedRowKeys = value;
-        $Data.activeRowKeys = value;
-        if (selectedRowData && selectedRowData.length > 0) {
-            $Data.currentRow = selectedRowData[0];
-        } else if ($Data.tableData.length > 0) {
-            $Data.currentRow = $Data.tableData[0];
-            $Data.selectedRowKeys = [$Data.tableData[0].id];
-            $Data.activeRowKeys = [$Data.tableData[0].id];
-        } else {
-            $Data.currentRow = null;
-        }
-    },
-
     // 高亮行变化
-    onActiveChange(value, { activeRowData }) {
+    onActiveChange(value, context) {
+        // 禁止取消高亮：如果新值为空，保持当前选中
+        if (value.length === 0 && $Data.activeRowKeys.length > 0) {
+            return;
+        }
         $Data.activeRowKeys = value;
-        $Data.selectedRowKeys = value;
-        if (activeRowData && activeRowData.length > 0) {
-            $Data.currentRow = activeRowData[0];
-        } else if ($Data.tableData.length > 0) {
-            $Data.currentRow = $Data.tableData[0];
-            $Data.selectedRowKeys = [$Data.tableData[0].id];
-            $Data.activeRowKeys = [$Data.tableData[0].id];
-        } else {
-            $Data.currentRow = null;
+        // 更新当前高亮的行数据
+        if (context.activeRowList && context.activeRowList.length > 0) {
+            $Data.currentRow = context.activeRowList[0].row;
         }
     }
 };
