@@ -390,8 +390,6 @@ body {
             }
 
             .t-table__row--active {
-                background-color: var(--table-row-selected) !important;
-
                 td {
                     background-color: var(--table-row-selected) !important;
                 }
