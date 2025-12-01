@@ -1,4 +1,4 @@
-﻿import UAParser from 'ua-parser-js';
+﻿import { UAParser } from 'ua-parser-js';
 
 import adminTable from '../../tables/admin.json';
 
@@ -18,8 +18,7 @@ export default {
     handler: async (befly, ctx) => {
         // 解析 User-Agent
         const userAgent = ctx.req.headers.get('user-agent') || '';
-        const parser = new UAParser(userAgent);
-        const uaResult = parser.getResult();
+        const uaResult = UAParser(userAgent);
 
         // 日志数据（公共部分）
         const logData = {
