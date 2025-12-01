@@ -44,9 +44,9 @@ describe('RegexAliases - 正则别名常量', () => {
             expect(new RegExp(RegexAliases.alphanumeric).test('Hello_123')).toBe(false);
         });
 
-        it('alphanumericUnderscore - 字母、数字和下划线', () => {
-            expect(new RegExp(RegexAliases.alphanumericUnderscore).test('Hello_123')).toBe(true);
-            expect(new RegExp(RegexAliases.alphanumericUnderscore).test('Hello-123')).toBe(false);
+        it('alphanumeric_ - 字母、数字和下划线', () => {
+            expect(new RegExp(RegexAliases.alphanumeric_).test('Hello_123')).toBe(true);
+            expect(new RegExp(RegexAliases.alphanumeric_).test('Hello-123')).toBe(false);
         });
     });
 

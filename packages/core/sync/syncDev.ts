@@ -15,7 +15,7 @@ import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { CacheHelper } from '../lib/cacheHelper.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { SyncDevOptions, SyncDevStats } from '../types/index.js';
 
@@ -29,7 +29,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             return;
         }
 
-        if (!config.devPassword) {
+        if (!beflyConfig.devPassword) {
             // 未配置开发者密码，跳过同步
             return;
         }

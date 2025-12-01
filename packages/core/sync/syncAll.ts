@@ -9,7 +9,7 @@ import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 import type { SyncOptions } from '../types/index.js';
 
 export async function syncAllCommand(options: SyncOptions = {}) {

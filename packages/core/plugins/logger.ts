@@ -4,7 +4,7 @@
  */
 
 import { Logger } from '../lib/logger.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { Plugin } from '../types/plugin.js';
 
@@ -16,8 +16,8 @@ const loggerPlugin: Plugin = {
     async handler(): Promise<typeof Logger> {
         try {
             // 配置 Logger
-            if (config.logger) {
-                Logger.configure(config.logger);
+            if (beflyConfig.logger) {
+                Logger.configure(beflyConfig.logger);
             }
             return Logger;
         } catch (error: any) {

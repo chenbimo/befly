@@ -1,6 +1,4 @@
-import { defineBeflyConfig } from 'befly-shared/defineBeflyConfig';
-
-export default defineBeflyConfig({
+export const beflyConfig = {
     // ========== 核心配置 ==========
     appName: '野蜂飞舞',
     appPort: 3000,
@@ -41,4 +39,4 @@ export default defineBeflyConfig({
             ]
         }
     ]
-});
+};

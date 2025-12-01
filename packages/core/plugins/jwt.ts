@@ -3,13 +3,13 @@
  */
 
 import { Jwt } from '../lib/jwt.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { Plugin } from '../types/plugin.js';
 
 const jwtPlugin: Plugin = {
     handler: () => {
-        return new Jwt(config.auth);
+        return new Jwt(beflyConfig.auth);
     }
 };
 

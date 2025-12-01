@@ -1,6 +1,6 @@
 /**
  * Befly 配置模块
- * 自动加载 app.config.ts 并与默认配置合并
+ * 自动加载 befly.config.ts 并与默认配置合并
  */
 import { scanConfig } from 'befly-shared/scanConfig';
 
@@ -122,17 +122,17 @@ function validateConfig(cfg: BeflyOptions): void {
 }
 
 // 加载项目配置（top-level await）
-const appConfig =
+const projectConfig =
     (await scanConfig({
         dirs: [process.cwd()],
-        files: ['app.config']
+        files: ['befly.config']
     })) || {};
 
 /**
  * 最终配置（默认配置 + 项目配置合并）
  * 可在任意模块中直接导入使用
  */
-export const config: BeflyOptions = mergeConfig(defaultOptions, appConfig as BeflyOptions);
+export const beflyConfig: BeflyOptions = mergeConfig(defaultOptions, projectConfig as BeflyOptions);
 
 // 运行时校验配置
-validateConfig(config);
+validateConfig(beflyConfig);

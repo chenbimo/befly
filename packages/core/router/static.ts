@@ -10,7 +10,7 @@ import { join } from 'pathe';
 import { projectDir } from '../paths.js';
 import { Logger } from '../lib/logger.js';
 import { setCorsOptions } from '../util.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 /**
  * 静态文件处理器工厂
@@ -18,7 +18,7 @@ import { config } from '../config.js';
 export function staticHandler() {
     return async (req: Request): Promise<Response> => {
         // 设置 CORS 响应头
-        const corsHeaders = setCorsOptions(req, config.cors);
+        const corsHeaders = setCorsOptions(req, beflyConfig.cors);
 
         const url = new URL(req.url);
         const filePath = join(projectDir, 'public', url.pathname);

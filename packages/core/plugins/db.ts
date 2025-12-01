@@ -6,7 +6,7 @@
 import { Logger } from '../lib/logger.js';
 import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -20,7 +20,7 @@ const dbPlugin: Plugin = {
         let sql: any = null;
 
         try {
-            sql = await Connect.connectSql(config.db || {});
+            sql = await Connect.connectSql(beflyConfig.db || {});
 
             // 创建数据库管理器实例，直接传入 sql 对象
             const dbManager = new DbHelper(befly, sql);

@@ -6,7 +6,7 @@
 import { Logger } from '../lib/logger.js';
 import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { Plugin } from '../types/plugin.js';
 
@@ -16,7 +16,7 @@ import type { Plugin } from '../types/plugin.js';
 const redisPlugin: Plugin = {
     after: ['logger'],
     async handler(): Promise<RedisHelper | Record<string, never>> {
-        const redisConfig = config.redis || {};
+        const redisConfig = beflyConfig.redis || {};
         try {
             // 初始化 Redis 客户端
             await Connect.connectRedis(redisConfig);

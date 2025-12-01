@@ -4,8 +4,8 @@
  *
  * 流程：
  * 1. 扫描所有 addon 的 addon.config.js/ts 配置文件
- * 2. 扫描项目根目录的 app.config.js/ts 配置文件
- * 3. 项目的 app.config 优先级最高，可以覆盖 addon 的菜单配置
+ * 2. 扫描项目根目录的 befly.config.js/ts 配置文件
+ * 3. 项目的 befly.config 优先级最高，可以覆盖 addon 的菜单配置
  * 4. 文件不存在或格式错误时默认为空数组
  * 5. 根据菜单的 path 字段检查是否存在
  * 6. 存在则更新其他字段（name、sort、type、pid）
@@ -24,7 +24,7 @@ import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
 import { scanConfig } from 'befly-shared/scanConfig';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { SyncMenuOptions, MenuConfig } from '../types/index.js';
 
@@ -269,7 +269,7 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; addonName
     try {
         const appConfigData = await scanConfig({
             dirs: [projectDir],
-            files: ['app.config'],
+            files: ['befly.config'],
             mode: 'first',
             paths: ['menus']
         });

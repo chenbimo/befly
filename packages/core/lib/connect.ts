@@ -6,7 +6,7 @@
 import { SQL, RedisClient } from 'bun';
 
 import { Logger } from './logger.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { DatabaseConfig, RedisConfig } from '../types/befly.js';
 
@@ -213,11 +213,11 @@ export class Connect {
     static async connect(): Promise<void> {
         try {
             // 连接 SQL
-            const dbConfig = config.db || {};
+            const dbConfig = beflyConfig.db || {};
             await this.connectSql(dbConfig);
 
             // 连接 Redis
-            const redisConfig = config.redis || {};
+            const redisConfig = beflyConfig.redis || {};
             await this.connectRedis(redisConfig);
         } catch (error: any) {
             Logger.error({ err: error }, '数据库初始化失败');

@@ -196,6 +196,63 @@ DB_NAME=/path/to/database.sqlite
 DB_NAME=:memory:
 ```
 
+## ⚙️ 项目配置文件
+
+Befly 使用 `befly.config.ts` 作为统一配置文件：
+
+```typescript
+// befly.config.ts
+export const beflyConfig = {
+    appName: '我的应用',
+    appPort: 3000,
+    appHost: '0.0.0.0',
+
+    // 数据库配置（优先使用环境变量）
+    db: {
+        type: 'mysql',
+        host: '127.0.0.1',
+        port: 3306,
+        user: 'root',
+        pass: 'password',
+        name: 'my_database'
+    },
+
+    // Redis 配置
+    redis: {
+        host: '127.0.0.1',
+        port: 6379
+    },
+
+    // CORS 跨域配置
+    cors: {
+        origin: ['http://localhost:5173'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE']
+    },
+
+    // Addon 插件配置
+    addons: {
+        admin: {
+            email: { host: 'smtp.qq.com' }
+        }
+    }
+};
+```
+
+### 配置文件迁移指南
+
+如果你的项目之前使用 `app.config.ts`，请按以下步骤迁移：
+
+1. **重命名文件**：`app.config.ts` → `befly.config.ts`
+2. **更新导出名**：`config` → `beflyConfig`
+
+```typescript
+// 旧写法
+export const config = { ... };
+
+// 新写法
+export const beflyConfig = { ... };
+```
+
 ## 📖 文档
 
 完整文档请访问 [`/docs` 目录](./docs/)：

@@ -26,7 +26,7 @@ import { modifyTable } from './syncDb/table.js';
 import { createTable } from './syncDb/tableCreate.js';
 import { applyFieldDefaults } from './syncDb/helpers.js';
 import { setDbType } from './syncDb/constants.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 import type { SQL } from 'bun';
 import type { SyncDbOptions } from '../types/index.js';
 
@@ -51,7 +51,7 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
         processedTables.length = 0;
 
         // 设置数据库类型（从配置获取）
-        const dbType = config.db?.type || 'mysql';
+        const dbType = beflyConfig.db?.type || 'mysql';
         setDbType(dbType);
 
         // 验证表定义文件

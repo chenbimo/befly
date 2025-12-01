@@ -21,7 +21,7 @@ import { scanAddons, addonDirExists, getAddonDir } from 'befly-shared/addonHelpe
 
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { SyncApiOptions, ApiInfo } from '../types/index.js';
 

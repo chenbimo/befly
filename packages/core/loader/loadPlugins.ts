@@ -8,7 +8,7 @@ import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
 import { Logger } from '../lib/logger.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';
 import { sortModules, scanModules } from '../util.js';
-import { config } from '../config.js';
+import { beflyConfig } from '../befly.config.js';
 
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
@@ -38,7 +38,7 @@ export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Pro
         allPlugins.push(...appPlugins);
 
         // 5. 过滤禁用的插件
-        const disablePlugins = config.disablePlugins || [];
+        const disablePlugins = beflyConfig.disablePlugins || [];
         const enabledPlugins = allPlugins.filter((plugin) => !disablePlugins.includes(plugin.name));
 
         if (disablePlugins.length > 0) {
