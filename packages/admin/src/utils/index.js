@@ -104,18 +104,6 @@ const defaultTableProps = {
 };
 
 /**
- * 生成表格通用属性
- * @param {Object} overrides - 覆盖或扩展的属性
- * @returns {Object} 合并后的表格属性
- */
-export function withTableProps(overrides = {}) {
-    return {
-        ...defaultTableProps,
-        ...overrides
-    };
-}
-
-/**
  * 树形表格默认配置
  */
 const defaultTreeConfig = {

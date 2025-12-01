@@ -19,7 +19,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable v-bind="withTableProps()" :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" select-on-row-click :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" active-row-type="single" select-on-row-click @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
                         <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
@@ -69,7 +69,7 @@ import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
-import { withDefaultColumns, withTableProps } from '@/utils';
+import { withDefaultColumns } from '@/utils';
 
 // 响应式数据
 const $Data = $ref({

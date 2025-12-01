@@ -18,7 +18,7 @@
         </div>
         <div class="main-content">
             <div class="main-table">
-                <TTable v-bind="withTableProps()" :data="$Data.dictList" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" @active-change="$Method.onActiveChange">
+                <TTable :data="$Data.dictList" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" theme="success">正常</TTag>
                         <TTag v-else-if="row.state === 2" theme="warning">禁用</TTag>
@@ -65,7 +65,7 @@ import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
-import { withDefaultColumns, withTableProps } from '@/utils';
+import { withDefaultColumns } from '@/utils';
 
 // 响应式数据
 const $Data = $ref({
