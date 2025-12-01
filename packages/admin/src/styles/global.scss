@@ -241,11 +241,6 @@ body {
             flex-direction: column;
             flex: 1;
 
-            // 表格边框优化
-            &.t-table--bordered {
-                border: none !important;
-            }
-
             // 表头样式 - 增强对比
             .t-table__header tr th {
                 background-color: var(--table-header-bg) !important;
@@ -272,28 +267,6 @@ body {
                 overflow-y: auto;
                 height: 100%;
             }
-        }
-    }
-
-    // 兼容旧版独立表格区域（未使用 main-content 包裹时）
-    .main-table {
-        flex: 1 1 100%;
-        overflow: hidden;
-        background: var(--bg-color-container);
-        border-radius: var(--card-radius);
-        box-shadow: var(--shadow-1);
-
-        .t-table__header th {
-            background-color: var(--table-header-bg) !important;
-            border-bottom: 2px solid var(--border-color) !important;
-            color: var(--table-header-text);
-            font-weight: var(--font-weight-semibold);
-            font-size: var(--font-size-sm);
-        }
-
-        // 确保 tbody 中的 tr 也有 hover 效果
-        tbody tr:not(.t-table__row--active):hover td {
-            background-color: var(--table-row-hover) !important;
         }
     }
 
