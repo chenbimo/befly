@@ -122,12 +122,12 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         }
 
         // 使用 bcrypt 加密密码
-        const hashed = await Cipher.hashPassword(config.devPassword);
+        const hashed = await Cipher.hashPassword(beflyConfig.devPassword);
 
         // 准备开发管理员数据
         const devData = {
             nickname: '开发者',
-            email: config.devEmail,
+            email: beflyConfig.devEmail,
             username: 'dev',
             password: hashed,
             roleId: devRole.id,
@@ -138,14 +138,14 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         // 查询现有账号
         const existing = await helper.getOne({
             table: 'addon_admin_admin',
-            where: { email: config.devEmail }
+            where: { email: beflyConfig.devEmail }
         });
 
         if (existing) {
             // 更新现有账号
             await helper.updData({
                 table: 'addon_admin_admin',
-                where: { email: config.devEmail },
+                where: { email: beflyConfig.devEmail },
                 data: devData
             });
         } else {
