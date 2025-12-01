@@ -12,7 +12,7 @@
 
             <!-- 接口分组列表 -->
             <div class="api-container">
-                <div v-for="group in $Data.filteredApiData" :key="group.name" class="api-group">
+                <div class="api-group" v-for="group in $Data.filteredApiData" :key="group.name">
                     <div class="group-header">{{ group.title }}</div>
                     <div class="api-checkbox-list">
                         <TCheckboxGroup v-model="$Data.checkedApiIds">
@@ -24,13 +24,11 @@
         </div>
 
         <template #footer>
-            <div class="footer-left">
-                <TButton size="small" @click="$Method.onCheckAll">全选</TButton>
-                <TButton size="small" @click="$Method.onUncheckAll">取消全选</TButton>
-            </div>
-            <div class="footer-right">
-                <TButton @click="$Method.onClose">取消</TButton>
-                <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">保存</TButton>
+            <div class="dialog-footer">
+                <t-space>
+                    <TButton theme="default" @click="$Method.onClose">取消</TButton>
+                    <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">保存</TButton>
+                </t-space>
             </div>
         </template>
     </TDialog>
@@ -149,22 +147,6 @@ const $Method = {
             .filter((group) => group.apis.length > 0);
     },
 
-    // 全选
-    onCheckAll() {
-        const allApiIds = [];
-        $Data.apiData.forEach((group) => {
-            group.apis.forEach((api) => {
-                allApiIds.push(api.id);
-            });
-        });
-        $Data.checkedApiIds = allApiIds;
-    },
-
-    // 取消全选
-    onUncheckAll() {
-        $Data.checkedApiIds = [];
-    },
-
     // 提交表单
     async onSubmit() {
         try {
@@ -213,6 +195,10 @@ $Method.initData();
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius-small);
             overflow: hidden;
+
+            .api-checkbox-list {
+                padding: 10px;
+            }
 
             &:last-child {
                 margin-bottom: 0;
@@ -267,20 +253,9 @@ $Method.initData();
     }
 }
 
-// 底部操作栏布局
-:deep(.t-dialog__footer) {
+.dialog-footer {
+    width: 100%;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .footer-left {
-        display: flex;
-        gap: 8px;
-    }
-
-    .footer-right {
-        display: flex;
-        gap: 8px;
-    }
+    justify-content: center;
 }
 </style>

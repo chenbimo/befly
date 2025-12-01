@@ -1,7 +1,7 @@
 ﻿<template>
     <TDialog v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <div class="comp-role-menu">
-            <TTree :data="$Data.menuTreeData" node-key="id" show-checkbox default-expand-all :props="{ label: 'name' }" :ref="(el) => ($From.tree = el)" />
+            <TTree v-model:value="$Data.menuTreeCheckedKeys" :data="$Data.menuTreeData" value-mode="all" :keys="{ value: 'id', label: 'name', children: 'children' }" checkable expand-all />
         </div>
         <template #footer>
             <TButton @click="$Method.onClose">取消</TButton>
@@ -11,7 +11,6 @@
 </template>
 
 <script setup>
-import { nextTick } from 'vue';
 import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
 import { arrayToTree } from '@/utils';
 import { $Http } from '@/plugins/http';
@@ -28,11 +27,6 @@ const $Prop = defineProps({
 });
 
 const $Emit = defineEmits(['update:modelValue', 'success']);
-
-// 表单引用
-const $From = $shallowRef({
-    tree: null
-});
 
 const $Data = $ref({
     visible: false,
@@ -85,13 +79,6 @@ const $Method = {
 
             // roleMenuDetail 返回的 data 直接就是菜单 ID 数组
             $Data.menuTreeCheckedKeys = Array.isArray(res.data) ? res.data : [];
-
-            // 等待树渲染完成后设置选中状态
-            nextTick(() => {
-                if ($From.tree && $Data.menuTreeCheckedKeys.length > 0) {
-                    $From.tree.setCheckedKeys($Data.menuTreeCheckedKeys);
-                }
-            });
         } catch (error) {
             console.error('加载角色菜单失败:', error);
         }
@@ -100,21 +87,11 @@ const $Method = {
     // 提交表单
     async onSubmit() {
         try {
-            if (!$From.tree) {
-                MessagePlugin.error('菜单树未初始化');
-                return;
-            }
-
             $Data.submitting = true;
-
-            // 获取选中的节点（包括半选中的父节点）
-            const checkedKeys = $From.tree.getCheckedKeys();
-            const halfCheckedKeys = $From.tree.getHalfCheckedKeys();
-            const menuIds = [...checkedKeys, ...halfCheckedKeys];
 
             const res = await $Http('/addon/admin/role/menuSave', {
                 roleId: $Prop.rowData.id,
-                menuIds
+                menuIds: $Data.menuTreeCheckedKeys
             });
 
             if (res.code === 0) {
