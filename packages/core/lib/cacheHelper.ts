@@ -46,8 +46,6 @@ export class CacheHelper {
 
             if (result === null) {
                 Logger.warn('⚠️ 接口缓存失败');
-            } else {
-                Logger.info(`✅ 已缓存 ${apiList.length} 个接口到 Redis (Key: ${RedisKeys.apisAll()})`);
             }
         } catch (error: any) {
             Logger.error({ err: error }, '⚠️ 接口缓存异常');
@@ -78,8 +76,6 @@ export class CacheHelper {
 
             if (result === null) {
                 Logger.warn('⚠️ 菜单缓存失败');
-            } else {
-                Logger.info(`✅ 已缓存 ${menus.length} 个菜单到 Redis (Key: ${RedisKeys.menusAll()})`);
             }
         } catch (error: any) {
             Logger.warn({ err: error }, '⚠️ 菜单缓存异常');
@@ -159,8 +155,6 @@ export class CacheHelper {
 
             // 统计成功缓存的角色数
             const cachedRoles = results.filter((r) => r > 0).length;
-
-            Logger.info(`✅ 已缓存 ${cachedRoles} 个角色的接口权限（共 ${cacheOperations.reduce((sum, op) => sum + op.apiPaths.length, 0)} 个接口）`);
         } catch (error: any) {
             Logger.warn({ err: error }, '⚠️ 角色权限缓存异常');
         }
