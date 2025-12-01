@@ -564,6 +564,10 @@ body {
     }
 }
 
+.t-dialog--default {
+    padding: 24px;
+}
+
 // 分页器样式
 .t-pagination {
     .t-pagination__btn {
@@ -583,18 +587,13 @@ body {
 
 // 对话框样式
 .t-dialog {
-    border-radius: var(--card-radius);
-    box-shadow: var(--shadow-3);
-
     .t-dialog__header {
         font-weight: var(--font-weight-semibold);
-        padding: var(--spacing-md) var(--spacing-lg);
-        border-bottom: 1px solid var(--border-color-light);
+        padding: 0 0 var(--spacing-md);
     }
 
     .t-dialog__footer {
-        padding: var(--spacing-md) var(--spacing-lg);
-        border-top: 1px solid var(--border-color-light);
+        padding: var(--spacing-md) 0 0;
     }
 }
 
