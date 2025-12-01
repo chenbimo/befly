@@ -40,6 +40,10 @@
     },
     "gitHead": "495f5661f3fad19c1d2d6d27926c10fec926fee4",
     "dependencies": {
-        "befly-shared": "^1.1.1"
+        "befly-shared": "^1.1.1",
+        "ua-parser-js": "^2.0.6"
+    },
+    "devDependencies": {
+        "@types/ua-parser-js": "^0.7.39"
     }
 }

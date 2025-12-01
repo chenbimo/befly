@@ -1,0 +1,96 @@
+{
+    "adminId": {
+        "name": "管理员ID",
+        "type": "number",
+        "min": 0,
+        "max": 999999999999999,
+        "index": true
+    },
+    "username": {
+        "name": "用户名",
+        "type": "string",
+        "min": 1,
+        "max": 50
+    },
+    "nickname": {
+        "name": "昵称",
+        "type": "string",
+        "max": 50
+    },
+    "ip": {
+        "name": "登录IP",
+        "type": "string",
+        "max": 50,
+        "index": true
+    },
+    "userAgent": {
+        "name": "用户代理",
+        "type": "string",
+        "max": 500
+    },
+    "browserName": {
+        "name": "浏览器名称",
+        "type": "string",
+        "max": 50
+    },
+    "browserVersion": {
+        "name": "浏览器版本",
+        "type": "string",
+        "max": 50
+    },
+    "osName": {
+        "name": "操作系统",
+        "type": "string",
+        "max": 50
+    },
+    "osVersion": {
+        "name": "系统版本",
+        "type": "string",
+        "max": 50
+    },
+    "deviceType": {
+        "name": "设备类型",
+        "type": "string",
+        "max": 20
+    },
+    "deviceVendor": {
+        "name": "设备厂商",
+        "type": "string",
+        "max": 50
+    },
+    "deviceModel": {
+        "name": "设备型号",
+        "type": "string",
+        "max": 50
+    },
+    "engineName": {
+        "name": "引擎名称",
+        "type": "string",
+        "max": 50
+    },
+    "cpuArchitecture": {
+        "name": "CPU架构",
+        "type": "string",
+        "max": 20
+    },
+    "loginTime": {
+        "name": "登录时间",
+        "type": "number",
+        "min": 0,
+        "max": 9999999999999,
+        "index": true
+    },
+    "loginResult": {
+        "name": "登录结果",
+        "type": "number",
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "index": true
+    },
+    "failReason": {
+        "name": "失败原因",
+        "type": "string",
+        "max": 200
+    }
+}

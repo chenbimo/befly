@@ -1,4 +1,6 @@
-﻿import adminTable from '../../tables/admin.json';
+﻿import UAParser from 'ua-parser-js';
+
+import adminTable from '../../tables/admin.json';
 
 export default {
     name: '管理员登录',
@@ -14,6 +16,32 @@ export default {
     },
     required: ['account', 'password'],
     handler: async (befly, ctx) => {
+        // 解析 User-Agent
+        const userAgent = ctx.req.headers.get('user-agent') || '';
+        const parser = new UAParser(userAgent);
+        const uaResult = parser.getResult();
+
+        // 日志数据（公共部分）
+        const logData = {
+            adminId: 0,
+            username: ctx.body.account,
+            nickname: '',
+            ip: ctx.ip || 'unknown',
+            userAgent: userAgent.substring(0, 500),
+            browserName: uaResult.browser.name || '',
+            browserVersion: uaResult.browser.version || '',
+            osName: uaResult.os.name || '',
+            osVersion: uaResult.os.version || '',
+            deviceType: uaResult.device.type || 'desktop',
+            deviceVendor: uaResult.device.vendor || '',
+            deviceModel: uaResult.device.model || '',
+            engineName: uaResult.engine.name || '',
+            cpuArchitecture: uaResult.cpu.architecture || '',
+            loginTime: Date.now(),
+            loginResult: 0,
+            failReason: ''
+        };
+
         // 查询管理员（account 匹配 username 或 email）
         const admin = await befly.db.getOne({
             table: 'addon_admin_admin',
@@ -22,25 +50,42 @@ export default {
             }
         });
 
-        if (!admin) {
-            return befly.tool.No('账号或密码错误1');
+        if (!admin?.id) {
+            logData.failReason = '账号不存在';
+            await befly.db.insData({ table: 'addon_admin_login_log', data: logData });
+            return befly.tool.No('账号或密码错误');
         }
+
+        // 更新日志数据（已找到用户）
+        logData.adminId = admin.id;
+        logData.username = admin.username;
+        logData.nickname = admin.nickname || '';
 
         // 验证密码
         try {
             const isValid = await befly.cipher.verifyPassword(ctx.body.password, admin.password);
             if (!isValid) {
-                return befly.tool.No('账号或密码错误2');
+                logData.failReason = '密码错误';
+                await befly.db.insData({ table: 'addon_admin_login_log', data: logData });
+                return befly.tool.No('账号或密码错误');
             }
         } catch (error: any) {
             befly.logger.error({ err: error }, '密码验证失败');
+            logData.failReason = '密码格式错误';
+            await befly.db.insData({ table: 'addon_admin_login_log', data: logData });
             return befly.tool.No('密码格式错误，请重新设置密码');
         }
 
         // 检查账号状态（state=1 表示正常，state=2 表示禁用）
         if (admin.state === 2) {
+            logData.failReason = '账号已被禁用';
+            await befly.db.insData({ table: 'addon_admin_login_log', data: logData });
             return befly.tool.No('账号已被禁用');
         }
+
+        // 登录成功，记录日志
+        logData.loginResult = 1;
+        await befly.db.insData({ table: 'addon_admin_login_log', data: logData });
 
         // 更新最后登录信息
         await befly.db.updData({
@@ -69,7 +114,7 @@ export default {
         const { password: _, ...userWithoutPassword } = admin;
 
         return befly.tool.Yes('登录成功', {
-            token,
+            token: token,
             userInfo: userWithoutPassword
         });
     }
