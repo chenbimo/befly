@@ -11,7 +11,8 @@
     },
     "main": "package.json",
     "exports": {
-        ".": "./package.json"
+        ".": "./package.json",
+        "./styles/*": "./styles/*"
     },
     "scripts": {
         "dev": "vite",

@@ -128,6 +128,3 @@ export function withTreeTableProps(treeOverrides = {}, tableOverrides = {}) {
         }
     };
 }
-
-// 导出组合式函数
-export { useTablePage } from './useTablePage.js';
