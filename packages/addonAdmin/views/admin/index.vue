@@ -19,7 +19,7 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :selected-row-keys="$Data.selectedRowKeys" :active-row-keys="$Data.activeRowKeys" active-row-type="single" select-on-row-click @select-change="$Method.onSelectChange" @active-change="$Method.onActiveChange">
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" row-key="id" height="100%" active-row-type="single" @active-change="$Method.onActiveChange">
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
                         <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
@@ -76,7 +76,6 @@ const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: 'row-select', type: 'single', fixed: 'left', checkProps: { allowUncheck: true } },
         { colKey: 'username', title: '用户名', fixed: 'left' },
         { colKey: 'id', title: '序号' },
         { colKey: 'nickname', title: '昵称' },
@@ -95,7 +94,6 @@ const $Data = $ref({
     actionType: 'add',
     rowData: {},
     currentRow: null,
-    selectedRowKeys: [],
     activeRowKeys: []
 });
 
@@ -116,14 +114,12 @@ const $Method = {
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
-            // 自动选中并高亮第一行
+            // 自动高亮第一行
             if ($Data.tableData.length > 0) {
                 $Data.currentRow = $Data.tableData[0];
-                $Data.selectedRowKeys = [$Data.tableData[0].id];
                 $Data.activeRowKeys = [$Data.tableData[0].id];
             } else {
                 $Data.currentRow = null;
-                $Data.selectedRowKeys = [];
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
@@ -174,37 +170,16 @@ const $Method = {
         $Method.apiAdminList();
     },
 
-    // 单选变化
-    onSelectChange(value, { selectedRowData }) {
-        $Data.selectedRowKeys = value;
-        $Data.activeRowKeys = value;
-        // 更新当前选中的行数据
-        if (selectedRowData && selectedRowData.length > 0) {
-            $Data.currentRow = selectedRowData[0];
-        } else if ($Data.tableData.length > 0) {
-            // 如果取消选中，默认显示第一行
-            $Data.currentRow = $Data.tableData[0];
-            $Data.selectedRowKeys = [$Data.tableData[0].id];
-            $Data.activeRowKeys = [$Data.tableData[0].id];
-        } else {
-            $Data.currentRow = null;
-        }
-    },
-
     // 高亮行变化
     onActiveChange(value, { activeRowData }) {
+        // 禁止取消高亮：如果新值为空，保持当前选中
+        if (value.length === 0 && $Data.activeRowKeys.length > 0) {
+            return;
+        }
         $Data.activeRowKeys = value;
-        $Data.selectedRowKeys = value;
         // 更新当前高亮的行数据
         if (activeRowData && activeRowData.length > 0) {
             $Data.currentRow = activeRowData[0];
-        } else if ($Data.tableData.length > 0) {
-            // 如果取消高亮，默认显示第一行
-            $Data.currentRow = $Data.tableData[0];
-            $Data.selectedRowKeys = [$Data.tableData[0].id];
-            $Data.activeRowKeys = [$Data.tableData[0].id];
-        } else {
-            $Data.currentRow = null;
         }
     },
 
