@@ -50,6 +50,11 @@ export default defineAddonConfig(import.meta.dirname, {
             name: '登录日志',
             path: '/loginLog',
             sort: 7
+        },
+        {
+            name: '邮件管理',
+            path: '/email',
+            sort: 8
         }
     ]
 });

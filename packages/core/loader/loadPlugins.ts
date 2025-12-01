@@ -69,6 +69,3 @@ export async function loadPlugins(config: Record<string, any> | undefined, plugi
         process.exit(1);
     }
 }
-
-// ==================== 钩子加载逻辑 ====================
-// 已移动到 loadHooks.ts

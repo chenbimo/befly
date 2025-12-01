@@ -1,0 +1,14 @@
+{
+    "adminId": "发送人ID|number",
+    "username": "发送人账号|string|0|100",
+    "nickname": "发送人昵称|string|0|100",
+    "toEmail": "收件人邮箱|string|5|200||true|email",
+    "subject": "邮件主题|string|1|200||true",
+    "content": "邮件内容|string|0|50000",
+    "ccEmail": "抄送邮箱|string|0|500",
+    "bccEmail": "密送邮箱|string|0|500",
+    "sendTime": "发送时间|number",
+    "sendResult": "发送结果|number|0|1|0",
+    "messageId": "消息ID|string|0|200",
+    "failReason": "失败原因|string|0|500"
+}
