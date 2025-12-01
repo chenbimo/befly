@@ -8,7 +8,7 @@
  */
 export const $Config = {
     /** 应用标题 */
-    appTitle: import.meta.env.VITE_APP_TITLE || '管理后台',
+    appTitle: import.meta.env.VITE_APP_TITLE || '野蜂飞舞',
     /** API 基础地址 */
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '',
     /** 存储命名空间 */
