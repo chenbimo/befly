@@ -28,13 +28,10 @@ export interface Plugin {
     after?: string[];
 
     /** 插件初始化函数 */
-    handler?: (context: BeflyContext, config?: Record<string, any>) => any | Promise<any>;
+    handler?: (context: BeflyContext) => any | Promise<any>;
 
     /** @deprecated use handler instead */
     onInit?: PluginInitFunction;
-
-    /** 插件配置 */
-    config?: Record<string, any>;
 
     /** 插件描述 */
     description?: string;

@@ -1,10 +1,13 @@
 /**
- * Befly 默认配置
- * 包含所有配置项的默认值
+ * Befly 配置模块
+ * 自动加载 app.config.ts 并与默认配置合并
  */
+import { scanConfig } from 'befly-shared/scanConfig';
+
 import type { BeflyOptions } from './types/befly.js';
 
-export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
+/** 默认配置 */
+const defaultOptions: BeflyOptions = {
     // ========== 核心参数 ==========
     nodeEnv: (process.env.NODE_ENV as any) || 'development',
     appName: '野蜂飞舞',
@@ -63,8 +66,73 @@ export const defaultOptions: Required<Omit<BeflyOptions, 'devPassword'>> = {
     },
 
     // ========== 禁用配置 ==========
-    /** 禁用的钩子列表 */
     disableHooks: [],
-    /** 禁用的插件列表 */
-    disablePlugins: []
+    disablePlugins: [],
+
+    // ========== Addon 配置 ==========
+    addons: {}
 };
+
+/**
+ * 合并配置（最多 2 级深度）
+ */
+function mergeConfig(defaults: BeflyOptions, userConfig: BeflyOptions): BeflyOptions {
+    const result = { ...defaults };
+
+    for (const key in userConfig) {
+        const value = userConfig[key as keyof BeflyOptions];
+        if (value !== undefined && value !== null) {
+            if (typeof value === 'object' && !Array.isArray(value)) {
+                result[key as keyof BeflyOptions] = {
+                    ...(defaults[key as keyof BeflyOptions] as object),
+                    ...value
+                } as any;
+            } else {
+                result[key as keyof BeflyOptions] = value as any;
+            }
+        }
+    }
+
+    return result;
+}
+
+/**
+ * 校验必要配置项
+ */
+function validateConfig(cfg: BeflyOptions): void {
+    const requiredFields: (keyof BeflyOptions)[] = ['appName', 'appPort', 'appHost'];
+
+    for (const field of requiredFields) {
+        if (cfg[field] === undefined || cfg[field] === null) {
+            throw new Error(`配置项 "${field}" 不能为空`);
+        }
+    }
+
+    // 校验端口号范围
+    if (typeof cfg.appPort !== 'number' || cfg.appPort < 1 || cfg.appPort > 65535) {
+        throw new Error(`配置项 "appPort" 必须是 1-65535 之间的数字`);
+    }
+
+    // 校验数据库配置
+    if (cfg.db) {
+        if (!cfg.db.database) {
+            throw new Error(`配置项 "db.database" 不能为空`);
+        }
+    }
+}
+
+// 加载项目配置（top-level await）
+const appConfig =
+    (await scanConfig({
+        dirs: [process.cwd()],
+        files: ['app.config']
+    })) || {};
+
+/**
+ * 最终配置（默认配置 + 项目配置合并）
+ * 可在任意模块中直接导入使用
+ */
+export const config: BeflyOptions = mergeConfig(defaultOptions, appConfig as BeflyOptions);
+
+// 运行时校验配置
+validateConfig(config);

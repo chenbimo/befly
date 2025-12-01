@@ -6,9 +6,9 @@
 import { SQL, RedisClient } from 'bun';
 
 import { Logger } from './logger.js';
+import { config } from '../config.js';
 
-import type { BeflyOptions, DatabaseConfig, RedisConfig } from '../types/befly.js';
-import type { SqlClientOptions } from '../types/database.js';
+import type { DatabaseConfig, RedisConfig } from '../types/befly.js';
 
 /**
  * 数据库连接管理器
@@ -208,20 +208,16 @@ export class Connect {
 
     /**
      * 连接所有数据库（SQL + Redis）
-     * @param config - Befly 配置对象（可选）
-     * @param options - 连接选项
+     * 自动从全局 config 获取配置
      */
-    static async connect(config?: BeflyOptions, options?: { sql?: SqlClientOptions; redis?: boolean }): Promise<void> {
+    static async connect(): Promise<void> {
         try {
-            // 如果 sql 参数不是 false，则连接 SQL
-            // 优先级：options.sql > config.db > 跳过
-            const sqlConfig = options?.db || {};
-            if (sqlConfig) {
-                await this.connectSql(sqlConfig);
-            }
+            // 连接 SQL
+            const dbConfig = config.db || {};
+            await this.connectSql(dbConfig);
 
-            // 如果 redis 参数不是 false，则连接 Redis
-            const redisConfig = config?.redis || {};
+            // 连接 Redis
+            const redisConfig = config.redis || {};
             await this.connectRedis(redisConfig);
         } catch (error: any) {
             Logger.error({ err: error }, '数据库初始化失败');

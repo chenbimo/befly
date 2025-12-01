@@ -12,6 +12,7 @@ export * from './regex.js';
 
 // 工具函数
 export * from './defineAddonConfig.js';
+export * from './defineBeflyConfig.js';
 export * from './addonHelper.js';
 export * from './arrayKeysToCamel.js';
 export * from './arrayToTree.js';

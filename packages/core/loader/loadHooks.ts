@@ -7,17 +7,18 @@
 import { Logger } from '../lib/logger.js';
 import { coreHookDir } from '../paths.js';
 import { scanModules } from '../util.js';
+import { config } from '../config.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
 
-export async function loadHooks(pluginsConfig: Record<string, any> | undefined, hooks: Hook[]): Promise<void> {
+export async function loadHooks(hooks: Hook[]): Promise<void> {
     try {
         // 1. 扫描核心钩子
-        const coreHooks = await scanModules<Hook>(coreHookDir, 'core', '钩子', pluginsConfig);
+        const coreHooks = await scanModules<Hook>(coreHookDir, 'core', '钩子');
 
         // 2. 过滤禁用的钩子
-        const disableHooks = (pluginsConfig as any)?.disableHooks || [];
+        const disableHooks = config.disableHooks || [];
         const enabledHooks = coreHooks.filter((hook) => !disableHooks.includes(hook.name));
 
         if (disableHooks.length > 0) {

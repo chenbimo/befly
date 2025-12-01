@@ -9,9 +9,10 @@ import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
-import type { SyncOptions, BeflyOptions } from '../types/index.js';
+import { config } from '../config.js';
+import type { SyncOptions } from '../types/index.js';
 
-export async function syncAllCommand(config: BeflyOptions, options: SyncOptions = {}) {
+export async function syncAllCommand(options: SyncOptions = {}) {
     try {
         const startTime = Date.now();
 
@@ -19,16 +20,16 @@ export async function syncAllCommand(config: BeflyOptions, options: SyncOptions 
         await checkApp();
 
         // 1. 同步数据库表结构
-        await syncDbCommand(config, { dryRun: false, force: options.force || false });
+        await syncDbCommand({ dryRun: false, force: options.force || false });
 
         // 2. 同步接口（并缓存）
-        await syncApiCommand(config);
+        await syncApiCommand();
 
         // 3. 同步菜单（并缓存）
-        await syncMenuCommand(config);
+        await syncMenuCommand();
 
         // 4. 同步开发管理员（并缓存角色权限）
-        await syncDevCommand(config);
+        await syncDevCommand();
 
         // 输出总结
         const totalTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);

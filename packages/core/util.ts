@@ -194,15 +194,14 @@ export function setCorsOptions(req: Request, config: CorsConfig = {}): Record<st
 }
 
 /**
- * 扫描并加载模块（插件或钩子）
+ * 扫描模块（插件或钩子）
  * @param dir - 目录路径
- * @param type - 模块类型
- * @param moduleLabel - 模块标签（如“插件”、“钩子”）
- * @param config - 配置对象
+ * @param type - 模块类型（core/addon/app）
+ * @param moduleLabel - 模块标签（如"插件"、"钩子"）
  * @param addonName - 组件名称（仅 type='addon' 时需要）
  * @returns 模块列表
  */
-export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'core' | 'addon' | 'app', moduleLabel: string, config?: Record<string, any>, addonName?: string): Promise<T[]> {
+export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'core' | 'addon' | 'app', moduleLabel: string, addonName?: string): Promise<T[]> {
     if (!existsSync(dir)) return [];
 
     const items: T[] = [];
@@ -219,9 +218,9 @@ export async function scanModules<T extends Plugin | Hook>(dir: string, type: 'c
             const item = moduleImport.default;
 
             item.name = moduleName;
-            // 注入配置
-            if (config && config[moduleName]) {
-                item.config = config[moduleName];
+            // 为 addon 模块记录 addon 名称
+            if (type === 'addon' && addonName) {
+                item.addonName = addonName;
             }
             items.push(item);
         } catch (err: any) {

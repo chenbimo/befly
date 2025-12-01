@@ -6,7 +6,7 @@
 import { describe, expect, it, test, beforeAll, afterAll } from 'bun:test';
 import { RedisClient } from 'bun';
 
-import { defaultOptions } from '../config.js';
+import { config } from '../config.js';
 import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 
@@ -14,7 +14,7 @@ let redis: RedisHelper;
 
 beforeAll(async () => {
     // 连接 Redis
-    await Connect.connectRedis(defaultOptions.redis);
+    await Connect.connectRedis(config.redis);
     redis = new RedisHelper();
 });
 

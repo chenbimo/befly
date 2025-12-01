@@ -124,6 +124,11 @@ export interface BeflyOptions {
     disableHooks?: string[];
     /** 禁用的插件列表 */
     disablePlugins?: string[];
+    /**
+     * Addon 运行时配置
+     * 按 addon 名称分组，如 addons.admin.email
+     */
+    addons?: Record<string, Record<string, any>>;
     /** 其他插件配置 */
     [key: string]: any;
 }

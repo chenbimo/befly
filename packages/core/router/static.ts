@@ -10,15 +10,12 @@ import { join } from 'pathe';
 import { projectDir } from '../paths.js';
 import { Logger } from '../lib/logger.js';
 import { setCorsOptions } from '../util.js';
-
-// 类型导入
-import type { BeflyOptions } from '../types/befly.js';
+import { config } from '../config.js';
 
 /**
  * 静态文件处理器工厂
- * @param config - Befly 配置
  */
-export function staticHandler(config: BeflyOptions) {
+export function staticHandler() {
     return async (req: Request): Promise<Response> => {
         // 设置 CORS 响应头
         const corsHeaders = setCorsOptions(req, config.cors);

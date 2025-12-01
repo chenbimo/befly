@@ -9,7 +9,7 @@ import type { Plugin } from '../types/plugin.js';
 
 export default {
     name: 'cipher',
-    handler: (context, config) => {
+    handler: () => {
         return Cipher;
     }
 } as Plugin;

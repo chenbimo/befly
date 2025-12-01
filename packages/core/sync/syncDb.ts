@@ -26,8 +26,9 @@ import { modifyTable } from './syncDb/table.js';
 import { createTable } from './syncDb/tableCreate.js';
 import { applyFieldDefaults } from './syncDb/helpers.js';
 import { setDbType } from './syncDb/constants.js';
+import { config } from '../config.js';
 import type { SQL } from 'bun';
-import type { BeflyOptions, SyncDbOptions } from '../types/index.js';
+import type { SyncDbOptions } from '../types/index.js';
 
 // 全局 SQL 客户端实例
 let sql: SQL | null = null;
@@ -44,7 +45,7 @@ const processedTables: string[] = [];
  * 3. 扫描表定义文件（核心表、项目表、addon表）
  * 4. 对比并应用表结构变更
  */
-export async function syncDbCommand(config: BeflyOptions, options: SyncDbOptions = {}): Promise<void> {
+export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> {
     try {
         // 清空处理记录
         processedTables.length = 0;

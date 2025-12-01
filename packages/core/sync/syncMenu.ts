@@ -24,8 +24,9 @@ import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
 import { scanConfig } from 'befly-shared/scanConfig';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
+import { config } from '../config.js';
 
-import type { SyncMenuOptions, MenuConfig, BeflyOptions } from '../types/index.js';
+import type { SyncMenuOptions, MenuConfig } from '../types/index.js';
 
 /**
  * 递归转换菜单路径
@@ -288,7 +289,7 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; addonName
 /**
  * SyncMenu 命令主函数
  */
-export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOptions = {}): Promise<void> {
+export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.debug('[计划] 同步菜单配置到数据库（plan 模式不执行）');
@@ -302,7 +303,7 @@ export async function syncMenuCommand(config: BeflyOptions, options: SyncMenuOpt
         const mergedMenus = mergeMenuConfigs(allMenus);
 
         // 连接数据库（SQL + Redis）
-        await Connect.connect(config);
+        await Connect.connect();
 
         const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
 

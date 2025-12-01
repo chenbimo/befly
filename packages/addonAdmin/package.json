@@ -10,6 +10,9 @@
         "registry": "https://registry.npmjs.org"
     },
     "main": "package.json",
+    "exports": {
+        ".": "./package.json"
+    },
     "scripts": {
         "dev": "vite",
         "build": "vite build",
@@ -17,9 +20,11 @@
     },
     "files": [
         "apis",
+        "plugins",
         "styles",
         "tables",
         "views",
+        "addon.config.js",
         "package.json",
         "README.md"
     ],

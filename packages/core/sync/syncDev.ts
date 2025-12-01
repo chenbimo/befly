@@ -15,13 +15,14 @@ import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { CacheHelper } from '../lib/cacheHelper.js';
+import { config } from '../config.js';
 
-import type { SyncDevOptions, SyncDevStats, BeflyOptions } from '../types/index.js';
+import type { SyncDevOptions, SyncDevStats } from '../types/index.js';
 
 /**
  * SyncDev 命令主函数
  */
-export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptions = {}): Promise<void> {
+export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.debug('[计划] 同步完成后将初始化/更新开发管理员账号（plan 模式不执行）');
@@ -34,7 +35,7 @@ export async function syncDevCommand(config: BeflyOptions, options: SyncDevOptio
         }
 
         // 连接数据库（SQL + Redis）
-        await Connect.connect(config);
+        await Connect.connect();
 
         const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
 

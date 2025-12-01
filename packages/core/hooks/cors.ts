@@ -1,5 +1,6 @@
 // 相对导入
 import { setCorsOptions } from '../util.js';
+import { config } from '../config.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';
@@ -24,11 +25,10 @@ const hook: Hook = {
             credentials: 'true'
         };
 
-        const userConfig = (hook as any).config || {};
-        const config = { ...defaultConfig, ...userConfig };
+        const corsConfig = { ...defaultConfig, ...(config.cors || {}) };
 
         // 设置 CORS 响应头
-        const headers = setCorsOptions(req, config);
+        const headers = setCorsOptions(req, corsConfig);
 
         ctx.corsHeaders = headers;
 

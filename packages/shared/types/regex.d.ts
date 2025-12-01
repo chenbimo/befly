@@ -21,7 +21,9 @@ export declare const RegexAliases: {
     /** 字母和数字 */
     readonly alphanumeric: '^[a-zA-Z0-9]+$';
     /** 字母、数字和下划线 */
-    readonly alphanumericUnderscore: '^[a-zA-Z0-9_]+$';
+    readonly alphanumeric_: '^[a-zA-Z0-9_]+$';
+    /** 字母、数字、下划线和短横线 */
+    readonly alphanumericDash_: '^[a-zA-Z0-9_-]+$';
     /** 小写字母 */
     readonly lowercase: '^[a-z]+$';
     /** 大写字母 */

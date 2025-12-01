@@ -8,28 +8,29 @@ import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
 import { Logger } from '../lib/logger.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';
 import { sortModules, scanModules } from '../util.js';
+import { config } from '../config.js';
 
 import type { Plugin } from '../types/plugin.js';
 import type { BeflyContext } from '../types/befly.js';
 
-export async function loadPlugins(config: Record<string, any> | undefined, plugins: Plugin[], context: BeflyContext): Promise<void> {
+export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Promise<void> {
     try {
         const allPlugins: Plugin[] = [];
 
         // 1. 扫描核心插件
-        const corePlugins = await scanModules<Plugin>(corePluginDir, 'core', '插件', config);
+        const corePlugins = await scanModules<Plugin>(corePluginDir, 'core', '插件');
 
         // 2. 扫描组件插件
         const addonPlugins: Plugin[] = [];
         const addons = scanAddons();
         for (const addon of addons) {
             const dir = getAddonDir(addon, 'plugins');
-            const plugins = await scanModules<Plugin>(dir, 'addon', '插件', config, addon);
+            const plugins = await scanModules<Plugin>(dir, 'addon', '插件', addon);
             addonPlugins.push(...plugins);
         }
 
         // 3. 扫描项目插件
-        const appPlugins = await scanModules<Plugin>(projectPluginDir, 'app', '插件', config);
+        const appPlugins = await scanModules<Plugin>(projectPluginDir, 'app', '插件');
 
         // 4. 合并所有插件
         allPlugins.push(...corePlugins);
@@ -37,7 +38,7 @@ export async function loadPlugins(config: Record<string, any> | undefined, plugi
         allPlugins.push(...appPlugins);
 
         // 5. 过滤禁用的插件
-        const disablePlugins = (config as any)?.disablePlugins || [];
+        const disablePlugins = config.disablePlugins || [];
         const enabledPlugins = allPlugins.filter((plugin) => !disablePlugins.includes(plugin.name));
 
         if (disablePlugins.length > 0) {
@@ -55,7 +56,7 @@ export async function loadPlugins(config: Record<string, any> | undefined, plugi
             try {
                 plugins.push(plugin);
 
-                const pluginInstance = typeof plugin.handler === 'function' ? await plugin.handler(context, config) : {};
+                const pluginInstance = typeof plugin.handler === 'function' ? await plugin.handler(context) : {};
 
                 // 直接挂载到 befly 下
                 (context as any)[plugin.name!] = pluginInstance;

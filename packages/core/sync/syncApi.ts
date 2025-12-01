@@ -21,8 +21,9 @@ import { scanAddons, addonDirExists, getAddonDir } from 'befly-shared/addonHelpe
 
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
+import { config } from '../config.js';
 
-import type { SyncApiOptions, ApiInfo, BeflyOptions } from '../types/index.js';
+import type { SyncApiOptions, ApiInfo } from '../types/index.js';
 
 /**
  * 从 API 文件中提取接口信息
@@ -215,7 +216,7 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
 /**
  * SyncApi 命令主函数
  */
-export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptions = {}): Promise<void> {
+export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void> {
     try {
         if (options.plan) {
             Logger.debug('[计划] 同步 API 接口到数据库（plan 模式不执行）');
@@ -223,7 +224,7 @@ export async function syncApiCommand(config: BeflyOptions, options: SyncApiOptio
         }
 
         // 连接数据库（SQL + Redis）
-        await Connect.connect(config);
+        await Connect.connect();
 
         const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
 

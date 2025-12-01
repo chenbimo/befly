@@ -190,12 +190,13 @@ class EmailHelper {
  * 邮件插件
  */
 const emailPlugin: Plugin = {
-    after: ['db', 'logger'],
-    async handler(befly: BeflyContext, appConfig?: Record<string, any>): Promise<EmailHelper> {
-        // 从配置中获取邮件配置，支持覆盖
+    after: ['db', 'logger', 'config'],
+    async handler(befly: BeflyContext): Promise<EmailHelper> {
+        // 从 befly.config.addons.admin.email 获取配置
+        const addonEmailConfig = befly.config?.addons?.admin?.email || {};
         const emailConfig: EmailConfig = {
             ...defaultConfig,
-            ...(appConfig?.email || {})
+            ...addonEmailConfig
         };
 
         return new EmailHelper(befly, emailConfig);
