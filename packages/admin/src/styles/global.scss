@@ -239,7 +239,7 @@ body {
             box-shadow: var(--shadow-1);
             display: flex;
             flex-direction: column;
-
+            flex: 1;
             // 表格头部样式 - 增强对比度
             .custom-table-cell-class {
                 background-color: var(--table-header-bg) !important;
@@ -249,80 +249,87 @@ body {
             }
 
             // 覆盖 TDesign 默认表格样式
-            :deep(.t-table) {
-                flex: 1;
+
+            // 表格边框优化
+            &.t-table--bordered {
                 border: none !important;
+            }
 
-                // 表格边框优化
-                &.t-table--bordered {
-                    border: none !important;
-                }
+            // 表头样式 - 增强对比
+            .t-table__header tr th {
+                background-color: var(--table-header-bg) !important;
+                border-bottom: 2px solid var(--border-color) !important;
+                color: var(--table-header-text);
+                font-weight: var(--font-weight-semibold);
+                font-size: var(--font-size-sm);
+            }
 
-                // 表头样式 - 增强对比
-                .t-table__header th {
-                    background-color: var(--table-header-bg) !important;
-                    border-bottom: 2px solid var(--border-color) !important;
-                    color: var(--table-header-text);
-                    font-weight: var(--font-weight-semibold);
-                    font-size: var(--font-size-sm);
-                }
+            // 单选框选中样式 - 更明显的蓝色
+            .t-table__row--selected {
+                background-color: var(--table-row-selected) !important;
 
-                // 单选框选中样式 - 更明显的蓝色
-                .t-table__row--selected {
-                    background-color: var(--table-row-selected) !important;
-
-                    td {
-                        background-color: var(--table-row-selected) !important;
-                    }
-
-                    &:hover {
-                        background-color: var(--table-row-active) !important;
-
-                        td {
-                            background-color: var(--table-row-active) !important;
-                        }
-                    }
-                }
-
-                // 行高亮样式（active-row）
-                .t-table__row--active {
-                    background-color: var(--table-row-selected) !important;
-
-                    td {
-                        background-color: var(--table-row-selected) !important;
-                    }
-
-                    &:hover {
-                        background-color: var(--table-row-active) !important;
-
-                        td {
-                            background-color: var(--table-row-active) !important;
-                        }
-                    }
-                }
-
-                // 普通行悬停样式
-                .t-table__row:hover {
-                    td {
-                        background-color: var(--table-row-hover) !important;
-                    }
-                }
-
-                // 单元格边框
                 td {
-                    border-bottom: 1px solid var(--border-color-light) !important;
-                    font-size: var(--font-size-sm);
+                    background-color: var(--table-row-selected) !important;
                 }
 
-                // 单选框样式优化
-                .t-radio__input {
-                    border-color: var(--border-color-dark);
+                &:hover {
+                    background-color: var(--table-row-active) !important;
+
+                    td {
+                        background-color: var(--table-row-active) !important;
+                    }
+                }
+            }
+
+            // 行高亮样式（active-row）
+            .t-table__row--active {
+                background-color: var(--table-row-selected) !important;
+
+                td {
+                    background-color: var(--table-row-selected) !important;
                 }
 
-                .t-radio.t-is-checked .t-radio__input {
-                    border-color: var(--primary-color);
-                    background-color: var(--primary-color);
+                &:hover {
+                    background-color: var(--table-row-active) !important;
+
+                    td {
+                        background-color: var(--table-row-active) !important;
+                    }
                 }
+            }
+
+            // 普通行样式
+            .t-table__row {
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+
+            // 普通行悬停样式（非选中行）
+            .t-table__row:not(.t-table__row--active):hover {
+                td {
+                    background-color: var(--table-row-hover) !important;
+                }
+            }
+
+            // 确保 tbody 中的 tr 也有 hover 效果
+            tbody tr:not(.t-table__row--active):hover td {
+                background-color: var(--table-row-hover) !important;
+            }
+
+            // 单元格边框
+            td {
+                border-bottom: 1px solid var(--border-color-light) !important;
+                font-size: var(--font-size-sm);
+            }
+
+            // 单选框样式优化
+            .t-radio__input {
+                border-color: var(--border-color-dark);
+            }
+
+            .t-radio.t-is-checked .t-radio__input {
+                border-color: var(--primary-color);
+                background-color: var(--primary-color);
             }
         }
 
@@ -398,10 +405,22 @@ body {
                 }
             }
 
-            .t-table__row:hover {
+            // 普通行样式
+            .t-table__row {
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+
+            // 普通行悬停样式（非选中行）
+            .t-table__row:not(.t-table__row--active):hover {
                 td {
                     background-color: var(--table-row-hover) !important;
                 }
+            }
+
+            // 确保 tbody 中的 tr 也有 hover 效果
+            tbody tr:not(.t-table__row--active):hover td {
+                background-color: var(--table-row-hover) !important;
             }
 
             // 单元格内容垂直居中
