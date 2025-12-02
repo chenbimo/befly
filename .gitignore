@@ -29,6 +29,8 @@ temp
 tempDocs
 dist
 packages/cli
+befly.local.json
+
 
 # 临时文件目录（保留目录结构）
 temp/*

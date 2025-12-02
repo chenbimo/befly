@@ -10,10 +10,12 @@ export interface LoadConfigOptions {
     files: string[];
     /** 文件扩展名，默认 ['.js', '.ts', '.json'] */
     extensions?: string[];
-    /** 加载模式：'first' = 返回第一个找到的配置（默认），'all' = 合并所有配置 */
-    mode?: 'all' | 'first';
+    /** 加载模式：'first' = 返回第一个找到的配置（默认），'merge' = 合并所有配置 */
+    mode?: 'merge' | 'first';
     /** 指定要提取的字段路径数组，如 ['menus', 'database.host']，为空则返回完整对象 */
     paths?: string[];
+    /** 默认配置，会与找到的配置合并（优先级最低） */
+    defaults?: Record<string, any>;
 }
 
 /**

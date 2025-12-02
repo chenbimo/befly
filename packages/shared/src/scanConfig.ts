@@ -20,7 +20,8 @@ export async function scanConfig(options: LoadConfigOptions): Promise<Record<str
         files,
         extensions = ['.js', '.ts', '.json'],
         mode = 'first',
-        paths
+        paths,
+        defaults = {}
     } = options;
 
     // 参数验证
@@ -86,7 +87,8 @@ export async function scanConfig(options: LoadConfigOptions): Promise<Record<str
     }
 
     // 合并配置（使用 mergeAndConcat 深度合并）
-    const finalConfig = configs.length > 0 ? mergeAndConcat({}, ...configs) : {};
+    // 合并顺序：defaults ← configs[0] ← configs[1] ← ...
+    const finalConfig = mergeAndConcat(defaults, ...configs);
 
     // 如果指定了 paths，则只返回指定路径的字段
     if (paths && paths.length > 0) {
