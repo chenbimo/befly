@@ -124,7 +124,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
             }
         } else {
             const lenPart = isStringOrArrayType(fieldDef.type) ? ` 长度:${parseInt(String(fieldDef.max))}` : '';
-            Logger.debug(`  + 新增字段 ${dbFieldName} (${fieldDef.type}${lenPart})`);
+            // Logger.debug(`  + 新增字段 ${dbFieldName} (${fieldDef.type}${lenPart})`);
             addClauses.push(generateDDLClause(fieldKey, fieldDef, true));
             changed = true;
         }
