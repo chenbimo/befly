@@ -124,6 +124,8 @@ export interface BeflyOptions {
     disableHooks?: string[];
     /** 禁用的插件列表 */
     disablePlugins?: string[];
+    /** 隐藏的菜单路径列表（不同步到数据库） */
+    hiddenMenus?: string[];
     /**
      * Addon 运行时配置
      * 按 addon 名称分组，如 addons.admin.email

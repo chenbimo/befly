@@ -5,7 +5,6 @@
 export * from './constants.js';
 export * from './redisKeys.js';
 export * from './regex.js';
-export * from './defineAddonConfig.js';
 export * from './addonHelper.js';
 export * from './arrayKeysToCamel.js';
 export * from './arrayToTree.js';

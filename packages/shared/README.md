@@ -142,29 +142,6 @@ const config = await mergeConfig({
 });
 ```
 
-### addonConfigMerge
-
-Addon 配置自动合并函数，自动读取 addon 的 `addon.config.js` 和项目 `config/` 目录下的同名配置文件进行合并。
-
-**参数：**
-
-- `options`: 合并选项（可选）
-
-**返回：** `Promise<Record<string, any>>`
-
-**示例：**
-
-```typescript
-import { addonConfigMerge } from 'befly-shared/scanConfig';
-
-// 在 @befly-addon/admin 包根目录文件中调用
-const config = await addonConfigMerge();
-// 自动读取：
-// 1. @befly-addon/admin/addon.config.js
-// 2. 项目根目录/config/admin.{js,ts,json}
-// 3. 合并后返回
-```
-
 ## 字段名转换
 
 ### keysToCamel

@@ -25,7 +25,6 @@
         "styles",
         "tables",
         "views",
-        "addon.config.js",
         "package.json",
         "README.md"
     ],
