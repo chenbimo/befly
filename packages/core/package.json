@@ -50,15 +50,15 @@
         ".npmrc",
         ".prettierignore",
         ".prettierrc",
+        "befly.config.ts",
         "bunfig.toml",
-        "config.ts",
         "LICENSE",
         "main.ts",
         "paths.ts",
         "package.json",
         "README.md",
         "tsconfig.json",
-        "LICENSE"
+        "util.ts"
     ],
     "engines": {
         "bun": ">=1.3.0"
