@@ -62,7 +62,7 @@
         "type": "text"
     },
     "duration": {
-        "name": "耗时(ms)",
+        "name": "耗时毫秒",
         "type": "number",
         "min": 0,
         "max": 999999999
