@@ -18,6 +18,18 @@
         "min": 6,
         "max": 500
     },
+    "email": {
+        "name": "邮箱",
+        "type": "string",
+        "max": 100,
+        "regexp": "@email"
+    },
+    "phone": {
+        "name": "手机号",
+        "type": "string",
+        "max": 20,
+        "regexp": "@phone"
+    },
     "avatar": {
         "name": "头像",
         "type": "string",
