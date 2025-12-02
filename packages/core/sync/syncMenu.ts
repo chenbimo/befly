@@ -3,9 +3,9 @@
  * 说明：根据配置文件增量同步菜单数据（最多3级：父级、子级、孙级）
  *
  * 流程：
- * 1. 扫描所有 addon 的 addon.config.js/ts 配置文件
- * 2. 扫描项目根目录的 befly.config.js/ts 配置文件
- * 3. 项目的 befly.config 优先级最高，可以覆盖 addon 的菜单配置
+ * 1. 扫描所有 addon 的 addon.config.json 配置文件
+ * 2. 从 beflyConfig 获取项目菜单配置
+ * 3. 项目的 beflyConfig 优先级最高，可以覆盖 addon 的菜单配置
  * 4. 文件不存在或格式错误时默认为空数组
  * 5. 根据菜单的 path 字段检查是否存在
  * 6. 存在则更新其他字段（name、sort、type、pid）
@@ -23,38 +23,9 @@ import { RedisKeys } from 'befly-shared/redisKeys';
 import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
 import { scanConfig } from 'befly-shared/scanConfig';
 import { Logger } from '../lib/logger.js';
-import { projectDir } from '../paths.js';
 import { beflyConfig } from '../befly.config.js';
 
 import type { SyncMenuOptions, MenuConfig } from '../types/index.js';
-
-/**
- * 递归转换菜单路径
- * @param menu 菜单对象（会被修改）
- * @param transform 路径转换函数
- */
-function transformMenuPaths(menu: MenuConfig, transform: (path: string) => string): void {
-    if (menu.path && menu.path.startsWith('/')) {
-        menu.path = transform(menu.path);
-    }
-    menu.children?.forEach((child) => transformMenuPaths(child, transform));
-}
-
-/**
- * 为 addon 菜单的 path 添加前缀
- * 规则：
- * 1. 所有路径必须以 / 开头
- * 2. 所有路径都添加 /addon/{addonName} 前缀（包括根路径 /）
- * 3. 递归处理所有层级的子菜单
- * 4. 项目菜单不添加前缀
- */
-function addAddonPrefix(menus: MenuConfig[], addonName: string): MenuConfig[] {
-    return menus.map((menu) => {
-        const cloned = cloneDeep(menu);
-        transformMenuPaths(cloned, (path) => `/addon/${addonName}${path}`);
-        return cloned;
-    });
-}
 
 /**
  * 合并菜单配置
@@ -241,7 +212,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
 async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; addonName: string }>> {
     const allMenus: Array<{ menus: MenuConfig[]; addonName: string }> = [];
 
-    // 1. 加载所有 addon 配置
+    // 1. 加载所有 addon 配置（从 addon.config.json）
     const addonNames = scanAddons();
 
     for (const addonName of addonNames) {
@@ -250,37 +221,39 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; addonName
             const addonConfigData = await scanConfig({
                 dirs: [addonDir],
                 files: ['addon.config'],
+                extensions: ['.json'],
                 mode: 'first',
                 paths: ['menus']
             });
 
             const addonMenus = addonConfigData?.menus || [];
             if (Array.isArray(addonMenus) && addonMenus.length > 0) {
-                // 为 addon 菜单添加路径前缀
-                const menusWithPrefix = addAddonPrefix(addonMenus, addonName);
-                allMenus.push({ menus: menusWithPrefix, addonName: addonName });
+                // 为 addon 菜单添加路径前缀（递归处理所有层级）
+                const addPrefix = (menu: MenuConfig): MenuConfig => {
+                    const cloned = cloneDeep(menu);
+                    if (cloned.path && cloned.path.startsWith('/')) {
+                        cloned.path = `/addon/${addonName}${cloned.path}`;
+                    }
+                    if (cloned.children) {
+                        cloned.children = cloned.children.map(addPrefix);
+                    }
+                    return cloned;
+                };
+                allMenus.push({
+                    menus: addonMenus.map(addPrefix),
+                    addonName: addonName
+                });
             }
         } catch (error: any) {
             Logger.warn({ err: error, addon: addonName }, '读取 addon 配置失败');
         }
     }
 
-    // 2. 加载项目配置
-    try {
-        const appConfigData = await scanConfig({
-            dirs: [projectDir],
-            files: ['befly.config'],
-            mode: 'first',
-            paths: ['menus']
-        });
-
-        const appMenus = appConfigData?.menus || [];
-        if (Array.isArray(appMenus) && appMenus.length > 0) {
-            // 项目菜单不添加前缀
-            allMenus.push({ menus: appMenus, addonName: 'app' });
-        }
-    } catch (error: any) {
-        Logger.warn({ err: error }, '读取项目配置失败');
+    // 2. 从 beflyConfig 获取项目菜单（已在模块加载时解析）
+    const appMenus = (beflyConfig as any).menus || [];
+    if (Array.isArray(appMenus) && appMenus.length > 0) {
+        // 项目菜单不添加前缀
+        allMenus.push({ menus: appMenus, addonName: 'app' });
     }
 
     return allMenus;
