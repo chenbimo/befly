@@ -1,0 +1,82 @@
+{
+    "adminId": {
+        "name": "管理员ID",
+        "type": "number",
+        "min": 0,
+        "max": 999999999999999,
+        "index": true
+    },
+    "username": {
+        "name": "用户名",
+        "type": "string",
+        "min": 1,
+        "max": 50
+    },
+    "nickname": {
+        "name": "昵称",
+        "type": "string",
+        "max": 50
+    },
+    "ip": {
+        "name": "操作IP",
+        "type": "string",
+        "max": 50,
+        "index": true
+    },
+    "module": {
+        "name": "操作模块",
+        "type": "string",
+        "max": 50,
+        "index": true
+    },
+    "action": {
+        "name": "操作类型",
+        "type": "string",
+        "max": 50,
+        "index": true
+    },
+    "method": {
+        "name": "请求方法",
+        "type": "string",
+        "max": 10
+    },
+    "path": {
+        "name": "请求路径",
+        "type": "string",
+        "max": 200
+    },
+    "params": {
+        "name": "请求参数",
+        "type": "text"
+    },
+    "result": {
+        "name": "操作结果",
+        "type": "number",
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "comment": "1成功 0失败"
+    },
+    "response": {
+        "name": "响应内容",
+        "type": "text"
+    },
+    "duration": {
+        "name": "耗时(ms)",
+        "type": "number",
+        "min": 0,
+        "max": 999999999
+    },
+    "operateTime": {
+        "name": "操作时间",
+        "type": "number",
+        "min": 0,
+        "max": 9999999999999,
+        "index": true
+    },
+    "remark": {
+        "name": "备注",
+        "type": "string",
+        "max": 500
+    }
+}
