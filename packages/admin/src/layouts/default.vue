@@ -296,27 +296,6 @@ $Method.fetchUserMenus();
                             background-color: transparent !important;
                         }
                     }
-
-                    // 展开且有子菜单选中时的父级 - 只显示蓝色文字
-                    &.t-is-active > .t-menu__item,
-                    &.t-is-opened > .t-menu__item {
-                        color: var(--primary-color);
-                        background-color: transparent !important;
-                        font-weight: var(--font-weight-medium);
-
-                        &::before {
-                            display: none !important;
-                        }
-                    }
-
-                    // 子菜单项样式
-                    .t-submenu__content .t-menu__item {
-                        padding-left: 32px !important;
-                    }
-                }
-
-                .t-submenu__content {
-                    background-color: transparent;
                 }
             }
         }
