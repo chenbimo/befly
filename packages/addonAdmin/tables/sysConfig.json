@@ -1,0 +1,53 @@
+{
+    "name": {
+        "name": "配置名称",
+        "type": "string",
+        "min": 2,
+        "max": 50
+    },
+    "code": {
+        "name": "配置代码",
+        "type": "string",
+        "min": 2,
+        "max": 100,
+        "unique": true,
+        "regexp": "@alphanumeric_"
+    },
+    "value": {
+        "name": "配置值",
+        "type": "text"
+    },
+    "valueType": {
+        "name": "值类型",
+        "type": "string",
+        "max": 20,
+        "default": "string",
+        "comment": "string number boolean json"
+    },
+    "group": {
+        "name": "配置分组",
+        "type": "string",
+        "max": 50,
+        "index": true
+    },
+    "sort": {
+        "name": "排序",
+        "type": "number",
+        "min": 0,
+        "max": 9999,
+        "default": 0
+    },
+    "isSystem": {
+        "name": "是否系统配置",
+        "type": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "comment": "1是 0否"
+    },
+    "description": {
+        "name": "描述说明",
+        "type": "string",
+        "max": 500
+    }
+}
