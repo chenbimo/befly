@@ -12,12 +12,14 @@ pre-commit:
         # 2. TypeScript 语法检查 (core)
         - name: TypeScript check (core)
           priority: 2
-          run: cd packages/core && bunx tsgo --noEmit
+          root: packages/core
+          run: bunx tsgo --noEmit
 
         # 3. TypeScript 语法检查 (shared)
         - name: TypeScript check (shared)
           priority: 2
-          run: cd packages/shared && bunx tsgo --noEmit
+          root: packages/shared
+          run: bunx tsgo --noEmit
 
         # 4. 运行测试
         - name: Run tests
