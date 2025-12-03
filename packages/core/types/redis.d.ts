@@ -48,8 +48,6 @@ export interface RedisHelper {
     // ==================== ID 生成 ====================
     /** 生成基于时间的唯一 ID (16位纯数字: 13位毫秒时间戳 + 3位后缀500-999) */
     genTimeID(): Promise<number>;
-    /** 批量生成基于时间的唯一 ID (使用 INCRBY 高效实现) */
-    genTimeIDBatch(count: number): Promise<number[]>;
 
     // ==================== Set 操作 ====================
     /** 向 Set 中添加一个或多个成员 */

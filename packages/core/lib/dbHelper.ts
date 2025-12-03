@@ -595,8 +595,11 @@ export class DbHelper {
         // 转换表名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
 
-        // 批量生成 ID（使用 INCRBY 一次性获取）
-        const ids = await this.befly.redis.genTimeIDBatch(dataList.length);
+        // 批量生成 ID（逐个获取）
+        const ids: number[] = [];
+        for (let i = 0; i < dataList.length; i++) {
+            ids.push(await this.befly.redis.genTimeID());
+        }
         const now = Date.now();
 
         // 处理所有数据（自动添加系统字段）

@@ -481,37 +481,6 @@ describe('RedisHelper - ID 生成', () => {
         const uniqueIds = new Set(ids);
         expect(uniqueIds.size).toBe(10);
     });
-
-    test('genTimeIDBatch - 批量生成唯一 ID', async () => {
-        const ids = await redis.genTimeIDBatch(5);
-
-        expect(ids.length).toBe(5);
-
-        // 验证所有 ID 唯一
-        const uniqueIds = new Set(ids);
-        expect(uniqueIds.size).toBe(5);
-
-        // 验证格式和后缀范围
-        for (const id of ids) {
-            expect(id.toString().length).toBe(16);
-            const suffix = id % 1000;
-            expect(suffix).toBeGreaterThanOrEqual(500);
-            expect(suffix).toBeLessThan(1000);
-        }
-    });
-
-    test('genTimeIDBatch - 空数组返回空', async () => {
-        const ids = await redis.genTimeIDBatch(0);
-        expect(ids).toEqual([]);
-    });
-
-    test('genTimeIDBatch - 大批量生成保持唯一', async () => {
-        const ids = await redis.genTimeIDBatch(100);
-
-        expect(ids.length).toBe(100);
-        const uniqueIds = new Set(ids);
-        expect(uniqueIds.size).toBe(100);
-    });
 });
 
 describe('RedisHelper - 连接测试', () => {
