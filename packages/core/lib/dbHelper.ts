@@ -86,7 +86,7 @@ export class DbHelper {
     private async getTableColumns(table: string): Promise<string[]> {
         // 1. 先查 Redis 缓存
         const cacheKey = RedisKeys.tableColumns(table);
-        let columns = await this.befly.redis.getObject<string[]>(cacheKey);
+        const columns = await this.befly.redis.getObject<string[]>(cacheKey);
 
         if (columns && columns.length > 0) {
             return columns;
@@ -100,12 +100,12 @@ export class DbHelper {
             throw new Error(`表 ${table} 不存在或没有字段`);
         }
 
-        columns = result.map((row: any) => row.Field);
+        const columnNames = result.map((row: any) => row.Field) as string[];
 
         // 3. 写入 Redis 缓存
-        await this.befly.redis.setObject(cacheKey, columns, RedisTTL.tableColumns);
+        await this.befly.redis.setObject(cacheKey, columnNames, RedisTTL.tableColumns);
 
-        return columns;
+        return columnNames;
     }
 
     /**
@@ -171,7 +171,7 @@ export class DbHelper {
      * 统一的查询参数预处理方法
      */
     private async prepareQueryOptions(options: QueryOptions) {
-        const cleanWhere = this.cleanFields(options.where);
+        const cleanWhere = this.cleanFields(options.where || {});
 
         // 处理 fields（支持排除语法）
         const processedFields = await this.fieldsToSnake(snakeCase(options.table), options.fields || []);
@@ -401,7 +401,7 @@ export class DbHelper {
      * getOne({ table: 'userProfile', fields: ['userId', 'userName'] })
      * getOne({ table: 'user_profile', fields: ['user_id', 'user_name'] })
      */
-    async getOne<T = any>(options: QueryOptions): Promise<T | null> {
+    async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<T | null> {
         const { table, fields, where } = await this.prepareQueryOptions(options);
 
         const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where));
@@ -427,7 +427,7 @@ export class DbHelper {
      * // 使用小驼峰格式（推荐）
      * getList({ table: 'userProfile', fields: ['userId', 'userName', 'createdAt'] })
      */
-    async getList<T = any>(options: QueryOptions): Promise<ListResult<T>> {
+    async getList<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<ListResult<T>> {
         const prepared = await this.prepareQueryOptions(options);
 
         // 参数上限校验
@@ -451,7 +451,7 @@ export class DbHelper {
         // 如果总数为 0，直接返回，不执行第二次查询
         if (total === 0) {
             return {
-                lists: [],
+                list: [],
                 total: 0,
                 page: prepared.page,
                 limit: prepared.limit,
@@ -476,7 +476,7 @@ export class DbHelper {
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
-            lists: this.convertBigIntFields<T>(camelList),
+            list: this.convertBigIntFields<T>(camelList),
             total: total,
             page: prepared.page,
             limit: prepared.limit,
@@ -493,7 +493,7 @@ export class DbHelper {
      * // 使用小驼峰格式（推荐）
      * getAll({ table: 'userProfile', fields: ['userId', 'userName'] })
      */
-    async getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
+    async getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
         // 添加硬性上限保护，防止内存溢出
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
@@ -745,6 +745,7 @@ export class DbHelper {
 
     /**
      * 执行事务
+     * 使用 Bun SQL 的 begin 方法开启事务
      */
     async trans<T = any>(callback: TransactionCallback<T>): Promise<T> {
         if (this.isTransaction) {
@@ -752,37 +753,12 @@ export class DbHelper {
             return await callback(this);
         }
 
-        // 开启新事务
-        const conn = await this.befly.db.transaction();
-        let committed = false;
-
-        try {
-            const trans = new DbHelper(this.befly, conn);
-            const result = await callback(trans);
-
-            // 提交事务
-            try {
-                await conn.query('COMMIT');
-                committed = true;
-            } catch (commitError: any) {
-                Logger.error({ err: commitError }, '事务提交失败，正在回滚');
-                await conn.query('ROLLBACK');
-                throw new Error(`事务提交失败: ${commitError.message}`);
-            }
-
-            return result;
-        } catch (error: any) {
-            // 回调执行失败，回滚事务
-            if (!committed) {
-                try {
-                    await conn.query('ROLLBACK');
-                    Logger.warn('事务已回滚');
-                } catch (rollbackError: any) {
-                    Logger.error({ err: rollbackError }, '事务回滚失败');
-                }
-            }
-            throw error;
-        }
+        // 使用 Bun SQL 的 begin 方法开启事务
+        // begin 方法会自动处理 commit/rollback
+        return await this.sql.begin(async (tx: any) => {
+            const trans = new DbHelper(this.befly, tx);
+            return await callback(trans);
+        });
     }
 
     /**

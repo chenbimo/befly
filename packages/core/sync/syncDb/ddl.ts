@@ -15,7 +15,8 @@ import { quoteIdentifier, escapeComment } from './helpers.js';
 import { resolveDefaultValue, generateDefaultSql, getSqlType } from './types.js';
 
 import type { SQL } from 'bun';
-import type { FieldDefinition, AnyObject } from 'befly/types/common.js';
+import type { FieldDefinition } from 'befly-shared/types';
+import type { AnyObject } from '../../types/common.js';
 
 /**
  * 构建索引操作 SQL（统一使用在线策略）

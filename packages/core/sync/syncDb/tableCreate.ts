@@ -16,7 +16,7 @@ import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from '.
 import { getTableIndexes } from './schema.js';
 
 import type { SQL } from 'bun';
-import type { FieldDefinition } from 'befly/types/common';
+import type { FieldDefinition } from 'befly-shared/types';
 
 /**
  * 为 PostgreSQL 表添加列注释
@@ -74,7 +74,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
     // 获取现有索引（MySQL 不支持 IF NOT EXISTS，需要先检查）
     let existingIndexes: Record<string, string[]> = {};
     if (isMySQL()) {
-        existingIndexes = await getTableIndexes(sql, tableName, dbName);
+        existingIndexes = await getTableIndexes(sql, tableName, dbName || '');
     }
 
     // 系统字段索引

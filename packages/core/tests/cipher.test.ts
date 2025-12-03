@@ -219,14 +219,14 @@ describe('Cipher - 快速哈希', () => {
 
     test('快速哈希 - 字符串输入', () => {
         const result = Cipher.fastHash(testData);
-        expect(typeof result).toBe('bigint');
-        expect(result).toBeGreaterThan(0n);
+        expect(typeof result).toBe('number');
+        expect(result).toBeGreaterThan(0);
     });
 
     test('快速哈希 - Uint8Array 输入', () => {
         const bytes = new TextEncoder().encode(testData);
         const result = Cipher.fastHash(bytes);
-        expect(typeof result).toBe('bigint');
+        expect(typeof result).toBe('number');
     });
 
     test('快速哈希 - 相同输入产生相同哈希', () => {
@@ -243,6 +243,6 @@ describe('Cipher - 快速哈希', () => {
 
     test('快速哈希 - 空字符串', () => {
         const result = Cipher.fastHash('');
-        expect(typeof result).toBe('bigint');
+        expect(typeof result).toBe('number');
     });
 });

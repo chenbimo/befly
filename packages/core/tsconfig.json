@@ -46,11 +46,10 @@
         "types": ["bun"],
 
         // 路径
-        "baseUrl": ".",
         "paths": {
             "@/*": ["./*"]
         }
     },
     "include": ["**/*.ts", "**/*.js"],
-    "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.js"]
+    "exclude": ["node_modules", "dist", "logs", "temp", "main.single.ts", "**/*.test.ts", "**/*.test.js"]
 }

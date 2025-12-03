@@ -117,7 +117,7 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
                     applyFieldDefaults(fieldDef);
                 }
 
-                const dbName = beflyConfig.db?.database;
+                const dbName = beflyConfig.db?.database || '';
                 const existsTable = await tableExists(sql!, tableName, dbName);
 
                 // 读取 force 参数

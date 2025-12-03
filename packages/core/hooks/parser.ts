@@ -36,7 +36,7 @@ const hook: Hook = {
             try {
                 // JSON 格式
                 if (contentType.includes('application/json')) {
-                    const body = await ctx.req.json();
+                    const body = (await ctx.req.json()) as Record<string, any>;
                     if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(body, Object.keys(ctx.api.fields));
                     } else {
@@ -45,7 +45,7 @@ const hook: Hook = {
                 } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
                     // XML 格式
                     const text = await ctx.req.text();
-                    const body = xmlParser.parse(text);
+                    const body = xmlParser.parse(text) as Record<string, any>;
                     if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(body, Object.keys(ctx.api.fields));
                     } else {

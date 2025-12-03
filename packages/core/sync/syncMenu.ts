@@ -243,7 +243,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
 
     for (const menu of menus) {
         try {
-            await syncMenuRecursive(helper, menu, 0, existingMenuMap, 1);
+            await syncMenuRecursive(helper, menu, 0, existingMenuMap);
         } catch (error: any) {
             Logger.error({ err: error, menu: menu.name }, '同步菜单失败');
             throw error;

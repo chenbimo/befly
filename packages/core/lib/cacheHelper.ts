@@ -225,8 +225,7 @@ export class CacheHelper {
      */
     async checkRolePermission(roleCode: string, apiPath: string): Promise<boolean> {
         try {
-            const result = await this.befly.redis.sismember(RedisKeys.roleApis(roleCode), apiPath);
-            return result === 1;
+            return await this.befly.redis.sismember(RedisKeys.roleApis(roleCode), apiPath);
         } catch (error: any) {
             Logger.error({ err: error, roleCode: roleCode }, '检查角色权限失败');
             return false;

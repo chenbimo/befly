@@ -14,9 +14,9 @@ import { logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArra
 import { generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
 import { getTableColumns, getTableIndexes } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
-import type { TablePlan } from '../../types.js';
+import type { TablePlan } from '../../types/sync.js';
 import type { SQL } from 'bun';
-import type { FieldDefinition } from 'befly/types/common';
+import type { FieldDefinition } from 'befly-shared/types';
 
 /**
  * 同步表结构（对比和应用变更）
@@ -34,30 +34,30 @@ import type { FieldDefinition } from 'befly/types/common';
  * @param dbName - 数据库名称
  */
 export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, force: boolean = false, dbName?: string): Promise<TablePlan> {
-    const existingColumns = await getTableColumns(sql, tableName, dbName);
-    const existingIndexes = await getTableIndexes(sql, tableName, dbName);
+    const existingColumns = await getTableColumns(sql, tableName, dbName || '');
+    const existingIndexes = await getTableIndexes(sql, tableName, dbName || '');
     let changed = false;
 
-    const addClauses = [];
-    const modifyClauses = [];
-    const defaultClauses = [];
-    const indexActions = [];
+    const addClauses: string[] = [];
+    const modifyClauses: string[] = [];
+    const defaultClauses: string[] = [];
+    const indexActions: Array<{ action: 'create' | 'drop'; indexName: string; fieldName: string }> = [];
 
     for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
         if (existingColumns[dbFieldName]) {
-            const comparison = compareFieldDefinition(existingColumns[dbFieldName], fieldDef, dbFieldName);
+            const comparison = compareFieldDefinition(existingColumns[dbFieldName], fieldDef);
             if (comparison.length > 0) {
                 for (const c of comparison) {
                     // 使用统一的日志格式函数和常量标签
-                    const changeLabel = CHANGE_TYPE_LABELS[c.type] || '未知';
+                    const changeLabel = CHANGE_TYPE_LABELS[c.type as keyof typeof CHANGE_TYPE_LABELS] || '未知';
                     logFieldChange(tableName, dbFieldName, c.type, c.current, c.expected, changeLabel);
                 }
 
-                if (isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max) {
-                    if (existingColumns[dbFieldName].max > fieldDef.max) {
+                if (isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && fieldDef.max !== null) {
+                    if (existingColumns[dbFieldName].max! > fieldDef.max) {
                         if (force) {
                             Logger.warn(`[强制执行] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max}`);
                         } else {
@@ -106,8 +106,8 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 // 若不仅仅是默认值变化，继续生成修改子句
                 if (!onlyDefaultChanged) {
                     let skipModify = false;
-                    if (hasLengthChange && isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max) {
-                        const isShrink = existingColumns[dbFieldName].max > fieldDef.max;
+                    if (hasLengthChange && isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && fieldDef.max !== null) {
+                        const isShrink = existingColumns[dbFieldName].max! > fieldDef.max;
                         if (isShrink && !force) skipModify = true;
                     }
 

@@ -77,10 +77,10 @@ export class Cipher {
      * RSA-SHA256 签名
      * @param data - 要签名的数据
      * @param privateKey - 私钥
-     * @param encoding - 输出编码
+     * @param encoding - 输出编码（'hex' | 'base64' | 'base64url'）
      * @returns RSA-SHA256 签名
      */
-    static rsaSha256(data: string, privateKey: string | Buffer, encoding: BufferEncoding = 'hex'): string {
+    static rsaSha256(data: string, privateKey: string | Buffer, encoding: 'hex' | 'base64' | 'base64url' = 'hex'): string {
         const sign = createSign('RSA-SHA256');
         sign.update(data);
         const signature = sign.sign(privateKey, encoding);
@@ -253,6 +253,7 @@ export class Cipher {
      * @returns 64位哈希值
      */
     static fastHash(data: string | Uint8Array, seed: number = 0): number {
-        return Bun.hash(data, seed);
+        const result = Bun.hash(data, seed);
+        return typeof result === 'bigint' ? Number(result) : result;
     }
 }

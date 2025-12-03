@@ -178,7 +178,8 @@ export class Validator {
     private static resolveRegex(regexp: string | null): string | null {
         if (!regexp) return null;
         if (regexp.startsWith('@')) {
-            return RegexAliases[regexp.substring(1)] || regexp;
+            const key = regexp.substring(1) as keyof typeof RegexAliases;
+            return RegexAliases[key] || regexp;
         }
         return regexp;
     }

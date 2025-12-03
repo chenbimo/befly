@@ -40,8 +40,7 @@ const hook: Hook = {
                 // 验证角色权限
                 const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
                 const roleApisKey = RedisKeys.roleApis(ctx.user.roleCode);
-                const isMember = await befly.redis.sismember(roleApisKey, apiPath);
-                hasPermission = isMember === 1;
+                hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
             } catch (error) {
                 // Redis 异常时降级为拒绝访问
                 befly.logger.warn({ err: error, route: ctx.route }, 'Redis 权限检查失败');

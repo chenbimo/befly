@@ -3,14 +3,34 @@
  */
 
 import type { SqlValue } from 'befly-shared/types';
-import type { WhereConditions } from './common';
 import type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, TypedWhereConditions } from './table';
-
-// 重新导出 WhereOperator 和 WhereConditions，供其他模块使用
-export type { WhereOperator, WhereConditions } from './index';
 
 // 重新导出表类型工具
 export type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, SystemFields, BaseTable, InsertType, UpdateType, SelectType, TypedWhereConditions } from './table';
+
+// ============================================
+// SQL 查询相关类型
+// ============================================
+
+/**
+ * WHERE 条件操作符
+ */
+export type WhereOperator = '$eq' | '$ne' | '$not' | '$gt' | '$gte' | '$lt' | '$lte' | '$like' | '$notLike' | '$in' | '$notIn' | '$nin' | '$isNull' | '$isNotNull' | '$null' | '$notNull' | '$between' | '$notBetween';
+
+/**
+ * WHERE 条件类型
+ */
+export type WhereConditions = Record<string, any>;
+
+/**
+ * 排序方向
+ */
+export type OrderDirection = 'ASC' | 'DESC';
+
+/**
+ * 排序字段
+ */
+export type OrderByField = string | { field: string; direction: OrderDirection };
 
 // ============================================
 // 泛型查询选项（类型安全版本）

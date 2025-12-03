@@ -163,7 +163,7 @@ export interface BeflyContext extends KeyValue {
     cipher: typeof Cipher;
 
     /** JWT 令牌 */
-    jwt: typeof Jwt;
+    jwt: Jwt;
 
     /** 项目配置 */
     config: BeflyOptions;

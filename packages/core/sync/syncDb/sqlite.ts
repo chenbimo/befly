@@ -9,6 +9,7 @@ import { Logger } from '../../lib/logger.js';
 import { IS_PLAN } from './constants.js';
 import { createTable } from './tableCreate.js';
 import type { SQL } from 'bun';
+import type { FieldDefinition } from 'befly-shared/types';
 
 /**
  * SQLite 重建表迁移（简化版）
@@ -25,10 +26,10 @@ import type { SQL } from 'bun';
  * @param tableName - 表名
  * @param fields - 字段定义对象
  */
-export async function rebuildSqliteTable(sql: SQL, tableName: string, fields: Record<string, string>): Promise<void> {
+export async function rebuildSqliteTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>): Promise<void> {
     // 1. 读取现有列顺序
     const info = await sql.unsafe(`PRAGMA table_info(${tableName})`);
-    const existingCols = info.map((r) => r.name);
+    const existingCols = info.map((r: any) => r.name);
     const targetCols = ['id', 'created_at', 'updated_at', 'deleted_at', 'state', ...Object.keys(fields)];
     const tmpTable = `${tableName}__tmp__${Date.now()}`;
 

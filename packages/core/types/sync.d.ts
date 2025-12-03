@@ -101,6 +101,7 @@ export interface ColumnInfo {
     type: string;
     columnType: string;
     length: number | null;
+    max?: number | null;
     nullable: boolean;
     defaultValue: any;
     comment: string | null;
@@ -117,7 +118,7 @@ export interface IndexInfo {
  * 字段变更接口
  */
 export interface FieldChange {
-    type: 'length' | 'datatype' | 'comment' | 'default';
+    type: 'length' | 'datatype' | 'comment' | 'default' | 'nullable';
     current: any;
     expected: any;
 }

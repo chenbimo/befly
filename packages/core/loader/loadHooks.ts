@@ -19,7 +19,7 @@ export async function loadHooks(hooks: Hook[]): Promise<void> {
 
         // 2. 过滤禁用的钩子
         const disableHooks = beflyConfig.disableHooks || [];
-        const enabledHooks = coreHooks.filter((hook) => !disableHooks.includes(hook.name));
+        const enabledHooks = coreHooks.filter((hook) => hook.name && !disableHooks.includes(hook.name));
 
         if (disableHooks.length > 0) {
             Logger.info({ hooks: disableHooks }, '禁用钩子');

@@ -3,6 +3,18 @@
 
 pre-commit:
     jobs:
+        # 1. 格式化代码
         - name: Format code
+          priority: 1
           glob: '*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}'
           run: bunx --bun prettier --write --cache --ignore-unknown {staged_files}
+
+        # 2. TypeScript 语法检查
+        - name: TypeScript check (core)
+          priority: 2
+          run: cd packages/core && bunx tsgo --noEmit
+
+        # 3. 运行测试
+        - name: Run tests
+          priority: 3
+          run: bun test

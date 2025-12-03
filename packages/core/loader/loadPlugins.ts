@@ -39,7 +39,7 @@ export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Pro
 
         // 5. 过滤禁用的插件
         const disablePlugins = beflyConfig.disablePlugins || [];
-        const enabledPlugins = allPlugins.filter((plugin) => !disablePlugins.includes(plugin.name));
+        const enabledPlugins = allPlugins.filter((plugin) => plugin.name && !disablePlugins.includes(plugin.name));
 
         if (disablePlugins.length > 0) {
             Logger.info({ plugins: disablePlugins }, '禁用插件');

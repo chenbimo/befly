@@ -3,6 +3,55 @@
  * Core 专用类型，通用类型请直接从 befly-shared/types 导入
  */
 
+import type { SqlValue } from 'befly-shared/types';
+
+// ============================================
+// SQL 查询相关类型
+// ============================================
+
+/**
+ * WHERE 条件操作符
+ */
+export type WhereOperator = '$eq' | '$ne' | '$not' | '$gt' | '$gte' | '$lt' | '$lte' | '$like' | '$notLike' | '$in' | '$notIn' | '$nin' | '$isNull' | '$isNotNull' | '$null' | '$notNull' | '$between' | '$notBetween';
+
+/**
+ * WHERE 条件类型
+ */
+export type WhereConditions = Record<string, any>;
+
+/**
+ * 排序方向
+ */
+export type OrderDirection = 'ASC' | 'DESC';
+
+/**
+ * 排序字段
+ */
+export type OrderByField = string | { field: string; direction: OrderDirection };
+
+/**
+ * SQL 查询结果
+ */
+export interface SqlQuery {
+    sql: string;
+    params: SqlValue[];
+}
+
+/**
+ * 插入数据类型
+ */
+export type InsertData = Record<string, SqlValue> | Record<string, SqlValue>[];
+
+/**
+ * 更新数据类型
+ */
+export type UpdateData = Record<string, SqlValue>;
+
+/**
+ * 任意对象类型
+ */
+export type AnyObject = Record<string, any>;
+
 // ============================================
 // Core 专用类型（不适合放在 shared 中的类型）
 // ============================================

@@ -7,8 +7,6 @@
  * - 表名: addon_admin_admin
  */
 
-import { scanAddons, getAddonDir, normalizeModuleForSync } from 'befly-shared/addonHelper';
-
 import { Logger } from '../lib/logger.js';
 import { Cipher } from '../lib/cipher.js';
 import { Connect } from '../lib/connect.js';
@@ -17,7 +15,7 @@ import { RedisHelper } from '../lib/redisHelper.js';
 import { CacheHelper } from '../lib/cacheHelper.js';
 import { beflyConfig } from '../befly.config.js';
 
-import type { SyncDevOptions, SyncDevStats } from '../types/index.js';
+import type { SyncDevOptions } from '../types/index.js';
 
 /**
  * SyncDev 命令主函数

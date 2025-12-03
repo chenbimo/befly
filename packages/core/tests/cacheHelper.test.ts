@@ -261,7 +261,7 @@ describe('CacheHelper', () => {
 
     describe('checkRolePermission', () => {
         it('有权限时返回 true', async () => {
-            mockRedis.sismember = mock(() => Promise.resolve(1));
+            mockRedis.sismember = mock(() => Promise.resolve(true));
 
             const result = await cacheHelper.checkRolePermission('admin', 'POST/api/login');
 
@@ -270,7 +270,7 @@ describe('CacheHelper', () => {
         });
 
         it('无权限时返回 false', async () => {
-            mockRedis.sismember = mock(() => Promise.resolve(0));
+            mockRedis.sismember = mock(() => Promise.resolve(false));
 
             const result = await cacheHelper.checkRolePermission('user', 'POST/api/admin/del');
 

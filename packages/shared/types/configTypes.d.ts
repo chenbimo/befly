@@ -14,6 +14,8 @@ export interface LoadConfigOptions {
     mode?: 'all' | 'first';
     /** 指定要提取的字段路径数组，如 ['menus', 'database.host']，为空则返回完整对象 */
     paths?: string[];
+    /** 默认配置对象，会与加载的配置合并 */
+    defaults?: Record<string, any>;
 }
 /**
  * Addon 配置合并选项（已废弃，仅用于向后兼容）

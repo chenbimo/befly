@@ -70,7 +70,7 @@ export function getSqlType(fieldType: string, fieldMax: number | null, unsigned:
  * resolveDefaultValue('admin', 'string') // => 'admin'
  * resolveDefaultValue(0, 'number') // => 0
  */
-export function resolveDefaultValue(fieldDefault: any, fieldType: 'number' | 'string' | 'text' | 'array'): any {
+export function resolveDefaultValue(fieldDefault: any, fieldType: string): any {
     // null 或字符串 'null' 都表示使用类型默认值
     if (fieldDefault !== null && fieldDefault !== 'null') {
         return fieldDefault;
@@ -83,6 +83,8 @@ export function resolveDefaultValue(fieldDefault: any, fieldType: 'number' | 'st
         case 'string':
             return '';
         case 'array':
+        case 'array_string':
+        case 'array_text':
             return '[]';
         case 'text':
             // text 类型不设置默认值，保持 'null'
@@ -105,14 +107,14 @@ export function resolveDefaultValue(fieldDefault: any, fieldType: 'number' | 'st
  * generateDefaultSql('', 'string') // => " DEFAULT ''"
  * generateDefaultSql('null', 'text') // => ''
  */
-export function generateDefaultSql(actualDefault: any, fieldType: 'number' | 'string' | 'text' | 'array'): string {
+export function generateDefaultSql(actualDefault: any, fieldType: string): string {
     // text 类型不设置默认值
     if (fieldType === 'text' || actualDefault === 'null') {
         return '';
     }
 
     // 仅 number/string/array 类型设置默认值
-    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array') {
+    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array' || fieldType === 'array_string' || fieldType === 'array_text') {
         if (typeof actualDefault === 'number' && !Number.isNaN(actualDefault)) {
             return ` DEFAULT ${actualDefault}`;
         } else {

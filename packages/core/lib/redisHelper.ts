@@ -140,14 +140,15 @@ export class RedisHelper {
     /**
      * 检查键是否存在
      * @param key - 键名
+     * @returns 是否存在（true/false）
      */
-    async exists(key: string): Promise<number> {
+    async exists(key: string): Promise<boolean> {
         try {
             const pkey = `${this.prefix}${key}`;
             return await this.client.exists(pkey);
         } catch (error: any) {
             Logger.error('Redis exists 错误', error);
-            return 0;
+            return false;
         }
     }
 
@@ -221,15 +222,15 @@ export class RedisHelper {
      * 判断成员是否在 Set 中
      * @param key - 键名
      * @param member - 成员
-     * @returns 1 表示存在，0 表示不存在
+     * @returns 是否存在（true/false）
      */
-    async sismember(key: string, member: string): Promise<number> {
+    async sismember(key: string, member: string): Promise<boolean> {
         try {
             const pkey = `${this.prefix}${key}`;
             return await this.client.sismember(pkey, member);
         } catch (error: any) {
             Logger.error('Redis sismember 错误', error);
-            return 0;
+            return false;
         }
     }
 
@@ -293,8 +294,7 @@ export class RedisHelper {
         }
 
         try {
-            const results = await Promise.all(items.map((item) => this.sismember(item.key, item.member)));
-            return results.map((r) => r > 0);
+            return await Promise.all(items.map((item) => this.sismember(item.key, item.member)));
         } catch (error: any) {
             Logger.error('Redis sismemberBatch 错误', error);
             return items.map(() => false);
@@ -389,8 +389,7 @@ export class RedisHelper {
         }
 
         try {
-            const results = await Promise.all(keys.map((key) => this.exists(key)));
-            return results.map((r) => r > 0);
+            return await Promise.all(keys.map((key) => this.exists(key)));
         } catch (error: any) {
             Logger.error('Redis existsBatch 错误', error);
             return keys.map(() => false);

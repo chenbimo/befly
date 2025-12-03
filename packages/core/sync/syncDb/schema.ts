@@ -8,7 +8,7 @@
  */
 
 import { isMySQL, isPG, isSQLite } from './constants.js';
-import type { ColumnInfo, IndexInfo } from '../../types.js';
+import type { ColumnInfo, IndexInfo } from '../../types/sync.js';
 import type { SQL } from 'bun';
 
 /**
@@ -83,6 +83,7 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName: strin
                 columns[row.COLUMN_NAME] = {
                     type: row.DATA_TYPE,
                     columnType: row.COLUMN_TYPE,
+                    length: row.CHARACTER_MAXIMUM_LENGTH,
                     max: row.CHARACTER_MAXIMUM_LENGTH,
                     nullable: row.IS_NULLABLE === 'YES',
                     defaultValue: defaultValue,
@@ -111,6 +112,7 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName: strin
                 columns[row.column_name] = {
                     type: row.data_type,
                     columnType: row.data_type,
+                    length: row.character_maximum_length,
                     max: row.character_maximum_length,
                     nullable: String(row.is_nullable).toUpperCase() === 'YES',
                     defaultValue: row.column_default,
@@ -130,6 +132,7 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName: strin
                 columns[row.name] = {
                     type: baseType.toLowerCase(),
                     columnType: baseType.toLowerCase(),
+                    length: max,
                     max: max,
                     nullable: row.notnull === 0,
                     defaultValue: row.dflt_value,
@@ -186,7 +189,7 @@ export async function getTableIndexes(sql: SQL, tableName: string, dbName: strin
             const list = await sql.unsafe(`PRAGMA index_list(${tableName})`);
             for (const idx of list) {
                 const info = await sql.unsafe(`PRAGMA index_info(${idx.name})`);
-                const cols = info.map((r) => r.name);
+                const cols = info.map((r: any) => r.name);
                 if (cols.length === 1) indexes[idx.name] = cols;
             }
         }

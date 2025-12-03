@@ -11,9 +11,9 @@ import { isMySQL, isPG, isSQLite, IS_PLAN, CHANGE_TYPE_LABELS, getTypeMapping } 
 import { logFieldChange, resolveDefaultValue, isStringOrArrayType } from './helpers.js';
 import { executeDDLSafely, buildIndexSQL } from './ddl.js';
 import { rebuildSqliteTable } from './sqlite.js';
-import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from '../../types.js';
+import type { FieldChange, IndexAction, TablePlan, ColumnInfo } from '../../types/sync.js';
 import type { SQL } from 'bun';
-import type { FieldDefinition } from 'befly/types/common';
+import type { FieldDefinition } from 'befly-shared/types';
 
 /**
  * 构建 ALTER TABLE SQL 语句

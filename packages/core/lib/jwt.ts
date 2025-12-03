@@ -4,6 +4,7 @@
 
 import { createSigner, createVerifier, createDecoder } from 'fast-jwt';
 
+import type { Algorithm as FastJwtAlgorithm } from 'fast-jwt';
 import type { AuthConfig } from '../types/befly.js';
 import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtDecoded, JwtHeader } from 'befly-shared/types';
 
@@ -26,15 +27,18 @@ export class Jwt {
     }
 
     sign(payload: JwtPayload, options: JwtSignOptions = {}): string {
+        const key = options.secret || this.config.secret || 'befly-secret';
+        const algorithm = (options.algorithm || this.config.algorithm || 'HS256') as FastJwtAlgorithm;
+
         const signer = createSigner({
-            key: options.secret || this.config.secret,
-            algorithm: options.algorithm || this.config.algorithm,
+            key: key,
+            algorithm: algorithm,
             expiresIn: options.expiresIn || this.config.expiresIn,
             iss: options.issuer,
             aud: options.audience,
             sub: options.subject,
             jti: options.jwtId,
-            notBefore: options.notBefore
+            notBefore: typeof options.notBefore === 'number' ? options.notBefore : undefined
         });
         return signer(payload);
     }
@@ -43,9 +47,13 @@ export class Jwt {
         if (!token || typeof token !== 'string') {
             throw new Error('Token必须是非空字符串');
         }
+        const key = options.secret || this.config.secret || 'befly-secret';
+        const algorithm = (this.config.algorithm || 'HS256') as FastJwtAlgorithm;
+        const algorithms: FastJwtAlgorithm[] = options.algorithms ? (options.algorithms as FastJwtAlgorithm[]) : [algorithm];
+
         const verifier = createVerifier({
-            key: options.secret || this.config.secret,
-            algorithms: options.algorithms || [this.config.algorithm || 'HS256'],
+            key: key,
+            algorithms: algorithms,
             allowedIss: options.issuer,
             allowedAud: options.audience,
             allowedSub: options.subject,

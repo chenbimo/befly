@@ -42,7 +42,7 @@ export class Befly {
     private hooks: Hook[] = [];
 
     /** 应用上下文 */
-    public context: BeflyContext = {};
+    public context: Partial<BeflyContext> = {};
 
     /** 配置引用（延迟加载） */
     private config: BeflyOptions | null = null;
@@ -51,7 +51,7 @@ export class Befly {
      * 启动完整的生命周期流程
      * @returns HTTP 服务器实例
      */
-    public async start(): Promise<Server> {
+    public async start(): Promise<ReturnType<typeof Bun.serve>> {
         try {
             const serverStartTime = Bun.nanoseconds();
 
@@ -65,7 +65,7 @@ export class Befly {
             await checkApi();
 
             // 2. 加载插件
-            await loadPlugins(this.plugins, this.context);
+            await loadPlugins(this.plugins, this.context as BeflyContext);
 
             // 3. 加载钩子
             await loadHooks(this.hooks);
@@ -84,7 +84,7 @@ export class Befly {
                 hostname: this.config!.appHost,
                 routes: {
                     '/': () => Response.json({ code: 0, msg: `${this.config!.appName} 接口服务已启动` }),
-                    '/api/*': apiHandler(this.apis, this.hooks, this.context),
+                    '/api/*': apiHandler(this.apis, this.hooks, this.context as BeflyContext),
                     '/*': staticHandler()
                 },
                 error: (error: Error) => {

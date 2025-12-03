@@ -16,6 +16,11 @@ export type PluginInitFunction = (befly: BeflyContext) => Promise<any> | any;
 export type Next = () => Promise<void>;
 
 /**
+ * 插件请求钩子类型
+ */
+export type PluginRequestHook = (ctx: RequestContext, next: Next) => Promise<void> | void;
+
+/**
  * 插件配置类型
  */
 export interface Plugin {
