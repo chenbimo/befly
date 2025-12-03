@@ -85,18 +85,20 @@ export class RedisHelper {
 
     /**
      * 生成基于时间的唯一 ID
-     * 格式: 毫秒时间戳(13位) + 3位后缀(500-999) = 16位纯数字
+     * 格式: 毫秒时间戳(13位) + 3位后缀(100-999) = 16位纯数字
      * @returns 唯一 ID (16位纯数字)
      */
     async genTimeID(): Promise<number> {
         const timestamp = Date.now();
-        const key = `${this.prefix}time_id_counter:${timestamp}`;
-        const counter = await this.client.incr(key);
-        await this.client.expire(key, 1);
+        const key = `${this.prefix}time_id:${timestamp}`;
 
-        // 使用 500-999 范围，保证后缀不以小数字开头
-        const base = 500 + (counter % 500);
-        const suffix = base.toString().padStart(3, '0');
+        const counter = await this.client.incr(key);
+        if (counter === 1) {
+            await this.client.expire(key, 1);
+        }
+
+        // 100-999 循环，容量 900/毫秒
+        const suffix = 100 + ((counter - 1) % 900);
 
         return Number(`${timestamp}${suffix}`);
     }

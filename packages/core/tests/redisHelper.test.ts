@@ -463,12 +463,12 @@ describe('RedisHelper - ID 生成', () => {
         expect(id1).not.toBe(id2);
         expect(id1.toString().length).toBe(16);
 
-        // 验证后缀在 500-999 范围内
+        // 验证后缀在 100-999 范围内
         const suffix1 = id1 % 1000;
         const suffix2 = id2 % 1000;
-        expect(suffix1).toBeGreaterThanOrEqual(500);
+        expect(suffix1).toBeGreaterThanOrEqual(100);
         expect(suffix1).toBeLessThan(1000);
-        expect(suffix2).toBeGreaterThanOrEqual(500);
+        expect(suffix2).toBeGreaterThanOrEqual(100);
         expect(suffix2).toBeLessThan(1000);
     });
 
