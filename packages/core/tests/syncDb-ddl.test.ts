@@ -6,7 +6,7 @@
  * - buildSystemColumnDefs
  * - buildBusinessColumnDefs
  * - generateDDLClause
- * - isPgCompatibleTypeChange
+ * - isCompatibleTypeChange
  */
 
 import { describe, test, expect, beforeAll } from 'bun:test';
@@ -19,7 +19,7 @@ let buildIndexSQL: any;
 let buildSystemColumnDefs: any;
 let buildBusinessColumnDefs: any;
 let generateDDLClause: any;
-let isPgCompatibleTypeChange: any;
+let isCompatibleTypeChange: any;
 
 beforeAll(async () => {
     const ddl = await import('../sync/syncDb/ddl.js');
@@ -27,7 +27,7 @@ beforeAll(async () => {
     buildSystemColumnDefs = ddl.buildSystemColumnDefs;
     buildBusinessColumnDefs = ddl.buildBusinessColumnDefs;
     generateDDLClause = ddl.generateDDLClause;
-    isPgCompatibleTypeChange = ddl.isPgCompatibleTypeChange;
+    isCompatibleTypeChange = ddl.isCompatibleTypeChange;
 });
 
 describe('buildIndexSQL (MySQL)', () => {
@@ -186,21 +186,45 @@ describe('generateDDLClause (MySQL)', () => {
     });
 });
 
-describe('isPgCompatibleTypeChange', () => {
+describe('isCompatibleTypeChange', () => {
     test('varchar -> text 是兼容变更', () => {
-        expect(isPgCompatibleTypeChange('character varying', 'text')).toBe(true);
+        expect(isCompatibleTypeChange('character varying', 'text')).toBe(true);
+        expect(isCompatibleTypeChange('varchar(100)', 'text')).toBe(true);
+        expect(isCompatibleTypeChange('varchar(100)', 'mediumtext')).toBe(true);
     });
 
     test('text -> varchar 不是兼容变更', () => {
-        expect(isPgCompatibleTypeChange('text', 'character varying')).toBe(false);
+        expect(isCompatibleTypeChange('text', 'character varying')).toBe(false);
+        expect(isCompatibleTypeChange('text', 'varchar(100)')).toBe(false);
+    });
+
+    test('int -> bigint 是兼容变更', () => {
+        expect(isCompatibleTypeChange('int', 'bigint')).toBe(true);
+        expect(isCompatibleTypeChange('int unsigned', 'bigint unsigned')).toBe(true);
+        expect(isCompatibleTypeChange('tinyint', 'int')).toBe(true);
+        expect(isCompatibleTypeChange('tinyint', 'bigint')).toBe(true);
+        expect(isCompatibleTypeChange('smallint', 'int')).toBe(true);
+        expect(isCompatibleTypeChange('mediumint', 'bigint')).toBe(true);
+    });
+
+    test('bigint -> int 不是兼容变更（收缩）', () => {
+        expect(isCompatibleTypeChange('bigint', 'int')).toBe(false);
+        expect(isCompatibleTypeChange('int', 'tinyint')).toBe(false);
+    });
+
+    test('PG integer -> bigint 是兼容变更', () => {
+        expect(isCompatibleTypeChange('integer', 'bigint')).toBe(true);
+        expect(isCompatibleTypeChange('smallint', 'integer')).toBe(true);
+        expect(isCompatibleTypeChange('smallint', 'bigint')).toBe(true);
     });
 
     test('相同类型不是变更', () => {
-        expect(isPgCompatibleTypeChange('text', 'text')).toBe(false);
+        expect(isCompatibleTypeChange('text', 'text')).toBe(false);
+        expect(isCompatibleTypeChange('bigint', 'bigint')).toBe(false);
     });
 
     test('空值处理', () => {
-        expect(isPgCompatibleTypeChange(null, 'text')).toBe(false);
-        expect(isPgCompatibleTypeChange('text', null)).toBe(false);
+        expect(isCompatibleTypeChange(null, 'text')).toBe(false);
+        expect(isCompatibleTypeChange('text', null)).toBe(false);
     });
 });

@@ -11,7 +11,7 @@ import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
 import { isMySQL, isPG, CHANGE_TYPE_LABELS, getTypeMapping, SYSTEM_INDEX_FIELDS } from './constants.js';
 import { logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from './helpers.js';
-import { generateDDLClause, isPgCompatibleTypeChange, getSystemColumnDef } from './ddl.js';
+import { generateDDLClause, getSystemColumnDef, isCompatibleTypeChange } from './ddl.js';
 import { getTableColumns, getTableIndexes } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
 import type { TablePlan } from '../../types/sync.js';
@@ -71,11 +71,18 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 const onlyDefaultChanged = comparison.every((c) => c.type === 'default');
                 const defaultChanged = comparison.some((c) => c.type === 'default');
 
-                // 严格限制：除 string/array 互转外，禁止任何字段类型变更
+                // 类型变更检查：只允许兼容的宽化型变更（如 INT -> BIGINT）
                 if (hasTypeChange) {
                     const typeChange = comparison.find((c) => c.type === 'datatype');
-                    const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange?.current}`, `目标类型: ${typeChange?.expected}`, `说明: 仅允许 string<->array 互相切换，其他类型变更需要手动处理`].join('\n');
-                    throw new Error(errorMsg);
+                    const currentType = String(typeChange?.current || '').toLowerCase();
+                    const typeMapping = getTypeMapping();
+                    const expectedType = typeMapping[fieldDef.type]?.toLowerCase() || '';
+
+                    if (!isCompatibleTypeChange(currentType, expectedType)) {
+                        const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange?.current}`, `目标类型: ${typeChange?.expected}`, `说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），其他类型变更需要手动处理`].join('\n');
+                        throw new Error(errorMsg);
+                    }
+                    Logger.debug(`[兼容类型变更] ${tableName}.${dbFieldName} ${currentType} -> ${expectedType}`);
                 }
 
                 // 默认值变化处理
@@ -109,13 +116,6 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     if (hasLengthChange && isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && fieldDef.max !== null) {
                         const isShrink = existingColumns[dbFieldName].max! > fieldDef.max;
                         if (isShrink && !force) skipModify = true;
-                    }
-
-                    if (hasTypeChange) {
-                        const typeMapping = getTypeMapping();
-                        if (isPG() && isPgCompatibleTypeChange(existingColumns[dbFieldName].type, typeMapping[fieldDef.type].toLowerCase())) {
-                            Logger.debug(`[PG兼容类型变更] ${tableName}.${dbFieldName} ${existingColumns[dbFieldName].type} -> ${typeMapping[fieldDef.type].toLowerCase()} 允许执行`);
-                        }
                     }
 
                     if (!skipModify) modifyClauses.push(generateDDLClause(fieldKey, fieldDef, false));

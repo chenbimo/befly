@@ -203,17 +203,50 @@ export async function executeDDLSafely(sql: SQL, stmt: string): Promise<boolean>
 }
 
 /**
- * PG 兼容类型变更识别：无需数据重写的宽化型变更
+ * 判断是否为兼容的类型变更（宽化型变更，无数据丢失风险）
  *
- * @param currentType - 当前类型
- * @param newType - 新类型
+ * 允许的变更：
+ * - MySQL: INT -> BIGINT, TINYINT -> INT/BIGINT, etc.
+ * - MySQL: VARCHAR -> TEXT/MEDIUMTEXT
+ * - PG: INTEGER -> BIGINT
+ * - PG: VARCHAR -> TEXT
+ *
+ * @param currentType - 当前数据库中的类型
+ * @param newType - 目标类型
  * @returns 是否为兼容变更
  */
-export function isPgCompatibleTypeChange(currentType: string, newType: string): boolean {
+export function isCompatibleTypeChange(currentType: string, newType: string): boolean {
     const c = String(currentType || '').toLowerCase();
     const n = String(newType || '').toLowerCase();
-    // varchar -> text 视为宽化
-    if (c === 'character varying' && n === 'text') return true;
-    // text -> character varying 非宽化（可能截断），不兼容
+
+    // 相同类型不算变更
+    if (c === n) return false;
+
+    // 提取基础类型（去掉 unsigned、长度等修饰）
+    const extractBaseType = (t: string): string => {
+        // 移除 unsigned 和括号内容
+        return t
+            .replace(/\s*unsigned/gi, '')
+            .replace(/\([^)]*\)/g, '')
+            .trim();
+    };
+
+    const cBase = extractBaseType(c);
+    const nBase = extractBaseType(n);
+
+    // MySQL/通用 整数类型宽化（小 -> 大）
+    const intTypes = ['tinyint', 'smallint', 'mediumint', 'int', 'integer', 'bigint'];
+    const cIntIdx = intTypes.indexOf(cBase);
+    const nIntIdx = intTypes.indexOf(nBase);
+    if (cIntIdx !== -1 && nIntIdx !== -1 && nIntIdx > cIntIdx) {
+        return true;
+    }
+
+    // 字符串类型宽化
+    // MySQL: varchar -> text/mediumtext/longtext
+    if (cBase === 'varchar' && (nBase === 'text' || nBase === 'mediumtext' || nBase === 'longtext')) return true;
+    // PG: character varying -> text
+    if (cBase === 'character varying' && nBase === 'text') return true;
+
     return false;
 }
