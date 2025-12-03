@@ -9,9 +9,9 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { Logger } from '../../lib/logger.js';
-import { isMySQL, isPG, CHANGE_TYPE_LABELS, getTypeMapping } from './constants.js';
+import { isMySQL, isPG, CHANGE_TYPE_LABELS, getTypeMapping, SYSTEM_INDEX_FIELDS } from './constants.js';
 import { logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from './helpers.js';
-import { generateDDLClause, isPgCompatibleTypeChange } from './ddl.js';
+import { generateDDLClause, isPgCompatibleTypeChange, getSystemColumnDef } from './ddl.js';
 import { getTableColumns, getTableIndexes } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
 import type { TablePlan } from '../../types/sync.js';
@@ -130,10 +130,26 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         }
     }
 
-    // 检查系统字段索引
-    for (const sysField of ['created_at', 'updated_at', 'state']) {
+    // 检查并添加缺失的系统字段（created_at, updated_at, deleted_at, state）
+    // 注意：id 是主键，不会缺失；这里只处理可能缺失的其他系统字段
+    const systemFieldNames = ['created_at', 'updated_at', 'deleted_at', 'state'];
+    for (const sysFieldName of systemFieldNames) {
+        if (!existingColumns[sysFieldName]) {
+            const colDef = getSystemColumnDef(sysFieldName);
+            if (colDef) {
+                Logger.debug(`  + 新增系统字段 ${sysFieldName}`);
+                addClauses.push(`ADD COLUMN ${colDef}`);
+                changed = true;
+            }
+        }
+    }
+
+    // 检查系统字段索引（字段存在或即将被添加时才创建索引）
+    for (const sysField of SYSTEM_INDEX_FIELDS) {
         const idxName = `idx_${sysField}`;
-        if (!existingIndexes[idxName]) {
+        // 字段已存在或刚添加到 addClauses 中
+        const fieldWillExist = existingColumns[sysField] || systemFieldNames.includes(sysField);
+        if (fieldWillExist && !existingIndexes[idxName]) {
             indexActions.push({ action: 'create', indexName: idxName, fieldName: sysField });
             changed = true;
         }
