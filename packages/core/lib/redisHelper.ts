@@ -86,6 +86,7 @@ export class RedisHelper {
     /**
      * 生成基于时间的唯一 ID
      * 格式: 毫秒时间戳(13位) + 3位后缀(100-999) = 16位纯数字
+     * 每毫秒起点基于时间戳偏移，后缀分布更均匀
      * @returns 唯一 ID (16位纯数字)
      */
     async genTimeID(): Promise<number> {
@@ -97,8 +98,8 @@ export class RedisHelper {
             await this.client.expire(key, 1);
         }
 
-        // 100-999 循环，容量 900/毫秒
-        const suffix = 100 + ((counter - 1) % 900);
+        // 基于时间戳偏移起点，后缀 100-999 循环
+        const suffix = 100 + (((timestamp % 900) + counter - 1) % 900);
 
         return Number(`${timestamp}${suffix}`);
     }
