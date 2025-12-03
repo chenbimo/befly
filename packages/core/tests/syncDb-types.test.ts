@@ -93,8 +93,12 @@ describe('generateDefaultSql', () => {
         expect(generateDefaultSql('null', 'text')).toBe('');
     });
 
-    test('array 类型生成 JSON 数组默认值', () => {
-        expect(generateDefaultSql('[]', 'array')).toBe(" DEFAULT '[]'");
+    test('array_string 类型生成 JSON 数组默认值', () => {
+        expect(generateDefaultSql('[]', 'array_string')).toBe(" DEFAULT '[]'");
+    });
+
+    test('array_text 类型不生成默认值（MySQL TEXT 不支持）', () => {
+        expect(generateDefaultSql('[]', 'array_text')).toBe('');
     });
 
     test('单引号被正确转义', () => {

@@ -106,15 +106,16 @@ export function resolveDefaultValue(fieldDefault: any, fieldType: string): any {
  * generateDefaultSql('admin', 'string') // => " DEFAULT 'admin'"
  * generateDefaultSql('', 'string') // => " DEFAULT ''"
  * generateDefaultSql('null', 'text') // => ''
+ * generateDefaultSql('[]', 'array_text') // => '' (TEXT 类型不能有默认值)
  */
 export function generateDefaultSql(actualDefault: any, fieldType: string): string {
-    // text 类型不设置默认值
-    if (fieldType === 'text' || actualDefault === 'null') {
+    // text 和 array_text 类型不设置默认值（MySQL TEXT 类型不支持默认值）
+    if (fieldType === 'text' || fieldType === 'array_text' || actualDefault === 'null') {
         return '';
     }
 
-    // 仅 number/string/array 类型设置默认值
-    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array' || fieldType === 'array_string' || fieldType === 'array_text') {
+    // 仅 number/string/array_string 类型设置默认值
+    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array_string') {
         if (typeof actualDefault === 'number' && !Number.isNaN(actualDefault)) {
             return ` DEFAULT ${actualDefault}`;
         } else {
