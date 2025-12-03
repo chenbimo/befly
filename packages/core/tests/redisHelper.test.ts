@@ -462,32 +462,55 @@ describe('RedisHelper - ID 生成', () => {
         expect(typeof id2).toBe('number');
         expect(id1).not.toBe(id2);
         expect(id1.toString().length).toBe(16);
+
+        // 验证后缀在 500-999 范围内
+        const suffix1 = id1 % 1000;
+        const suffix2 = id2 % 1000;
+        expect(suffix1).toBeGreaterThanOrEqual(500);
+        expect(suffix1).toBeLessThan(1000);
+        expect(suffix2).toBeGreaterThanOrEqual(500);
+        expect(suffix2).toBeLessThan(1000);
     });
 
-    test('genTimeIDBatch - 批量生成 ID', async () => {
-        const ids = await redis.genTimeIDBatch(10);
+    test('genTimeID - 多次生成保持唯一', async () => {
+        const ids: number[] = [];
+        for (let i = 0; i < 10; i++) {
+            ids.push(await redis.genTimeID());
+        }
 
-        expect(ids.length).toBe(10);
-        expect(ids.every((id) => typeof id === 'number')).toBe(true);
-        expect(ids.every((id) => id.toString().length === 16)).toBe(true);
-
-        // 验证 ID 唯一性
         const uniqueIds = new Set(ids);
         expect(uniqueIds.size).toBe(10);
     });
 
-    test('genTimeIDBatch - 空数组', async () => {
-        const ids = await redis.genTimeIDBatch(0);
-        expect(ids.length).toBe(0);
+    test('genTimeIDBatch - 批量生成唯一 ID', async () => {
+        const ids = await redis.genTimeIDBatch(5);
+
+        expect(ids.length).toBe(5);
+
+        // 验证所有 ID 唯一
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(5);
+
+        // 验证格式和后缀范围
+        for (const id of ids) {
+            expect(id.toString().length).toBe(16);
+            const suffix = id % 1000;
+            expect(suffix).toBeGreaterThanOrEqual(500);
+            expect(suffix).toBeLessThan(1000);
+        }
     });
 
-    test('genTimeIDBatch - 超过最大限制', async () => {
-        try {
-            await redis.genTimeIDBatch(1001);
-            expect(true).toBe(false); // 不应该执行到这里
-        } catch (error: any) {
-            expect(error.message).toContain('超过最大限制');
-        }
+    test('genTimeIDBatch - 空数组返回空', async () => {
+        const ids = await redis.genTimeIDBatch(0);
+        expect(ids).toEqual([]);
+    });
+
+    test('genTimeIDBatch - 大批量生成保持唯一', async () => {
+        const ids = await redis.genTimeIDBatch(100);
+
+        expect(ids.length).toBe(100);
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(100);
     });
 });
 

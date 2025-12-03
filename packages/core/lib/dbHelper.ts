@@ -595,7 +595,7 @@ export class DbHelper {
         // 转换表名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
 
-        // 批量生成 ID（一次性从 Redis 获取 N 个 ID）
+        // 批量生成 ID（使用 INCRBY 一次性获取）
         const ids = await this.befly.redis.genTimeIDBatch(dataList.length);
         const now = Date.now();
 

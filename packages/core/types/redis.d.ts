@@ -46,9 +46,9 @@ export interface RedisHelper {
     ping(): Promise<string>;
 
     // ==================== ID 生成 ====================
-    /** 生成基于时间的唯一 ID (14位纯数字) */
+    /** 生成基于时间的唯一 ID (16位纯数字: 13位毫秒时间戳 + 3位后缀500-999) */
     genTimeID(): Promise<number>;
-    /** 批量生成基于时间的唯一 ID */
+    /** 批量生成基于时间的唯一 ID (使用 INCRBY 高效实现) */
     genTimeIDBatch(count: number): Promise<number[]>;
 
     // ==================== Set 操作 ====================

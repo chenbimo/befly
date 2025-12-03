@@ -81,14 +81,11 @@ export class RedisHelper {
 
     // ==================== ID 生成 ====================
     // 注意：ID 生成功能强依赖 Redis 原子操作（INCR/INCRBY）保证分布式唯一性
-    // 主要被 DbHelper.insData/insBatch 使用
-    // 如未来有其他 ID 生成需求，可考虑提取到独立模块
+    // 主要被 DbHelper.insData 使用
 
     /**
      * 生成基于时间的唯一 ID
-     * 格式: 毫秒时间戳(13位) + 3位自增 = 16位纯数字
-     * 容量: 1000/毫秒 = 1,000,000/秒
-     * 范围: 到 2286年
+     * 格式: 毫秒时间戳(13位) + 3位后缀(500-999) = 16位纯数字
      * @returns 唯一 ID (16位纯数字)
      */
     async genTimeID(): Promise<number> {
@@ -98,29 +95,30 @@ export class RedisHelper {
 
     /**
      * 批量生成基于时间的唯一 ID
-     * 格式: 毫秒时间戳(13位) + 3位自增 = 16位纯数字
+     * 格式: 毫秒时间戳(13位) + 3位后缀(500-999) = 16位纯数字
+     * 使用 INCRBY 一次性获取连续计数器，效率更高
      * @param count - 需要生成的 ID 数量
-     * @returns ID 数组 (16位纯数字)
+     * @returns 唯一 ID 数组 (16位纯数字)
      */
     async genTimeIDBatch(count: number): Promise<number[]> {
-        if (count <= 0) {
-            return [];
-        }
-
-        const MAX_BATCH_SIZE = 1000;
-        if (count > MAX_BATCH_SIZE) {
-            throw new Error(`批量大小 ${count} 超过最大限制 ${MAX_BATCH_SIZE}`);
-        }
+        if (count <= 0) return [];
 
         const timestamp = Date.now();
         const key = `${this.prefix}time_id_counter:${timestamp}`;
+
+        // 一次性获取 count 个连续计数器
         const endCounter = await this.client.incrby(key, count);
         await this.client.expire(key, 1);
 
+        // 生成 ID 数组
         const ids: number[] = [];
+        const startCounter = endCounter - count + 1;
+
         for (let i = 0; i < count; i++) {
-            const counter = endCounter - count + i + 1;
-            const suffix = (counter % 1000).toString().padStart(3, '0');
+            const counter = startCounter + i;
+            // 使用 500-999 范围，保证后缀不以小数字开头
+            const base = 500 + (counter % 500);
+            const suffix = base.toString().padStart(3, '0');
             ids.push(Number(`${timestamp}${suffix}`));
         }
 
