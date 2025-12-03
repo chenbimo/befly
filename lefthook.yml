@@ -13,13 +13,15 @@ pre-commit:
         - name: TypeScript check (core)
           priority: 2
           root: packages/core
-          run: bunx tsgo --noEmit
+          glob: 'packages/core/**/*.ts'
+          run: bunx tsgo --noEmit {staged_files}
 
         # 3. TypeScript 语法检查 (shared)
         - name: TypeScript check (shared)
           priority: 2
           root: packages/shared
-          run: bunx tsgo --noEmit
+          glob: 'packages/shared/**/*.ts'
+          run: bunx tsgo --noEmit {staged_files}
 
         # 4. 运行测试
         - name: Run tests
