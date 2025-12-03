@@ -461,7 +461,7 @@ describe('RedisHelper - ID 生成', () => {
         expect(typeof id1).toBe('number');
         expect(typeof id2).toBe('number');
         expect(id1).not.toBe(id2);
-        expect(id1.toString().length).toBe(14);
+        expect(id1.toString().length).toBe(16);
     });
 
     test('genTimeIDBatch - 批量生成 ID', async () => {
@@ -469,7 +469,7 @@ describe('RedisHelper - ID 生成', () => {
 
         expect(ids.length).toBe(10);
         expect(ids.every((id) => typeof id === 'number')).toBe(true);
-        expect(ids.every((id) => id.toString().length === 14)).toBe(true);
+        expect(ids.every((id) => id.toString().length === 16)).toBe(true);
 
         // 验证 ID 唯一性
         const uniqueIds = new Set(ids);
@@ -483,7 +483,7 @@ describe('RedisHelper - ID 生成', () => {
 
     test('genTimeIDBatch - 超过最大限制', async () => {
         try {
-            await redis.genTimeIDBatch(10001);
+            await redis.genTimeIDBatch(1001);
             expect(true).toBe(false); // 不应该执行到这里
         } catch (error: any) {
             expect(error.message).toContain('超过最大限制');

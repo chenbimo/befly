@@ -86,53 +86,42 @@ export class RedisHelper {
 
     /**
      * 生成基于时间的唯一 ID
-     * 格式: 秒级时间戳(10位) + 4位自增 = 14位纯数字
-     * 容量: 10000/秒 = 864,000,000/天
-     * 范围: 到 2286年9月
-     * @returns 唯一 ID (14位纯数字)
+     * 格式: 毫秒时间戳(13位) + 3位自增 = 16位纯数字
+     * 容量: 1000/毫秒 = 1,000,000/秒
+     * 范围: 到 2286年
+     * @returns 唯一 ID (16位纯数字)
      */
     async genTimeID(): Promise<number> {
-        const timestamp = Math.floor(Date.now() / 1000); // 秒级时间戳
-        const key = `${this.prefix}time_id_counter:${timestamp}`;
-
-        const counter = await this.client.incr(key);
-        await this.client.expire(key, 1);
-
-        const counterSuffix = (counter % 10000).toString().padStart(4, '0');
-
-        return Number(`${timestamp}${counterSuffix}`);
+        const ids = await this.genTimeIDBatch(1);
+        return ids[0];
     }
 
     /**
      * 批量生成基于时间的唯一 ID
-     * 格式: 秒级时间戳(10位) + 4位自增 = 14位纯数字
+     * 格式: 毫秒时间戳(13位) + 3位自增 = 16位纯数字
      * @param count - 需要生成的 ID 数量
-     * @returns ID 数组 (14位纯数字)
+     * @returns ID 数组 (16位纯数字)
      */
     async genTimeIDBatch(count: number): Promise<number[]> {
         if (count <= 0) {
             return [];
         }
 
-        // 限制单次批量生成数量（每秒最多10000个）
-        const MAX_BATCH_SIZE = 10000;
+        const MAX_BATCH_SIZE = 1000;
         if (count > MAX_BATCH_SIZE) {
             throw new Error(`批量大小 ${count} 超过最大限制 ${MAX_BATCH_SIZE}`);
         }
 
-        const timestamp = Math.floor(Date.now() / 1000); // 秒级时间戳
+        const timestamp = Date.now();
         const key = `${this.prefix}time_id_counter:${timestamp}`;
-
-        // 使用 INCRBY 一次性获取 N 个连续计数
-        const startCounter = await this.client.incrby(key, count);
+        const endCounter = await this.client.incrby(key, count);
         await this.client.expire(key, 1);
 
-        // 生成 ID 数组
         const ids: number[] = [];
         for (let i = 0; i < count; i++) {
-            const counter = startCounter - count + i + 1; // 计算每个 ID 的计数值
-            const counterSuffix = (counter % 10000).toString().padStart(4, '0');
-            ids.push(Number(`${timestamp}${counterSuffix}`));
+            const counter = endCounter - count + i + 1;
+            const suffix = (counter % 1000).toString().padStart(3, '0');
+            ids.push(Number(`${timestamp}${suffix}`));
         }
 
         return ids;
