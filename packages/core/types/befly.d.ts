@@ -142,31 +142,31 @@ export interface BeflyOptions {
 export interface BeflyContext extends KeyValue {
     // ========== 核心插件 ==========
     /** 数据库助手 */
-    db?: DbHelper;
+    db: DbHelper;
 
     /** Redis 助手 */
-    redis?: RedisHelper;
+    redis: RedisHelper;
 
     /** 日志器 */
-    logger?: typeof Logger;
+    logger: typeof Logger;
 
     /** 缓存助手 */
-    cache?: CacheHelper;
+    cache: CacheHelper;
 
     /** 工具函数 */
-    tool?: {
+    tool: {
         Yes: (msg: string, data?: any, other?: Record<string, any>) => { code: 0; msg: string; data: any };
         No: (msg: string, data?: any, other?: Record<string, any>) => { code: 1; msg: string; data: any };
     };
 
     /** 加密解密 */
-    cipher?: typeof Cipher;
+    cipher: typeof Cipher;
 
     /** JWT 令牌 */
-    jwt?: typeof Jwt;
+    jwt: typeof Jwt;
 
     /** 项目配置 */
-    config?: BeflyOptions;
+    config: BeflyOptions;
 
     // ========== 动态插件 ==========
     /** 组件插件：addon_{addonName}_{pluginName} */
