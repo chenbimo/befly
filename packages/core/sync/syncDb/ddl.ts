@@ -72,14 +72,14 @@ export function getSystemColumnDef(fieldName: string): string | null {
         created_at: '`created_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "创建时间"',
         updated_at: '`updated_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "更新时间"',
         deleted_at: '`deleted_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "删除时间"',
-        state: '`state` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "状态字段"'
+        state: '`state` BIGINT UNSIGNED NOT NULL DEFAULT 1 COMMENT "状态字段"'
     };
     const pgDefs: Record<string, string> = {
         id: '"id" INTEGER PRIMARY KEY',
         created_at: '"created_at" INTEGER NOT NULL DEFAULT 0',
         updated_at: '"updated_at" INTEGER NOT NULL DEFAULT 0',
         deleted_at: '"deleted_at" INTEGER NOT NULL DEFAULT 0',
-        state: '"state" INTEGER NOT NULL DEFAULT 0'
+        state: '"state" INTEGER NOT NULL DEFAULT 1'
     };
 
     const defs = isMySQL() ? mysqlDefs : pgDefs;

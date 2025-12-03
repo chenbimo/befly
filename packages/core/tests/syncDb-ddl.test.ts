@@ -74,7 +74,7 @@ describe('buildSystemColumnDefs (MySQL)', () => {
         const def = defs.find((d: string) => d.includes('`state`'));
         expect(def).toContain('BIGINT UNSIGNED');
         expect(def).toContain('NOT NULL');
-        expect(def).toContain('DEFAULT 0');
+        expect(def).toContain('DEFAULT 1');
     });
 });
 
