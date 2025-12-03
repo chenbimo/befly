@@ -65,8 +65,9 @@ export function getSqlType(fieldType: string, fieldMax: number | null, unsigned:
  * resolveDefaultValue(null, 'string') // => ''
  * resolveDefaultValue(null, 'number') // => 0
  * resolveDefaultValue('null', 'number') // => 0
- * resolveDefaultValue(null, 'array') // => '[]'
+ * resolveDefaultValue(null, 'array_string') // => '[]'
  * resolveDefaultValue(null, 'text') // => 'null'
+ * resolveDefaultValue(null, 'array_text') // => 'null' (TEXT 不支持默认值)
  * resolveDefaultValue('admin', 'string') // => 'admin'
  * resolveDefaultValue(0, 'number') // => 0
  */
@@ -82,12 +83,11 @@ export function resolveDefaultValue(fieldDefault: any, fieldType: string): any {
             return 0;
         case 'string':
             return '';
-        case 'array':
         case 'array_string':
-        case 'array_text':
             return '[]';
         case 'text':
-            // text 类型不设置默认值，保持 'null'
+        case 'array_text':
+            // text/array_text 类型不设置默认值（MySQL TEXT 不支持），保持 'null'
             return 'null';
         default:
             return fieldDefault;

@@ -63,12 +63,16 @@ describe('resolveDefaultValue', () => {
         expect(resolveDefaultValue('null', 'number')).toBe(0);
     });
 
-    test('null 值 + array 类型 => "[]"', () => {
-        expect(resolveDefaultValue(null, 'array')).toBe('[]');
+    test('null 值 + array_string 类型 => "[]"', () => {
+        expect(resolveDefaultValue(null, 'array_string')).toBe('[]');
     });
 
     test('null 值 + text 类型 => "null"', () => {
         expect(resolveDefaultValue(null, 'text')).toBe('null');
+    });
+
+    test('null 值 + array_text 类型 => "null"（TEXT 不支持默认值）', () => {
+        expect(resolveDefaultValue(null, 'array_text')).toBe('null');
     });
 
     test('有实际值时直接返回', () => {
