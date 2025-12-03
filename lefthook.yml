@@ -9,12 +9,17 @@ pre-commit:
           glob: '*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}'
           run: bunx --bun prettier --write --cache --ignore-unknown {staged_files}
 
-        # 2. TypeScript 语法检查
+        # 2. TypeScript 语法检查 (core)
         - name: TypeScript check (core)
           priority: 2
           run: cd packages/core && bunx tsgo --noEmit
 
-        # 3. 运行测试
+        # 3. TypeScript 语法检查 (shared)
+        - name: TypeScript check (shared)
+          priority: 2
+          run: cd packages/shared && bunx tsgo --noEmit
+
+        # 4. 运行测试
         - name: Run tests
           priority: 3
           run: bun test
