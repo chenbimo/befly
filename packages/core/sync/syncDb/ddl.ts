@@ -61,19 +61,21 @@ export function buildIndexSQL(tableName: string, indexName: string, fieldName: s
 }
 
 /**
- * 获取单个系统字段的列定义（用于 ADD COLUMN）
+ * 获取单个系统字段的列定义（用于 ADD COLUMN 或 CREATE TABLE）
  *
- * @param fieldName - 系统字段名（created_at, updated_at, deleted_at, state）
+ * @param fieldName - 系统字段名（id, created_at, updated_at, deleted_at, state）
  * @returns 列定义字符串，如果不是系统字段则返回 null
  */
 export function getSystemColumnDef(fieldName: string): string | null {
     const mysqlDefs: Record<string, string> = {
+        id: '`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT COMMENT "主键ID"',
         created_at: '`created_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "创建时间"',
         updated_at: '`updated_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "更新时间"',
         deleted_at: '`deleted_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "删除时间"',
         state: '`state` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "状态字段"'
     };
     const pgDefs: Record<string, string> = {
+        id: '"id" INTEGER PRIMARY KEY',
         created_at: '"created_at" INTEGER NOT NULL DEFAULT 0',
         updated_at: '"updated_at" INTEGER NOT NULL DEFAULT 0',
         deleted_at: '"deleted_at" INTEGER NOT NULL DEFAULT 0',
@@ -90,10 +92,7 @@ export function getSystemColumnDef(fieldName: string): string | null {
  * @returns 系统字段的列定义数组
  */
 export function buildSystemColumnDefs(): string[] {
-    if (isMySQL()) {
-        return ['`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT COMMENT "主键ID"', getSystemColumnDef('created_at')!, getSystemColumnDef('updated_at')!, getSystemColumnDef('deleted_at')!, getSystemColumnDef('state')!];
-    }
-    return ['"id" INTEGER PRIMARY KEY', getSystemColumnDef('created_at')!, getSystemColumnDef('updated_at')!, getSystemColumnDef('deleted_at')!, getSystemColumnDef('state')!];
+    return [getSystemColumnDef('id')!, getSystemColumnDef('created_at')!, getSystemColumnDef('updated_at')!, getSystemColumnDef('deleted_at')!, getSystemColumnDef('state')!];
 }
 
 /**
