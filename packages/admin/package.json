@@ -1,6 +1,6 @@
 {
     "name": "befly-admin",
-    "version": "3.4.58",
+    "version": "3.5.0",
     "description": "Befly Admin - 基于 Vue3 + OpenTiny Vue 的后台管理系统",
     "type": "module",
     "private": false,
@@ -26,11 +26,11 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@befly-addon/admin": "^1.0.57",
+        "@befly-addon/admin": "^1.1.0",
         "@iconify-json/lucide": "^1.2.77",
         "axios": "^1.13.2",
-        "befly-shared": "^1.1.2",
-        "befly-vite": "^1.0.15",
+        "befly-shared": "^1.2.0",
+        "befly-vite": "^1.1.0",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.17.6",
         "vite": "^7.2.6",
