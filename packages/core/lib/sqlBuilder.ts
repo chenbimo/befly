@@ -356,6 +356,30 @@ export class SqlBuilder {
     }
 
     /**
+     * RIGHT JOIN
+     */
+    rightJoin(table: string, on: string): this {
+        if (typeof table !== 'string' || typeof on !== 'string') {
+            throw new Error(`JOIN 表名和条件必须是字符串 (table: ${table}, on: ${on})`);
+        }
+        const escapedTable = this._escapeTable(table);
+        this._joins.push(`RIGHT JOIN ${escapedTable} ON ${on}`);
+        return this;
+    }
+
+    /**
+     * INNER JOIN
+     */
+    innerJoin(table: string, on: string): this {
+        if (typeof table !== 'string' || typeof on !== 'string') {
+            throw new Error(`JOIN 表名和条件必须是字符串 (table: ${table}, on: ${on})`);
+        }
+        const escapedTable = this._escapeTable(table);
+        this._joins.push(`INNER JOIN ${escapedTable} ON ${on}`);
+        return this;
+    }
+
+    /**
      * ORDER BY
      * @param fields - 格式为 ["field#ASC", "field2#DESC"]
      */

@@ -11,7 +11,7 @@ import { keysToSnake } from 'befly-shared/keysToSnake';
 import { fieldClear } from 'befly-shared/fieldClear';
 import { RedisTTL, RedisKeys } from 'befly-shared/redisKeys';
 import { Logger } from './logger.js';
-import type { WhereConditions } from '../types/common.js';
+import type { WhereConditions, JoinOption } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
 
@@ -168,22 +168,172 @@ export class DbHelper {
     }
 
     /**
+     * 处理表名（转下划线格式）
+     * 'userProfile' -> 'user_profile'
+     */
+    private processTableName(table: string): string {
+        return snakeCase(table.trim());
+    }
+
+    /**
+     * 处理联查字段（支持表名.字段名格式）
+     * 'user.userId' -> 'user.user_id'
+     * 'username' -> 'user_name'
+     */
+    private processJoinField(field: string): string {
+        // 跳过函数、星号、已处理的字段
+        if (field.includes('(') || field === '*' || field.startsWith('`')) {
+            return field;
+        }
+
+        // 处理别名 AS
+        if (field.toUpperCase().includes(' AS ')) {
+            const [fieldPart, aliasPart] = field.split(/\s+AS\s+/i);
+            return `${this.processJoinField(fieldPart.trim())} AS ${aliasPart.trim()}`;
+        }
+
+        // 处理表名.字段名
+        if (field.includes('.')) {
+            const [tableName, fieldName] = field.split('.');
+            return `${snakeCase(tableName)}.${snakeCase(fieldName)}`;
+        }
+
+        // 普通字段
+        return snakeCase(field);
+    }
+
+    /**
+     * 处理联查的 where 条件键名
+     * 'user.userId': 1 -> 'user.user_id': 1
+     * 'user.status$in': [...] -> 'user.status$in': [...]
+     */
+    private processJoinWhereKey(key: string): string {
+        // 保留逻辑操作符
+        if (key === '$or' || key === '$and') {
+            return key;
+        }
+
+        // 处理带操作符的字段名（如 user.userId$gt）
+        if (key.includes('$')) {
+            const lastDollarIndex = key.lastIndexOf('$');
+            const fieldPart = key.substring(0, lastDollarIndex);
+            const operator = key.substring(lastDollarIndex);
+
+            if (fieldPart.includes('.')) {
+                const [tableName, fieldName] = fieldPart.split('.');
+                return `${snakeCase(tableName)}.${snakeCase(fieldName)}${operator}`;
+            }
+            return `${snakeCase(fieldPart)}${operator}`;
+        }
+
+        // 处理表名.字段名
+        if (key.includes('.')) {
+            const [tableName, fieldName] = key.split('.');
+            return `${snakeCase(tableName)}.${snakeCase(fieldName)}`;
+        }
+
+        // 普通字段
+        return snakeCase(key);
+    }
+
+    /**
+     * 递归处理联查的 where 条件
+     */
+    private processJoinWhere(where: any): any {
+        if (!where || typeof where !== 'object') return where;
+
+        if (Array.isArray(where)) {
+            return where.map((item) => this.processJoinWhere(item));
+        }
+
+        const result: any = {};
+        for (const [key, value] of Object.entries(where)) {
+            const newKey = this.processJoinWhereKey(key);
+
+            if (key === '$or' || key === '$and') {
+                result[newKey] = (value as any[]).map((item) => this.processJoinWhere(item));
+            } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                result[newKey] = this.processJoinWhere(value);
+            } else {
+                result[newKey] = value;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 处理联查的 orderBy
+     * 'o.createdAt#DESC' -> 'o.created_at#DESC'
+     */
+    private processJoinOrderBy(orderBy: string[]): string[] {
+        if (!orderBy || !Array.isArray(orderBy)) return orderBy;
+        return orderBy.map((item) => {
+            if (typeof item !== 'string' || !item.includes('#')) return item;
+            const [field, direction] = item.split('#');
+            return `${this.processJoinField(field.trim())}#${direction.trim()}`;
+        });
+    }
+
+    /**
      * 统一的查询参数预处理方法
      */
     private async prepareQueryOptions(options: QueryOptions) {
         const cleanWhere = this.cleanFields(options.where || {});
+        const hasJoins = options.joins && options.joins.length > 0;
 
-        // 处理 fields（支持排除语法）
+        // 联查时使用特殊处理逻辑
+        if (hasJoins) {
+            // 联查时字段直接处理（支持表别名）
+            const processedFields = (options.fields || []).map((f) => this.processJoinField(f));
+
+            return {
+                table: this.processTableName(options.table),
+                fields: processedFields.length > 0 ? processedFields : ['*'],
+                where: this.processJoinWhere(cleanWhere),
+                joins: options.joins,
+                orderBy: this.processJoinOrderBy(options.orderBy || []),
+                page: options.page || 1,
+                limit: options.limit || 10
+            };
+        }
+
+        // 单表查询使用原有逻辑
         const processedFields = await this.fieldsToSnake(snakeCase(options.table), options.fields || []);
 
         return {
             table: snakeCase(options.table),
             fields: processedFields,
             where: this.whereKeysToSnake(cleanWhere),
+            joins: undefined,
             orderBy: this.orderByToSnake(options.orderBy || []),
             page: options.page || 1,
             limit: options.limit || 10
         };
+    }
+
+    /**
+     * 为 builder 添加 JOIN
+     */
+    private applyJoins(builder: SqlBuilder, joins?: JoinOption[]): void {
+        if (!joins || joins.length === 0) return;
+
+        for (const join of joins) {
+            const processedTable = this.processTableName(join.table);
+            const type = join.type || 'left';
+
+            switch (type) {
+                case 'inner':
+                    builder.innerJoin(processedTable, join.on);
+                    break;
+                case 'right':
+                    builder.rightJoin(processedTable, join.on);
+                    break;
+                case 'left':
+                default:
+                    builder.leftJoin(processedTable, join.on);
+                    break;
+            }
+        }
     }
 
     /**
@@ -375,16 +525,26 @@ export class DbHelper {
      * 查询记录数
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      * @param options.where - 查询条件
+     * @param options.joins - 多表联查选项
      * @example
      * // 查询总数
      * const count = await db.getCount({ table: 'user' });
      * // 查询指定条件的记录数
      * const activeCount = await db.getCount({ table: 'user', where: { state: 1 } });
+     * // 联查计数
+     * const count = await db.getCount({
+     *     table: 'order o',
+     *     joins: [{ table: 'user u', on: 'o.user_id = u.id' }],
+     *     where: { 'o.state': 1 }
+     * });
      */
     async getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number> {
-        const { table, where } = await this.prepareQueryOptions(options as QueryOptions);
+        const { table, where, joins } = await this.prepareQueryOptions(options as QueryOptions);
 
         const builder = new SqlBuilder().select(['COUNT(*) as count']).from(table).where(this.addDefaultStateFilter(where));
+
+        // 添加 JOIN
+        this.applyJoins(builder, joins);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -394,17 +554,27 @@ export class DbHelper {
 
     /**
      * 查询单条数据
-     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
-     * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换；联查时可带别名如 'order o'）
+     * @param options.fields - 字段列表（联查时需带表别名，如 'o.id', 'u.username'）
+     * @param options.joins - 多表联查选项
      * @example
-     * // 以下两种写法等效：
+     * // 单表查询
      * getOne({ table: 'userProfile', fields: ['userId', 'userName'] })
-     * getOne({ table: 'user_profile', fields: ['user_id', 'user_name'] })
+     * // 联查
+     * getOne({
+     *     table: 'order o',
+     *     joins: [{ table: 'user u', on: 'o.user_id = u.id' }],
+     *     fields: ['o.id', 'o.totalAmount', 'u.username'],
+     *     where: { 'o.id': 1 }
+     * })
      */
     async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<T | null> {
-        const { table, fields, where } = await this.prepareQueryOptions(options);
+        const { table, fields, where, joins } = await this.prepareQueryOptions(options);
 
         const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where));
+
+        // 添加 JOIN
+        this.applyJoins(builder, joins);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -421,11 +591,25 @@ export class DbHelper {
 
     /**
      * 查询列表（带分页）
-     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
-     * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换；联查时可带别名）
+     * @param options.fields - 字段列表（联查时需带表别名）
+     * @param options.joins - 多表联查选项
      * @example
-     * // 使用小驼峰格式（推荐）
+     * // 单表分页
      * getList({ table: 'userProfile', fields: ['userId', 'userName', 'createdAt'] })
+     * // 联查分页
+     * getList({
+     *     table: 'order o',
+     *     joins: [
+     *         { table: 'user u', on: 'o.user_id = u.id' },
+     *         { table: 'product p', on: 'o.product_id = p.id' }
+     *     ],
+     *     fields: ['o.id', 'o.totalAmount', 'u.username', 'p.name AS productName'],
+     *     where: { 'o.status': 'paid' },
+     *     orderBy: ['o.createdAt#DESC'],
+     *     page: 1,
+     *     limit: 10
+     * })
      */
     async getList<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<ListResult<T>> {
         const prepared = await this.prepareQueryOptions(options);
@@ -443,6 +627,9 @@ export class DbHelper {
 
         // 查询总数
         const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(prepared.table).where(whereFiltered);
+
+        // 添加 JOIN（计数也需要）
+        this.applyJoins(countBuilder, prepared.joins);
 
         const { sql: countSql, params: countParams } = countBuilder.toSelectSql();
         const countResult = await this.executeWithConn(countSql, countParams);
@@ -462,6 +649,9 @@ export class DbHelper {
         // 查询数据
         const offset = (prepared.page - 1) * prepared.limit;
         const dataBuilder = new SqlBuilder().select(prepared.fields).from(prepared.table).where(whereFiltered).limit(prepared.limit).offset(offset);
+
+        // 添加 JOIN
+        this.applyJoins(dataBuilder, prepared.joins);
 
         // 只有用户明确指定了 orderBy 才添加排序
         if (prepared.orderBy && prepared.orderBy.length > 0) {
@@ -486,12 +676,20 @@ export class DbHelper {
 
     /**
      * 查询所有数据（不分页，有上限保护）
-     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
-     * @param options.fields - 字段列表（支持小驼峰或下划线格式，会自动转换为数据库字段名）
+     * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换；联查时可带别名）
+     * @param options.fields - 字段列表（联查时需带表别名）
+     * @param options.joins - 多表联查选项
      * ⚠️ 警告：此方法会查询大量数据，建议使用 getList 分页查询
      * @example
-     * // 使用小驼峰格式（推荐）
+     * // 单表查询
      * getAll({ table: 'userProfile', fields: ['userId', 'userName'] })
+     * // 联查
+     * getAll({
+     *     table: 'order o',
+     *     joins: [{ table: 'user u', on: 'o.user_id = u.id' }],
+     *     fields: ['o.id', 'u.username'],
+     *     where: { 'o.state': 1 }
+     * })
      */
     async getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
         // 添加硬性上限保护，防止内存溢出
@@ -501,6 +699,9 @@ export class DbHelper {
         const prepared = await this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
 
         const builder = new SqlBuilder().select(prepared.fields).from(prepared.table).where(this.addDefaultStateFilter(prepared.where)).limit(MAX_LIMIT);
+
+        // 添加 JOIN
+        this.applyJoins(builder, prepared.joins);
 
         if (prepared.orderBy && prepared.orderBy.length > 0) {
             builder.orderBy(prepared.orderBy);

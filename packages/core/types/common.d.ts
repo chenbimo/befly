@@ -93,6 +93,19 @@ export type ComparisonOperator = '=' | '>' | '<' | '>=' | '<=' | '!=' | '<>' | '
 export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
 
 /**
+ * JOIN 选项
+ * 用于简化多表联查的写法
+ */
+export interface JoinOption {
+    /** JOIN 类型，默认 'left' */
+    type?: 'left' | 'right' | 'inner';
+    /** 要联接的表名（不支持别名） */
+    table: string;
+    /** JOIN 条件（如 'order.user_id = user.id'） */
+    on: string;
+}
+
+/**
  * 工具函数返回类型
  */
 export interface ToolResponse<T = any> {

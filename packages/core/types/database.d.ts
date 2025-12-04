@@ -4,6 +4,7 @@
 
 import type { SqlValue } from 'befly-shared/types';
 import type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, TypedWhereConditions } from './table';
+import type { JoinOption } from './common';
 
 // 重新导出表类型工具
 export type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, SystemFields, BaseTable, InsertType, UpdateType, SelectType, TypedWhereConditions } from './table';
@@ -98,12 +99,14 @@ export interface TypedDeleteOptions<K extends TableName> {
  * 查询选项（兼容旧版，不进行类型检查）
  */
 export interface QueryOptions {
-    /** 表名 */
+    /** 表名（可带别名，如 'order o'） */
     table: string;
-    /** 查询字段 */
+    /** 查询字段（联查时需带表别名，如 'o.id', 'u.username'） */
     fields?: string[];
-    /** WHERE 条件 */
+    /** WHERE 条件（联查时字段需带表别名，如 { 'o.state': 1 }） */
     where?: WhereConditions;
+    /** 多表联查选项 */
+    joins?: JoinOption[];
     /** 排序（格式：["字段#ASC", "字段#DESC"]） */
     orderBy?: string[];
     /** 页码（从 1 开始） */

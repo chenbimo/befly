@@ -85,6 +85,6 @@ export const beflyConfig = (await scanConfig({
     dirs: ['configs'],
     files: ['befly.common', `befly.${envSuffix}`, 'befly.local'],
     extensions: ['.json'],
-    mode: 'all',
+    mode: 'merge',
     defaults: defaultOptions
 })) as BeflyOptions;
