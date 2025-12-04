@@ -38,6 +38,7 @@
     "license": "Apache-2.0",
     "files": [
         "checks",
+        "docs",
         "dist",
         "hooks",
         "lib",
