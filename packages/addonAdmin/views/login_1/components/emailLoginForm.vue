@@ -32,6 +32,7 @@ import ILucideUser from '~icons/lucide/user';
 import ILucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
 import { $Storage } from '@/plugins/storage';
+import { hashPassword } from 'befly-shared/hashPassword';
 
 const router = useRouter();
 
@@ -65,9 +66,12 @@ const $Method = {
 
             $Data.loading = true;
 
+            // 对密码进行 SHA-256 加密
+            const hashedPassword = await hashPassword($Data.formData.password);
+
             const res = await $Http('/addon/admin/auth/login', {
                 account: $Data.formData.account,
-                password: $Data.formData.password
+                password: hashedPassword
             });
 
             // 先保存 token

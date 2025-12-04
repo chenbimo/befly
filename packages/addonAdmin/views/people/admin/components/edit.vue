@@ -48,6 +48,7 @@ import {
 } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 import { fieldClear } from 'befly-shared/fieldClear';
+import { hashPassword } from 'befly-shared/hashPassword';
 
 const $Prop = defineProps({
     modelValue: {
@@ -141,6 +142,11 @@ const $Method = {
 
             $Data.submitting = true;
             const formData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : fieldClear($Data.formData, { omitKeys: ['password'] });
+
+            // 添加管理员时，对密码进行 SHA-256 加密
+            if ($Prop.actionType === 'add' && formData.password) {
+                formData.password = await hashPassword(formData.password);
+            }
 
             const result = await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', formData);
 
