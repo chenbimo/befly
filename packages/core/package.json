@@ -1,6 +1,6 @@
 {
     "name": "befly",
-    "version": "3.9.5",
+    "version": "3.9.6",
     "description": "Befly - 为 Bun 专属打造的 TypeScript API 接口框架核心引擎",
     "type": "module",
     "private": false,
@@ -64,7 +64,7 @@
         "bun": ">=1.3.0"
     },
     "dependencies": {
-        "befly-shared": "^1.2.1",
+        "befly-shared": "^1.2.2",
         "chalk": "^5.6.2",
         "es-toolkit": "^1.42.0",
         "fast-jwt": "^6.1.0",
