@@ -119,8 +119,9 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             devRole = { id: roleId };
         }
 
-        // 使用 bcrypt 加密密码
-        const hashed = await Cipher.hashPassword(beflyConfig.devPassword);
+        // 先对密码进行 SHA-256 + 盐值 哈希（模拟前端加密），再用 bcrypt 存储
+        const sha256Hashed = Cipher.sha256(beflyConfig.devPassword + 'befly');
+        const hashed = await Cipher.hashPassword(sha256Hashed);
 
         // 准备开发管理员数据
         const devData = {
