@@ -67,8 +67,9 @@ export async function checkApi(): Promise<void> {
                 }
 
                 // 验证可选属性的类型（如果提供了）
-                if (api.method && !['GET', 'POST'].includes(api.method.toUpperCase())) {
-                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法`);
+                const validMethods = ['GET', 'POST', 'GET,POST', 'POST,GET'];
+                if (api.method && !validMethods.includes(api.method.toUpperCase())) {
+                    Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 method 属性必须是有效的 HTTP 方法 (GET, POST, GET,POST, POST,GET)`);
                 }
                 if (api.auth !== undefined && typeof api.auth !== 'boolean') {
                     Logger.warn(`[${item.displayName}] 接口 ${apiPath} 的 auth 属性必须是布尔值 (true=需登录, false=公开)`);
