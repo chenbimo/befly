@@ -59,7 +59,7 @@ const DEFAULT_API_FIELDS = {
 
 /**
  * 加载所有 API 路由
- * @param apis - API 路由映射表
+ * @param apis - API 跁由映射表
  */
 export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
     try {
@@ -69,7 +69,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
             filePath: file.filePath,
             relativePath: file.relativePath,
             type: 'project' as const,
-            routePrefix: '',
+            routePrefix: '/',
             typeName: '项目'
         }));
 
@@ -93,7 +93,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                     filePath: file.filePath,
                     relativePath: file.relativePath,
                     type: 'addon' as const,
-                    routePrefix: `addon/${addon}`,
+                    routePrefix: `/addon/${addon}/`, // 组件 API 默认带斜杠
                     typeName: `组件${addon}`
                 });
             }
@@ -118,7 +118,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 api.required = api.required || [];
 
                 // 构建路由路径（不含方法）
-                const routePath = `/api/${apiFile.routePrefix ? apiFile.routePrefix + '/' : ''}${apiFile.relativePath}`;
+                const routePath = `/api${apiFile.routePrefix}${apiFile.relativePath}`;
 
                 // 支持逗号分隔的多方法，拆分后分别注册
                 const methods = methodStr
