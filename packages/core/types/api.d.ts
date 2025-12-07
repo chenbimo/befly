@@ -7,9 +7,16 @@ import type { KeyValue, TableDefinition } from './common.js';
 import type { RequestContext } from './context.js';
 
 /**
- * HTTP 方法类型
+ * HTTP 方法类型（单个）
  */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+export type HttpMethodSingle = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+
+/**
+ * HTTP 方法类型
+ * 支持单个方法或逗号分隔的多个方法
+ * @example 'POST' | 'GET,POST' | 'GET,POST,PUT'
+ */
+export type HttpMethod = HttpMethodSingle | string;
 
 /**
  * 用户信息类型

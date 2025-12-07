@@ -111,15 +111,26 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 const api = apiImport.default;
 
                 // 设置默认值
-                api.method = api.method || 'POST';
+                const methodStr = (api.method || 'POST').toUpperCase();
                 api.auth = api.auth !== undefined ? api.auth : true;
                 // 合并默认字段：默认字段作为基础，API 自定义字段优先级更高
                 api.fields = { ...DEFAULT_API_FIELDS, ...(api.fields || {}) };
                 api.required = api.required || [];
 
-                // 构建路由
-                api.route = `${api.method.toUpperCase()}/api/${apiFile.routePrefix ? apiFile.routePrefix + '/' : ''}${apiFile.relativePath}`;
-                apis.set(api.route, api);
+                // 构建路由路径（不含方法）
+                const routePath = `/api/${apiFile.routePrefix ? apiFile.routePrefix + '/' : ''}${apiFile.relativePath}`;
+
+                // 支持逗号分隔的多方法，拆分后分别注册
+                const methods = methodStr
+                    .split(',')
+                    .map((m: string) => m.trim())
+                    .filter((m: string) => m);
+                for (const method of methods) {
+                    const route = `${method}${routePath}`;
+                    // 为每个方法创建独立的路由对象
+                    const routeApi = { ...api, method: method, route: route };
+                    apis.set(route, routeApi);
+                }
             } catch (error: any) {
                 Logger.error({ err: error, api: apiFile.relativePath, type: apiFile.typeName }, '接口加载失败');
                 process.exit(1);
