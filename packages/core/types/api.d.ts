@@ -7,16 +7,10 @@ import type { KeyValue, TableDefinition } from './common.js';
 import type { RequestContext } from './context.js';
 
 /**
- * HTTP 方法类型（单个）
- */
-export type HttpMethodSingle = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-
-/**
  * HTTP 方法类型
- * 支持单个方法或逗号分隔的多个方法
- * @example 'POST' | 'GET,POST' | 'GET,POST,PUT'
+ * 支持 GET、POST 或逗号分隔的组合
  */
-export type HttpMethod = HttpMethodSingle | string;
+export type HttpMethod = 'GET' | 'POST' | 'GET,POST' | 'POST,GET';
 
 /**
  * 用户信息类型
@@ -76,7 +70,7 @@ export interface ApiRoute<T = any, R = any> {
     /** 处理器函数（必填） */
     handler: ApiHandler<T, R>;
 
-    /** HTTP 方法（可选，默认 POST） */
+    /** HTTP 方法（可选，默认 POST，支持逗号分隔多个方法） */
     method?: HttpMethod;
 
     /** 认证类型（可选，默认 true）
