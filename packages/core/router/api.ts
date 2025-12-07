@@ -33,6 +33,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
         const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
 
         const ctx: RequestContext = {
+            method: req.method,
             body: {},
             user: {},
             req: req,

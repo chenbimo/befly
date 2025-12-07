@@ -8,6 +8,8 @@ import type { ApiRoute } from './api.js';
  * 请求上下文接口
  */
 export interface RequestContext {
+    /** 请求方法 (GET/POST) */
+    method: string;
     /** 请求体参数 */
     body: Record<string, any>;
     /** 用户信息 */
