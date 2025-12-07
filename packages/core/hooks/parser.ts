@@ -25,22 +25,35 @@ const hook: Hook = {
         // GET 请求：解析查询参数
         if (ctx.req.method === 'GET') {
             const url = new URL(ctx.req.url);
-            if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
-                ctx.body = pickFields(Object.fromEntries(url.searchParams), Object.keys(ctx.api.fields));
+            const params = Object.fromEntries(url.searchParams);
+            // rawBody 模式：保留完整请求参数，不过滤字段
+            if (ctx.api.rawBody) {
+                ctx.body = params;
+            } else if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                ctx.body = pickFields(params, Object.keys(ctx.api.fields));
             } else {
-                ctx.body = Object.fromEntries(url.searchParams);
+                ctx.body = params;
             }
         } else if (ctx.req.method === 'POST') {
             // POST 请求：解析请求体
             const contentType = ctx.req.headers.get('content-type') || '';
+            // 获取 URL 查询参数（POST 请求也可能带参数，如微信回调）
+            const url = new URL(ctx.req.url);
+            const queryParams = Object.fromEntries(url.searchParams);
+
             try {
                 // JSON 格式
                 if (contentType.includes('application/json')) {
                     const body = (await ctx.req.json()) as Record<string, any>;
-                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
-                        ctx.body = pickFields(body, Object.keys(ctx.api.fields));
+                    // 合并 URL 参数和请求体（请求体优先）
+                    const merged = { ...queryParams, ...body };
+                    // rawBody 模式：保留完整请求体，不过滤字段
+                    if (ctx.api.rawBody) {
+                        ctx.body = merged;
+                    } else if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                        ctx.body = pickFields(merged, Object.keys(ctx.api.fields));
                     } else {
-                        ctx.body = body;
+                        ctx.body = merged;
                     }
                 } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
                     // XML 格式
@@ -49,10 +62,15 @@ const hook: Hook = {
                     // 提取根节点内容（如 xml），使 body 扁平化
                     const rootKey = Object.keys(parsed)[0];
                     const body = rootKey && typeof parsed[rootKey] === 'object' ? parsed[rootKey] : parsed;
-                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
-                        ctx.body = pickFields(body, Object.keys(ctx.api.fields));
+                    // 合并 URL 参数和请求体（请求体优先）
+                    const merged = { ...queryParams, ...body };
+                    // rawBody 模式：保留完整请求体，不过滤字段
+                    if (ctx.api.rawBody) {
+                        ctx.body = merged;
+                    } else if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                        ctx.body = pickFields(merged, Object.keys(ctx.api.fields));
                     } else {
-                        ctx.body = body;
+                        ctx.body = merged;
                     }
                 } else {
                     // 不支持的 Content-Type

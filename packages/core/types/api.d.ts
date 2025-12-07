@@ -85,6 +85,18 @@ export interface ApiRoute<T = any, R = any> {
     /** 必填字段（可选，默认 []） */
     required?: string[];
 
+    /** 是否保留原始请求体（可选，默认 false）
+     * - true: 不过滤字段，保留完整请求体（适用于微信回调、webhook 等场景）
+     * - false: 根据 fields 定义过滤字段
+     */
+    rawBody?: boolean;
+
+    /** 请求预处理函数（可选，在 handler 之前执行）
+     * 用于解密、转换请求数据等场景
+     * 可以修改 ctx.body
+     */
+    preprocess?: ApiHandler<T, void>;
+
     /** 缓存配置（可选，单位：秒） */
     cache?: number;
 
