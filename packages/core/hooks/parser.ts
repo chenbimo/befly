@@ -45,7 +45,10 @@ const hook: Hook = {
                 } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
                     // XML 格式
                     const text = await ctx.req.text();
-                    const body = xmlParser.parse(text) as Record<string, any>;
+                    const parsed = xmlParser.parse(text) as Record<string, any>;
+                    // 提取根节点内容（如 xml），使 body 扁平化
+                    const rootKey = Object.keys(parsed)[0];
+                    const body = rootKey && typeof parsed[rootKey] === 'object' ? parsed[rootKey] : parsed;
                     if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(body, Object.keys(ctx.api.fields));
                     } else {
