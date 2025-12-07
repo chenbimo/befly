@@ -82,14 +82,34 @@ export class Befly {
             const server = Bun.serve({
                 port: this.config!.appPort,
                 hostname: this.config!.appHost,
+                // 开发模式下启用详细错误信息
+                development: this.config!.nodeEnv === 'development',
+                // 空闲连接超时时间（秒），防止恶意连接占用资源
+                idleTimeout: 30,
                 routes: {
                     '/': () => Response.json({ code: 0, msg: `${this.config!.appName} 接口服务已启动` }),
                     '/api/*': apiHandler(this.apis, this.hooks, this.context as BeflyContext),
                     '/*': staticHandler()
                 },
+                // 未匹配路由的兜底处理
+                fetch: () => {
+                    return Response.json({ code: 1, msg: '路由未找到' }, { status: 404 });
+                },
                 error: (error: Error) => {
                     Logger.error({ err: error }, '服务启动时发生错误');
-                    return Response.json({ code: 1, msg: '内部服务器错误' });
+                    // 开发模式下返回详细错误信息
+                    if (this.config!.nodeEnv === 'development') {
+                        return Response.json(
+                            {
+                                code: 1,
+                                msg: '内部服务器错误',
+                                error: error.message,
+                                stack: error.stack
+                            },
+                            { status: 200 }
+                        );
+                    }
+                    return Response.json({ code: 1, msg: '内部服务器错误' }, { status: 200 });
                 }
             });
 
@@ -100,13 +120,19 @@ export class Befly {
 
             Logger.info(`${this.config!.appName} 启动成功! (${roleLabel}${envLabel})`);
             Logger.info(`服务器启动耗时: ${finalStartupTime}`);
-            Logger.info(`服务器监听地址: http://${this.config!.appHost}:${this.config!.appPort}`);
+            Logger.info(`服务器监听地址: ${server.url}`);
 
             // 7. 注册优雅关闭处理
             const gracefulShutdown = async (signal: string) => {
-                // 停止接收新请求
-                server.stop(true);
-                Logger.info('HTTP 服务器已停止');
+                Logger.info(`收到 ${signal} 信号，开始优雅关闭...`);
+
+                // 优雅停止（等待进行中的请求完成）
+                try {
+                    await server.stop();
+                    Logger.info('HTTP 服务器已停止');
+                } catch (error: any) {
+                    Logger.error({ err: error }, '停止 HTTP 服务器时出错');
+                }
 
                 // 关闭数据库连接
                 try {
