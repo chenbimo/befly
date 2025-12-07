@@ -55,10 +55,10 @@ function truncateBody(body: Record<string, any>): Record<string, any> {
 /**
  * 请求日志钩子
  * 在认证和解析之后记录完整的请求日志
- * order: 4.5 (在 parser 之后、validator 之前)
+ * order: 5 (在 parser 之后、validator 之前)
  */
 const hook: Hook = {
-    order: 4.5,
+    order: 5,
     handler: async (befly, ctx) => {
         // 只记录有效的 API 请求
         if (!ctx.api) return;
