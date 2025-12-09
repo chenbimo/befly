@@ -771,6 +771,99 @@ export default {
 
 ---
 
+## 代码优化技巧
+
+### 利用自动过滤简化更新操作
+
+数据库操作会**自动过滤 null 和 undefined 值**，因此可以大幅简化代码。
+
+#### 传统写法（繁琐）
+
+```typescript
+// ❌ 手动检查每个字段
+const updateData: Record<string, any> = {};
+if (ctx.body.nickname !== undefined) updateData.nickname = ctx.body.nickname;
+if (ctx.body.avatar !== undefined) updateData.avatar = ctx.body.avatar;
+if (ctx.body.phone !== undefined) updateData.phone = ctx.body.phone;
+if (ctx.body.gender !== undefined) updateData.gender = ctx.body.gender;
+
+if (Object.keys(updateData).length === 0) {
+    return No('没有需要更新的字段');
+}
+
+await befly.db.updData({
+    table: 'user',
+    data: updateData,
+    where: { id: ctx.user.userId }
+});
+```
+
+#### 优化写法（简洁）
+
+```typescript
+// ✅ 直接传入，undefined 值自动过滤
+const { nickname, avatar, phone, gender, birthday, bio } = ctx.body;
+
+const data = { nickname: nickname, avatar: avatar, phone: phone, gender: gender, birthday: birthday, bio: bio };
+
+// 使用 cleanFields 检查是否有有效数据
+const cleanData = befly.tool.cleanFields(data);
+if (Object.keys(cleanData).length === 0) {
+    return No('没有需要更新的字段');
+}
+
+await befly.db.updData({
+    table: 'user',
+    data: cleanData,
+    where: { id: ctx.user.userId }
+});
+```
+
+### 使用 cleanFields 进行精细控制
+
+当需要保留特定值（如 0、空字符串）时，使用 `cleanFields` 的高级参数：
+
+```typescript
+const { nickname, sort, state, remark } = ctx.body;
+
+// 保留 0 值（sort 和 state 允许为 0）
+const data = befly.tool.cleanFields(
+    { nickname: nickname, sort: sort, state: state, remark: remark },
+    [null, undefined], // 排除 null 和 undefined
+    { sort: true, state: true } // 保留这些字段的 0 值
+);
+
+await befly.db.updData({
+    table: 'menu',
+    data: data,
+    where: { id: ctx.body.id }
+});
+```
+
+### 查询条件的自动过滤
+
+where 条件同样支持自动过滤：
+
+```typescript
+// ✅ 可选筛选条件，undefined 自动忽略
+const { keyword, state, categoryId, startDate, endDate } = ctx.body;
+
+const result = await befly.db.getList({
+    table: 'article',
+    columns: ['id', 'title', 'createdAt'],
+    where: {
+        state: state, // undefined 时忽略
+        categoryId: categoryId, // undefined 时忽略
+        title: keyword ? { $like: `%${keyword}%` } : undefined, // 无关键词时忽略
+        createdAt: startDate && endDate ? { $gte: startDate, $lte: endDate } : undefined
+    },
+    page: ctx.body.page || 1,
+    limit: ctx.body.limit || 20
+});
+```
+
+---
+
 ## 完整目录结构
 
 ```

@@ -9,6 +9,12 @@
     - [核心概念](#核心概念)
         - [DbHelper](#dbhelper)
         - [自动转换](#自动转换)
+        - [自动过滤 null 和 undefined](#自动过滤-null-和-undefined)
+            - [写入时自动过滤](#写入时自动过滤)
+            - [更新时自动过滤](#更新时自动过滤)
+            - [Where 条件自动过滤](#where-条件自动过滤)
+            - [实际应用示例](#实际应用示例)
+            - [手动清理字段](#手动清理字段)
     - [字段命名规范](#字段命名规范)
     - [查询方法](#查询方法)
         - [getOne - 查询单条](#getone---查询单条)
@@ -78,6 +84,126 @@ handler: async (befly, ctx) => {
 - **表名**：小驼峰 `userProfile` 自动转换为下划线 `user_profile`
 - **字段名**：写入时小驼峰转下划线，查询时下划线转小驼峰
 - **BIGINT 字段**：`id`、`*Id`、`*_id`、`*At`、`*_at` 自动转为 number
+
+### 自动过滤 null 和 undefined
+
+所有写入方法（`insData`、`insBatch`、`updData`）和条件查询（`where`）都会**自动过滤值为 `null` 或 `undefined` 的字段**。
+
+这意味着：
+
+- 传入 `undefined` 或 `null` 的字段会被忽略，不会写入数据库
+- `where` 条件中值为 `undefined` 或 `null` 的条件会被忽略
+- 这使得处理可选参数变得非常简单，无需手动判断
+
+#### 写入时自动过滤
+
+```typescript
+// 用户提交的数据可能部分字段为空
+await befly.db.insData({
+    table: 'user',
+    data: {
+        username: 'john',
+        email: 'john@example.com',
+        phone: undefined, // ❌ 自动忽略，不会写入
+        avatar: null, // ❌ 自动忽略，不会写入
+        nickname: '' // ✅ 空字符串会写入（不是 null/undefined）
+    }
+});
+// 实际 SQL: INSERT INTO user (username, email, nickname, ...) VALUES ('john', 'john@example.com', '', ...)
+```
+
+#### 更新时自动过滤
+
+```typescript
+// 只更新用户提交的字段
+await befly.db.updData({
+    table: 'user',
+    data: {
+        nickname: ctx.body.nickname, // 如果用户传了值，会更新
+        avatar: ctx.body.avatar, // 如果为 undefined，自动忽略
+        bio: ctx.body.bio // 如果为 null，自动忽略
+    },
+    where: { id: ctx.user.id }
+});
+// 只有非 null/undefined 的字段会被更新
+```
+
+#### Where 条件自动过滤
+
+```typescript
+// 条件筛选：用户可能只传部分筛选条件
+const result = await befly.db.getList({
+    table: 'article',
+    where: {
+        categoryId: ctx.body.categoryId, // 如果未传，值为 undefined，自动忽略
+        status: ctx.body.status, // 如果未传，值为 undefined，自动忽略
+        authorId: ctx.body.authorId // 如果未传，值为 undefined，自动忽略
+    },
+    page: 1,
+    limit: 10
+});
+// 只有非 null/undefined 的条件会参与 WHERE 构建
+```
+
+#### 实际应用示例
+
+```typescript
+// API: 用户列表（带可选筛选条件）
+export default {
+    name: '用户列表',
+    fields: {
+        keyword: { name: '关键词', type: 'string', max: 50 },
+        roleId: { name: '角色ID', type: 'number' },
+        state: { name: '状态', type: 'number' }
+    },
+    handler: async (befly, ctx) => {
+        // 直接使用请求参数，无需判断是否存在
+        // null/undefined 的条件会被自动过滤
+        const result = await befly.db.getList({
+            table: 'user',
+            where: {
+                roleId: ctx.body.roleId, // 未传时为 undefined，自动忽略
+                state: ctx.body.state, // 未传时为 undefined，自动忽略
+                username$like: ctx.body.keyword ? `%${ctx.body.keyword}%` : undefined // 无关键词时忽略
+            },
+            page: ctx.body.page || 1,
+            limit: ctx.body.limit || 10
+        });
+
+        return befly.tool.Yes('查询成功', result);
+    }
+};
+```
+
+#### 手动清理字段
+
+如需手动清理数据，可以使用 `cleanFields` 方法：
+
+```typescript
+// 默认排除 null 和 undefined
+const cleanData = befly.db.cleanFields({
+    name: 'John',
+    age: null,
+    email: undefined,
+    phone: ''
+});
+// 结果: { name: 'John', phone: '' }
+
+// 自定义排除值（如同时排除空字符串）
+const cleanData2 = befly.db.cleanFields(
+    { name: 'John', phone: '', age: null },
+    [null, undefined, ''] // 排除这些值
+);
+// 结果: { name: 'John' }
+
+// 保留特定字段的特定值（即使在排除列表中）
+const cleanData3 = befly.db.cleanFields(
+    { name: 'John', status: null, count: 0 },
+    [null, undefined], // 排除 null 和 undefined
+    { status: null } // 但保留 status 字段的 null 值
+);
+// 结果: { name: 'John', status: null, count: 0 }
+```
 
 ---
 
@@ -889,14 +1015,32 @@ orderBy: ['sort#ASC', 'id#DESC'];
 
 ### 默认 State 过滤
 
-所有查询方法默认添加 `state > 0` 条件，自动过滤已删除的数据。
+所有查询方法默认添加 `state > 0` 条件，**仅过滤软删除的数据（state=0）**。
+
+**过滤效果**：
+
+| state 值 | 默认查询结果        |
+| -------- | ------------------- |
+| 0        | ❌ 被过滤（软删除） |
+| 1        | ✅ 可查询（正常）   |
+| 2        | ✅ 可查询（禁用）   |
+
+> ⚠️ **注意**：禁用数据（state=2）默认**可以**查询到，如需过滤禁用数据，需显式指定 `state: 1`。
 
 ```typescript
-// 实际执行
+// 默认查询：state > 0，包含正常和禁用数据
 getOne({ table: 'user', where: { id: 1 } });
 // → WHERE id = 1 AND state > 0
 
-// 如需查询所有状态，显式指定 state 条件
+// 只查询正常状态的数据
+getList({ table: 'user', where: { state: 1 } });
+// → WHERE state = 1
+
+// 只查询禁用状态的数据
+getList({ table: 'user', where: { state: 2 } });
+// → WHERE state = 2
+
+// 查询所有状态（包括软删除）
 getOne({ table: 'user', where: { id: 1, state$gte: 0 } });
 // → WHERE id = 1 AND state >= 0
 ```

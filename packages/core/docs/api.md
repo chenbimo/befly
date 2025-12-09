@@ -310,7 +310,7 @@ ctx.response = ErrorResponse(ctx, '未授权', 1, null);
 
 ### 默认字段
 
-所有 API 自动包含以下默认字段，无需重复定义：
+所有 API 自动包含以下默认字段，**无需重复定义即可直接使用**：
 
 ```typescript
 const DEFAULT_API_FIELDS = {
@@ -345,6 +345,131 @@ const DEFAULT_API_FIELDS = {
         max: 2
     }
 };
+```
+
+#### 默认字段说明
+
+| 字段      | 类型     | 范围      | 说明                               |
+| --------- | -------- | --------- | ---------------------------------- |
+| `id`      | `number` | >= 1      | 通用 ID 字段，用于详情/删除等      |
+| `page`    | `number` | 1-9999    | 分页页码，默认从 1 开始            |
+| `limit`   | `number` | 1-100     | 每页数量，最大 100 条              |
+| `keyword` | `string` | 1-50 字符 | 搜索关键词                         |
+| `state`   | `number` | 0-2       | 状态字段（0=禁用，1=正常，2=其他） |
+
+#### 自动合并机制
+
+框架会自动将默认字段合并到 API 的 `fields` 中：
+
+1. **无需声明即可使用**：默认字段会自动注入，直接从 `ctx.body` 获取
+2. **API 字段优先**：如果 API 中定义了同名字段，会覆盖默认字段
+3. **验证自动生效**：使用默认字段时，验证规则也会自动应用
+
+#### 使用默认字段示例
+
+```typescript
+// apis/article/list.ts
+export default {
+    name: '文章列表',
+    auth: true,
+    // 无需定义 page、limit、keyword，直接使用默认字段
+    fields: {
+        categoryId: { name: '分类ID', type: 'number', min: 0 }
+    },
+    handler: async (befly, ctx) => {
+        // 直接使用默认字段，已自动验证
+        const { page, limit, keyword, categoryId } = ctx.body;
+
+        const where: Record<string, any> = { state: 1 };
+        if (categoryId) where.categoryId = categoryId;
+        if (keyword) where.title = { $like: `%${keyword}%` };
+
+        const result = await befly.db.getList({
+            table: 'article',
+            columns: ['id', 'title', 'summary', 'createdAt'],
+            where: where,
+            page: page || 1, // 默认第 1 页
+            limit: limit || 10, // 默认每页 10 条
+            orderBy: { id: 'desc' }
+        });
+
+        return befly.tool.Yes('获取成功', result);
+    }
+} as ApiRoute;
+```
+
+#### 覆盖默认字段
+
+如需修改默认字段的验证规则，在 `fields` 中重新定义即可：
+
+```typescript
+export default {
+    name: '大数据列表',
+    fields: {
+        // 覆盖默认的 limit 字段，允许更大的分页
+        limit: {
+            name: '每页数量',
+            type: 'number',
+            min: 1,
+            max: 500 // 修改最大值为 500
+        },
+        // 覆盖默认的 page 字段，添加默认值
+        page: {
+            name: '页码',
+            type: 'number',
+            min: 1,
+            max: 99999,
+            default: 1
+        }
+    },
+    handler: async (befly, ctx) => {
+        // ctx.body.limit 最大可以是 500
+        // ctx.body.page 如果未传则默认为 1
+        return befly.tool.Yes('获取成功');
+    }
+} as ApiRoute;
+```
+
+#### 详情/删除接口示例
+
+```typescript
+// apis/article/detail.ts
+export default {
+    name: '文章详情',
+    auth: false,
+    // id 是默认字段，无需定义
+    required: ['id'], // 标记为必填
+    handler: async (befly, ctx) => {
+        // ctx.body.id 已自动验证：必须是 >= 1 的数字
+        const article = await befly.db.getDetail({
+            table: 'article',
+            where: { id: ctx.body.id, state: 1 }
+        });
+
+        if (!article?.id) {
+            return befly.tool.No('文章不存在');
+        }
+
+        return befly.tool.Yes('获取成功', article);
+    }
+} as ApiRoute;
+```
+
+```typescript
+// apis/article/delete.ts
+export default {
+    name: '删除文章',
+    auth: true,
+    required: ['id'], // id 是默认字段，直接使用
+    handler: async (befly, ctx) => {
+        await befly.db.delData({
+            table: 'article',
+            where: { id: ctx.body.id }
+        });
+
+        return befly.tool.Yes('删除成功');
+    }
+} as ApiRoute;
 ```
 
 ### 字段定义格式
@@ -837,6 +962,52 @@ interface BeflyContext {
     config: BeflyConfig;
 }
 ```
+
+### 常用工具方法
+
+#### befly.db.cleanFields - 清理数据字段
+
+清理对象中的 `null` 和 `undefined` 值，适用于处理可选参数：
+
+```typescript
+// 方法签名
+befly.db.cleanFields<T>(
+    data: T,                           // 要清理的数据对象
+    excludeValues?: any[],             // 要排除的值，默认 [null, undefined]
+    keepValues?: Record<string, any>   // 强制保留的键值对
+): Partial<T>
+```
+
+**基本用法：**
+
+```typescript
+// 默认排除 null 和 undefined
+const cleanData = befly.db.cleanFields({
+    name: 'John',
+    age: null,
+    email: undefined,
+    phone: ''
+});
+// 结果: { name: 'John', phone: '' }
+```
+
+**自定义排除值：**
+
+```typescript
+// 同时排除 null、undefined 和空字符串
+const cleanData = befly.db.cleanFields({ name: 'John', phone: '', age: null }, [null, undefined, '']);
+// 结果: { name: 'John' }
+```
+
+**保留特定字段的特定值：**
+
+```typescript
+// 即使值在排除列表中，也保留 status 字段的 null 值
+const cleanData = befly.db.cleanFields({ name: 'John', status: null, count: 0 }, [null, undefined], { status: null });
+// 结果: { name: 'John', status: null, count: 0 }
+```
+
+> **注意**：`insData`、`updData` 和 `where` 条件会自动调用 `cleanFields`，通常无需手动调用。
 
 ---
 

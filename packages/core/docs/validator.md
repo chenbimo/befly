@@ -586,3 +586,33 @@ A: 数组类型会验证：
 1. 值是否为数组
 2. 元素数量是否在 min/max 范围内
 3. 如果有 regexp，每个元素都会进行正则验证
+
+### Q: 如何在验证前清理数据中的 null/undefined 值？
+
+A: 使用 `befly.tool.cleanFields` 方法：
+
+```typescript
+// 在 API handler 中使用
+handler: async (befly, ctx) => {
+    const { nickname, phone, address } = ctx.body;
+
+    // 清理 null 和 undefined 值
+    const cleanData = befly.tool.cleanFields({
+        nickname: nickname,
+        phone: phone,
+        address: address
+    });
+
+    // cleanData 只包含有效值
+    await befly.db.updData({
+        table: 'user',
+        data: cleanData,
+        where: { id: ctx.user.userId }
+    });
+
+    return Yes('更新成功');
+};
+```
+
+> **注意**：数据库操作（insData、updData 等）会自动过滤 null/undefined 值，通常不需要手动调用 cleanFields。
+> 详见 [database.md](./database.md#nullundefined-值自动过滤)。
