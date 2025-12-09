@@ -20,6 +20,41 @@ import { projectApiDir } from '../paths.js';
 import type { ApiRoute } from '../types/api.js';
 
 /**
+ * 预定义的默认字段
+ */
+const PRESET_FIELDS: Record<string, any> = {
+    '@id': { name: 'ID', type: 'number', min: 1, max: null },
+    '@page': { name: '页码', type: 'number', min: 1, max: 9999 },
+    '@limit': { name: '每页数量', type: 'number', min: 1, max: 100 },
+    '@keyword': { name: '关键词', type: 'string', min: 1, max: 50 },
+    '@state': { name: '状态', type: 'number', min: 0, max: 2 }
+};
+
+/**
+ * 处理字段定义，将 @ 符号引用替换为实际字段定义
+ */
+function processFields(fields: Record<string, any>): Record<string, any> {
+    if (!fields || typeof fields !== 'object') return fields;
+
+    const processed: Record<string, any> = {};
+    for (const [key, value] of Object.entries(fields)) {
+        // 如果值是字符串且以 @ 开头，则查找预定义字段
+        if (typeof value === 'string' && value.startsWith('@')) {
+            if (PRESET_FIELDS[value]) {
+                processed[key] = PRESET_FIELDS[value];
+            } else {
+                // 未找到预定义字段，保持原值
+                processed[key] = value;
+            }
+        } else {
+            // 普通字段定义，保持原样
+            processed[key] = value;
+        }
+    }
+    return processed;
+}
+
+/**
  * 加载所有 API 路由
  * @param apis - API 跁由映射表
  */
@@ -75,8 +110,8 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 // 设置默认值
                 const methodStr = (api.method || 'POST').toUpperCase();
                 api.auth = api.auth !== undefined ? api.auth : true;
-                // 使用 API 自定义的 fields，不自动合并默认字段
-                api.fields = api.fields || {};
+                // 处理字段定义，将 @ 引用替换为实际字段定义
+                api.fields = processFields(api.fields || {});
                 api.required = api.required || [];
 
                 // 构建路由路径（不含方法）
