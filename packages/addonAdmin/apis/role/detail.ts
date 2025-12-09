@@ -1,5 +1,8 @@
 ﻿export default {
     name: '获取用户角色',
+    fields: {
+        id: '@id'
+    },
     handler: async (befly, ctx) => {
         let roleInfo = null;
         if (ctx.body.id && ctx.user.roleType === 'admin') {

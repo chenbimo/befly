@@ -10,6 +10,9 @@
 
 export default {
     name: '获取用户信息',
+    fields: {
+        id: '@id'
+    },
     handler: async (befly, ctx) => {
         // 从 JWT token 中获取用户ID
         const userId = ctx.user?.id;

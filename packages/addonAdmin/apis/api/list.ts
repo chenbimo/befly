@@ -2,6 +2,12 @@ import type { ApiRoute } from 'befly';
 
 export default {
     name: '获取接口列表（分页）',
+    fields: {
+        page: '@page',
+        limit: '@limit',
+        keyword: '@keyword',
+        state: '@state'
+    },
     handler: async (befly, ctx) => {
         try {
             const { page = 1, limit = 30, keyword = '' } = ctx.body;

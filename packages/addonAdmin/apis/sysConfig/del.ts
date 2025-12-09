@@ -1,5 +1,8 @@
 export default {
     name: '删除系统配置',
+    fields: {
+        id: '@id'
+    },
     handler: async (befly, ctx) => {
         try {
             // 检查是否为系统配置

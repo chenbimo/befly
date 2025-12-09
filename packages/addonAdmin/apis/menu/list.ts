@@ -1,5 +1,11 @@
 ﻿export default {
     name: '获取菜单列表',
+    fields: {
+        page: '@page',
+        limit: '@limit',
+        keyword: '@keyword',
+        state: '@state'
+    },
     handler: async (befly, ctx) => {
         try {
             const menus = await befly.db.getAll({

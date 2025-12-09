@@ -1,5 +1,8 @@
 ﻿export default {
     name: '删除字典',
+    fields: {
+        id: '@id'
+    },
     handler: async (befly, ctx) => {
         try {
             await befly.db.delData({

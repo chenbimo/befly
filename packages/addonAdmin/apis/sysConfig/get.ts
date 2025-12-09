@@ -1,6 +1,9 @@
 export default {
     name: '根据代码获取配置值',
     auth: false,
+    fields: {
+        code: { name: '配置代码', type: 'string', min: 1, max: 50 }
+    },
     handler: async (befly, ctx) => {
         const config = await befly.db.getDetail({
             table: 'addon_admin_sys_config',

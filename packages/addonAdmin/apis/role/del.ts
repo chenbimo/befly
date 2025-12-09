@@ -1,5 +1,8 @@
 ﻿export default {
     name: '删除角色',
+    fields: {
+        id: '@id'
+    },
     handler: async (befly, ctx) => {
         try {
             // 检查是否有用户使用此角色（使用 getList 代替 getAll）

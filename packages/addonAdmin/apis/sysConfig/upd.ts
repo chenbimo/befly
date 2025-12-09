@@ -2,7 +2,10 @@ import sysConfigTable from '../../tables/sysConfig.json';
 
 export default {
     name: '更新系统配置',
-    fields: sysConfigTable,
+    fields: {
+        id: '@id',
+        ...sysConfigTable
+    },
     handler: async (befly, ctx) => {
         try {
             // 检查是否为系统配置

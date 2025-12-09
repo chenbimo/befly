@@ -1,6 +1,8 @@
 ﻿export default {
     name: '删除管理员',
-    fields: {},
+    fields: {
+        id: '@id'
+    },
     required: ['id'],
     handler: async (befly, ctx) => {
         // 检查管理员是否存在

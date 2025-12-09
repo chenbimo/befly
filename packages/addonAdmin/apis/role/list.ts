@@ -1,5 +1,11 @@
 ﻿export default {
     name: '获取角色列表',
+    fields: {
+        page: '@page',
+        limit: '@limit',
+        keyword: '@keyword',
+        state: '@state'
+    },
     handler: async (befly, ctx) => {
         const roles = await befly.db.getList({
             limit: 30,

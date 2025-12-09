@@ -1,5 +1,8 @@
 ﻿export default {
     name: '获取字典详情',
+    fields: {
+        id: '@id'
+    },
     handler: async (befly, ctx) => {
         try {
             const dict = await befly.db.getDetail({

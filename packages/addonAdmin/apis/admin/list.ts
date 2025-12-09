@@ -1,5 +1,11 @@
 ﻿export default {
     name: '获取管理员列表',
+    fields: {
+        page: '@page',
+        limit: '@limit',
+        keyword: '@keyword',
+        state: '@state'
+    },
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({
             table: 'addon_admin_admin',
