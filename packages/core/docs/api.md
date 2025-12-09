@@ -24,7 +24,7 @@
         - [ErrorResponse - Hook 中断响应](#errorresponse---hook-中断响应)
         - [FinalResponse - 最终响应](#finalresponse---最终响应)
     - [字段定义与验证](#字段定义与验证)
-        - [默认字段](#默认字段)
+        - [预定义字段](#预定义字段)
         - [字段定义格式](#字段定义格式)
         - [字段类型](#字段类型)
         - [验证规则](#验证规则)
@@ -308,37 +308,39 @@ ctx.response = ErrorResponse(ctx, '未授权', 1, null);
 
 ## 字段定义与验证
 
-### 默认字段
+### 预定义字段
 
-所有 API 自动包含以下默认字段，**无需重复定义即可直接使用**：
+框架提供了一套预定义字段系统，通过 `@` 符号引用常用字段，避免重复定义。
+
+#### 可用预定义字段
 
 ```typescript
-const DEFAULT_API_FIELDS = {
-    id: {
+const PRESET_FIELDS = {
+    '@id': {
         name: 'ID',
         type: 'number',
         min: 1,
         max: null
     },
-    page: {
+    '@page': {
         name: '页码',
         type: 'number',
         min: 1,
         max: 9999
     },
-    limit: {
+    '@limit': {
         name: '每页数量',
         type: 'number',
         min: 1,
         max: 100
     },
-    keyword: {
+    '@keyword': {
         name: '关键词',
         type: 'string',
         min: 1,
         max: 50
     },
-    state: {
+    '@state': {
         name: '状态',
         type: 'number',
         min: 0,
@@ -347,37 +349,61 @@ const DEFAULT_API_FIELDS = {
 };
 ```
 
-#### 默认字段说明
+#### 预定义字段说明
 
-| 字段      | 类型     | 范围      | 说明                               |
-| --------- | -------- | --------- | ---------------------------------- |
-| `id`      | `number` | >= 1      | 通用 ID 字段，用于详情/删除等      |
-| `page`    | `number` | 1-9999    | 分页页码，默认从 1 开始            |
-| `limit`   | `number` | 1-100     | 每页数量，最大 100 条              |
-| `keyword` | `string` | 1-50 字符 | 搜索关键词                         |
-| `state`   | `number` | 0-2       | 状态字段（0=禁用，1=正常，2=其他） |
+| 字段       | 类型     | 范围      | 说明                                 |
+| ---------- | -------- | --------- | ------------------------------------ |
+| `@id`      | `number` | >= 1      | 通用 ID 字段，用于详情/删除等        |
+| `@page`    | `number` | 1-9999    | 分页页码，默认从 1 开始              |
+| `@limit`   | `number` | 1-100     | 每页数量，最大 100 条                |
+| `@keyword` | `string` | 1-50 字符 | 搜索关键词                           |
+| `@state`   | `number` | 0-2       | 状态字段（0=软删除，1=正常，2=禁用） |
 
-#### 自动合并机制
+#### 使用方式
 
-框架会自动将默认字段合并到 API 的 `fields` 中：
+在 `fields` 中使用 `@` 符号引用预定义字段：
 
-1. **无需声明即可使用**：默认字段会自动注入，直接从 `ctx.body` 获取
-2. **API 字段优先**：如果 API 中定义了同名字段，会覆盖默认字段
-3. **验证自动生效**：使用默认字段时，验证规则也会自动应用
+```typescript
+// 方式一：直接字符串引用
+fields: {
+    id: '@id',
+    page: '@page',
+    limit: '@limit',
+    keyword: '@keyword',
+    state: '@state'
+}
 
-#### 使用默认字段示例
+// 方式二：与自定义字段混用
+fields: {
+    page: '@page',
+    limit: '@limit',
+    categoryId: { name: '分类ID', type: 'number', min: 0 }
+}
+```
+
+#### 加载机制
+
+1. **按需引用**：只有在 `fields` 中显式声明的预定义字段才会生效
+2. **自动替换**：在 API 加载时，`@` 引用会被自动替换为完整的字段定义
+3. **验证生效**：引用的预定义字段会自动应用验证规则
+
+#### 使用预定义字段示例
+
+**列表查询接口**
 
 ```typescript
 // apis/article/list.ts
 export default {
     name: '文章列表',
     auth: true,
-    // 无需定义 page、limit、keyword，直接使用默认字段
     fields: {
+        page: '@page',
+        limit: '@limit',
+        keyword: '@keyword',
+        state: '@state',
         categoryId: { name: '分类ID', type: 'number', min: 0 }
     },
     handler: async (befly, ctx) => {
-        // 直接使用默认字段，已自动验证
         const { page, limit, keyword, categoryId } = ctx.body;
 
         const where: Record<string, any> = { state: 1 };
@@ -388,8 +414,8 @@ export default {
             table: 'article',
             columns: ['id', 'title', 'summary', 'createdAt'],
             where: where,
-            page: page || 1, // 默认第 1 页
-            limit: limit || 10, // 默认每页 10 条
+            page: page || 1,
+            limit: limit || 10,
             orderBy: { id: 'desc' }
         });
 
@@ -398,49 +424,18 @@ export default {
 } as ApiRoute;
 ```
 
-#### 覆盖默认字段
-
-如需修改默认字段的验证规则，在 `fields` 中重新定义即可：
-
-```typescript
-export default {
-    name: '大数据列表',
-    fields: {
-        // 覆盖默认的 limit 字段，允许更大的分页
-        limit: {
-            name: '每页数量',
-            type: 'number',
-            min: 1,
-            max: 500 // 修改最大值为 500
-        },
-        // 覆盖默认的 page 字段，添加默认值
-        page: {
-            name: '页码',
-            type: 'number',
-            min: 1,
-            max: 99999,
-            default: 1
-        }
-    },
-    handler: async (befly, ctx) => {
-        // ctx.body.limit 最大可以是 500
-        // ctx.body.page 如果未传则默认为 1
-        return befly.tool.Yes('获取成功');
-    }
-} as ApiRoute;
-```
-
-#### 详情/删除接口示例
+**详情/删除接口**
 
 ```typescript
 // apis/article/detail.ts
 export default {
     name: '文章详情',
     auth: false,
-    // id 是默认字段，无需定义
-    required: ['id'], // 标记为必填
+    fields: {
+        id: '@id'
+    },
+    required: ['id'],
     handler: async (befly, ctx) => {
-        // ctx.body.id 已自动验证：必须是 >= 1 的数字
         const article = await befly.db.getDetail({
             table: 'article',
             where: { id: ctx.body.id, state: 1 }
@@ -460,7 +455,10 @@ export default {
 export default {
     name: '删除文章',
     auth: true,
-    required: ['id'], // id 是默认字段，直接使用
+    fields: {
+        id: '@id'
+    },
+    required: ['id'],
     handler: async (befly, ctx) => {
         await befly.db.delData({
             table: 'article',
@@ -470,6 +468,71 @@ export default {
         return befly.tool.Yes('删除成功');
     }
 } as ApiRoute;
+```
+
+#### 覆盖预定义字段
+
+如需修改预定义字段的验证规则，在 `fields` 中重新定义即可：
+
+```typescript
+export default {
+    name: '大数据列表',
+    fields: {
+        page: '@page',
+        // 覆盖默认的 @limit，允许更大的分页
+        limit: {
+            name: '每页数量',
+            type: 'number',
+            min: 1,
+            max: 500 // 修改最大值为 500
+        }
+    },
+    handler: async (befly, ctx) => {
+        // ctx.body.limit 最大可以是 500
+        return befly.tool.Yes('获取成功');
+    }
+} as ApiRoute;
+```
+
+#### 预定义字段最佳实践
+
+**推荐使用场景**
+
+| API 类型 | 推荐字段                            | 说明               |
+| -------- | ----------------------------------- | ------------------ |
+| 列表查询 | `page`, `limit`, `keyword`, `state` | 完整的查询字段组合 |
+| 获取详情 | `id`                                | 只需 ID 参数       |
+| 删除操作 | `id`                                | 只需 ID 参数       |
+| 更新操作 | `id` + 表字段                       | ID + 业务字段      |
+| 添加操作 | 表字段（无需预定义字段）            | 只需业务字段       |
+
+**使用建议**
+
+```typescript
+// ✅ 推荐：列表查询使用完整预定义字段
+fields: {
+    page: '@page',
+    limit: '@limit',
+    keyword: '@keyword',
+    state: '@state'
+}
+
+// ✅ 推荐：详情/删除只使用 id
+fields: {
+    id: '@id'
+}
+
+// ✅ 推荐：更新接口混用预定义和表字段
+fields: {
+    id: '@id',
+    ...articleTable
+}
+
+// ❌ 避免：添加接口不需要预定义字段
+fields: {
+    page: '@page', // 添加操作不需要分页
+    ...articleTable
+}
 ```
 
 ### 字段定义格式
@@ -1017,8 +1080,10 @@ const cleanData = befly.db.cleanFields({ name: 'John', status: null, count: 0 },
 
 ```typescript
 fields: {
-    // 1. 首选：使用默认字段（id, page, limit, keyword, state）
-    // 无需定义，自动包含
+    // 1. 首选：使用预定义字段（@id, @page, @limit, @keyword, @state）
+    page: '@page',
+    limit: '@limit',
+    keyword: '@keyword',
 
     // 2. 次选：引用表字段
     email: adminTable.email,

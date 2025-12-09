@@ -284,10 +284,10 @@ export default {
     auth: true,
     permission: 'user:list',
     fields: {
-        page: { name: '页码', type: 'number', min: 1, default: 1 },
-        limit: { name: '每页数量', type: 'number', min: 1, max: 100, default: 20 },
-        keyword: { name: '关键词', type: 'string', max: 50 },
-        state: { name: '状态', type: 'number', min: -1, max: 1 },
+        page: '@page',
+        limit: '@limit',
+        keyword: '@keyword',
+        state: '@state',
         role: { name: '角色', type: 'string', max: 20 }
     },
     handler: async (befly, ctx) => {
@@ -429,7 +429,7 @@ export default {
     method: 'POST',
     auth: true,
     fields: {
-        id: { name: '文章ID', type: 'number', min: 1 },
+        id: '@id',
         title: { name: '标题', type: 'string', min: 2, max: 200 },
         content: { name: '内容', type: 'text', min: 1, max: 100000 },
         summary: { name: '摘要', type: 'string', max: 500 },
@@ -510,7 +510,7 @@ export default {
     method: 'POST',
     auth: true,
     fields: {
-        id: { name: '文章ID', type: 'number', min: 1 }
+        id: '@id'
     },
     required: ['id'],
     handler: async (befly, ctx) => {
@@ -561,11 +561,11 @@ export default {
     method: 'POST',
     auth: false,
     fields: {
-        page: { name: '页码', type: 'number', min: 1, default: 1 },
-        limit: { name: '每页数量', type: 'number', min: 1, max: 50, default: 10 },
+        page: '@page',
+        limit: '@limit',
+        keyword: '@keyword',
         categoryId: { name: '分类', type: 'number', min: 0 },
         authorId: { name: '作者', type: 'number', min: 0 },
-        keyword: { name: '关键词', type: 'string', max: 50 },
         isTop: { name: '置顶', type: 'number', min: 0, max: 1 },
         isRecommend: { name: '推荐', type: 'number', min: 0, max: 1 },
         orderBy: { name: '排序', type: 'string', max: 20 }
@@ -615,7 +615,7 @@ export default {
     method: 'GET',
     auth: false,
     fields: {
-        id: { name: '文章ID', type: 'number', min: 1 }
+        id: '@id'
     },
     required: ['id'],
     handler: async (befly, ctx) => {
