@@ -20,44 +20,6 @@ import { projectApiDir } from '../paths.js';
 import type { ApiRoute } from '../types/api.js';
 
 /**
- * API 默认字段定义
- * 这些字段会自动合并到所有 API 的 fields 中
- * API 自定义的同名字段可以覆盖这些默认值
- */
-const DEFAULT_API_FIELDS = {
-    id: {
-        name: 'ID',
-        type: 'number',
-        min: 1,
-        max: null
-    },
-    page: {
-        name: '页码',
-        type: 'number',
-        min: 1,
-        max: 9999
-    },
-    limit: {
-        name: '每页数量',
-        type: 'number',
-        min: 1,
-        max: 100
-    },
-    keyword: {
-        name: '关键词',
-        type: 'string',
-        min: 1,
-        max: 50
-    },
-    state: {
-        name: '状态',
-        type: 'number',
-        min: 0,
-        max: 2
-    }
-} as const;
-
-/**
  * 加载所有 API 路由
  * @param apis - API 跁由映射表
  */
@@ -113,8 +75,8 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 // 设置默认值
                 const methodStr = (api.method || 'POST').toUpperCase();
                 api.auth = api.auth !== undefined ? api.auth : true;
-                // 合并默认字段：默认字段作为基础，API 自定义字段优先级更高
-                api.fields = { ...DEFAULT_API_FIELDS, ...(api.fields || {}) };
+                // 使用 API 自定义的 fields，不自动合并默认字段
+                api.fields = api.fields || {};
                 api.required = api.required || [];
 
                 // 构建路由路径（不含方法）
