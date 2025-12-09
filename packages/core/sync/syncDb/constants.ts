@@ -19,17 +19,6 @@ export const DB_VERSION_REQUIREMENTS = {
 } as const;
 
 /**
- * 系统字段定义（所有表都包含的固定字段）
- */
-export const SYSTEM_FIELDS = {
-    ID: { name: 'id' },
-    CREATED_AT: { name: 'created_at' },
-    UPDATED_AT: { name: 'updated_at' },
-    DELETED_AT: { name: 'deleted_at' },
-    STATE: { name: 'state' }
-} as const;
-
-/**
  * 需要创建索引的系统字段
  */
 export const SYSTEM_INDEX_FIELDS = ['created_at', 'updated_at', 'state'] as const;

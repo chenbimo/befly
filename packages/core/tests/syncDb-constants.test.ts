@@ -3,7 +3,7 @@
  *
  * 测试 constants.ts 中的常量：
  * - DB_VERSION_REQUIREMENTS
- * - SYSTEM_FIELDS
+ * - SYSTEM_INDEX_FIELDS
  * - SYSTEM_INDEX_FIELDS
  * - CHANGE_TYPE_LABELS
  * - MYSQL_TABLE_CONFIG
@@ -33,28 +33,6 @@ describe('DB_VERSION_REQUIREMENTS', () => {
 
     test('SQLite 最低版本为 3.50.0', () => {
         expect(constants.DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION).toBe('3.50.0');
-    });
-});
-
-describe('SYSTEM_FIELDS', () => {
-    test('包含 id 字段', () => {
-        expect(constants.SYSTEM_FIELDS.ID.name).toBe('id');
-    });
-
-    test('包含 created_at 字段', () => {
-        expect(constants.SYSTEM_FIELDS.CREATED_AT.name).toBe('created_at');
-    });
-
-    test('包含 updated_at 字段', () => {
-        expect(constants.SYSTEM_FIELDS.UPDATED_AT.name).toBe('updated_at');
-    });
-
-    test('包含 deleted_at 字段', () => {
-        expect(constants.SYSTEM_FIELDS.DELETED_AT.name).toBe('deleted_at');
-    });
-
-    test('包含 state 字段', () => {
-        expect(constants.SYSTEM_FIELDS.STATE.name).toBe('state');
     });
 });
 
