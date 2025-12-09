@@ -27,8 +27,6 @@ export interface FieldDefinition {
     index: boolean;
     /** 是否唯一 */
     unique: boolean;
-    /** 字段注释 */
-    comment: string;
     /** 是否允许为空 */
     nullable: boolean;
     /** 是否无符号（仅 number 类型） */

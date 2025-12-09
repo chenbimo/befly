@@ -81,7 +81,6 @@ export function applyFieldDefaults(fieldDef: any): void {
     fieldDef.default = fieldDef.default ?? null;
     fieldDef.index = fieldDef.index ?? false;
     fieldDef.unique = fieldDef.unique ?? false;
-    fieldDef.comment = fieldDef.comment ?? '';
     fieldDef.nullable = fieldDef.nullable ?? false;
     fieldDef.unsigned = fieldDef.unsigned ?? true;
     fieldDef.regexp = fieldDef.regexp ?? null;

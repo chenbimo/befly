@@ -108,8 +108,6 @@ interface FieldDefinition {
     index?: boolean;
     /** 是否唯一 */
     unique?: boolean;
-    /** 字段注释 */
-    comment?: string;
     /** 是否允许为空 */
     nullable?: boolean;
     /** 是否无符号（仅 number 类型） */
@@ -136,7 +134,6 @@ interface FieldDefinition {
 | `default`  | `any`            | `null`  | 默认值                               |
 | `index`    | `boolean`        | `false` | 是否创建普通索引                     |
 | `unique`   | `boolean`        | `false` | 是否唯一约束                         |
-| `comment`  | `string`         | `''`    | 数据库字段注释                       |
 | `nullable` | `boolean`        | `false` | 是否允许 NULL                        |
 | `unsigned` | `boolean`        | `true`  | 是否无符号（仅 number 类型有效）     |
 | `regexp`   | `string \| null` | `null`  | 正则验证规则（内置或自定义）         |

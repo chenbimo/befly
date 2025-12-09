@@ -170,8 +170,8 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         }
     }
 
-    // PG 列注释处理
-    const commentActions = [];
+    // PG 列注释处理（对比数据库 comment 与字段 name）
+    const commentActions: string[] = [];
     if (isPG()) {
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             // 转换字段名为下划线格式

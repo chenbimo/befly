@@ -19,7 +19,7 @@ import type { SQL } from 'bun';
 import type { FieldDefinition } from 'befly-shared/types';
 
 /**
- * 为 PostgreSQL 表添加列注释
+ * 为 PostgreSQL 表添加列注释（使用字段的 name 作为注释）
  *
  * @param sql - SQL 客户端实例
  * @param tableName - 表名
@@ -44,7 +44,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
         }
     }
 
-    // 业务字段注释
+    // 业务字段注释（使用 fieldDef.name 作为数据库列注释）
     for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
@@ -149,7 +149,7 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
         await sql.unsafe(createSQL);
     }
 
-    // PostgreSQL: 添加列注释
+    // PostgreSQL: 添加列注释（使用字段 name 作为数据库列注释）
     if (isPG() && !IS_PLAN) {
         await addPostgresComments(sql, tableName, fields);
     } else if (isPG() && IS_PLAN) {

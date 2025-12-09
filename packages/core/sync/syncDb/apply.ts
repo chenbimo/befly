@@ -61,7 +61,7 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
         }
     }
 
-    // 检查注释变化（MySQL/PG 支持列注释）
+    // 检查注释变化（MySQL/PG 支持列注释，对比数据库 comment 与字段 name）
     if (!isSQLite()) {
         const currentComment = existingColumn.comment || '';
         if (currentComment !== fieldDef.name) {

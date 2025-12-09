@@ -22,11 +22,11 @@ export const DB_VERSION_REQUIREMENTS = {
  * 系统字段定义（所有表都包含的固定字段）
  */
 export const SYSTEM_FIELDS = {
-    ID: { name: 'id', comment: '主键ID' },
-    CREATED_AT: { name: 'created_at', comment: '创建时间' },
-    UPDATED_AT: { name: 'updated_at', comment: '更新时间' },
-    DELETED_AT: { name: 'deleted_at', comment: '删除时间' },
-    STATE: { name: 'state', comment: '状态字段' }
+    ID: { name: 'id' },
+    CREATED_AT: { name: 'created_at' },
+    UPDATED_AT: { name: 'updated_at' },
+    DELETED_AT: { name: 'deleted_at' },
+    STATE: { name: 'state' }
 } as const;
 
 /**

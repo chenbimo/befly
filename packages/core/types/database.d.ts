@@ -203,8 +203,6 @@ export interface ColumnInfo {
     nullable: boolean;
     /** 默认值 */
     default: any;
-    /** 注释 */
-    comment: string;
     /** 长度 */
     length?: number;
 }
