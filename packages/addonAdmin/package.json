@@ -47,7 +47,7 @@
     "dependencies": {
         "befly-shared": "^1.2.2",
         "nodemailer": "^7.0.11",
-        "ua-parser-js": "^2.0.6"
+        "ua-parser-js": "^2.0.7"
     },
     "devDependencies": {
         "@types/nodemailer": "^7.0.4",
