@@ -206,6 +206,11 @@ export async function checkTable(): Promise<void> {
                         hasError = true;
                     }
 
+                    // 检查 unique 和 index 冲突（警告但不阻断）
+                    if (field.unique && field.index) {
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 同时设置了 unique=true 和 index=true，` + `unique 约束会自动创建唯一索引，index=true 将被忽略以避免重复索引`);
+                    }
+
                     // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
                     if (fieldMin !== undefined && fieldMax !== undefined && fieldMin !== null && fieldMax !== null) {
                         if (fieldMin > fieldMax) {

@@ -161,7 +161,8 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
         const dbFieldName = snakeCase(fieldKey);
 
         const indexName = `idx_${dbFieldName}`;
-        if (fieldDef.index && !existingIndexes[indexName]) {
+        // 如果字段有 unique 约束，跳过创建普通索引（unique 会自动创建唯一索引）
+        if (fieldDef.index && !fieldDef.unique && !existingIndexes[indexName]) {
             indexActions.push({ action: 'create', indexName: indexName, fieldName: dbFieldName });
             changed = true;
         } else if (!fieldDef.index && existingIndexes[indexName] && existingIndexes[indexName].length === 1) {
