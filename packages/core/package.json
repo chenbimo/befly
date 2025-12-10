@@ -74,7 +74,7 @@
         "pino": "^10.1.0",
         "pino-roll": "^4.0.0"
     },
-    "gitHead": "6ccfd16045c2167aa95c0b83b8d2995729d1c33e",
+    "gitHead": "b016a4842dc762487ff81f54624f84e3eb898fa2",
     "devDependencies": {
         "typescript": "^5.9.3"
     }
