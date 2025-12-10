@@ -6,8 +6,8 @@
 import nodemailer from 'nodemailer';
 
 import type { Transporter } from 'nodemailer';
-import type { Plugin } from 'befly-core/types/plugin.js';
-import type { BeflyContext } from 'befly-core/types/befly.js';
+import type { Plugin } from 'befly/types/plugin.js';
+import type { BeflyContext } from 'befly/types/befly.js';
 
 /** 邮件配置 */
 export interface EmailConfig {

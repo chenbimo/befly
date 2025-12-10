@@ -519,7 +519,7 @@ const plugin: Plugin = {
 ### 直接导入
 
 ```typescript
-import { beflyConfig } from 'befly-core/befly.config';
+import { beflyConfig } from 'befly/befly.config';
 
 console.log(beflyConfig.appName);
 ```

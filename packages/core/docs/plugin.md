@@ -1,4 +1,4 @@
-# 插件开发指南
+﻿# 插件开发指南
 
 > 本文档详细介绍 Befly 框架的插件系统，包括插件结构、生命周期、内置插件及自定义插件开发。
 
@@ -68,7 +68,7 @@ Befly 插件系统是框架的核心扩展机制，允许开发者封装和复�
 ### 基础结构
 
 ```typescript
-import type { Plugin } from 'befly-core/types/plugin';
+import type { Plugin } from 'befly/types/plugin';
 
 const plugin: Plugin = {
     // 依赖的插件列表（可选）
@@ -440,7 +440,7 @@ return befly.tool.No('操作失败');
 
 ```typescript
 // plugins/hello.ts
-import type { Plugin } from 'befly-core/types/plugin';
+import type { Plugin } from 'befly/types/plugin';
 
 const plugin: Plugin = {
     handler: () => {
@@ -467,8 +467,8 @@ const greeting = befly.app_hello.sayHello('World');
 
 ```typescript
 // plugins/userService.ts
-import type { Plugin } from 'befly-core/types/plugin';
-import type { BeflyContext } from 'befly-core/types/befly';
+import type { Plugin } from 'befly/types/plugin';
+import type { BeflyContext } from 'befly/types/befly';
 
 const plugin: Plugin = {
     after: ['db', 'redis'], // 依赖数据库和 Redis
@@ -507,7 +507,7 @@ export default plugin;
 
 ```typescript
 // plugins/elastic.ts
-import type { Plugin } from 'befly-core/types/plugin';
+import type { Plugin } from 'befly/types/plugin';
 import { Client } from '@elastic/elasticsearch';
 
 const plugin: Plugin = {
@@ -550,8 +550,8 @@ export default plugin;
 
 ```typescript
 // plugins/sms.ts
-import type { Plugin } from 'befly-core/types/plugin';
-import type { BeflyContext } from 'befly-core/types/befly';
+import type { Plugin } from 'befly/types/plugin';
+import type { BeflyContext } from 'befly/types/befly';
 
 interface SmsConfig {
     accessKeyId: string;
@@ -598,8 +598,8 @@ export default plugin;
 // addonAdmin/plugins/email.ts
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
-import type { Plugin } from 'befly-core/types/plugin';
-import type { BeflyContext } from 'befly-core/types/befly';
+import type { Plugin } from 'befly/types/plugin';
+import type { BeflyContext } from 'befly/types/befly';
 
 /** 邮件配置 */
 interface EmailConfig {
@@ -767,8 +767,8 @@ Addon 插件是组件包中的扩展功能，用于为 Addon 提供特定的服�
 
 ```typescript
 // packages/addonPay/plugins/wechat.ts
-import type { Plugin } from 'befly-core/types/plugin';
-import type { BeflyContext } from 'befly-core/types/befly';
+import type { Plugin } from 'befly/types/plugin';
+import type { BeflyContext } from 'befly/types/befly';
 
 class WechatPayHelper {
     private befly: BeflyContext;

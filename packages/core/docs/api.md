@@ -1,4 +1,4 @@
-# Befly API 接口文档
+﻿# Befly API 接口文档
 
 > 本文档详细介绍 Befly 框架的 API 接口开发规范，包括路由定义、参数验证、权限控制、请求处理流程等。
 
@@ -123,7 +123,7 @@ addonAdmin/apis/
 ### 基础结构
 
 ```typescript
-import type { ApiRoute } from 'befly-core/types/api';
+import type { ApiRoute } from 'befly/types/api';
 
 export default {
     // 必填字段
@@ -294,7 +294,7 @@ befly.tool.No(msg: string, data?: any, other?: Record<string, any>)
 在 Hook 中使用，用于提前拦截请求：
 
 ```typescript
-import { ErrorResponse } from 'befly-core/util';
+import { ErrorResponse } from 'befly/util';
 
 // 在 Hook 中使用
 ctx.response = ErrorResponse(ctx, '未授权', 1, null);
@@ -1208,7 +1208,7 @@ handler: async (befly, ctx) => {
 
 ```typescript
 // tpl/hooks/requestLog.ts
-import type { Hook } from 'befly-core/types/hook';
+import type { Hook } from 'befly/types/hook';
 
 const hook: Hook = {
     order: 100, // 执行顺序

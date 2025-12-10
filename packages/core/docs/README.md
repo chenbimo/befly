@@ -1,4 +1,4 @@
-# Befly Core 文档
+﻿# Befly Core 文档
 
 > Befly 是基于 Bun 的高性能 API 框架
 
@@ -75,7 +75,7 @@
 ## 常用链接
 
 - [GitHub](https://github.com/chenbimo/befly)
-- [npm](https://www.npmjs.com/package/befly-core)
+- [npm](https://www.npmjs.com/package/befly)
 
 ## 版本信息
 

@@ -1,4 +1,4 @@
-# Quickstart 快速入门
+﻿# Quickstart 快速入门
 
 > 5 分钟搭建你的第一个 Befly API 服务
 
@@ -74,7 +74,7 @@ my-api/
 在 `apis/user/` 目录下创建 `login.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly-core/types';
+import type { ApiRoute } from 'befly/types';
 
 export default {
     name: '用户登录',

@@ -1,4 +1,4 @@
-# Addon 插件包开发
+﻿# Addon 插件包开发
 
 > 可复用的功能模块，包含 API、表、插件、视图
 
@@ -127,7 +127,7 @@ bun init
 `apis/hello/world.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly-core/types/api.js';
+import type { ApiRoute } from 'befly/types/api.js';
 
 export default {
     name: 'Hello World',
@@ -267,7 +267,7 @@ apis/
 ### API 定义示例
 
 ```typescript
-import type { ApiRoute } from 'befly-core/types/api.js';
+import type { ApiRoute } from 'befly/types/api.js';
 
 export default {
     name: '管理员登录',
@@ -339,7 +339,7 @@ await befly.db.getList({
 `plugins/email.ts`：
 
 ```typescript
-import type { Plugin } from 'befly-core/types/plugin.js';
+import type { Plugin } from 'befly/types/plugin.js';
 
 export interface EmailConfig {
     host: string;

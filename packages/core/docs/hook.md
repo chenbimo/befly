@@ -1,4 +1,4 @@
-# Hook 钩子开发指南
+﻿# Hook 钩子开发指南
 
 > 本文档详细介绍 Befly 框架的 Hook 钩子系统，包括钩子结构、执行顺序、内置钩子及自定义钩子开发。
 
@@ -72,7 +72,7 @@ Befly Hook 系统是请求处理的中间件机制，采用串联模式依次执
 ### 基础结构
 
 ```typescript
-import type { Hook } from 'befly-core/types/hook';
+import type { Hook } from 'befly/types/hook';
 
 const hook: Hook = {
     // 执行顺序（数字越小越先执行）
@@ -462,7 +462,7 @@ const hook: Hook = {
 
 ```typescript
 // hooks/myHook.ts（项目钩子名：app_myHook）
-import type { Hook } from 'befly-core/types/hook';
+import type { Hook } from 'befly/types/hook';
 
 const hook: Hook = {
     order: 10,
@@ -482,8 +482,8 @@ export default hook;
 
 ```typescript
 // hooks/blacklist.ts
-import type { Hook } from 'befly-core/types/hook';
-import { ErrorResponse } from 'befly-core/util';
+import type { Hook } from 'befly/types/hook';
+import { ErrorResponse } from 'befly/util';
 
 const hook: Hook = {
     order: 1, // 最先执行
@@ -509,8 +509,8 @@ export default hook;
 
 ```typescript
 // hooks/rateLimit.ts
-import type { Hook } from 'befly-core/types/hook';
-import { ErrorResponse } from 'befly-core/util';
+import type { Hook } from 'befly/types/hook';
+import { ErrorResponse } from 'befly/util';
 
 const hook: Hook = {
     order: 7,
@@ -551,7 +551,7 @@ export default hook;
 
 ```typescript
 // hooks/audit.ts
-import type { Hook } from 'befly-core/types/hook';
+import type { Hook } from 'befly/types/hook';
 
 const hook: Hook = {
     order: 100, // 在 handler 执行后
@@ -590,7 +590,7 @@ export default hook;
 设置 `ctx.response` 可以中断后续 Hook 和 API Handler 的执行：
 
 ```typescript
-import { ErrorResponse } from 'befly-core/util';
+import { ErrorResponse } from 'befly/util';
 
 const hook: Hook = {
     order: 5,
