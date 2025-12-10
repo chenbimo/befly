@@ -199,11 +199,11 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
 async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<void> {
     const allRecords = await helper.getAll({
         table: 'addon_admin_api',
-        fields: ['id', 'path'],
+        fields: ['id', 'addonName', 'path', 'method'],
         where: { state$gte: 0 }
     });
 
-    for (const record of allRecords) {
+    for (const record of allRecords.lists) {
         if (record.path && !apiPaths.has(record.path)) {
             await helper.delForce({
                 table: 'addon_admin_api',
@@ -255,7 +255,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
             });
 
             const redisHelper = new RedisHelper();
-            await redisHelper.setObject(RedisKeys.apisAll(), apiList);
+            await redisHelper.setObject(RedisKeys.apisAll(), apiList.lists);
         } catch (error: any) {
             // 忽略缓存错误
         }

@@ -164,6 +164,16 @@ export interface ListResult<T = any> {
 }
 
 /**
+ * 全部查询结果
+ */
+export interface AllResult<T = any> {
+    /** 数据列表 */
+    lists: T[];
+    /** 总条数 */
+    total: number;
+}
+
+/**
  * 事务回调函数
  */
 export type TransactionCallback<T = any> = (trans: DbHelper) => Promise<T>;
@@ -269,7 +279,7 @@ export interface DbHelper {
      * @template K - 表名类型
      * @returns 返回类型自动推断为对应表的记录数组
      */
-    getAll<K extends TableName>(options: Omit<TypedQueryOptions<K>, 'page' | 'limit'>): Promise<TableType<K>[]>;
+    getAll<K extends TableName>(options: Omit<TypedQueryOptions<K>, 'page' | 'limit'>): Promise<AllResult<TableType<K>>>;
 
     /**
      * 插入数据（类型安全版本）
@@ -314,7 +324,7 @@ export interface DbHelper {
      * 查询所有数据（兼容版本，需手动指定泛型）
      * @template T - 返回类型
      */
-    getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]>;
+    getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<AllResult<T>>;
 
     /**
      * 插入数据（兼容版本）

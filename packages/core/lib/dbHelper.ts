@@ -13,7 +13,7 @@ import { RedisTTL, RedisKeys } from 'befly-shared/redisKeys';
 import { Logger } from './logger.js';
 import type { WhereConditions, JoinOption } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';
-import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, TransactionCallback } from '../types/database.js';
+import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback } from '../types/database.js';
 
 /**
  * 数据库助手类
@@ -691,40 +691,66 @@ export class DbHelper {
      *     where: { 'o.state': 1 }
      * })
      */
-    async getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<T[]> {
+    async getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<AllResult<T>> {
         // 添加硬性上限保护，防止内存溢出
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
 
         const prepared = await this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
 
-        const builder = new SqlBuilder().select(prepared.fields).from(prepared.table).where(this.addDefaultStateFilter(prepared.where)).limit(MAX_LIMIT);
+        const whereFiltered = this.addDefaultStateFilter(prepared.where);
 
-        // 添加 JOIN
-        this.applyJoins(builder, prepared.joins);
+        // 查询真实总数
+        const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(prepared.table).where(whereFiltered);
 
-        if (prepared.orderBy && prepared.orderBy.length > 0) {
-            builder.orderBy(prepared.orderBy);
+        // 添加 JOIN（计数也需要）
+        this.applyJoins(countBuilder, prepared.joins);
+
+        const { sql: countSql, params: countParams } = countBuilder.toSelectSql();
+        const countResult = await this.executeWithConn(countSql, countParams);
+        const total = countResult?.[0]?.total || 0;
+
+        // 如果总数为 0，直接返回
+        if (total === 0) {
+            return {
+                lists: [],
+                total: 0
+            };
         }
 
-        const { sql, params } = builder.toSelectSql();
-        const result = (await this.executeWithConn(sql, params)) || [];
+        // 查询数据（受上限保护）
+        const dataBuilder = new SqlBuilder().select(prepared.fields).from(prepared.table).where(whereFiltered).limit(MAX_LIMIT);
+
+        // 添加 JOIN
+        this.applyJoins(dataBuilder, prepared.joins);
+
+        if (prepared.orderBy && prepared.orderBy.length > 0) {
+            dataBuilder.orderBy(prepared.orderBy);
+        }
+
+        const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
+        const result = (await this.executeWithConn(dataSql, dataParams)) || [];
 
         // 警告日志：返回数据超过警告阈值
         if (result.length >= WARNING_LIMIT) {
-            Logger.warn({ table: options.table, count: result.length }, 'getAll 返回数据过多，建议使用 getList 分页查询');
+            Logger.warn({ table: options.table, count: result.length, total: total }, 'getAll 返回数据过多，建议使用 getList 分页查询');
         }
 
         // 如果达到上限，额外警告
         if (result.length >= MAX_LIMIT) {
-            Logger.warn({ table: options.table, limit: MAX_LIMIT }, 'getAll 达到最大限制，可能还有更多数据');
+            Logger.warn({ table: options.table, limit: MAX_LIMIT, total: total }, `getAll 达到最大限制 ${MAX_LIMIT}，实际总数 ${total}，只返回前 ${MAX_LIMIT} 条`);
         }
 
         // 字段名转换：下划线 → 小驼峰
         const camelResult = arrayKeysToCamel<T>(result);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        return this.convertBigIntFields<T>(camelResult);
+        const lists = this.convertBigIntFields<T>(camelResult);
+
+        return {
+            lists: lists,
+            total: total
+        };
     }
 
     /**

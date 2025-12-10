@@ -32,8 +32,8 @@ export default {
                     orderBy: ['addonName#ASC', 'path#ASC']
                 });
 
-                await befly.redis.setObject(RedisKeys.apisAll(), apis);
-                results.apis = { success: true, count: apis.length };
+                await befly.redis.setObject(RedisKeys.apisAll(), apis.lists);
+                results.apis = { success: true, count: apis.lists.length };
             } catch (error: any) {
                 befly.logger.error({ err: error }, '刷新接口缓存失败');
                 results.apis = { success: false, error: error.message };
@@ -47,14 +47,14 @@ export default {
                     orderBy: ['sort#ASC', 'id#ASC']
                 });
 
-                await befly.redis.setObject(RedisKeys.menusAll(), menus);
+                await befly.redis.setObject(RedisKeys.menusAll(), menus.lists);
 
-                const parentCount = menus.filter((m: any) => m.pid === 0).length;
-                const childCount = menus.filter((m: any) => m.pid !== 0).length;
+                const parentCount = menus.lists.filter((m: any) => m.pid === 0).length;
+                const childCount = menus.lists.filter((m: any) => m.pid !== 0).length;
 
                 results.menus = {
                     success: true,
-                    count: menus.length,
+                    count: menus.lists.length,
                     parentCount: parentCount,
                     childCount: childCount
                 };
@@ -67,19 +67,18 @@ export default {
             try {
                 const roles = await befly.db.getAll({
                     table: 'addon_admin_role',
-                    fields: ['id', 'name', 'code', 'apis', 'menus'],
-                    orderBy: ['id#ASC']
+                    fields: ['id', 'name', 'code', 'menus', 'apis']
                 });
 
-                // 使用 setBatch 批量缓存所有角色（利用 Bun Redis auto-pipeline）
-                await befly.redis.setBatch(
-                    roles.map((role: any) => ({
+                // 使用 setBatch 批量缓存所有角色
+                const count = await befly.redis.setBatch(
+                    roles.lists.map((role: any) => ({
                         key: RedisKeys.roleInfo(role.code),
                         value: role
                     }))
                 );
 
-                results.roles = { success: true, count: roles.length };
+                results.roles = { success: true, count: count };
             } catch (error: any) {
                 befly.logger.error({ err: error }, '刷新角色缓存失败');
                 results.roles = { success: false, error: error.message };

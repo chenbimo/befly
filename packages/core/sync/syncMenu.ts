@@ -235,7 +235,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
         fields: ['id', 'pid', 'name', 'path', 'sort']
     });
     const existingMenuMap = new Map<string, any>();
-    for (const menu of allExistingMenus) {
+    for (const menu of allExistingMenus.lists) {
         if (menu.path) {
             existingMenuMap.set(menu.path, menu);
         }
@@ -261,7 +261,7 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
         where: { state$gte: 0 }
     });
 
-    for (const record of allRecords) {
+    for (const record of allRecords.lists) {
         if (record.path && !configPaths.has(record.path)) {
             await helper.delForce({
                 table: 'addon_admin_menu',
@@ -375,7 +375,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         // 8. 缓存菜单数据到 Redis
         try {
             const redisHelper = new RedisHelper();
-            await redisHelper.setObject(RedisKeys.menusAll(), allMenusData);
+            await redisHelper.setObject(RedisKeys.menusAll(), allMenusData.lists);
         } catch (error: any) {
             Logger.warn({ err: error }, 'Redis 缓存菜单数据失败');
         }

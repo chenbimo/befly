@@ -36,11 +36,12 @@ export default {
 
             // 如果缓存不存在，从数据库查询
             if (allMenus.length === 0) {
-                allMenus = await befly.db.getAll({
+                const result = await befly.db.getAll({
                     table: 'addon_admin_menu',
-                    fields: ['id', 'pid', 'name', 'path', 'icon', 'sort'],
+                    fields: ['id', 'pid', 'name', 'path', 'sort'],
                     orderBy: ['sort#ASC', 'id#ASC']
                 });
+                allMenus = result.lists;
             }
 
             if (allMenus.length === 0) {

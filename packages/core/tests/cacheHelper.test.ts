@@ -76,7 +76,7 @@ describe('CacheHelper', () => {
                 { id: 1, name: '登录', path: '/api/login', method: 'POST' },
                 { id: 2, name: '用户列表', path: '/api/user/list', method: 'GET' }
             ];
-            mockDb.getAll = mock(() => Promise.resolve(apis));
+            mockDb.getAll = mock(() => Promise.resolve({ lists: apis, total: apis.length }));
 
             await cacheHelper.cacheApis();
 
@@ -115,7 +115,7 @@ describe('CacheHelper', () => {
                 { id: 1, pid: 0, name: '首页', path: '/home', sort: 1 },
                 { id: 2, pid: 0, name: '用户管理', path: '/user', sort: 2 }
             ];
-            mockDb.getAll = mock(() => Promise.resolve(menus));
+            mockDb.getAll = mock(() => Promise.resolve({ lists: menus, total: menus.length }));
 
             await cacheHelper.cacheMenus();
 
@@ -148,9 +148,9 @@ describe('CacheHelper', () => {
             ];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === 'addon_admin_role') return Promise.resolve(roles);
-                if (opts.table === 'addon_admin_api') return Promise.resolve(apis);
-                return Promise.resolve([]);
+                if (opts.table === 'addon_admin_role') return Promise.resolve({ lists: roles, total: roles.length });
+                if (opts.table === 'addon_admin_api') return Promise.resolve({ lists: apis, total: apis.length });
+                return Promise.resolve({ lists: [], total: 0 });
             });
 
             await cacheHelper.cacheRolePermissions();
@@ -169,9 +169,9 @@ describe('CacheHelper', () => {
             const apis = [{ id: 1, path: '/api/login', method: 'POST' }];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === 'addon_admin_role') return Promise.resolve(roles);
-                if (opts.table === 'addon_admin_api') return Promise.resolve(apis);
-                return Promise.resolve([]);
+                if (opts.table === 'addon_admin_role') return Promise.resolve({ lists: roles, total: roles.length });
+                if (opts.table === 'addon_admin_api') return Promise.resolve({ lists: apis, total: apis.length });
+                return Promise.resolve({ lists: [], total: 0 });
             });
 
             await cacheHelper.cacheRolePermissions();
@@ -188,9 +188,9 @@ describe('CacheHelper', () => {
             const apis = [{ id: 1, path: '/api/test', method: 'GET' }];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === 'addon_admin_role') return Promise.resolve(roles);
-                if (opts.table === 'addon_admin_api') return Promise.resolve(apis);
-                return Promise.resolve([]);
+                if (opts.table === 'addon_admin_role') return Promise.resolve({ lists: roles, total: roles.length });
+                if (opts.table === 'addon_admin_api') return Promise.resolve({ lists: apis, total: apis.length });
+                return Promise.resolve({ lists: [], total: 0 });
             });
 
             await cacheHelper.cacheRolePermissions();

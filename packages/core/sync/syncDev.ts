@@ -64,12 +64,12 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             fields: ['id']
         });
 
-        if (!allMenus || !Array.isArray(allMenus)) {
+        if (!allMenus || !Array.isArray(allMenus.lists)) {
             Logger.debug('[SyncDev] 菜单数据为空，跳过开发者账号同步');
             return;
         }
 
-        const menuIds = allMenus.length > 0 ? allMenus.map((m: any) => m.id).join(',') : '';
+        const menuIds = allMenus.lists.length > 0 ? allMenus.lists.map((m: any) => m.id).join(',') : '';
 
         // 查询所有接口 ID
         const existApi = await helper.tableExists('addon_admin_api');
@@ -80,8 +80,8 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
                 fields: ['id']
             });
 
-            if (allApis && Array.isArray(allApis) && allApis.length > 0) {
-                apiIds = allApis.map((a: any) => a.id).join(',');
+            if (allApis && Array.isArray(allApis.lists) && allApis.lists.length > 0) {
+                apiIds = allApis.lists.map((a: any) => a.id).join(',');
             }
         }
 

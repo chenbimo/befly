@@ -42,7 +42,7 @@ export class CacheHelper {
             });
 
             // 缓存到 Redis
-            const result = await this.befly.redis.setObject(RedisKeys.apisAll(), apiList);
+            const result = await this.befly.redis.setObject(RedisKeys.apisAll(), apiList.lists);
 
             if (result === null) {
                 Logger.warn('⚠️ 接口缓存失败');
@@ -72,7 +72,7 @@ export class CacheHelper {
             });
 
             // 缓存到 Redis
-            const result = await this.befly.redis.setObject(RedisKeys.menusAll(), menus);
+            const result = await this.befly.redis.setObject(RedisKeys.menusAll(), menus.lists);
 
             if (result === null) {
                 Logger.warn('⚠️ 菜单缓存失败');
@@ -111,14 +111,14 @@ export class CacheHelper {
 
             // 构建接口 ID -> 路径的映射（避免重复过滤）
             const apiMap = new Map<number, string>();
-            for (const api of allApis) {
+            for (const api of allApis.lists) {
                 apiMap.set(api.id, `${api.method}${api.path}`);
             }
 
             // 收集需要缓存的角色权限
             const cacheOperations: Array<{ roleCode: string; apiPaths: string[] }> = [];
 
-            for (const role of roles) {
+            for (const role of roles.lists) {
                 if (!role.apis) continue;
 
                 // 解析角色的接口 ID 列表并映射到路径

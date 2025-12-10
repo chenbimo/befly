@@ -11,6 +11,6 @@
             orderBy: ['sort#ASC', 'id#ASC']
         });
 
-        return befly.tool.Yes('操作成功', roles);
+        return befly.tool.Yes('操作成功', { lists: roles.lists, total: roles.total });
     }
 };
