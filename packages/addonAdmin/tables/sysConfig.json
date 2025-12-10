@@ -22,7 +22,7 @@
         "type": "string",
         "max": 20,
         "default": "string",
-        "comment": "string number boolean json"
+        "detail": "string number boolean json"
     },
     "group": {
         "name": "配置分组",
@@ -43,7 +43,7 @@
         "min": 0,
         "max": 1,
         "default": 0,
-        "comment": "1是 0否"
+        "detail": "1是 0否"
     },
     "description": {
         "name": "描述说明",

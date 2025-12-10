@@ -55,7 +55,7 @@
         "min": 0,
         "max": 1,
         "default": 1,
-        "comment": "1成功 0失败"
+        "detail": "1成功 0失败"
     },
     "response": {
         "name": "响应内容",

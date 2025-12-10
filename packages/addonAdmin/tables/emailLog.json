@@ -21,15 +21,13 @@
         "type": "string",
         "min": 5,
         "max": 200,
-        "required": true,
-        "regex": "email"
+        "regexp": "@email"
     },
     "subject": {
         "name": "邮件主题",
         "type": "string",
         "min": 1,
-        "max": 200,
-        "required": true
+        "max": 200
     },
     "content": {
         "name": "邮件内容",
