@@ -21,7 +21,11 @@ export default {
     },
     required: ['to', 'subject', 'content'],
     handler: async (befly, ctx) => {
-        const result = await befly.email.sendAndLog({
+        if (!(befly as any).addon_admin_email) {
+            return befly.tool.No('邮件插件未加载，请检查配置');
+        }
+
+        const result = await (befly as any).addon_admin_email.sendAndLog({
             adminId: ctx.user?.id || 0,
             username: ctx.user?.username || '',
             nickname: ctx.user?.nickname || '',
