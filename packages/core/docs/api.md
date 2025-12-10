@@ -1430,7 +1430,7 @@ export default {
         }
 
         // 查询订单明细
-        const items = await befly.db.getAll({
+        const itemsResult = await befly.db.getAll({
             table: 'order_item',
             where: { orderId: order.id }
         });
@@ -1438,6 +1438,14 @@ export default {
         // 查询用户信息
         const user = await befly.db.getOne({
             table: 'user',
+            where: { id: order.userId }
+        });
+
+        return befly.tool.Yes('查询成功', {
+            order: order,
+            items: itemsResult.lists,  // 订单明细列表
+            user: user
+        });
             where: { id: order.userId },
             columns: ['id', 'username', 'nickname', 'phone']
         });
@@ -1494,10 +1502,12 @@ export default {
 
         if (!config) {
             // 缓存不存在，从数据库查询
-            config = await befly.db.getAll({
+            const result = await befly.db.getAll({
                 table: 'sys_config',
                 where: { state: 1 }
             });
+
+            config = result.lists; // 获取配置列表
 
             // 写入缓存
             await befly.redis.set(cacheKey, JSON.stringify(config), 'EX', 300);
@@ -1546,8 +1556,8 @@ export default {
 export default {
     name: '导出用户数据',
     handler: async (befly, ctx) => {
-        // 查询所有用户（不分页）
-        const users = await befly.db.getAll({
+        // 查询所有用户（不分页，注意上限 10000 条）
+        const result = await befly.db.getAll({
             table: 'user',
             columns: ['id', 'username', 'nickname', 'email', 'phone', 'createdAt'],
             where: { state: 1 },
@@ -1556,11 +1566,11 @@ export default {
 
         // 转换为 CSV 格式
         const headers = ['ID', '用户名', '昵称', '邮箱', '手机', '注册时间'];
-        const rows = users.map((u: any) => [u.id, u.username, u.nickname, u.email, u.phone, new Date(u.createdAt).toLocaleString()]);
+        const rows = result.lists.map((u: any) => [u.id, u.username, u.nickname, u.email, u.phone, new Date(u.createdAt).toLocaleString()]);
 
         const csv = [headers.join(','), ...rows.map((r: any[]) => r.join(','))].join('\n');
 
-        // 返回 CSV 文件
+        // 返回 CSV 文件（注意：如果 total > 10000，只会导出前 10000 条）
         return new Response(csv, {
             headers: {
                 'Content-Type': 'text/csv; charset=utf-8',

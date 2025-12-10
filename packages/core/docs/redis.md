@@ -438,12 +438,13 @@ let articles = await befly.redis.getObject(cacheKey);
 
 if (!articles) {
     // 缓存未命中，查询数据库
-    articles = await befly.db.getAll({
+    const result = await befly.db.getAll({
         table: 'article',
         fields: ['id', 'title', 'viewCount'],
-        orderBy: ['viewCount#DESC'],
-        limit: 10
+        orderBy: ['viewCount#DESC']
     });
+
+    articles = result.lists; // 获取数据列表（最多 10000 条）
 
     // 写入缓存，5分钟过期
     await befly.redis.setObject(cacheKey, articles, 300);

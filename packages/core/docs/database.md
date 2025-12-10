@@ -321,22 +321,39 @@ const result = await befly.db.getList({
 
 查询所有满足条件的记录（有上限保护，最多 10000 条）。
 
+**返回值**：`{ lists: T[], total: number }`
+
+- `lists`：数据数组（受 MAX_LIMIT 保护，最多 10000 条）
+- `total`：真实总记录数（不受 MAX_LIMIT 限制）
+
 ```typescript
 // 查询所有
-const users = await befly.db.getAll({
+const result = await befly.db.getAll({
     table: 'user'
 });
+// result: { lists: [...], total: 实际总数 }
 
 // 带条件
-const activeUsers = await befly.db.getAll({
+const activeResult = await befly.db.getAll({
     table: 'user',
     fields: ['id', 'username'],
     where: { state: 1 },
     orderBy: ['sort#ASC']
 });
+
+// 访问数据
+console.log(activeResult.lists); // 数据数组（最多 10000 条）
+console.log(activeResult.total); // 真实总数（如 100000）
 ```
 
-> ⚠️ **警告**：此方法可能返回大量数据，建议使用 `getList` 分页查询。超过 1000 条会输出警告日志。
+**重要说明**：
+
+- `total` 是查询满足条件的真实总记录数
+- `lists` 受 `MAX_LIMIT = 10000` 保护，最多返回 10000 条
+- 如果总数超过 10000，`lists.length < total`
+- 建议使用 `getList` 进行分页查询
+
+> ⚠️ **警告**：此方法可能返回大量数据。超过 1000 条会输出警告日志，达到 10000 条会提示只返回部分数据。
 
 ### getCount - 查询数量
 
@@ -659,6 +676,7 @@ const allOrders = await befly.db.getAll({
     where: { 'order.state': 1 },
     orderBy: ['order.id#DESC']
 });
+// 返回: { lists: [...最多10000条], total: 真实总数 }
 ```
 
 ### JoinOption 参数说明
