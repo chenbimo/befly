@@ -104,9 +104,9 @@ const $Method = {
     async fetchUserMenus() {
         try {
             const { data } = await $Http('/addon/admin/menu/all');
-            // 保存一维数据
-            $Data.userMenusFlat = data;
-            $Data.userMenus = arrayToTree(data);
+            // 保存一维数据（data 是 { lists: [] } 格式）
+            $Data.userMenusFlat = data.lists || [];
+            $Data.userMenus = arrayToTree(data.lists || []);
             $Method.setActiveMenu();
         } catch (error) {
             console.error('获取用户菜单失败:', error);
