@@ -38,6 +38,11 @@ const RESERVED_FIELDS = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'
 const FIELD_TYPES = ['string', 'number', 'text', 'array_string', 'array_text'] as const;
 
 /**
+ * 允许的字段属性列表
+ */
+const ALLOWED_FIELD_PROPERTIES = ['name', 'type', 'min', 'max', 'default', 'detail', 'index', 'unique', 'nullable', 'unsigned', 'regexp'] as const;
+
+/**
  * 小驼峰命名正则
  * 可选：以下划线开头（用于特殊文件，如通用字段定义）
  * 必须以小写字母开头，后续可包含小写/数字，或多个 [大写+小写/数字] 片段
@@ -132,6 +137,14 @@ export async function checkTable(): Promise<void> {
 
                     // 直接使用字段对象
                     const field = fieldDef as FieldDefinition;
+
+                    // 检查是否存在非法属性
+                    const fieldKeys = Object.keys(field);
+                    const illegalProps = fieldKeys.filter((key) => !ALLOWED_FIELD_PROPERTIES.includes(key as any));
+                    if (illegalProps.length > 0) {
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 包含非法属性: ${illegalProps.join(', ')}，` + `允许的属性为: ${ALLOWED_FIELD_PROPERTIES.join(', ')}`);
+                        hasError = true;
+                    }
 
                     // 检查必填字段：name, type
                     if (!field.name || typeof field.name !== 'string') {
