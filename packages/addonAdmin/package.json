@@ -44,7 +44,7 @@
         "url": "https://github.com/chenbimo/befly.git",
         "directory": "packages/addon-admin"
     },
-    "gitHead": "45e04d71863f75f203ba26233cd2332f6a04cf90",
+    "gitHead": "283db34af8c2487fb34f98cb41c9dc02337bd5d1",
     "dependencies": {
         "befly": "^3.9.24",
         "befly-shared": "^1.2.3",
