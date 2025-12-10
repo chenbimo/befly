@@ -91,7 +91,7 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         const menu: MenuConfig = {
             name: meta.name,
             path: fullPath,
-            sort: meta.order || 100
+            sort: meta.order || 1
         };
 
         // 递归扫描子目录
@@ -104,7 +104,7 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
     }
 
     // 按 sort 排序
-    menus.sort((a, b) => (a.sort || 100) - (b.sort || 100));
+    menus.sort((a, b) => (a.sort || 1) - (b.sort || 1));
 
     return menus;
 }
@@ -192,7 +192,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
     if (existing) {
         menuId = existing.id;
 
-        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.sort !== (menu.sort || 0);
+        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.sort !== (menu.sort || 1);
 
         if (needUpdate) {
             await helper.updData({
@@ -201,7 +201,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                 data: {
                     pid: pid,
                     name: menu.name,
-                    sort: menu.sort || 0
+                    sort: menu.sort || 1
                 }
             });
         }
@@ -212,7 +212,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                 pid: pid,
                 name: menu.name,
                 path: menu.path || '',
-                sort: menu.sort || 0
+                sort: menu.sort || 1
             }
         });
     }
