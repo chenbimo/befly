@@ -1,6 +1,6 @@
 {
     "name": "befly-tpl",
-    "version": "3.10.26",
+    "version": "3.10.27",
     "description": "Befly 3.0 TypeScript Template",
     "private": false,
     "publishConfig": {
@@ -29,7 +29,7 @@
     ],
     "type": "module",
     "dependencies": {
-        "@befly-addon/admin": "^1.1.10",
+        "@befly-addon/admin": "^1.1.11",
         "befly": "^3.9.23"
     },
     "engines": {
