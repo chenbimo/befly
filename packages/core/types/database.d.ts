@@ -152,7 +152,7 @@ export interface DeleteOptions {
  */
 export interface ListResult<T = any> {
     /** 数据列表 */
-    list: T[];
+    lists: T[];
     /** 总条数 */
     total: number;
     /** 当前页码 */

@@ -638,7 +638,7 @@ export class DbHelper {
         // 如果总数为 0，直接返回，不执行第二次查询
         if (total === 0) {
             return {
-                list: [],
+                lists: [],
                 total: 0,
                 page: prepared.page,
                 limit: prepared.limit,
@@ -666,7 +666,7 @@ export class DbHelper {
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
-            list: this.convertBigIntFields<T>(camelList),
+            lists: this.convertBigIntFields<T>(camelList),
             total: total,
             page: prepared.page,
             limit: prepared.limit,
