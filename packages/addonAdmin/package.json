@@ -21,6 +21,7 @@
     },
     "files": [
         "apis",
+        "libs",
         "plugins",
         "styles",
         "tables",

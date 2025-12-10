@@ -25,10 +25,10 @@ export default {
             return befly.tool.No('邮件插件未加载，请检查配置');
         }
 
-        const result = await (befly as any).addon_admin_email.sendAndLog({
-            adminId: ctx.user?.id || 0,
-            username: ctx.user?.username || '',
-            nickname: ctx.user?.nickname || '',
+        const startTime = Date.now();
+
+        // 发送邮件
+        const result = await (befly as any).addon_admin_email.send({
             to: ctx.body.to,
             subject: ctx.body.subject,
             html: ctx.body.isHtml ? ctx.body.content : undefined,
@@ -36,6 +36,29 @@ export default {
             cc: ctx.body.cc || undefined,
             bcc: ctx.body.bcc || undefined
         });
+
+        // 记录邮件发送日志
+        try {
+            await befly.db.insData({
+                table: 'addon_admin_email_log',
+                data: {
+                    adminId: ctx.user?.id || 0,
+                    username: ctx.user?.username || '',
+                    nickname: ctx.user?.nickname || '',
+                    toEmail: ctx.body.to,
+                    subject: ctx.body.subject,
+                    content: ctx.body.content,
+                    ccEmail: ctx.body.cc || '',
+                    bccEmail: ctx.body.bcc || '',
+                    sendTime: startTime,
+                    sendResult: result.success ? 1 : 0,
+                    messageId: result.messageId || '',
+                    failReason: result.error || ''
+                }
+            });
+        } catch (logError: any) {
+            befly.logger.error({ err: logError }, '记录邮件日志失败');
+        }
 
         if (result.success) {
             return befly.tool.Yes('发送成功', { messageId: result.messageId });
