@@ -90,7 +90,7 @@ import ILucideTrash2 from '~icons/lucide/trash-2';
 import EditDialog from './components/edit.vue';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from '@/utils';
+import { withDefaultColumns } from 'befly-shared/withDefaultColumns';
 
 // 响应式数据
 const $Data = $ref({
