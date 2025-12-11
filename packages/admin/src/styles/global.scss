@@ -24,33 +24,33 @@ body {
 }
 
 /* 滚动条样式 - 更精致 */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+// ::-webkit-scrollbar {
+//     width: 6px;
+//     height: 6px;
+// }
 
-::-webkit-scrollbar-track {
-    background: transparent;
-}
+// ::-webkit-scrollbar-track {
+//     background: transparent;
+// }
 
-::-webkit-scrollbar-thumb {
-    background: #d9d9d9;
-    border-radius: 3px;
-    transition: background var(--transition-fast);
-}
+// ::-webkit-scrollbar-thumb {
+//     background: #d9d9d9;
+//     border-radius: 3px;
+//     transition: background var(--transition-fast);
+// }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #bfbfbf;
-}
+// ::-webkit-scrollbar-thumb:hover {
+//     background: #bfbfbf;
+// }
 
-.tiny-dialog-box {
-    .tiny-dialog-box__header {
-        .tiny-dialog-box__headerbtn {
-            top: 0 !important;
-            right: 0 !important;
-        }
-    }
-}
+// .tiny-dialog-box {
+//     .tiny-dialog-box__header {
+//         .tiny-dialog-box__headerbtn {
+//             top: 0 !important;
+//             right: 0 !important;
+//         }
+//     }
+// }
 
 /* 通用工具类 */
 .text-center {
@@ -158,41 +158,17 @@ body {
 
 // 数据列表页面通用布局样式
 .page-table {
+    position: relative;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: var(--layout-gap);
     overflow: hidden;
-
-    // 搜索栏区域（卡片样式）
-    .main-search {
-        height: var(--search-height);
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        padding: 0 var(--spacing-md);
-        background: var(--bg-color-container);
-        border-radius: var(--card-radius);
-        box-shadow: var(--shadow-1);
-
-        .search-left {
-            display: flex;
-            gap: var(--spacing-sm);
-            align-items: center;
-        }
-
-        .search-right {
-            display: flex;
-            gap: var(--spacing-sm);
-            align-items: center;
-            margin-left: auto;
-        }
-    }
 
     // 工具栏
     .main-tool {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
         height: var(--search-height);
-        flex-shrink: 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -224,22 +200,23 @@ body {
 
     // 主内容区域（包含表格和详情）
     .main-content {
-        flex: 1;
+        position: absolute;
+        left: 0;
+        top: calc(var(--search-height) + var(--layout-gap));
+        right: 0;
+        bottom: calc(var(--pagination-height) + var(--layout-gap));
         display: flex;
-        overflow: hidden;
-        gap: var(--layout-gap);
-        min-height: 0;
 
         // 表格区域
         .main-table {
-            flex: 1;
-            overflow: hidden;
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: calc(var(--detail-width) + var(--layout-gap));
+            bottom: 0;
             background: var(--bg-color-container);
             border-radius: var(--card-radius);
             box-shadow: var(--shadow-1);
-            display: flex;
-            flex-direction: column;
-            flex: 1;
 
             // 表头样式 - 增强对比
             .t-table__header tr th {
@@ -256,8 +233,12 @@ body {
         }
 
         .main-detail {
-            background: var(--bg-color-container);
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
             width: var(--detail-width);
+            background: var(--bg-color-container);
             border-radius: var(--card-radius);
             box-shadow: var(--shadow-1);
             overflow: hidden;
@@ -272,14 +253,17 @@ body {
 
     // 分页栏 - 卡片样式
     .main-page {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        right: 0;
         height: var(--pagination-height);
-        flex-shrink: 0;
-        padding: 0 var(--spacing-md);
         background: var(--bg-color-container);
         border-radius: var(--card-radius);
         box-shadow: var(--shadow-1);
         display: flex;
         align-items: center;
+        padding: 0 var(--spacing-md);
 
         // 分页文字样式
         .t-pagination__total {
