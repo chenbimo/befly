@@ -3,7 +3,6 @@
         "name": "发送人ID",
         "type": "number",
         "min": 0,
-        "max": 999999999999999,
         "index": true
     },
     "username": {

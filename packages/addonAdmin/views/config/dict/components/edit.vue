@@ -11,7 +11,7 @@
                 <TInput v-model="$Data.formData.value" placeholder="请输入字典值" />
             </TFormItem>
             <TFormItem label="父级ID" prop="pid">
-                <TInputNumber v-model="$Data.formData.pid" :min="0" :max="999999999999999" />
+                <TInputNumber v-model="$Data.formData.pid" :min="0" />
             </TFormItem>
             <TFormItem label="排序" prop="sort">
                 <TInputNumber v-model="$Data.formData.sort" :min="0" :max="9999" />

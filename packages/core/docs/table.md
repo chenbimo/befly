@@ -188,7 +188,6 @@ interface FieldDefinition {
         "name": "角色ID",
         "type": "number",
         "min": 1,
-        "max": 999999999999999,
         "index": true
     }
 }

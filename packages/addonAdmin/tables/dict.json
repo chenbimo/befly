@@ -31,7 +31,6 @@
         "name": "父级ID",
         "type": "number",
         "min": 0,
-        "max": 999999999999999,
         "default": 0,
         "index": true
     },

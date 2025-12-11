@@ -3,7 +3,6 @@
         "name": "管理员ID",
         "type": "number",
         "min": 0,
-        "max": 999999999999999,
         "index": true
     },
     "username": {
@@ -64,14 +63,12 @@
     "duration": {
         "name": "耗时毫秒",
         "type": "number",
-        "min": 0,
-        "max": 999999999
+        "min": 0
     },
     "operateTime": {
         "name": "操作时间",
         "type": "number",
         "min": 0,
-        "max": 9999999999999,
         "index": true
     },
     "remark": {

@@ -3,7 +3,6 @@
         "name": "管理员ID",
         "type": "number",
         "min": 0,
-        "max": 999999999999999,
         "index": true
     },
     "username": {
@@ -77,7 +76,6 @@
         "name": "登录时间",
         "type": "number",
         "min": 0,
-        "max": 9999999999999,
         "index": true
     },
     "loginResult": {
