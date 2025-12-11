@@ -77,7 +77,7 @@ export function formatFieldList(fields: string[]): string {
 export function applyFieldDefaults(fieldDef: any): void {
     fieldDef.detail = fieldDef.detail ?? '';
     fieldDef.min = fieldDef.min ?? 0;
-    fieldDef.max = fieldDef.max ?? 100;
+    fieldDef.max = fieldDef.max ?? (fieldDef.type === 'number' ? 999999999999999 : 100);
     fieldDef.default = fieldDef.default ?? null;
     fieldDef.index = fieldDef.index ?? false;
     fieldDef.unique = fieldDef.unique ?? false;
