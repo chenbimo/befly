@@ -38,7 +38,7 @@
         "@vitejs/plugin-vue": "^6.0.2",
         "@vue-macros/reactivity-transform": "^3.1.1",
         "befly-shared": "^1.2.6",
-        "sass": "^1.95.0",
+        "sass": "^1.96.0",
         "unocss": "^66.5.10",
         "unplugin-auto-import": "^20.3.0",
         "unplugin-icons": "^22.5.0",
