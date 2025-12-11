@@ -39,7 +39,7 @@
                         <TDropdown trigger="click" placement="bottom-right" @click="(data) => $Method.onAction(data.value, row)">
                             <TButton theme="primary" size="small">
                                 操作
-                                <template #suffix><t-icon name="chevron-down" size="16" /></template>
+                                <template #suffix><ILucideChevronDown :size="16" /></template>
                             </TButton>
                             <TDropdownMenu slot="dropdown">
                                 <TDropdownItem value="upd">
@@ -87,6 +87,7 @@ import ILucidePlus from '~icons/lucide/plus';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import ILucidePencil from '~icons/lucide/pencil';
 import ILucideTrash2 from '~icons/lucide/trash-2';
+import ILucideChevronDown from '~icons/lucide/chevron-down';
 import EditDialog from './components/edit.vue';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
