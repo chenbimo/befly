@@ -19,3 +19,4 @@ export * from './layouts.js';
 export * from './pickFields.js';
 export * from './scanFiles.js';
 export * from './scanViews.js';
+export * from './withDefaultColumns.js';
