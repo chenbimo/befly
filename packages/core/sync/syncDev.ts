@@ -3,7 +3,9 @@
  * - 邮箱: 通过 DEV_EMAIL 环境变量配置（默认 dev@qq.com）
  * - 姓名: 开发者
  * - 密码: 使用 bcrypt 加密，通过 DEV_PASSWORD 环境变量配置
- * - 角色: roleCode=dev, roleType=admin
+ * - 角色: 同步 dev, user, admin, guest 四个角色
+ *   - dev: 拥有所有菜单和接口权限
+ *   - user, admin, guest: 菜单和接口权限为空
  * - 表名: addon_admin_admin
  */
 
@@ -85,38 +87,86 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             }
         }
 
-        // 查询或创建 dev 角色
-        let devRole = await helper.getOne({
-            table: 'addon_admin_role',
-            where: { code: 'dev' }
-        });
+        // 定义四个角色的配置
+        const roles = [
+            {
+                code: 'dev',
+                name: '开发者角色',
+                description: '拥有所有菜单和接口权限的开发者角色',
+                menus: menuIds,
+                apis: apiIds,
+                sort: 0
+            },
+            {
+                code: 'user',
+                name: '用户角色',
+                description: '普通用户角色',
+                menus: '',
+                apis: '',
+                sort: 1
+            },
+            {
+                code: 'admin',
+                name: '管理员角色',
+                description: '管理员角色',
+                menus: '',
+                apis: '',
+                sort: 2
+            },
+            {
+                code: 'guest',
+                name: '访客角色',
+                description: '访客角色',
+                menus: '',
+                apis: '',
+                sort: 3
+            }
+        ];
 
-        if (devRole) {
-            // 更新 dev 角色的菜单和接口权限
-            await helper.updData({
+        // 同步所有角色
+        let devRole = null;
+        for (const roleConfig of roles) {
+            const existingRole = await helper.getOne({
                 table: 'addon_admin_role',
-                where: { code: 'dev' },
-                data: {
-                    name: '开发者角色',
-                    description: '拥有所有菜单和接口权限的开发者角色',
-                    menus: menuIds,
-                    apis: apiIds
-                }
+                where: { code: roleConfig.code }
             });
-        } else {
-            // 创建 dev 角色
-            const roleId = await helper.insData({
-                table: 'addon_admin_role',
-                data: {
-                    name: '开发者角色',
-                    code: 'dev',
-                    description: '拥有所有菜单和接口权限的开发者角色',
-                    menus: menuIds,
-                    apis: apiIds,
-                    sort: 0
+
+            if (existingRole) {
+                // 检查字段是否有变化
+                const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || existingRole.menus !== roleConfig.menus || existingRole.apis !== roleConfig.apis || existingRole.sort !== roleConfig.sort;
+
+                if (hasChanges) {
+                    // 更新现有角色
+                    await helper.updData({
+                        table: 'addon_admin_role',
+                        where: { code: roleConfig.code },
+                        data: {
+                            name: roleConfig.name,
+                            description: roleConfig.description,
+                            menus: roleConfig.menus,
+                            apis: roleConfig.apis,
+                            sort: roleConfig.sort
+                        }
+                    });
                 }
-            });
-            devRole = { id: roleId };
+                if (roleConfig.code === 'dev') {
+                    devRole = existingRole;
+                }
+            } else {
+                // 创建新角色
+                const roleId = await helper.insData({
+                    table: 'addon_admin_role',
+                    data: roleConfig
+                });
+                if (roleConfig.code === 'dev') {
+                    devRole = { id: roleId };
+                }
+            }
+        }
+
+        if (!devRole) {
+            Logger.error('dev 角色不存在，无法创建开发者账号');
+            return;
         }
 
         // 先对密码进行 SHA-256 + 盐值 哈希（模拟前端加密），再用 bcrypt 存储
