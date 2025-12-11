@@ -31,6 +31,8 @@ dist
 packages/cli
 befly.local.json
 
+# NPM 认证配置（包含敏感 token）
+.npmrc
 
 # 临时文件目录（保留目录结构）
 temp/*
