@@ -42,7 +42,7 @@ export function No(msg: string, data: any = null, other: Record<string, any> = {
 /**
  * 响应选项
  */
-export interface ResponseOptions {
+interface ResponseOptions {
     /** HTTP 状态码，默认 200 */
     status?: number;
     /** Content-Type，默认根据 data 类型自动判断 */

@@ -284,21 +284,61 @@ befly.tool.No(msg: string, data?: any, other?: Record<string, any>)
 
 ### Raw - 原始响应
 
-用于第三方回调等需要自定义响应格式的场景，直接返回 `Response` 对象：
+用于第三方回调等需要自定义响应格式的场景，直接返回 `Response` 对象。自动识别数据类型并设置正确的 Content-Type。
 
 ```typescript
-befly.tool.Raw(ctx: RequestContext, data: Record<string, any>, status?: number)
+befly.tool.Raw(ctx: RequestContext, data: Record<string, any> | string, options?: ResponseOptions)
 ```
 
 **参数说明：**
 
-| 参数   | 类型                | 必填 | 默认值 | 说明         |
-| ------ | ------------------- | ---- | ------ | ------------ |
-| ctx    | RequestContext      | 是   | -      | 请求上下文   |
-| data   | Record<string, any> | 是   | -      | 响应数据对象 |
-| status | number              | 否   | 200    | HTTP 状态码  |
+| 参数    | 类型                           | 必填 | 默认值 | 说明                       |
+| ------- | ------------------------------ | ---- | ------ | -------------------------- |
+| ctx     | RequestContext                 | 是   | -      | 请求上下文                 |
+| data    | Record<string, any> \| string  | 是   | -      | 响应数据（对象或字符串）   |
+| options | ResponseOptions                | 否   | {}     | 响应选项                   |
+
+**ResponseOptions 选项：**
+
+| 属性        | 类型                  | 默认值       | 说明                                |
+| ----------- | --------------------- | ------------ | ----------------------------------- |
+| status      | number                | 200          | HTTP 状态码                         |
+| contentType | string                | 自动判断     | Content-Type，默认根据 data 类型自动判断 |
+| headers     | Record<string, string>| {}           | 额外的响应头                        |
+
+**Content-Type 自动判断规则：**
+
+| data 类型 | 自动 Content-Type |
+| --------- | ----------------- |
+| 对象      | application/json  |
+| 字符串（以 `<` 开头） | application/xml |
+| 字符串（其他） | text/plain |
 
 **使用示例：**
+
+```typescript
+// JSON 响应（自动）
+return befly.tool.Raw(ctx, { code: 'SUCCESS', message: '成功' });
+
+// 纯文本响应（自动）- 支付宝回调
+return befly.tool.Raw(ctx, 'success');
+
+// XML 响应（自动判断）
+return befly.tool.Raw(ctx, '<xml><return_code>SUCCESS</return_code></xml>');
+
+// XML 响应（手动指定）
+return befly.tool.Raw(ctx, xmlString, { contentType: 'application/xml' });
+
+// 自定义状态码
+return befly.tool.Raw(ctx, { error: 'Not Found' }, { status: 404 });
+
+// 自定义响应头
+return befly.tool.Raw(ctx, { code: 'SUCCESS' }, {
+    headers: { 'X-Custom-Header': 'value' }
+});
+```
+
+**完整回调示例：**
 
 ```typescript
 // 微信支付回调
@@ -323,9 +363,25 @@ export default {
     rawBody: true,
     handler: async (befly, ctx) => {
         // 支付宝要求返回纯文本 "success"
-        return new Response('success', {
-            headers: { ...ctx.corsHeaders, 'Content-Type': 'text/plain' }
-        });
+        return befly.tool.Raw(ctx, 'success');
+    }
+};
+
+// 微信公众号 XML 回调
+export default {
+    name: '微信公众号回调',
+    auth: false,
+    rawBody: true,
+    handler: async (befly, ctx) => {
+        // 返回 XML 格式响应
+        const xml = `<xml>
+            <ToUserName><![CDATA[${fromUser}]]></ToUserName>
+            <FromUserName><![CDATA[${toUser}]]></FromUserName>
+            <CreateTime>${Date.now()}</CreateTime>
+            <MsgType><![CDATA[text]]></MsgType>
+            <Content><![CDATA[收到]]></Content>
+        </xml>`;
+        return befly.tool.Raw(ctx, xml);
     }
 };
 ```
