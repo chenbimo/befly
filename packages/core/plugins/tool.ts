@@ -5,6 +5,7 @@
 
 // 类型导入
 import type { Plugin } from '../types/plugin.js';
+import type { RequestContext } from '../types/context.js';
 
 /**
  * 成功响应
@@ -38,11 +39,26 @@ export function No(msg: string, data: any = null, other: Record<string, any> = {
     };
 }
 
+/**
+ * 原始响应（用于第三方回调等场景）
+ * @param ctx - 请求上下文
+ * @param data - 响应数据对象
+ * @param status - HTTP 状态码（可选，默认 200）
+ * @returns Response 对象
+ */
+export function Raw(ctx: RequestContext, data: Record<string, any>, status: number = 200) {
+    return new Response(JSON.stringify(data), {
+        status: status,
+        headers: { ...ctx.corsHeaders, 'Content-Type': 'application/json' }
+    });
+}
+
 const plugin: Plugin = {
     handler: () => {
         return {
             Yes: Yes,
-            No: No
+            No: No,
+            Raw: Raw
         };
     }
 };

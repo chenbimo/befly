@@ -282,6 +282,56 @@ befly.tool.No(msg: string, data?: any, other?: Record<string, any>)
 }
 ```
 
+### Raw - 原始响应
+
+用于第三方回调等需要自定义响应格式的场景，直接返回 `Response` 对象：
+
+```typescript
+befly.tool.Raw(ctx: RequestContext, data: Record<string, any>, status?: number)
+```
+
+**参数说明：**
+
+| 参数   | 类型                | 必填 | 默认值 | 说明         |
+| ------ | ------------------- | ---- | ------ | ------------ |
+| ctx    | RequestContext      | 是   | -      | 请求上下文   |
+| data   | Record<string, any> | 是   | -      | 响应数据对象 |
+| status | number              | 否   | 200    | HTTP 状态码  |
+
+**使用示例：**
+
+```typescript
+// 微信支付回调
+export default {
+    name: '微信支付回调',
+    auth: false,
+    rawBody: true,
+    handler: async (befly, ctx) => {
+        if (!befly.weixin) {
+            return befly.tool.Raw(ctx, { code: 'SYSTEM_ERROR', message: 'weixin 插件未配置' });
+        }
+
+        // 处理成功
+        return befly.tool.Raw(ctx, { code: 'SUCCESS', message: '' });
+    }
+};
+
+// 支付宝回调
+export default {
+    name: '支付宝回调',
+    auth: false,
+    rawBody: true,
+    handler: async (befly, ctx) => {
+        // 支付宝要求返回纯文本 "success"
+        return new Response('success', {
+            headers: { ...ctx.corsHeaders, 'Content-Type': 'text/plain' }
+        });
+    }
+};
+```
+
+**注意**：`Raw` 返回的是 `Response` 对象，会直接作为 HTTP 响应返回，不经过 `FinalResponse` 处理。
+
 ### ErrorResponse - Hook 中断响应
 
 在 Hook 中使用，用于提前拦截请求：
