@@ -139,7 +139,6 @@ export default {
     fields: {}, // 字段定义（验证规则）
     required: [], // 必填字段列表
     rawBody: false, // 是否保留原始请求体
-    preprocess: undefined, // 预处理函数
     cache: undefined, // 缓存时间（秒）
     rateLimit: undefined // 限流配置
 } as ApiRoute;
@@ -175,12 +174,6 @@ interface ApiRoute<T = any, R = any> {
      * - false: 根据 fields 定义过滤字段
      */
     rawBody?: boolean;
-
-    /** 请求预处理函数（可选，在 handler 之前执行）
-     * 用于解密、转换请求数据等场景
-     * 可以修改 ctx.body
-     */
-    preprocess?: ApiHandler<T, void>;
 
     /** 缓存配置（可选，单位：秒） */
     cache?: number;
@@ -878,30 +871,6 @@ export default {
 };
 ```
 
-### 案例九：预处理函数
-
-```typescript
-// apis/data/import.ts
-export default {
-    name: '导入数据',
-    preprocess: async (befly, ctx) => {
-        // 在 handler 之前执行
-        // 可以解密、转换数据
-        if (ctx.body.encryptedData) {
-            ctx.body.data = await befly.cipher.decrypt(ctx.body.encryptedData);
-        }
-    },
-    handler: async (befly, ctx) => {
-        // 使用预处理后的数据
-        const data = ctx.body.data;
-
-        // 处理导入逻辑...
-
-        return befly.tool.Yes('导入成功');
-    }
-};
-```
-
 ---
 
 ## 请求处理流程
@@ -937,14 +906,11 @@ export default {
 │    - 验证用户登录状态                         │
 │    - 检查角色权限                             │
 ├─────────────────────────────────────────────┤
-│ 6. preprocess (如果定义)                     │
-│    - 执行 API 预处理函数                      │
-├─────────────────────────────────────────────┤
-│ 7. handler                                  │
+│ 6. handler                                  │
 │    - 执行 API 处理函数                        │
 │    - 返回结果                                │
 ├─────────────────────────────────────────────┤
-│ 8. FinalResponse                            │
+│ 7. FinalResponse                            │
 │    - 格式化响应                              │
 │    - 记录请求日志                             │
 └─────────────────────────────────────────────┘
@@ -954,7 +920,7 @@ export default {
 
 ### 中断请求
 
-在任何 Hook 或 preprocess 中设置 `ctx.response` 可以中断请求处理：
+在任何 Hook 中设置 `ctx.response` 可以中断请求处理：
 
 ```typescript
 // 在 Hook 中中断

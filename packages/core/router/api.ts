@@ -61,16 +61,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
                 }
             }
 
-            // 5. 执行 preprocess 预处理（如果有）
-            if (ctx.api?.preprocess) {
-                await ctx.api.preprocess(context, ctx);
-                // 如果 preprocess 设置了 response，停止执行
-                if (ctx.response) {
-                    return ctx.response;
-                }
-            }
-
-            // 6. 执行 API handler
+            // 5. 执行 API handler
             if (!ctx.api) {
                 if (req.method !== 'OPTIONS') {
                     ctx.response = Response.json(

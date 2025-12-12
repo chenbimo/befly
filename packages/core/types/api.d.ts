@@ -91,12 +91,6 @@ export interface ApiRoute<T = any, R = any> {
      */
     rawBody?: boolean;
 
-    /** 请求预处理函数（可选，在 handler 之前执行）
-     * 用于解密、转换请求数据等场景
-     * 可以修改 ctx.body
-     */
-    preprocess?: ApiHandler<T, void>;
-
     /** 缓存配置（可选，单位：秒） */
     cache?: number;
 
