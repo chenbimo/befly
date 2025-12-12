@@ -33,9 +33,9 @@
         "befly-vite": "^1.1.9",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.17.6",
-        "vite": "^8.0.0-beta.1",
+        "vite": "^8.0.0-beta.2",
         "vue": "^3.5.25",
-        "vue-router": "^4.6.3"
+        "vue-router": "^4.6.4"
     },
     "engines": {
         "node": ">=24.0.0",
