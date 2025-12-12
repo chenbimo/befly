@@ -575,6 +575,233 @@ interface FieldDefinition {
 
 ---
 
+## rawBody 原始请求体
+
+### 概述
+
+`rawBody` 参数用于控制 `parser` 钩子的行为。当设置 `rawBody: true` 时，框架会**完全跳过请求体解析**，`ctx.body` 为空对象 `{}`，handler 可以通过 `ctx.req` 获取原始请求自行处理。
+
+这对于需要**手动验签、解密**的场景非常重要，如微信支付回调需要原始请求体来验证 RSA 签名。
+
+### 工作原理
+
+#### 默认行为（rawBody: false）
+
+```typescript
+// API 定义
+export default {
+    name: '更新用户',
+    fields: {
+        id: '@id',
+        username: { name: '用户名', type: 'string', max: 50 }
+    },
+    handler: async (befly, ctx) => {
+        // ctx.body 只包含 fields 中定义的字段
+    }
+};
+
+// 请求参数
+{ id: 1, username: 'test', email: 'test@qq.com', role: 'admin' }
+
+// ctx.body 实际值（过滤后）
+{ id: 1, username: 'test' }
+// email 和 role 被过滤掉了
+```
+
+#### rawBody 模式（rawBody: true）
+
+```typescript
+// API 定义
+export default {
+    name: '微信支付回调',
+    method: 'POST',
+    auth: false,
+    rawBody: true, // 跳过解析，保留原始请求
+    handler: async (befly, ctx) => {
+        // ctx.body 为空对象 {}
+        // 通过 ctx.req 获取原始请求自行处理
+
+        // 获取原始请求体（用于验签）
+        const rawBody = await ctx.req.text();
+
+        // 解析数据
+        const data = JSON.parse(rawBody);
+
+        // 处理业务逻辑...
+    }
+};
+```
+
+### 处理流程
+
+| rawBody        | parser 钩子行为                 | ctx.body     | 使用场景           |
+| -------------- | ------------------------------- | ------------ | ------------------ |
+| `false` (默认) | 解析 JSON/XML，根据 fields 过滤 | 解析后的对象 | 普通 CRUD          |
+| `true`         | **完全跳过**，不解析请求体      | `{}` 空对象  | 回调验签、手动解密 |
+
+### 适用场景
+
+| 场景         | rawBody | 说明                           |
+| ------------ | ------- | ------------------------------ |
+| 微信支付回调 | `true`  | 需要原始请求体验证 RSA 签名    |
+| 支付宝回调   | `true`  | 需要原始请求体验证签名         |
+| Webhook      | `true`  | 需要原始请求体验证 HMAC 签名   |
+| 加密数据接口 | `true`  | 需要手动解密请求体             |
+| 文件上传     | `true`  | 需要原始请求体处理二进制数据   |
+| 普通 CRUD    | `false` | 标准增删改查（默认）           |
+| 批量操作     | `false` | 使用空 fields 即可保留所有字段 |
+
+### 示例代码
+
+#### 微信支付 V3 回调（需要验签和解密）
+
+```typescript
+// apis/webhook/wechatPayV3.ts
+export default {
+    name: '微信支付V3回调',
+    method: 'POST',
+    auth: false,
+    rawBody: true, // 跳过解析，保留原始请求
+    handler: async (befly, ctx) => {
+        // 1. 获取原始请求体（用于验签）
+        const rawBody = await ctx.req.text();
+
+        // 2. 获取微信签名头
+        const signature = ctx.req.headers.get('Wechatpay-Signature');
+        const timestamp = ctx.req.headers.get('Wechatpay-Timestamp');
+        const nonce = ctx.req.headers.get('Wechatpay-Nonce');
+        const serial = ctx.req.headers.get('Wechatpay-Serial');
+
+        // 3. 验证签名
+        const verifyMessage = `${timestamp}\n${nonce}\n${rawBody}\n`;
+        if (!verifyRsaSign(verifyMessage, signature, serial)) {
+            return { code: 'FAIL', message: '签名验证失败' };
+        }
+
+        // 4. 解析并解密数据
+        const notification = JSON.parse(rawBody);
+        const { ciphertext, nonce: decryptNonce, associated_data } = notification.resource;
+        const decrypted = decryptAesGcm(ciphertext, decryptNonce, associated_data);
+        const payResult = JSON.parse(decrypted);
+
+        // 5. 处理支付结果
+        if (payResult.trade_state === 'SUCCESS') {
+            await befly.db.updData({
+                table: 'order',
+                where: { orderNo: payResult.out_trade_no },
+                data: {
+                    payStatus: 1,
+                    payTime: Date.now(),
+                    transactionId: payResult.transaction_id
+                }
+            });
+        }
+
+        return { code: 'SUCCESS', message: '' };
+    }
+};
+```
+
+#### GitHub Webhook（HMAC 签名验证）
+
+```typescript
+// apis/webhook/github.ts
+import { createHmac } from 'crypto';
+
+export default {
+    name: 'GitHub Webhook',
+    method: 'POST',
+    auth: false,
+    rawBody: true,
+    handler: async (befly, ctx) => {
+        // 获取原始请求体
+        const rawBody = await ctx.req.text();
+
+        // 获取 GitHub 签名
+        const signature = ctx.req.headers.get('X-Hub-Signature-256');
+        if (!signature) {
+            return befly.tool.No('缺少签名');
+        }
+
+        // 验证 HMAC 签名
+        const secret = process.env.GITHUB_WEBHOOK_SECRET;
+        const hmac = createHmac('sha256', secret);
+        const expectedSignature = 'sha256=' + hmac.update(rawBody).digest('hex');
+
+        if (signature !== expectedSignature) {
+            return befly.tool.No('签名验证失败');
+        }
+
+        // 解析数据
+        const payload = JSON.parse(rawBody);
+        const event = ctx.req.headers.get('X-GitHub-Event');
+
+        // 处理不同事件
+        if (event === 'push') {
+            befly.logger.info({ ref: payload.ref }, 'GitHub Push 事件');
+        }
+
+        return befly.tool.Yes('处理成功');
+    }
+};
+```
+
+#### 加密数据接口
+
+```typescript
+// apis/secure/receive.ts
+export default {
+    name: '接收加密数据',
+    auth: false,
+    rawBody: true,
+    handler: async (befly, ctx) => {
+        // 获取加密的请求体
+        const encryptedBody = await ctx.req.text();
+
+        // 解密数据
+        const decrypted = befly.cipher.decrypt(encryptedBody);
+        const data = JSON.parse(decrypted);
+
+        // 处理解密后的数据
+        // ...
+
+        return befly.tool.Yes('处理成功');
+    }
+};
+```
+
+### 批量操作的替代方案
+
+对于批量导入等场景，**不需要使用 rawBody**，使用空 `fields` 即可保留所有字段：
+
+```typescript
+// apis/user/batchImport.ts
+export default {
+    name: '批量导入用户',
+    // 不定义 fields，或 fields: {}，会保留所有请求参数
+    handler: async (befly, ctx) => {
+        const { users } = ctx.body; // 正常解析
+
+        if (!Array.isArray(users) || users.length === 0) {
+            return befly.tool.No('用户列表不能为空');
+        }
+
+        // 批量插入...
+        return befly.tool.Yes('导入成功');
+    }
+};
+```
+
+### 注意事项
+
+1. **请求体只能读取一次**：`ctx.req.text()` 或 `ctx.req.json()` 只能调用一次，第二次调用会返回空
+2. **ctx.body 为空**：`rawBody: true` 时 `ctx.body = {}`，所有数据需要从 `ctx.req` 获取
+3. **validator 钩子**：如果定义了 `required` 字段，validator 仍会检查 `ctx.body`（此时为空），建议 rawBody 接口不定义 required
+4. **安全性**：手动处理请求时务必做好验签和数据验证
+5. **Content-Type 无限制**：rawBody 模式不检查 Content-Type，支持任意格式
+
+---
+
 ## 实际案例
 
 ### 案例一：公开接口（无需认证）

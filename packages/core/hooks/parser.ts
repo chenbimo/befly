@@ -16,20 +16,25 @@ const xmlParser = new XMLParser();
  * - GET 请求：解析 URL 查询参数
  * - POST 请求：解析 JSON 或 XML 请求体
  * - 根据 API 定义的 fields 过滤字段
+ * - rawBody: true 时跳过解析，由 handler 自行处理原始请求
  */
 const hook: Hook = {
     order: 4,
     handler: async (befly, ctx) => {
         if (!ctx.api) return;
 
+        // rawBody 模式：跳过解析，保留原始请求供 handler 自行处理
+        // 适用于：微信回调、支付回调、webhook 等需要手动解密/验签的场景
+        if (ctx.api.rawBody) {
+            ctx.body = {};
+            return;
+        }
+
         // GET 请求：解析查询参数
         if (ctx.req.method === 'GET') {
             const url = new URL(ctx.req.url);
             const params = Object.fromEntries(url.searchParams);
-            // rawBody 模式：保留完整请求参数，不过滤字段
-            if (ctx.api.rawBody) {
-                ctx.body = params;
-            } else if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+            if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                 ctx.body = pickFields(params, Object.keys(ctx.api.fields));
             } else {
                 ctx.body = params;
@@ -37,7 +42,7 @@ const hook: Hook = {
         } else if (ctx.req.method === 'POST') {
             // POST 请求：解析请求体
             const contentType = ctx.req.headers.get('content-type') || '';
-            // 获取 URL 查询参数（POST 请求也可能带参数，如微信回调）
+            // 获取 URL 查询参数（POST 请求也可能带参数）
             const url = new URL(ctx.req.url);
             const queryParams = Object.fromEntries(url.searchParams);
 
@@ -47,10 +52,7 @@ const hook: Hook = {
                     const body = (await ctx.req.json()) as Record<string, any>;
                     // 合并 URL 参数和请求体（请求体优先）
                     const merged = { ...queryParams, ...body };
-                    // rawBody 模式：保留完整请求体，不过滤字段
-                    if (ctx.api.rawBody) {
-                        ctx.body = merged;
-                    } else if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(merged, Object.keys(ctx.api.fields));
                     } else {
                         ctx.body = merged;
@@ -64,10 +66,7 @@ const hook: Hook = {
                     const body = rootKey && typeof parsed[rootKey] === 'object' ? parsed[rootKey] : parsed;
                     // 合并 URL 参数和请求体（请求体优先）
                     const merged = { ...queryParams, ...body };
-                    // rawBody 模式：保留完整请求体，不过滤字段
-                    if (ctx.api.rawBody) {
-                        ctx.body = merged;
-                    } else if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
+                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
                         ctx.body = pickFields(merged, Object.keys(ctx.api.fields));
                     } else {
                         ctx.body = merged;
