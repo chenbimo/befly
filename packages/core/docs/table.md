@@ -126,17 +126,17 @@ interface FieldDefinition {
 
 ### 可选属性
 
-| 属性       | 类型             | 默认值                                         | 说明                                                                    |
-| ---------- | ---------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
-| `detail`   | `string`         | `''`                                           | 字段详细说明                                                            |
-| `min`      | `number \| null` | `0`                                            | 最小值（number）或最小长度（string）                                    |
-| `max`      | `number \| null` | `100` (string) <br> `999999999999999` (number) | 最大值（number）或最大长度（string），number 类型默认为 999999999999999 |
-| `default`  | `any`            | `null`                                         | 默认值                                                                  |
-| `index`    | `boolean`        | `false`                                        | 是否创建普通索引                                                        |
-| `unique`   | `boolean`        | `false`                                        | 是否唯一约束                                                            |
-| `nullable` | `boolean`        | `false`                                        | 是否允许 NULL                                                           |
-| `unsigned` | `boolean`        | `true`                                         | 是否无符号（仅 number 类型有效）                                        |
-| `regexp`   | `string \| null` | `null`                                         | 正则验证规则（内置或自定义）                                            |
+| 属性       | 类型             | 默认值                                          | 说明                                                                     |
+| ---------- | ---------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
+| `detail`   | `string`         | `''`                                            | 字段详细说明                                                             |
+| `min`      | `number \| null` | `0`                                             | 最小值（number）或最小长度（string）                                     |
+| `max`      | `number \| null` | `100` (string) <br> `9999999999999999` (number) | 最大值（number）或最大长度（string），number 类型默认为 9999999999999999 |
+| `default`  | `any`            | `null`                                          | 默认值                                                                   |
+| `index`    | `boolean`        | `false`                                         | 是否创建普通索引                                                         |
+| `unique`   | `boolean`        | `false`                                         | 是否唯一约束                                                             |
+| `nullable` | `boolean`        | `false`                                         | 是否允许 NULL                                                            |
+| `unsigned` | `boolean`        | `true`                                          | 是否无符号（仅 number 类型有效）                                         |
+| `regexp`   | `string \| null` | `null`                                          | 正则验证规则（内置或自定义）                                             |
 
 ---
 
@@ -196,7 +196,7 @@ interface FieldDefinition {
 **约束规则：**
 
 - `min` 和 `max` 用于输入验证
-- `max` 默认为 `999999999999999`（如未指定或为 null）
+- `max` 默认为 `9999999999999999`（如未指定或为 null）
 - `unsigned` 默认为 `true`（无符号，仅 MySQL 有效）
 - 默认值为 `0`
 
