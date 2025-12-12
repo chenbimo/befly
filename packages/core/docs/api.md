@@ -292,27 +292,27 @@ befly.tool.Raw(ctx: RequestContext, data: Record<string, any> | string, options?
 
 **参数说明：**
 
-| 参数    | 类型                           | 必填 | 默认值 | 说明                       |
-| ------- | ------------------------------ | ---- | ------ | -------------------------- |
-| ctx     | RequestContext                 | 是   | -      | 请求上下文                 |
-| data    | Record<string, any> \| string  | 是   | -      | 响应数据（对象或字符串）   |
-| options | ResponseOptions                | 否   | {}     | 响应选项                   |
+| 参数    | 类型                          | 必填 | 默认值 | 说明                     |
+| ------- | ----------------------------- | ---- | ------ | ------------------------ |
+| ctx     | RequestContext                | 是   | -      | 请求上下文               |
+| data    | Record<string, any> \| string | 是   | -      | 响应数据（对象或字符串） |
+| options | ResponseOptions               | 否   | {}     | 响应选项                 |
 
 **ResponseOptions 选项：**
 
-| 属性        | 类型                  | 默认值       | 说明                                |
-| ----------- | --------------------- | ------------ | ----------------------------------- |
-| status      | number                | 200          | HTTP 状态码                         |
-| contentType | string                | 自动判断     | Content-Type，默认根据 data 类型自动判断 |
-| headers     | Record<string, string>| {}           | 额外的响应头                        |
+| 属性        | 类型                   | 默认值   | 说明                                     |
+| ----------- | ---------------------- | -------- | ---------------------------------------- |
+| status      | number                 | 200      | HTTP 状态码                              |
+| contentType | string                 | 自动判断 | Content-Type，默认根据 data 类型自动判断 |
+| headers     | Record<string, string> | {}       | 额外的响应头                             |
 
 **Content-Type 自动判断规则：**
 
-| data 类型 | 自动 Content-Type |
-| --------- | ----------------- |
-| 对象      | application/json  |
-| 字符串（以 `<` 开头） | application/xml |
-| 字符串（其他） | text/plain |
+| data 类型             | 自动 Content-Type |
+| --------------------- | ----------------- |
+| 对象                  | application/json  |
+| 字符串（以 `<` 开头） | application/xml   |
+| 字符串（其他）        | text/plain        |
 
 **使用示例：**
 
@@ -333,9 +333,13 @@ return befly.tool.Raw(ctx, xmlString, { contentType: 'application/xml' });
 return befly.tool.Raw(ctx, { error: 'Not Found' }, { status: 404 });
 
 // 自定义响应头
-return befly.tool.Raw(ctx, { code: 'SUCCESS' }, {
-    headers: { 'X-Custom-Header': 'value' }
-});
+return befly.tool.Raw(
+    ctx,
+    { code: 'SUCCESS' },
+    {
+        headers: { 'X-Custom-Header': 'value' }
+    }
+);
 ```
 
 **完整回调示例：**
