@@ -1,22 +1,17 @@
 ﻿export default {
     name: '获取字典详情',
-    fields: {
-        id: '@id'
-    },
+    fields: { '@id': true },
+    required: ['id'],
     handler: async (befly, ctx) => {
-        try {
-            const dict = await befly.db.getDetail({
-                table: 'addon_admin_dict',
-                fields: ['id', 'name', 'code', 'value', 'sort', 'pid', 'description', 'state', 'created_at', 'updated_at'],
-                where: {
-                    id: ctx.body.id
-                }
-            });
+        const dict = await befly.db.getDetail({
+            table: 'addon_admin_dict',
+            where: { id: ctx.body.id }
+        });
 
-            return befly.tool.Yes('操作成功', dict);
-        } catch (error: any) {
-            befly.logger.error({ err: error }, '获取字典详情失败');
-            return befly.tool.No('操作失败');
+        if (!dict?.id) {
+            return befly.tool.No('字典项不存在');
         }
+
+        return befly.tool.Yes('获取成功', dict);
     }
 };

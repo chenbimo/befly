@@ -3,10 +3,10 @@
     handler: async (befly) => {
         const dicts = await befly.db.getAll({
             table: 'addon_admin_dict',
-            fields: ['*'],
-            orderBy: ['id#ASC']
+            fields: ['id', 'typeCode', 'key', 'label', 'value', 'sort', 'remark'],
+            orderBy: ['sort#ASC', 'id#ASC']
         });
 
-        return befly.tool.Yes('操作成功', { lists: dicts.lists });
+        return befly.tool.Yes('获取成功', dicts);
     }
 };

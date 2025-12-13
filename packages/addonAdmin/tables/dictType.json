@@ -1,0 +1,28 @@
+{
+    "code": {
+        "name": "类型代码",
+        "type": "string",
+        "min": 2,
+        "max": 50,
+        "unique": true,
+        "regexp": "@alphanumeric_"
+    },
+    "name": {
+        "name": "类型名称",
+        "type": "string",
+        "min": 2,
+        "max": 50
+    },
+    "description": {
+        "name": "描述",
+        "type": "string",
+        "max": 200
+    },
+    "sort": {
+        "name": "排序",
+        "type": "number",
+        "min": 0,
+        "max": 9999,
+        "default": 0
+    }
+}

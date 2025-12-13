@@ -1,24 +1,30 @@
 ﻿{
-    "name": {
-        "name": "字典名称",
-        "type": "string",
-        "min": 2,
-        "max": 50,
-        "index": true
-    },
-    "code": {
-        "name": "字典代码",
+    "typeCode": {
+        "name": "字典类型代码",
         "type": "string",
         "min": 2,
         "max": 50,
         "index": true,
         "regexp": "@alphanumeric_"
     },
+    "key": {
+        "name": "字典键",
+        "type": "string",
+        "min": 1,
+        "max": 50,
+        "index": true,
+        "regexp": "@alphanumeric_"
+    },
+    "label": {
+        "name": "字典标签",
+        "type": "string",
+        "min": 1,
+        "max": 100
+    },
     "value": {
         "name": "字典值",
         "type": "string",
-        "max": 200,
-        "index": true
+        "max": 200
     },
     "sort": {
         "name": "排序",
@@ -27,15 +33,8 @@
         "max": 9999,
         "default": 0
     },
-    "pid": {
-        "name": "父级ID",
-        "type": "number",
-        "min": 0,
-        "default": 0,
-        "index": true
-    },
-    "description": {
-        "name": "描述",
+    "remark": {
+        "name": "备注",
         "type": "string",
         "max": 200
     }
