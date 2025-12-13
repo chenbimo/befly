@@ -9,43 +9,21 @@
  */
 
 export default {
-    name: '获取用户信息',
+    name: '获取管理员信息',
     fields: {
         id: '@id'
     },
     handler: async (befly, ctx) => {
-        // 从 JWT token 中获取用户ID
-        const userId = ctx.user?.id;
-
-        if (!userId) {
-            return befly.tool.No('未授权');
-        }
-
-        // 查询用户信息（框架自动转换为小驼峰）
-        const admin = await befly.db.getOne({
+        const adminData = await befly.db.getOne({
             table: 'addon_admin_admin',
-            where: { id: userId }
+            fields: ['!password'],
+            where: { id: ctx.user?.id }
         });
 
-        if (!admin) {
-            return befly.tool.No('用户不存在');
+        if (!adminData?.id) {
+            return befly.tool.No('管理员不存在');
         }
 
-        // 查询角色信息（使用 roleCode 而非 roleId，框架自动转换为小驼峰）
-        let roleInfo = null;
-        if (admin.roleCode) {
-            roleInfo = await befly.db.getOne({
-                table: 'addon_admin_role',
-                where: { code: admin.roleCode }
-            });
-        }
-
-        // 返回用户信息（不包含密码，字段已是小驼峰格式）
-        const { password: _, ...userWithoutPassword } = admin;
-
-        return befly.tool.Yes('获取成功', {
-            ...userWithoutPassword,
-            role: roleInfo
-        });
+        return befly.tool.Yes('查询成功', adminData);
     }
 };

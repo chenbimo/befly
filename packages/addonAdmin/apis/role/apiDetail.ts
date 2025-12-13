@@ -4,7 +4,7 @@
         // 查询角色信息
         const role = await befly.db.getOne({
             table: 'addon_admin_role',
-            where: { id: ctx.body.roleId }
+            where: { code: ctx.body.roleCode }
         });
 
         if (!role) {

@@ -2,19 +2,21 @@
 
 export default {
     name: '添加管理员',
-    fields: adminTable,
+    fields: {
+        username: adminTable.username,
+        password: adminTable.password,
+        roleId: adminTable.roleId
+    },
     required: ['username', 'password', 'roleId'],
     handler: async (befly, ctx) => {
         // 检查用户名是否已存在
-        if (ctx.body.username) {
-            const existingByUsername = await befly.db.getOne({
-                table: 'addon_admin_admin',
-                where: { username: ctx.body.username }
-            });
+        const existingByUsername = await befly.db.getOne({
+            table: 'addon_admin_admin',
+            where: { username: ctx.body.username }
+        });
 
-            if (existingByUsername) {
-                return befly.tool.No('用户名已被使用');
-            }
+        if (existingByUsername) {
+            return befly.tool.No('用户名已被使用');
         }
 
         // 查询角色信息

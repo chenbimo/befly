@@ -6,17 +6,17 @@
     required: ['id'],
     handler: async (befly, ctx) => {
         // 检查管理员是否存在
-        const admin = await befly.db.getOne({
+        const adminData = await befly.db.getOne({
             table: 'addon_admin_admin',
             where: { id: ctx.body.id }
         });
 
-        if (!admin) {
+        if (!adminData?.id) {
             return befly.tool.No('管理员不存在');
         }
 
         // 不能删除 dev 角色的管理员
-        if (admin.roleCode === 'dev') {
+        if (adminData.roleCode === 'dev') {
             return befly.tool.No('不能删除开发者账号');
         }
 
