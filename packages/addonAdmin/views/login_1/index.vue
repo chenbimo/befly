@@ -22,20 +22,21 @@
                 </div>
 
                 <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :show-message="false" label-width="0">
-                    <TFormItem prop="loginType">
-                        <TRadioGroup v-model="$Data.formData.loginType" size="large">
-                            <TRadioButton value="username">用户名</TRadioButton>
-                            <TRadioButton value="email">邮箱</TRadioButton>
-                            <TRadioButton value="phone">手机号</TRadioButton>
-                        </TRadioGroup>
-                    </TFormItem>
-
                     <TFormItem prop="account">
-                        <TInput v-model="$Data.formData.account" :placeholder="$Data.formData.loginType === 'username' ? '请输入用户名' : $Data.formData.loginType === 'email' ? '请输入邮箱' : '请输入手机号'" size="large" clearable @enter="$Method.apiLogin">
-                            <template #prefix-icon>
-                                <ILucideUser />
+                        <TInputAdornment>
+                            <template #prepend>
+                                <TSelect v-model="$Data.formData.loginType" :style="{ width: '110px' }" size="large" :popup-props="{ overlayClassName: 'login-type-select-popup' }">
+                                    <TOption value="username" label="用户名" />
+                                    <TOption value="email" label="邮箱" />
+                                    <TOption value="phone" label="手机号" />
+                                </TSelect>
                             </template>
-                        </TInput>
+                            <TInput v-model="$Data.formData.account" :placeholder="$Data.formData.loginType === 'username' ? '请输入用户名' : $Data.formData.loginType === 'email' ? '请输入邮箱' : '请输入手机号'" size="large" clearable @enter="$Method.apiLogin">
+                                <template #prefix-icon>
+                                    <ILucideUser />
+                                </template>
+                            </TInput>
+                        </TInputAdornment>
                     </TFormItem>
 
                     <TFormItem prop="password">
@@ -64,7 +65,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, RadioGroup as TRadioGroup, RadioButton as TRadioButton, MessagePlugin } from 'tdesign-vue-next';
+import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, InputAdornment as TInputAdornment, Select as TSelect, Option as TOption, MessagePlugin } from 'tdesign-vue-next';
 import ILucideUser from '~icons/lucide/user';
 import ILucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
@@ -91,7 +92,6 @@ const $Data = $ref({
 
 const $Data2 = $shallowRef({
     formRules: {
-        loginType: [{ required: true }],
         account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
         password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
     }
@@ -279,6 +279,15 @@ const $Method = {
 
     :deep(.t-form__controls) {
         width: 100%;
+    }
+
+    :deep(.t-input-adornment) {
+        width: 100%;
+    }
+
+    :deep(.t-input-adornment__prepend) {
+        padding: 0;
+        border-right: 1px solid var(--login-card-border);
     }
 
     :deep(.t-input) {
