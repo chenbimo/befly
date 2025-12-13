@@ -122,7 +122,7 @@ const $Method = {
 
         try {
             const res = await $Http('/addon/admin/role/apiDetail', {
-                roleId: $Prop.rowData.id
+                roleCode: $Prop.rowData.code
             });
 
             $Data.checkedApiIds = res.data.apiIds || [];
@@ -153,7 +153,7 @@ const $Method = {
             $Data.submitting = true;
 
             const res = await $Http('/addon/admin/role/apiSave', {
-                roleId: $Prop.rowData.id,
+                roleCode: $Prop.rowData.code,
                 apiIds: $Data.checkedApiIds
             });
 

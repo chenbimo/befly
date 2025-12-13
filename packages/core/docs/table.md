@@ -184,8 +184,8 @@ interface FieldDefinition {
         "max": 150,
         "default": 0
     },
-    "roleId": {
-        "name": "角色ID",
+    "userId": {
+        "name": "用户ID",
         "type": "number",
         "min": 1,
         "index": true
@@ -287,8 +287,8 @@ interface FieldDefinition {
 
 ```json
 {
-    "roleId": {
-        "name": "角色ID",
+    "categoryId": {
+        "name": "分类ID",
         "type": "number",
         "index": true
     },
@@ -620,8 +620,8 @@ bun run sync:db --force
         "type": "string",
         "max": 500
     },
-    "roleId": {
-        "name": "角色ID",
+    "departmentId": {
+        "name": "部门ID",
         "type": "number",
         "min": 1,
         "index": true

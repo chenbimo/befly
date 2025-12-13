@@ -2,8 +2,8 @@
     <TDialog v-model:visible="$Data.visible" :header="$Prop.actionType === 'upd' ? '编辑管理员' : '添加管理员'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
         <div class="dialog-wrapper">
             <TForm :model="$Data.formData" label-width="80px" label-position="left" label-align="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-                <TFormItem label="角色" prop="roleId">
-                    <TSelect v-model="$Data.formData.roleId" :options="$Data.allRoleLists" :keys="$Data.keys" placeholder="请选择角色" />
+                <TFormItem label="角色" prop="roleCode">
+                    <TSelect v-model="$Data.formData.roleCode" :options="$Data.allRoleLists" :keys="$Data.keys" placeholder="请选择角色" />
                 </TFormItem>
                 <TFormItem label="用户名" prop="username">
                     <TInput v-model="$Data.formData.username" placeholder="请输入用户名" :disabled="$Prop.actionType === 'upd'" />
@@ -78,14 +78,14 @@ const $Data = $ref({
     allRoleLists: [],
     keys: {
         label: 'name',
-        value: 'id'
+        value: 'code'
     },
     formData: {
         id: null,
         username: '',
         password: '',
         nickname: '',
-        roleId: null,
+        roleCode: null,
         state: 1
     }
 });
@@ -97,7 +97,7 @@ const $Data2 = $shallowRef({
             { required: true, message: '请输入密码', trigger: 'blur' },
             { min: 6, message: '密码至少6位', trigger: 'blur' }
         ],
-        roleId: [{ required: true, message: '请选择角色', trigger: 'change' }],
+        roleCode: [{ required: true, message: '请选择角色', trigger: 'change' }],
         nickname: [{ min: 2, max: 50, message: '昵称长度在 2 到 50 个字符', trigger: 'blur' }]
     }
 });

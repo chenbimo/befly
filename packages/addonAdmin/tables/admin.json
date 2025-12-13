@@ -35,12 +35,6 @@
         "type": "string",
         "max": 500
     },
-    "roleId": {
-        "name": "角色ID",
-        "type": "number",
-        "min": 1,
-        "index": true
-    },
     "roleCode": {
         "name": "角色编码",
         "type": "string",

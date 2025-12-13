@@ -13,7 +13,6 @@
         }
 
         return befly.tool.Yes('操作成功', {
-            roleId: ctx.body.id,
             roleCode: ctx.body.id,
             role: roleInfo
         });

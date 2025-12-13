@@ -999,7 +999,7 @@ import adminTable from '../../tables/admin.json';
 export default {
     name: '添加管理员',
     fields: adminTable,
-    required: ['username', 'password', 'roleId'],
+    required: ['username', 'password', 'roleCode'],
     handler: async (befly, ctx) => {
         // 检查用户名是否已存在
         const existing = await befly.db.getOne({
@@ -1014,11 +1014,10 @@ export default {
         // 查询角色信息
         const role = await befly.db.getOne({
             table: 'addon_admin_role',
-            where: { id: ctx.body.roleId },
-            columns: ['code']
+            where: { code: ctx.body.roleCode }
         });
 
-        if (!role?.code) {
+        if (!role) {
             return befly.tool.No('角色不存在');
         }
 
@@ -1032,7 +1031,6 @@ export default {
                 username: ctx.body.username,
                 password: hashedPassword,
                 nickname: ctx.body.nickname,
-                roleId: ctx.body.roleId,
                 roleCode: role.code
             }
         });

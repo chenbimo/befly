@@ -24,12 +24,11 @@
             // 根据角色编码判断角色类型（硬编码规则）
             const roleType = role.code === 'dev' || role.code === 'admin' ? 'admin' : 'user';
 
-            // 更新管理员的角色ID、角色编码和角色类型
+            // 更新管理员的角色编码和角色类型
             await befly.db.updData({
                 table: 'addon_admin_admin',
                 where: { id: ctx.body.adminId },
                 data: {
-                    roleId: role.id,
                     roleCode: role.code,
                     roleType: roleType
                 }

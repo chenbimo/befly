@@ -153,7 +153,7 @@ export default {
     name: '用户列表',
     fields: {
         keyword: { name: '关键词', type: 'string', max: 50 },
-        roleId: { name: '角色ID', type: 'number' },
+        status: { name: '状态', type: 'number' },
         state: { name: '状态', type: 'number' }
     },
     handler: async (befly, ctx) => {
@@ -162,7 +162,7 @@ export default {
         const result = await befly.db.getList({
             table: 'user',
             where: {
-                roleId: ctx.body.roleId, // 未传时为 undefined，自动忽略
+                status: ctx.body.status, // 未传时为 undefined，自动忽略
                 state: ctx.body.state, // 未传时为 undefined，自动忽略
                 username$like: ctx.body.keyword ? `%${ctx.body.keyword}%` : undefined // 无关键词时忽略
             },
@@ -441,7 +441,7 @@ const userId = await befly.db.insData({
         username: 'john',
         email: 'john@example.com',
         password: hashedPassword,
-        roleId: 1
+        categoryId: 1
     }
 });
 // 返回新记录的 ID
@@ -502,7 +502,7 @@ const affected = await befly.db.updData({
 await befly.db.updData({
     table: 'user',
     data: { state: 2 },
-    where: { roleId: 5 }
+    where: { status: 5 }
 });
 ```
 
@@ -794,8 +794,8 @@ where: { id: 1 }
 // → WHERE id = 1
 
 // 多条件（AND）
-where: { state: 1, roleId: 2 }
-// → WHERE state = 1 AND role_id = 2
+where: { state: 1, status: 2 }
+// → WHERE state = 1 AND status = 2
 ```
 
 ### 比较操作符
@@ -842,9 +842,9 @@ where: {
 ```typescript
 // 显式 AND（通常不需要，多条件默认就是 AND）
 where: {
-    $and: [{ state: 1 }, { roleId: 2 }];
+    $and: [{ state: 1 }, { status: 2 }];
 }
-// → WHERE state = 1 AND role_id = 2
+// → WHERE state = 1 AND status = 2
 ```
 
 **组合使用**
@@ -867,9 +867,9 @@ where: {
 
 ```typescript
 where: {
-    roleId$in: [1, 2, 3];
+    categoryId$in: [1, 2, 3];
 }
-// → WHERE role_id IN (1, 2, 3)
+// → WHERE category_id IN (1, 2, 3)
 
 where: {
     status$in: ['pending', 'processing'];
@@ -1075,7 +1075,7 @@ export default {
     name: '用户列表',
     fields: {
         keyword: { name: '关键词', type: 'string', max: 50 },
-        roleId: { name: '角色ID', type: 'number' },
+        departmentId: { name: '部门ID', type: 'number' },
         page: Fields.page,
         limit: Fields.limit
     },
@@ -1087,9 +1087,9 @@ export default {
             where.$or = [{ username$like: `%${ctx.body.keyword}%` }, { nickname$like: `%${ctx.body.keyword}%` }, { email$like: `%${ctx.body.keyword}%` }];
         }
 
-        // 角色过滤
-        if (ctx.body.roleId) {
-            where.roleId = ctx.body.roleId;
+        // 部门过滤
+        if (ctx.body.departmentId) {
+            where.departmentId = ctx.body.departmentId;
         }
 
         const result = await befly.db.getList({

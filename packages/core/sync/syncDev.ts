@@ -179,7 +179,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             email: beflyConfig.devEmail,
             username: 'dev',
             password: hashed,
-            roleId: devRole.id,
             roleCode: 'dev',
             roleType: 'admin'
         };

@@ -1,5 +1,8 @@
 ﻿export default {
     name: '获取角色接口权限',
+    fields: {
+        roleCode: '@string'
+    },
     handler: async (befly, ctx) => {
         // 查询角色信息
         const role = await befly.db.getOne({

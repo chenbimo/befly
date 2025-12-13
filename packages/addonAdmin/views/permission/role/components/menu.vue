@@ -74,7 +74,7 @@ const $Method = {
 
         try {
             const res = await $Http('/addon/admin/role/menuDetail', {
-                roleId: $Prop.rowData.id
+                roleCode: $Prop.rowData.code
             });
 
             // roleMenuDetail 返回的 data 直接就是菜单 ID 数组
@@ -90,7 +90,7 @@ const $Method = {
             $Data.submitting = true;
 
             const res = await $Http('/addon/admin/role/menuSave', {
-                roleId: $Prop.rowData.id,
+                roleCode: $Prop.rowData.code,
                 menuIds: $Data.menuTreeCheckedKeys
             });
 
