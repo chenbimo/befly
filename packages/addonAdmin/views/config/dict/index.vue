@@ -9,6 +9,14 @@
                 </TButton>
             </div>
             <div class="right">
+                <TSelect v-model="$Data.searchTypeCode" placeholder="请选择字典类型" clearable filterable @change="$Method.handleSearch">
+                    <TOption v-for="item in $Data.typeList" :key="item.code" :value="item.code" :label="item.name" />
+                </TSelect>
+                <TInput v-model="$Data.searchKeyword" placeholder="搜索键/标签/值" clearable @enter="$Method.handleSearch" @clear="$Method.handleSearch">
+                    <template #suffix-icon>
+                        <ILucideSearch />
+                    </template>
+                </TInput>
                 <TButton shape="circle" @click="$Method.handleRefresh">
                     <template #icon>
                         <ILucideRotateCw />
@@ -18,12 +26,7 @@
         </div>
         <div class="main-content">
             <div class="main-table">
-                <TTable :data="$Data.dictList" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" row-key="id" height="calc(100vh - var(--search-height) - var(--pagination-height) - var(--layout-gap) * 4)" active-row-type="single" @active-change="$Method.onActiveChange">
-                    <template #state="{ row }">
-                        <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
-                        <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
-                        <TTag v-else shape="round" theme="danger" variant="light-outline">已删除</TTag>
-                    </template>
+                <TTable :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" row-key="id" height="calc(100vh - var(--search-height) - var(--pagination-height) - var(--layout-gap) * 4)" active-row-type="single" @active-change="$Method.onActiveChange">
                     <template #operation="{ row }">
                         <TDropdown trigger="click" placement="bottom-right" @click="(data) => $Method.onAction(data.value, row)">
                             <TButton theme="primary" size="small">
@@ -54,15 +57,15 @@
             <TPagination :current-page="$Data.pagerConfig.currentPage" :page-size="$Data.pagerConfig.limit" :total="$Data.pagerConfig.total" @current-change="$Method.onPageChange" @page-size-change="$Method.handleSizeChange" />
         </div>
 
-        <!-- 编辑对话框组件 -->
-        <EditDialog v-if="$Data.editVisible" v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" @success="$Method.apiDictList" />
+        <EditDialog v-if="$Data.editVisible" v-model="$Data.editVisible" :action-type="$Data.actionType" :row-data="$Data.rowData" :type-list="$Data.typeList" @success="$Method.apiDictList" />
     </div>
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
+import { Button as TButton, Table as TTable, Input as TInput, Select as TSelect, Option as TOption, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
 import ILucidePlus from '~icons/lucide/plus';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
+import ILucideSearch from '~icons/lucide/search';
 import ILucidePencil from '~icons/lucide/pencil';
 import ILucideTrash2 from '~icons/lucide/trash-2';
 import ILucideChevronDown from '~icons/lucide/chevron-down';
@@ -71,22 +74,23 @@ import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
 import { withDefaultColumns } from 'befly-shared/withDefaultColumns';
 
-// 响应式数据
 const $Data = $ref({
-    dictList: [],
+    tableData: [],
+    typeList: [],
     loading: false,
     activeRowKeys: [],
     currentRow: null,
+    searchTypeCode: '',
+    searchKeyword: '',
     columns: withDefaultColumns([
-        { colKey: 'index', title: '序号' },
-        { colKey: 'name', title: '字典名称' },
-        { colKey: 'code', title: '字典代码' },
-        { colKey: 'value', title: '字典值' },
-        { colKey: 'pid', title: '父级ID' },
-        { colKey: 'sort', title: '排序' },
-        { colKey: 'description', title: '描述' },
-        { colKey: 'state', title: '状态' },
-        { colKey: 'operation', title: '操作' }
+        { colKey: 'id', title: 'ID', width: 80 },
+        { colKey: 'typeName', title: '类型', width: 120 },
+        { colKey: 'key', title: '键', width: 150 },
+        { colKey: 'label', title: '标签', width: 150 },
+        { colKey: 'value', title: '值', width: 200 },
+        { colKey: 'sort', title: '排序', width: 80 },
+        { colKey: 'remark', title: '备注' },
+        { colKey: 'operation', title: '操作', width: 100 }
     ]),
     pagerConfig: {
         currentPage: 1,
@@ -100,27 +104,34 @@ const $Data = $ref({
     rowData: {}
 });
 
-// 方法
 const $Method = {
     async initData() {
+        await $Method.apiDictTypeAll();
         await $Method.apiDictList();
     },
-
-    // 加载字典列表
+    async apiDictTypeAll() {
+        try {
+            const res = await $Http('/addon/admin/dictType/all');
+            $Data.typeList = res.data.lists || [];
+        } catch (error) {
+            console.error('加载字典类型列表失败:', error);
+        }
+    },
     async apiDictList() {
         $Data.loading = true;
         try {
             const res = await $Http('/addon/admin/dict/list', {
                 page: $Data.pagerConfig.currentPage,
-                limit: $Data.pagerConfig.limit
+                limit: $Data.pagerConfig.limit,
+                typeCode: $Data.searchTypeCode,
+                keyword: $Data.searchKeyword
             });
-            $Data.dictList = res.data.lists || [];
+            $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
-            // 自动选中并高亮第一行
-            if ($Data.dictList.length > 0) {
-                $Data.currentRow = $Data.dictList[0];
-                $Data.activeRowKeys = [$Data.dictList[0].id];
+            if ($Data.tableData.length > 0) {
+                $Data.currentRow = $Data.tableData[0];
+                $Data.activeRowKeys = [$Data.tableData[0].id];
             } else {
                 $Data.currentRow = null;
                 $Data.activeRowKeys = [];
@@ -132,12 +143,10 @@ const $Method = {
             $Data.loading = false;
         }
     },
-
-    // 删除字典
     async apiDictDel(row) {
         DialogPlugin.confirm({
             header: '确认删除',
-            body: `确定要删除字典“${row.name}” 吗？`,
+            body: `确定要删除字典项"${row.label}"吗？`,
             status: 'warning'
         }).then(async () => {
             try {
@@ -154,53 +163,66 @@ const $Method = {
             }
         });
     },
-
-    // 刷新
-    handleRefresh() {
+    handleSearch() {
+        $Data.pagerConfig.currentPage = 1;
         $Method.apiDictList();
     },
-
-    // 分页改变
+    handleRefresh() {
+        $Data.searchTypeCode = '';
+        $Data.searchKeyword = '';
+        $Data.pagerConfig.currentPage = 1;
+        $Method.apiDictList();
+    },
     onPageChange({ currentPage }) {
         $Data.pagerConfig.currentPage = currentPage;
         $Method.apiDictList();
     },
-
-    // 每页条数改变
     handleSizeChange({ pageSize }) {
         $Data.pagerConfig.limit = pageSize;
         $Data.pagerConfig.currentPage = 1;
         $Method.apiDictList();
     },
-
-    // 高亮行变化
     onActiveChange(value, context) {
-        // 禁止取消高亮：如果新值为空，保持当前选中
         if (value.length === 0 && $Data.activeRowKeys.length > 0) {
             return;
         }
         $Data.activeRowKeys = value;
-        // 更新当前高亮的行数据
-        if (context.activeRowList && context.activeRowList.length > 0) {
-            $Data.currentRow = context.activeRowList[0].row;
-        }
+        $Data.currentRow = context.currentRowData;
     },
-
-    // 操作菜单点击
-    onAction(command, rowData) {
-        $Data.actionType = command;
-        $Data.rowData = rowData;
-        if (command === 'add' || command === 'upd') {
+    onAction(type, row) {
+        if (type === 'add') {
+            $Data.actionType = 'add';
+            $Data.rowData = {};
             $Data.editVisible = true;
-        } else if (command === 'del') {
-            $Method.apiDictDel(rowData);
+        } else if (type === 'upd') {
+            $Data.actionType = 'upd';
+            $Data.rowData = { ...row };
+            $Data.editVisible = true;
+        } else if (type === 'del') {
+            $Method.apiDictDel(row);
         }
     }
 };
 
-$Method.initData();
+onMounted(() => {
+    $Method.initData();
+});
 </script>
 
 <style scoped lang="scss">
-// 样式继承自全局 page-table
+.page-dict {
+    .main-tool .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        .t-select {
+            width: 200px;
+        }
+
+        .t-input {
+            width: 240px;
+        }
+    }
+}
 </style>

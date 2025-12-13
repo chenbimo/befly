@@ -1,162 +1,125 @@
 ﻿<template>
-    <TDialog v-model:visible="$Data.visible" :title="$Prop.actionType === 'upd' ? '编辑字典' : '添加字典'" width="600px" :append-to-body="true" :show-footer="true" :esc-closable="false" top="10vh" @close="$Method.onClose">
-        <TForm :model="$Data.formData" label-width="120px" label-position="left" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)">
-            <TFormItem label="字典名称" prop="name">
-                <TInput v-model="$Data.formData.name" placeholder="请输入字典名称" />
+    <TDialog v-model:visible="visible" :header="actionType === 'add' ? '添加字典项' : '编辑字典项'" width="600px" @confirm="$Method.handleSubmit" @close="$Method.handleClose">
+        <TForm ref="formRef" :data="$Data.formData" :rules="$Data.rules" label-width="100px">
+            <TFormItem label="字典类型" name="typeCode">
+                <TSelect v-model="$Data.formData.typeCode" placeholder="请选择字典类型" filterable>
+                    <TOption v-for="item in typeList" :key="item.code" :value="item.code" :label="item.name" />
+                </TSelect>
             </TFormItem>
-            <TFormItem label="字典代码" prop="code">
-                <TInput v-model="$Data.formData.code" placeholder="请输入字典代码，如：gender" />
+            <TFormItem label="键" name="key">
+                <TInput v-model="$Data.formData.key" placeholder="请输入键名（英文/数字/下划线）" />
             </TFormItem>
-            <TFormItem label="字典值" prop="value">
-                <TInput v-model="$Data.formData.value" placeholder="请输入字典值" />
+            <TFormItem label="标签" name="label">
+                <TInput v-model="$Data.formData.label" placeholder="请输入标签（显示名称）" />
             </TFormItem>
-            <TFormItem label="父级ID" prop="pid">
-                <TInputNumber v-model="$Data.formData.pid" :min="0" />
+            <TFormItem label="值" name="value">
+                <TInput v-model="$Data.formData.value" placeholder="请输入值" />
             </TFormItem>
-            <TFormItem label="排序" prop="sort">
-                <TInputNumber v-model="$Data.formData.sort" :min="0" :max="9999" />
+            <TFormItem label="排序" name="sort">
+                <TInputNumber v-model="$Data.formData.sort" :min="0" placeholder="请输入排序值" />
             </TFormItem>
-            <TFormItem label="描述" prop="description">
-                <TInput v-model="$Data.formData.description" type="textarea" placeholder="请输入描述" :rows="3" />
-            </TFormItem>
-            <TFormItem label="状态" prop="state">
-                <TRadioGroup v-model="$Data.formData.state">
-                    <TRadio :label="1">正常</TRadio>
-                    <TRadio :label="2">禁用</TRadio>
-                </TRadioGroup>
+            <TFormItem label="备注" name="remark">
+                <TTextarea v-model="$Data.formData.remark" placeholder="请输入备注信息" :autosize="{ minRows: 3, maxRows: 6 }" />
             </TFormItem>
         </TForm>
-        <template #footer>
-            <TButton @click="$Method.onClose">取消</TButton>
-            <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">确定</TButton>
-        </template>
     </TDialog>
 </template>
 
 <script setup>
-import { watch } from 'vue';
-import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, InputNumber as TInputNumber, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
+import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Select as TSelect, Option as TOption, Textarea as TTextarea, InputNumber as TInputNumber, MessagePlugin } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
 
-const $Prop = defineProps({
-    modelValue: {
-        type: Boolean,
-        default: false
-    },
-    actionType: {
-        type: String,
-        default: 'add'
-    },
-    rowData: {
-        type: Object,
-        default: {}
-    }
+const props = defineProps({
+    modelValue: Boolean,
+    actionType: String,
+    rowData: Object,
+    typeList: Array
 });
 
-const $Emit = defineEmits(['update:modelValue', 'success']);
+const emit = defineEmits(['update:modelValue', 'success']);
 
-// 表单引用
-const $From = $shallowRef({
-    form: null
+const visible = computed({
+    get: () => props.modelValue,
+    set: (val) => emit('update:modelValue', val)
 });
+
+const formRef = $ref(null);
 
 const $Data = $ref({
-    visible: false,
-    submitting: false,
     formData: {
-        id: 0,
-        name: '',
-        code: '',
+        typeCode: '',
+        key: '',
+        label: '',
         value: '',
-        pid: 0,
         sort: 0,
-        description: '',
-        state: 1
+        remark: ''
+    },
+    rules: {
+        typeCode: [{ required: true, message: '请选择字典类型' }],
+        key: [{ required: true, message: '请输入键名' }],
+        label: [{ required: true, message: '请输入标签' }],
+        value: [{ required: true, message: '请输入值' }]
     }
 });
 
-const $Data2 = $shallowRef({
-    formRules: {
-        name: [{ required: true, message: '请输入字典名称', trigger: 'blur' }],
-        code: [
-            { required: true, message: '请输入字典代码', trigger: 'blur' },
-            { pattern: /^[a-zA-Z0-9_]+$/, message: '字典代码只能包含字母、数字和下划线', trigger: 'blur' }
-        ],
-        value: [{ required: true, message: '请输入字典值', trigger: 'blur' }]
-    }
-});
-
-// 方法集合
 const $Method = {
-    async initData() {
-        $Method.onShow();
-    },
+    async handleSubmit() {
+        const valid = await formRef.validate();
+        if (!valid) return;
 
-    onShow() {
-        $Data.visible = true;
-        if ($Prop.actionType === 'upd' && $Prop.rowData) {
-            $Data.formData.id = $Prop.rowData.id || 0;
-            $Data.formData.name = $Prop.rowData.name || '';
-            $Data.formData.code = $Prop.rowData.code || '';
-            $Data.formData.value = $Prop.rowData.value || '';
-            $Data.formData.pid = $Prop.rowData.pid || 0;
-            $Data.formData.sort = $Prop.rowData.sort || 0;
-            $Data.formData.description = $Prop.rowData.description || '';
-            $Data.formData.state = $Prop.rowData.state ?? 1;
-        } else {
-            // 重置表单
-            $Data.formData.id = 0;
-            $Data.formData.name = '';
-            $Data.formData.code = '';
-            $Data.formData.value = '';
-            $Data.formData.pid = 0;
-            $Data.formData.sort = 0;
-            $Data.formData.description = '';
-            $Data.formData.state = 1;
-        }
-    },
-
-    onClose() {
-        $Data.visible = false;
-        setTimeout(() => {
-            $Emit('update:modelValue', false);
-        }, 300);
-    },
-
-    async onSubmit() {
         try {
-            const valid = await $From.form.validate();
-            if (!valid) return;
+            const apiUrl = props.actionType === 'add' ? '/addon/admin/dict/ins' : '/addon/admin/dict/upd';
+            const params = {
+                typeCode: $Data.formData.typeCode,
+                key: $Data.formData.key,
+                label: $Data.formData.label,
+                value: $Data.formData.value,
+                sort: $Data.formData.sort,
+                remark: $Data.formData.remark
+            };
+            if (props.actionType === 'upd') {
+                params.id = props.rowData.id;
+            }
 
-            $Data.submitting = true;
-            const res = await $Http($Prop.actionType === 'add' ? '/addon/admin/dictIns' : '/addon/admin/dictUpd', $Data.formData);
-
-            MessagePlugin.success($Prop.actionType === 'add' ? '添加成功' : '编辑成功');
-            $Method.onClose();
-            $Emit('success');
+            const res = await $Http(apiUrl, params);
+            if (res.code === 0) {
+                MessagePlugin.success(props.actionType === 'add' ? '添加成功' : '更新成功');
+                visible.value = false;
+                emit('success');
+            } else {
+                MessagePlugin.error(res.msg || '操作失败');
+            }
         } catch (error) {
             console.error('提交失败:', error);
-            MessagePlugin.error('提交失败');
-        } finally {
-            $Data.submitting = false;
+            MessagePlugin.error('操作失败');
         }
+    },
+    handleClose() {
+        visible.value = false;
     }
 };
 
-// 监听 modelValue 变化
 watch(
-    () => $Prop.modelValue,
+    () => props.modelValue,
     (val) => {
-        if (val && !$Data.visible) {
-            $Method.initData();
-        } else if (!val && $Data.visible) {
-            $Data.visible = false;
+        if (val) {
+            if (props.actionType === 'upd' && props.rowData) {
+                $Data.formData.typeCode = props.rowData.typeCode || '';
+                $Data.formData.key = props.rowData.key || '';
+                $Data.formData.label = props.rowData.label || '';
+                $Data.formData.value = props.rowData.value || '';
+                $Data.formData.sort = props.rowData.sort || 0;
+                $Data.formData.remark = props.rowData.remark || '';
+            } else {
+                $Data.formData.typeCode = '';
+                $Data.formData.key = '';
+                $Data.formData.label = '';
+                $Data.formData.value = '';
+                $Data.formData.sort = 0;
+                $Data.formData.remark = '';
+            }
         }
     },
     { immediate: true }
 );
 </script>
-
-<style scoped lang="scss">
-// 可根据需要添加样式
-</style>
