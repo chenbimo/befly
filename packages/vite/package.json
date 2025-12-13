@@ -35,7 +35,7 @@
     "dependencies": {
         "@unocss/preset-attributify": "^66.5.10",
         "@unocss/preset-uno": "^66.5.10",
-        "@vitejs/plugin-vue": "^6.0.2",
+        "@vitejs/plugin-vue": "^6.0.3",
         "@vue-macros/reactivity-transform": "^3.1.1",
         "befly-shared": "^1.2.7",
         "sass": "^1.96.0",

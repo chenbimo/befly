@@ -22,8 +22,8 @@
     "devDependencies": {
         "@prettier/plugin-oxc": "^0.1.3",
         "@types/bun": "^1.3.4",
-        "@typescript/native-preview": "^7.0.0-dev.20251211.1",
-        "lefthook": "^2.0.9",
+        "@typescript/native-preview": "^7.0.0-dev.20251212.1",
+        "lefthook": "^2.0.11",
         "lerna": "^9.0.3",
         "prettier": "^3.7.4"
     }
