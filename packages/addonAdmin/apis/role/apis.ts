@@ -1,7 +1,9 @@
-﻿export default {
+﻿import adminRoleTable from '../../tables/role.json';
+
+export default {
     name: '获取角色接口权限',
     fields: {
-        roleCode: '@string'
+        roleCode: adminRoleTable.code
     },
     handler: async (befly, ctx) => {
         // 查询角色信息

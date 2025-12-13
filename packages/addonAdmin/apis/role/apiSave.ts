@@ -3,7 +3,7 @@
 export default {
     name: '保存角色接口权限',
     fields: {
-        roleCode: '@string',
+        roleCode: adminRoleTable.code,
         apiIds: adminRoleTable.apis
     },
     handler: async (befly, ctx) => {

@@ -33,7 +33,7 @@ const PRESET_FIELDS: Record<string, any> = {
 /**
  * 处理字段定义，将 @ 符号引用替换为实际字段定义
  */
-function processFields(fields: Record<string, any>): Record<string, any> {
+function processFields(fields: Record<string, any>, apiName: string, routePath: string): Record<string, any> {
     if (!fields || typeof fields !== 'object') return fields;
 
     const processed: Record<string, any> = {};
@@ -43,8 +43,9 @@ function processFields(fields: Record<string, any>): Record<string, any> {
             if (PRESET_FIELDS[value]) {
                 processed[key] = PRESET_FIELDS[value];
             } else {
-                // 未找到预定义字段，保持原值
-                processed[key] = value;
+                // 未找到预定义字段，抛出错误
+                const validKeys = Object.keys(PRESET_FIELDS).join(', ');
+                throw new Error(`API [${apiName}] (${routePath}) 字段 [${key}] 引用了未定义的预设字段 "${value}"。可用的预设字段有: ${validKeys}`);
             }
         } else {
             // 普通字段定义，保持原样
@@ -110,12 +111,13 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 // 设置默认值
                 const methodStr = (api.method || 'POST').toUpperCase();
                 api.auth = api.auth !== undefined ? api.auth : true;
-                // 处理字段定义，将 @ 引用替换为实际字段定义
-                api.fields = processFields(api.fields || {});
-                api.required = api.required || [];
 
-                // 构建路由路径（不含方法）
+                // 构建路由路径（用于错误提示）
                 const routePath = `/api${apiFile.routePrefix}${apiFile.relativePath}`;
+
+                // 处理字段定义，将 @ 引用替换为实际字段定义
+                api.fields = processFields(api.fields || {}, api.name || apiFile.relativePath, routePath);
+                api.required = api.required || [];
 
                 // 支持逗号分隔的多方法，拆分后分别注册
                 const methods = methodStr

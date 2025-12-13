@@ -3,7 +3,7 @@
 export default {
     name: '保存角色菜单权限',
     fields: {
-        roleCode: '@string',
+        roleCode: adminRoleTable.code,
         menuIds: adminRoleTable.menus
     },
     handler: async (befly, ctx) => {

@@ -1,8 +1,8 @@
 ﻿export default {
     name: '获取字典列表',
     fields: {
-        '@page': true,
-        '@limit': true,
+        page: '@page',
+        limit: '@limit',
         typeCode: { type: 'string', label: '类型代码' },
         keyword: '@keyword'
     },
