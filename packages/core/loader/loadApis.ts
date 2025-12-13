@@ -27,7 +27,7 @@ const PRESET_FIELDS: Record<string, any> = {
     '@page': { name: '页码', type: 'number', min: 1, max: 9999, default: 1 },
     '@limit': { name: '每页数量', type: 'number', min: 1, max: 100, default: 30 },
     '@keyword': { name: '关键词', type: 'string', min: 0, max: 50 },
-    '@state': { name: '状态', type: 'number', min: 0, max: 2 }
+    '@state': { name: '状态', type: 'number', regex: '^[0-2]$' }
 };
 
 /**
