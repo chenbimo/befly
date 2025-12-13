@@ -8,16 +8,12 @@ export default {
     },
     handler: async (befly, ctx) => {
         try {
-            // 构建查询条件
-            const where: Record<string, any> = {};
-            if (ctx.body.keyword) {
-                where.$or = [{ name: { $like: `%${ctx.body.keyword}%` } }, { path: { $like: `%${ctx.body.keyword}%` } }];
-            }
-
             const result = await befly.db.getList({
                 table: 'addon_admin_api',
                 fields: ['*'],
-                where: where,
+                where: {
+                    $or: ctx.body.keyword ? [{ name$like: `%${ctx.body.keyword}%` }, { path$like: `%${ctx.body.keyword}%` }] : undefined
+                },
                 orderBy: ['id#ASC'],
                 page: ctx.body.page,
                 limit: ctx.body.limit
