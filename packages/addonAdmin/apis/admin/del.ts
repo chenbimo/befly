@@ -17,7 +17,7 @@
 
         // 不能删除 dev 角色的管理员
         if (adminData.roleCode === 'dev') {
-            return befly.tool.No('不能删除开发者账号');
+            return befly.tool.No('不能删除开发管理员');
         }
 
         // 删除管理员

@@ -20,12 +20,12 @@ export default {
         }
 
         // 查询角色信息
-        const role = await befly.db.getOne({
+        const roleData = await befly.db.getOne({
             table: 'addon_admin_role',
             where: { code: ctx.body.roleCode }
         });
 
-        if (!role) {
+        if (!roleData?.id) {
             return befly.tool.No('角色不存在');
         }
 
@@ -44,8 +44,7 @@ export default {
         });
 
         return befly.tool.Yes('添加成功', {
-            id: adminId,
-            username: ctx.body.username
+            id: adminId
         });
     }
 };
