@@ -339,13 +339,24 @@ export class DbHelper {
     /**
      * 添加默认的 state 过滤条件
      * 默认查询 state > 0 的数据（排除已删除和特殊状态）
+     * @param where - where 条件
+     * @param table - 主表名（JOIN 查询时需要，用于添加表名前缀避免歧义）
+     * @param hasJoins - 是否有 JOIN 查询
      */
-    private addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
+    private addDefaultStateFilter(where: WhereConditions = {}, table?: string, hasJoins: boolean = false): WhereConditions {
         // 如果用户已经指定了 state 条件，优先使用用户的条件
         const hasStateCondition = Object.keys(where).some((key) => key.startsWith('state') || key.includes('.state'));
 
         if (hasStateCondition) {
             return where;
+        }
+
+        // JOIN 查询时需要指定主表名前缀避免歧义
+        if (hasJoins && table) {
+            return {
+                ...where,
+                [`${table}.state$gt`]: 0
+            };
         }
 
         // 默认查询 state > 0 的数据
@@ -541,7 +552,7 @@ export class DbHelper {
     async getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number> {
         const { table, where, joins } = await this.prepareQueryOptions(options as QueryOptions);
 
-        const builder = new SqlBuilder().select(['COUNT(*) as count']).from(table).where(this.addDefaultStateFilter(where));
+        const builder = new SqlBuilder().select(['COUNT(*) as count']).from(table).where(this.addDefaultStateFilter(where, table, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -571,7 +582,7 @@ export class DbHelper {
     async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<T | null> {
         const { table, fields, where, joins } = await this.prepareQueryOptions(options);
 
-        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where));
+        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where, table, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -623,7 +634,7 @@ export class DbHelper {
         }
 
         // 构建查询
-        const whereFiltered = this.addDefaultStateFilter(prepared.where);
+        const whereFiltered = this.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
 
         // 查询总数
         const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(prepared.table).where(whereFiltered);
@@ -698,7 +709,7 @@ export class DbHelper {
 
         const prepared = await this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
 
-        const whereFiltered = this.addDefaultStateFilter(prepared.where);
+        const whereFiltered = this.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
 
         // 查询真实总数
         const countBuilder = new SqlBuilder().select(['COUNT(*) as total']).from(prepared.table).where(whereFiltered);
@@ -893,7 +904,7 @@ export class DbHelper {
         };
 
         // 构建 SQL
-        const whereFiltered = this.addDefaultStateFilter(snakeWhere);
+        const whereFiltered = this.addDefaultStateFilter(snakeWhere, snakeTable, false);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql, params } = builder.toUpdateSql(snakeTable, processed);
 
@@ -1003,7 +1014,7 @@ export class DbHelper {
         const { table, where } = await this.prepareQueryOptions({ ...options, page: 1, limit: 1 });
 
         // 使用 COUNT(1) 性能更好
-        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where)).limit(1);
+        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where, table, false)).limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);
@@ -1084,7 +1095,7 @@ export class DbHelper {
         const snakeWhere = this.whereKeysToSnake(cleanWhere);
 
         // 使用 SqlBuilder 构建安全的 WHERE 条件
-        const whereFiltered = this.addDefaultStateFilter(snakeWhere);
+        const whereFiltered = this.addDefaultStateFilter(snakeWhere, snakeTable, false);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql: whereClause, params: whereParams } = builder.getWhereConditions();
 
