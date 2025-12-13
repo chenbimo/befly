@@ -121,7 +121,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/role/apiDetail', {
+            const res = await $Http('/addon/admin/role/apis', {
                 roleCode: $Prop.rowData.code
             });
 

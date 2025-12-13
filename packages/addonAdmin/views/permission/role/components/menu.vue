@@ -73,11 +73,11 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/role/menuDetail', {
+            const res = await $Http('/addon/admin/role/menus', {
                 roleCode: $Prop.rowData.code
             });
 
-            // roleMenuDetail 返回的 data 直接就是菜单 ID 数组
+            // menus 返回的 data 直接就是菜单 ID 数组
             $Data.menuTreeCheckedKeys = Array.isArray(res.data) ? res.data : [];
         } catch (error) {
             console.error('加载角色菜单失败:', error);
