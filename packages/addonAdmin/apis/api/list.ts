@@ -10,7 +10,6 @@ export default {
         try {
             const result = await befly.db.getList({
                 table: 'addon_admin_api',
-                fields: ['*'],
                 where: {
                     $or: ctx.body.keyword ? [{ name$like: `%${ctx.body.keyword}%` }, { path$like: `%${ctx.body.keyword}%` }] : undefined
                 },

@@ -10,7 +10,6 @@
         try {
             const menus = await befly.db.getAll({
                 table: 'addon_admin_menu',
-                fields: ['*'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
 

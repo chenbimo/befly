@@ -3,7 +3,6 @@ export default {
     handler: async (befly, ctx) => {
         const result = await befly.db.getAll({
             table: 'addon_admin_sys_config',
-            fields: ['*'],
             orderBy: ['id#ASC']
         });
 

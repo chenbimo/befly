@@ -9,7 +9,6 @@
             if (allApis.length === 0) {
                 const result = await befly.db.getAll({
                     table: 'addon_admin_api',
-                    fields: ['*'],
                     orderBy: ['id#ASC']
                 });
                 allApis = result.lists;

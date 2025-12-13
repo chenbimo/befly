@@ -11,7 +11,6 @@ export default {
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({
             table: 'addon_admin_dict_type',
-            fields: ['*'],
             where: {
                 name$like: ctx.body.keyword ? `%${ctx.body.keyword}%` : undefined
             },
