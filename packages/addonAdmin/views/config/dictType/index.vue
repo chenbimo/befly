@@ -78,12 +78,12 @@ const $Data = $ref({
     currentRow: null,
     searchKeyword: '',
     columns: withDefaultColumns([
-        { colKey: 'id', title: 'ID', width: 80 },
-        { colKey: 'code', title: '类型代码', width: 150 },
-        { colKey: 'name', title: '类型名称', width: 200 },
+        { colKey: 'id', title: 'ID' },
+        { colKey: 'code', title: '类型代码' },
+        { colKey: 'name', title: '类型名称' },
         { colKey: 'description', title: '描述' },
-        { colKey: 'sort', title: '排序', width: 80 },
-        { colKey: 'operation', title: '操作', width: 100 }
+        { colKey: 'sort', title: '排序' },
+        { colKey: 'operation', title: '操作' }
     ]),
     pagerConfig: {
         currentPage: 1,
