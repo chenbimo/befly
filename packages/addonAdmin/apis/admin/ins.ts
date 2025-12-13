@@ -11,8 +11,20 @@ export default {
             where: { username: ctx.body.username }
         });
 
-        if (existingByUsername) {
+        if (existingByUsername?.id) {
             return befly.tool.No('用户名已被使用');
+        }
+
+        // 检查昵称是否已存在
+        if (ctx.body.nickname) {
+            const existingByNickname = await befly.db.getOne({
+                table: 'addon_admin_admin',
+                where: { nickname: ctx.body.nickname }
+            });
+
+            if (existingByNickname?.id) {
+                return befly.tool.No('昵称已被使用');
+            }
         }
 
         // 查询角色信息
