@@ -9,8 +9,8 @@ export default {
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({
             table: 'addon_admin_operate_log',
-            page: ctx.body.page || 1,
-            limit: ctx.body.limit || 30,
+            page: ctx.body.page,
+            limit: ctx.body.limit,
             orderBy: ['operateTime#DESC']
         });
 

@@ -21,7 +21,7 @@
         ];
 
         // 根据 limit 参数返回指定数量的日志
-        const limit = ctx.body.limit || 5;
+        const limit = ctx.body.limit;
         const lists = changelog.slice(0, limit);
 
         return befly.tool.Yes('获取成功', {
