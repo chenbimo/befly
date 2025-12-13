@@ -1,7 +1,15 @@
 ﻿<template>
     <TForm :model="$Data.formData" :rules="$Data2.formRules" :ref="(el) => ($From.form = el)" class="login-form" :show-message="false" label-width="0">
+        <TFormItem prop="loginType">
+            <TRadioGroup v-model="$Data.formData.loginType" size="large">
+                <TRadioButton value="username">用户名</TRadioButton>
+                <TRadioButton value="email">邮箱</TRadioButton>
+                <TRadioButton value="phone">手机号</TRadioButton>
+            </TRadioGroup>
+        </TFormItem>
+
         <TFormItem prop="account">
-            <TInput v-model="$Data.formData.account" placeholder="用户名或邮箱" size="large" clearable @enter="$Method.apiLogin">
+            <TInput v-model="$Data.formData.account" :placeholder="$Data.accountPlaceholder" size="large" clearable @enter="$Method.apiLogin">
                 <template #prefix-icon>
                     <ILucideUser />
                 </template>
@@ -27,7 +35,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, MessagePlugin } from 'tdesign-vue-next';
+import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, RadioGroup as TRadioGroup, RadioButton as TRadioButton, MessagePlugin } from 'tdesign-vue-next';
 import ILucideUser from '~icons/lucide/user';
 import ILucideLock from '~icons/lucide/lock';
 import { $Http } from '@/plugins/http';
@@ -46,14 +54,26 @@ const $Data = $ref({
     loading: false,
     rememberMe: false,
     formData: {
+        loginType: 'username',
         account: '',
         password: ''
     }
 });
 
+// 计算属性：根据登录类型显示不同占位符
+const $Data.accountPlaceholder = $computed(() => {
+    const placeholderMap = {
+        username: '请输入用户名',
+        email: '请输入邮箱',
+        phone: '请输入手机号'
+    };
+    return placeholderMap[$Data.formData.loginType] || '请输入账号';
+});
+
 const $Data2 = $shallowRef({
     formRules: {
-        account: [{ required: true, message: '请输入用户名或邮箱', trigger: 'blur' }],
+        loginType: [{ required: true }],
+        account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
         password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
     }
 });
@@ -70,6 +90,7 @@ const $Method = {
             const hashedPassword = await hashPassword($Data.formData.password);
 
             const res = await $Http('/addon/admin/auth/login', {
+                loginType: $Data.formData.loginType,
                 account: $Data.formData.account,
                 password: hashedPassword
             });

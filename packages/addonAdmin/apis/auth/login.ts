@@ -12,9 +12,14 @@ export default {
             min: 3,
             max: 100
         },
-        password: adminTable.password
+        password: adminTable.password,
+        loginType: {
+            name: '登录类型',
+            type: 'string',
+            regexp: '^(username|email|phone)$'
+        }
     },
-    required: ['account', 'password'],
+    required: ['account', 'password', 'loginType'],
     handler: async (befly, ctx) => {
         // 解析 User-Agent
         const userAgent = ctx.req.headers.get('user-agent') || '';
@@ -41,12 +46,20 @@ export default {
             failReason: ''
         };
 
-        // 查询管理员（account 匹配 username 或 email）
+        // 根据登录类型构建查询条件
+        const whereCondition: Record<string, any> = {};
+        if (ctx.body.loginType === 'username') {
+            whereCondition.username = ctx.body.account;
+        } else if (ctx.body.loginType === 'email') {
+            whereCondition.email = ctx.body.account;
+        } else if (ctx.body.loginType === 'phone') {
+            whereCondition.phone = ctx.body.account;
+        }
+
+        // 查询管理员
         const admin = await befly.db.getOne({
             table: 'addon_admin_admin',
-            where: {
-                $or: [{ username: ctx.body.account }, { email: ctx.body.account }]
-            }
+            where: whereCondition
         });
 
         if (!admin?.id) {
@@ -85,16 +98,6 @@ export default {
         // 登录成功，记录日志
         logData.loginResult = 1;
         await befly.db.insData({ table: 'addon_admin_login_log', data: logData });
-
-        // 更新最后登录信息
-        await befly.db.updData({
-            table: 'addon_admin_admin',
-            where: { id: admin.id },
-            data: {
-                lastLoginTime: Date.now(),
-                lastLoginIp: ctx.ip || 'unknown'
-            }
-        });
 
         // 生成 JWT Token（包含核心身份信息）
         const token = await befly.jwt.sign(
