@@ -552,7 +552,10 @@ export class DbHelper {
     async getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number> {
         const { table, where, joins } = await this.prepareQueryOptions(options as QueryOptions);
 
-        const builder = new SqlBuilder().select(['COUNT(*) as count']).from(table).where(this.addDefaultStateFilter(where, table, !!joins));
+        const builder = new SqlBuilder()
+            .select(['COUNT(*) as count'])
+            .from(table)
+            .where(this.addDefaultStateFilter(where, table, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -582,7 +585,10 @@ export class DbHelper {
     async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<T | null> {
         const { table, fields, where, joins } = await this.prepareQueryOptions(options);
 
-        const builder = new SqlBuilder().select(fields).from(table).where(this.addDefaultStateFilter(where, table, !!joins));
+        const builder = new SqlBuilder()
+            .select(fields)
+            .from(table)
+            .where(this.addDefaultStateFilter(where, table, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -1014,7 +1020,11 @@ export class DbHelper {
         const { table, where } = await this.prepareQueryOptions({ ...options, page: 1, limit: 1 });
 
         // 使用 COUNT(1) 性能更好
-        const builder = new SqlBuilder().select(['COUNT(1) as cnt']).from(table).where(this.addDefaultStateFilter(where, table, false)).limit(1);
+        const builder = new SqlBuilder()
+            .select(['COUNT(1) as cnt'])
+            .from(table)
+            .where(this.addDefaultStateFilter(where, table, false))
+            .limit(1);
 
         const { sql, params } = builder.toSelectSql();
         const result = await this.executeWithConn(sql, params);

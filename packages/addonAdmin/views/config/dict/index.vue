@@ -84,7 +84,8 @@ const $Data = $ref({
     searchKeyword: '',
     columns: withDefaultColumns([
         { colKey: 'id', title: 'ID' },
-        { colKey: 'typeName', title: '类型' },
+        { colKey: 'typeName', title: '类型名称' },
+        { colKey: 'typeCode', title: '类型代码' },
         { colKey: 'label', title: '标签' },
         { colKey: 'key', title: '键值' },
         { colKey: 'sort', title: '排序', width: 100 },
