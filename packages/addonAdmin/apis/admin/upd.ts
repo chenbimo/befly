@@ -1,12 +1,8 @@
-﻿/**
- * 更新管理员信息
- */
-
-import adminTable from '../../tables/admin.json';
+﻿import adminTable from '../../tables/admin.json';
 
 export default {
     name: '更新管理员',
-    fields: adminTable,
+    fields: { id: '@id', ...adminTable },
     required: ['id'],
     handler: async (befly, ctx) => {
         const { id, ...updateData } = ctx.body;

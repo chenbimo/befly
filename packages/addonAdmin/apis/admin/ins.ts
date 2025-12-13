@@ -2,11 +2,7 @@
 
 export default {
     name: '添加管理员',
-    fields: {
-        username: adminTable.username,
-        password: adminTable.password,
-        roleCode: adminTable.roleCode
-    },
+    fields: adminTable,
     required: ['username', 'password', 'roleCode'],
     handler: async (befly, ctx) => {
         // 检查用户名是否已存在

@@ -1,5 +1,5 @@
 ﻿export default {
-    name: '获取管理员列表',
+    name: '查询管理员列表',
     fields: {
         page: '@page',
         limit: '@limit',
