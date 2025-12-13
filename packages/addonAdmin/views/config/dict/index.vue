@@ -83,13 +83,13 @@ const $Data = $ref({
     searchTypeCode: '',
     searchKeyword: '',
     columns: withDefaultColumns([
-        { colKey: 'id', title: 'ID', width: 80 },
-        { colKey: 'typeName', title: '类型', width: 120 },
-        { colKey: 'key', title: '键', width: 150 },
-        { colKey: 'label', title: '标签', width: 200 },
-        { colKey: 'sort', title: '排序', width: 80 },
+        { colKey: 'id', title: 'ID' },
+        { colKey: 'typeName', title: '类型' },
+        { colKey: 'label', title: '标签' },
+        { colKey: 'key', title: '键值' },
+        { colKey: 'sort', title: '排序', width: 100 },
         { colKey: 'remark', title: '备注' },
-        { colKey: 'operation', title: '操作', width: 100 }
+        { colKey: 'operation', title: '操作' }
     ]),
     pagerConfig: {
         currentPage: 1,

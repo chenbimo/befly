@@ -6,7 +6,7 @@
                     <TOption v-for="item in typeList" :key="item.code" :value="item.code" :label="item.name" />
                 </TSelect>
             </TFormItem>
-            <TFormItem label="键" name="key">
+            <TFormItem label="键值" name="key">
                 <TInput v-model="$Data.formData.key" placeholder="请输入键名（英文/数字/下划线）" />
             </TFormItem>
             <TFormItem label="标签" name="label">
@@ -52,17 +52,15 @@ const $Data = $ref({
     },
     rules: {
         typeCode: [{ required: true, message: '请选择字典类型' }],
-        key: [{ required: true, message: '请输入键名' }],
+        key: [{ required: true, message: '请输入键值' }],
         label: [{ required: true, message: '请输入标签' }]
     }
 });
 
 const $Method = {
     async handleSubmit() {
-        const valid = await formRef.validate();
-        if (!valid) return;
-
         try {
+            const valid = await formRef.validate();
             const apiUrl = props.actionType === 'add' ? '/addon/admin/dict/ins' : '/addon/admin/dict/upd';
             const params = {
                 typeCode: $Data.formData.typeCode,
@@ -76,6 +74,7 @@ const $Method = {
             }
 
             const res = await $Http(apiUrl, params);
+            console.log('🔥[ res ]-79', res);
             if (res.code === 0) {
                 MessagePlugin.success(props.actionType === 'add' ? '添加成功' : '更新成功');
                 visible.value = false;
