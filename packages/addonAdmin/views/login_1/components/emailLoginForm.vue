@@ -9,7 +9,7 @@
         </TFormItem>
 
         <TFormItem prop="account">
-            <TInput v-model="$Data.formData.account" :placeholder="$Data.accountPlaceholder" size="large" clearable @enter="$Method.apiLogin">
+            <TInput v-model="$Data.formData.account" :placeholder="$Data.formData.loginType === 'username' ? '请输入用户名' : $Data.formData.loginType === 'email' ? '请输入邮箱' : '请输入手机号'" size="large" clearable @enter="$Method.apiLogin">
                 <template #prefix-icon>
                     <ILucideUser />
                 </template>
@@ -58,16 +58,6 @@ const $Data = $ref({
         account: '',
         password: ''
     }
-});
-
-// 计算属性：根据登录类型显示不同占位符
-const $Data.accountPlaceholder = $computed(() => {
-    const placeholderMap = {
-        username: '请输入用户名',
-        email: '请输入邮箱',
-        phone: '请输入手机号'
-    };
-    return placeholderMap[$Data.formData.loginType] || '请输入账号';
 });
 
 const $Data2 = $shallowRef({
