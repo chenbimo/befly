@@ -5,7 +5,7 @@ export default {
     fields: { id: '@id', ...adminTable },
     required: ['id'],
     handler: async (befly, ctx) => {
-        const { id, ...updateData } = ctx.body;
+        const { id, username, nickname, roleCode, ...updateData } = ctx.body;
 
         // 检查管理员是否存在
         const admin = await befly.db.getOne({
@@ -17,10 +17,49 @@ export default {
             return befly.tool.No('管理员不存在');
         }
 
+        // 检查用户名是否已被其他管理员使用
+        if (username && username !== admin.username) {
+            const existingUsername = await befly.db.getOne({
+                table: 'addon_admin_admin',
+                where: { username, id: { $ne: id } }
+            });
+            if (existingUsername?.id) {
+                return befly.tool.No('用户名已被使用');
+            }
+        }
+
+        // 检查昵称是否已被其他管理员使用
+        if (nickname && nickname !== admin.nickname) {
+            const existingNickname = await befly.db.getOne({
+                table: 'addon_admin_admin',
+                where: { nickname, id: { $ne: id } }
+            });
+            if (existingNickname?.id) {
+                return befly.tool.No('昵称已被使用');
+            }
+        }
+
+        // 检查角色是否存在
+        if (roleCode && roleCode !== admin.roleCode) {
+            const role = await befly.db.getOne({
+                table: 'addon_admin_role',
+                where: { code: roleCode }
+            });
+            if (!role?.id) {
+                return befly.tool.No('角色不存在');
+            }
+        }
+
+        // 构建更新数据
+        const dataToUpdate: Record<string, any> = { ...updateData };
+        if (username) dataToUpdate.username = username;
+        if (nickname) dataToUpdate.nickname = nickname;
+        if (roleCode) dataToUpdate.roleCode = roleCode;
+
         // 更新管理员信息
         await befly.db.updData({
             table: 'addon_admin_admin',
-            data: updateData,
+            data: dataToUpdate,
             where: { id }
         });
 
