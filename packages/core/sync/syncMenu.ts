@@ -231,8 +231,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
  */
 async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
     const allExistingMenus = await helper.getAll({
-        table: 'addon_admin_menu',
-        fields: ['id', 'pid', 'name', 'path', 'sort']
+        table: 'addon_admin_menu'
     });
     const existingMenuMap = new Map<string, any>();
     for (const menu of allExistingMenus.lists) {
@@ -368,7 +367,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         // 7. 获取最终菜单数据（用于缓存）
         const allMenusData = await helper.getAll({
             table: 'addon_admin_menu',
-            fields: ['id', 'pid', 'name', 'path', 'sort'],
             orderBy: ['sort#ASC', 'id#ASC']
         });
 

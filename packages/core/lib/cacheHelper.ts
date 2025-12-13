@@ -37,7 +37,6 @@ export class CacheHelper {
             // 从数据库查询所有接口
             const apiList = await this.befly.db.getAll({
                 table: 'addon_admin_api',
-                fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                 orderBy: ['addonName#ASC', 'path#ASC']
             });
 
@@ -67,7 +66,6 @@ export class CacheHelper {
             // 从数据库查询所有菜单
             const menus = await this.befly.db.getAll({
                 table: 'addon_admin_menu',
-                fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                 orderBy: ['sort#ASC', 'id#ASC']
             });
 
@@ -100,12 +98,10 @@ export class CacheHelper {
             // 并行查询角色和接口（利用自动 pipeline）
             const [roles, allApis] = await Promise.all([
                 this.befly.db.getAll({
-                    table: 'addon_admin_role',
-                    fields: ['id', 'code', 'apis']
+                    table: 'addon_admin_role'
                 }),
                 this.befly.db.getAll({
-                    table: 'addon_admin_api',
-                    fields: ['id', 'path', 'method']
+                    table: 'addon_admin_api'
                 })
             ]);
 

@@ -28,7 +28,6 @@ export default {
             try {
                 const apis = await befly.db.getAll({
                     table: 'addon_admin_api',
-                    fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
                     orderBy: ['addonName#ASC', 'path#ASC']
                 });
 
@@ -43,7 +42,6 @@ export default {
             try {
                 const menus = await befly.db.getAll({
                     table: 'addon_admin_menu',
-                    fields: ['id', 'pid', 'name', 'path', 'icon', 'type', 'sort'],
                     orderBy: ['sort#ASC', 'id#ASC']
                 });
 
@@ -66,8 +64,7 @@ export default {
             // 3. 刷新角色权限缓存
             try {
                 const roles = await befly.db.getAll({
-                    table: 'addon_admin_role',
-                    fields: ['id', 'name', 'code', 'menus', 'apis']
+                    table: 'addon_admin_role'
                 });
 
                 // 使用 setBatch 批量缓存所有角色

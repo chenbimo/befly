@@ -15,7 +15,6 @@
 
         const result = await befly.db.getList({
             table: 'addon_admin_dict',
-            fields: ['id', 'typeCode', 'key', 'label', 'sort', 'remark', 'created_at', 'updated_at'],
             where: where,
             page: ctx.body.page,
             limit: ctx.body.limit,
@@ -28,7 +27,7 @@
             const types = await befly.db.getAll({
                 table: 'addon_admin_dict_type',
                 where: { code$in: typeCodes },
-                fields: ['code', 'name']
+                fields: ['id', 'code', 'name']
             });
 
             const typeMap = new Map(types.lists.map((t: any) => [t.code, t.name]));

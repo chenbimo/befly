@@ -3,7 +3,6 @@ export default {
     handler: async (befly, ctx) => {
         const result = await befly.db.getAll({
             table: 'addon_admin_dict_type',
-            fields: ['id', 'code', 'name', 'description', 'sort'],
             orderBy: ['sort#ASC', 'id#ASC']
         });
 

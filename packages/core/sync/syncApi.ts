@@ -199,7 +199,6 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
 async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<void> {
     const allRecords = await helper.getAll({
         table: 'addon_admin_api',
-        fields: ['id', 'addonName', 'path', 'method'],
         where: { state$gte: 0 }
     });
 
@@ -250,8 +249,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         try {
             const apiList = await helper.getAll({
                 table: 'addon_admin_api',
-                fields: ['id', 'name', 'path', 'method', 'description', 'addonName', 'addonTitle'],
-                orderBy: ['addonName#ASC', 'path#ASC']
+                orderBy: ['id#ASC']
             });
 
             const redisHelper = new RedisHelper();

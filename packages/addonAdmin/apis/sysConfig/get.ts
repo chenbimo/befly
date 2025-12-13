@@ -7,7 +7,6 @@ export default {
     handler: async (befly, ctx) => {
         const config = await befly.db.getDetail({
             table: 'addon_admin_sys_config',
-            fields: ['code', 'value', 'valueType'],
             where: { code: ctx.body.code }
         });
 

@@ -99,7 +99,6 @@ export default {
 
         const result = await befly.db.getList<UserTable>({
             table: 'user',
-            fields: ['id', 'email', 'nickname', 'createdAt'],
             where: where,
             orderBy: ['createdAt#DESC'],
             page: 1,
