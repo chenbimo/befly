@@ -9,11 +9,17 @@
             const role = await befly.db.getOne({
                 table: 'addon_admin_role',
                 where: { id: ctx.body.id },
-                columns: ['code']
+                fields: ['code']
             });
 
             if (!role?.code) {
                 return befly.tool.No('角色不存在');
+            }
+
+            // 禁止删除系统角色
+            const systemRoles = ['dev', 'user', 'admin', 'guest'];
+            if (systemRoles.includes(role.code)) {
+                return befly.tool.No(`系统角色 [${role.code}] 不允许删除`);
             }
 
             const adminList = await befly.db.getList({
