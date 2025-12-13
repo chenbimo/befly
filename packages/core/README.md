@@ -293,7 +293,7 @@ export const beflyConfig = { ... };
 
 - **`packages/core`** - Befly 核心框架包（发布到 npm）
 - **`packages/tpl`** - API 项目模板示例
-- **`packages/admin`** - 后台管理系统（Vue3 + TinyVue + 自动导入）
+- **`packages/admin`** - 后台管理系统（Vue3 + TDesign Vue Next + 自动导入）
 
 ## 🚀 快速启动
 
