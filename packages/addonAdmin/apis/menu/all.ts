@@ -17,7 +17,7 @@ export default {
                 where: { code: ctx.user.roleCode }
             });
 
-            if (!role) {
+            if (!role?.id) {
                 return befly.tool.No('角色不存在', { lists: [] });
             }
 

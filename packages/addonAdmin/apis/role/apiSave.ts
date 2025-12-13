@@ -13,7 +13,7 @@ export default {
             where: { code: ctx.body.roleCode }
         });
 
-        if (!role) {
+        if (!role?.id) {
             return befly.tool.No('角色不存在');
         }
 
