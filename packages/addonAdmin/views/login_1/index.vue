@@ -122,10 +122,7 @@ const $Method = {
                 $Storage.local.set('userInfo', res.data.userInfo);
             }
 
-            MessagePlugin.info({
-                message: res.data.msg || '登录成功',
-                status: 'success'
-            });
+            MessagePlugin.success(res.msg || '登录成功');
 
             // 跳转到首页，路由守卫会自动加载菜单
             await router.push('/');
