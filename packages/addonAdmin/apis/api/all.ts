@@ -5,7 +5,7 @@
             // 从缓存获取所有接口
             let allApis = await befly.cache.getApis();
 
-            // 如果缓存不存在，从数据库查询
+            // 如果缓存不存在，从数据库查询并缓存
             if (allApis.length === 0) {
                 const result = await befly.db.getAll({
                     table: 'addon_admin_api',
@@ -13,6 +13,11 @@
                     orderBy: ['id#ASC']
                 });
                 allApis = result.lists;
+
+                // 缓存到 Redis
+                if (allApis.length > 0) {
+                    await befly.cache.cacheApis();
+                }
             }
 
             return befly.tool.Yes('操作成功', { lists: allApis });
