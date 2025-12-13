@@ -283,7 +283,7 @@ export class DbHelper {
 
         // 联查时使用特殊处理逻辑
         if (hasJoins) {
-            // 联查时字段直接处理（支持表别名）
+            // 联查时字段直接处理（支持表名.字段名格式）
             const processedFields = (options.fields || []).map((f) => this.processJoinField(f));
 
             return {
@@ -342,7 +342,7 @@ export class DbHelper {
      */
     private addDefaultStateFilter(where: WhereConditions = {}): WhereConditions {
         // 如果用户已经指定了 state 条件，优先使用用户的条件
-        const hasStateCondition = Object.keys(where).some((key) => key.startsWith('state'));
+        const hasStateCondition = Object.keys(where).some((key) => key.startsWith('state') || key.includes('.state'));
 
         if (hasStateCondition) {
             return where;

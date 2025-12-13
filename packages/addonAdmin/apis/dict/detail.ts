@@ -4,10 +4,10 @@
     required: ['id'],
     handler: async (befly, ctx) => {
         const dict = await befly.db.getOne({
-            table: 'addon_admin_dict d',
-            joins: [{ table: 'addon_admin_dict_type dt', on: 'd.type_code = dt.code' }],
-            fields: ['d.id', 'd.typeCode', 'd.key', 'd.label', 'd.sort', 'd.remark', 'd.createdAt', 'd.updatedAt', 'dt.name AS typeName'],
-            where: { 'd.id': ctx.body.id }
+            table: 'addon_admin_dict',
+            joins: [{ table: 'addon_admin_dict_type', on: 'addon_admin_dict.type_code = addon_admin_dict_type.code' }],
+            fields: ['addon_admin_dict.id', 'addon_admin_dict.typeCode', 'addon_admin_dict.key', 'addon_admin_dict.label', 'addon_admin_dict.sort', 'addon_admin_dict.remark', 'addon_admin_dict.createdAt', 'addon_admin_dict.updatedAt', 'addon_admin_dict_type.name AS typeName'],
+            where: { 'addon_admin_dict.id': ctx.body.id }
         });
 
         if (!dict?.id) {
