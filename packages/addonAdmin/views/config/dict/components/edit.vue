@@ -12,9 +12,6 @@
             <TFormItem label="标签" name="label">
                 <TInput v-model="$Data.formData.label" placeholder="请输入标签（显示名称）" />
             </TFormItem>
-            <TFormItem label="值" name="value">
-                <TInput v-model="$Data.formData.value" placeholder="请输入值" />
-            </TFormItem>
             <TFormItem label="排序" name="sort">
                 <TInputNumber v-model="$Data.formData.sort" :min="0" placeholder="请输入排序值" />
             </TFormItem>
@@ -50,15 +47,13 @@ const $Data = $ref({
         typeCode: '',
         key: '',
         label: '',
-        value: '',
         sort: 0,
         remark: ''
     },
     rules: {
         typeCode: [{ required: true, message: '请选择字典类型' }],
         key: [{ required: true, message: '请输入键名' }],
-        label: [{ required: true, message: '请输入标签' }],
-        value: [{ required: true, message: '请输入值' }]
+        label: [{ required: true, message: '请输入标签' }]
     }
 });
 
@@ -73,7 +68,6 @@ const $Method = {
                 typeCode: $Data.formData.typeCode,
                 key: $Data.formData.key,
                 label: $Data.formData.label,
-                value: $Data.formData.value,
                 sort: $Data.formData.sort,
                 remark: $Data.formData.remark
             };
@@ -107,14 +101,12 @@ watch(
                 $Data.formData.typeCode = props.rowData.typeCode || '';
                 $Data.formData.key = props.rowData.key || '';
                 $Data.formData.label = props.rowData.label || '';
-                $Data.formData.value = props.rowData.value || '';
                 $Data.formData.sort = props.rowData.sort || 0;
                 $Data.formData.remark = props.rowData.remark || '';
             } else {
                 $Data.formData.typeCode = '';
                 $Data.formData.key = '';
                 $Data.formData.label = '';
-                $Data.formData.value = '';
                 $Data.formData.sort = 0;
                 $Data.formData.remark = '';
             }

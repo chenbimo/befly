@@ -19,7 +19,7 @@ export default {
         const items = await befly.db.getAll({
             table: 'addon_admin_dict',
             where: { typeCode: ctx.body.typeCode },
-            fields: ['id', 'key', 'label', 'value', 'sort'],
+            fields: ['id', 'key', 'label', 'sort'],
             orderBy: ['sort#ASC', 'id#ASC']
         });
 

@@ -12,7 +12,7 @@
                 <TSelect v-model="$Data.searchTypeCode" placeholder="请选择字典类型" clearable filterable @change="$Method.handleSearch">
                     <TOption v-for="item in $Data.typeList" :key="item.code" :value="item.code" :label="item.name" />
                 </TSelect>
-                <TInput v-model="$Data.searchKeyword" placeholder="搜索键/标签/值" clearable @enter="$Method.handleSearch" @clear="$Method.handleSearch">
+                <TInput v-model="$Data.searchKeyword" placeholder="搜索键/标签" clearable @enter="$Method.handleSearch" @clear="$Method.handleSearch">
                     <template #suffix-icon>
                         <ILucideSearch />
                     </template>
@@ -86,8 +86,7 @@ const $Data = $ref({
         { colKey: 'id', title: 'ID', width: 80 },
         { colKey: 'typeName', title: '类型', width: 120 },
         { colKey: 'key', title: '键', width: 150 },
-        { colKey: 'label', title: '标签', width: 150 },
-        { colKey: 'value', title: '值', width: 200 },
+        { colKey: 'label', title: '标签', width: 200 },
         { colKey: 'sort', title: '排序', width: 80 },
         { colKey: 'remark', title: '备注' },
         { colKey: 'operation', title: '操作', width: 100 }

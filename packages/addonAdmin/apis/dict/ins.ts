@@ -3,7 +3,7 @@
 export default {
     name: '添加字典',
     fields: adminDictTable,
-    required: ['typeCode', 'key', 'label', 'value'],
+    required: ['typeCode', 'key', 'label'],
     handler: async (befly, ctx) => {
         // 验证 typeCode 是否存在
         const dictType = await befly.db.getOne({
@@ -34,7 +34,6 @@ export default {
                 typeCode: ctx.body.typeCode,
                 key: ctx.body.key,
                 label: ctx.body.label,
-                value: ctx.body.value,
                 sort: ctx.body.sort,
                 remark: ctx.body.remark
             }

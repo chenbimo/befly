@@ -10,12 +10,12 @@
         const where: any = {};
         if (ctx.body.typeCode) where.typeCode = ctx.body.typeCode;
         if (ctx.body.keyword) {
-            where.$or = [{ key$like: `%${ctx.body.keyword}%` }, { label$like: `%${ctx.body.keyword}%` }, { value$like: `%${ctx.body.keyword}%` }];
+            where.$or = [{ key$like: `%${ctx.body.keyword}%` }, { label$like: `%${ctx.body.keyword}%` }];
         }
 
         const result = await befly.db.getList({
             table: 'addon_admin_dict',
-            fields: ['id', 'typeCode', 'key', 'label', 'value', 'sort', 'remark', 'created_at', 'updated_at'],
+            fields: ['id', 'typeCode', 'key', 'label', 'sort', 'remark', 'created_at', 'updated_at'],
             where: where,
             page: ctx.body.page,
             limit: ctx.body.limit,

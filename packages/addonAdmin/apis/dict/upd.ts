@@ -8,7 +8,7 @@ export default {
     },
     required: ['id'],
     handler: async (befly, ctx) => {
-        const { id, typeCode, key, label, value, sort, remark } = ctx.body;
+        const { id, typeCode, key, label, sort, remark } = ctx.body;
 
         // 如果更新了 typeCode，验证其是否存在
         if (typeCode) {
@@ -50,7 +50,6 @@ export default {
         if (typeCode !== undefined) updateData.typeCode = typeCode;
         if (key !== undefined) updateData.key = key;
         if (label !== undefined) updateData.label = label;
-        if (value !== undefined) updateData.value = value;
         if (sort !== undefined) updateData.sort = sort;
         if (remark !== undefined) updateData.remark = remark;
 
