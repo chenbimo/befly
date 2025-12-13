@@ -3,7 +3,7 @@
     handler: async (befly) => {
         const dicts = await befly.db.getAll({
             table: 'addon_admin_dict',
-            fields: ['id', 'code', 'name', 'value'],
+            fields: ['*'],
             orderBy: ['id#ASC']
         });
 
