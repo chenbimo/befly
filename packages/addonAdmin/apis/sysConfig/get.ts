@@ -10,7 +10,7 @@ export default {
             where: { code: ctx.body.code }
         });
 
-        if (!config) {
+        if (!config?.id) {
             return befly.tool.No('配置不存在');
         }
 
