@@ -8,33 +8,20 @@
     },
     handler: async (befly, ctx) => {
         const where: any = {};
-        if (ctx.body.typeCode) where.typeCode = ctx.body.typeCode;
+        if (ctx.body.typeCode) where['d.typeCode'] = ctx.body.typeCode;
         if (ctx.body.keyword) {
-            where.$or = [{ key$like: `%${ctx.body.keyword}%` }, { label$like: `%${ctx.body.keyword}%` }];
+            where.$or = [{ 'd.key$like': `%${ctx.body.keyword}%` }, { 'd.label$like': `%${ctx.body.keyword}%` }];
         }
 
         const result = await befly.db.getList({
-            table: 'addon_admin_dict',
+            table: 'addon_admin_dict d',
+            joins: [{ table: 'addon_admin_dict_type dt', on: 'd.type_code = dt.code' }],
+            fields: ['d.id', 'd.typeCode', 'd.key', 'd.label', 'd.sort', 'd.remark', 'd.createdAt', 'd.updatedAt', 'dt.name AS typeName'],
             where: where,
             page: ctx.body.page,
             limit: ctx.body.limit,
-            orderBy: ['sort#ASC', 'id#ASC']
+            orderBy: ['d.sort#ASC', 'd.id#ASC']
         });
-
-        // 获取类型名称映射
-        if (result.lists.length > 0) {
-            const typeCodes = [...new Set(result.lists.map((item: any) => item.typeCode))];
-            const types = await befly.db.getAll({
-                table: 'addon_admin_dict_type',
-                where: { code$in: typeCodes },
-                fields: ['id', 'code', 'name']
-            });
-
-            const typeMap = new Map(types.lists.map((t: any) => [t.code, t.name]));
-            result.lists.forEach((item: any) => {
-                item.typeName = typeMap.get(item.typeCode) || '';
-            });
-        }
 
         return befly.tool.Yes('获取成功', result);
     }

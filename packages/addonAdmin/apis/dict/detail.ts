@@ -3,9 +3,11 @@
     fields: { '@id': true },
     required: ['id'],
     handler: async (befly, ctx) => {
-        const dict = await befly.db.getDetail({
-            table: 'addon_admin_dict',
-            where: { id: ctx.body.id }
+        const dict = await befly.db.getOne({
+            table: 'addon_admin_dict d',
+            joins: [{ table: 'addon_admin_dict_type dt', on: 'd.type_code = dt.code' }],
+            fields: ['d.id', 'd.typeCode', 'd.key', 'd.label', 'd.sort', 'd.remark', 'd.createdAt', 'd.updatedAt', 'dt.name AS typeName'],
+            where: { 'd.id': ctx.body.id }
         });
 
         if (!dict?.id) {
