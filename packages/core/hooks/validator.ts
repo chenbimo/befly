@@ -19,6 +19,14 @@ const hook: Hook = {
             return;
         }
 
+        // 应用字段默认值
+        for (const [field, fieldDef] of Object.entries(ctx.api.fields)) {
+            // 字段未传值且定义了默认值时，应用默认值
+            if (ctx.body[field] === undefined && (fieldDef as any)?.default !== undefined) {
+                ctx.body[field] = (fieldDef as any).default;
+            }
+        }
+
         // 验证参数
         const result = Validator.validate(ctx.body, ctx.api.fields, ctx.api.required || []);
 
