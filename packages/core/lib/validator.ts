@@ -49,7 +49,8 @@ export class Validator {
         // 验证有值的字段
         for (const [field, rule] of Object.entries(rules)) {
             if (fieldErrors[field]) continue;
-            if (!(field in data) && !required.includes(field)) continue;
+            // 字段值为 undefined 时跳过验证（除非是必填字段，但必填字段已在上面检查过）
+            if (data[field] === undefined && !required.includes(field)) continue;
 
             const error = this.checkField(data[field], rule, field);
             if (error) fieldErrors[field] = error;
