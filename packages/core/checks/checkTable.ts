@@ -35,7 +35,7 @@ const RESERVED_FIELDS = ['id', 'created_at', 'updated_at', 'deleted_at', 'state'
 /**
  * 允许的字段类型
  */
-const FIELD_TYPES = ['string', 'number', 'text', 'array_string', 'array_text'] as const;
+const FIELD_TYPES = ['string', 'number', 'text', 'array_string', 'array_text', 'array_number_string', 'array_number_text'] as const;
 
 /**
  * 允许的字段属性列表
@@ -234,7 +234,7 @@ export async function checkTable(): Promise<void> {
                             Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
                             hasError = true;
                         }
-                    } else if (fieldType === 'string' || fieldType === 'array_string') {
+                    } else if (fieldType === 'string' || fieldType === 'array_string' || fieldType === 'array_number_string') {
                         if (fieldMax !== undefined && (fieldMax === null || typeof fieldMax !== 'number')) {
                             Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
                             hasError = true;
