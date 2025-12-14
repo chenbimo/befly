@@ -16,13 +16,8 @@ export default {
             return befly.tool.No('角色不存在');
         }
 
-        // 解析菜单ID列表（逗号分隔的字符串转为数组）
-        const menuIds = role.menus
-            ? role.menus
-                  .split(',')
-                  .map((id: string) => parseInt(id.trim()))
-                  .filter((id: number) => !isNaN(id))
-            : [];
+        // 数据库自动将 array_number_string 转换为数组
+        const menuIds = role.menus || [];
 
         return befly.tool.Yes('操作成功', menuIds);
     }

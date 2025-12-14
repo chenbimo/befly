@@ -7,7 +7,7 @@ import { getSqlType, resolveDefaultValue, generateDefaultSql, isStringOrArrayTyp
 
 describe('syncDb - array_number 类型支持', () => {
     // ==================== 类型判断测试 ====================
-    
+
     test('isStringOrArrayType: array_number_string 需要长度', () => {
         expect(isStringOrArrayType('array_number_string')).toBe(true);
     });
@@ -17,7 +17,7 @@ describe('syncDb - array_number 类型支持', () => {
     });
 
     // ==================== SQL 类型映射测试 ====================
-    
+
     test('getSqlType: array_number_string 生成 VARCHAR(max)', () => {
         const sqlType = getSqlType('array_number_string', 500);
         expect(sqlType).toMatch(/VARCHAR\(500\)/i);
@@ -31,13 +31,13 @@ describe('syncDb - array_number 类型支持', () => {
     test('getSqlType: array_number_string 使用 max 参数', () => {
         const sqlType1 = getSqlType('array_number_string', 200);
         const sqlType2 = getSqlType('array_number_string', 1000);
-        
+
         expect(sqlType1).toMatch(/VARCHAR\(200\)/i);
         expect(sqlType2).toMatch(/VARCHAR\(1000\)/i);
     });
 
     // ==================== 默认值处理测试 ====================
-    
+
     test('resolveDefaultValue: array_number_string null 时返回 "[]"', () => {
         const result = resolveDefaultValue(null, 'array_number_string');
         expect(result).toBe('[]');
@@ -61,13 +61,13 @@ describe('syncDb - array_number 类型支持', () => {
     test('resolveDefaultValue: 字符串 "null" 也视为 null', () => {
         const result1 = resolveDefaultValue('null', 'array_number_string');
         const result2 = resolveDefaultValue('null', 'array_number_text');
-        
+
         expect(result1).toBe('[]');
         expect(result2).toBe('null');
     });
 
     // ==================== SQL DEFAULT 子句测试 ====================
-    
+
     test('generateDefaultSql: array_number_string 生成 DEFAULT 子句', () => {
         const sql = generateDefaultSql('[]', 'array_number_string');
         expect(sql).toBe(" DEFAULT '[]'");
@@ -89,31 +89,31 @@ describe('syncDb - array_number 类型支持', () => {
     });
 
     // ==================== 单引号转义测试 ====================
-    
+
     test('generateDefaultSql: 默认值包含单引号时正确转义', () => {
         const sql = generateDefaultSql("[1,'test',2]", 'array_number_string');
         expect(sql).toBe(" DEFAULT '[1,''test'',2]'");
     });
 
     // ==================== 完整流程测试 ====================
-    
+
     test('完整流程: array_number_string 字段定义', () => {
         // 模拟字段定义："标签ID|array_number_string|0|500|[]|0"
         const fieldType = 'array_number_string';
         const fieldMax = 500;
         const fieldDefault = null;
-        
+
         // 1. 判断是否需要长度
         expect(isStringOrArrayType(fieldType)).toBe(true);
-        
+
         // 2. 获取 SQL 类型
         const sqlType = getSqlType(fieldType, fieldMax);
         expect(sqlType).toMatch(/VARCHAR\(500\)/i);
-        
+
         // 3. 处理默认值
         const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
         expect(actualDefault).toBe('[]');
-        
+
         // 4. 生成 DEFAULT 子句
         const defaultSql = generateDefaultSql(actualDefault, fieldType);
         expect(defaultSql).toBe(" DEFAULT '[]'");
@@ -124,18 +124,18 @@ describe('syncDb - array_number 类型支持', () => {
         const fieldType = 'array_number_text';
         const fieldMax = null;
         const fieldDefault = null;
-        
+
         // 1. 判断是否需要长度
         expect(isStringOrArrayType(fieldType)).toBe(false);
-        
+
         // 2. 获取 SQL 类型
         const sqlType = getSqlType(fieldType, fieldMax);
         expect(sqlType).toMatch(/TEXT/i);
-        
+
         // 3. 处理默认值
         const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
         expect(actualDefault).toBe('null');
-        
+
         // 4. 生成 DEFAULT 子句（TEXT 类型不支持）
         const defaultSql = generateDefaultSql(actualDefault, fieldType);
         expect(defaultSql).toBe('');
@@ -146,13 +146,13 @@ describe('syncDb - array_number 类型支持', () => {
         const fieldType = 'array_number_string';
         const fieldMax = 10;
         const fieldDefault = '[60,70,80]';
-        
+
         const sqlType = getSqlType(fieldType, fieldMax);
         expect(sqlType).toMatch(/VARCHAR\(10\)/i);
-        
+
         const actualDefault = resolveDefaultValue(fieldDefault, fieldType);
         expect(actualDefault).toBe('[60,70,80]');
-        
+
         const defaultSql = generateDefaultSql(actualDefault, fieldType);
         expect(defaultSql).toBe(" DEFAULT '[60,70,80]'");
     });

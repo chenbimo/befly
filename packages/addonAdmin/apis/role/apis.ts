@@ -16,13 +16,8 @@ export default {
             return befly.tool.No('角色不存在');
         }
 
-        // 解析接口ID列表（逗号分隔的字符串转为数组）
-        const apiIds = role.apis
-            ? role.apis
-                  .split(',')
-                  .map((id: string) => parseInt(id.trim()))
-                  .filter((id: number) => !isNaN(id))
-            : [];
+        // 数据库自动将 array_number_string 转换为数组
+        const apiIds = role.apis || [];
 
         return befly.tool.Yes('操作成功', { apiIds });
     }

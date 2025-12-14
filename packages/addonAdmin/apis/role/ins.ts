@@ -20,15 +20,15 @@ export default {
                 name: ctx.body.name,
                 code: ctx.body.code,
                 description: ctx.body.description,
-                menus: ctx.body.menus || '',
-                apis: ctx.body.apis || '',
+                menus: ctx.body.menus || [],
+                apis: ctx.body.apis || [],
                 sort: ctx.body.sort
                 // state 由框架自动设置为 1
             }
         });
 
         // 增量缓存角色权限到 Redis Set
-        await befly.cache.cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || '');
+        await befly.cache.cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || []);
 
         return befly.tool.Yes('操作成功', { id: roleId });
     }

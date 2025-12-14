@@ -24,15 +24,15 @@ export default {
                 name: ctx.body.name,
                 code: ctx.body.code,
                 description: ctx.body.description,
-                menus: ctx.body.menus || '',
-                apis: ctx.body.apis || '',
+                menus: ctx.body.menus || [],
+                apis: ctx.body.apis || [],
                 sort: ctx.body.sort
                 // state 字段不在此处更新，需要禁用/启用时单独处理
             }
         });
 
         // 增量更新角色权限缓存（先删除再重建）
-        await befly.cache.cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || '');
+        await befly.cache.cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || []);
 
         return befly.tool.Yes('操作成功');
     }

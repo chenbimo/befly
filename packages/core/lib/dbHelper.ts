@@ -418,6 +418,56 @@ export class DbHelper {
     }
 
     /**
+     * 序列化数组字段（写入数据库前）
+     * 将数组类型的字段转换为 JSON 字符串
+     */
+    private serializeArrayFields(data: Record<string, any>): Record<string, any> {
+        const serialized = { ...data };
+
+        for (const [key, value] of Object.entries(serialized)) {
+            // 跳过 null 和 undefined
+            if (value === null || value === undefined) continue;
+
+            // 数组类型序列化为 JSON 字符串
+            if (Array.isArray(value)) {
+                serialized[key] = JSON.stringify(value);
+            }
+        }
+
+        return serialized;
+    }
+
+    /**
+     * 反序列化数组字段（从数据库读取后）
+     * 将 JSON 字符串转换回数组
+     */
+    private deserializeArrayFields<T = any>(data: Record<string, any> | null): T | null {
+        if (!data) return null;
+
+        const deserialized = { ...data };
+
+        for (const [key, value] of Object.entries(deserialized)) {
+            // 跳过非字符串值
+            if (typeof value !== 'string') continue;
+
+            // 尝试解析 JSON 数组字符串
+            // 只解析符合 JSON 数组格式的字符串（以 [ 开头，以 ] 结尾）
+            if (value.startsWith('[') && value.endsWith(']')) {
+                try {
+                    const parsed = JSON.parse(value);
+                    if (Array.isArray(parsed)) {
+                        deserialized[key] = parsed;
+                    }
+                } catch {
+                    // 解析失败则保持原值
+                }
+            }
+        }
+
+        return deserialized as T;
+    }
+
+    /**
      * Where 条件键名转下划线格式（递归处理嵌套）（私有方法）
      * 支持操作符字段（如 userId$gt）和逻辑操作符（$or, $and）
      */
@@ -602,8 +652,12 @@ export class DbHelper {
 
         const camelRow = keysToCamel<T>(row);
 
+        // 反序列化数组字段（JSON 字符串 → 数组）
+        const deserialized = this.deserializeArrayFields<T>(camelRow);
+        if (!deserialized) return null;
+
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        return this.convertBigIntFields<T>([camelRow])[0];
+        return this.convertBigIntFields<T>([deserialized])[0];
     }
 
     /**
@@ -681,9 +735,12 @@ export class DbHelper {
         // 字段名转换：下划线 → 小驼峰
         const camelList = arrayKeysToCamel<T>(list);
 
+        // 反序列化数组字段
+        const deserializedList = camelList.map((item) => this.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
+
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
-            lists: this.convertBigIntFields<T>(camelList),
+            lists: this.convertBigIntFields<T>(deserializedList),
             total: total,
             page: prepared.page,
             limit: prepared.limit,
@@ -761,8 +818,11 @@ export class DbHelper {
         // 字段名转换：下划线 → 小驼峰
         const camelResult = arrayKeysToCamel<T>(result);
 
+        // 反序列化数组字段
+        const deserializedList = camelResult.map((item) => this.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
+
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        const lists = this.convertBigIntFields<T>(camelResult);
+        const lists = this.convertBigIntFields<T>(deserializedList);
 
         return {
             lists: lists,
@@ -787,8 +847,11 @@ export class DbHelper {
         // 字段名转换：小驼峰 → 下划线
         const snakeData = keysToSnake(cleanData);
 
+        // 序列化数组字段（数组 → JSON 字符串）
+        const serializedData = this.serializeArrayFields(snakeData);
+
         // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
-        const { id, created_at, updated_at, deleted_at, state, ...userData } = snakeData;
+        const { id, created_at, updated_at, deleted_at, state, ...userData } = serializedData;
 
         const processed: Record<string, any> = { ...userData };
 
@@ -854,8 +917,11 @@ export class DbHelper {
             // 字段名转换：小驼峰 → 下划线
             const snakeData = keysToSnake(cleanData);
 
+            // 序列化数组字段（数组 → JSON 字符串）
+            const serializedData = this.serializeArrayFields(snakeData);
+
             // 移除系统字段（防止用户尝试覆盖）
-            const { id, created_at, updated_at, deleted_at, state, ...userData } = snakeData;
+            const { id, created_at, updated_at, deleted_at, state, ...userData } = serializedData;
 
             // 强制生成系统字段（不可被用户覆盖）
             return {
@@ -899,9 +965,12 @@ export class DbHelper {
         const snakeData = keysToSnake(cleanData);
         const snakeWhere = this.whereKeysToSnake(cleanWhere);
 
+        // 序列化数组字段（数组 → JSON 字符串）
+        const serializedData = this.serializeArrayFields(snakeData);
+
         // 移除系统字段（防止用户尝试修改）
         // 注意：state 允许用户修改（用于设置禁用状态 state=2）
-        const { id, created_at, updated_at, deleted_at, ...userData } = snakeData;
+        const { id, created_at, updated_at, deleted_at, ...userData } = serializedData;
 
         // 强制更新时间戳（不可被用户覆盖）
         const processed: Record<string, any> = {

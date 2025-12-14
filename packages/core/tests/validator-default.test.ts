@@ -8,7 +8,7 @@ import type { FieldDefinition } from 'befly-shared/types';
 
 describe('Validator - 默认值处理逻辑', () => {
     // ==================== number 类型默认值 ====================
-    
+
     test('number: 无 default 时返回 0', () => {
         const field: FieldDefinition = {
             name: '数字',
@@ -18,7 +18,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe(0);
@@ -33,7 +33,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 100,
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe(100);
@@ -48,7 +48,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: '999',
             regexp: null
         };
-        
+
         const result = Validator.single(null, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe(999);
@@ -63,14 +63,14 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 'invalid',
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe(0);
     });
 
     // ==================== string 类型默认值 ====================
-    
+
     test('string: 无 default 时返回空字符串', () => {
         const field: FieldDefinition = {
             name: '字符串',
@@ -80,7 +80,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe('');
@@ -95,14 +95,14 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 'admin',
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe('admin');
     });
 
     // ==================== text 类型默认值 ====================
-    
+
     test('text: 无 default 时返回空字符串', () => {
         const field: FieldDefinition = {
             name: '文本',
@@ -112,7 +112,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe('');
@@ -127,14 +127,14 @@ describe('Validator - 默认值处理逻辑', () => {
             default: '这是长文本内容',
             regexp: null
         };
-        
+
         const result = Validator.single(null, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe('这是长文本内容');
     });
 
     // ==================== array_string 类型默认值 ====================
-    
+
     test('array_string: 无 default 时返回空数组', () => {
         const field: FieldDefinition = {
             name: '字符串数组',
@@ -144,7 +144,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([]);
@@ -159,7 +159,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: ['a', 'b', 'c'],
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual(['a', 'b', 'c']);
@@ -174,7 +174,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: '[]',
             regexp: null
         };
-        
+
         const result = Validator.single(null, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([]);
@@ -189,7 +189,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: '["x", "y", "z"]',
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual(['x', 'y', 'z']);
@@ -204,14 +204,14 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 'invalid-json',
             regexp: null
         };
-        
+
         const result = Validator.single(null, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([]);
     });
 
     // ==================== array_text 类型默认值 ====================
-    
+
     test('array_text: 无 default 时返回空数组', () => {
         const field: FieldDefinition = {
             name: '文本数组',
@@ -221,7 +221,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([]);
@@ -236,14 +236,14 @@ describe('Validator - 默认值处理逻辑', () => {
             default: ['长文本1', '长文本2'],
             regexp: null
         };
-        
+
         const result = Validator.single(null, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual(['长文本1', '长文本2']);
     });
 
     // ==================== 空值处理测试 ====================
-    
+
     test('undefined 应使用默认值', () => {
         const field: FieldDefinition = {
             name: '测试',
@@ -253,7 +253,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 'test',
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe('test');
@@ -268,7 +268,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 999,
             regexp: null
         };
-        
+
         const result = Validator.single(null, field);
         expect(result.error).toBeNull();
         expect(result.value).toBe(999);
@@ -283,14 +283,14 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 'fallback',
             regexp: null
         };
-        
+
         const result = Validator.single('', field);
         expect(result.error).toBeNull();
         expect(result.value).toBe('fallback');
     });
 
     // ==================== 默认值优先级测试 ====================
-    
+
     test('字段 default 应覆盖类型默认值（number）', () => {
         const fieldWithDefault: FieldDefinition = {
             name: '数字',
@@ -300,7 +300,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 888,
             regexp: null
         };
-        
+
         const fieldWithoutDefault: FieldDefinition = {
             name: '数字',
             type: 'number',
@@ -309,10 +309,10 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single(undefined, fieldWithDefault);
         expect(result1.value).toBe(888); // 使用字段 default
-        
+
         const result2 = Validator.single(undefined, fieldWithoutDefault);
         expect(result2.value).toBe(0); // 使用类型默认值
     });
@@ -326,7 +326,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: 'custom',
             regexp: null
         };
-        
+
         const fieldWithoutDefault: FieldDefinition = {
             name: '字符串',
             type: 'string',
@@ -335,10 +335,10 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single(undefined, fieldWithDefault);
         expect(result1.value).toBe('custom'); // 使用字段 default
-        
+
         const result2 = Validator.single(undefined, fieldWithoutDefault);
         expect(result2.value).toBe(''); // 使用类型默认值
     });
@@ -352,7 +352,7 @@ describe('Validator - 默认值处理逻辑', () => {
             default: [1, 2, 3],
             regexp: null
         };
-        
+
         const fieldWithoutDefault: FieldDefinition = {
             name: '数组',
             type: 'array_number_string',
@@ -361,10 +361,10 @@ describe('Validator - 默认值处理逻辑', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single(undefined, fieldWithDefault);
         expect(result1.value).toEqual([1, 2, 3]); // 使用字段 default
-        
+
         const result2 = Validator.single(undefined, fieldWithoutDefault);
         expect(result2.value).toEqual([]); // 使用类型默认值
     });

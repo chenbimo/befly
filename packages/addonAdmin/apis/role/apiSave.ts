@@ -17,20 +17,17 @@ export default {
             return befly.tool.No('角色不存在');
         }
 
-        // 将数组转为逗号分隔的字符串存储
-        const apiIdsStr = Array.isArray(ctx.body.apiIds) ? ctx.body.apiIds.join(',') : '';
-
-        // 更新角色的接口权限
+        // 直接使用数组，数据库会自动处理存储
         await befly.db.updData({
             table: 'addon_admin_role',
             where: { code: ctx.body.roleCode },
             data: {
-                apis: apiIdsStr
+                apis: ctx.body.apiIds
             }
         });
 
-        // 增量更新 Redis 缓存
-        await befly.cache.cacheRolePermissions(befly, role.code, apiIdsStr);
+        // 增量更新 Redis 缓存（传递数组）
+        await befly.cache.cacheRolePermissions(befly, role.code, ctx.body.apiIds);
 
         return befly.tool.Yes('操作成功');
     }

@@ -8,7 +8,7 @@ import type { FieldDefinition } from 'befly-shared/types';
 
 describe('Validator - array_number 类型验证', () => {
     // ==================== 类型转换测试 ====================
-    
+
     test('array_number_string: 接受数字数组', () => {
         const field: FieldDefinition = {
             name: '数字数组',
@@ -18,7 +18,7 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single([1, 2, 3], field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([1, 2, 3]);
@@ -33,7 +33,7 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single(['1', '2', '3'], field);
         expect(result.error).toBe('数组元素必须是数字');
         expect(result.value).toBeNull();
@@ -48,7 +48,7 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single([1, '2', 3], field);
         expect(result.error).toBe('数组元素必须是数字');
     });
@@ -62,7 +62,7 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single('123', field);
         expect(result.error).toBe('必须是数组');
     });
@@ -76,7 +76,7 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single([100, 200, 300], field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([100, 200, 300]);
@@ -91,16 +91,16 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single([1, NaN, 3], field);
         expect(result1.error).toBe('数组元素必须是数字');
-        
+
         const result2 = Validator.single([1, Infinity, 3], field);
         expect(result2.error).toBe('数组元素必须是数字');
     });
 
     // ==================== 规则验证测试 ====================
-    
+
     test('array_number_string: min 规则验证', () => {
         const field: FieldDefinition = {
             name: '数字数组',
@@ -110,13 +110,13 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single([1], field);
         expect(result1.error).toBe('至少需要2个元素');
-        
+
         const result2 = Validator.single([1, 2], field);
         expect(result2.error).toBeNull();
-        
+
         const result3 = Validator.single([1, 2, 3], field);
         expect(result3.error).toBeNull();
     });
@@ -130,10 +130,10 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single([1, 2, 3], field);
         expect(result1.error).toBeNull();
-        
+
         const result2 = Validator.single([1, 2, 3, 4], field);
         expect(result2.error).toBe('最多只能有3个元素');
     });
@@ -147,19 +147,19 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single([], field);
         expect(result1.error).toBe('至少需要1个元素');
-        
+
         const result2 = Validator.single([1, 2, 3], field);
         expect(result2.error).toBeNull();
-        
+
         const result3 = Validator.single([1, 2, 3, 4, 5, 6], field);
         expect(result3.error).toBe('最多只能有5个元素');
     });
 
     // ==================== 默认值测试 ====================
-    
+
     test('array_number_string: 无 default 时返回空数组', () => {
         const field: FieldDefinition = {
             name: '数字数组',
@@ -169,15 +169,15 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result1 = Validator.single(undefined, field);
         expect(result1.error).toBeNull();
         expect(result1.value).toEqual([]);
-        
+
         const result2 = Validator.single(null, field);
         expect(result2.error).toBeNull();
         expect(result2.value).toEqual([]);
-        
+
         const result3 = Validator.single('', field);
         expect(result3.error).toBeNull();
         expect(result3.value).toEqual([]);
@@ -192,7 +192,7 @@ describe('Validator - array_number 类型验证', () => {
             default: [10, 20, 30],
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([10, 20, 30]);
@@ -207,7 +207,7 @@ describe('Validator - array_number 类型验证', () => {
             default: '[]',
             regexp: null
         };
-        
+
         const result = Validator.single(null, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([]);
@@ -222,7 +222,7 @@ describe('Validator - array_number 类型验证', () => {
             default: null,
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([]);
@@ -237,14 +237,14 @@ describe('Validator - array_number 类型验证', () => {
             default: [100, 200],
             regexp: null
         };
-        
+
         const result = Validator.single(undefined, field);
         expect(result.error).toBeNull();
         expect(result.value).toEqual([100, 200]);
     });
 
     // ==================== validate 方法测试 ====================
-    
+
     test('validate: array_number_string 字段验证', () => {
         const rules = {
             tags: {
@@ -256,14 +256,14 @@ describe('Validator - array_number 类型验证', () => {
                 regexp: null
             }
         };
-        
+
         const result1 = Validator.validate({ tags: [1, 2, 3] }, rules as any, ['tags']);
         expect(result1.failed).toBe(false);
-        
+
         const result2 = Validator.validate({ tags: [] }, rules as any, ['tags']);
         expect(result2.failed).toBe(true);
         expect(result2.firstError).toBe('标签ID至少需要1个元素');
-        
+
         const result3 = Validator.validate({ tags: ['1', '2'] }, rules as any, ['tags']);
         expect(result3.failed).toBe(true);
         expect(result3.firstError).toBe('标签ID数组元素必须是数字');
@@ -280,10 +280,10 @@ describe('Validator - array_number 类型验证', () => {
                 regexp: null
             }
         };
-        
+
         const result1 = Validator.validate({ ids: [100, 200, 300] }, rules as any, []);
         expect(result1.failed).toBe(false);
-        
+
         const result2 = Validator.validate({ ids: 'not-array' }, rules as any, []);
         expect(result2.failed).toBe(true);
         expect(result2.firstError).toBe('关联ID必须是数组');
@@ -300,7 +300,7 @@ describe('Validator - array_number 类型验证', () => {
                 regexp: null
             }
         };
-        
+
         // undefined 且不是必填字段，应跳过验证
         const result = Validator.validate({ other: 'value' }, rules as any, []);
         expect(result.failed).toBe(false);
