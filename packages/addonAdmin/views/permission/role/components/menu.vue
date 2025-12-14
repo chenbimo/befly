@@ -63,7 +63,6 @@ const $Method = {
             const menuList = Array.isArray(res.data) ? res.data : [];
             $Data.menuTreeData = arrayToTree(menuList);
         } catch (error) {
-            console.error('加载菜单失败:', error);
             MessagePlugin.error('加载菜单失败');
         }
     },
@@ -80,7 +79,7 @@ const $Method = {
             // menus 返回的 data 直接就是菜单 ID 数组
             $Data.menuTreeCheckedKeys = Array.isArray(res.data) ? res.data : [];
         } catch (error) {
-            console.error('加载角色菜单失败:', error);
+            MessagePlugin.error('加载数据失败');
         }
     },
 
@@ -102,7 +101,6 @@ const $Method = {
                 MessagePlugin.error(res.msg || '保存失败');
             }
         } catch (error) {
-            console.error('保存失败:', error);
             MessagePlugin.error('保存失败');
         } finally {
             $Data.submitting = false;

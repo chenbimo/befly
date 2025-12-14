@@ -59,7 +59,7 @@ const fetchData = async () => {
         const { data } = await $Http('/addon/admin/dashboard/systemResources');
         Object.assign(systemResources, data);
     } catch (error) {
-        console.error('获取系统资源失败:', error);
+        // 静默失败：不阻断页面展示
     }
 };
 

@@ -75,7 +75,6 @@ const $Method = {
                 MessagePlugin.error(res.msg || '操作失败');
             }
         } catch (error) {
-            console.error('提交失败:', error);
             MessagePlugin.error('操作失败');
         }
     },

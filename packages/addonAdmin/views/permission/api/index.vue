@@ -99,7 +99,6 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            console.error('加载接口列表失败:', error);
             MessagePlugin.error('加载数据失败');
         } finally {
             $Data.loading = false;

@@ -130,7 +130,6 @@ const $Method = {
             const result = await $Http('/addon/admin/role/all');
             $Data.allRoleLists = result.data || [];
         } catch (error) {
-            console.error('加载角色列表失败:', error);
             MessagePlugin.error('加载角色列表失败');
         }
     },

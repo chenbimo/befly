@@ -59,7 +59,7 @@ const $Method = {
             const { data } = await $Http('/addon/admin/admin/detail');
             Object.assign($Data.userInfo, data);
         } catch (error) {
-            console.error('获取用户信息失败:', error);
+            MessagePlugin.error('获取用户信息失败');
         }
     },
 
@@ -88,7 +88,6 @@ const $Method = {
                 MessagePlugin.warning(result.msg || '部分缓存刷新失败');
             }
         } catch (error) {
-            console.error('刷新缓存失败:', error);
             MessagePlugin.error('刷新缓存失败，请稍后重试');
         } finally {
             $Data.refreshing = false;

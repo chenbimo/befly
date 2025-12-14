@@ -111,7 +111,6 @@ const $Method = {
 
             $Data.apiData = Array.from(apiMap.values());
         } catch (error) {
-            console.error('加载接口失败:', error);
             MessagePlugin.error('加载接口失败');
         }
     },
@@ -127,7 +126,7 @@ const $Method = {
 
             $Data.checkedApiIds = res.data.apiIds || [];
         } catch (error) {
-            console.error('加载角色接口失败:', error);
+            MessagePlugin.error('加载数据失败');
         }
     },
 
@@ -165,7 +164,6 @@ const $Method = {
                 MessagePlugin.error(res.msg || '保存失败');
             }
         } catch (error) {
-            console.error('保存失败:', error);
             MessagePlugin.error('保存失败');
         } finally {
             $Data.submitting = false;

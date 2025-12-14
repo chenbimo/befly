@@ -55,7 +55,7 @@ const fetchData = async () => {
         const { data } = await $Http('/addon/admin/dashboard/environmentInfo');
         Object.assign(environmentInfo, data);
     } catch (error) {
-        console.error('获取运行环境信息失败:', error);
+        // 静默失败：不阻断页面展示
     }
 };
 

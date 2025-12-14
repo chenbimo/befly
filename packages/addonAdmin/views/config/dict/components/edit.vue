@@ -74,7 +74,6 @@ const $Method = {
             }
 
             const res = await $Http(apiUrl, params);
-            console.log('🔥[ res ]-79', res);
             if (res.code === 0) {
                 MessagePlugin.success(props.actionType === 'add' ? '添加成功' : '更新成功');
                 visible.value = false;
@@ -83,7 +82,6 @@ const $Method = {
                 MessagePlugin.error(res.msg || '操作失败');
             }
         } catch (error) {
-            console.error('提交失败:', error);
             MessagePlugin.error('操作失败');
         }
     },

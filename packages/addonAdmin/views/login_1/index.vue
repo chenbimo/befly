@@ -127,7 +127,7 @@ const $Method = {
             // 跳转到首页，路由守卫会自动加载菜单
             await router.push('/');
         } catch (error) {
-            console.log('🔥[ error ]-77', error);
+            MessagePlugin.error('登录失败');
         } finally {
             $Data.loading = false;
         }

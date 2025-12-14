@@ -115,7 +115,7 @@ const $Method = {
             const res = await $Http('/addon/admin/dictType/all');
             $Data.typeList = res.data.lists || [];
         } catch (error) {
-            console.error('加载字典类型列表失败:', error);
+            MessagePlugin.error('加载数据失败');
         }
     },
     async apiDictList() {
@@ -138,7 +138,6 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            console.error('加载字典列表失败:', error);
             MessagePlugin.error('加载数据失败');
         } finally {
             $Data.loading = false;

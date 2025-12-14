@@ -75,7 +75,7 @@ const fetchData = async () => {
         const { data } = await $Http('/addon/admin/dashboard/performanceMetrics');
         Object.assign(performanceMetrics, data);
     } catch (error) {
-        console.error('获取性能指标失败:', error);
+        // 静默失败：不阻断页面展示
     }
 };
 

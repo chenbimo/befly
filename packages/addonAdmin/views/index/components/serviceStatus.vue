@@ -55,7 +55,7 @@ const fetchData = async () => {
         const { data } = await $Http('/addon/admin/dashboard/serviceStatus');
         services.splice(0, services.length, ...data.services);
     } catch (error) {
-        console.error('获取服务状态失败:', error);
+        // 静默失败：不阻断页面展示
     }
 };
 

@@ -16,7 +16,7 @@ import { Button as TButton } from 'tdesign-vue-next';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
 
 const handleClearCache = () => {
-    console.log('刷新缓存');
+    // TODO: 接入刷新缓存接口
 };
 </script>
 
