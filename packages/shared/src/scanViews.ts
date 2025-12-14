@@ -48,7 +48,7 @@ export function scanViews() {
             }
         }
     } catch (error) {
-        console.error('扫描 @befly-addon 目录失败:', error);
+        // 扫描失败时保持静默，避免影响 Vite 启动
     }
 
     return routesFolders;

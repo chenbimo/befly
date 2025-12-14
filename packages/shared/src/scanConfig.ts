@@ -79,7 +79,7 @@ export async function scanConfig(options: LoadConfigOptions): Promise<Record<str
                         // 找到后跳过同名文件的其他扩展名
                         break;
                     } catch (error: any) {
-                        console.error(`加载配置文件失败: ${filePath}`, error.message);
+                        // 保持静默：继续尝试下一个候选配置文件
                     }
                 }
             }

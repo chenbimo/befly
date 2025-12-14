@@ -9,21 +9,27 @@ pre-commit:
           glob: '*.{js,ts,jsx,tsx,vue,json,md,yaml,yml,css,scss,less,html}'
           run: bunx --bun prettier --write --cache --ignore-unknown {staged_files}
 
-        # 2. TypeScript 语法检查 (core)
+        # 2. Oxlint 代码检查（门禁）
+        - name: Oxlint
+          priority: 2
+          glob: '*.{js,ts,jsx,tsx,vue}'
+          run: bunx oxlint {staged_files}
+
+        # 3. TypeScript 语法检查 (core)
         - name: TypeScript check (core)
           priority: 2
           root: packages/core
           glob: 'packages/core/**/*.ts'
           run: bunx tsgo --noEmit
 
-        # 3. TypeScript 语法检查 (shared)
+        # 4. TypeScript 语法检查 (shared)
         - name: TypeScript check (shared)
           priority: 2
           root: packages/shared
           glob: 'packages/shared/**/*.ts'
           run: bunx tsgo --noEmit
 
-        # 4. 运行测试
+        # 5. 运行测试
         - name: Run tests
           priority: 3
           run: bun test

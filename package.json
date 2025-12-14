@@ -17,6 +17,7 @@
         "test:shared": "bun --filter 'befly-shared' test",
         "test:bail": "bun --filter '*' test --bail",
         "test:coverage": "bun --filter '*' test --coverage",
+        "lint": "bunx oxlint .",
         "r": "lerna publish"
     },
     "devDependencies": {
@@ -25,6 +26,7 @@
         "@typescript/native-preview": "^7.0.0-dev.20251212.1",
         "lefthook": "^2.0.11",
         "lerna": "^9.0.3",
+        "oxlint": "latest",
         "prettier": "^3.7.4"
     }
 }

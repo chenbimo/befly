@@ -1,0 +1,43 @@
+{
+    "env": {
+        "es2022": true,
+        "node": true,
+        "browser": true
+    },
+    "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/logs/**", "temp/**", "packages/core/main.single.ts", "**/*.d.ts"],
+    "rules": {
+        "no-console": "error",
+        "no-debugger": "error",
+        "eslint/no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "befly-shared",
+                        "message": "禁止从 'befly-shared' 根路径导入；必须使用子路径按需导入（例如：befly-shared/scanFiles）。"
+                    }
+                ]
+            }
+        ]
+    },
+    "overrides": [
+        {
+            "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.test.js", "**/*.test.jsx", "**/tests/**"],
+            "rules": {
+                "no-console": "off"
+            }
+        },
+        {
+            "files": ["packages/shared/**"],
+            "rules": {
+                "eslint/no-restricted-imports": "off"
+            }
+        },
+        {
+            "files": ["packages/core/lib/logger.ts"],
+            "rules": {
+                "no-console": "off"
+            }
+        }
+    ]
+}
