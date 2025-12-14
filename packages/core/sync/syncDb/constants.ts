@@ -112,6 +112,8 @@ export function getTypeMapping(): Record<string, string> {
         string: isSqlite ? 'TEXT' : isPg ? 'character varying' : 'VARCHAR',
         text: isMysql ? 'MEDIUMTEXT' : 'TEXT',
         array_string: isSqlite ? 'TEXT' : isPg ? 'character varying' : 'VARCHAR',
-        array_text: isMysql ? 'MEDIUMTEXT' : 'TEXT'
+        array_text: isMysql ? 'MEDIUMTEXT' : 'TEXT',
+        array_number_string: isSqlite ? 'TEXT' : isPg ? 'character varying' : 'VARCHAR',
+        array_number_text: isMysql ? 'MEDIUMTEXT' : 'TEXT'
     };
 }

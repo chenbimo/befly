@@ -5,7 +5,7 @@
 /**
  * 字段类型
  */
-export type FieldType = 'string' | 'number' | 'text' | 'array_string' | 'array_text';
+export type FieldType = 'string' | 'number' | 'text' | 'array_string' | 'array_text' | 'array_number_string' | 'array_number_text';
 
 /**
  * 字段定义类型（对象格式）

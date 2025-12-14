@@ -18,12 +18,13 @@ import { isMySQL, getTypeMapping } from './constants.js';
  * @example
  * isStringOrArrayType('string') // => true
  * isStringOrArrayType('array_string') // => true
+ * isStringOrArrayType('array_number_string') // => true
  * isStringOrArrayType('array_text') // => false
  * isStringOrArrayType('number') // => false
  * isStringOrArrayType('text') // => false
  */
 export function isStringOrArrayType(fieldType: string): boolean {
-    return fieldType === 'string' || fieldType === 'array_string';
+    return fieldType === 'string' || fieldType === 'array_string' || fieldType === 'array_number_string';
 }
 
 /**
@@ -84,10 +85,12 @@ export function resolveDefaultValue(fieldDefault: any, fieldType: string): any {
         case 'string':
             return '';
         case 'array_string':
+        case 'array_number_string':
             return '[]';
         case 'text':
         case 'array_text':
-            // text/array_text 类型不设置默认值（MySQL TEXT 不支持），保持 'null'
+        case 'array_number_text':
+            // text/array_text/array_number_text 类型不设置默认值（MySQL TEXT 不支持），保持 'null'
             return 'null';
         default:
             return fieldDefault;
@@ -114,8 +117,8 @@ export function generateDefaultSql(actualDefault: any, fieldType: string): strin
         return '';
     }
 
-    // 仅 number/string/array_string 类型设置默认值
-    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array_string') {
+    // 仅 number/string/array_string/array_number_string 类型设置默认值
+    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array_string' || fieldType === 'array_number_string') {
         if (typeof actualDefault === 'number' && !Number.isNaN(actualDefault)) {
             return ` DEFAULT ${actualDefault}`;
         } else {

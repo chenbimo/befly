@@ -137,6 +137,19 @@ export class Validator {
             case 'array_text':
                 return Array.isArray(value) ? { value: value, error: null } : { value: null, error: '必须是数组' };
 
+            case 'array_number_string':
+            case 'array_number_text':
+                if (!Array.isArray(value)) {
+                    return { value: null, error: '必须是数组' };
+                }
+                // 验证数组元素必须是数字
+                for (const item of value) {
+                    if (typeof item !== 'number' || !isFinite(item)) {
+                        return { value: null, error: '数组元素必须是数字' };
+                    }
+                }
+                return { value: value, error: null };
+
             default:
                 return { value: value, error: null };
         }
@@ -163,6 +176,8 @@ export class Validator {
 
             case 'array_string':
             case 'array_text':
+            case 'array_number_string':
+            case 'array_number_text':
                 if (min !== null && value.length < min) return `至少需要${min}个元素`;
                 if (max !== null && max > 0 && value.length > max) return `最多只能有${max}个元素`;
                 if (regex) {
@@ -196,9 +211,10 @@ export class Validator {
 
     /** 获取默认值 */
     private static defaultFor(type: string, defaultValue: any): any {
+        // 如果字段定义了默认值，则使用字段默认值（优先级最高）
         if (defaultValue !== null && defaultValue !== undefined) {
             // 数组默认值
-            if ((type === 'array_string' || type === 'array_text') && typeof defaultValue === 'string') {
+            if ((type === 'array_string' || type === 'array_text' || type === 'array_number_string' || type === 'array_number_text') && typeof defaultValue === 'string') {
                 if (defaultValue === '[]') return [];
                 try {
                     const parsed = JSON.parse(defaultValue);
@@ -215,12 +231,14 @@ export class Validator {
             return defaultValue;
         }
 
-        // 类型默认值
+        // 类型默认值（字段未定义 default 时使用）
         switch (type.toLowerCase()) {
             case 'number':
                 return 0;
             case 'array_string':
             case 'array_text':
+            case 'array_number_string':
+            case 'array_number_text':
                 return [];
             default:
                 return '';
