@@ -127,22 +127,37 @@ const $Method = {
         }
     },
     async apiDictTypeDel(row) {
-        DialogPlugin.confirm({
+        let dialog = null;
+        let destroyed = false;
+
+        dialog = DialogPlugin.confirm({
             header: '确认删除',
             body: `确定要删除类型"${row.name}"吗？删除前会检查是否有字典项引用此类型。`,
-            status: 'warning'
-        }).then(async () => {
-            try {
-                const res = await $Http('/addon/admin/dictType/del', { id: row.id });
-                if (res.code === 0) {
-                    MessagePlugin.success('删除成功');
-                    $Method.apiDictTypeList();
-                } else {
-                    MessagePlugin.error(res.msg || '删除失败');
+            status: 'warning',
+            onConfirm: async () => {
+                try {
+                    const res = await $Http('/addon/admin/dictType/del', { id: row.id });
+                    if (res.code === 0) {
+                        MessagePlugin.success('删除成功');
+                        $Method.apiDictTypeList();
+                    } else {
+                        MessagePlugin.error(res.msg || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除失败:', error);
+                    MessagePlugin.error('删除失败');
                 }
-            } catch (error) {
-                console.error('删除失败:', error);
-                MessagePlugin.error('删除失败');
+
+                if (!destroyed) {
+                    destroyed = true;
+                    if (dialog && dialog.destroy) dialog.destroy();
+                }
+            },
+            onClose: () => {
+                if (!destroyed) {
+                    destroyed = true;
+                    if (dialog && dialog.destroy) dialog.destroy();
+                }
             }
         });
     },

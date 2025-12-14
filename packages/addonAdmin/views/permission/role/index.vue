@@ -152,22 +152,37 @@ const $Method = {
 
     // 删除角色
     async apiRoleDel(row) {
-        DialogPlugin.confirm({
+        let dialog = null;
+        let destroyed = false;
+
+        dialog = DialogPlugin.confirm({
             header: '确认删除',
             body: `确定要删除角色“${row.name}” 吗？`,
-            status: 'warning'
-        }).then(async () => {
-            try {
-                const res = await $Http('/addon/admin/role/del', { id: row.id });
-                if (res.code === 0) {
-                    MessagePlugin.success('删除成功');
-                    $Method.apiRoleList();
-                } else {
-                    MessagePlugin.error(res.msg || '删除失败');
+            status: 'warning',
+            onConfirm: async () => {
+                try {
+                    const res = await $Http('/addon/admin/role/del', { id: row.id });
+                    if (res.code === 0) {
+                        MessagePlugin.success('删除成功');
+                        $Method.apiRoleList();
+                    } else {
+                        MessagePlugin.error(res.msg || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除失败:', error);
+                    MessagePlugin.error('删除失败');
                 }
-            } catch (error) {
-                console.error('删除失败:', error);
-                MessagePlugin.error('删除失败');
+
+                if (!destroyed) {
+                    destroyed = true;
+                    if (dialog && dialog.destroy) dialog.destroy();
+                }
+            },
+            onClose: () => {
+                if (!destroyed) {
+                    destroyed = true;
+                    if (dialog && dialog.destroy) dialog.destroy();
+                }
             }
         });
     },
@@ -223,6 +238,5 @@ $Method.initData();
 </script>
 
 <style scoped lang="scss">
-.page-role {
-}
+/* page styles */
 </style>

@@ -173,21 +173,36 @@ const $Method = {
             return;
         }
 
-        DialogPlugin.confirm({
+        let dialog = null;
+        let destroyed = false;
+
+        dialog = DialogPlugin.confirm({
             header: '确认删除',
             body: `确定要删除配置"${row.name}"吗？`,
-            status: 'warning'
-        }).then(async () => {
-            try {
-                const res = await $Http('/addon/admin/sysConfig/del', { id: row.id });
-                if (res.code === 0) {
-                    MessagePlugin.success('删除成功');
-                    $Method.apiConfigList();
-                } else {
-                    MessagePlugin.error(res.msg || '删除失败');
+            status: 'warning',
+            onConfirm: async () => {
+                try {
+                    const res = await $Http('/addon/admin/sysConfig/del', { id: row.id });
+                    if (res.code === 0) {
+                        MessagePlugin.success('删除成功');
+                        $Method.apiConfigList();
+                    } else {
+                        MessagePlugin.error(res.msg || '删除失败');
+                    }
+                } catch (error) {
+                    MessagePlugin.error('删除失败');
                 }
-            } catch (error) {
-                MessagePlugin.error('删除失败');
+
+                if (!destroyed) {
+                    destroyed = true;
+                    if (dialog && dialog.destroy) dialog.destroy();
+                }
+            },
+            onClose: () => {
+                if (!destroyed) {
+                    destroyed = true;
+                    if (dialog && dialog.destroy) dialog.destroy();
+                }
             }
         });
     },
