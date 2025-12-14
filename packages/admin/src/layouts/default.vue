@@ -77,6 +77,8 @@
 <script setup>
 import { arrayToTree } from 'befly-shared/arrayToTree';
 
+import { confirmAndRun } from '@/utils/confirmAndRun';
+
 const router = useRouter();
 const route = useRoute();
 const global = useGlobal();
@@ -109,7 +111,7 @@ const $Method = {
             $Data.userMenus = arrayToTree(data.lists || []);
             $Method.setActiveMenu();
         } catch (error) {
-            console.error('获取用户菜单失败:', error);
+            MessagePlugin.error('获取用户菜单失败');
         }
     },
 
@@ -153,13 +155,13 @@ const $Method = {
 
     // 处理退出登录
     handleLogout() {
-        const dialog = DialogPlugin.confirm({
+        confirmAndRun({
+            header: '确认退出登录',
             body: '确定要退出登录吗？',
-            header: '确认',
-            onConfirm: () => {
-                dialog.destroy();
+            status: 'warning',
+            onConfirm: async () => {
                 $Storage.local.remove('token');
-                router.push('/internal/login');
+                await router.push('/internal/login');
                 MessagePlugin.success('退出成功');
             }
         });

@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Select as TSelect, Option as TOption, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
+import { Button as TButton, Table as TTable, Tag as TTag, Select as TSelect, Option as TOption, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
 import ILucidePlus from '~icons/lucide/plus';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import ILucidePencil from '~icons/lucide/pencil';
@@ -92,6 +92,7 @@ import EditDialog from './components/edit.vue';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
 import { withDefaultColumns } from 'befly-shared/withDefaultColumns';
+import { confirmDeleteAndRun } from '@/utils/confirmAndRun';
 
 // 响应式数据
 const $Data = $ref({
@@ -173,36 +174,13 @@ const $Method = {
             return;
         }
 
-        let dialog = null;
-        let destroyed = false;
-
-        dialog = DialogPlugin.confirm({
-            header: '确认删除',
-            body: `确定要删除配置"${row.name}"吗？`,
-            status: 'warning',
-            onConfirm: async () => {
-                try {
-                    const res = await $Http('/addon/admin/sysConfig/del', { id: row.id });
-                    if (res.code === 0) {
-                        MessagePlugin.success('删除成功');
-                        $Method.apiConfigList();
-                    } else {
-                        MessagePlugin.error(res.msg || '删除失败');
-                    }
-                } catch (error) {
-                    MessagePlugin.error('删除失败');
-                }
-
-                if (!destroyed) {
-                    destroyed = true;
-                    if (dialog && dialog.destroy) dialog.destroy();
-                }
+        confirmDeleteAndRun({
+            displayName: `配置“${row.name}”`,
+            request: async () => {
+                return await $Http('/addon/admin/sysConfig/del', { id: row.id });
             },
-            onClose: () => {
-                if (!destroyed) {
-                    destroyed = true;
-                    if (dialog && dialog.destroy) dialog.destroy();
-                }
+            onSuccess: async () => {
+                await $Method.apiConfigList();
             }
         });
     },

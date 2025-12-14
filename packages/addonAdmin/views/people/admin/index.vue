@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
+import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
 import ILucidePlus from '~icons/lucide/plus';
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import ILucidePencil from '~icons/lucide/pencil';
@@ -71,6 +71,7 @@ import EditDialog from './components/edit.vue';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
 import { withDefaultColumns } from 'befly-shared/withDefaultColumns';
+import { confirmDeleteAndRun } from '@/utils/confirmAndRun';
 
 // 响应式数据
 const $Data = $ref({
@@ -133,37 +134,13 @@ const $Method = {
 
     // 删除管理员
     async apiAdminDel(row) {
-        let dialog = null;
-        let destroyed = false;
-
-        dialog = DialogPlugin.confirm({
-            header: '确认删除',
-            body: `确定要删除管理员“${row.username}” 吗？`,
-            status: 'warning',
-            onConfirm: async () => {
-                try {
-                    const res = await $Http('/addon/admin/admin/del', { id: row.id });
-                    if (res.code === 0) {
-                        MessagePlugin.success('删除成功');
-                        $Method.apiAdminList();
-                    } else {
-                        MessagePlugin.error(res.msg || '删除失败');
-                    }
-                } catch (error) {
-                    console.error('删除失败:', error);
-                    MessagePlugin.error('删除失败');
-                }
-
-                if (!destroyed) {
-                    destroyed = true;
-                    if (dialog && dialog.destroy) dialog.destroy();
-                }
+        confirmDeleteAndRun({
+            displayName: `管理员“${row.username}”`,
+            request: async () => {
+                return await $Http('/addon/admin/admin/del', { id: row.id });
             },
-            onClose: () => {
-                if (!destroyed) {
-                    destroyed = true;
-                    if (dialog && dialog.destroy) dialog.destroy();
-                }
+            onSuccess: async () => {
+                await $Method.apiAdminList();
             }
         });
     },
