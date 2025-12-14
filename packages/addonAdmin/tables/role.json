@@ -21,14 +21,12 @@
     },
     "menus": {
         "name": "菜单权限",
-        "type": "array_number_string",
-        "max": 2000,
+        "type": "array_number_text",
         "detail": "菜单ID数组，如 [1,2,3]"
     },
     "apis": {
         "name": "接口权限",
-        "type": "array_number_string",
-        "max": 3000,
+        "type": "array_number_text",
         "detail": "接口ID数组，如 [1,2,3]"
     },
     "sort": {
