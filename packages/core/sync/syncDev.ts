@@ -6,12 +6,14 @@
  * - 角色: 同步 dev, user, admin, guest 四个角色
  *   - dev: 拥有所有菜单和接口权限
  *   - user, admin, guest: 菜单和接口权限为空
+ * - 同步完成后：重建角色接口权限缓存到 Redis（极简方案：覆盖更新）
  * - 表名: addon_admin_admin
  */
 
 import { Logger } from '../lib/logger.js';
 import { Cipher } from '../lib/cipher.js';
 import { Connect } from '../lib/connect.js';
+import { CacheHelper } from '../lib/cacheHelper.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { beflyConfig } from '../befly.config.js';
@@ -36,7 +38,8 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         // 连接数据库（SQL + Redis）
         await Connect.connect();
 
-        const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
+        const redisHelper = new RedisHelper();
+        const helper = new DbHelper({ redis: redisHelper } as any, Connect.getSql());
 
         // 检查 addon_admin_admin 表是否存在
         const existAdmin = await helper.tableExists('addon_admin_admin');
@@ -210,7 +213,16 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             });
         }
 
-        // 缓存角色权限数据到 Redis（复用 CacheHelper 逻辑）
+        // 重建角色接口权限缓存到 Redis（极简方案：覆盖更新）
+        // 说明：syncDev 会修改角色 apis，需同步刷新对应角色权限缓存
+        try {
+            Logger.debug('[SyncDev] 开始重建角色接口权限缓存');
+            const cacheHelper = new CacheHelper({ db: helper, redis: redisHelper } as any);
+            await cacheHelper.rebuildRoleApiPermissions();
+            Logger.debug('[SyncDev] 角色接口权限缓存重建完成');
+        } catch (error: any) {
+            Logger.warn({ err: error }, '[SyncDev] 重建角色接口权限缓存失败');
+        }
     } catch (error: any) {
         Logger.error({ err: error }, '同步开发者管理员失败');
         throw error;
