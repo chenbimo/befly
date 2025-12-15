@@ -434,9 +434,20 @@ const hook: Hook = {
         // 4. 角色权限检查
         let hasPermission = false;
         if (ctx.user.roleCode && befly.redis) {
-            const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
-            const roleApisKey = RedisKeys.roleApis(ctx.user.roleCode);
-            hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
+            // 统一格式：METHOD/path（与写入缓存保持一致）
+            const apiPath = normalizeApiPath(ctx.req.method, new URL(ctx.req.url).pathname);
+
+            // 版本化权限缓存：active(ver) + ready(ver) 就绪门槛
+            const active = await befly.redis.getObject(RedisKeys.roleApisActive());
+            if (active?.ver) {
+                const readyKey = RedisKeys.roleApisReady(active.ver);
+                const ready = await befly.redis.getObject(readyKey);
+
+                if (ready) {
+                    const roleApisKey = RedisKeys.roleApis(ctx.user.roleCode, active.ver);
+                    hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
+                }
+            }
         }
 
         if (!hasPermission) {

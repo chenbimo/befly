@@ -16,7 +16,11 @@ export const RedisKeys = {
     /** 角色信息缓存（完整角色对象） */
     roleInfo: (roleCode: string) => `befly:role:info:${roleCode}`,
 
-    /** 角色接口权限缓存（Set 集合） */
+    /**
+     * 角色接口权限缓存（Set 集合）
+     * - key: befly:role:apis:${roleCode}
+     * - member: METHOD/path
+     */
     roleApis: (roleCode: string) => `befly:role:apis:${roleCode}`,
 
     /** 表结构缓存 */
@@ -30,7 +34,7 @@ export const RedisTTL = {
     /** 表结构缓存 - 1小时 */
     tableColumns: 3600,
 
-    /** 角色接口权限 - 24小时 */
+    /** 角色接口权限 Set - 24小时 */
     roleApis: 86400,
 
     /** 角色信息 - 24小时 */

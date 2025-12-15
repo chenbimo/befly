@@ -37,13 +37,25 @@ const hook: Hook = {
         let hasPermission = false;
         if (ctx.user.roleCode && befly.redis) {
             try {
-                // 验证角色权限
-                const apiPath = `${ctx.req.method}${new URL(ctx.req.url).pathname}`;
-                const roleApisKey = RedisKeys.roleApis(ctx.user.roleCode);
+                // apiPath 在 apiHandler 中已统一生成并写入 ctx.route
+                const apiPath = ctx.route;
+                const roleCode = ctx.user.roleCode;
+
+                // 极简方案：每个角色一个 Set，直接判断成员是否存在
+                const roleApisKey = RedisKeys.roleApis(roleCode);
                 hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
             } catch (error) {
                 // Redis 异常时降级为拒绝访问
-                befly.logger.warn({ err: error, route: ctx.route }, 'Redis 权限检查失败');
+                befly.logger.warn(
+                    {
+                        err: error,
+                        requestId: ctx.requestId,
+                        route: ctx.route,
+                        roleCode: ctx.user.roleCode,
+                        apiPath: ctx.route
+                    },
+                    'Redis 权限检查失败'
+                );
                 hasPermission = false;
             }
         }

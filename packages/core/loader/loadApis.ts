@@ -15,6 +15,7 @@ import { scanAddons, getAddonDir, addonDirExists } from 'befly-shared/addonHelpe
 // 相对导入
 import { Logger } from '../lib/logger.js';
 import { projectApiDir } from '../paths.js';
+import { makeRouteKey } from '../util.js';
 
 // 类型导入
 import type { ApiRoute } from '../types/api.js';
@@ -125,7 +126,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                     .map((m: string) => m.trim())
                     .filter((m: string) => m);
                 for (const method of methods) {
-                    const route = `${method}${routePath}`;
+                    const route = makeRouteKey(method, routePath);
                     // 为每个方法创建独立的路由对象
                     const routeApi = { ...api, method: method, route: route };
                     apis.set(route, routeApi);

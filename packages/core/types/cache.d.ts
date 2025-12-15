@@ -20,10 +20,14 @@ export interface CacheHelper {
     cacheMenus(): Promise<void>;
 
     /**
-     * 缓存所有角色的接口权限到 Redis
-     * 优化：使用 Promise.all 利用 Bun Redis 自动 pipeline 特性
+     * 全量重建所有角色的接口权限缓存
      */
-    cacheRolePermissions(): Promise<void>;
+    rebuildRoleApiPermissions(): Promise<void>;
+
+    /**
+     * 增量刷新单个角色的接口权限缓存
+     */
+    refreshRoleApiPermissions(roleCode: string, apiIds: number[]): Promise<void>;
 
     /**
      * 缓存所有数据（接口、菜单、角色权限）

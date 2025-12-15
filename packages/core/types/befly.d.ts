@@ -124,6 +124,12 @@ export interface BeflyOptions {
     disableHooks?: string[];
     /** 禁用的插件列表 */
     disablePlugins?: string[];
+
+    /** 是否启用组件钩子扫描（默认 false，仅加载 core hooks） */
+    enableAddonHooks?: boolean;
+
+    /** 是否启用项目钩子扫描（默认 false，仅加载 core hooks） */
+    enableAppHooks?: boolean;
     /** 隐藏的菜单路径列表（不同步到数据库） */
     hiddenMenus?: string[];
     /**

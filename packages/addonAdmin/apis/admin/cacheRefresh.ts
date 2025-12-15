@@ -21,14 +21,14 @@ export default {
             const results: Record<string, any> = {
                 apis: { success: false, count: 0 },
                 menus: { success: false, count: 0 },
-                roles: { success: false, count: 0 }
+                roles: { success: false, count: 0 },
+                roleApiPermissions: { success: false }
             };
 
             // 1. 刷新接口缓存
             try {
                 const apis = await befly.db.getAll({
-                    table: 'addon_admin_api',
-                    orderBy: ['addonName#ASC', 'path#ASC']
+                    table: 'addon_admin_api'
                 });
 
                 await befly.redis.setObject(RedisKeys.apisAll(), apis.lists);
@@ -41,8 +41,7 @@ export default {
             // 2. 刷新菜单缓存
             try {
                 const menus = await befly.db.getAll({
-                    table: 'addon_admin_menu',
-                    orderBy: ['sort#ASC', 'id#ASC']
+                    table: 'addon_admin_menu'
                 });
 
                 await befly.redis.setObject(RedisKeys.menusAll(), menus.lists);
@@ -81,8 +80,17 @@ export default {
                 results.roles = { success: false, error: error.message };
             }
 
+            // 4. 重建角色接口权限缓存（版本化 + 原子切换）
+            try {
+                await befly.cache.rebuildRoleApiPermissions();
+                results.roleApiPermissions = { success: true };
+            } catch (error: any) {
+                befly.logger.error({ err: error }, '重建角色接口权限缓存失败');
+                results.roleApiPermissions = { success: false, error: error.message };
+            }
+
             // 检查是否全部成功
-            const allSuccess = results.apis.success && results.menus.success && results.roles.success;
+            const allSuccess = results.apis.success && results.menus.success && results.roles.success && results.roleApiPermissions.success;
 
             if (allSuccess) {
                 return befly.tool.Yes('全部缓存刷新成功', results);

@@ -288,7 +288,10 @@ import { RedisKeys, RedisTTL } from 'befly-shared/redisKeys';
 const key = RedisKeys.apisAll(); // 'befly:apis:all'
 const key = RedisKeys.menusAll(); // 'befly:menus:all'
 const key = RedisKeys.roleInfo('admin'); // 'befly:role:info:admin'
-const key = RedisKeys.roleApis('admin'); // 'befly:role:apis:admin'
+const key = RedisKeys.roleApisActive(); // 'befly:role:apis:active'
+const key = RedisKeys.roleApisReady('v1'); // 'befly:role:apis:ready:v1'
+const key = RedisKeys.roleApis('admin', 'v1'); // 'befly:role:apis:admin:v:v1'
+const key = RedisKeys.roleApisMeta('admin', 'v1'); // 'befly:role:apis:admin:v:v1:meta'
 const key = RedisKeys.tableColumns('user'); // 'befly:table:columns:user'
 
 // 获取 TTL
@@ -338,11 +341,18 @@ const columns = await befly.db.getTableColumns('user');
 使用 Set 集合存储角色的接口权限，实现 O(1) 时间复杂度的权限检查。
 
 ```typescript
-// 缓存角色权限（启动时自动执行）
-await befly.redis.sadd('befly:role:apis:admin', ['GET/api/user/list', 'POST/api/user/add', 'DELETE/api/user/del']);
+// 权限缓存是“版本化 key + active 原子切换”
+// 1) 读取当前生效版本
+const active = await befly.redis.getObject(RedisKeys.roleApisActive());
+if (!active?.ver) throw new Error('role apis cache not ready');
 
-// 权限检查（请求时）
-const hasPermission = await befly.redis.sismember('befly:role:apis:admin', 'POST/api/user/add');
+// 2) 读取该版本的 ready（就绪门槛）
+const ready = await befly.redis.getObject(RedisKeys.roleApisReady(active.ver));
+if (!ready) throw new Error('role apis cache not ready');
+
+// 3) 权限检查（请求时）
+const roleApisKey = RedisKeys.roleApis('admin', active.ver);
+const hasPermission = await befly.redis.sismember(roleApisKey, 'POST/api/user/add');
 // 返回: true
 ```
 

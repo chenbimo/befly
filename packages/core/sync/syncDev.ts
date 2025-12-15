@@ -14,7 +14,6 @@ import { Cipher } from '../lib/cipher.js';
 import { Connect } from '../lib/connect.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { CacheHelper } from '../lib/cacheHelper.js';
 import { beflyConfig } from '../befly.config.js';
 
 import type { SyncDevOptions } from '../types/index.js';
@@ -63,7 +62,8 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         // 查询所有菜单 ID
         const allMenus = await helper.getAll({
             table: 'addon_admin_menu',
-            fields: ['id']
+            fields: ['id'],
+            orderBy: ['id#ASC']
         });
 
         if (!allMenus || !Array.isArray(allMenus.lists)) {
@@ -71,19 +71,20 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
             return;
         }
 
-        const menuIds = allMenus.lists.length > 0 ? allMenus.lists.map((m: any) => m.id).join(',') : '';
+        const menuIds = allMenus.lists.length > 0 ? allMenus.lists.map((m: any) => m.id) : [];
 
         // 查询所有接口 ID
         const existApi = await helper.tableExists('addon_admin_api');
-        let apiIds = '';
+        let apiIds: number[] = [];
         if (existApi) {
             const allApis = await helper.getAll({
                 table: 'addon_admin_api',
-                fields: ['id']
+                fields: ['id'],
+                orderBy: ['id#ASC']
             });
 
             if (allApis && Array.isArray(allApis.lists) && allApis.lists.length > 0) {
-                apiIds = allApis.lists.map((a: any) => a.id).join(',');
+                apiIds = allApis.lists.map((a: any) => a.id);
             }
         }
 
@@ -101,24 +102,24 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
                 code: 'user',
                 name: '用户角色',
                 description: '普通用户角色',
-                menus: '',
-                apis: '',
+                menus: [],
+                apis: [],
                 sort: 1
             },
             {
                 code: 'admin',
                 name: '管理员角色',
                 description: '管理员角色',
-                menus: '',
-                apis: '',
+                menus: [],
+                apis: [],
                 sort: 2
             },
             {
                 code: 'guest',
                 name: '访客角色',
                 description: '访客角色',
-                menus: '',
-                apis: '',
+                menus: [],
+                apis: [],
                 sort: 3
             }
         ];
@@ -133,7 +134,12 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
 
             if (existingRole) {
                 // 检查字段是否有变化
-                const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || existingRole.menus !== roleConfig.menus || existingRole.apis !== roleConfig.apis || existingRole.sort !== roleConfig.sort;
+                const existingMenusJson = JSON.stringify(existingRole.menus || []);
+                const existingApisJson = JSON.stringify(existingRole.apis || []);
+                const nextMenusJson = JSON.stringify(roleConfig.menus);
+                const nextApisJson = JSON.stringify(roleConfig.apis);
+
+                const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || existingMenusJson !== nextMenusJson || existingApisJson !== nextApisJson || existingRole.sort !== roleConfig.sort;
 
                 if (hasChanges) {
                     // 更新现有角色
@@ -205,13 +211,6 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         }
 
         // 缓存角色权限数据到 Redis（复用 CacheHelper 逻辑）
-        try {
-            const tempBefly = { db: helper, redis: new RedisHelper() } as any;
-            const cacheHelper = new CacheHelper(tempBefly);
-            await cacheHelper.cacheRolePermissions();
-        } catch (error: any) {
-            // 忽略缓存错误
-        }
     } catch (error: any) {
         Logger.error({ err: error }, '同步开发者管理员失败');
         throw error;

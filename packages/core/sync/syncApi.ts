@@ -10,18 +10,16 @@
  * 5. 存在则更新，不存在则新增
  * 6. 删除配置中不存在的接口记录
  */
-import { readdirSync, statSync } from 'node:fs';
-import { join, dirname, relative, basename } from 'pathe';
+import { join, relative } from 'pathe';
 import { Connect } from '../lib/connect.js';
+import { CacheHelper } from '../lib/cacheHelper.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { RedisKeys } from 'befly-shared/redisKeys';
 import { scanFiles } from 'befly-shared/scanFiles';
 import { scanAddons, addonDirExists, getAddonDir } from 'befly-shared/addonHelper';
 
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
-import { beflyConfig } from '../befly.config.js';
 
 import type { SyncApiOptions, ApiInfo } from '../types/index.js';
 
@@ -71,7 +69,7 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: 'app' | '
 /**
  * 扫描所有 API 文件
  */
-async function scanAllApis(projectRoot: string): Promise<ApiInfo[]> {
+async function scanAllApis(): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
     // 1. 扫描项目 API（只扫描 apis 目录）
@@ -225,7 +223,9 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         // 连接数据库（SQL + Redis）
         await Connect.connect();
 
-        const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
+        const redisHelper = new RedisHelper();
+        const helper = new DbHelper({ redis: redisHelper } as any, Connect.getSql());
+        const cacheHelper = new CacheHelper({ db: helper, redis: redisHelper } as any);
 
         // 1. 检查表是否存在（addon_admin_api 来自 addon-admin 组件）
         const exists = await helper.tableExists('addon_admin_api');
@@ -236,7 +236,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         }
 
         // 2. 扫描所有 API 文件
-        const apis = await scanAllApis(projectDir);
+        const apis = await scanAllApis();
         const apiPaths = new Set(apis.map((api) => api.path));
 
         // 3. 同步 API 数据
@@ -247,15 +247,18 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
 
         // 5. 缓存接口数据到 Redis
         try {
-            const apiList = await helper.getAll({
-                table: 'addon_admin_api',
-                orderBy: ['id#ASC']
-            });
-
-            const redisHelper = new RedisHelper();
-            await redisHelper.setObject(RedisKeys.apisAll(), apiList.lists);
+            await cacheHelper.cacheApis();
         } catch (error: any) {
             // 忽略缓存错误
+        }
+
+        // 6. API 表发生变更后，重建角色接口权限缓存（不使用定时器）
+        // 说明：role permission set 的成员是 METHOD/path，API 的 method/path 变更会影响所有角色权限。
+        try {
+            await cacheHelper.rebuildRoleApiPermissions();
+        } catch (error: any) {
+            // 不阻塞 syncApi 主流程，但记录日志
+            Logger.warn({ err: error }, 'API 同步完成，但重建角色权限缓存失败');
         }
     } catch (error: any) {
         Logger.error({ err: error }, 'API 同步失败');

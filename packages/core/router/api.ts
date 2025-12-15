@@ -7,7 +7,7 @@
 import { genShortId } from 'befly-shared/genShortId';
 
 // 相对导入
-import { FinalResponse } from '../util.js';
+import { FinalResponse, makeRouteKey } from '../util.js';
 import { Logger } from '../lib/logger.js';
 
 // 类型导入
@@ -29,7 +29,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
 
         // 2. 创建请求上下文
         const url = new URL(req.url);
-        const apiPath = `${req.method}${url.pathname}`;
+        const apiPath = makeRouteKey(req.method, url.pathname);
         const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
 
         const ctx: RequestContext = {

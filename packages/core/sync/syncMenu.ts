@@ -366,8 +366,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
 
         // 7. 获取最终菜单数据（用于缓存）
         const allMenusData = await helper.getAll({
-            table: 'addon_admin_menu',
-            orderBy: ['sort#ASC', 'id#ASC']
+            table: 'addon_admin_menu'
         });
 
         // 8. 缓存菜单数据到 Redis

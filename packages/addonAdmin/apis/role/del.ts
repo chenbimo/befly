@@ -38,7 +38,7 @@
             });
 
             // 删除角色权限缓存
-            await befly.cache.deleteRolePermissions(befly, role.code);
+            await befly.cache.deleteRolePermissions(role.code);
 
             return befly.tool.Yes('操作成功');
         } catch (error: any) {

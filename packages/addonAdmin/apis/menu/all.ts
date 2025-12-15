@@ -21,11 +21,9 @@ export default {
                 return befly.tool.No('角色不存在', { lists: [] });
             }
 
-            // 3. 解析菜单ID列表（逗号分隔的字符串）
-            const menuIds = role.menus
-                .split(',')
-                .map((id: string) => parseInt(id.trim()))
-                .filter((id: number) => !isNaN(id));
+            // 3. 解析菜单ID列表（数组，数据库字段已改为 array 存储）
+            const rawMenuIds = Array.isArray(role.menus) ? role.menus : [];
+            const menuIds = rawMenuIds.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id));
 
             if (menuIds.length === 0) {
                 return befly.tool.Yes('菜单为空', { lists: [] });
@@ -48,8 +46,8 @@ export default {
             }
 
             // 5. 根据角色权限过滤菜单
-            const menuIdSet = new Set(menuIds.map(String)); // 转为字符串 Set 方便比较
-            const authorizedMenus = allMenus.filter((menu: any) => menuIdSet.has(String(menu.id)));
+            const menuIdSet = new Set<number>(menuIds);
+            const authorizedMenus = allMenus.filter((menu: any) => menuIdSet.has(Number(menu.id)));
 
             // 6. 返回一维数组（由前端构建树形结构）
             return befly.tool.Yes('获取菜单成功', { lists: authorizedMenus });

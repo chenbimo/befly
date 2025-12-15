@@ -9,6 +9,7 @@ import { syncDbCommand } from './syncDb.js';
 import { syncApiCommand } from './syncApi.js';
 import { syncMenuCommand } from './syncMenu.js';
 import { syncDevCommand } from './syncDev.js';
+import { syncRolePermissionsCommand } from './syncRolePermissions.js';
 import { beflyConfig } from '../befly.config.js';
 import type { SyncOptions } from '../types/index.js';
 
@@ -28,6 +29,9 @@ export async function syncAllCommand(options: SyncOptions = {}) {
 
         // 4. 同步开发管理员（并缓存角色权限）
         await syncDevCommand();
+
+        // 5. 重建角色接口权限缓存（写入 ready 标记）
+        await syncRolePermissionsCommand();
     } catch (error: any) {
         Logger.error({ err: error }, '同步过程中发生错误');
         throw error;

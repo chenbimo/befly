@@ -6,6 +6,8 @@
 import { Logger } from './logger.js';
 import { RedisKeys } from 'befly-shared/redisKeys';
 
+import { makeRouteKey } from '../util.js';
+
 import type { BeflyContext } from '../types/befly.js';
 
 /**
@@ -13,6 +15,104 @@ import type { BeflyContext } from '../types/befly.js';
  */
 export class CacheHelper {
     private befly: BeflyContext;
+
+    private static readonly API_ID_IN_CHUNK_SIZE = 1000;
+
+    private normalizeNumberIdList(value: unknown): number[] {
+        if (value === null || value === undefined) return [];
+
+        const normalizeSingle = (item: unknown): number | null => {
+            if (typeof item === 'number') {
+                if (!Number.isFinite(item)) return null;
+                const intValue = Math.trunc(item);
+                return Number.isSafeInteger(intValue) ? intValue : null;
+            }
+            if (typeof item === 'bigint') {
+                const intValue = Number(item);
+                return Number.isSafeInteger(intValue) ? intValue : null;
+            }
+            if (typeof item === 'string') {
+                const trimmed = item.trim();
+                if (!trimmed) return null;
+                const intValue = Number.parseInt(trimmed, 10);
+                return Number.isSafeInteger(intValue) ? intValue : null;
+            }
+            return null;
+        };
+
+        if (Array.isArray(value)) {
+            const ids: number[] = [];
+            for (const item of value) {
+                const id = normalizeSingle(item);
+                if (id !== null) ids.push(id);
+            }
+            return ids;
+        }
+
+        if (typeof value === 'string') {
+            const str = value.trim();
+            if (!str) return [];
+
+            if (str.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(str);
+                    return this.normalizeNumberIdList(parsed);
+                } catch {
+                    // ignore
+                }
+            }
+
+            const ids: number[] = [];
+            const parts = str.split(',');
+            for (const part of parts) {
+                const id = normalizeSingle(part);
+                if (id !== null) ids.push(id);
+            }
+            return ids;
+        }
+
+        const single = normalizeSingle(value);
+        return single === null ? [] : [single];
+    }
+
+    private chunkNumberArray(arr: number[], chunkSize: number): number[][] {
+        if (chunkSize <= 0) {
+            throw new Error(`chunkSize 必须为正整数 (chunkSize: ${chunkSize})`);
+        }
+        if (arr.length === 0) return [];
+
+        const chunks: number[][] = [];
+        for (let i = 0; i < arr.length; i += chunkSize) {
+            chunks.push(arr.slice(i, i + chunkSize));
+        }
+        return chunks;
+    }
+
+    private async buildApiPathMapByIds(apiIds: number[]): Promise<Map<number, string>> {
+        const uniqueIds = Array.from(new Set(apiIds));
+        if (uniqueIds.length === 0) {
+            return new Map();
+        }
+
+        const apiMap = new Map<number, string>();
+        const chunks = this.chunkNumberArray(uniqueIds, CacheHelper.API_ID_IN_CHUNK_SIZE);
+
+        for (const chunk of chunks) {
+            const apis = await this.befly.db.getAll({
+                table: 'addon_admin_api',
+                fields: ['id', 'method', 'path'],
+                where: {
+                    id$in: chunk
+                }
+            });
+
+            for (const api of apis.lists) {
+                apiMap.set(api.id, makeRouteKey(api.method, api.path));
+            }
+        }
+
+        return apiMap;
+    }
 
     /**
      * 构造函数
@@ -36,8 +136,7 @@ export class CacheHelper {
 
             // 从数据库查询所有接口
             const apiList = await this.befly.db.getAll({
-                table: 'addon_admin_api',
-                orderBy: ['addonName#ASC', 'path#ASC']
+                table: 'addon_admin_api'
             });
 
             // 缓存到 Redis
@@ -65,8 +164,7 @@ export class CacheHelper {
 
             // 从数据库查询所有菜单
             const menus = await this.befly.db.getAll({
-                table: 'addon_admin_menu',
-                orderBy: ['sort#ASC', 'id#ASC']
+                table: 'addon_admin_menu'
             });
 
             // 缓存到 Redis
@@ -82,9 +180,10 @@ export class CacheHelper {
 
     /**
      * 缓存所有角色的接口权限到 Redis
-     * 优化：使用 Promise.all 利用 Bun Redis 自动 pipeline 特性
+     * 全量重建：清理所有角色权限缓存并重建
+     * - 极简方案：每个角色一个 Set，直接覆盖更新（DEL + SADD）
      */
-    async cacheRolePermissions(): Promise<void> {
+    async rebuildRoleApiPermissions(): Promise<void> {
         try {
             // 检查表是否存在
             const apiTableExists = await this.befly.db.tableExists('addon_admin_api');
@@ -95,64 +194,101 @@ export class CacheHelper {
                 return;
             }
 
-            // 并行查询角色和接口（利用自动 pipeline）
-            const [roles, allApis] = await Promise.all([
-                this.befly.db.getAll({
-                    table: 'addon_admin_role'
-                }),
-                this.befly.db.getAll({
-                    table: 'addon_admin_api'
-                })
-            ]);
+            // 查询所有角色（仅取必要字段）
+            const roles = await this.befly.db.getAll({
+                table: 'addon_admin_role',
+                fields: ['code', 'apis']
+            });
 
-            // 构建接口 ID -> 路径的映射（避免重复过滤）
-            const apiMap = new Map<number, string>();
-            for (const api of allApis.lists) {
-                apiMap.set(api.id, `${api.method}${api.path}`);
-            }
-
-            // 收集需要缓存的角色权限
-            const cacheOperations: Array<{ roleCode: string; apiPaths: string[] }> = [];
+            const roleApiIdsMap = new Map<string, number[]>();
+            const allApiIdsSet = new Set<number>();
 
             for (const role of roles.lists) {
-                if (!role.apis) continue;
-
-                // 解析角色的接口 ID 列表并映射到路径
-                const apiPaths: string[] = [];
-                const apiIds = role.apis.split(',');
-
-                for (const idStr of apiIds) {
-                    const id = parseInt(idStr.trim());
-                    if (!isNaN(id)) {
-                        const path = apiMap.get(id);
-                        if (path) {
-                            apiPaths.push(path);
-                        }
-                    }
-                }
-
-                if (apiPaths.length > 0) {
-                    cacheOperations.push({ roleCode: role.code, apiPaths: apiPaths });
+                if (!role?.code) continue;
+                const apiIds = this.normalizeNumberIdList(role.apis);
+                roleApiIdsMap.set(role.code, apiIds);
+                for (const id of apiIds) {
+                    allApiIdsSet.add(id);
                 }
             }
 
-            if (cacheOperations.length === 0) {
+            const roleCodes = Array.from(roleApiIdsMap.keys());
+            if (roleCodes.length === 0) {
                 Logger.info('✅ 没有需要缓存的角色权限');
                 return;
             }
 
-            // 批量删除旧缓存（利用自动 pipeline）
-            const deletePromises = cacheOperations.map((op) => this.befly.redis.del(RedisKeys.roleApis(op.roleCode)));
-            await Promise.all(deletePromises);
+            // 构建所有需要的 API 映射（按 ID 分块使用 $in，避免全表扫描/避免超长 IN）
+            const allApiIds = Array.from(allApiIdsSet);
+            const apiMap = await this.buildApiPathMapByIds(allApiIds);
 
-            // 批量添加新缓存（利用自动 pipeline）
-            const addPromises = cacheOperations.map((op) => this.befly.redis.sadd(RedisKeys.roleApis(op.roleCode), op.apiPaths));
-            const results = await Promise.all(addPromises);
+            // 清理所有角色的缓存 key（保证幂等）
+            const roleKeys = roleCodes.map((code) => RedisKeys.roleApis(code));
+            await this.befly.redis.delBatch(roleKeys);
 
-            // 统计成功缓存的角色数
-            const cachedRoles = results.filter((r) => r > 0).length;
+            // 批量写入新缓存（只写入非空权限）
+            const items: Array<{ key: string; members: string[] }> = [];
+
+            for (const roleCode of roleCodes) {
+                const apiIds = roleApiIdsMap.get(roleCode) || [];
+                const membersSet = new Set<string>();
+
+                for (const id of apiIds) {
+                    const apiPath = apiMap.get(id);
+                    if (apiPath) {
+                        membersSet.add(apiPath);
+                    }
+                }
+
+                const members = Array.from(membersSet).sort();
+
+                if (members.length > 0) {
+                    items.push({ key: RedisKeys.roleApis(roleCode), members: members });
+                }
+            }
+
+            if (items.length > 0) {
+                await this.befly.redis.saddBatch(items);
+            }
+
+            // 极简方案不做版本/ready/meta：重建完成即生效
         } catch (error: any) {
             Logger.warn({ err: error }, '⚠️ 角色权限缓存异常');
+        }
+    }
+
+    /**
+     * 增量刷新单个角色的接口权限缓存
+     * - apiIds 为空数组：仅清理缓存（防止残留）
+     * - apiIds 非空：使用 $in 最小查询，DEL 后 SADD
+     */
+    async refreshRoleApiPermissions(roleCode: string, apiIds: number[]): Promise<void> {
+        if (!roleCode || typeof roleCode !== 'string') {
+            throw new Error('roleCode 必须是非空字符串');
+        }
+        const normalizedIds = this.normalizeNumberIdList(apiIds);
+        const roleKey = RedisKeys.roleApis(roleCode);
+
+        // 空数组短路：避免触发 $in 空数组异常，同时保证清理残留
+        if (normalizedIds.length === 0) {
+            await this.befly.redis.del(roleKey);
+            return;
+        }
+
+        const apiMap = await this.buildApiPathMapByIds(normalizedIds);
+        const membersSet = new Set<string>();
+        for (const id of normalizedIds) {
+            const apiPath = apiMap.get(id);
+            if (apiPath) {
+                membersSet.add(apiPath);
+            }
+        }
+
+        const members = Array.from(membersSet);
+
+        await this.befly.redis.del(roleKey);
+        if (members.length > 0) {
+            await this.befly.redis.sadd(roleKey, members);
         }
     }
 
@@ -167,7 +303,7 @@ export class CacheHelper {
         await this.cacheMenus();
 
         // 3. 缓存角色权限
-        await this.cacheRolePermissions();
+        await this.rebuildRoleApiPermissions();
     }
 
     /**

@@ -26,8 +26,8 @@ export default {
             }
         });
 
-        // 增量更新 Redis 缓存（传递数组）
-        await befly.cache.cacheRolePermissions(befly, role.code, ctx.body.apiIds);
+        // 增量刷新 Redis 权限缓存
+        await befly.cache.refreshRoleApiPermissions(role.code, ctx.body.apiIds || []);
 
         return befly.tool.Yes('操作成功');
     }

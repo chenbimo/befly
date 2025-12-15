@@ -104,12 +104,18 @@ import { RedisKeys, RedisTTL } from 'befly-shared/redisKeys';
 RedisKeys.apisAll(); // 'befly:apis:all'
 RedisKeys.menusAll(); // 'befly:menus:all'
 RedisKeys.roleInfo('admin'); // 'befly:role:info:admin'
-RedisKeys.roleApis('admin'); // 'befly:role:apis:admin'
+RedisKeys.roleApisActive(); // 'befly:role:apis:active'
+RedisKeys.roleApisReady('v1'); // 'befly:role:apis:ready:v1'
+RedisKeys.roleApis('admin', 'v1'); // 'befly:role:apis:admin:v:v1'
+RedisKeys.roleApisMeta('admin', 'v1'); // 'befly:role:apis:admin:v:v1:meta'
 RedisKeys.tableColumns('user'); // 'befly:table:columns:user'
 
 // TTL 配置（秒）
 RedisTTL.tableColumns; // 3600 (1小时)
 RedisTTL.roleApis; // 86400 (24小时)
+RedisTTL.roleApisActive; // null (永久)
+RedisTTL.roleApisReady; // null (永久)
+RedisTTL.roleApisMeta; // 86400 (24小时)
 RedisTTL.roleInfo; // 86400 (24小时)
 RedisTTL.apisAll; // null (永久)
 RedisTTL.menusAll; // null (永久)

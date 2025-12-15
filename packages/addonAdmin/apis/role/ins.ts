@@ -27,8 +27,8 @@ export default {
             }
         });
 
-        // 增量缓存角色权限到 Redis Set
-        await befly.cache.cacheRolePermissions(befly, ctx.body.code, ctx.body.apis || []);
+        // 增量刷新角色权限缓存
+        await befly.cache.refreshRoleApiPermissions(ctx.body.code, ctx.body.apis || []);
 
         return befly.tool.Yes('操作成功', { id: roleId });
     }
