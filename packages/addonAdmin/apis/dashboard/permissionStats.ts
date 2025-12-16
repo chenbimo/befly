@@ -1,6 +1,6 @@
-﻿export default {
+export default {
     name: '获取权限统计',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         // 统计菜单数量
         const menuCount = await befly.db.count({
             table: 'addon_admin_menu'

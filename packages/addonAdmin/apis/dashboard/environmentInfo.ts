@@ -1,14 +1,14 @@
-﻿import os from 'node:os';
+import os from 'node:os';
 
 export default {
     name: '获取运行环境信息',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         // 获取数据库版本
         let databaseVersion = 'Unknown';
         try {
             const versionResult = await befly.db.query('SELECT VERSION() as version');
             databaseVersion = versionResult?.[0]?.version || 'Unknown';
-        } catch (error) {
+        } catch {
             // 忽略错误
         }
 
@@ -21,7 +21,7 @@ export default {
                 if (match) {
                     redisVersion = match[1];
                 }
-            } catch (error) {
+            } catch {
                 redisVersion = '未知';
             }
         }

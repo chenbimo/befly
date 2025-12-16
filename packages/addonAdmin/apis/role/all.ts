@@ -1,6 +1,6 @@
-﻿export default {
+export default {
     name: '获取所有角色',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         const roles = await befly.db.getAll({
             table: 'addon_admin_role',
             where: {

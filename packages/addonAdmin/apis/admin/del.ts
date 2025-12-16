@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '删除管理员',
     fields: {
         id: '@id'

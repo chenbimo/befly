@@ -1,4 +1,4 @@
-﻿import adminRoleTable from '../../tables/role.json';
+import adminRoleTable from '../../tables/role.json';
 
 export default {
     name: '更新角色',

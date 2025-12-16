@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '获取菜单列表',
     fields: {
         page: '@page',
@@ -6,7 +6,7 @@
         keyword: '@keyword',
         state: '@state'
     },
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         try {
             const menus = await befly.db.getAll({
                 table: 'addon_admin_menu',

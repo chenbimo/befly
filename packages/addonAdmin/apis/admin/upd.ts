@@ -1,4 +1,4 @@
-﻿import adminTable from '../../tables/admin.json';
+import adminTable from '../../tables/admin.json';
 
 export default {
     name: '更新管理员',

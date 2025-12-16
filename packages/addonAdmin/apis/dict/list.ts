@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '获取字典列表',
     fields: {
         page: '@page',

@@ -1,6 +1,6 @@
 export default {
     name: '获取所有字典类型',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         const result = await befly.db.getAll({
             table: 'addon_admin_dict_type',
             orderBy: ['sort#ASC', 'id#ASC']

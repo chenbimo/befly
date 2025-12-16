@@ -1,6 +1,6 @@
 export default {
     name: '获取邮件配置',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         if (!(befly as any).addon_admin_email) {
             return befly.tool.No('邮件插件未加载，请检查配置');
         }

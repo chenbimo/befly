@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '删除字典',
     fields: { '@id': true },
     required: ['id'],

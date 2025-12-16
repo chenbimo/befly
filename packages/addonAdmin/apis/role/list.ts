@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '获取角色列表',
     fields: {
         page: '@page',
@@ -6,7 +6,7 @@
         keyword: '@keyword',
         state: '@state'
     },
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         const roles = await befly.db.getList({
             limit: 30,
             table: 'addon_admin_role',

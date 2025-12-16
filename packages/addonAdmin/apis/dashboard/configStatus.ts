@@ -1,6 +1,6 @@
-﻿export default {
+export default {
     name: '获取配置状态',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         const status = {
             database: { status: 'ok', latency: 0 },
             redis: { status: 'ok', latency: 0 },
@@ -15,7 +15,7 @@
             await befly.db.query('SELECT 1');
             status.database.latency = Date.now() - startTime;
             status.database.status = 'ok';
-        } catch (error) {
+        } catch {
             status.database.status = 'error';
             status.database.message = '连接失败';
         }
@@ -26,7 +26,7 @@
             await befly.redis.ping();
             status.redis.latency = Date.now() - startTime;
             status.redis.status = 'ok';
-        } catch (error) {
+        } catch {
             status.redis.status = 'error';
             status.redis.message = '连接失败';
         }

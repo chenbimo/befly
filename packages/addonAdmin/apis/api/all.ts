@@ -1,6 +1,6 @@
-﻿export default {
+export default {
     name: '获取所有接口',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         try {
             // 从缓存获取所有接口
             let allApis = await befly.cache.getApis();

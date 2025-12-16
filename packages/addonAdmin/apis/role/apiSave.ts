@@ -1,4 +1,4 @@
-﻿import adminRoleTable from '../../tables/role.json';
+import adminRoleTable from '../../tables/role.json';
 
 export default {
     name: '保存角色接口权限',

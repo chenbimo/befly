@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '查询管理员列表',
     fields: {
         page: '@page',

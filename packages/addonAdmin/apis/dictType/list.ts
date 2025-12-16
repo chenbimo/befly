@@ -1,5 +1,3 @@
-import dictTypeTable from '../../tables/dictType.json';
-
 export default {
     name: '获取字典类型列表',
     fields: {

@@ -1,6 +1,6 @@
-﻿export default {
+export default {
     name: '获取系统信息',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         // 系统启动时间（从进程启动时间计算）
         const startTime = Date.now() - Math.floor(process.uptime() * 1000);
 

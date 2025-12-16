@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '获取管理员信息',
     fields: {
         id: '@id'

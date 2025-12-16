@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '获取所有字典',
     handler: async (befly) => {
         const result = await befly.db.getAll({

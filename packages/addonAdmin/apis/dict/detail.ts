@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '获取字典详情',
     fields: { '@id': true },
     required: ['id'],

@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     name: '获取用户角色',
     fields: {
         id: '@id'

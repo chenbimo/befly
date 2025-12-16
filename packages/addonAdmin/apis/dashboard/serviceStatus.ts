@@ -1,6 +1,6 @@
-﻿export default {
+export default {
     name: '获取服务状态',
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         const services = [];
 
         // 数据库状态

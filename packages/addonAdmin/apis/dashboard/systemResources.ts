@@ -1,4 +1,4 @@
-﻿import os from 'node:os';
+import os from 'node:os';
 import fs from 'node:fs';
 import { promisify } from 'node:util';
 
@@ -6,7 +6,7 @@ export default {
     name: '获取系统资源',
     auth: true,
     fields: {},
-    handler: async (befly, ctx) => {
+    handler: async (befly) => {
         // CPU 使用率
         const cpus = os.cpus();
         const cpuCount = cpus.length; // 逻辑核心数（包括超线程）
