@@ -1,10 +1,10 @@
 /**
- * RedisKeys 和 RedisTTL 测试
+ * RedisKeys 测试（历史文件名保留）
  */
 
 import { describe, expect, test } from "bun:test";
 
-import { RedisKeys, RedisTTL } from "../lib/redisKeys.js";
+import { RedisKeys } from "../lib/cacheKeys.js";
 
 describe("RedisKeys - Key 生成函数", () => {
   test("apisAll - 返回固定的接口缓存键", () => {
@@ -37,41 +37,5 @@ describe("RedisKeys - Key 生成函数", () => {
 
   test("tableColumns - 空字符串", () => {
     expect(RedisKeys.tableColumns("")).toBe("befly:table:columns:");
-  });
-});
-
-describe("RedisTTL - 过期时间常量", () => {
-  test("tableColumns - 1小时 (3600秒)", () => {
-    expect(RedisTTL.tableColumns).toBe(3600);
-  });
-
-  test("roleApis - 24小时 (86400秒)", () => {
-    expect(RedisTTL.roleApis).toBe(86400);
-  });
-
-  test("roleInfo - 24小时 (86400秒)", () => {
-    expect(RedisTTL.roleInfo).toBe(86400);
-  });
-
-  test("apisAll - 永久 (null)", () => {
-    expect(RedisTTL.apisAll).toBeNull();
-  });
-
-  test("menusAll - 永久 (null)", () => {
-    expect(RedisTTL.menusAll).toBeNull();
-  });
-
-  test("所有 TTL 值都是数字或 null", () => {
-    for (const [_key, value] of Object.entries(RedisTTL)) {
-      expect(value === null || typeof value === "number").toBe(true);
-    }
-  });
-
-  test("数字类型的 TTL 都是正数", () => {
-    for (const [_key, value] of Object.entries(RedisTTL)) {
-      if (typeof value === "number") {
-        expect(value).toBeGreaterThan(0);
-      }
-    }
   });
 });

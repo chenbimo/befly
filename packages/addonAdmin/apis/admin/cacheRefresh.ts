@@ -12,7 +12,7 @@
  * - 缓存出现异常需要重建
  */
 
-import { RedisKeys } from "befly/lib/redisKeys";
+import { RedisKeys } from "befly/lib/cacheKeys";
 
 export default {
   name: "刷新全部缓存",

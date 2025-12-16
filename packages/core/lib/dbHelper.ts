@@ -22,8 +22,10 @@ import { fieldClear } from "../utils/fieldClear.js";
 import { keysToCamel } from "../utils/keysToCamel.js";
 import { keysToSnake } from "../utils/keysToSnake.js";
 import { Logger } from "./logger.js";
-import { RedisTTL, RedisKeys } from "./redisKeys.js";
+import { RedisKeys } from "./cacheKeys.js";
 import { SqlBuilder } from "./sqlBuilder.js";
+
+const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 
 /**
  * 数据库助手类
@@ -115,7 +117,7 @@ export class DbHelper {
     const columnNames = result.map((row: any) => row.Field) as string[];
 
     // 3. 写入 Redis 缓存
-    await this.befly.redis.setObject(cacheKey, columnNames, RedisTTL.tableColumns);
+    await this.befly.redis.setObject(cacheKey, columnNames, TABLE_COLUMNS_CACHE_TTL_SECONDS);
 
     return columnNames;
   }

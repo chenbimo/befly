@@ -1,7 +1,7 @@
 // 类型导入
 import type { Hook } from "../types/hook.js";
 
-import { RedisKeys } from "../lib/redisKeys.js";
+import { RedisKeys } from "../lib/cacheKeys.js";
 // 相对导入
 import { ErrorResponse } from "../utils/response.js";
 

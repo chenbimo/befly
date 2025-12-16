@@ -20,7 +20,7 @@ import { checkTable } from "../checks/checkTable.js";
 import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
-import { RedisKeys } from "../lib/redisKeys.js";
+import { RedisKeys } from "../lib/cacheKeys.js";
 import { projectDir } from "../paths.js";
 import { scanAddons, addonDirExists, getAddonDir } from "../utils/addonHelper.js";
 import { scanFiles } from "../utils/scanFiles.js";

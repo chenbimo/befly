@@ -25,7 +25,7 @@ import { Connect } from "../lib/connect.js";
 import { DbHelper } from "../lib/dbHelper.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
-import { RedisKeys } from "../lib/redisKeys.js";
+import { RedisKeys } from "../lib/cacheKeys.js";
 import { projectDir } from "../paths.js";
 import { scanAddons, getAddonDir } from "../utils/addonHelper.js";
 
