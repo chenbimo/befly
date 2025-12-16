@@ -1,9 +1,9 @@
-﻿/**
+/**
  * 数据验证器 - Befly 项目专用
  * 纯静态类设计，简洁易用
  */
 
-import { RegexAliases, getCompiledRegex } from './regex.js';
+import { RegexAliases, getCompiledRegex } from '../utils/regex.js';
 import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from '../types/validate.js';
 
 /**

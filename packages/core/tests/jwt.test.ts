@@ -1,4 +1,4 @@
-﻿import { describe, test, expect } from 'bun:test';
+import { describe, test, expect } from 'bun:test';
 import { Jwt } from '../lib/jwt';
 
 const jwt = new Jwt({

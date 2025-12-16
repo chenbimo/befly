@@ -1,4 +1,4 @@
-﻿import { describe, test, expect } from 'bun:test';
+import { describe, test, expect } from 'bun:test';
 import { SqlBuilder } from '../lib/sqlBuilder';
 
 describe('SqlBuilder - SELECT 查询', () => {

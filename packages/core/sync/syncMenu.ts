@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SyncMenu 命令 - 同步菜单数据到数据库
  * 说明：扫描 addon 的 views 目录和项目的 menus.json，同步菜单数据
  *

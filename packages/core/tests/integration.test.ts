@@ -1,4 +1,4 @@
-﻿import { describe, test, expect } from 'bun:test';
+import { describe, test, expect } from 'bun:test';
 import { XMLParser } from 'fast-xml-parser';
 import { Cipher } from '../lib/cipher';
 import { Jwt } from '../lib/jwt';

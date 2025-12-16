@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SQL 构造器 - TypeScript 版本
  * 提供链式 API 构建 SQL 查询
  */

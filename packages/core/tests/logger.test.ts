@@ -1,4 +1,4 @@
-﻿import { describe, test, expect, beforeAll, afterAll, afterEach } from 'bun:test';
+import { describe, test, expect, beforeAll, afterAll, afterEach } from 'bun:test';
 import { Logger } from '../lib/logger';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';

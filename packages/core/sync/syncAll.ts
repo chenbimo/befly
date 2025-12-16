@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Sync 命令 - 一次性执行所有同步操作
  * 按顺序执行：syncDb → syncApi → syncMenu → syncDev（syncDev 内会重建角色接口权限缓存）
  */

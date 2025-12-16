@@ -1,14 +1,16 @@
-﻿/**
+/**
  * 数据库助手 - TypeScript 版本
  * 提供数据库 CRUD 操作的封装
  */
 
 import { snakeCase } from 'es-toolkit/string';
+
+import { arrayKeysToCamel } from '../utils/arrayKeysToCamel.js';
+import { fieldClear } from '../utils/fieldClear.js';
+import { keysToCamel } from '../utils/keysToCamel.js';
+import { keysToSnake } from '../utils/keysToSnake.js';
+
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel } from './keysToCamel.js';
-import { arrayKeysToCamel } from './arrayKeysToCamel.js';
-import { keysToSnake } from './keysToSnake.js';
-import { fieldClear } from './fieldClear.js';
 import { RedisTTL, RedisKeys } from './redisKeys.js';
 import { Logger } from './logger.js';
 import type { WhereConditions, JoinOption } from '../types/common.js';
@@ -851,7 +853,7 @@ export class DbHelper {
         const serializedData = this.serializeArrayFields(snakeData);
 
         // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
-        const { id, created_at, updated_at, deleted_at, state, ...userData } = serializedData;
+        const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, state: _state, ...userData } = serializedData;
 
         const processed: Record<string, any> = { ...userData };
 
@@ -921,7 +923,7 @@ export class DbHelper {
             const serializedData = this.serializeArrayFields(snakeData);
 
             // 移除系统字段（防止用户尝试覆盖）
-            const { id, created_at, updated_at, deleted_at, state, ...userData } = serializedData;
+            const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, state: _state, ...userData } = serializedData;
 
             // 强制生成系统字段（不可被用户覆盖）
             return {
@@ -970,7 +972,7 @@ export class DbHelper {
 
         // 移除系统字段（防止用户尝试修改）
         // 注意：state 允许用户修改（用于设置禁用状态 state=2）
-        const { id, created_at, updated_at, deleted_at, ...userData } = serializedData;
+        const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, ...userData } = serializedData;
 
         // 强制更新时间戳（不可被用户覆盖）
         const processed: Record<string, any> = {

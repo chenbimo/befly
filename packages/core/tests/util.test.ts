@@ -1,4 +1,4 @@
-﻿import { describe, test, expect } from 'bun:test';
+import { describe, test, expect } from 'bun:test';
 import { keysToCamel } from '../utils/keysToCamel.js';
 import { keysToSnake } from '../utils/keysToSnake.js';
 import { arrayKeysToCamel } from '../utils/arrayKeysToCamel.js';

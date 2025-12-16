@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Redis 助手 - TypeScript 版本
  * 提供 Redis 操作的便捷方法
  */
