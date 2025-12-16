@@ -47,8 +47,8 @@ import {
     MessagePlugin
 } from 'tdesign-vue-next';
 import { $Http } from '@/plugins/http';
-import { fieldClear } from 'befly-shared/fieldClear';
-import { hashPassword } from 'befly-shared/hashPassword';
+import { fieldClear } from 'befly-vite/utils/fieldClear';
+import { hashPassword } from 'befly-vite/utils/hashPassword';
 
 const $Prop = defineProps({
     modelValue: {

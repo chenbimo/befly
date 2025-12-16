@@ -9,7 +9,7 @@ import { join } from 'pathe';
 // 相对导入
 import { projectDir } from '../paths.js';
 import { Logger } from '../lib/logger.js';
-import { setCorsOptions } from '../util.js';
+import { setCorsOptions } from '../utils/cors.js';
 import { beflyConfig } from '../befly.config.js';
 
 /**

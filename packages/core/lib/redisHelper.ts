@@ -3,10 +3,9 @@
  * 提供 Redis 操作的便捷方法
  */
 
-import { SQL, RedisClient } from 'bun';
+import { RedisClient } from 'bun';
 import { Logger } from './logger.js';
 import { Connect } from './connect.js';
-import type { KeyValue } from 'befly-shared/types';
 
 /**
  * Redis 助手类

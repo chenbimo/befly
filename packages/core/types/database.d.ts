@@ -2,7 +2,7 @@
  * 数据库相关类型定义
  */
 
-import type { SqlValue } from 'befly-shared/types';
+import type { SqlValue } from './common';
 import type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, TypedWhereConditions } from './table';
 import type { JoinOption } from './common';
 

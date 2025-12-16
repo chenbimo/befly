@@ -4,9 +4,9 @@
  */
 
 import { Logger } from './logger.js';
-import { RedisKeys } from 'befly-shared/redisKeys';
+import { RedisKeys } from './redisKeys.js';
 
-import { makeRouteKey } from '../util.js';
+import { makeRouteKey } from '../utils/route.js';
 
 import type { BeflyContext } from '../types/befly.js';
 

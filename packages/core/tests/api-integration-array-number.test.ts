@@ -4,9 +4,9 @@
  * 测试流程：请求验证 → 数据库存储 → 查询返回
  */
 
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { Validator } from '../lib/validator.js';
-import type { FieldDefinition, TableDefinition } from 'befly-shared/types';
+import type { TableDefinition } from 'befly/types';
 
 describe('API 集成测试 - array_number_string 数据流', () => {
     // 模拟角色表定义

@@ -3,11 +3,10 @@
  * 处理 /api/* 路径的请求
  */
 
-// 外部依赖
-import { genShortId } from 'befly-shared/genShortId';
-
 // 相对导入
-import { FinalResponse, makeRouteKey } from '../util.js';
+import { genShortId } from '../utils/genShortId.js';
+import { FinalResponse } from '../utils/response.js';
+import { makeRouteKey } from '../utils/route.js';
 import { Logger } from '../lib/logger.js';
 
 // 类型导入

@@ -1,16 +1,12 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { routes } from 'vue-router/auto-routes';
 import { $Storage } from '@/plugins/storage';
-import { Layouts } from 'befly-shared/layouts';
-
-/**
- * @typedef {import('befly-shared').LayoutConfig} LayoutConfig
- */
+import { Layouts } from 'befly-vite/utils/layouts';
 
 /**
  * 将布局配置转换为实际的路由配置
  * 在这里执行实际的布局组件导入
- * @param {LayoutConfig[]} configs
+ * @param {any[]} configs
  * @returns {import('vue-router').RouteRecordRaw[]}
  */
 function applyLayouts(configs) {
@@ -78,9 +74,9 @@ router.beforeEach(async (to, from, next) => {
 });
 
 // 路由就绪后处理
-router.afterEach((to) => {
+router.afterEach((_to) => {
     // 可以在这里添加页面访问统计等
     if (import.meta.env.DEV) {
-        console.log(`[Router] 导航到: ${to.path}`);
+        // 开发环境调试日志请使用更合适的日志方案（此处避免 console 触发 lint 门禁）
     }
 });

@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { arrayToTree } from 'befly-shared/arrayToTree';
+import { arrayToTree } from 'befly-vite/utils/arrayToTree';
 
 import { confirmAndRun } from '@/utils/confirmAndRun';
 

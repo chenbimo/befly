@@ -34,7 +34,7 @@ import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from '
 import ILucideRotateCw from '~icons/lucide/rotate-cw';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-shared/withDefaultColumns';
+import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
 import { withTreeTableProps } from '@/utils';
 
 // 响应式数据

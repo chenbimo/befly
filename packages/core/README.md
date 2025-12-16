@@ -164,9 +164,7 @@ await befly.db.delData({
 
 同步到数据库：
 
-```bash
-bun run scripts/syncDb.ts
-```
+请参考：`docs/sync.md`（`syncDb` / `syncAll` 等同步流程说明）。
 
 ## 🗄️ 数据库配置
 

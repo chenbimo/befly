@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test } from 'bun:test';
-import { RedisKeys, RedisTTL } from 'befly-shared/redisKeys';
+import { RedisKeys, RedisTTL } from '../lib/redisKeys.js';
 
 describe('RedisKeys - Key 生成函数', () => {
     test('apisAll - 返回固定的接口缓存键', () => {
@@ -61,13 +61,13 @@ describe('RedisTTL - 过期时间常量', () => {
     });
 
     test('所有 TTL 值都是数字或 null', () => {
-        for (const [key, value] of Object.entries(RedisTTL)) {
+        for (const [_key, value] of Object.entries(RedisTTL)) {
             expect(value === null || typeof value === 'number').toBe(true);
         }
     });
 
     test('数字类型的 TTL 都是正数', () => {
-        for (const [key, value] of Object.entries(RedisTTL)) {
+        for (const [_key, value] of Object.entries(RedisTTL)) {
             if (typeof value === 'number') {
                 expect(value).toBeGreaterThan(0);
             }

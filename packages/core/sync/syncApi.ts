@@ -15,8 +15,8 @@ import { Connect } from '../lib/connect.js';
 import { CacheHelper } from '../lib/cacheHelper.js';
 import { DbHelper } from '../lib/dbHelper.js';
 import { RedisHelper } from '../lib/redisHelper.js';
-import { scanFiles } from 'befly-shared/scanFiles';
-import { scanAddons, addonDirExists, getAddonDir } from 'befly-shared/addonHelper';
+import { scanFiles } from '../utils/scanFiles.js';
+import { scanAddons, addonDirExists, getAddonDir } from '../utils/addonHelper.js';
 
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
@@ -113,7 +113,7 @@ async function scanAllApis(): Promise<ApiInfo[]> {
             try {
                 const packageJson = await import(addonPackageJsonPath, { with: { type: 'json' } });
                 addonTitle = packageJson.default?.title || addonName;
-            } catch (error) {
+            } catch {
                 // 忽略配置读取错误
             }
 
@@ -248,7 +248,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         // 5. 缓存接口数据到 Redis
         try {
             await cacheHelper.cacheApis();
-        } catch (error: any) {
+        } catch {
             // 忽略缓存错误
         }
 

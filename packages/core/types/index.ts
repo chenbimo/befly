@@ -1,18 +1,19 @@
 /**
  * 类型定义导出
- *
- * 注意：通用类型已迁移到 befly-shared/types
- * - addon, crypto, jwt, logger, tool 等类型请从 befly-shared/types 导入
  */
 
 export * from './api.js';
 export * from './befly.js';
 export * from './cache.js';
 export * from './context.js';
+export * from './crypto.js';
 export * from './hook.js';
+export * from './jwt.js';
+export * from './logger.js';
 export * from './plugin.js';
 export * from './redis.js';
 export * from './table.js';
+export * from './validate.js';
 
 // common.js 包含基础类型
 export * from './common.js';

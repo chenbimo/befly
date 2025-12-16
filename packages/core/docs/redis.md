@@ -282,7 +282,7 @@ const id = await befly.db.insData({
 避免硬编码，统一管理所有缓存键。
 
 ```typescript
-import { RedisKeys, RedisTTL } from 'befly-shared/redisKeys';
+import { RedisKeys, RedisTTL } from 'befly/lib/redisKeys';
 
 // 获取键名
 const key = RedisKeys.apisAll(); // 'befly:apis:all'

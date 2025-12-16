@@ -3,10 +3,10 @@ import { existsSync } from 'node:fs';
 
 // 外部依赖
 import { isPlainObject } from 'es-toolkit/compat';
-import { scanFiles } from 'befly-shared/scanFiles';
-import { scanAddons, getAddonDir, addonDirExists } from 'befly-shared/addonHelper';
 
 // 相对导入
+import { scanFiles } from '../utils/scanFiles.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/addonHelper.js';
 import { Logger } from '../lib/logger.js';
 import { projectApiDir } from '../paths.js';
 

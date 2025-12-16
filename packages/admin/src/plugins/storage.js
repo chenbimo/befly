@@ -45,9 +45,7 @@ class StorageManager {
                     const fullKey = this.getKey(key);
                     const serializedValue = JSON.stringify(value);
                     storage.setItem(fullKey, serializedValue);
-                } catch (error) {
-                    console.error(`Storage.set error for key "${key}":`, error);
-                }
+                } catch {}
             },
 
             /**
@@ -65,8 +63,7 @@ class StorageManager {
                         return defaultValue;
                     }
                     return JSON.parse(value);
-                } catch (error) {
-                    console.error(`Storage.get error for key "${key}":`, error);
+                } catch {
                     return defaultValue;
                 }
             },
@@ -80,9 +77,7 @@ class StorageManager {
                 try {
                     const fullKey = this.getKey(key);
                     storage.removeItem(fullKey);
-                } catch (error) {
-                    console.error(`Storage.remove error for key "${key}":`, error);
-                }
+                } catch {}
             },
 
             /**
@@ -98,9 +93,7 @@ class StorageManager {
                             storage.removeItem(key);
                         }
                     });
-                } catch (error) {
-                    console.error('Storage.clear error:', error);
-                }
+                } catch {}
             },
 
             /**

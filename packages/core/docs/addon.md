@@ -92,7 +92,8 @@ Addon 是 Befly 的可复用功能模块，一个 Addon 可以包含：
     "files": ["apis", "plugins", "styles", "tables", "views", "package.json", "README.md"],
     "keywords": ["befly", "addon"],
     "dependencies": {
-        "befly-shared": "^1.2.0"
+        "befly": "^3.9.0",
+        "befly-vite": "^1.1.0"
     }
 }
 ```

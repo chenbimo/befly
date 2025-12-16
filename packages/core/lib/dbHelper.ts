@@ -5,11 +5,11 @@
 
 import { snakeCase } from 'es-toolkit/string';
 import { SqlBuilder } from './sqlBuilder.js';
-import { keysToCamel } from 'befly-shared/keysToCamel';
-import { arrayKeysToCamel } from 'befly-shared/arrayKeysToCamel';
-import { keysToSnake } from 'befly-shared/keysToSnake';
-import { fieldClear } from 'befly-shared/fieldClear';
-import { RedisTTL, RedisKeys } from 'befly-shared/redisKeys';
+import { keysToCamel } from './keysToCamel.js';
+import { arrayKeysToCamel } from './arrayKeysToCamel.js';
+import { keysToSnake } from './keysToSnake.js';
+import { fieldClear } from './fieldClear.js';
+import { RedisTTL, RedisKeys } from './redisKeys.js';
 import { Logger } from './logger.js';
 import type { WhereConditions, JoinOption } from '../types/common.js';
 import type { BeflyContext } from '../types/befly.js';

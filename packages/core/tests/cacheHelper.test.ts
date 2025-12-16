@@ -3,8 +3,8 @@
  */
 import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 import { CacheHelper } from '../lib/cacheHelper.js';
-import { Logger, setMockLogger } from '../lib/logger.js';
-import { RedisKeys } from 'befly-shared/redisKeys';
+import { setMockLogger } from '../lib/logger.js';
+import { RedisKeys } from '../lib/redisKeys.js';
 
 import type { BeflyContext } from '../types/befly.js';
 

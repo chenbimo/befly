@@ -4,13 +4,11 @@
  * 可选：通过配置开启组件/项目钩子（默认关闭以保持稳定性与可预期性）
  */
 
-// 外部依赖
-import { scanAddons, getAddonDir, addonDirExists } from 'befly-shared/addonHelper';
-
 // 相对导入
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/addonHelper.js';
 import { Logger } from '../lib/logger.js';
 import { coreHookDir, projectHookDir } from '../paths.js';
-import { scanModules } from '../util.js';
+import { scanModules } from '../utils/modules.js';
 import { beflyConfig } from '../befly.config.js';
 
 // 类型导入

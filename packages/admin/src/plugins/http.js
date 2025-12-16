@@ -25,19 +25,10 @@ request.interceptors.request.use(
         const token = $Storage.local.get('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            // 开发环境下打印 token 信息
-            if (import.meta.env.DEV) {
-                console.log('[HTTP] 请求携带 token:', token.substring(0, 20) + '...');
-            }
-        } else {
-            if (import.meta.env.DEV) {
-                console.log('[HTTP] 请求未携带 token');
-            }
         }
         return config;
     },
     (error) => {
-        console.error('[Request] 请求错误:', error);
         return Promise.reject(error);
     }
 );

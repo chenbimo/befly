@@ -138,17 +138,17 @@ async function genMenus() {
     const viewsDir = join(cwd, 'views');
 
     if (!existsSync(viewsDir)) {
-        console.error('错误：当前目录下没有 views 目录');
+        process.stderr.write('错误：当前目录下没有 views 目录\n');
         process.exit(1);
     }
 
-    console.log('扫描目录:', viewsDir);
+    process.stdout.write(`扫描目录: ${viewsDir}\n`);
 
     const menus = await scanMenuDir(viewsDir);
 
     // 输出树形结构（用于预览）
-    console.log('\n菜单结构:');
-    console.log(JSON.stringify(menus, null, 2));
+    process.stdout.write('\n菜单结构:\n');
+    process.stdout.write(JSON.stringify(menus, null, 2) + '\n');
 
     // 扁平化输出
     const flatMenus = flattenMenus(menus);
@@ -157,12 +157,13 @@ async function genMenus() {
     const outputPath = join(cwd, 'menus.json');
     writeFileSync(outputPath, JSON.stringify(flatMenus, null, 4), 'utf-8');
 
-    console.log('\n已生成:', outputPath);
-    console.log('菜单数量:', flatMenus.length);
+    process.stdout.write(`\n已生成: ${outputPath}\n`);
+    process.stdout.write(`菜单数量: ${flatMenus.length}\n`);
 }
 
 // 执行
 genMenus().catch((err) => {
-    console.error('生成失败:', err);
+    const msg = err instanceof Error ? err.stack || err.message : String(err);
+    process.stderr.write(`生成失败: ${msg}\n`);
     process.exit(1);
 });

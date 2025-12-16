@@ -5,7 +5,7 @@
 import pino from 'pino';
 import { join } from 'pathe';
 
-import type { LoggerConfig } from 'befly-shared/types';
+import type { LoggerConfig } from '../types/logger.js';
 
 let instance: pino.Logger | null = null;
 let mockInstance: pino.Logger | null = null;

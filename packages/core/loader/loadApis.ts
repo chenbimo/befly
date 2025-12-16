@@ -3,19 +3,12 @@
  * 负责扫描和加载所有 API 路由（组件、项目）
  */
 
-// 内部依赖
-import { existsSync } from 'node:fs';
-
-// 外部依赖
-import { relative, basename, join } from 'pathe';
-import { isPlainObject } from 'es-toolkit/compat';
-import { scanFiles } from 'befly-shared/scanFiles';
-import { scanAddons, getAddonDir, addonDirExists } from 'befly-shared/addonHelper';
-
 // 相对导入
+import { scanFiles } from '../utils/scanFiles.js';
+import { scanAddons, getAddonDir, addonDirExists } from '../utils/addonHelper.js';
 import { Logger } from '../lib/logger.js';
 import { projectApiDir } from '../paths.js';
-import { makeRouteKey } from '../util.js';
+import { makeRouteKey } from '../utils/route.js';
 
 // 类型导入
 import type { ApiRoute } from '../types/api.js';

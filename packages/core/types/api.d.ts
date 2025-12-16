@@ -3,8 +3,9 @@
  */
 
 import type { BeflyContext } from './befly.js';
-import type { KeyValue, TableDefinition } from './common.js';
+import type { KeyValue } from './common.js';
 import type { RequestContext } from './context.js';
+import type { TableDefinition } from './validate.js';
 
 /**
  * HTTP 方法类型

@@ -181,7 +181,7 @@ export async function getTableIndexes(sql: SQL, tableName: string, dbName: strin
             for (const row of result) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {
-                    const col = m[1].replace(/\"/g, '').replace(/"/g, '').trim();
+                    const col = m[1].replace(/"/g, '').trim();
                     indexes[row.indexname] = [col];
                 }
             }

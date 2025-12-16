@@ -3,10 +3,8 @@
  * 提供简洁的框架接口，核心逻辑已提取到 loader 层
  */
 
-// ========== 外部依赖 ==========
-import { calcPerfTime } from 'befly-shared/calcPerfTime';
-
 // ========== 相对导入 ==========
+import { calcPerfTime } from './utils/calcPerfTime.js';
 import { Logger } from './lib/logger.js';
 import { Connect } from './lib/connect.js';
 import { loadPlugins } from './loader/loadPlugins.js';
@@ -18,10 +16,9 @@ import { checkApp } from './checks/checkApp.js';
 import { checkTable } from './checks/checkTable.js';
 import { checkApi } from './checks/checkApi.js';
 import { syncAllCommand } from './sync/syncAll.js';
-import { isPrimaryProcess, getProcessRole } from './util.js';
+import { isPrimaryProcess, getProcessRole } from './utils/process.js';
 
 // ========== 类型导入 ==========
-import type { Server } from 'bun';
 import type { BeflyContext, BeflyOptions } from './types/befly.js';
 import type { Plugin } from './types/plugin.js';
 import type { Hook } from './types/hook.js';

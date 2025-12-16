@@ -5,11 +5,9 @@
  * - SQLite 重建表迁移（处理列修改等不支持的操作）
  */
 
-import { Logger } from '../../lib/logger.js';
-import { IS_PLAN } from './constants.js';
 import { createTable } from './tableCreate.js';
 import type { SQL } from 'bun';
-import type { FieldDefinition } from 'befly-shared/types';
+import type { FieldDefinition } from '../../types/validate.js';
 
 /**
  * SQLite 重建表迁移（简化版）

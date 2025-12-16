@@ -1,11 +1,11 @@
 import { createBeflyViteConfig } from 'befly-vite';
-import { scanViews } from 'befly-shared/scanViews';
+import { scanViews } from 'befly-vite/utils/scanViews';
 import { fileURLToPath } from 'node:url';
 
 export default createBeflyViteConfig({
     root: fileURLToPath(new URL('.', import.meta.url)),
     scanViews: scanViews,
     optimizeDeps: {
-        include: ['befly-shared']
+        include: []
     }
 });

@@ -1,9 +1,17 @@
 ﻿/**
  * Befly 框架通用类型定义
- * Core 专用类型，通用类型请直接从 befly-shared/types 导入
+ * 框架核心通用类型定义
  */
 
-import type { SqlValue } from 'befly-shared/types';
+/**
+ * SQL 值类型
+ */
+export type SqlValue = string | number | boolean | null | Date;
+
+/**
+ * 通用键值对类型
+ */
+export type KeyValue<T = any> = Record<string, T>;
 
 // ============================================
 // SQL 查询相关类型

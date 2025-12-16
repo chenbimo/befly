@@ -42,7 +42,7 @@ import {
     Button as TButton,
     MessagePlugin
 } from 'tdesign-vue-next';
-import { fieldClear } from 'befly-shared/fieldClear';
+import { fieldClear } from 'befly-vite/utils/fieldClear';
 import { $Http } from '@/plugins/http';
 
 const $Prop = defineProps({

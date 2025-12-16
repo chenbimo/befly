@@ -4,7 +4,7 @@
 
 import { describe, expect, test } from 'bun:test';
 import { Validator } from '../lib/validator.js';
-import type { FieldDefinition } from 'befly-shared/types';
+import type { FieldDefinition } from 'befly/types';
 
 describe('Validator - 默认值处理逻辑', () => {
     // ==================== number 类型默认值 ====================

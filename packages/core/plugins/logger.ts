@@ -14,15 +14,11 @@ import type { Plugin } from '../types/plugin.js';
 const loggerPlugin: Plugin = {
     after: [],
     async handler(): Promise<typeof Logger> {
-        try {
-            // 配置 Logger
-            if (beflyConfig.logger) {
-                Logger.configure(beflyConfig.logger);
-            }
-            return Logger;
-        } catch (error: any) {
-            throw error;
+        // 配置 Logger
+        if (beflyConfig.logger) {
+            Logger.configure(beflyConfig.logger);
         }
+        return Logger;
     }
 };
 

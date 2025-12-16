@@ -3,7 +3,7 @@
  * 自动加载 configs 目录下的配置文件并与默认配置合并
  * 支持环境分离：befly.common.json + befly.dev/prod.json + befly.local.json
  */
-import { scanConfig } from 'befly-shared/scanConfig';
+import { scanConfig } from './utils/scanConfig.js';
 
 import type { BeflyOptions } from './types/befly.js';
 

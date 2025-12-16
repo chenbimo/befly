@@ -13,9 +13,9 @@ import { snakeCase } from 'es-toolkit/string';
 import { Connect } from '../lib/connect.js';
 import { RedisHelper } from '../lib/redisHelper.js';
 import { checkTable } from '../checks/checkTable.js';
-import { scanFiles } from 'befly-shared/scanFiles';
-import { scanAddons, addonDirExists, getAddonDir } from 'befly-shared/addonHelper';
-import { RedisKeys } from 'befly-shared/redisKeys';
+import { scanFiles } from '../utils/scanFiles.js';
+import { scanAddons, addonDirExists, getAddonDir } from '../utils/addonHelper.js';
+import { RedisKeys } from '../lib/redisKeys.js';
 import { Logger } from '../lib/logger.js';
 import { projectDir } from '../paths.js';
 

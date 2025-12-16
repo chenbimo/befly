@@ -87,7 +87,7 @@ import MenuDialog from './components/menu.vue';
 import ApiDialog from './components/api.vue';
 import DetailPanel from '@/components/DetailPanel.vue';
 import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-shared/withDefaultColumns';
+import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
 import { confirmDeleteAndRun } from '@/utils/confirmAndRun';
 
 // 响应式数据

@@ -3,8 +3,8 @@
  * 纯静态类设计，简洁易用
  */
 
-import { RegexAliases, getCompiledRegex } from 'befly-shared/regex';
-import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from 'befly-shared/types';
+import { RegexAliases, getCompiledRegex } from './regex.js';
+import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from '../types/validate.js';
 
 /**
  * 验证器类

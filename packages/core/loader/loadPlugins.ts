@@ -3,11 +3,10 @@
  * 负责扫描和初始化所有插件（核心、组件、项目）
  */
 
-import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
-
+import { scanAddons, getAddonDir } from '../utils/addonHelper.js';
 import { Logger } from '../lib/logger.js';
 import { corePluginDir, projectPluginDir } from '../paths.js';
-import { sortModules, scanModules } from '../util.js';
+import { sortModules, scanModules } from '../utils/modules.js';
 import { beflyConfig } from '../befly.config.js';
 
 import type { Plugin } from '../types/plugin.js';

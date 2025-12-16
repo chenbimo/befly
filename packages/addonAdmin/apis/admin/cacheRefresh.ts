@@ -12,11 +12,11 @@
  * - 缓存出现异常需要重建
  */
 
-import { RedisKeys } from 'befly-shared/redisKeys';
+import { RedisKeys } from 'befly/lib/redisKeys';
 
 export default {
     name: '刷新全部缓存',
-    handler: async (befly, ctx) => {
+    handler: async (befly, _ctx) => {
         try {
             const results: Record<string, any> = {
                 apis: { success: false, count: 0 },

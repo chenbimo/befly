@@ -1,6 +1,6 @@
 // 相对导入
 import { Validator } from '../lib/validator.js';
-import { ErrorResponse } from '../util.js';
+import { ErrorResponse } from '../utils/response.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';

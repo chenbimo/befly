@@ -16,7 +16,7 @@ import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from '.
 import { getTableIndexes } from './schema.js';
 
 import type { SQL } from 'bun';
-import type { FieldDefinition } from 'befly-shared/types';
+import type { FieldDefinition } from '../../types/validate.js';
 
 /**
  * 为 PostgreSQL 表添加列注释（使用字段的 name 作为注释）

@@ -16,7 +16,7 @@ import { getTableColumns, getTableIndexes } from './schema.js';
 import { compareFieldDefinition, applyTablePlan } from './apply.js';
 import type { TablePlan } from '../../types/sync.js';
 import type { SQL } from 'bun';
-import type { FieldDefinition } from 'befly-shared/types';
+import type { FieldDefinition } from '../../types/validate.js';
 
 /**
  * 同步表结构（对比和应用变更）
@@ -123,7 +123,6 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                 changed = true;
             }
         } else {
-            const lenPart = isStringOrArrayType(fieldDef.type) ? ` 长度:${parseInt(String(fieldDef.max))}` : '';
             // Logger.debug(`  + 新增字段 ${dbFieldName} (${fieldDef.type}${lenPart})`);
             addClauses.push(generateDDLClause(fieldKey, fieldDef, true));
             changed = true;

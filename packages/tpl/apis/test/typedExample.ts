@@ -87,10 +87,10 @@ export default {
         });
 
         if (user) {
-            // 有完整的类型提示
-            const email = user.email; // string
-            const createdAt = user.createdAt; // number（系统字段）
-            const nickname = user.nickname; // string | null
+            // 有完整的类型提示（这里使用 void 避免示例代码产生未使用变量告警）
+            void user.email; // string
+            void user.createdAt; // number（系统字段）
+            void user.nickname; // string | null
         }
 
         // ----------------------------------------
@@ -106,10 +106,7 @@ export default {
         });
 
         // result.lists 类型为 UserTable[]
-        for (const item of result.lists) {
-            // 完整的类型提示
-            console.log(item.email, item.createdAt);
-        }
+        // 示例代码中不输出日志，避免 lint 的 no-console 报错
 
         // ----------------------------------------
         // 示例 4: 复杂 WHERE 条件（$or, $and）
@@ -139,6 +136,9 @@ export default {
             ],
             roleId$between: [1, 10] // 角色 ID 1-10
         };
+
+        // 示例中仅演示类型写法，避免产生未使用变量告警
+        void rangeWhere;
 
         return befly.tool.Yes('类型安全示例', {
             user: user,

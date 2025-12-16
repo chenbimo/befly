@@ -1,10 +1,10 @@
 // 外部依赖
 import { isPlainObject, isEmpty } from 'es-toolkit/compat';
-import { pickFields } from 'befly-shared/pickFields';
 import { XMLParser } from 'fast-xml-parser';
 
 // 相对导入
-import { ErrorResponse } from '../util.js';
+import { pickFields } from '../utils/pickFields.js';
+import { ErrorResponse } from '../utils/response.js';
 
 // 类型导入
 import type { Hook } from '../types/hook.js';

@@ -3,15 +3,15 @@ import { existsSync } from 'node:fs';
 
 // 外部依赖
 import { basename } from 'pathe';
-import { scanFiles } from 'befly-shared/scanFiles';
-import { scanAddons, getAddonDir } from 'befly-shared/addonHelper';
 
 // 相对导入
+import { scanFiles } from '../utils/scanFiles.js';
+import { scanAddons, getAddonDir } from '../utils/addonHelper.js';
 import { Logger } from '../lib/logger.js';
 import { projectTableDir } from '../paths.js';
 
 // 类型导入
-import type { FieldDefinition } from 'befly-shared/types';
+import type { FieldDefinition } from '../types/validate.js';
 
 /**
  * 表文件信息接口

@@ -89,7 +89,7 @@ export class Connect {
                 }, timeout);
             });
 
-            const version = await Promise.race([healthCheckPromise, timeoutPromise]);
+            await Promise.race([healthCheckPromise, timeoutPromise]);
 
             this.sqlClient = sql;
             this.sqlConnectedAt = Date.now();
@@ -99,7 +99,7 @@ export class Connect {
             Logger.error({ err: error }, '[Connect] SQL 连接失败');
             try {
                 await sql?.close();
-            } catch (cleanupError) {}
+            } catch {}
 
             throw error;
         }

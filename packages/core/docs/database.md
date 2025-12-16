@@ -778,7 +778,7 @@ const usersWithOrderCount = await befly.db.query(
 );
 
 // 需要手动转换字段名
-import { arrayKeysToCamel } from 'befly-shared/arrayKeysToCamel';
+import { arrayKeysToCamel } from 'befly/lib/arrayKeysToCamel';
 const list = arrayKeysToCamel(usersWithOrderCount);
 ```
 
