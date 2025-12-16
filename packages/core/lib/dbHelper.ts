@@ -21,8 +21,8 @@ import { arrayKeysToCamel } from "../utils/arrayKeysToCamel.js";
 import { fieldClear } from "../utils/fieldClear.js";
 import { keysToCamel } from "../utils/keysToCamel.js";
 import { keysToSnake } from "../utils/keysToSnake.js";
-import { Logger } from "./logger.js";
 import { RedisKeys } from "./cacheKeys.js";
+import { Logger } from "./logger.js";
 import { SqlBuilder } from "./sqlBuilder.js";
 
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;

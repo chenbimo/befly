@@ -6,8 +6,8 @@
 import type { BeflyContext } from "../types/befly.js";
 
 import { makeRouteKey } from "../utils/route.js";
-import { Logger } from "./logger.js";
 import { RedisKeys } from "./cacheKeys.js";
+import { Logger } from "./logger.js";
 
 /**
  * 缓存助手类
