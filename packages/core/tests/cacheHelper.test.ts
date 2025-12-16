@@ -12,347 +12,358 @@ import { RedisKeys } from "../lib/redisKeys.js";
 
 // Mock pino logger
 const mockPino = {
-    info: mock(() => {}),
-    warn: mock(() => {}),
-    error: mock(() => {}),
-    debug: mock(() => {}),
-    fatal: mock(() => {}),
-    trace: mock(() => {}),
-    silent: mock(() => {}),
-    child: mock(() => mockPino),
-    level: "info"
+  info: mock(() => {}),
+  warn: mock(() => {}),
+  error: mock(() => {}),
+  debug: mock(() => {}),
+  fatal: mock(() => {}),
+  trace: mock(() => {}),
+  silent: mock(() => {}),
+  child: mock(() => mockPino),
+  level: "info",
 };
 
 describe("CacheHelper", () => {
-    let cacheHelper: CacheHelper;
-    let mockBefly: BeflyContext;
-    let mockDb: any;
-    let mockRedis: any;
+  let cacheHelper: CacheHelper;
+  let mockBefly: BeflyContext;
+  let mockDb: any;
+  let mockRedis: any;
 
-    beforeEach(() => {
-        // 设置 mock logger
-        setMockLogger(mockPino as any);
+  beforeEach(() => {
+    // 设置 mock logger
+    setMockLogger(mockPino as any);
 
-        // Mock 数据库方法
-        mockDb = {
-            tableExists: mock(() => Promise.resolve(true)),
-            getAll: mock(() => Promise.resolve({ lists: [], total: 0 }))
-        };
+    // Mock 数据库方法
+    mockDb = {
+      tableExists: mock(() => Promise.resolve(true)),
+      getAll: mock(() => Promise.resolve({ lists: [], total: 0 })),
+    };
 
-        // Mock Redis 方法
-        mockRedis = {
-            setObject: mock(() => Promise.resolve("OK")),
-            getObject: mock(() => Promise.resolve(null)),
-            sadd: mock(() => Promise.resolve(1)),
-            saddBatch: mock(() => Promise.resolve(1)),
-            smembers: mock(() => Promise.resolve([])),
-            sismember: mock(() => Promise.resolve(0)),
-            del: mock(() => Promise.resolve(1)),
-            delBatch: mock(() => Promise.resolve(1)),
-            exists: mock(() => Promise.resolve(true))
-        };
+    // Mock Redis 方法
+    mockRedis = {
+      setObject: mock(() => Promise.resolve("OK")),
+      getObject: mock(() => Promise.resolve(null)),
+      sadd: mock(() => Promise.resolve(1)),
+      saddBatch: mock(() => Promise.resolve(1)),
+      smembers: mock(() => Promise.resolve([])),
+      sismember: mock(() => Promise.resolve(0)),
+      del: mock(() => Promise.resolve(1)),
+      delBatch: mock(() => Promise.resolve(1)),
+      exists: mock(() => Promise.resolve(true)),
+    };
 
-        // 创建 mock befly context
-        mockBefly = {
-            db: mockDb,
-            redis: mockRedis
-        } as unknown as BeflyContext;
+    // 创建 mock befly context
+    mockBefly = {
+      db: mockDb,
+      redis: mockRedis,
+    } as unknown as BeflyContext;
 
-        cacheHelper = new CacheHelper(mockBefly);
+    cacheHelper = new CacheHelper(mockBefly);
+  });
+
+  afterEach(() => {
+    // 重置 mock logger
+    setMockLogger(null);
+  });
+
+  describe("cacheApis", () => {
+    it("表不存在时跳过缓存", async () => {
+      mockDb.tableExists = mock(() => Promise.resolve(false));
+
+      await cacheHelper.cacheApis();
+
+      expect(mockDb.tableExists).toHaveBeenCalledWith("addon_admin_api");
+      expect(mockDb.getAll).not.toHaveBeenCalled();
     });
 
-    afterEach(() => {
-        // 重置 mock logger
-        setMockLogger(null);
+    it("正常缓存接口列表", async () => {
+      const apis = [
+        { id: 1, name: "登录", path: "/api/login", method: "POST" },
+        { id: 2, name: "用户列表", path: "/api/user/list", method: "GET" },
+      ];
+      mockDb.getAll = mock(() => Promise.resolve({ lists: apis, total: apis.length }));
+
+      await cacheHelper.cacheApis();
+
+      expect(mockRedis.setObject).toHaveBeenCalledWith(RedisKeys.apisAll(), apis);
     });
 
-    describe("cacheApis", () => {
-        it("表不存在时跳过缓存", async () => {
-            mockDb.tableExists = mock(() => Promise.resolve(false));
+    it("缓存失败时记录警告", async () => {
+      mockRedis.setObject = mock(() => Promise.resolve(null));
 
-            await cacheHelper.cacheApis();
+      await cacheHelper.cacheApis();
 
-            expect(mockDb.tableExists).toHaveBeenCalledWith("addon_admin_api");
-            expect(mockDb.getAll).not.toHaveBeenCalled();
-        });
-
-        it("正常缓存接口列表", async () => {
-            const apis = [
-                { id: 1, name: "登录", path: "/api/login", method: "POST" },
-                { id: 2, name: "用户列表", path: "/api/user/list", method: "GET" }
-            ];
-            mockDb.getAll = mock(() => Promise.resolve({ lists: apis, total: apis.length }));
-
-            await cacheHelper.cacheApis();
-
-            expect(mockRedis.setObject).toHaveBeenCalledWith(RedisKeys.apisAll(), apis);
-        });
-
-        it("缓存失败时记录警告", async () => {
-            mockRedis.setObject = mock(() => Promise.resolve(null));
-
-            await cacheHelper.cacheApis();
-
-            expect(mockPino.warn).toHaveBeenCalled();
-        });
-
-        it("异常时记录错误", async () => {
-            mockDb.getAll = mock(() => Promise.reject(new Error("DB Error")));
-
-            await cacheHelper.cacheApis();
-
-            expect(mockPino.error).toHaveBeenCalled();
-        });
+      expect(mockPino.warn).toHaveBeenCalled();
     });
 
-    describe("cacheMenus", () => {
-        it("表不存在时跳过缓存", async () => {
-            mockDb.tableExists = mock(() => Promise.resolve(false));
+    it("异常时记录错误", async () => {
+      mockDb.getAll = mock(() => Promise.reject(new Error("DB Error")));
 
-            await cacheHelper.cacheMenus();
+      await cacheHelper.cacheApis();
 
-            expect(mockDb.tableExists).toHaveBeenCalledWith("addon_admin_menu");
-            expect(mockDb.getAll).not.toHaveBeenCalled();
-        });
+      expect(mockPino.error).toHaveBeenCalled();
+    });
+  });
 
-        it("正常缓存菜单列表", async () => {
-            const menus = [
-                { id: 1, pid: 0, name: "首页", path: "/home", sort: 1 },
-                { id: 2, pid: 0, name: "用户管理", path: "/user", sort: 2 }
-            ];
-            mockDb.getAll = mock(() => Promise.resolve({ lists: menus, total: menus.length }));
+  describe("cacheMenus", () => {
+    it("表不存在时跳过缓存", async () => {
+      mockDb.tableExists = mock(() => Promise.resolve(false));
 
-            await cacheHelper.cacheMenus();
+      await cacheHelper.cacheMenus();
 
-            expect(mockRedis.setObject).toHaveBeenCalledWith(RedisKeys.menusAll(), menus);
-        });
+      expect(mockDb.tableExists).toHaveBeenCalledWith("addon_admin_menu");
+      expect(mockDb.getAll).not.toHaveBeenCalled();
     });
 
-    describe("rebuildRoleApiPermissions", () => {
-        it("表不存在时跳过缓存", async () => {
-            mockDb.tableExists = mock((table: string) => {
-                if (table === "addon_admin_api") return Promise.resolve(true);
-                if (table === "addon_admin_role") return Promise.resolve(false);
-                return Promise.resolve(false);
-            });
+    it("正常缓存菜单列表", async () => {
+      const menus = [
+        { id: 1, pid: 0, name: "首页", path: "/home", sort: 1 },
+        { id: 2, pid: 0, name: "用户管理", path: "/user", sort: 2 },
+      ];
+      mockDb.getAll = mock(() => Promise.resolve({ lists: menus, total: menus.length }));
 
-            await cacheHelper.rebuildRoleApiPermissions();
+      await cacheHelper.cacheMenus();
 
-            expect(mockPino.warn).toHaveBeenCalled();
-        });
+      expect(mockRedis.setObject).toHaveBeenCalledWith(RedisKeys.menusAll(), menus);
+    });
+  });
 
-        it("正常重建角色权限（覆盖更新）", async () => {
-            const roles = [
-                { id: 1, code: "admin", apis: [1, "2", 3] },
-                { id: 2, code: "user", apis: [1] }
-            ];
-            const apis = [
-                { id: 1, path: "/api/login", method: "POST" },
-                { id: 2, path: "/api/user/list", method: "GET" },
-                { id: 3, path: "/api/user/del", method: "POST" }
-            ];
+  describe("rebuildRoleApiPermissions", () => {
+    it("表不存在时跳过缓存", async () => {
+      mockDb.tableExists = mock((table: string) => {
+        if (table === "addon_admin_api") return Promise.resolve(true);
+        if (table === "addon_admin_role") return Promise.resolve(false);
+        return Promise.resolve(false);
+      });
 
-            mockDb.getAll = mock((opts: any) => {
-                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
-                if (opts.table === "addon_admin_api") {
-                    // rebuildRoleApiPermissions 会通过 where: { id$in: [...] } 分块查询
-                    return Promise.resolve({ lists: apis, total: apis.length });
-                }
-                return Promise.resolve({ lists: [], total: 0 });
-            });
+      await cacheHelper.rebuildRoleApiPermissions();
 
-            await cacheHelper.rebuildRoleApiPermissions();
-
-            // 验证批量删除角色 key
-            expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
-            const delBatchArgs = (mockRedis.delBatch as any).mock.calls[0][0] as string[];
-            expect(delBatchArgs).toEqual([RedisKeys.roleApis("admin"), RedisKeys.roleApis("user")]);
-
-            // 验证批量写入
-            expect(mockRedis.saddBatch).toHaveBeenCalledTimes(1);
-            const saddBatchArgs = (mockRedis.saddBatch as any).mock.calls[0][0] as Array<{
-                key: string;
-                members: string[];
-            }>;
-            expect(saddBatchArgs).toEqual([
-                {
-                    key: RedisKeys.roleApis("admin"),
-                    members: ["GET/api/user/list", "POST/api/login", "POST/api/user/del"]
-                },
-                { key: RedisKeys.roleApis("user"), members: ["POST/api/login"] }
-            ]);
-        });
-
-        it("无权限时仍会清理旧缓存，但不写入成员", async () => {
-            const roles = [{ id: 1, code: "empty", apis: [] }];
-            const apis = [{ id: 1, path: "/api/login", method: "POST" }];
-
-            mockDb.getAll = mock((opts: any) => {
-                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
-                if (opts.table === "addon_admin_api") return Promise.resolve({ lists: apis, total: apis.length });
-                return Promise.resolve({ lists: [], total: 0 });
-            });
-
-            await cacheHelper.rebuildRoleApiPermissions();
-
-            expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
-            expect(mockRedis.saddBatch).not.toHaveBeenCalled();
-        });
+      expect(mockPino.warn).toHaveBeenCalled();
     });
 
-    describe("refreshRoleApiPermissions", () => {
-        it("apiIds 为空数组时只清理缓存，不查询 API 表", async () => {
-            mockDb.getAll = mock(() => Promise.resolve({ lists: [], total: 0 }));
+    it("正常重建角色权限（覆盖更新）", async () => {
+      const roles = [
+        { id: 1, code: "admin", apis: [1, "2", 3] },
+        { id: 2, code: "user", apis: [1] },
+      ];
+      const apis = [
+        { id: 1, path: "/api/login", method: "POST" },
+        { id: 2, path: "/api/user/list", method: "GET" },
+        { id: 3, path: "/api/user/del", method: "POST" },
+      ];
 
-            await cacheHelper.refreshRoleApiPermissions("admin", []);
+      mockDb.getAll = mock((opts: any) => {
+        if (opts.table === "addon_admin_role")
+          return Promise.resolve({ lists: roles, total: roles.length });
+        if (opts.table === "addon_admin_api") {
+          // rebuildRoleApiPermissions 会通过 where: { id$in: [...] } 分块查询
+          return Promise.resolve({ lists: apis, total: apis.length });
+        }
+        return Promise.resolve({ lists: [], total: 0 });
+      });
 
-            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
-            expect(mockDb.getAll).not.toHaveBeenCalledWith(
-                expect.objectContaining({
-                    table: "addon_admin_api"
-                })
-            );
-        });
+      await cacheHelper.rebuildRoleApiPermissions();
 
-        it("apiIds 非空时使用 $in 查询并重建该角色缓存（覆盖更新）", async () => {
-            const apis = [
-                { id: 1, path: "/api/login", method: "POST" },
-                { id: 2, path: "/api/user/list", method: "GET" }
-            ];
+      // 验证批量删除角色 key
+      expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
+      const delBatchArgs = (mockRedis.delBatch as any).mock.calls[0][0] as string[];
+      expect(delBatchArgs).toEqual([RedisKeys.roleApis("admin"), RedisKeys.roleApis("user")]);
 
-            mockDb.getAll = mock((opts: any) => {
-                if (opts.table === "addon_admin_api") return Promise.resolve({ lists: apis, total: apis.length });
-                return Promise.resolve({ lists: [], total: 0 });
-            });
-
-            await cacheHelper.refreshRoleApiPermissions("admin", [1, 2]);
-
-            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
-            expect(mockRedis.sadd).toHaveBeenCalledWith(RedisKeys.roleApis("admin"), ["POST/api/login", "GET/api/user/list"]);
-        });
+      // 验证批量写入
+      expect(mockRedis.saddBatch).toHaveBeenCalledTimes(1);
+      const saddBatchArgs = (mockRedis.saddBatch as any).mock.calls[0][0] as Array<{
+        key: string;
+        members: string[];
+      }>;
+      expect(saddBatchArgs).toEqual([
+        {
+          key: RedisKeys.roleApis("admin"),
+          members: ["GET/api/user/list", "POST/api/login", "POST/api/user/del"],
+        },
+        { key: RedisKeys.roleApis("user"), members: ["POST/api/login"] },
+      ]);
     });
 
-    describe("getApis", () => {
-        it("返回缓存的接口列表", async () => {
-            const apis = [{ id: 1, name: "登录" }];
-            mockRedis.getObject = mock(() => Promise.resolve(apis));
+    it("无权限时仍会清理旧缓存，但不写入成员", async () => {
+      const roles = [{ id: 1, code: "empty", apis: [] }];
+      const apis = [{ id: 1, path: "/api/login", method: "POST" }];
 
-            const result = await cacheHelper.getApis();
+      mockDb.getAll = mock((opts: any) => {
+        if (opts.table === "addon_admin_role")
+          return Promise.resolve({ lists: roles, total: roles.length });
+        if (opts.table === "addon_admin_api")
+          return Promise.resolve({ lists: apis, total: apis.length });
+        return Promise.resolve({ lists: [], total: 0 });
+      });
 
-            expect(result).toEqual(apis);
-        });
+      await cacheHelper.rebuildRoleApiPermissions();
 
-        it("缓存不存在时返回空数组", async () => {
-            mockRedis.getObject = mock(() => Promise.resolve(null));
+      expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
+      expect(mockRedis.saddBatch).not.toHaveBeenCalled();
+    });
+  });
 
-            const result = await cacheHelper.getApis();
+  describe("refreshRoleApiPermissions", () => {
+    it("apiIds 为空数组时只清理缓存，不查询 API 表", async () => {
+      mockDb.getAll = mock(() => Promise.resolve({ lists: [], total: 0 }));
 
-            expect(result).toEqual([]);
-        });
+      await cacheHelper.refreshRoleApiPermissions("admin", []);
+
+      expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
+      expect(mockDb.getAll).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: "addon_admin_api",
+        }),
+      );
     });
 
-    describe("getMenus", () => {
-        it("返回缓存的菜单列表", async () => {
-            const menus = [{ id: 1, name: "首页" }];
-            mockRedis.getObject = mock(() => Promise.resolve(menus));
+    it("apiIds 非空时使用 $in 查询并重建该角色缓存（覆盖更新）", async () => {
+      const apis = [
+        { id: 1, path: "/api/login", method: "POST" },
+        { id: 2, path: "/api/user/list", method: "GET" },
+      ];
 
-            const result = await cacheHelper.getMenus();
+      mockDb.getAll = mock((opts: any) => {
+        if (opts.table === "addon_admin_api")
+          return Promise.resolve({ lists: apis, total: apis.length });
+        return Promise.resolve({ lists: [], total: 0 });
+      });
 
-            expect(result).toEqual(menus);
-        });
+      await cacheHelper.refreshRoleApiPermissions("admin", [1, 2]);
 
-        it("缓存不存在时返回空数组", async () => {
-            mockRedis.getObject = mock(() => Promise.resolve(null));
+      expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
+      expect(mockRedis.sadd).toHaveBeenCalledWith(RedisKeys.roleApis("admin"), [
+        "POST/api/login",
+        "GET/api/user/list",
+      ]);
+    });
+  });
 
-            const result = await cacheHelper.getMenus();
+  describe("getApis", () => {
+    it("返回缓存的接口列表", async () => {
+      const apis = [{ id: 1, name: "登录" }];
+      mockRedis.getObject = mock(() => Promise.resolve(apis));
 
-            expect(result).toEqual([]);
-        });
+      const result = await cacheHelper.getApis();
+
+      expect(result).toEqual(apis);
     });
 
-    describe("getRolePermissions", () => {
-        it("返回角色的权限列表", async () => {
-            const permissions = ["POST/api/login", "GET/api/user/list"];
-            mockRedis.smembers = mock(() => Promise.resolve(permissions));
+    it("缓存不存在时返回空数组", async () => {
+      mockRedis.getObject = mock(() => Promise.resolve(null));
 
-            const result = await cacheHelper.getRolePermissions("admin");
+      const result = await cacheHelper.getApis();
 
-            expect(mockRedis.smembers).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
-            expect(result).toEqual(permissions);
-        });
+      expect(result).toEqual([]);
+    });
+  });
 
-        it("权限不存在时返回空数组", async () => {
-            mockRedis.smembers = mock(() => Promise.resolve(null));
+  describe("getMenus", () => {
+    it("返回缓存的菜单列表", async () => {
+      const menus = [{ id: 1, name: "首页" }];
+      mockRedis.getObject = mock(() => Promise.resolve(menus));
 
-            const result = await cacheHelper.getRolePermissions("unknown");
+      const result = await cacheHelper.getMenus();
 
-            expect(result).toEqual([]);
-        });
+      expect(result).toEqual(menus);
     });
 
-    describe("checkRolePermission", () => {
-        it("有权限时返回 true", async () => {
-            mockRedis.sismember = mock(() => Promise.resolve(true));
+    it("缓存不存在时返回空数组", async () => {
+      mockRedis.getObject = mock(() => Promise.resolve(null));
 
-            const result = await cacheHelper.checkRolePermission("admin", "POST/api/login");
+      const result = await cacheHelper.getMenus();
 
-            expect(mockRedis.sismember).toHaveBeenCalledWith(RedisKeys.roleApis("admin"), "POST/api/login");
-            expect(result).toBe(true);
-        });
+      expect(result).toEqual([]);
+    });
+  });
 
-        it("无权限时返回 false", async () => {
-            mockRedis.sismember = mock(() => Promise.resolve(false));
+  describe("getRolePermissions", () => {
+    it("返回角色的权限列表", async () => {
+      const permissions = ["POST/api/login", "GET/api/user/list"];
+      mockRedis.smembers = mock(() => Promise.resolve(permissions));
 
-            const result = await cacheHelper.checkRolePermission("user", "POST/api/admin/del");
+      const result = await cacheHelper.getRolePermissions("admin");
 
-            expect(result).toBe(false);
-        });
+      expect(mockRedis.smembers).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
+      expect(result).toEqual(permissions);
     });
 
-    describe("deleteRolePermissions", () => {
-        it("删除成功返回 true", async () => {
-            mockRedis.del = mock(() => Promise.resolve(1));
+    it("权限不存在时返回空数组", async () => {
+      mockRedis.smembers = mock(() => Promise.resolve(null));
 
-            const result = await cacheHelper.deleteRolePermissions("admin");
+      const result = await cacheHelper.getRolePermissions("unknown");
 
-            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
-            expect(result).toBe(true);
-        });
+      expect(result).toEqual([]);
+    });
+  });
 
-        it("不存在时返回 false", async () => {
-            mockRedis.del = mock(() => Promise.resolve(0));
+  describe("checkRolePermission", () => {
+    it("有权限时返回 true", async () => {
+      mockRedis.sismember = mock(() => Promise.resolve(true));
 
-            const result = await cacheHelper.deleteRolePermissions("unknown");
+      const result = await cacheHelper.checkRolePermission("admin", "POST/api/login");
 
-            expect(result).toBe(false);
-        });
+      expect(mockRedis.sismember).toHaveBeenCalledWith(
+        RedisKeys.roleApis("admin"),
+        "POST/api/login",
+      );
+      expect(result).toBe(true);
     });
 
-    describe("cacheAll", () => {
-        it("按顺序调用三个缓存方法", async () => {
-            const callOrder: string[] = [];
+    it("无权限时返回 false", async () => {
+      mockRedis.sismember = mock(() => Promise.resolve(false));
 
-            // 使用 spy 记录调用顺序
-            const originalCacheApis = cacheHelper.cacheApis.bind(cacheHelper);
-            const originalCacheMenus = cacheHelper.cacheMenus.bind(cacheHelper);
-            const originalRebuildRoleApiPermissions = cacheHelper.rebuildRoleApiPermissions.bind(cacheHelper);
+      const result = await cacheHelper.checkRolePermission("user", "POST/api/admin/del");
 
-            cacheHelper.cacheApis = async () => {
-                callOrder.push("apis");
-                await originalCacheApis();
-            };
-            cacheHelper.cacheMenus = async () => {
-                callOrder.push("menus");
-                await originalCacheMenus();
-            };
-            cacheHelper.rebuildRoleApiPermissions = async () => {
-                callOrder.push("permissions");
-                await originalRebuildRoleApiPermissions();
-            };
-
-            await cacheHelper.cacheAll();
-
-            expect(callOrder).toEqual(["apis", "menus", "permissions"]);
-        });
+      expect(result).toBe(false);
     });
+  });
+
+  describe("deleteRolePermissions", () => {
+    it("删除成功返回 true", async () => {
+      mockRedis.del = mock(() => Promise.resolve(1));
+
+      const result = await cacheHelper.deleteRolePermissions("admin");
+
+      expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
+      expect(result).toBe(true);
+    });
+
+    it("不存在时返回 false", async () => {
+      mockRedis.del = mock(() => Promise.resolve(0));
+
+      const result = await cacheHelper.deleteRolePermissions("unknown");
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("cacheAll", () => {
+    it("按顺序调用三个缓存方法", async () => {
+      const callOrder: string[] = [];
+
+      // 使用 spy 记录调用顺序
+      const originalCacheApis = cacheHelper.cacheApis.bind(cacheHelper);
+      const originalCacheMenus = cacheHelper.cacheMenus.bind(cacheHelper);
+      const originalRebuildRoleApiPermissions =
+        cacheHelper.rebuildRoleApiPermissions.bind(cacheHelper);
+
+      cacheHelper.cacheApis = async () => {
+        callOrder.push("apis");
+        await originalCacheApis();
+      };
+      cacheHelper.cacheMenus = async () => {
+        callOrder.push("menus");
+        await originalCacheMenus();
+      };
+      cacheHelper.rebuildRoleApiPermissions = async () => {
+        callOrder.push("permissions");
+        await originalRebuildRoleApiPermissions();
+      };
+
+      await cacheHelper.cacheAll();
+
+      expect(callOrder).toEqual(["apis", "menus", "permissions"]);
+    });
+  });
 });

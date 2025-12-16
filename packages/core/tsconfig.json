@@ -1,56 +1,54 @@
 {
-    "extends": "../../tsconfig.base.json",
-    "compilerOptions": {
-        // 基础配置
-        "target": "ESNext",
-        "module": "ESNext",
-        "lib": ["ESNext"],
-        "moduleResolution": "bundler",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // 基础配置
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext"],
+    "moduleResolution": "bundler",
 
-        // 类型检查
-        "strict": true,
-        "noImplicitAny": true,
-        "strictNullChecks": true,
-        "strictFunctionTypes": true,
-        "strictBindCallApply": true,
-        "strictPropertyInitialization": true,
-        "noImplicitThis": true,
-        "alwaysStrict": true,
+    // 类型检查
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
 
-        // 额外检查
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedIndexedAccess": false,
-        "noImplicitOverride": true,
-        "noPropertyAccessFromIndexSignature": false,
+    // 额外检查
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
 
-        // 模块
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
+    // 模块
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
 
-        // 输出
-        "noEmit": true,
-        "removeComments": false,
-        "importHelpers": false,
+    // 输出
+    "noEmit": true,
+    "removeComments": false,
+    "importHelpers": false,
 
-        // 高级
-        "skipLibCheck": true,
-        "allowJs": false,
+    // 高级
+    "skipLibCheck": true,
+    "allowJs": false,
+    // Bun 特定
+    "types": ["bun"],
 
-
-        // Bun 特定
-        "types": ["bun"],
-
-        // 路径
-        "paths": {
-            "@/*": ["./*"]
-        }
-    },
-    "include": ["**/*.ts"],
-    "exclude": ["node_modules", "dist", "logs", "temp", "tests", "main.single.ts"]
+    // 路径
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist", "logs", "temp", "tests", "main.single.ts"]
 }
