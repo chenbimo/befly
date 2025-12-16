@@ -1,0 +1,12 @@
+{
+    "$schema": "./node_modules/oxfmt/configuration_schema.json",
+    "experimentalSortImports": {
+        "groups": [["type-import"], ["value-builtin"], ["value-external"], ["value-parent", "value-sibling", "value-index"], ["unknown"]],
+        "ignoreCase": true,
+        "newlinesBetween": true,
+        "order": "asc",
+        "partitionByComment": false,
+        "partitionByNewline": false,
+        "sortSideEffects": false
+    }
+}
