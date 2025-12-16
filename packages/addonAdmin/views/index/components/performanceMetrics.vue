@@ -53,12 +53,12 @@
 </template>
 
 <script setup>
-import ILucideActivity from '~icons/lucide/activity';
-import ILucideClock from '~icons/lucide/clock';
-import ILucideTrendingUp from '~icons/lucide/trending-up';
-import ILucideAlertCircle from '~icons/lucide/alert-circle';
-import ILucideAlertTriangle from '~icons/lucide/alert-triangle';
-import { $Http } from '@/plugins/http';
+import ILucideActivity from "~icons/lucide/activity";
+import ILucideClock from "~icons/lucide/clock";
+import ILucideTrendingUp from "~icons/lucide/trending-up";
+import ILucideAlertCircle from "~icons/lucide/alert-circle";
+import ILucideAlertTriangle from "~icons/lucide/alert-triangle";
+import { $Http } from "@/plugins/http";
 
 // 组件内部数据
 const performanceMetrics = $ref({
@@ -72,7 +72,7 @@ const performanceMetrics = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/addon/admin/dashboard/performanceMetrics');
+        const { data } = await $Http("/addon/admin/dashboard/performanceMetrics");
         Object.assign(performanceMetrics, data);
     } catch (error) {
         // 静默失败：不阻断页面展示

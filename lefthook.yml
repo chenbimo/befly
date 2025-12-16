@@ -3,28 +3,28 @@
 
 pre-commit:
     jobs:
-        # 1. 格式化代码（JS/TS/JSON 用 oxfmt，其余用 prettier）
-        - name: Format JS/TS/JSON (oxfmt)
+        # 1. 格式化代码（oxfmt 支持的格式用 oxfmt，其余用 prettier）
+        - name: Format JS/TS/JSON/JSONC (oxfmt)
           priority: 1
-          glob: '*.{js,ts,jsx,tsx,json}'
+          glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc}"
           run: bunx oxfmt --no-error-on-unmatched-pattern {staged_files}
 
         - name: Format other files (prettier)
           priority: 1
-          glob: '*.{vue,md,yaml,yml,css,scss,less,html}'
+          glob: "*.{vue,md,yaml,yml,css,scss,less,html}"
           run: bunx --bun prettier --write --cache --ignore-unknown {staged_files}
 
         # 2. Oxlint 代码检查（门禁）
         - name: Oxlint
           priority: 2
-          glob: '*.{js,ts,jsx,tsx,vue}'
+          glob: "*.{js,ts,jsx,tsx,vue}"
           run: bunx oxlint {staged_files}
 
         # 3. TypeScript 语法检查 (core)
         - name: TypeScript check (core)
           priority: 2
           root: packages/core
-          glob: 'packages/core/**/*.ts'
+          glob: "packages/core/**/*.ts"
           run: bunx tsgo --noEmit
 
         # 4. 运行测试

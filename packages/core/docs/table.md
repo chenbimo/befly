@@ -95,7 +95,7 @@ interface FieldDefinition {
     /** 字段标签/描述（必填） */
     name: string;
     /** 字段类型（必填） */
-    type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
+    type: "string" | "number" | "text" | "array_string" | "array_text";
     /** 字段详细说明 */
     detail?: string;
     /** 最小值/最小长度 */

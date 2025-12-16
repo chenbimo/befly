@@ -84,13 +84,13 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, Space as TSpace, MessagePlugin } from 'tdesign-vue-next';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucideSend from '~icons/lucide/send';
-import ILucideCheckCircle from '~icons/lucide/check-circle';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
+import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, Space as TSpace, MessagePlugin } from "tdesign-vue-next";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import ILucideSend from "~icons/lucide/send";
+import ILucideCheckCircle from "~icons/lucide/check-circle";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
 const sendFormRef = $ref(null);
 
@@ -99,25 +99,25 @@ const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: 'username', title: '发送人', fixed: 'left' },
-        { colKey: 'id', title: '序号' },
-        { colKey: 'toEmail', title: '收件人' },
-        { colKey: 'subject', title: '主题' },
-        { colKey: 'sendTime', title: '发送时间' },
-        { colKey: 'sendResult', title: '发送结果' }
+        { colKey: "username", title: "发送人", fixed: "left" },
+        { colKey: "id", title: "序号" },
+        { colKey: "toEmail", title: "收件人" },
+        { colKey: "subject", title: "主题" },
+        { colKey: "sendTime", title: "发送时间" },
+        { colKey: "sendResult", title: "发送结果" }
     ]),
     detailFields: [
-        { colKey: 'username', title: '发送人账号' },
-        { colKey: 'nickname', title: '发送人昵称' },
-        { colKey: 'toEmail', title: '收件人' },
-        { colKey: 'ccEmail', title: '抄送' },
-        { colKey: 'bccEmail', title: '密送' },
-        { colKey: 'subject', title: '主题' },
-        { colKey: 'content', title: '内容' },
-        { colKey: 'sendTime', title: '发送时间' },
-        { colKey: 'sendResult', title: '发送结果' },
-        { colKey: 'messageId', title: '消息ID' },
-        { colKey: 'failReason', title: '失败原因' }
+        { colKey: "username", title: "发送人账号" },
+        { colKey: "nickname", title: "发送人昵称" },
+        { colKey: "toEmail", title: "收件人" },
+        { colKey: "ccEmail", title: "抄送" },
+        { colKey: "bccEmail", title: "密送" },
+        { colKey: "subject", title: "主题" },
+        { colKey: "content", title: "内容" },
+        { colKey: "sendTime", title: "发送时间" },
+        { colKey: "sendResult", title: "发送结果" },
+        { colKey: "messageId", title: "消息ID" },
+        { colKey: "failReason", title: "失败原因" }
     ],
     pagerConfig: {
         currentPage: 1,
@@ -129,15 +129,15 @@ const $Data = $ref({
     sendDialogVisible: false,
     sending: false,
     sendForm: {
-        to: '',
-        cc: '',
-        subject: '',
-        content: ''
+        to: "",
+        cc: "",
+        subject: "",
+        content: ""
     },
     sendRules: {
-        to: [{ required: true, message: '请输入收件人邮箱', trigger: 'blur' }],
-        subject: [{ required: true, message: '请输入邮件主题', trigger: 'blur' }],
-        content: [{ required: true, message: '请输入邮件内容', trigger: 'blur' }]
+        to: [{ required: true, message: "请输入收件人邮箱", trigger: "blur" }],
+        subject: [{ required: true, message: "请输入邮件主题", trigger: "blur" }],
+        content: [{ required: true, message: "请输入邮件内容", trigger: "blur" }]
     }
 });
 
@@ -151,7 +151,7 @@ const $Method = {
     async apiEmailLogList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/email/logList', {
+            const res = await $Http("/addon/admin/email/logList", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -166,7 +166,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }
@@ -175,10 +175,10 @@ const $Method = {
     // 打开发送弹框
     openSendDialog() {
         $Data.sendForm = {
-            to: '',
-            cc: '',
-            subject: '',
-            content: ''
+            to: "",
+            cc: "",
+            subject: "",
+            content: ""
         };
         $Data.sendDialogVisible = true;
     },
@@ -190,7 +190,7 @@ const $Method = {
 
         $Data.sending = true;
         try {
-            const res = await $Http('/addon/admin/email/send', {
+            const res = await $Http("/addon/admin/email/send", {
                 to: $Data.sendForm.to,
                 subject: $Data.sendForm.subject,
                 content: $Data.sendForm.content,
@@ -199,14 +199,14 @@ const $Method = {
             });
 
             if (res.code === 0) {
-                MessagePlugin.success('发送成功');
+                MessagePlugin.success("发送成功");
                 $Data.sendDialogVisible = false;
                 $Method.apiEmailLogList();
             } else {
-                MessagePlugin.error(res.msg || '发送失败');
+                MessagePlugin.error(res.msg || "发送失败");
             }
         } catch (error) {
-            MessagePlugin.error('发送失败');
+            MessagePlugin.error("发送失败");
         } finally {
             $Data.sending = false;
         }
@@ -215,14 +215,14 @@ const $Method = {
     // 验证配置
     async onVerify() {
         try {
-            const res = await $Http('/addon/admin/email/verify');
+            const res = await $Http("/addon/admin/email/verify");
             if (res.code === 0) {
-                MessagePlugin.success('邮件服务配置正常');
+                MessagePlugin.success("邮件服务配置正常");
             } else {
-                MessagePlugin.error(res.msg || '配置异常');
+                MessagePlugin.error(res.msg || "配置异常");
             }
         } catch (error) {
-            MessagePlugin.error('验证失败');
+            MessagePlugin.error("验证失败");
         }
     },
 
@@ -257,14 +257,14 @@ const $Method = {
 
     // 格式化时间
     formatTime(timestamp) {
-        if (!timestamp) return '-';
+        if (!timestamp) return "-";
         const date = new Date(timestamp);
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const seconds = String(date.getSeconds()).padStart(2, "0");
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
 };

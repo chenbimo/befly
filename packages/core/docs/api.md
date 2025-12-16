@@ -123,18 +123,18 @@ addonAdmin/apis/
 ### 基础结构
 
 ```typescript
-import type { ApiRoute } from 'befly/types/api';
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     // 必填字段
-    name: '接口名称', // 接口描述，用于日志和文档
+    name: "接口名称", // 接口描述，用于日志和文档
     handler: async (befly, ctx) => {
         // 处理逻辑
-        return befly.tool.Yes('成功', { data });
+        return befly.tool.Yes("成功", { data });
     },
 
     // 可选字段
-    method: 'POST', // HTTP 方法，默认 POST
+    method: "POST", // HTTP 方法，默认 POST
     auth: true, // 是否需要认证，默认 true
     fields: {}, // 字段定义（验证规则）
     required: [], // 必填字段列表
@@ -155,7 +155,7 @@ interface ApiRoute<T = any, R = any> {
     handler: ApiHandler<T, R>;
 
     /** HTTP 方法（可选，默认 POST，支持逗号分隔多个方法） */
-    method?: 'GET' | 'POST' | 'GET,POST' | 'POST,GET';
+    method?: "GET" | "POST" | "GET,POST" | "POST,GET";
 
     /** 认证类型（可选，默认 true）
      * - true: 需要登录
@@ -318,26 +318,26 @@ befly.tool.Raw(ctx: RequestContext, data: Record<string, any> | string, options?
 
 ```typescript
 // JSON 响应（自动）
-return befly.tool.Raw(ctx, { code: 'SUCCESS', message: '成功' });
+return befly.tool.Raw(ctx, { code: "SUCCESS", message: "成功" });
 
 // 纯文本响应（自动）- 支付宝回调
-return befly.tool.Raw(ctx, 'success');
+return befly.tool.Raw(ctx, "success");
 
 // XML 响应（自动判断）
-return befly.tool.Raw(ctx, '<xml><return_code>SUCCESS</return_code></xml>');
+return befly.tool.Raw(ctx, "<xml><return_code>SUCCESS</return_code></xml>");
 
 // XML 响应（手动指定）
-return befly.tool.Raw(ctx, xmlString, { contentType: 'application/xml' });
+return befly.tool.Raw(ctx, xmlString, { contentType: "application/xml" });
 
 // 自定义状态码
-return befly.tool.Raw(ctx, { error: 'Not Found' }, { status: 404 });
+return befly.tool.Raw(ctx, { error: "Not Found" }, { status: 404 });
 
 // 自定义响应头
 return befly.tool.Raw(
     ctx,
-    { code: 'SUCCESS' },
+    { code: "SUCCESS" },
     {
-        headers: { 'X-Custom-Header': 'value' }
+        headers: { "X-Custom-Header": "value" }
     }
 );
 ```
@@ -347,33 +347,33 @@ return befly.tool.Raw(
 ```typescript
 // 微信支付回调
 export default {
-    name: '微信支付回调',
+    name: "微信支付回调",
     auth: false,
     rawBody: true,
     handler: async (befly, ctx) => {
         if (!befly.weixin) {
-            return befly.tool.Raw(ctx, { code: 'SYSTEM_ERROR', message: 'weixin 插件未配置' });
+            return befly.tool.Raw(ctx, { code: "SYSTEM_ERROR", message: "weixin 插件未配置" });
         }
 
         // 处理成功
-        return befly.tool.Raw(ctx, { code: 'SUCCESS', message: '' });
+        return befly.tool.Raw(ctx, { code: "SUCCESS", message: "" });
     }
 };
 
 // 支付宝回调
 export default {
-    name: '支付宝回调',
+    name: "支付宝回调",
     auth: false,
     rawBody: true,
     handler: async (befly, ctx) => {
         // 支付宝要求返回纯文本 "success"
-        return befly.tool.Raw(ctx, 'success');
+        return befly.tool.Raw(ctx, "success");
     }
 };
 
 // 微信公众号 XML 回调
 export default {
-    name: '微信公众号回调',
+    name: "微信公众号回调",
     auth: false,
     rawBody: true,
     handler: async (befly, ctx) => {
@@ -397,10 +397,10 @@ export default {
 在 Hook 中使用，用于提前拦截请求：
 
 ```typescript
-import { ErrorResponse } from 'befly/util';
+import { ErrorResponse } from "befly/util";
 
 // 在 Hook 中使用
-ctx.response = ErrorResponse(ctx, '未授权', 1, null);
+ctx.response = ErrorResponse(ctx, "未授权", 1, null);
 ```
 
 ### FinalResponse - 最终响应
@@ -419,33 +419,33 @@ ctx.response = ErrorResponse(ctx, '未授权', 1, null);
 
 ```typescript
 const PRESET_FIELDS = {
-    '@id': {
-        name: 'ID',
-        type: 'number',
+    "@id": {
+        name: "ID",
+        type: "number",
         min: 1,
         max: null
     },
-    '@page': {
-        name: '页码',
-        type: 'number',
+    "@page": {
+        name: "页码",
+        type: "number",
         min: 1,
         max: 9999
     },
-    '@limit': {
-        name: '每页数量',
-        type: 'number',
+    "@limit": {
+        name: "每页数量",
+        type: "number",
         min: 1,
         max: 100
     },
-    '@keyword': {
-        name: '关键词',
-        type: 'string',
+    "@keyword": {
+        name: "关键词",
+        type: "string",
         min: 1,
         max: 50
     },
-    '@state': {
-        name: '状态',
-        type: 'number',
+    "@state": {
+        name: "状态",
+        type: "number",
         min: 0,
         max: 2
     }
@@ -497,14 +497,14 @@ fields: {
 ```typescript
 // apis/article/list.ts
 export default {
-    name: '文章列表',
+    name: "文章列表",
     auth: true,
     fields: {
-        page: '@page',
-        limit: '@limit',
-        keyword: '@keyword',
-        state: '@state',
-        categoryId: { name: '分类ID', type: 'number', min: 0 }
+        page: "@page",
+        limit: "@limit",
+        keyword: "@keyword",
+        state: "@state",
+        categoryId: { name: "分类ID", type: "number", min: 0 }
     },
     handler: async (befly, ctx) => {
         const { page, limit, keyword, categoryId } = ctx.body;
@@ -514,15 +514,15 @@ export default {
         if (keyword) where.title = { $like: `%${keyword}%` };
 
         const result = await befly.db.getList({
-            table: 'article',
-            columns: ['id', 'title', 'summary', 'createdAt'],
+            table: "article",
+            columns: ["id", "title", "summary", "createdAt"],
             where: where,
             page: page || 1,
             limit: limit || 10,
-            orderBy: { id: 'desc' }
+            orderBy: { id: "desc" }
         });
 
-        return befly.tool.Yes('获取成功', result);
+        return befly.tool.Yes("获取成功", result);
     }
 } as ApiRoute;
 ```
@@ -532,23 +532,23 @@ export default {
 ```typescript
 // apis/article/detail.ts
 export default {
-    name: '文章详情',
+    name: "文章详情",
     auth: false,
     fields: {
-        id: '@id'
+        id: "@id"
     },
-    required: ['id'],
+    required: ["id"],
     handler: async (befly, ctx) => {
         const article = await befly.db.getDetail({
-            table: 'article',
+            table: "article",
             where: { id: ctx.body.id, state: 1 }
         });
 
         if (!article?.id) {
-            return befly.tool.No('文章不存在');
+            return befly.tool.No("文章不存在");
         }
 
-        return befly.tool.Yes('获取成功', article);
+        return befly.tool.Yes("获取成功", article);
     }
 } as ApiRoute;
 ```
@@ -556,19 +556,19 @@ export default {
 ```typescript
 // apis/article/delete.ts
 export default {
-    name: '删除文章',
+    name: "删除文章",
     auth: true,
     fields: {
-        id: '@id'
+        id: "@id"
     },
-    required: ['id'],
+    required: ["id"],
     handler: async (befly, ctx) => {
         await befly.db.delData({
-            table: 'article',
+            table: "article",
             where: { id: ctx.body.id }
         });
 
-        return befly.tool.Yes('删除成功');
+        return befly.tool.Yes("删除成功");
     }
 } as ApiRoute;
 ```
@@ -579,20 +579,20 @@ export default {
 
 ```typescript
 export default {
-    name: '大数据列表',
+    name: "大数据列表",
     fields: {
-        page: '@page',
+        page: "@page",
         // 覆盖默认的 @limit，允许更大的分页
         limit: {
-            name: '每页数量',
-            type: 'number',
+            name: "每页数量",
+            type: "number",
             min: 1,
             max: 500 // 修改最大值为 500
         }
     },
     handler: async (befly, ctx) => {
         // ctx.body.limit 最大可以是 500
-        return befly.tool.Yes('获取成功');
+        return befly.tool.Yes("获取成功");
     }
 } as ApiRoute;
 ```
@@ -723,8 +723,8 @@ export default {
 ```typescript
 // API 定义
 export default {
-    name: '微信支付回调',
-    method: 'POST',
+    name: "微信支付回调",
+    method: "POST",
     auth: false,
     rawBody: true, // 跳过解析，保留原始请求
     handler: async (befly, ctx) => {
@@ -768,8 +768,8 @@ export default {
 ```typescript
 // apis/webhook/wechatPayV3.ts
 export default {
-    name: '微信支付V3回调',
-    method: 'POST',
+    name: "微信支付V3回调",
+    method: "POST",
     auth: false,
     rawBody: true, // 跳过解析，保留原始请求
     handler: async (befly, ctx) => {
@@ -777,15 +777,15 @@ export default {
         const rawBody = await ctx.req.text();
 
         // 2. 获取微信签名头
-        const signature = ctx.req.headers.get('Wechatpay-Signature');
-        const timestamp = ctx.req.headers.get('Wechatpay-Timestamp');
-        const nonce = ctx.req.headers.get('Wechatpay-Nonce');
-        const serial = ctx.req.headers.get('Wechatpay-Serial');
+        const signature = ctx.req.headers.get("Wechatpay-Signature");
+        const timestamp = ctx.req.headers.get("Wechatpay-Timestamp");
+        const nonce = ctx.req.headers.get("Wechatpay-Nonce");
+        const serial = ctx.req.headers.get("Wechatpay-Serial");
 
         // 3. 验证签名
         const verifyMessage = `${timestamp}\n${nonce}\n${rawBody}\n`;
         if (!verifyRsaSign(verifyMessage, signature, serial)) {
-            return { code: 'FAIL', message: '签名验证失败' };
+            return { code: "FAIL", message: "签名验证失败" };
         }
 
         // 4. 解析并解密数据
@@ -795,9 +795,9 @@ export default {
         const payResult = JSON.parse(decrypted);
 
         // 5. 处理支付结果
-        if (payResult.trade_state === 'SUCCESS') {
+        if (payResult.trade_state === "SUCCESS") {
             await befly.db.updData({
-                table: 'order',
+                table: "order",
                 where: { orderNo: payResult.out_trade_no },
                 data: {
                     payStatus: 1,
@@ -807,7 +807,7 @@ export default {
             });
         }
 
-        return { code: 'SUCCESS', message: '' };
+        return { code: "SUCCESS", message: "" };
     }
 };
 ```
@@ -816,11 +816,11 @@ export default {
 
 ```typescript
 // apis/webhook/github.ts
-import { createHmac } from 'crypto';
+import { createHmac } from "crypto";
 
 export default {
-    name: 'GitHub Webhook',
-    method: 'POST',
+    name: "GitHub Webhook",
+    method: "POST",
     auth: false,
     rawBody: true,
     handler: async (befly, ctx) => {
@@ -828,30 +828,30 @@ export default {
         const rawBody = await ctx.req.text();
 
         // 获取 GitHub 签名
-        const signature = ctx.req.headers.get('X-Hub-Signature-256');
+        const signature = ctx.req.headers.get("X-Hub-Signature-256");
         if (!signature) {
-            return befly.tool.No('缺少签名');
+            return befly.tool.No("缺少签名");
         }
 
         // 验证 HMAC 签名
         const secret = process.env.GITHUB_WEBHOOK_SECRET;
-        const hmac = createHmac('sha256', secret);
-        const expectedSignature = 'sha256=' + hmac.update(rawBody).digest('hex');
+        const hmac = createHmac("sha256", secret);
+        const expectedSignature = "sha256=" + hmac.update(rawBody).digest("hex");
 
         if (signature !== expectedSignature) {
-            return befly.tool.No('签名验证失败');
+            return befly.tool.No("签名验证失败");
         }
 
         // 解析数据
         const payload = JSON.parse(rawBody);
-        const event = ctx.req.headers.get('X-GitHub-Event');
+        const event = ctx.req.headers.get("X-GitHub-Event");
 
         // 处理不同事件
-        if (event === 'push') {
-            befly.logger.info({ ref: payload.ref }, 'GitHub Push 事件');
+        if (event === "push") {
+            befly.logger.info({ ref: payload.ref }, "GitHub Push 事件");
         }
 
-        return befly.tool.Yes('处理成功');
+        return befly.tool.Yes("处理成功");
     }
 };
 ```
@@ -861,7 +861,7 @@ export default {
 ```typescript
 // apis/secure/receive.ts
 export default {
-    name: '接收加密数据',
+    name: "接收加密数据",
     auth: false,
     rawBody: true,
     handler: async (befly, ctx) => {
@@ -875,7 +875,7 @@ export default {
         // 处理解密后的数据
         // ...
 
-        return befly.tool.Yes('处理成功');
+        return befly.tool.Yes("处理成功");
     }
 };
 ```
@@ -887,17 +887,17 @@ export default {
 ```typescript
 // apis/user/batchImport.ts
 export default {
-    name: '批量导入用户',
+    name: "批量导入用户",
     // 不定义 fields，或 fields: {}，会保留所有请求参数
     handler: async (befly, ctx) => {
         const { users } = ctx.body; // 正常解析
 
         if (!Array.isArray(users) || users.length === 0) {
-            return befly.tool.No('用户列表不能为空');
+            return befly.tool.No("用户列表不能为空");
         }
 
         // 批量插入...
-        return befly.tool.Yes('导入成功');
+        return befly.tool.Yes("导入成功");
     }
 };
 ```
@@ -918,39 +918,39 @@ export default {
 
 ```typescript
 // apis/auth/login.ts
-import adminTable from '../../tables/admin.json';
+import adminTable from "../../tables/admin.json";
 
 export default {
-    name: '管理员登录',
+    name: "管理员登录",
     auth: false, // 公开接口
     fields: {
         account: {
-            name: '账号',
-            type: 'string',
+            name: "账号",
+            type: "string",
             min: 3,
             max: 100
         },
         password: adminTable.password
     },
-    required: ['account', 'password'],
+    required: ["account", "password"],
     handler: async (befly, ctx) => {
         // 查询用户
         const admin = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             where: {
                 $or: [{ username: ctx.body.account }, { email: ctx.body.account }]
             }
         });
 
         if (!admin?.id) {
-            return befly.tool.No('账号或密码错误');
+            return befly.tool.No("账号或密码错误");
         }
 
         // 验证密码
         const isValid = await befly.cipher.verifyPassword(ctx.body.password, admin.password);
 
         if (!isValid) {
-            return befly.tool.No('账号或密码错误');
+            return befly.tool.No("账号或密码错误");
         }
 
         // 生成 Token
@@ -959,7 +959,7 @@ export default {
             roleCode: admin.roleCode
         });
 
-        return befly.tool.Yes('登录成功', {
+        return befly.tool.Yes("登录成功", {
             token: token,
             userInfo: admin
         });
@@ -972,20 +972,20 @@ export default {
 ```typescript
 // apis/admin/list.ts
 export default {
-    name: '获取管理员列表',
+    name: "获取管理员列表",
     // auth: true,  // 默认需要认证
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             page: ctx.body.page || 1,
             limit: ctx.body.limit || 10,
             where: {
-                roleCode: { $ne: 'dev' }
+                roleCode: { $ne: "dev" }
             },
-            orderBy: ['createdAt#DESC']
+            orderBy: ["createdAt#DESC"]
         });
 
-        return befly.tool.Yes('获取成功', result);
+        return befly.tool.Yes("获取成功", result);
     }
 };
 ```
@@ -994,31 +994,31 @@ export default {
 
 ```typescript
 // apis/admin/ins.ts
-import adminTable from '../../tables/admin.json';
+import adminTable from "../../tables/admin.json";
 
 export default {
-    name: '添加管理员',
+    name: "添加管理员",
     fields: adminTable,
-    required: ['username', 'password', 'roleCode'],
+    required: ["username", "password", "roleCode"],
     handler: async (befly, ctx) => {
         // 检查用户名是否已存在
         const existing = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             where: { username: ctx.body.username }
         });
 
         if (existing) {
-            return befly.tool.No('用户名已被使用');
+            return befly.tool.No("用户名已被使用");
         }
 
         // 查询角色信息
         const role = await befly.db.getOne({
-            table: 'addon_admin_role',
+            table: "addon_admin_role",
             where: { code: ctx.body.roleCode }
         });
 
         if (!role) {
-            return befly.tool.No('角色不存在');
+            return befly.tool.No("角色不存在");
         }
 
         // 加密密码
@@ -1026,7 +1026,7 @@ export default {
 
         // 创建管理员
         const adminId = await befly.db.insData({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             data: {
                 username: ctx.body.username,
                 password: hashedPassword,
@@ -1035,7 +1035,7 @@ export default {
             }
         });
 
-        return befly.tool.Yes('添加成功', {
+        return befly.tool.Yes("添加成功", {
             id: adminId
         });
     }
@@ -1046,33 +1046,33 @@ export default {
 
 ```typescript
 // apis/admin/upd.ts
-import adminTable from '../../tables/admin.json';
+import adminTable from "../../tables/admin.json";
 
 export default {
-    name: '更新管理员',
+    name: "更新管理员",
     fields: adminTable,
-    required: ['id'],
+    required: ["id"],
     handler: async (befly, ctx) => {
         const { id, ...updateData } = ctx.body;
 
         // 检查管理员是否存在
         const admin = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             where: { id: id }
         });
 
         if (!admin?.id) {
-            return befly.tool.No('管理员不存在');
+            return befly.tool.No("管理员不存在");
         }
 
         // 更新管理员信息
         await befly.db.updData({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             data: updateData,
             where: { id: id }
         });
 
-        return befly.tool.Yes('更新成功');
+        return befly.tool.Yes("更新成功");
     }
 };
 ```
@@ -1082,32 +1082,32 @@ export default {
 ```typescript
 // apis/admin/del.ts
 export default {
-    name: '删除管理员',
+    name: "删除管理员",
     fields: {},
-    required: ['id'],
+    required: ["id"],
     handler: async (befly, ctx) => {
         // 检查管理员是否存在
         const admin = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             where: { id: ctx.body.id }
         });
 
         if (!admin) {
-            return befly.tool.No('管理员不存在');
+            return befly.tool.No("管理员不存在");
         }
 
         // 业务检查：不能删除开发者账号
-        if (admin.roleCode === 'dev') {
-            return befly.tool.No('不能删除开发者账号');
+        if (admin.roleCode === "dev") {
+            return befly.tool.No("不能删除开发者账号");
         }
 
         // 删除管理员
         await befly.db.delData({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             where: { id: ctx.body.id }
         });
 
-        return befly.tool.Yes('删除成功');
+        return befly.tool.Yes("删除成功");
     }
 };
 ```
@@ -1117,29 +1117,29 @@ export default {
 ```typescript
 // apis/admin/detail.ts
 export default {
-    name: '获取用户信息',
+    name: "获取用户信息",
     handler: async (befly, ctx) => {
         const userId = ctx.user?.id;
 
         if (!userId) {
-            return befly.tool.No('未授权');
+            return befly.tool.No("未授权");
         }
 
         // 查询用户信息
         const admin = await befly.db.getOne({
-            table: 'addon_admin_admin',
+            table: "addon_admin_admin",
             where: { id: userId }
         });
 
         if (!admin) {
-            return befly.tool.No('用户不存在');
+            return befly.tool.No("用户不存在");
         }
 
         // 查询角色信息
         let roleInfo = null;
         if (admin.roleCode) {
             roleInfo = await befly.db.getOne({
-                table: 'addon_admin_role',
+                table: "addon_admin_role",
                 where: { code: admin.roleCode }
             });
         }
@@ -1147,7 +1147,7 @@ export default {
         // 返回用户信息（不包含密码）
         const { password: _, ...userWithoutPassword } = admin;
 
-        return befly.tool.Yes('获取成功', {
+        return befly.tool.Yes("获取成功", {
             ...userWithoutPassword,
             role: roleInfo
         });
@@ -1160,27 +1160,27 @@ export default {
 ```typescript
 // apis/article/search.ts
 export default {
-    name: '搜索文章',
-    method: 'GET,POST', // 同时支持 GET 和 POST
+    name: "搜索文章",
+    method: "GET,POST", // 同时支持 GET 和 POST
     auth: false,
     fields: {
         keyword: {
-            name: '关键词',
-            type: 'string',
+            name: "关键词",
+            type: "string",
             min: 1,
             max: 100
         }
     },
-    required: ['keyword'],
+    required: ["keyword"],
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({
-            table: 'article',
+            table: "article",
             where: {
                 title: { $like: `%${ctx.body.keyword}%` }
             }
         });
 
-        return befly.tool.Yes('搜索成功', result);
+        return befly.tool.Yes("搜索成功", result);
     }
 };
 ```
@@ -1190,8 +1190,8 @@ export default {
 ```typescript
 // apis/webhook/wechat.ts
 export default {
-    name: '微信回调',
-    method: 'POST',
+    name: "微信回调",
+    method: "POST",
     auth: false,
     rawBody: true, // 不过滤字段，保留完整请求体
     handler: async (befly, ctx) => {
@@ -1199,9 +1199,9 @@ export default {
         const { ToUserName, FromUserName, MsgType, Content } = ctx.body;
 
         // 处理微信消息
-        befly.logger.info({ msg: Content }, '收到微信消息');
+        befly.logger.info({ msg: Content }, "收到微信消息");
 
-        return befly.tool.Yes('处理成功');
+        return befly.tool.Yes("处理成功");
     }
 };
 ```
@@ -1260,7 +1260,7 @@ export default {
 ```typescript
 // 在 Hook 中中断
 if (!ctx.user?.id) {
-    ctx.response = ErrorResponse(ctx, '未登录');
+    ctx.response = ErrorResponse(ctx, "未登录");
     return; // 后续 Hook 和 handler 不会执行
 }
 ```
@@ -1347,10 +1347,10 @@ befly.db.cleanFields<T>(
 ```typescript
 // 默认排除 null 和 undefined
 const cleanData = befly.db.cleanFields({
-    name: 'John',
+    name: "John",
     age: null,
     email: undefined,
-    phone: ''
+    phone: ""
 });
 // 结果: { name: 'John', phone: '' }
 ```
@@ -1359,7 +1359,7 @@ const cleanData = befly.db.cleanFields({
 
 ```typescript
 // 同时排除 null、undefined 和空字符串
-const cleanData = befly.db.cleanFields({ name: 'John', phone: '', age: null }, [null, undefined, '']);
+const cleanData = befly.db.cleanFields({ name: "John", phone: "", age: null }, [null, undefined, ""]);
 // 结果: { name: 'John' }
 ```
 
@@ -1367,7 +1367,7 @@ const cleanData = befly.db.cleanFields({ name: 'John', phone: '', age: null }, [
 
 ```typescript
 // 即使值在排除列表中，也保留 status 字段的 null 值
-const cleanData = befly.db.cleanFields({ name: 'John', status: null, count: 0 }, [null, undefined], { status: null });
+const cleanData = befly.db.cleanFields({ name: "John", status: null, count: 0 }, [null, undefined], { status: null });
 // 结果: { name: 'John', status: null, count: 0 }
 ```
 
@@ -1405,7 +1405,7 @@ fields: {
 ```typescript
 // ✅ 推荐：直接使用
 const result = await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: {
         username: ctx.body.username,
         email: ctx.body.email
@@ -1421,7 +1421,7 @@ const { username, email } = ctx.body;
 ```typescript
 // ✅ 推荐：明确每个字段
 await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: {
         username: ctx.body.username,
         email: ctx.body.email,
@@ -1431,7 +1431,7 @@ await befly.db.insData({
 
 // ❌ 避免：扩展运算符
 await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: { ...ctx.body } // 危险！可能写入未预期的字段
 });
 ```
@@ -1443,12 +1443,12 @@ handler: async (befly, ctx) => {
     try {
         // 业务逻辑
         const result = await someOperation();
-        return befly.tool.Yes('成功', result);
+        return befly.tool.Yes("成功", result);
     } catch (error: any) {
         // 记录错误日志
-        befly.logger.error({ err: error }, '操作失败');
+        befly.logger.error({ err: error }, "操作失败");
         // 返回友好错误信息
-        return befly.tool.No('操作失败，请稍后重试');
+        return befly.tool.No("操作失败，请稍后重试");
     }
 };
 ```
@@ -1458,7 +1458,7 @@ handler: async (befly, ctx) => {
 ```typescript
 // ✅ 推荐：使用 Date.now()
 await befly.db.updData({
-    table: 'user',
+    table: "user",
     data: {
         lastLoginTime: Date.now(), // number 类型
         lastLoginIp: ctx.ip
@@ -1478,7 +1478,7 @@ lastLoginTime: new Date(); // 类型不一致
 
 ```typescript
 export default {
-    name: '公开接口',
+    name: "公开接口",
     auth: false, // 设置为 false
     handler: async (befly, ctx) => {
         // ...
@@ -1494,7 +1494,7 @@ handler: async (befly, ctx) => {
     const roleCode = ctx.user?.roleCode;
 
     if (!userId) {
-        return befly.tool.No('未登录');
+        return befly.tool.No("未登录");
     }
 };
 ```
@@ -1509,12 +1509,12 @@ handler: async (befly, ctx) => {
 
 ```typescript
 // tpl/hooks/requestLog.ts
-import type { Hook } from 'befly/types/hook';
+import type { Hook } from "befly/types/hook";
 
 const hook: Hook = {
     order: 100, // 执行顺序
     handler: async (befly, ctx) => {
-        befly.logger.info({ route: ctx.route }, '请求开始');
+        befly.logger.info({ route: ctx.route }, "请求开始");
     }
 };
 export default hook;
@@ -1538,42 +1538,42 @@ export default hook;
 ```typescript
 // apis/order/create.ts
 export default {
-    name: '创建订单',
+    name: "创建订单",
     fields: {
         productId: {
-            name: '商品ID',
-            type: 'number',
+            name: "商品ID",
+            type: "number",
             min: 1
         },
         quantity: {
-            name: '数量',
-            type: 'number',
+            name: "数量",
+            type: "number",
             min: 1,
             max: 999
         }
     },
-    required: ['productId', 'quantity'],
+    required: ["productId", "quantity"],
     handler: async (befly, ctx) => {
         // 使用事务确保库存扣减和订单创建的原子性
         const result = await befly.db.transaction(async (trx) => {
             // 1. 查询商品信息（带锁）
             const product = await trx.getOne({
-                table: 'product',
+                table: "product",
                 where: { id: ctx.body.productId },
                 forUpdate: true // 行锁
             });
 
             if (!product) {
-                throw new Error('商品不存在');
+                throw new Error("商品不存在");
             }
 
             if (product.stock < ctx.body.quantity) {
-                throw new Error('库存不足');
+                throw new Error("库存不足");
             }
 
             // 2. 扣减库存
             await trx.updData({
-                table: 'product',
+                table: "product",
                 data: {
                     stock: product.stock - ctx.body.quantity
                 },
@@ -1582,19 +1582,19 @@ export default {
 
             // 3. 创建订单
             const orderId = await trx.insData({
-                table: 'order',
+                table: "order",
                 data: {
                     userId: ctx.user.id,
                     productId: ctx.body.productId,
                     quantity: ctx.body.quantity,
                     totalPrice: product.price * ctx.body.quantity,
-                    status: 'pending'
+                    status: "pending"
                 }
             });
 
             // 4. 创建订单明细
             await trx.insData({
-                table: 'order_item',
+                table: "order_item",
                 data: {
                     orderId: orderId,
                     productId: ctx.body.productId,
@@ -1607,7 +1607,7 @@ export default {
             return { orderId: orderId };
         });
 
-        return befly.tool.Yes('订单创建成功', result);
+        return befly.tool.Yes("订单创建成功", result);
     }
 };
 ```
@@ -1619,22 +1619,22 @@ export default {
 ```typescript
 // apis/user/batchImport.ts
 export default {
-    name: '批量导入用户',
+    name: "批量导入用户",
     rawBody: true, // 保留原始请求体
     handler: async (befly, ctx) => {
         const users = ctx.body.users;
 
         if (!Array.isArray(users) || users.length === 0) {
-            return befly.tool.No('用户列表不能为空');
+            return befly.tool.No("用户列表不能为空");
         }
 
         if (users.length > 100) {
-            return befly.tool.No('单次导入不能超过100条');
+            return befly.tool.No("单次导入不能超过100条");
         }
 
         // 批量插入
         const result = await befly.db.batchInsert({
-            table: 'user',
+            table: "user",
             data: users.map((user: any) => ({
                 username: user.username,
                 email: user.email,
@@ -1643,7 +1643,7 @@ export default {
             }))
         });
 
-        return befly.tool.Yes('导入成功', {
+        return befly.tool.Yes("导入成功", {
             total: users.length,
             inserted: result.affectedRows
         });
@@ -1656,25 +1656,25 @@ export default {
 ```typescript
 // apis/article/batchUpdate.ts
 export default {
-    name: '批量更新文章状态',
+    name: "批量更新文章状态",
     rawBody: true,
     handler: async (befly, ctx) => {
         const { ids, state } = ctx.body;
 
         if (!Array.isArray(ids) || ids.length === 0) {
-            return befly.tool.No('文章ID列表不能为空');
+            return befly.tool.No("文章ID列表不能为空");
         }
 
         // 批量更新
         const result = await befly.db.updData({
-            table: 'article',
+            table: "article",
             data: { state: state },
             where: {
                 id: { $in: ids }
             }
         });
 
-        return befly.tool.Yes('更新成功', {
+        return befly.tool.Yes("更新成功", {
             updated: result.affectedRows
         });
     }
@@ -1686,24 +1686,24 @@ export default {
 ```typescript
 // apis/log/batchDelete.ts
 export default {
-    name: '批量删除日志',
+    name: "批量删除日志",
     rawBody: true,
     handler: async (befly, ctx) => {
         const { ids } = ctx.body;
 
         if (!Array.isArray(ids) || ids.length === 0) {
-            return befly.tool.No('日志ID列表不能为空');
+            return befly.tool.No("日志ID列表不能为空");
         }
 
         // 批量软删除
         const result = await befly.db.delData({
-            table: 'operate_log',
+            table: "operate_log",
             where: {
                 id: { $in: ids }
             }
         });
 
-        return befly.tool.Yes('删除成功', {
+        return befly.tool.Yes("删除成功", {
             deleted: result.affectedRows
         });
     }
@@ -1765,25 +1765,25 @@ export default {
 ```typescript
 // apis/article/listWithAuthor.ts
 export default {
-    name: '文章列表（含作者）',
+    name: "文章列表（含作者）",
     handler: async (befly, ctx) => {
         const result = await befly.db.getList({
-            table: 'article',
+            table: "article",
             joins: [
                 {
-                    type: 'LEFT',
-                    table: 'user',
-                    alias: 'author',
-                    on: { 'article.authorId': 'author.id' }
+                    type: "LEFT",
+                    table: "user",
+                    alias: "author",
+                    on: { "article.authorId": "author.id" }
                 }
             ],
-            columns: ['article.id', 'article.title', 'article.createdAt', 'author.nickname AS authorName'],
+            columns: ["article.id", "article.title", "article.createdAt", "author.nickname AS authorName"],
             page: ctx.body.page || 1,
             limit: ctx.body.limit || 10,
-            orderBy: ['article.createdAt#DESC']
+            orderBy: ["article.createdAt#DESC"]
         });
 
-        return befly.tool.Yes('获取成功', result);
+        return befly.tool.Yes("获取成功", result);
     }
 };
 ```
@@ -1793,30 +1793,30 @@ export default {
 ```typescript
 // apis/config/getSiteConfig.ts
 export default {
-    name: '获取站点配置',
+    name: "获取站点配置",
     auth: false,
     cache: 300, // 缓存 5 分钟
     handler: async (befly, ctx) => {
         // 先从缓存获取
-        const cacheKey = 'site:config';
+        const cacheKey = "site:config";
         let config = await befly.redis.get(cacheKey);
 
         if (!config) {
             // 缓存不存在，从数据库查询
             const result = await befly.db.getAll({
-                table: 'sys_config',
+                table: "sys_config",
                 where: { state: 1 }
             });
 
             config = result.lists; // 获取配置列表
 
             // 写入缓存
-            await befly.redis.set(cacheKey, JSON.stringify(config), 'EX', 300);
+            await befly.redis.set(cacheKey, JSON.stringify(config), "EX", 300);
         } else {
             config = JSON.parse(config);
         }
 
-        return befly.tool.Yes('获取成功', config);
+        return befly.tool.Yes("获取成功", config);
     }
 };
 ```
@@ -1826,22 +1826,22 @@ export default {
 ```typescript
 // apis/task/execute.ts
 export default {
-    name: '执行定时任务',
+    name: "执行定时任务",
     handler: async (befly, ctx) => {
         const lockKey = `lock:task:${ctx.body.taskId}`;
 
         // 尝试获取锁（30秒超时）
-        const locked = await befly.redis.set(lockKey, ctx.requestId, 'EX', 30, 'NX');
+        const locked = await befly.redis.set(lockKey, ctx.requestId, "EX", 30, "NX");
 
         if (!locked) {
-            return befly.tool.No('任务正在执行中，请稍后');
+            return befly.tool.No("任务正在执行中，请稍后");
         }
 
         try {
             // 执行任务逻辑
             await executeTask(ctx.body.taskId);
 
-            return befly.tool.Yes('任务执行成功');
+            return befly.tool.Yes("任务执行成功");
         } finally {
             // 释放锁
             await befly.redis.del(lockKey);
@@ -1855,27 +1855,27 @@ export default {
 ```typescript
 // apis/report/exportUsers.ts
 export default {
-    name: '导出用户数据',
+    name: "导出用户数据",
     handler: async (befly, ctx) => {
         // 查询所有用户（不分页，注意上限 10000 条）
         const result = await befly.db.getAll({
-            table: 'user',
-            columns: ['id', 'username', 'nickname', 'email', 'phone', 'createdAt'],
+            table: "user",
+            columns: ["id", "username", "nickname", "email", "phone", "createdAt"],
             where: { state: 1 },
-            orderBy: ['createdAt#DESC']
+            orderBy: ["createdAt#DESC"]
         });
 
         // 转换为 CSV 格式
-        const headers = ['ID', '用户名', '昵称', '邮箱', '手机', '注册时间'];
+        const headers = ["ID", "用户名", "昵称", "邮箱", "手机", "注册时间"];
         const rows = result.lists.map((u: any) => [u.id, u.username, u.nickname, u.email, u.phone, new Date(u.createdAt).toLocaleString()]);
 
-        const csv = [headers.join(','), ...rows.map((r: any[]) => r.join(','))].join('\n');
+        const csv = [headers.join(","), ...rows.map((r: any[]) => r.join(","))].join("\n");
 
         // 返回 CSV 文件（注意：如果 total > 10000，只会导出前 10000 条）
         return new Response(csv, {
             headers: {
-                'Content-Type': 'text/csv; charset=utf-8',
-                'Content-Disposition': 'attachment; filename="users.csv"'
+                "Content-Type": "text/csv; charset=utf-8",
+                "Content-Disposition": 'attachment; filename="users.csv"'
             }
         });
     }
@@ -1887,17 +1887,17 @@ export default {
 ```typescript
 // apis/file/download.ts
 export default {
-    name: '文件下载',
-    required: ['fileId'],
+    name: "文件下载",
+    required: ["fileId"],
     handler: async (befly, ctx) => {
         // 查询文件信息
         const file = await befly.db.getOne({
-            table: 'file',
+            table: "file",
             where: { id: ctx.body.fileId }
         });
 
         if (!file) {
-            return befly.tool.No('文件不存在');
+            return befly.tool.No("文件不存在");
         }
 
         // 读取文件并返回流
@@ -1905,9 +1905,9 @@ export default {
 
         return new Response(fileStream, {
             headers: {
-                'Content-Type': file.mimeType,
-                'Content-Disposition': `attachment; filename="${encodeURIComponent(file.name)}"`,
-                'Content-Length': String(file.size)
+                "Content-Type": file.mimeType,
+                "Content-Disposition": `attachment; filename="${encodeURIComponent(file.name)}"`,
+                "Content-Length": String(file.size)
             }
         });
     }

@@ -167,26 +167,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Card as TCard, Select as TSelect, Option as TOption, Button as TButton, Avatar as TAvatar, Tag as TTag, Progress as TProgress, Link as TLink } from 'tdesign-vue-next';
-import ILucideUser from '~icons/lucide/user';
-import ILucideDollarSign from '~icons/lucide/dollar-sign';
-import ILucideShoppingCart from '~icons/lucide/shopping-cart';
-import ILucideBell from '~icons/lucide/bell';
-import ILucideChevronUp from '~icons/lucide/chevron-up';
-import ILucideChevronDown from '~icons/lucide/chevron-down';
-import * as echarts from 'echarts';
+import { ref, onMounted, onUnmounted } from "vue";
+import { Card as TCard, Select as TSelect, Option as TOption, Button as TButton, Avatar as TAvatar, Tag as TTag, Progress as TProgress, Link as TLink } from "tdesign-vue-next";
+import ILucideUser from "~icons/lucide/user";
+import ILucideDollarSign from "~icons/lucide/dollar-sign";
+import ILucideShoppingCart from "~icons/lucide/shopping-cart";
+import ILucideBell from "~icons/lucide/bell";
+import ILucideChevronUp from "~icons/lucide/chevron-up";
+import ILucideChevronDown from "~icons/lucide/chevron-down";
+import * as echarts from "echarts";
 
-const currentDate = ref(new Date().toLocaleDateString('zh-CN'));
-const currentTime = ref(new Date().toLocaleTimeString('zh-CN'));
+const currentDate = ref(new Date().toLocaleDateString("zh-CN"));
+const currentTime = ref(new Date().toLocaleTimeString("zh-CN"));
 
 // 时间更新
 let timeInterval: number | null = null;
 
 onMounted(() => {
     timeInterval = window.setInterval(() => {
-        currentDate.value = new Date().toLocaleDateString('zh-CN');
-        currentTime.value = new Date().toLocaleTimeString('zh-CN');
+        currentDate.value = new Date().toLocaleDateString("zh-CN");
+        currentTime.value = new Date().toLocaleTimeString("zh-CN");
     }, 1000);
 
     initSalesChart();
@@ -201,7 +201,7 @@ onUnmounted(() => {
 
 // 销售图表
 const salesChartRef = ref<HTMLElement | null>(null);
-const salesPeriod = ref('month');
+const salesPeriod = ref("month");
 
 const initSalesChart = () => {
     if (!salesChartRef.value) return;
@@ -210,44 +210,44 @@ const initSalesChart = () => {
 
     const option = {
         tooltip: {
-            trigger: 'axis',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            borderColor: '#e0e0e0',
+            trigger: "axis",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            borderColor: "#e0e0e0",
             borderWidth: 1,
-            textStyle: { color: '#333' }
+            textStyle: { color: "#333" }
         },
         grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '3%',
+            left: "3%",
+            right: "4%",
+            bottom: "3%",
             containLabel: true
         },
         xAxis: {
-            type: 'category',
+            type: "category",
             boundaryGap: false,
-            data: ['1日', '2日', '3日', '4日', '5日', '6日', '7日', '8日', '9日', '10日', '11日', '12日', '13日', '14日', '15日'],
-            axisLine: { lineStyle: { color: '#f0f0f0' } },
+            data: ["1日", "2日", "3日", "4日", "5日", "6日", "7日", "8日", "9日", "10日", "11日", "12日", "13日", "14日", "15日"],
+            axisLine: { lineStyle: { color: "#f0f0f0" } },
             axisTick: { show: false }
         },
         yAxis: {
-            type: 'value',
+            type: "value",
             axisLine: { show: false },
             axisTick: { show: false },
-            splitLine: { lineStyle: { color: '#f0f0f0' } }
+            splitLine: { lineStyle: { color: "#f0f0f0" } }
         },
         series: [
             {
-                name: '销售额',
-                type: 'line',
+                name: "销售额",
+                type: "line",
                 smooth: true,
                 areaStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: 'rgba(64, 158, 255, 0.5)' },
-                        { offset: 1, color: 'rgba(64, 158, 255, 0.05)' }
+                        { offset: 0, color: "rgba(64, 158, 255, 0.5)" },
+                        { offset: 1, color: "rgba(64, 158, 255, 0.05)" }
                     ])
                 },
-                lineStyle: { color: '#409EFF', width: 3 },
-                itemStyle: { color: '#409EFF' },
+                lineStyle: { color: "#409EFF", width: 3 },
+                itemStyle: { color: "#409EFF" },
                 data: [12000, 21348, 18900, 23400, 29000, 33000, 27800, 25600, 34900, 31000, 38000, 36400, 40000, 38700, 42300]
             }
         ]
@@ -256,7 +256,7 @@ const initSalesChart = () => {
     chart.setOption(option);
 
     // 响应式
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
         chart.resize();
     });
 };
@@ -271,40 +271,40 @@ const initProductChart = () => {
 
     const option = {
         tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'shadow' },
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            borderColor: '#e0e0e0',
+            trigger: "axis",
+            axisPointer: { type: "shadow" },
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            borderColor: "#e0e0e0",
             borderWidth: 1,
-            textStyle: { color: '#333' }
+            textStyle: { color: "#333" }
         },
         grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '3%',
+            left: "3%",
+            right: "4%",
+            bottom: "3%",
             containLabel: true
         },
         xAxis: {
-            type: 'category',
-            data: ['产品A', '产品B', '产品C', '产品D', '产品E', '产品F'],
-            axisLine: { lineStyle: { color: '#f0f0f0' } },
+            type: "category",
+            data: ["产品A", "产品B", "产品C", "产品D", "产品E", "产品F"],
+            axisLine: { lineStyle: { color: "#f0f0f0" } },
             axisTick: { show: false }
         },
         yAxis: {
-            type: 'value',
+            type: "value",
             axisLine: { show: false },
             axisTick: { show: false },
-            splitLine: { lineStyle: { color: '#f0f0f0' } }
+            splitLine: { lineStyle: { color: "#f0f0f0" } }
         },
         series: [
             {
-                name: '销售量',
-                type: 'bar',
-                barWidth: '60%',
+                name: "销售量",
+                type: "bar",
+                barWidth: "60%",
                 itemStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: '#67C23A' },
-                        { offset: 1, color: '#E6F7FF' }
+                        { offset: 0, color: "#67C23A" },
+                        { offset: 1, color: "#E6F7FF" }
                     ]),
                     borderRadius: [4, 4, 0, 0]
                 },
@@ -316,7 +316,7 @@ const initProductChart = () => {
     chart.setOption(option);
 
     // 响应式
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
         chart.resize();
     });
 };
@@ -325,78 +325,78 @@ const initProductChart = () => {
 const activities = [
     {
         id: 1,
-        user: '张三',
-        action: '完成了订单',
-        time: '10分钟前',
-        description: '订单号：#20230415001，金额¥1299.00',
-        status: 'success',
-        avatar: 'https://picsum.photos/id/1005/100/100'
+        user: "张三",
+        action: "完成了订单",
+        time: "10分钟前",
+        description: "订单号：#20230415001，金额¥1299.00",
+        status: "success",
+        avatar: "https://picsum.photos/id/1005/100/100"
     },
     {
         id: 2,
-        user: '李四',
-        action: '添加了新用户',
-        time: '30分钟前',
-        description: '用户邮箱：user@example.com，角色：管理员',
-        status: 'info',
-        avatar: 'https://picsum.photos/id/1006/100/100'
+        user: "李四",
+        action: "添加了新用户",
+        time: "30分钟前",
+        description: "用户邮箱：user@example.com，角色：管理员",
+        status: "info",
+        avatar: "https://picsum.photos/id/1006/100/100"
     },
     {
         id: 3,
-        user: '王五',
-        action: '修改了产品',
-        time: '1小时前',
-        description: '产品名称：智能手表，价格调整为¥1599.00',
-        status: 'warning',
-        avatar: 'https://picsum.photos/id/1007/100/100'
+        user: "王五",
+        action: "修改了产品",
+        time: "1小时前",
+        description: "产品名称：智能手表，价格调整为¥1599.00",
+        status: "warning",
+        avatar: "https://picsum.photos/id/1007/100/100"
     },
     {
         id: 4,
-        user: '赵六',
-        action: '删除了日志',
-        time: '2小时前',
-        description: '删除了2023-04-14的系统日志',
-        status: 'danger',
-        avatar: 'https://picsum.photos/id/1008/100/100'
+        user: "赵六",
+        action: "删除了日志",
+        time: "2小时前",
+        description: "删除了2023-04-14的系统日志",
+        status: "danger",
+        avatar: "https://picsum.photos/id/1008/100/100"
     },
     {
         id: 5,
-        user: '孙七',
-        action: '发布了公告',
-        time: '3小时前',
-        description: '新功能上线通知：新增数据分析模块',
-        status: 'success',
-        avatar: 'https://picsum.photos/id/1009/100/100'
+        user: "孙七",
+        action: "发布了公告",
+        time: "3小时前",
+        description: "新功能上线通知：新增数据分析模块",
+        status: "success",
+        avatar: "https://picsum.photos/id/1009/100/100"
     }
 ];
 
 const tasks = [
     {
         id: 1,
-        title: '完成系统架构设计',
-        deadline: '2023-04-20',
+        title: "完成系统架构设计",
+        deadline: "2023-04-20",
         progress: 85,
-        color: '#409EFF',
-        assignee: '张三',
-        priority: 'danger'
+        color: "#409EFF",
+        assignee: "张三",
+        priority: "danger"
     },
     {
         id: 2,
-        title: '开发用户管理模块',
-        deadline: '2023-04-25',
+        title: "开发用户管理模块",
+        deadline: "2023-04-25",
         progress: 55,
-        color: '#67C23A',
-        assignee: '李四',
-        priority: 'warning'
+        color: "#67C23A",
+        assignee: "李四",
+        priority: "warning"
     },
     {
         id: 3,
-        title: '测试支付系统',
-        deadline: '2023-04-30',
+        title: "测试支付系统",
+        deadline: "2023-04-30",
         progress: 30,
-        color: '#E6A23C',
-        assignee: '王五',
-        priority: 'success'
+        color: "#E6A23C",
+        assignee: "王五",
+        priority: "success"
     }
 ];
 </script>

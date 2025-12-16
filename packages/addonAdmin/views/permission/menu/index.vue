@@ -30,24 +30,24 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from 'tdesign-vue-next';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
-import { withTreeTableProps } from '@/utils';
+import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from "tdesign-vue-next";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
+import { withTreeTableProps } from "@/utils";
 
 // 响应式数据
 const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: 'name', title: '菜单名称', fixed: 'left' },
-        { colKey: 'id', title: '序号' },
-        { colKey: 'path', title: '路由路径' },
-        { colKey: 'icon', title: '图标' },
-        { colKey: 'sort', title: '排序' },
-        { colKey: 'state', title: '状态' }
+        { colKey: "name", title: "菜单名称", fixed: "left" },
+        { colKey: "id", title: "序号" },
+        { colKey: "path", title: "路由路径" },
+        { colKey: "icon", title: "图标" },
+        { colKey: "sort", title: "排序" },
+        { colKey: "state", title: "状态" }
     ]),
     currentRow: null,
     activeRowKeys: []
@@ -63,7 +63,7 @@ const $Method = {
     async apiMenuList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/menu/list');
+            const res = await $Http("/addon/admin/menu/list");
             // 构建树形结构
             $Data.tableData = $Method.buildTree(res.data || []);
 
@@ -76,7 +76,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }

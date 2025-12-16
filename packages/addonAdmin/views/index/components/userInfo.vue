@@ -5,14 +5,16 @@
                 <ILucideUser />
             </div>
             <div class="user-basic">
-                <div class="user-name">{{ $Data.userInfo.nickname || $Data.userInfo.name || $Data.userInfo.username || '未设置' }}</div>
-                <div class="user-role">{{ $Data.userInfo.role?.name || '普通用户' }}</div>
+                <div class="user-name">
+                    {{ $Data.userInfo.nickname || $Data.userInfo.name || $Data.userInfo.username || "未设置" }}
+                </div>
+                <div class="user-role">{{ $Data.userInfo.role?.name || "普通用户" }}</div>
             </div>
         </div>
         <div class="user-details">
             <div class="detail-item">
                 <ILucideMail />
-                <span>{{ $Data.userInfo.email || '未设置' }}</span>
+                <span>{{ $Data.userInfo.email || "未设置" }}</span>
             </div>
             <div v-if="$Data.userInfo.phone" class="detail-item">
                 <ILucidePhone />
@@ -37,13 +39,13 @@
 </template>
 
 <script setup>
-import { Button as TButton, MessagePlugin } from 'tdesign-vue-next';
-import ILucideUser from '~icons/lucide/user';
-import ILucideMail from '~icons/lucide/mail';
-import ILucidePhone from '~icons/lucide/phone';
-import ILucideClock from '~icons/lucide/clock';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import { $Http } from '@/plugins/http';
+import { Button as TButton, MessagePlugin } from "tdesign-vue-next";
+import ILucideUser from "~icons/lucide/user";
+import ILucideMail from "~icons/lucide/mail";
+import ILucidePhone from "~icons/lucide/phone";
+import ILucideClock from "~icons/lucide/clock";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import { $Http } from "@/plugins/http";
 
 // 响应式数据
 const $Data = $ref({
@@ -56,10 +58,10 @@ const $Method = {
     // 获取数据
     async fetchData() {
         try {
-            const { data } = await $Http('/addon/admin/admin/detail');
+            const { data } = await $Http("/addon/admin/admin/detail");
             Object.assign($Data.userInfo, data);
         } catch (error) {
-            MessagePlugin.error('获取用户信息失败');
+            MessagePlugin.error("获取用户信息失败");
         }
     },
 
@@ -67,7 +69,7 @@ const $Method = {
     async handleRefreshCache() {
         try {
             $Data.refreshing = true;
-            const result = await $Http('/addon/admin/admin/cacheRefresh');
+            const result = await $Http("/addon/admin/admin/cacheRefresh");
 
             if (result.code === 0) {
                 const { apis, menus, roles } = result.data;
@@ -83,12 +85,12 @@ const $Method = {
                     messages.push(`角色缓存: ${roles.count} 个`);
                 }
 
-                MessagePlugin.success(`缓存刷新成功！${messages.join('，')}`);
+                MessagePlugin.success(`缓存刷新成功！${messages.join("，")}`);
             } else {
-                MessagePlugin.warning(result.msg || '部分缓存刷新失败');
+                MessagePlugin.warning(result.msg || "部分缓存刷新失败");
             }
         } catch (error) {
-            MessagePlugin.error('刷新缓存失败，请稍后重试');
+            MessagePlugin.error("刷新缓存失败，请稍后重试");
         } finally {
             $Data.refreshing = false;
         }
@@ -96,14 +98,14 @@ const $Method = {
 
     // 格式化时间
     formatTime(timestamp) {
-        if (!timestamp) return '';
+        if (!timestamp) return "";
         const date = new Date(Number(timestamp));
         const now = new Date();
         const diff = now - date;
 
         // 小于1分钟
         if (diff < 60000) {
-            return '刚刚';
+            return "刚刚";
         }
         // 小于1小时
         if (diff < 3600000) {

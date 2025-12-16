@@ -153,7 +153,7 @@ meta:
     padding: 20px;
     min-height: 100vh;
     background-color: #f5f7fa;
-    font-family: 'Arial', sans-serif;
+    font-family: "Arial", sans-serif;
 }
 
 h1 {

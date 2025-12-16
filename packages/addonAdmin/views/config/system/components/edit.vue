@@ -45,9 +45,9 @@
 </template>
 
 <script setup>
-import { watch } from 'vue';
-import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, InputNumber as TInputNumber, Select as TSelect, Option as TOption, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
-import { $Http } from '@/plugins/http';
+import { watch } from "vue";
+import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, InputNumber as TInputNumber, Select as TSelect, Option as TOption, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from "tdesign-vue-next";
+import { $Http } from "@/plugins/http";
 
 const $Prop = defineProps({
     modelValue: {
@@ -56,7 +56,7 @@ const $Prop = defineProps({
     },
     actionType: {
         type: String,
-        default: 'add'
+        default: "add"
     },
     rowData: {
         type: Object,
@@ -64,7 +64,7 @@ const $Prop = defineProps({
     }
 });
 
-const $Emit = defineEmits(['update:modelValue', 'success']);
+const $Emit = defineEmits(["update:modelValue", "success"]);
 
 // 表单引用
 const $Form = $shallowRef({
@@ -77,28 +77,28 @@ const $Data = $ref({
     isSystem: false,
     formData: {
         id: 0,
-        name: '',
-        code: '',
-        value: '',
-        valueType: 'string',
-        group: '',
+        name: "",
+        code: "",
+        value: "",
+        valueType: "string",
+        group: "",
         sort: 0,
-        description: '',
+        description: "",
         state: 1
     }
 });
 
 const $Data2 = $shallowRef({
     formRules: {
-        name: [{ required: true, message: '请输入配置名称', trigger: 'blur' }],
+        name: [{ required: true, message: "请输入配置名称", trigger: "blur" }],
         code: [
-            { required: true, message: '请输入配置代码', trigger: 'blur' },
-            { pattern: /^[a-zA-Z0-9_]+$/, message: '配置代码只能包含字母、数字和下划线', trigger: 'blur' }
+            { required: true, message: "请输入配置代码", trigger: "blur" },
+            { pattern: /^[a-zA-Z0-9_]+$/, message: "配置代码只能包含字母、数字和下划线", trigger: "blur" }
         ],
-        value: [{ required: true, message: '请输入配置值', trigger: 'blur' }],
-        valueType: [{ required: true, message: '请选择值类型', trigger: 'change' }]
+        value: [{ required: true, message: "请输入配置值", trigger: "blur" }],
+        valueType: [{ required: true, message: "请选择值类型", trigger: "change" }]
     },
-    groupOptions: ['基础配置', '邮件配置', '存储配置', '安全配置', '其他']
+    groupOptions: ["基础配置", "邮件配置", "存储配置", "安全配置", "其他"]
 });
 
 // 方法集合
@@ -109,27 +109,27 @@ const $Method = {
 
     onShow() {
         $Data.visible = true;
-        if ($Prop.actionType === 'upd' && $Prop.rowData) {
+        if ($Prop.actionType === "upd" && $Prop.rowData) {
             $Data.formData.id = $Prop.rowData.id || 0;
-            $Data.formData.name = $Prop.rowData.name || '';
-            $Data.formData.code = $Prop.rowData.code || '';
-            $Data.formData.value = $Prop.rowData.value || '';
-            $Data.formData.valueType = $Prop.rowData.valueType || 'string';
-            $Data.formData.group = $Prop.rowData.group || '';
+            $Data.formData.name = $Prop.rowData.name || "";
+            $Data.formData.code = $Prop.rowData.code || "";
+            $Data.formData.value = $Prop.rowData.value || "";
+            $Data.formData.valueType = $Prop.rowData.valueType || "string";
+            $Data.formData.group = $Prop.rowData.group || "";
             $Data.formData.sort = $Prop.rowData.sort || 0;
-            $Data.formData.description = $Prop.rowData.description || '';
+            $Data.formData.description = $Prop.rowData.description || "";
             $Data.formData.state = $Prop.rowData.state || 1;
             $Data.isSystem = $Prop.rowData.isSystem === 1;
         } else {
             $Data.formData = {
                 id: 0,
-                name: '',
-                code: '',
-                value: '',
-                valueType: 'string',
-                group: '',
+                name: "",
+                code: "",
+                value: "",
+                valueType: "string",
+                group: "",
                 sort: 0,
-                description: '',
+                description: "",
                 state: 1
             };
             $Data.isSystem = false;
@@ -138,7 +138,7 @@ const $Method = {
 
     onClose() {
         $Data.visible = false;
-        $Emit('update:modelValue', false);
+        $Emit("update:modelValue", false);
     },
 
     async onSubmit() {
@@ -147,18 +147,18 @@ const $Method = {
 
         $Data.submitting = true;
         try {
-            const api = $Prop.actionType === 'upd' ? '/addon/admin/sysConfig/upd' : '/addon/admin/sysConfig/ins';
+            const api = $Prop.actionType === "upd" ? "/addon/admin/sysConfig/upd" : "/addon/admin/sysConfig/ins";
             const res = await $Http(api, $Data.formData);
 
             if (res.code === 0) {
-                MessagePlugin.success($Prop.actionType === 'upd' ? '编辑成功' : '添加成功');
-                $Emit('success');
+                MessagePlugin.success($Prop.actionType === "upd" ? "编辑成功" : "添加成功");
+                $Emit("success");
                 $Method.onClose();
             } else {
-                MessagePlugin.error(res.msg || '操作失败');
+                MessagePlugin.error(res.msg || "操作失败");
             }
         } catch (error) {
-            MessagePlugin.error('操作失败');
+            MessagePlugin.error("操作失败");
         } finally {
             $Data.submitting = false;
         }

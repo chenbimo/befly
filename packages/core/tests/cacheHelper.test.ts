@@ -1,12 +1,14 @@
 /**
  * CacheHelper 单元测试
  */
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
-import { CacheHelper } from '../lib/cacheHelper.js';
-import { setMockLogger } from '../lib/logger.js';
-import { RedisKeys } from '../lib/redisKeys.js';
 
-import type { BeflyContext } from '../types/befly.js';
+import type { BeflyContext } from "../types/befly.js";
+
+import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+
+import { CacheHelper } from "../lib/cacheHelper.js";
+import { setMockLogger } from "../lib/logger.js";
+import { RedisKeys } from "../lib/redisKeys.js";
 
 // Mock pino logger
 const mockPino = {
@@ -18,10 +20,10 @@ const mockPino = {
     trace: mock(() => {}),
     silent: mock(() => {}),
     child: mock(() => mockPino),
-    level: 'info'
+    level: "info"
 };
 
-describe('CacheHelper', () => {
+describe("CacheHelper", () => {
     let cacheHelper: CacheHelper;
     let mockBefly: BeflyContext;
     let mockDb: any;
@@ -39,7 +41,7 @@ describe('CacheHelper', () => {
 
         // Mock Redis 方法
         mockRedis = {
-            setObject: mock(() => Promise.resolve('OK')),
+            setObject: mock(() => Promise.resolve("OK")),
             getObject: mock(() => Promise.resolve(null)),
             sadd: mock(() => Promise.resolve(1)),
             saddBatch: mock(() => Promise.resolve(1)),
@@ -64,20 +66,20 @@ describe('CacheHelper', () => {
         setMockLogger(null);
     });
 
-    describe('cacheApis', () => {
-        it('表不存在时跳过缓存', async () => {
+    describe("cacheApis", () => {
+        it("表不存在时跳过缓存", async () => {
             mockDb.tableExists = mock(() => Promise.resolve(false));
 
             await cacheHelper.cacheApis();
 
-            expect(mockDb.tableExists).toHaveBeenCalledWith('addon_admin_api');
+            expect(mockDb.tableExists).toHaveBeenCalledWith("addon_admin_api");
             expect(mockDb.getAll).not.toHaveBeenCalled();
         });
 
-        it('正常缓存接口列表', async () => {
+        it("正常缓存接口列表", async () => {
             const apis = [
-                { id: 1, name: '登录', path: '/api/login', method: 'POST' },
-                { id: 2, name: '用户列表', path: '/api/user/list', method: 'GET' }
+                { id: 1, name: "登录", path: "/api/login", method: "POST" },
+                { id: 2, name: "用户列表", path: "/api/user/list", method: "GET" }
             ];
             mockDb.getAll = mock(() => Promise.resolve({ lists: apis, total: apis.length }));
 
@@ -86,7 +88,7 @@ describe('CacheHelper', () => {
             expect(mockRedis.setObject).toHaveBeenCalledWith(RedisKeys.apisAll(), apis);
         });
 
-        it('缓存失败时记录警告', async () => {
+        it("缓存失败时记录警告", async () => {
             mockRedis.setObject = mock(() => Promise.resolve(null));
 
             await cacheHelper.cacheApis();
@@ -94,8 +96,8 @@ describe('CacheHelper', () => {
             expect(mockPino.warn).toHaveBeenCalled();
         });
 
-        it('异常时记录错误', async () => {
-            mockDb.getAll = mock(() => Promise.reject(new Error('DB Error')));
+        it("异常时记录错误", async () => {
+            mockDb.getAll = mock(() => Promise.reject(new Error("DB Error")));
 
             await cacheHelper.cacheApis();
 
@@ -103,20 +105,20 @@ describe('CacheHelper', () => {
         });
     });
 
-    describe('cacheMenus', () => {
-        it('表不存在时跳过缓存', async () => {
+    describe("cacheMenus", () => {
+        it("表不存在时跳过缓存", async () => {
             mockDb.tableExists = mock(() => Promise.resolve(false));
 
             await cacheHelper.cacheMenus();
 
-            expect(mockDb.tableExists).toHaveBeenCalledWith('addon_admin_menu');
+            expect(mockDb.tableExists).toHaveBeenCalledWith("addon_admin_menu");
             expect(mockDb.getAll).not.toHaveBeenCalled();
         });
 
-        it('正常缓存菜单列表', async () => {
+        it("正常缓存菜单列表", async () => {
             const menus = [
-                { id: 1, pid: 0, name: '首页', path: '/home', sort: 1 },
-                { id: 2, pid: 0, name: '用户管理', path: '/user', sort: 2 }
+                { id: 1, pid: 0, name: "首页", path: "/home", sort: 1 },
+                { id: 2, pid: 0, name: "用户管理", path: "/user", sort: 2 }
             ];
             mockDb.getAll = mock(() => Promise.resolve({ lists: menus, total: menus.length }));
 
@@ -126,11 +128,11 @@ describe('CacheHelper', () => {
         });
     });
 
-    describe('rebuildRoleApiPermissions', () => {
-        it('表不存在时跳过缓存', async () => {
+    describe("rebuildRoleApiPermissions", () => {
+        it("表不存在时跳过缓存", async () => {
             mockDb.tableExists = mock((table: string) => {
-                if (table === 'addon_admin_api') return Promise.resolve(true);
-                if (table === 'addon_admin_role') return Promise.resolve(false);
+                if (table === "addon_admin_api") return Promise.resolve(true);
+                if (table === "addon_admin_role") return Promise.resolve(false);
                 return Promise.resolve(false);
             });
 
@@ -139,20 +141,20 @@ describe('CacheHelper', () => {
             expect(mockPino.warn).toHaveBeenCalled();
         });
 
-        it('正常重建角色权限（覆盖更新）', async () => {
+        it("正常重建角色权限（覆盖更新）", async () => {
             const roles = [
-                { id: 1, code: 'admin', apis: [1, '2', 3] },
-                { id: 2, code: 'user', apis: [1] }
+                { id: 1, code: "admin", apis: [1, "2", 3] },
+                { id: 2, code: "user", apis: [1] }
             ];
             const apis = [
-                { id: 1, path: '/api/login', method: 'POST' },
-                { id: 2, path: '/api/user/list', method: 'GET' },
-                { id: 3, path: '/api/user/del', method: 'POST' }
+                { id: 1, path: "/api/login", method: "POST" },
+                { id: 2, path: "/api/user/list", method: "GET" },
+                { id: 3, path: "/api/user/del", method: "POST" }
             ];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === 'addon_admin_role') return Promise.resolve({ lists: roles, total: roles.length });
-                if (opts.table === 'addon_admin_api') {
+                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
+                if (opts.table === "addon_admin_api") {
                     // rebuildRoleApiPermissions 会通过 where: { id$in: [...] } 分块查询
                     return Promise.resolve({ lists: apis, total: apis.length });
                 }
@@ -164,24 +166,30 @@ describe('CacheHelper', () => {
             // 验证批量删除角色 key
             expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
             const delBatchArgs = (mockRedis.delBatch as any).mock.calls[0][0] as string[];
-            expect(delBatchArgs).toEqual([RedisKeys.roleApis('admin'), RedisKeys.roleApis('user')]);
+            expect(delBatchArgs).toEqual([RedisKeys.roleApis("admin"), RedisKeys.roleApis("user")]);
 
             // 验证批量写入
             expect(mockRedis.saddBatch).toHaveBeenCalledTimes(1);
-            const saddBatchArgs = (mockRedis.saddBatch as any).mock.calls[0][0] as Array<{ key: string; members: string[] }>;
+            const saddBatchArgs = (mockRedis.saddBatch as any).mock.calls[0][0] as Array<{
+                key: string;
+                members: string[];
+            }>;
             expect(saddBatchArgs).toEqual([
-                { key: RedisKeys.roleApis('admin'), members: ['GET/api/user/list', 'POST/api/login', 'POST/api/user/del'] },
-                { key: RedisKeys.roleApis('user'), members: ['POST/api/login'] }
+                {
+                    key: RedisKeys.roleApis("admin"),
+                    members: ["GET/api/user/list", "POST/api/login", "POST/api/user/del"]
+                },
+                { key: RedisKeys.roleApis("user"), members: ["POST/api/login"] }
             ]);
         });
 
-        it('无权限时仍会清理旧缓存，但不写入成员', async () => {
-            const roles = [{ id: 1, code: 'empty', apis: [] }];
-            const apis = [{ id: 1, path: '/api/login', method: 'POST' }];
+        it("无权限时仍会清理旧缓存，但不写入成员", async () => {
+            const roles = [{ id: 1, code: "empty", apis: [] }];
+            const apis = [{ id: 1, path: "/api/login", method: "POST" }];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === 'addon_admin_role') return Promise.resolve({ lists: roles, total: roles.length });
-                if (opts.table === 'addon_admin_api') return Promise.resolve({ lists: apis, total: apis.length });
+                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
+                if (opts.table === "addon_admin_api") return Promise.resolve({ lists: apis, total: apis.length });
                 return Promise.resolve({ lists: [], total: 0 });
             });
 
@@ -192,41 +200,41 @@ describe('CacheHelper', () => {
         });
     });
 
-    describe('refreshRoleApiPermissions', () => {
-        it('apiIds 为空数组时只清理缓存，不查询 API 表', async () => {
+    describe("refreshRoleApiPermissions", () => {
+        it("apiIds 为空数组时只清理缓存，不查询 API 表", async () => {
             mockDb.getAll = mock(() => Promise.resolve({ lists: [], total: 0 }));
 
-            await cacheHelper.refreshRoleApiPermissions('admin', []);
+            await cacheHelper.refreshRoleApiPermissions("admin", []);
 
-            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis('admin'));
+            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
             expect(mockDb.getAll).not.toHaveBeenCalledWith(
                 expect.objectContaining({
-                    table: 'addon_admin_api'
+                    table: "addon_admin_api"
                 })
             );
         });
 
-        it('apiIds 非空时使用 $in 查询并重建该角色缓存（覆盖更新）', async () => {
+        it("apiIds 非空时使用 $in 查询并重建该角色缓存（覆盖更新）", async () => {
             const apis = [
-                { id: 1, path: '/api/login', method: 'POST' },
-                { id: 2, path: '/api/user/list', method: 'GET' }
+                { id: 1, path: "/api/login", method: "POST" },
+                { id: 2, path: "/api/user/list", method: "GET" }
             ];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === 'addon_admin_api') return Promise.resolve({ lists: apis, total: apis.length });
+                if (opts.table === "addon_admin_api") return Promise.resolve({ lists: apis, total: apis.length });
                 return Promise.resolve({ lists: [], total: 0 });
             });
 
-            await cacheHelper.refreshRoleApiPermissions('admin', [1, 2]);
+            await cacheHelper.refreshRoleApiPermissions("admin", [1, 2]);
 
-            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis('admin'));
-            expect(mockRedis.sadd).toHaveBeenCalledWith(RedisKeys.roleApis('admin'), ['POST/api/login', 'GET/api/user/list']);
+            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
+            expect(mockRedis.sadd).toHaveBeenCalledWith(RedisKeys.roleApis("admin"), ["POST/api/login", "GET/api/user/list"]);
         });
     });
 
-    describe('getApis', () => {
-        it('返回缓存的接口列表', async () => {
-            const apis = [{ id: 1, name: '登录' }];
+    describe("getApis", () => {
+        it("返回缓存的接口列表", async () => {
+            const apis = [{ id: 1, name: "登录" }];
             mockRedis.getObject = mock(() => Promise.resolve(apis));
 
             const result = await cacheHelper.getApis();
@@ -234,7 +242,7 @@ describe('CacheHelper', () => {
             expect(result).toEqual(apis);
         });
 
-        it('缓存不存在时返回空数组', async () => {
+        it("缓存不存在时返回空数组", async () => {
             mockRedis.getObject = mock(() => Promise.resolve(null));
 
             const result = await cacheHelper.getApis();
@@ -243,9 +251,9 @@ describe('CacheHelper', () => {
         });
     });
 
-    describe('getMenus', () => {
-        it('返回缓存的菜单列表', async () => {
-            const menus = [{ id: 1, name: '首页' }];
+    describe("getMenus", () => {
+        it("返回缓存的菜单列表", async () => {
+            const menus = [{ id: 1, name: "首页" }];
             mockRedis.getObject = mock(() => Promise.resolve(menus));
 
             const result = await cacheHelper.getMenus();
@@ -253,7 +261,7 @@ describe('CacheHelper', () => {
             expect(result).toEqual(menus);
         });
 
-        it('缓存不存在时返回空数组', async () => {
+        it("缓存不存在时返回空数组", async () => {
             mockRedis.getObject = mock(() => Promise.resolve(null));
 
             const result = await cacheHelper.getMenus();
@@ -262,66 +270,66 @@ describe('CacheHelper', () => {
         });
     });
 
-    describe('getRolePermissions', () => {
-        it('返回角色的权限列表', async () => {
-            const permissions = ['POST/api/login', 'GET/api/user/list'];
+    describe("getRolePermissions", () => {
+        it("返回角色的权限列表", async () => {
+            const permissions = ["POST/api/login", "GET/api/user/list"];
             mockRedis.smembers = mock(() => Promise.resolve(permissions));
 
-            const result = await cacheHelper.getRolePermissions('admin');
+            const result = await cacheHelper.getRolePermissions("admin");
 
-            expect(mockRedis.smembers).toHaveBeenCalledWith(RedisKeys.roleApis('admin'));
+            expect(mockRedis.smembers).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
             expect(result).toEqual(permissions);
         });
 
-        it('权限不存在时返回空数组', async () => {
+        it("权限不存在时返回空数组", async () => {
             mockRedis.smembers = mock(() => Promise.resolve(null));
 
-            const result = await cacheHelper.getRolePermissions('unknown');
+            const result = await cacheHelper.getRolePermissions("unknown");
 
             expect(result).toEqual([]);
         });
     });
 
-    describe('checkRolePermission', () => {
-        it('有权限时返回 true', async () => {
+    describe("checkRolePermission", () => {
+        it("有权限时返回 true", async () => {
             mockRedis.sismember = mock(() => Promise.resolve(true));
 
-            const result = await cacheHelper.checkRolePermission('admin', 'POST/api/login');
+            const result = await cacheHelper.checkRolePermission("admin", "POST/api/login");
 
-            expect(mockRedis.sismember).toHaveBeenCalledWith(RedisKeys.roleApis('admin'), 'POST/api/login');
+            expect(mockRedis.sismember).toHaveBeenCalledWith(RedisKeys.roleApis("admin"), "POST/api/login");
             expect(result).toBe(true);
         });
 
-        it('无权限时返回 false', async () => {
+        it("无权限时返回 false", async () => {
             mockRedis.sismember = mock(() => Promise.resolve(false));
 
-            const result = await cacheHelper.checkRolePermission('user', 'POST/api/admin/del');
+            const result = await cacheHelper.checkRolePermission("user", "POST/api/admin/del");
 
             expect(result).toBe(false);
         });
     });
 
-    describe('deleteRolePermissions', () => {
-        it('删除成功返回 true', async () => {
+    describe("deleteRolePermissions", () => {
+        it("删除成功返回 true", async () => {
             mockRedis.del = mock(() => Promise.resolve(1));
 
-            const result = await cacheHelper.deleteRolePermissions('admin');
+            const result = await cacheHelper.deleteRolePermissions("admin");
 
-            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis('admin'));
+            expect(mockRedis.del).toHaveBeenCalledWith(RedisKeys.roleApis("admin"));
             expect(result).toBe(true);
         });
 
-        it('不存在时返回 false', async () => {
+        it("不存在时返回 false", async () => {
             mockRedis.del = mock(() => Promise.resolve(0));
 
-            const result = await cacheHelper.deleteRolePermissions('unknown');
+            const result = await cacheHelper.deleteRolePermissions("unknown");
 
             expect(result).toBe(false);
         });
     });
 
-    describe('cacheAll', () => {
-        it('按顺序调用三个缓存方法', async () => {
+    describe("cacheAll", () => {
+        it("按顺序调用三个缓存方法", async () => {
             const callOrder: string[] = [];
 
             // 使用 spy 记录调用顺序
@@ -330,21 +338,21 @@ describe('CacheHelper', () => {
             const originalRebuildRoleApiPermissions = cacheHelper.rebuildRoleApiPermissions.bind(cacheHelper);
 
             cacheHelper.cacheApis = async () => {
-                callOrder.push('apis');
+                callOrder.push("apis");
                 await originalCacheApis();
             };
             cacheHelper.cacheMenus = async () => {
-                callOrder.push('menus');
+                callOrder.push("menus");
                 await originalCacheMenus();
             };
             cacheHelper.rebuildRoleApiPermissions = async () => {
-                callOrder.push('permissions');
+                callOrder.push("permissions");
                 await originalRebuildRoleApiPermissions();
             };
 
             await cacheHelper.cacheAll();
 
-            expect(callOrder).toEqual(['apis', 'menus', 'permissions']);
+            expect(callOrder).toEqual(["apis", "menus", "permissions"]);
         });
     });
 });

@@ -55,8 +55,8 @@
                         </div>
                     </t-upload>
                     <div class="user-info">
-                        <span class="user-name">{{ $Data.userInfo.nickname || '管理员' }}</span>
-                        <span class="user-role">{{ $Data.userInfo.role || '超级管理员' }}</span>
+                        <span class="user-name">{{ $Data.userInfo.nickname || "管理员" }}</span>
+                        <span class="user-role">{{ $Data.userInfo.role || "超级管理员" }}</span>
                     </div>
                     <t-button theme="default" variant="text" size="small" @click="$Method.handleLogout">
                         <template #icon>
@@ -75,9 +75,9 @@
 </template>
 
 <script setup>
-import { arrayToTree } from 'befly-vite/utils/arrayToTree';
+import { arrayToTree } from "befly-vite/utils/arrayToTree";
 
-import { confirmAndRun } from '@/utils/confirmAndRun';
+import { confirmAndRun } from "@/utils/confirmAndRun";
 
 const router = useRouter();
 const route = useRoute();
@@ -92,11 +92,11 @@ const $Data = $ref({
     userMenus: [],
     userMenusFlat: [], // 一维菜单数据
     expandedKeys: [],
-    currentMenuKey: '',
+    currentMenuKey: "",
     userInfo: {
-        nickname: '管理员',
-        role: '超级管理员',
-        avatar: '' // 用户头像
+        nickname: "管理员",
+        role: "超级管理员",
+        avatar: "" // 用户头像
     }
 });
 
@@ -105,13 +105,13 @@ const $Method = {
     // 获取用户菜单权限
     async fetchUserMenus() {
         try {
-            const { data } = await $Http('/addon/admin/menu/all');
+            const { data } = await $Http("/addon/admin/menu/all");
             // 保存一维数据（data 是 { lists: [] } 格式）
             $Data.userMenusFlat = data.lists || [];
             $Data.userMenus = arrayToTree(data.lists || []);
             $Method.setActiveMenu();
         } catch (error) {
-            MessagePlugin.error('获取用户菜单失败');
+            MessagePlugin.error("获取用户菜单失败");
         }
     },
 
@@ -156,27 +156,27 @@ const $Method = {
     // 处理退出登录
     handleLogout() {
         confirmAndRun({
-            header: '确认退出登录',
-            body: '确定要退出登录吗？',
-            status: 'warning',
+            header: "确认退出登录",
+            body: "确定要退出登录吗？",
+            status: "warning",
             onConfirm: async () => {
-                $Storage.local.remove('token');
-                await router.push('/internal/login');
-                MessagePlugin.success('退出成功');
+                $Storage.local.remove("token");
+                await router.push("/internal/login");
+                MessagePlugin.success("退出成功");
             }
         });
     },
 
     // 处理系统设置
     handleSettings() {
-        router.push('/addon/admin/settings');
+        router.push("/addon/admin/settings");
     },
 
     // 头像上传成功
     onAvatarUploadSuccess(res) {
         if (res.response?.code === 0 && res.response?.data?.url) {
             $Data.userInfo.avatar = res.response.data.url;
-            MessagePlugin.success('头像上传成功');
+            MessagePlugin.success("头像上传成功");
             // TODO: 可以调用接口保存用户头像
         }
     }
@@ -262,7 +262,7 @@ $Method.fetchUserMenus();
                         font-weight: var(--font-weight-medium);
 
                         &::before {
-                            content: '';
+                            content: "";
                             position: absolute;
                             left: 0;
                             top: 50%;

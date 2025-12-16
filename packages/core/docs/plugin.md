@@ -68,11 +68,11 @@ Befly 插件系统是框架的核心扩展机制，允许开发者封装和复�
 ### 基础结构
 
 ```typescript
-import type { Plugin } from 'befly/types/plugin';
+import type { Plugin } from "befly/types/plugin";
 
 const plugin: Plugin = {
     // 依赖的插件列表（可选）
-    after: ['logger', 'db'],
+    after: ["logger", "db"],
 
     // 初始化函数（必填）
     handler: (befly) => {
@@ -176,7 +176,7 @@ interface Plugin {
 ```typescript
 // redis.ts - 依赖 logger
 const plugin: Plugin = {
-    after: ['logger'], // 在 logger 插件之后初始化
+    after: ["logger"], // 在 logger 插件之后初始化
     handler: () => {
         /* ... */
     }
@@ -212,10 +212,10 @@ const loggerPlugin: Plugin = {
 **使用方式**：
 
 ```typescript
-befly.logger.info('信息日志');
-befly.logger.warn('警告日志');
-befly.logger.error({ err: error }, '错误日志');
-befly.logger.debug('调试日志');
+befly.logger.info("信息日志");
+befly.logger.warn("警告日志");
+befly.logger.error({ err: error }, "错误日志");
+befly.logger.debug("调试日志");
 ```
 
 ---
@@ -250,7 +250,7 @@ const redisConfig = befly.config.redis;
 ```typescript
 // 插件源码
 const dbPlugin: Plugin = {
-    after: ['logger'],
+    after: ["logger"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
         const sql = await Connect.connectSql();
         return new DbHelper(befly, sql);
@@ -262,16 +262,16 @@ const dbPlugin: Plugin = {
 
 ```typescript
 // 查询
-const user = await befly.db.getOne({ table: 'user', where: { id: 1 } });
+const user = await befly.db.getOne({ table: "user", where: { id: 1 } });
 
 // 插入
-const id = await befly.db.insData({ table: 'user', data: { name: '张三' } });
+const id = await befly.db.insData({ table: "user", data: { name: "张三" } });
 
 // 更新
-await befly.db.updData({ table: 'user', data: { name: '李四' }, where: { id: 1 } });
+await befly.db.updData({ table: "user", data: { name: "李四" }, where: { id: 1 } });
 
 // 删除
-await befly.db.delData({ table: 'user', where: { id: 1 } });
+await befly.db.delData({ table: "user", where: { id: 1 } });
 ```
 
 > 详细用法请参考 [database.md](./database.md)
@@ -285,7 +285,7 @@ await befly.db.delData({ table: 'user', where: { id: 1 } });
 ```typescript
 // 插件源码
 const redisPlugin: Plugin = {
-    after: ['logger'],
+    after: ["logger"],
     async handler(): Promise<RedisHelper | Record<string, never>> {
         await Connect.connectRedis();
         return new RedisHelper(redisConfig.prefix);
@@ -297,16 +297,16 @@ const redisPlugin: Plugin = {
 
 ```typescript
 // 字符串操作
-await befly.redis.setString('key', 'value', 3600);
-const value = await befly.redis.getString('key');
+await befly.redis.setString("key", "value", 3600);
+const value = await befly.redis.getString("key");
 
 // 对象操作
-await befly.redis.setObject('user:1', { name: '张三' });
-const user = await befly.redis.getObject('user:1');
+await befly.redis.setObject("user:1", { name: "张三" });
+const user = await befly.redis.getObject("user:1");
 
 // 集合操作
-await befly.redis.sadd('set:key', 'member1', 'member2');
-const isMember = await befly.redis.sismember('set:key', 'member1');
+await befly.redis.sadd("set:key", "member1", "member2");
+const isMember = await befly.redis.sismember("set:key", "member1");
 ```
 
 > 详细用法请参考 [redis.md](./redis.md)
@@ -335,7 +335,7 @@ const token = await befly.jwt.sign(
         id: user.id,
         roleCode: user.roleCode
     },
-    { expiresIn: '7d' }
+    { expiresIn: "7d" }
 );
 
 // 验证 Token
@@ -361,13 +361,13 @@ const plugin: Plugin = {
 
 ```typescript
 // 密码哈希
-const hashedPassword = await befly.cipher.hashPassword('123456');
+const hashedPassword = await befly.cipher.hashPassword("123456");
 
 // 密码验证
-const isValid = await befly.cipher.verifyPassword('123456', hashedPassword);
+const isValid = await befly.cipher.verifyPassword("123456", hashedPassword);
 
 // AES 加密
-const encrypted = befly.cipher.encrypt('敏感数据');
+const encrypted = befly.cipher.encrypt("敏感数据");
 
 // AES 解密
 const decrypted = befly.cipher.decrypt(encrypted);
@@ -393,7 +393,7 @@ const cachePlugin: Plugin = {
 
 ```typescript
 // 刷新角色权限缓存
-await befly.cache.refreshRoleApis('admin');
+await befly.cache.refreshRoleApis("admin");
 
 // 获取菜单缓存
 const menus = await befly.cache.getMenus();
@@ -424,11 +424,11 @@ const plugin: Plugin = {
 
 ```typescript
 // 成功响应
-return befly.tool.Yes('操作成功', { id: 1 });
+return befly.tool.Yes("操作成功", { id: 1 });
 // 返回: { code: 0, msg: '操作成功', data: { id: 1 } }
 
 // 失败响应
-return befly.tool.No('操作失败');
+return befly.tool.No("操作失败");
 // 返回: { code: 1, msg: '操作失败', data: null }
 ```
 
@@ -440,7 +440,7 @@ return befly.tool.No('操作失败');
 
 ```typescript
 // plugins/hello.ts
-import type { Plugin } from 'befly/types/plugin';
+import type { Plugin } from "befly/types/plugin";
 
 const plugin: Plugin = {
     handler: () => {
@@ -457,7 +457,7 @@ export default plugin;
 
 ```typescript
 // 项目插件名为 app_hello
-const greeting = befly.app_hello.sayHello('World');
+const greeting = befly.app_hello.sayHello("World");
 // 返回: "Hello, World!"
 ```
 
@@ -467,11 +467,11 @@ const greeting = befly.app_hello.sayHello('World');
 
 ```typescript
 // plugins/userService.ts
-import type { Plugin } from 'befly/types/plugin';
-import type { BeflyContext } from 'befly/types/befly';
+import type { Plugin } from "befly/types/plugin";
+import type { BeflyContext } from "befly/types/befly";
 
 const plugin: Plugin = {
-    after: ['db', 'redis'], // 依赖数据库和 Redis
+    after: ["db", "redis"], // 依赖数据库和 Redis
     handler: (befly: BeflyContext) => {
         return {
             async getUser(id: number) {
@@ -482,7 +482,7 @@ const plugin: Plugin = {
                 if (!user) {
                     // 缓存不存在，从数据库查询
                     user = await befly.db.getOne({
-                        table: 'user',
+                        table: "user",
                         where: { id: id }
                     });
 
@@ -507,25 +507,25 @@ export default plugin;
 
 ```typescript
 // plugins/elastic.ts
-import type { Plugin } from 'befly/types/plugin';
-import { Client } from '@elastic/elasticsearch';
+import type { Plugin } from "befly/types/plugin";
+import { Client } from "@elastic/elasticsearch";
 
 const plugin: Plugin = {
-    after: ['logger', 'config'],
+    after: ["logger", "config"],
     async handler(befly) {
         const config = befly.config.elasticsearch || {};
 
         const client = new Client({
-            node: config.node || 'http://localhost:9200',
+            node: config.node || "http://localhost:9200",
             auth: config.auth
         });
 
         // 测试连接
         try {
             await client.ping();
-            befly.logger.info('Elasticsearch 连接成功');
+            befly.logger.info("Elasticsearch 连接成功");
         } catch (error) {
-            befly.logger.error({ err: error }, 'Elasticsearch 连接失败');
+            befly.logger.error({ err: error }, "Elasticsearch 连接失败");
             throw error;
         }
 
@@ -550,8 +550,8 @@ export default plugin;
 
 ```typescript
 // plugins/sms.ts
-import type { Plugin } from 'befly/types/plugin';
-import type { BeflyContext } from 'befly/types/befly';
+import type { Plugin } from "befly/types/plugin";
+import type { BeflyContext } from "befly/types/befly";
 
 interface SmsConfig {
     accessKeyId: string;
@@ -571,14 +571,14 @@ class SmsHelper {
 
     async send(phone: string, params: Record<string, string>) {
         // 实现短信发送逻辑
-        this.befly.logger.info({ phone: phone }, '发送短信');
+        this.befly.logger.info({ phone: phone }, "发送短信");
         // ...
         return { success: true };
     }
 }
 
 const plugin: Plugin = {
-    after: ['logger', 'config'],
+    after: ["logger", "config"],
     handler: (befly: BeflyContext) => {
         const smsConfig = befly.config.sms || {};
         return new SmsHelper(befly, smsConfig);
@@ -596,10 +596,10 @@ export default plugin;
 
 ```typescript
 // addonAdmin/plugins/email.ts
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
-import type { Plugin } from 'befly/types/plugin';
-import type { BeflyContext } from 'befly/types/befly';
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
+import type { Plugin } from "befly/types/plugin";
+import type { BeflyContext } from "befly/types/befly";
 
 /** 邮件配置 */
 interface EmailConfig {
@@ -653,7 +653,7 @@ class EmailHelper {
 
     async send(options: SendEmailOptions): Promise<SendEmailResult> {
         if (!this.transporter) {
-            return { success: false, error: '邮件服务未配置' };
+            return { success: false, error: "邮件服务未配置" };
         }
 
         try {
@@ -686,7 +686,7 @@ class EmailHelper {
  * 邮件插件
  */
 const emailPlugin: Plugin = {
-    after: ['db', 'logger', 'config'],
+    after: ["db", "logger", "config"],
     async handler(befly: BeflyContext): Promise<EmailHelper> {
         const emailConfig = befly.config?.addons?.admin?.email || {};
         return new EmailHelper(befly, emailConfig);
@@ -701,15 +701,15 @@ export default emailPlugin;
 ```typescript
 // Addon 插件名为 addon_addonAdmin_email
 const result = await befly.addon_addonAdmin_email.send({
-    to: 'user@example.com',
-    subject: '验证码',
-    html: '<p>您的验证码是：123456</p>'
+    to: "user@example.com",
+    subject: "验证码",
+    html: "<p>您的验证码是：123456</p>"
 });
 
 if (result.success) {
-    return befly.tool.Yes('邮件发送成功');
+    return befly.tool.Yes("邮件发送成功");
 } else {
-    return befly.tool.No(result.error || '邮件发送失败');
+    return befly.tool.No(result.error || "邮件发送失败");
 }
 ```
 
@@ -722,22 +722,22 @@ if (result.success) {
 ```typescript
 // 在 API handler 中
 export default {
-    name: '示例接口',
+    name: "示例接口",
     handler: async (befly, ctx) => {
         // 访问内置插件
-        const user = await befly.db.getOne({ table: 'user', where: { id: 1 } });
-        befly.logger.info({ user: user }, '查询用户');
+        const user = await befly.db.getOne({ table: "user", where: { id: 1 } });
+        befly.logger.info({ user: user }, "查询用户");
 
         // 访问项目插件
-        const result = await befly.app_sms.send('13800138000', { code: '123456' });
+        const result = await befly.app_sms.send("13800138000", { code: "123456" });
 
         // 访问 Addon 插件
         await befly.addon_addonAdmin_email.send({
-            to: 'admin@example.com',
-            subject: '通知'
+            to: "admin@example.com",
+            subject: "通知"
         });
 
-        return befly.tool.Yes('成功');
+        return befly.tool.Yes("成功");
     }
 };
 ```
@@ -767,8 +767,8 @@ Addon 插件是组件包中的扩展功能，用于为 Addon 提供特定的服�
 
 ```typescript
 // packages/addonPay/plugins/wechat.ts
-import type { Plugin } from 'befly/types/plugin';
-import type { BeflyContext } from 'befly/types/befly';
+import type { Plugin } from "befly/types/plugin";
+import type { BeflyContext } from "befly/types/befly";
 
 class WechatPayHelper {
     private befly: BeflyContext;
@@ -782,24 +782,24 @@ class WechatPayHelper {
     async createOrder(params: { orderId: string; amount: number; description: string }) {
         // 调用微信支付 API 创建订单
         // ...
-        return { prepayId: 'xxx', nonceStr: 'xxx' };
+        return { prepayId: "xxx", nonceStr: "xxx" };
     }
 
     async queryOrder(orderId: string) {
         // 查询订单状态
         // ...
-        return { status: 'SUCCESS' };
+        return { status: "SUCCESS" };
     }
 
     async refund(orderId: string, amount: number) {
         // 申请退款
         // ...
-        return { refundId: 'xxx' };
+        return { refundId: "xxx" };
     }
 }
 
 const plugin: Plugin = {
-    after: ['logger', 'config'],
+    after: ["logger", "config"],
     handler: (befly: BeflyContext) => {
         return new WechatPayHelper(befly);
     }
@@ -813,9 +813,9 @@ export default plugin;
 ```typescript
 // 插件名：addon_addonPay_wechat
 const order = await befly.addon_addonPay_wechat.createOrder({
-    orderId: '202312010001',
+    orderId: "202312010001",
     amount: 100,
-    description: '商品购买'
+    description: "商品购买"
 });
 ```
 
@@ -849,7 +849,7 @@ const plugin: Plugin = {
 ```typescript
 // ✅ 推荐：明确声明所有依赖
 const plugin: Plugin = {
-    after: ['logger', 'db', 'redis'], // 声明所有使用的插件
+    after: ["logger", "db", "redis"], // 声明所有使用的插件
     handler: (befly) => {
         /* ... */
     }
@@ -875,7 +875,7 @@ const plugin: Plugin = {
             const client = await connectToService();
             return client;
         } catch (error) {
-            befly.logger.error({ err: error }, '服务连接失败');
+            befly.logger.error({ err: error }, "服务连接失败");
             throw error; // 抛出错误会终止应用启动
         }
     }
@@ -891,7 +891,7 @@ const plugin: Plugin = {
         const config = befly.config.myService;
 
         if (!config?.apiKey) {
-            throw new Error('myService.apiKey 配置缺失');
+            throw new Error("myService.apiKey 配置缺失");
         }
 
         return new MyService(config);
@@ -936,11 +936,11 @@ class DatabasePool {
 
 ```typescript
 const plugin: Plugin = {
-    after: ['db'], // 声明依赖
+    after: ["db"], // 声明依赖
     handler: (befly) => {
         return {
             async getUser(id: number) {
-                return befly.db.getOne({ table: 'user', where: { id: id } });
+                return befly.db.getOne({ table: "user", where: { id: id } });
             }
         };
     }
@@ -959,20 +959,20 @@ const plugin: Plugin = {
 
 ```typescript
 // tests/myPlugin.test.ts
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect } from "bun:test";
 
-describe('MyPlugin', () => {
-    test('应该正确初始化', async () => {
+describe("MyPlugin", () => {
+    test("应该正确初始化", async () => {
         const mockBefly = {
-            config: { myService: { apiKey: 'test' } },
+            config: { myService: { apiKey: "test" } },
             logger: { info: () => {}, error: () => {} }
         };
 
-        const plugin = (await import('../plugins/myPlugin.ts')).default;
+        const plugin = (await import("../plugins/myPlugin.ts")).default;
         const instance = await plugin.handler(mockBefly);
 
         expect(instance).toBeDefined();
-        expect(typeof instance.doSomething).toBe('function');
+        expect(typeof instance.doSomething).toBe("function");
     });
 });
 ```

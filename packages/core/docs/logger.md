@@ -87,27 +87,27 @@ interface LoggerConfig {
 ### 导入 Logger
 
 ```typescript
-import { Logger } from '../lib/logger.js';
+import { Logger } from "../lib/logger.js";
 ```
 
 ### 日志方法
 
 ```typescript
 // 信息日志
-Logger.info('用户登录成功');
-Logger.info({ userId: 123 }, '用户登录成功');
+Logger.info("用户登录成功");
+Logger.info({ userId: 123 }, "用户登录成功");
 
 // 警告日志
-Logger.warn('配置项已弃用');
-Logger.warn({ config: 'oldOption' }, '配置项已弃用');
+Logger.warn("配置项已弃用");
+Logger.warn({ config: "oldOption" }, "配置项已弃用");
 
 // 错误日志
-Logger.error('数据库连接失败');
-Logger.error({ err: error }, '数据库连接失败');
+Logger.error("数据库连接失败");
+Logger.error({ err: error }, "数据库连接失败");
 
 // 调试日志（仅 debug=1 时输出）
-Logger.debug('SQL 查询');
-Logger.debug({ sql: 'SELECT * FROM user', params: [] }, 'SQL 查询');
+Logger.debug("SQL 查询");
+Logger.debug({ sql: "SELECT * FROM user", params: [] }, "SQL 查询");
 ```
 
 ### 带上下文的日志
@@ -116,7 +116,7 @@ pino 风格：第一个参数为对象时作为上下文，第二个参数为消
 
 ```typescript
 // 推荐：上下文 + 消息
-Logger.info({ userId: 123, action: 'login' }, '用户登录成功');
+Logger.info({ userId: 123, action: "login" }, "用户登录成功");
 
 // 输出：
 // {"level":30,"time":1234567890,"userId":123,"action":"login","msg":"用户登录成功"}
@@ -125,7 +125,7 @@ Logger.info({ userId: 123, action: 'login' }, '用户登录成功');
 try {
     await riskyOperation();
 } catch (error) {
-    Logger.error({ err: error }, '操作失败');
+    Logger.error({ err: error }, "操作失败");
 }
 ```
 
@@ -135,7 +135,7 @@ try {
 // 手动配置（通常由插件自动完成）
 Logger.configure({
     debug: 1,
-    dir: './custom-logs',
+    dir: "./custom-logs",
     console: 1,
     maxSize: 20
 });
@@ -163,13 +163,13 @@ Logger.configure({
 
 ```typescript
 // debug=0 时
-Logger.debug('这条不会输出'); // ❌ 被过滤
-Logger.info('这条会输出'); // ✅
-Logger.error('这条会输出'); // ✅
+Logger.debug("这条不会输出"); // ❌ 被过滤
+Logger.info("这条会输出"); // ✅
+Logger.error("这条会输出"); // ✅
 
 // debug=1 时
-Logger.debug('这条会输出'); // ✅
-Logger.info('这条会输出'); // ✅
+Logger.debug("这条会输出"); // ✅
+Logger.info("这条会输出"); // ✅
 ```
 
 ---
@@ -284,11 +284,11 @@ const loggerPlugin: Plugin = {
 ```typescript
 // 在 API handler 中
 export default {
-    name: '示例接口',
+    name: "示例接口",
     handler: async (befly, ctx) => {
-        befly.logger.info('处理请求');
-        befly.logger.debug({ body: ctx.body }, '请求参数');
-        return Yes('成功');
+        befly.logger.info("处理请求");
+        befly.logger.debug({ body: ctx.body }, "请求参数");
+        return Yes("成功");
     }
 } as ApiRoute;
 ```
@@ -297,9 +297,9 @@ export default {
 
 ```typescript
 // 直接导入使用
-import { Logger } from '../lib/logger.js';
+import { Logger } from "../lib/logger.js";
 
-Logger.info('直接使用');
+Logger.info("直接使用");
 ```
 
 ---
@@ -311,17 +311,17 @@ Logger.info('直接使用');
 测试时可以设置 Mock 实例：
 
 ```typescript
-import { Logger, setMockLogger } from '../lib/logger.js';
-import pino from 'pino';
+import { Logger, setMockLogger } from "../lib/logger.js";
+import pino from "pino";
 
 // 创建 mock logger
-const mockLogger = pino({ level: 'silent' });
+const mockLogger = pino({ level: "silent" });
 
 // 设置 mock
 setMockLogger(mockLogger);
 
 // 测试代码...
-Logger.info('这条日志会被 mock 处理');
+Logger.info("这条日志会被 mock 处理");
 
 // 清除 mock
 setMockLogger(null);
@@ -330,17 +330,17 @@ setMockLogger(null);
 ### 测试示例
 
 ```typescript
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Logger, setMockLogger } from '../lib/logger.js';
-import pino from 'pino';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Logger, setMockLogger } from "../lib/logger.js";
+import pino from "pino";
 
-describe('Logger', () => {
+describe("Logger", () => {
     let mockLogger: pino.Logger;
     let infoSpy: any;
 
     beforeEach(() => {
-        mockLogger = pino({ level: 'debug' });
-        infoSpy = vi.spyOn(mockLogger, 'info');
+        mockLogger = pino({ level: "debug" });
+        infoSpy = vi.spyOn(mockLogger, "info");
         setMockLogger(mockLogger);
     });
 
@@ -348,9 +348,9 @@ describe('Logger', () => {
         setMockLogger(null);
     });
 
-    it('should log info message', () => {
-        Logger.info('test message');
-        expect(infoSpy).toHaveBeenCalledWith('test message');
+    it("should log info message", () => {
+        Logger.info("test message");
+        expect(infoSpy).toHaveBeenCalledWith("test message");
     });
 });
 ```
@@ -363,7 +363,7 @@ describe('Logger', () => {
 
 ```typescript
 // ✅ 推荐：结构化上下文
-Logger.info({ userId: 123, action: 'login', ip: '192.168.1.1' }, '用户登录');
+Logger.info({ userId: 123, action: "login", ip: "192.168.1.1" }, "用户登录");
 
 // ❌ 避免：字符串拼接
 Logger.info(`用户 ${userId} 从 ${ip} 登录`);
@@ -376,7 +376,7 @@ try {
     await riskyOperation();
 } catch (error) {
     // ✅ 使用 err 属性保留完整错误信息
-    Logger.error({ err: error }, '操作失败');
+    Logger.error({ err: error }, "操作失败");
 
     // ❌ 避免：只记录消息
     Logger.error(`操作失败: ${error.message}`);
@@ -387,26 +387,26 @@ try {
 
 ```typescript
 // debug: 开发调试信息
-Logger.debug({ sql: query, params: params }, 'SQL 查询');
+Logger.debug({ sql: query, params: params }, "SQL 查询");
 
 // info: 正常业务操作
-Logger.info({ userId: 123 }, '用户登录成功');
+Logger.info({ userId: 123 }, "用户登录成功");
 
 // warn: 潜在问题，但不影响功能
-Logger.warn({ config: 'deprecated' }, '配置项已弃用');
+Logger.warn({ config: "deprecated" }, "配置项已弃用");
 
 // error: 操作失败
-Logger.error({ err: error }, '数据库连接失败');
+Logger.error({ err: error }, "数据库连接失败");
 ```
 
 ### 4. 不要记录敏感信息
 
 ```typescript
 // ❌ 避免：记录密码、token 等
-Logger.info({ password: user.password }, '用户信息');
+Logger.info({ password: user.password }, "用户信息");
 
 // ✅ 推荐：只记录必要信息
-Logger.info({ userId: user.id, email: user.email }, '用户信息');
+Logger.info({ userId: user.id, email: user.email }, "用户信息");
 ```
 
 ### 5. 生产环境关闭控制台
@@ -464,11 +464,11 @@ A: 可以创建 child logger：
 
 ```typescript
 const childLogger = getLogger().child({
-    service: 'user-service',
-    version: '1.0.0'
+    service: "user-service",
+    version: "1.0.0"
 });
 
-childLogger.info('所有日志都会包含 service 和 version');
+childLogger.info("所有日志都会包含 service 和 version");
 ```
 
 ### Q: 日志没有输出怎么排查？
@@ -485,8 +485,8 @@ A: 检查以下几点：
 A: 使用 `setMockLogger` 设置 mock 实例，然后用 spy 捕获调用：
 
 ```typescript
-const mockLogger = pino({ level: 'debug' });
-const spy = vi.spyOn(mockLogger, 'info');
+const mockLogger = pino({ level: "debug" });
+const spy = vi.spyOn(mockLogger, "info");
 setMockLogger(mockLogger);
 
 // 执行测试...

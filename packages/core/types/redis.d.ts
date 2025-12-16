@@ -2,7 +2,7 @@
  * Redis 相关类型定义
  */
 
-import { RedisClient as BunRedisClient } from 'bun';
+import { RedisClient as BunRedisClient } from "bun";
 
 /**
  * Redis 客户端类型

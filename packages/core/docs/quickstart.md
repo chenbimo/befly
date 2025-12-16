@@ -74,39 +74,39 @@ my-api/
 在 `apis/user/` 目录下创建 `login.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '用户登录',
-    method: 'POST',
+    name: "用户登录",
+    method: "POST",
     auth: false, // 不需要登录
     fields: {
-        email: { name: '邮箱', type: 'string', min: 5, max: 100, regexp: '@email' },
-        password: { name: '密码', type: 'string', min: 6, max: 100 }
+        email: { name: "邮箱", type: "string", min: 5, max: 100, regexp: "@email" },
+        password: { name: "密码", type: "string", min: 6, max: 100 }
     },
-    required: ['email', 'password'],
+    required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 查询用户
         const user = await befly.db.getDetail({
-            table: 'user',
-            columns: ['id', 'email', 'password', 'nickname'],
+            table: "user",
+            columns: ["id", "email", "password", "nickname"],
             where: { email: ctx.body.email }
         });
 
         if (!user?.id) {
-            return No('用户不存在');
+            return No("用户不存在");
         }
 
         // 验证密码
         const isValid = await befly.cipher.verifyPassword(ctx.body.password, user.password);
         if (!isValid) {
-            return No('密码错误');
+            return No("密码错误");
         }
 
         // 签发令牌
         const token = befly.jwt.sign({ userId: user.id });
 
-        return Yes('登录成功', { token: token, user: { id: user.id, nickname: user.nickname } });
+        return Yes("登录成功", { token: token, user: { id: user.id, nickname: user.nickname } });
     }
 } as ApiRoute;
 ```

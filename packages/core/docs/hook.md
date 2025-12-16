@@ -72,7 +72,7 @@ Befly Hook 系统是请求处理的中间件机制，采用串联模式依次执
 ### 基础结构
 
 ```typescript
-import type { Hook } from 'befly/types/hook';
+import type { Hook } from "befly/types/hook";
 
 const hook: Hook = {
     // 执行顺序（数字越小越先执行）
@@ -208,12 +208,12 @@ const hook: Hook = {
 
         // 合并默认配置和用户配置
         const defaultConfig: CorsConfig = {
-            origin: '*',
-            methods: 'GET, POST, PUT, DELETE, OPTIONS',
-            allowedHeaders: 'Content-Type, Authorization, authorization, token',
-            exposedHeaders: 'Content-Range, X-Content-Range, Authorization, authorization, token',
+            origin: "*",
+            methods: "GET, POST, PUT, DELETE, OPTIONS",
+            allowedHeaders: "Content-Type, Authorization, authorization, token",
+            exposedHeaders: "Content-Range, X-Content-Range, Authorization, authorization, token",
             maxAge: 86400,
-            credentials: 'true'
+            credentials: "true"
         };
 
         const corsConfig = { ...defaultConfig, ...(beflyConfig.cors || {}) };
@@ -222,7 +222,7 @@ const hook: Hook = {
         ctx.corsHeaders = setCorsOptions(req, corsConfig);
 
         // 处理 OPTIONS 预检请求
-        if (req.method === 'OPTIONS') {
+        if (req.method === "OPTIONS") {
             ctx.response = new Response(null, {
                 status: 204,
                 headers: ctx.corsHeaders
@@ -259,9 +259,9 @@ const hook: Hook = {
 const hook: Hook = {
     order: 3,
     handler: async (befly, ctx) => {
-        const authHeader = ctx.req.headers.get('authorization');
+        const authHeader = ctx.req.headers.get("authorization");
 
-        if (authHeader && authHeader.startsWith('Bearer ')) {
+        if (authHeader && authHeader.startsWith("Bearer ")) {
             const token = authHeader.substring(7);
 
             try {
@@ -297,7 +297,7 @@ const hook: Hook = {
         if (!ctx.api) return;
 
         // GET 请求：解析查询参数
-        if (ctx.req.method === 'GET') {
+        if (ctx.req.method === "GET") {
             const url = new URL(ctx.req.url);
             const params = Object.fromEntries(url.searchParams);
 
@@ -310,17 +310,17 @@ const hook: Hook = {
             }
         }
         // POST 请求：解析 JSON/XML
-        else if (ctx.req.method === 'POST') {
-            const contentType = ctx.req.headers.get('content-type') || '';
+        else if (ctx.req.method === "POST") {
+            const contentType = ctx.req.headers.get("content-type") || "";
 
-            if (contentType.includes('application/json')) {
+            if (contentType.includes("application/json")) {
                 const body = await ctx.req.json();
                 // 过滤字段...
                 ctx.body = pickFields(body, Object.keys(ctx.api.fields));
-            } else if (contentType.includes('application/xml')) {
+            } else if (contentType.includes("application/xml")) {
                 // XML 解析...
             } else {
-                ctx.response = ErrorResponse(ctx, '无效的请求参数格式');
+                ctx.response = ErrorResponse(ctx, "无效的请求参数格式");
                 return;
             }
         }
@@ -350,9 +350,9 @@ const hook: Hook = {
             requestId: ctx.requestId,
             route: ctx.route,
             ip: ctx.ip,
-            userId: ctx.user?.id || '',
-            nickname: ctx.user?.nickname || '',
-            roleCode: ctx.user?.roleCode || ''
+            userId: ctx.user?.id || "",
+            nickname: ctx.user?.nickname || "",
+            roleCode: ctx.user?.roleCode || ""
         };
 
         // 截断大请求体
@@ -360,7 +360,7 @@ const hook: Hook = {
             logData.body = truncateBody(ctx.body);
         }
 
-        Logger.info(logData, '请求日志');
+        Logger.info(logData, "请求日志");
     }
 };
 ```
@@ -388,7 +388,7 @@ const hook: Hook = {
         const result = Validator.validate(ctx.body, ctx.api.fields, ctx.api.required || []);
 
         if (result.code !== 0) {
-            ctx.response = ErrorResponse(ctx, result.firstError || '参数验证失败', 1, null, result.fieldErrors);
+            ctx.response = ErrorResponse(ctx, result.firstError || "参数验证失败", 1, null, result.fieldErrors);
             return;
         }
     }
@@ -422,12 +422,12 @@ const hook: Hook = {
 
         // 2. 用户未登录
         if (!ctx.user || !ctx.user.id) {
-            ctx.response = ErrorResponse(ctx, '未登录');
+            ctx.response = ErrorResponse(ctx, "未登录");
             return;
         }
 
         // 3. 开发者权限（最高权限）
-        if (ctx.user.roleCode === 'dev') {
+        if (ctx.user.roleCode === "dev") {
             return;
         }
 
@@ -451,7 +451,7 @@ const hook: Hook = {
         }
 
         if (!hasPermission) {
-            ctx.response = ErrorResponse(ctx, '无权访问');
+            ctx.response = ErrorResponse(ctx, "无权访问");
             return;
         }
     }
@@ -473,12 +473,12 @@ const hook: Hook = {
 
 ```typescript
 // hooks/myHook.ts（项目钩子名：app_myHook）
-import type { Hook } from 'befly/types/hook';
+import type { Hook } from "befly/types/hook";
 
 const hook: Hook = {
     order: 10,
     handler: async (befly, ctx) => {
-        befly.logger.info({ route: ctx.route }, '自定义钩子执行');
+        befly.logger.info({ route: ctx.route }, "自定义钩子执行");
     }
 };
 
@@ -493,17 +493,17 @@ export default hook;
 
 ```typescript
 // hooks/blacklist.ts
-import type { Hook } from 'befly/types/hook';
-import { ErrorResponse } from 'befly/util';
+import type { Hook } from "befly/types/hook";
+import { ErrorResponse } from "befly/util";
 
 const hook: Hook = {
     order: 1, // 最先执行
     handler: async (befly, ctx) => {
         // IP 黑名单检查
-        const blacklist = ['192.168.1.100', '10.0.0.1'];
+        const blacklist = ["192.168.1.100", "10.0.0.1"];
 
         if (blacklist.includes(ctx.ip)) {
-            ctx.response = ErrorResponse(ctx, '您的 IP 已被禁止访问', 403);
+            ctx.response = ErrorResponse(ctx, "您的 IP 已被禁止访问", 403);
             return;
         }
     }
@@ -520,8 +520,8 @@ export default hook;
 
 ```typescript
 // hooks/rateLimit.ts
-import type { Hook } from 'befly/types/hook';
-import { ErrorResponse } from 'befly/util';
+import type { Hook } from "befly/types/hook";
+import { ErrorResponse } from "befly/util";
 
 const hook: Hook = {
     order: 7,
@@ -545,7 +545,7 @@ const hook: Hook = {
 
         // 超过限制
         if (count > limit) {
-            ctx.response = ErrorResponse(ctx, '请求过于频繁，请稍后再试', 429);
+            ctx.response = ErrorResponse(ctx, "请求过于频繁，请稍后再试", 429);
             return;
         }
     }
@@ -562,22 +562,22 @@ export default hook;
 
 ```typescript
 // hooks/audit.ts
-import type { Hook } from 'befly/types/hook';
+import type { Hook } from "befly/types/hook";
 
 const hook: Hook = {
     order: 100, // 在 handler 执行后
     handler: async (befly, ctx) => {
         // 只记录写操作
-        if (!ctx.api || ctx.req.method === 'GET') return;
+        if (!ctx.api || ctx.req.method === "GET") return;
         if (!ctx.user?.id) return;
 
         // 记录审计日志
         try {
             await befly.db.insData({
-                table: 'audit_log',
+                table: "audit_log",
                 data: {
                     userId: ctx.user.id,
-                    username: ctx.user.username || '',
+                    username: ctx.user.username || "",
                     route: ctx.route,
                     method: ctx.req.method,
                     ip: ctx.ip,
@@ -586,7 +586,7 @@ const hook: Hook = {
                 }
             });
         } catch (error) {
-            befly.logger.error({ err: error }, '审计日志记录失败');
+            befly.logger.error({ err: error }, "审计日志记录失败");
         }
     }
 };
@@ -601,7 +601,7 @@ export default hook;
 设置 `ctx.response` 可以中断后续 Hook 和 API Handler 的执行：
 
 ```typescript
-import { ErrorResponse } from 'befly/util';
+import { ErrorResponse } from "befly/util";
 
 const hook: Hook = {
     order: 5,
@@ -609,7 +609,7 @@ const hook: Hook = {
         // 条件判断
         if (someCondition) {
             // 设置 response 中断请求
-            ctx.response = ErrorResponse(ctx, '请求被拦截', 1);
+            ctx.response = ErrorResponse(ctx, "请求被拦截", 1);
             return; // 必须 return
         }
 
@@ -689,7 +689,7 @@ const hook: Hook = {
         try {
             await someOperation();
         } catch (error) {
-            befly.logger.error({ err: error }, '钩子执行失败');
+            befly.logger.error({ err: error }, "钩子执行失败");
             // 根据业务决定是否中断请求
         }
     }
@@ -738,8 +738,8 @@ const hook: Hook = {
         await befly.db.getOne({
             /* ... */
         });
-        await befly.redis.get('key');
-        befly.logger.info('日志');
+        await befly.redis.get("key");
+        befly.logger.info("日志");
     }
 };
 ```
@@ -750,7 +750,7 @@ const hook: Hook = {
 
 ```typescript
 // 钩子 A（order: 10）
-ctx.customData = { key: 'value' };
+ctx.customData = { key: "value" };
 
 // 钩子 B（order: 20）
 const data = ctx.customData;

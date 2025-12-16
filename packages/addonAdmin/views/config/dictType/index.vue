@@ -59,42 +59,42 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Input as TInput, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
-import ILucidePlus from '~icons/lucide/plus';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucideSearch from '~icons/lucide/search';
-import ILucidePencil from '~icons/lucide/pencil';
-import ILucideTrash2 from '~icons/lucide/trash-2';
-import ILucideChevronDown from '~icons/lucide/chevron-down';
-import EditDialog from './components/edit.vue';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
-import { confirmDeleteAndRun } from '@/utils/confirmAndRun';
+import { Button as TButton, Table as TTable, Input as TInput, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from "tdesign-vue-next";
+import ILucidePlus from "~icons/lucide/plus";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import ILucideSearch from "~icons/lucide/search";
+import ILucidePencil from "~icons/lucide/pencil";
+import ILucideTrash2 from "~icons/lucide/trash-2";
+import ILucideChevronDown from "~icons/lucide/chevron-down";
+import EditDialog from "./components/edit.vue";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
+import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
 const $Data = $ref({
     tableData: [],
     loading: false,
     activeRowKeys: [],
     currentRow: null,
-    searchKeyword: '',
+    searchKeyword: "",
     columns: withDefaultColumns([
-        { colKey: 'id', title: 'ID' },
-        { colKey: 'code', title: '类型代码' },
-        { colKey: 'name', title: '类型名称' },
-        { colKey: 'description', title: '描述' },
-        { colKey: 'sort', title: '排序' },
-        { colKey: 'operation', title: '操作' }
+        { colKey: "id", title: "ID" },
+        { colKey: "code", title: "类型代码" },
+        { colKey: "name", title: "类型名称" },
+        { colKey: "description", title: "描述" },
+        { colKey: "sort", title: "排序" },
+        { colKey: "operation", title: "操作" }
     ]),
     pagerConfig: {
         currentPage: 1,
         limit: 30,
         total: 0,
-        align: 'right',
-        layout: 'total, prev, pager, next, jumper'
+        align: "right",
+        layout: "total, prev, pager, next, jumper"
     },
     editVisible: false,
-    actionType: 'add',
+    actionType: "add",
     rowData: {}
 });
 
@@ -105,7 +105,7 @@ const $Method = {
     async apiDictTypeList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/dictType/list', {
+            const res = await $Http("/addon/admin/dictType/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit,
                 keyword: $Data.searchKeyword
@@ -121,7 +121,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }
@@ -130,7 +130,7 @@ const $Method = {
         confirmDeleteAndRun({
             displayName: `类型“${row.name}”`,
             request: async () => {
-                return await $Http('/addon/admin/dictType/del', { id: row.id });
+                return await $Http("/addon/admin/dictType/del", { id: row.id });
             },
             onSuccess: async () => {
                 await $Method.apiDictTypeList();
@@ -142,7 +142,7 @@ const $Method = {
         $Method.apiDictTypeList();
     },
     handleRefresh() {
-        $Data.searchKeyword = '';
+        $Data.searchKeyword = "";
         $Data.pagerConfig.currentPage = 1;
         $Method.apiDictTypeList();
     },
@@ -163,15 +163,15 @@ const $Method = {
         $Data.currentRow = context.currentRowData;
     },
     onAction(type, row) {
-        if (type === 'add') {
-            $Data.actionType = 'add';
+        if (type === "add") {
+            $Data.actionType = "add";
             $Data.rowData = {};
             $Data.editVisible = true;
-        } else if (type === 'upd') {
-            $Data.actionType = 'upd';
+        } else if (type === "upd") {
+            $Data.actionType = "upd";
             $Data.rowData = { ...row };
             $Data.editVisible = true;
-        } else if (type === 'del') {
+        } else if (type === "del") {
             $Method.apiDictTypeDel(row);
         }
     }

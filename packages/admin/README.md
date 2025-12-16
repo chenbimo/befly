@@ -4,26 +4,26 @@
 
 ## 技术栈
 
--   **Vue 3** - 渐进式 JavaScript 框架
--   **TDesign Vue Next** - 企业级设计体系
--   **TypeScript** - 类型安全
--   **Vite** - 下一代前端构建工具
--   **SCSS** - CSS 预处理器
--   **Vue Router** - 路由管理
--   **Pinia** - 状态管理
--   **unplugin-auto-import** - API 自动导入
--   **unplugin-vue-components** - 组件自动导入
+- **Vue 3** - 渐进式 JavaScript 框架
+- **TDesign Vue Next** - 企业级设计体系
+- **TypeScript** - 类型安全
+- **Vite** - 下一代前端构建工具
+- **SCSS** - CSS 预处理器
+- **Vue Router** - 路由管理
+- **Pinia** - 状态管理
+- **unplugin-auto-import** - API 自动导入
+- **unplugin-vue-components** - 组件自动导入
 
 ## 特性
 
--   ✅ 自动导入 Vue3 API（ref、reactive、computed 等）
--   ✅ 自动导入 TDesign 组件（无需手动注册）
--   ✅ 自动导入 Vue Router 和 Pinia API
--   ✅ TypeScript 类型安全
--   ✅ SCSS 支持（全局变量 + Mixins）
--   ✅ 响应式布局
--   ✅ 路由权限控制
--   ✅ 代理配置（开发环境）
+- ✅ 自动导入 Vue3 API（ref、reactive、computed 等）
+- ✅ 自动导入 TDesign 组件（无需手动注册）
+- ✅ 自动导入 Vue Router 和 Pinia API
+- ✅ TypeScript 类型安全
+- ✅ SCSS 支持（全局变量 + Mixins）
+- ✅ 响应式布局
+- ✅ 路由权限控制
+- ✅ 代理配置（开发环境）
 
 ## 开发
 
@@ -72,14 +72,14 @@ admin/
 
 ```typescript
 // ❌ 不需要这样写
-import { ref, computed, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { defineStore } from 'pinia';
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { defineStore } from "pinia";
 
 // ✅ 直接使用
 const count = ref(0);
 const router = useRouter();
-const store = defineStore('main', {});
+const store = defineStore("main", {});
 ```
 
 ### 组件自动导入
@@ -104,16 +104,16 @@ TDesign 组件无需手动导入和注册：
 
 ### Vite 配置
 
--   **自动导入配置**: `unplugin-auto-import` 和 `unplugin-vue-components`
--   **路径别名**: `@` 指向 `src` 目录
--   **开发服务器**: 端口 5173，自动打开浏览器
--   **代理配置**: `/api` 代理到 `http://localhost:3000`
+- **自动导入配置**: `unplugin-auto-import` 和 `unplugin-vue-components`
+- **路径别名**: `@` 指向 `src` 目录
+- **开发服务器**: 端口 5173，自动打开浏览器
+- **代理配置**: `/api` 代理到 `http://localhost:3000`
 
 ### TypeScript 配置
 
--   **严格模式**: 启用所有严格类型检查
--   **路径映射**: `@/*` 映射到 `src/*`
--   **自动生成类型**: `auto-imports.d.ts` 和 `components.d.ts`
+- **严格模式**: 启用所有严格类型检查
+- **路径映射**: `@/*` 映射到 `src/*`
+- **自动生成类型**: `auto-imports.d.ts` 和 `components.d.ts`
 
 ## 构建
 
@@ -126,10 +126,10 @@ bun run build
 
 构建优化：
 
--   代码分割（Vue、TDesign 单独打包）
--   Tree-shaking
--   压缩优化
--   Chunk size 限制：1500KB
+- 代码分割（Vue、TDesign 单独打包）
+- Tree-shaking
+- 压缩优化
+- Chunk size 限制：1500KB
 
 ## 注意事项
 

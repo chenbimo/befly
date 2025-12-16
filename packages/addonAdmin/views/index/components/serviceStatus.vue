@@ -35,16 +35,16 @@
 </template>
 
 <script setup>
-import ILucideCheckCircle from '~icons/lucide/check-circle';
-import ILucideDatabase from '~icons/lucide/database';
-import ILucideZap from '~icons/lucide/zap';
-import ILucideHardDrive from '~icons/lucide/hard-drive';
-import ILucideMail from '~icons/lucide/mail';
-import ILucideCloud from '~icons/lucide/cloud';
-import ILucideCircle from '~icons/lucide/circle';
-import ILucideXCircle from '~icons/lucide/x-circle';
-import ILucideAlertCircle from '~icons/lucide/alert-circle';
-import { $Http } from '@/plugins/http';
+import ILucideCheckCircle from "~icons/lucide/check-circle";
+import ILucideDatabase from "~icons/lucide/database";
+import ILucideZap from "~icons/lucide/zap";
+import ILucideHardDrive from "~icons/lucide/hard-drive";
+import ILucideMail from "~icons/lucide/mail";
+import ILucideCloud from "~icons/lucide/cloud";
+import ILucideCircle from "~icons/lucide/circle";
+import ILucideXCircle from "~icons/lucide/x-circle";
+import ILucideAlertCircle from "~icons/lucide/alert-circle";
+import { $Http } from "@/plugins/http";
 
 // 组件内部数据
 const services = $ref([]);
@@ -52,7 +52,7 @@ const services = $ref([]);
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/addon/admin/dashboard/serviceStatus');
+        const { data } = await $Http("/addon/admin/dashboard/serviceStatus");
         services.splice(0, services.length, ...data.services);
     } catch (error) {
         // 静默失败：不阻断页面展示
@@ -64,18 +64,18 @@ fetchData();
 // 工具函数
 const getStatusColor = (status) => {
     const colors = {
-        running: 'success',
-        stopped: 'error',
-        unconfigured: 'warning'
+        running: "success",
+        stopped: "error",
+        unconfigured: "warning"
     };
-    return colors[status] || 'default';
+    return colors[status] || "default";
 };
 
 const getStatusText = (status) => {
     const texts = {
-        running: '正常',
-        stopped: '停止',
-        unconfigured: '未配置'
+        running: "正常",
+        stopped: "停止",
+        unconfigured: "未配置"
     };
     return texts[status] || status;
 };

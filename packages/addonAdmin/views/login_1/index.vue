@@ -64,13 +64,13 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
-import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, InputAdornment as TInputAdornment, Select as TSelect, Option as TOption, MessagePlugin } from 'tdesign-vue-next';
-import ILucideUser from '~icons/lucide/user';
-import ILucideLock from '~icons/lucide/lock';
-import { $Http } from '@/plugins/http';
-import { $Storage } from '@/plugins/storage';
-import { hashPassword } from 'befly-vite/utils/hashPassword';
+import { useRouter } from "vue-router";
+import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, InputAdornment as TInputAdornment, Select as TSelect, Option as TOption, MessagePlugin } from "tdesign-vue-next";
+import ILucideUser from "~icons/lucide/user";
+import ILucideLock from "~icons/lucide/lock";
+import { $Http } from "@/plugins/http";
+import { $Storage } from "@/plugins/storage";
+import { hashPassword } from "befly-vite/utils/hashPassword";
 
 const router = useRouter();
 
@@ -84,16 +84,16 @@ const $Data = $ref({
     loading: false,
     rememberMe: false,
     formData: {
-        loginType: 'username',
-        account: '',
-        password: ''
+        loginType: "username",
+        account: "",
+        password: ""
     }
 });
 
 const $Data2 = $shallowRef({
     formRules: {
-        account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
-        password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+        account: [{ required: true, message: "请输入账号", trigger: "blur" }],
+        password: [{ required: true, message: "请输入密码", trigger: "blur" }]
     }
 });
 
@@ -108,26 +108,26 @@ const $Method = {
             // 对密码进行 SHA-256 加密
             const hashedPassword = await hashPassword($Data.formData.password);
 
-            const res = await $Http('/addon/admin/auth/login', {
+            const res = await $Http("/addon/admin/auth/login", {
                 loginType: $Data.formData.loginType,
                 account: $Data.formData.account,
                 password: hashedPassword
             });
 
             // 先保存 token
-            $Storage.local.set('token', res.data.token);
+            $Storage.local.set("token", res.data.token);
 
             // 如果返回用户信息,也可以存储
             if (res.data.userInfo) {
-                $Storage.local.set('userInfo', res.data.userInfo);
+                $Storage.local.set("userInfo", res.data.userInfo);
             }
 
-            MessagePlugin.success(res.msg || '登录成功');
+            MessagePlugin.success(res.msg || "登录成功");
 
             // 跳转到首页，路由守卫会自动加载菜单
-            await router.push('/');
+            await router.push("/");
         } catch (error) {
-            MessagePlugin.error('登录失败');
+            MessagePlugin.error("登录失败");
         } finally {
             $Data.loading = false;
         }

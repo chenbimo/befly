@@ -16,7 +16,9 @@
                     <div class="group-header">{{ group.title }}</div>
                     <div class="api-checkbox-list">
                         <TCheckboxGroup v-model="$Data.checkedApiIds">
-                            <TCheckbox v-for="api in group.apis" :key="api.id" :value="api.id"> {{ api.label }} </TCheckbox>
+                            <TCheckbox v-for="api in group.apis" :key="api.id" :value="api.id">
+                                {{ api.label }}
+                            </TCheckbox>
                         </TCheckboxGroup>
                     </div>
                 </div>
@@ -35,9 +37,9 @@
 </template>
 
 <script setup>
-import { Dialog as TDialog, Input as TInput, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
-import ILucideSearch from '~icons/lucide/search';
-import { $Http } from '@/plugins/http';
+import { Dialog as TDialog, Input as TInput, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, MessagePlugin } from "tdesign-vue-next";
+import ILucideSearch from "~icons/lucide/search";
+import { $Http } from "@/plugins/http";
 
 const $Prop = defineProps({
     modelValue: {
@@ -50,14 +52,14 @@ const $Prop = defineProps({
     }
 });
 
-const $Emit = defineEmits(['update:modelValue', 'success']);
+const $Emit = defineEmits(["update:modelValue", "success"]);
 
 const $Data = $ref({
     visible: false,
     submitting: false,
     apiData: [],
     filteredApiData: [],
-    searchText: '',
+    searchText: "",
     checkedApiIds: []
 });
 
@@ -78,21 +80,21 @@ const $Method = {
     onClose() {
         $Data.visible = false;
         setTimeout(() => {
-            $Emit('update:modelValue', false);
+            $Emit("update:modelValue", false);
         }, 300);
     },
 
     // 加载所有接口
     async apiApiAll() {
         try {
-            const res = await $Http('/addon/admin/api/all');
+            const res = await $Http("/addon/admin/api/all");
 
             // 将接口列表按 addonTitle 分组
             const apiMap = new Map();
 
             res.data.lists.forEach((api) => {
-                const addonTitle = api.addonTitle || api.addonName || '项目接口';
-                const addonName = api.addonName || 'project';
+                const addonTitle = api.addonTitle || api.addonName || "项目接口";
+                const addonName = api.addonName || "project";
 
                 if (!apiMap.has(addonName)) {
                     apiMap.set(addonName, {
@@ -111,7 +113,7 @@ const $Method = {
 
             $Data.apiData = Array.from(apiMap.values());
         } catch (error) {
-            MessagePlugin.error('加载接口失败');
+            MessagePlugin.error("加载接口失败");
         }
     },
 
@@ -120,13 +122,13 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/role/apis', {
+            const res = await $Http("/addon/admin/role/apis", {
                 roleCode: $Prop.rowData.code
             });
 
             $Data.checkedApiIds = res.data.apiIds || [];
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         }
     },
 
@@ -151,20 +153,20 @@ const $Method = {
         try {
             $Data.submitting = true;
 
-            const res = await $Http('/addon/admin/role/apiSave', {
+            const res = await $Http("/addon/admin/role/apiSave", {
                 roleCode: $Prop.rowData.code,
                 apiIds: $Data.checkedApiIds
             });
 
             if (res.code === 0) {
-                MessagePlugin.success('保存成功');
+                MessagePlugin.success("保存成功");
                 $Data.visible = false;
-                $Emit('success');
+                $Emit("success");
             } else {
-                MessagePlugin.error(res.msg || '保存失败');
+                MessagePlugin.error(res.msg || "保存失败");
             }
         } catch (error) {
-            MessagePlugin.error('保存失败');
+            MessagePlugin.error("保存失败");
         } finally {
             $Data.submitting = false;
         }
@@ -213,7 +215,7 @@ $Method.initData();
                 gap: 8px;
 
                 &::before {
-                    content: '';
+                    content: "";
                     width: 8px;
                     height: 8px;
                     border-radius: 50%;

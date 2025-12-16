@@ -40,8 +40,8 @@
 
         // 高级
         "skipLibCheck": true,
-        "allowJs": true,
-        "checkJs": false,
+        "allowJs": false,
+
 
         // Bun 特定
         "types": ["bun"],
@@ -51,6 +51,6 @@
             "@/*": ["./*"]
         }
     },
-    "include": ["**/*.ts", "**/*.js"],
-    "exclude": ["node_modules", "dist", "logs", "temp", "main.single.ts", "**/*.test.ts", "**/*.test.js"]
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules", "dist", "logs", "temp", "tests", "main.single.ts"]
 }

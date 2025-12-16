@@ -31,8 +31,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { Tag as TTag } from 'tdesign-vue-next';
+import { computed } from "vue";
+import { Tag as TTag } from "tdesign-vue-next";
 
 const props = defineProps({
     /**
@@ -57,14 +57,14 @@ const props = defineProps({
      */
     excludeKeys: {
         type: Array,
-        default: () => ['row-select', 'operation', 'index']
+        default: () => ["row-select", "operation", "index"]
     },
     /**
      * 空数据时的提示文字
      */
     emptyText: {
         type: String,
-        default: '暂无数据'
+        default: "暂无数据"
     }
 });
 
@@ -92,8 +92,8 @@ const normalizedFields = computed(() => {
  * @returns {string} 格式化后的值
  */
 function formatValue(value, field) {
-    if (value === null || value === undefined || value === '') {
-        return field.default || '-';
+    if (value === null || value === undefined || value === "") {
+        return field.default || "-";
     }
     if (field.formatter) {
         return field.formatter(value);

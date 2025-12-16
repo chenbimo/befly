@@ -51,25 +51,25 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Input as TInput, MessagePlugin } from 'tdesign-vue-next';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucideSearch from '~icons/lucide/search';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
-import DetailPanel from '@/components/DetailPanel.vue';
+import { Button as TButton, Table as TTable, Tag as TTag, Input as TInput, MessagePlugin } from "tdesign-vue-next";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import ILucideSearch from "~icons/lucide/search";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
+import DetailPanel from "@/components/DetailPanel.vue";
 
 // 响应式数据
 const $Data = $ref({
     tableData: [],
     allData: [],
     loading: false,
-    searchKeyword: '',
+    searchKeyword: "",
     columns: withDefaultColumns([
-        { colKey: 'name', title: '接口名称' },
-        { colKey: 'id', title: '序号' },
-        { colKey: 'path', title: '接口路径' },
-        { colKey: 'method', title: '请求方法' },
-        { colKey: 'addonName', title: '所属组件' }
+        { colKey: "name", title: "接口名称" },
+        { colKey: "id", title: "序号" },
+        { colKey: "path", title: "接口路径" },
+        { colKey: "method", title: "请求方法" },
+        { colKey: "addonName", title: "所属组件" }
     ]),
     currentRow: null,
     activeRowKeys: []
@@ -85,7 +85,7 @@ const $Method = {
     async loadApiAll() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/api/all');
+            const res = await $Http("/addon/admin/api/all");
             const list = res.data?.lists || [];
             $Data.allData = list;
             $Data.tableData = list;
@@ -99,7 +99,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }

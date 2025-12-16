@@ -376,8 +376,8 @@ befly sync:dev --plan
 // befly.config.ts
 export default {
     dev: {
-        username: 'dev', // 开发账户用户名
-        password: 'dev123456' // 开发账户密码
+        username: "dev", // 开发账户用户名
+        password: "dev123456" // 开发账户密码
     }
 };
 ```
@@ -412,17 +412,17 @@ befly sync:dev --plan          # 预览开发账户变更
 ### 代码调用
 
 ```typescript
-import { syncAllCommand } from './sync/syncAll';
-import { syncDbCommand } from './sync/syncDb';
-import { syncApiCommand } from './sync/syncApi';
-import { syncMenuCommand } from './sync/syncMenu';
-import { syncDevCommand } from './sync/syncDev';
+import { syncAllCommand } from "./sync/syncAll";
+import { syncDbCommand } from "./sync/syncDb";
+import { syncApiCommand } from "./sync/syncApi";
+import { syncMenuCommand } from "./sync/syncMenu";
+import { syncDevCommand } from "./sync/syncDev";
 
 // 全量同步
 await syncAllCommand();
 
 // 单独调用
-await syncDbCommand({ table: 'user' });
+await syncDbCommand({ table: "user" });
 await syncApiCommand({ plan: true });
 await syncMenuCommand({ plan: true });
 await syncDevCommand({ plan: true });
@@ -573,8 +573,8 @@ A: 在配置文件中设置：
 // befly.config.ts
 export default {
     dev: {
-        username: 'dev',
-        password: 'your_password'
+        username: "dev",
+        password: "your_password"
     }
 };
 ```

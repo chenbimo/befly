@@ -24,54 +24,56 @@
  * @param {string=} inheritLayout
  * @returns {LayoutConfig[]}
  */
-export function Layouts(routes, inheritLayout = '') {
-    /** @type {LayoutConfig[]} */
-    const result = [];
+export function Layouts(routes, inheritLayout = "") {
+  /** @type {LayoutConfig[]} */
+  const result = [];
 
-    for (const route of routes) {
-        const currentPath = route.path || '';
+  for (const route of routes) {
+    const currentPath = route.path || "";
 
-        const pathMatch = currentPath.match(/_(\d+)$/);
-        const currentLayout = pathMatch ? pathMatch[1] : inheritLayout;
+    const pathMatch = currentPath.match(/_(\d+)$/);
+    const currentLayout = pathMatch ? pathMatch[1] : inheritLayout;
 
-        // 中间节点：递归处理子路由，不包裹布局
-        if (route.children && route.children.length > 0) {
-            const cleanPath = pathMatch ? currentPath.replace(/_\d+$/, '') : currentPath;
-            const childConfigs = Layouts(route.children, currentLayout);
+    // 中间节点：递归处理子路由，不包裹布局
+    if (route.children && route.children.length > 0) {
+      const cleanPath = pathMatch ? currentPath.replace(/_\d+$/, "") : currentPath;
+      const childConfigs = Layouts(route.children, currentLayout);
 
-            for (const child of childConfigs) {
-                const mergedPath = cleanPath ? `${cleanPath}/${child.path}`.replace(/\/+/, '/') : child.path;
-                result.push({
-                    path: mergedPath,
-                    layoutName: child.layoutName,
-                    component: child.component,
-                    meta: child.meta
-                });
-            }
-            continue;
-        }
-
-        // 叶子节点：包裹布局
-        const lastPart = currentPath;
-        const match = lastPart.match(/_(\d+)$/);
-        const layoutName = match ? match[1] : currentLayout || 'default';
-
-        let cleanPath = '';
-        if (lastPart === 'index' || (lastPart.startsWith('index_') && match)) {
-            cleanPath = '';
-        } else if (match) {
-            cleanPath = lastPart.replace(/_\d+$/, '');
-        } else {
-            cleanPath = lastPart;
-        }
-
+      for (const child of childConfigs) {
+        const mergedPath = cleanPath
+          ? `${cleanPath}/${child.path}`.replace(/\/+/, "/")
+          : child.path;
         result.push({
-            path: cleanPath,
-            layoutName: layoutName,
-            component: route.component,
-            meta: route.meta
+          path: mergedPath,
+          layoutName: child.layoutName,
+          component: child.component,
+          meta: child.meta,
         });
+      }
+      continue;
     }
 
-    return result;
+    // 叶子节点：包裹布局
+    const lastPart = currentPath;
+    const match = lastPart.match(/_(\d+)$/);
+    const layoutName = match ? match[1] : currentLayout || "default";
+
+    let cleanPath = "";
+    if (lastPart === "index" || (lastPart.startsWith("index_") && match)) {
+      cleanPath = "";
+    } else if (match) {
+      cleanPath = lastPart.replace(/_\d+$/, "");
+    } else {
+      cleanPath = lastPart;
+    }
+
+    result.push({
+      path: cleanPath,
+      layoutName: layoutName,
+      component: route.component,
+      meta: route.meta,
+    });
+  }
+
+  return result;
 }

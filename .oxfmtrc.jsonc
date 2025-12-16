@@ -1,12 +1,32 @@
 {
-    "$schema": "./node_modules/oxfmt/configuration_schema.json",
-    "experimentalSortImports": {
-        "groups": [["type-import"], ["value-builtin"], ["value-external"], ["value-parent", "value-sibling", "value-index"], ["unknown"]],
-        "ignoreCase": true,
-        "newlinesBetween": true,
-        "order": "asc",
-        "partitionByComment": false,
-        "partitionByNewline": false,
-        "sortSideEffects": false
-    }
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/logs/**",
+    "**/coverage/**",
+    "**/.vite-inspect/**",
+    "**/*.d.ts",
+    "**/*.vue",
+    "**/*.css",
+    "**/*.scss",
+    "**/*.less",
+    "**/*.html",
+  ],
+  "experimentalSortImports": {
+    "groups": [
+      ["type-import"],
+      ["value-builtin"],
+      ["value-external", "value-internal"],
+      ["value-parent", "value-sibling", "value-index"],
+      ["unknown"],
+    ],
+    "ignoreCase": true,
+    "internalPattern": ["befly", "befly/**", "befly-vite", "befly-vite/**"],
+    "newlinesBetween": true,
+    "order": "asc",
+    "partitionByComment": false,
+    "partitionByNewline": false,
+    "sortSideEffects": false,
+  },
 }

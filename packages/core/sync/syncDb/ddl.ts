@@ -8,13 +8,14 @@
  * - 构建系统列和业务列定义
  */
 
-import { snakeCase } from 'es-toolkit/string';
-import { isMySQL, isPG } from './constants.js';
-import { quoteIdentifier, escapeComment } from './helpers.js';
-import { resolveDefaultValue, generateDefaultSql, getSqlType } from './types.js';
+import type { FieldDefinition } from "../../types/validate.js";
+import type { SQL } from "bun";
 
-import type { SQL } from 'bun';
-import type { FieldDefinition } from '../../types/validate.js';
+import { snakeCase } from "es-toolkit/string";
+
+import { isMySQL, isPG } from "./constants.js";
+import { quoteIdentifier, escapeComment } from "./helpers.js";
+import { resolveDefaultValue, generateDefaultSql, getSqlType } from "./types.js";
 
 /**
  * 构建索引操作 SQL（统一使用在线策略）
@@ -25,37 +26,42 @@ import type { FieldDefinition } from '../../types/validate.js';
  * @param action - 操作类型（create/drop）
  * @returns SQL 语句
  */
-export function buildIndexSQL(tableName: string, indexName: string, fieldName: string, action: 'create' | 'drop'): string {
-    const tableQuoted = quoteIdentifier(tableName);
-    const indexQuoted = quoteIdentifier(indexName);
-    const fieldQuoted = quoteIdentifier(fieldName);
+export function buildIndexSQL(
+  tableName: string,
+  indexName: string,
+  fieldName: string,
+  action: "create" | "drop",
+): string {
+  const tableQuoted = quoteIdentifier(tableName);
+  const indexQuoted = quoteIdentifier(indexName);
+  const fieldQuoted = quoteIdentifier(fieldName);
 
-    if (isMySQL()) {
-        const parts = [];
-        if (action === 'create') {
-            parts.push(`ADD INDEX ${indexQuoted} (${fieldQuoted})`);
-        } else {
-            parts.push(`DROP INDEX ${indexQuoted}`);
-        }
-        // 始终使用在线算法
-        parts.push('ALGORITHM=INPLACE');
-        parts.push('LOCK=NONE');
-        return `ALTER TABLE ${tableQuoted} ${parts.join(', ')}`;
+  if (isMySQL()) {
+    const parts = [];
+    if (action === "create") {
+      parts.push(`ADD INDEX ${indexQuoted} (${fieldQuoted})`);
+    } else {
+      parts.push(`DROP INDEX ${indexQuoted}`);
     }
+    // 始终使用在线算法
+    parts.push("ALGORITHM=INPLACE");
+    parts.push("LOCK=NONE");
+    return `ALTER TABLE ${tableQuoted} ${parts.join(", ")}`;
+  }
 
-    if (isPG()) {
-        if (action === 'create') {
-            // 始终使用 CONCURRENTLY
-            return `CREATE INDEX CONCURRENTLY IF NOT EXISTS ${indexQuoted} ON ${tableQuoted}(${fieldQuoted})`;
-        }
-        return `DROP INDEX CONCURRENTLY IF EXISTS ${indexQuoted}`;
+  if (isPG()) {
+    if (action === "create") {
+      // 始终使用 CONCURRENTLY
+      return `CREATE INDEX CONCURRENTLY IF NOT EXISTS ${indexQuoted} ON ${tableQuoted}(${fieldQuoted})`;
     }
+    return `DROP INDEX CONCURRENTLY IF EXISTS ${indexQuoted}`;
+  }
 
-    // SQLite
-    if (action === 'create') {
-        return `CREATE INDEX IF NOT EXISTS ${indexQuoted} ON ${tableQuoted}(${fieldQuoted})`;
-    }
-    return `DROP INDEX IF EXISTS ${indexQuoted}`;
+  // SQLite
+  if (action === "create") {
+    return `CREATE INDEX IF NOT EXISTS ${indexQuoted} ON ${tableQuoted}(${fieldQuoted})`;
+  }
+  return `DROP INDEX IF EXISTS ${indexQuoted}`;
 }
 
 /**
@@ -65,23 +71,23 @@ export function buildIndexSQL(tableName: string, indexName: string, fieldName: s
  * @returns 列定义字符串，如果不是系统字段则返回 null
  */
 export function getSystemColumnDef(fieldName: string): string | null {
-    const mysqlDefs: Record<string, string> = {
-        id: '`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT COMMENT "主键ID"',
-        created_at: '`created_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "创建时间"',
-        updated_at: '`updated_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "更新时间"',
-        deleted_at: '`deleted_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "删除时间"',
-        state: '`state` BIGINT UNSIGNED NOT NULL DEFAULT 1 COMMENT "状态字段"'
-    };
-    const pgDefs: Record<string, string> = {
-        id: '"id" INTEGER PRIMARY KEY',
-        created_at: '"created_at" INTEGER NOT NULL DEFAULT 0',
-        updated_at: '"updated_at" INTEGER NOT NULL DEFAULT 0',
-        deleted_at: '"deleted_at" INTEGER NOT NULL DEFAULT 0',
-        state: '"state" INTEGER NOT NULL DEFAULT 1'
-    };
+  const mysqlDefs: Record<string, string> = {
+    id: '`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT COMMENT "主键ID"',
+    created_at: '`created_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "创建时间"',
+    updated_at: '`updated_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "更新时间"',
+    deleted_at: '`deleted_at` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT "删除时间"',
+    state: '`state` BIGINT UNSIGNED NOT NULL DEFAULT 1 COMMENT "状态字段"',
+  };
+  const pgDefs: Record<string, string> = {
+    id: '"id" INTEGER PRIMARY KEY',
+    created_at: '"created_at" INTEGER NOT NULL DEFAULT 0',
+    updated_at: '"updated_at" INTEGER NOT NULL DEFAULT 0',
+    deleted_at: '"deleted_at" INTEGER NOT NULL DEFAULT 0',
+    state: '"state" INTEGER NOT NULL DEFAULT 1',
+  };
 
-    const defs = isMySQL() ? mysqlDefs : pgDefs;
-    return defs[fieldName] || null;
+  const defs = isMySQL() ? mysqlDefs : pgDefs;
+  return defs[fieldName] || null;
 }
 
 /**
@@ -90,7 +96,13 @@ export function getSystemColumnDef(fieldName: string): string | null {
  * @returns 系统字段的列定义数组
  */
 export function buildSystemColumnDefs(): string[] {
-    return [getSystemColumnDef('id')!, getSystemColumnDef('created_at')!, getSystemColumnDef('updated_at')!, getSystemColumnDef('deleted_at')!, getSystemColumnDef('state')!];
+  return [
+    getSystemColumnDef("id")!,
+    getSystemColumnDef("created_at")!,
+    getSystemColumnDef("updated_at")!,
+    getSystemColumnDef("deleted_at")!,
+    getSystemColumnDef("state")!,
+  ];
 }
 
 /**
@@ -100,41 +112,9 @@ export function buildSystemColumnDefs(): string[] {
  * @returns 业务字段的列定义数组
  */
 export function buildBusinessColumnDefs(fields: Record<string, FieldDefinition>): string[] {
-    const colDefs: string[] = [];
+  const colDefs: string[] = [];
 
-    for (const [fieldKey, fieldDef] of Object.entries(fields)) {
-        // 转换字段名为下划线格式
-        const dbFieldName = snakeCase(fieldKey);
-
-        const sqlType = getSqlType(fieldDef.type, fieldDef.max, fieldDef.unsigned);
-
-        // 使用公共函数处理默认值
-        const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
-        const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
-
-        // 构建约束
-        const uniqueSql = fieldDef.unique ? ' UNIQUE' : '';
-        const nullableSql = fieldDef.nullable ? ' NULL' : ' NOT NULL';
-
-        if (isMySQL()) {
-            colDefs.push(`\`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`);
-        } else {
-            colDefs.push(`"${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`);
-        }
-    }
-
-    return colDefs;
-}
-
-/**
- * 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
- *
- * @param fieldKey - 字段键名
- * @param fieldDef - 字段定义对象
- * @param isAdd - 是否为添加字段（true）还是修改字段（false）
- * @returns DDL 子句
- */
-export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string {
+  for (const [fieldKey, fieldDef] of Object.entries(fields)) {
     // 转换字段名为下划线格式
     const dbFieldName = snakeCase(fieldKey);
 
@@ -145,20 +125,60 @@ export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, i
     const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
 
     // 构建约束
-    const uniqueSql = fieldDef.unique ? ' UNIQUE' : '';
-    const nullableSql = fieldDef.nullable ? ' NULL' : ' NOT NULL';
+    const uniqueSql = fieldDef.unique ? " UNIQUE" : "";
+    const nullableSql = fieldDef.nullable ? " NULL" : " NOT NULL";
 
     if (isMySQL()) {
-        return `${isAdd ? 'ADD COLUMN' : 'MODIFY COLUMN'} \`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`;
+      colDefs.push(
+        `\`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`,
+      );
+    } else {
+      colDefs.push(`"${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`);
     }
-    if (isPG()) {
-        if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
-        // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
-        return `ALTER COLUMN "${dbFieldName}" TYPE ${sqlType}`;
-    }
-    // SQLite 仅支持 ADD COLUMN（>=3.50.0：支持 IF NOT EXISTS）
-    if (isAdd) return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
-    return '';
+  }
+
+  return colDefs;
+}
+
+/**
+ * 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
+ *
+ * @param fieldKey - 字段键名
+ * @param fieldDef - 字段定义对象
+ * @param isAdd - 是否为添加字段（true）还是修改字段（false）
+ * @returns DDL 子句
+ */
+export function generateDDLClause(
+  fieldKey: string,
+  fieldDef: FieldDefinition,
+  isAdd: boolean = false,
+): string {
+  // 转换字段名为下划线格式
+  const dbFieldName = snakeCase(fieldKey);
+
+  const sqlType = getSqlType(fieldDef.type, fieldDef.max, fieldDef.unsigned);
+
+  // 使用公共函数处理默认值
+  const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
+  const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
+
+  // 构建约束
+  const uniqueSql = fieldDef.unique ? " UNIQUE" : "";
+  const nullableSql = fieldDef.nullable ? " NULL" : " NOT NULL";
+
+  if (isMySQL()) {
+    return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} \`${dbFieldName}\` ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`;
+  }
+  if (isPG()) {
+    if (isAdd)
+      return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
+    // PG 修改：类型与非空可分条执行，生成 TYPE 改变；非空另由上层统一控制
+    return `ALTER COLUMN "${dbFieldName}" TYPE ${sqlType}`;
+  }
+  // SQLite 仅支持 ADD COLUMN（>=3.50.0：支持 IF NOT EXISTS）
+  if (isAdd)
+    return `ADD COLUMN IF NOT EXISTS "${dbFieldName}" ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
+  return "";
 }
 
 /**
@@ -175,29 +195,29 @@ export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, i
  * @throws {Error} 如果所有尝试都失败
  */
 export async function executeDDLSafely(sql: SQL, stmt: string): Promise<boolean> {
-    try {
-        await sql.unsafe(stmt);
+  try {
+    await sql.unsafe(stmt);
+    return true;
+  } catch (error: any) {
+    // MySQL 专用降级路径
+    if (stmt.includes("ALGORITHM=INSTANT")) {
+      const inplaceSql = stmt.replace(/ALGORITHM=INSTANT/g, "ALGORITHM=INPLACE");
+      try {
+        await sql.unsafe(inplaceSql);
         return true;
-    } catch (error: any) {
-        // MySQL 专用降级路径
-        if (stmt.includes('ALGORITHM=INSTANT')) {
-            const inplaceSql = stmt.replace(/ALGORITHM=INSTANT/g, 'ALGORITHM=INPLACE');
-            try {
-                await sql.unsafe(inplaceSql);
-                return true;
-            } catch {
-                // 最后尝试传统DDL：移除 ALGORITHM/LOCK 附加子句后执行
-                const traditionSql = stmt
-                    .replace(/,\s*ALGORITHM=INPLACE/g, '')
-                    .replace(/,\s*ALGORITHM=INSTANT/g, '')
-                    .replace(/,\s*LOCK=(NONE|SHARED|EXCLUSIVE)/g, '');
-                await sql.unsafe(traditionSql);
-                return true;
-            }
-        } else {
-            throw error;
-        }
+      } catch {
+        // 最后尝试传统DDL：移除 ALGORITHM/LOCK 附加子句后执行
+        const traditionSql = stmt
+          .replace(/,\s*ALGORITHM=INPLACE/g, "")
+          .replace(/,\s*ALGORITHM=INSTANT/g, "")
+          .replace(/,\s*LOCK=(NONE|SHARED|EXCLUSIVE)/g, "");
+        await sql.unsafe(traditionSql);
+        return true;
+      }
+    } else {
+      throw error;
     }
+  }
 }
 
 /**
@@ -214,37 +234,38 @@ export async function executeDDLSafely(sql: SQL, stmt: string): Promise<boolean>
  * @returns 是否为兼容变更
  */
 export function isCompatibleTypeChange(currentType: string, newType: string): boolean {
-    const c = String(currentType || '').toLowerCase();
-    const n = String(newType || '').toLowerCase();
+  const c = String(currentType || "").toLowerCase();
+  const n = String(newType || "").toLowerCase();
 
-    // 相同类型不算变更
-    if (c === n) return false;
+  // 相同类型不算变更
+  if (c === n) return false;
 
-    // 提取基础类型（去掉 unsigned、长度等修饰）
-    const extractBaseType = (t: string): string => {
-        // 移除 unsigned 和括号内容
-        return t
-            .replace(/\s*unsigned/gi, '')
-            .replace(/\([^)]*\)/g, '')
-            .trim();
-    };
+  // 提取基础类型（去掉 unsigned、长度等修饰）
+  const extractBaseType = (t: string): string => {
+    // 移除 unsigned 和括号内容
+    return t
+      .replace(/\s*unsigned/gi, "")
+      .replace(/\([^)]*\)/g, "")
+      .trim();
+  };
 
-    const cBase = extractBaseType(c);
-    const nBase = extractBaseType(n);
+  const cBase = extractBaseType(c);
+  const nBase = extractBaseType(n);
 
-    // MySQL/通用 整数类型宽化（小 -> 大）
-    const intTypes = ['tinyint', 'smallint', 'mediumint', 'int', 'integer', 'bigint'];
-    const cIntIdx = intTypes.indexOf(cBase);
-    const nIntIdx = intTypes.indexOf(nBase);
-    if (cIntIdx !== -1 && nIntIdx !== -1 && nIntIdx > cIntIdx) {
-        return true;
-    }
+  // MySQL/通用 整数类型宽化（小 -> 大）
+  const intTypes = ["tinyint", "smallint", "mediumint", "int", "integer", "bigint"];
+  const cIntIdx = intTypes.indexOf(cBase);
+  const nIntIdx = intTypes.indexOf(nBase);
+  if (cIntIdx !== -1 && nIntIdx !== -1 && nIntIdx > cIntIdx) {
+    return true;
+  }
 
-    // 字符串类型宽化
-    // MySQL: varchar -> text/mediumtext/longtext
-    if (cBase === 'varchar' && (nBase === 'text' || nBase === 'mediumtext' || nBase === 'longtext')) return true;
-    // PG: character varying -> text
-    if (cBase === 'character varying' && nBase === 'text') return true;
+  // 字符串类型宽化
+  // MySQL: varchar -> text/mediumtext/longtext
+  if (cBase === "varchar" && (nBase === "text" || nBase === "mediumtext" || nBase === "longtext"))
+    return true;
+  // PG: character varying -> text
+  if (cBase === "character varying" && nBase === "text") return true;
 
-    return false;
+  return false;
 }

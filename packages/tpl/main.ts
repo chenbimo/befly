@@ -1,4 +1,4 @@
-import { Befly } from 'befly';
+import { Befly } from "befly";
 
 export const app = new Befly();
 

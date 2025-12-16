@@ -1,6 +1,6 @@
-import { Logger } from '../lib/logger.js';
+import type { RequestContext } from "../types/context.js";
 
-import type { RequestContext } from '../types/context.js';
+import { Logger } from "../lib/logger.js";
 
 /**
  * 创建错误响应（专用于 Hook 中间件）
@@ -12,25 +12,31 @@ import type { RequestContext } from '../types/context.js';
  * @param detail - 详细信息，用于标记具体提示位置，默认 null
  * @returns Response 对象
  */
-export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1, data: any = null, detail: any = null): Response {
-    // 记录拦截日志
-    if (ctx.requestId) {
-        const duration = Date.now() - ctx.now;
-        const user = ctx.user?.id ? `[User:${ctx.user.id} ${ctx.user.nickname}]` : '[Guest]';
-        Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms [${msg}]`);
-    }
+export function ErrorResponse(
+  ctx: RequestContext,
+  msg: string,
+  code: number = 1,
+  data: any = null,
+  detail: any = null,
+): Response {
+  // 记录拦截日志
+  if (ctx.requestId) {
+    const duration = Date.now() - ctx.now;
+    const user = ctx.user?.id ? `[User:${ctx.user.id} ${ctx.user.nickname}]` : "[Guest]";
+    Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms [${msg}]`);
+  }
 
-    return Response.json(
-        {
-            code: code,
-            msg: msg,
-            data: data,
-            detail: detail
-        },
-        {
-            headers: ctx.corsHeaders
-        }
-    );
+  return Response.json(
+    {
+      code: code,
+      msg: msg,
+      data: data,
+      detail: detail,
+    },
+    {
+      headers: ctx.corsHeaders,
+    },
+  );
 }
 
 /**
@@ -40,63 +46,65 @@ export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1
  * @returns Response 对象
  */
 export function FinalResponse(ctx: RequestContext): Response {
-    // 记录请求日志
-    if (ctx.api && ctx.requestId) {
-        const duration = Date.now() - ctx.now;
-        const user = ctx.user?.id ? `[User:${ctx.user.id}  ${ctx.user.nickname}]` : '[Guest]';
-        Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms`);
+  // 记录请求日志
+  if (ctx.api && ctx.requestId) {
+    const duration = Date.now() - ctx.now;
+    const user = ctx.user?.id ? `[User:${ctx.user.id}  ${ctx.user.nickname}]` : "[Guest]";
+    Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms`);
+  }
+
+  // 1. 如果已经有 response，直接返回
+  if (ctx.response) {
+    return ctx.response;
+  }
+
+  // 2. 如果有 result，格式化为响应
+  if (ctx.result !== undefined) {
+    let result = ctx.result;
+
+    // 如果是字符串，自动包裹为成功响应
+    if (typeof result === "string") {
+      result = {
+        code: 0,
+        msg: result,
+      };
+    }
+    // 如果是对象，自动补充 code: 0
+    else if (result && typeof result === "object") {
+      if (!("code" in result)) {
+        result = {
+          code: 0,
+          ...result,
+        };
+      }
     }
 
-    // 1. 如果已经有 response，直接返回
-    if (ctx.response) {
-        return ctx.response;
-    }
-
-    // 2. 如果有 result，格式化为响应
-    if (ctx.result !== undefined) {
-        let result = ctx.result;
-
-        // 如果是字符串，自动包裹为成功响应
-        if (typeof result === 'string') {
-            result = {
-                code: 0,
-                msg: result
-            };
-        }
-        // 如果是对象，自动补充 code: 0
-        else if (result && typeof result === 'object') {
-            if (!('code' in result)) {
-                result = {
-                    code: 0,
-                    ...result
-                };
-            }
-        }
-
-        // 处理 BigInt 序列化问题
-        if (result && typeof result === 'object') {
-            const jsonString = JSON.stringify(result, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
-            return new Response(jsonString, {
-                headers: {
-                    ...ctx.corsHeaders,
-                    'Content-Type': 'application/json'
-                }
-            });
-        } else {
-            return Response.json(result, {
-                headers: ctx.corsHeaders
-            });
-        }
-    }
-
-    // 3. 默认响应：没有生成响应
-    return Response.json(
-        {
-            code: 1,
-            msg: '未生成响应'
+    // 处理 BigInt 序列化问题
+    if (result && typeof result === "object") {
+      const jsonString = JSON.stringify(result, (key, value) =>
+        typeof value === "bigint" ? value.toString() : value,
+      );
+      return new Response(jsonString, {
+        headers: {
+          ...ctx.corsHeaders,
+          "Content-Type": "application/json",
         },
-        {
-            headers: ctx.corsHeaders
-        }
-    );
+      });
+    } else {
+      return Response.json(result, {
+        headers: ctx.corsHeaders,
+      });
+    }
+  }
+
+  // 3. 默认响应：没有生成响应
+  return Response.json(
+    {
+      code: 1,
+      msg: "未生成响应",
+    },
+    {
+      headers: ctx.corsHeaders,
+    },
+  );
 }

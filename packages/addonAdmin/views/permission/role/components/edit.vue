@@ -41,9 +41,9 @@ import {
     Radio as TRadio,
     Button as TButton,
     MessagePlugin
-} from 'tdesign-vue-next';
-import { fieldClear } from 'befly-vite/utils/fieldClear';
-import { $Http } from '@/plugins/http';
+} from "tdesign-vue-next";
+import { fieldClear } from "befly-vite/utils/fieldClear";
+import { $Http } from "@/plugins/http";
 
 const $Prop = defineProps({
     modelValue: {
@@ -52,7 +52,7 @@ const $Prop = defineProps({
     },
     actionType: {
         type: String,
-        default: 'add'
+        default: "add"
     },
     rowData: {
         type: Object,
@@ -60,7 +60,7 @@ const $Prop = defineProps({
     }
 });
 
-const $Emit = defineEmits(['update:modelValue', 'success']);
+const $Emit = defineEmits(["update:modelValue", "success"]);
 
 // 表单引用
 const $From = $shallowRef({
@@ -74,9 +74,9 @@ const $Data = $ref({
     submitting: false,
     formData: {
         id: 0,
-        name: '',
-        code: '',
-        description: '',
+        name: "",
+        code: "",
+        description: "",
         sort: 0,
         state: 1
     }
@@ -84,19 +84,19 @@ const $Data = $ref({
 
 const $Data2 = $shallowRef({
     formRules: {
-        name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
+        name: [{ required: true, message: "请输入角色名称", trigger: "blur" }],
         code: [
-            { required: true, message: '请输入角色代码', trigger: 'blur' },
-            { pattern: /^[a-zA-Z0-9_]+$/, message: '角色代码只能包含字母、数字和下划线', trigger: 'blur' }
+            { required: true, message: "请输入角色代码", trigger: "blur" },
+            { pattern: /^[a-zA-Z0-9_]+$/, message: "角色代码只能包含字母、数字和下划线", trigger: "blur" }
         ],
-        sort: [{ type: 'number', message: '排序必须是数字', trigger: 'blur' }]
+        sort: [{ type: "number", message: "排序必须是数字", trigger: "blur" }]
     }
 });
 
 // 方法集合
 const $Method = {
     async initData() {
-        if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
+        if ($Prop.actionType === "upd" && $Prop.rowData.id) {
             $Data.formData = Object.assign({}, $Prop.rowData);
         }
         $Method.onShow();
@@ -110,7 +110,7 @@ const $Method = {
     onClose() {
         $Data.visible = false;
         setTimeout(() => {
-            $Emit('update:modelValue', false);
+            $Emit("update:modelValue", false);
         }, 300);
     },
     async onSubmit() {
@@ -119,14 +119,14 @@ const $Method = {
             if (!valid) return;
 
             $Data.submitting = true;
-            const formData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : $Data.formData;
-            const res = await $Http($Prop.actionType === 'upd' ? '/addon/admin/role/upd' : '/addon/admin/role/ins', formData);
+            const formData = $Prop.actionType === "add" ? fieldClear($Data.formData, { omitKeys: ["id", "state"] }) : $Data.formData;
+            const res = await $Http($Prop.actionType === "upd" ? "/addon/admin/role/upd" : "/addon/admin/role/ins", formData);
 
             MessagePlugin.success(res.msg);
-            $Emit('success');
+            $Emit("success");
             $Method.onClose();
         } catch (error) {
-            MessagePlugin.error(error.msg || '提交失败');
+            MessagePlugin.error(error.msg || "提交失败");
         } finally {
             $Data.submitting = false;
         }

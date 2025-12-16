@@ -2,12 +2,12 @@
  * 数据库相关类型定义
  */
 
-import type { SqlValue } from './common';
-import type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, TypedWhereConditions } from './table';
-import type { JoinOption } from './common';
+import type { SqlValue } from "./common";
+import type { JoinOption } from "./common";
+import type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, TypedWhereConditions } from "./table";
 
 // 重新导出表类型工具
-export type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, SystemFields, BaseTable, InsertType, UpdateType, SelectType, TypedWhereConditions } from './table';
+export type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdateType, SystemFields, BaseTable, InsertType, UpdateType, SelectType, TypedWhereConditions } from "./table";
 
 // ============================================
 // SQL 查询相关类型
@@ -16,7 +16,7 @@ export type { DatabaseTables, TableName, TableType, TableInsertType, TableUpdate
 /**
  * WHERE 条件操作符
  */
-export type WhereOperator = '$eq' | '$ne' | '$not' | '$gt' | '$gte' | '$lt' | '$lte' | '$like' | '$notLike' | '$in' | '$notIn' | '$nin' | '$isNull' | '$isNotNull' | '$null' | '$notNull' | '$between' | '$notBetween';
+export type WhereOperator = "$eq" | "$ne" | "$not" | "$gt" | "$gte" | "$lt" | "$lte" | "$like" | "$notLike" | "$in" | "$notIn" | "$nin" | "$isNull" | "$isNotNull" | "$null" | "$notNull" | "$between" | "$notBetween";
 
 /**
  * WHERE 条件类型
@@ -26,7 +26,7 @@ export type WhereConditions = Record<string, any>;
 /**
  * 排序方向
  */
-export type OrderDirection = 'ASC' | 'DESC';
+export type OrderDirection = "ASC" | "DESC";
 
 /**
  * 排序字段
@@ -199,7 +199,7 @@ export type UpdateData = Record<string, SqlValue>;
 /**
  * 数据库类型
  */
-export type DbType = 'mysql' | 'postgresql' | 'sqlite';
+export type DbType = "mysql" | "postgresql" | "sqlite";
 
 /**
  * 列信息
@@ -258,7 +258,7 @@ export interface DbHelper {
      * 查询记录数（类型安全版本）
      * @template K - 表名类型
      */
-    getCount<K extends TableName>(options: Omit<TypedQueryOptions<K>, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number>;
+    getCount<K extends TableName>(options: Omit<TypedQueryOptions<K>, "fields" | "page" | "limit" | "orderBy">): Promise<number>;
 
     /**
      * 查询单条数据（类型安全版本）
@@ -279,7 +279,7 @@ export interface DbHelper {
      * @template K - 表名类型
      * @returns 返回类型自动推断为对应表的记录数组
      */
-    getAll<K extends TableName>(options: Omit<TypedQueryOptions<K>, 'page' | 'limit'>): Promise<AllResult<TableType<K>>>;
+    getAll<K extends TableName>(options: Omit<TypedQueryOptions<K>, "page" | "limit">): Promise<AllResult<TableType<K>>>;
 
     /**
      * 插入数据（类型安全版本）
@@ -306,7 +306,7 @@ export interface DbHelper {
     /**
      * 查询记录数（兼容版本）
      */
-    getCount(options: Omit<QueryOptions, 'fields' | 'page' | 'limit' | 'orderBy'>): Promise<number>;
+    getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<number>;
 
     /**
      * 查询单条数据（兼容版本，需手动指定泛型）
@@ -324,7 +324,7 @@ export interface DbHelper {
      * 查询所有数据（兼容版本，需手动指定泛型）
      * @template T - 返回类型
      */
-    getAll<T = any>(options: Omit<QueryOptions, 'page' | 'limit'>): Promise<AllResult<T>>;
+    getAll<T = any>(options: Omit<QueryOptions, "page" | "limit">): Promise<AllResult<T>>;
 
     /**
      * 插入数据（兼容版本）
@@ -359,7 +359,7 @@ export interface DbHelper {
     /**
      * 检查数据是否存在
      */
-    exists(options: Omit<QueryOptions, 'fields' | 'orderBy' | 'page' | 'limit'>): Promise<boolean>;
+    exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<boolean>;
 
     /**
      * 检查表是否存在
@@ -374,17 +374,17 @@ export interface DbHelper {
     /**
      * 禁用数据（设置 state=2）
      */
-    disableData(options: Omit<DeleteOptions, 'hard'>): Promise<number>;
+    disableData(options: Omit<DeleteOptions, "hard">): Promise<number>;
 
     /**
      * 启用数据（设置 state=1）
      */
-    enableData(options: Omit<DeleteOptions, 'hard'>): Promise<number>;
+    enableData(options: Omit<DeleteOptions, "hard">): Promise<number>;
 
     /**
      * 硬删除数据（物理删除）
      */
-    delForce(options: Omit<DeleteOptions, 'hard'>): Promise<number>;
+    delForce(options: Omit<DeleteOptions, "hard">): Promise<number>;
 
     /**
      * 自增字段
@@ -399,7 +399,7 @@ export interface DbHelper {
     /**
      * 查询单个字段值
      */
-    getFieldValue<T = any>(options: Omit<QueryOptions, 'fields'> & { field: string }): Promise<T | null>;
+    getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<T | null>;
 
     /**
      * 清理数据或 where 条件（默认排除 null 和 undefined）
@@ -454,7 +454,7 @@ export interface IndexInfo {
  */
 export interface FieldChange {
     /** 变更类型 */
-    type: 'length' | 'comment' | 'datatype' | 'default';
+    type: "length" | "comment" | "datatype" | "default";
     /** 当前值 */
     current: any;
     /** 新值 */
@@ -466,7 +466,7 @@ export interface FieldChange {
  */
 export interface IndexAction {
     /** 操作类型：create（创建）或 drop（删除） */
-    action: 'create' | 'drop';
+    action: "create" | "drop";
     /** 索引名称 */
     indexName: string;
     /** 字段名称 */

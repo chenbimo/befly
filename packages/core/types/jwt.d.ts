@@ -5,14 +5,14 @@
 /**
  * JWT 算法类型
  */
-export type JwtAlgorithm = 'HS256' | 'HS384' | 'HS512';
+export type JwtAlgorithm = "HS256" | "HS384" | "HS512";
 
 /**
  * JWT Header 接口
  */
 export interface JwtHeader {
     alg: JwtAlgorithm;
-    typ: 'JWT';
+    typ: "JWT";
 }
 
 /**

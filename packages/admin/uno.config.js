@@ -1,3 +1,3 @@
-import { createUnoConfig } from 'befly-vite';
+import { createUnoConfig } from "befly-vite";
 
 export default createUnoConfig();

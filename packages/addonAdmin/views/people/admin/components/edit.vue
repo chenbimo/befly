@@ -45,10 +45,10 @@ import {
     Radio as TRadio,
     Button as TButton,
     MessagePlugin
-} from 'tdesign-vue-next';
-import { $Http } from '@/plugins/http';
-import { fieldClear } from 'befly-vite/utils/fieldClear';
-import { hashPassword } from 'befly-vite/utils/hashPassword';
+} from "tdesign-vue-next";
+import { $Http } from "@/plugins/http";
+import { fieldClear } from "befly-vite/utils/fieldClear";
+import { hashPassword } from "befly-vite/utils/hashPassword";
 
 const $Prop = defineProps({
     modelValue: {
@@ -57,7 +57,7 @@ const $Prop = defineProps({
     },
     actionType: {
         type: String,
-        default: 'add'
+        default: "add"
     },
     rowData: {
         type: Object,
@@ -65,7 +65,7 @@ const $Prop = defineProps({
     }
 });
 
-const $Emit = defineEmits(['update:modelValue', 'success']);
+const $Emit = defineEmits(["update:modelValue", "success"]);
 
 // 表单引用
 const $From = $shallowRef({
@@ -77,14 +77,14 @@ const $Data = $ref({
     submitting: false,
     allRoleLists: [],
     keys: {
-        label: 'name',
-        value: 'code'
+        label: "name",
+        value: "code"
     },
     formData: {
         id: null,
-        username: '',
-        password: '',
-        nickname: '',
+        username: "",
+        password: "",
+        nickname: "",
         roleCode: null,
         state: 1
     }
@@ -92,13 +92,13 @@ const $Data = $ref({
 
 const $Data2 = $shallowRef({
     formRules: {
-        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+        username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
         password: [
-            { required: true, message: '请输入密码', trigger: 'blur' },
-            { min: 6, message: '密码至少6位', trigger: 'blur' }
+            { required: true, message: "请输入密码", trigger: "blur" },
+            { min: 6, message: "密码至少6位", trigger: "blur" }
         ],
-        roleCode: [{ required: true, message: '请选择角色', trigger: 'change' }],
-        nickname: [{ min: 2, max: 50, message: '昵称长度在 2 到 50 个字符', trigger: 'blur' }]
+        roleCode: [{ required: true, message: "请选择角色", trigger: "change" }],
+        nickname: [{ min: 2, max: 50, message: "昵称长度在 2 到 50 个字符", trigger: "blur" }]
     }
 });
 
@@ -107,7 +107,7 @@ const $Method = {
     async initData() {
         $Method.onShow();
         await $Method.apiRoleLists();
-        if ($Prop.actionType === 'upd' && $Prop.rowData.id) {
+        if ($Prop.actionType === "upd" && $Prop.rowData.id) {
             $Data.formData = { ...$Prop.rowData };
         }
     },
@@ -121,16 +121,16 @@ const $Method = {
     onClose() {
         $Data.visible = false;
         setTimeout(() => {
-            $Emit('update:modelValue', false);
+            $Emit("update:modelValue", false);
         }, 300);
     },
 
     async apiRoleLists() {
         try {
-            const result = await $Http('/addon/admin/role/all');
+            const result = await $Http("/addon/admin/role/all");
             $Data.allRoleLists = result.data || [];
         } catch (error) {
-            MessagePlugin.error('加载角色列表失败');
+            MessagePlugin.error("加载角色列表失败");
         }
     },
 
@@ -140,20 +140,20 @@ const $Method = {
             if (!valid) return;
 
             $Data.submitting = true;
-            const formData = $Prop.actionType === 'add' ? fieldClear($Data.formData, { omitKeys: ['id', 'state'] }) : fieldClear($Data.formData, { omitKeys: ['password'] });
+            const formData = $Prop.actionType === "add" ? fieldClear($Data.formData, { omitKeys: ["id", "state"] }) : fieldClear($Data.formData, { omitKeys: ["password"] });
 
             // 添加管理员时，对密码进行 SHA-256 加密
-            if ($Prop.actionType === 'add' && formData.password) {
+            if ($Prop.actionType === "add" && formData.password) {
                 formData.password = await hashPassword(formData.password);
             }
 
-            const result = await $Http($Prop.actionType === 'upd' ? '/addon/admin/admin/upd' : '/addon/admin/admin/ins', formData);
+            const result = await $Http($Prop.actionType === "upd" ? "/addon/admin/admin/upd" : "/addon/admin/admin/ins", formData);
 
             MessagePlugin.success(result.msg);
-            $Emit('success');
+            $Emit("success");
             $Method.onClose();
         } catch (error) {
-            MessagePlugin.error(error.msg || '提交失败');
+            MessagePlugin.error(error.msg || "提交失败");
         } finally {
             $Data.submitting = false;
         }

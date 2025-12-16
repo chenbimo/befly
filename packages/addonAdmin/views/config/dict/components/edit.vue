@@ -23,8 +23,8 @@
 </template>
 
 <script setup>
-import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Select as TSelect, Option as TOption, Textarea as TTextarea, InputNumber as TInputNumber, MessagePlugin } from 'tdesign-vue-next';
-import { $Http } from '@/plugins/http';
+import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Select as TSelect, Option as TOption, Textarea as TTextarea, InputNumber as TInputNumber, MessagePlugin } from "tdesign-vue-next";
+import { $Http } from "@/plugins/http";
 
 const props = defineProps({
     modelValue: Boolean,
@@ -33,27 +33,27 @@ const props = defineProps({
     typeList: Array
 });
 
-const emit = defineEmits(['update:modelValue', 'success']);
+const emit = defineEmits(["update:modelValue", "success"]);
 
 const visible = computed({
     get: () => props.modelValue,
-    set: (val) => emit('update:modelValue', val)
+    set: (val) => emit("update:modelValue", val)
 });
 
 const formRef = $ref(null);
 
 const $Data = $ref({
     formData: {
-        typeCode: '',
-        key: '',
-        label: '',
+        typeCode: "",
+        key: "",
+        label: "",
         sort: 0,
-        remark: ''
+        remark: ""
     },
     rules: {
-        typeCode: [{ required: true, message: '请选择字典类型' }],
-        key: [{ required: true, message: '请输入键值' }],
-        label: [{ required: true, message: '请输入标签' }]
+        typeCode: [{ required: true, message: "请选择字典类型" }],
+        key: [{ required: true, message: "请输入键值" }],
+        label: [{ required: true, message: "请输入标签" }]
     }
 });
 
@@ -61,7 +61,7 @@ const $Method = {
     async handleSubmit() {
         try {
             const valid = await formRef.validate();
-            const apiUrl = props.actionType === 'add' ? '/addon/admin/dict/ins' : '/addon/admin/dict/upd';
+            const apiUrl = props.actionType === "add" ? "/addon/admin/dict/ins" : "/addon/admin/dict/upd";
             const params = {
                 typeCode: $Data.formData.typeCode,
                 key: $Data.formData.key,
@@ -69,20 +69,20 @@ const $Method = {
                 sort: $Data.formData.sort,
                 remark: $Data.formData.remark
             };
-            if (props.actionType === 'upd') {
+            if (props.actionType === "upd") {
                 params.id = props.rowData.id;
             }
 
             const res = await $Http(apiUrl, params);
             if (res.code === 0) {
-                MessagePlugin.success(props.actionType === 'add' ? '添加成功' : '更新成功');
+                MessagePlugin.success(props.actionType === "add" ? "添加成功" : "更新成功");
                 visible.value = false;
-                emit('success');
+                emit("success");
             } else {
-                MessagePlugin.error(res.msg || '操作失败');
+                MessagePlugin.error(res.msg || "操作失败");
             }
         } catch (error) {
-            MessagePlugin.error('操作失败');
+            MessagePlugin.error("操作失败");
         }
     },
     handleClose() {
@@ -94,18 +94,18 @@ watch(
     () => props.modelValue,
     (val) => {
         if (val) {
-            if (props.actionType === 'upd' && props.rowData) {
-                $Data.formData.typeCode = props.rowData.typeCode || '';
-                $Data.formData.key = props.rowData.key || '';
-                $Data.formData.label = props.rowData.label || '';
+            if (props.actionType === "upd" && props.rowData) {
+                $Data.formData.typeCode = props.rowData.typeCode || "";
+                $Data.formData.key = props.rowData.key || "";
+                $Data.formData.label = props.rowData.label || "";
                 $Data.formData.sort = props.rowData.sort || 0;
-                $Data.formData.remark = props.rowData.remark || '';
+                $Data.formData.remark = props.rowData.remark || "";
             } else {
-                $Data.formData.typeCode = '';
-                $Data.formData.key = '';
-                $Data.formData.label = '';
+                $Data.formData.typeCode = "";
+                $Data.formData.key = "";
+                $Data.formData.label = "";
                 $Data.formData.sort = 0;
-                $Data.formData.remark = '';
+                $Data.formData.remark = "";
             }
         }
     },

@@ -2,8 +2,8 @@
  * Befly 钩子系统类型定义
  */
 
-import type { BeflyContext } from './befly.js';
-import type { RequestContext } from './context.js';
+import type { BeflyContext } from "./befly.js";
+import type { RequestContext } from "./context.js";
 
 /**
  * 钩子处理函数类型（串联模式，无 next 参数）

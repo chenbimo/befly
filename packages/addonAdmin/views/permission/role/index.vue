@@ -74,21 +74,21 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
-import ILucidePlus from '~icons/lucide/plus';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucidePencil from '~icons/lucide/pencil';
-import ILucideSettings from '~icons/lucide/settings';
-import ILucideCode from '~icons/lucide/code';
-import ILucideTrash2 from '~icons/lucide/trash-2';
-import ILucideChevronDown from '~icons/lucide/chevron-down';
-import EditDialog from './components/edit.vue';
-import MenuDialog from './components/menu.vue';
-import ApiDialog from './components/api.vue';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
-import { confirmDeleteAndRun } from '@/utils/confirmAndRun';
+import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from "tdesign-vue-next";
+import ILucidePlus from "~icons/lucide/plus";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import ILucidePencil from "~icons/lucide/pencil";
+import ILucideSettings from "~icons/lucide/settings";
+import ILucideCode from "~icons/lucide/code";
+import ILucideTrash2 from "~icons/lucide/trash-2";
+import ILucideChevronDown from "~icons/lucide/chevron-down";
+import EditDialog from "./components/edit.vue";
+import MenuDialog from "./components/menu.vue";
+import ApiDialog from "./components/api.vue";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
+import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
 // 响应式数据
 const $Data = $ref({
@@ -97,25 +97,25 @@ const $Data = $ref({
     activeRowKeys: [],
     currentRow: null,
     columns: withDefaultColumns([
-        { colKey: 'id', title: 'ID' },
-        { colKey: 'name', title: '角色名称' },
-        { colKey: 'code', title: '角色代码' },
-        { colKey: 'description', title: '描述' },
-        { colKey: 'sort', title: '排序' },
-        { colKey: 'state', title: '状态' },
-        { colKey: 'operation', title: '操作' }
+        { colKey: "id", title: "ID" },
+        { colKey: "name", title: "角色名称" },
+        { colKey: "code", title: "角色代码" },
+        { colKey: "description", title: "描述" },
+        { colKey: "sort", title: "排序" },
+        { colKey: "state", title: "状态" },
+        { colKey: "operation", title: "操作" }
     ]),
     pagerConfig: {
         currentPage: 1,
         limit: 30,
         total: 0,
-        align: 'right',
-        layout: 'total, prev, pager, next, jumper'
+        align: "right",
+        layout: "total, prev, pager, next, jumper"
     },
     editVisible: false,
     menuVisible: false,
     apiVisible: false,
-    actionType: 'add',
+    actionType: "add",
     rowData: {}
 });
 
@@ -128,7 +128,7 @@ const $Method = {
     async apiRoleList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/role/list', {
+            const res = await $Http("/addon/admin/role/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -144,7 +144,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }
@@ -155,7 +155,7 @@ const $Method = {
         confirmDeleteAndRun({
             displayName: `角色“${row.name}”`,
             request: async () => {
-                return await $Http('/addon/admin/role/del', { id: row.id });
+                return await $Http("/addon/admin/role/del", { id: row.id });
             },
             onSuccess: async () => {
                 await $Method.apiRoleList();
@@ -198,13 +198,13 @@ const $Method = {
     onAction(command, rowData) {
         $Data.actionType = command;
         $Data.rowData = rowData;
-        if (command === 'add' || command === 'upd') {
+        if (command === "add" || command === "upd") {
             $Data.editVisible = true;
-        } else if (command === 'menu') {
+        } else if (command === "menu") {
             $Data.menuVisible = true;
-        } else if (command === 'api') {
+        } else if (command === "api") {
             $Data.apiVisible = true;
-        } else if (command === 'del') {
+        } else if (command === "del") {
             $Method.apiRoleDel(rowData);
         }
     }

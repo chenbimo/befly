@@ -39,12 +39,12 @@
 </template>
 
 <script setup>
-import { Progress as TProgress } from 'tdesign-vue-next';
-import ILucideActivity from '~icons/lucide/activity';
-import ILucideCpu from '~icons/lucide/cpu';
-import ILucideHardDrive from '~icons/lucide/hard-drive';
-import ILucideDisc from '~icons/lucide/disc';
-import { $Http } from '@/plugins/http';
+import { Progress as TProgress } from "tdesign-vue-next";
+import ILucideActivity from "~icons/lucide/activity";
+import ILucideCpu from "~icons/lucide/cpu";
+import ILucideHardDrive from "~icons/lucide/hard-drive";
+import ILucideDisc from "~icons/lucide/disc";
+import { $Http } from "@/plugins/http";
 
 // 组件内部数据
 const systemResources = $ref({
@@ -56,7 +56,7 @@ const systemResources = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/addon/admin/dashboard/systemResources');
+        const { data } = await $Http("/addon/admin/dashboard/systemResources");
         Object.assign(systemResources, data);
     } catch (error) {
         // 静默失败：不阻断页面展示
@@ -67,9 +67,9 @@ fetchData();
 
 // 工具函数
 const getProgressColor = (percentage) => {
-    if (percentage < 50) return 'success';
-    if (percentage < 80) return 'warning';
-    return 'danger';
+    if (percentage < 50) return "success";
+    if (percentage < 80) return "warning";
+    return "danger";
 };
 </script>
 

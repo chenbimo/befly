@@ -82,43 +82,43 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Select as TSelect, Option as TOption, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
-import ILucidePlus from '~icons/lucide/plus';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucidePencil from '~icons/lucide/pencil';
-import ILucideTrash2 from '~icons/lucide/trash-2';
-import ILucideChevronDown from '~icons/lucide/chevron-down';
-import EditDialog from './components/edit.vue';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
-import { confirmDeleteAndRun } from '@/utils/confirmAndRun';
+import { Button as TButton, Table as TTable, Tag as TTag, Select as TSelect, Option as TOption, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from "tdesign-vue-next";
+import ILucidePlus from "~icons/lucide/plus";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import ILucidePencil from "~icons/lucide/pencil";
+import ILucideTrash2 from "~icons/lucide/trash-2";
+import ILucideChevronDown from "~icons/lucide/chevron-down";
+import EditDialog from "./components/edit.vue";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
+import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
 // 响应式数据
 const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: 'name', title: '配置名称', fixed: 'left', width: 150 },
-        { colKey: 'id', title: '序号', width: 80 },
-        { colKey: 'code', title: '配置代码', ellipsis: true },
-        { colKey: 'value', title: '配置值', ellipsis: true, width: 200 },
-        { colKey: 'valueType', title: '值类型', width: 100 },
-        { colKey: 'group', title: '分组', width: 100 },
-        { colKey: 'sort', title: '排序', width: 80 },
-        { colKey: 'isSystem', title: '类型', width: 80 },
-        { colKey: 'state', title: '状态', width: 80 },
-        { colKey: 'operation', title: '操作', width: 100 }
+        { colKey: "name", title: "配置名称", fixed: "left", width: 150 },
+        { colKey: "id", title: "序号", width: 80 },
+        { colKey: "code", title: "配置代码", ellipsis: true },
+        { colKey: "value", title: "配置值", ellipsis: true, width: 200 },
+        { colKey: "valueType", title: "值类型", width: 100 },
+        { colKey: "group", title: "分组", width: 100 },
+        { colKey: "sort", title: "排序", width: 80 },
+        { colKey: "isSystem", title: "类型", width: 80 },
+        { colKey: "state", title: "状态", width: 80 },
+        { colKey: "operation", title: "操作", width: 100 }
     ]),
     detailFields: [
-        { colKey: 'name', title: '配置名称' },
-        { colKey: 'code', title: '配置代码' },
-        { colKey: 'value', title: '配置值' },
-        { colKey: 'valueType', title: '值类型' },
-        { colKey: 'group', title: '配置分组' },
-        { colKey: 'sort', title: '排序' },
-        { colKey: 'isSystem', title: '配置类型' },
-        { colKey: 'description', title: '描述说明' }
+        { colKey: "name", title: "配置名称" },
+        { colKey: "code", title: "配置代码" },
+        { colKey: "value", title: "配置值" },
+        { colKey: "valueType", title: "值类型" },
+        { colKey: "group", title: "配置分组" },
+        { colKey: "sort", title: "排序" },
+        { colKey: "isSystem", title: "配置类型" },
+        { colKey: "description", title: "描述说明" }
     ],
     pagerConfig: {
         currentPage: 1,
@@ -128,12 +128,12 @@ const $Data = $ref({
     currentRow: null,
     activeRowKeys: [],
     editVisible: false,
-    actionType: 'add',
+    actionType: "add",
     rowData: {},
     filter: {
-        group: ''
+        group: ""
     },
-    groupOptions: ['基础配置', '邮件配置', '存储配置', '安全配置', '其他']
+    groupOptions: ["基础配置", "邮件配置", "存储配置", "安全配置", "其他"]
 });
 
 // 方法
@@ -146,7 +146,7 @@ const $Method = {
     async apiConfigList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/sysConfig/list', {
+            const res = await $Http("/addon/admin/sysConfig/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -161,7 +161,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }
@@ -170,14 +170,14 @@ const $Method = {
     // 删除配置
     async apiConfigDel(row) {
         if (row.isSystem === 1) {
-            MessagePlugin.warning('系统配置不允许删除');
+            MessagePlugin.warning("系统配置不允许删除");
             return;
         }
 
         confirmDeleteAndRun({
             displayName: `配置“${row.name}”`,
             request: async () => {
-                return await $Http('/addon/admin/sysConfig/del', { id: row.id });
+                return await $Http("/addon/admin/sysConfig/del", { id: row.id });
             },
             onSuccess: async () => {
                 await $Method.apiConfigList();
@@ -224,9 +224,9 @@ const $Method = {
     onAction(command, rowData) {
         $Data.actionType = command;
         $Data.rowData = rowData;
-        if (command === 'add' || command === 'upd') {
+        if (command === "add" || command === "upd") {
             $Data.editVisible = true;
-        } else if (command === 'del') {
+        } else if (command === "del") {
             $Method.apiConfigDel(rowData);
         }
     }

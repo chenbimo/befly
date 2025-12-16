@@ -128,14 +128,14 @@ bun init
 `apis/hello/world.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types/api.js';
+import type { ApiRoute } from "befly/types/api.js";
 
 export default {
-    name: 'Hello World',
-    method: 'GET',
+    name: "Hello World",
+    method: "GET",
     auth: false,
     handler: async (befly, ctx) => {
-        return Yes('Hello from my-addon!');
+        return Yes("Hello from my-addon!");
     }
 } as ApiRoute;
 ```
@@ -217,7 +217,7 @@ bun add @befly-addon/admin
 
 ```typescript
 // main.ts 或 vite.config.js
-import '@befly-addon/admin/styles/variables.scss';
+import "@befly-addon/admin/styles/variables.scss";
 ```
 
 ---
@@ -268,29 +268,29 @@ apis/
 ### API 定义示例
 
 ```typescript
-import type { ApiRoute } from 'befly/types/api.js';
+import type { ApiRoute } from "befly/types/api.js";
 
 export default {
-    name: '管理员登录',
-    method: 'POST',
+    name: "管理员登录",
+    method: "POST",
     auth: false,
-    desc: '管理员邮箱密码登录',
+    desc: "管理员邮箱密码登录",
     fields: {
-        email: { name: '邮箱', type: 'string', min: 5, max: 100, regexp: '@email' },
-        password: { name: '密码', type: 'string', min: 6, max: 100 }
+        email: { name: "邮箱", type: "string", min: 5, max: 100, regexp: "@email" },
+        password: { name: "密码", type: "string", min: 6, max: 100 }
     },
-    required: ['email', 'password'],
+    required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 使用 addon 表时需要完整表名
         const admin = await befly.db.getDetail({
-            table: 'addon_admin_admin',
-            columns: ['id', 'email', 'password', 'nickname'],
+            table: "addon_admin_admin",
+            columns: ["id", "email", "password", "nickname"],
             where: { email: ctx.body.email }
         });
 
         // ... 业务逻辑
 
-        return Yes('登录成功', { token: token });
+        return Yes("登录成功", { token: token });
     }
 } as ApiRoute;
 ```
@@ -326,8 +326,8 @@ export default {
 ```typescript
 // 使用完整表名
 await befly.db.getList({
-    table: 'addon_admin_role', // addon_{name}_{table}
-    columns: ['id', 'name', 'code']
+    table: "addon_admin_role", // addon_{name}_{table}
+    columns: ["id", "name", "code"]
 });
 ```
 
@@ -340,7 +340,7 @@ await befly.db.getList({
 `plugins/email.ts`：
 
 ```typescript
-import type { Plugin } from 'befly/types/plugin.js';
+import type { Plugin } from "befly/types/plugin.js";
 
 export interface EmailConfig {
     host: string;
@@ -350,9 +350,9 @@ export interface EmailConfig {
 }
 
 const emailPlugin: Plugin = {
-    after: ['config'], // 依赖 config 插件
+    after: ["config"], // 依赖 config 插件
     async handler(befly) {
-        const config = befly.config.get('email') as EmailConfig;
+        const config = befly.config.get("email") as EmailConfig;
 
         return {
             async send(to: string, subject: string, html: string) {
@@ -376,10 +376,10 @@ export default emailPlugin;
 ```typescript
 // 在 API 中使用
 export default {
-    name: '发送邮件',
+    name: "发送邮件",
     handler: async (befly, ctx) => {
-        await befly.email.send(ctx.body.to, '欢迎注册', '<h1>欢迎使用</h1>');
-        return Yes('发送成功');
+        await befly.email.send(ctx.body.to, "欢迎注册", "<h1>欢迎使用</h1>");
+        return Yes("发送成功");
     }
 } as ApiRoute;
 ```
@@ -475,8 +475,8 @@ A: 使用 `befly sync:db` 命令，会自动同步所有 Addon 的表定义。
 A: 通过 `befly.config` 访问：
 
 ```typescript
-const dbConfig = befly.config.get('db');
-const customConfig = befly.config.get('myAddon');
+const dbConfig = befly.config.get("db");
+const customConfig = befly.config.get("myAddon");
 ```
 
 ### Q: Addon 之间可以互相依赖吗？

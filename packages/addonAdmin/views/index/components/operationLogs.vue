@@ -23,7 +23,7 @@
                         <span class="col-ip">{{ log.ip }}</span>
                         <span class="col-status">
                             <t-tag :type="log.status === 'success' ? 'success' : 'danger'" size="small">
-                                {{ log.status === 'success' ? '成功' : '失败' }}
+                                {{ log.status === "success" ? "成功" : "失败" }}
                             </t-tag>
                         </span>
                     </div>
@@ -36,19 +36,19 @@
 <script setup>
 // 组件内部数据
 const operationLogs = $ref([
-    { id: 1, userName: '管理员', action: '创建角色', module: '权限管理', ip: '192.168.1.100', status: 'success', createdAt: Date.now() - 120000 },
-    { id: 2, userName: '张三', action: '修改菜单', module: '系统设置', ip: '192.168.1.101', status: 'success', createdAt: Date.now() - 900000 },
-    { id: 3, userName: '李四', action: '删除接口', module: '接口管理', ip: '192.168.1.102', status: 'failed', createdAt: Date.now() - 3600000 },
-    { id: 4, userName: '管理员', action: '同步数据库', module: '数据库', ip: '192.168.1.100', status: 'success', createdAt: Date.now() - 7200000 },
-    { id: 5, userName: '王五', action: '登录系统', module: '系统', ip: '192.168.1.103', status: 'success', createdAt: Date.now() - 10800000 }
+    { id: 1, userName: "管理员", action: "创建角色", module: "权限管理", ip: "192.168.1.100", status: "success", createdAt: Date.now() - 120000 },
+    { id: 2, userName: "张三", action: "修改菜单", module: "系统设置", ip: "192.168.1.101", status: "success", createdAt: Date.now() - 900000 },
+    { id: 3, userName: "李四", action: "删除接口", module: "接口管理", ip: "192.168.1.102", status: "failed", createdAt: Date.now() - 3600000 },
+    { id: 4, userName: "管理员", action: "同步数据库", module: "数据库", ip: "192.168.1.100", status: "success", createdAt: Date.now() - 7200000 },
+    { id: 5, userName: "王五", action: "登录系统", module: "系统", ip: "192.168.1.103", status: "success", createdAt: Date.now() - 10800000 }
 ]);
 
 const formatTime = (timestamp) => {
     const date = new Date(timestamp);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${month}-${day} ${hours}:${minutes}`;
 };
 </script>

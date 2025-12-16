@@ -487,7 +487,7 @@ configs/befly.local.json
 
 ```typescript
 export default {
-    name: '示例接口',
+    name: "示例接口",
     handler: async (befly, ctx) => {
         // 通过 befly.config 访问配置
         const appName = befly.config.appName;
@@ -497,7 +497,7 @@ export default {
         // 访问 Addon 配置
         const emailConfig = befly.config.addons?.admin?.email;
 
-        return befly.tool.Yes('成功', { appName: appName });
+        return befly.tool.Yes("成功", { appName: appName });
     }
 };
 ```
@@ -505,7 +505,7 @@ export default {
 ### 在插件中访问
 
 ```typescript
-import { beflyConfig } from '../befly.config.js';
+import { beflyConfig } from "../befly.config.js";
 
 const plugin: Plugin = {
     handler: () => {
@@ -519,7 +519,7 @@ const plugin: Plugin = {
 ### 直接导入
 
 ```typescript
-import { beflyConfig } from 'befly/befly.config';
+import { beflyConfig } from "befly/befly.config";
 
 console.log(beflyConfig.appName);
 ```
@@ -607,7 +607,7 @@ console.log(beflyConfig.appName);
 
 ```typescript
 // 在 API 中打印
-befly.logger.info({ config: befly.config }, '当前配置');
+befly.logger.info({ config: befly.config }, "当前配置");
 ```
 
 ### Q3: local 配置被提交了？

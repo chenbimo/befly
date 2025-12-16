@@ -3,9 +3,9 @@
  * 提供常用的工具函数
  */
 
+import type { RequestContext } from "../types/context.js";
 // 类型导入
-import type { Plugin } from '../types/plugin.js';
-import type { RequestContext } from '../types/context.js';
+import type { Plugin } from "../types/plugin.js";
 
 /**
  * 成功响应
@@ -15,12 +15,12 @@ import type { RequestContext } from '../types/context.js';
  * @returns 成功响应对象
  */
 export function Yes(msg: string, data: any = {}, other: Record<string, any> = {}) {
-    return {
-        code: 0,
-        msg: msg,
-        data: data,
-        ...other
-    };
+  return {
+    code: 0,
+    msg: msg,
+    data: data,
+    ...other,
+  };
 }
 
 /**
@@ -31,24 +31,24 @@ export function Yes(msg: string, data: any = {}, other: Record<string, any> = {}
  * @returns 失败响应对象
  */
 export function No(msg: string, data: any = null, other: Record<string, any> = {}) {
-    return {
-        code: 1,
-        msg: msg,
-        data: data,
-        ...other
-    };
+  return {
+    code: 1,
+    msg: msg,
+    data: data,
+    ...other,
+  };
 }
 
 /**
  * 响应选项
  */
 interface ResponseOptions {
-    /** HTTP 状态码，默认 200 */
-    status?: number;
-    /** Content-Type，默认根据 data 类型自动判断 */
-    contentType?: string;
-    /** 额外的响应头 */
-    headers?: Record<string, string>;
+  /** HTTP 状态码，默认 200 */
+  status?: number;
+  /** Content-Type，默认根据 data 类型自动判断 */
+  contentType?: string;
+  /** 额外的响应头 */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -80,47 +80,51 @@ interface ResponseOptions {
  *   headers: { 'X-Custom': 'value' }
  * });
  */
-export function Raw(ctx: RequestContext, data: Record<string, any> | string, options: ResponseOptions = {}): Response {
-    const { status = 200, contentType, headers = {} } = options;
+export function Raw(
+  ctx: RequestContext,
+  data: Record<string, any> | string,
+  options: ResponseOptions = {},
+): Response {
+  const { status = 200, contentType, headers = {} } = options;
 
-    // 自动判断 Content-Type
-    let finalContentType = contentType;
-    let body: string;
+  // 自动判断 Content-Type
+  let finalContentType = contentType;
+  let body: string;
 
-    if (typeof data === 'string') {
-        // 字符串类型
-        body = data;
-        if (!finalContentType) {
-            // 自动判断：XML 或纯文本
-            finalContentType = data.trim().startsWith('<') ? 'application/xml' : 'text/plain';
-        }
-    } else {
-        // 对象类型，JSON 序列化
-        body = JSON.stringify(data);
-        finalContentType = finalContentType || 'application/json';
+  if (typeof data === "string") {
+    // 字符串类型
+    body = data;
+    if (!finalContentType) {
+      // 自动判断：XML 或纯文本
+      finalContentType = data.trim().startsWith("<") ? "application/xml" : "text/plain";
     }
+  } else {
+    // 对象类型，JSON 序列化
+    body = JSON.stringify(data);
+    finalContentType = finalContentType || "application/json";
+  }
 
-    // 合并响应头
-    const responseHeaders = {
-        ...ctx.corsHeaders,
-        'Content-Type': finalContentType,
-        ...headers
-    };
+  // 合并响应头
+  const responseHeaders = {
+    ...ctx.corsHeaders,
+    "Content-Type": finalContentType,
+    ...headers,
+  };
 
-    return new Response(body, {
-        status: status,
-        headers: responseHeaders
-    });
+  return new Response(body, {
+    status: status,
+    headers: responseHeaders,
+  });
 }
 
 const plugin: Plugin = {
-    handler: () => {
-        return {
-            Yes: Yes,
-            No: No,
-            Raw: Raw
-        };
-    }
+  handler: () => {
+    return {
+      Yes: Yes,
+      No: No,
+      Raw: Raw,
+    };
+  },
 };
 
 export default plugin;

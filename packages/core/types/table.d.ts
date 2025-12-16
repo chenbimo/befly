@@ -5,7 +5,7 @@
 /**
  * 保留字段（系统自动管理）
  */
-export type ReservedFields = 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'state';
+export type ReservedFields = "id" | "created_at" | "updated_at" | "deleted_at" | "state";
 
 /**
  * 系统字段（所有表都有的字段）
@@ -36,7 +36,7 @@ export type InsertType<T> = Omit<T, keyof SystemFields>;
 /**
  * 更新类型：所有字段可选，排除不可修改的系统字段
  */
-export type UpdateType<T> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>>;
+export type UpdateType<T> = Partial<Omit<T, "id" | "createdAt" | "updatedAt" | "deletedAt">>;
 
 /**
  * 查询结果类型：完整的表记录
@@ -108,27 +108,27 @@ export type TableUpdateType<K extends TableName> = UpdateType<DatabaseTables[K]>
 /**
  * 比较操作符（值类型与字段类型相同）
  */
-type CompareOperators = 'gt' | 'gte' | 'lt' | 'lte' | 'ne' | 'not';
+type CompareOperators = "gt" | "gte" | "lt" | "lte" | "ne" | "not";
 
 /**
  * 数组操作符（值类型为字段类型的数组）
  */
-type ArrayOperators = 'in' | 'nin' | 'notIn';
+type ArrayOperators = "in" | "nin" | "notIn";
 
 /**
  * 字符串操作符（值类型为字符串）
  */
-type StringOperators = 'like' | 'notLike';
+type StringOperators = "like" | "notLike";
 
 /**
  * 范围操作符（值类型为 [min, max] 元组）
  */
-type RangeOperators = 'between' | 'notBetween';
+type RangeOperators = "between" | "notBetween";
 
 /**
  * 空值操作符（值类型为 boolean）
  */
-type NullOperators = 'null' | 'notNull';
+type NullOperators = "null" | "notNull";
 
 /**
  * 所有操作符联合类型

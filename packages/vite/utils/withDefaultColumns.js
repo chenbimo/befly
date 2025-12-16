@@ -5,36 +5,36 @@
  * @returns {any[]}
  */
 export function withDefaultColumns(columns, customConfig = {}) {
-    /** @type {Record<string, any>} */
-    const specialColumnConfig = Object.assign(
-        {
-            operation: { width: 100, align: 'center', fixed: 'right' },
-            state: { width: 100, align: 'center' },
-            id: { width: 200, align: 'center' }
-        },
-        customConfig
-    );
+  /** @type {Record<string, any>} */
+  const specialColumnConfig = Object.assign(
+    {
+      operation: { width: 100, align: "center", fixed: "right" },
+      state: { width: 100, align: "center" },
+      id: { width: 200, align: "center" },
+    },
+    customConfig,
+  );
 
-    return columns.map((col) => {
-        const colKey = col && col.colKey;
+  return columns.map((col) => {
+    const colKey = col && col.colKey;
 
-        let specialConfig = colKey ? specialColumnConfig[colKey] : undefined;
+    let specialConfig = colKey ? specialColumnConfig[colKey] : undefined;
 
-        if (!specialConfig && colKey && (colKey.endsWith('At') || colKey.endsWith('At2'))) {
-            specialConfig = { align: 'center' };
-        }
+    if (!specialConfig && colKey && (colKey.endsWith("At") || colKey.endsWith("At2"))) {
+      specialConfig = { align: "center" };
+    }
 
-        const base = {
-            width: 200,
-            ellipsis: true
-        };
+    const base = {
+      width: 200,
+      ellipsis: true,
+    };
 
-        const merged = Object.assign({}, base);
-        if (specialConfig) {
-            Object.assign(merged, specialConfig);
-        }
-        Object.assign(merged, col);
+    const merged = Object.assign({}, base);
+    if (specialConfig) {
+      Object.assign(merged, specialConfig);
+    }
+    Object.assign(merged, col);
 
-        return merged;
-    });
+    return merged;
+  });
 }

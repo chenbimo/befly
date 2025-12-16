@@ -31,6 +31,9 @@ dist
 packages/cli
 befly.local.json
 
+# Vite inspect output (generated)
+**/.vite-inspect/
+
 # NPM 认证配置（包含敏感 token）
 .npmrc
 

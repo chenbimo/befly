@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { ConfigProvider } from 'tdesign-vue-next';
+import { ConfigProvider } from "tdesign-vue-next";
 
 const globalConfig = {
     dialog: {
@@ -15,12 +15,12 @@ const globalConfig = {
     },
     table: {
         // 表格默认配置
-        size: 'medium',
+        size: "medium",
         bordered: false,
         stripe: false,
         showHeader: true,
         // 列默认配置（需要在每个列上单独设置）
-        cellEmptyContent: '-'
+        cellEmptyContent: "-"
     }
 };
 </script>

@@ -21,7 +21,7 @@ bun add -d befly-vite vite
 
 ```javascript
 // vite.config.js
-import { createBeflyViteConfig } from 'befly-vite';
+import { createBeflyViteConfig } from "befly-vite";
 
 export default createBeflyViteConfig();
 ```
@@ -29,11 +29,11 @@ export default createBeflyViteConfig();
 ### 自定义配置
 
 ```javascript
-import { createBeflyViteConfig } from 'befly-vite';
-import { fileURLToPath } from 'node:url';
+import { createBeflyViteConfig } from "befly-vite";
+import { fileURLToPath } from "node:url";
 
 export default createBeflyViteConfig({
-    root: fileURLToPath(new URL('.', import.meta.url)),
+    root: fileURLToPath(new URL(".", import.meta.url)),
 
     // 自定义配置
     userConfig: {

@@ -73,7 +73,7 @@
 // 在 API handler 中使用
 handler: async (befly, ctx) => {
     const user = await befly.db.getOne({
-        table: 'user',
+        table: "user",
         where: { id: 1 }
     });
 };
@@ -100,13 +100,13 @@ handler: async (befly, ctx) => {
 ```typescript
 // 用户提交的数据可能部分字段为空
 await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: {
-        username: 'john',
-        email: 'john@example.com',
+        username: "john",
+        email: "john@example.com",
         phone: undefined, // ❌ 自动忽略，不会写入
         avatar: null, // ❌ 自动忽略，不会写入
-        nickname: '' // ✅ 空字符串会写入（不是 null/undefined）
+        nickname: "" // ✅ 空字符串会写入（不是 null/undefined）
     }
 });
 // 实际 SQL: INSERT INTO user (username, email, nickname, ...) VALUES ('john', 'john@example.com', '', ...)
@@ -117,7 +117,7 @@ await befly.db.insData({
 ```typescript
 // 只更新用户提交的字段
 await befly.db.updData({
-    table: 'user',
+    table: "user",
     data: {
         nickname: ctx.body.nickname, // 如果用户传了值，会更新
         avatar: ctx.body.avatar, // 如果为 undefined，自动忽略
@@ -133,7 +133,7 @@ await befly.db.updData({
 ```typescript
 // 条件筛选：用户可能只传部分筛选条件
 const result = await befly.db.getList({
-    table: 'article',
+    table: "article",
     where: {
         categoryId: ctx.body.categoryId, // 如果未传，值为 undefined，自动忽略
         status: ctx.body.status, // 如果未传，值为 undefined，自动忽略
@@ -150,17 +150,17 @@ const result = await befly.db.getList({
 ```typescript
 // API: 用户列表（带可选筛选条件）
 export default {
-    name: '用户列表',
+    name: "用户列表",
     fields: {
-        keyword: { name: '关键词', type: 'string', max: 50 },
-        status: { name: '状态', type: 'number' },
-        state: { name: '状态', type: 'number' }
+        keyword: { name: "关键词", type: "string", max: 50 },
+        status: { name: "状态", type: "number" },
+        state: { name: "状态", type: "number" }
     },
     handler: async (befly, ctx) => {
         // 直接使用请求参数，无需判断是否存在
         // null/undefined 的条件会被自动过滤
         const result = await befly.db.getList({
-            table: 'user',
+            table: "user",
             where: {
                 status: ctx.body.status, // 未传时为 undefined，自动忽略
                 state: ctx.body.state, // 未传时为 undefined，自动忽略
@@ -170,7 +170,7 @@ export default {
             limit: ctx.body.limit || 10
         });
 
-        return befly.tool.Yes('查询成功', result);
+        return befly.tool.Yes("查询成功", result);
     }
 };
 ```
@@ -182,23 +182,23 @@ export default {
 ```typescript
 // 默认排除 null 和 undefined
 const cleanData = befly.db.cleanFields({
-    name: 'John',
+    name: "John",
     age: null,
     email: undefined,
-    phone: ''
+    phone: ""
 });
 // 结果: { name: 'John', phone: '' }
 
 // 自定义排除值（如同时排除空字符串）
 const cleanData2 = befly.db.cleanFields(
-    { name: 'John', phone: '', age: null },
-    [null, undefined, ''] // 排除这些值
+    { name: "John", phone: "", age: null },
+    [null, undefined, ""] // 排除这些值
 );
 // 结果: { name: 'John' }
 
 // 保留特定字段的特定值（即使在排除列表中）
 const cleanData3 = befly.db.cleanFields(
-    { name: 'John', status: null, count: 0 },
+    { name: "John", status: null, count: 0 },
     [null, undefined], // 排除 null 和 undefined
     { status: null } // 但保留 status 字段的 null 值
 );
@@ -217,16 +217,16 @@ const cleanData3 = befly.db.cleanFields(
 ```typescript
 // 写入时使用小驼峰
 await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: {
-        userName: 'John', // → user_name
+        userName: "John", // → user_name
         createdBy: 1 // → created_by
     }
 });
 
 // 查询返回小驼峰
 const user = await befly.db.getOne({
-    table: 'user',
+    table: "user",
     where: { userId: 1 } // → WHERE user_id = 1
 });
 // 返回: { userId: 1, userName: 'John', createdBy: 1 }
@@ -253,21 +253,21 @@ interface QueryOptions {
 ```typescript
 // 基础查询
 const user = await befly.db.getOne({
-    table: 'user',
+    table: "user",
     where: { id: 1 }
 });
 
 // 指定字段
 const user = await befly.db.getOne({
-    table: 'user',
-    fields: ['id', 'username', 'email'],
+    table: "user",
+    fields: ["id", "username", "email"],
     where: { id: 1 }
 });
 
 // 排除字段（使用 ! 前缀）
 const user = await befly.db.getOne({
-    table: 'user',
-    fields: ['!password', '!token'],
+    table: "user",
+    fields: ["!password", "!token"],
     where: { id: 1 }
 });
 ```
@@ -300,7 +300,7 @@ interface ListResult<T> {
 ```typescript
 // 基础分页
 const result = await befly.db.getList({
-    table: 'user',
+    table: "user",
     page: 1,
     limit: 10
 });
@@ -308,10 +308,10 @@ const result = await befly.db.getList({
 
 // 带条件和排序
 const result = await befly.db.getList({
-    table: 'user',
-    fields: ['id', 'username', 'createdAt'],
+    table: "user",
+    fields: ["id", "username", "createdAt"],
     where: { state: 1 },
-    orderBy: ['createdAt#DESC', 'id#ASC'],
+    orderBy: ["createdAt#DESC", "id#ASC"],
     page: 2,
     limit: 20
 });
@@ -329,16 +329,16 @@ const result = await befly.db.getList({
 ```typescript
 // 查询所有
 const result = await befly.db.getAll({
-    table: 'user'
+    table: "user"
 });
 // result: { lists: [...], total: 实际总数 }
 
 // 带条件
 const activeResult = await befly.db.getAll({
-    table: 'user',
-    fields: ['id', 'username'],
+    table: "user",
+    fields: ["id", "username"],
     where: { state: 1 },
-    orderBy: ['sort#ASC']
+    orderBy: ["sort#ASC"]
 });
 
 // 访问数据
@@ -362,12 +362,12 @@ console.log(activeResult.total); // 真实总数（如 100000）
 ```typescript
 // 查询总数
 const count = await befly.db.getCount({
-    table: 'user'
+    table: "user"
 });
 
 // 条件计数
 const activeCount = await befly.db.getCount({
-    table: 'user',
+    table: "user",
     where: { state: 1 }
 });
 ```
@@ -378,8 +378,8 @@ const activeCount = await befly.db.getCount({
 
 ```typescript
 const hasAdmin = await befly.db.exists({
-    table: 'user',
-    where: { roleCode: 'admin' }
+    table: "user",
+    where: { roleCode: "admin" }
 });
 
 if (hasAdmin) {
@@ -394,15 +394,15 @@ if (hasAdmin) {
 ```typescript
 // 查询用户名
 const username = await befly.db.getFieldValue({
-    table: 'user',
-    field: 'username',
+    table: "user",
+    field: "username",
     where: { id: 1 }
 });
 
 // 查询余额
 const balance = await befly.db.getFieldValue<number>({
-    table: 'account',
-    field: 'balance',
+    table: "account",
+    field: "balance",
     where: { userId: 1 }
 });
 ```
@@ -436,10 +436,10 @@ interface InsertOptions {
 ```typescript
 // 插入用户
 const userId = await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: {
-        username: 'john',
-        email: 'john@example.com',
+        username: "john",
+        email: "john@example.com",
         password: hashedPassword,
         categoryId: 1
     }
@@ -448,12 +448,12 @@ const userId = await befly.db.insData({
 
 // 系统字段不可覆盖
 await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: {
         id: 999, // ❌ 会被忽略，自动生成
         createdAt: 0, // ❌ 会被忽略，自动生成
         state: 2, // ❌ 会被忽略，强制设为 1
-        username: 'john' // ✅ 正常写入
+        username: "john" // ✅ 正常写入
     }
 });
 ```
@@ -464,10 +464,10 @@ await befly.db.insData({
 
 ```typescript
 // 批量插入
-const ids = await befly.db.insBatch('user', [
-    { username: 'user1', email: 'user1@example.com' },
-    { username: 'user2', email: 'user2@example.com' },
-    { username: 'user3', email: 'user3@example.com' }
+const ids = await befly.db.insBatch("user", [
+    { username: "user1", email: "user1@example.com" },
+    { username: "user2", email: "user2@example.com" },
+    { username: "user3", email: "user3@example.com" }
 ]);
 // 返回: [id1, id2, id3]
 ```
@@ -489,10 +489,10 @@ interface UpdateOptions {
 ```typescript
 // 更新用户
 const affected = await befly.db.updData({
-    table: 'user',
+    table: "user",
     data: {
-        nickname: '新昵称',
-        email: 'new@example.com'
+        nickname: "新昵称",
+        email: "new@example.com"
     },
     where: { id: 1 }
 });
@@ -500,7 +500,7 @@ const affected = await befly.db.updData({
 
 // 批量更新
 await befly.db.updData({
-    table: 'user',
+    table: "user",
     data: { state: 2 },
     where: { status: 5 }
 });
@@ -519,7 +519,7 @@ await befly.db.updData({
 ```typescript
 // 软删除
 const affected = await befly.db.delData({
-    table: 'user',
+    table: "user",
     where: { id: 1 }
 });
 ```
@@ -531,7 +531,7 @@ const affected = await befly.db.delData({
 ```typescript
 // 硬删除
 const affected = await befly.db.delForce({
-    table: 'temp_data',
+    table: "temp_data",
     where: { expiredAt$lt: Date.now() }
 });
 ```
@@ -545,7 +545,7 @@ const affected = await befly.db.delForce({
 ```typescript
 // 禁用用户
 await befly.db.disableData({
-    table: 'user',
+    table: "user",
     where: { id: 1 }
 });
 ```
@@ -557,7 +557,7 @@ await befly.db.disableData({
 ```typescript
 // 启用用户
 await befly.db.enableData({
-    table: 'user',
+    table: "user",
     where: { id: 1 }
 });
 ```
@@ -572,10 +572,10 @@ await befly.db.enableData({
 
 ```typescript
 // 阅读数 +1
-await befly.db.increment('article', 'viewCount', { id: 1 });
+await befly.db.increment("article", "viewCount", { id: 1 });
 
 // 阅读数 +10
-await befly.db.increment('article', 'viewCount', { id: 1 }, 10);
+await befly.db.increment("article", "viewCount", { id: 1 }, 10);
 ```
 
 ### decrement - 自减
@@ -584,10 +584,10 @@ await befly.db.increment('article', 'viewCount', { id: 1 }, 10);
 
 ```typescript
 // 库存 -1
-await befly.db.decrement('product', 'stock', { id: 1 });
+await befly.db.decrement("product", "stock", { id: 1 });
 
 // 余额 -100
-await befly.db.decrement('account', 'balance', { userId: 1 }, 100);
+await befly.db.decrement("account", "balance", { userId: 1 }, 100);
 ```
 
 ---
@@ -600,14 +600,14 @@ await befly.db.decrement('account', 'balance', { userId: 1 }, 100);
 // 转账示例
 const result = await befly.db.trans(async (tx) => {
     // 扣除转出方余额
-    await tx.decrement('account', 'balance', { userId: 1 }, 100);
+    await tx.decrement("account", "balance", { userId: 1 }, 100);
 
     // 增加转入方余额
-    await tx.increment('account', 'balance', { userId: 2 }, 100);
+    await tx.increment("account", "balance", { userId: 2 }, 100);
 
     // 记录转账日志
     await tx.insData({
-        table: 'transfer_log',
+        table: "transfer_log",
         data: {
             fromUserId: 1,
             toUserId: 2,
@@ -620,9 +620,9 @@ const result = await befly.db.trans(async (tx) => {
 
 // 事务中抛出异常会自动回滚
 await befly.db.trans(async (tx) => {
-    await tx.updData({ table: 'user', data: { balance: 0 }, where: { id: 1 } });
+    await tx.updData({ table: "user", data: { balance: 0 }, where: { id: 1 } });
 
-    throw new Error('业务校验失败'); // 自动回滚
+    throw new Error("业务校验失败"); // 自动回滚
 });
 ```
 
@@ -639,23 +639,23 @@ DbHelper 的查询方法（getOne、getList、getAll、getCount）支持通过 `
 ```typescript
 // 单条联查
 const order = await befly.db.getOne({
-    table: 'order',
-    joins: [{ table: 'user', on: 'order.user_id = user.id' }],
-    fields: ['order.id', 'order.totalAmount', 'order.status', 'user.username', 'user.nickname'],
-    where: { 'order.id': orderId }
+    table: "order",
+    joins: [{ table: "user", on: "order.user_id = user.id" }],
+    fields: ["order.id", "order.totalAmount", "order.status", "user.username", "user.nickname"],
+    where: { "order.id": orderId }
 });
 // 返回: { id: 1, totalAmount: 100, status: 'paid', username: 'john', nickname: '张三' }
 
 // 分页联查
 const result = await befly.db.getList({
-    table: 'order',
+    table: "order",
     joins: [
-        { table: 'user', on: 'order.userId = user.id' },
-        { table: 'product', on: 'order.productId = product.id' }
+        { table: "user", on: "order.userId = user.id" },
+        { table: "product", on: "order.productId = product.id" }
     ],
-    fields: ['order.id', 'order.totalAmount', 'user.username', 'product.name AS productName'],
-    where: { 'order.status': 'paid' },
-    orderBy: ['order.createdAt#DESC'],
+    fields: ["order.id", "order.totalAmount", "user.username", "product.name AS productName"],
+    where: { "order.status": "paid" },
+    orderBy: ["order.createdAt#DESC"],
     page: 1,
     limit: 10
 });
@@ -663,18 +663,18 @@ const result = await befly.db.getList({
 
 // 联查计数
 const count = await befly.db.getCount({
-    table: 'order',
-    joins: [{ table: 'user', on: 'order.userId = user.id' }],
-    where: { 'order.state': 1, 'user.state': 1 }
+    table: "order",
+    joins: [{ table: "user", on: "order.userId = user.id" }],
+    where: { "order.state": 1, "user.state": 1 }
 });
 
 // 联查全部
 const allOrders = await befly.db.getAll({
-    table: 'order',
-    joins: [{ table: 'user', on: 'order.userId = user.id' }],
-    fields: ['order.id', 'user.username'],
-    where: { 'order.state': 1 },
-    orderBy: ['order.id#DESC']
+    table: "order",
+    joins: [{ table: "user", on: "order.userId = user.id" }],
+    fields: ["order.id", "user.username"],
+    where: { "order.state": 1 },
+    orderBy: ["order.id#DESC"]
 });
 // 返回: { lists: [...最多10000条], total: 真实总数 }
 ```
@@ -684,7 +684,7 @@ const allOrders = await befly.db.getAll({
 ```typescript
 interface JoinOption {
     /** JOIN 类型：'left' | 'right' | 'inner'，默认 'left' */
-    type?: 'left' | 'right' | 'inner';
+    type?: "left" | "right" | "inner";
     /** 表名（不支持别名） */
     table: string;
     /** JOIN 条件（如 'order.user_id = user.id'） */
@@ -696,10 +696,10 @@ interface JoinOption {
 
 ```typescript
 joins: [
-    { table: 'user', on: 'order.userId = user.id' }, // LEFT JOIN（默认）
-    { type: 'left', table: 'product', on: 'order.productId = product.id' }, // LEFT JOIN
-    { type: 'inner', table: 'category', on: 'product.categoryId = category.id' }, // INNER JOIN
-    { type: 'right', table: 'warehouse', on: 'product.warehouseId = warehouse.id' } // RIGHT JOIN
+    { table: "user", on: "order.userId = user.id" }, // LEFT JOIN（默认）
+    { type: "left", table: "product", on: "order.productId = product.id" }, // LEFT JOIN
+    { type: "inner", table: "category", on: "product.categoryId = category.id" }, // INNER JOIN
+    { type: "right", table: "warehouse", on: "product.warehouseId = warehouse.id" } // RIGHT JOIN
 ];
 ```
 
@@ -714,43 +714,43 @@ joins: [
 
 ```typescript
 export default {
-    name: '订单列表',
+    name: "订单列表",
     fields: {
-        keyword: { name: '关键词', type: 'string', max: 50 },
-        status: { name: '状态', type: 'string' },
+        keyword: { name: "关键词", type: "string", max: 50 },
+        status: { name: "状态", type: "string" },
         page: Fields.page,
         limit: Fields.limit
     },
     handler: async (befly, ctx) => {
         const where: any = {
-            'order.state': 1,
-            'user.state': 1
+            "order.state": 1,
+            "user.state": 1
         };
 
         // 关键词搜索
         if (ctx.body.keyword) {
-            where.$or = [{ 'user.username$like': `%${ctx.body.keyword}%` }, { 'user.nickname$like': `%${ctx.body.keyword}%` }, { 'product.name$like': `%${ctx.body.keyword}%` }];
+            where.$or = [{ "user.username$like": `%${ctx.body.keyword}%` }, { "user.nickname$like": `%${ctx.body.keyword}%` }, { "product.name$like": `%${ctx.body.keyword}%` }];
         }
 
         // 状态过滤
         if (ctx.body.status) {
-            where['order.status'] = ctx.body.status;
+            where["order.status"] = ctx.body.status;
         }
 
         const result = await befly.db.getList({
-            table: 'order',
+            table: "order",
             joins: [
-                { table: 'user', on: 'order.userId = user.id' },
-                { table: 'product', on: 'order.productId = product.id' }
+                { table: "user", on: "order.userId = user.id" },
+                { table: "product", on: "order.productId = product.id" }
             ],
-            fields: ['order.id', 'order.quantity', 'order.totalAmount', 'order.status', 'order.createdAt', 'user.username', 'user.nickname', 'product.name AS productName', 'product.price AS productPrice'],
+            fields: ["order.id", "order.quantity", "order.totalAmount", "order.status", "order.createdAt", "user.username", "user.nickname", "product.name AS productName", "product.price AS productPrice"],
             where: where,
-            orderBy: ['order.createdAt#DESC'],
+            orderBy: ["order.createdAt#DESC"],
             page: ctx.body.page,
             limit: ctx.body.limit
         });
 
-        return befly.tool.Yes('查询成功', result);
+        return befly.tool.Yes("查询成功", result);
     }
 };
 ```
@@ -778,7 +778,7 @@ const usersWithOrderCount = await befly.db.query(
 );
 
 // 需要手动转换字段名
-import { arrayKeysToCamel } from 'befly/lib/arrayKeysToCamel';
+import { arrayKeysToCamel } from "befly/lib/arrayKeysToCamel";
 const list = arrayKeysToCamel(usersWithOrderCount);
 ```
 
@@ -832,7 +832,7 @@ where: {
 ```typescript
 // 用户名或邮箱匹配
 where: {
-    $or: [{ username: 'admin' }, { email: 'admin@example.com' }];
+    $or: [{ username: "admin" }, { email: "admin@example.com" }];
 }
 // → WHERE (username = 'admin' OR email = 'admin@example.com')
 ```
@@ -872,7 +872,7 @@ where: {
 // → WHERE category_id IN (1, 2, 3)
 
 where: {
-    status$in: ['pending', 'processing'];
+    status$in: ["pending", "processing"];
 }
 // → WHERE status IN ('pending', 'processing')
 ```
@@ -936,19 +936,19 @@ where: {
 ```typescript
 // 包含
 where: {
-    username$like: '%admin%';
+    username$like: "%admin%";
 }
 // → WHERE username LIKE '%admin%'
 
 // 以...开头
 where: {
-    email$like: 'test%';
+    email$like: "test%";
 }
 // → WHERE email LIKE 'test%'
 
 // 以...结尾
 where: {
-    phone$like: '%1234';
+    phone$like: "%1234";
 }
 // → WHERE phone LIKE '%1234'
 ```
@@ -957,7 +957,7 @@ where: {
 
 ```typescript
 where: {
-    username$notLike: '%test%';
+    username$notLike: "%test%";
 }
 // → WHERE username NOT LIKE '%test%'
 ```
@@ -978,7 +978,7 @@ fields: undefined;
 ### 指定字段
 
 ```typescript
-fields: ['id', 'username', 'email'];
+fields: ["id", "username", "email"];
 // → SELECT id, username, email
 ```
 
@@ -987,7 +987,7 @@ fields: ['id', 'username', 'email'];
 使用 `!` 前缀排除字段（查询除指定字段外的所有字段）。
 
 ```typescript
-fields: ['!password', '!token', '!salt'];
+fields: ["!password", "!token", "!salt"];
 // → SELECT id, username, email, created_at, ... (除了 password, token, salt)
 ```
 
@@ -1001,11 +1001,11 @@ fields: ['!password', '!token', '!salt'];
 
 ```typescript
 // 单字段排序
-orderBy: ['createdAt#DESC'];
+orderBy: ["createdAt#DESC"];
 // → ORDER BY created_at DESC
 
 // 多字段排序
-orderBy: ['sort#ASC', 'id#DESC'];
+orderBy: ["sort#ASC", "id#DESC"];
 // → ORDER BY sort ASC, id DESC
 ```
 
@@ -1047,19 +1047,19 @@ orderBy: ['sort#ASC', 'id#DESC'];
 
 ```typescript
 // 默认查询：state > 0，包含正常和禁用数据
-getOne({ table: 'user', where: { id: 1 } });
+getOne({ table: "user", where: { id: 1 } });
 // → WHERE id = 1 AND state > 0
 
 // 只查询正常状态的数据
-getList({ table: 'user', where: { state: 1 } });
+getList({ table: "user", where: { state: 1 } });
 // → WHERE state = 1
 
 // 只查询禁用状态的数据
-getList({ table: 'user', where: { state: 2 } });
+getList({ table: "user", where: { state: 2 } });
 // → WHERE state = 2
 
 // 查询所有状态（包括软删除）
-getOne({ table: 'user', where: { id: 1, state$gte: 0 } });
+getOne({ table: "user", where: { id: 1, state$gte: 0 } });
 // → WHERE id = 1 AND state >= 0
 ```
 
@@ -1072,10 +1072,10 @@ getOne({ table: 'user', where: { id: 1, state$gte: 0 } });
 ```typescript
 // 用户列表
 export default {
-    name: '用户列表',
+    name: "用户列表",
     fields: {
-        keyword: { name: '关键词', type: 'string', max: 50 },
-        departmentId: { name: '部门ID', type: 'number' },
+        keyword: { name: "关键词", type: "string", max: 50 },
+        departmentId: { name: "部门ID", type: "number" },
         page: Fields.page,
         limit: Fields.limit
     },
@@ -1093,15 +1093,15 @@ export default {
         }
 
         const result = await befly.db.getList({
-            table: 'user',
-            fields: ['!password', '!token'],
+            table: "user",
+            fields: ["!password", "!token"],
             where: where,
-            orderBy: ['createdAt#DESC'],
+            orderBy: ["createdAt#DESC"],
             page: ctx.body.page,
             limit: ctx.body.limit
         });
 
-        return befly.tool.Yes('查询成功', result);
+        return befly.tool.Yes("查询成功", result);
     }
 };
 ```
@@ -1110,47 +1110,47 @@ export default {
 
 ```typescript
 export default {
-    name: '创建订单',
+    name: "创建订单",
     fields: {
-        productId: { name: '商品ID', type: 'number' },
-        quantity: { name: '数量', type: 'number', min: 1 }
+        productId: { name: "商品ID", type: "number" },
+        quantity: { name: "数量", type: "number", min: 1 }
     },
-    required: ['productId', 'quantity'],
+    required: ["productId", "quantity"],
     handler: async (befly, ctx) => {
         const result = await befly.db.trans(async (tx) => {
             // 1. 查询商品
             const product = await tx.getOne({
-                table: 'product',
+                table: "product",
                 where: { id: ctx.body.productId }
             });
 
             if (!product) {
-                throw new Error('商品不存在');
+                throw new Error("商品不存在");
             }
 
             if (product.stock < ctx.body.quantity) {
-                throw new Error('库存不足');
+                throw new Error("库存不足");
             }
 
             // 2. 扣减库存
-            await tx.decrement('product', 'stock', { id: ctx.body.productId }, ctx.body.quantity);
+            await tx.decrement("product", "stock", { id: ctx.body.productId }, ctx.body.quantity);
 
             // 3. 创建订单
             const orderId = await tx.insData({
-                table: 'order',
+                table: "order",
                 data: {
                     userId: ctx.user.id,
                     productId: ctx.body.productId,
                     quantity: ctx.body.quantity,
                     totalAmount: product.price * ctx.body.quantity,
-                    status: 'pending'
+                    status: "pending"
                 }
             });
 
             return { orderId: orderId };
         });
 
-        return befly.tool.Yes('订单创建成功', result);
+        return befly.tool.Yes("订单创建成功", result);
     }
 };
 ```
@@ -1160,14 +1160,14 @@ export default {
 ```typescript
 // 查询最近7天内，状态为正常或待审核的文章
 const articles = await befly.db.getList({
-    table: 'article',
-    fields: ['id', 'title', 'authorId', 'viewCount', 'createdAt'],
+    table: "article",
+    fields: ["id", "title", "authorId", "viewCount", "createdAt"],
     where: {
         createdAt$gte: Date.now() - 7 * 24 * 60 * 60 * 1000,
-        $or: [{ status: 'published' }, { status: 'pending' }],
+        $or: [{ status: "published" }, { status: "pending" }],
         categoryId$in: [1, 2, 3]
     },
-    orderBy: ['viewCount#DESC', 'createdAt#DESC'],
+    orderBy: ["viewCount#DESC", "createdAt#DESC"],
     page: 1,
     limit: 20
 });

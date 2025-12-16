@@ -20,7 +20,7 @@ export type KeyValue<T = any> = Record<string, T>;
 /**
  * WHERE 条件操作符
  */
-export type WhereOperator = '$eq' | '$ne' | '$not' | '$gt' | '$gte' | '$lt' | '$lte' | '$like' | '$notLike' | '$in' | '$notIn' | '$nin' | '$isNull' | '$isNotNull' | '$null' | '$notNull' | '$between' | '$notBetween';
+export type WhereOperator = "$eq" | "$ne" | "$not" | "$gt" | "$gte" | "$lt" | "$lte" | "$like" | "$notLike" | "$in" | "$notIn" | "$nin" | "$isNull" | "$isNotNull" | "$null" | "$notNull" | "$between" | "$notBetween";
 
 /**
  * WHERE 条件类型
@@ -30,7 +30,7 @@ export type WhereConditions = Record<string, any>;
 /**
  * 排序方向
  */
-export type OrderDirection = 'ASC' | 'DESC';
+export type OrderDirection = "ASC" | "DESC";
 
 /**
  * 排序字段
@@ -82,7 +82,7 @@ export type FieldRule = string;
  */
 export interface ParsedFieldRule {
     name: string;
-    type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
+    type: "string" | "number" | "text" | "array_string" | "array_text";
     min: number | null;
     max: number | null;
     default: any;
@@ -93,12 +93,12 @@ export interface ParsedFieldRule {
 /**
  * 比较运算符
  */
-export type ComparisonOperator = '=' | '>' | '<' | '>=' | '<=' | '!=' | '<>' | 'LIKE' | 'IN' | 'NOT IN' | 'IS NULL' | 'IS NOT NULL';
+export type ComparisonOperator = "=" | ">" | "<" | ">=" | "<=" | "!=" | "<>" | "LIKE" | "IN" | "NOT IN" | "IS NULL" | "IS NOT NULL";
 
 /**
  * JOIN 类型
  */
-export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
+export type JoinType = "INNER" | "LEFT" | "RIGHT" | "FULL";
 
 /**
  * JOIN 选项
@@ -106,7 +106,7 @@ export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
  */
 export interface JoinOption {
     /** JOIN 类型，默认 'left' */
-    type?: 'left' | 'right' | 'inner';
+    type?: "left" | "right" | "inner";
     /** 要联接的表名（不支持别名） */
     table: string;
     /** JOIN 条件（如 'order.user_id = user.id'） */

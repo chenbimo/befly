@@ -7,7 +7,7 @@
  * - 类型判断工具
  */
 
-import { isMySQL, getTypeMapping } from './constants.js';
+import { isMySQL, getTypeMapping } from "./constants.js";
 
 /**
  * 判断是否为字符串或数组类型（需要长度参数）
@@ -24,7 +24,9 @@ import { isMySQL, getTypeMapping } from './constants.js';
  * isStringOrArrayType('text') // => false
  */
 export function isStringOrArrayType(fieldType: string): boolean {
-    return fieldType === 'string' || fieldType === 'array_string' || fieldType === 'array_number_string';
+  return (
+    fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string"
+  );
 }
 
 /**
@@ -42,17 +44,21 @@ export function isStringOrArrayType(fieldType: string): boolean {
  * getSqlType('array_string', 500) // => 'VARCHAR(500)'
  * getSqlType('array_text', null) // => 'MEDIUMTEXT'
  */
-export function getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
-    const typeMapping = getTypeMapping();
-    if (isStringOrArrayType(fieldType)) {
-        return `${typeMapping[fieldType]}(${fieldMax})`;
-    }
-    // 处理 UNSIGNED 修饰符（仅 MySQL number 类型）
-    const baseType = typeMapping[fieldType] || 'TEXT';
-    if (isMySQL() && fieldType === 'number' && unsigned) {
-        return `${baseType} UNSIGNED`;
-    }
-    return baseType;
+export function getSqlType(
+  fieldType: string,
+  fieldMax: number | null,
+  unsigned: boolean = false,
+): string {
+  const typeMapping = getTypeMapping();
+  if (isStringOrArrayType(fieldType)) {
+    return `${typeMapping[fieldType]}(${fieldMax})`;
+  }
+  // 处理 UNSIGNED 修饰符（仅 MySQL number 类型）
+  const baseType = typeMapping[fieldType] || "TEXT";
+  if (isMySQL() && fieldType === "number" && unsigned) {
+    return `${baseType} UNSIGNED`;
+  }
+  return baseType;
 }
 
 /**
@@ -73,28 +79,28 @@ export function getSqlType(fieldType: string, fieldMax: number | null, unsigned:
  * resolveDefaultValue(0, 'number') // => 0
  */
 export function resolveDefaultValue(fieldDefault: any, fieldType: string): any {
-    // null 或字符串 'null' 都表示使用类型默认值
-    if (fieldDefault !== null && fieldDefault !== 'null') {
-        return fieldDefault;
-    }
+  // null 或字符串 'null' 都表示使用类型默认值
+  if (fieldDefault !== null && fieldDefault !== "null") {
+    return fieldDefault;
+  }
 
-    // null 表示使用类型默认值
-    switch (fieldType) {
-        case 'number':
-            return 0;
-        case 'string':
-            return '';
-        case 'array_string':
-        case 'array_number_string':
-            return '[]';
-        case 'text':
-        case 'array_text':
-        case 'array_number_text':
-            // text/array_text/array_number_text 类型不设置默认值（MySQL TEXT 不支持），保持 'null'
-            return 'null';
-        default:
-            return fieldDefault;
-    }
+  // null 表示使用类型默认值
+  switch (fieldType) {
+    case "number":
+      return 0;
+    case "string":
+      return "";
+    case "array_string":
+    case "array_number_string":
+      return "[]";
+    case "text":
+    case "array_text":
+    case "array_number_text":
+      // text/array_text/array_number_text 类型不设置默认值（MySQL TEXT 不支持），保持 'null'
+      return "null";
+    default:
+      return fieldDefault;
+  }
 }
 
 /**
@@ -112,21 +118,26 @@ export function resolveDefaultValue(fieldDefault: any, fieldType: string): any {
  * generateDefaultSql('[]', 'array_text') // => '' (TEXT 类型不能有默认值)
  */
 export function generateDefaultSql(actualDefault: any, fieldType: string): string {
-    // text 和 array_text 类型不设置默认值（MySQL TEXT 类型不支持默认值）
-    if (fieldType === 'text' || fieldType === 'array_text' || actualDefault === 'null') {
-        return '';
-    }
+  // text 和 array_text 类型不设置默认值（MySQL TEXT 类型不支持默认值）
+  if (fieldType === "text" || fieldType === "array_text" || actualDefault === "null") {
+    return "";
+  }
 
-    // 仅 number/string/array_string/array_number_string 类型设置默认值
-    if (fieldType === 'number' || fieldType === 'string' || fieldType === 'array_string' || fieldType === 'array_number_string') {
-        if (typeof actualDefault === 'number' && !Number.isNaN(actualDefault)) {
-            return ` DEFAULT ${actualDefault}`;
-        } else {
-            // 字符串需要转义单引号：' -> ''
-            const escaped = String(actualDefault).replace(/'/g, "''");
-            return ` DEFAULT '${escaped}'`;
-        }
+  // 仅 number/string/array_string/array_number_string 类型设置默认值
+  if (
+    fieldType === "number" ||
+    fieldType === "string" ||
+    fieldType === "array_string" ||
+    fieldType === "array_number_string"
+  ) {
+    if (typeof actualDefault === "number" && !Number.isNaN(actualDefault)) {
+      return ` DEFAULT ${actualDefault}`;
+    } else {
+      // 字符串需要转义单引号：' -> ''
+      const escaped = String(actualDefault).replace(/'/g, "''");
+      return ` DEFAULT '${escaped}'`;
     }
+  }
 
-    return '';
+  return "";
 }

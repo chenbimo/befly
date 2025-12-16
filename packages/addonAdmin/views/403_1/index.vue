@@ -13,14 +13,14 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
-import { Button as TButton } from 'tdesign-vue-next';
+import { useRouter } from "vue-router";
+import { Button as TButton } from "tdesign-vue-next";
 
 const router = useRouter();
 
 const $Method = {
     goHome() {
-        router.push('/');
+        router.push("/");
     },
     goBack() {
         router.back();

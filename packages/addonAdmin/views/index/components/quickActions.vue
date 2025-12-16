@@ -12,8 +12,8 @@
 </template>
 
 <script setup>
-import { Button as TButton } from 'tdesign-vue-next';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
+import { Button as TButton } from "tdesign-vue-next";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
 
 const handleClearCache = () => {
     // TODO: 接入刷新缓存接口

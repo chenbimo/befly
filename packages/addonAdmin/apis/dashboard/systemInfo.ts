@@ -1,19 +1,19 @@
 export default {
-    name: '获取系统信息',
-    handler: async (befly) => {
-        // 系统启动时间（从进程启动时间计算）
-        const startTime = Date.now() - Math.floor(process.uptime() * 1000);
+  name: "获取系统信息",
+  handler: async (befly) => {
+    // 系统启动时间（从进程启动时间计算）
+    const startTime = Date.now() - Math.floor(process.uptime() * 1000);
 
-        // 运行时长（毫秒）
-        const uptime = Math.floor(process.uptime() * 1000);
+    // 运行时长（毫秒）
+    const uptime = Math.floor(process.uptime() * 1000);
 
-        // 环境
-        const environment = Env.NODE_ENV || 'development';
+    // 环境
+    const environment = Env.NODE_ENV || "development";
 
-        return befly.tool.Yes('获取成功', {
-            environment: environment,
-            startTime: startTime,
-            uptime: uptime
-        });
-    }
+    return befly.tool.Yes("获取成功", {
+      environment: environment,
+      startTime: startTime,
+      uptime: uptime,
+    });
+  },
 };

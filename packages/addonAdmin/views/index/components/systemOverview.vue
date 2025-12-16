@@ -35,11 +35,11 @@
 </template>
 
 <script setup>
-import ILucideInfo from '~icons/lucide/info';
-import ILucideMenu from '~icons/lucide/menu';
-import ILucideWebhook from '~icons/lucide/webhook';
-import ILucideUsers from '~icons/lucide/users';
-import { $Http } from '@/plugins/http';
+import ILucideInfo from "~icons/lucide/info";
+import ILucideMenu from "~icons/lucide/menu";
+import ILucideWebhook from "~icons/lucide/webhook";
+import ILucideUsers from "~icons/lucide/users";
+import { $Http } from "@/plugins/http";
 
 // 组件内部数据
 const permissionStats = $ref({
@@ -51,7 +51,7 @@ const permissionStats = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/addon/admin/dashboard/systemOverview');
+        const { data } = await $Http("/addon/admin/dashboard/systemOverview");
         Object.assign(permissionStats, data);
     } catch (error) {
         // 静默失败：不阻断页面展示

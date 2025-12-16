@@ -20,11 +20,11 @@
 </template>
 
 <script setup>
-import SystemOverview from './components/systemOverview.vue';
-import ServiceStatus from './components/serviceStatus.vue';
-import SystemResources from './components/systemResources.vue';
-import PerformanceMetrics from './components/performanceMetrics.vue';
-import EnvironmentInfo from './components/environmentInfo.vue';
+import SystemOverview from "./components/systemOverview.vue";
+import ServiceStatus from "./components/serviceStatus.vue";
+import SystemResources from "./components/systemResources.vue";
+import PerformanceMetrics from "./components/performanceMetrics.vue";
+import EnvironmentInfo from "./components/environmentInfo.vue";
 </script>
 
 <style scoped lang="scss">

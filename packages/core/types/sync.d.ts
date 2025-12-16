@@ -118,7 +118,7 @@ export interface IndexInfo {
  * 字段变更接口
  */
 export interface FieldChange {
-    type: 'length' | 'datatype' | 'comment' | 'default' | 'nullable';
+    type: "length" | "datatype" | "comment" | "default" | "nullable";
     current: any;
     expected: any;
 }
@@ -127,7 +127,7 @@ export interface FieldChange {
  * 索引操作接口
  */
 export interface IndexAction {
-    action: 'create' | 'drop';
+    action: "create" | "drop";
     indexName: string;
     fieldName: string;
 }
@@ -166,7 +166,7 @@ export interface GlobalStats {
  */
 export interface ParsedFieldRule {
     name: string;
-    type: 'string' | 'number' | 'text' | 'array_string' | 'array_text';
+    type: "string" | "number" | "text" | "array_string" | "array_text";
     min: number | null;
     max: number | null;
     default: any;
@@ -204,7 +204,7 @@ export interface SyncReportMeta {
     timestampStr: string;
     environment: string;
     totalTime: number;
-    status: 'success' | 'error';
+    status: "success" | "error";
     error?: string;
 }
 
@@ -229,9 +229,9 @@ export interface DatabaseReport {
  */
 export interface TableChangeDetail {
     name: string;
-    source: 'app' | 'addon';
+    source: "app" | "addon";
     addonName?: string;
-    action: 'create' | 'modify' | 'none';
+    action: "create" | "modify" | "none";
     fields: {
         added: FieldDetail[];
         modified: FieldModification[];
@@ -263,7 +263,7 @@ export interface FieldModification {
     name: string;
     before: FieldDetail;
     after: FieldDetail;
-    changeType: 'type' | 'length' | 'default' | 'nullable' | 'comment';
+    changeType: "type" | "length" | "default" | "nullable" | "comment";
 }
 
 /**
@@ -358,7 +358,7 @@ export interface MenuTreeNode {
     icon?: string;
     sort?: number;
     type?: number;
-    action?: 'created' | 'updated' | 'none';
+    action?: "created" | "updated" | "none";
     children?: MenuTreeNode[];
 }
 
@@ -391,7 +391,7 @@ export interface MenuDetailWithDiff extends MenuDetail {
  */
 export interface AdminDetail {
     username: string;
-    action: 'created' | 'updated' | 'exists';
+    action: "created" | "updated" | "exists";
 }
 
 /**
@@ -400,5 +400,5 @@ export interface AdminDetail {
 export interface RoleDetail {
     name: string;
     permissions: number;
-    action: 'created' | 'updated' | 'exists';
+    action: "created" | "updated" | "exists";
 }

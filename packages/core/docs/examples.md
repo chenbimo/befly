@@ -40,28 +40,28 @@
 `apis/user/register.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '用户注册',
-    method: 'POST',
+    name: "用户注册",
+    method: "POST",
     auth: false,
     fields: {
-        email: { name: '邮箱', type: 'string', min: 5, max: 100, regexp: '@email' },
-        password: { name: '密码', type: 'string', min: 6, max: 100 },
-        nickname: { name: '昵称', type: 'string', min: 2, max: 50 }
+        email: { name: "邮箱", type: "string", min: 5, max: 100, regexp: "@email" },
+        password: { name: "密码", type: "string", min: 6, max: 100 },
+        nickname: { name: "昵称", type: "string", min: 2, max: 50 }
     },
-    required: ['email', 'password'],
+    required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 检查邮箱是否已存在
         const exists = await befly.db.getDetail({
-            table: 'user',
-            columns: ['id'],
+            table: "user",
+            columns: ["id"],
             where: { email: ctx.body.email }
         });
 
         if (exists?.id) {
-            return No('该邮箱已被注册');
+            return No("该邮箱已被注册");
         }
 
         // 加密密码
@@ -69,15 +69,15 @@ export default {
 
         // 创建用户
         const result = await befly.db.insData({
-            table: 'user',
+            table: "user",
             data: {
                 email: ctx.body.email,
                 password: hashedPassword,
-                nickname: ctx.body.nickname || '用户'
+                nickname: ctx.body.nickname || "用户"
             }
         });
 
-        return Yes('注册成功', { id: result.insertId });
+        return Yes("注册成功", { id: result.insertId });
     }
 } as ApiRoute;
 ```
@@ -87,42 +87,42 @@ export default {
 `apis/user/login.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '用户登录',
-    method: 'POST',
+    name: "用户登录",
+    method: "POST",
     auth: false,
     fields: {
-        email: { name: '邮箱', type: 'string', min: 5, max: 100, regexp: '@email' },
-        password: { name: '密码', type: 'string', min: 6, max: 100 }
+        email: { name: "邮箱", type: "string", min: 5, max: 100, regexp: "@email" },
+        password: { name: "密码", type: "string", min: 6, max: 100 }
     },
-    required: ['email', 'password'],
+    required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 查询用户
         const user = await befly.db.getDetail({
-            table: 'user',
-            columns: ['id', 'email', 'password', 'nickname', 'avatar', 'role', 'state'],
+            table: "user",
+            columns: ["id", "email", "password", "nickname", "avatar", "role", "state"],
             where: { email: ctx.body.email }
         });
 
         if (!user?.id) {
-            return No('用户不存在');
+            return No("用户不存在");
         }
 
         if (user.state !== 1) {
-            return No('账户已被禁用');
+            return No("账户已被禁用");
         }
 
         // 验证密码
         const isValid = await befly.cipher.verifyPassword(ctx.body.password, user.password);
         if (!isValid) {
-            return No('密码错误');
+            return No("密码错误");
         }
 
         // 更新登录信息
         await befly.db.updData({
-            table: 'user',
+            table: "user",
             data: {
                 loginCount: user.loginCount + 1,
                 lastLoginAt: Date.now()
@@ -136,7 +136,7 @@ export default {
             role: user.role
         });
 
-        return Yes('登录成功', {
+        return Yes("登录成功", {
             token: token,
             user: {
                 id: user.id,
@@ -155,24 +155,24 @@ export default {
 `apis/user/info.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '获取用户信息',
-    method: 'GET',
+    name: "获取用户信息",
+    method: "GET",
     auth: true,
     handler: async (befly, ctx) => {
         const user = await befly.db.getDetail({
-            table: 'user',
-            columns: ['id', 'email', 'nickname', 'avatar', 'phone', 'gender', 'birthday', 'bio', 'role', 'createdAt'],
+            table: "user",
+            columns: ["id", "email", "nickname", "avatar", "phone", "gender", "birthday", "bio", "role", "createdAt"],
             where: { id: ctx.user.userId }
         });
 
         if (!user?.id) {
-            return No('用户不存在');
+            return No("用户不存在");
         }
 
-        return Yes('获取成功', user);
+        return Yes("获取成功", user);
     }
 } as ApiRoute;
 ```
@@ -182,19 +182,19 @@ export default {
 `apis/user/update.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '更新用户信息',
-    method: 'POST',
+    name: "更新用户信息",
+    method: "POST",
     auth: true,
     fields: {
-        nickname: { name: '昵称', type: 'string', min: 2, max: 50 },
-        avatar: { name: '头像', type: 'string', max: 500 },
-        phone: { name: '手机号', type: 'string', max: 20, regexp: '@phone' },
-        gender: { name: '性别', type: 'number', min: 0, max: 2 },
-        birthday: { name: '生日', type: 'string', max: 10 },
-        bio: { name: '简介', type: 'string', max: 500 }
+        nickname: { name: "昵称", type: "string", min: 2, max: 50 },
+        avatar: { name: "头像", type: "string", max: 500 },
+        phone: { name: "手机号", type: "string", max: 20, regexp: "@phone" },
+        gender: { name: "性别", type: "number", min: 0, max: 2 },
+        birthday: { name: "生日", type: "string", max: 10 },
+        bio: { name: "简介", type: "string", max: 500 }
     },
     handler: async (befly, ctx) => {
         const updateData: Record<string, any> = {};
@@ -208,16 +208,16 @@ export default {
         if (ctx.body.bio !== undefined) updateData.bio = ctx.body.bio;
 
         if (Object.keys(updateData).length === 0) {
-            return No('没有需要更新的字段');
+            return No("没有需要更新的字段");
         }
 
         await befly.db.updData({
-            table: 'user',
+            table: "user",
             data: updateData,
             where: { id: ctx.user.userId }
         });
 
-        return Yes('更新成功');
+        return Yes("更新成功");
     }
 } as ApiRoute;
 ```
@@ -227,33 +227,33 @@ export default {
 `apis/user/changePassword.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '修改密码',
-    method: 'POST',
+    name: "修改密码",
+    method: "POST",
     auth: true,
     fields: {
-        oldPassword: { name: '原密码', type: 'string', min: 6, max: 100 },
-        newPassword: { name: '新密码', type: 'string', min: 6, max: 100 }
+        oldPassword: { name: "原密码", type: "string", min: 6, max: 100 },
+        newPassword: { name: "新密码", type: "string", min: 6, max: 100 }
     },
-    required: ['oldPassword', 'newPassword'],
+    required: ["oldPassword", "newPassword"],
     handler: async (befly, ctx) => {
         // 获取用户密码
         const user = await befly.db.getDetail({
-            table: 'user',
-            columns: ['id', 'password'],
+            table: "user",
+            columns: ["id", "password"],
             where: { id: ctx.user.userId }
         });
 
         if (!user?.id) {
-            return No('用户不存在');
+            return No("用户不存在");
         }
 
         // 验证原密码
         const isValid = await befly.cipher.verifyPassword(ctx.body.oldPassword, user.password);
         if (!isValid) {
-            return No('原密码错误');
+            return No("原密码错误");
         }
 
         // 加密新密码
@@ -261,12 +261,12 @@ export default {
 
         // 更新密码
         await befly.db.updData({
-            table: 'user',
+            table: "user",
             data: { password: hashedPassword },
             where: { id: ctx.user.userId }
         });
 
-        return Yes('密码修改成功');
+        return Yes("密码修改成功");
     }
 } as ApiRoute;
 ```
@@ -276,19 +276,19 @@ export default {
 `apis/user/list.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '用户列表',
-    method: 'POST',
+    name: "用户列表",
+    method: "POST",
     auth: true,
-    permission: 'user:list',
+    permission: "user:list",
     fields: {
-        page: '@page',
-        limit: '@limit',
-        keyword: '@keyword',
-        state: '@state',
-        role: { name: '角色', type: 'string', max: 20 }
+        page: "@page",
+        limit: "@limit",
+        keyword: "@keyword",
+        state: "@state",
+        role: { name: "角色", type: "string", max: 20 }
     },
     handler: async (befly, ctx) => {
         const { page, limit, keyword, state, role } = ctx.body;
@@ -309,15 +309,15 @@ export default {
         }
 
         const result = await befly.db.getList({
-            table: 'user',
-            columns: ['id', 'email', 'nickname', 'avatar', 'phone', 'role', 'state', 'loginCount', 'lastLoginAt', 'createdAt'],
+            table: "user",
+            columns: ["id", "email", "nickname", "avatar", "phone", "role", "state", "loginCount", "lastLoginAt", "createdAt"],
             where: where,
             page: page || 1,
             limit: limit || 20,
-            orderBy: { id: 'desc' }
+            orderBy: { id: "desc" }
         });
 
-        return Yes('获取成功', result);
+        return Yes("获取成功", result);
     }
 } as ApiRoute;
 ```
@@ -368,34 +368,34 @@ export default {
 `apis/article/create.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '发布文章',
-    method: 'POST',
+    name: "发布文章",
+    method: "POST",
     auth: true,
     fields: {
-        title: { name: '标题', type: 'string', min: 2, max: 200 },
-        content: { name: '内容', type: 'text', min: 1, max: 100000 },
-        summary: { name: '摘要', type: 'string', max: 500 },
-        cover: { name: '封面', type: 'string', max: 500 },
-        categoryId: { name: '分类', type: 'number', min: 0 },
-        tags: { name: '标签', type: 'array_string', max: 10 }
+        title: { name: "标题", type: "string", min: 2, max: 200 },
+        content: { name: "内容", type: "text", min: 1, max: 100000 },
+        summary: { name: "摘要", type: "string", max: 500 },
+        cover: { name: "封面", type: "string", max: 500 },
+        categoryId: { name: "分类", type: "number", min: 0 },
+        tags: { name: "标签", type: "array_string", max: 10 }
     },
-    required: ['title', 'content'],
+    required: ["title", "content"],
     handler: async (befly, ctx) => {
         const { title, content, summary, cover, categoryId, tags } = ctx.body;
 
         // 自动生成摘要
-        const autoSummary = summary || content.replace(/<[^>]+>/g, '').slice(0, 200);
+        const autoSummary = summary || content.replace(/<[^>]+>/g, "").slice(0, 200);
 
         const result = await befly.db.insData({
-            table: 'article',
+            table: "article",
             data: {
                 title: title,
                 content: content,
                 summary: autoSummary,
-                cover: cover || '',
+                cover: cover || "",
                 categoryId: categoryId || 0,
                 tags: tags || [],
                 authorId: ctx.user.userId,
@@ -406,13 +406,13 @@ export default {
         // 更新分类文章数
         if (categoryId) {
             await befly.db.updData({
-                table: 'category',
+                table: "category",
                 data: { articleCount: { $incr: 1 } },
                 where: { id: categoryId }
             });
         }
 
-        return Yes('发布成功', { id: result.insertId });
+        return Yes("发布成功", { id: result.insertId });
     }
 } as ApiRoute;
 ```
@@ -422,39 +422,39 @@ export default {
 `apis/article/update.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '编辑文章',
-    method: 'POST',
+    name: "编辑文章",
+    method: "POST",
     auth: true,
     fields: {
-        id: '@id',
-        title: { name: '标题', type: 'string', min: 2, max: 200 },
-        content: { name: '内容', type: 'text', min: 1, max: 100000 },
-        summary: { name: '摘要', type: 'string', max: 500 },
-        cover: { name: '封面', type: 'string', max: 500 },
-        categoryId: { name: '分类', type: 'number', min: 0 },
-        tags: { name: '标签', type: 'array_string', max: 10 }
+        id: "@id",
+        title: { name: "标题", type: "string", min: 2, max: 200 },
+        content: { name: "内容", type: "text", min: 1, max: 100000 },
+        summary: { name: "摘要", type: "string", max: 500 },
+        cover: { name: "封面", type: "string", max: 500 },
+        categoryId: { name: "分类", type: "number", min: 0 },
+        tags: { name: "标签", type: "array_string", max: 10 }
     },
-    required: ['id'],
+    required: ["id"],
     handler: async (befly, ctx) => {
         const { id, title, content, summary, cover, categoryId, tags } = ctx.body;
 
         // 检查文章是否存在
         const article = await befly.db.getDetail({
-            table: 'article',
-            columns: ['id', 'authorId', 'categoryId'],
+            table: "article",
+            columns: ["id", "authorId", "categoryId"],
             where: { id: id }
         });
 
         if (!article?.id) {
-            return No('文章不存在');
+            return No("文章不存在");
         }
 
         // 检查权限（只能编辑自己的文章，管理员除外）
-        if (article.authorId !== ctx.user.userId && ctx.user.role !== 'admin') {
-            return No('没有权限编辑此文章');
+        if (article.authorId !== ctx.user.userId && ctx.user.role !== "admin") {
+            return No("没有权限编辑此文章");
         }
 
         const updateData: Record<string, any> = {};
@@ -466,11 +466,11 @@ export default {
         if (tags !== undefined) updateData.tags = tags;
 
         if (Object.keys(updateData).length === 0) {
-            return No('没有需要更新的字段');
+            return No("没有需要更新的字段");
         }
 
         await befly.db.updData({
-            table: 'article',
+            table: "article",
             data: updateData,
             where: { id: id }
         });
@@ -479,21 +479,21 @@ export default {
         if (categoryId !== undefined && categoryId !== article.categoryId) {
             if (article.categoryId) {
                 await befly.db.updData({
-                    table: 'category',
+                    table: "category",
                     data: { articleCount: { $decr: 1 } },
                     where: { id: article.categoryId }
                 });
             }
             if (categoryId) {
                 await befly.db.updData({
-                    table: 'category',
+                    table: "category",
                     data: { articleCount: { $incr: 1 } },
                     where: { id: categoryId }
                 });
             }
         }
 
-        return Yes('更新成功');
+        return Yes("更新成功");
     }
 } as ApiRoute;
 ```
@@ -503,48 +503,48 @@ export default {
 `apis/article/delete.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '删除文章',
-    method: 'POST',
+    name: "删除文章",
+    method: "POST",
     auth: true,
     fields: {
-        id: '@id'
+        id: "@id"
     },
-    required: ['id'],
+    required: ["id"],
     handler: async (befly, ctx) => {
         const article = await befly.db.getDetail({
-            table: 'article',
-            columns: ['id', 'authorId', 'categoryId'],
+            table: "article",
+            columns: ["id", "authorId", "categoryId"],
             where: { id: ctx.body.id }
         });
 
         if (!article?.id) {
-            return No('文章不存在');
+            return No("文章不存在");
         }
 
         // 检查权限
-        if (article.authorId !== ctx.user.userId && ctx.user.role !== 'admin') {
-            return No('没有权限删除此文章');
+        if (article.authorId !== ctx.user.userId && ctx.user.role !== "admin") {
+            return No("没有权限删除此文章");
         }
 
         // 软删除
         await befly.db.delData({
-            table: 'article',
+            table: "article",
             where: { id: ctx.body.id }
         });
 
         // 更新分类文章数
         if (article.categoryId) {
             await befly.db.updData({
-                table: 'category',
+                table: "category",
                 data: { articleCount: { $decr: 1 } },
                 where: { id: article.categoryId }
             });
         }
 
-        return Yes('删除成功');
+        return Yes("删除成功");
     }
 } as ApiRoute;
 ```
@@ -554,21 +554,21 @@ export default {
 `apis/article/list.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '文章列表',
-    method: 'POST',
+    name: "文章列表",
+    method: "POST",
     auth: false,
     fields: {
-        page: '@page',
-        limit: '@limit',
-        keyword: '@keyword',
-        categoryId: { name: '分类', type: 'number', min: 0 },
-        authorId: { name: '作者', type: 'number', min: 0 },
-        isTop: { name: '置顶', type: 'number', min: 0, max: 1 },
-        isRecommend: { name: '推荐', type: 'number', min: 0, max: 1 },
-        orderBy: { name: '排序', type: 'string', max: 20 }
+        page: "@page",
+        limit: "@limit",
+        keyword: "@keyword",
+        categoryId: { name: "分类", type: "number", min: 0 },
+        authorId: { name: "作者", type: "number", min: 0 },
+        isTop: { name: "置顶", type: "number", min: 0, max: 1 },
+        isRecommend: { name: "推荐", type: "number", min: 0, max: 1 },
+        orderBy: { name: "排序", type: "string", max: 20 }
     },
     handler: async (befly, ctx) => {
         const { page, limit, categoryId, authorId, keyword, isTop, isRecommend, orderBy } = ctx.body;
@@ -585,20 +585,20 @@ export default {
         }
 
         // 排序
-        let order: Record<string, 'asc' | 'desc'> = { isTop: 'desc', publishedAt: 'desc' };
-        if (orderBy === 'views') order = { viewCount: 'desc' };
-        if (orderBy === 'likes') order = { likeCount: 'desc' };
+        let order: Record<string, "asc" | "desc"> = { isTop: "desc", publishedAt: "desc" };
+        if (orderBy === "views") order = { viewCount: "desc" };
+        if (orderBy === "likes") order = { likeCount: "desc" };
 
         const result = await befly.db.getList({
-            table: 'article',
-            columns: ['id', 'title', 'summary', 'cover', 'categoryId', 'tags', 'authorId', 'viewCount', 'likeCount', 'commentCount', 'isTop', 'isRecommend', 'publishedAt'],
+            table: "article",
+            columns: ["id", "title", "summary", "cover", "categoryId", "tags", "authorId", "viewCount", "likeCount", "commentCount", "isTop", "isRecommend", "publishedAt"],
             where: where,
             page: page || 1,
             limit: limit || 10,
             orderBy: order
         });
 
-        return Yes('获取成功', result);
+        return Yes("获取成功", result);
     }
 } as ApiRoute;
 ```
@@ -608,37 +608,37 @@ export default {
 `apis/article/detail.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '文章详情',
-    method: 'GET',
+    name: "文章详情",
+    method: "GET",
     auth: false,
     fields: {
-        id: '@id'
+        id: "@id"
     },
-    required: ['id'],
+    required: ["id"],
     handler: async (befly, ctx) => {
         const article = await befly.db.getDetail({
-            table: 'article',
+            table: "article",
             where: { id: ctx.body.id, state: 1 }
         });
 
         if (!article?.id) {
-            return No('文章不存在');
+            return No("文章不存在");
         }
 
         // 增加浏览量
         await befly.db.updData({
-            table: 'article',
+            table: "article",
             data: { viewCount: { $incr: 1 } },
             where: { id: ctx.body.id }
         });
 
         // 获取作者信息
         const author = await befly.db.getDetail({
-            table: 'user',
-            columns: ['id', 'nickname', 'avatar'],
+            table: "user",
+            columns: ["id", "nickname", "avatar"],
             where: { id: article.authorId }
         });
 
@@ -646,13 +646,13 @@ export default {
         let category = null;
         if (article.categoryId) {
             category = await befly.db.getDetail({
-                table: 'category',
-                columns: ['id', 'name', 'slug'],
+                table: "category",
+                columns: ["id", "name", "slug"],
                 where: { id: article.categoryId }
             });
         }
 
-        return Yes('获取成功', {
+        return Yes("获取成功", {
             ...article,
             viewCount: article.viewCount + 1,
             author: author,
@@ -671,39 +671,39 @@ export default {
 `apis/common/upload.ts`：
 
 ```typescript
-import { join } from 'pathe';
-import { existsSync, mkdirSync } from 'node:fs';
-import type { ApiRoute } from 'befly/types';
+import { join } from "pathe";
+import { existsSync, mkdirSync } from "node:fs";
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '文件上传',
-    method: 'POST',
+    name: "文件上传",
+    method: "POST",
     auth: true,
     handler: async (befly, ctx) => {
         const formData = await ctx.req.formData();
-        const file = formData.get('file') as File | null;
+        const file = formData.get("file") as File | null;
 
         if (!file) {
-            return No('请选择文件');
+            return No("请选择文件");
         }
 
         // 检查文件大小（10MB）
         if (file.size > 10 * 1024 * 1024) {
-            return No('文件大小不能超过 10MB');
+            return No("文件大小不能超过 10MB");
         }
 
         // 检查文件类型
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
         if (!allowedTypes.includes(file.type)) {
-            return No('只支持 jpg/png/gif/webp 格式');
+            return No("只支持 jpg/png/gif/webp 格式");
         }
 
         // 生成文件名
-        const ext = file.name.split('.').pop();
+        const ext = file.name.split(".").pop();
         const fileName = `${Date.now()}_${befly.cipher.randomString(8)}.${ext}`;
 
         // 保存目录
-        const uploadDir = join(process.cwd(), 'uploads', new Date().toISOString().slice(0, 7));
+        const uploadDir = join(process.cwd(), "uploads", new Date().toISOString().slice(0, 7));
         if (!existsSync(uploadDir)) {
             mkdirSync(uploadDir, { recursive: true });
         }
@@ -716,7 +716,7 @@ export default {
         // 返回 URL
         const url = `/uploads/${new Date().toISOString().slice(0, 7)}/${fileName}`;
 
-        return Yes('上传成功', {
+        return Yes("上传成功", {
             url: url,
             name: file.name,
             size: file.size,
@@ -735,34 +735,34 @@ export default {
 `apis/user/export.ts`：
 
 ```typescript
-import type { ApiRoute } from 'befly/types';
+import type { ApiRoute } from "befly/types";
 
 export default {
-    name: '导出用户',
-    method: 'GET',
+    name: "导出用户",
+    method: "GET",
     auth: true,
-    permission: 'user:export',
+    permission: "user:export",
     handler: async (befly, ctx) => {
         // 获取所有用户
         const result = await befly.db.getList({
-            table: 'user',
-            columns: ['id', 'email', 'nickname', 'phone', 'role', 'state', 'createdAt'],
+            table: "user",
+            columns: ["id", "email", "nickname", "phone", "role", "state", "createdAt"],
             where: { state: { $gte: 0 } },
             page: 1,
             limit: 10000
         });
 
         // 生成 CSV
-        const headers = ['ID', '邮箱', '昵称', '手机号', '角色', '状态', '注册时间'];
-        const rows = result.list.map((user: any) => [user.id, user.email, user.nickname, user.phone || '', user.role, user.state === 1 ? '正常' : '禁用', new Date(user.createdAt).toLocaleString()]);
+        const headers = ["ID", "邮箱", "昵称", "手机号", "角色", "状态", "注册时间"];
+        const rows = result.list.map((user: any) => [user.id, user.email, user.nickname, user.phone || "", user.role, user.state === 1 ? "正常" : "禁用", new Date(user.createdAt).toLocaleString()]);
 
-        const csv = [headers.join(','), ...rows.map((row: any[]) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
+        const csv = [headers.join(","), ...rows.map((row: any[]) => row.map((cell) => `"${cell}"`).join(","))].join("\n");
 
         // 返回文件
         return new Response(csv, {
             headers: {
-                'Content-Type': 'text/csv; charset=utf-8',
-                'Content-Disposition': `attachment; filename="users_${Date.now()}.csv"`
+                "Content-Type": "text/csv; charset=utf-8",
+                "Content-Disposition": `attachment; filename="users_${Date.now()}.csv"`
             }
         });
     }
@@ -788,11 +788,11 @@ if (ctx.body.phone !== undefined) updateData.phone = ctx.body.phone;
 if (ctx.body.gender !== undefined) updateData.gender = ctx.body.gender;
 
 if (Object.keys(updateData).length === 0) {
-    return No('没有需要更新的字段');
+    return No("没有需要更新的字段");
 }
 
 await befly.db.updData({
-    table: 'user',
+    table: "user",
     data: updateData,
     where: { id: ctx.user.userId }
 });
@@ -809,11 +809,11 @@ const data = { nickname: nickname, avatar: avatar, phone: phone, gender: gender,
 // 使用 cleanFields 检查是否有有效数据
 const cleanData = befly.tool.cleanFields(data);
 if (Object.keys(cleanData).length === 0) {
-    return No('没有需要更新的字段');
+    return No("没有需要更新的字段");
 }
 
 await befly.db.updData({
-    table: 'user',
+    table: "user",
     data: cleanData,
     where: { id: ctx.user.userId }
 });
@@ -834,7 +834,7 @@ const data = befly.tool.cleanFields(
 );
 
 await befly.db.updData({
-    table: 'menu',
+    table: "menu",
     data: data,
     where: { id: ctx.body.id }
 });
@@ -849,8 +849,8 @@ where 条件同样支持自动过滤：
 const { keyword, state, categoryId, startDate, endDate } = ctx.body;
 
 const result = await befly.db.getList({
-    table: 'article',
-    columns: ['id', 'title', 'createdAt'],
+    table: "article",
+    columns: ["id", "title", "createdAt"],
     where: {
         state: state, // undefined 时忽略
         categoryId: categoryId, // undefined 时忽略

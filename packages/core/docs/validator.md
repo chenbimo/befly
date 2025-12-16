@@ -33,7 +33,7 @@ Validator 是 Befly 的参数验证系统，提供：
 ### 基本结构
 
 ```typescript
-import { Validator } from '../lib/validator.js';
+import { Validator } from "../lib/validator.js";
 
 class Validator {
     // 验证数据对象
@@ -50,18 +50,18 @@ class Validator {
 
 ```typescript
 const data = {
-    email: 'test@example.com',
+    email: "test@example.com",
     age: 25,
-    name: 'John'
+    name: "John"
 };
 
 const rules = {
-    email: { name: '邮箱', type: 'string', min: 5, max: 100, regexp: '@email' },
-    age: { name: '年龄', type: 'number', min: 0, max: 150 },
-    name: { name: '姓名', type: 'string', min: 2, max: 50 }
+    email: { name: "邮箱", type: "string", min: 5, max: 100, regexp: "@email" },
+    age: { name: "年龄", type: "number", min: 0, max: 150 },
+    name: { name: "姓名", type: "string", min: 2, max: 50 }
 };
 
-const result = Validator.validate(data, rules, ['email', 'name']);
+const result = Validator.validate(data, rules, ["email", "name"]);
 
 if (result.failed) {
     console.log(result.firstError); // 第一条错误信息
@@ -77,14 +77,14 @@ if (result.failed) {
 
 ```typescript
 const fieldDef = {
-    name: '年龄',
-    type: 'number',
+    name: "年龄",
+    type: "number",
     min: 0,
     max: 150,
     default: 0
 };
 
-const result = Validator.single('25', fieldDef);
+const result = Validator.single("25", fieldDef);
 
 if (!result.error) {
     console.log(result.value); // 25 (已转换为 number)
@@ -199,18 +199,18 @@ if (!result.error) {
 ```typescript
 // 使用别名
 {
-    regexp: '@email';
+    regexp: "@email";
 } // 邮箱格式
 {
-    regexp: '@phone';
+    regexp: "@phone";
 } // 手机号格式
 {
-    regexp: '@url';
+    regexp: "@url";
 } // URL 格式
 
 // 直接使用正则
 {
-    regexp: '^[a-z]+$';
+    regexp: "^[a-z]+$";
 } // 小写字母
 ```
 
@@ -319,7 +319,7 @@ const hook: Hook = {
         const result = Validator.validate(ctx.body, ctx.api.fields, ctx.api.required || []);
 
         if (result.code !== 0) {
-            ctx.response = ErrorResponse(ctx, result.firstError || '参数验证失败', 1, null, result.fieldErrors);
+            ctx.response = ErrorResponse(ctx, result.firstError || "参数验证失败", 1, null, result.fieldErrors);
         }
     }
 };
@@ -342,17 +342,17 @@ const hook: Hook = {
 ```typescript
 // apis/user/login.ts
 export default {
-    name: '用户登录',
-    method: 'POST',
+    name: "用户登录",
+    method: "POST",
     auth: false,
     fields: {
-        email: { name: '邮箱', type: 'string', min: 5, max: 100, regexp: '@email' },
-        password: { name: '密码', type: 'string', min: 6, max: 100 }
+        email: { name: "邮箱", type: "string", min: 5, max: 100, regexp: "@email" },
+        password: { name: "密码", type: "string", min: 6, max: 100 }
     },
-    required: ['email', 'password'],
+    required: ["email", "password"],
     handler: async (befly, ctx) => {
         // ctx.body.email 和 ctx.body.password 已验证
-        return Yes('登录成功');
+        return Yes("登录成功");
     }
 } as ApiRoute;
 ```
@@ -362,16 +362,16 @@ export default {
 可以引用表定义中的字段：
 
 ```typescript
-import { adminTable } from '../../../tables/admin.js';
+import { adminTable } from "../../../tables/admin.js";
 
 export default {
-    name: '创建管理员',
+    name: "创建管理员",
     fields: {
         email: adminTable.email, // 引用表字段
         password: adminTable.password,
         nickname: adminTable.nickname
     },
-    required: ['email', 'password'],
+    required: ["email", "password"],
     handler: async (befly, ctx) => {
         // ...
     }
@@ -381,14 +381,14 @@ export default {
 ### 使用公共字段
 
 ```typescript
-import { Fields } from '../../../config/fields.js';
+import { Fields } from "../../../config/fields.js";
 
 export default {
-    name: '获取列表',
+    name: "获取列表",
     fields: {
         ...Fields.page, // 分页字段
         ...Fields.limit,
-        keyword: { name: '关键词', type: 'string', max: 50 }
+        keyword: { name: "关键词", type: "string", max: 50 }
     },
     handler: async (befly, ctx) => {
         // ...
@@ -461,18 +461,18 @@ interface SingleResult {
 
 ```typescript
 const data = {
-    username: 'john',
+    username: "john",
     age: 25,
-    email: 'john@example.com'
+    email: "john@example.com"
 };
 
 const rules = {
-    username: { name: '用户名', type: 'string', min: 2, max: 20 },
-    age: { name: '年龄', type: 'number', min: 0, max: 150 },
-    email: { name: '邮箱', type: 'string', regexp: '@email' }
+    username: { name: "用户名", type: "string", min: 2, max: 20 },
+    age: { name: "年龄", type: "number", min: 0, max: 150 },
+    email: { name: "邮箱", type: "string", regexp: "@email" }
 };
 
-const result = Validator.validate(data, rules, ['username', 'email']);
+const result = Validator.validate(data, rules, ["username", "email"]);
 // result.code === 0
 ```
 
@@ -480,13 +480,13 @@ const result = Validator.validate(data, rules, ['username', 'email']);
 
 ```typescript
 const data = {
-    age: '25', // 字符串
-    score: '98.5' // 字符串
+    age: "25", // 字符串
+    score: "98.5" // 字符串
 };
 
 const rules = {
-    age: { name: '年龄', type: 'number', min: 0 },
-    score: { name: '分数', type: 'number', min: 0, max: 100 }
+    age: { name: "年龄", type: "number", min: 0 },
+    score: { name: "分数", type: "number", min: 0, max: 100 }
 };
 
 // 验证通过，'25' 会被转换为 25
@@ -497,31 +497,31 @@ const result = Validator.validate(data, rules);
 
 ```typescript
 const data = {
-    tags: ['vue', 'react', 'angular'],
+    tags: ["vue", "react", "angular"],
     ids: [1, 2, 3]
 };
 
 const rules = {
-    tags: { name: '标签', type: 'array_string', min: 1, max: 10 },
-    ids: { name: 'ID列表', type: 'array_string', min: 1 }
+    tags: { name: "标签", type: "array_string", min: 1, max: 10 },
+    ids: { name: "ID列表", type: "array_string", min: 1 }
 };
 
-const result = Validator.validate(data, rules, ['tags']);
+const result = Validator.validate(data, rules, ["tags"]);
 ```
 
 ### 示例 4：正则验证
 
 ```typescript
 const data = {
-    phone: '13812345678',
-    email: 'test@example.com',
-    code: 'ABC123'
+    phone: "13812345678",
+    email: "test@example.com",
+    code: "ABC123"
 };
 
 const rules = {
-    phone: { name: '手机号', type: 'string', regexp: '@phone' },
-    email: { name: '邮箱', type: 'string', regexp: '@email' },
-    code: { name: '验证码', type: 'string', regexp: '^[A-Z0-9]{6}$' }
+    phone: { name: "手机号", type: "string", regexp: "@phone" },
+    email: { name: "邮箱", type: "string", regexp: "@email" },
+    code: { name: "验证码", type: "string", regexp: "^[A-Z0-9]{6}$" }
 };
 
 const result = Validator.validate(data, rules);
@@ -531,9 +531,9 @@ const result = Validator.validate(data, rules);
 
 ```typescript
 // 验证并转换单个值
-const ageResult = Validator.single('25', {
-    name: '年龄',
-    type: 'number',
+const ageResult = Validator.single("25", {
+    name: "年龄",
+    type: "number",
     min: 0,
     max: 150
 });
@@ -543,9 +543,9 @@ if (!ageResult.error) {
 }
 
 // 空值使用默认值
-const emptyResult = Validator.single('', {
-    name: '数量',
-    type: 'number',
+const emptyResult = Validator.single("", {
+    name: "数量",
+    type: "number",
     default: 10
 });
 console.log(emptyResult.value); // 10
@@ -605,12 +605,12 @@ handler: async (befly, ctx) => {
 
     // cleanData 只包含有效值
     await befly.db.updData({
-        table: 'user',
+        table: "user",
         data: cleanData,
         where: { id: ctx.user.userId }
     });
 
-    return Yes('更新成功');
+    return Yes("更新成功");
 };
 ```
 

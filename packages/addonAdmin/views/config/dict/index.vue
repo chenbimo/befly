@@ -62,18 +62,18 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Input as TInput, Select as TSelect, Option as TOption, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
-import ILucidePlus from '~icons/lucide/plus';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import ILucideSearch from '~icons/lucide/search';
-import ILucidePencil from '~icons/lucide/pencil';
-import ILucideTrash2 from '~icons/lucide/trash-2';
-import ILucideChevronDown from '~icons/lucide/chevron-down';
-import EditDialog from './components/edit.vue';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
-import { confirmDeleteAndRun } from '@/utils/confirmAndRun';
+import { Button as TButton, Table as TTable, Input as TInput, Select as TSelect, Option as TOption, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from "tdesign-vue-next";
+import ILucidePlus from "~icons/lucide/plus";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import ILucideSearch from "~icons/lucide/search";
+import ILucidePencil from "~icons/lucide/pencil";
+import ILucideTrash2 from "~icons/lucide/trash-2";
+import ILucideChevronDown from "~icons/lucide/chevron-down";
+import EditDialog from "./components/edit.vue";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
+import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
 const $Data = $ref({
     tableData: [],
@@ -81,27 +81,27 @@ const $Data = $ref({
     loading: false,
     activeRowKeys: [],
     currentRow: null,
-    searchTypeCode: '',
-    searchKeyword: '',
+    searchTypeCode: "",
+    searchKeyword: "",
     columns: withDefaultColumns([
-        { colKey: 'id', title: 'ID' },
-        { colKey: 'typeName', title: '类型名称' },
-        { colKey: 'typeCode', title: '类型代码' },
-        { colKey: 'label', title: '标签' },
-        { colKey: 'key', title: '键值' },
-        { colKey: 'sort', title: '排序', width: 100 },
-        { colKey: 'remark', title: '备注' },
-        { colKey: 'operation', title: '操作' }
+        { colKey: "id", title: "ID" },
+        { colKey: "typeName", title: "类型名称" },
+        { colKey: "typeCode", title: "类型代码" },
+        { colKey: "label", title: "标签" },
+        { colKey: "key", title: "键值" },
+        { colKey: "sort", title: "排序", width: 100 },
+        { colKey: "remark", title: "备注" },
+        { colKey: "operation", title: "操作" }
     ]),
     pagerConfig: {
         currentPage: 1,
         limit: 30,
         total: 0,
-        align: 'right',
-        layout: 'total, prev, pager, next, jumper'
+        align: "right",
+        layout: "total, prev, pager, next, jumper"
     },
     editVisible: false,
-    actionType: 'add',
+    actionType: "add",
     rowData: {}
 });
 
@@ -112,16 +112,16 @@ const $Method = {
     },
     async apiDictTypeAll() {
         try {
-            const res = await $Http('/addon/admin/dictType/all');
+            const res = await $Http("/addon/admin/dictType/all");
             $Data.typeList = res.data.lists || [];
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         }
     },
     async apiDictList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/dict/list', {
+            const res = await $Http("/addon/admin/dict/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit,
                 typeCode: $Data.searchTypeCode,
@@ -138,7 +138,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }
@@ -147,7 +147,7 @@ const $Method = {
         confirmDeleteAndRun({
             displayName: `字典项“${row.label}”`,
             request: async () => {
-                return await $Http('/addon/admin/dict/del', { id: row.id });
+                return await $Http("/addon/admin/dict/del", { id: row.id });
             },
             onSuccess: async () => {
                 await $Method.apiDictList();
@@ -159,8 +159,8 @@ const $Method = {
         $Method.apiDictList();
     },
     handleRefresh() {
-        $Data.searchTypeCode = '';
-        $Data.searchKeyword = '';
+        $Data.searchTypeCode = "";
+        $Data.searchKeyword = "";
         $Data.pagerConfig.currentPage = 1;
         $Method.apiDictList();
     },
@@ -181,15 +181,15 @@ const $Method = {
         $Data.currentRow = context.currentRowData;
     },
     onAction(type, row) {
-        if (type === 'add') {
-            $Data.actionType = 'add';
+        if (type === "add") {
+            $Data.actionType = "add";
             $Data.rowData = {};
             $Data.editVisible = true;
-        } else if (type === 'upd') {
-            $Data.actionType = 'upd';
+        } else if (type === "upd") {
+            $Data.actionType = "upd";
             $Data.rowData = { ...row };
             $Data.editVisible = true;
-        } else if (type === 'del') {
+        } else if (type === "del") {
             $Method.apiDictDel(row);
         }
     }

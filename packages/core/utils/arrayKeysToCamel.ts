@@ -1,4 +1,4 @@
-import { keysToCamel } from './keysToCamel.js';
+import { keysToCamel } from "./keysToCamel.js";
 
 /**
  * 数组对象字段名批量转小驼峰
@@ -13,6 +13,6 @@ import { keysToCamel } from './keysToCamel.js';
  * // [{ userId: 1, userName: 'John' }, { userId: 2, userName: 'Jane' }]
  */
 export const arrayKeysToCamel = <T = any>(arr: Record<string, any>[]): T[] => {
-    if (!arr || !Array.isArray(arr)) return arr as T[];
-    return arr.map((item) => keysToCamel<T>(item));
+  if (!arr || !Array.isArray(arr)) return arr as T[];
+  return arr.map((item) => keysToCamel<T>(item));
 };

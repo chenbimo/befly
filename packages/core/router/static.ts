@@ -4,65 +4,65 @@
  */
 
 // 外部依赖
-import { join } from 'pathe';
+import { join } from "pathe";
 
+import { beflyConfig } from "../befly.config.js";
+import { Logger } from "../lib/logger.js";
 // 相对导入
-import { projectDir } from '../paths.js';
-import { Logger } from '../lib/logger.js';
-import { setCorsOptions } from '../utils/cors.js';
-import { beflyConfig } from '../befly.config.js';
+import { projectDir } from "../paths.js";
+import { setCorsOptions } from "../utils/cors.js";
 
 /**
  * 静态文件处理器工厂
  */
 export function staticHandler() {
-    return async (req: Request): Promise<Response> => {
-        // 设置 CORS 响应头
-        const corsHeaders = setCorsOptions(req, beflyConfig.cors);
+  return async (req: Request): Promise<Response> => {
+    // 设置 CORS 响应头
+    const corsHeaders = setCorsOptions(req, beflyConfig.cors);
 
-        const url = new URL(req.url);
-        const filePath = join(projectDir, 'public', url.pathname);
+    const url = new URL(req.url);
+    const filePath = join(projectDir, "public", url.pathname);
 
-        try {
-            // OPTIONS预检请求
-            if (req.method === 'OPTIONS') {
-                return new Response(null, {
-                    status: 204,
-                    headers: corsHeaders
-                });
-            }
+    try {
+      // OPTIONS预检请求
+      if (req.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: corsHeaders,
+        });
+      }
 
-            const file = Bun.file(filePath);
-            if (await file.exists()) {
-                return new Response(file, {
-                    headers: {
-                        'Content-Type': file.type || 'application/octet-stream',
-                        ...corsHeaders
-                    }
-                });
-            } else {
-                return Response.json(
-                    {
-                        code: 1,
-                        msg: '文件未找到'
-                    },
-                    {
-                        headers: corsHeaders
-                    }
-                );
-            }
-        } catch (error: any) {
-            Logger.error({ err: error }, '静态文件处理失败');
+      const file = Bun.file(filePath);
+      if (await file.exists()) {
+        return new Response(file, {
+          headers: {
+            "Content-Type": file.type || "application/octet-stream",
+            ...corsHeaders,
+          },
+        });
+      } else {
+        return Response.json(
+          {
+            code: 1,
+            msg: "文件未找到",
+          },
+          {
+            headers: corsHeaders,
+          },
+        );
+      }
+    } catch (error: any) {
+      Logger.error({ err: error }, "静态文件处理失败");
 
-            return Response.json(
-                {
-                    code: 1,
-                    msg: '文件读取失败'
-                },
-                {
-                    headers: corsHeaders
-                }
-            );
-        }
-    };
+      return Response.json(
+        {
+          code: 1,
+          msg: "文件读取失败",
+        },
+        {
+          headers: corsHeaders,
+        },
+      );
+    }
+  };
 }

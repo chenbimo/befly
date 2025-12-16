@@ -11,9 +11,9 @@
 </template>
 
 <script setup>
-import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from 'tdesign-vue-next';
-import { arrayToTree } from '@/utils';
-import { $Http } from '@/plugins/http';
+import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from "tdesign-vue-next";
+import { arrayToTree } from "@/utils";
+import { $Http } from "@/plugins/http";
 
 const $Prop = defineProps({
     modelValue: {
@@ -26,7 +26,7 @@ const $Prop = defineProps({
     }
 });
 
-const $Emit = defineEmits(['update:modelValue', 'success']);
+const $Emit = defineEmits(["update:modelValue", "success"]);
 
 const $Data = $ref({
     visible: false,
@@ -51,19 +51,19 @@ const $Method = {
     onClose() {
         $Data.visible = false;
         setTimeout(() => {
-            $Emit('update:modelValue', false);
+            $Emit("update:modelValue", false);
         }, 300);
     },
 
     // 加载菜单树（用于配置权限）
     async apiMenuAll() {
         try {
-            const res = await $Http('/addon/admin/menu/all');
+            const res = await $Http("/addon/admin/menu/all");
             // menuAll 返回的 data 直接就是菜单数组
             const menuList = Array.isArray(res.data) ? res.data : [];
             $Data.menuTreeData = arrayToTree(menuList);
         } catch (error) {
-            MessagePlugin.error('加载菜单失败');
+            MessagePlugin.error("加载菜单失败");
         }
     },
 
@@ -72,14 +72,14 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http('/addon/admin/role/menus', {
+            const res = await $Http("/addon/admin/role/menus", {
                 roleCode: $Prop.rowData.code
             });
 
             // menus 返回的 data 直接就是菜单 ID 数组
             $Data.menuTreeCheckedKeys = Array.isArray(res.data) ? res.data : [];
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         }
     },
 
@@ -88,20 +88,20 @@ const $Method = {
         try {
             $Data.submitting = true;
 
-            const res = await $Http('/addon/admin/role/menuSave', {
+            const res = await $Http("/addon/admin/role/menuSave", {
                 roleCode: $Prop.rowData.code,
                 menuIds: $Data.menuTreeCheckedKeys
             });
 
             if (res.code === 0) {
-                MessagePlugin.success('保存成功');
+                MessagePlugin.success("保存成功");
                 $Data.visible = false;
-                $Emit('success');
+                $Emit("success");
             } else {
-                MessagePlugin.error(res.msg || '保存失败');
+                MessagePlugin.error(res.msg || "保存失败");
             }
         } catch (error) {
-            MessagePlugin.error('保存失败');
+            MessagePlugin.error("保存失败");
         } finally {
             $Data.submitting = false;
         }

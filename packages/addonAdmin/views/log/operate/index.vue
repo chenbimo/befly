@@ -70,41 +70,41 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, Select as TSelect, Option as TOption, MessagePlugin } from 'tdesign-vue-next';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
+import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, Select as TSelect, Option as TOption, MessagePlugin } from "tdesign-vue-next";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
 // 响应式数据
 const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: 'username', title: '操作人', fixed: 'left', width: 100 },
-        { colKey: 'id', title: '序号', width: 80 },
-        { colKey: 'module', title: '模块', width: 100 },
-        { colKey: 'action', title: '操作', width: 80 },
-        { colKey: 'path', title: '请求路径', ellipsis: true },
-        { colKey: 'ip', title: 'IP地址', width: 130 },
-        { colKey: 'duration', title: '耗时', width: 100 },
-        { colKey: 'operateTime', title: '操作时间', width: 170 },
-        { colKey: 'result', title: '结果', width: 80 }
+        { colKey: "username", title: "操作人", fixed: "left", width: 100 },
+        { colKey: "id", title: "序号", width: 80 },
+        { colKey: "module", title: "模块", width: 100 },
+        { colKey: "action", title: "操作", width: 80 },
+        { colKey: "path", title: "请求路径", ellipsis: true },
+        { colKey: "ip", title: "IP地址", width: 130 },
+        { colKey: "duration", title: "耗时", width: 100 },
+        { colKey: "operateTime", title: "操作时间", width: 170 },
+        { colKey: "result", title: "结果", width: 80 }
     ]),
     detailFields: [
-        { colKey: 'username', title: '操作人账号' },
-        { colKey: 'nickname', title: '操作人昵称' },
-        { colKey: 'module', title: '操作模块' },
-        { colKey: 'action', title: '操作类型' },
-        { colKey: 'method', title: '请求方法' },
-        { colKey: 'path', title: '请求路径' },
-        { colKey: 'ip', title: 'IP地址' },
-        { colKey: 'params', title: '请求参数' },
-        { colKey: 'response', title: '响应内容' },
-        { colKey: 'duration', title: '耗时' },
-        { colKey: 'operateTime', title: '操作时间' },
-        { colKey: 'result', title: '操作结果' },
-        { colKey: 'remark', title: '备注' }
+        { colKey: "username", title: "操作人账号" },
+        { colKey: "nickname", title: "操作人昵称" },
+        { colKey: "module", title: "操作模块" },
+        { colKey: "action", title: "操作类型" },
+        { colKey: "method", title: "请求方法" },
+        { colKey: "path", title: "请求路径" },
+        { colKey: "ip", title: "IP地址" },
+        { colKey: "params", title: "请求参数" },
+        { colKey: "response", title: "响应内容" },
+        { colKey: "duration", title: "耗时" },
+        { colKey: "operateTime", title: "操作时间" },
+        { colKey: "result", title: "操作结果" },
+        { colKey: "remark", title: "备注" }
     ],
     pagerConfig: {
         currentPage: 1,
@@ -114,22 +114,22 @@ const $Data = $ref({
     currentRow: null,
     activeRowKeys: [],
     filter: {
-        module: '',
-        action: '',
+        module: "",
+        action: "",
         result: null
     },
     moduleOptions: [
-        { label: '管理员', value: '管理员' },
-        { label: '角色', value: '角色' },
-        { label: '菜单', value: '菜单' },
-        { label: '接口', value: '接口' },
-        { label: '字典', value: '字典' }
+        { label: "管理员", value: "管理员" },
+        { label: "角色", value: "角色" },
+        { label: "菜单", value: "菜单" },
+        { label: "接口", value: "接口" },
+        { label: "字典", value: "字典" }
     ],
     actionOptions: [
-        { label: '新增', value: '新增' },
-        { label: '编辑', value: '编辑' },
-        { label: '删除', value: '删除' },
-        { label: '查询', value: '查询' }
+        { label: "新增", value: "新增" },
+        { label: "编辑", value: "编辑" },
+        { label: "删除", value: "删除" },
+        { label: "查询", value: "查询" }
     ]
 });
 
@@ -143,7 +143,7 @@ const $Method = {
     async apiOperateLogList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/operateLog/list', {
+            const res = await $Http("/addon/admin/operateLog/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -158,7 +158,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }
@@ -201,22 +201,22 @@ const $Method = {
 
     // 格式化时间
     formatTime(timestamp) {
-        if (!timestamp) return '-';
+        if (!timestamp) return "-";
         const date = new Date(timestamp);
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const seconds = String(date.getSeconds()).padStart(2, "0");
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
 
     // 格式化 JSON
     formatJson(value) {
-        if (!value) return '-';
+        if (!value) return "-";
         try {
-            const obj = typeof value === 'string' ? JSON.parse(value) : value;
+            const obj = typeof value === "string" ? JSON.parse(value) : value;
             return JSON.stringify(obj, null, 2);
         } catch {
             return value;

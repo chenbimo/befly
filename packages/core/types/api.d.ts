@@ -2,16 +2,16 @@
  * Befly API 类型定义
  */
 
-import type { BeflyContext } from './befly.js';
-import type { KeyValue } from './common.js';
-import type { RequestContext } from './context.js';
-import type { TableDefinition } from './validate.js';
+import type { BeflyContext } from "./befly.js";
+import type { KeyValue } from "./common.js";
+import type { RequestContext } from "./context.js";
+import type { TableDefinition } from "./validate.js";
 
 /**
  * HTTP 方法类型
  * 支持 GET、POST 或逗号分隔的组合
  */
-export type HttpMethod = 'GET' | 'POST' | 'GET,POST' | 'POST,GET';
+export type HttpMethod = "GET" | "POST" | "GET,POST" | "POST,GET";
 
 /**
  * 用户信息类型
@@ -32,7 +32,7 @@ export interface UserInfo {
  * - 'user': 需要普通用户权限
  * - string[]: 需要特定角色
  */
-export type AuthType = boolean | 'admin' | 'user' | string[];
+export type AuthType = boolean | "admin" | "user" | string[];
 
 /**
  * API 处理器函数类型

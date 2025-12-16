@@ -29,15 +29,15 @@ Befly 框架使用 Redis 作为缓存层，提供高性能的数据缓存、会�
 ```typescript
 // 在 API handler 中
 export default {
-    name: '示例接口',
+    name: "示例接口",
     handler: async (befly, ctx) => {
         // 设置缓存
-        await befly.redis.setObject('user:1', { name: '张三', age: 25 });
+        await befly.redis.setObject("user:1", { name: "张三", age: 25 });
 
         // 获取缓存
-        const user = await befly.redis.getObject('user:1');
+        const user = await befly.redis.getObject("user:1");
 
-        return befly.tool.Yes('成功', user);
+        return befly.tool.Yes("成功", user);
     }
 };
 ```
@@ -52,16 +52,16 @@ export default {
 
 ```typescript
 // 基本设置
-await befly.redis.setString('key', 'value');
+await befly.redis.setString("key", "value");
 
 // 带过期时间（秒）
-await befly.redis.setString('key', 'value', 3600); // 1小时后过期
+await befly.redis.setString("key", "value", 3600); // 1小时后过期
 ```
 
 #### getString - 获取字符串
 
 ```typescript
-const value = await befly.redis.getString('key');
+const value = await befly.redis.getString("key");
 // 返回: 'value' 或 null（不存在时）
 ```
 
@@ -73,14 +73,14 @@ const value = await befly.redis.getString('key');
 
 ```typescript
 // 基本设置
-await befly.redis.setObject('user:1', {
+await befly.redis.setObject("user:1", {
     id: 1,
-    name: '张三',
-    roles: ['admin', 'user']
+    name: "张三",
+    roles: ["admin", "user"]
 });
 
 // 带过期时间（秒）
-await befly.redis.setObject('session:abc123', { userId: 1 }, 7200); // 2小时
+await befly.redis.setObject("session:abc123", { userId: 1 }, 7200); // 2小时
 ```
 
 #### getObject - 获取对象
@@ -88,14 +88,14 @@ await befly.redis.setObject('session:abc123', { userId: 1 }, 7200); // 2小时
 自动反序列化 JSON。
 
 ```typescript
-const user = await befly.redis.getObject<UserInfo>('user:1');
+const user = await befly.redis.getObject<UserInfo>("user:1");
 // 返回: { id: 1, name: '张三', roles: ['admin', 'user'] } 或 null
 ```
 
 #### delObject - 删除对象
 
 ```typescript
-await befly.redis.delObject('user:1');
+await befly.redis.delObject("user:1");
 ```
 
 ### 键操作
@@ -103,27 +103,27 @@ await befly.redis.delObject('user:1');
 #### exists - 检查键是否存在
 
 ```typescript
-const exists = await befly.redis.exists('user:1');
+const exists = await befly.redis.exists("user:1");
 // 返回: true 或 false
 ```
 
 #### del - 删除键
 
 ```typescript
-const count = await befly.redis.del('user:1');
+const count = await befly.redis.del("user:1");
 // 返回: 删除的键数量（0 或 1）
 ```
 
 #### expire - 设置过期时间
 
 ```typescript
-await befly.redis.expire('user:1', 3600); // 1小时后过期
+await befly.redis.expire("user:1", 3600); // 1小时后过期
 ```
 
 #### ttl - 获取剩余过期时间
 
 ```typescript
-const seconds = await befly.redis.ttl('user:1');
+const seconds = await befly.redis.ttl("user:1");
 // 返回: 剩余秒数，-1 表示永不过期，-2 表示键不存在
 ```
 
@@ -135,30 +135,30 @@ const seconds = await befly.redis.ttl('user:1');
 
 ```typescript
 // 添加单个成员
-await befly.redis.sadd('tags:article:1', ['技术']);
+await befly.redis.sadd("tags:article:1", ["技术"]);
 
 // 添加多个成员
-await befly.redis.sadd('user:1:roles', ['admin', 'editor', 'viewer']);
+await befly.redis.sadd("user:1:roles", ["admin", "editor", "viewer"]);
 ```
 
 #### sismember - 检查成员是否存在
 
 ```typescript
-const isMember = await befly.redis.sismember('user:1:roles', 'admin');
+const isMember = await befly.redis.sismember("user:1:roles", "admin");
 // 返回: true 或 false
 ```
 
 #### smembers - 获取所有成员
 
 ```typescript
-const roles = await befly.redis.smembers('user:1:roles');
+const roles = await befly.redis.smembers("user:1:roles");
 // 返回: ['admin', 'editor', 'viewer']
 ```
 
 #### scard - 获取成员数量
 
 ```typescript
-const count = await befly.redis.scard('user:1:roles');
+const count = await befly.redis.scard("user:1:roles");
 // 返回: 3
 ```
 
@@ -172,9 +172,9 @@ const count = await befly.redis.scard('user:1:roles');
 
 ```typescript
 const count = await befly.redis.setBatch([
-    { key: 'user:1', value: { name: '张三' }, ttl: 3600 },
-    { key: 'user:2', value: { name: '李四' }, ttl: 3600 },
-    { key: 'user:3', value: { name: '王五' } } // 无 TTL，永不过期
+    { key: "user:1", value: { name: "张三" }, ttl: 3600 },
+    { key: "user:2", value: { name: "李四" }, ttl: 3600 },
+    { key: "user:3", value: { name: "王五" } } // 无 TTL，永不过期
 ]);
 // 返回: 成功设置的数量
 ```
@@ -182,28 +182,28 @@ const count = await befly.redis.setBatch([
 ### getBatch - 批量获取对象
 
 ```typescript
-const users = await befly.redis.getBatch<UserInfo>(['user:1', 'user:2', 'user:3']);
+const users = await befly.redis.getBatch<UserInfo>(["user:1", "user:2", "user:3"]);
 // 返回: [{ name: '张三' }, { name: '李四' }, null]（不存在的返回 null）
 ```
 
 ### delBatch - 批量删除键
 
 ```typescript
-const count = await befly.redis.delBatch(['user:1', 'user:2', 'user:3']);
+const count = await befly.redis.delBatch(["user:1", "user:2", "user:3"]);
 // 返回: 成功删除的数量
 ```
 
 ### existsBatch - 批量检查存在
 
 ```typescript
-const results = await befly.redis.existsBatch(['user:1', 'user:2', 'user:3']);
+const results = await befly.redis.existsBatch(["user:1", "user:2", "user:3"]);
 // 返回: [true, true, false]
 ```
 
 ### ttlBatch - 批量获取过期时间
 
 ```typescript
-const ttls = await befly.redis.ttlBatch(['user:1', 'user:2', 'user:3']);
+const ttls = await befly.redis.ttlBatch(["user:1", "user:2", "user:3"]);
 // 返回: [3600, 7200, -1]
 ```
 
@@ -211,8 +211,8 @@ const ttls = await befly.redis.ttlBatch(['user:1', 'user:2', 'user:3']);
 
 ```typescript
 const count = await befly.redis.expireBatch([
-    { key: 'user:1', seconds: 3600 },
-    { key: 'user:2', seconds: 7200 }
+    { key: "user:1", seconds: 3600 },
+    { key: "user:2", seconds: 7200 }
 ]);
 // 返回: 成功设置的数量
 ```
@@ -221,8 +221,8 @@ const count = await befly.redis.expireBatch([
 
 ```typescript
 const count = await befly.redis.saddBatch([
-    { key: 'role:admin:apis', members: ['GET/api/user', 'POST/api/user'] },
-    { key: 'role:editor:apis', members: ['GET/api/article', 'POST/api/article'] }
+    { key: "role:admin:apis", members: ["GET/api/user", "POST/api/user"] },
+    { key: "role:editor:apis", members: ["GET/api/article", "POST/api/article"] }
 ]);
 // 返回: 成功添加的总成员数量
 ```
@@ -231,8 +231,8 @@ const count = await befly.redis.saddBatch([
 
 ```typescript
 const results = await befly.redis.sismemberBatch([
-    { key: 'role:admin:apis', member: 'GET/api/user' },
-    { key: 'role:admin:apis', member: 'DELETE/api/user' }
+    { key: "role:admin:apis", member: "GET/api/user" },
+    { key: "role:admin:apis", member: "DELETE/api/user" }
 ]);
 // 返回: [true, false]
 ```
@@ -257,10 +257,10 @@ const id = await befly.redis.genTimeID();
 ```typescript
 // 在 DbHelper.insData 中自动调用
 const id = await befly.db.insData({
-    table: 'article',
+    table: "article",
     data: {
-        title: '文章标题',
-        content: '文章内容'
+        title: "文章标题",
+        content: "文章内容"
     }
 });
 // id 由 genTimeID 自动生成
@@ -282,17 +282,17 @@ const id = await befly.db.insData({
 避免硬编码，统一管理所有缓存键。
 
 ```typescript
-import { RedisKeys, RedisTTL } from 'befly/lib/redisKeys';
+import { RedisKeys, RedisTTL } from "befly/lib/redisKeys";
 
 // 获取键名
 const key = RedisKeys.apisAll(); // 'befly:apis:all'
 const key = RedisKeys.menusAll(); // 'befly:menus:all'
-const key = RedisKeys.roleInfo('admin'); // 'befly:role:info:admin'
+const key = RedisKeys.roleInfo("admin"); // 'befly:role:info:admin'
 const key = RedisKeys.roleApisActive(); // 'befly:role:apis:active'
-const key = RedisKeys.roleApisReady('v1'); // 'befly:role:apis:ready:v1'
-const key = RedisKeys.roleApis('admin', 'v1'); // 'befly:role:apis:admin:v:v1'
-const key = RedisKeys.roleApisMeta('admin', 'v1'); // 'befly:role:apis:admin:v:v1:meta'
-const key = RedisKeys.tableColumns('user'); // 'befly:table:columns:user'
+const key = RedisKeys.roleApisReady("v1"); // 'befly:role:apis:ready:v1'
+const key = RedisKeys.roleApis("admin", "v1"); // 'befly:role:apis:admin:v:v1'
+const key = RedisKeys.roleApisMeta("admin", "v1"); // 'befly:role:apis:admin:v:v1:meta'
+const key = RedisKeys.tableColumns("user"); // 'befly:table:columns:user'
 
 // 获取 TTL
 const ttl = RedisTTL.tableColumns; // 3600（1小时）
@@ -324,13 +324,13 @@ DbHelper 自动缓存表字段信息，避免重复查询数据库。
 
 ```typescript
 // 首次查询 - 缓存未命中，查询数据库
-const columns = await befly.db.getTableColumns('user');
+const columns = await befly.db.getTableColumns("user");
 // ❌ Redis 缓存未命中
 // 🔍 查询数据库表结构
 // 📝 写入 Redis 缓存 (TTL: 3600s)
 
 // 后续查询 - 直接从缓存获取
-const columns = await befly.db.getTableColumns('user');
+const columns = await befly.db.getTableColumns("user");
 // ✅ Redis 缓存命中
 ```
 
@@ -344,15 +344,15 @@ const columns = await befly.db.getTableColumns('user');
 // 权限缓存是“版本化 key + active 原子切换”
 // 1) 读取当前生效版本
 const active = await befly.redis.getObject(RedisKeys.roleApisActive());
-if (!active?.ver) throw new Error('role apis cache not ready');
+if (!active?.ver) throw new Error("role apis cache not ready");
 
 // 2) 读取该版本的 ready（就绪门槛）
 const ready = await befly.redis.getObject(RedisKeys.roleApisReady(active.ver));
-if (!ready) throw new Error('role apis cache not ready');
+if (!ready) throw new Error("role apis cache not ready");
 
 // 3) 权限检查（请求时）
-const roleApisKey = RedisKeys.roleApis('admin', active.ver);
-const hasPermission = await befly.redis.sismember(roleApisKey, 'POST/api/user/add');
+const roleApisKey = RedisKeys.roleApis("admin", active.ver);
+const hasPermission = await befly.redis.sismember(roleApisKey, "POST/api/user/add");
 // 返回: true
 ```
 
@@ -375,7 +375,7 @@ await befly.redis.setObject(
 // 验证会话
 const session = await befly.redis.getObject(`session:${sessionId}`);
 if (!session) {
-    return befly.tool.No('会话已过期');
+    return befly.tool.No("会话已过期");
 }
 
 // 登出时删除会话
@@ -386,16 +386,16 @@ await befly.redis.delObject(`session:${sessionId}`);
 
 ```typescript
 // 用户登出时，将 token 加入黑名单
-const token = ctx.req.headers.get('Authorization')?.replace('Bearer ', '');
+const token = ctx.req.headers.get("Authorization")?.replace("Bearer ", "");
 if (token) {
     const key = `token:blacklist:${token}`;
-    await befly.redis.setString(key, '1', 7 * 24 * 60 * 60); // 7天
+    await befly.redis.setString(key, "1", 7 * 24 * 60 * 60); // 7天
 }
 
 // 验证时检查黑名单
 const isBlacklisted = await befly.redis.exists(`token:blacklist:${token}`);
 if (isBlacklisted) {
-    return befly.tool.No('Token 已失效');
+    return befly.tool.No("Token 已失效");
 }
 ```
 
@@ -409,11 +409,11 @@ const count = current ? parseInt(current) : 0;
 
 if (count >= 100) {
     // 每分钟最多 100 次
-    return befly.tool.No('请求过于频繁');
+    return befly.tool.No("请求过于频繁");
 }
 
 if (count === 0) {
-    await befly.redis.setString(key, '1', 60); // 60秒窗口
+    await befly.redis.setString(key, "1", 60); // 60秒窗口
 } else {
     await befly.redis.setString(key, String(count + 1), await befly.redis.ttl(key));
 }
@@ -424,10 +424,10 @@ if (count === 0) {
 ```typescript
 // 获取锁
 const lockKey = `lock:order:${orderId}`;
-const acquired = await befly.redis.setString(lockKey, '1', 30); // 30秒自动释放
+const acquired = await befly.redis.setString(lockKey, "1", 30); // 30秒自动释放
 
 if (!acquired) {
-    return befly.tool.No('操作正在进行中，请稍后');
+    return befly.tool.No("操作正在进行中，请稍后");
 }
 
 try {
@@ -443,15 +443,15 @@ try {
 
 ```typescript
 // 获取热门文章（带缓存）
-const cacheKey = 'articles:hot:10';
+const cacheKey = "articles:hot:10";
 let articles = await befly.redis.getObject(cacheKey);
 
 if (!articles) {
     // 缓存未命中，查询数据库
     const result = await befly.db.getAll({
-        table: 'article',
-        fields: ['id', 'title', 'viewCount'],
-        orderBy: ['viewCount#DESC']
+        table: "article",
+        fields: ["id", "title", "viewCount"],
+        orderBy: ["viewCount#DESC"]
     });
 
     articles = result.lists; // 获取数据列表（最多 10000 条）
@@ -460,7 +460,7 @@ if (!articles) {
     await befly.redis.setObject(cacheKey, articles, 300);
 }
 
-return befly.tool.Yes('成功', articles);
+return befly.tool.Yes("成功", articles);
 ```
 
 ---
@@ -491,7 +491,7 @@ const apis = await befly.cache.getApis();
 const menus = await befly.cache.getMenus();
 
 // 获取角色权限
-const permissions = await befly.cache.getRolePermissions('admin');
+const permissions = await befly.cache.getRolePermissions("admin");
 // 返回: ['GET/api/user/list', 'POST/api/user/add', ...]
 ```
 
@@ -499,7 +499,7 @@ const permissions = await befly.cache.getRolePermissions('admin');
 
 ```typescript
 // 检查角色是否有指定接口权限
-const hasPermission = await befly.cache.checkRolePermission('admin', 'POST/api/user/add');
+const hasPermission = await befly.cache.checkRolePermission("admin", "POST/api/user/add");
 // 返回: true 或 false
 ```
 
@@ -509,7 +509,7 @@ const hasPermission = await befly.cache.checkRolePermission('admin', 'POST/api/u
 
 ```typescript
 // 删除指定角色的权限缓存
-await befly.cache.deleteRolePermissions('admin');
+await befly.cache.deleteRolePermissions("admin");
 
 // 重新缓存所有角色权限
 await befly.cache.cacheRolePermissions();
@@ -525,7 +525,7 @@ Bun Redis 客户端自动将多个并发请求合并为 pipeline，无需手动�
 
 ```typescript
 // 这些请求会自动合并为一个 pipeline
-const [user1, user2, user3] = await Promise.all([befly.redis.getObject('user:1'), befly.redis.getObject('user:2'), befly.redis.getObject('user:3')]);
+const [user1, user2, user3] = await Promise.all([befly.redis.getObject("user:1"), befly.redis.getObject("user:2"), befly.redis.getObject("user:3")]);
 ```
 
 ### 2. 使用批量方法
@@ -534,7 +534,7 @@ const [user1, user2, user3] = await Promise.all([befly.redis.getObject('user:1')
 
 ```typescript
 // ✅ 推荐：使用批量方法
-const users = await befly.redis.getBatch(['user:1', 'user:2', 'user:3']);
+const users = await befly.redis.getBatch(["user:1", "user:2", "user:3"]);
 
 // ❌ 不推荐：循环调用
 const users = [];
@@ -547,20 +547,20 @@ for (const id of [1, 2, 3]) {
 
 ```typescript
 // 高频访问、变化少的数据 - 较长 TTL
-await befly.redis.setObject('config:system', config, 86400); // 24小时
+await befly.redis.setObject("config:system", config, 86400); // 24小时
 
 // 实时性要求高的数据 - 较短 TTL
-await befly.redis.setObject('stats:online', count, 60); // 1分钟
+await befly.redis.setObject("stats:online", count, 60); // 1分钟
 
 // 永久缓存（慎用）
-await befly.redis.setObject('constants:provinces', provinces); // 无 TTL
+await befly.redis.setObject("constants:provinces", provinces); // 无 TTL
 ```
 
 ### 4. 避免大 Key
 
 ```typescript
 // ❌ 避免：存储大量数据在单个 key
-await befly.redis.setObject('all:users', hugeUserList); // 可能有 10MB+
+await befly.redis.setObject("all:users", hugeUserList); // 可能有 10MB+
 
 // ✅ 推荐：分散存储
 for (const user of users) {
@@ -586,9 +586,9 @@ const pong = await befly.redis.ping();
 
 ```typescript
 // 操作失败时返回默认值，不会中断程序
-const value = await befly.redis.getObject('key'); // 返回 null
-const exists = await befly.redis.exists('key'); // 返回 false
-const count = await befly.redis.del('key'); // 返回 0
+const value = await befly.redis.getObject("key"); // 返回 null
+const exists = await befly.redis.exists("key"); // 返回 false
+const count = await befly.redis.del("key"); // 返回 0
 
 // 错误会记录到日志
 // Logger.error('Redis getObject 错误', error);
@@ -597,9 +597,9 @@ const count = await befly.redis.del('key'); // 返回 0
 如需捕获错误，可以检查返回值：
 
 ```typescript
-const result = await befly.redis.setObject('key', data);
+const result = await befly.redis.setObject("key", data);
 if (result === null) {
-    Logger.warn('缓存写入失败');
+    Logger.warn("缓存写入失败");
     // 降级处理...
 }
 ```

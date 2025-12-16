@@ -2,7 +2,7 @@
  * 缓存助手类型定义
  */
 
-import type { BeflyContext } from './befly.js';
+import type { BeflyContext } from "./befly.js";
 
 /**
  * 缓存助手类

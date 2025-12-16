@@ -36,23 +36,23 @@
 </template>
 
 <script setup>
-import ILucideServer from '~icons/lucide/server';
-import { $Http } from '@/plugins/http';
+import ILucideServer from "~icons/lucide/server";
+import { $Http } from "@/plugins/http";
 
 // 组件内部数据
 const environmentInfo = $ref({
-    os: '',
-    server: '',
-    nodeVersion: '',
-    database: '',
-    cache: '',
-    timezone: ''
+    os: "",
+    server: "",
+    nodeVersion: "",
+    database: "",
+    cache: "",
+    timezone: ""
 });
 
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http('/addon/admin/dashboard/environmentInfo');
+        const { data } = await $Http("/addon/admin/dashboard/environmentInfo");
         Object.assign(environmentInfo, data);
     } catch (error) {
         // 静默失败：不阻断页面展示

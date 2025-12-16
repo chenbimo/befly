@@ -22,7 +22,7 @@
                         {{ $Method.formatTime(row.loginTime) }}
                     </template>
                     <template #deviceType="{ row }">
-                        <TTag shape="round" variant="light-outline">{{ row.deviceType || 'desktop' }}</TTag>
+                        <TTag shape="round" variant="light-outline">{{ row.deviceType || "desktop" }}</TTag>
                     </template>
                 </TTable>
             </div>
@@ -37,7 +37,7 @@
                         {{ $Method.formatTime(value) }}
                     </template>
                     <template #deviceType="{ value }">
-                        <TTag shape="round" variant="light-outline">{{ value || 'desktop' }}</TTag>
+                        <TTag shape="round" variant="light-outline">{{ value || "desktop" }}</TTag>
                     </template>
                 </DetailPanel>
             </div>
@@ -50,43 +50,43 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, MessagePlugin } from 'tdesign-vue-next';
-import ILucideRotateCw from '~icons/lucide/rotate-cw';
-import DetailPanel from '@/components/DetailPanel.vue';
-import { $Http } from '@/plugins/http';
-import { withDefaultColumns } from 'befly-vite/utils/withDefaultColumns';
+import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, MessagePlugin } from "tdesign-vue-next";
+import ILucideRotateCw from "~icons/lucide/rotate-cw";
+import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
 // 响应式数据
 const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: 'username', title: '用户名', fixed: 'left' },
-        { colKey: 'id', title: '序号' },
-        { colKey: 'ip', title: '登录IP' },
-        { colKey: 'browserName', title: '浏览器' },
-        { colKey: 'osName', title: '操作系统' },
-        { colKey: 'deviceType', title: '设备类型' },
-        { colKey: 'loginTime', title: '登录时间' },
-        { colKey: 'loginResult', title: '登录结果' }
+        { colKey: "username", title: "用户名", fixed: "left" },
+        { colKey: "id", title: "序号" },
+        { colKey: "ip", title: "登录IP" },
+        { colKey: "browserName", title: "浏览器" },
+        { colKey: "osName", title: "操作系统" },
+        { colKey: "deviceType", title: "设备类型" },
+        { colKey: "loginTime", title: "登录时间" },
+        { colKey: "loginResult", title: "登录结果" }
     ]),
     // 详情面板显示更多字段
     detailFields: [
-        { colKey: 'username', title: '用户名' },
-        { colKey: 'nickname', title: '昵称' },
-        { colKey: 'ip', title: '登录IP' },
-        { colKey: 'browserName', title: '浏览器' },
-        { colKey: 'browserVersion', title: '浏览器版本' },
-        { colKey: 'osName', title: '操作系统' },
-        { colKey: 'osVersion', title: '系统版本' },
-        { colKey: 'deviceType', title: '设备类型' },
-        { colKey: 'deviceVendor', title: '设备厂商' },
-        { colKey: 'deviceModel', title: '设备型号' },
-        { colKey: 'engineName', title: '渲染引擎' },
-        { colKey: 'cpuArchitecture', title: 'CPU架构' },
-        { colKey: 'loginTime', title: '登录时间' },
-        { colKey: 'loginResult', title: '登录结果' },
-        { colKey: 'failReason', title: '失败原因' }
+        { colKey: "username", title: "用户名" },
+        { colKey: "nickname", title: "昵称" },
+        { colKey: "ip", title: "登录IP" },
+        { colKey: "browserName", title: "浏览器" },
+        { colKey: "browserVersion", title: "浏览器版本" },
+        { colKey: "osName", title: "操作系统" },
+        { colKey: "osVersion", title: "系统版本" },
+        { colKey: "deviceType", title: "设备类型" },
+        { colKey: "deviceVendor", title: "设备厂商" },
+        { colKey: "deviceModel", title: "设备型号" },
+        { colKey: "engineName", title: "渲染引擎" },
+        { colKey: "cpuArchitecture", title: "CPU架构" },
+        { colKey: "loginTime", title: "登录时间" },
+        { colKey: "loginResult", title: "登录结果" },
+        { colKey: "failReason", title: "失败原因" }
     ],
     pagerConfig: {
         currentPage: 1,
@@ -107,7 +107,7 @@ const $Method = {
     async apiLoginLogList() {
         $Data.loading = true;
         try {
-            const res = await $Http('/addon/admin/loginLog/list', {
+            const res = await $Http("/addon/admin/loginLog/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -123,7 +123,7 @@ const $Method = {
                 $Data.activeRowKeys = [];
             }
         } catch (error) {
-            MessagePlugin.error('加载数据失败');
+            MessagePlugin.error("加载数据失败");
         } finally {
             $Data.loading = false;
         }
@@ -160,14 +160,14 @@ const $Method = {
 
     // 格式化时间
     formatTime(timestamp) {
-        if (!timestamp) return '-';
+        if (!timestamp) return "-";
         const date = new Date(timestamp);
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const seconds = String(date.getSeconds()).padStart(2, "0");
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
 };

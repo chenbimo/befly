@@ -37,10 +37,10 @@ bunx befly init
 
 ```typescript
 // main.ts
-import { Befly } from 'befly';
+import { Befly } from "befly";
 
 const app = new Befly({
-    appName: 'My API',
+    appName: "My API",
     appPort: 3000
 });
 
@@ -57,15 +57,15 @@ bun run main.ts
 
 ```typescript
 // apis/user/hello.ts
-import type { ApiRoute } from 'befly/types/index';
+import type { ApiRoute } from "befly/types/index";
 
 export default {
-    name: '问候接口',
+    name: "问候接口",
     auth: false, // 公开接口
     fields: {},
     handler: async (befly, ctx) => {
         return {
-            msg: 'Hello, Befly!',
+            msg: "Hello, Befly!",
             data: {
                 timestamp: Date.now()
             }
@@ -81,26 +81,26 @@ export default {
 ### TypeScript 全面支持
 
 ```typescript
-import type { ApiRoute, BeflyContext } from 'befly/types/index';
-import type { User } from './types/models';
+import type { ApiRoute, BeflyContext } from "befly/types/index";
+import type { User } from "./types/models";
 
 export default {
-    name: '获取用户',
+    name: "获取用户",
     auth: true,
     fields: {
-        id: '用户ID|number|1|999999|null|1|null'
+        id: "用户ID|number|1|999999|null|1|null"
     },
-    required: ['id'],
+    required: ["id"],
     handler: async (befly: BeflyContext, ctx) => {
         const { id } = ctx.body;
 
         // 类型安全的数据库查询
         const user = await befly.db.getOne<User>({
-            table: 'user',
+            table: "user",
             where: { id }
         });
 
-        return { msg: '查询成功', data: user };
+        return { msg: "查询成功", data: user };
     }
 } as ApiRoute;
 ```
@@ -110,40 +110,40 @@ export default {
 ```typescript
 // 查询单条
 const user = await befly.db.getOne<User>({
-    table: 'user',
+    table: "user",
     where: { id: 1 }
 });
 
 // 分页列表
 const result = await befly.db.getList<Product>({
-    table: 'product',
-    where: { category: 'electronics' },
+    table: "product",
+    where: { category: "electronics" },
     page: 1,
     limit: 10,
-    orderBy: ['createdAt#DESC']
+    orderBy: ["createdAt#DESC"]
 });
 
 // 插入数据
 await befly.db.insData({
-    table: 'user',
+    table: "user",
     data: {
-        username: 'john',
-        email: 'john@example.com'
+        username: "john",
+        email: "john@example.com"
     }
 });
 
 // 更新数据
 await befly.db.updData({
-    table: 'user',
+    table: "user",
     where: { id: 1 },
     data: {
-        nickname: 'John Doe'
+        nickname: "John Doe"
     }
 });
 
 // 删除数据
 await befly.db.delData({
-    table: 'user',
+    table: "user",
     where: { id: 1 }
 });
 ```

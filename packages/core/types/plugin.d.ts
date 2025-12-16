@@ -2,8 +2,8 @@
  * Befly 插件系统类型定义
  */
 
-import type { BeflyContext } from './befly.js';
-import type { RequestContext } from './context.js';
+import type { BeflyContext } from "./befly.js";
+import type { RequestContext } from "./context.js";
 
 /**
  * 插件初始化函数类型
@@ -83,7 +83,7 @@ export interface PluginContext {
     endTime?: number;
 
     /** 执行状态 */
-    status: 'pending' | 'running' | 'success' | 'error';
+    status: "pending" | "running" | "success" | "error";
 
     /** 错误信息 */
     error?: Error;

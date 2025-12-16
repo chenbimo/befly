@@ -7,11 +7,16 @@
  * - 字段默认值应用
  */
 
-import { isMySQL, isPG } from './constants.js';
-import { Logger } from '../../lib/logger.js';
+import { Logger } from "../../lib/logger.js";
+import { isMySQL, isPG } from "./constants.js";
 
 // 从 types.ts 重新导出，保持向后兼容
-export { isStringOrArrayType, getSqlType, resolveDefaultValue, generateDefaultSql } from './types.js';
+export {
+  isStringOrArrayType,
+  getSqlType,
+  resolveDefaultValue,
+  generateDefaultSql,
+} from "./types.js";
 
 /**
  * 根据数据库类型引用标识符
@@ -26,9 +31,9 @@ export { isStringOrArrayType, getSqlType, resolveDefaultValue, generateDefaultSq
  * // SQLite: user_table
  */
 export function quoteIdentifier(identifier: string): string {
-    if (isMySQL()) return `\`${identifier}\``;
-    if (isPG()) return `"${identifier}"`;
-    return identifier; // SQLite 无需引用
+  if (isMySQL()) return `\`${identifier}\``;
+  if (isPG()) return `"${identifier}"`;
+  return identifier; // SQLite 无需引用
 }
 
 /**
@@ -42,7 +47,7 @@ export function quoteIdentifier(identifier: string): string {
  * escapeComment('用户"昵称"') // => '用户\\"昵称\\"'
  */
 export function escapeComment(str: string): string {
-    return String(str).replace(/"/g, '\\"');
+  return String(str).replace(/"/g, '\\"');
 }
 
 /**
@@ -55,8 +60,15 @@ export function escapeComment(str: string): string {
  * @param newValue - 新值
  * @param changeLabel - 变更类型的中文标签
  */
-export function logFieldChange(tableName: string, fieldName: string, changeType: string, oldValue: any, newValue: any, changeLabel: string): void {
-    Logger.debug(`  ~ 修改 ${fieldName} ${changeLabel}: ${oldValue} -> ${newValue}`);
+export function logFieldChange(
+  tableName: string,
+  fieldName: string,
+  changeType: string,
+  oldValue: any,
+  newValue: any,
+  changeLabel: string,
+): void {
+  Logger.debug(`  ~ 修改 ${fieldName} ${changeLabel}: ${oldValue} -> ${newValue}`);
 }
 
 /**
@@ -66,7 +78,7 @@ export function logFieldChange(tableName: string, fieldName: string, changeType:
  * @returns 格式化的字符串（逗号分隔）
  */
 export function formatFieldList(fields: string[]): string {
-    return fields.map((f) => quoteIdentifier(f)).join(', ');
+  return fields.map((f) => quoteIdentifier(f)).join(", ");
 }
 
 /**
@@ -75,13 +87,13 @@ export function formatFieldList(fields: string[]): string {
  * @param fieldDef - 字段定义对象
  */
 export function applyFieldDefaults(fieldDef: any): void {
-    fieldDef.detail = fieldDef.detail ?? '';
-    fieldDef.min = fieldDef.min ?? 0;
-    fieldDef.max = fieldDef.max ?? (fieldDef.type === 'number' ? Number.MAX_SAFE_INTEGER : 100);
-    fieldDef.default = fieldDef.default ?? null;
-    fieldDef.index = fieldDef.index ?? false;
-    fieldDef.unique = fieldDef.unique ?? false;
-    fieldDef.nullable = fieldDef.nullable ?? false;
-    fieldDef.unsigned = fieldDef.unsigned ?? true;
-    fieldDef.regexp = fieldDef.regexp ?? null;
+  fieldDef.detail = fieldDef.detail ?? "";
+  fieldDef.min = fieldDef.min ?? 0;
+  fieldDef.max = fieldDef.max ?? (fieldDef.type === "number" ? Number.MAX_SAFE_INTEGER : 100);
+  fieldDef.default = fieldDef.default ?? null;
+  fieldDef.index = fieldDef.index ?? false;
+  fieldDef.unique = fieldDef.unique ?? false;
+  fieldDef.nullable = fieldDef.nullable ?? false;
+  fieldDef.unsigned = fieldDef.unsigned ?? true;
+  fieldDef.regexp = fieldDef.regexp ?? null;
 }

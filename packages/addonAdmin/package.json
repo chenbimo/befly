@@ -1,70 +1,70 @@
 {
-    "name": "@befly-addon/admin",
-    "version": "1.1.30",
-    "title": "管理后台",
-    "description": "Befly - 管理后台功能组件",
-    "type": "module",
-    "private": false,
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://registry.npmjs.org"
-    },
-    "main": "package.json",
-    "exports": {
-        ".": "./package.json",
-        "./styles/*": "./styles/*"
-    },
-    "scripts": {
-        "dev": "vite",
-        "build": "vite build",
-        "preview": "vite preview"
-    },
-    "files": [
-        "apis",
-        "libs",
-        "plugins",
-        "styles",
-        "tables",
-        "views",
-        "package.json",
-        "README.md"
-    ],
-    "keywords": [
-        "befly",
-        "addon",
-        "admin",
-        "rbac",
-        "auth",
-        "typescript"
-    ],
-    "author": "chenbimo",
-    "license": "Apache-2.0",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/chenbimo/befly.git",
-        "directory": "packages/addon-admin"
-    },
-    "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc",
-    "dependencies": {
-        "befly": "^3.9.38",
-        "befly-vite": "^1.1.11",
-        "nodemailer": "^7.0.11",
-        "ua-parser-js": "^2.0.7"
-    },
-    "peerDependencies": {
-        "@iconify-json/lucide": "^1.2.80",
-        "pinia": "^3.0.4",
-        "tdesign-vue-next": "^1.17.6",
-        "vue": "^3.5.25",
-        "vue-router": "^4.6.4"
-    },
-    "devDependencies": {
-        "@types/nodemailer": "^7.0.4",
-        "@types/ua-parser-js": "^0.7.39",
-        "@iconify-json/lucide": "^1.2.80",
-        "pinia": "^3.0.4",
-        "tdesign-vue-next": "^1.17.6",
-        "vue": "^3.5.25",
-        "vue-router": "^4.6.4"
-    }
+  "name": "@befly-addon/admin",
+  "version": "1.1.30",
+  "private": false,
+  "description": "Befly - 管理后台功能组件",
+  "keywords": [
+    "addon",
+    "admin",
+    "auth",
+    "befly",
+    "rbac",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chenbimo/befly.git",
+    "directory": "packages/addon-admin"
+  },
+  "author": "chenbimo",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "package.json",
+  "exports": {
+    ".": "./package.json",
+    "./styles/*": "./styles/*"
+  },
+  "files": [
+    "README.md",
+    "apis",
+    "libs",
+    "package.json",
+    "plugins",
+    "styles",
+    "tables",
+    "views"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "befly": "^3.9.38",
+    "befly-vite": "^1.1.11",
+    "nodemailer": "^7.0.11",
+    "ua-parser-js": "^2.0.7"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.80",
+    "@types/nodemailer": "^7.0.4",
+    "@types/ua-parser-js": "^0.7.39",
+    "pinia": "^3.0.4",
+    "tdesign-vue-next": "^1.17.6",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.4"
+  },
+  "peerDependencies": {
+    "@iconify-json/lucide": "^1.2.80",
+    "pinia": "^3.0.4",
+    "tdesign-vue-next": "^1.17.6",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc",
+  "title": "管理后台"
 }
