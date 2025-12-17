@@ -3,7 +3,7 @@
     "tabWidth": 4,
     "semi": true,
     "singleQuote": false,
-    "printWidth": 1024,
+    "printWidth": 300,
     "useTabs": false,
     "endOfLine": "lf"
 }
