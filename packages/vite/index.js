@@ -10,7 +10,8 @@ import { createDevToolsPlugin } from "./plugins/devtools.js";
 import { createIconsPlugin } from "./plugins/icons.js";
 import { createRouterPlugin } from "./plugins/router.js";
 import { createUnoCSSPlugin } from "./plugins/unocss.js";
-import { createVuePlugins } from "./plugins/vue.js";
+import { createReactivityTransformPlugin } from "./plugins/reactivity-transform.js";
+import { createVuePlugin } from "./plugins/vue.js";
 
 /**
  * 默认分包策略
@@ -98,9 +99,10 @@ export function createBeflyViteConfig(options = {}) {
         plugins: [
             //
             createUnoCSSPlugin(),
-            createDevToolsPlugin(),
             createRouterPlugin({ scanViews: scanViews }),
-            ...createVuePlugins(),
+            createVuePlugin(),
+            createReactivityTransformPlugin(),
+            createDevToolsPlugin(),
             createAutoImportPlugin({ resolvers: resolvers }),
             createComponentsPlugin({ resolvers: resolvers }),
             createIconsPlugin(),
