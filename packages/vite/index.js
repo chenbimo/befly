@@ -8,7 +8,6 @@ import { createComponentsPlugin } from "./plugins/components.js";
 import { createCompressionPlugin } from "./plugins/compression.js";
 import { createDevToolsPlugin } from "./plugins/devtools.js";
 import { createIconsPlugin } from "./plugins/icons.js";
-import { createInspectPlugin } from "./plugins/inspect.js";
 import { createRouterPlugin } from "./plugins/router.js";
 import { createUnoCSSPlugin } from "./plugins/unocss.js";
 import { createVuePlugins } from "./plugins/vue.js";
@@ -106,7 +105,6 @@ export function createBeflyViteConfig(options = {}) {
             createComponentsPlugin({ resolvers: resolvers }),
             createIconsPlugin(),
             createAnalyzerPlugin(),
-            createInspectPlugin(),
             createCompressionPlugin()
         ],
 
