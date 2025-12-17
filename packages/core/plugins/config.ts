@@ -7,9 +7,9 @@ import type { Plugin } from "../types/plugin.js";
 import { beflyConfig } from "../befly.config.js";
 
 const plugin: Plugin = {
-  handler: () => {
-    return beflyConfig;
-  },
+    handler: () => {
+        return beflyConfig;
+    }
 };
 
 export default plugin;

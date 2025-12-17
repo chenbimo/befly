@@ -11,12 +11,12 @@ import { camelCase } from "es-toolkit/string";
  * keysToCamel({ created_at: 1697452800000 }) // { createdAt: 1697452800000 }
  */
 export const keysToCamel = <T = any>(obj: Record<string, any>): T => {
-  if (!obj || !isPlainObject(obj)) return obj as T;
+    if (!obj || !isPlainObject(obj)) return obj as T;
 
-  const result: any = {};
-  for (const [key, value] of Object.entries(obj)) {
-    const camelKey = camelCase(key);
-    result[camelKey] = value;
-  }
-  return result;
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+        const camelKey = camelCase(key);
+        result[camelKey] = value;
+    }
+    return result;
 };

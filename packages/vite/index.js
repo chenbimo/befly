@@ -17,68 +17,64 @@ import { createVuePlugins } from "./plugins/vue.js";
  * 默认分包策略
  */
 function defaultManualChunks(id) {
-  // Vue 生态系统 - 使用更严格的匹配确保独立打包
-  // 注意：必须在 befly-addon 之前判断，因为 addon 会引用这些库
+    // Vue 生态系统 - 使用更严格的匹配确保独立打包
+    // 注意：必须在 befly-addon 之前判断，因为 addon 会引用这些库
 
-  // vue-router（优先级最高）
-  if (id.match(/node_modules[/\\]vue-router[/\\]/)) {
-    return "vue-router";
-  }
+    // vue-router（优先级最高）
+    if (id.match(/node_modules[/\\]vue-router[/\\]/)) {
+        return "vue-router";
+    }
 
-  // pinia
-  if (id.match(/node_modules[/\\]pinia[/\\]/)) {
-    return "pinia";
-  }
+    // pinia
+    if (id.match(/node_modules[/\\]pinia[/\\]/)) {
+        return "pinia";
+    }
 
-  // vue 核心和运行时（@vue/* 包）
-  if (id.match(/node_modules[/\\](vue[/\\]|@vue[/\\])/)) {
-    return "vue";
-  }
+    // vue 核心和运行时（@vue/* 包）
+    if (id.match(/node_modules[/\\](vue[/\\]|@vue[/\\])/)) {
+        return "vue";
+    }
 
-  // TDesign Vue Next
-  if (id.includes("tdesign-vue-next")) {
-    return "tdesign";
-  }
+    // TDesign Vue Next
+    if (id.includes("tdesign-vue-next")) {
+        return "tdesign";
+    }
 
-  // 工具库
-  if (id.match(/node_modules[/\\]axios[/\\]/)) {
-    return "axios";
-  }
-  if (id.match(/node_modules[/\\]lodash-es[/\\]/)) {
-    return "lodash";
-  }
+    // 工具库
+    if (id.match(/node_modules[/\\]axios[/\\]/)) {
+        return "axios";
+    }
+    if (id.match(/node_modules[/\\]lodash-es[/\\]/)) {
+        return "lodash";
+    }
 
-  // echarts
-  if (id.match(/node_modules[/\\]echarts[/\\]/)) {
-    return "echarts";
-  }
-  if (id.match(/node_modules[/\\]zrender[/\\]/)) {
-    return "zrender";
-  }
+    // echarts
+    if (id.match(/node_modules[/\\]echarts[/\\]/)) {
+        return "echarts";
+    }
+    if (id.match(/node_modules[/\\]zrender[/\\]/)) {
+        return "zrender";
+    }
 
-  // 图标
-  if (id.includes("/@iconify/") || id.includes("~icons/")) {
-    return "icons";
-  }
+    // 图标
+    if (id.includes("/@iconify/") || id.includes("~icons/")) {
+        return "icons";
+    }
 
-  // Vue Macros
-  if (id.match(/node_modules[/\\](@vue-macros|vue-macros)[/\\]/)) {
-    return "vue-macros";
-  }
+    // Vue Macros
+    if (id.match(/node_modules[/\\](@vue-macros|vue-macros)[/\\]/)) {
+        return "vue-macros";
+    }
 
-  // befly-addon（必须在 Vue 判断之后）
-  if (
-    id.includes("@befly-addon/") ||
-    id.includes("packages/addonAdmin/") ||
-    id.includes("packages\\addonAdmin\\")
-  ) {
-    return "befly-addon";
-  }
+    // befly-addon（必须在 Vue 判断之后）
+    if (id.includes("@befly-addon/") || id.includes("packages/addonAdmin/") || id.includes("packages\\addonAdmin\\")) {
+        return "befly-addon";
+    }
 
-  // 其他 node_modules 依赖
-  if (id.includes("node_modules/")) {
-    return "vendor";
-  }
+    // 其他 node_modules 依赖
+    if (id.includes("node_modules/")) {
+        return "vendor";
+    }
 }
 
 /**
@@ -92,72 +88,72 @@ function defaultManualChunks(id) {
  * @returns {Object} Vite 配置对象
  */
 export function createBeflyViteConfig(options = {}) {
-  const { root, scanViews, resolvers = {}, manualChunks, userConfig = {} } = options;
+    const { root, scanViews, resolvers = {}, manualChunks, userConfig = {} } = options;
 
-  // 计算根目录（如果未提供）
-  const projectRoot = root || process.cwd();
+    // 计算根目录（如果未提供）
+    const projectRoot = root || process.cwd();
 
-  const baseConfig = defineConfig({
-    base: "./",
+    const baseConfig = defineConfig({
+        base: "./",
 
-    plugins: [
-      //
-      createUnoCSSPlugin(),
-      createDevToolsPlugin(),
-      createRouterPlugin({ scanViews: scanViews }),
-      ...createVuePlugins(),
-      createAutoImportPlugin({ resolvers: resolvers }),
-      createComponentsPlugin({ resolvers: resolvers }),
-      createIconsPlugin(),
-      createAnalyzerPlugin(),
-      createInspectPlugin(),
-      createCompressionPlugin(),
-    ],
+        plugins: [
+            //
+            createUnoCSSPlugin(),
+            createDevToolsPlugin(),
+            createRouterPlugin({ scanViews: scanViews }),
+            ...createVuePlugins(),
+            createAutoImportPlugin({ resolvers: resolvers }),
+            createComponentsPlugin({ resolvers: resolvers }),
+            createIconsPlugin(),
+            createAnalyzerPlugin(),
+            createInspectPlugin(),
+            createCompressionPlugin()
+        ],
 
-    resolve: {
-      alias: {
-        "@": fileURLToPath(new URL("src", `file:///${projectRoot.replace(/\\/g, "/")}/`)),
-      },
-    },
-
-    server: {
-      open: false,
-      hmr: true,
-    },
-
-    build: {
-      target: "es2020",
-      outDir: "dist",
-      assetsDir: "assets",
-      sourcemap: false,
-      minify: "esbuild",
-      chunkSizeWarningLimit: 1000,
-      commonjsOptions: {
-        include: [/node_modules/],
-        transformMixedEsModules: true,
-      },
-      rollupOptions: {
-        output: {
-          chunkFileNames: "assets/js/[name]-[hash].js",
-          entryFileNames: "assets/js/[name]-[hash].js",
-          assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
-          manualChunks(id) {
-            if (typeof manualChunks === "function") {
-              const chunkName = manualChunks(id);
-              if (chunkName) return chunkName;
+        resolve: {
+            alias: {
+                "@": fileURLToPath(new URL("src", `file:///${projectRoot.replace(/\\/g, "/")}/`))
             }
-            return defaultManualChunks(id);
-          },
         },
-      },
-    },
 
-    optimizeDeps: {
-      include: ["vue", "vue-router", "pinia", "axios", "tdesign-vue-next"],
-    },
-  });
+        server: {
+            open: false,
+            hmr: true
+        },
 
-  return mergeConfig(baseConfig, userConfig);
+        build: {
+            target: "es2020",
+            outDir: "dist",
+            assetsDir: "assets",
+            sourcemap: false,
+            minify: "esbuild",
+            chunkSizeWarningLimit: 1000,
+            commonjsOptions: {
+                include: [/node_modules/],
+                transformMixedEsModules: true
+            },
+            rollupOptions: {
+                output: {
+                    chunkFileNames: "assets/js/[name]-[hash].js",
+                    entryFileNames: "assets/js/[name]-[hash].js",
+                    assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
+                    manualChunks(id) {
+                        if (typeof manualChunks === "function") {
+                            const chunkName = manualChunks(id);
+                            if (chunkName) return chunkName;
+                        }
+                        return defaultManualChunks(id);
+                    }
+                }
+            }
+        },
+
+        optimizeDeps: {
+            include: ["vue", "vue-router", "pinia", "axios", "tdesign-vue-next"]
+        }
+    });
+
+    return mergeConfig(baseConfig, userConfig);
 }
 
 // 导出 UnoCSS 配置创建函数

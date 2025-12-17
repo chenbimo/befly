@@ -1,34 +1,34 @@
 {
-  "name": "befly-monorepo",
-  "version": "3.0.0",
-  "private": true,
-  "description": "Befly Framework - Monorepo with Core and Template",
-  "author": "chenbimo",
-  "license": "Apache-2.0",
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "test": "bun --filter '*' test",
-    "test:core": "bun --filter 'befly' test",
-    "test:bail": "bun --filter '*' test --bail",
-    "test:coverage": "bun --filter '*' test --coverage",
-    "format:oxfmt": "bunx oxfmt .",
-    "format:prettier": "bunx --bun prettier --write --cache --ignore-unknown \"**/*.{vue,md,yaml,yml,css,scss,less,html}\"",
-    "format": "bun run format:oxfmt && bun run format:prettier",
-    "lint": "bunx oxlint .",
-    "r": "lerna publish"
-  },
-  "devDependencies": {
-    "@types/bun": "^1.3.4",
-    "@typescript/native-preview": "^7.0.0-dev.20251212.1",
-    "lefthook": "^2.0.11",
-    "lerna": "^9.0.3",
-    "oxfmt": "latest",
-    "oxlint": "latest",
-    "prettier": "^3.7.4"
-  },
-  "engines": {
-    "bun": ">=1.3.0"
-  }
+    "name": "befly-monorepo",
+    "version": "3.0.0",
+    "private": true,
+    "description": "Befly Framework - Monorepo with Core and Template",
+    "author": "chenbimo",
+    "license": "Apache-2.0",
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "test": "bun --filter '*' test",
+        "test:core": "bun --filter 'befly' test",
+        "test:bail": "bun --filter '*' test --bail",
+        "test:coverage": "bun --filter '*' test --coverage",
+        "format:oxfmt": "bunx oxfmt .",
+        "format:prettier": "bunx --bun prettier --write --cache --ignore-unknown \"**/*.{vue,md,yaml,yml,css,scss,less,html}\"",
+        "format": "bun run format:oxfmt && bun run format:prettier",
+        "lint": "bunx oxlint .",
+        "r": "lerna publish"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.3.4",
+        "@typescript/native-preview": "^7.0.0-dev.20251212.1",
+        "lefthook": "^2.0.11",
+        "lerna": "^9.0.3",
+        "oxfmt": "latest",
+        "oxlint": "latest",
+        "prettier": "^3.7.4"
+    },
+    "engines": {
+        "bun": ">=1.3.0"
+    }
 }

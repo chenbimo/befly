@@ -13,62 +13,59 @@ import { scanAddons, getAddonDir } from "../utils/addonHelper.js";
 import { sortModules, scanModules } from "../utils/modules.js";
 
 export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Promise<void> {
-  try {
-    const allPlugins: Plugin[] = [];
+    try {
+        const allPlugins: Plugin[] = [];
 
-    // 1. 扫描核心插件
-    const corePlugins = await scanModules<Plugin>(corePluginDir, "core", "插件");
+        // 1. 扫描核心插件
+        const corePlugins = await scanModules<Plugin>(corePluginDir, "core", "插件");
 
-    // 2. 扫描组件插件
-    const addonPlugins: Plugin[] = [];
-    const addons = scanAddons();
-    for (const addon of addons) {
-      const dir = getAddonDir(addon, "plugins");
-      const plugins = await scanModules<Plugin>(dir, "addon", "插件", addon);
-      addonPlugins.push(...plugins);
-    }
+        // 2. 扫描组件插件
+        const addonPlugins: Plugin[] = [];
+        const addons = scanAddons();
+        for (const addon of addons) {
+            const dir = getAddonDir(addon, "plugins");
+            const plugins = await scanModules<Plugin>(dir, "addon", "插件", addon);
+            addonPlugins.push(...plugins);
+        }
 
-    // 3. 扫描项目插件
-    const appPlugins = await scanModules<Plugin>(projectPluginDir, "app", "插件");
+        // 3. 扫描项目插件
+        const appPlugins = await scanModules<Plugin>(projectPluginDir, "app", "插件");
 
-    // 4. 合并所有插件
-    allPlugins.push(...corePlugins);
-    allPlugins.push(...addonPlugins);
-    allPlugins.push(...appPlugins);
+        // 4. 合并所有插件
+        allPlugins.push(...corePlugins);
+        allPlugins.push(...addonPlugins);
+        allPlugins.push(...appPlugins);
 
-    // 5. 过滤禁用的插件
-    const disablePlugins = beflyConfig.disablePlugins || [];
-    const enabledPlugins = allPlugins.filter(
-      (plugin) => plugin.name && !disablePlugins.includes(plugin.name),
-    );
+        // 5. 过滤禁用的插件
+        const disablePlugins = beflyConfig.disablePlugins || [];
+        const enabledPlugins = allPlugins.filter((plugin) => plugin.name && !disablePlugins.includes(plugin.name));
 
-    if (disablePlugins.length > 0) {
-      Logger.info({ plugins: disablePlugins }, "禁用插件");
-    }
+        if (disablePlugins.length > 0) {
+            Logger.info({ plugins: disablePlugins }, "禁用插件");
+        }
 
-    // 6. 排序与初始化
-    const sortedPlugins = sortModules(enabledPlugins);
-    if (sortedPlugins === false) {
-      Logger.error("插件依赖关系错误，请检查 after 属性");
-      process.exit(1);
-    }
+        // 6. 排序与初始化
+        const sortedPlugins = sortModules(enabledPlugins);
+        if (sortedPlugins === false) {
+            Logger.error("插件依赖关系错误，请检查 after 属性");
+            process.exit(1);
+        }
 
-    for (const plugin of sortedPlugins) {
-      try {
-        plugins.push(plugin);
+        for (const plugin of sortedPlugins) {
+            try {
+                plugins.push(plugin);
 
-        const pluginInstance =
-          typeof plugin.handler === "function" ? await plugin.handler(context) : {};
+                const pluginInstance = typeof plugin.handler === "function" ? await plugin.handler(context) : {};
 
-        // 直接挂载到 befly 下
-        (context as any)[plugin.name!] = pluginInstance;
-      } catch (error: any) {
-        Logger.error({ err: error, plugin: plugin.name }, "插件初始化失败");
+                // 直接挂载到 befly 下
+                (context as any)[plugin.name!] = pluginInstance;
+            } catch (error: any) {
+                Logger.error({ err: error, plugin: plugin.name }, "插件初始化失败");
+                process.exit(1);
+            }
+        }
+    } catch (error: any) {
+        Logger.error({ err: error }, "加载插件时发生错误");
         process.exit(1);
-      }
     }
-  } catch (error: any) {
-    Logger.error({ err: error }, "加载插件时发生错误");
-    process.exit(1);
-  }
 }

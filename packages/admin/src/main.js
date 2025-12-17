@@ -22,30 +22,30 @@ app.use(router);
 
 // 全局配置 TTable 默认属性
 app.component("TTable", {
-  ...TTable,
-  props: {
-    ...TTable.props,
-    bordered: {
-      type: [Boolean, Object],
-      default: () => ({ cell: "horizontal" }),
-    },
-    size: {
-      type: String,
-      default: "small",
-    },
-    height: {
-      type: [String, Number],
-      default: "100%",
-    },
-    selectOnRowClick: {
-      type: Boolean,
-      default: true,
-    },
-    activeRowType: {
-      type: String,
-      default: "single",
-    },
-  },
+    ...TTable,
+    props: {
+        ...TTable.props,
+        bordered: {
+            type: [Boolean, Object],
+            default: () => ({ cell: "horizontal" })
+        },
+        size: {
+            type: String,
+            default: "small"
+        },
+        height: {
+            type: [String, Number],
+            default: "100%"
+        },
+        selectOnRowClick: {
+            type: Boolean,
+            default: true
+        },
+        activeRowType: {
+            type: String,
+            default: "single"
+        }
+    }
 });
 
 app.mount("#app");

@@ -6,16 +6,16 @@
  * @returns {Promise<string>} 十六进制哈希
  */
 export async function hashPassword(password, salt = "befly") {
-  const data = String(password) + String(salt);
+    const data = String(password) + String(salt);
 
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(data);
 
-  // Web Crypto API
-  const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
+    // Web Crypto API
+    const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
 
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 
-  return hashHex;
+    return hashHex;
 }

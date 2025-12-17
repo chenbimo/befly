@@ -12,14 +12,14 @@ import { Logger } from "../lib/logger.js";
  * 日志插件
  */
 const loggerPlugin: Plugin = {
-  after: [],
-  async handler(): Promise<typeof Logger> {
-    // 配置 Logger
-    if (beflyConfig.logger) {
-      Logger.configure(beflyConfig.logger);
+    after: [],
+    async handler(): Promise<typeof Logger> {
+        // 配置 Logger
+        if (beflyConfig.logger) {
+            Logger.configure(beflyConfig.logger);
+        }
+        return Logger;
     }
-    return Logger;
-  },
 };
 
 export default loggerPlugin;

@@ -12,10 +12,10 @@ import { CacheHelper } from "../lib/cacheHelper.js";
  * 缓存插件
  */
 const cachePlugin: Plugin = {
-  after: [],
-  async handler(befly: BeflyContext): Promise<CacheHelper> {
-    return new CacheHelper(befly);
-  },
+    after: [],
+    async handler(befly: BeflyContext): Promise<CacheHelper> {
+        return new CacheHelper(befly);
+    }
 };
 
 export default cachePlugin;

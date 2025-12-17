@@ -2,12 +2,12 @@
  * 进程角色信息
  */
 export interface ProcessRole {
-  /** 进程角色：primary（主进程）或 worker（工作进程） */
-  role: "primary" | "worker";
-  /** 实例 ID（PM2 或 Bun Worker） */
-  instanceId: string | null;
-  /** 运行环境：bun-cluster、pm2-cluster 或 standalone */
-  env: "bun-cluster" | "pm2-cluster" | "standalone";
+    /** 进程角色：primary（主进程）或 worker（工作进程） */
+    role: "primary" | "worker";
+    /** 实例 ID（PM2 或 Bun Worker） */
+    instanceId: string | null;
+    /** 运行环境：bun-cluster、pm2-cluster 或 standalone */
+    env: "bun-cluster" | "pm2-cluster" | "standalone";
 }
 
 /**
@@ -15,33 +15,33 @@ export interface ProcessRole {
  * @returns 进程角色、实例 ID 和运行环境
  */
 export function getProcessRole(): ProcessRole {
-  const bunWorkerId = process.env.BUN_WORKER_ID;
-  const pm2InstanceId = process.env.PM2_INSTANCE_ID;
+    const bunWorkerId = process.env.BUN_WORKER_ID;
+    const pm2InstanceId = process.env.PM2_INSTANCE_ID;
 
-  // Bun 集群模式
-  if (bunWorkerId !== undefined) {
+    // Bun 集群模式
+    if (bunWorkerId !== undefined) {
+        return {
+            role: bunWorkerId === "" ? "primary" : "worker",
+            instanceId: bunWorkerId || "0",
+            env: "bun-cluster"
+        };
+    }
+
+    // PM2 集群模式
+    if (pm2InstanceId !== undefined) {
+        return {
+            role: pm2InstanceId === "0" ? "primary" : "worker",
+            instanceId: pm2InstanceId,
+            env: "pm2-cluster"
+        };
+    }
+
+    // 单进程模式
     return {
-      role: bunWorkerId === "" ? "primary" : "worker",
-      instanceId: bunWorkerId || "0",
-      env: "bun-cluster",
+        role: "primary",
+        instanceId: null,
+        env: "standalone"
     };
-  }
-
-  // PM2 集群模式
-  if (pm2InstanceId !== undefined) {
-    return {
-      role: pm2InstanceId === "0" ? "primary" : "worker",
-      instanceId: pm2InstanceId,
-      env: "pm2-cluster",
-    };
-  }
-
-  // 单进程模式
-  return {
-    role: "primary",
-    instanceId: null,
-    env: "standalone",
-  };
 }
 
 /**
@@ -52,5 +52,5 @@ export function getProcessRole(): ProcessRole {
  * @returns 是否为主进程
  */
 export function isPrimaryProcess(): boolean {
-  return getProcessRole().role === "primary";
+    return getProcessRole().role === "primary";
 }

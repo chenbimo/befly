@@ -10,27 +10,24 @@ import { routes } from "vue-router/auto-routes";
  * @returns {import('vue-router').RouteRecordRaw[]}
  */
 function applyLayouts(configs) {
-  return configs.map((config) => {
-    // 根据布局名称加载对应的布局组件
-    const layoutComponent =
-      config.layoutName === "default"
-        ? () => import("@/layouts/default.vue")
-        : () => import(`@/layouts/${config.layoutName}.vue`);
+    return configs.map((config) => {
+        // 根据布局名称加载对应的布局组件
+        const layoutComponent = config.layoutName === "default" ? () => import("@/layouts/default.vue") : () => import(`@/layouts/${config.layoutName}.vue`);
 
-    // 所有配置都是叶子节点（Layouts 函数已经扁平化处理）
-    // 直接包裹布局
-    return {
-      path: config.path,
-      component: layoutComponent,
-      meta: config.meta,
-      children: [
-        {
-          path: "",
-          component: config.component,
-        },
-      ],
-    };
-  });
+        // 所有配置都是叶子节点（Layouts 函数已经扁平化处理）
+        // 直接包裹布局
+        return {
+            path: config.path,
+            component: layoutComponent,
+            meta: config.meta,
+            children: [
+                {
+                    path: "",
+                    component: config.component
+                }
+            ]
+        };
+    });
 }
 
 // 应用自定义布局系统
@@ -38,11 +35,11 @@ const layoutRoutes = applyLayouts(Layouts(routes));
 
 // 添加根路径重定向
 const finalRoutes = [
-  {
-    path: "/",
-    redirect: "/addon/admin",
-  },
-  ...layoutRoutes,
+    {
+        path: "/",
+        redirect: "/addon/admin"
+    },
+    ...layoutRoutes
 ];
 
 /**
@@ -50,36 +47,36 @@ const finalRoutes = [
  * 可直接在 main.js 中使用 app.use(router)
  */
 export const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
-  routes: finalRoutes,
+    history: createWebHashHistory(import.meta.env.BASE_URL),
+    routes: finalRoutes
 });
 
 // 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
-  const token = $Storage.local.get("token");
+    const token = $Storage.local.get("token");
 
-  // 0. 根路径重定向
-  if (to.path === "/") {
-    return next(token ? "/addon/admin" : "/addon/admin/login");
-  }
+    // 0. 根路径重定向
+    if (to.path === "/") {
+        return next(token ? "/addon/admin" : "/addon/admin/login");
+    }
 
-  // 1. 未登录且访问非公开路由 → 跳转登录
-  if (!token && to.meta?.public !== true && to.path !== "/addon/admin/login") {
-    return next("/addon/admin/login");
-  }
+    // 1. 未登录且访问非公开路由 → 跳转登录
+    if (!token && to.meta?.public !== true && to.path !== "/addon/admin/login") {
+        return next("/addon/admin/login");
+    }
 
-  // 2. 已登录访问登录页 → 跳转首页
-  if (token && to.path === "/addon/admin/login") {
-    return next("/addon/admin");
-  }
+    // 2. 已登录访问登录页 → 跳转首页
+    if (token && to.path === "/addon/admin/login") {
+        return next("/addon/admin");
+    }
 
-  next();
+    next();
 });
 
 // 路由就绪后处理
 router.afterEach((_to) => {
-  // 可以在这里添加页面访问统计等
-  if (import.meta.env.DEV) {
-    // 开发环境调试日志请使用更合适的日志方案（此处避免 console 触发 lint 门禁）
-  }
+    // 可以在这里添加页面访问统计等
+    if (import.meta.env.DEV) {
+        // 开发环境调试日志请使用更合适的日志方案（此处避免 console 触发 lint 门禁）
+    }
 });

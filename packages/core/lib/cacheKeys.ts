@@ -7,32 +7,32 @@
  * Cache Key 生成函数集合
  */
 export class CacheKeys {
-  /** 所有接口缓存 */
-  static apisAll(): string {
-    return "befly:apis:all";
-  }
+    /** 所有接口缓存 */
+    static apisAll(): string {
+        return "befly:apis:all";
+    }
 
-  /** 所有菜单缓存 */
-  static menusAll(): string {
-    return "befly:menus:all";
-  }
+    /** 所有菜单缓存 */
+    static menusAll(): string {
+        return "befly:menus:all";
+    }
 
-  /** 角色信息缓存（完整角色对象） */
-  static roleInfo(roleCode: string): string {
-    return `befly:role:info:${roleCode}`;
-  }
+    /** 角色信息缓存（完整角色对象） */
+    static roleInfo(roleCode: string): string {
+        return `befly:role:info:${roleCode}`;
+    }
 
-  /**
-   * 角色接口权限缓存（Set 集合）
-   * - key: befly:role:apis:${roleCode}
-   * - member: METHOD/path
-   */
-  static roleApis(roleCode: string): string {
-    return `befly:role:apis:${roleCode}`;
-  }
+    /**
+     * 角色接口权限缓存（Set 集合）
+     * - key: befly:role:apis:${roleCode}
+     * - member: METHOD/path
+     */
+    static roleApis(roleCode: string): string {
+        return `befly:role:apis:${roleCode}`;
+    }
 
-  /** 表结构缓存 */
-  static tableColumns(table: string): string {
-    return `befly:table:columns:${table}`;
-  }
+    /** 表结构缓存 */
+    static tableColumns(table: string): string {
+        return `befly:table:columns:${table}`;
+    }
 }

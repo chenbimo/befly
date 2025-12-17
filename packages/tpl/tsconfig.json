@@ -1,24 +1,24 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "lib": ["ESNext"],
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "types": ["bun"],
-    "baseUrl": ".",
-    "paths": {
-      "befly": ["../core/main.ts"],
-      "befly/*": ["../core/*"]
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": ["ESNext"],
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "types": ["bun"],
+        "baseUrl": ".",
+        "paths": {
+            "befly": ["../core/main.ts"],
+            "befly/*": ["../core/*"]
+        },
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true
     },
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["**/*.ts", "**/*.d.ts"],
-  "exclude": ["node_modules", "data", "logs", "tests"]
+    "include": ["**/*.ts", "**/*.d.ts"],
+    "exclude": ["node_modules", "data", "logs", "tests"]
 }

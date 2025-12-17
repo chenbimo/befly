@@ -12,53 +12,53 @@ import { $Storage } from "./storage";
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+    baseURL: import.meta.env.VITE_API_BASE_URL,
+    timeout: 10000,
+    headers: {
+        "Content-Type": "application/json"
+    }
 });
 
 // 请求拦截器
 request.interceptors.request.use(
-  (config) => {
-    // 添加 token
-    const token = $Storage.local.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    (config) => {
+        // 添加 token
+        const token = $Storage.local.get("token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
 );
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response) => {
-    const res = response.data;
+    (response) => {
+        const res = response.data;
 
-    // 如果code不是0,说明业务失败（不显示提示，由业务层处理）
-    if (res.code !== 0) {
-      return Promise.reject({
-        code: res.code,
-        msg: res.msg || "请求失败",
-        data: res.data,
-      });
+        // 如果code不是0,说明业务失败（不显示提示，由业务层处理）
+        if (res.code !== 0) {
+            return Promise.reject({
+                code: res.code,
+                msg: res.msg || "请求失败",
+                data: res.data
+            });
+        }
+
+        // 成功时返回 data
+        return res;
+    },
+    (error) => {
+        MessagePlugin.error("网络连接失败");
+        return Promise.reject({
+            code: -1,
+            msg: "网络连接失败",
+            error: error
+        });
     }
-
-    // 成功时返回 data
-    return res;
-  },
-  (error) => {
-    MessagePlugin.error("网络连接失败");
-    return Promise.reject({
-      code: -1,
-      msg: "网络连接失败",
-      error: error,
-    });
-  },
 );
 
 /**
@@ -71,16 +71,16 @@ request.interceptors.response.use(
  * @returns {Promise<any>} 成功返回 data，失败抛出 {code, msg, data} 对象
  */
 export function $Http(url, data = {}, method = "post", config) {
-  const methodLower = method.toLowerCase();
+    const methodLower = method.toLowerCase();
 
-  // GET 请求将 data 作为 params
-  if (methodLower === "get") {
-    return request.get(url, {
-      ...config,
-      params: data,
-    });
-  }
+    // GET 请求将 data 作为 params
+    if (methodLower === "get") {
+        return request.get(url, {
+            ...config,
+            params: data
+        });
+    }
 
-  // POST 请求将 data 作为 body
-  return request.post(url, data, config);
+    // POST 请求将 data 作为 body
+    return request.post(url, data, config);
 }

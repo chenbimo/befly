@@ -13,7 +13,17 @@
 
         <div class="main-content">
             <div class="main-table">
-                <TTable v-bind="withTreeTableProps()" :data="$Data.tableData" :columns="$Data.columns" :loading="$Data.loading" :active-row-keys="$Data.activeRowKeys" row-key="id" height="calc(100vh - var(--search-height) - var(--layout-gap) * 2)" active-row-type="single" @active-change="$Method.onActiveChange">
+                <TTable
+                    v-bind="withTreeTableProps()"
+                    :data="$Data.tableData"
+                    :columns="$Data.columns"
+                    :loading="$Data.loading"
+                    :active-row-keys="$Data.activeRowKeys"
+                    row-key="id"
+                    height="calc(100vh - var(--search-height) - var(--layout-gap) * 2)"
+                    active-row-type="single"
+                    @active-change="$Method.onActiveChange"
+                >
                     <template #state="{ row }">
                         <TTag v-if="row.state === 1" shape="round" theme="success" variant="light-outline">正常</TTag>
                         <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
