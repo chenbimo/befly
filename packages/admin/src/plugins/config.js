@@ -13,9 +13,7 @@ export const $Config = {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL || "",
 
     /** 上传地址（优先使用 VITE_UPLOAD_URL；否则基于 VITE_API_BASE_URL 拼接 /upload） */
-    uploadUrl:
-        import.meta.env.VITE_UPLOAD_URL ||
-        ((import.meta.env.VITE_API_BASE_URL || "").length > 0 ? `${import.meta.env.VITE_API_BASE_URL}/upload` : "/upload"),
+    uploadUrl: import.meta.env.VITE_UPLOAD_URL || ((import.meta.env.VITE_API_BASE_URL || "").length > 0 ? `${import.meta.env.VITE_API_BASE_URL}/upload` : "/upload"),
     /** 存储命名空间 */
     storageNamespace: import.meta.env.VITE_STORAGE_NAMESPACE || "befly_admin",
 
