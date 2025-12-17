@@ -1,14 +1,18 @@
 import { $Config } from "@/config";
 import { $Storage } from "@/plugins/storage";
-import { applyTokenAuthGuard } from "befly-vite/utils/routerGuard";
-import { buildLayoutRoutes } from "befly-vite/utils/routerLayouts";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
 
+import { applyTokenAuthGuard, buildLayoutRoutes, createLayoutComponentResolver } from "befly-vite/utils/router";
+
 // 应用自定义布局系统
-const layoutRoutes = buildLayoutRoutes(routes, (layoutName) => {
-    return layoutName === "default" ? () => import("@/layouts/default.vue") : () => import(`@/layouts/${layoutName}.vue`);
-});
+const layoutRoutes = buildLayoutRoutes(
+    routes,
+    createLayoutComponentResolver({
+        resolveDefaultLayout: () => import("@/layouts/default.vue"),
+        resolveNamedLayout: (layoutName) => import(`@/layouts/${layoutName}.vue`)
+    })
+);
 
 // 添加根路径重定向
 const finalRoutes = [

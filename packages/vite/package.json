@@ -17,7 +17,14 @@
     "main": "index.js",
     "exports": {
         ".": "./index.js",
-        "./utils/*": "./utils/*.js"
+        "./utils/arrayToTree": "./utils/arrayToTree.js",
+        "./utils/createUnoConfig": "./utils/createUnoConfig.js",
+        "./utils/fieldClear": "./utils/fieldClear.js",
+        "./utils/hashPassword": "./utils/hashPassword.js",
+        "./utils/layouts": "./utils/layouts.js",
+        "./utils/router": "./utils/router.js",
+        "./utils/scanViews": "./utils/scanViews.js",
+        "./utils/withDefaultColumns": "./utils/withDefaultColumns.js"
     },
     "files": [
         "README.md",
