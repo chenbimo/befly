@@ -17,7 +17,7 @@
                         <!-- 无子菜单 -->
                         <t-menu-item v-if="!menu.children || menu.children.length === 0" :value="menu.path">
                             <template #icon>
-                                <i-lucide:home v-if="menu.path === '/addon/admin/'" style="margin-right: 8px" />
+                                <i-lucide:home v-if="menu.path === '/dashboard' || menu.path === '/addon/admin/' || menu.path === '/addon/admin'" style="margin-right: 8px" />
                                 <i-lucide:file-text v-else style="margin-right: 8px" />
                             </template>
                             {{ menu.name }}
@@ -83,6 +83,17 @@ const router = useRouter();
 const route = useRoute();
 const global = useGlobal();
 
+const loginPath = "/addon/admin/login";
+
+const normalizePath = (path) => {
+    if (typeof path !== "string") {
+        return path;
+    }
+
+    const normalized = path.replace(/\/+$/, "");
+    return normalized.length === 0 ? "/" : normalized;
+};
+
 const $From = {
     treeMenuRef: null
 };
@@ -106,9 +117,71 @@ const $Method = {
     async fetchUserMenus() {
         try {
             const { data } = await $Http("/addon/admin/menu/all");
+            const lists = Array.isArray(data?.lists) ? data.lists : [];
+
+            const bizMenus = [];
+            const routeRecords = router.getRoutes();
+
+            for (const record of routeRecords) {
+                const path = normalizePath(record.path);
+
+                if (typeof path !== "string") {
+                    continue;
+                }
+
+                if (path === "/") {
+                    continue;
+                }
+
+                if (path === normalizePath(loginPath)) {
+                    continue;
+                }
+
+                if (path.startsWith("/addon/")) {
+                    continue;
+                }
+
+                const title = typeof record.meta?.title === "string" ? record.meta.title : "";
+                if (title.length === 0) {
+                    continue;
+                }
+
+                if (bizMenus.some((m) => m.path === path)) {
+                    continue;
+                }
+
+                bizMenus.push({
+                    id: `biz_${path.replace(/[^a-zA-Z0-9]+/g, "_")}`,
+                    pid: "biz",
+                    name: title,
+                    path: path
+                });
+            }
+
+            bizMenus.sort((a, b) => String(a.path).localeCompare(String(b.path)));
+
+            const bizMenusFlat =
+                bizMenus.length > 0
+                    ? [
+                          {
+                              id: "biz",
+                              pid: 0,
+                              name: "业务",
+                              path: ""
+                          }
+                      ].concat(bizMenus)
+                    : [];
+
+            const normalizedLists = lists.map((menu) => {
+                const menuPath = normalizePath(menu?.path);
+                return Object.assign({}, menu, { path: menuPath });
+            });
+
+            const mergedLists = bizMenusFlat.concat(normalizedLists);
+
             // 保存一维数据（data 是 { lists: [] } 格式）
-            $Data.userMenusFlat = data.lists || [];
-            $Data.userMenus = arrayToTree(data.lists || []);
+            $Data.userMenusFlat = mergedLists;
+            $Data.userMenus = arrayToTree(mergedLists);
             $Method.setActiveMenu();
         } catch (error) {
             MessagePlugin.error("获取用户菜单失败");
@@ -118,9 +191,14 @@ const $Method = {
     // 设置当前激活的菜单（从一维数据查找并构建父级链）
     setActiveMenu() {
         const currentPath = route.path;
+        const normalizedCurrentPath = normalizePath(currentPath);
 
         // 在一维数据中查找当前路径对应的菜单
-        const currentMenu = $Data.userMenusFlat.find((menu) => menu.path === currentPath);
+        const currentMenu = $Data.userMenusFlat.find((menu) => {
+            const menuPath = menu.path;
+            const normalizedMenuPath = normalizePath(menuPath);
+            return normalizedMenuPath === normalizedCurrentPath;
+        });
 
         if (!currentMenu) {
             return;
@@ -148,7 +226,7 @@ const $Method = {
 
     // 处理菜单点击
     onMenuClick(path) {
-        if (path) {
+        if (typeof path === "string" && path.startsWith("/")) {
             router.push(path);
         }
     },
@@ -161,7 +239,7 @@ const $Method = {
             status: "warning",
             onConfirm: async () => {
                 $Storage.local.remove("token");
-                await router.push("/internal/login");
+                await router.push(loginPath);
                 MessagePlugin.success("退出成功");
             }
         });
@@ -183,6 +261,13 @@ const $Method = {
 };
 
 $Method.fetchUserMenus();
+
+watch(
+    () => route.path,
+    () => {
+        $Method.setActiveMenu();
+    }
+);
 </script>
 
 <style scoped lang="scss">

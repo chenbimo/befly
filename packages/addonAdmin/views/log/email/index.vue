@@ -92,6 +92,13 @@ import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
+definePage({
+    meta: {
+        title: "邮件日志",
+        order: 2
+    }
+});
+
 const sendFormRef = $ref(null);
 
 // 响应式数据

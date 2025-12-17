@@ -94,6 +94,13 @@ import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
+definePage({
+    meta: {
+        title: "系统配置",
+        order: 2
+    }
+});
+
 // 响应式数据
 const $Data = $ref({
     tableData: [],

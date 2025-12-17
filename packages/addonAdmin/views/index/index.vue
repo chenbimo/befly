@@ -25,6 +25,13 @@ import ServiceStatus from "./components/serviceStatus.vue";
 import SystemResources from "./components/systemResources.vue";
 import PerformanceMetrics from "./components/performanceMetrics.vue";
 import EnvironmentInfo from "./components/environmentInfo.vue";
+
+definePage({
+    meta: {
+        title: "首页",
+        order: 0
+    }
+});
 </script>
 
 <style scoped lang="scss">

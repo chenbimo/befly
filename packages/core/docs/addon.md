@@ -59,11 +59,9 @@ Addon 是 Befly 的可复用功能模块，一个 Addon 可以包含：
 │   └── email.ts             # 邮件插件
 ├── views/                   # 前端视图
 │   ├── login_1/             # 登录页
-│   │   ├── login.vue
-│   │   └── meta.json
+│   │   └── index.vue
 │   └── permission/          # 权限管理
-│       ├── permission.vue
-│       └── meta.json
+│       └── index.vue
 ├── styles/                  # 样式文件
 │   └── variables.scss
 ├── package.json             # 包配置
@@ -393,27 +391,28 @@ export default {
 ```
 views/
 ├── login_1/              # 使用 layout 1
-│   ├── login.vue         # 页面组件
-│   └── meta.json         # 菜单配置
+│   └── index.vue         # 页面组件（definePage 声明菜单元信息）
 ├── permission/
-│   ├── permission.vue
-│   ├── meta.json
+│   ├── index.vue
 │   ├── role/             # 子菜单
-│   │   ├── role.vue
-│   │   └── meta.json
+│   │   └── index.vue
 │   └── menu/
-│       ├── menu.vue
-│       └── meta.json
+│       └── index.vue
 ```
 
-### meta.json 配置
+### definePage(meta) 配置
 
-```json
-{
-    "name": "权限管理",
-    "icon": "Shield",
-    "sort": 10
-}
+在 `views/**/index.vue` 中使用 `definePage()` 声明菜单元信息：
+
+```vue
+<script setup>
+definePage({
+    meta: {
+        title: "权限管理",
+        order: 10
+    }
+});
+</script>
 ```
 
 ### 目录命名规则

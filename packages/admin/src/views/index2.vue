@@ -142,11 +142,14 @@
     </div>
 </template>
 
-<route lang="yaml">
-meta:
-    layout: default
-    title: 数据面板
-</route>
+<script setup>
+definePage({
+    meta: {
+        title: "数据面板",
+        layout: "default"
+    }
+});
+</script>
 
 <style lang="scss" scoped>
 .dashboard {

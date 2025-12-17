@@ -82,6 +82,13 @@ import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
+definePage({
+    meta: {
+        title: "管理员",
+        order: 1
+    }
+});
+
 // 响应式数据
 const $Data = $ref({
     tableData: [],

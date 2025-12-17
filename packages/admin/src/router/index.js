@@ -1,46 +1,32 @@
 import { $Storage } from "@/plugins/storage";
-import { Layouts } from "befly-vite/utils/layouts";
+import { Layouts, applyLayouts } from "befly-vite/utils/layouts";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
 
-/**
- * 将布局配置转换为实际的路由配置
- * 在这里执行实际的布局组件导入
- * @param {any[]} configs
- * @returns {import('vue-router').RouteRecordRaw[]}
- */
-function applyLayouts(configs) {
-    return configs.map((config) => {
-        // 根据布局名称加载对应的布局组件
-        const layoutComponent = config.layoutName === "default" ? () => import("@/layouts/default.vue") : () => import(`@/layouts/${config.layoutName}.vue`);
+const loginPath = "/addon/admin/login";
+const homePath = "/dashboard";
 
-        // 所有配置都是叶子节点（Layouts 函数已经扁平化处理）
-        // 直接包裹布局
-        return {
-            path: config.path,
-            component: layoutComponent,
-            meta: config.meta,
-            children: [
-                {
-                    path: "",
-                    component: config.component
-                }
-            ]
-        };
-    });
-}
+const normalizePath = (path) => {
+    if (typeof path !== "string") {
+        return path;
+    }
+
+    const normalized = path.replace(/\/+$/, "");
+    return normalized.length === 0 ? "/" : normalized;
+};
 
 // 应用自定义布局系统
-const layoutRoutes = applyLayouts(Layouts(routes));
+const layoutRoutes = applyLayouts(Layouts(routes), (layoutName) => {
+    return layoutName === "default" ? () => import("@/layouts/default.vue") : () => import(`@/layouts/${layoutName}.vue`);
+});
 
 // 添加根路径重定向
 const finalRoutes = [
     {
         path: "/",
-        redirect: "/addon/admin"
-    },
-    ...layoutRoutes
-];
+        redirect: homePath
+    }
+].concat(layoutRoutes);
 
 /**
  * 创建并导出路由实例
@@ -54,20 +40,21 @@ export const router = createRouter({
 // 路由守卫 - 基础验证
 router.beforeEach(async (to, from, next) => {
     const token = $Storage.local.get("token");
+    const toPath = normalizePath(to.path);
 
     // 0. 根路径重定向
-    if (to.path === "/") {
-        return next(token ? "/addon/admin" : "/addon/admin/login");
+    if (toPath === "/") {
+        return next(token ? homePath : loginPath);
     }
 
     // 1. 未登录且访问非公开路由 → 跳转登录
-    if (!token && to.meta?.public !== true && to.path !== "/addon/admin/login") {
-        return next("/addon/admin/login");
+    if (!token && to.meta?.public !== true && toPath !== normalizePath(loginPath)) {
+        return next(loginPath);
     }
 
     // 2. 已登录访问登录页 → 跳转首页
-    if (token && to.path === "/addon/admin/login") {
-        return next("/addon/admin");
+    if (token && toPath === normalizePath(loginPath)) {
+        return next(homePath);
     }
 
     next();

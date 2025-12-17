@@ -8,7 +8,7 @@
         "skipLibCheck": true,
         "baseUrl": "."
     },
-    "include": ["views/**/*.vue", "apis/**/*.ts", "plugins/**/*.ts", "libs/**/*.ts", "genMenus.ts"],
+    "include": ["views/**/*.vue", "apis/**/*.ts", "plugins/**/*.ts", "libs/**/*.ts"],
     "vueCompilerOptions": {
         "globalTypesPath": "../../temp/volar/addonAdmin-global-types.d.ts"
     }

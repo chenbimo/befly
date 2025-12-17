@@ -224,7 +224,7 @@ interface SyncApiStats {
 
 ## syncMenu 菜单同步
 
-将 `views/*/meta.json` 菜单配置同步到 `addon_admin_menu` 表。
+将 `views/**/index.vue` 中的 `definePage({ meta })` 菜单配置同步到 `addon_admin_menu` 表。
 
 ### 基本用法
 
@@ -244,24 +244,25 @@ befly sync:menu --plan
 
 ### 菜单配置文件
 
-在 `views/{menuName}/meta.json` 中定义菜单：
+在 `views/{menuName}/index.vue` 中用 `definePage()` 定义菜单：
 
-```json
-{
-    "name": "用户管理",
-    "icon": "Users",
-    "sort": 10
-}
+```vue
+<script setup>
+definePage({
+    meta: {
+        title: "用户管理",
+        order: 10
+    }
+});
+</script>
 ```
 
 **配置字段**：
 
-| 字段     | 类型    | 必填 | 说明                       |
-| -------- | ------- | ---- | -------------------------- |
-| `name`   | string  | 是   | 菜单名称                   |
-| `icon`   | string  | 否   | 图标名称（Lucide 图标）    |
-| `sort`   | number  | 否   | 排序权重，越小越靠前       |
-| `hidden` | boolean | 否   | 是否隐藏（不同步到数据库） |
+| 字段    | 类型   | 必填 | 说明                 |
+| ------- | ------ | ---- | -------------------- |
+| `title` | string | 是   | 菜单名称             |
+| `order` | number | 否   | 排序权重，越小越靠前 |
 
 ### 目录结构
 
@@ -269,19 +270,15 @@ befly sync:menu --plan
 views/
 ├── index/              # 首页
 │   ├── index.vue
-│   └── meta.json       # { "name": "首页", "icon": "Home", "sort": 1 }
+│   └── index.vue       # definePage({ meta: { title: "首页", order: 1 } })
 ├── user/               # 用户管理（父菜单）
-│   ├── user.vue
-│   ├── meta.json       # { "name": "用户管理", "icon": "Users", "sort": 10 }
+│   ├── index.vue       # definePage({ meta: { title: "用户管理", order: 10 } })
 │   ├── list/           # 用户列表（子菜单）
-│   │   ├── list.vue
-│   │   └── meta.json   # { "name": "用户列表", "sort": 1 }
+│   │   └── index.vue   # definePage({ meta: { title: "用户列表", order: 1 } })
 │   └── detail/         # 用户详情（子菜单）
-│       ├── detail.vue
-│       └── meta.json   # { "name": "用户详情", "sort": 2 }
+│       └── index.vue   # definePage({ meta: { title: "用户详情", order: 2 } })
 └── setting/            # 系统设置
-    ├── setting.vue
-    └── meta.json       # { "name": "系统设置", "icon": "Settings", "sort": 99 }
+    └── index.vue       # definePage({ meta: { title: "系统设置", order: 99 } })
 ```
 
 ### 同步逻辑
@@ -294,7 +291,7 @@ views/
 │     - 项目：tpl/views/                              │
 │     - Addon：addons/*/views/                        │
 │         ↓                                           │
-│  2. 读取每个目录的 meta.json 配置                    │
+│  2. 读取每个目录 index.vue 的 definePage(meta) 配置   │
 │         ↓                                           │
 │  3. 构建菜单树（父子关系由目录层级决定）              │
 │         ↓                                           │

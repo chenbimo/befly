@@ -75,3 +75,29 @@ export function Layouts(routes, inheritLayout = "") {
 
     return result;
 }
+
+/**
+ * 将 Layouts 输出的扁平配置转换为 Vue Router 的 RouteRecordRaw
+ * 说明：resolveLayoutComponent 由业务方提供，以避免 utils 强耦合具体项目的布局路径。
+ *
+ * @param {LayoutConfig[]} configs
+ * @param {(layoutName: string) => any} resolveLayoutComponent
+ * @returns {import('vue-router').RouteRecordRaw[]}
+ */
+export function applyLayouts(configs, resolveLayoutComponent) {
+    return configs.map((config) => {
+        const layoutComponent = resolveLayoutComponent(config.layoutName);
+
+        return {
+            path: config.path,
+            component: layoutComponent,
+            meta: config.meta,
+            children: [
+                {
+                    path: "",
+                    component: config.component
+                }
+            ]
+        };
+    });
+}

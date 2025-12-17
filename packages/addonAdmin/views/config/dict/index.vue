@@ -84,6 +84,13 @@ import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
+definePage({
+    meta: {
+        title: "字典列表",
+        order: 1
+    }
+});
+
 const $Data = $ref({
     tableData: [],
     typeList: [],

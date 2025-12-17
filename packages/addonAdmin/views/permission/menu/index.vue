@@ -47,6 +47,13 @@ import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 import { withTreeTableProps } from "@/utils";
 
+definePage({
+    meta: {
+        title: "菜单列表",
+        order: 2
+    }
+});
+
 // 响应式数据
 const $Data = $ref({
     tableData: [],

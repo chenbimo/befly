@@ -3,7 +3,7 @@
  * 说明：扫描 addon 的 views 目录和项目的 menus.json，同步菜单数据
  *
  * 流程：
- * 1. 扫描所有 addon 的 views 目录下的 meta.json 文件
+ * 1. 扫描所有 addon 的 views 目录下的 index.vue，并从 definePage({ meta }) 解析菜单元信息
  * 2. 根据目录层级构建菜单树（无层级限制）
  * 3. 读取项目的 menus.json 文件（手动配置的菜单）
  * 4. 根据菜单的 path 字段检查是否存在
@@ -37,6 +37,88 @@ function cleanDirName(name: string): string {
     return name.replace(/_\d+$/, "");
 }
 
+type ViewDirMeta = {
+    title: string;
+    order?: number;
+};
+
+function extractDefinePageMetaFromVueContent(content: string): ViewDirMeta | null {
+    const defineIndex = content.indexOf("definePage");
+    if (defineIndex < 0) {
+        return null;
+    }
+
+    const openParenIndex = content.indexOf("(", defineIndex);
+    if (openParenIndex < 0) {
+        return null;
+    }
+
+    let i = openParenIndex + 1;
+    let depth = 1;
+    let inString: '"' | "'" | "`" | null = null;
+    let escaped = false;
+
+    for (; i < content.length; i++) {
+        const ch = content[i];
+
+        if (inString) {
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (ch === "\\") {
+                escaped = true;
+                continue;
+            }
+            if (ch === inString) {
+                inString = null;
+                continue;
+            }
+            continue;
+        }
+
+        if (ch === '"' || ch === "'" || ch === "`") {
+            inString = ch;
+            continue;
+        }
+
+        if (ch === "(") {
+            depth++;
+            continue;
+        }
+        if (ch === ")") {
+            depth--;
+            if (depth === 0) {
+                break;
+            }
+            continue;
+        }
+    }
+
+    if (depth !== 0) {
+        return null;
+    }
+
+    const arg = content.slice(openParenIndex + 1, i);
+
+    const titleMatch = arg.match(/meta\s*:\s*\{[\s\S]*?title\s*:\s*(["'`])([^"'`]+)\1/);
+    if (!titleMatch) {
+        return null;
+    }
+
+    const orderMatch = arg.match(/meta\s*:\s*\{[\s\S]*?order\s*:\s*(\d+)/);
+
+    const meta: ViewDirMeta = {
+        title: titleMatch[2]
+    };
+
+    if (orderMatch) {
+        meta.order = Number(orderMatch[1]);
+    }
+
+    return meta;
+}
+
 /**
  * 扫描 views 目录，构建菜单树
  * @param viewsDir views 目录路径
@@ -59,20 +141,34 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         }
 
         const dirPath = join(viewsDir, entry.name);
-        const metaPath = join(dirPath, "meta.json");
+        const indexVuePath = join(dirPath, "index.vue");
 
-        // 没有 meta.json 的目录不处理
-        if (!existsSync(metaPath)) {
+        // 没有 index.vue 的目录不处理
+        if (!existsSync(indexVuePath)) {
             continue;
         }
 
-        // 读取 meta.json
-        let meta: { name: string; order?: number };
+        // 从 index.vue 中解析 definePage({ meta })
+        let meta: ViewDirMeta | null = null;
         try {
-            const content = await readFile(metaPath, "utf-8");
-            meta = JSON.parse(content);
+            const content = await readFile(indexVuePath, "utf-8");
+            meta = extractDefinePageMetaFromVueContent(content);
+
+            // 目录存在 index.vue，但缺 definePage(meta.title) 时给出提示，便于定位漏迁移/漏配置
+            if (!meta?.title) {
+                if (content.includes("definePage")) {
+                    Logger.warn({ path: indexVuePath }, "index.vue 中 definePage(meta.title) 解析失败，已跳过该目录菜单同步");
+                } else {
+                    Logger.warn({ path: indexVuePath }, "index.vue 未声明 definePage({ meta: { title } })，已跳过该目录菜单同步");
+                }
+            }
         } catch (error: any) {
-            Logger.warn({ err: error, path: metaPath }, "读取 meta.json 失败");
+            Logger.warn({ err: error, path: indexVuePath }, "读取 index.vue 失败");
+            continue;
+        }
+
+        // 没有 definePage meta 的目录不处理
+        if (!meta?.title) {
             continue;
         }
 
@@ -90,7 +186,7 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         const fullPath = prefix ? `${prefix}${menuPath}` : menuPath;
 
         const menu: MenuConfig = {
-            name: meta.name,
+            name: meta.title,
             path: fullPath,
             sort: meta.order || 1
         };
