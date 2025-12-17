@@ -212,7 +212,7 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         }
 
         // 添加 addon 前缀
-        const fullPath = prefix ? (menuPath ? `${prefix}${menuPath}` : prefix) : (menuPath || "/");
+        const fullPath = prefix ? (menuPath ? `${prefix}${menuPath}` : prefix) : menuPath || "/";
 
         const menu: MenuConfig = {
             name: meta.title,

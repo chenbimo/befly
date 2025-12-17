@@ -1,5 +1,4 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -61,13 +60,9 @@ describe("syncMenu - scanViewsDir paths", () => {
 
 describe("syncMenu - normalizeMenuPath", () => {
     test("去掉尾随 / 且折叠多 /", () => {
-        expect(__test__.normalizeMenuPath("/addon/a/"))
-            .toBe("/addon/a");
-        expect(__test__.normalizeMenuPath("//addon//a//b/"))
-            .toBe("/addon/a/b");
-        expect(__test__.normalizeMenuPath("addon/a"))
-            .toBe("/addon/a");
-        expect(__test__.normalizeMenuPath("/"))
-            .toBe("/");
+        expect(__test__.normalizeMenuPath("/addon/a/")).toBe("/addon/a");
+        expect(__test__.normalizeMenuPath("//addon//a//b/")).toBe("/addon/a/b");
+        expect(__test__.normalizeMenuPath("addon/a")).toBe("/addon/a");
+        expect(__test__.normalizeMenuPath("/")).toBe("/");
     });
 });
