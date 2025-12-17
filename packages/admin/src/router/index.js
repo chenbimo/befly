@@ -1,22 +1,13 @@
-import { $Storage } from "@/plugins/storage";
-import { Layouts, applyLayouts } from "befly-vite/utils/layouts";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
+import { applyTokenAuthGuard } from "befly-vite/utils/routerGuard";
+import { buildLayoutRoutes } from "befly-vite/utils/routerLayouts";
 
-const loginPath = "/addon/admin/login";
-const homePath = "/dashboard";
-
-const normalizePath = (path) => {
-    if (typeof path !== "string") {
-        return path;
-    }
-
-    const normalized = path.replace(/\/+$/, "");
-    return normalized.length === 0 ? "/" : normalized;
-};
+import { $Config } from "@/config";
+import { $Storage } from "@/plugins/storage";
 
 // 应用自定义布局系统
-const layoutRoutes = applyLayouts(Layouts(routes), (layoutName) => {
+const layoutRoutes = buildLayoutRoutes(routes, (layoutName) => {
     return layoutName === "default" ? () => import("@/layouts/default.vue") : () => import(`@/layouts/${layoutName}.vue`);
 });
 
@@ -24,7 +15,7 @@ const layoutRoutes = applyLayouts(Layouts(routes), (layoutName) => {
 const finalRoutes = [
     {
         path: "/",
-        redirect: homePath
+        redirect: $Config.homePath
     }
 ].concat(layoutRoutes);
 
@@ -38,26 +29,10 @@ export const router = createRouter({
 });
 
 // 路由守卫 - 基础验证
-router.beforeEach(async (to, from, next) => {
-    const token = $Storage.local.get("token");
-    const toPath = normalizePath(to.path);
-
-    // 0. 根路径重定向
-    if (toPath === "/") {
-        return next(token ? homePath : loginPath);
-    }
-
-    // 1. 未登录且访问非公开路由 → 跳转登录
-    if (!token && to.meta?.public !== true && toPath !== normalizePath(loginPath)) {
-        return next(loginPath);
-    }
-
-    // 2. 已登录访问登录页 → 跳转首页
-    if (token && toPath === normalizePath(loginPath)) {
-        return next(homePath);
-    }
-
-    next();
+applyTokenAuthGuard(router, {
+    getToken: () => $Storage.local.get("token"),
+    loginPath: $Config.loginPath,
+    homePath: $Config.homePath
 });
 
 // 路由就绪后处理

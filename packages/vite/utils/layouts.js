@@ -101,3 +101,6 @@ export function applyLayouts(configs, resolveLayoutComponent) {
         };
     });
 }
+
+// 路由相关工具函数拆分到更语义化的文件中；这里保留导出以兼容历史引用。
+export { normalizeRoutePath, applyTokenAuthGuard } from "./routerGuard.js";
