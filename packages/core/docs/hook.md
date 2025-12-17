@@ -704,7 +704,7 @@ const hook: Hook = {
 
 ### 5. 性能考虑
 
-```typescript
+````typescript
 // ✅ 推荐：异步操作使用 Promise
 const hook: Hook = {
     handler: async (befly, ctx) => {
@@ -712,7 +712,42 @@ const hook: Hook = {
         const [result1, result2] = await Promise.all([operation1(), operation2()]);
     }
 };
-```
+
+### 6. 直接使用字段，避免多余变量
+
+仅用于“转发参数 / 改名 / 只用一次”的中间变量不要定义；优先直接使用来源对象字段（例如 `ctx.body.xxx`、`payload.xxx`）。
+
+```typescript
+// ❌ 避免：只为转发参数而改名/多一层
+const hook: Hook = {
+    handler: async (befly, ctx) => {
+        const payload = await befly.jwt.verify(token); // token 解析略
+        const userId = payload.id;
+        setCtxUser(userId, payload.roleCode, payload.nickname, payload.roleType);
+    }
+};
+
+// ✅ 推荐：直接转发字段
+const hook2: Hook = {
+    handler: async (befly, ctx) => {
+        const payload = await befly.jwt.verify(token); // token 解析略
+        setCtxUser(payload.id, payload.roleCode, payload.nickname, payload.roleType);
+    }
+};
+
+// ✅ 例外：需要类型收窄/非空校验/复用（>=2 次）时再定义变量
+const hook3: Hook = {
+    handler: async (befly, ctx) => {
+        const payload = await befly.jwt.verify(token); // token 解析略
+        const userId = payload.id;
+        if (typeof userId !== "number") return;
+
+        setCtxUser(userId, payload.roleCode, payload.nickname, payload.roleType);
+    }
+};
+````
+
+````
 
 ---
 
@@ -736,7 +771,7 @@ const hook: Hook = {
         befly.logger.info("日志");
     }
 };
-```
+````
 
 ### Q3: 如何在钩子间传递数据？
 

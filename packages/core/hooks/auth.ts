@@ -14,11 +14,7 @@ const hook: Hook = {
                 const payload = await befly.jwt.verify(token);
                 ctx.user = payload;
 
-                const userId = (ctx.user as any)?.id;
-                const roleCode = (ctx.user as any)?.roleCode;
-                const nickname = (ctx.user as any)?.nickname;
-                const roleType = (ctx.user as any)?.roleType;
-                setCtxUser(userId, roleCode, nickname, roleType);
+                setCtxUser(payload.id, payload.roleCode, payload.nickname, payload.roleType);
             } catch {
                 ctx.user = {};
             }

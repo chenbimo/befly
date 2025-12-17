@@ -20,7 +20,15 @@ export interface JwtHeader {
  */
 export interface JwtPayload {
     /** 用户 ID */
-    userId?: string;
+    userId?: string | number;
+    /** 用户 ID（部分项目使用 id 字段） */
+    id?: string | number;
+    /** 角色编码 */
+    roleCode?: string;
+    /** 昵称 */
+    nickname?: string;
+    /** 角色类型 */
+    roleType?: string;
     /** 用户名 */
     username?: string;
     /** 角色 */
