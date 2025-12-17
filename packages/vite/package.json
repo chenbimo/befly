@@ -17,8 +17,6 @@
     "main": "index.js",
     "exports": {
         ".": "./index.js",
-        "./configs/*": "./configs/*.js",
-        "./plugins/*": "./plugins/*.js",
         "./utils/*": "./utils/*.js"
     },
     "files": [
@@ -26,7 +24,8 @@
         "configs/",
         "index.js",
         "package.json",
-        "plugins/"
+        "plugins/",
+        "utils/"
     ],
     "dependencies": {
         "@unocss/preset-attributify": "^66.5.10",
