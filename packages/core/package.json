@@ -1,83 +1,83 @@
 {
-    "name": "befly",
-    "version": "3.9.38",
-    "private": false,
-    "description": "Befly - 为 Bun 专属打造的 TypeScript API 接口框架核心引擎",
-    "keywords": [
-        "api",
-        "backend",
-        "bun",
-        "core",
-        "framework",
-        "http",
-        "javascript",
-        "rest",
-        "type-safe",
-        "typescript"
-    ],
-    "homepage": "https://chensuiyi.me",
-    "author": "chensuiyi <bimostyle@qq.com>",
-    "license": "Apache-2.0",
-    "type": "module",
-    "main": "main.ts",
-    "exports": {
-        ".": {
-            "types": "./main.ts",
-            "default": "./main.ts"
-        },
-        "./lib/*": "./lib/*.ts",
-        "./utils/*": "./utils/*.ts",
-        "./types/*": "./types/*.d.ts"
+  "name": "befly",
+  "version": "3.9.38",
+  "private": false,
+  "description": "Befly - 为 Bun 专属打造的 TypeScript API 接口框架核心引擎",
+  "keywords": [
+    "api",
+    "backend",
+    "bun",
+    "core",
+    "framework",
+    "http",
+    "javascript",
+    "rest",
+    "type-safe",
+    "typescript"
+  ],
+  "homepage": "https://chensuiyi.me",
+  "author": "chensuiyi <bimostyle@qq.com>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "main.ts",
+  "exports": {
+    ".": {
+      "types": "./main.ts",
+      "default": "./main.ts"
     },
-    "types": "main.ts",
-    "files": [
-        ".npmrc",
-        ".prettierignore",
-        ".prettierrc",
-        "LICENSE",
-        "README.md",
-        "befly.config.ts",
-        "bunfig.toml",
-        "checks",
-        "dist",
-        "docs",
-        "hooks",
-        "lib",
-        "loader",
-        "main.ts",
-        "package.json",
-        "paths.ts",
-        "plugins",
-        "router",
-        "sync",
-        "tests",
-        "tsconfig.json",
-        "types",
-        "utils"
-    ],
-    "scripts": {
-        "test": "bun test",
-        "bundler": "bun build ./main.ts --outfile ./main.single.ts --minify --target bun"
-    },
-    "dependencies": {
-        "chalk": "^5.6.2",
-        "es-toolkit": "^1.43.0",
-        "fast-jwt": "^6.1.0",
-        "fast-xml-parser": "^5.3.3",
-        "merge-anything": "^6.0.6",
-        "pathe": "^2.0.3",
-        "pino": "^10.1.0",
-        "pino-roll": "^4.0.0"
-    },
-    "devDependencies": {
-        "typescript": "^5.9.3"
-    },
-    "engines": {
-        "bun": ">=1.3.0"
-    },
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://registry.npmjs.org"
-    },
-    "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc"
+    "./lib/*": "./lib/*.ts",
+    "./types/*": "./types/*.d.ts",
+    "./utils/*": "./utils/*.ts"
+  },
+  "types": "main.ts",
+  "files": [
+    ".npmrc",
+    ".prettierignore",
+    ".prettierrc",
+    "LICENSE",
+    "README.md",
+    "befly.config.ts",
+    "bunfig.toml",
+    "checks",
+    "dist",
+    "docs",
+    "hooks",
+    "lib",
+    "loader",
+    "main.ts",
+    "package.json",
+    "paths.ts",
+    "plugins",
+    "router",
+    "sync",
+    "tests",
+    "tsconfig.json",
+    "types",
+    "utils"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "bundler": "bun build ./main.ts --outfile ./main.single.ts --minify --target bun"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "es-toolkit": "^1.43.0",
+    "fast-jwt": "^6.1.0",
+    "fast-xml-parser": "^5.3.3",
+    "merge-anything": "^6.0.6",
+    "pathe": "^2.0.3",
+    "pino": "^10.1.0",
+    "pino-roll": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc"
 }
