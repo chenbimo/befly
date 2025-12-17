@@ -578,25 +578,31 @@ export class DbHelper {
 
       // 慢查询警告（超过 1000ms）
       if (duration > 1000) {
-        const sqlPreview = sqlStr.length > 100 ? sqlStr.substring(0, 100) + "..." : sqlStr;
-        Logger.warn(`🐌 检测到慢查询 (${duration}ms): ${sqlPreview}`);
+        Logger.warn(
+          {
+            duration: duration,
+            sqlPreview: sqlStr,
+            params: params || [],
+            paramsCount: (params || []).length,
+          },
+          "🐌 检测到慢查询",
+        );
       }
 
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
 
-      Logger.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      Logger.error("SQL 执行错误");
-      Logger.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      Logger.error(`SQL 语句: ${sqlStr.length > 200 ? sqlStr.substring(0, 200) + "..." : sqlStr}`);
-      Logger.error(`参数列表: ${JSON.stringify(params || [])}`);
-      Logger.error(`执行耗时: ${duration}ms`);
-      Logger.error(`错误信息: ${error.message}`);
-      if (error.stack) {
-        Logger.error(`错误堆栈:\n${error.stack}`);
-      }
-      Logger.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      const sqlPreview = sqlStr.length > 200 ? sqlStr.substring(0, 200) + "..." : sqlStr;
+      Logger.error(
+        {
+          err: error,
+          sqlPreview: sqlPreview,
+          params: params || [],
+          duration: duration,
+        },
+        "SQL 执行错误",
+      );
 
       const enhancedError: any = new Error(`SQL执行失败: ${error.message}`);
       enhancedError.originalError = error;

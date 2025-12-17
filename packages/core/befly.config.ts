@@ -22,7 +22,7 @@ const defaultOptions: BeflyOptions = {
   // ========== 日志配置 ==========
   logger: {
     debug: 1,
-    excludeFields: "password,token,secret",
+    excludeFields: ["password", "token", "secret"],
     dir: "./logs",
     console: 1,
     maxSize: 10485760, // 10MB

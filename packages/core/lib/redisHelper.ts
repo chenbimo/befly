@@ -15,6 +15,8 @@ export class RedisHelper {
   private client: RedisClient;
   private prefix: string;
 
+  private readonly slowThresholdMs: number = 200;
+
   /**
    * 构造函数
    * @param prefix - Key 前缀
@@ -26,6 +28,24 @@ export class RedisHelper {
     }
     this.client = client;
     this.prefix = prefix ? `${prefix}:` : "";
+  }
+
+  private logSlow(
+    cmd: string,
+    key: string,
+    duration: number,
+    extra: Record<string, any> = {},
+  ): void {
+    if (duration <= this.slowThresholdMs) return;
+    Logger.warn(
+      {
+        duration: duration,
+        cmd: cmd,
+        key: key,
+        extra: extra,
+      },
+      "🐌 Redis 慢操作",
+    );
   }
 
   /**
@@ -40,12 +60,21 @@ export class RedisHelper {
       const data = JSON.stringify(obj);
       const pkey = `${this.prefix}${key}`;
 
+      const startTime = Date.now();
+
       if (ttl) {
-        return await this.client.setex(pkey, ttl, data);
+        const res = await this.client.setex(pkey, ttl, data);
+        const duration = Date.now() - startTime;
+        this.logSlow("SETEX", pkey, duration, { ttl: ttl });
+        return res;
       }
-      return await this.client.set(pkey, data);
+
+      const res = await this.client.set(pkey, data);
+      const duration = Date.now() - startTime;
+      this.logSlow("SET", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis setObject 错误", error);
+      Logger.error({ err: error }, "Redis setObject 错误");
       return null;
     }
   }
@@ -58,10 +87,14 @@ export class RedisHelper {
   async getObject<T = any>(key: string): Promise<T | null> {
     try {
       const pkey = `${this.prefix}${key}`;
+
+      const startTime = Date.now();
       const data = await this.client.get(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("GET", pkey, duration);
       return data ? JSON.parse(data) : null;
     } catch (error: any) {
-      Logger.error("Redis getObject 错误", error);
+      Logger.error({ err: error }, "Redis getObject 错误");
       return null;
     }
   }
@@ -73,9 +106,13 @@ export class RedisHelper {
   async delObject(key: string): Promise<void> {
     try {
       const pkey = `${this.prefix}${key}`;
+
+      const startTime = Date.now();
       await this.client.del(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("DEL", pkey, duration);
     } catch (error: any) {
-      Logger.error("Redis delObject 错误", error);
+      Logger.error({ err: error }, "Redis delObject 错误");
     }
   }
 
@@ -93,10 +130,15 @@ export class RedisHelper {
     const timestamp = Date.now();
     const key = `${this.prefix}time_id:${timestamp}`;
 
+    const startTime = Date.now();
+
     const counter = await this.client.incr(key);
     if (counter === 1) {
       await this.client.expire(key, 1);
     }
+
+    const duration = Date.now() - startTime;
+    this.logSlow("INCR", key, duration, { expireSeconds: 1 });
 
     // 基于时间戳偏移起点，后缀 100-999 循环
     const suffix = 100 + (((timestamp % 900) + counter - 1) % 900);
@@ -113,12 +155,21 @@ export class RedisHelper {
   async setString(key: string, value: string, ttl: number | null = null): Promise<string | null> {
     try {
       const pkey = `${this.prefix}${key}`;
+
+      const startTime = Date.now();
       if (ttl) {
-        return await this.client.setex(pkey, ttl, value);
+        const res = await this.client.setex(pkey, ttl, value);
+        const duration = Date.now() - startTime;
+        this.logSlow("SETEX", pkey, duration, { ttl: ttl });
+        return res;
       }
-      return await this.client.set(pkey, value);
+
+      const res = await this.client.set(pkey, value);
+      const duration = Date.now() - startTime;
+      this.logSlow("SET", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis setString 错误", error);
+      Logger.error({ err: error }, "Redis setString 错误");
       return null;
     }
   }
@@ -130,9 +181,14 @@ export class RedisHelper {
   async getString(key: string): Promise<string | null> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.get(pkey);
+
+      const startTime = Date.now();
+      const res = await this.client.get(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("GET", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis getString 错误", error);
+      Logger.error({ err: error }, "Redis getString 错误");
       return null;
     }
   }
@@ -145,9 +201,14 @@ export class RedisHelper {
   async exists(key: string): Promise<boolean> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.exists(pkey);
+
+      const startTime = Date.now();
+      const res = await this.client.exists(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("EXISTS", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis exists 错误", error);
+      Logger.error({ err: error }, "Redis exists 错误");
       return false;
     }
   }
@@ -160,9 +221,14 @@ export class RedisHelper {
   async expire(key: string, seconds: number): Promise<number> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.expire(pkey, seconds);
+
+      const startTime = Date.now();
+      const res = await this.client.expire(pkey, seconds);
+      const duration = Date.now() - startTime;
+      this.logSlow("EXPIRE", pkey, duration, { seconds: seconds });
+      return res;
     } catch (error: any) {
-      Logger.error("Redis expire 错误", error);
+      Logger.error({ err: error }, "Redis expire 错误");
       return 0;
     }
   }
@@ -174,9 +240,14 @@ export class RedisHelper {
   async ttl(key: string): Promise<number> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.ttl(pkey);
+
+      const startTime = Date.now();
+      const res = await this.client.ttl(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("TTL", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis ttl 错误", error);
+      Logger.error({ err: error }, "Redis ttl 错误");
       return -1;
     }
   }
@@ -195,7 +266,7 @@ export class RedisHelper {
       const results = await Promise.all(keys.map((key) => this.ttl(key)));
       return results;
     } catch (error: any) {
-      Logger.error("Redis ttlBatch 错误", error);
+      Logger.error({ err: error }, "Redis ttlBatch 错误");
       return keys.map(() => -1);
     }
   }
@@ -211,9 +282,14 @@ export class RedisHelper {
       if (members.length === 0) return 0;
 
       const pkey = `${this.prefix}${key}`;
-      return await this.client.sadd(pkey, ...members);
+
+      const startTime = Date.now();
+      const res = await this.client.sadd(pkey, ...members);
+      const duration = Date.now() - startTime;
+      this.logSlow("SADD", pkey, duration, { membersCount: members.length });
+      return res;
     } catch (error: any) {
-      Logger.error("Redis sadd 错误", error);
+      Logger.error({ err: error }, "Redis sadd 错误");
       return 0;
     }
   }
@@ -227,9 +303,14 @@ export class RedisHelper {
   async sismember(key: string, member: string): Promise<boolean> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.sismember(pkey, member);
+
+      const startTime = Date.now();
+      const res = await this.client.sismember(pkey, member);
+      const duration = Date.now() - startTime;
+      this.logSlow("SISMEMBER", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis sismember 错误", error);
+      Logger.error({ err: error }, "Redis sismember 错误");
       return false;
     }
   }
@@ -242,9 +323,14 @@ export class RedisHelper {
   async scard(key: string): Promise<number> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.scard(pkey);
+
+      const startTime = Date.now();
+      const res = await this.client.scard(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("SCARD", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis scard 错误", error);
+      Logger.error({ err: error }, "Redis scard 错误");
       return 0;
     }
   }
@@ -257,9 +343,14 @@ export class RedisHelper {
   async smembers(key: string): Promise<string[]> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.smembers(pkey);
+
+      const startTime = Date.now();
+      const res = await this.client.smembers(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("SMEMBERS", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis smembers 错误", error);
+      Logger.error({ err: error }, "Redis smembers 错误");
       return [];
     }
   }
@@ -278,7 +369,7 @@ export class RedisHelper {
       const results = await Promise.all(items.map((item) => this.sadd(item.key, item.members)));
       return results.reduce((sum, count) => sum + count, 0);
     } catch (error: any) {
-      Logger.error("Redis saddBatch 错误", error);
+      Logger.error({ err: error }, "Redis saddBatch 错误");
       return 0;
     }
   }
@@ -296,7 +387,7 @@ export class RedisHelper {
     try {
       return await Promise.all(items.map((item) => this.sismember(item.key, item.member)));
     } catch (error: any) {
-      Logger.error("Redis sismemberBatch 错误", error);
+      Logger.error({ err: error }, "Redis sismemberBatch 错误");
       return items.map(() => false);
     }
   }
@@ -309,9 +400,14 @@ export class RedisHelper {
   async del(key: string): Promise<number> {
     try {
       const pkey = `${this.prefix}${key}`;
-      return await this.client.del(pkey);
+
+      const startTime = Date.now();
+      const res = await this.client.del(pkey);
+      const duration = Date.now() - startTime;
+      this.logSlow("DEL", pkey, duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis del 错误", error);
+      Logger.error({ err: error }, "Redis del 错误");
       return 0;
     }
   }
@@ -335,7 +431,7 @@ export class RedisHelper {
       );
       return results.reduce((sum, count) => sum + count, 0);
     } catch (error: any) {
-      Logger.error("Redis delBatch 错误", error);
+      Logger.error({ err: error }, "Redis delBatch 错误");
       return 0;
     }
   }
@@ -358,7 +454,7 @@ export class RedisHelper {
       );
       return results.filter((r) => r !== null).length;
     } catch (error: any) {
-      Logger.error("Redis setBatch 错误", error);
+      Logger.error({ err: error }, "Redis setBatch 错误");
       return 0;
     }
   }
@@ -377,7 +473,7 @@ export class RedisHelper {
       const results = await Promise.all(keys.map((key) => this.getObject<T>(key)));
       return results;
     } catch (error: any) {
-      Logger.error("Redis getBatch 错误", error);
+      Logger.error({ err: error }, "Redis getBatch 错误");
       return keys.map(() => null);
     }
   }
@@ -395,7 +491,7 @@ export class RedisHelper {
     try {
       return await Promise.all(keys.map((key) => this.exists(key)));
     } catch (error: any) {
-      Logger.error("Redis existsBatch 错误", error);
+      Logger.error({ err: error }, "Redis existsBatch 错误");
       return keys.map(() => false);
     }
   }
@@ -414,7 +510,7 @@ export class RedisHelper {
       const results = await Promise.all(items.map((item) => this.expire(item.key, item.seconds)));
       return results.filter((r) => r > 0).length;
     } catch (error: any) {
-      Logger.error("Redis expireBatch 错误", error);
+      Logger.error({ err: error }, "Redis expireBatch 错误");
       return 0;
     }
   }
@@ -425,9 +521,13 @@ export class RedisHelper {
    */
   async ping(): Promise<string> {
     try {
-      return await this.client.ping();
+      const startTime = Date.now();
+      const res = await this.client.ping();
+      const duration = Date.now() - startTime;
+      this.logSlow("PING", "(no-key)", duration);
+      return res;
     } catch (error: any) {
-      Logger.error("Redis ping 错误", error);
+      Logger.error({ err: error }, "Redis ping 错误");
       throw error;
     }
   }

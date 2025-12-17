@@ -13,8 +13,14 @@ export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 export interface LoggerConfig {
     /** 是否开启调试模式 (0: 关闭, 1: 开启) @default 0 */
     debug?: number;
-    /** 需要在日志中脱敏/排除的字段（逗号分隔）例如: 'password,token,secret' */
-    excludeFields?: string;
+    /**
+     * 需要在日志中脱敏/排除的字段（仅支持数组）
+     * - 支持模糊匹配："token" 可命中 "accessToken" / "user_token" 等
+     * - 支持后缀匹配："*Secret" 可命中 "mySecret" / "appSecret" 等
+     * - 支持前缀匹配："auth*" 可命中 "authorization" 等
+     * - 支持包含匹配："*token*" 可命中包含 token 的任意 key
+     */
+    excludeFields?: string[];
     /** 日志目录 @default './logs' */
     dir?: string;
     /** 是否输出到控制台 (0: 关闭, 1: 开启) @default 1 */
