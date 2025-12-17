@@ -42,81 +42,40 @@ type ViewDirMeta = {
     order?: number;
 };
 
-function extractDefinePageMetaFromVueContent(content: string): ViewDirMeta | null {
-    const defineIndex = content.indexOf("definePage");
-    if (defineIndex < 0) {
+function extractScriptSetupBlock(vueContent: string): string | null {
+    // 只取第一个 <script ... setup ...> 块
+    const openTag = /<script\b[^>]*\bsetup\b[^>]*>/i.exec(vueContent);
+    if (!openTag) {
         return null;
     }
 
-    const openParenIndex = content.indexOf("(", defineIndex);
-    if (openParenIndex < 0) {
+    const start = openTag.index + openTag[0].length;
+    const closeIndex = vueContent.indexOf("</script>", start);
+    if (closeIndex < 0) {
         return null;
     }
 
-    let i = openParenIndex + 1;
-    let depth = 1;
-    let inString: '"' | "'" | "`" | null = null;
-    let escaped = false;
+    return vueContent.slice(start, closeIndex);
+}
 
-    for (; i < content.length; i++) {
-        const ch = content[i];
+function extractDefinePageMetaFromScriptSetup(scriptSetup: string): ViewDirMeta | null {
+    // 简化约束：
+    // - 每个页面只有一个 definePage
+    // - title 是纯字符串字面量
+    // - order 是数字字面量（可选）
+    // - 不考虑变量/表达式/多段 meta 组合
 
-        if (inString) {
-            if (escaped) {
-                escaped = false;
-                continue;
-            }
-            if (ch === "\\") {
-                escaped = true;
-                continue;
-            }
-            if (ch === inString) {
-                inString = null;
-                continue;
-            }
-            continue;
-        }
-
-        if (ch === '"' || ch === "'" || ch === "`") {
-            inString = ch;
-            continue;
-        }
-
-        if (ch === "(") {
-            depth++;
-            continue;
-        }
-        if (ch === ")") {
-            depth--;
-            if (depth === 0) {
-                break;
-            }
-            continue;
-        }
-    }
-
-    if (depth !== 0) {
-        return null;
-    }
-
-    const arg = content.slice(openParenIndex + 1, i);
-
-    const titleMatch = arg.match(/meta\s*:\s*\{[\s\S]*?title\s*:\s*(["'`])([^"'`]+)\1/);
+    const titleMatch = scriptSetup.match(/definePage\s*\([\s\S]*?meta\s*:\s*\{[\s\S]*?title\s*:\s*(["'`])([^"'`]+)\1/);
     if (!titleMatch) {
         return null;
     }
 
-    const orderMatch = arg.match(/meta\s*:\s*\{[\s\S]*?order\s*:\s*(\d+)/);
+    const orderMatch = scriptSetup.match(/definePage\s*\([\s\S]*?meta\s*:\s*\{[\s\S]*?order\s*:\s*(\d+)/);
 
-    const meta: ViewDirMeta = {
-        title: titleMatch[2]
+    return {
+        title: titleMatch[2],
+        order: orderMatch ? Number(orderMatch[1]) : undefined
     };
-
-    if (orderMatch) {
-        meta.order = Number(orderMatch[1]);
-    }
-
-    return meta;
 }
 
 /**
@@ -152,15 +111,17 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         let meta: ViewDirMeta | null = null;
         try {
             const content = await readFile(indexVuePath, "utf-8");
-            meta = extractDefinePageMetaFromVueContent(content);
 
-            // 目录存在 index.vue，但缺 definePage(meta.title) 时给出提示，便于定位漏迁移/漏配置
+            const scriptSetup = extractScriptSetupBlock(content);
+            if (!scriptSetup) {
+                Logger.warn({ path: indexVuePath }, "index.vue 缺少 <script setup>，已跳过该目录菜单同步");
+                continue;
+            }
+
+            meta = extractDefinePageMetaFromScriptSetup(scriptSetup);
             if (!meta?.title) {
-                if (content.includes("definePage")) {
-                    Logger.warn({ path: indexVuePath }, "index.vue 中 definePage(meta.title) 解析失败，已跳过该目录菜单同步");
-                } else {
-                    Logger.warn({ path: indexVuePath }, "index.vue 未声明 definePage({ meta: { title } })，已跳过该目录菜单同步");
-                }
+                Logger.warn({ path: indexVuePath }, "index.vue 未声明 definePage({ meta: { title, order? } })，已跳过该目录菜单同步");
+                continue;
             }
         } catch (error: any) {
             Logger.warn({ err: error, path: indexVuePath }, "读取 index.vue 失败");
