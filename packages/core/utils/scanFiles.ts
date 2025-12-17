@@ -14,7 +14,7 @@ export interface ScanFileResult {
  * @param pattern Glob 模式
  * @param ignoreUnderline 是否忽略下划线开头的文件/目录
  */
-export async function scanFiles(dir: string, pattern: string = "**/*.{ts,js}", ignoreUnderline: boolean = true): Promise<ScanFileResult[]> {
+export async function scanFiles(dir: string, pattern: string = "**/*.js", ignoreUnderline: boolean = true): Promise<ScanFileResult[]> {
     if (!existsSync(dir)) return [];
 
     const normalizedDir = normalize(dir);

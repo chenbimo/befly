@@ -20,7 +20,7 @@ export async function scanModules<T extends Plugin | Hook>(dir: string, type: "c
     if (!existsSync(dir)) return [];
 
     const items: T[] = [];
-    const files = await scanFiles(dir, "*.{ts,js}");
+    const files = await scanFiles(dir, "*.ts");
 
     for (const { filePath, fileName } of files) {
         // 生成模块名称
