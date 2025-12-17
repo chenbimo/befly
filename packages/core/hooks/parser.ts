@@ -73,18 +73,32 @@ const hook: Hook = {
           }
         } else {
           // 不支持的 Content-Type
-          ctx.response = ErrorResponse(ctx, "无效的请求参数格式", 1, null, {
-            location: "content-type",
-            value: contentType,
-          });
+          ctx.response = ErrorResponse(
+            ctx,
+            "无效的请求参数格式",
+            1,
+            null,
+            {
+              location: "content-type",
+              value: contentType,
+            },
+            "parser",
+          );
           return;
         }
       } catch (e: any) {
         // 解析失败
-        ctx.response = ErrorResponse(ctx, "无效的请求参数格式", 1, null, {
-          location: "body",
-          error: e.message,
-        });
+        ctx.response = ErrorResponse(
+          ctx,
+          "无效的请求参数格式",
+          1,
+          null,
+          {
+            location: "body",
+            error: e.message,
+          },
+          "parser",
+        );
         return;
       }
     }

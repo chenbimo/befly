@@ -10,6 +10,7 @@ import { Logger } from "../lib/logger.js";
  * @param code - 错误码，默认 1
  * @param data - 附加数据，默认 null
  * @param detail - 详细信息，用于标记具体提示位置，默认 null
+ * @param reasonCode - 拦截原因标识（用于统计/聚合），默认 null
  * @returns Response 对象
  */
 export function ErrorResponse(
@@ -18,12 +19,21 @@ export function ErrorResponse(
   code: number = 1,
   data: any = null,
   detail: any = null,
+  reasonCode: string | null = null,
 ): Response {
   // 记录拦截日志
   if (ctx.requestId) {
-    const duration = Date.now() - ctx.now;
-    const user = ctx.user?.id ? `[User:${ctx.user.id} ${ctx.user.nickname}]` : "[Guest]";
-    Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms [${msg}]`);
+    // requestId/route/user/duration 等字段由 ALS 统一注入，避免在 msg 中重复拼接
+    Logger.info(
+      {
+        event: "request_blocked",
+        reason: msg,
+        reasonCode: reasonCode,
+        code: code,
+        detail: detail,
+      },
+      "request blocked",
+    );
   }
 
   return Response.json(
@@ -48,9 +58,13 @@ export function ErrorResponse(
 export function FinalResponse(ctx: RequestContext): Response {
   // 记录请求日志
   if (ctx.api && ctx.requestId) {
-    const duration = Date.now() - ctx.now;
-    const user = ctx.user?.id ? `[User:${ctx.user.id}  ${ctx.user.nickname}]` : "[Guest]";
-    Logger.info(`[${ctx.requestId}] ${ctx.route} ${user} ${duration}ms`);
+    // requestId/route/user/duration 等字段由 ALS 统一注入，避免在 msg 中重复拼接
+    Logger.info(
+      {
+        event: "request_done",
+      },
+      "request done",
+    );
   }
 
   // 1. 如果已经有 response，直接返回

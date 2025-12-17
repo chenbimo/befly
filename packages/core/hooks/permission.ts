@@ -24,7 +24,7 @@ const hook: Hook = {
 
     // 2. 用户未登录
     if (!ctx.user || !ctx.user.id) {
-      ctx.response = ErrorResponse(ctx, "未登录");
+      ctx.response = ErrorResponse(ctx, "未登录", 1, null, null, "auth");
       return;
     }
 
@@ -61,7 +61,7 @@ const hook: Hook = {
     }
 
     if (!hasPermission) {
-      ctx.response = ErrorResponse(ctx, "无权访问");
+      ctx.response = ErrorResponse(ctx, "无权访问", 1, null, null, "permission");
       return;
     }
   },
