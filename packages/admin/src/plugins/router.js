@@ -1,8 +1,9 @@
-import { $Config } from "@/config";
-import { $Storage } from "@/plugins/storage";
 import { applyTokenAuthGuard, buildLayoutRoutes, createLayoutComponentResolver } from "befly-vite/utils/router";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
+
+import { $Config } from "@/config";
+import { $Storage } from "@/plugins/storage";
 
 // 应用自定义布局系统
 const layoutRoutes = buildLayoutRoutes(

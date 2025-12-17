@@ -10,7 +10,7 @@ import "@befly-addon/admin/styles/variables.scss";
 import "@/styles/global.scss";
 import App from "./App.vue";
 // 引入路由实例
-import { router } from "./router";
+import { router } from "./plugins/router";
 
 const app = createApp(App);
 
