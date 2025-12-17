@@ -15,7 +15,7 @@ export class RedisHelper {
   private client: RedisClient;
   private prefix: string;
 
-  private readonly slowThresholdMs: number = 200;
+  private readonly slowThresholdMs: number = 500;
 
   /**
    * 构造函数
@@ -39,6 +39,8 @@ export class RedisHelper {
     if (duration <= this.slowThresholdMs) return;
     Logger.warn(
       {
+        subsystem: "redis",
+        event: "slow",
         duration: duration,
         cmd: cmd,
         key: key,

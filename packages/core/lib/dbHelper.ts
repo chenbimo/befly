@@ -576,10 +576,12 @@ export class DbHelper {
       // 计算执行时间
       const duration = Date.now() - startTime;
 
-      // 慢查询警告（超过 1000ms）
-      if (duration > 1000) {
+      // 慢查询警告（超过 5000ms）
+      if (duration > 5000) {
         Logger.warn(
           {
+            subsystem: "db",
+            event: "slow",
             duration: duration,
             sqlPreview: sqlStr,
             params: params || [],

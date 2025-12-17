@@ -2,6 +2,9 @@
  * 日志系统 - 基于 pino 实现
  */
 
+import { readdir, stat, unlink } from "node:fs/promises";
+import { join as nodePathJoin } from "node:path";
+
 import type { LoggerConfig } from "../types/logger.js";
 
 import { isPlainObject } from "es-toolkit/compat";
@@ -13,6 +16,8 @@ import { getCtx } from "./asyncContext.js";
 
 const MAX_LOG_STRING_LEN = 100;
 const MAX_LOG_ARRAY_ITEMS = 100;
+
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 const BUILTIN_SENSITIVE_KEYS = [
   "*password*",
@@ -40,7 +45,10 @@ let sensitiveContainsMatchers: string[] = [];
 let sensitiveContainsRegex: RegExp | null = null;
 
 let instance: pino.Logger | null = null;
+let slowInstance: pino.Logger | null = null;
+let errorInstance: pino.Logger | null = null;
 let mockInstance: pino.Logger | null = null;
+let didPruneOldLogFiles: boolean = false;
 let config: LoggerConfig = {
   debug: 0,
   dir: "./logs",
@@ -48,12 +56,60 @@ let config: LoggerConfig = {
   maxSize: 10,
 };
 
+async function pruneOldLogFiles(): Promise<void> {
+  if (didPruneOldLogFiles) return;
+  didPruneOldLogFiles = true;
+
+  const dir = config.dir || "./logs";
+  const now = Date.now();
+  const cutoff = now - ONE_YEAR_MS;
+
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+
+      const name = entry.name;
+
+      // 只处理本项目的日志文件前缀
+      const isTarget =
+        name.startsWith("app.") ||
+        name.startsWith("slow.") ||
+        name.startsWith("error.");
+      if (!isTarget) continue;
+
+      const fullPath = nodePathJoin(dir, name);
+
+      let st: any;
+      try {
+        st = await stat(fullPath);
+      } catch {
+        continue;
+      }
+
+      const mtimeMs = typeof st.mtimeMs === "number" ? st.mtimeMs : 0;
+      if (mtimeMs > 0 && mtimeMs < cutoff) {
+        try {
+          await unlink(fullPath);
+        } catch {
+          // 忽略删除失败（权限/占用等），避免影响服务启动
+        }
+      }
+    }
+  } catch {
+    // 忽略：目录不存在或无权限等
+  }
+}
+
 /**
  * 配置日志
  */
 export function configure(cfg: LoggerConfig): void {
   config = { ...config, ...cfg };
   instance = null;
+  slowInstance = null;
+  errorInstance = null;
+  didPruneOldLogFiles = false;
 
   // 仅支持数组配置：excludeFields?: string[]
   const userPatterns = Array.isArray(config.excludeFields) ? config.excludeFields : [];
@@ -138,6 +194,9 @@ export function getLogger(): pino.Logger {
 
   if (instance) return instance;
 
+  // 启动时清理过期日志（异步，不阻塞初始化）
+  void pruneOldLogFiles();
+
   const level = config.debug === 1 ? "debug" : "info";
   const targets: pino.TransportTargetOptions[] = [];
 
@@ -169,6 +228,62 @@ export function getLogger(): pino.Logger {
   });
 
   return instance;
+}
+
+function getSlowLogger(): pino.Logger {
+  if (mockInstance) return mockInstance;
+  if (slowInstance) return slowInstance;
+
+  void pruneOldLogFiles();
+
+  const level = config.debug === 1 ? "debug" : "info";
+  slowInstance = pino({
+    level: level,
+    transport: {
+      targets: [
+        {
+          target: "pino-roll",
+          level: level,
+          options: {
+            file: join(config.dir || "./logs", "slow"),
+            // 只按大小分割（frequency 默认不启用）
+            size: `${config.maxSize || 10}m`,
+            mkdir: true,
+          },
+        },
+      ],
+    },
+  });
+
+  return slowInstance;
+}
+
+function getErrorLogger(): pino.Logger {
+  if (mockInstance) return mockInstance;
+  if (errorInstance) return errorInstance;
+
+  void pruneOldLogFiles();
+
+  // error 专属文件：只关注 error 及以上
+  errorInstance = pino({
+    level: "error",
+    transport: {
+      targets: [
+        {
+          target: "pino-roll",
+          level: "error",
+          options: {
+            file: join(config.dir || "./logs", "error"),
+            // 只按大小分割（frequency 默认不启用）
+            size: `${config.maxSize || 10}m`,
+            mkdir: true,
+          },
+        },
+      ],
+    },
+  });
+
+  return errorInstance;
 }
 
 function truncateString(val: string, stats: Record<string, number>): string {
@@ -521,6 +636,24 @@ function withRequestMeta(args: any[]): any[] {
   return args;
 }
 
+function shouldMirrorToSlow(args: any[]): boolean {
+  // 测试场景：启用 mock 时不做镜像，避免调用次数翻倍
+  if (mockInstance) return false;
+  if (!args || args.length === 0) return false;
+  const first = args[0];
+  if (!isPlainObject(first)) return false;
+
+  // 优先使用显式标记：event=slow
+  const event = (first as any).event;
+  if (event === "slow") return true;
+
+  // 兼容旧写法：仅通过 message emoji 判断（尽量少用）
+  const msg = args.length > 1 ? args[1] : undefined;
+  if (typeof msg === "string" && msg.includes("🐌")) return true;
+
+  return false;
+}
+
 type LoggerObject = Record<string, any>;
 
 // 兼容 pino 常用调用形式 + 本项目的 Logger.error("msg", err)
@@ -548,7 +681,13 @@ export const Logger = {
     if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
       finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>);
     }
-    return (logger.info as any).apply(logger, finalArgs);
+    const ret = (logger.info as any).apply(logger, finalArgs);
+    if (mockInstance) return ret;
+    if (shouldMirrorToSlow(finalArgs as any[])) {
+      const slowLogger = getSlowLogger();
+      (slowLogger.info as any).apply(slowLogger, finalArgs);
+    }
+    return ret;
   },
   warn(...args: LoggerCallArgs) {
     if (args.length === 0) return;
@@ -558,7 +697,13 @@ export const Logger = {
     if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
       finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>);
     }
-    return (logger.warn as any).apply(logger, finalArgs);
+    const ret = (logger.warn as any).apply(logger, finalArgs);
+    if (mockInstance) return ret;
+    if (shouldMirrorToSlow(finalArgs as any[])) {
+      const slowLogger = getSlowLogger();
+      (slowLogger.warn as any).apply(slowLogger, finalArgs);
+    }
+    return ret;
   },
   error(...args: LoggerCallArgs) {
     if (args.length === 0) return;
@@ -568,7 +713,22 @@ export const Logger = {
     if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
       finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>);
     }
-    return (logger.error as any).apply(logger, finalArgs);
+    const ret = (logger.error as any).apply(logger, finalArgs);
+
+    // 测试场景：启用 mock 时不做镜像，避免调用次数翻倍
+    if (mockInstance) return ret;
+
+    // error 专属文件：始终镜像一份
+    const errorLogger = getErrorLogger();
+    (errorLogger.error as any).apply(errorLogger, finalArgs);
+
+    // error 同时也属于 slow？一般不会，但允许显式 event=slow
+    if (shouldMirrorToSlow(finalArgs as any[])) {
+      const slowLogger = getSlowLogger();
+      (slowLogger.error as any).apply(slowLogger, finalArgs);
+    }
+
+    return ret;
   },
   debug(...args: LoggerCallArgs) {
     if (args.length === 0) return;
@@ -578,7 +738,13 @@ export const Logger = {
     if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
       finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>);
     }
-    return (logger.debug as any).apply(logger, finalArgs);
+    const ret = (logger.debug as any).apply(logger, finalArgs);
+    if (mockInstance) return ret;
+    if (shouldMirrorToSlow(finalArgs as any[])) {
+      const slowLogger = getSlowLogger();
+      (slowLogger.debug as any).apply(slowLogger, finalArgs);
+    }
+    return ret;
   },
   configure: configure,
   setMock: setMockLogger,
