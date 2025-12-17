@@ -42,6 +42,74 @@ type ViewDirMeta = {
     order?: number;
 };
 
+function normalizeMenuPath(path: string): string {
+    // 约束：统一 path 形态，避免隐藏菜单匹配、DB 同步出现重复
+    // - 必须以 / 开头
+    // - 折叠多个 /
+    // - 去掉尾随 /（根 / 除外）
+    let result = path;
+
+    if (!result) {
+        return "/";
+    }
+
+    if (!result.startsWith("/")) {
+        result = `/${result}`;
+    }
+
+    result = result.replace(/\/+/g, "/");
+
+    if (result.length > 1) {
+        result = result.replace(/\/+$/, "");
+    }
+
+    return result;
+}
+
+function normalizeMenuTree(menus: MenuConfig[]): MenuConfig[] {
+    // 递归规范化并按 path 去重（同 path 的 children 合并）
+    const map = new Map<string, MenuConfig>();
+
+    for (const menu of menus) {
+        const menuPath = menu.path ? normalizeMenuPath(menu.path) : "";
+        const cloned: MenuConfig = {
+            name: menu.name,
+            path: menuPath,
+            sort: menu.sort
+        };
+
+        if (menu.children && menu.children.length > 0) {
+            cloned.children = normalizeMenuTree(menu.children);
+        }
+
+        if (!menuPath) {
+            // path 缺失的菜单无法参与同步/去重，直接丢弃
+            continue;
+        }
+
+        const existing = map.get(menuPath);
+        if (existing) {
+            if (cloned.children && cloned.children.length > 0) {
+                existing.children = existing.children || [];
+                existing.children.push(...cloned.children);
+                existing.children = normalizeMenuTree(existing.children);
+            }
+            if (typeof cloned.sort === "number") {
+                existing.sort = cloned.sort;
+            }
+            if (cloned.name) {
+                existing.name = cloned.name;
+            }
+        } else {
+            map.set(menuPath, cloned);
+        }
+    }
+
+    const result = Array.from(map.values());
+    result.sort((a, b) => (a.sort || 1) - (b.sort || 1));
+    return result;
+}
+
 function extractScriptSetupBlock(vueContent: string): string | null {
     // 只取第一个 <script ... setup ...> 块
     const openTag = /<script\b[^>]*\bsetup\b[^>]*>/i.exec(vueContent);
@@ -137,14 +205,14 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         const cleanName = cleanDirName(entry.name);
         let menuPath: string;
         if (cleanName === "index") {
-            // index 目录路径为父级路径，根级别则为 /
-            menuPath = parentPath || "/";
+            // index 目录路径为父级路径；根级别用空字符串（避免 addon prefix 拼出尾随 /）
+            menuPath = parentPath;
         } else {
             menuPath = parentPath ? `${parentPath}/${cleanName}` : `/${cleanName}`;
         }
 
         // 添加 addon 前缀
-        const fullPath = prefix ? `${prefix}${menuPath}` : menuPath;
+        const fullPath = prefix ? (menuPath ? `${prefix}${menuPath}` : prefix) : (menuPath || "/");
 
         const menu: MenuConfig = {
             name: meta.title,
@@ -393,11 +461,15 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         // 2. 合并菜单配置
         let mergedMenus = mergeMenuConfigs(allMenus);
 
+        // 2.1 规范化并去重（防止尾随 / 或多 / 导致隐藏菜单与 DB 同步异常）
+        mergedMenus = normalizeMenuTree(mergedMenus);
+
         // 3. 过滤隐藏菜单（根据 hiddenMenus 配置）
         const hiddenMenus = (beflyConfig as any).hiddenMenus || [];
         if (Array.isArray(hiddenMenus) && hiddenMenus.length > 0) {
-            const hiddenSet = new Set(hiddenMenus);
+            const hiddenSet = new Set(hiddenMenus.map((item: string) => normalizeMenuPath(item)));
             mergedMenus = filterHiddenMenus(mergedMenus, hiddenSet);
+            mergedMenus = normalizeMenuTree(mergedMenus);
         }
 
         // 连接数据库
@@ -441,3 +513,9 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         await Connect.disconnect();
     }
 }
+
+// 仅测试用（避免将内部扫描逻辑变成稳定 API）
+export const __test__ = {
+    scanViewsDir: scanViewsDir,
+    normalizeMenuPath: normalizeMenuPath
+};
