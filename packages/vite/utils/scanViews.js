@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -18,7 +18,7 @@ export function scanViews() {
     const projectViewsPath = join(projectRoot, "src", "views");
     if (existsSync(projectViewsPath)) {
         routesFolders.push({
-            src: projectViewsPath,
+            src: realpathSync(projectViewsPath),
             path: "",
             exclude: ["**/components/**"]
         });
@@ -41,7 +41,7 @@ export function scanViews() {
             const viewsPath = join(addonPath, "views");
             if (existsSync(viewsPath)) {
                 routesFolders.push({
-                    src: viewsPath,
+                    src: realpathSync(viewsPath),
                     path: `addon/${addonName}/`,
                     exclude: ["**/components/**"]
                 });
