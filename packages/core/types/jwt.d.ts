@@ -19,40 +19,51 @@ export interface JwtHeader {
  * JWT 载荷
  */
 export interface JwtPayload {
-    /** 用户 ID */
+    /**
+     * 注意：JWT payload 的业务字段来自 `befly.jwt.sign(payload)` 的入参。
+     * 也就是说：你在 sign 时放了什么字段，verify/decode 时就能取到什么字段。
+     *
+     * 另外，JWT 标准 claim（如 iat/exp/nbf/iss/aud/sub/jti）可能由 signer 注入。
+     */
+
+    /** 用户 ID（历史字段：部分代码用 userId） */
     userId?: string | number;
-    /** 用户 ID（部分项目使用 id 字段） */
+
+    /** 用户 ID（推荐字段：部分项目使用 id） */
     id?: string | number;
+
     /** 角色编码 */
     roleCode?: string;
+
     /** 昵称 */
     nickname?: string;
+
     /** 角色类型 */
     roleType?: string;
-    /** 用户名 */
-    username?: string;
-    /** 角色 */
-    role?: string;
-    /** 角色列表 */
-    roles?: string[];
-    /** 权限列表 */
-    permissions?: string[];
-    /** 签发时间 */
+
+    /** 签发时间（秒级或毫秒级取决于实现，当前由底层库决定） */
     iat?: number;
-    /** 过期时间 */
+
+    /** 过期时间（秒级或毫秒级取决于实现，当前由底层库决定） */
     exp?: number;
-    /** 主题 */
-    sub?: string;
-    /** 签发者 */
-    iss?: string;
-    /** 受众 */
-    aud?: string | string[];
-    /** JWT ID */
-    jti?: string;
+
     /** 生效时间 */
     nbf?: number;
-    /** 其他自定义字段 */
-    [key: string]: any;
+
+    /** 签发者 */
+    iss?: string;
+
+    /** 受众 */
+    aud?: string | string[];
+
+    /** 主题 */
+    sub?: string;
+
+    /** JWT ID */
+    jti?: string;
+
+    /** 其他自定义字段（由 sign 入参决定） */
+    [key: string]: unknown;
 }
 
 /**
