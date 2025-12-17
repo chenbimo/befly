@@ -2,10 +2,10 @@
  * 日志系统 - 基于 pino 实现
  */
 
+import type { LoggerConfig } from "../types/logger.js";
+
 import { readdir, stat, unlink } from "node:fs/promises";
 import { join as nodePathJoin } from "node:path";
-
-import type { LoggerConfig } from "../types/logger.js";
 
 import { isPlainObject } from "es-toolkit/compat";
 import { escapeRegExp } from "es-toolkit/string";
@@ -73,9 +73,7 @@ async function pruneOldLogFiles(): Promise<void> {
 
       // 只处理本项目的日志文件前缀
       const isTarget =
-        name.startsWith("app.") ||
-        name.startsWith("slow.") ||
-        name.startsWith("error.");
+        name.startsWith("app.") || name.startsWith("slow.") || name.startsWith("error.");
       if (!isTarget) continue;
 
       const fullPath = nodePathJoin(dir, name);
