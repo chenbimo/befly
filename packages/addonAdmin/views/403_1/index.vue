@@ -63,4 +63,13 @@ const $Method = {
     .error-description {
         font-size: 16px;
         color: var(--text-secondary);
+        margin: 8px 0 24px;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+}
 </style>
