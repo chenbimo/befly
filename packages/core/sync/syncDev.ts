@@ -10,7 +10,7 @@
  * - 表名: addon_admin_admin
  */
 
-import type { SyncDevOptions } from "../types/index.js";
+import type { SyncDevOptions } from "../types/sync.js";
 
 import { beflyConfig } from "../befly.config.js";
 import { CacheHelper } from "../lib/cacheHelper.js";

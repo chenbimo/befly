@@ -3,7 +3,7 @@
  * 按顺序执行：syncDb → syncApi → syncMenu → syncDev（syncDev 内会重建角色接口权限缓存）
  */
 
-import type { SyncOptions } from "../types/index.js";
+import type { SyncOptions } from "../types/sync.js";
 
 import { checkApp } from "../checks/checkApp.js";
 import { Logger } from "../lib/logger.js";

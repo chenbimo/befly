@@ -3,7 +3,7 @@
  * 提供邮件发送功能，支持 SMTP 配置
  */
 
-import type { BeflyContext } from "befly/types/befly.js";
+import type { BeflyContext } from "befly/types/befly";
 import type { Transporter } from "nodemailer";
 
 import nodemailer from "nodemailer";

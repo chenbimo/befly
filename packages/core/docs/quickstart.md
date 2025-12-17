@@ -74,7 +74,7 @@ my-api/
 在 `apis/user/` 目录下创建 `login.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "用户登录",

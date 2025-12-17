@@ -13,7 +13,7 @@
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
-import type { SyncMenuOptions, MenuConfig } from "../types/index.js";
+import type { SyncMenuOptions, MenuConfig } from "../types/sync.js";
 
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";

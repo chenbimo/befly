@@ -40,7 +40,7 @@
 `apis/user/register.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "用户注册",
@@ -87,7 +87,7 @@ export default {
 `apis/user/login.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "用户登录",
@@ -155,7 +155,7 @@ export default {
 `apis/user/info.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "获取用户信息",
@@ -182,7 +182,7 @@ export default {
 `apis/user/update.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "更新用户信息",
@@ -227,7 +227,7 @@ export default {
 `apis/user/changePassword.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "修改密码",
@@ -276,7 +276,7 @@ export default {
 `apis/user/list.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "用户列表",
@@ -368,7 +368,7 @@ export default {
 `apis/article/create.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "发布文章",
@@ -422,7 +422,7 @@ export default {
 `apis/article/update.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "编辑文章",
@@ -503,7 +503,7 @@ export default {
 `apis/article/delete.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "删除文章",
@@ -554,7 +554,7 @@ export default {
 `apis/article/list.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "文章列表",
@@ -608,7 +608,7 @@ export default {
 `apis/article/detail.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "文章详情",
@@ -673,7 +673,7 @@ export default {
 ```typescript
 import { join } from "pathe";
 import { existsSync, mkdirSync } from "node:fs";
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "文件上传",
@@ -735,7 +735,7 @@ export default {
 `apis/user/export.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "导出用户",

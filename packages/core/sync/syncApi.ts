@@ -10,7 +10,7 @@
  * 5. 存在则更新，不存在则新增
  * 6. 删除配置中不存在的接口记录
  */
-import type { SyncApiOptions, ApiInfo } from "../types/index.js";
+import type { SyncApiOptions, ApiInfo } from "../types/sync.js";
 
 import { join, relative } from "pathe";
 

@@ -2,7 +2,7 @@
  * 测试 Validator 对 array_number_string 和 array_number_text 类型的支持
  */
 
-import type { FieldDefinition } from "befly/types";
+import type { FieldDefinition } from "befly/types/validate";
 
 import { describe, expect, test } from "bun:test";
 

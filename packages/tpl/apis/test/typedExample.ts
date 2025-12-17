@@ -8,8 +8,8 @@
  * 通过扩展 DatabaseTables 接口，可以获得完整的类型推断和智能提示
  */
 
-import type { BeflyContext } from "befly/types";
-import type { RequestContext } from "befly/types";
+import type { BeflyContext } from "befly/types/befly";
+import type { RequestContext } from "befly/types/context";
 import type { BaseTable, TypedWhereConditions } from "befly/types/table";
 
 // ============================================

@@ -4,8 +4,8 @@
  */
 
 import type { EmailConfig } from "../libs/emailHelper.js";
-import type { BeflyContext } from "befly/types/befly.js";
-import type { Plugin } from "befly/types/plugin.js";
+import type { BeflyContext } from "befly/types/befly";
+import type { Plugin } from "befly/types/plugin";
 
 import { EmailHelper } from "../libs/emailHelper.js";
 

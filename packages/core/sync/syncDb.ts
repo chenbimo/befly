@@ -7,7 +7,7 @@
  * - 提供统计信息和错误处理
  */
 
-import type { SyncDbOptions } from "../types/index.js";
+import type { SyncDbOptions } from "../types/sync.js";
 import type { SQL } from "bun";
 
 import { existsSync } from "node:fs";

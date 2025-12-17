@@ -2,7 +2,7 @@
  * 测试 Validator 的默认值处理逻辑
  */
 
-import type { FieldDefinition } from "befly/types";
+import type { FieldDefinition } from "befly/types/validate";
 
 import { describe, expect, test } from "bun:test";
 

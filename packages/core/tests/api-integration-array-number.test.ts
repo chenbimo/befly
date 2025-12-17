@@ -4,7 +4,7 @@
  * 测试流程：请求验证 → 数据库存储 → 查询返回
  */
 
-import type { TableDefinition } from "befly/types";
+import type { TableDefinition } from "befly/types/validate";
 
 import { describe, expect, test } from "bun:test";
 

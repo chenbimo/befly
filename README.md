@@ -57,7 +57,7 @@ bun run main.ts
 
 ```typescript
 // apis/user/hello.ts
-import type { ApiRoute } from "befly/types/index";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "问候接口",
@@ -81,7 +81,8 @@ export default {
 ### TypeScript 全面支持
 
 ```typescript
-import type { ApiRoute, BeflyContext } from "befly/types/index";
+import type { ApiRoute } from "befly/types/api";
+import type { BeflyContext } from "befly/types/befly";
 import type { User } from "./types/models";
 
 export default {

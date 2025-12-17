@@ -128,7 +128,7 @@ bun init
 `apis/hello/world.ts`：
 
 ```typescript
-import type { ApiRoute } from "befly/types/api.js";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "Hello World",
@@ -268,7 +268,7 @@ apis/
 ### API 定义示例
 
 ```typescript
-import type { ApiRoute } from "befly/types/api.js";
+import type { ApiRoute } from "befly/types/api";
 
 export default {
     name: "管理员登录",
@@ -340,7 +340,7 @@ await befly.db.getList({
 `plugins/email.ts`：
 
 ```typescript
-import type { Plugin } from "befly/types/plugin.js";
+import type { Plugin } from "befly/types/plugin";
 
 export interface EmailConfig {
     host: string;
