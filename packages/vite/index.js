@@ -8,9 +8,9 @@ import { createComponentsPlugin } from "./plugins/components.js";
 import { createCompressionPlugin } from "./plugins/compression.js";
 import { createDevToolsPlugin } from "./plugins/devtools.js";
 import { createIconsPlugin } from "./plugins/icons.js";
+import { createReactivityTransformPlugin } from "./plugins/reactivity-transform.js";
 import { createRouterPlugin } from "./plugins/router.js";
 import { createUnoCSSPlugin } from "./plugins/unocss.js";
-import { createReactivityTransformPlugin } from "./plugins/reactivity-transform.js";
 import { createVuePlugin } from "./plugins/vue.js";
 
 /**
