@@ -493,7 +493,7 @@ befly sync:db --force
 
 ```typescript
 // 自动清理以下缓存键
-RedisKeys.tableColumns(tableName); // table:columns:{tableName}
+CacheKeys.tableColumns(tableName); // table:columns:{tableName}
 ```
 
 ### 4. 连接管理

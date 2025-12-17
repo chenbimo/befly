@@ -5,7 +5,7 @@
 
 import { test, expect, mock } from "bun:test";
 
-import { RedisKeys } from "../lib/cacheKeys.js";
+import { CacheKeys } from "../lib/cacheKeys.js";
 import { DbHelper } from "../lib/dbHelper.js";
 
 // 创建 Mock Befly 上下文
@@ -49,7 +49,7 @@ test("getTableColumns - 正常查询表字段", async () => {
 
   expect(columns).toEqual(["id", "username", "email", "created_at"]);
   expect(sqlMock.unsafe).toHaveBeenCalledTimes(1);
-  expect(redisMock.getObject).toHaveBeenCalledWith(RedisKeys.tableColumns("users"));
+  expect(redisMock.getObject).toHaveBeenCalledWith(CacheKeys.tableColumns("users"));
   expect(redisMock.setObject).toHaveBeenCalled();
 });
 
@@ -73,7 +73,7 @@ test("getTableColumns - Redis 缓存命中", async () => {
   const columns = await (dbHelper as any).getTableColumns("users");
 
   expect(columns).toEqual(cachedColumns);
-  expect(redisMock.getObject).toHaveBeenCalledWith(RedisKeys.tableColumns("users"));
+  expect(redisMock.getObject).toHaveBeenCalledWith(CacheKeys.tableColumns("users"));
   expect(sqlMock.unsafe).not.toHaveBeenCalled(); // SQL 不应该被调用
   expect(redisMock.setObject).not.toHaveBeenCalled(); // 不需要写缓存
 });
@@ -150,7 +150,7 @@ test("getTableColumns - 缓存键格式正确", async () => {
     getObject: mock(async () => null),
     setObject: mock(async (key: string, value: any, seconds: number) => {
       // 验证缓存键格式
-      expect(key).toBe(RedisKeys.tableColumns("test_table"));
+      expect(key).toBe(CacheKeys.tableColumns("test_table"));
       // 验证缓存值格式
       expect(Array.isArray(value)).toBe(true);
       // 验证过期时间

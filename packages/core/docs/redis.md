@@ -277,27 +277,19 @@ const id = await befly.db.insData({
 
 ## 缓存键管理
 
-### RedisKeys - 统一键名管理
+### CacheKeys - 统一键名管理
 
 避免硬编码，统一管理所有缓存键。
 
 ```typescript
-import { RedisKeys, RedisTTL } from "befly/lib/redisKeys";
+import { CacheKeys } from "befly/lib/cacheKeys";
 
 // 获取键名
-const key = RedisKeys.apisAll(); // 'befly:apis:all'
-const key = RedisKeys.menusAll(); // 'befly:menus:all'
-const key = RedisKeys.roleInfo("admin"); // 'befly:role:info:admin'
-const key = RedisKeys.roleApisActive(); // 'befly:role:apis:active'
-const key = RedisKeys.roleApisReady("v1"); // 'befly:role:apis:ready:v1'
-const key = RedisKeys.roleApis("admin", "v1"); // 'befly:role:apis:admin:v:v1'
-const key = RedisKeys.roleApisMeta("admin", "v1"); // 'befly:role:apis:admin:v:v1:meta'
-const key = RedisKeys.tableColumns("user"); // 'befly:table:columns:user'
-
-// 获取 TTL
-const ttl = RedisTTL.tableColumns; // 3600（1小时）
-const ttl = RedisTTL.roleApis; // 86400（24小时）
-const ttl = RedisTTL.apisAll; // null（永不过期）
+const key = CacheKeys.apisAll(); // 'befly:apis:all'
+const key = CacheKeys.menusAll(); // 'befly:menus:all'
+const key = CacheKeys.roleInfo("admin"); // 'befly:role:info:admin'
+const key = CacheKeys.roleApis("admin"); // 'befly:role:apis:admin'
+const key = CacheKeys.tableColumns("user"); // 'befly:table:columns:user'
 ```
 
 ### 键名前缀
@@ -341,17 +333,8 @@ const columns = await befly.db.getTableColumns("user");
 使用 Set 集合存储角色的接口权限，实现 O(1) 时间复杂度的权限检查。
 
 ```typescript
-// 权限缓存是“版本化 key + active 原子切换”
-// 1) 读取当前生效版本
-const active = await befly.redis.getObject(RedisKeys.roleApisActive());
-if (!active?.ver) throw new Error("role apis cache not ready");
-
-// 2) 读取该版本的 ready（就绪门槛）
-const ready = await befly.redis.getObject(RedisKeys.roleApisReady(active.ver));
-if (!ready) throw new Error("role apis cache not ready");
-
-// 3) 权限检查（请求时）
-const roleApisKey = RedisKeys.roleApis("admin", active.ver);
+// 极简方案：每个角色一个 Set
+const roleApisKey = CacheKeys.roleApis("admin");
 const hasPermission = await befly.redis.sismember(roleApisKey, "POST/api/user/add");
 // 返回: true
 ```

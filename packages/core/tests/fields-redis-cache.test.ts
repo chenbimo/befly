@@ -2,7 +2,7 @@
  * 验证 Redis 缓存的字段查询功能
  */
 
-import { RedisKeys } from "../lib/cacheKeys.js";
+import { CacheKeys } from "../lib/cacheKeys.js";
 
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 
@@ -42,7 +42,7 @@ async function queryDatabase(table: string): Promise<string[]> {
 // 模拟 getTableColumns 方法
 async function getTableColumns(redis: MockRedis, table: string): Promise<string[]> {
   // 1. 先查 Redis 缓存
-  const cacheKey = RedisKeys.tableColumns(table);
+  const cacheKey = CacheKeys.tableColumns(table);
   let columns = await redis.getObject<string[]>(cacheKey);
 
   if (columns && columns.length > 0) {

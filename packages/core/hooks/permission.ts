@@ -1,7 +1,7 @@
 // 类型导入
 import type { Hook } from "../types/hook.js";
 
-import { RedisKeys } from "../lib/cacheKeys.js";
+import { CacheKeys } from "../lib/cacheKeys.js";
 // 相对导入
 import { ErrorResponse } from "../utils/response.js";
 
@@ -42,7 +42,7 @@ const hook: Hook = {
         const roleCode = ctx.user.roleCode;
 
         // 极简方案：每个角色一个 Set，直接判断成员是否存在
-        const roleApisKey = RedisKeys.roleApis(roleCode);
+        const roleApisKey = CacheKeys.roleApis(roleCode);
         hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
       } catch (error) {
         // Redis 异常时降级为拒绝访问

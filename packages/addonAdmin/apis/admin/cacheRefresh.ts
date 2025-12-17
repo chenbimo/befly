@@ -12,7 +12,7 @@
  * - 缓存出现异常需要重建
  */
 
-import { RedisKeys } from "befly/lib/cacheKeys";
+import { CacheKeys } from "befly/lib/cacheKeys";
 
 export default {
   name: "刷新全部缓存",
@@ -31,7 +31,7 @@ export default {
           table: "addon_admin_api",
         });
 
-        await befly.redis.setObject(RedisKeys.apisAll(), apis.lists);
+        await befly.redis.setObject(CacheKeys.apisAll(), apis.lists);
         results.apis = { success: true, count: apis.lists.length };
       } catch (error: any) {
         befly.logger.error({ err: error }, "刷新接口缓存失败");
@@ -44,7 +44,7 @@ export default {
           table: "addon_admin_menu",
         });
 
-        await befly.redis.setObject(RedisKeys.menusAll(), menus.lists);
+        await befly.redis.setObject(CacheKeys.menusAll(), menus.lists);
 
         const parentCount = menus.lists.filter((m: any) => m.pid === 0).length;
         const childCount = menus.lists.filter((m: any) => m.pid !== 0).length;
@@ -69,7 +69,7 @@ export default {
         // 使用 setBatch 批量缓存所有角色
         const count = await befly.redis.setBatch(
           roles.lists.map((role: any) => ({
-            key: RedisKeys.roleInfo(role.code),
+            key: CacheKeys.roleInfo(role.code),
             value: role,
           })),
         );

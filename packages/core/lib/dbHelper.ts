@@ -21,7 +21,7 @@ import { arrayKeysToCamel } from "../utils/arrayKeysToCamel.js";
 import { fieldClear } from "../utils/fieldClear.js";
 import { keysToCamel } from "../utils/keysToCamel.js";
 import { keysToSnake } from "../utils/keysToSnake.js";
-import { RedisKeys } from "./cacheKeys.js";
+import { CacheKeys } from "./cacheKeys.js";
 import { Logger } from "./logger.js";
 import { SqlBuilder } from "./sqlBuilder.js";
 
@@ -99,7 +99,7 @@ export class DbHelper {
    */
   private async getTableColumns(table: string): Promise<string[]> {
     // 1. 先查 Redis 缓存
-    const cacheKey = RedisKeys.tableColumns(table);
+    const cacheKey = CacheKeys.tableColumns(table);
     const columns = await this.befly.redis.getObject<string[]>(cacheKey);
 
     if (columns && columns.length > 0) {

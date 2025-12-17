@@ -21,7 +21,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "pathe";
 
 import { beflyConfig } from "../befly.config.js";
-import { RedisKeys } from "../lib/cacheKeys.js";
+import { CacheKeys } from "../lib/cacheKeys.js";
 import { Connect } from "../lib/connect.js";
 import { DbHelper } from "../lib/dbHelper.js";
 import { Logger } from "../lib/logger.js";
@@ -383,7 +383,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
     // 8. 缓存菜单数据到 Redis
     try {
       const redisHelper = new RedisHelper();
-      await redisHelper.setObject(RedisKeys.menusAll(), allMenusData.lists);
+      await redisHelper.setObject(CacheKeys.menusAll(), allMenusData.lists);
     } catch (error: any) {
       Logger.warn({ err: error }, "Redis 缓存菜单数据失败");
     }

@@ -17,7 +17,7 @@ import { resolve } from "pathe";
 
 import { beflyConfig } from "../befly.config.js";
 import { checkTable } from "../checks/checkTable.js";
-import { RedisKeys } from "../lib/cacheKeys.js";
+import { CacheKeys } from "../lib/cacheKeys.js";
 import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
@@ -150,7 +150,7 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
     // 清理 Redis 缓存（如果有表被处理）
     if (processedTables.length > 0) {
       const redisHelper = new RedisHelper();
-      const cacheKeys = processedTables.map((tableName) => RedisKeys.tableColumns(tableName));
+      const cacheKeys = processedTables.map((tableName) => CacheKeys.tableColumns(tableName));
       await redisHelper.delBatch(cacheKeys);
     }
   } catch (error: any) {
