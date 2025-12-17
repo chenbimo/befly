@@ -1,10 +1,9 @@
-import { createRouter, createWebHashHistory } from "vue-router";
-import { routes } from "vue-router/auto-routes";
-import { applyTokenAuthGuard } from "befly-vite/utils/routerGuard";
-import { buildLayoutRoutes } from "befly-vite/utils/routerLayouts";
-
 import { $Config } from "@/config";
 import { $Storage } from "@/plugins/storage";
+import { applyTokenAuthGuard } from "befly-vite/utils/routerGuard";
+import { buildLayoutRoutes } from "befly-vite/utils/routerLayouts";
+import { createRouter, createWebHashHistory } from "vue-router";
+import { routes } from "vue-router/auto-routes";
 
 // 应用自定义布局系统
 const layoutRoutes = buildLayoutRoutes(routes, (layoutName) => {
