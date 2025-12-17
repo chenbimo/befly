@@ -9,8 +9,6 @@ import "@befly-addon/admin/styles/variables.scss";
 // 引入全局基础样式（reset、通用类、滚动条等）
 import "@/styles/global.scss";
 import App from "./App.vue";
-// 引入路由实例
-import { router } from "./plugins/router";
 
 const app = createApp(App);
 

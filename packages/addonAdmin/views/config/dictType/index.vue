@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { Button as TButton, Table as TTable, Input as TInput, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin } from "tdesign-vue-next";
+import { Button as TButton, Table as TTable, Input as TInput, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from "tdesign-vue-next";
 import ILucidePlus from "~icons/lucide/plus";
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import ILucideSearch from "~icons/lucide/search";
@@ -79,7 +79,6 @@ import EditDialog from "./components/edit.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
-import { confirmDeleteAndRun } from "@/utils/confirmAndRun";
 
 definePage({
     meta: {
@@ -143,13 +142,43 @@ const $Method = {
         }
     },
     async apiDictTypeDel(row) {
-        confirmDeleteAndRun({
-            displayName: `类型“${row.name}”`,
-            request: async () => {
-                return await $Http("/addon/admin/dictType/del", { id: row.id });
+        let dialog = null;
+        let destroyed = false;
+
+        const destroy = () => {
+            if (destroyed) return;
+            destroyed = true;
+            if (dialog && typeof dialog.destroy === "function") {
+                dialog.destroy();
+            }
+        };
+
+        dialog = DialogPlugin.confirm({
+            header: "确认删除",
+            body: `确认删除类型“${row.name}”吗？`,
+            status: "warning",
+            confirmBtn: "删除",
+            cancelBtn: "取消",
+            onConfirm: async () => {
+                if (dialog && typeof dialog.setConfirmLoading === "function") {
+                    dialog.setConfirmLoading(true);
+                }
+
+                try {
+                    await $Http("/addon/admin/dictType/del", { id: row.id });
+                    MessagePlugin.success("删除成功");
+                    destroy();
+                    await $Method.apiDictTypeList();
+                } catch (error) {
+                    MessagePlugin.error("删除失败");
+                } finally {
+                    if (dialog && typeof dialog.setConfirmLoading === "function") {
+                        dialog.setConfirmLoading(false);
+                    }
+                }
             },
-            onSuccess: async () => {
-                await $Method.apiDictTypeList();
+            onClose: () => {
+                destroy();
             }
         });
     },

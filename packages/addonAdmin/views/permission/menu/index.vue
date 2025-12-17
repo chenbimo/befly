@@ -14,7 +14,6 @@
         <div class="main-content">
             <div class="main-table">
                 <TTable
-                    v-bind="withTreeTableProps()"
                     :data="$Data.tableData"
                     :columns="$Data.columns"
                     :loading="$Data.loading"
@@ -22,6 +21,7 @@
                     row-key="id"
                     height="calc(100vh - var(--search-height) - var(--layout-gap) * 2)"
                     active-row-type="single"
+                    :tree="{ childrenKey: 'children', treeNodeColumnIndex: 0, defaultExpandAll: true }"
                     @active-change="$Method.onActiveChange"
                 >
                     <template #state="{ row }">
@@ -45,7 +45,6 @@ import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
-import { withTreeTableProps } from "@/utils";
 
 definePage({
     meta: {

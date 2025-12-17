@@ -77,7 +77,7 @@
 <script setup>
 import { arrayToTree } from "befly-vite/utils/arrayToTree";
 
-import { confirmAndRun } from "@/utils/confirmAndRun";
+import { DialogPlugin } from "tdesign-vue-next";
 
 const router = useRouter();
 const route = useRoute();
@@ -233,14 +233,42 @@ const $Method = {
 
     // 处理退出登录
     handleLogout() {
-        confirmAndRun({
+        let dialog = null;
+        let destroyed = false;
+
+        const destroy = () => {
+            if (destroyed) return;
+            destroyed = true;
+            if (dialog && typeof dialog.destroy === "function") {
+                dialog.destroy();
+            }
+        };
+
+        dialog = DialogPlugin.confirm({
             header: "确认退出登录",
             body: "确定要退出登录吗？",
             status: "warning",
             onConfirm: async () => {
-                $Storage.local.remove("token");
-                await router.push(loginPath);
-                MessagePlugin.success("退出成功");
+                if (dialog && typeof dialog.setConfirmLoading === "function") {
+                    dialog.setConfirmLoading(true);
+                }
+
+                try {
+                    $Storage.local.remove("token");
+                    await router.push(loginPath);
+                    MessagePlugin.success("退出成功");
+                    destroy();
+                } catch (error) {
+                    MessagePlugin.error("退出失败");
+                    destroy();
+                } finally {
+                    if (dialog && typeof dialog.setConfirmLoading === "function") {
+                        dialog.setConfirmLoading(false);
+                    }
+                }
+            },
+            onClose: () => {
+                destroy();
             }
         });
     },

@@ -12,7 +12,7 @@
 
 <script setup>
 import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from "tdesign-vue-next";
-import { arrayToTree } from "@/utils";
+import { arrayToTree } from "befly-vite/utils/arrayToTree";
 import { $Http } from "@/plugins/http";
 
 const $Prop = defineProps({
