@@ -488,7 +488,7 @@ export default hook;
 ```typescript
 // hooks/blacklist.ts
 import type { Hook } from "befly/types/hook";
-import { ErrorResponse } from "befly/util";
+import { ErrorResponse } from "befly/utils/response";
 
 const hook: Hook = {
     order: 1, // 最先执行
@@ -515,7 +515,7 @@ export default hook;
 ```typescript
 // hooks/rateLimit.ts
 import type { Hook } from "befly/types/hook";
-import { ErrorResponse } from "befly/util";
+import { ErrorResponse } from "befly/utils/response";
 
 const hook: Hook = {
     order: 7,
@@ -595,7 +595,7 @@ export default hook;
 设置 `ctx.response` 可以中断后续 Hook 和 API Handler 的执行：
 
 ```typescript
-import { ErrorResponse } from "befly/util";
+import { ErrorResponse } from "befly/utils/response";
 
 const hook: Hook = {
     order: 5,

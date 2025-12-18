@@ -397,7 +397,7 @@ export default {
 在 Hook 中使用，用于提前拦截请求：
 
 ```typescript
-import { ErrorResponse } from "befly/util";
+import { ErrorResponse } from "befly/utils/response";
 
 // 在 Hook 中使用
 ctx.response = ErrorResponse(ctx, "未授权", 1, null);

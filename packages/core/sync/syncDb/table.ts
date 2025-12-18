@@ -17,7 +17,8 @@ import { Logger } from "../../lib/logger.js";
 import { compareFieldDefinition, applyTablePlan } from "./apply.js";
 import { isMySQL, isPG, CHANGE_TYPE_LABELS, getTypeMapping, SYSTEM_INDEX_FIELDS } from "./constants.js";
 import { generateDDLClause, getSystemColumnDef, isCompatibleTypeChange } from "./ddl.js";
-import { logFieldChange, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from "./helpers.js";
+import { logFieldChange } from "./helpers.js";
+import { generateDefaultSql, isStringOrArrayType, resolveDefaultValue } from "./types.js";
 import { getTableColumns, getTableIndexes } from "./schema.js";
 
 /**

@@ -13,7 +13,7 @@ import type { SQL } from "bun";
 import { Logger } from "../../lib/logger.js";
 import { isMySQL, isPG, isSQLite, IS_PLAN, getTypeMapping } from "./constants.js";
 import { executeDDLSafely, buildIndexSQL } from "./ddl.js";
-import { resolveDefaultValue, isStringOrArrayType } from "./helpers.js";
+import { isStringOrArrayType, resolveDefaultValue } from "./types.js";
 import { rebuildSqliteTable } from "./sqlite.js";
 
 /**

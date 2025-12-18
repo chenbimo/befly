@@ -10,9 +10,6 @@
 import { Logger } from "../../lib/logger.js";
 import { isMySQL, isPG } from "./constants.js";
 
-// 从 types.ts 重新导出，保持向后兼容
-export { isStringOrArrayType, getSqlType, resolveDefaultValue, generateDefaultSql } from "./types.js";
-
 /**
  * 根据数据库类型引用标识符
  *
