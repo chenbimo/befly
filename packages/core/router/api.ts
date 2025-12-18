@@ -13,6 +13,7 @@ import { withCtx } from "../lib/asyncContext.js";
 import { Logger } from "../lib/logger.js";
 // 相对导入
 import { genShortId } from "../utils/genShortId.js";
+import { getClientIp } from "../utils/getClientIp.js";
 import { FinalResponse } from "../utils/response.js";
 import { makeRouteKey } from "../utils/route.js";
 
@@ -23,14 +24,15 @@ import { makeRouteKey } from "../utils/route.js";
  * @param context - 应用上下文
  */
 export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: BeflyContext) {
-    return async (req: Request): Promise<Response> => {
+    return async (req: Request, server?: any): Promise<Response> => {
         // 1. 生成请求 ID
         const requestId = genShortId();
 
         // 2. 创建请求上下文
         const url = new URL(req.url);
         const apiPath = makeRouteKey(req.method, url.pathname);
-        const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+
+        const clientIp = getClientIp(req, server);
 
         const now = Date.now();
 

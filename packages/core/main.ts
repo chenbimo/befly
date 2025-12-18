@@ -82,6 +82,9 @@ export class Befly {
             }
 
             // 6. 启动 HTTP 服务器
+            const apiFetch = apiHandler(this.apis, this.hooks, this.context as BeflyContext);
+            const staticFetch = staticHandler();
+
             const server = Bun.serve({
                 port: this.config!.appPort,
                 hostname: this.config!.appHost,
@@ -89,14 +92,18 @@ export class Befly {
                 development: this.config!.nodeEnv === "development",
                 // 空闲连接超时时间（秒），防止恶意连接占用资源
                 idleTimeout: 30,
-                routes: {
-                    "/": () => Response.json({ code: 0, msg: `${this.config!.appName} 接口服务已启动` }),
-                    "/api/*": apiHandler(this.apis, this.hooks, this.context as BeflyContext),
-                    "/*": staticHandler()
-                },
-                // 未匹配路由的兜底处理
-                fetch: () => {
-                    return Response.json({ code: 1, msg: "路由未找到" }, { status: 404 });
+                fetch: async (req, bunServer) => {
+                    const url = new URL(req.url);
+
+                    if (url.pathname === "/") {
+                        return Response.json({ code: 0, msg: `${this.config!.appName} 接口服务已启动` });
+                    }
+
+                    if (url.pathname.startsWith("/api/")) {
+                        return apiFetch(req, bunServer);
+                    }
+
+                    return staticFetch(req);
                 },
                 error: (error: Error) => {
                     Logger.error({ err: error }, "服务启动时发生错误");

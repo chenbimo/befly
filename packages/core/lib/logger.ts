@@ -506,9 +506,7 @@ function metaToObject(): Record<string, any> | null {
         route: meta.route,
         ip: meta.ip,
         now: meta.now,
-        durationSinceNowMs: durationSinceNowMs,
-        // 兼容旧字段名
-        durationSinceNow: durationSinceNowMs
+        durationSinceNowMs: durationSinceNowMs
     };
 
     // userId / roleCode 默认写入
@@ -527,20 +525,7 @@ function mergeMetaIntoObject(input: Record<string, any>, meta: Record<string, an
     }
 
     // 只补齐、不覆盖：允许把 undefined / null / 空字符串写入（由日志底层序列化决定是否展示）
-    const keys = [
-        "requestId",
-        "method",
-        "route",
-        "ip",
-        "now",
-        "durationSinceNowMs",
-        // 兼容旧字段名
-        "durationSinceNow",
-        "userId",
-        "roleCode",
-        "nickname",
-        "roleType"
-    ];
+    const keys = ["requestId", "method", "route", "ip", "now", "durationSinceNowMs", "userId", "roleCode", "nickname", "roleType"];
 
     for (const key of keys) {
         if (merged[key] === undefined) merged[key] = meta[key];
