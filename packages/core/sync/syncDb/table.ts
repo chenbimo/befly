@@ -18,8 +18,8 @@ import { compareFieldDefinition, applyTablePlan } from "./apply.js";
 import { isMySQL, isPG, CHANGE_TYPE_LABELS, getTypeMapping, SYSTEM_INDEX_FIELDS } from "./constants.js";
 import { generateDDLClause, getSystemColumnDef, isCompatibleTypeChange } from "./ddl.js";
 import { logFieldChange } from "./helpers.js";
-import { generateDefaultSql, isStringOrArrayType, resolveDefaultValue } from "./types.js";
 import { getTableColumns, getTableIndexes } from "./schema.js";
+import { generateDefaultSql, isStringOrArrayType, resolveDefaultValue } from "./types.js";
 
 /**
  * 同步表结构（对比和应用变更）
