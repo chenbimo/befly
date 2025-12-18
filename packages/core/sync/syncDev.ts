@@ -216,10 +216,8 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         // 重建角色接口权限缓存到 Redis（极简方案：覆盖更新）
         // 说明：syncDev 会修改角色 apis，需同步刷新对应角色权限缓存
         try {
-            Logger.debug("[SyncDev] 开始重建角色接口权限缓存");
             const cacheHelper = new CacheHelper({ db: helper, redis: redisHelper } as any);
             await cacheHelper.rebuildRoleApiPermissions();
-            Logger.debug("[SyncDev] 角色接口权限缓存重建完成");
         } catch (error: any) {
             Logger.warn({ err: error }, "[SyncDev] 重建角色接口权限缓存失败");
         }
