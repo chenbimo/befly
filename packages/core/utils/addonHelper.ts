@@ -3,6 +3,8 @@ import { existsSync, statSync } from "node:fs";
 
 import { join } from "pathe";
 
+import { projectAddonsDir } from "../paths.js";
+
 /**
  * 扫描所有可用的 addon
  * 优先从本地 addons/ 目录加载，其次从 node_modules/@befly-addon/ 加载
@@ -11,25 +13,24 @@ import { join } from "pathe";
  */
 export const scanAddons = (cwd: string = process.cwd()): string[] => {
     const addons = new Set<string>();
-    // const projectAddonsDir = join(cwd, 'addons');
 
     // 1. 扫描本地 addons 目录（优先级高）
-    // if (existsSync(projectAddonsDir)) {
-    //     try {
-    //         const localAddons = fs.readdirSync(projectAddonsDir).filter((name) => {
-    //             const fullPath = join(projectAddonsDir, name);
-    //             try {
-    //                 const stat = statSync(fullPath);
-    //                 return stat.isDirectory() && !name.startsWith('_');
-    //             } catch {
-    //                 return false;
-    //             }
-    //         });
-    //         localAddons.forEach((name) => addons.add(name));
-    //     } catch (err) {
-    //         // 忽略本地目录读取错误
-    //     }
-    // }
+    if (existsSync(projectAddonsDir)) {
+        try {
+            const localAddons = fs.readdirSync(projectAddonsDir).filter((name) => {
+                const fullPath = join(projectAddonsDir, name);
+                try {
+                    const stat = statSync(fullPath);
+                    return stat.isDirectory() && !name.startsWith("_");
+                } catch {
+                    return false;
+                }
+            });
+            localAddons.forEach((name) => addons.add(name));
+        } catch {
+            // 忽略本地目录读取错误
+        }
+    }
 
     // 2. 扫描 node_modules/@befly-addon 目录
     const beflyDir = join(cwd, "node_modules", "@befly-addon");
