@@ -138,9 +138,8 @@ export default {
     auth: true, // 是否需要认证，默认 true
     fields: {}, // 字段定义（验证规则）
     required: [], // 必填字段列表
-    rawBody: false, // 是否保留原始请求体
-    cache: undefined, // 缓存时间（秒）
-    rateLimit: undefined // 限流配置
+    rawBody: false // 是否保留原始请求体
+    // 缓存/限流：已统一迁移为 Hook 能力（见 hook 文档/配置），不再挂载在接口定义上
 } as ApiRoute;
 ```
 
@@ -174,12 +173,6 @@ interface ApiRoute<T = any, R = any> {
      * - false: 根据 fields 定义过滤字段
      */
     rawBody?: boolean;
-
-    /** 缓存配置（可选，单位：秒） */
-    cache?: number;
-
-    /** 限流配置（可选，格式：次数/秒，如 "10/60" 表示 60秒内10次） */
-    rateLimit?: string;
 
     /** 路由路径（运行时生成，无需手动设置） */
     route?: string;
@@ -1795,7 +1788,6 @@ export default {
 export default {
     name: "获取站点配置",
     auth: false,
-    cache: 300, // 缓存 5 分钟
     handler: async (befly, ctx) => {
         // 先从缓存获取
         const cacheKey = "site:config";

@@ -25,27 +25,26 @@ const PRESET_FIELDS: Record<string, any> = {
 };
 
 /**
- * 处理字段定义，将 @ 符号引用替换为实际字段定义
+ * 处理字段定义：将 @ 符号引用替换为实际字段定义
  */
 function processFields(fields: Record<string, any>, apiName: string, routePath: string): Record<string, any> {
     if (!fields || typeof fields !== "object") return fields;
 
     const processed: Record<string, any> = {};
     for (const [key, value] of Object.entries(fields)) {
-        // 如果值是字符串且以 @ 开头，则查找预定义字段
         if (typeof value === "string" && value.startsWith("@")) {
             if (PRESET_FIELDS[value]) {
                 processed[key] = PRESET_FIELDS[value];
-            } else {
-                // 未找到预定义字段，抛出错误
-                const validKeys = Object.keys(PRESET_FIELDS).join(", ");
-                throw new Error(`API [${apiName}] (${routePath}) 字段 [${key}] 引用了未定义的预设字段 "${value}"。可用的预设字段有: ${validKeys}`);
+                continue;
             }
-        } else {
-            // 普通字段定义，保持原样
-            processed[key] = value;
+
+            const validKeys = Object.keys(PRESET_FIELDS).join(", ");
+            throw new Error(`API [${apiName}] (${routePath}) 字段 [${key}] 引用了未定义的预设字段 "${value}"。可用的预设字段有: ${validKeys}`);
         }
+
+        processed[key] = value;
     }
+
     return processed;
 }
 
@@ -102,6 +101,8 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 const apiImport = await import(normalizedFilePath);
                 const api = apiImport.default;
 
+                api.name = api.name || apiFile.relativePath;
+
                 // 设置默认值
                 const methodStr = (api.method || "POST").toUpperCase();
                 api.auth = api.auth !== undefined ? api.auth : true;
@@ -110,7 +111,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 const routePath = `/api${apiFile.routePrefix}${apiFile.relativePath}`;
 
                 // 处理字段定义，将 @ 引用替换为实际字段定义
-                api.fields = processFields(api.fields || {}, api.name || apiFile.relativePath, routePath);
+                api.fields = processFields(api.fields || {}, api.name, routePath);
                 api.required = api.required || [];
 
                 // 支持逗号分隔的多方法，拆分后分别注册
@@ -121,7 +122,16 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                 for (const method of methods) {
                     const route = makeRouteKey(method, routePath);
                     // 为每个方法创建独立的路由对象
-                    const routeApi = { ...api, method: method, route: route };
+                    const routeApi: ApiRoute = {
+                        name: api.name,
+                        handler: api.handler,
+                        method: method,
+                        auth: api.auth,
+                        fields: api.fields,
+                        required: api.required,
+                        rawBody: api.rawBody,
+                        route: route
+                    };
                     apis.set(route, routeApi);
                 }
             } catch (error: any) {

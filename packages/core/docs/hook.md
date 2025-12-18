@@ -512,6 +512,47 @@ export default hook;
 
 基于 Redis 的请求限流：
 
+> 说明：Befly Core 已内置 `rateLimit` 钩子（默认启用）。
+>
+> 默认行为：按 IP 对所有 API 进行限流（默认阈值：$1000/60$，即 60 秒最多 1000 次）。
+>
+> - 关闭：`rateLimit.enable = 0`
+> - 覆盖：配置 `rules`（更细粒度）或调整 `defaultLimit/defaultWindow`
+> - 跳过：配置 `skipRoutes`（命中后直接跳过限流，优先级最高）
+>
+> 规则选择：当多条 `rules` 同时命中时，会优先选择更“具体”的规则（精确 > 前缀 > 通配）；
+> 同等具体度按 `rules` 的先后顺序。
+>
+> key 行为：当 `key = user` 且请求上下文中没有 `ctx.user.id` 时，会回退为按 IP 计数，避免所有匿名请求共享同一个计数桶。
+
+配置示例（`configs/befly.common.json`）：
+
+```json
+{
+    "rateLimit": {
+        "enable": 1,
+        "defaultLimit": 1000,
+        "defaultWindow": 60,
+        "key": "ip",
+        "skipRoutes": ["/api/health", "GET/api/metrics"],
+        "rules": [
+            {
+                "route": "/api/auth/*",
+                "limit": 20,
+                "window": 60,
+                "key": "ip"
+            },
+            {
+                "route": "POST/api/order/create",
+                "limit": 5,
+                "window": 60,
+                "key": "user"
+            }
+        ]
+    }
+}
+```
+
 ```typescript
 // hooks/rateLimit.ts
 import type { Hook } from "befly/types/hook";
@@ -529,17 +570,12 @@ const hook: Hook = {
         // 限流 key：IP + 路由
         const key = `ratelimit:${ctx.ip}:${ctx.route}`;
 
-        // 获取当前计数
-        const count = await befly.redis.incr(key);
-
-        // 首次请求设置过期时间
-        if (count === 1) {
-            await befly.redis.expire(key, window);
-        }
+        // 原子计数 + 首次设置过期
+        const count = await befly.redis.incrWithExpire(key, window);
 
         // 超过限制
         if (count > limit) {
-            ctx.response = ErrorResponse(ctx, "请求过于频繁，请稍后再试", 429);
+            ctx.response = ErrorResponse(ctx, "请求过于频繁，请稍后再试", 1);
             return;
         }
     }

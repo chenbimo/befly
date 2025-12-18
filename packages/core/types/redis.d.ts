@@ -35,7 +35,11 @@ export interface RedisHelper {
     /** 获取字符串值 */
     getString(key: string): Promise<string | null>;
     /** 检查键是否存在 */
-    exists(key: string): Promise<number>;
+    exists(key: string): Promise<boolean>;
+    /** 原子自增 */
+    incr(key: string): Promise<number>;
+    /** 原子自增并在首次自增时设置过期时间 */
+    incrWithExpire(key: string, seconds: number): Promise<number>;
     /** 设置过期时间 */
     expire(key: string, seconds: number): Promise<number>;
     /** 获取剩余过期时间 */

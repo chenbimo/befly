@@ -66,6 +66,17 @@ const defaultOptions: BeflyOptions = {
         credentials: "true"
     },
 
+    // ========== Hook：全局限流 ==========
+    rateLimit: {
+        enable: 1,
+        // 默认兜底规则：所有接口按 IP 限流（如需更细粒度请配置 rules）
+        defaultLimit: 1000,
+        defaultWindow: 60,
+        key: "ip",
+        skipRoutes: [],
+        rules: []
+    },
+
     // ========== 禁用配置 ==========
     disableHooks: [],
     disablePlugins: [],

@@ -88,6 +88,44 @@ export interface CorsConfig {
 }
 
 /**
+ * 全局请求限流配置（Hook）
+ */
+export interface RateLimitRule {
+    /**
+     * 路由匹配串
+     * - 精确："POST/api/auth/login"
+     * - 前缀："POST/api/auth/*" 或 "/api/auth/*"
+     * - 全量："*"
+     */
+    route: string;
+    /** 窗口期内允许次数 */
+    limit: number;
+    /** 窗口期秒数 */
+    window: number;
+    /** 计数维度（默认 ip） */
+    key?: "ip" | "user" | "ip_user";
+}
+
+export interface RateLimitConfig {
+    /** 是否启用 (0/1) */
+    enable?: number;
+    /** 未命中 rules 时的默认次数（<=0 表示不启用默认规则） */
+    defaultLimit?: number;
+    /** 未命中 rules 时的默认窗口秒数（<=0 表示不启用默认规则） */
+    defaultWindow?: number;
+    /** 默认计数维度（默认 ip） */
+    key?: "ip" | "user" | "ip_user";
+    /**
+     * 直接跳过限流的路由列表（优先级最高）
+     * - 精确："POST/api/health" 或 "/api/health"
+     * - 前缀："POST/api/health/*" 或 "/api/health/*"
+     */
+    skipRoutes?: string[];
+    /** 路由规则列表 */
+    rules?: RateLimitRule[];
+}
+
+/**
  * Befly 构造函数选项（最多 2 级结构）
  */
 export interface BeflyOptions {
@@ -120,6 +158,9 @@ export interface BeflyOptions {
     auth?: AuthConfig;
     /** CORS 插件配置 */
     cors?: CorsConfig;
+
+    /** 全局请求限流配置（Hook） */
+    rateLimit?: RateLimitConfig;
     /** 禁用的钩子列表 */
     disableHooks?: string[];
     /** 禁用的插件列表 */

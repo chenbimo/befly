@@ -313,20 +313,18 @@ Redis 插件支持配置全局前缀，避免键名冲突：
 ### 场景1：表结构缓存
 
 DbHelper 自动缓存表字段信息，避免重复查询数据库。
+// 计数 + 过期：常用于限流/风控
+// 更推荐：直接使用 Befly Core 内置的 rateLimit hook（通过 configs 配置即可）
 
-```typescript
-// 首次查询 - 缓存未命中，查询数据库
-const columns = await befly.db.getTableColumns("user");
-// ❌ Redis 缓存未命中
-// 🔍 查询数据库表结构
-// 📝 写入 Redis 缓存 (TTL: 3600s)
+const limit = 100; // 60 秒内最多 100 次
+const windowSeconds = 60;
 
-// 后续查询 - 直接从缓存获取
-const columns = await befly.db.getTableColumns("user");
-// ✅ Redis 缓存命中
-```
+const key = `ratelimit:${ctx.ip}:${ctx.route}`;
+const count = await befly.redis.incrWithExpire(key, windowSeconds);
 
-**PM2 Cluster 模式：** 多个 Worker 进程共享同一份 Redis 缓存，只有第一个进程需要查询数据库。
+if (count > limit) {
+return befly.tool.No("请求过于频繁");
+}
 
 ### 场景2：接口权限缓存
 

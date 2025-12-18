@@ -211,6 +211,50 @@ export class RedisHelper {
     }
 
     /**
+     * 原子自增
+     * @param key - 键名
+     * @returns 自增后的值
+     */
+    async incr(key: string): Promise<number> {
+        try {
+            const pkey = `${this.prefix}${key}`;
+
+            const startTime = Date.now();
+            const res = await this.client.incr(pkey);
+            const duration = Date.now() - startTime;
+            this.logSlow("INCR", pkey, duration);
+            return res;
+        } catch (error: any) {
+            Logger.error({ err: error }, "Redis incr 错误");
+            return 0;
+        }
+    }
+
+    /**
+     * 原子自增并在首次自增时设置过期时间（常用于限流/计数）
+     * @param key - 键名
+     * @param seconds - 过期秒数
+     * @returns 自增后的值
+     */
+    async incrWithExpire(key: string, seconds: number): Promise<number> {
+        try {
+            const pkey = `${this.prefix}${key}`;
+
+            const startTime = Date.now();
+            const res = await this.client.incr(pkey);
+            if (res === 1) {
+                await this.client.expire(pkey, seconds);
+            }
+            const duration = Date.now() - startTime;
+            this.logSlow("INCR", pkey, duration, { expireSeconds: seconds });
+            return res;
+        } catch (error: any) {
+            Logger.error({ err: error }, "Redis incrWithExpire 错误");
+            return 0;
+        }
+    }
+
+    /**
      * 设置过期时间
      * @param key - 键名
      * @param seconds - 秒数

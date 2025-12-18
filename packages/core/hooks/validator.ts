@@ -10,7 +10,7 @@ import { ErrorResponse } from "../utils/response.js";
  * 根据 API 定义的 fields 和 required 验证请求参数
  */
 const hook: Hook = {
-    order: 6,
+    order: 8,
     handler: async (befly, ctx) => {
         if (!ctx.api) return;
 
