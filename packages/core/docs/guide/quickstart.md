@@ -1,4 +1,4 @@
-﻿# Quickstart 快速入门
+# Quickstart 快速入门
 
 > 5 分钟搭建你的第一个 Befly API 服务
 
@@ -281,18 +281,18 @@ curl -X POST http://localhost:3000/api/user/login \
 
 ### 学习更多
 
-| 主题       | 文档                                 | 说明                 |
-| ---------- | ------------------------------------ | -------------------- |
-| API 开发   | [api.md](./api/api.md)               | API 定义、字段、权限 |
-| 表结构     | [table.md](./table.md)               | 表定义格式详解       |
-| 数据库操作 | [database.md](./plugins/database.md) | CRUD 操作            |
-| 配置系统   | [config.md](./config.md)             | 配置文件说明         |
-| 插件开发   | [plugin.md](./plugins/plugin.md)     | 自定义插件           |
-| Hook 开发  | [hook.md](./hooks/hook.md)           | 请求处理钩子         |
-| 验证系统   | [validator.md](./validator.md)       | 参数验证             |
-| 日志系统   | [logger.md](./logger.md)             | 日志配置             |
-| 加密工具   | [cipher.md](./plugins/cipher.md)     | 加密与 JWT           |
-| 同步命令   | [sync.md](./sync.md)                 | 数据库同步           |
+| 主题       | 文档                                      | 说明                 |
+| ---------- | ----------------------------------------- | -------------------- |
+| API 开发   | [api.md](../api/api.md)                   | API 定义、字段、权限 |
+| 表结构     | [table.md](../reference/table.md)         | 表定义格式详解       |
+| 数据库操作 | [database.md](../plugins/database.md)     | CRUD 操作            |
+| 配置系统   | [config.md](../reference/config.md)       | 配置文件说明         |
+| 插件开发   | [plugin.md](../plugins/plugin.md)         | 自定义插件           |
+| Hook 开发  | [hook.md](../hooks/hook.md)               | 请求处理钩子         |
+| 验证系统   | [validator.md](../reference/validator.md) | 参数验证             |
+| 日志系统   | [logger.md](../reference/logger.md)       | 日志配置             |
+| 加密工具   | [cipher.md](../plugins/cipher.md)         | 加密与 JWT           |
+| 同步命令   | [sync.md](../reference/sync.md)           | 数据库同步           |
 
 ### 常用命令
 

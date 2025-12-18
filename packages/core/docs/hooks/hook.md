@@ -195,6 +195,13 @@ interface Hook {
 
 ## 内置钩子
 
+内置钩子除本页总览外，也提供分文档说明（更聚焦配置与行为）：
+
+- [cors Hook](./cors.md)
+- [auth Hook](./auth.md)
+- [parser Hook](./parser.md)
+- [rateLimit Hook](./rateLimit.md)
+
 ### cors - 跨域处理
 
 处理 CORS 跨域请求，设置响应头。

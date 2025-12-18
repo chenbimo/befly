@@ -2,6 +2,8 @@
 
 > 哈希、签名、密码加密与 JWT 令牌
 
+> 本文档已迁移到：[`./plugins/cipher.md`](./plugins/cipher.md)
+
 ## 目录
 
 - [概述](#概述)

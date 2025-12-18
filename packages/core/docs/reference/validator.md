@@ -615,4 +615,4 @@ handler: async (befly, ctx) => {
 ```
 
 > **注意**：数据库操作（insData、updData 等）会自动过滤 null/undefined 值，通常不需要手动调用 cleanFields。
-> 详见 [database.md](./database.md#nullundefined-值自动过滤)。
+> 详见 [database.md](../plugins/database.md#nullundefined-值自动过滤)。

@@ -165,7 +165,7 @@ await befly.db.delData({
 
 同步到数据库：
 
-请参考：`befly` 的同步文档：`packages/core/docs/sync.md`（`syncDb` / `syncAll` 等同步流程说明）。
+请参考：`befly` 的同步文档：`packages/core/docs/reference/sync.md`（`syncDb` / `syncAll` 等同步流程说明）。
 
 ## 🗄️ 数据库配置
 

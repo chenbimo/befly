@@ -309,7 +309,7 @@ await befly.redis.sadd("set:key", "member1", "member2");
 const isMember = await befly.redis.sismember("set:key", "member1");
 ```
 
-> 详细用法请参考 [redis.md](./redis.md)
+> 详细用法请参考 [redis.md](../infra/redis.md)
 
 ---
 
@@ -372,6 +372,8 @@ const encrypted = befly.cipher.encrypt("敏感数据");
 // AES 解密
 const decrypted = befly.cipher.decrypt(encrypted);
 ```
+
+> 详细用法请参考 [cipher.md](./cipher.md)
 
 ---
 
