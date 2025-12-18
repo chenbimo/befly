@@ -37,22 +37,16 @@ export async function checkApp(): Promise<void> {
             writeFileSync(beflyJsonPath, "{}", "utf-8");
         }
 
-        // 检查并创建 befly.dev.json
-        const beflyDevJsonPath = join(configsDir, "befly.dev.json");
-        if (!existsSync(beflyDevJsonPath)) {
-            writeFileSync(beflyDevJsonPath, "{}", "utf-8");
+        // 检查并创建 befly.development.json
+        const beflyDevelopmentJsonPath = join(configsDir, "befly.development.json");
+        if (!existsSync(beflyDevelopmentJsonPath)) {
+            writeFileSync(beflyDevelopmentJsonPath, "{}", "utf-8");
         }
 
-        // 检查并创建 befly.prod.json
-        const beflyProdJsonPath = join(configsDir, "befly.prod.json");
-        if (!existsSync(beflyProdJsonPath)) {
-            writeFileSync(beflyProdJsonPath, "{}", "utf-8");
-        }
-
-        // 检查并创建 befly.local.json
-        const beflyLocalJsonPath = join(configsDir, "befly.local.json");
-        if (!existsSync(beflyLocalJsonPath)) {
-            writeFileSync(beflyLocalJsonPath, "{}", "utf-8");
+        // 检查并创建 befly.production.json
+        const beflyProductionJsonPath = join(configsDir, "befly.production.json");
+        if (!existsSync(beflyProductionJsonPath)) {
+            writeFileSync(beflyProductionJsonPath, "{}", "utf-8");
         }
     } catch (error: any) {
         Logger.error("项目结构检查过程中出错", error);

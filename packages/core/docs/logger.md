@@ -57,7 +57,7 @@ interface LoggerConfig {
 在配置文件中设置：
 
 ```json
-// befly.dev.json
+// befly.development.json
 {
     "logger": {
         "debug": 1,
@@ -69,7 +69,7 @@ interface LoggerConfig {
 ```
 
 ```json
-// befly.prod.json
+// befly.production.json
 {
     "logger": {
         "debug": 0,
@@ -412,7 +412,7 @@ Logger.info({ userId: user.id, email: user.email }, "用户信息");
 ### 5. 生产环境关闭控制台
 
 ```json
-// befly.prod.json
+// befly.production.json
 {
     "logger": {
         "debug": 0,

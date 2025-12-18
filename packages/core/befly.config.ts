@@ -1,7 +1,7 @@
 /**
  * Befly 配置模块
  * 自动加载 configs 目录下的配置文件并与默认配置合并
- * 支持环境分离：befly.common.json + befly.dev/prod.json + befly.local.json
+ * 支持环境分离：befly.common.json + befly.development/production.json
  */
 import type { BeflyOptions } from "./types/befly.js";
 
@@ -10,7 +10,7 @@ import { scanConfig } from "./utils/scanConfig.js";
 /** 默认配置 */
 const defaultOptions: BeflyOptions = {
     // ========== 核心参数 ==========
-    nodeEnv: (process.env.NODE_ENV as any) || "development",
+    nodeEnv: "development",
     appName: "野蜂飞舞",
     appPort: 3000,
     appHost: "127.0.0.1",
@@ -75,16 +75,27 @@ const defaultOptions: BeflyOptions = {
     addons: {}
 };
 
-// 确定环境
-const nodeEnv = process.env.NODE_ENV || "development";
-const envSuffix = nodeEnv === "production" ? "prod" : "dev";
+export type LoadBeflyConfigOptions = {
+    cwd?: string;
+    nodeEnv?: string;
+};
 
-// 使用 scanConfig 一次性加载并合并所有配置文件
-// 合并顺序：defaultOptions ← befly.common.json ← befly.dev/prod.json ← befly.local.json
-export const beflyConfig = (await scanConfig({
-    dirs: ["configs"],
-    files: ["befly.common", `befly.${envSuffix}`, "befly.local"],
-    extensions: [".json"],
-    mode: "merge",
-    defaults: defaultOptions
-})) as BeflyOptions;
+export async function loadBeflyConfig(options: LoadBeflyConfigOptions = {}): Promise<BeflyOptions> {
+    const nodeEnv = options.nodeEnv || process.env.NODE_ENV || "development";
+    const envSuffix = nodeEnv === "production" ? "production" : "development";
+
+    // 使用 scanConfig 一次性加载并合并所有配置文件
+    // 合并顺序：defaultOptions ← befly.common.json ← befly.development/production.json
+    const config = await scanConfig({
+        cwd: options.cwd,
+        dirs: ["configs"],
+        files: ["befly.common", `befly.${envSuffix}`],
+        extensions: [".json"],
+        mode: "merge",
+        defaults: defaultOptions
+    });
+
+    return config as BeflyOptions;
+}
+
+export const beflyConfig = await loadBeflyConfig();

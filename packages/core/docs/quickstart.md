@@ -59,8 +59,8 @@ my-api/
 │   └── user.json          # 用户表定义
 ├── configs/               # 配置文件目录
 │   ├── befly.common.json  # 公共配置
-│   ├── befly.dev.json     # 开发环境配置
-│   └── befly.prod.json    # 生产环境配置
+│   ├── befly.development.json  # 开发环境配置
+│   └── befly.production.json   # 生产环境配置
 ├── main.ts                # 入口文件
 └── package.json
 ```
@@ -127,7 +127,7 @@ export default {
 
 ### 编辑配置文件
 
-修改 `configs/befly.dev.json`：
+修改 `configs/befly.development.json`：
 
 ```json
 {

@@ -749,7 +749,7 @@ export default {
 在配置文件中设置 `disablePlugins` 数组：
 
 ```json
-// befly.local.json
+// befly.development.json
 {
     "disablePlugins": ["redis", "app_sms"]
 }

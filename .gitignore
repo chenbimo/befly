@@ -29,7 +29,6 @@ temp
 tempDocs
 dist
 packages/cli
-befly.local.json
 
 # Vite inspect output (generated)
 **/.vite-inspect/

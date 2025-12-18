@@ -375,7 +375,7 @@ export default {
 JWT 插件自动读取配置文件中的 `auth` 配置：
 
 ```json
-// befly.dev.json
+// befly.development.json
 {
     "auth": {
         "secret": "your-dev-secret",

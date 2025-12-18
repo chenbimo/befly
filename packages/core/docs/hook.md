@@ -236,7 +236,7 @@ const hook: Hook = {
 **配置**：
 
 ```json
-// befly.local.json
+// befly.development.json
 {
     "cors": {
         "origin": "https://example.com",
@@ -630,7 +630,7 @@ ErrorResponse(ctx, msg, code?, data?, detail?)
 在配置文件中设置 `disableHooks` 数组：
 
 ```json
-// befly.local.json
+// befly.development.json
 {
     "disableHooks": ["requestLogger", "permission"]
 }

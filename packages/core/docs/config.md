@@ -24,9 +24,8 @@
     - [环境变量](#环境变量)
     - [完整配置示例](#完整配置示例)
         - [befly.common.json](#beflycmmonjson)
-        - [befly.dev.json](#befldevjson)
-        - [befly.prod.json](#beflprodjson)
-        - [befly.local.json](#befllocaljson)
+        - [befly.development.json](#beflydevelopmentjson)
+        - [befly.production.json](#beflyproductionjson)
     - [访问配置](#访问配置)
     - [最佳实践](#最佳实践)
     - [常见问题](#常见问题)
@@ -54,16 +53,16 @@ Befly 配置系统采用分层配置设计，支持环境分离和本地覆盖�
 配置文件存放在项目根目录的 `configs/` 目录下：
 
 ```
-项目根目录/
+// befly.development.json
 └── configs/
     ├── befly.common.json   # 通用配置（所有环境共享）
-    ├── befly.dev.json      # 开发环境配置
-    ├── befly.prod.json     # 生产环境配置
-    └── befly.local.json    # 本地配置（不提交到 Git）
+    ├── befly.development.json  # 开发环境配置
+    └── befly.production.json   # 生产环境配置
 ```
 
 ### 加载优先级
 
+// befly.production.json
 配置按以下顺序加载，后加载的覆盖先加载的：
 
 ```
@@ -71,15 +70,13 @@ Befly 配置系统采用分层配置设计，支持环境分离和本地覆盖�
     ↓
 befly.common.json（通用配置）
     ↓
-befly.dev.json 或 befly.prod.json（环境配置）
-    ↓
-befly.local.json（本地配置，最高优先级）
+befly.development.json 或 befly.production.json（环境配置）
 ```
 
 **环境判断**：
 
-- `NODE_ENV=production` → 加载 `befly.prod.json`
-- 其他情况 → 加载 `befly.dev.json`
+- `NODE_ENV=production` → 加载 `befly.production.json`
+- 其他情况 → 加载 `befly.development.json`
 
 ### 合并规则
 
@@ -95,7 +92,7 @@ befly.local.json（本地配置，最高优先级）
     }
 }
 
-// befly.local.json
+// befly.development.json
 {
     "db": {
         "password": "local_password"
@@ -393,7 +390,7 @@ NODE_ENV=production bun run start
 }
 ```
 
-### befly.dev.json
+### befly.development.json
 
 开发环境配置：
 
@@ -418,7 +415,7 @@ NODE_ENV=production bun run start
 }
 ```
 
-### befly.prod.json
+### befly.production.json
 
 生产环境配置：
 
@@ -442,44 +439,6 @@ NODE_ENV=production bun run start
     }
 }
 ```
-
-### befly.local.json
-
-本地配置（不提交到 Git）：
-
-```json
-{
-    "db": {
-        "password": "my_local_password"
-    },
-
-    "redis": {
-        "password": "my_redis_password"
-    },
-
-    "auth": {
-        "secret": "my-super-secret-key-for-local-development"
-    },
-
-    "addons": {
-        "admin": {
-            "email": {
-                "user": "my-email@qq.com",
-                "pass": "my-auth-code"
-            }
-        }
-    }
-}
-```
-
-**注意**：将 `befly.local.json` 添加到 `.gitignore`：
-
-```gitignore
-# 本地配置
-configs/befly.local.json
-```
-
----
 
 ## 访问配置
 
@@ -528,31 +487,21 @@ console.log(beflyConfig.appName);
 
 ## 最佳实践
 
-### 1. 敏感信息放 local 配置
+### 1. 敏感信息使用环境变量
 
-```json
-// ✅ befly.local.json（不提交）
-{
-    "db": { "password": "real_password" },
-    "auth": { "secret": "real_secret" },
-    "redis": { "password": "real_password" }
-}
+不建议在 `configs/*.json` 中保存明文密码/密钥（这些文件通常会被提交）。
 
-// ❌ befly.common.json（会提交）
-{
-    "db": { "password": "real_password" }
-}
-```
+推荐做法：通过环境变量注入敏感信息（本地用 `.env`，部署用平台的 Secret/环境变量管理）。
 
 ### 2. 环境差异放环境配置
 
 ```json
-// befly.dev.json
+// befly.development.json
 {
     "logger": { "debug": 1, "console": 1 }
 }
 
-// befly.prod.json
+// befly.production.json
 {
     "logger": { "debug": 0, "console": 0 }
 }
@@ -583,7 +532,7 @@ console.log(beflyConfig.appName);
 ### 5. 生产环境关闭调试
 
 ```json
-// befly.prod.json
+// befly.production.json
 {
     "logger": {
         "debug": 0,
@@ -612,11 +561,9 @@ befly.logger.info({ config: befly.config }, "当前配置");
 
 ### Q3: local 配置被提交了？
 
-添加到 `.gitignore`：
+不再使用“本地覆盖配置文件”。
 
-```gitignore
-configs/befly.local.json
-```
+如果你发现敏感配置被提交：请改为环境变量注入，并在仓库层面避免提交 `.env`、密钥文件等。
 
 ### Q4: 如何动态修改配置？
 
@@ -630,7 +577,7 @@ configs/befly.local.json
 // befly.common.json
 { "disableHooks": ["hook1"] }
 
-// befly.local.json
+// befly.production.json
 { "disableHooks": ["hook2"] }
 
 // 最终结果
