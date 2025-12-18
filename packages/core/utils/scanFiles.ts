@@ -12,9 +12,8 @@ export interface ScanFileResult {
  * 扫描指定目录下的文件
  * @param dir 目录路径
  * @param pattern Glob 模式
- * @param ignoreUnderline 是否忽略下划线开头的文件/目录
  */
-export async function scanFiles(dir: string, pattern: string = "**/*.js", ignoreUnderline: boolean = true): Promise<ScanFileResult[]> {
+export async function scanFiles(dir: string, pattern: string = "**/*.ts"): Promise<ScanFileResult[]> {
     if (!existsSync(dir)) return [];
 
     const normalizedDir = normalize(dir);
@@ -33,12 +32,9 @@ export async function scanFiles(dir: string, pattern: string = "**/*.js", ignore
         // 计算相对路径（pathe.relative 返回的已经是正斜杠路径）
         const relativePath = relative(normalizedDir, normalizedFile).replace(/\.[^/.]+$/, "");
 
-        if (ignoreUnderline) {
-            // 检查文件名是否以下划线开头
-            if (fileName.startsWith("_")) continue;
-            // 检查路径中是否包含下划线开头的目录
-            if (relativePath.split("/").some((part) => part.startsWith("_"))) continue;
-        }
+        // 固定默认过滤（不可关闭）：忽略下划线开头的文件/目录
+        if (fileName.startsWith("_")) continue;
+        if (relativePath.split("/").some((part) => part.startsWith("_"))) continue;
 
         results.push({
             filePath: normalizedFile,

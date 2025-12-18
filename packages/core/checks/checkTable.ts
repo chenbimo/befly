@@ -73,7 +73,7 @@ export async function checkTable(): Promise<void> {
 
         // 收集项目表字段定义文件（如果目录存在）
         if (existsSync(projectTableDir)) {
-            const files = await scanFiles(projectTableDir, "*.json", false);
+            const files = await scanFiles(projectTableDir, "*.json");
             for (const { filePath } of files) {
                 allTableFiles.push({
                     file: filePath,
@@ -93,7 +93,7 @@ export async function checkTable(): Promise<void> {
                 continue;
             }
 
-            const files = await scanFiles(addonTablesDir, "*.json", false);
+            const files = await scanFiles(addonTablesDir, "*.json");
             for (const { filePath } of files) {
                 allTableFiles.push({
                     file: filePath,
