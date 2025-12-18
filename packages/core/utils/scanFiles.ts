@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 
-import { relative, basename, normalize } from "pathe";
+import { relative, normalize, parse, join } from "pathe";
 
 export interface ScanFileResult {
     filePath: string; // 绝对路径
@@ -27,10 +27,12 @@ export async function scanFiles(dir: string, pattern: string = "**/*.ts"): Promi
         const normalizedFile = normalize(file);
 
         // 获取文件名（去除扩展名）
-        const fileName = basename(normalizedFile).replace(/\.[^.]+$/, "");
+        const fileName = parse(normalizedFile).name;
 
-        // 计算相对路径（pathe.relative 返回的已经是正斜杠路径）
-        const relativePath = relative(normalizedDir, normalizedFile).replace(/\.[^/.]+$/, "");
+        // 计算相对路径（去除扩展名）
+        const relativePathWithExt = relative(normalizedDir, normalizedFile);
+        const parsedRelativePath = parse(relativePathWithExt);
+        const relativePath = parsedRelativePath.dir ? join(parsedRelativePath.dir, parsedRelativePath.name) : parsedRelativePath.name;
 
         // 固定默认过滤（不可关闭）：忽略下划线开头的文件/目录
         if (fileName.startsWith("_")) continue;
