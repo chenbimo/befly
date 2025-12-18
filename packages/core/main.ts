@@ -3,26 +3,37 @@
  * 提供简洁的框架接口，核心逻辑已提取到 loader 层
  */
 
-import type { ApiRoute } from "./types/api.js";
-// ========== 类型导入 ==========
-import type { BeflyContext, BeflyOptions } from "./types/befly.js";
-import type { Hook } from "./types/hook.js";
-import type { Plugin } from "./types/plugin.js";
-
+// ========== 相对导入（项目内部文件） ==========
+// 启动检查
 import { checkApi } from "./checks/checkApi.js";
 import { checkApp } from "./checks/checkApp.js";
 import { checkTable } from "./checks/checkTable.js";
+
+// 基础设施
 import { Connect } from "./lib/connect.js";
 import { Logger } from "./lib/logger.js";
+
+// 加载器
 import { loadApis } from "./loader/loadApis.js";
 import { loadHooks } from "./loader/loadHooks.js";
 import { loadPlugins } from "./loader/loadPlugins.js";
+
+// 路由处理
 import { apiHandler } from "./router/api.js";
 import { staticHandler } from "./router/static.js";
+
+// 同步
 import { syncAllCommand } from "./sync/syncAll.js";
-// ========== 相对导入 ==========
+
+// 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
 import { isPrimaryProcess, getProcessRole } from "./utils/process.js";
+
+// ========== 类型导入 ==========
+import type { ApiRoute } from "./types/api.js";
+import type { BeflyContext, BeflyOptions } from "./types/befly.js";
+import type { Hook } from "./types/hook.js";
+import type { Plugin } from "./types/plugin.js";
 
 /**
  * Befly 框架核心类
