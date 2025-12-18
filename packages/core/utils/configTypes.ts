@@ -1,19 +1,3 @@
-/**
- * 加载配置选项
- */
-export interface LoadConfigOptions {
-    /** 当前工作目录，默认 process.cwd() */
-    cwd?: string;
-    /** 目录数组：要搜索的目录路径（相对于 cwd） */
-    dirs: string[];
-    /** 文件数组：要匹配的文件名 */
-    files: string[];
-    /** 文件扩展名，默认 ['.js', '.ts', '.json'] */
-    extensions?: string[];
-    /** 加载模式：'first' = 返回第一个找到的配置（默认），'merge' = 合并所有配置 */
-    mode?: "merge" | "first";
-    /** 指定要提取的字段路径数组，如 ['menus', 'database.host']，为空则返回完整对象 */
-    paths?: string[];
-    /** 默认配置，会与找到的配置合并（优先级最低） */
-    defaults?: Record<string, any>;
-}
+// 该类型已内联到 ./scanConfig.ts（减少文件分散）。
+// 这个文件保留为空模块，避免旧工具/缓存引用报错。
+export {};
