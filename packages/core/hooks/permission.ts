@@ -44,18 +44,8 @@ const hook: Hook = {
                 // 极简方案：每个角色一个 Set，直接判断成员是否存在
                 const roleApisKey = CacheKeys.roleApis(roleCode);
                 hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
-            } catch (error) {
-                // Redis 异常时降级为拒绝访问
-                befly.logger.warn(
-                    {
-                        err: error,
-                        requestId: ctx.requestId,
-                        route: ctx.route,
-                        roleCode: ctx.user.roleCode,
-                        apiPath: ctx.route
-                    },
-                    "Redis 权限检查失败"
-                );
+            } catch {
+                // Redis 异常时降级为拒绝访问（仅记录 ErrorResponse 日志，不在 hook 内单独打日志）
                 hasPermission = false;
             }
         }

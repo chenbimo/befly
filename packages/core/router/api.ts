@@ -72,6 +72,20 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
                         }
                     }
 
+                    // hooks 全部通过后记录请求日志（拦截请求仅由 ErrorResponse 记录）
+                    if (ctx.api && req.method !== "OPTIONS") {
+                        const logData: Record<string, any> = {
+                            event: "request",
+                            apiName: ctx.api.name
+                        };
+
+                        if (ctx.body && Object.keys(ctx.body).length > 0) {
+                            logData.body = ctx.body;
+                        }
+
+                        Logger.info(logData, "request");
+                    }
+
                     // 5. 执行 API handler
                     if (!ctx.api) {
                         if (req.method !== "OPTIONS") {
