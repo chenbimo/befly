@@ -2,7 +2,6 @@
 import type { Hook } from "../types/hook.js";
 
 import { beflyConfig } from "../befly.config.js";
-
 // 相对导入
 import { ErrorResponse } from "../utils/response.js";
 
