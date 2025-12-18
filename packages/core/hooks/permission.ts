@@ -2,6 +2,7 @@
 import type { Hook } from "../types/hook.js";
 
 import { CacheKeys } from "../lib/cacheKeys.js";
+import { Logger } from "../lib/logger.js";
 // 相对导入
 import { ErrorResponse } from "../utils/response.js";
 
@@ -36,16 +37,25 @@ const hook: Hook = {
         // 4. 角色权限检查
         let hasPermission = false;
         if (ctx.user.roleCode && befly.redis) {
-            try {
-                // apiPath 在 apiHandler 中已统一生成并写入 ctx.route
-                const apiPath = ctx.route;
-                const roleCode = ctx.user.roleCode;
+            // apiPath 在 apiHandler 中已统一生成并写入 ctx.route
+            const apiPath = ctx.route;
+            const roleCode = ctx.user.roleCode;
 
+            try {
                 // 极简方案：每个角色一个 Set，直接判断成员是否存在
                 const roleApisKey = CacheKeys.roleApis(roleCode);
                 hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
-            } catch {
-                // Redis 异常时降级为拒绝访问（仅记录 ErrorResponse 日志，不在 hook 内单独打日志）
+            } catch (err: any) {
+                // Redis 异常：记录到 error 日志文件（不回传给客户端），并降级为拒绝访问
+                Logger.error(
+                    {
+                        event: "hook_permission_redis_error",
+                        apiPath: apiPath,
+                        roleCode: roleCode,
+                        err: err
+                    },
+                    "hook permission redis error"
+                );
                 hasPermission = false;
             }
         }

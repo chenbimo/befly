@@ -86,8 +86,8 @@ const hook: Hook = {
                     );
                     return;
                 }
-            } catch (e: any) {
-                // 解析失败
+            } catch {
+                // 解析失败：属于客户端输入错误，返回安全 detail（不回传异常栈/原始 body）
                 ctx.response = ErrorResponse(
                     ctx,
                     "无效的请求参数格式",
@@ -95,7 +95,7 @@ const hook: Hook = {
                     null,
                     {
                         location: "body",
-                        error: e.message
+                        reason: contentType.includes("application/json") ? "invalid_json" : contentType.includes("xml") ? "invalid_xml" : "invalid_body"
                     },
                     "parser"
                 );
