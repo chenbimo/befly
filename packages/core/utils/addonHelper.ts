@@ -11,11 +11,18 @@ export type AddonDirs = {
     pluginsDir: string | null;
     tablesDir: string | null;
     /**
-     * 后台管理页面目录（用于菜单同步）。
-     * 注意：字段名保持为 viewsDir（历史命名），但实际指向 addon 的 adminViews/。
-     * appViews/ 不在 core 侧处理。
+     * Addon 页面根目录（views/）。
+     * 约定：views/admin 用于后台管理页面（会参与菜单同步）；views/app 用于普通前端页面（core 不处理）。
      */
     viewsDir: string | null;
+    /**
+     * 后台管理页面目录（views/admin）。
+     */
+    adminViewsDir: string | null;
+    /**
+     * 普通前端页面目录（views/app）。
+     */
+    appViewsDir: string | null;
     configsDir: string | null;
 };
 
@@ -46,7 +53,9 @@ function buildAddonDirs(rootDir: string): AddonDirs {
         hooksDir: childDirNames.has("hooks") ? join(rootDir, "hooks") : null,
         pluginsDir: childDirNames.has("plugins") ? join(rootDir, "plugins") : null,
         tablesDir: childDirNames.has("tables") ? join(rootDir, "tables") : null,
-        viewsDir: childDirNames.has("adminViews") ? join(rootDir, "adminViews") : null,
+        viewsDir: childDirNames.has("views") ? join(rootDir, "views") : null,
+        adminViewsDir: childDirNames.has("views") && existsSync(join(rootDir, "views", "admin")) ? join(rootDir, "views", "admin") : null,
+        appViewsDir: childDirNames.has("views") && existsSync(join(rootDir, "views", "app")) ? join(rootDir, "views", "app") : null,
         configsDir: childDirNames.has("configs") ? join(rootDir, "configs") : null
     };
 }
