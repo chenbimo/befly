@@ -1,6 +1,6 @@
 {
     "name": "befly-vite",
-    "version": "1.1.11",
+    "version": "1.1.12",
     "private": false,
     "description": "Befly Vite 配置预设和插件集合",
     "keywords": [

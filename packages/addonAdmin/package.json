@@ -1,6 +1,6 @@
 {
     "name": "@befly-addon/admin",
-    "version": "1.1.30",
+    "version": "1.1.31",
     "private": false,
     "description": "Befly - 管理后台功能组件",
     "keywords": [
@@ -40,8 +40,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "befly": "^3.9.38",
-        "befly-vite": "^1.1.11",
+        "befly": "^3.9.39",
+        "befly-vite": "^1.1.12",
         "nodemailer": "^7.0.11",
         "ua-parser-js": "^2.0.7"
     },
