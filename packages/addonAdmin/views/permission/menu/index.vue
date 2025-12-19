@@ -44,6 +44,7 @@ import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from "
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
+import { arrayToTree } from "befly-vite/utils/arrayToTree";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
 definePage({
@@ -58,7 +59,7 @@ const $Data = $ref({
     tableData: [],
     loading: false,
     columns: withDefaultColumns([
-        { colKey: "name", title: "菜单名称", fixed: "left" },
+        { colKey: "name", title: "菜单名称" },
         { colKey: "id", title: "序号" },
         { colKey: "path", title: "路由路径" },
         { colKey: "icon", title: "图标" },
@@ -79,9 +80,11 @@ const $Method = {
     async apiMenuList() {
         $Data.loading = true;
         try {
-            const res = await $Http("/addon/admin/menu/list");
+            const res = await $Http("/addon/admin/menu/all");
+            const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
+
             // 构建树形结构
-            $Data.tableData = $Method.buildTree(res.data || []);
+            $Data.tableData = arrayToTree(lists);
 
             // 自动高亮第一行
             if ($Data.tableData.length > 0) {
@@ -96,43 +99,6 @@ const $Method = {
         } finally {
             $Data.loading = false;
         }
-    },
-
-    // 构建树形结构
-    buildTree(list) {
-        const map = {};
-        const roots = [];
-
-        // 先创建所有节点的映射
-        for (const item of list) {
-            map[item.id] = { ...item, children: [] };
-        }
-
-        // 构建树形结构
-        for (const item of list) {
-            const node = map[item.id];
-            if (item.pid === 0) {
-                roots.push(node);
-            } else if (map[item.pid]) {
-                map[item.pid].children.push(node);
-            } else {
-                roots.push(node);
-            }
-        }
-
-        // 移除空的 children 数组
-        const removeEmptyChildren = (nodes) => {
-            for (const node of nodes) {
-                if (node.children.length === 0) {
-                    delete node.children;
-                } else {
-                    removeEmptyChildren(node.children);
-                }
-            }
-        };
-        removeEmptyChildren(roots);
-
-        return roots;
     },
 
     // 刷新

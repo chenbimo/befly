@@ -59,9 +59,8 @@ const $Method = {
     async apiMenuAll() {
         try {
             const res = await $Http("/addon/admin/menu/all");
-            // menuAll 返回的 data 直接就是菜单数组
-            const menuList = Array.isArray(res.data) ? res.data : [];
-            $Data.menuTreeData = arrayToTree(menuList);
+            const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
+            $Data.menuTreeData = arrayToTree(lists);
         } catch (error) {
             MessagePlugin.error("加载菜单失败");
         }
