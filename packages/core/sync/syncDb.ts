@@ -22,7 +22,7 @@ import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
 import { projectDir } from "../paths.js";
-import { scanAddons, addonDirExists, getAddonDir } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 import { scanFiles } from "../utils/scanFiles.js";
 import { setDbType } from "./syncDb/constants.js";
 import { applyFieldDefaults } from "./syncDb/helpers.js";
@@ -83,12 +83,12 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
         const addons = scanAddons();
         for (const addon of addons) {
-            if (addonDirExists(addon, "tables")) {
+            if (addon.dirs.tablesDir) {
                 directories.push({
-                    path: getAddonDir(addon, "tables"),
+                    path: addon.dirs.tablesDir,
                     type: "addon",
-                    addonName: addon,
-                    addonNameSnake: snakeCase(addon) // 提前转换，避免每个文件都转换
+                    addonName: addon.name,
+                    addonNameSnake: snakeCase(addon.name) // 提前转换，避免每个文件都转换
                 });
             }
         }

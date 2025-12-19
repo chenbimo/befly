@@ -11,7 +11,7 @@ import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
 import { coreHookDir, projectHookDir } from "../paths.js";
 // 相对导入
-import { scanAddons, getAddonDir, addonDirExists } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 import { scanModules } from "../utils/modules.js";
 
 export async function loadHooks(hooks: Hook[]): Promise<void> {
@@ -28,9 +28,9 @@ export async function loadHooks(hooks: Hook[]): Promise<void> {
             const addonHooks: Hook[] = [];
             const addons = scanAddons();
             for (const addon of addons) {
-                if (!addonDirExists(addon, "hooks")) continue;
-                const dir = getAddonDir(addon, "hooks");
-                const items = await scanModules<Hook>(dir, "addon", "钩子", addon);
+                const dir = addon.dirs.hooksDir;
+                if (!dir) continue;
+                const items = await scanModules<Hook>(dir, "addon", "钩子", addon.name);
                 addonHooks.push(...items);
             }
             allHooks.push(...addonHooks);

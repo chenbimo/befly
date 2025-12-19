@@ -27,7 +27,7 @@ import { DbHelper } from "../lib/dbHelper.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
 import { projectDir } from "../paths.js";
-import { scanAddons, getAddonDir } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 
 /**
  * 清理目录名中的数字后缀
@@ -403,25 +403,23 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; source: s
     const allMenus: Array<{ menus: MenuConfig[]; source: string }> = [];
 
     // 1. 扫描所有 addon 的 views 目录
-    const addonNames = scanAddons();
+    const addons = scanAddons();
 
-    for (const addonName of addonNames) {
+    for (const addon of addons) {
         try {
-            const addonDir = getAddonDir(addonName, "");
-            const viewsDir = join(addonDir, "views");
-
-            if (existsSync(viewsDir)) {
-                const prefix = `/addon/${addonName}`;
+            const viewsDir = addon.dirs.viewsDir;
+            if (viewsDir) {
+                const prefix = `/addon/${addon.name}`;
                 const menus = await scanViewsDir(viewsDir, prefix);
                 if (menus.length > 0) {
                     allMenus.push({
                         menus: menus,
-                        source: `addon:${addonName}`
+                        source: `addon:${addon.name}`
                     });
                 }
             }
         } catch (error: any) {
-            Logger.warn({ err: error, addon: addonName }, "扫描 addon views 目录失败");
+            Logger.warn({ err: error, addon: addon.name }, "扫描 addon views 目录失败");
         }
     }
 

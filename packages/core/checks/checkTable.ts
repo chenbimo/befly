@@ -9,7 +9,7 @@ import { basename } from "pathe";
 
 import { Logger } from "../lib/logger.js";
 import { projectTableDir } from "../paths.js";
-import { scanAddons, getAddonDir } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 // 相对导入
 import { scanFiles } from "../utils/scanFiles.js";
 
@@ -85,11 +85,9 @@ export async function checkTable(): Promise<void> {
 
         // 收集 addon 表字段定义文件
         const addons = scanAddons();
-        for (const addonName of addons) {
-            const addonTablesDir = getAddonDir(addonName, "tables");
-
-            // 检查 addon tables 目录是否存在
-            if (!existsSync(addonTablesDir)) {
+        for (const addon of addons) {
+            const addonTablesDir = addon.dirs.tablesDir;
+            if (!addonTablesDir) {
                 continue;
             }
 
@@ -98,8 +96,8 @@ export async function checkTable(): Promise<void> {
                 allTableFiles.push({
                     file: filePath,
                     type: "addon",
-                    typeName: `组件${addonName}`,
-                    addonName: addonName
+                    typeName: `组件${addon.name}`,
+                    addonName: addon.name
                 });
             }
         }

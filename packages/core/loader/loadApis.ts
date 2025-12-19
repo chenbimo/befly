@@ -8,7 +8,7 @@ import type { ApiRoute } from "../types/api.js";
 
 import { Logger } from "../lib/logger.js";
 import { projectApiDir } from "../paths.js";
-import { scanAddons, getAddonDir, addonDirExists } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 import { makeRouteKey } from "../utils/route.js";
 // 相对导入
 import { scanFiles } from "../utils/scanFiles.js";
@@ -74,9 +74,8 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
         }> = [];
         const addons = scanAddons();
         for (const addon of addons) {
-            if (!addonDirExists(addon, "apis")) continue;
-
-            const addonApiDir = getAddonDir(addon, "apis");
+            const addonApiDir = addon.dirs.apisDir;
+            if (!addonApiDir) continue;
             const addonApiFiles = await scanFiles(addonApiDir);
 
             for (const file of addonApiFiles) {
@@ -84,8 +83,8 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                     filePath: file.filePath,
                     relativePath: file.relativePath,
                     type: "addon" as const,
-                    routePrefix: `/addon/${addon}/`, // 组件 API 默认带斜杠
-                    typeName: `组件${addon}`
+                    routePrefix: `/addon/${addon.name}/`, // 组件 API 默认带斜杠
+                    typeName: `组件${addon.name}`
                 });
             }
         }

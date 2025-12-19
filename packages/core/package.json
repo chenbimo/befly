@@ -1,6 +1,7 @@
 {
     "name": "befly",
     "version": "3.9.40",
+    "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc",
     "private": false,
     "description": "Befly - 为 Bun 专属打造的 TypeScript API 接口框架核心引擎",
     "keywords": [
@@ -16,10 +17,36 @@
         "typescript"
     ],
     "homepage": "https://chensuiyi.me",
-    "author": "chensuiyi <bimostyle@qq.com>",
     "license": "Apache-2.0",
+    "author": "chensuiyi <bimostyle@qq.com>",
+    "files": [
+        ".npmrc",
+        ".prettierignore",
+        ".prettierrc",
+        "befly.config.ts",
+        "bunfig.toml",
+        "checks",
+        "dist",
+        "docs",
+        "hooks",
+        "lib",
+        "LICENSE",
+        "loader",
+        "main.ts",
+        "package.json",
+        "paths.ts",
+        "plugins",
+        "README.md",
+        "router",
+        "sync",
+        "tests",
+        "tsconfig.json",
+        "types",
+        "utils"
+    ],
     "type": "module",
     "main": "main.ts",
+    "types": "main.ts",
     "exports": {
         ".": {
             "types": "./main.ts",
@@ -29,35 +56,12 @@
         "./types/*": "./types/*.d.ts",
         "./utils/*": "./utils/*.ts"
     },
-    "types": "main.ts",
-    "files": [
-        ".npmrc",
-        ".prettierignore",
-        ".prettierrc",
-        "LICENSE",
-        "README.md",
-        "befly.config.ts",
-        "bunfig.toml",
-        "checks",
-        "dist",
-        "docs",
-        "hooks",
-        "lib",
-        "loader",
-        "main.ts",
-        "package.json",
-        "paths.ts",
-        "plugins",
-        "router",
-        "sync",
-        "tests",
-        "tsconfig.json",
-        "types",
-        "utils"
-    ],
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    },
     "scripts": {
-        "test": "bun test",
-        "bundler": "bun build ./main.ts --outfile ./main.single.ts --minify --target bun"
+        "test": "bun test"
     },
     "dependencies": {
         "chalk": "^5.6.2",
@@ -74,10 +78,5 @@
     },
     "engines": {
         "bun": ">=1.3.0"
-    },
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://registry.npmjs.org"
-    },
-    "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc"
+    }
 }

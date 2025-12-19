@@ -20,7 +20,7 @@ import { DbHelper } from "../lib/dbHelper.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
 import { projectDir } from "../paths.js";
-import { scanAddons, addonDirExists, getAddonDir } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 import { scanFiles } from "../utils/scanFiles.js";
 
 /**
@@ -95,27 +95,17 @@ async function scanAllApis(): Promise<ApiInfo[]> {
         }
 
         // 2. 扫描组件 API (node_modules/@befly-addon/*)
-        const addonNames = scanAddons();
+        const addons = scanAddons();
 
-        for (const addonName of addonNames) {
-            // addonName 格式: admin, demo 等
+        for (const addon of addons) {
+            // addon.name 格式: admin, demo 等
 
-            // 检查 apis 子目录是否存在
-            if (!addonDirExists(addonName, "apis")) {
+            const addonApisDir = addon.dirs.apisDir;
+            if (!addonApisDir) {
                 continue;
             }
 
-            const addonApisDir = getAddonDir(addonName, "apis");
-
-            // 读取 addon 配置
-            const addonPackageJsonPath = getAddonDir(addonName, "package.json");
-            let addonTitle = addonName;
-            try {
-                const packageJson = await import(addonPackageJsonPath, { with: { type: "json" } });
-                addonTitle = packageJson.default?.title || addonName;
-            } catch {
-                // 忽略配置读取错误
-            }
+            const addonTitle = addon.name;
 
             // 扫描 addon API 文件
             const addonApiFiles: string[] = [];
@@ -129,7 +119,7 @@ async function scanAllApis(): Promise<ApiInfo[]> {
             }
 
             for (const filePath of addonApiFiles) {
-                const apiInfo = await extractApiInfo(filePath, addonApisDir, "addon", addonName, addonTitle);
+                const apiInfo = await extractApiInfo(filePath, addonApisDir, "addon", addon.name, addonTitle);
                 if (apiInfo) {
                     apis.push(apiInfo);
                 }

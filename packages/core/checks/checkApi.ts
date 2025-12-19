@@ -6,7 +6,7 @@ import { isPlainObject } from "es-toolkit/compat";
 
 import { Logger } from "../lib/logger.js";
 import { projectApiDir } from "../paths.js";
-import { scanAddons, getAddonDir, addonDirExists } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 // 相对导入
 import { scanFiles } from "../utils/scanFiles.js";
 
@@ -33,14 +33,14 @@ export async function checkApi(): Promise<void> {
         // 收集组件 API 文件
         const addons = scanAddons();
         for (const addon of addons) {
-            if (!addonDirExists(addon, "apis")) continue;
-            const addonApiDir = getAddonDir(addon, "apis");
+            const addonApiDir = addon.dirs.apisDir;
+            if (!addonApiDir) continue;
 
             const files = await scanFiles(addonApiDir);
             for (const { filePath, relativePath } of files) {
                 allApiFiles.push({
                     file: filePath,
-                    displayName: `组件${addon}`,
+                    displayName: `组件${addon.name}`,
                     apiPath: relativePath
                 });
             }

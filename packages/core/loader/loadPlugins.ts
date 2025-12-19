@@ -9,7 +9,7 @@ import type { Plugin } from "../types/plugin.js";
 import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
 import { corePluginDir, projectPluginDir } from "../paths.js";
-import { scanAddons, getAddonDir } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/addonHelper.js";
 import { sortModules, scanModules } from "../utils/modules.js";
 
 export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Promise<void> {
@@ -23,8 +23,11 @@ export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Pro
         const addonPlugins: Plugin[] = [];
         const addons = scanAddons();
         for (const addon of addons) {
-            const dir = getAddonDir(addon, "plugins");
-            const plugins = await scanModules<Plugin>(dir, "addon", "插件", addon);
+            const dir = addon.dirs.pluginsDir;
+            if (!dir) {
+                continue;
+            }
+            const plugins = await scanModules<Plugin>(dir, "addon", "插件", addon.name);
             addonPlugins.push(...plugins);
         }
 

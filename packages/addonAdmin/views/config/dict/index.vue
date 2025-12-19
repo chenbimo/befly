@@ -88,7 +88,7 @@ import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 definePage({
     meta: {
         title: "字典列表",
-        order: 1
+        order: 2
     }
 });
 

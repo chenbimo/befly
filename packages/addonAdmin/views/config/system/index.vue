@@ -96,7 +96,7 @@ import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 definePage({
     meta: {
         title: "系统配置",
-        order: 2
+        order: 3
     }
 });
 

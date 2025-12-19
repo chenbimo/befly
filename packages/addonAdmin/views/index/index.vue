@@ -29,7 +29,7 @@ import EnvironmentInfo from "./components/environmentInfo.vue";
 definePage({
     meta: {
         title: "首页",
-        order: 0
+        order: 1
     }
 });
 </script>
