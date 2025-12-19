@@ -13,7 +13,7 @@
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
-import type { SyncMenuOptions, MenuConfig } from "../types/sync.js";
+import type { SyncMenuOptions, MenuConfig, MenuConfigSource } from "../types/sync.js";
 
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
@@ -239,7 +239,13 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
  * 合并菜单配置
  * 支持无限层级菜单结构
  */
-function mergeMenuConfigs(allMenus: Array<{ menus: MenuConfig[]; source: string }>): MenuConfig[] {
+type LoadedMenuConfigs = {
+    menus: MenuConfig[];
+    source: MenuConfigSource;
+    addonName?: string;
+};
+
+function mergeMenuConfigs(allMenus: LoadedMenuConfigs[]): MenuConfig[] {
     const menuMap = new Map<string, MenuConfig>();
 
     for (const { menus } of allMenus) {
@@ -399,8 +405,8 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
 /**
  * 加载所有菜单配置（addon views + 项目 menus.json）
  */
-async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; source: string }>> {
-    const allMenus: Array<{ menus: MenuConfig[]; source: string }> = [];
+async function loadMenuConfigs(): Promise<LoadedMenuConfigs[]> {
+    const allMenus: LoadedMenuConfigs[] = [];
 
     // 1. 扫描所有 addon 的 views 目录
     const addons = scanAddons();
@@ -414,7 +420,8 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; source: s
                 if (menus.length > 0) {
                     allMenus.push({
                         menus: menus,
-                        source: `addon:${addon.name}`
+                        source: "addon",
+                        addonName: addon.name
                     });
                 }
             }
@@ -432,7 +439,7 @@ async function loadMenuConfigs(): Promise<Array<{ menus: MenuConfig[]; source: s
             if (Array.isArray(projectMenus) && projectMenus.length > 0) {
                 allMenus.push({
                     menus: projectMenus,
-                    source: "project"
+                    source: "app"
                 });
             }
         } catch (error: any) {

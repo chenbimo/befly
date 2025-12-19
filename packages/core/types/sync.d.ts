@@ -43,6 +43,11 @@ export interface MenuConfig {
 }
 
 /**
+ * 菜单配置来源（三值约束）
+ */
+export type MenuConfigSource = "core" | "app" | "addon";
+
+/**
  * SyncDev 命令选项
  */
 export interface SyncDevOptions {
