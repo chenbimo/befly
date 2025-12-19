@@ -22,7 +22,7 @@ const hook: Hook = {
         // 应用字段默认值
         for (const [field, fieldDef] of Object.entries(ctx.api.fields)) {
             // 字段未传值且定义了默认值时，应用默认值
-            if (ctx.body[field] === undefined && (fieldDef as any)?.default !== undefined) {
+            if (ctx.body[field] === undefined && (fieldDef as any)?.default !== undefined && (fieldDef as any)?.default !== null) {
                 ctx.body[field] = (fieldDef as any).default;
             }
         }
