@@ -1,0 +1,7 @@
+{
+    "extends": "../core/tsconfig.json",
+    "compilerOptions": {
+        "noEmit": true
+    },
+    "include": ["./benches/**/*.ts", "./utils/**/*.ts"]
+}
