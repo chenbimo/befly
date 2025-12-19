@@ -23,6 +23,8 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
+
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Select as TSelect, Option as TOption, Textarea as TTextarea, InputNumber as TInputNumber, MessagePlugin } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
 
@@ -90,25 +92,18 @@ const $Method = {
     }
 };
 
-watch(
-    () => props.modelValue,
-    (val) => {
-        if (val) {
-            if (props.actionType === "upd" && props.rowData) {
-                $Data.formData.typeCode = props.rowData.typeCode || "";
-                $Data.formData.key = props.rowData.key || "";
-                $Data.formData.label = props.rowData.label || "";
-                $Data.formData.sort = props.rowData.sort || 0;
-                $Data.formData.remark = props.rowData.remark || "";
-            } else {
-                $Data.formData.typeCode = "";
-                $Data.formData.key = "";
-                $Data.formData.label = "";
-                $Data.formData.sort = 0;
-                $Data.formData.remark = "";
-            }
-        }
-    },
-    { immediate: true }
-);
+// 该组件由父组件 v-if 控制挂载/卸载，因此无需 watch：创建时初始化一次即可
+if (props.actionType === "upd" && props.rowData) {
+    $Data.formData.typeCode = props.rowData.typeCode || "";
+    $Data.formData.key = props.rowData.key || "";
+    $Data.formData.label = props.rowData.label || "";
+    $Data.formData.sort = props.rowData.sort || 0;
+    $Data.formData.remark = props.rowData.remark || "";
+} else {
+    $Data.formData.typeCode = "";
+    $Data.formData.key = "";
+    $Data.formData.label = "";
+    $Data.formData.sort = 0;
+    $Data.formData.remark = "";
+}
 </script>

@@ -18,6 +18,8 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
+
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, InputNumber as TInputNumber, MessagePlugin } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
 
@@ -83,23 +85,16 @@ const $Method = {
     }
 };
 
-watch(
-    () => props.modelValue,
-    (val) => {
-        if (val) {
-            if (props.actionType === "upd" && props.rowData) {
-                $Data.formData.code = props.rowData.code || "";
-                $Data.formData.name = props.rowData.name || "";
-                $Data.formData.description = props.rowData.description || "";
-                $Data.formData.sort = props.rowData.sort || 0;
-            } else {
-                $Data.formData.code = "";
-                $Data.formData.name = "";
-                $Data.formData.description = "";
-                $Data.formData.sort = 0;
-            }
-        }
-    },
-    { immediate: true }
-);
+// 该组件由父组件 v-if 控制挂载/卸载，因此无需 watch：创建时初始化一次即可
+if (props.actionType === "upd" && props.rowData) {
+    $Data.formData.code = props.rowData.code || "";
+    $Data.formData.name = props.rowData.name || "";
+    $Data.formData.description = props.rowData.description || "";
+    $Data.formData.sort = props.rowData.sort || 0;
+} else {
+    $Data.formData.code = "";
+    $Data.formData.name = "";
+    $Data.formData.description = "";
+    $Data.formData.sort = 0;
+}
 </script>

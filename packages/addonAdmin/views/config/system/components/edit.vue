@@ -45,7 +45,6 @@
 </template>
 
 <script setup>
-import { watch } from "vue";
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, InputNumber as TInputNumber, Select as TSelect, Option as TOption, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
 
@@ -165,15 +164,8 @@ const $Method = {
     }
 };
 
-watch(
-    () => $Prop.modelValue,
-    (val) => {
-        if (val) {
-            $Method.initData();
-        }
-    },
-    { immediate: true }
-);
+// 该组件由父组件 v-if 控制挂载/卸载，因此无需 watch：创建时初始化一次即可
+$Method.initData();
 </script>
 
 <style scoped lang="scss"></style>
