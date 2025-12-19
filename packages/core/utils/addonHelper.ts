@@ -10,6 +10,11 @@ export type AddonDirs = {
     hooksDir: string | null;
     pluginsDir: string | null;
     tablesDir: string | null;
+    /**
+     * 后台管理页面目录（用于菜单同步）。
+     * 注意：字段名保持为 viewsDir（历史命名），但实际指向 addon 的 adminViews/。
+     * appViews/ 不在 core 侧处理。
+     */
     viewsDir: string | null;
     configsDir: string | null;
 };
@@ -41,7 +46,7 @@ function buildAddonDirs(rootDir: string): AddonDirs {
         hooksDir: childDirNames.has("hooks") ? join(rootDir, "hooks") : null,
         pluginsDir: childDirNames.has("plugins") ? join(rootDir, "plugins") : null,
         tablesDir: childDirNames.has("tables") ? join(rootDir, "tables") : null,
-        viewsDir: childDirNames.has("views") ? join(rootDir, "views") : null,
+        viewsDir: childDirNames.has("adminViews") ? join(rootDir, "adminViews") : null,
         configsDir: childDirNames.has("configs") ? join(rootDir, "configs") : null
     };
 }
