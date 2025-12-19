@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 
 import { join } from "pathe";
 
-export type AddonSource = "local" | "npm";
+export type AddonSource = "local" | "addon";
 
 export type AddonDirs = {
     apisDir: string | null;
@@ -101,7 +101,7 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
                 const rootDir = join(beflyDir, entry.name);
                 addons.set(entry.name, {
                     name: entry.name,
-                    source: "npm",
+                    source: "addon",
                     rootDir: rootDir,
                     dirs: buildAddonDirs(rootDir)
                 });

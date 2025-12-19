@@ -50,5 +50,5 @@
         }
     },
     "include": ["**/*.ts"],
-    "exclude": ["node_modules", "dist", "logs", "temp", "tests", "main.single.ts"]
+    "exclude": ["node_modules", "dist", "logs", "temp", "tests"]
 }
