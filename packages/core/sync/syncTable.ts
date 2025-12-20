@@ -16,7 +16,6 @@ import { snakeCase } from "es-toolkit/string";
 import { resolve } from "pathe";
 
 import { beflyConfig } from "../befly.config.js";
-import { checkTable } from "../checks/checkTable.js";
 import { CacheKeys } from "../lib/cacheKeys.js";
 import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
@@ -42,10 +41,11 @@ const processedTables: string[] = [];
  * syncDbCommand - 数据库同步命令入口
  *
  * 流程：
- * 1. 验证表定义文件
- * 2. 建立数据库连接并检查版本
- * 3. 扫描表定义文件（核心表、项目表、addon表）
- * 4. 对比并应用表结构变更
+ * 1. 建立数据库连接并检查版本
+ * 2. 扫描表定义文件（核心表、项目表、addon表）
+ * 3. 对比并应用表结构变更
+ *
+ * 说明：表定义/接口定义检查在 syncAllCommand 中统一执行。
  */
 export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> {
     try {
@@ -55,9 +55,6 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
         // 设置数据库类型（从配置获取）
         const dbType = beflyConfig.db?.type || "mysql";
         setDbType(dbType);
-
-        // 验证表定义文件
-        await checkTable();
 
         // 建立数据库连接并检查版本
         sql = await Connect.connectSql();

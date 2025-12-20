@@ -11,9 +11,7 @@ import type { Plugin } from "./types/plugin.js";
 
 // ========== 相对导入（项目内部文件） ==========
 // 启动检查
-import { checkApi } from "./checks/checkApi.js";
 import { checkApp } from "./checks/checkApp.js";
-import { checkTable } from "./checks/checkTable.js";
 // 基础设施
 import { Connect } from "./lib/connect.js";
 import { Logger } from "./lib/logger.js";
@@ -64,8 +62,6 @@ export class Befly {
 
             // 1. 执行启动检查
             await checkApp();
-            await checkTable();
-            await checkApi();
 
             // 2. 加载插件
             await loadPlugins(this.plugins, this.context as BeflyContext);
