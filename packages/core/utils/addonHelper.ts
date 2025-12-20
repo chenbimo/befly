@@ -25,9 +25,10 @@ export type AddonInfo = {
 
 type ScanAddonsCacheEntry = {
     addons: AddonInfo[];
-    createdAt: number;
 };
 
+// 进程内缓存：只用于启动/同步/检测阶段，同一进程内多处调用 scanAddons 时避免重复扫磁盘。
+// 组件在运行过程中不会动态变化，因此不提供“强制刷新”语义。
 const scanAddonsCache = new Map<string, ScanAddonsCacheEntry>();
 
 const normalizeScanAddonsCacheKey = (cwd: string): string => {
@@ -42,19 +43,23 @@ const normalizeScanAddonsCacheKey = (cwd: string): string => {
 };
 
 const cloneAddonInfos = (addons: AddonInfo[]): AddonInfo[] => {
-    if (typeof structuredClone === "function") {
-        return structuredClone(addons);
-    }
-    // 兜底：理论上不会走到（Bun/Node 都支持 structuredClone），但保留以防运行时环境裁剪
-    return JSON.parse(JSON.stringify(addons)) as AddonInfo[];
-};
-
-export const clearScanAddonsCache = (cwd?: string): void => {
-    if (typeof cwd === "string" && cwd.length > 0) {
-        scanAddonsCache.delete(normalizeScanAddonsCacheKey(cwd));
-        return;
-    }
-    scanAddonsCache.clear();
+    // AddonInfo 是纯 string/null 的扁平对象：不需要深拷贝。
+    // 这里对数组与对象做浅拷贝即可避免调用方修改返回值污染缓存。
+    return addons.map((addon) => {
+        return {
+            name: addon.name,
+            source: addon.source,
+            rootDir: addon.rootDir,
+            apisDir: addon.apisDir,
+            hooksDir: addon.hooksDir,
+            pluginsDir: addon.pluginsDir,
+            tablesDir: addon.tablesDir,
+            viewsDir: addon.viewsDir,
+            adminViewsDir: addon.adminViewsDir,
+            appViewsDir: addon.appViewsDir,
+            configsDir: addon.configsDir
+        };
+    });
 };
 
 /**
@@ -148,8 +153,7 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
     });
 
     scanAddonsCache.set(cacheKey, {
-        addons: sortedAddons,
-        createdAt: Date.now()
+        addons: sortedAddons
     });
 
     return cloneAddonInfos(sortedAddons);
