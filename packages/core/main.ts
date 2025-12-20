@@ -70,7 +70,7 @@ export class Befly {
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             if (isPrimaryProcess()) {
-                await syncTable({ dryRun: false, force: false });
+                await syncTable();
                 await syncData();
             }
 

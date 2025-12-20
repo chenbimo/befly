@@ -33,10 +33,9 @@ import { generateDefaultSql, isStringOrArrayType, resolveDefaultValue } from "./
  * @param sql - SQL 客户端实例
  * @param tableName - 表名
  * @param fields - 字段定义
- * @param force - 是否强制同步（删除多余字段）
  * @param dbName - 数据库名称
  */
-export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, force: boolean = false, dbName?: string): Promise<TablePlan> {
+export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan> {
     const existingColumns = await getTableColumns(sql, tableName, dbName || "");
     const existingIndexes = await getTableIndexes(sql, tableName, dbName || "");
     let changed = false;
@@ -61,11 +60,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
                 if (isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && fieldDef.max !== null) {
                     if (existingColumns[dbFieldName].max! > fieldDef.max) {
-                        if (force) {
-                            Logger.warn(`[强制执行] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max}`);
-                        } else {
-                            Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max} 已被跳过（使用 --force 强制执行）`);
-                        }
+                        Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max} 已被跳过（需手动处理）`);
                     }
                 }
 
@@ -118,7 +113,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
                     let skipModify = false;
                     if (hasLengthChange && isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && fieldDef.max !== null) {
                         const isShrink = existingColumns[dbFieldName].max! > fieldDef.max;
-                        if (isShrink && !force) skipModify = true;
+                        if (isShrink) skipModify = true;
                     }
 
                     if (!skipModify) modifyClauses.push(generateDDLClause(fieldKey, fieldDef, false));
@@ -198,7 +193,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
     const plan = { changed, addClauses, modifyClauses, defaultClauses, indexActions, commentActions };
 
-    // 将计划应用（包含 --plan 情况下仅输出）
+    // 将计划应用
     if (plan.changed) {
         await applyTablePlan(sql, tableName, fields, plan);
     }

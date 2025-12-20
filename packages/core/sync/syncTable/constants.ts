@@ -49,9 +49,6 @@ export const MYSQL_TABLE_CONFIG = {
     COLLATE: "utf8mb4_0900_ai_ci"
 } as const;
 
-// 是否为计划模式（仅输出 SQL 不执行）
-export const IS_PLAN = process.argv.includes("--plan");
-
 // 数据库类型（运行时设置，默认 mysql）
 let _dbType: string = "mysql";
 

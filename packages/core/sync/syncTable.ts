@@ -7,7 +7,6 @@
  * - 提供统计信息和错误处理
  */
 
-import type { SyncTableOptions } from "../types/sync.js";
 import type { SQL } from "bun";
 
 import { existsSync } from "node:fs";
@@ -45,7 +44,7 @@ const processedTables: string[] = [];
  * 2. 扫描表定义文件（核心表、项目表、addon表）
  * 3. 对比并应用表结构变更
  */
-export async function syncTable(options: SyncTableOptions = {}): Promise<void> {
+export async function syncTable(): Promise<void> {
     try {
         // 清空处理记录
         processedTables.length = 0;
@@ -106,11 +105,6 @@ export async function syncTable(options: SyncTableOptions = {}): Promise<void> {
                     tableName = `addon_${dirConfig.addonNameSnake}_${tableName}`;
                 }
 
-                // 如果指定了表名，则只同步该表
-                if (options.table && options.table !== tableName) {
-                    continue;
-                }
-
                 const tableDefinitionModule = await import(file, { with: { type: "json" } });
                 const tableDefinition = tableDefinitionModule.default;
 
@@ -122,11 +116,8 @@ export async function syncTable(options: SyncTableOptions = {}): Promise<void> {
                 const dbName = beflyConfig.db?.database || "";
                 const existsTable = await tableExists(sql!, tableName, dbName);
 
-                // 读取 force 参数
-                const force = options.force || false;
-
                 if (existsTable) {
-                    await modifyTable(sql!, tableName, tableDefinition, force, dbName);
+                    await modifyTable(sql!, tableName, tableDefinition, dbName);
                 } else {
                     await createTable(sql!, tableName, tableDefinition, ["created_at", "updated_at", "state"], dbName);
                 }

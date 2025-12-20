@@ -11,7 +11,7 @@ import type { FieldDefinition } from "../../types/validate.js";
 import type { SQL } from "bun";
 
 import { Logger } from "../../lib/logger.js";
-import { isMySQL, isPG, isSQLite, IS_PLAN, getTypeMapping } from "./constants.js";
+import { isMySQL, isPG, isSQLite, getTypeMapping } from "./constants.js";
 import { executeDDLSafely, buildIndexSQL } from "./ddl.js";
 import { rebuildSqliteTable } from "./sqlite.js";
 import { isStringOrArrayType, resolveDefaultValue } from "./types.js";
@@ -131,21 +131,18 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     // SQLite: 仅支持部分 ALTER；需要时走重建
     if (isSQLite()) {
         if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
-            if (IS_PLAN) Logger.debug(`[计划] 重建表 ${tableName} 以应用列修改/默认值变化`);
-            else await rebuildSqliteTable(sql, tableName, fields);
+            await rebuildSqliteTable(sql, tableName, fields);
         } else {
             for (const c of plan.addClauses) {
                 const stmt = `ALTER TABLE "${tableName}" ${c}`;
-                if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
-                else await sql.unsafe(stmt);
+                await sql.unsafe(stmt);
             }
         }
     } else {
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
             const stmt = buildAlterTableSQL(tableName, clauses);
-            if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
-            else if (isMySQL()) await executeDDLSafely(sql, stmt);
+            if (isMySQL()) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
         }
     }
@@ -156,8 +153,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
         } else {
             const stmt = buildAlterTableSQL(tableName, plan.defaultClauses);
-            if (IS_PLAN) Logger.debug(`[计划] ${stmt}`);
-            else if (isMySQL()) await executeDDLSafely(sql, stmt);
+            if (isMySQL()) await executeDDLSafely(sql, stmt);
             else await sql.unsafe(stmt);
         }
     }
@@ -165,28 +161,23 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     // 索引操作
     for (const act of plan.indexActions) {
         const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
-        if (IS_PLAN) {
-            Logger.debug(`[计划] ${stmt}`);
-        } else {
-            try {
-                await sql.unsafe(stmt);
-                if (act.action === "create") {
-                    Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
-                } else {
-                    Logger.debug(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
-                }
-            } catch (error: any) {
-                Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName }, `${act.action === "create" ? "创建" : "删除"}索引失败`);
-                throw error;
+        try {
+            await sql.unsafe(stmt);
+            if (act.action === "create") {
+                Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+            } else {
+                Logger.debug(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
             }
+        } catch (error: any) {
+            Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName }, `${act.action === "create" ? "创建" : "删除"}索引失败`);
+            throw error;
         }
     }
 
     // PG 列注释
     if (isPG() && plan.commentActions && plan.commentActions.length > 0) {
         for (const stmt of plan.commentActions) {
-            if (IS_PLAN) Logger.info(`[计划] ${stmt}`);
-            else await sql.unsafe(stmt);
+            await sql.unsafe(stmt);
         }
     }
 }

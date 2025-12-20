@@ -13,8 +13,7 @@ import type { SQL } from "bun";
 
 import { snakeCase } from "es-toolkit/string";
 
-import { Logger } from "../../lib/logger.js";
-import { isMySQL, isPG, IS_PLAN, MYSQL_TABLE_CONFIG } from "./constants.js";
+import { isMySQL, isPG, MYSQL_TABLE_CONFIG } from "./constants.js";
 import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from "./ddl.js";
 import { quoteIdentifier } from "./helpers.js";
 import { getTableIndexes } from "./schema.js";
@@ -38,11 +37,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
 
     for (const [name, comment] of systemComments) {
         const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${comment}'`;
-        if (IS_PLAN) {
-            Logger.debug(`[计划] ${stmt}`);
-        } else {
-            await sql.unsafe(stmt);
-        }
+        await sql.unsafe(stmt);
     }
 
     // 业务字段注释（使用 fieldDef.name 作为数据库列注释）
@@ -52,11 +47,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
 
         const { name: fieldName } = fieldDef;
         const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS '${fieldName}'`;
-        if (IS_PLAN) {
-            Logger.debug(`[计划] ${stmt}`);
-        } else {
-            await sql.unsafe(stmt);
-        }
+        await sql.unsafe(stmt);
     }
 }
 
@@ -86,11 +77,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
             continue;
         }
         const stmt = buildIndexSQL(tableName, indexName, sysField, "create");
-        if (IS_PLAN) {
-            Logger.debug(`[计划] ${stmt}`);
-        } else {
-            indexTasks.push(sql.unsafe(stmt));
-        }
+        indexTasks.push(sql.unsafe(stmt));
     }
 
     // 业务字段索引
@@ -105,11 +92,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
                 continue;
             }
             const stmt = buildIndexSQL(tableName, indexName, dbFieldName, "create");
-            if (IS_PLAN) {
-                Logger.debug(`[计划] ${stmt}`);
-            } else {
-                indexTasks.push(sql.unsafe(stmt));
-            }
+            indexTasks.push(sql.unsafe(stmt));
         }
     }
 
@@ -144,19 +127,10 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
             ${cols}
         )`;
 
-    if (IS_PLAN) {
-        Logger.debug(`[计划] ${createSQL.replace(/\n+/g, " ")}`);
-    } else {
-        await sql.unsafe(createSQL);
-    }
+    await sql.unsafe(createSQL);
 
     // PostgreSQL: 添加列注释（使用字段 name 作为数据库列注释）
-    if (isPG() && !IS_PLAN) {
-        await addPostgresComments(sql, tableName, fields);
-    } else if (isPG() && IS_PLAN) {
-        // 计划模式也要输出注释语句
-        await addPostgresComments(sql, tableName, fields);
-    }
+    if (isPG()) await addPostgresComments(sql, tableName, fields);
 
     // 创建索引
     await createTableIndexes(sql, tableName, fields, systemIndexFields, dbName);

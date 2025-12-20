@@ -109,12 +109,6 @@ describe("getTypeMapping (MySQL)", () => {
     });
 });
 
-describe("IS_PLAN", () => {
-    test("IS_PLAN 为 boolean 类型", () => {
-        expect(typeof constants.IS_PLAN).toBe("boolean");
-    });
-});
-
 describe("数据库类型判断 (MySQL)", () => {
     test("isMySQL 为 true", () => {
         expect(constants.isMySQL()).toBe(true);

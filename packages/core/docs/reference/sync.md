@@ -71,24 +71,11 @@ befly sync
 ```bash
 # 同步所有表
 befly sync:db
-
-# 只同步指定表
-befly sync:db --table user
-
-# 强制模式（允许破坏性操作）
-befly sync:db --force
-
-# 预览模式（仅显示变更，不执行）
-befly sync:db --dry-run
 ```
 
 ### 命令选项
 
-| 选项        | 类型    | 默认值 | 说明                 |
-| ----------- | ------- | ------ | -------------------- |
-| `--table`   | string  | -      | 只同步指定表         |
-| `--force`   | boolean | false  | 强制模式，允许删除列 |
-| `--dry-run` | boolean | false  | 预览模式，不实际执行 |
+无
 
 ### 同步逻辑
 
@@ -152,16 +139,7 @@ befly sync:db --dry-run
 ```bash
 # 同步 API 路由
 befly sync:api
-
-# 预览模式
-befly sync:api --plan
 ```
-
-### 命令选项
-
-| 选项     | 类型    | 默认值 | 说明                   |
-| -------- | ------- | ------ | ---------------------- |
-| `--plan` | boolean | false  | 预览模式，显示变更计划 |
 
 ### 同步逻辑
 
@@ -224,16 +202,7 @@ interface SyncApiStats {
 ```bash
 # 同步菜单
 befly sync:menu
-
-# 预览模式
-befly sync:menu --plan
 ```
-
-### 命令选项
-
-| 选项     | 类型    | 默认值 | 说明                   |
-| -------- | ------- | ------ | ---------------------- |
-| `--plan` | boolean | false  | 预览模式，显示变更计划 |
 
 ### 菜单配置文件
 
@@ -321,16 +290,7 @@ interface SyncMenuStats {
 ```bash
 # 同步开发账户
 befly sync:dev
-
-# 预览模式
-befly sync:dev --plan
 ```
-
-### 命令选项
-
-| 选项     | 类型    | 默认值 | 说明                   |
-| -------- | ------- | ------ | ---------------------- |
-| `--plan` | boolean | false  | 预览模式，显示变更计划 |
 
 ### 同步逻辑
 
@@ -389,14 +349,6 @@ befly sync:db              # 同步数据库结构
 befly sync:api             # 同步 API 路由
 befly sync:menu            # 同步菜单配置
 befly sync:dev             # 同步开发账户
-
-# 带参数
-befly sync:db --table user     # 只同步 user 表
-befly sync:db --force          # 强制模式
-befly sync:db --dry-run        # 预览模式
-befly sync:api --plan          # 预览 API 变更
-befly sync:menu --plan         # 预览菜单变更
-befly sync:dev --plan          # 预览开发账户变更
 ```
 
 ### 代码调用
@@ -406,11 +358,11 @@ import { syncTable } from "./sync/syncTable";
 import { syncData } from "./sync/syncData";
 
 // 依次执行全量同步（等价于 befly sync）
-await syncTable({ dryRun: false, force: false });
+await syncTable();
 await syncData();
 
 // 单独调用（示例：只同步指定表）
-await syncTable({ table: "user" });
+await syncTable();
 ```
 
 ---
@@ -465,12 +417,10 @@ addons/demo/tables/article.json   → addon_demo_article
 - 新增缺失的列
 - 修改现有列的类型/默认值
 
-使用 `--force` 参数允许删除列：
+此外，`syncTable` **不会执行长度收缩等可能导致数据截断的危险变更**：
 
-```bash
-# 谨慎使用！会删除数据库中存在但定义中不存在的列
-befly sync:db --force
-```
+- 例如：`VARCHAR(200)` → `VARCHAR(50)`
+- 这类变更会被跳过，并输出告警；需要手动评估并处理
 
 ### 3. 缓存清理
 
@@ -489,16 +439,6 @@ Sync 命令会自动管理数据库和 Redis 连接：
 - 执行后关闭连接
 - 出错时正确清理资源
 
-### 5. 预览模式
-
-使用 `--dry-run` 或 `--plan` 参数可以预览变更而不实际执行：
-
-```bash
-befly sync:db --dry-run   # 预览数据库结构变更
-befly sync:api --plan     # 预览 API 变更
-befly sync:menu --plan    # 预览菜单变更
-```
-
 ---
 
 ## FAQ
@@ -514,17 +454,11 @@ A: 检查以下几点：
 1. JSON 文件语法是否正确
 2. 字段定义格式是否正确
 3. 是否保存了文件
-4. 尝试使用 `--dry-run` 查看预期变更
+4. 确认表定义文件与配置已保存
 
-### Q: 如何删除数据库中不需要的列？
+### Q: 如何处理“字段长度收缩”这类危险变更？
 
-A: 使用 `--force` 参数：
-
-```bash
-befly sync:db --force
-```
-
-**警告**：这会删除表定义中不存在的列及其数据，请先备份。
+A: `syncTable` 会跳过长度收缩并告警；请手动评估并处理（例如先清理/截断数据，再手动执行 DDL），然后再运行 `befly sync:db` 让其继续同步后续安全变更。
 
 ### Q: Addon 表名太长怎么办？
 
@@ -544,11 +478,7 @@ A:
 
 ### Q: 如何只同步某个 Addon 的表？
 
-A: 目前不支持按 Addon 筛选，可以使用 `--table` 参数同步单个表：
-
-```bash
-befly sync:db --table addon_admin_role
-```
+A: 当前不支持按 Addon 或单表筛选；会同步项目与所有 Addon 的表定义。
 
 ### Q: 开发账户密码在哪里配置？
 

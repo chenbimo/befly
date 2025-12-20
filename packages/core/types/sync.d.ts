@@ -6,25 +6,6 @@
 // ==================== 命令选项类型 ====================
 
 /**
- * SyncTable（sync:db）命令选项
- */
-export interface SyncTableOptions {
-    table?: string;
-    dryRun?: boolean;
-    force?: boolean;
-}
-
-/**
- * Sync 命令选项
- */
-export interface SyncOptions {
-    table?: string;
-    force?: boolean;
-    dryRun?: boolean;
-    drop?: boolean;
-}
-
-/**
  * SyncMenu 命令选项
  */
 export interface SyncMenuOptions {

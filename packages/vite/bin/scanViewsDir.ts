@@ -86,69 +86,31 @@ export async function scanViewsDir(viewsDir: string, prefix: string, parentPath:
     return menus;
 }
 
-function parseArgs(argv: string[]): { dir: string; prefix: string; out: string | null; pretty: number } {
-    let dir = "";
-    let prefix = "";
-    let out: string | null = null;
-    let pretty = 4;
-
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-
-        if (arg === "--dir" || arg === "-d") {
-            dir = argv[i + 1] || "";
-            i += 1;
-            continue;
-        }
-
-        if (arg === "--prefix" || arg === "-p") {
-            prefix = argv[i + 1] || "";
-            i += 1;
-            continue;
-        }
-
-        if (arg === "--out" || arg === "-o") {
-            out = argv[i + 1] || "";
-            i += 1;
-            continue;
-        }
-
-        if (arg === "--pretty") {
-            const next = argv[i + 1] || "";
-            const parsed = Number(next);
-            if (Number.isFinite(parsed) && parsed >= 0) {
-                pretty = parsed;
-            }
-            i += 1;
-            continue;
-        }
-    }
-
-    return {
-        dir: dir,
-        prefix: prefix,
-        out: out,
-        pretty: pretty
-    };
-}
-
 async function main(): Promise<void> {
-    const args = parseArgs(process.argv.slice(2));
+    const dir = process.env.SCAN_VIEWS_DIR || "";
+    const prefix = process.env.SCAN_PREFIX || "";
 
-    if (!args.dir) {
-        process.stderr.write("Missing required --dir\n");
-        process.stderr.write("Usage: bun ./bin/scanViewsDir.ts --dir <viewsAdminDir> [--prefix <pathPrefix>] [--out <menu.json>]\n");
+    const outRaw = process.env.SCAN_OUT || "";
+    const out = outRaw ? outRaw : null;
+
+    const prettyRaw = process.env.SCAN_PRETTY || "";
+    const parsedPretty = Number(prettyRaw);
+    const pretty = Number.isFinite(parsedPretty) && parsedPretty >= 0 ? parsedPretty : 4;
+
+    if (!dir) {
+        process.stderr.write("Missing required env SCAN_VIEWS_DIR\n");
+        process.stderr.write("Usage: SCAN_VIEWS_DIR=<viewsDir> [SCAN_PREFIX=<pathPrefix>] [SCAN_OUT=<menu.json>] [SCAN_PRETTY=4] bun ./bin/scanViewsDir.ts\n");
         process.exitCode = 1;
         return;
     }
 
-    const absDir = resolve(process.cwd(), args.dir);
-    const outPath = args.out ? resolve(process.cwd(), args.out) : join(absDir, "menu.json");
+    const absDir = resolve(process.cwd(), dir);
+    const outPath = out ? resolve(process.cwd(), out) : join(absDir, "menu.json");
 
-    const menus = await scanViewsDir(absDir, args.prefix);
+    const menus = await scanViewsDir(absDir, prefix);
     const normalized = normalizeMenuTree(menus);
 
-    const content = `${JSON.stringify(normalized, null, args.pretty)}\n`;
+    const content = `${JSON.stringify(normalized, null, pretty)}\n`;
     await writeFile(outPath, content, { encoding: "utf-8" });
 
     process.stdout.write(`Wrote ${normalized.length} root menus to ${outPath}\n`);
