@@ -8,15 +8,12 @@ import { test, expect, mock } from "bun:test";
 import { CacheKeys } from "../lib/cacheKeys.js";
 import { DbHelper } from "../lib/dbHelper.js";
 
-// 创建 Mock Befly 上下文
-function createMockBefly(sqlMock: any, redisMock?: any) {
+function createMockRedis() {
     return {
-        redis: redisMock || {
-            getObject: mock(async () => null),
-            setObject: mock(async () => true),
-            del: mock(async () => 1)
-        },
-        db: null
+        getObject: mock(async () => null),
+        setObject: mock(async () => true),
+        del: mock(async () => 1),
+        genTimeID: mock(async () => 1)
     };
 }
 
@@ -34,11 +31,11 @@ test("getTableColumns - 正常查询表字段", async () => {
     const redisMock = {
         getObject: mock(async () => null), // 缓存未命中
         setObject: mock(async () => true),
-        del: mock(async () => 1)
+        del: mock(async () => 1),
+        genTimeID: mock(async () => 1)
     };
 
-    const befly = createMockBefly(sqlMock, redisMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(redisMock as any, sqlMock);
 
     const columns = await (dbHelper as any).getTableColumns("users");
 
@@ -53,7 +50,8 @@ test("getTableColumns - Redis 缓存命中", async () => {
     const redisMock = {
         getObject: mock(async () => cachedColumns),
         setObject: mock(async () => true),
-        del: mock(async () => 1)
+        del: mock(async () => 1),
+        genTimeID: mock(async () => 1)
     };
 
     const sqlMock = {
@@ -62,8 +60,7 @@ test("getTableColumns - Redis 缓存命中", async () => {
         })
     };
 
-    const befly = createMockBefly(sqlMock, redisMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(redisMock as any, sqlMock);
 
     const columns = await (dbHelper as any).getTableColumns("users");
 
@@ -81,11 +78,11 @@ test("getTableColumns - 表不存在错误", async () => {
     const redisMock = {
         getObject: mock(async () => null),
         setObject: mock(async () => true),
-        del: mock(async () => 1)
+        del: mock(async () => 1),
+        genTimeID: mock(async () => 1)
     };
 
-    const befly = createMockBefly(sqlMock, redisMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(redisMock as any, sqlMock);
 
     try {
         await (dbHelper as any).getTableColumns("non_existent_table");
@@ -106,8 +103,7 @@ test("getTableColumns - SQL 语法使用反引号", async () => {
         })
     };
 
-    const befly = createMockBefly(sqlMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(createMockRedis() as any, sqlMock);
 
     await (dbHelper as any).getTableColumns("addon_admin_user");
 
@@ -123,8 +119,7 @@ test("getTableColumns - 表名特殊字符处理", async () => {
         unsafe: mock(async () => mockColumns)
     };
 
-    const befly = createMockBefly(sqlMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(createMockRedis() as any, sqlMock);
 
     // 测试下划线表名
     await (dbHelper as any).getTableColumns("addon_admin_user");
@@ -152,11 +147,11 @@ test("getTableColumns - 缓存键格式正确", async () => {
             expect(seconds).toBe(3600); // 1 小时
             return true;
         }),
-        del: mock(async () => 1)
+        del: mock(async () => 1),
+        genTimeID: mock(async () => 1)
     };
 
-    const befly = createMockBefly(sqlMock, redisMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(redisMock as any, sqlMock);
 
     await (dbHelper as any).getTableColumns("test_table");
 
@@ -181,11 +176,11 @@ test("getTableColumns - 多次调用相同表（缓存效果）", async () => {
             cache[key] = value;
             return true;
         }),
-        del: mock(async () => 1)
+        del: mock(async () => 1),
+        genTimeID: mock(async () => 1)
     };
 
-    const befly = createMockBefly(sqlMock, redisMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(redisMock as any, sqlMock);
 
     // 第一次调用 - 应该查询数据库
     const columns1 = await (dbHelper as any).getTableColumns("users");
@@ -214,11 +209,11 @@ test("getTableColumns - Redis 错误处理", async () => {
             throw new Error("Redis 连接失败");
         }),
         setObject: mock(async () => true),
-        del: mock(async () => 1)
+        del: mock(async () => 1),
+        genTimeID: mock(async () => 1)
     };
 
-    const befly = createMockBefly(sqlMock, redisMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(redisMock as any, sqlMock);
 
     try {
         await (dbHelper as any).getTableColumns("users");
@@ -240,8 +235,7 @@ test("getTableColumns - 字段映射正确性", async () => {
         unsafe: mock(async () => mockColumns)
     };
 
-    const befly = createMockBefly(sqlMock);
-    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
+    const dbHelper = new DbHelper(createMockRedis() as any, sqlMock);
 
     const columns = await (dbHelper as any).getTableColumns("users");
 

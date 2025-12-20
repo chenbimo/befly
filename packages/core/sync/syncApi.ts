@@ -236,20 +236,11 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         await deleteObsoleteRecords(helper, apiPaths);
 
         // 5. 缓存接口数据到 Redis
-        try {
-            await cacheHelper.cacheApis();
-        } catch {
-            // 忽略缓存错误
-        }
+        await cacheHelper.cacheApis();
 
         // 6. API 表发生变更后，重建角色接口权限缓存（不使用定时器）
         // 说明：role permission set 的成员是 METHOD/path，API 的 method/path 变更会影响所有角色权限。
-        try {
-            await cacheHelper.rebuildRoleApiPermissions();
-        } catch (error: any) {
-            // 不阻塞 syncApi 主流程，但记录日志
-            Logger.warn({ err: error }, "API 同步完成，但重建角色权限缓存失败");
-        }
+        await cacheHelper.rebuildRoleApiPermissions();
     } catch (error: any) {
         Logger.error({ err: error }, "API 同步失败");
         throw error;
