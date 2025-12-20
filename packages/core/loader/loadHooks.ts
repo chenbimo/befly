@@ -28,7 +28,7 @@ export async function loadHooks(hooks: Hook[]): Promise<void> {
             const addonHooks: Hook[] = [];
             const addons = scanAddons();
             for (const addon of addons) {
-                const dir = addon.dirs.hooksDir;
+                const dir = addon.hooksDir;
                 if (!dir) continue;
                 const items = await scanModules<Hook>(dir, "addon", "钩子", addon.name);
                 addonHooks.push(...items);

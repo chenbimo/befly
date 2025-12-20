@@ -23,7 +23,7 @@ export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Pro
         const addonPlugins: Plugin[] = [];
         const addons = scanAddons();
         for (const addon of addons) {
-            const dir = addon.dirs.pluginsDir;
+            const dir = addon.pluginsDir;
             if (!dir) {
                 continue;
             }

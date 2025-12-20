@@ -83,9 +83,9 @@ export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
         const addons = scanAddons();
         for (const addon of addons) {
-            if (addon.dirs.tablesDir) {
+            if (addon.tablesDir) {
                 directories.push({
-                    path: addon.dirs.tablesDir,
+                    path: addon.tablesDir,
                     type: "addon",
                     addonName: addon.name,
                     addonNameSnake: snakeCase(addon.name) // 提前转换，避免每个文件都转换

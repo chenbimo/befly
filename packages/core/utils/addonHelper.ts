@@ -1,11 +1,10 @@
-import fs from "node:fs";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 
 import { join } from "pathe";
 
 export type AddonSource = "addon";
 
-export type AddonDirs = {
+type AddonDirPaths = {
     apisDir: string | null;
     hooksDir: string | null;
     pluginsDir: string | null;
@@ -30,14 +29,21 @@ export type AddonInfo = {
     name: string;
     source: AddonSource;
     rootDir: string;
-    dirs: AddonDirs;
+    apisDir: string | null;
+    hooksDir: string | null;
+    pluginsDir: string | null;
+    tablesDir: string | null;
+    viewsDir: string | null;
+    adminViewsDir: string | null;
+    appViewsDir: string | null;
+    configsDir: string | null;
 };
 
-function buildAddonDirs(rootDir: string): AddonDirs {
+function buildAddonDirs(rootDir: string): AddonDirPaths {
     const childDirNames = new Set<string>();
 
     try {
-        const entries = fs.readdirSync(rootDir, { withFileTypes: true });
+        const entries = readdirSync(rootDir, { withFileTypes: true });
         for (const entry of entries) {
             if (!entry.isDirectory()) {
                 continue;
@@ -73,7 +79,7 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
     const localAddonsDir = join(cwd, "addons");
     if (existsSync(localAddonsDir)) {
         try {
-            const entries = fs.readdirSync(localAddonsDir, { withFileTypes: true });
+            const entries = readdirSync(localAddonsDir, { withFileTypes: true });
             for (const entry of entries) {
                 if (!entry.isDirectory()) {
                     continue;
@@ -83,11 +89,19 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
                 }
 
                 const rootDir = join(localAddonsDir, entry.name);
+                const dirs = buildAddonDirs(rootDir);
                 addons.set(entry.name, {
                     name: entry.name,
                     source: "addon",
                     rootDir: rootDir,
-                    dirs: buildAddonDirs(rootDir)
+                    apisDir: dirs.apisDir,
+                    hooksDir: dirs.hooksDir,
+                    pluginsDir: dirs.pluginsDir,
+                    tablesDir: dirs.tablesDir,
+                    viewsDir: dirs.viewsDir,
+                    adminViewsDir: dirs.adminViewsDir,
+                    appViewsDir: dirs.appViewsDir,
+                    configsDir: dirs.configsDir
                 });
             }
         } catch {
@@ -99,7 +113,7 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
     const beflyDir = join(cwd, "node_modules", "@befly-addon");
     if (existsSync(beflyDir)) {
         try {
-            const entries = fs.readdirSync(beflyDir, { withFileTypes: true });
+            const entries = readdirSync(beflyDir, { withFileTypes: true });
             for (const entry of entries) {
                 if (!entry.isDirectory()) {
                     continue;
@@ -113,11 +127,19 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
                 }
 
                 const rootDir = join(beflyDir, entry.name);
+                const dirs = buildAddonDirs(rootDir);
                 addons.set(entry.name, {
                     name: entry.name,
                     source: "addon",
                     rootDir: rootDir,
-                    dirs: buildAddonDirs(rootDir)
+                    apisDir: dirs.apisDir,
+                    hooksDir: dirs.hooksDir,
+                    pluginsDir: dirs.pluginsDir,
+                    tablesDir: dirs.tablesDir,
+                    viewsDir: dirs.viewsDir,
+                    adminViewsDir: dirs.adminViewsDir,
+                    appViewsDir: dirs.appViewsDir,
+                    configsDir: dirs.configsDir
                 });
             }
         } catch {

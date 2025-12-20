@@ -74,7 +74,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
         }> = [];
         const addons = scanAddons();
         for (const addon of addons) {
-            const addonApiDir = addon.dirs.apisDir;
+            const addonApiDir = addon.apisDir;
             if (!addonApiDir) continue;
             const addonApiFiles = await scanFiles(addonApiDir);
 

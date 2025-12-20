@@ -100,7 +100,7 @@ async function scanAllApis(): Promise<ApiInfo[]> {
         for (const addon of addons) {
             // addon.name 格式: admin, demo 等
 
-            const addonApisDir = addon.dirs.apisDir;
+            const addonApisDir = addon.apisDir;
             if (!addonApisDir) {
                 continue;
             }

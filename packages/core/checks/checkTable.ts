@@ -86,7 +86,7 @@ export async function checkTable(): Promise<void> {
         // 收集 addon 表字段定义文件
         const addons = scanAddons();
         for (const addon of addons) {
-            const addonTablesDir = addon.dirs.tablesDir;
+            const addonTablesDir = addon.tablesDir;
             if (!addonTablesDir) {
                 continue;
             }

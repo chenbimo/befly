@@ -33,7 +33,7 @@ export async function checkApi(): Promise<void> {
         // 收集组件 API 文件
         const addons = scanAddons();
         for (const addon of addons) {
-            const addonApiDir = addon.dirs.apisDir;
+            const addonApiDir = addon.apisDir;
             if (!addonApiDir) continue;
 
             const files = await scanFiles(addonApiDir);
