@@ -1,7 +1,7 @@
 // 类型导入
 import type { FieldDefinition } from "../../types/validate.js";
+import type { AddonInfo } from "../../utils/addonHelper.js";
 
-// 内部依赖
 import { existsSync } from "node:fs";
 
 // 外部依赖
@@ -10,7 +10,6 @@ import { basename } from "pathe";
 // 相对导入
 import { Logger } from "../../lib/logger.js";
 import { projectTableDir } from "../../paths.js";
-import { scanAddons } from "../../utils/addonHelper.js";
 import { scanFiles } from "../../utils/scanFiles.js";
 
 /**
@@ -65,7 +64,7 @@ const MAX_VARCHAR_LENGTH = 65535;
  * 检查表定义文件
  * @throws 当检查失败时抛出异常
  */
-export async function checkTable(): Promise<void> {
+export async function checkTable(addons: AddonInfo[]): Promise<void> {
     try {
         // 收集所有表文件
         const allTableFiles: TableFileInfo[] = [];
@@ -84,7 +83,6 @@ export async function checkTable(): Promise<void> {
         }
 
         // 收集 addon 表字段定义文件
-        const addons = scanAddons();
         for (const addon of addons) {
             const addonTablesDir = addon.tablesDir;
             if (!addonTablesDir) {

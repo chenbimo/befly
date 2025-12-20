@@ -240,7 +240,7 @@ export async function syncMenu(ctx: SyncDataContext): Promise<void> {
         return;
     }
 
-    await checkTable();
+    await checkTable(ctx.addons);
 
     const configPaths = collectPaths(mergedMenus);
 

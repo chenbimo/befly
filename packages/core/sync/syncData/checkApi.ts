@@ -1,3 +1,6 @@
+// 类型导入
+import type { AddonInfo } from "../../utils/addonHelper.js";
+
 // 内部依赖
 import { existsSync } from "node:fs";
 
@@ -7,13 +10,12 @@ import { isPlainObject } from "es-toolkit/compat";
 // 相对导入
 import { Logger } from "../../lib/logger.js";
 import { projectApiDir } from "../../paths.js";
-import { scanAddons } from "../../utils/addonHelper.js";
 import { scanFiles } from "../../utils/scanFiles.js";
 
 /**
  * 检查所有 API 定义
  */
-export async function checkApi(): Promise<void> {
+export async function checkApi(addons: AddonInfo[]): Promise<void> {
     try {
         // 收集所有 API 文件
         const allApiFiles: Array<{ file: string; displayName: string; apiPath: string }> = [];
@@ -31,7 +33,6 @@ export async function checkApi(): Promise<void> {
         }
 
         // 收集组件 API 文件
-        const addons = scanAddons();
         for (const addon of addons) {
             const addonApiDir = addon.apisDir;
             if (!addonApiDir) continue;

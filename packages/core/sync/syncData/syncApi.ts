@@ -187,7 +187,7 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
         return;
     }
 
-    await checkApi();
+    await checkApi(ctx.addons);
 
     const apis = await scanAllApis(ctx);
     const apiPaths = new Set(apis.map((api) => api.path));
