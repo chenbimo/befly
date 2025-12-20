@@ -53,8 +53,8 @@ export async function loadHooks(hooks: Hook[]): Promise<void> {
 
         // 5. 按 order 排序
         const sortedHooks = enabledHooks.sort((a, b) => {
-            const orderA = a.order ?? 999;
-            const orderB = b.order ?? 999;
+            const orderA = a.order ?? 999999;
+            const orderB = b.order ?? 999999;
             return orderA - orderB;
         });
 
