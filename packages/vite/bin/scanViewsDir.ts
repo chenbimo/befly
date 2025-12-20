@@ -3,6 +3,7 @@ import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 import { existsSync } from "node:fs";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock, normalizeMenuTree } from "befly-shared/utils/scanViewsDir";
 
@@ -87,30 +88,24 @@ export async function scanViewsDir(viewsDir: string, prefix: string, parentPath:
 }
 
 async function main(): Promise<void> {
-    const dir = process.env.SCAN_VIEWS_DIR || "";
-    const prefix = process.env.SCAN_PREFIX || "";
+    // 固定扫描目录：仓库 packages/admin/src/views
+    // 固定输出：同目录下的 menu.json
+    const fileDir = resolve(fileURLToPath(new URL(".", import.meta.url)));
+    const repoRoot = resolve(fileDir, "..", "..", "..");
 
-    const outRaw = process.env.SCAN_OUT || "";
-    const out = outRaw ? outRaw : null;
+    const absDir = resolve(repoRoot, "packages", "admin", "src", "views");
+    const outPath = join(absDir, "menu.json");
 
-    const prettyRaw = process.env.SCAN_PRETTY || "";
-    const parsedPretty = Number(prettyRaw);
-    const pretty = Number.isFinite(parsedPretty) && parsedPretty >= 0 ? parsedPretty : 4;
-
-    if (!dir) {
-        process.stderr.write("Missing required env SCAN_VIEWS_DIR\n");
-        process.stderr.write("Usage: SCAN_VIEWS_DIR=<viewsDir> [SCAN_PREFIX=<pathPrefix>] [SCAN_OUT=<menu.json>] [SCAN_PRETTY=4] bun ./bin/scanViewsDir.ts\n");
+    if (!existsSync(absDir)) {
+        process.stderr.write(`Missing views dir: ${absDir}\n`);
         process.exitCode = 1;
         return;
     }
 
-    const absDir = resolve(process.cwd(), dir);
-    const outPath = out ? resolve(process.cwd(), out) : join(absDir, "menu.json");
-
-    const menus = await scanViewsDir(absDir, prefix);
+    const menus = await scanViewsDir(absDir, "");
     const normalized = normalizeMenuTree(menus);
 
-    const content = `${JSON.stringify(normalized, null, pretty)}\n`;
+    const content = `${JSON.stringify(normalized, null, 4)}\n`;
     await writeFile(outPath, content, { encoding: "utf-8" });
 
     process.stdout.write(`Wrote ${normalized.length} root menus to ${outPath}\n`);
