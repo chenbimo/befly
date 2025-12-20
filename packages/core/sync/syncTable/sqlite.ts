@@ -1,5 +1,5 @@
 /**
- * syncDb SQLite 特殊处理模块
+ * syncTable SQLite 特殊处理模块
  *
  * 包含：
  * - SQLite 重建表迁移（处理列修改等不支持的操作）

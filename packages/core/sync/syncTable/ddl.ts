@@ -1,5 +1,5 @@
 /**
- * syncDb DDL 构建模块
+ * syncTable DDL 构建模块
  *
  * 包含：
  * - 构建索引 SQL

@@ -1,3 +1,4 @@
+import type { DbHelper } from "../../lib/dbHelper.js";
 import type { MenuConfig } from "../../types/sync.js";
 import type { SyncDataContext } from "./types.js";
 import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
@@ -10,9 +11,9 @@ import { join } from "pathe";
 
 import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
-import { scanAddons } from "../../utils/addonHelper.js";
 import { isDirentDirectory } from "../../utils/isDirentDirectory.js";
 import { assertTablesExist } from "./assertTablesExist.js";
+import { forEachAddonDir } from "./forEachAddonDir.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {
@@ -105,7 +106,7 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
     return paths;
 }
 
-async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, existingMenuMap: Map<string, any>): Promise<number> {
+async function syncMenuRecursive(dbHelper: DbHelper, menu: MenuConfig, pid: number, existingMenuMap: Map<string, any>): Promise<number> {
     const existing = existingMenuMap.get(menu.path || "");
     let menuId: number;
 
@@ -115,7 +116,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
         const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.sort !== (menu.sort ?? 999);
 
         if (needUpdate) {
-            await helper.updData({
+            await dbHelper.updData({
                 table: "addon_admin_menu",
                 where: { id: existing.id },
                 data: {
@@ -126,7 +127,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
             });
         }
     } else {
-        menuId = await helper.insData({
+        menuId = await dbHelper.insData({
             table: "addon_admin_menu",
             data: {
                 pid: pid,
@@ -139,17 +140,17 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
 
     if (menu.children && menu.children.length > 0) {
         for (const child of menu.children) {
-            await syncMenuRecursive(helper, child, menuId, existingMenuMap);
+            await syncMenuRecursive(dbHelper, child, menuId, existingMenuMap);
         }
     }
 
     return menuId;
 }
 
-async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
-    const allExistingMenus = await helper.getAll({
+async function syncMenus(dbHelper: DbHelper, menus: MenuConfig[]): Promise<void> {
+    const allExistingMenus = await dbHelper.getAll({
         table: "addon_admin_menu"
-    });
+    } as any);
     const existingMenuMap = new Map<string, any>();
     for (const menu of allExistingMenus.lists) {
         if (menu.path) {
@@ -159,7 +160,7 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
 
     for (const menu of menus) {
         try {
-            await syncMenuRecursive(helper, menu, 0, existingMenuMap);
+            await syncMenuRecursive(dbHelper, menu, 0, existingMenuMap);
         } catch (error: any) {
             Logger.error({ err: error, menu: menu.name }, "同步菜单失败");
             throw error;
@@ -167,16 +168,16 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
     }
 }
 
-async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<void> {
-    const allRecords = await helper.getAll({
+async function deleteObsoleteRecords(dbHelper: DbHelper, configPaths: Set<string>): Promise<void> {
+    const allRecords = await dbHelper.getAll({
         table: "addon_admin_menu",
         fields: ["id", "path"],
         where: { state$gte: 0 }
-    });
+    } as any);
 
     for (const record of allRecords.lists) {
         if (record.path && !configPaths.has(record.path)) {
-            await helper.delForce({
+            await dbHelper.delForce({
                 table: "addon_admin_menu",
                 where: { id: record.id }
             });
@@ -184,26 +185,23 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
     }
 }
 
-async function loadMenuConfigs(): Promise<MenuConfig[]> {
+async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
     const allMenus: MenuConfig[] = [];
 
-    const addons = scanAddons();
-
-    for (const addon of addons) {
-        try {
-            if (addon.adminViewsDir) {
-                const prefix = `/${addon.source}/${addon.name}`;
-                const menus = await scanViewsDir(addon.adminViewsDir, prefix);
-                if (menus.length > 0) {
-                    for (const menu of menus) {
-                        allMenus.push(menu);
-                    }
+    await forEachAddonDir({
+        addons: ctx.addons,
+        pickDir: (addon) => addon.adminViewsDir,
+        warnMessage: "扫描 addon views 目录失败",
+        onDir: async (addon, adminViewsDir) => {
+            const prefix = `/${addon.source}/${addon.name}`;
+            const menus = await scanViewsDir(adminViewsDir, prefix);
+            if (menus.length > 0) {
+                for (const menu of menus) {
+                    allMenus.push(menu);
                 }
             }
-        } catch (error: any) {
-            Logger.warn({ err: error, addon: addon.name }, "扫描 addon views 目录失败");
         }
-    }
+    });
 
     const menusJsonPath = join(projectDir, "menus.json");
     if (existsSync(menusJsonPath)) {
@@ -224,12 +222,12 @@ async function loadMenuConfigs(): Promise<MenuConfig[]> {
 }
 
 export async function syncMenu(ctx: SyncDataContext): Promise<void> {
-    const helper = ctx.helper as any;
+    const dbHelper = ctx.dbHelper;
 
-    const mergedMenus = await loadMenuConfigs();
+    const mergedMenus = await loadMenuConfigs(ctx);
 
     const tablesOk = await assertTablesExist({
-        helper: helper,
+        dbHelper: dbHelper,
         tables: [
             {
                 table: "addon_admin_menu",
@@ -243,8 +241,8 @@ export async function syncMenu(ctx: SyncDataContext): Promise<void> {
 
     const configPaths = collectPaths(mergedMenus);
 
-    await syncMenus(helper, mergedMenus);
-    await deleteObsoleteRecords(helper, configPaths);
+    await syncMenus(dbHelper, mergedMenus);
+    await deleteObsoleteRecords(dbHelper, configPaths);
 
     await ctx.cacheHelper.cacheMenus();
 }

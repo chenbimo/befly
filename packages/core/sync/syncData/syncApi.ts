@@ -1,3 +1,4 @@
+import type { DbHelper } from "../../lib/dbHelper.js";
 import type { ApiInfo } from "../../types/sync.js";
 import type { SyncDataContext } from "./types.js";
 
@@ -5,9 +6,9 @@ import { join, relative } from "pathe";
 
 import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
-import { scanAddons } from "../../utils/addonHelper.js";
-import { scanFiles } from "../../utils/scanFiles.js";
 import { assertTablesExist } from "./assertTablesExist.js";
+import { forEachAddonFile } from "./forEachAddonFile.js";
+import { forEachFileInDir } from "./forEachFileInDir.js";
 
 async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "addon", addonName: string = "", addonTitle: string = ""): Promise<ApiInfo | null> {
     try {
@@ -40,61 +41,68 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "
             addonTitle: addonTitle || addonName
         };
     } catch (error: any) {
-        Logger.error({ err: error }, "同步 API 失败");
-        throw error;
+        Logger.warn({ err: error, filePath: filePath }, "加载 API 模块失败，已跳过该文件");
+        return null;
     }
 }
 
-async function scanAllApis(): Promise<ApiInfo[]> {
+async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
+
+    let projectApiFileCount = 0;
+    let projectApiCount = 0;
+    let projectApiSkippedCount = 0;
+
+    let addonApiFileCount = 0;
+    let addonApiCount = 0;
+    let addonApiSkippedCount = 0;
 
     try {
         const projectApisDir = join(projectDir, "apis");
 
-        const projectApiFiles: string[] = [];
-        try {
-            const files = await scanFiles(projectApisDir);
-            for (const { filePath } of files) {
-                projectApiFiles.push(filePath);
-            }
-        } catch (error: any) {
-            Logger.warn(`扫描项目 API 目录失败: ${projectApisDir} - ${error.message}`);
-        }
-
-        for (const filePath of projectApiFiles) {
-            const apiInfo = await extractApiInfo(filePath, projectApisDir, "app", "", "项目接口");
-            if (apiInfo) {
-                apis.push(apiInfo);
-            }
-        }
-
-        const addons = scanAddons();
-
-        for (const addon of addons) {
-            const addonApisDir = addon.apisDir;
-            if (!addonApisDir) {
-                continue;
-            }
-
-            const addonTitle = addon.name;
-
-            const addonApiFiles: string[] = [];
-            try {
-                const files = await scanFiles(addonApisDir);
-                for (const { filePath } of files) {
-                    addonApiFiles.push(filePath);
-                }
-            } catch (error: any) {
-                Logger.warn(`扫描 addon API 目录失败: ${addonApisDir} - ${error.message}`);
-            }
-
-            for (const filePath of addonApiFiles) {
-                const apiInfo = await extractApiInfo(filePath, addonApisDir, "addon", addon.name, addonTitle);
+        await forEachFileInDir({
+            dirPath: projectApisDir,
+            warnMessage: "扫描项目 API 目录失败",
+            onFile: async (filePath) => {
+                projectApiFileCount += 1;
+                const apiInfo = await extractApiInfo(filePath, projectApisDir, "app", "", "项目接口");
                 if (apiInfo) {
                     apis.push(apiInfo);
+                    projectApiCount += 1;
+                } else {
+                    projectApiSkippedCount += 1;
                 }
             }
-        }
+        });
+
+        await forEachAddonFile({
+            addons: ctx.addons,
+            pickDir: (addon) => addon.apisDir,
+            warnMessage: "扫描 addon API 目录失败",
+            onFile: async (addon, addonApisDir, filePath) => {
+                addonApiFileCount += 1;
+                const apiInfo = await extractApiInfo(filePath, addonApisDir, "addon", addon.name, addon.name);
+                if (apiInfo) {
+                    apis.push(apiInfo);
+                    addonApiCount += 1;
+                } else {
+                    addonApiSkippedCount += 1;
+                }
+            }
+        });
+
+        Logger.info(
+            {
+                projectApiFiles: projectApiFileCount,
+                projectApis: projectApiCount,
+                projectApiSkipped: projectApiSkippedCount,
+                addonApiFiles: addonApiFileCount,
+                addonApis: addonApiCount,
+                addonApiSkipped: addonApiSkippedCount,
+                totalApis: apis.length
+            },
+            "接口扫描完成"
+        );
 
         return apis;
     } catch (error: any) {
@@ -103,10 +111,10 @@ async function scanAllApis(): Promise<ApiInfo[]> {
     }
 }
 
-async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
+async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
     for (const api of apis) {
         try {
-            const existing = await helper.getOne({
+            const existing = await dbHelper.getOne({
                 table: "addon_admin_api",
                 where: { path: api.path }
             });
@@ -115,7 +123,7 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
                 const needUpdate = existing.name !== api.name || existing.method !== api.method || existing.description !== api.description || existing.addonName !== api.addonName || existing.addonTitle !== api.addonTitle;
 
                 if (needUpdate) {
-                    await helper.updData({
+                    await dbHelper.updData({
                         table: "addon_admin_api",
                         where: { id: existing.id },
                         data: {
@@ -128,7 +136,7 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
                     });
                 }
             } else {
-                await helper.insData({
+                await dbHelper.insData({
                     table: "addon_admin_api",
                     data: {
                         name: api.name,
@@ -146,15 +154,15 @@ async function syncApis(helper: any, apis: ApiInfo[]): Promise<void> {
     }
 }
 
-async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promise<void> {
-    const allRecords = await helper.getAll({
+async function deleteObsoleteRecords(dbHelper: DbHelper, apiPaths: Set<string>): Promise<void> {
+    const allRecords = await dbHelper.getAll({
         table: "addon_admin_api",
         where: { state$gte: 0 }
-    });
+    } as any);
 
     for (const record of allRecords.lists) {
         if (record.path && !apiPaths.has(record.path)) {
-            await helper.delForce({
+            await dbHelper.delForce({
                 table: "addon_admin_api",
                 where: { id: record.id }
             });
@@ -163,10 +171,10 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
 }
 
 export async function syncApi(ctx: SyncDataContext): Promise<void> {
-    const helper = ctx.helper as any;
+    const dbHelper = ctx.dbHelper;
 
     const tablesOk = await assertTablesExist({
-        helper: helper,
+        dbHelper: dbHelper,
         tables: [
             {
                 table: "addon_admin_api",
@@ -178,11 +186,11 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
         return;
     }
 
-    const apis = await scanAllApis();
+    const apis = await scanAllApis(ctx);
     const apiPaths = new Set(apis.map((api) => api.path));
 
-    await syncApis(helper, apis);
-    await deleteObsoleteRecords(helper, apiPaths);
+    await syncApis(dbHelper, apis);
+    await deleteObsoleteRecords(dbHelper, apiPaths);
 
     await ctx.cacheHelper.cacheApis();
 

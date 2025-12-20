@@ -6,7 +6,7 @@
 // ==================== 命令选项类型 ====================
 
 /**
- * SyncDb 命令选项
+ * SyncTable（sync:db）命令选项
  */
 export interface SyncDbOptions {
     table?: string;

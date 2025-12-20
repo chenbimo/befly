@@ -1,5 +1,5 @@
 /**
- * syncDb 辅助工具模块测试
+ * syncTable 辅助工具模块测试
  *
  * 测试 helpers.ts 中的函数：
  * - quoteIdentifier

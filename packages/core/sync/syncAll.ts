@@ -1,6 +1,6 @@
 /**
  * Sync 命令 - 一次性执行所有同步操作
- * 按顺序执行：syncDb → syncApi → syncMenu → syncDev（syncDev 内会重建角色接口权限缓存）
+ * 按顺序执行：syncTable → syncData（syncData 内按顺序执行：syncApi → syncMenu → syncDev）
  */
 
 import type { SyncOptions } from "../types/sync.js";
@@ -8,7 +8,7 @@ import type { SyncOptions } from "../types/sync.js";
 import { checkApp } from "../checks/checkApp.js";
 import { Logger } from "../lib/logger.js";
 import { syncDataCommand } from "./syncData.js";
-import { syncDbCommand } from "./syncDb.js";
+import { syncDbCommand } from "./syncTable.js";
 
 export async function syncAllCommand(options: SyncOptions = {}) {
     try {

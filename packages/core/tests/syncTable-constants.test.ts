@@ -1,5 +1,5 @@
 /**
- * syncDb 常量模块测试
+ * syncTable 常量模块测试
  *
  * 测试 constants.ts 中的常量：
  * - DB_VERSION_REQUIREMENTS

@@ -1,5 +1,5 @@
 /**
- * syncDb 数据库版本检查模块
+ * syncTable 数据库版本检查模块
  *
  * 包含：
  * - 数据库版本验证（MySQL/PostgreSQL/SQLite）

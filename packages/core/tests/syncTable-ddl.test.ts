@@ -1,5 +1,5 @@
 /**
- * syncDb DDL 构建模块测试
+ * syncTable DDL 构建模块测试
  *
  * 测试 ddl.ts 中的函数：
  * - buildIndexSQL

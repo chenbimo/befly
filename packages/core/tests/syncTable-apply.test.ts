@@ -1,5 +1,5 @@
 /**
- * syncDb 变更应用模块测试
+ * syncTable 变更应用模块测试
  *
  * 测试 apply.ts 中的函数：
  * - compareFieldDefinition

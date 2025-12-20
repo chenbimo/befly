@@ -1,5 +1,5 @@
 /**
- * syncDb 表结构查询模块测试
+ * syncTable 表结构查询模块测试
  *
  * 测试 schema.ts 中的函数（纯逻辑测试，不需要数据库连接）：
  * - tableExists

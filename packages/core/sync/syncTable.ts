@@ -1,5 +1,5 @@
 /**
- * SyncDb 命令 - 同步数据库表结构
+ * SyncTable 命令 - 同步数据库表结构
  *
  * 功能：
  * - 协调所有模块，执行数据库表结构同步
@@ -24,13 +24,13 @@ import { RedisHelper } from "../lib/redisHelper.js";
 import { projectDir } from "../paths.js";
 import { scanAddons } from "../utils/addonHelper.js";
 import { scanFiles } from "../utils/scanFiles.js";
-import { setDbType } from "./syncDb/constants.js";
-import { applyFieldDefaults } from "./syncDb/helpers.js";
-import { tableExists } from "./syncDb/schema.js";
-import { modifyTable } from "./syncDb/table.js";
-import { createTable } from "./syncDb/tableCreate.js";
+import { setDbType } from "./syncTable/constants.js";
+import { applyFieldDefaults } from "./syncTable/helpers.js";
+import { tableExists } from "./syncTable/schema.js";
+import { modifyTable } from "./syncTable/table.js";
+import { createTable } from "./syncTable/tableCreate.js";
 // 导入模块化的功能
-import { ensureDbVersion } from "./syncDb/version.js";
+import { ensureDbVersion } from "./syncTable/version.js";
 
 // 全局 SQL 客户端实例
 let sql: SQL | null = null;

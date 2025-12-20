@@ -1,5 +1,5 @@
 /**
- * syncDb 类型处理模块测试
+ * syncTable 类型处理模块测试
  *
  * 测试 types.ts 中的函数：
  * - isStringOrArrayType

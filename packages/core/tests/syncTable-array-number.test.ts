@@ -1,12 +1,12 @@
 /**
- * 测试 syncDb 对 array_number_string 和 array_number_text 类型的支持
+ * 测试 syncTable 对 array_number_string 和 array_number_text 类型的支持
  */
 
 import { describe, expect, test } from "bun:test";
 
 import { getSqlType, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from "../sync/syncTable/types.js";
 
-describe("syncDb - array_number 类型支持", () => {
+describe("syncTable - array_number 类型支持", () => {
     // ==================== 类型判断测试 ====================
 
     test("isStringOrArrayType: array_number_string 需要长度", () => {

@@ -6,7 +6,7 @@
 
 - [概述](#概述)
 - [syncAll 全量同步](#syncall-全量同步)
-- [syncDb 数据库同步](#syncdb-数据库同步)
+- [syncTable 数据库同步](#synctable-数据库同步)
 - [syncApi 接口同步](#syncapi-接口同步)
 - [syncMenu 菜单同步](#syncmenu-菜单同步)
 - [syncDev 开发账户同步](#syncdev-开发账户同步)
@@ -21,15 +21,15 @@
 
 Sync 同步系统用于将代码定义同步到数据库，包括：
 
-| 命令       | 功能              | 目标表                                  |
-| ---------- | ----------------- | --------------------------------------- |
-| `syncDb`   | 同步表结构定义    | 所有业务表                              |
-| `syncApi`  | 同步 API 路由信息 | `addon_admin_api`                       |
-| `syncMenu` | 同步菜单配置      | `addon_admin_menu`                      |
-| `syncDev`  | 创建开发者账户    | `addon_admin_role`, `addon_admin_admin` |
-| `syncAll`  | 依次执行以上全部  | -                                       |
+| 命令        | 功能              | 目标表                                  |
+| ----------- | ----------------- | --------------------------------------- |
+| `syncTable` | 同步表结构定义    | 所有业务表                              |
+| `syncApi`   | 同步 API 路由信息 | `addon_admin_api`                       |
+| `syncMenu`  | 同步菜单配置      | `addon_admin_menu`                      |
+| `syncDev`   | 创建开发者账户    | `addon_admin_role`, `addon_admin_admin` |
+| `syncAll`   | 依次执行以上全部  | -                                       |
 
-**执行顺序**：`checkApp` → `syncDb` → `syncApi` → `syncMenu` → `syncDev`
+**执行顺序**：`checkApp` → `syncTable` → `syncApi` → `syncMenu` → `syncDev`
 
 ---
 
@@ -43,7 +43,7 @@ befly sync
 
 # 等同于依次执行：
 # 1. checkApp - 检查应用配置
-# 2. syncDb   - 同步数据库表结构
+# 2. syncTable - 同步数据库表结构
 # 3. syncApi  - 同步 API 路由
 # 4. syncMenu - 同步菜单配置
 # 5. syncDev  - 同步开发账户
@@ -57,7 +57,7 @@ befly sync
 ├──────────────────────────────────────────────────┤
 │  1. checkApp()      检查应用配置是否完整          │
 │         ↓                                        │
-│  2. syncDbCommand() 同步数据库表结构              │
+│  2. syncDbCommand() 同步数据库表结构（syncTable）  │
 │         ↓                                        │
 │  3. syncApiCommand() 同步 API 路由到数据库        │
 │         ↓                                        │
@@ -69,7 +69,7 @@ befly sync
 
 ---
 
-## syncDb 数据库同步
+## syncTable 数据库同步
 
 将 `tables/*.json` 表定义同步到数据库结构。
 
@@ -101,7 +101,7 @@ befly sync:db --dry-run
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    syncDb                           │
+│                  syncTable                          │
 ├─────────────────────────────────────────────────────┤
 │  1. 设置数据库类型 (setDbType)                       │
 │  2. 检查表定义完整性 (checkTable)                    │
@@ -410,19 +410,15 @@ befly sync:dev --plan          # 预览开发账户变更
 
 ```typescript
 import { syncAllCommand } from "./sync/syncAll";
-import { syncDbCommand } from "./sync/syncDb";
-import { syncApiCommand } from "./sync/syncApi";
-import { syncMenuCommand } from "./sync/syncMenu";
-import { syncDevCommand } from "./sync/syncDev";
+import { syncDbCommand } from "./sync/syncTable";
+import { syncDataCommand } from "./sync/syncData";
 
 // 全量同步
 await syncAllCommand();
 
 // 单独调用
 await syncDbCommand({ table: "user" });
-await syncApiCommand({ plan: true });
-await syncMenuCommand({ plan: true });
-await syncDevCommand({ plan: true });
+await syncDataCommand();
 ```
 
 ---
@@ -464,15 +460,15 @@ addons/demo/tables/article.json   → addon_demo_article
 
 ### 1. 执行顺序
 
-**必须按顺序执行**：`syncDb` → `syncApi` → `syncMenu` → `syncDev`
+**必须按顺序执行**：`syncTable` → `syncApi` → `syncMenu` → `syncDev`
 
-- `syncApi` 依赖 `addon_admin_api` 表（由 `syncDb` 创建）
-- `syncMenu` 依赖 `addon_admin_menu` 表（由 `syncDb` 创建）
+- `syncApi` 依赖 `addon_admin_api` 表（由 `syncTable` 创建）
+- `syncMenu` 依赖 `addon_admin_menu` 表（由 `syncTable` 创建）
 - `syncDev` 依赖角色表和权限数据（由前面命令创建）
 
 ### 2. 破坏性操作
 
-默认模式下，`syncDb` **不会删除列**，只会：
+默认模式下，`syncTable` **不会删除列**，只会：
 
 - 新增缺失的列
 - 修改现有列的类型/默认值
@@ -486,7 +482,7 @@ befly sync:db --force
 
 ### 3. 缓存清理
 
-`syncDb` 执行后会自动清理 Redis 中的表结构缓存：
+`syncTable` 执行后会自动清理 Redis 中的表结构缓存：
 
 ```typescript
 // 自动清理以下缓存键

@@ -1,6 +1,6 @@
 import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
-import { createSyncDataContext } from "./syncData/createSyncDataContext.js";
+import { createContext } from "./syncData/createContext.js";
 import { syncApi } from "./syncData/syncApi.js";
 import { syncDev } from "./syncData/syncDev.js";
 import { syncMenu } from "./syncData/syncMenu.js";
@@ -9,7 +9,7 @@ export async function syncDataCommand(): Promise<void> {
     try {
         await Connect.connect();
 
-        const ctx = createSyncDataContext();
+        const ctx = createContext();
 
         // 顺序严格固定：接口 → 菜单 → dev
         await syncApi(ctx);
