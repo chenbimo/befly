@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 
 import { join, normalize, resolve } from "pathe";
 
@@ -64,6 +64,25 @@ const cloneAddonInfos = (addons: AddonInfo[]): AddonInfo[] => {
     return addons.map((addon) => cloneAddonInfo(addon));
 };
 
+const isDirentDirectory = (parentDir: string, entry: any): boolean => {
+    if (typeof entry?.isDirectory === "function" && entry.isDirectory()) {
+        return true;
+    }
+
+    // 兼容 Windows 下的 junction / workspace link：Dirent.isDirectory() 可能为 false，但它实际指向目录。
+    const isSymbolicLink = typeof entry?.isSymbolicLink === "function" ? entry.isSymbolicLink() : false;
+    if (!isSymbolicLink) {
+        return false;
+    }
+
+    try {
+        const stats = statSync(join(parentDir, entry.name));
+        return stats.isDirectory();
+    } catch {
+        return false;
+    }
+};
+
 /**
  * 扫描所有可用的 addon
  * 优先从本地 addons/ 目录加载，其次从 node_modules/@befly-addon/ 加载
@@ -94,10 +113,11 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
         try {
             const entries = readdirSync(scan.dir, { withFileTypes: true });
             for (const entry of entries) {
-                if (!entry.isDirectory()) {
+                if (entry.name.startsWith("_")) {
                     continue;
                 }
-                if (entry.name.startsWith("_")) {
+
+                if (!isDirentDirectory(scan.dir, entry)) {
                     continue;
                 }
 
