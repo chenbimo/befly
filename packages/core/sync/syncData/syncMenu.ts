@@ -12,6 +12,7 @@ import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
 import { scanAddons } from "../../utils/addonHelper.js";
 import { isDirentDirectory } from "../../utils/isDirentDirectory.js";
+import { assertTablesExist } from "./assertTablesExist.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {
@@ -227,9 +228,16 @@ export async function syncMenu(ctx: SyncDataContext): Promise<void> {
 
     const mergedMenus = await loadMenuConfigs();
 
-    const exists = await helper.tableExists("addon_admin_menu");
-    if (!exists) {
-        Logger.debug("表 addon_admin_menu 不存在，跳过菜单同步");
+    const tablesOk = await assertTablesExist({
+        helper: helper,
+        tables: [
+            {
+                table: "addon_admin_menu",
+                skipMessage: "表 addon_admin_menu 不存在，跳过菜单同步"
+            }
+        ]
+    });
+    if (!tablesOk) {
         return;
     }
 

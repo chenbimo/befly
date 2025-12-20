@@ -7,6 +7,7 @@ import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
 import { scanAddons } from "../../utils/addonHelper.js";
 import { scanFiles } from "../../utils/scanFiles.js";
+import { assertTablesExist } from "./assertTablesExist.js";
 
 async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "addon", addonName: string = "", addonTitle: string = ""): Promise<ApiInfo | null> {
     try {
@@ -164,9 +165,16 @@ async function deleteObsoleteRecords(helper: any, apiPaths: Set<string>): Promis
 export async function syncApi(ctx: SyncDataContext): Promise<void> {
     const helper = ctx.helper as any;
 
-    const exists = await helper.tableExists("addon_admin_api");
-    if (!exists) {
-        Logger.debug("表 addon_admin_api 不存在，跳过 API 同步（需要安装 addon-admin 组件）");
+    const tablesOk = await assertTablesExist({
+        helper: helper,
+        tables: [
+            {
+                table: "addon_admin_api",
+                skipMessage: "表 addon_admin_api 不存在，跳过 API 同步（需要安装 addon-admin 组件）"
+            }
+        ]
+    });
+    if (!tablesOk) {
         return;
     }
 

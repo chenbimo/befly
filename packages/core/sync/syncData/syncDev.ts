@@ -3,6 +3,7 @@ import type { SyncDataContext } from "./types.js";
 import { beflyConfig } from "../../befly.config.js";
 import { Cipher } from "../../lib/cipher.js";
 import { Logger } from "../../lib/logger.js";
+import { assertTablesExist } from "./assertTablesExist.js";
 
 export async function syncDev(ctx: SyncDataContext): Promise<void> {
     if (!beflyConfig.devPassword) {
@@ -11,21 +12,24 @@ export async function syncDev(ctx: SyncDataContext): Promise<void> {
 
     const helper = ctx.helper as any;
 
-    const existAdmin = await helper.tableExists("addon_admin_admin");
-    if (!existAdmin) {
-        Logger.debug("[SyncDev] 表 addon_admin_admin 不存在，跳过开发者账号同步");
-        return;
-    }
-
-    const existRole = await helper.tableExists("addon_admin_role");
-    if (!existRole) {
-        Logger.debug("[SyncDev] 表 addon_admin_role 不存在，跳过开发者账号同步");
-        return;
-    }
-
-    const existMenu = await helper.tableExists("addon_admin_menu");
-    if (!existMenu) {
-        Logger.debug("[SyncDev] 表 addon_admin_menu 不存在，跳过开发者账号同步");
+    const tablesOk = await assertTablesExist({
+        helper: helper,
+        tables: [
+            {
+                table: "addon_admin_admin",
+                skipMessage: "[SyncDev] 表 addon_admin_admin 不存在，跳过开发者账号同步"
+            },
+            {
+                table: "addon_admin_role",
+                skipMessage: "[SyncDev] 表 addon_admin_role 不存在，跳过开发者账号同步"
+            },
+            {
+                table: "addon_admin_menu",
+                skipMessage: "[SyncDev] 表 addon_admin_menu 不存在，跳过开发者账号同步"
+            }
+        ]
+    });
+    if (!tablesOk) {
         return;
     }
 
