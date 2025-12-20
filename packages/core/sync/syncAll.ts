@@ -5,22 +5,16 @@
 
 import type { SyncOptions } from "../types/sync.js";
 
-import { checkApi } from "../checks/checkApi.js";
-import { checkTable } from "../checks/checkTable.js";
 import { Logger } from "../lib/logger.js";
 import { syncDataCommand } from "./syncData.js";
 import { syncDbCommand } from "./syncTable.js";
 
 export async function syncAllCommand(options: SyncOptions = {}) {
     try {
-        // 1. 同步前检查：表定义 + 接口定义
-        await checkTable();
-        await checkApi();
-
-        // 2. 同步数据库表结构
+        // 1. 同步数据库表结构
         await syncDbCommand({ dryRun: false, force: options.force || false });
 
-        // 3. 同步数据：接口 → 菜单 → dev（共用同一份连接与 helper/cache 实例）
+        // 2. 同步数据：接口 → 菜单 → dev（共用同一份连接与 helper/cache 实例）
         await syncDataCommand();
     } catch (error: any) {
         Logger.error({ err: error }, "同步过程中发生错误");

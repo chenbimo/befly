@@ -7,6 +7,7 @@ import { join, relative } from "pathe";
 import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
 import { assertTablesExist } from "./assertTablesExist.js";
+import { checkApi } from "./checkApi.js";
 import { forEachAddonFile } from "./forEachAddonFile.js";
 import { forEachFileInDir } from "./forEachFileInDir.js";
 
@@ -185,6 +186,8 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
     if (!tablesOk) {
         return;
     }
+
+    await checkApi();
 
     const apis = await scanAllApis(ctx);
     const apiPaths = new Set(apis.map((api) => api.path));

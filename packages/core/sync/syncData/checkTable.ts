@@ -1,5 +1,5 @@
 // 类型导入
-import type { FieldDefinition } from "../types/validate.js";
+import type { FieldDefinition } from "../../types/validate.js";
 
 // 内部依赖
 import { existsSync } from "node:fs";
@@ -7,11 +7,11 @@ import { existsSync } from "node:fs";
 // 外部依赖
 import { basename } from "pathe";
 
-import { Logger } from "../lib/logger.js";
-import { projectTableDir } from "../paths.js";
-import { scanAddons } from "../utils/addonHelper.js";
 // 相对导入
-import { scanFiles } from "../utils/scanFiles.js";
+import { Logger } from "../../lib/logger.js";
+import { projectTableDir } from "../../paths.js";
+import { scanAddons } from "../../utils/addonHelper.js";
+import { scanFiles } from "../../utils/scanFiles.js";
 
 /**
  * 表文件信息接口

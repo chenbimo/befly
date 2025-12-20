@@ -13,6 +13,7 @@ import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
 import { isDirentDirectory } from "../../utils/isDirentDirectory.js";
 import { assertTablesExist } from "./assertTablesExist.js";
+import { checkTable } from "./checkTable.js";
 import { forEachAddonDir } from "./forEachAddonDir.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
@@ -238,6 +239,8 @@ export async function syncMenu(ctx: SyncDataContext): Promise<void> {
     if (!tablesOk) {
         return;
     }
+
+    await checkTable();
 
     const configPaths = collectPaths(mergedMenus);
 
