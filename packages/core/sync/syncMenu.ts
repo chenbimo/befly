@@ -30,6 +30,7 @@ import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
 import { projectDir } from "../paths.js";
 import { scanAddons } from "../utils/addonHelper.js";
+import { isDirentDirectory } from "../utils/isDirentDirectory.js";
 
 /**
  * 扫描 views 目录，构建菜单树
@@ -48,7 +49,7 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
 
     for (const entry of entries) {
         // 只处理目录，忽略 components 目录
-        if (!entry.isDirectory() || entry.name === "components") {
+        if (!isDirentDirectory(viewsDir, entry) || entry.name === "components") {
             continue;
         }
 

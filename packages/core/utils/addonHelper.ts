@@ -1,6 +1,8 @@
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 
 import { join, normalize, resolve } from "pathe";
+
+import { isDirentDirectory } from "./isDirentDirectory.js";
 
 export type AddonSource = "addon" | "app";
 
@@ -62,25 +64,6 @@ const cloneAddonInfos = (addons: AddonInfo[]): AddonInfo[] => {
     // AddonInfo 是纯 string/null 的扁平对象：不需要深拷贝。
     // 这里对数组与对象做浅拷贝即可避免调用方修改返回值污染缓存。
     return addons.map((addon) => cloneAddonInfo(addon));
-};
-
-const isDirentDirectory = (parentDir: string, entry: any): boolean => {
-    if (typeof entry?.isDirectory === "function" && entry.isDirectory()) {
-        return true;
-    }
-
-    // 兼容 Windows 下的 junction / workspace link：Dirent.isDirectory() 可能为 false，但它实际指向目录。
-    const isSymbolicLink = typeof entry?.isSymbolicLink === "function" ? entry.isSymbolicLink() : false;
-    if (!isSymbolicLink) {
-        return false;
-    }
-
-    try {
-        const stats = statSync(join(parentDir, entry.name));
-        return stats.isDirectory();
-    } catch {
-        return false;
-    }
 };
 
 /**
