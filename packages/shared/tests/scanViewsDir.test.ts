@@ -99,7 +99,7 @@ describe("befly-shared/scanViewsDir - normalizeMenuTree", () => {
         expect(childPaths).toEqual(["/a/c", "/a/b", "/a/d"]);
     });
 
-    test("should sort root nodes by sort ascending with default=1", () => {
+    test("should sort root nodes by sort ascending with default=999", () => {
         const input = [
             { name: "B", path: "/b", sort: 2 },
             { name: "A", path: "/a" },
@@ -107,6 +107,6 @@ describe("befly-shared/scanViewsDir - normalizeMenuTree", () => {
         ];
 
         const normalized = normalizeMenuTree(input as any);
-        expect(normalized.map((x: any) => x.path)).toEqual(["/a", "/b", "/c"]);
+        expect(normalized.map((x: any) => x.path)).toEqual(["/b", "/c", "/a"]);
     });
 });

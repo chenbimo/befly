@@ -102,7 +102,7 @@ export function normalizeMenuTree<T extends MenuNodeLike<T>>(menus: T[]): T[] {
     }
 
     const result = Array.from(map.values());
-    result.sort((a, b) => ((a as any).sort || 1) - ((b as any).sort || 1));
+    result.sort((a, b) => ((a as any).sort ?? 999) - ((b as any).sort ?? 999));
     return result;
 }
 
