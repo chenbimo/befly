@@ -22,7 +22,6 @@ import { readdir, readFile } from "node:fs/promises";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "befly-shared/utils/scanViewsDir";
 import { join } from "pathe";
 
-import { beflyConfig } from "../befly.config.js";
 import { CacheKeys } from "../lib/cacheKeys.js";
 import { Connect } from "../lib/connect.js";
 import { DbHelper } from "../lib/dbHelper.js";
@@ -119,31 +118,6 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
     menus.sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999));
 
     return menus;
-}
-
-/**
- * 过滤隐藏的菜单（递归处理子菜单）
- */
-function filterHiddenMenus(menus: MenuConfig[], hiddenSet: Set<string>): MenuConfig[] {
-    const result: MenuConfig[] = [];
-
-    for (const menu of menus) {
-        // 如果菜单在隐藏列表中，跳过
-        if (menu.path && hiddenSet.has(menu.path)) {
-            continue;
-        }
-
-        const filtered = { ...menu };
-
-        // 递归过滤子菜单
-        if (filtered.children && filtered.children.length > 0) {
-            filtered.children = filterHiddenMenus(filtered.children, hiddenSet);
-        }
-
-        result.push(filtered);
-    }
-
-    return result;
 }
 
 /**
@@ -310,14 +284,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         }
 
         // 1. 加载所有菜单配置
-        let mergedMenus = await loadMenuConfigs();
-
-        // 3. 过滤隐藏菜单（根据 hiddenMenus 配置）
-        const hiddenMenus = (beflyConfig as any).hiddenMenus || [];
-        if (Array.isArray(hiddenMenus) && hiddenMenus.length > 0) {
-            const hiddenSet = new Set(hiddenMenus);
-            mergedMenus = filterHiddenMenus(mergedMenus, hiddenSet);
-        }
+        const mergedMenus = await loadMenuConfigs();
 
         // 连接数据库
         await Connect.connect();
@@ -364,5 +331,4 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）
 export const __test__ = {
     scanViewsDir: scanViewsDir
-    // normalizeMenuPath/normalizeMenuTree 已移除：要求调用方传入的 path 与 hiddenMenus 配置本身就是规范的
 };

@@ -295,13 +295,11 @@ befly.development.json 或 befly.production.json（环境配置）
 | ---------------- | -------- | ------ | -------------- |
 | `disableHooks`   | string[] | `[]`   | 禁用的钩子列表 |
 | `disablePlugins` | string[] | `[]`   | 禁用的插件列表 |
-| `hiddenMenus`    | string[] | `[]`   | 隐藏的菜单路径 |
 
 ```json
 {
     "disableHooks": ["requestLogger"],
-    "disablePlugins": ["redis"],
-    "hiddenMenus": ["/admin/debug", "/admin/test"]
+    "disablePlugins": ["redis"]
 }
 ```
 

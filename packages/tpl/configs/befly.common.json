@@ -12,7 +12,5 @@
                 "fromName": ""
             }
         }
-    },
-
-    "hiddenMenus": ["/addon/admin/login", "/addon/admin/403"]
+    }
 }
