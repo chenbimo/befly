@@ -241,6 +241,8 @@ async function loadMenuConfigs(): Promise<MenuConfig[]> {
     for (const addon of addons) {
         try {
             if (addon.adminViewsDir) {
+                // 约束：菜单 path 由扫描与配置保证规范（以 / 开头且无多余 /），此处不做任何 path 规范化/合并。
+                // 命名空间：不同来源使用不同前缀，避免与项目 menus.json 或其他来源冲突。
                 const prefix = `/${addon.source}/${addon.name}`;
                 const menus = await scanViewsDir(addon.adminViewsDir, prefix);
                 if (menus.length > 0) {
