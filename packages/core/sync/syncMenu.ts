@@ -300,7 +300,7 @@ async function loadMenuConfigs(): Promise<LoadedMenuConfigs[]> {
     for (const addon of addons) {
         try {
             if (addon.adminViewsDir) {
-                const prefix = `/addon/${addon.name}`;
+                const prefix = addon.source === "addon" ? `/addon/${addon.name}` : addon.name;
                 const menus = await scanViewsDir(addon.adminViewsDir, prefix);
                 if (menus.length > 0) {
                     allMenus.push({
