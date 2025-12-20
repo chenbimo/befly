@@ -13,7 +13,10 @@ function createMockBefly() {
         redis: {
             get: mock(async () => null),
             set: mock(async () => true),
-            del: mock(async () => 1)
+            del: mock(async () => 1),
+            getObject: mock(async () => null),
+            setObject: mock(async () => true),
+            genTimeID: mock(async () => 1)
         },
         db: null
     };
@@ -26,7 +29,7 @@ test("executeWithConn - 正常执行（无参数）", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     // 使用反射访问私有方法
     const result = await (dbHelper as any).executeWithConn("SELECT * FROM users");
@@ -42,7 +45,7 @@ test("executeWithConn - 正常执行（带参数）", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     const result = await (dbHelper as any).executeWithConn("SELECT * FROM users WHERE id = ?", [1]);
 
@@ -59,7 +62,7 @@ test("executeWithConn - SQL 错误捕获", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     try {
         await (dbHelper as any).executeWithConn("SELECT * FROM invalid_table");
@@ -82,7 +85,7 @@ test("executeWithConn - 错误信息包含完整信息", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     const testSql = "SHOW COLUMNS FROM ??";
     const testParams = ["users"];
@@ -107,7 +110,7 @@ test("executeWithConn - 超长 SQL 保留在错误对象中", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     try {
         await (dbHelper as any).executeWithConn(longSql);
@@ -129,7 +132,7 @@ test("executeWithConn - 慢查询检测（>1000ms）", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     const result = await (dbHelper as any).executeWithConn("SELECT SLEEP(1)");
 
@@ -138,8 +141,8 @@ test("executeWithConn - 慢查询检测（>1000ms）", async () => {
 });
 
 test("executeWithConn - 数据库未连接错误", async () => {
-    const befly = createMockBefly(null);
-    const dbHelper = new DbHelper(befly as any, null); // 没有 sql 实例
+    const befly = createMockBefly();
+    const dbHelper = new DbHelper(befly.redis as any, null); // 没有 sql 实例
 
     try {
         await (dbHelper as any).executeWithConn("SELECT * FROM users");
@@ -156,7 +159,7 @@ test("executeWithConn - 空参数数组", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     const result = await (dbHelper as any).executeWithConn("SELECT COUNT(*) as count FROM users", []);
 
@@ -173,7 +176,7 @@ test("executeWithConn - 复杂参数处理", async () => {
     };
 
     const befly = createMockBefly();
-    const dbHelper = new DbHelper(befly as any, sqlMock);
+    const dbHelper = new DbHelper(befly.redis as any, sqlMock);
 
     const complexParams = [1, "test", { nested: "object" }, [1, 2, 3], null, undefined];
 

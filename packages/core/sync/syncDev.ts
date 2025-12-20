@@ -39,7 +39,7 @@ export async function syncDevCommand(options: SyncDevOptions = {}): Promise<void
         await Connect.connect();
 
         const redisHelper = new RedisHelper();
-        const helper = new DbHelper({ redis: redisHelper } as any, Connect.getSql());
+        const helper = new DbHelper(redisHelper, Connect.getSql());
 
         // 检查 addon_admin_admin 表是否存在
         const existAdmin = await helper.tableExists("addon_admin_admin");

@@ -291,7 +291,7 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         // 连接数据库
         await Connect.connect();
 
-        const helper = new DbHelper({ redis: new RedisHelper() } as any, Connect.getSql());
+        const helper = new DbHelper(new RedisHelper(), Connect.getSql());
 
         // 3. 检查表是否存在
         const exists = await helper.tableExists("addon_admin_menu");

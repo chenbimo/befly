@@ -214,7 +214,7 @@ export async function syncApiCommand(options: SyncApiOptions = {}): Promise<void
         await Connect.connect();
 
         const redisHelper = new RedisHelper();
-        const helper = new DbHelper({ redis: redisHelper } as any, Connect.getSql());
+        const helper = new DbHelper(redisHelper, Connect.getSql());
         const cacheHelper = new CacheHelper({ db: helper, redis: redisHelper } as any);
 
         // 1. 检查表是否存在（addon_admin_api 来自 addon-admin 组件）

@@ -3,9 +3,9 @@
  * 提供数据库 CRUD 操作的封装
  */
 
-import type { BeflyContext } from "../types/befly.js";
 import type { WhereConditions, JoinOption } from "../types/common.js";
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback } from "../types/database.js";
+import type { RedisHelper } from "./redisHelper.js";
 
 import { snakeCase } from "es-toolkit/string";
 
@@ -23,17 +23,17 @@ const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
  * 数据库助手类
  */
 export class DbHelper {
-    private befly: BeflyContext;
+    private redis: RedisHelper;
     private sql: any = null;
     private isTransaction: boolean = false;
 
     /**
      * 构造函数
-     * @param befly - Befly 上下文
+     * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(befly: BeflyContext, sql: any = null) {
-        this.befly = befly;
+    constructor(redis: RedisHelper, sql: any = null) {
+        this.redis = redis;
         this.sql = sql;
         this.isTransaction = !!sql;
     }
@@ -90,7 +90,7 @@ export class DbHelper {
     private async getTableColumns(table: string): Promise<string[]> {
         // 1. 先查 Redis 缓存
         const cacheKey = CacheKeys.tableColumns(table);
-        const columns = await this.befly.redis.getObject<string[]>(cacheKey);
+        const columns = await this.redis.getObject<string[]>(cacheKey);
 
         if (columns && columns.length > 0) {
             return columns;
@@ -107,7 +107,7 @@ export class DbHelper {
         const columnNames = result.map((row: any) => row.Field) as string[];
 
         // 3. 写入 Redis 缓存
-        await this.befly.redis.setObject(cacheKey, columnNames, TABLE_COLUMNS_CACHE_TTL_SECONDS);
+        await this.redis.setObject(cacheKey, columnNames, TABLE_COLUMNS_CACHE_TTL_SECONDS);
 
         return columnNames;
     }
@@ -869,7 +869,7 @@ export class DbHelper {
 
         // 强制生成 ID（不可被用户覆盖）
         try {
-            processed.id = await this.befly.redis.genTimeID();
+            processed.id = await this.redis.genTimeID();
         } catch (error: any) {
             throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table})`, error);
         }
@@ -917,7 +917,7 @@ export class DbHelper {
         // 批量生成 ID（逐个获取）
         const ids: number[] = [];
         for (let i = 0; i < dataList.length; i++) {
-            ids.push(await this.befly.redis.genTimeID());
+            ids.push(await this.redis.genTimeID());
         }
         const now = Date.now();
 
@@ -1081,7 +1081,7 @@ export class DbHelper {
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
         return await this.sql.begin(async (tx: any) => {
-            const trans = new DbHelper(this.befly, tx);
+            const trans = new DbHelper(this.redis, tx);
             return await callback(trans);
         });
     }

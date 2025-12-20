@@ -22,7 +22,7 @@ const dbPlugin: Plugin = {
             sql = await Connect.connectSql();
 
             // 创建数据库管理器实例，直接传入 sql 对象
-            const dbManager = new DbHelper(befly, sql);
+            const dbManager = new DbHelper(befly.redis, sql);
 
             return dbManager;
         } catch (error: any) {
