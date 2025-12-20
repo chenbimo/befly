@@ -4,6 +4,7 @@
 
 import type { LoggerConfig } from "../types/logger.js";
 
+import { existsSync, mkdirSync } from "node:fs";
 import { readdir, stat, unlink } from "node:fs/promises";
 import { join as nodePathJoin } from "node:path";
 
@@ -32,12 +33,28 @@ let slowInstance: pino.Logger | null = null;
 let errorInstance: pino.Logger | null = null;
 let mockInstance: pino.Logger | null = null;
 let didPruneOldLogFiles: boolean = false;
+let didEnsureLogDir: boolean = false;
 let config: LoggerConfig = {
     debug: 0,
     dir: "./logs",
     console: 1,
     maxSize: 10
 };
+
+function ensureLogDirExists(): void {
+    if (didEnsureLogDir) return;
+    didEnsureLogDir = true;
+
+    const dir = config.dir || "./logs";
+    try {
+        if (!existsSync(dir)) {
+            mkdirSync(dir, { recursive: true });
+        }
+    } catch (error: any) {
+        // 不能在 Logger 初始化前调用 Logger 本身，直接抛错即可
+        throw new Error(`创建 logs 目录失败: ${dir}. ${error?.message || error}`);
+    }
+}
 
 async function pruneOldLogFiles(): Promise<void> {
     if (didPruneOldLogFiles) return;
@@ -90,6 +107,7 @@ export function configure(cfg: LoggerConfig): void {
     slowInstance = null;
     errorInstance = null;
     didPruneOldLogFiles = false;
+    didEnsureLogDir = false;
 
     // 仅支持数组配置：excludeFields?: string[]
     const userPatterns = Array.isArray(config.excludeFields) ? config.excludeFields : [];
@@ -172,6 +190,8 @@ export function getLogger(): pino.Logger {
 
     if (instance) return instance;
 
+    ensureLogDirExists();
+
     // 启动时清理过期日志（异步，不阻塞初始化）
     void pruneOldLogFiles();
 
@@ -212,6 +232,8 @@ function getSlowLogger(): pino.Logger {
     if (mockInstance) return mockInstance;
     if (slowInstance) return slowInstance;
 
+    ensureLogDirExists();
+
     void pruneOldLogFiles();
 
     const level = config.debug === 1 ? "debug" : "info";
@@ -239,6 +261,8 @@ function getSlowLogger(): pino.Logger {
 function getErrorLogger(): pino.Logger {
     if (mockInstance) return mockInstance;
     if (errorInstance) return errorInstance;
+
+    ensureLogDirExists();
 
     void pruneOldLogFiles();
 
