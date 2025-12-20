@@ -1,19 +1,5 @@
-/**
- * SyncMenu 命令 - 同步菜单数据到数据库
- * 说明：扫描 addon 的 views 目录和项目的 menus.json，同步菜单数据
- *
- * 流程：
- * 1. 扫描所有 addon 的 views 目录下的 index.vue，并从 definePage({ meta }) 解析菜单元信息
- * 2. 根据目录层级构建菜单树（无层级限制）
- * 3. 读取项目的 menus.json 文件（手动配置的菜单）
- * 4. 根据菜单的 path 字段检查是否存在
- * 5. 存在则更新其他字段（name、sort、pid）
- * 6. 不存在则新增菜单记录
- * 7. 强制删除配置中不存在的菜单记录
- * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
- */
-
-import type { SyncMenuOptions, MenuConfig } from "../types/sync.js";
+import type { MenuConfig } from "../../types/sync.js";
+import type { SyncDataContext } from "./types.js";
 import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 
 import { existsSync } from "node:fs";
@@ -22,22 +8,11 @@ import { readdir, readFile } from "node:fs/promises";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "befly-shared/utils/scanViewsDir";
 import { join } from "pathe";
 
-import { CacheKeys } from "../lib/cacheKeys.js";
-import { Connect } from "../lib/connect.js";
-import { DbHelper } from "../lib/dbHelper.js";
-import { Logger } from "../lib/logger.js";
-import { RedisHelper } from "../lib/redisHelper.js";
-import { projectDir } from "../paths.js";
-import { scanAddons } from "../utils/addonHelper.js";
-import { isDirentDirectory } from "../utils/isDirentDirectory.js";
+import { Logger } from "../../lib/logger.js";
+import { projectDir } from "../../paths.js";
+import { scanAddons } from "../../utils/addonHelper.js";
+import { isDirentDirectory } from "../../utils/isDirentDirectory.js";
 
-/**
- * 扫描 views 目录，构建菜单树
- * @param viewsDir views 目录路径
- * @param prefix 路径前缀（addon 前缀）
- * @param parentPath 父级路径
- * @returns 菜单数组
- */
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {
         return [];
@@ -47,7 +22,6 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
     const entries = await readdir(viewsDir, { withFileTypes: true });
 
     for (const entry of entries) {
-        // 只处理目录，忽略 components 目录
         if (!isDirentDirectory(viewsDir, entry) || entry.name === "components") {
             continue;
         }
@@ -55,12 +29,10 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         const dirPath = join(viewsDir, entry.name);
         const indexVuePath = join(dirPath, "index.vue");
 
-        // 没有 index.vue 的目录不处理
         if (!existsSync(indexVuePath)) {
             continue;
         }
 
-        // 从 index.vue 中解析 definePage({ meta })
         let meta: ViewDirMeta | null = null;
         try {
             const content = await readFile(indexVuePath, "utf-8");
@@ -81,22 +53,18 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
             continue;
         }
 
-        // 没有 definePage meta 的目录不处理
         if (!meta?.title) {
             continue;
         }
 
-        // 计算路径：清理数字后缀，index 目录特殊处理
         const cleanName = cleanDirName(entry.name);
         let menuPath: string;
         if (cleanName === "index") {
-            // index 目录路径为父级路径；根级别用空字符串（避免 addon prefix 拼出尾随 /）
             menuPath = parentPath;
         } else {
             menuPath = parentPath ? `${parentPath}/${cleanName}` : `/${cleanName}`;
         }
 
-        // 添加 addon 前缀
         const fullPath = prefix ? (menuPath ? `${prefix}${menuPath}` : prefix) : menuPath || "/";
 
         const menu: MenuConfig = {
@@ -105,7 +73,6 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
             sort: meta.order ?? 999
         };
 
-        // 递归扫描子目录
         const children = await scanViewsDir(dirPath, prefix, menuPath);
         if (children.length > 0) {
             menu.children = children;
@@ -114,15 +81,11 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         menus.push(menu);
     }
 
-    // 按 sort 排序
     menus.sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999));
 
     return menus;
 }
 
-/**
- * 收集所有菜单的 path（递归收集所有层级）
- */
 function collectPaths(menus: MenuConfig[]): Set<string> {
     const paths = new Set<string>();
 
@@ -141,9 +104,6 @@ function collectPaths(menus: MenuConfig[]): Set<string> {
     return paths;
 }
 
-/**
- * 递归同步单个菜单（无层级限制）
- */
 async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, existingMenuMap: Map<string, any>): Promise<number> {
     const existing = existingMenuMap.get(menu.path || "");
     let menuId: number;
@@ -185,9 +145,6 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
     return menuId;
 }
 
-/**
- * 同步菜单到数据库
- */
 async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
     const allExistingMenus = await helper.getAll({
         table: "addon_admin_menu"
@@ -209,9 +166,6 @@ async function syncMenus(helper: any, menus: MenuConfig[]): Promise<void> {
     }
 }
 
-/**
- * 删除配置中不存在的菜单（强制删除）
- */
 async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Promise<void> {
     const allRecords = await helper.getAll({
         table: "addon_admin_menu",
@@ -229,20 +183,14 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
     }
 }
 
-/**
- * 加载所有菜单配置（addon views + 项目 menus.json）
- */
 async function loadMenuConfigs(): Promise<MenuConfig[]> {
     const allMenus: MenuConfig[] = [];
 
-    // 1. 扫描所有 addon 的 views 目录
     const addons = scanAddons();
 
     for (const addon of addons) {
         try {
             if (addon.adminViewsDir) {
-                // 约束：菜单 path 由扫描与配置保证规范（以 / 开头且无多余 /），此处不做任何 path 规范化/合并。
-                // 命名空间：不同来源使用不同前缀，避免与项目 menus.json 或其他来源冲突。
                 const prefix = `/${addon.source}/${addon.name}`;
                 const menus = await scanViewsDir(addon.adminViewsDir, prefix);
                 if (menus.length > 0) {
@@ -256,7 +204,6 @@ async function loadMenuConfigs(): Promise<MenuConfig[]> {
         }
     }
 
-    // 2. 读取项目的 menus.json
     const menusJsonPath = join(projectDir, "menus.json");
     if (existsSync(menusJsonPath)) {
         try {
@@ -275,58 +222,23 @@ async function loadMenuConfigs(): Promise<MenuConfig[]> {
     return allMenus;
 }
 
-/**
- * SyncMenu 命令主函数
- */
-export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<void> {
-    try {
-        if (options.plan) {
-            Logger.debug("[计划] 同步菜单配置到数据库（plan 模式不执行）");
-            return;
-        }
+export async function syncMenu(ctx: SyncDataContext): Promise<void> {
+    const helper = ctx.helper as any;
 
-        // 1. 加载所有菜单配置
-        const mergedMenus = await loadMenuConfigs();
+    const mergedMenus = await loadMenuConfigs();
 
-        // 连接数据库
-        await Connect.connect();
-
-        const redisHelper = new RedisHelper();
-        const helper = new DbHelper(redisHelper, Connect.getSql());
-
-        // 3. 检查表是否存在
-        const exists = await helper.tableExists("addon_admin_menu");
-
-        if (!exists) {
-            Logger.debug("表 addon_admin_menu 不存在，跳过菜单同步");
-            return;
-        }
-
-        // 4. 收集所有菜单的 path
-        const configPaths = collectPaths(mergedMenus);
-
-        // 5. 同步菜单
-        await syncMenus(helper, mergedMenus);
-
-        // 6. 删除不存在的菜单
-        await deleteObsoleteRecords(helper, configPaths);
-
-        // 7. 获取最终菜单数据（用于缓存）
-        const allMenusData = await helper.getAll({
-            table: "addon_admin_menu"
-        });
-
-        // 8. 缓存菜单数据到 Redis
-        const cacheRes = await redisHelper.setObject(CacheKeys.menusAll(), allMenusData.lists);
-        if (!cacheRes) {
-            Logger.warn("Redis 缓存菜单数据失败");
-        }
-    } catch (error: any) {
-        Logger.error({ err: error }, "菜单同步失败");
-        throw error;
-    } finally {
-        await Connect.disconnect();
+    const exists = await helper.tableExists("addon_admin_menu");
+    if (!exists) {
+        Logger.debug("表 addon_admin_menu 不存在，跳过菜单同步");
+        return;
     }
+
+    const configPaths = collectPaths(mergedMenus);
+
+    await syncMenus(helper, mergedMenus);
+    await deleteObsoleteRecords(helper, configPaths);
+
+    await ctx.cacheHelper.cacheMenus();
 }
 
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）

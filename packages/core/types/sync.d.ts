@@ -28,7 +28,6 @@ export interface SyncOptions {
  * SyncMenu 命令选项
  */
 export interface SyncMenuOptions {
-    plan?: boolean;
 }
 
 /**
@@ -51,14 +50,12 @@ export type MenuConfigSource = "core" | "app" | "addon";
  * SyncDev 命令选项
  */
 export interface SyncDevOptions {
-    plan?: boolean;
 }
 
 /**
  * SyncApi 命令选项
  */
 export interface SyncApiOptions {
-    plan?: boolean;
 }
 
 /**
