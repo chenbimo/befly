@@ -5,7 +5,6 @@
 
 import type { WhereConditions, JoinOption } from "../types/common.js";
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback } from "../types/database.js";
-import type { RedisHelper } from "./redisHelper.js";
 
 import { snakeCase } from "es-toolkit/string";
 
@@ -19,11 +18,17 @@ import { SqlBuilder } from "./sqlBuilder.js";
 
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 
+type DbHelperRedis = {
+    getObject<T = any>(key: string): Promise<T | null>;
+    setObject<T = any>(key: string, obj: T, ttl?: number | null): Promise<string | null>;
+    genTimeID(): Promise<number>;
+};
+
 /**
  * 数据库助手类
  */
 export class DbHelper {
-    private redis: RedisHelper;
+    private redis: DbHelperRedis;
     private sql: any = null;
     private isTransaction: boolean = false;
 
@@ -32,7 +37,7 @@ export class DbHelper {
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(redis: RedisHelper, sql: any = null) {
+    constructor(redis: DbHelperRedis, sql: any = null) {
         this.redis = redis;
         this.sql = sql;
         this.isTransaction = !!sql;

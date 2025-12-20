@@ -317,10 +317,9 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         });
 
         // 8. 缓存菜单数据到 Redis
-        try {
-            await redisHelper.setObject(CacheKeys.menusAll(), allMenusData.lists);
-        } catch (error: any) {
-            Logger.warn({ err: error }, "Redis 缓存菜单数据失败");
+        const cacheRes = await redisHelper.setObject(CacheKeys.menusAll(), allMenusData.lists);
+        if (!cacheRes) {
+            Logger.warn("Redis 缓存菜单数据失败");
         }
     } catch (error: any) {
         Logger.error({ err: error }, "菜单同步失败");
