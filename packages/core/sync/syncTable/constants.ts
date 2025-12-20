@@ -56,7 +56,7 @@ export const IS_PLAN = process.argv.includes("--plan");
 let _dbType: string = "mysql";
 
 /**
- * 设置数据库类型（由 syncDbCommand 调用）
+ * 设置数据库类型（由 syncTable 调用）
  * @param dbType - 数据库类型（mysql/postgresql/postgres/sqlite）
  */
 export function setDbType(dbType: string): void {

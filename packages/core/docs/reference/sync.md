@@ -29,7 +29,7 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 | `syncDev`   | 创建开发者账户    | `addon_admin_role`, `addon_admin_admin` |
 | `syncAll`   | 依次执行以上全部  | -                                       |
 
-**执行顺序**：`checkApp` → `syncTable` → `syncApi` → `syncMenu` → `syncDev`
+**执行顺序**：`syncTable` → `syncApi` → `syncMenu` → `syncDev`
 
 ---
 
@@ -42,11 +42,10 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 befly sync
 
 # 等同于依次执行：
-# 1. checkApp - 检查应用配置
-# 2. syncTable - 同步数据库表结构
-# 3. syncApi  - 同步 API 路由
-# 4. syncMenu - 同步菜单配置
-# 5. syncDev  - 同步开发账户
+# 1. syncTable - 同步数据库表结构
+# 2. syncApi  - 同步 API 路由
+# 3. syncMenu - 同步菜单配置
+# 4. syncDev  - 同步开发账户
 ```
 
 **执行流程**：
@@ -55,15 +54,9 @@ befly sync
 ┌──────────────────────────────────────────────────┐
 │                  syncAll                         │
 ├──────────────────────────────────────────────────┤
-│  1. checkApp()      检查应用配置是否完整          │
+│  1. syncTable() 同步数据库表结构（syncTable）      │
 │         ↓                                        │
-│  2. syncDbCommand() 同步数据库表结构（syncTable）  │
-│         ↓                                        │
-│  3. syncApiCommand() 同步 API 路由到数据库        │
-│         ↓                                        │
-│  4. syncMenuCommand() 同步菜单配置到数据库        │
-│         ↓                                        │
-│  5. syncDevCommand() 创建/更新开发者账户          │
+│  2. syncData() 同步数据（按顺序：syncApi → syncMenu → syncDev） │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -104,9 +97,9 @@ befly sync:db --dry-run
 │                  syncTable                          │
 ├─────────────────────────────────────────────────────┤
 │  1. 设置数据库类型 (setDbType)                       │
-│  2. 检查表定义完整性 (checkTable)                    │
-│  3. 连接数据库 (Connect.connectSql)                 │
-│  4. 确保版本表存在 (ensureDbVersion)                 │
+│  2. 连接数据库 (Connect.connectSql)                 │
+│  3. 确保版本表存在 (ensureDbVersion)                 │
+│  4. 初始化 Redis 连接 (Connect.connectRedis)         │
 │         ↓                                           │
 │  5. 扫描表定义文件：                                 │
 │     - 项目表：tpl/tables/*.json                     │
@@ -409,16 +402,15 @@ befly sync:dev --plan          # 预览开发账户变更
 ### 代码调用
 
 ```typescript
-import { syncAllCommand } from "./sync/syncAll";
-import { syncDbCommand } from "./sync/syncTable";
-import { syncDataCommand } from "./sync/syncData";
+import { syncTable } from "./sync/syncTable";
+import { syncData } from "./sync/syncData";
 
-// 全量同步
-await syncAllCommand();
+// 依次执行全量同步（等价于 befly sync）
+await syncTable({ dryRun: false, force: false });
+await syncData();
 
-// 单独调用
-await syncDbCommand({ table: "user" });
-await syncDataCommand();
+// 单独调用（示例：只同步指定表）
+await syncTable({ table: "user" });
 ```
 
 ---

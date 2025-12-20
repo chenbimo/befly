@@ -21,8 +21,8 @@ import { loadPlugins } from "./loader/loadPlugins.js";
 import { apiHandler } from "./router/api.js";
 import { staticHandler } from "./router/static.js";
 // 同步
-import { syncDataCommand } from "./sync/syncData.js";
-import { syncDbCommand } from "./sync/syncTable.js";
+import { syncData } from "./sync/syncData.js";
+import { syncTable } from "./sync/syncTable.js";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
 import { isPrimaryProcess, getProcessRole } from "./utils/process.js";
@@ -70,8 +70,8 @@ export class Befly {
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             if (isPrimaryProcess()) {
-                await syncDbCommand({ dryRun: false, force: false });
-                await syncDataCommand();
+                await syncTable({ dryRun: false, force: false });
+                await syncData();
             }
 
             // 6. 启动 HTTP 服务器

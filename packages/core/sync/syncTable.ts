@@ -7,7 +7,7 @@
  * - 提供统计信息和错误处理
  */
 
-import type { SyncDbOptions } from "../types/sync.js";
+import type { SyncTableOptions } from "../types/sync.js";
 import type { SQL } from "bun";
 
 import { existsSync } from "node:fs";
@@ -38,14 +38,14 @@ let sql: SQL | null = null;
 const processedTables: string[] = [];
 
 /**
- * syncDbCommand - 数据库同步命令入口
+ * syncTable - 数据库同步命令入口
  *
  * 流程：
  * 1. 建立数据库连接并检查版本
  * 2. 扫描表定义文件（核心表、项目表、addon表）
  * 3. 对比并应用表结构变更
  */
-export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> {
+export async function syncTable(options: SyncTableOptions = {}): Promise<void> {
     try {
         // 清空处理记录
         processedTables.length = 0;

@@ -5,7 +5,7 @@ import { syncApi } from "./syncData/syncApi.js";
 import { syncDev } from "./syncData/syncDev.js";
 import { syncMenu } from "./syncData/syncMenu.js";
 
-export async function syncDataCommand(): Promise<void> {
+export async function syncData(): Promise<void> {
     try {
         await Connect.connect();
 

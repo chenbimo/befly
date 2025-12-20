@@ -8,7 +8,7 @@
 /**
  * SyncTable（sync:db）命令选项
  */
-export interface SyncDbOptions {
+export interface SyncTableOptions {
     table?: string;
     dryRun?: boolean;
     force?: boolean;
