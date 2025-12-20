@@ -44,8 +44,6 @@ const processedTables: string[] = [];
  * 1. 建立数据库连接并检查版本
  * 2. 扫描表定义文件（核心表、项目表、addon表）
  * 3. 对比并应用表结构变更
- *
- * 说明：表定义/接口定义检查在 syncAllCommand 中统一执行。
  */
 export async function syncDbCommand(options: SyncDbOptions = {}): Promise<void> {
     try {
