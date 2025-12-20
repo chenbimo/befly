@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 
-import { join } from "pathe";
+import { join, normalize, resolve } from "pathe";
 
 export type AddonSource = "addon" | "app";
 
@@ -23,6 +23,40 @@ export type AddonInfo = {
     configsDir: string | null;
 };
 
+type ScanAddonsCacheEntry = {
+    addons: AddonInfo[];
+    createdAt: number;
+};
+
+const scanAddonsCache = new Map<string, ScanAddonsCacheEntry>();
+
+const normalizeScanAddonsCacheKey = (cwd: string): string => {
+    // - resolve: 折叠相对路径（例如 ./、../）
+    // - normalize: 统一分隔符与尾随斜杠等
+    // - win32: 盘符大小写不应影响缓存命中
+    const normalized = normalize(resolve(cwd));
+    if (process.platform === "win32") {
+        return normalized.toLowerCase();
+    }
+    return normalized;
+};
+
+const cloneAddonInfos = (addons: AddonInfo[]): AddonInfo[] => {
+    if (typeof structuredClone === "function") {
+        return structuredClone(addons);
+    }
+    // 兜底：理论上不会走到（Bun/Node 都支持 structuredClone），但保留以防运行时环境裁剪
+    return JSON.parse(JSON.stringify(addons)) as AddonInfo[];
+};
+
+export const clearScanAddonsCache = (cwd?: string): void => {
+    if (typeof cwd === "string" && cwd.length > 0) {
+        scanAddonsCache.delete(normalizeScanAddonsCacheKey(cwd));
+        return;
+    }
+    scanAddonsCache.clear();
+};
+
 /**
  * 扫描所有可用的 addon
  * 优先从本地 addons/ 目录加载，其次从 node_modules/@befly-addon/ 加载
@@ -30,6 +64,13 @@ export type AddonInfo = {
  * @returns addon 信息数组（包含来源、根目录、常用子目录路径）
  */
 export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
+    const cacheKey = normalizeScanAddonsCacheKey(cwd);
+
+    const cached = scanAddonsCache.get(cacheKey);
+    if (cached) {
+        return cloneAddonInfos(cached.addons);
+    }
+
     const candidates: Array<{ name: string; source: AddonSource; rootDir: string }> = [];
 
     // 1. 先收集所有来源的组件路径（不做重名去重：来源不同可在后续逻辑中区分）
@@ -98,11 +139,18 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
         });
     }
 
-    return addons.sort((a, b) => {
+    const sortedAddons = addons.sort((a, b) => {
         const nameCmp = a.name.localeCompare(b.name);
         if (nameCmp !== 0) {
             return nameCmp;
         }
         return a.source.localeCompare(b.source);
     });
+
+    scanAddonsCache.set(cacheKey, {
+        addons: sortedAddons,
+        createdAt: Date.now()
+    });
+
+    return cloneAddonInfos(sortedAddons);
 };
