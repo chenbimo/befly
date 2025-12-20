@@ -71,35 +71,30 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
         const source = candidate.source;
         const rootDir = candidate.rootDir;
 
-        const childDirNames = new Set<string>();
-        try {
-            const entries = readdirSync(rootDir, { withFileTypes: true });
-            for (const entry of entries) {
-                if (!entry.isDirectory()) {
-                    continue;
-                }
-                childDirNames.add(entry.name);
-            }
-        } catch {
-            // 忽略读取错误（例如权限问题）
-        }
+        // 这里不枚举 rootDir 下的所有目录项（readdirSync），而是仅探测我们关心的固定子目录集合。
+        // 在 addon 目录项很多时，这通常会更省。
+        const apisDir = existsSync(join(rootDir, "apis")) ? join(rootDir, "apis") : null;
+        const hooksDir = existsSync(join(rootDir, "hooks")) ? join(rootDir, "hooks") : null;
+        const pluginsDir = existsSync(join(rootDir, "plugins")) ? join(rootDir, "plugins") : null;
+        const tablesDir = existsSync(join(rootDir, "tables")) ? join(rootDir, "tables") : null;
+        const configsDir = existsSync(join(rootDir, "configs")) ? join(rootDir, "configs") : null;
 
-        const viewsDir = childDirNames.has("views") ? join(rootDir, "views") : null;
-        const adminViewsDir = viewsDir && existsSync(join(viewsDir, "admin")) ? join(viewsDir, "admin") : null;
-        const appViewsDir = viewsDir && existsSync(join(viewsDir, "app")) ? join(viewsDir, "app") : null;
+        const viewsDir = existsSync(join(rootDir, "views")) ? join(rootDir, "views") : null;
+        const adminViewsDir = viewsDir && existsSync(join(rootDir, "views", "admin")) ? join(rootDir, "views", "admin") : null;
+        const appViewsDir = viewsDir && existsSync(join(rootDir, "views", "app")) ? join(rootDir, "views", "app") : null;
 
         addons.push({
             name: name,
             source: source,
             rootDir: rootDir,
-            apisDir: childDirNames.has("apis") ? join(rootDir, "apis") : null,
-            hooksDir: childDirNames.has("hooks") ? join(rootDir, "hooks") : null,
-            pluginsDir: childDirNames.has("plugins") ? join(rootDir, "plugins") : null,
-            tablesDir: childDirNames.has("tables") ? join(rootDir, "tables") : null,
+            apisDir: apisDir,
+            hooksDir: hooksDir,
+            pluginsDir: pluginsDir,
+            tablesDir: tablesDir,
             viewsDir: viewsDir,
             adminViewsDir: adminViewsDir,
             appViewsDir: appViewsDir,
-            configsDir: childDirNames.has("configs") ? join(rootDir, "configs") : null
+            configsDir: configsDir
         });
     }
 
