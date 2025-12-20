@@ -14,10 +14,12 @@
  */
 
 import type { SyncMenuOptions, MenuConfig, MenuConfigSource } from "../types/sync.js";
+import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 
+import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock, normalizeMenuPath, normalizeMenuTree } from "befly-shared/utils/scanViewsDir";
 import { join } from "pathe";
 
 import { beflyConfig } from "../befly.config.js";
@@ -28,123 +30,6 @@ import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
 import { projectDir } from "../paths.js";
 import { scanAddons } from "../utils/addonHelper.js";
-
-/**
- * 清理目录名中的数字后缀
- * 如：login_1 → login, index_2 → index
- */
-function cleanDirName(name: string): string {
-    return name.replace(/_\d+$/, "");
-}
-
-type ViewDirMeta = {
-    title: string;
-    order?: number;
-};
-
-function normalizeMenuPath(path: string): string {
-    // 约束：统一 path 形态，避免隐藏菜单匹配、DB 同步出现重复
-    // - 必须以 / 开头
-    // - 折叠多个 /
-    // - 去掉尾随 /（根 / 除外）
-    let result = path;
-
-    if (!result) {
-        return "/";
-    }
-
-    if (!result.startsWith("/")) {
-        result = `/${result}`;
-    }
-
-    result = result.replace(/\/+/g, "/");
-
-    if (result.length > 1) {
-        result = result.replace(/\/+$/, "");
-    }
-
-    return result;
-}
-
-function normalizeMenuTree(menus: MenuConfig[]): MenuConfig[] {
-    // 递归规范化并按 path 去重（同 path 的 children 合并）
-    const map = new Map<string, MenuConfig>();
-
-    for (const menu of menus) {
-        const menuPath = menu.path ? normalizeMenuPath(menu.path) : "";
-        const cloned: MenuConfig = {
-            name: menu.name,
-            path: menuPath,
-            sort: menu.sort
-        };
-
-        if (menu.children && menu.children.length > 0) {
-            cloned.children = normalizeMenuTree(menu.children);
-        }
-
-        if (!menuPath) {
-            // path 缺失的菜单无法参与同步/去重，直接丢弃
-            continue;
-        }
-
-        const existing = map.get(menuPath);
-        if (existing) {
-            if (cloned.children && cloned.children.length > 0) {
-                existing.children = existing.children || [];
-                existing.children.push(...cloned.children);
-                existing.children = normalizeMenuTree(existing.children);
-            }
-            if (typeof cloned.sort === "number") {
-                existing.sort = cloned.sort;
-            }
-            if (cloned.name) {
-                existing.name = cloned.name;
-            }
-        } else {
-            map.set(menuPath, cloned);
-        }
-    }
-
-    const result = Array.from(map.values());
-    result.sort((a, b) => (a.sort || 1) - (b.sort || 1));
-    return result;
-}
-
-function extractScriptSetupBlock(vueContent: string): string | null {
-    // 只取第一个 <script ... setup ...> 块
-    const openTag = /<script\b[^>]*\bsetup\b[^>]*>/i.exec(vueContent);
-    if (!openTag) {
-        return null;
-    }
-
-    const start = openTag.index + openTag[0].length;
-    const closeIndex = vueContent.indexOf("</script>", start);
-    if (closeIndex < 0) {
-        return null;
-    }
-
-    return vueContent.slice(start, closeIndex);
-}
-
-function extractDefinePageMetaFromScriptSetup(scriptSetup: string): ViewDirMeta | null {
-    // 简化约束：
-    // - 每个页面只有一个 definePage
-    // - title 是纯字符串字面量
-    // - order 是数字字面量（可选）
-    // - 不考虑变量/表达式/多段 meta 组合
-
-    const titleMatch = scriptSetup.match(/definePage\s*\([\s\S]*?meta\s*:\s*\{[\s\S]*?title\s*:\s*(["'`])([^"'`]+)\1/);
-    if (!titleMatch) {
-        return null;
-    }
-
-    const orderMatch = scriptSetup.match(/definePage\s*\([\s\S]*?meta\s*:\s*\{[\s\S]*?order\s*:\s*(\d+)/);
-
-    return {
-        title: titleMatch[2],
-        order: orderMatch ? Number(orderMatch[1]) : undefined
-    };
-}
 
 /**
  * 扫描 views 目录，构建菜单树

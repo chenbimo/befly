@@ -32,11 +32,15 @@
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
+    "scripts": {
+        "scanViewsDir": "bun ./bin/scanViewsDir.ts"
+    },
     "dependencies": {
         "@unocss/preset-attributify": "^66.5.10",
         "@unocss/preset-uno": "^66.5.10",
         "@vitejs/plugin-vue": "^6.0.3",
         "@vue-macros/reactivity-transform": "^3.1.1",
+        "befly-shared": "workspace:*",
         "sass": "^1.96.0",
         "unocss": "^66.5.10",
         "unplugin-auto-import": "^20.3.0",

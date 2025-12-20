@@ -64,6 +64,7 @@
         "test": "bun test"
     },
     "dependencies": {
+        "befly-shared": "workspace:*",
         "chalk": "^5.6.2",
         "es-toolkit": "^1.43.0",
         "fast-jwt": "^6.1.0",
