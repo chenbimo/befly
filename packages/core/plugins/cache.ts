@@ -14,7 +14,7 @@ import { CacheHelper } from "../lib/cacheHelper.js";
 const cachePlugin: Plugin = {
     after: [],
     async handler(befly: BeflyContext): Promise<CacheHelper> {
-        return new CacheHelper(befly);
+        return new CacheHelper({ db: befly.db, redis: befly.redis });
     }
 };
 

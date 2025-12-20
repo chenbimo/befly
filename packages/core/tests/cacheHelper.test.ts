@@ -2,8 +2,6 @@
  * CacheHelper 单元测试
  */
 
-import type { BeflyContext } from "../types/befly.js";
-
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 
 import { CacheHelper } from "../lib/cacheHelper.js";
@@ -25,7 +23,6 @@ const mockPino = {
 
 describe("CacheHelper", () => {
     let cacheHelper: CacheHelper;
-    let mockBefly: BeflyContext;
     let mockDb: any;
     let mockRedis: any;
 
@@ -52,13 +49,7 @@ describe("CacheHelper", () => {
             exists: mock(() => Promise.resolve(true))
         };
 
-        // 创建 mock befly context
-        mockBefly = {
-            db: mockDb,
-            redis: mockRedis
-        } as unknown as BeflyContext;
-
-        cacheHelper = new CacheHelper(mockBefly);
+        cacheHelper = new CacheHelper({ db: mockDb, redis: mockRedis });
     });
 
     afterEach(() => {

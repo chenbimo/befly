@@ -10,6 +10,7 @@ import { Logger } from "./logger.js";
 
 /**
  * Redis 助手类
+ * 约定：除构造函数外，方法默认不抛异常；失败时返回 null/false/0/[] 并记录日志。
  */
 export class RedisHelper {
     private client: RedisClient;
