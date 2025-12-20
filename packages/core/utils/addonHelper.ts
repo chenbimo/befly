@@ -42,24 +42,26 @@ const normalizeScanAddonsCacheKey = (cwd: string): string => {
     return normalized;
 };
 
+const cloneAddonInfo = (addon: AddonInfo): AddonInfo => {
+    return {
+        name: addon.name,
+        source: addon.source,
+        rootDir: addon.rootDir,
+        apisDir: addon.apisDir,
+        hooksDir: addon.hooksDir,
+        pluginsDir: addon.pluginsDir,
+        tablesDir: addon.tablesDir,
+        viewsDir: addon.viewsDir,
+        adminViewsDir: addon.adminViewsDir,
+        appViewsDir: addon.appViewsDir,
+        configsDir: addon.configsDir
+    };
+};
+
 const cloneAddonInfos = (addons: AddonInfo[]): AddonInfo[] => {
     // AddonInfo 是纯 string/null 的扁平对象：不需要深拷贝。
     // 这里对数组与对象做浅拷贝即可避免调用方修改返回值污染缓存。
-    return addons.map((addon) => {
-        return {
-            name: addon.name,
-            source: addon.source,
-            rootDir: addon.rootDir,
-            apisDir: addon.apisDir,
-            hooksDir: addon.hooksDir,
-            pluginsDir: addon.pluginsDir,
-            tablesDir: addon.tablesDir,
-            viewsDir: addon.viewsDir,
-            adminViewsDir: addon.adminViewsDir,
-            appViewsDir: addon.appViewsDir,
-            configsDir: addon.configsDir
-        };
-    });
+    return addons.map((addon) => cloneAddonInfo(addon));
 };
 
 /**
