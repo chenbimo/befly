@@ -30,13 +30,21 @@ export type AddonInfo = {
  * @returns addon 信息数组（包含来源、根目录、常用子目录路径）
  */
 export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
-    const addonPaths = new Map<string, string>();
+    const candidates: Array<{ name: string; source: AddonSource; rootDir: string }> = [];
 
-    // 1. 收集本地 addons 目录路径
-    const localAddonsDir = join(cwd, "addons");
-    if (existsSync(localAddonsDir)) {
+    // 1. 先收集所有来源的组件路径（不做重名去重：来源不同可在后续逻辑中区分）
+    const scanDirs: Array<{ dir: string; source: AddonSource }> = [
+        { dir: join(cwd, "addons"), source: "app" },
+        { dir: join(cwd, "node_modules", "@befly-addon"), source: "addon" }
+    ];
+
+    for (const scan of scanDirs) {
+        if (!existsSync(scan.dir)) {
+            continue;
+        }
+
         try {
-            const entries = readdirSync(localAddonsDir, { withFileTypes: true });
+            const entries = readdirSync(scan.dir, { withFileTypes: true });
             for (const entry of entries) {
                 if (!entry.isDirectory()) {
                     continue;
@@ -45,44 +53,23 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
                     continue;
                 }
 
-                const rootDir = join(localAddonsDir, entry.name);
-                addonPaths.set(entry.name, rootDir);
+                candidates.push({
+                    name: entry.name,
+                    source: scan.source,
+                    rootDir: join(scan.dir, entry.name)
+                });
             }
         } catch {
-            // 忽略本地目录读取错误
+            // 忽略目录读取错误
         }
     }
 
-    // 2. 收集 node_modules/@befly-addon 目录路径
-    const beflyDir = join(cwd, "node_modules", "@befly-addon");
-    if (existsSync(beflyDir)) {
-        try {
-            const entries = readdirSync(beflyDir, { withFileTypes: true });
-            for (const entry of entries) {
-                if (!entry.isDirectory()) {
-                    continue;
-                }
-                if (entry.name.startsWith("_")) {
-                    continue;
-                }
-                // 如果本地已存在，跳过 npm 包版本（本地优先）
-                if (addonPaths.has(entry.name)) {
-                    continue;
-                }
-
-                const rootDir = join(beflyDir, entry.name);
-                addonPaths.set(entry.name, rootDir);
-            }
-        } catch {
-            // 忽略 npm 目录读取错误
-        }
-    }
-
-    // 3. 合并后统一处理
+    // 2. 统一处理候选项，补齐各类子目录路径
     const addons: AddonInfo[] = [];
-    for (const [name, rootDir] of addonPaths) {
-        // 统一 source 语义：本地 addons/ 视为 app；node_modules/@befly-addon 视为 addon
-        const source: AddonSource = rootDir.includes("@befly-addon") ? "addon" : "app";
+    for (const candidate of candidates) {
+        const name = candidate.name;
+        const source = candidate.source;
+        const rootDir = candidate.rootDir;
 
         const childDirNames = new Set<string>();
         try {
@@ -116,5 +103,11 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
         });
     }
 
-    return addons.sort((a, b) => a.name.localeCompare(b.name));
+    return addons.sort((a, b) => {
+        const nameCmp = a.name.localeCompare(b.name);
+        if (nameCmp !== 0) {
+            return nameCmp;
+        }
+        return a.source.localeCompare(b.source);
+    });
 };
