@@ -13,13 +13,13 @@
  * 注：state 字段由框架自动管理（1=正常，2=禁用，0=删除）
  */
 
-import type { SyncMenuOptions, MenuConfig, MenuConfigSource } from "../types/sync.js";
+import type { SyncMenuOptions, MenuConfig } from "../types/sync.js";
 import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 
-import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock, normalizeMenuPath, normalizeMenuTree } from "befly-shared/utils/scanViewsDir";
+import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "befly-shared/utils/scanViewsDir";
 import { join } from "pathe";
 
 import { beflyConfig } from "../befly.config.js";
@@ -103,7 +103,7 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
         const menu: MenuConfig = {
             name: meta.title,
             path: fullPath,
-            sort: meta.order ?? 999999
+            sort: meta.order ?? 999
         };
 
         // 递归扫描子目录
@@ -116,42 +116,9 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
     }
 
     // 按 sort 排序
-    menus.sort((a, b) => (a.sort ?? 999999) - (b.sort ?? 999999));
+    menus.sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999));
 
     return menus;
-}
-
-/**
- * 合并菜单配置
- * 支持无限层级菜单结构
- */
-type LoadedMenuConfigs = {
-    menus: MenuConfig[];
-    source: MenuConfigSource;
-    addonName?: string;
-};
-
-function mergeMenuConfigs(allMenus: LoadedMenuConfigs[]): MenuConfig[] {
-    const menuMap = new Map<string, MenuConfig>();
-
-    for (const { menus } of allMenus) {
-        for (const menu of menus) {
-            if (!menu.path) continue;
-
-            const existing = menuMap.get(menu.path);
-            if (existing) {
-                // 合并子菜单
-                if (menu.children && menu.children.length > 0) {
-                    existing.children = existing.children || [];
-                    existing.children.push(...menu.children);
-                }
-            } else {
-                menuMap.set(menu.path, { ...menu });
-            }
-        }
-    }
-
-    return Array.from(menuMap.values());
 }
 
 /**
@@ -210,7 +177,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
     if (existing) {
         menuId = existing.id;
 
-        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.sort !== (menu.sort ?? 999999);
+        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.sort !== (menu.sort ?? 999);
 
         if (needUpdate) {
             await helper.updData({
@@ -219,7 +186,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                 data: {
                     pid: pid,
                     name: menu.name,
-                    sort: menu.sort ?? 999999
+                    sort: menu.sort ?? 999
                 }
             });
         }
@@ -230,7 +197,7 @@ async function syncMenuRecursive(helper: any, menu: MenuConfig, pid: number, exi
                 pid: pid,
                 name: menu.name,
                 path: menu.path || "",
-                sort: menu.sort ?? 999999
+                sort: menu.sort ?? 999
             }
         });
     }
@@ -291,8 +258,8 @@ async function deleteObsoleteRecords(helper: any, configPaths: Set<string>): Pro
 /**
  * 加载所有菜单配置（addon views + 项目 menus.json）
  */
-async function loadMenuConfigs(): Promise<LoadedMenuConfigs[]> {
-    const allMenus: LoadedMenuConfigs[] = [];
+async function loadMenuConfigs(): Promise<MenuConfig[]> {
+    const allMenus: MenuConfig[] = [];
 
     // 1. 扫描所有 addon 的 views 目录
     const addons = scanAddons();
@@ -300,14 +267,12 @@ async function loadMenuConfigs(): Promise<LoadedMenuConfigs[]> {
     for (const addon of addons) {
         try {
             if (addon.adminViewsDir) {
-                const prefix = addon.source === "addon" ? `/addon/${addon.name}` : addon.name;
+                const prefix = `/${addon.source}/${addon.name}`;
                 const menus = await scanViewsDir(addon.adminViewsDir, prefix);
                 if (menus.length > 0) {
-                    allMenus.push({
-                        menus: menus,
-                        source: "addon",
-                        addonName: addon.name
-                    });
+                    for (const menu of menus) {
+                        allMenus.push(menu);
+                    }
                 }
             }
         } catch (error: any) {
@@ -322,10 +287,9 @@ async function loadMenuConfigs(): Promise<LoadedMenuConfigs[]> {
             const content = await readFile(menusJsonPath, "utf-8");
             const projectMenus = JSON.parse(content);
             if (Array.isArray(projectMenus) && projectMenus.length > 0) {
-                allMenus.push({
-                    menus: projectMenus,
-                    source: "app"
-                });
+                for (const menu of projectMenus) {
+                    allMenus.push(menu);
+                }
             }
         } catch (error: any) {
             Logger.warn({ err: error }, "读取项目 menus.json 失败");
@@ -346,20 +310,13 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         }
 
         // 1. 加载所有菜单配置
-        const allMenus = await loadMenuConfigs();
-
-        // 2. 合并菜单配置
-        let mergedMenus = mergeMenuConfigs(allMenus);
-
-        // 2.1 规范化并去重（防止尾随 / 或多 / 导致隐藏菜单与 DB 同步异常）
-        mergedMenus = normalizeMenuTree(mergedMenus);
+        let mergedMenus = await loadMenuConfigs();
 
         // 3. 过滤隐藏菜单（根据 hiddenMenus 配置）
         const hiddenMenus = (beflyConfig as any).hiddenMenus || [];
         if (Array.isArray(hiddenMenus) && hiddenMenus.length > 0) {
-            const hiddenSet = new Set(hiddenMenus.map((item: string) => normalizeMenuPath(item)));
+            const hiddenSet = new Set(hiddenMenus);
             mergedMenus = filterHiddenMenus(mergedMenus, hiddenSet);
-            mergedMenus = normalizeMenuTree(mergedMenus);
         }
 
         // 连接数据库
@@ -406,6 +363,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
 
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）
 export const __test__ = {
-    scanViewsDir: scanViewsDir,
-    normalizeMenuPath: normalizeMenuPath
+    scanViewsDir: scanViewsDir
+    // normalizeMenuPath/normalizeMenuTree 已移除：要求调用方传入的 path 与 hiddenMenus 配置本身就是规范的
 };

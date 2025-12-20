@@ -57,12 +57,3 @@ describe("syncMenu - scanViewsDir paths", () => {
         expect(user?.sort).toBe(1);
     });
 });
-
-describe("syncMenu - normalizeMenuPath", () => {
-    test("去掉尾随 / 且折叠多 /", () => {
-        expect(__test__.normalizeMenuPath("/addon/a/")).toBe("/addon/a");
-        expect(__test__.normalizeMenuPath("//addon//a//b/")).toBe("/addon/a/b");
-        expect(__test__.normalizeMenuPath("addon/a")).toBe("/addon/a");
-        expect(__test__.normalizeMenuPath("/")).toBe("/");
-    });
-});
