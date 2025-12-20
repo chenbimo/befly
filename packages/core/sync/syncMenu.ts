@@ -291,7 +291,8 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
         // 连接数据库
         await Connect.connect();
 
-        const helper = new DbHelper(new RedisHelper(), Connect.getSql());
+        const redisHelper = new RedisHelper();
+        const helper = new DbHelper(redisHelper, Connect.getSql());
 
         // 3. 检查表是否存在
         const exists = await helper.tableExists("addon_admin_menu");
@@ -317,7 +318,6 @@ export async function syncMenuCommand(options: SyncMenuOptions = {}): Promise<vo
 
         // 8. 缓存菜单数据到 Redis
         try {
-            const redisHelper = new RedisHelper();
             await redisHelper.setObject(CacheKeys.menusAll(), allMenusData.lists);
         } catch (error: any) {
             Logger.warn({ err: error }, "Redis 缓存菜单数据失败");
