@@ -1,6 +1,5 @@
 import type { DbHelper } from "../lib/dbHelper.js";
 import type { MenuConfig } from "../types/sync.js";
-import type { SyncDataContext } from "./syncData/types.js";
 import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 
 import { existsSync } from "node:fs";
@@ -12,7 +11,6 @@ import { join } from "pathe";
 import { Logger } from "../lib/logger.js";
 import { appDir } from "../paths.js";
 import { isDirentDirectory } from "../utils/isDirentDirectory.js";
-import { isTablesExist } from "./syncData/isTablesExist.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {
@@ -146,7 +144,7 @@ async function syncMenuRecursive(dbHelper: DbHelper, menu: MenuConfig, pid: numb
     return menuId;
 }
 
-async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
+async function loadMenuConfigs(ctx): Promise<MenuConfig[]> {
     const allMenus: MenuConfig[] = [];
 
     for (const addon of ctx.addons) {
@@ -193,11 +191,11 @@ async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
 
     return allMenus;
 }
-export async function syncMenu(ctx: SyncDataContext): Promise<void> {
+export async function syncMenu(ctx): Promise<void> {
     const mergedMenus = await loadMenuConfigs(ctx);
 
-    const tablesOk = await isTablesExist(ctx.dbHelper, ["addon_admin_menu"]);
-    if (!tablesOk) {
+    if (!(await ctx.db.tableExists("addon_admin_menu"))) {
+        Logger.debug(`addon_admin_menu 表不存在`);
         return;
     }
 

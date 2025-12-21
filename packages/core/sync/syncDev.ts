@@ -1,17 +1,22 @@
-import type { SyncDataContext } from "./syncData/types.js";
-
 import { beflyConfig } from "../befly.config.js";
 import { Cipher } from "../lib/cipher.js";
 import { Logger } from "../lib/logger.js";
-import { isTablesExist } from "./syncData/isTablesExist.js";
 
-export async function syncDev(ctx: SyncDataContext): Promise<void> {
+export async function syncDev(ctx): Promise<void> {
     if (!beflyConfig.devPassword) {
         return;
     }
 
-    const tablesOk = await isTablesExist(ctx.dbHelper, ["addon_admin_admin", "addon_admin_role", "addon_admin_menu"]);
-    if (!tablesOk) {
+    if (!(await ctx.db.tableExists("addon_admin_admin"))) {
+        Logger.debug(`addon_admin_admin 表不存在`);
+        return;
+    }
+    if (!(await ctx.db.tableExists("addon_admin_role"))) {
+        Logger.debug(`addon_admin_role 表不存在`);
+        return;
+    }
+    if (!(await ctx.db.tableExists("addon_admin_menu"))) {
+        Logger.debug(`addon_admin_menu 表不存在`);
         return;
     }
 

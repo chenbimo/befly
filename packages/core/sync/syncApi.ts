@@ -1,5 +1,4 @@
 import type { ApiInfo } from "../types/sync.js";
-import type { SyncDataContext } from "./syncData/types.js";
 
 import { isPlainObject } from "es-toolkit/compat";
 import { relative } from "pathe";
@@ -7,9 +6,8 @@ import { relative } from "pathe";
 import { Logger } from "../lib/logger.js";
 import { appApiDir } from "../paths.js";
 import { scanFiles } from "../utils/scanFiles.js";
-import { isTablesExist } from "./syncData/isTablesExist.js";
 
-async function scanApi(ctx: SyncDataContext): Promise<ApiInfo[]> {
+async function scanApi(ctx): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
     try {
@@ -62,9 +60,9 @@ async function scanApi(ctx: SyncDataContext): Promise<ApiInfo[]> {
     }
 }
 
-export async function syncApi(ctx: SyncDataContext): Promise<void> {
-    const tablesOk = await isTablesExist(ctx.dbHelper, ["addon_admin_api"]);
-    if (!tablesOk) {
+export async function syncApi(ctx): Promise<void> {
+    if (!(await ctx.db.tableExists("addon_admin_api"))) {
+        Logger.debug(`addon_admin_api 表不存在`);
         return;
     }
 
