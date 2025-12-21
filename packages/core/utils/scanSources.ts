@@ -25,11 +25,12 @@ export const scanSources = async (): Promise<AddonInfo[]> => {
     const adddons = await scanAddons();
 
     // 处理核心项目 =================================
-    const appTable = await scanFiles(appTableDir, "core", "*.json", {});
-    const addonTable = adddons.map(async (addon) => {
-        return await scanFiles(join(addon.fullPath, "tables"), "addon", "*.json", {});
+    tables.push(...(await scanFiles(appTableDir, "app", "*.json", {})));
+    adddons.forEach(async (addon) => {
+        tables.push(...(await scanFiles(join(addon.fullPath, "tables"), "addon", "*.json", {})));
     });
-    const apis = [...appTable, ...[].concat(...(await Promise.all(addonTable)))];
+    console.log("🔥[ addonTable ]-30", tables);
+
     // 处理实际项目 =================================
     // 处理组件项目 =================================
 };
