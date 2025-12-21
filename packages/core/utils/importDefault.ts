@@ -4,6 +4,8 @@
  * - import() 报错：返回 defaultValue
  * - default 导出为 null/undefined：返回 defaultValue
  */
+import { Logger } from "../lib/logger.js";
+
 export async function importDefault<T>(file: string, defaultValue: T): Promise<T> {
     try {
         const mod = (await import(file)) as { default?: unknown } | null | undefined;
@@ -12,7 +14,8 @@ export async function importDefault<T>(file: string, defaultValue: T): Promise<T
             return defaultValue;
         }
         return value as T;
-    } catch {
+    } catch (err: any) {
+        Logger.warn({ err: err, file: file }, "importDefault 导入失败，已回退到默认值");
         return defaultValue;
     }
 }
