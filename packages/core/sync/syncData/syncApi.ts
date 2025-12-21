@@ -18,17 +18,10 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "
             return null;
         }
 
-        let apiPath = "";
-
-        if (type === "addon") {
-            const relativePath = relative(apiRoot, filePath);
-            const pathWithoutExt = relativePath.replace(/\.(ts|js)$/, "");
-            apiPath = `/api/addon/${addonName}/${pathWithoutExt}`;
-        } else {
-            const relativePath = relative(apiRoot, filePath);
-            const pathWithoutExt = relativePath.replace(/\.(ts|js)$/, "");
-            apiPath = `/api/${pathWithoutExt}`;
-        }
+        const relativePath = relative(apiRoot, filePath);
+        const pathWithoutExt = relativePath.replace(/\.(ts|js)$/, "");
+        const apiPrefix = type === "addon" ? `/api/addon/${addonName}/` : "/api/";
+        const apiPath = `${apiPrefix}${pathWithoutExt}`;
 
         return {
             name: apiConfig.name || "",
