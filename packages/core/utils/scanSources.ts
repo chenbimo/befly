@@ -4,7 +4,15 @@ import { coreDir, appDir } from "../paths.js";
 import { scanAddons } from "./scanAddons.js";
 import { scanFiles } from "./scanFiles.js";
 
-export const scanSources = async (): Promise<AddonInfo[]> => {
+export type ScanSourcesResult = {
+    hooks: any[];
+    plugins: any[];
+    apis: any[];
+    tables: any[];
+    adddons: any[];
+};
+
+export const scanSources = async (): Promise<ScanSourcesResult> => {
     const apis = [];
     const plugins = [];
     const hooks = [];
@@ -43,5 +51,11 @@ export const scanSources = async (): Promise<AddonInfo[]> => {
         hooks.push(...(await scanFiles(join(addon.fullPath, "hooks"), "addon", "*.ts", {})));
     }
 
-    return { hooks, plugins, apis, tables, adddons };
+    return {
+        hooks: hooks,
+        plugins: plugins,
+        apis: apis,
+        tables: tables,
+        adddons: adddons
+    };
 };
