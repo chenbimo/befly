@@ -18,13 +18,13 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "
             return null;
         }
 
-        const relativePath = relative(apiRoot, filePath);
+        const relativePath = relative(apiRoot, filePath).replace(/\\/g, "/");
         const pathWithoutExt = relativePath.replace(/\.(ts|js)$/, "");
         const apiPrefix = type === "addon" ? `/api/addon/${addonName}/` : "/api/";
         const apiPath = `${apiPrefix}${pathWithoutExt}`;
 
         return {
-            name: apiConfig.name || "",
+            name: apiConfig.name,
             path: apiPath,
             method: apiConfig.method || "POST",
             description: apiConfig.description || "",
