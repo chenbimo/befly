@@ -62,17 +62,17 @@ export class Befly {
             // 2. 加载插件
             await loadPlugins(this.plugins, this.context as BeflyContext);
 
-            // 3. 加载钩子
-            await loadHooks(this.hooks);
-
-            // 4. 加载所有 API
-            await loadApis(this.apis);
-
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             if (isPrimaryProcess()) {
                 await syncTable();
                 await syncData();
             }
+
+            // 3. 加载钩子
+            await loadHooks(this.hooks);
+
+            // 4. 加载所有 API
+            await loadApis(this.apis);
 
             // 6. 启动 HTTP 服务器
             const apiFetch = apiHandler(this.apis, this.hooks, this.context as BeflyContext);
