@@ -1,8 +1,8 @@
 import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
-import { checkApi } from "./syncData/checkApi.js";
 import { checkTable } from "./syncData/checkTable.js";
 import { createContext } from "./syncData/createContext.js";
+import { checkApi } from "./syncData/syncApi.js";
 import { syncApi } from "./syncData/syncApi.js";
 import { syncDev } from "./syncData/syncDev.js";
 import { syncMenu } from "./syncData/syncMenu.js";

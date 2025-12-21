@@ -1,14 +1,18 @@
 import type { ApiInfo } from "../../types/sync.js";
+import type { AddonInfo } from "../../utils/scanAddons.js";
 import type { SyncDataContext } from "./types.js";
 
-import { join, relative } from "pathe";
+import { existsSync } from "node:fs";
+
+import { isPlainObject } from "es-toolkit/compat";
+import { relative } from "pathe";
 
 import { Logger } from "../../lib/logger.js";
-import { projectDir } from "../../paths.js";
+import { projectApiDir } from "../../paths.js";
 import { scanFiles } from "../../utils/scanFiles.js";
 import { assertTablesExist } from "./assertTablesExist.js";
 
-async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "addon", addonName: string = "", addonTitle: string = ""): Promise<ApiInfo | null> {
+async function extractApi(filePath: string, apiRoot: string, type: "app" | "addon", addonName: string = "", addonTitle: string = ""): Promise<ApiInfo | null> {
     try {
         const normalizedFilePath = filePath.replace(/\\/g, "/");
         const apiModule = await import(normalizedFilePath);
@@ -46,16 +50,102 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "
     }
 }
 
-async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
+export async function checkApi(addons: AddonInfo[]): Promise<void> {
+    try {
+        const allApiFiles: Array<{ file: string; scope: "app" | "addon"; apiPath: string; addonName: string; addonSource: string; dir: string }> = [];
+
+        if (existsSync(projectApiDir)) {
+            const files = await scanFiles(projectApiDir);
+            for (const item of files) {
+                allApiFiles.push({
+                    file: item.filePath,
+                    scope: "app",
+                    apiPath: item.relativePath,
+                    addonName: "",
+                    addonSource: "",
+                    dir: projectApiDir
+                });
+            }
+        }
+
+        for (const addon of addons) {
+            if (!addon.apisDir) {
+                continue;
+            }
+
+            const files = await scanFiles(addon.apisDir);
+            for (const item of files) {
+                allApiFiles.push({
+                    file: item.filePath,
+                    scope: "addon",
+                    apiPath: item.relativePath,
+                    addonName: addon.name,
+                    addonSource: addon.source,
+                    dir: addon.apisDir
+                });
+            }
+        }
+
+        for (const item of allApiFiles) {
+            try {
+                const filePath = item.file.replace(/\\/g, "/");
+                const apiImport = await import(filePath);
+                const api = apiImport.default;
+
+                if (typeof api?.name !== "string" || api.name.trim() === "") {
+                    Logger.warn(item, "接口的 name 属性必须是非空字符串");
+                    continue;
+                }
+
+                if (typeof api?.handler !== "function") {
+                    Logger.warn(item, "接口的 handler 属性必须是函数");
+                    continue;
+                }
+
+                const validMethods = ["GET", "POST", "GET,POST", "POST,GET"];
+                if (api.method && !validMethods.includes(String(api.method).toUpperCase())) {
+                    Logger.warn(item, "接口的 method 属性必须是有效的 HTTP 方法 (GET, POST, GET,POST, POST,GET)");
+                }
+
+                if (api.auth !== undefined && typeof api.auth !== "boolean") {
+                    Logger.warn(item, "接口的 auth 属性必须是布尔值 (true=需登录, false=公开)");
+                }
+
+                if (api.fields && !isPlainObject(api.fields)) {
+                    Logger.warn(item, "接口的 fields 属性必须是对象");
+                }
+
+                if (api.required && !Array.isArray(api.required)) {
+                    Logger.warn(item, "接口的 required 属性必须是数组");
+                }
+
+                if (api.required && api.required.some((reqItem: any) => typeof reqItem !== "string")) {
+                    Logger.warn(item, "接口的 required 属性必须是字符串数组");
+                }
+            } catch (error: any) {
+                Logger.error(
+                    {
+                        err: error,
+                        item: item
+                    },
+                    "接口解析失败"
+                );
+            }
+        }
+    } catch (error: any) {
+        Logger.error({ err: error }, "API 定义检查过程中出错");
+        throw error;
+    }
+}
+
+async function scanApi(ctx: SyncDataContext): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
     try {
-        const projectApisDir = join(projectDir, "apis");
-
-        const projectFiles = await scanFiles(projectApisDir);
+        const projectFiles = await scanFiles(projectApiDir);
 
         for (const item of projectFiles) {
-            const apiInfo = await extractApiInfo(item.filePath, projectApisDir, "app", "", "项目接口");
+            const apiInfo = await extractApi(item.filePath, projectApiDir, "app", "", "项目接口");
             if (apiInfo) {
                 apis.push(apiInfo);
             }
@@ -85,7 +175,7 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
             }
 
             for (const item of addonFiles) {
-                const apiInfo = await extractApiInfo(item.filePath, addon.apisDir, "addon", addon.name, addon.name);
+                const apiInfo = await extractApi(item.filePath, addon.apisDir, "addon", addon.name, addon.name);
                 if (apiInfo) {
                     apis.push(apiInfo);
                 }
@@ -105,7 +195,7 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
         return;
     }
 
-    const allApis = await scanAllApis(ctx);
+    const allApis = await scanApi(ctx);
 
     const apiPaths = new Set(allApis.map((api) => api.path));
 
