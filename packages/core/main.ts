@@ -27,6 +27,7 @@ import { syncTable } from "./sync/syncTable.js";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
 import { isPrimaryProcess, getProcessRole } from "./utils/process.js";
+import { scanSources } from "./utils/scanSources.js";
 
 /**
  * Befly 框架核心类
@@ -60,13 +61,16 @@ export class Befly {
             const { beflyConfig } = await import("./befly.config.js");
             this.config = beflyConfig;
 
+            await scanSources();
+            process.exit(1);
+
             // 2. 加载插件
             await loadPlugins(this.plugins, this.context as BeflyContext);
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             // await syncTable();
             await syncApi(this.context as BeflyContext);
-            process.exit(1);
+
             await syncMenu(this.context as BeflyContext);
             await syncDev(this.context as BeflyContext);
 

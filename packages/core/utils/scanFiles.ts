@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 
 import { relative, normalize, parse, join } from "pathe";
 
+import { importDefault } from "./importDefault.js";
+
 export type ScanFileSource = "app" | "addon" | "core";
 
 export interface ScanFileResult {
@@ -17,7 +19,7 @@ export interface ScanFileResult {
  * @param source 文件来源（app/addon/core）
  * @param pattern Glob 模式
  */
-export async function scanFiles(dir: string, source: ScanFileSource, pattern: string = "**/*.ts"): Promise<ScanFileResult[]> {
+export async function scanFiles(dir: string, source: ScanFileSource, pattern: string, defaultValue): Promise<ScanFileResult[]> {
     if (!existsSync(dir)) return [];
 
     const normalizedDir = normalize(dir);
@@ -25,7 +27,13 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
     const results: ScanFileResult[] = [];
 
     try {
-        for await (const file of glob.scan({ cwd: dir, onlyFiles: true, absolute: true })) {
+        const files = await glob.scan({
+            cwd: dir,
+            onlyFiles: true,
+            absolute: true,
+            followSymlinks: true
+        });
+        for await (const file of files) {
             if (file.endsWith(".d.ts")) continue;
 
             // 使用 pathe.normalize 统一路径分隔符为 /
@@ -42,15 +50,17 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
             // 固定默认过滤（不可关闭）：忽略下划线开头的文件/目录
             if (fileName.startsWith("_")) continue;
             if (relativePath.split("/").some((part) => part.startsWith("_"))) continue;
+            const content = await importDefault(normalizedFile, defaultValue);
 
             results.push({
                 source: source,
-                sourceName: source === "app" ? "项目" : "组件",
+                sourceName: { core: "核心", addon: "组件", app: "项目" }[source],
                 filePath: normalizedFile,
                 relativePath: relativePath,
                 fileName: fileName,
                 routePrefix: source === "app" ? "/app/" : "/addon/",
-                fileDir: dir
+                fileDir: dir,
+                content: content
             });
         }
     } catch (error: any) {
