@@ -18,8 +18,8 @@ import { scanFiles } from "../../utils/scanFiles.js";
 interface TableFileInfo {
     /** 表文件路径 */
     file: string;
-    /** 文件类型：project（项目）或 addon（组件） */
-    type: "project" | "addon";
+    /** 文件类型：app（项目）或 addon（组件） */
+    type: "app" | "addon";
     /** 如果是 addon 类型，记录 addon 名称 */
     addonName?: string;
     /** 类型名称（用于日志） */
@@ -72,11 +72,11 @@ export async function checkTable(addons: AddonInfo[]): Promise<void> {
 
         // 收集项目表字段定义文件（如果目录存在）
         if (existsSync(projectTableDir)) {
-            const files = await scanFiles(projectTableDir, "*.json");
+            const files = await scanFiles(projectTableDir, "app", "*.json");
             for (const { filePath } of files) {
                 allTableFiles.push({
                     file: filePath,
-                    type: "project",
+                    type: "app",
                     typeName: "项目"
                 });
             }
@@ -89,7 +89,7 @@ export async function checkTable(addons: AddonInfo[]): Promise<void> {
                 continue;
             }
 
-            const files = await scanFiles(addonTablesDir, "*.json");
+            const files = await scanFiles(addonTablesDir, "addon", "*.json");
             for (const { filePath } of files) {
                 allTableFiles.push({
                     file: filePath,

@@ -55,7 +55,7 @@ async function checkApi(addons: AddonInfo[]): Promise<void> {
         const allApiFiles: Array<{ file: string; scope: "app" | "addon"; apiPath: string; addonName: string; addonSource: string; dir: string }> = [];
 
         if (existsSync(projectApiDir)) {
-            const files = await scanFiles(projectApiDir);
+            const files = await scanFiles(projectApiDir, "app");
             for (const item of files) {
                 allApiFiles.push({
                     file: item.filePath,
@@ -73,7 +73,7 @@ async function checkApi(addons: AddonInfo[]): Promise<void> {
                 continue;
             }
 
-            const files = await scanFiles(addon.apisDir);
+            const files = await scanFiles(addon.apisDir, "addon");
             for (const item of files) {
                 allApiFiles.push({
                     file: item.filePath,
@@ -102,8 +102,7 @@ async function checkApi(addons: AddonInfo[]): Promise<void> {
                     continue;
                 }
 
-                const validMethods = ["GET", "POST", "GET,POST", "POST,GET"];
-                if (api.method && !validMethods.includes(String(api.method).toUpperCase())) {
+                if (api.method && !["GET", "POST", "GET,POST", "POST,GET"].includes(String(api.method).toUpperCase())) {
                     Logger.warn(item, "接口的 method 属性必须是有效的 HTTP 方法 (GET, POST, GET,POST, POST,GET)");
                 }
 
@@ -142,7 +141,7 @@ async function scanApi(ctx: SyncDataContext): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
     try {
-        const projectFiles = await scanFiles(projectApiDir);
+        const projectFiles = await scanFiles(projectApiDir, "app");
 
         for (const item of projectFiles) {
             const apiInfo = await extractApi(item.filePath, projectApiDir, "app", "", "项目接口");
@@ -156,7 +155,7 @@ async function scanApi(ctx: SyncDataContext): Promise<ApiInfo[]> {
                 continue;
             }
 
-            const addonFiles = await scanFiles(addon.apisDir).catch((error: any) => {
+            const addonFiles = await scanFiles(addon.apisDir, "addon").catch((error: any) => {
                 Logger.warn(
                     {
                         err: error,

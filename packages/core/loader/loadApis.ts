@@ -55,11 +55,11 @@ function processFields(fields: Record<string, any>, apiName: string, routePath: 
 export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
     try {
         // 1. 扫描项目 API
-        const projectApiFiles = await scanFiles(projectApiDir);
+        const projectApiFiles = await scanFiles(projectApiDir, "app");
         const projectApiList = projectApiFiles.map((file) => ({
             filePath: file.filePath,
             relativePath: file.relativePath,
-            type: "project" as const,
+            type: "app" as const,
             routePrefix: "/",
             typeName: "项目"
         }));
@@ -76,7 +76,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
         for (const addon of addons) {
             const addonApiDir = addon.apisDir;
             if (!addonApiDir) continue;
-            const addonApiFiles = await scanFiles(addonApiDir);
+            const addonApiFiles = await scanFiles(addonApiDir, "addon");
 
             for (const file of addonApiFiles) {
                 addonApiList.push({
