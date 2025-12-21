@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { syncMenu } from "../sync/syncData/syncMenu.js";
+import { syncMenu } from "../sync/syncMenu.js";
 
 describe("syncMenu - delete obsolete records", () => {
     test("应删除不在配置中的菜单记录（仅 state>=0）", async () => {

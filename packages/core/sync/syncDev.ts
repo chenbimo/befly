@@ -1,16 +1,16 @@
-import type { SyncDataContext } from "./types.js";
+import type { SyncDataContext } from "./syncData/types.js";
 
-import { beflyConfig } from "../../befly.config.js";
-import { Cipher } from "../../lib/cipher.js";
-import { Logger } from "../../lib/logger.js";
-import { assertTablesExist } from "./assertTablesExist.js";
+import { beflyConfig } from "../befly.config.js";
+import { Cipher } from "../lib/cipher.js";
+import { Logger } from "../lib/logger.js";
+import { isTablesExist } from "./syncData/isTablesExist.js";
 
 export async function syncDev(ctx: SyncDataContext): Promise<void> {
     if (!beflyConfig.devPassword) {
         return;
     }
 
-    const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_admin", "addon_admin_role", "addon_admin_menu"]);
+    const tablesOk = await isTablesExist(ctx.dbHelper, ["addon_admin_admin", "addon_admin_role", "addon_admin_menu"]);
     if (!tablesOk) {
         return;
     }

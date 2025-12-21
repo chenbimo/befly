@@ -1,6 +1,6 @@
-import type { DbHelper } from "../../lib/dbHelper.js";
-import type { MenuConfig } from "../../types/sync.js";
-import type { SyncDataContext } from "./types.js";
+import type { DbHelper } from "../lib/dbHelper.js";
+import type { MenuConfig } from "../types/sync.js";
+import type { SyncDataContext } from "./syncData/types.js";
 import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 
 import { existsSync } from "node:fs";
@@ -9,10 +9,10 @@ import { readdir, readFile } from "node:fs/promises";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "befly-shared/utils/scanViewsDir";
 import { join } from "pathe";
 
-import { Logger } from "../../lib/logger.js";
-import { projectDir } from "../../paths.js";
-import { isDirentDirectory } from "../../utils/isDirentDirectory.js";
-import { assertTablesExist } from "./assertTablesExist.js";
+import { Logger } from "../lib/logger.js";
+import { projectDir } from "../paths.js";
+import { isDirentDirectory } from "../utils/isDirentDirectory.js";
+import { isTablesExist } from "./syncData/isTablesExist.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {
@@ -196,7 +196,7 @@ async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
 export async function syncMenu(ctx: SyncDataContext): Promise<void> {
     const mergedMenus = await loadMenuConfigs(ctx);
 
-    const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_menu"]);
+    const tablesOk = await isTablesExist(ctx.dbHelper, ["addon_admin_menu"]);
     if (!tablesOk) {
         return;
     }

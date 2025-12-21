@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { __test__ } from "../sync/syncData/syncMenu.js";
+import { __test__ } from "../sync/syncMenu.js";
 
 const testRootDir = join(process.cwd(), "temp", "test-sync-menu-views");
 const viewsDir = join(testRootDir, "views");

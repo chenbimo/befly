@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { syncApi } from "../sync/syncData/syncApi.js";
+import { syncApi } from "../sync/syncApi.js";
 
 describe("syncApi - delete obsolete records", () => {
     test("应删除不在配置中的接口记录", async () => {

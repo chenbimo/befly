@@ -45,9 +45,12 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
 
             results.push({
                 source: source,
+                sourceName: source === "app" ? "项目" : "组件",
                 filePath: normalizedFile,
                 relativePath: relativePath,
-                fileName: fileName
+                fileName: fileName,
+                routePrefix: source === "app" ? "/app/" : "/addon/",
+                fileDir: dir
             });
         }
     } catch (error: any) {

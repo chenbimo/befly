@@ -2,7 +2,7 @@ import type { DbHelper } from "../../lib/dbHelper.js";
 
 import { Logger } from "../../lib/logger.js";
 
-export async function assertTablesExist(dbHelper: DbHelper, tables: string[]): Promise<boolean> {
+export async function isTablesExist(dbHelper: DbHelper, tables: string[]): Promise<boolean> {
     for (const table of tables) {
         const exists = await dbHelper.tableExists(table);
         if (!exists) {
