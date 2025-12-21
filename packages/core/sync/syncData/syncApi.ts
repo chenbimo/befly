@@ -69,30 +69,30 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
         }
 
         for (const addon of ctx.addons) {
-            const addonApisDir = addon.apisDir;
-            if (!addonApisDir) {
+            if (!addon.apisDir) {
                 continue;
             }
 
-            let addonFiles: Array<{ filePath: string }> = [];
-            try {
-                addonFiles = await scanFiles(addonApisDir);
-            } catch (error: any) {
+            const addonFiles = await scanFiles(addon.apisDir).catch((error: any) => {
                 Logger.warn(
                     {
                         err: error,
                         scope: "addon",
                         addon: addon.name,
                         addonSource: addon.source,
-                        dir: addonApisDir
+                        dir: addon.apisDir
                     },
                     "扫描 addon API 目录失败"
                 );
+                return null;
+            });
+
+            if (!addonFiles) {
                 continue;
             }
 
             for (const item of addonFiles) {
-                const apiInfo = await extractApiInfo(item.filePath, addonApisDir, "addon", addon.name, addon.name);
+                const apiInfo = await extractApiInfo(item.filePath, addon.apisDir, "addon", addon.name, addon.name);
                 if (apiInfo) {
                     apis.push(apiInfo);
                 }
