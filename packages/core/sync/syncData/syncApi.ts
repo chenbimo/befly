@@ -158,12 +158,20 @@ async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
 
     const allRecords = await dbHelper.getAll({
         table: "addon_admin_api",
-        fields: ["id", "path"],
+        fields: ["id", "path", "state"],
         where: { state$gte: 0 }
     } as any);
 
     for (const record of allRecords.lists) {
-        if (record.path && !apiPaths.has(record.path)) {
+        if (typeof record?.state !== "number" || record.state < 0) {
+            continue;
+        }
+
+        if (typeof record?.path !== "string" || !record.path) {
+            continue;
+        }
+
+        if (!apiPaths.has(record.path)) {
             await dbHelper.delForce({
                 table: "addon_admin_api",
                 where: { id: record.id }

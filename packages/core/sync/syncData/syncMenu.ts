@@ -174,7 +174,11 @@ async function syncMenus(dbHelper: DbHelper, menus: MenuConfig[], configPaths: S
             continue;
         }
 
-        if (record.path && !configPaths.has(record.path)) {
+        if (typeof record?.path !== "string" || !record.path) {
+            continue;
+        }
+
+        if (!configPaths.has(record.path)) {
             await dbHelper.delForce({
                 table: "addon_admin_menu",
                 where: { id: record.id }

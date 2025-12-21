@@ -47,7 +47,7 @@ describe("syncApi - delete obsolete records", () => {
 
         await __test__.syncApis(dbHelper, apis as any);
 
-        expect(calls.getAllArgs?.fields).toEqual(["id", "path"]);
+        expect(calls.getAllArgs?.fields).toEqual(["id", "path", "state"]);
 
         expect(calls.delForce).toHaveLength(1);
         expect(calls.delForce[0].where.id).toBe(2);
