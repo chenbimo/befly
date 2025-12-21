@@ -4,6 +4,7 @@ import { join, normalize, resolve } from "pathe";
 
 import { coreDir, appDir, coreTableDir, appTableDir } from "../paths.js";
 import { isDirentDirectory } from "./isDirentDirectory.js";
+import { scanAddons } from "./scanAddons.js";
 import { scanFiles } from "./scanFiles.js";
 
 export type AddonSource = "addon" | "app";
@@ -21,9 +22,14 @@ export const scanSources = async (): Promise<AddonInfo[]> => {
     const tables = [];
     const views = [];
 
+    const adddons = await scanAddons();
+
     // 处理核心项目 =================================
     const appTable = await scanFiles(appTableDir, "core", "*.json", {});
-    console.log("🔥[ appTable ]-26", appTable);
+    const addonTable = adddons.map(async (addon) => {
+        return await scanFiles(join(addon.fullPath, "tables"), "addon", "*.json", {});
+    });
+    const apis = [...appTable, ...[].concat(...(await Promise.all(addonTable)))];
     // 处理实际项目 =================================
     // 处理组件项目 =================================
 };
