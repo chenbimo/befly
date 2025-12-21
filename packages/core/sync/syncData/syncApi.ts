@@ -50,7 +50,7 @@ async function extractApi(filePath: string, apiRoot: string, type: "app" | "addo
     }
 }
 
-export async function checkApi(addons: AddonInfo[]): Promise<void> {
+async function checkApi(addons: AddonInfo[]): Promise<void> {
     try {
         const allApiFiles: Array<{ file: string; scope: "app" | "addon"; apiPath: string; addonName: string; addonSource: string; dir: string }> = [];
 
@@ -190,6 +190,8 @@ async function scanApi(ctx: SyncDataContext): Promise<ApiInfo[]> {
 }
 
 export async function syncApi(ctx: SyncDataContext): Promise<void> {
+    await checkApi(ctx.addons);
+
     const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_api"]);
     if (!tablesOk) {
         return;
