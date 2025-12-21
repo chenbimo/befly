@@ -54,51 +54,10 @@ function processFields(fields: Record<string, any>, apiName: string, routePath: 
  */
 export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
     try {
-        // 1. 扫描项目 API
-        const appApiFiles = await scanFiles(appApiDir, "app");
-        const appApiList = appApiFiles.map((file) => ({
-            filePath: file.filePath,
-            relativePath: file.relativePath,
-            type: "app" as const,
-            routePrefix: "/",
-            typeName: "项目"
-        }));
-
-        // 2. 扫描组件 API
-        const addonApiList: Array<{
-            filePath: string;
-            relativePath: string;
-            type: "addon";
-            routePrefix: string;
-            typeName: string;
-        }> = [];
-        const addons = scanAddons();
-        for (const addon of addons) {
-            const addonApiDir = addon.apisDir;
-            if (!addonApiDir) continue;
-            const addonApiFiles = await scanFiles(addonApiDir, "addon");
-
-            for (const file of addonApiFiles) {
-                addonApiList.push({
-                    filePath: file.filePath,
-                    relativePath: file.relativePath,
-                    type: "addon" as const,
-                    routePrefix: `/addon/${addon.name}/`, // 组件 API 默认带斜杠
-                    typeName: `组件${addon.name}`
-                });
-            }
-        }
-
-        // 3. 合并所有 API 文件
-        const allApiFiles = [...appApiList, ...addonApiList];
-
         // 4. 遍历处理所有 API 文件
-        for (const apiFile of allApiFiles) {
+        for (const item of apis) {
             try {
-                // Windows 下路径需要转换为正斜杠格式
-                const normalizedFilePath = apiFile.filePath.replace(/\\/g, "/");
-                const apiImport = await import(normalizedFilePath);
-                const api = apiImport.default;
+                const api = item?.content || {};
 
                 api.name = api.name || apiFile.relativePath;
 

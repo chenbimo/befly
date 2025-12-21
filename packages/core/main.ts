@@ -26,6 +26,7 @@ import { syncMenu } from "./sync/syncMenu.js";
 import { syncTable } from "./sync/syncTable.js";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
+import { checkApi } from "./utils/checkApi.js";
 import { isPrimaryProcess, getProcessRole } from "./utils/process.js";
 import { scanSources } from "./utils/scanSources.js";
 
@@ -61,8 +62,12 @@ export class Befly {
             const { beflyConfig } = await import("./befly.config.js");
             this.config = beflyConfig;
 
-            await scanSources();
-            process.exit(1);
+            const { apis, tables, plugins, hooks } = await scanSources();
+
+            await checkApi(apis);
+            await checkTable(tables);
+            await checkPlugins(plugins);
+            await checkHooks(hooks);
 
             // 2. 加载插件
             await loadPlugins(this.plugins, this.context as BeflyContext);

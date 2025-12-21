@@ -16,29 +16,6 @@ export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Pro
     try {
         const allPlugins: Plugin[] = [];
 
-        // 1. 扫描核心插件
-        const corePlugins = await scanModules<Plugin>(corePluginDir, "core", "插件");
-
-        // 2. 扫描组件插件
-        const addonPlugins: Plugin[] = [];
-        const addons = scanAddons();
-        for (const addon of addons) {
-            const dir = addon.pluginsDir;
-            if (!dir) {
-                continue;
-            }
-            const plugins = await scanModules<Plugin>(dir, "addon", "插件", addon.name);
-            addonPlugins.push(...plugins);
-        }
-
-        // 3. 扫描项目插件
-        const appPlugins = await scanModules<Plugin>(appPluginDir, "app", "插件");
-
-        // 4. 合并所有插件
-        allPlugins.push(...corePlugins);
-        allPlugins.push(...addonPlugins);
-        allPlugins.push(...appPlugins);
-
         // 5. 过滤禁用的插件
         const disablePlugins = beflyConfig.disablePlugins || [];
         const enabledPlugins = allPlugins.filter((plugin) => plugin.name && !disablePlugins.includes(plugin.name));

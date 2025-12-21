@@ -20,7 +20,6 @@ export interface ScanFileResult {
  * @param pattern Glob 模式
  */
 export async function scanFiles(dir: string, source: ScanFileSource, pattern: string, defaultValue): Promise<ScanFileResult[]> {
-    console.log("🔥[ dir ]-23", dir);
     if (!existsSync(dir)) return [];
 
     const normalizedDir = normalize(dir);
@@ -34,7 +33,6 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
             absolute: true,
             followSymlinks: true
         });
-        console.log("🔥[ files ]-31", files);
 
         for await (const file of files) {
             if (file.endsWith(".d.ts")) continue;
