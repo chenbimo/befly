@@ -40,7 +40,16 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "
             addonTitle: addonTitle || addonName
         };
     } catch (error: any) {
-        Logger.warn({ err: error, filePath: filePath }, "加载 API 模块失败，已跳过该文件");
+        Logger.warn(
+            {
+                err: error,
+                scope: type,
+                dir: apiRoot,
+                file: filePath,
+                addon: addonName
+            },
+            "加载 API 模块失败，已跳过该文件"
+        );
         return null;
     }
 }
@@ -59,24 +68,22 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
     try {
         const projectApisDir = join(projectDir, "apis");
 
+        let projectFiles: Array<{ filePath: string }> = [];
         try {
-            const files = await scanFiles(projectApisDir);
-            for (const item of files) {
-                try {
-                    projectApiFileCount += 1;
-                    const apiInfo = await extractApiInfo(item.filePath, projectApisDir, "app", "", "项目接口");
-                    if (apiInfo) {
-                        apis.push(apiInfo);
-                        projectApiCount += 1;
-                    } else {
-                        projectApiSkippedCount += 1;
-                    }
-                } catch (error: any) {
-                    Logger.warn({ err: error, dir: projectApisDir, file: item.filePath }, "扫描项目 API 目录失败");
-                }
-            }
+            projectFiles = await scanFiles(projectApisDir);
         } catch (error: any) {
-            Logger.warn({ err: error, dir: projectApisDir }, "扫描项目 API 目录失败");
+            Logger.warn({ err: error, scope: "app", dir: projectApisDir }, "扫描项目 API 目录失败");
+        }
+
+        for (const item of projectFiles) {
+            projectApiFileCount += 1;
+            const apiInfo = await extractApiInfo(item.filePath, projectApisDir, "app", "", "项目接口");
+            if (apiInfo) {
+                apis.push(apiInfo);
+                projectApiCount += 1;
+            } else {
+                projectApiSkippedCount += 1;
+            }
         }
 
         for (const addon of ctx.addons) {
@@ -85,13 +92,14 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
                 continue;
             }
 
-            let files: Array<{ filePath: string }> = [];
+            let addonFiles: Array<{ filePath: string }> = [];
             try {
-                files = await scanFiles(addonApisDir);
+                addonFiles = await scanFiles(addonApisDir);
             } catch (error: any) {
                 Logger.warn(
                     {
                         err: error,
+                        scope: "addon",
                         addon: addon.name,
                         addonSource: addon.source,
                         dir: addonApisDir
@@ -101,27 +109,14 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
                 continue;
             }
 
-            for (const item of files) {
-                try {
-                    addonApiFileCount += 1;
-                    const apiInfo = await extractApiInfo(item.filePath, addonApisDir, "addon", addon.name, addon.name);
-                    if (apiInfo) {
-                        apis.push(apiInfo);
-                        addonApiCount += 1;
-                    } else {
-                        addonApiSkippedCount += 1;
-                    }
-                } catch (error: any) {
-                    Logger.warn(
-                        {
-                            err: error,
-                            addon: addon.name,
-                            addonSource: addon.source,
-                            dir: addonApisDir,
-                            file: item.filePath
-                        },
-                        "扫描 addon API 目录失败"
-                    );
+            for (const item of addonFiles) {
+                addonApiFileCount += 1;
+                const apiInfo = await extractApiInfo(item.filePath, addonApisDir, "addon", addon.name, addon.name);
+                if (apiInfo) {
+                    apis.push(apiInfo);
+                    addonApiCount += 1;
+                } else {
+                    addonApiSkippedCount += 1;
                 }
             }
         }
