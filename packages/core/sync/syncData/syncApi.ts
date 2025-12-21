@@ -113,6 +113,8 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
 }
 
 async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
+    const apiPaths = new Set(apis.map((api) => api.path));
+
     for (const api of apis) {
         try {
             const existing = await dbHelper.getOne({
@@ -153,11 +155,10 @@ async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
             Logger.error({ err: error, api: api.name }, "同步接口失败");
         }
     }
-}
 
-async function deleteObsoleteRecords(dbHelper: DbHelper, apiPaths: Set<string>): Promise<void> {
     const allRecords = await dbHelper.getAll({
         table: "addon_admin_api",
+        fields: ["id", "path"],
         where: { state$gte: 0 }
     } as any);
 
@@ -190,13 +191,15 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
     await checkApi(ctx.addons);
 
     const apis = await scanAllApis(ctx);
-    const apiPaths = new Set(apis.map((api) => api.path));
-
     await syncApis(dbHelper, apis);
-    await deleteObsoleteRecords(dbHelper, apiPaths);
 
     await ctx.cacheHelper.cacheApis();
 
     // API 表发生变更后，重建角色接口权限缓存
     await ctx.cacheHelper.rebuildRoleApiPermissions();
 }
+
+// 仅测试用（避免将内部同步逻辑变成稳定 API）
+export const __test__ = {
+    syncApis: syncApis
+};

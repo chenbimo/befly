@@ -148,7 +148,7 @@ async function syncMenuRecursive(dbHelper: DbHelper, menu: MenuConfig, pid: numb
     return menuId;
 }
 
-async function syncMenus(dbHelper: DbHelper, menus: MenuConfig[]): Promise<void> {
+async function syncMenus(dbHelper: DbHelper, menus: MenuConfig[], configPaths: Set<string>): Promise<void> {
     const allExistingMenus = await dbHelper.getAll({
         table: "addon_admin_menu"
     } as any);
@@ -167,16 +167,13 @@ async function syncMenus(dbHelper: DbHelper, menus: MenuConfig[]): Promise<void>
             throw error;
         }
     }
-}
 
-async function deleteObsoleteRecords(dbHelper: DbHelper, configPaths: Set<string>): Promise<void> {
-    const allRecords = await dbHelper.getAll({
-        table: "addon_admin_menu",
-        fields: ["id", "path"],
-        where: { state$gte: 0 }
-    } as any);
+    // 复用首次 getAll 结果：删除菜单只依赖 id/path/state。
+    for (const record of allExistingMenus.lists) {
+        if (typeof record?.state !== "number" || record.state < 0) {
+            continue;
+        }
 
-    for (const record of allRecords.lists) {
         if (record.path && !configPaths.has(record.path)) {
             await dbHelper.delForce({
                 table: "addon_admin_menu",
@@ -244,13 +241,13 @@ export async function syncMenu(ctx: SyncDataContext): Promise<void> {
 
     const configPaths = collectPaths(mergedMenus);
 
-    await syncMenus(dbHelper, mergedMenus);
-    await deleteObsoleteRecords(dbHelper, configPaths);
+    await syncMenus(dbHelper, mergedMenus, configPaths);
 
     await ctx.cacheHelper.cacheMenus();
 }
 
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）
 export const __test__ = {
-    scanViewsDir: scanViewsDir
+    scanViewsDir: scanViewsDir,
+    syncMenus: syncMenus
 };
