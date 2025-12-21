@@ -33,17 +33,6 @@ type ScanAddonsCacheEntry = {
 // 组件在运行过程中不会动态变化，因此不提供“强制刷新”语义。
 const scanAddonsCache = new Map<string, ScanAddonsCacheEntry>();
 
-const normalizeScanAddonsCacheKey = (cwd: string): string => {
-    // - resolve: 折叠相对路径（例如 ./、../）
-    // - normalize: 统一分隔符与尾随斜杠等
-    // - win32: 盘符大小写不应影响缓存命中
-    const normalized = normalize(resolve(cwd));
-    if (process.platform === "win32") {
-        return normalized.toLowerCase();
-    }
-    return normalized;
-};
-
 const cloneAddonInfo = (addon: AddonInfo): AddonInfo => {
     return {
         name: addon.name,
@@ -60,12 +49,6 @@ const cloneAddonInfo = (addon: AddonInfo): AddonInfo => {
     };
 };
 
-const cloneAddonInfos = (addons: AddonInfo[]): AddonInfo[] => {
-    // AddonInfo 是纯 string/null 的扁平对象：不需要深拷贝。
-    // 这里对数组与对象做浅拷贝即可避免调用方修改返回值污染缓存。
-    return addons.map((addon) => cloneAddonInfo(addon));
-};
-
 /**
  * 扫描所有可用的 addon
  * 优先从本地 addons/ 目录加载，其次从 node_modules/@befly-addon/ 加载
@@ -73,11 +56,17 @@ const cloneAddonInfos = (addons: AddonInfo[]): AddonInfo[] => {
  * @returns addon 信息数组（包含来源、根目录、常用子目录路径）
  */
 export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
-    const cacheKey = normalizeScanAddonsCacheKey(cwd);
+    // - resolve: 折叠相对路径（例如 ./、../）
+    // - normalize: 统一分隔符与尾随斜杠等
+    // - win32: 盘符大小写不应影响缓存命中
+    const normalizedCwd = normalize(resolve(cwd));
+    const cacheKey = process.platform === "win32" ? normalizedCwd.toLowerCase() : normalizedCwd;
 
     const cached = scanAddonsCache.get(cacheKey);
     if (cached) {
-        return cloneAddonInfos(cached.addons);
+        // AddonInfo 是纯 string/null 的扁平对象：不需要深拷贝。
+        // 这里对数组与对象做浅拷贝即可避免调用方修改返回值污染缓存。
+        return cached.addons.map((addon) => cloneAddonInfo(addon));
     }
 
     const candidates: Array<{ name: string; source: AddonSource; rootDir: string }> = [];
@@ -161,5 +150,6 @@ export const scanAddons = (cwd: string = process.cwd()): AddonInfo[] => {
         addons: sortedAddons
     });
 
-    return cloneAddonInfos(sortedAddons);
+    // 同上：返回给调用方的结果做浅拷贝，避免污染缓存。
+    return sortedAddons.map((addon) => cloneAddonInfo(addon));
 };
