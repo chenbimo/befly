@@ -7,7 +7,6 @@ import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
 import { scanFiles } from "../../utils/scanFiles.js";
 import { assertTablesExist } from "./assertTablesExist.js";
-import { checkApi } from "./checkApi.js";
 
 async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "addon", addonName: string = "", addonTitle: string = ""): Promise<ApiInfo | null> {
     try {
@@ -148,7 +147,6 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
     }
 
     const finalApis = await scanAllApis(ctx);
-    await checkApi(ctx.addons);
 
     const apiPaths = new Set(finalApis.map((api) => api.path));
 

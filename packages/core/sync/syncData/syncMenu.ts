@@ -13,7 +13,6 @@ import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
 import { isDirentDirectory } from "../../utils/isDirentDirectory.js";
 import { assertTablesExist } from "./assertTablesExist.js";
-import { checkTable } from "./checkTable.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {
@@ -201,10 +200,6 @@ export async function syncMenu(ctx: SyncDataContext, menus?: MenuConfig[]): Prom
     const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_menu"]);
     if (!tablesOk) {
         return;
-    }
-
-    if (!menus) {
-        await checkTable(ctx.addons);
     }
 
     const configPaths = collectPaths(mergedMenus);
