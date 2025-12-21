@@ -59,12 +59,7 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
     try {
         const projectApisDir = join(projectDir, "apis");
 
-        let projectFiles: Array<{ filePath: string }> = [];
-        try {
-            projectFiles = await scanFiles(projectApisDir);
-        } catch (error: any) {
-            Logger.warn({ err: error, scope: "app", dir: projectApisDir }, "扫描项目 API 目录失败");
-        }
+        const projectFiles = await scanFiles(projectApisDir);
 
         for (const item of projectFiles) {
             const apiInfo = await extractApiInfo(item.filePath, projectApisDir, "app", "", "项目接口");
