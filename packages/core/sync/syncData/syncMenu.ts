@@ -14,7 +14,6 @@ import { projectDir } from "../../paths.js";
 import { isDirentDirectory } from "../../utils/isDirentDirectory.js";
 import { assertTablesExist } from "./assertTablesExist.js";
 import { checkTable } from "./checkTable.js";
-import { forEachAddonDir } from "./forEachAddonDir.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {
@@ -151,11 +150,13 @@ async function syncMenuRecursive(dbHelper: DbHelper, menu: MenuConfig, pid: numb
 async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
     const allMenus: MenuConfig[] = [];
 
-    await forEachAddonDir({
-        addons: ctx.addons,
-        pickDir: (addon) => addon.adminViewsDir,
-        warnMessage: "扫描 addon views 目录失败",
-        onDir: async (addon, adminViewsDir) => {
+    for (const addon of ctx.addons) {
+        const adminViewsDir = addon.adminViewsDir;
+        if (!adminViewsDir) {
+            continue;
+        }
+
+        try {
             const prefix = `/${addon.source}/${addon.name}`;
             const menus = await scanViewsDir(adminViewsDir, prefix);
             if (menus.length > 0) {
@@ -163,8 +164,18 @@ async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
                     allMenus.push(menu);
                 }
             }
+        } catch (error: any) {
+            Logger.warn(
+                {
+                    err: error,
+                    addon: addon.name,
+                    addonSource: addon.source,
+                    dir: adminViewsDir
+                },
+                "扫描 addon views 目录失败"
+            );
         }
-    });
+    }
 
     const menusJsonPath = join(projectDir, "menus.json");
     if (existsSync(menusJsonPath)) {

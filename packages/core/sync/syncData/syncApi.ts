@@ -5,10 +5,9 @@ import { join, relative } from "pathe";
 
 import { Logger } from "../../lib/logger.js";
 import { projectDir } from "../../paths.js";
+import { scanFiles } from "../../utils/scanFiles.js";
 import { assertTablesExist } from "./assertTablesExist.js";
 import { checkApi } from "./checkApi.js";
-import { forEachAddonFile } from "./forEachAddonFile.js";
-import { forEachFileInDir } from "./forEachFileInDir.js";
 
 async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "addon", addonName: string = "", addonTitle: string = ""): Promise<ApiInfo | null> {
     try {
@@ -60,36 +59,72 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
     try {
         const projectApisDir = join(projectDir, "apis");
 
-        await forEachFileInDir({
-            dirPath: projectApisDir,
-            warnMessage: "扫描项目 API 目录失败",
-            onFile: async (filePath) => {
-                projectApiFileCount += 1;
-                const apiInfo = await extractApiInfo(filePath, projectApisDir, "app", "", "项目接口");
-                if (apiInfo) {
-                    apis.push(apiInfo);
-                    projectApiCount += 1;
-                } else {
-                    projectApiSkippedCount += 1;
+        try {
+            const files = await scanFiles(projectApisDir);
+            for (const item of files) {
+                try {
+                    projectApiFileCount += 1;
+                    const apiInfo = await extractApiInfo(item.filePath, projectApisDir, "app", "", "项目接口");
+                    if (apiInfo) {
+                        apis.push(apiInfo);
+                        projectApiCount += 1;
+                    } else {
+                        projectApiSkippedCount += 1;
+                    }
+                } catch (error: any) {
+                    Logger.warn({ err: error, dir: projectApisDir, file: item.filePath }, "扫描项目 API 目录失败");
                 }
             }
-        });
+        } catch (error: any) {
+            Logger.warn({ err: error, dir: projectApisDir }, "扫描项目 API 目录失败");
+        }
 
-        await forEachAddonFile({
-            addons: ctx.addons,
-            pickDir: (addon) => addon.apisDir,
-            warnMessage: "扫描 addon API 目录失败",
-            onFile: async (addon, addonApisDir, filePath) => {
-                addonApiFileCount += 1;
-                const apiInfo = await extractApiInfo(filePath, addonApisDir, "addon", addon.name, addon.name);
-                if (apiInfo) {
-                    apis.push(apiInfo);
-                    addonApiCount += 1;
-                } else {
-                    addonApiSkippedCount += 1;
+        for (const addon of ctx.addons) {
+            const addonApisDir = addon.apisDir;
+            if (!addonApisDir) {
+                continue;
+            }
+
+            let files: Array<{ filePath: string }> = [];
+            try {
+                files = await scanFiles(addonApisDir);
+            } catch (error: any) {
+                Logger.warn(
+                    {
+                        err: error,
+                        addon: addon.name,
+                        addonSource: addon.source,
+                        dir: addonApisDir
+                    },
+                    "扫描 addon API 目录失败"
+                );
+                continue;
+            }
+
+            for (const item of files) {
+                try {
+                    addonApiFileCount += 1;
+                    const apiInfo = await extractApiInfo(item.filePath, addonApisDir, "addon", addon.name, addon.name);
+                    if (apiInfo) {
+                        apis.push(apiInfo);
+                        addonApiCount += 1;
+                    } else {
+                        addonApiSkippedCount += 1;
+                    }
+                } catch (error: any) {
+                    Logger.warn(
+                        {
+                            err: error,
+                            addon: addon.name,
+                            addonSource: addon.source,
+                            dir: addonApisDir,
+                            file: item.filePath
+                        },
+                        "扫描 addon API 目录失败"
+                    );
                 }
             }
-        });
+        }
 
         Logger.info(
             {
@@ -111,16 +146,14 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
     }
 }
 
-export async function syncApi(ctx: SyncDataContext, apis?: ApiInfo[]): Promise<void> {
+export async function syncApi(ctx: SyncDataContext): Promise<void> {
     const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_api"]);
     if (!tablesOk) {
         return;
     }
 
-    const finalApis = apis ? apis : await scanAllApis(ctx);
-    if (!apis) {
-        await checkApi(ctx.addons);
-    }
+    const finalApis = await scanAllApis(ctx);
+    await checkApi(ctx.addons);
 
     const apiPaths = new Set(finalApis.map((api) => api.path));
 
