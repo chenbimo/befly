@@ -1,5 +1,5 @@
 // 类型导入
-import type { AddonInfo } from "../../utils/addonHelper.js";
+import type { AddonInfo } from "../../utils/scanAddons.js";
 
 // 内部依赖
 import { existsSync } from "node:fs";

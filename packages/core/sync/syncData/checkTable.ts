@@ -1,6 +1,6 @@
 // 类型导入
 import type { FieldDefinition } from "../../types/validate.js";
-import type { AddonInfo } from "../../utils/addonHelper.js";
+import type { AddonInfo } from "../../utils/scanAddons.js";
 
 import { existsSync } from "node:fs";
 

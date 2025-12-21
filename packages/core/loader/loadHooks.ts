@@ -10,9 +10,9 @@ import type { Hook } from "../types/hook.js";
 import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
 import { coreHookDir, projectHookDir } from "../paths.js";
-// 相对导入
-import { scanAddons } from "../utils/addonHelper.js";
 import { scanModules } from "../utils/modules.js";
+// 相对导入
+import { scanAddons } from "../utils/scanAddons.js";
 
 export async function loadHooks(hooks: Hook[]): Promise<void> {
     try {

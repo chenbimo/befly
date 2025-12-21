@@ -20,7 +20,7 @@ import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
 import { projectDir } from "../paths.js";
-import { scanAddons } from "../utils/addonHelper.js";
+import { scanAddons } from "../utils/scanAddons.js";
 import { scanFiles } from "../utils/scanFiles.js";
 import { setDbType } from "./syncTable/constants.js";
 import { applyFieldDefaults } from "./syncTable/helpers.js";

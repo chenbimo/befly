@@ -117,11 +117,11 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
         return;
     }
 
-    const finalApis = await scanAllApis(ctx);
+    const allApis = await scanAllApis(ctx);
 
-    const apiPaths = new Set(finalApis.map((api) => api.path));
+    const apiPaths = new Set(allApis.map((api) => api.path));
 
-    for (const api of finalApis) {
+    for (const api of allApis) {
         try {
             const existing = await ctx.dbHelper.getOne({
                 table: "addon_admin_api",

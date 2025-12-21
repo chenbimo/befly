@@ -9,8 +9,8 @@ import type { Plugin } from "../types/plugin.js";
 import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
 import { corePluginDir, projectPluginDir } from "../paths.js";
-import { scanAddons } from "../utils/addonHelper.js";
 import { sortModules, scanModules } from "../utils/modules.js";
+import { scanAddons } from "../utils/scanAddons.js";
 
 export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Promise<void> {
     try {

@@ -14,7 +14,7 @@ test("scanAddons - should reuse in-process cache for same cwd", async () => {
         // 放一个非目录项，确保扫描逻辑不会误判
         writeFileSync(join(projectDir, "addons", "README.md"), "x", { encoding: "utf8" });
 
-        const mod = await import(`../utils/addonHelper.js?cacheTest=${Date.now()}`);
+        const mod = await import(`../utils/scanAddons.js?cacheTest=${Date.now()}`);
         const scanAddons = mod.scanAddons as (cwd?: string) => any[];
 
         const first = scanAddons(projectDir);

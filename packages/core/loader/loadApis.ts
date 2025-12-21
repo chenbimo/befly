@@ -8,8 +8,8 @@ import type { ApiRoute } from "../types/api.js";
 
 import { Logger } from "../lib/logger.js";
 import { projectApiDir } from "../paths.js";
-import { scanAddons } from "../utils/addonHelper.js";
 import { makeRouteKey } from "../utils/route.js";
+import { scanAddons } from "../utils/scanAddons.js";
 // 相对导入
 import { scanFiles } from "../utils/scanFiles.js";
 
