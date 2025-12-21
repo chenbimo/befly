@@ -193,9 +193,8 @@ async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
 
     return allMenus;
 }
-
-export async function syncMenu(ctx: SyncDataContext, menus?: MenuConfig[]): Promise<void> {
-    const mergedMenus = menus ? menus : await loadMenuConfigs(ctx);
+export async function syncMenu(ctx: SyncDataContext): Promise<void> {
+    const mergedMenus = await loadMenuConfigs(ctx);
 
     const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_menu"]);
     if (!tablesOk) {
