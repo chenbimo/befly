@@ -56,14 +56,6 @@ async function extractApiInfo(filePath: string, apiRoot: string, type: "app" | "
 async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
     const apis: ApiInfo[] = [];
 
-    let projectApiFileCount = 0;
-    let projectApiCount = 0;
-    let projectApiSkippedCount = 0;
-
-    let addonApiFileCount = 0;
-    let addonApiCount = 0;
-    let addonApiSkippedCount = 0;
-
     try {
         const projectApisDir = join(projectDir, "apis");
 
@@ -75,13 +67,9 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
         }
 
         for (const item of projectFiles) {
-            projectApiFileCount += 1;
             const apiInfo = await extractApiInfo(item.filePath, projectApisDir, "app", "", "项目接口");
             if (apiInfo) {
                 apis.push(apiInfo);
-                projectApiCount += 1;
-            } else {
-                projectApiSkippedCount += 1;
             }
         }
 
@@ -109,29 +97,12 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
             }
 
             for (const item of addonFiles) {
-                addonApiFileCount += 1;
                 const apiInfo = await extractApiInfo(item.filePath, addonApisDir, "addon", addon.name, addon.name);
                 if (apiInfo) {
                     apis.push(apiInfo);
-                    addonApiCount += 1;
-                } else {
-                    addonApiSkippedCount += 1;
                 }
             }
         }
-
-        Logger.info(
-            {
-                projectApiFiles: projectApiFileCount,
-                projectApis: projectApiCount,
-                projectApiSkipped: projectApiSkippedCount,
-                addonApiFiles: addonApiFileCount,
-                addonApis: addonApiCount,
-                addonApiSkipped: addonApiSkippedCount,
-                totalApis: apis.length
-            },
-            "接口扫描完成"
-        );
 
         return apis;
     } catch (error: any) {
