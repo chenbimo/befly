@@ -9,7 +9,7 @@ import { basename } from "pathe";
 
 // 相对导入
 import { Logger } from "../../lib/logger.js";
-import { projectTableDir } from "../../paths.js";
+import { appTableDir } from "../../paths.js";
 import { scanFiles } from "../../utils/scanFiles.js";
 
 /**
@@ -71,8 +71,8 @@ export async function checkTable(addons: AddonInfo[]): Promise<void> {
         let hasError = false;
 
         // 收集项目表字段定义文件（如果目录存在）
-        if (existsSync(projectTableDir)) {
-            const files = await scanFiles(projectTableDir, "app", "*.json");
+        if (existsSync(appTableDir)) {
+            const files = await scanFiles(appTableDir, "app", "*.json");
             for (const { filePath } of files) {
                 allTableFiles.push({
                     file: filePath,

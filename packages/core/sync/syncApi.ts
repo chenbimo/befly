@@ -5,7 +5,7 @@ import { isPlainObject } from "es-toolkit/compat";
 import { relative } from "pathe";
 
 import { Logger } from "../lib/logger.js";
-import { projectApiDir } from "../paths.js";
+import { appApiDir } from "../paths.js";
 import { scanFiles } from "../utils/scanFiles.js";
 import { isTablesExist } from "./syncData/isTablesExist.js";
 
@@ -62,7 +62,7 @@ async function scanApi(ctx: SyncDataContext): Promise<ApiInfo[]> {
 
     try {
         // 获取所有项目接口文件数据
-        const appApiFiles = await scanFiles(projectApiDir, "app");
+        const appApiFiles = await scanFiles(appApiDir, "app");
 
         // 获取所有组件接口文件数据
         const addonApiFiles = [];
@@ -117,7 +117,6 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
     }
 
     const allApis = await scanApi(ctx);
-    console.log("🔥[ allApis ]-117", allApis);
 
     // await checkApi(allApis);
 
@@ -191,4 +190,6 @@ export async function syncApi(ctx: SyncDataContext): Promise<void> {
 
     // // API 表发生变更后，重建角色接口权限缓存
     // await ctx.cacheHelper.rebuildRoleApiPermissions();
+
+    return allApis;
 }

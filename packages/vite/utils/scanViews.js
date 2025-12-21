@@ -8,17 +8,17 @@ import { join } from "node:path";
  * @returns {Array<{ src: string, path: string, exclude: string[] }>} 路由文件夹配置数组
  */
 export function scanViews() {
-    const projectRoot = process.cwd();
-    const addonBasePath = join(projectRoot, "node_modules", "@befly-addon");
+    const appRoot = process.cwd();
+    const addonBasePath = join(appRoot, "node_modules", "@befly-addon");
 
     /** @type {Array<{ src: string, path: string, exclude: string[] }>} */
     const routesFolders = [];
 
     // 1. 项目自身 views
-    const projectViewsPath = join(projectRoot, "src", "views");
-    if (existsSync(projectViewsPath)) {
+    const appViewsPath = join(appRoot, "src", "views");
+    if (existsSync(appViewsPath)) {
         routesFolders.push({
-            src: realpathSync(projectViewsPath),
+            src: realpathSync(appViewsPath),
             path: "",
             exclude: ["**/components/**"]
         });

@@ -9,7 +9,7 @@ import type { Hook } from "../types/hook.js";
 
 import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
-import { coreHookDir, projectHookDir } from "../paths.js";
+import { coreHookDir, appHookDir } from "../paths.js";
 import { scanModules } from "../utils/modules.js";
 // 相对导入
 import { scanAddons } from "../utils/scanAddons.js";
@@ -39,7 +39,7 @@ export async function loadHooks(hooks: Hook[]): Promise<void> {
         // 3. 可选：扫描项目钩子（默认关闭）
         const enableAppHooks = Boolean((beflyConfig as any).enableAppHooks);
         if (enableAppHooks) {
-            const appHooks = await scanModules<Hook>(projectHookDir, "app", "钩子");
+            const appHooks = await scanModules<Hook>(appHookDir, "app", "钩子");
             allHooks.push(...appHooks);
         }
 

@@ -6,7 +6,7 @@
  *
  * 路径分类：
  * - root* 系列：Core 框架内部路径（packages/core/*）
- * - project* 系列：用户项目路径（process.cwd()/*）
+ * - app* 系列：用户项目路径（process.cwd()/*）
  *
  */
 
@@ -68,46 +68,46 @@ export const coreTableDir = join(__dirname, "tables");
  * @description process.cwd()
  * @usage 用户项目的根目录
  */
-export const projectDir = process.cwd();
+export const appDir = process.cwd();
 
 /**
  * 项目检查目录
- * @description {projectDir}/checks/
+ * @description {appDir}/checks/
  * @usage 存放用户自定义启动检查模块
  */
-export const projectCheckDir = join(projectDir, "checks");
+export const appCheckDir = join(appDir, "checks");
 
 /**
  * 项目插件目录
- * @description {projectDir}/plugins/
+ * @description {appDir}/plugins/
  * @usage 存放用户自定义插件
  */
-export const projectPluginDir = join(projectDir, "plugins");
+export const appPluginDir = join(appDir, "plugins");
 
 /**
  * 项目钩子目录
- * @description {projectDir}/hooks/
+ * @description {appDir}/hooks/
  * @usage 存放用户自定义钩子
  */
-export const projectHookDir = join(projectDir, "hooks");
+export const appHookDir = join(appDir, "hooks");
 
 /**
  * 项目 API 目录
- * @description {projectDir}/apis/
+ * @description {appDir}/apis/
  * @usage 存放用户业务 API 接口
  */
-export const projectApiDir = join(projectDir, "apis");
+export const appApiDir = join(appDir, "apis");
 
 /**
  * 项目表定义目录
- * @description {projectDir}/tables/
+ * @description {appDir}/tables/
  * @usage 存放用户业务表定义（JSON 格式）
  */
-export const projectTableDir = join(projectDir, "tables");
+export const appTableDir = join(appDir, "tables");
 
 /**
  * 项目组件目录
- * @description {projectDir}/addons/
+ * @description {appDir}/addons/
  * @usage 存放本地组件（优先级高于 node_modules 中的组件）
  */
-export const projectAddonsDir = join(projectDir, "addons");
+export const appAddonsDir = join(appDir, "addons");

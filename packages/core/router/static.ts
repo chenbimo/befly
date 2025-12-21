@@ -9,7 +9,7 @@ import { join } from "pathe";
 import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
 // 相对导入
-import { projectDir } from "../paths.js";
+import { appDir } from "../paths.js";
 import { setCorsOptions } from "../utils/cors.js";
 
 /**
@@ -21,7 +21,7 @@ export function staticHandler() {
         const corsHeaders = setCorsOptions(req, beflyConfig.cors);
 
         const url = new URL(req.url);
-        const filePath = join(projectDir, "public", url.pathname);
+        const filePath = join(appDir, "public", url.pathname);
 
         try {
             // OPTIONS预检请求

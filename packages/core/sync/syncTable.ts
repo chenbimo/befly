@@ -19,7 +19,7 @@ import { CacheKeys } from "../lib/cacheKeys.js";
 import { Connect } from "../lib/connect.js";
 import { Logger } from "../lib/logger.js";
 import { RedisHelper } from "../lib/redisHelper.js";
-import { projectDir } from "../paths.js";
+import { appDir } from "../paths.js";
 import { scanAddons } from "../utils/scanAddons.js";
 import { scanFiles } from "../utils/scanFiles.js";
 import { setDbType } from "./syncTable/constants.js";
@@ -69,9 +69,9 @@ export async function syncTable(): Promise<void> {
         }> = [];
 
         // 1. 项目表（无前缀）- 如果 tables 目录存在
-        const projectTablesDir = resolve(projectDir, "tables");
-        if (existsSync(projectTablesDir)) {
-            directories.push({ path: projectTablesDir, type: "app" });
+        const appTablesDir = resolve(appDir, "tables");
+        if (existsSync(appTablesDir)) {
+            directories.push({ path: appTablesDir, type: "app" });
         }
 
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）

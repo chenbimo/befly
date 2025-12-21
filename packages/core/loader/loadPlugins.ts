@@ -8,7 +8,7 @@ import type { Plugin } from "../types/plugin.js";
 
 import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
-import { corePluginDir, projectPluginDir } from "../paths.js";
+import { corePluginDir, appPluginDir } from "../paths.js";
 import { sortModules, scanModules } from "../utils/modules.js";
 import { scanAddons } from "../utils/scanAddons.js";
 
@@ -32,7 +32,7 @@ export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Pro
         }
 
         // 3. 扫描项目插件
-        const appPlugins = await scanModules<Plugin>(projectPluginDir, "app", "插件");
+        const appPlugins = await scanModules<Plugin>(appPluginDir, "app", "插件");
 
         // 4. 合并所有插件
         allPlugins.push(...corePlugins);

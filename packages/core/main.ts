@@ -21,7 +21,8 @@ import { loadPlugins } from "./loader/loadPlugins.js";
 import { apiHandler } from "./router/api.js";
 import { staticHandler } from "./router/static.js";
 // 同步
-import { syncData } from "./sync/syncData.js";
+import { syncApi } from "./sync/syncApi.js";
+import { syncMenu } from "./sync/syncMenu.js";
 import { syncTable } from "./sync/syncTable.js";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
@@ -63,10 +64,11 @@ export class Befly {
             await loadPlugins(this.plugins, this.context as BeflyContext);
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
-            await syncTable();
-            await syncApi(this.plugins, this.context as BeflyContext);
-            await syncMenu(this.plugins, this.context as BeflyContext);
-            await syncDev(this.plugins, this.context as BeflyContext);
+            // await syncTable();
+            await syncApi(this.context as BeflyContext);
+            process.exit(1);
+            await syncMenu(this.context as BeflyContext);
+            await syncDev(this.context as BeflyContext);
 
             // 3. 加载钩子
             await loadHooks(this.hooks);

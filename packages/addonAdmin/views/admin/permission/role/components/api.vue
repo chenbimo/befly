@@ -94,7 +94,7 @@ const $Method = {
 
             res.data.lists.forEach((api) => {
                 const addonTitle = api.addonTitle || api.addonName || "项目接口";
-                const addonName = api.addonName || "project";
+                const addonName = api.addonName || "app";
 
                 if (!apiMap.has(addonName)) {
                     apiMap.set(addonName, {

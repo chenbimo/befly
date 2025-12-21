@@ -10,7 +10,7 @@ import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupB
 import { join } from "pathe";
 
 import { Logger } from "../lib/logger.js";
-import { projectDir } from "../paths.js";
+import { appDir } from "../paths.js";
 import { isDirentDirectory } from "../utils/isDirentDirectory.js";
 import { isTablesExist } from "./syncData/isTablesExist.js";
 
@@ -176,13 +176,13 @@ async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
         }
     }
 
-    const menusJsonPath = join(projectDir, "menus.json");
+    const menusJsonPath = join(appDir, "menus.json");
     if (existsSync(menusJsonPath)) {
         try {
             const content = await readFile(menusJsonPath, "utf-8");
-            const projectMenus = JSON.parse(content);
-            if (Array.isArray(projectMenus) && projectMenus.length > 0) {
-                for (const menu of projectMenus) {
+            const appMenus = JSON.parse(content);
+            if (Array.isArray(appMenus) && appMenus.length > 0) {
+                for (const menu of appMenus) {
                     allMenus.push(menu);
                 }
             }

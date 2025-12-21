@@ -264,7 +264,7 @@ export interface IndexDetail {
 export interface ApiReport {
     stats: {
         totalApis: number;
-        projectApis: number;
+        appApis: number;
         addonApis: number;
         created: number;
         updated: number;
@@ -272,7 +272,7 @@ export interface ApiReport {
     };
     details: {
         bySource: {
-            project: ApiDetail[];
+            app: ApiDetail[];
             addons: Record<string, ApiDetail[]>;
         };
         byAction: {

@@ -7,7 +7,7 @@
 import type { ApiRoute } from "../types/api.js";
 
 import { Logger } from "../lib/logger.js";
-import { projectApiDir } from "../paths.js";
+import { appApiDir } from "../paths.js";
 import { makeRouteKey } from "../utils/route.js";
 import { scanAddons } from "../utils/scanAddons.js";
 // 相对导入
@@ -55,8 +55,8 @@ function processFields(fields: Record<string, any>, apiName: string, routePath: 
 export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
     try {
         // 1. 扫描项目 API
-        const projectApiFiles = await scanFiles(projectApiDir, "app");
-        const projectApiList = projectApiFiles.map((file) => ({
+        const appApiFiles = await scanFiles(appApiDir, "app");
+        const appApiList = appApiFiles.map((file) => ({
             filePath: file.filePath,
             relativePath: file.relativePath,
             type: "app" as const,
@@ -90,7 +90,7 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
         }
 
         // 3. 合并所有 API 文件
-        const allApiFiles = [...projectApiList, ...addonApiList];
+        const allApiFiles = [...appApiList, ...addonApiList];
 
         // 4. 遍历处理所有 API 文件
         for (const apiFile of allApiFiles) {

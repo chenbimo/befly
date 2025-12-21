@@ -91,7 +91,7 @@ export function createBeflyViteConfig(options = {}) {
     const { root, scanViews, resolvers = {}, manualChunks, userConfig = {} } = options;
 
     // 计算根目录（如果未提供）
-    const projectRoot = root || process.cwd();
+    const appRoot = root || process.cwd();
 
     const baseConfig = defineConfig({
         base: "./",
@@ -112,7 +112,7 @@ export function createBeflyViteConfig(options = {}) {
 
         resolve: {
             alias: {
-                "@": fileURLToPath(new URL("src", `file:///${projectRoot.replace(/\\/g, "/")}/`))
+                "@": fileURLToPath(new URL("src", `file:///${appRoot.replace(/\\/g, "/")}/`))
             }
         },
 
