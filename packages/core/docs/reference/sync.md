@@ -1,16 +1,14 @@
-# Sync 同步命令
+# Sync 同步流程
 
 > 数据库结构、API路由、菜单配置、开发账户同步
 
 ## 目录
 
 - [概述](#概述)
-- [syncAll 全量同步](#syncall-全量同步)
 - [syncTable 数据库同步](#synctable-数据库同步)
 - [syncApi 接口同步](#syncapi-接口同步)
 - [syncMenu 菜单同步](#syncmenu-菜单同步)
 - [syncDev 开发账户同步](#syncdev-开发账户同步)
-- [命令行使用](#命令行使用)
 - [表名规则](#表名规则)
 - [注意事项](#注意事项)
 - [FAQ](#faq)
@@ -27,38 +25,10 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 | `syncApi`   | 同步 API 路由信息 | `addon_admin_api`                       |
 | `syncMenu`  | 同步菜单配置      | `addon_admin_menu`                      |
 | `syncDev`   | 创建开发者账户    | `addon_admin_role`, `addon_admin_admin` |
-| `syncAll`   | 依次执行以上全部  | -                                       |
 
 **执行顺序**：`syncTable` → `syncApi` → `syncMenu` → `syncDev`
 
----
-
-## syncAll 全量同步
-
-一键执行所有同步命令：
-
-```bash
-# 执行全量同步
-befly sync
-
-# 等同于依次执行：
-# 1. syncTable - 同步数据库表结构
-# 2. syncApi  - 同步 API 路由
-# 3. syncMenu - 同步菜单配置
-# 4. syncDev  - 同步开发账户
-```
-
-**执行流程**：
-
-```
-┌──────────────────────────────────────────────────┐
-│                  syncAll                         │
-├──────────────────────────────────────────────────┤
-│  1. syncTable() 同步数据库表结构（syncTable）      │
-│         ↓                                        │
-│  2. syncData() 同步数据（按顺序：syncApi → syncMenu → syncDev） │
-└──────────────────────────────────────────────────┘
-```
+> 说明：当前版本不提供 CLI 同步命令；同步逻辑在服务启动时由主进程自动执行（见 `packages/core/main.ts`）。
 
 ---
 
@@ -68,9 +38,12 @@ befly sync
 
 ### 基本用法
 
-```bash
-# 同步所有表
-befly sync:db
+默认会在服务启动时自动执行（仅主进程）。如需在代码中手动执行：
+
+```typescript
+import { syncTable } from "../sync/syncTable.js";
+
+await syncTable();
 ```
 
 ### 命令选项
@@ -136,9 +109,14 @@ befly sync:db
 
 ### 基本用法
 
-```bash
-# 同步 API 路由
-befly sync:api
+通常无需单独调用：`syncData()` 会按顺序执行 `syncApi` → `syncMenu` → `syncDev`。
+
+如需在代码中手动触发整套数据同步：
+
+```typescript
+import { syncData } from "../sync/syncData.js";
+
+await syncData();
 ```
 
 ### 同步逻辑
@@ -199,10 +177,7 @@ interface SyncApiStats {
 
 ### 基本用法
 
-```bash
-# 同步菜单
-befly sync:menu
-```
+同 `syncApi`，通常由 `syncData()` 统一触发。
 
 ### 菜单配置文件
 
@@ -287,10 +262,7 @@ interface SyncMenuStats {
 
 ### 基本用法
 
-```bash
-# 同步开发账户
-befly sync:dev
-```
+同 `syncApi`，通常由 `syncData()` 统一触发。
 
 ### 同步逻辑
 
@@ -336,33 +308,17 @@ export default {
 
 ---
 
-## 命令行使用
-
-### CLI 命令列表
-
-```bash
-# 全量同步
-befly sync
-
-# 单独执行
-befly sync:db              # 同步数据库结构
-befly sync:api             # 同步 API 路由
-befly sync:menu            # 同步菜单配置
-befly sync:dev             # 同步开发账户
-```
-
-### 代码调用
+## 代码调用
 
 ```typescript
 import { syncTable } from "./sync/syncTable";
 import { syncData } from "./sync/syncData";
 
-// 依次执行全量同步（等价于 befly sync）
+// 启动前/启动中手动触发同步
 await syncTable();
 await syncData();
 
-// 单独调用（示例：只同步指定表）
-await syncTable();
+// 说明：syncData 内部会固定顺序执行：syncApi → syncMenu → syncDev
 ```
 
 ---
@@ -445,7 +401,7 @@ Sync 命令会自动管理数据库和 Redis 连接：
 
 ### Q: sync 命令报错 "表不存在" 怎么办？
 
-A: 确保先执行 `befly sync:db` 创建表结构，再执行其他 sync 命令。或直接使用 `befly sync` 执行全量同步。
+A: 确保 `syncTable()` 已先执行（服务启动时会自动执行）。`syncApi/syncMenu/syncDev` 依赖对应的表结构存在。
 
 ### Q: 为什么修改了表定义但数据库没变化？
 
@@ -458,7 +414,7 @@ A: 检查以下几点：
 
 ### Q: 如何处理“字段长度收缩”这类危险变更？
 
-A: `syncTable` 会跳过长度收缩并告警；请手动评估并处理（例如先清理/截断数据，再手动执行 DDL），然后再运行 `befly sync:db` 让其继续同步后续安全变更。
+A: `syncTable` 会跳过长度收缩并告警；请手动评估并处理（例如先清理/截断数据，再手动执行 DDL），再重新启动服务或再次调用 `syncTable()`。
 
 ### Q: Addon 表名太长怎么办？
 
@@ -494,8 +450,4 @@ export default {
 };
 ```
 
-或使用环境变量：
-
-```bash
-DEV_PASSWORD=your_password befly sync:dev
-```
+（不再提供 CLI 参数/命令；按配置文件机制设置即可。）

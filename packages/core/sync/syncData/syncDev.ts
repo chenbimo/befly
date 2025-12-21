@@ -1,4 +1,3 @@
-import type { DbHelper } from "../../lib/dbHelper.js";
 import type { SyncDataContext } from "./types.js";
 
 import { beflyConfig } from "../../befly.config.js";
@@ -11,30 +10,12 @@ export async function syncDev(ctx: SyncDataContext): Promise<void> {
         return;
     }
 
-    const dbHelper: DbHelper = ctx.dbHelper;
-
-    const tablesOk = await assertTablesExist({
-        dbHelper: dbHelper,
-        tables: [
-            {
-                table: "addon_admin_admin",
-                skipMessage: "[SyncDev] 表 addon_admin_admin 不存在，跳过开发者账号同步"
-            },
-            {
-                table: "addon_admin_role",
-                skipMessage: "[SyncDev] 表 addon_admin_role 不存在，跳过开发者账号同步"
-            },
-            {
-                table: "addon_admin_menu",
-                skipMessage: "[SyncDev] 表 addon_admin_menu 不存在，跳过开发者账号同步"
-            }
-        ]
-    });
+    const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_admin", "addon_admin_role", "addon_admin_menu"]);
     if (!tablesOk) {
         return;
     }
 
-    const allMenus = await dbHelper.getAll({
+    const allMenus = await ctx.dbHelper.getAll({
         table: "addon_admin_menu",
         fields: ["id"],
         orderBy: ["id#ASC"]
@@ -47,10 +28,10 @@ export async function syncDev(ctx: SyncDataContext): Promise<void> {
 
     const menuIds = allMenus.lists.length > 0 ? allMenus.lists.map((m: any) => m.id) : [];
 
-    const existApi = await dbHelper.tableExists("addon_admin_api");
+    const existApi = await ctx.dbHelper.tableExists("addon_admin_api");
     let apiIds: number[] = [];
     if (existApi) {
-        const allApis = await dbHelper.getAll({
+        const allApis = await ctx.dbHelper.getAll({
             table: "addon_admin_api",
             fields: ["id"],
             orderBy: ["id#ASC"]
@@ -98,7 +79,7 @@ export async function syncDev(ctx: SyncDataContext): Promise<void> {
 
     let devRole = null;
     for (const roleConfig of roles) {
-        const existingRole = await dbHelper.getOne({
+        const existingRole = await ctx.dbHelper.getOne({
             table: "addon_admin_role",
             where: { code: roleConfig.code }
         });
@@ -112,7 +93,7 @@ export async function syncDev(ctx: SyncDataContext): Promise<void> {
             const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || existingMenusJson !== nextMenusJson || existingApisJson !== nextApisJson || existingRole.sort !== roleConfig.sort;
 
             if (hasChanges) {
-                await dbHelper.updData({
+                await ctx.dbHelper.updData({
                     table: "addon_admin_role",
                     where: { code: roleConfig.code },
                     data: {
@@ -128,7 +109,7 @@ export async function syncDev(ctx: SyncDataContext): Promise<void> {
                 devRole = existingRole;
             }
         } else {
-            const roleId = await dbHelper.insData({
+            const roleId = await ctx.dbHelper.insData({
                 table: "addon_admin_role",
                 data: roleConfig
             });
@@ -155,19 +136,19 @@ export async function syncDev(ctx: SyncDataContext): Promise<void> {
         roleType: "admin"
     };
 
-    const existing = await dbHelper.getOne({
+    const existing = await ctx.dbHelper.getOne({
         table: "addon_admin_admin",
         where: { email: beflyConfig.devEmail }
     });
 
     if (existing) {
-        await dbHelper.updData({
+        await ctx.dbHelper.updData({
             table: "addon_admin_admin",
             where: { email: beflyConfig.devEmail },
             data: devData
         });
     } else {
-        await dbHelper.insData({
+        await ctx.dbHelper.insData({
             table: "addon_admin_admin",
             data: devData
         });

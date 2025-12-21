@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { __test__ } from "../sync/syncData/syncMenu.js";
+import { syncMenu } from "../sync/syncData/syncMenu.js";
 
 describe("syncMenu - delete obsolete records", () => {
-    test("syncMenus 应删除不在配置中的菜单记录（仅 state>=0）", async () => {
+    test("应删除不在配置中的菜单记录（仅 state>=0）", async () => {
         const existingMenus = [
             { id: 1, path: "/a", state: 0 },
             { id: 2, path: "/b", state: -1 },
@@ -16,6 +16,7 @@ describe("syncMenu - delete obsolete records", () => {
         };
 
         const dbHelper = {
+            tableExists: async () => true,
             getAll: async () => {
                 calls.getAllCount += 1;
                 return { lists: existingMenus };
@@ -27,14 +28,22 @@ describe("syncMenu - delete obsolete records", () => {
             updData: async () => {}
         } as any;
 
-        await __test__.syncMenus(dbHelper, [], new Set<string>());
+        const ctx = {
+            dbHelper: dbHelper,
+            addons: [],
+            cacheHelper: {
+                cacheMenus: async () => {}
+            }
+        } as any;
+
+        await syncMenu(ctx, []);
 
         expect(calls.getAllCount).toBe(1);
         expect(calls.delForce).toHaveLength(1);
         expect(calls.delForce[0].where.id).toBe(1);
     });
 
-    test("syncMenus 不应删除仍在配置中的菜单记录", async () => {
+    test("不应删除仍在配置中的菜单记录", async () => {
         const existingMenus = [
             { id: 1, path: "/keep", state: 0 },
             { id: 2, path: "/remove", state: 0 }
@@ -45,6 +54,7 @@ describe("syncMenu - delete obsolete records", () => {
         };
 
         const dbHelper = {
+            tableExists: async () => true,
             getAll: async () => {
                 return { lists: existingMenus };
             },
@@ -55,7 +65,21 @@ describe("syncMenu - delete obsolete records", () => {
             updData: async () => {}
         } as any;
 
-        await __test__.syncMenus(dbHelper, [], new Set<string>(["/keep"]));
+        const ctx = {
+            dbHelper: dbHelper,
+            addons: [],
+            cacheHelper: {
+                cacheMenus: async () => {}
+            }
+        } as any;
+
+        await syncMenu(ctx, [
+            {
+                name: "Keep",
+                path: "/keep",
+                sort: 999
+            }
+        ] as any);
 
         expect(calls.delForce).toHaveLength(1);
         expect(calls.delForce[0].where.id).toBe(2);

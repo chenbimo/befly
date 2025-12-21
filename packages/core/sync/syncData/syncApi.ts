@@ -1,4 +1,3 @@
-import type { DbHelper } from "../../lib/dbHelper.js";
 import type { ApiInfo } from "../../types/sync.js";
 import type { SyncDataContext } from "./types.js";
 
@@ -112,12 +111,22 @@ async function scanAllApis(ctx: SyncDataContext): Promise<ApiInfo[]> {
     }
 }
 
-async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
-    const apiPaths = new Set(apis.map((api) => api.path));
+export async function syncApi(ctx: SyncDataContext, apis?: ApiInfo[]): Promise<void> {
+    const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_api"]);
+    if (!tablesOk) {
+        return;
+    }
 
-    for (const api of apis) {
+    const finalApis = apis ? apis : await scanAllApis(ctx);
+    if (!apis) {
+        await checkApi(ctx.addons);
+    }
+
+    const apiPaths = new Set(finalApis.map((api) => api.path));
+
+    for (const api of finalApis) {
         try {
-            const existing = await dbHelper.getOne({
+            const existing = await ctx.dbHelper.getOne({
                 table: "addon_admin_api",
                 where: { path: api.path }
             });
@@ -126,7 +135,7 @@ async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
                 const needUpdate = existing.name !== api.name || existing.method !== api.method || existing.description !== api.description || existing.addonName !== api.addonName || existing.addonTitle !== api.addonTitle;
 
                 if (needUpdate) {
-                    await dbHelper.updData({
+                    await ctx.dbHelper.updData({
                         table: "addon_admin_api",
                         where: { id: existing.id },
                         data: {
@@ -139,7 +148,7 @@ async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
                     });
                 }
             } else {
-                await dbHelper.insData({
+                await ctx.dbHelper.insData({
                     table: "addon_admin_api",
                     data: {
                         name: api.name,
@@ -156,7 +165,7 @@ async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
         }
     }
 
-    const allRecords = await dbHelper.getAll({
+    const allRecords = await ctx.dbHelper.getAll({
         table: "addon_admin_api",
         fields: ["id", "path", "state"],
         where: { state$gte: 0 }
@@ -172,42 +181,15 @@ async function syncApis(dbHelper: DbHelper, apis: ApiInfo[]): Promise<void> {
         }
 
         if (!apiPaths.has(record.path)) {
-            await dbHelper.delForce({
+            await ctx.dbHelper.delForce({
                 table: "addon_admin_api",
                 where: { id: record.id }
             });
         }
     }
-}
-
-export async function syncApi(ctx: SyncDataContext): Promise<void> {
-    const dbHelper = ctx.dbHelper;
-
-    const tablesOk = await assertTablesExist({
-        dbHelper: dbHelper,
-        tables: [
-            {
-                table: "addon_admin_api",
-                skipMessage: "表 addon_admin_api 不存在，跳过 API 同步（需要安装 addon-admin 组件）"
-            }
-        ]
-    });
-    if (!tablesOk) {
-        return;
-    }
-
-    await checkApi(ctx.addons);
-
-    const apis = await scanAllApis(ctx);
-    await syncApis(dbHelper, apis);
 
     await ctx.cacheHelper.cacheApis();
 
     // API 表发生变更后，重建角色接口权限缓存
     await ctx.cacheHelper.rebuildRoleApiPermissions();
 }
-
-// 仅测试用（避免将内部同步逻辑变成稳定 API）
-export const __test__ = {
-    syncApis: syncApis
-};

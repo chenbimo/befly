@@ -208,15 +208,21 @@ CREATE DATABASE my_api CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ## 同步数据库
 
-### 运行同步命令
+### 自动同步
 
-```bash
-# 全量同步（表结构 + API + 菜单 + 开发账户）
-bun befly sync
+服务启动时会在**主进程**自动执行同步流程：
 
-# 或单独同步
-bun befly sync:db      # 只同步表结构
-bun befly sync:api     # 只同步 API 路由
+1. `syncTable()`：同步表结构
+2. `syncData()`：固定顺序执行 `syncApi` → `syncMenu` → `syncDev`
+
+如需手动触发，可在代码中调用（一般不建议在请求路径中调用）：
+
+```typescript
+import { syncData } from "../sync/syncData.js";
+import { syncTable } from "../sync/syncTable.js";
+
+await syncTable();
+await syncData();
 ```
 
 ### 验证同步结果
@@ -299,8 +305,6 @@ curl -X POST http://localhost:3000/api/user/login \
 ```bash
 # 开发
 bun run dev          # 启动开发服务
-bun befly sync       # 同步数据库
-bun befly sync:db    # 只同步表结构
 
 # 生产
 bun run build        # 构建

@@ -467,7 +467,15 @@ A: 在配置文件中设置：
 
 ### Q: Addon 的表如何迁移？
 
-A: 使用 `befly sync:db` 命令，会自动同步所有 Addon 的表定义。
+A: 服务启动时（主进程）会自动执行 `syncTable()`，会同步项目与所有 Addon 的表定义。
+
+如需手动触发：
+
+```typescript
+import { syncTable } from "../../sync/syncTable.js";
+
+await syncTable();
+```
 
 ### Q: 如何在 Addon 中访问项目配置？
 

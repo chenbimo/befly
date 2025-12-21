@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { __test__ } from "../sync/syncData/syncApi.js";
+import { syncApi } from "../sync/syncData/syncApi.js";
 
 describe("syncApi - delete obsolete records", () => {
-    test("syncApis 应删除不在配置中的接口记录", async () => {
+    test("应删除不在配置中的接口记录", async () => {
         const existingRecords = [
             { id: 1, path: "/api/a", state: 0 },
             { id: 2, path: "/api/b", state: 0 }
@@ -20,6 +20,7 @@ describe("syncApi - delete obsolete records", () => {
         };
 
         const dbHelper = {
+            tableExists: async () => true,
             getOne: async (options: any) => {
                 return existingByPath.get(options.where.path) ?? null;
             },
@@ -45,7 +46,16 @@ describe("syncApi - delete obsolete records", () => {
             }
         ];
 
-        await __test__.syncApis(dbHelper, apis as any);
+        const ctx = {
+            dbHelper: dbHelper,
+            addons: [],
+            cacheHelper: {
+                cacheApis: async () => {},
+                rebuildRoleApiPermissions: async () => {}
+            }
+        } as any;
+
+        await syncApi(ctx, apis as any);
 
         expect(calls.getAllArgs?.fields).toEqual(["id", "path", "state"]);
 

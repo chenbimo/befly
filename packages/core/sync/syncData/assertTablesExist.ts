@@ -2,16 +2,11 @@ import type { DbHelper } from "../../lib/dbHelper.js";
 
 import { Logger } from "../../lib/logger.js";
 
-export type TableExistSpec = {
-    table: string;
-    skipMessage: string;
-};
-
-export async function assertTablesExist(options: { dbHelper: DbHelper; tables: TableExistSpec[] }): Promise<boolean> {
-    for (const spec of options.tables) {
-        const exists = await options.dbHelper.tableExists(spec.table);
+export async function assertTablesExist(dbHelper: DbHelper, tables: string[]): Promise<boolean> {
+    for (const table of tables) {
+        const exists = await dbHelper.tableExists(table);
         if (!exists) {
-            Logger.debug(spec.skipMessage);
+            Logger.debug(`${table} 表不存在`);
             return false;
         }
     }

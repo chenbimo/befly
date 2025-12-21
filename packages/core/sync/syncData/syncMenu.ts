@@ -148,45 +148,6 @@ async function syncMenuRecursive(dbHelper: DbHelper, menu: MenuConfig, pid: numb
     return menuId;
 }
 
-async function syncMenus(dbHelper: DbHelper, menus: MenuConfig[], configPaths: Set<string>): Promise<void> {
-    const allExistingMenus = await dbHelper.getAll({
-        table: "addon_admin_menu"
-    } as any);
-    const existingMenuMap = new Map<string, any>();
-    for (const menu of allExistingMenus.lists) {
-        if (menu.path) {
-            existingMenuMap.set(menu.path, menu);
-        }
-    }
-
-    for (const menu of menus) {
-        try {
-            await syncMenuRecursive(dbHelper, menu, 0, existingMenuMap);
-        } catch (error: any) {
-            Logger.error({ err: error, menu: menu.name }, "同步菜单失败");
-            throw error;
-        }
-    }
-
-    // 复用首次 getAll 结果：删除菜单只依赖 id/path/state。
-    for (const record of allExistingMenus.lists) {
-        if (typeof record?.state !== "number" || record.state < 0) {
-            continue;
-        }
-
-        if (typeof record?.path !== "string" || !record.path) {
-            continue;
-        }
-
-        if (!configPaths.has(record.path)) {
-            await dbHelper.delForce({
-                table: "addon_admin_menu",
-                where: { id: record.id }
-            });
-        }
-    }
-}
-
 async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
     const allMenus: MenuConfig[] = [];
 
@@ -223,35 +184,61 @@ async function loadMenuConfigs(ctx: SyncDataContext): Promise<MenuConfig[]> {
     return allMenus;
 }
 
-export async function syncMenu(ctx: SyncDataContext): Promise<void> {
-    const dbHelper = ctx.dbHelper;
+export async function syncMenu(ctx: SyncDataContext, menus?: MenuConfig[]): Promise<void> {
+    const mergedMenus = menus ? menus : await loadMenuConfigs(ctx);
 
-    const mergedMenus = await loadMenuConfigs(ctx);
-
-    const tablesOk = await assertTablesExist({
-        dbHelper: dbHelper,
-        tables: [
-            {
-                table: "addon_admin_menu",
-                skipMessage: "表 addon_admin_menu 不存在，跳过菜单同步"
-            }
-        ]
-    });
+    const tablesOk = await assertTablesExist(ctx.dbHelper, ["addon_admin_menu"]);
     if (!tablesOk) {
         return;
     }
 
-    await checkTable(ctx.addons);
+    if (!menus) {
+        await checkTable(ctx.addons);
+    }
 
     const configPaths = collectPaths(mergedMenus);
 
-    await syncMenus(dbHelper, mergedMenus, configPaths);
+    const allExistingMenus = await ctx.dbHelper.getAll({
+        table: "addon_admin_menu"
+    } as any);
+    const existingMenuMap = new Map<string, any>();
+    for (const menu of allExistingMenus.lists) {
+        if (menu.path) {
+            existingMenuMap.set(menu.path, menu);
+        }
+    }
+
+    for (const menu of mergedMenus) {
+        try {
+            await syncMenuRecursive(ctx.dbHelper, menu, 0, existingMenuMap);
+        } catch (error: any) {
+            Logger.error({ err: error, menu: menu.name }, "同步菜单失败");
+            throw error;
+        }
+    }
+
+    // 复用首次 getAll 结果：删除菜单只依赖 id/path/state。
+    for (const record of allExistingMenus.lists) {
+        if (typeof record?.state !== "number" || record.state < 0) {
+            continue;
+        }
+
+        if (typeof record?.path !== "string" || !record.path) {
+            continue;
+        }
+
+        if (!configPaths.has(record.path)) {
+            await ctx.dbHelper.delForce({
+                table: "addon_admin_menu",
+                where: { id: record.id }
+            });
+        }
+    }
 
     await ctx.cacheHelper.cacheMenus();
 }
 
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）
 export const __test__ = {
-    scanViewsDir: scanViewsDir,
-    syncMenus: syncMenus
+    scanViewsDir: scanViewsDir
 };

@@ -510,11 +510,16 @@ interface FieldDefinition {
 
 ## 数据库同步
 
-### 同步命令
+### 触发方式
 
-```bash
-# 同步所有表
-bun run sync:db
+服务启动时会在**主进程**自动执行 `syncTable()`。
+
+如需在代码中手动触发：
+
+```typescript
+import { syncTable } from "../../sync/syncTable.js";
+
+await syncTable();
 ```
 
 ### 同步流程
