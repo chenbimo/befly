@@ -27,14 +27,11 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
 
     // 1) 先构建当前扫描到的 routePath 集合（用于删除差集）
     const apiRouteKeys = new Set<string>();
-    for (const api of apis) {
-        apiRouteKeys.add((api as any).routePath);
-    }
 
     // 2) 插入 / 更新（存在不一定更新：仅当 name/routePath/addonName 任一不匹配时更新）
     for (const api of apis) {
         const routePath = (api as any).routePath;
-
+        apiRouteKeys.add((api as any).routePath);
         const item = (allDbApiMap as any)[routePath];
         if (item) {
             const shouldUpdate = api.name !== item.name || api.routePath !== item.routePath || api.addonName !== item.addonName;
