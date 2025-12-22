@@ -59,6 +59,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
                 filePath: normalizedFile,
                 relativePath: relativePath,
                 fileName: fileName,
+                fileBaseName: parse(normalizedFile).base,
                 routePrefix: source === "app" ? "/app/" : "/addon/",
                 fileDir: dir,
                 content: content
