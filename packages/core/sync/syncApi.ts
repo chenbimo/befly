@@ -37,11 +37,11 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
             .map((m: string) => m.trim())
             .filter((m: string) => m);
 
-        const sourcePrefix = api.source === "core" ? "/core/" : api.source === "app" ? "/app/" : "/addon/";
-        const routePath = `/api${sourcePrefix}${api.relativePath}`;
+        const sourcePrefix = item.source === "core" ? "/core/" : item.source === "app" ? "/app/" : "/addon/";
+        const routePath = `/api${sourcePrefix}${item.relativePath}`;
 
         const description = typeof api.description === "string" ? api.description : "";
-        const addonName = api.source === "addon" ? api.addonName || "" : "";
+        const addonName = item.source === "addon" ? item.addonName || "" : "";
         const addonTitle = addonName ? getAddonTitleFromCtx(ctx, addonName) : "";
 
         for (const method of methods) {

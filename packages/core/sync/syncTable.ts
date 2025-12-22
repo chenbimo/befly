@@ -94,7 +94,7 @@ export async function syncTable(): Promise<void> {
         for (const dirConfig of directories) {
             const { path: dir, type } = dirConfig;
 
-            const files = await scanFiles(dir, type, "*.json");
+            const files = await scanFiles(dir, type, "table", "*.json", {});
 
             for (const { filePath: file, fileName } of files) {
                 // 确定表名：

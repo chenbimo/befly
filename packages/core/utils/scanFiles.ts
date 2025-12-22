@@ -7,8 +7,11 @@ import { importDefault } from "./importDefault.js";
 
 export type ScanFileSource = "app" | "addon" | "core";
 
+export type ScanFileType = "api" | "table" | "plugin" | "hook";
+
 export interface ScanFileResult {
     source: ScanFileSource; // 文件来源
+    type: ScanFileType; // 文件类型（api/table/plugin/hook）
     sourceName: string; // 来源名称（用于日志展示）
     filePath: string; // 绝对路径
     relativePath: string; // 相对路径（无扩展名）
@@ -39,9 +42,10 @@ function parseAddonNameFromPath(normalizedPath: string): string | null {
  * 扫描指定目录下的文件
  * @param dir 目录路径
  * @param source 文件来源（app/addon/core）
+ * @param type 文件类型（api/table/plugin/hook）
  * @param pattern Glob 模式
  */
-export async function scanFiles(dir: string, source: ScanFileSource, pattern: string, defaultValue): Promise<ScanFileResult[]> {
+export async function scanFiles(dir: string, source: ScanFileSource, type: ScanFileType, pattern: string, defaultValue): Promise<ScanFileResult[]> {
     if (!existsSync(dir)) return [];
 
     const normalizedDir = normalize(dir);
@@ -94,6 +98,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
 
             results.push({
                 source: source,
+                type: type,
                 sourceName: { core: "核心", addon: "组件", app: "项目" }[source],
                 filePath: normalizedFile,
                 relativePath: relativePath,
@@ -106,7 +111,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
             });
         }
     } catch (error: any) {
-        const wrappedError = new Error(`scanFiles failed: source=${source} dir=${normalizedDir} pattern=${pattern}`);
+        const wrappedError = new Error(`scanFiles failed: source=${source} type=${type} dir=${normalizedDir} pattern=${pattern}`);
         (wrappedError as any).cause = error;
         throw wrappedError;
     }
