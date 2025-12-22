@@ -59,8 +59,6 @@ export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, 
             try {
                 const api = (apiFile as any)?.content || {};
 
-                const apiName = typeof api.name === "string" && api.name.trim() !== "" ? api.name : apiFile.relativePath;
-
                 // 设置默认值
                 const methodStr = (api.method || "POST").toUpperCase();
                 const auth = api.auth !== undefined ? api.auth : true;
@@ -70,7 +68,7 @@ export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, 
                 const routePath = `/api${sourcePrefix}${apiFile.relativePath}`;
 
                 // 处理字段定义，将 @ 引用替换为实际字段定义
-                const fields = processFields(api.fields || {}, apiName, routePath);
+                const fields = processFields(api.fields || {}, api.name, routePath);
                 const required = api.required || [];
 
                 // 支持逗号分隔的多方法，拆分后分别注册
@@ -82,7 +80,7 @@ export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, 
                     const route = makeRouteKey(method, routePath);
                     // 为每个方法创建独立的路由对象
                     const routeApi: ApiRoute = {
-                        name: apiName,
+                        name: api.name,
                         handler: api.handler,
                         method: method,
                         auth: auth,
