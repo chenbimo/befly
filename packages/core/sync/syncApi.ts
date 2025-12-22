@@ -1,4 +1,3 @@
-import type { ApiInfo } from "../types/sync.js";
 import type { ScanFileResult } from "../utils/scanFiles.js";
 
 import { keyBy } from "es-toolkit/array";
@@ -15,32 +14,47 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
 
     const allDbApis = await ctx.dbHelper.getAll({
         table: tableName,
-        fields: ["id", "path", "name"],
+        fields: ["id", "routePath", "name", "addonName", "state"],
         where: { state$gte: 0 }
     } as any);
 
-    const allDbApiMap = keyBy(allDbApis, (item) => item.routePath);
+    const dbLists = allDbApis.lists || allDbApis;
+    const allDbApiMap = keyBy(dbLists, (item: any) => item.routePath);
 
-    const insData: ApiInfo[] = [];
-    const updData: Array<{ id: number; api: ApiInfo }> = [];
+    const insData: ScanFileResult[] = [];
+    const updData: Array<{ id: number; api: ScanFileResult }> = [];
     const delData: number[] = [];
 
+    // 1) 先构建当前扫描到的 routePath 集合（用于删除差集）
+    const apiRouteKeys = new Set<string>();
     for (const api of apis) {
-        const item = allDbApiMap[api.routePath];
+        apiRouteKeys.add((api as any).routePath);
+    }
+
+    // 2) 插入 / 更新（存在不一定更新：仅当 name/routePath/addonName 任一不匹配时更新）
+    for (const api of apis) {
+        const routePath = (api as any)?.routePath;
+        if (typeof routePath !== "string" || !routePath) {
+            Logger.warn({ api: api }, "同步接口失败：缺少 routePath");
+            continue;
+        }
+
+        const item = (allDbApiMap as any)[routePath];
         if (item) {
-            // 更新
-            if (api.name !== item.name || api.routePath !== item.routePath || api.addonName !== item.addonName) {
-                updData.push({ id: item.id, ...api });
+            const shouldUpdate = api.name !== item.name || api.routePath !== item.routePath || api.addonName !== item.addonName;
+            if (shouldUpdate) {
+                updData.push({ id: item.id, api: api });
             }
         } else {
-            // 添加
             insData.push(api);
         }
     }
 
-    for (const [path, record] of existingByPath) {
-        if (!apiKeys.has(path)) {
-            toDelete.push(record.id);
+    // 3) 删除：用差集（DB - 当前扫描）得到要删除的 id
+    for (const record of dbLists) {
+        if (typeof record?.routePath !== "string" || !record.routePath) continue;
+        if (!apiRouteKeys.has(record.routePath)) {
+            delData.push(record.id);
         }
     }
 
@@ -50,14 +64,13 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
                 table: tableName,
                 where: { id: item.id },
                 data: {
-                    name: item.api.name,
-                    description: item.api.description,
-                    addonName: item.api.addonName,
-                    addonTitle: item.api.addonTitle
+                    name: (item.api as any).name,
+                    routePath: (item.api as any).routePath,
+                    addonName: (item.api as any).addonName
                 }
             });
         } catch (error: any) {
-            Logger.error({ err: error, api: item.api.name }, "同步接口更新失败");
+            Logger.error({ err: error, api: (item.api as any)?.name }, "同步接口更新失败");
         }
     }
 
@@ -66,15 +79,13 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
             await ctx.dbHelper.insData({
                 table: tableName,
                 data: {
-                    name: api.name,
-                    path: api.path,
-                    description: api.description,
-                    addonName: api.addonName,
-                    addonTitle: api.addonTitle
+                    name: (api as any).name,
+                    routePath: (api as any).routePath,
+                    addonName: (api as any).addonName
                 }
             });
         } catch (error: any) {
-            Logger.error({ err: error, api: api.name }, "同步接口新增失败");
+            Logger.error({ err: error, api: (api as any)?.name }, "同步接口新增失败");
         }
     }
 
