@@ -1,24 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 
 import { syncApi } from "../sync/syncApi.js";
 
 describe("syncApi - delete obsolete records", () => {
     test("应删除不在配置中的接口记录", async () => {
-        const apisDir = join(process.cwd(), "apis");
-        const testFilePath = join(apisDir, "testSyncKeep.ts");
-
-        const apisDirExisted = existsSync(apisDir);
-        if (!apisDirExisted) {
-            mkdirSync(apisDir, { recursive: true });
-        }
-
-        writeFileSync(testFilePath, "export default { name: 'Keep', handler: async () => {} };\n", { encoding: "utf8" });
-
         const existingRecords = [
-            { id: 1, path: "/api/testSyncKeep", state: 0 },
-            { id: 2, path: "/api/testSyncRemove", state: 0 }
+            { id: 1, path: "/api/app/testSyncKeep", method: "POST", state: 0 },
+            { id: 2, path: "/api/app/testSyncRemove", method: "POST", state: 0 }
         ];
 
         const existingByPath = new Map<string, any>();
@@ -32,7 +20,6 @@ describe("syncApi - delete obsolete records", () => {
         };
 
         const dbHelper = {
-            tableExists: async () => true,
             getOne: async (options: any) => {
                 return existingByPath.get(options.where.path) ?? null;
             },
@@ -48,6 +35,7 @@ describe("syncApi - delete obsolete records", () => {
         } as any;
 
         const ctx = {
+            db: { tableExists: async () => true },
             dbHelper: dbHelper,
             addons: [],
             cacheHelper: {
@@ -56,22 +44,23 @@ describe("syncApi - delete obsolete records", () => {
             }
         } as any;
 
-        try {
-            await syncApi(ctx);
-        } finally {
-            if (existsSync(testFilePath)) {
-                rmSync(testFilePath, { force: true });
+        const apiItems = [
+            {
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testSyncKeep",
+                fileName: "testSyncKeep",
+                moduleName: "app_testSyncKeep",
+                fileBaseName: "testSyncKeep.ts",
+                fileDir: "DUMMY",
+                content: { name: "Keep", handler: async () => {} }
             }
+        ] as any;
 
-            if (!apisDirExisted && existsSync(apisDir)) {
-                const entries = readdirSync(apisDir);
-                if (entries.length === 0) {
-                    rmSync(apisDir, { recursive: true, force: true });
-                }
-            }
-        }
+        await syncApi(apiItems, ctx);
 
-        expect(calls.getAllArgs?.fields).toEqual(["id", "path", "state"]);
+        expect(calls.getAllArgs?.fields).toEqual(["id", "path", "method", "state"]);
 
         expect(calls.delForce).toHaveLength(1);
         expect(calls.delForce[0].where.id).toBe(2);

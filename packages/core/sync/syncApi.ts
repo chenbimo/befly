@@ -1,25 +1,22 @@
 import type { ApiInfo } from "../types/sync.js";
-
-import { isPlainObject } from "es-toolkit/compat";
-import { relative } from "pathe";
+import type { ScanFileResult } from "../utils/scanFiles.js";
 
 import { Logger } from "../lib/logger.js";
-import { appApiDir } from "../paths.js";
-import { scanFiles } from "../utils/scanFiles.js";
+import { makeRouteKey } from "../utils/route.js";
 
-export async function syncApi(ctx): Promise<void> {
+export async function syncApi(apiItems: ScanFileResult[], ctx: any): Promise<void> {
     if (!(await ctx.db.tableExists("addon_admin_api"))) {
         Logger.debug(`addon_admin_api 表不存在`);
         return;
     }
 
-    const apiPaths = new Set(allApis.map((api) => api.path));
+    const allApis: ApiInfo[] = [];
 
     for (const api of allApis) {
         try {
             const existing = await ctx.dbHelper.getOne({
                 table: "addon_admin_api",
-                where: { path: api.path }
+                where: { path: api.path, method: api.method }
             });
 
             if (existing) {
@@ -58,7 +55,7 @@ export async function syncApi(ctx): Promise<void> {
 
     const allRecords = await ctx.dbHelper.getAll({
         table: "addon_admin_api",
-        fields: ["id", "path", "state"],
+        fields: ["id", "path", "method", "state"],
         where: { state$gte: 0 }
     } as any);
 
@@ -71,7 +68,13 @@ export async function syncApi(ctx): Promise<void> {
             continue;
         }
 
-        if (!apiPaths.has(record.path)) {
+        if (typeof record?.method !== "string" || !record.method) {
+            continue;
+        }
+
+        const recordKey = makeRouteKey(record.method, record.path);
+
+        if (!apiKeys.has(recordKey)) {
             await ctx.dbHelper.delForce({
                 table: "addon_admin_api",
                 where: { id: record.id }
@@ -84,5 +87,5 @@ export async function syncApi(ctx): Promise<void> {
     // API 表发生变更后，重建角色接口权限缓存
     await ctx.cacheHelper.rebuildRoleApiPermissions();
 
-    return allApis;
+    return;
 }

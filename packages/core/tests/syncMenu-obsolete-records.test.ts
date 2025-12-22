@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { syncMenu } from "../sync/syncMenu.js";
 
 describe("syncMenu - delete obsolete records", () => {
     test("应删除不在配置中的菜单记录（仅 state>=0）", async () => {
-        const menusJsonPath = join(process.cwd(), "menus.json");
-        const menusJsonExisted = existsSync(menusJsonPath);
-        const menusJsonBackup = menusJsonExisted ? readFileSync(menusJsonPath, { encoding: "utf8" }) : "";
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `syncMenu-obsolete-records-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
 
         const existingMenus = [
             { id: 1, path: "/a", state: 0 },
@@ -22,7 +22,6 @@ describe("syncMenu - delete obsolete records", () => {
         };
 
         const dbHelper = {
-            tableExists: async () => true,
             getAll: async () => {
                 calls.getAllCount += 1;
                 return { lists: existingMenus };
@@ -35,6 +34,9 @@ describe("syncMenu - delete obsolete records", () => {
         } as any;
 
         const ctx = {
+            db: {
+                tableExists: async () => true
+            },
             dbHelper: dbHelper,
             addons: [],
             cacheHelper: {
@@ -43,14 +45,14 @@ describe("syncMenu - delete obsolete records", () => {
         } as any;
 
         try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
             writeFileSync(menusJsonPath, "[]", { encoding: "utf8" });
             await syncMenu(ctx);
         } finally {
-            if (menusJsonExisted) {
-                writeFileSync(menusJsonPath, menusJsonBackup, { encoding: "utf8" });
-            } else if (existsSync(menusJsonPath)) {
-                rmSync(menusJsonPath, { force: true });
-            }
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
         }
 
         expect(calls.getAllCount).toBe(1);
@@ -59,9 +61,9 @@ describe("syncMenu - delete obsolete records", () => {
     });
 
     test("不应删除仍在配置中的菜单记录", async () => {
-        const menusJsonPath = join(process.cwd(), "menus.json");
-        const menusJsonExisted = existsSync(menusJsonPath);
-        const menusJsonBackup = menusJsonExisted ? readFileSync(menusJsonPath, { encoding: "utf8" }) : "";
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `syncMenu-obsolete-records-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
 
         const existingMenus = [
             { id: 1, path: "/keep", state: 0 },
@@ -73,7 +75,6 @@ describe("syncMenu - delete obsolete records", () => {
         };
 
         const dbHelper = {
-            tableExists: async () => true,
             getAll: async () => {
                 return { lists: existingMenus };
             },
@@ -85,6 +86,9 @@ describe("syncMenu - delete obsolete records", () => {
         } as any;
 
         const ctx = {
+            db: {
+                tableExists: async () => true
+            },
             dbHelper: dbHelper,
             addons: [],
             cacheHelper: {
@@ -93,6 +97,9 @@ describe("syncMenu - delete obsolete records", () => {
         } as any;
 
         try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
             writeFileSync(
                 menusJsonPath,
                 JSON.stringify(
@@ -110,11 +117,8 @@ describe("syncMenu - delete obsolete records", () => {
             );
             await syncMenu(ctx);
         } finally {
-            if (menusJsonExisted) {
-                writeFileSync(menusJsonPath, menusJsonBackup, { encoding: "utf8" });
-            } else if (existsSync(menusJsonPath)) {
-                rmSync(menusJsonPath, { force: true });
-            }
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
         }
 
         expect(calls.delForce).toHaveLength(1);

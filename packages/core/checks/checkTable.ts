@@ -1,30 +1,8 @@
 // 类型导入
 import type { FieldDefinition } from "../../types/validate.js";
-import type { AddonInfo } from "../../utils/scanAddons.js";
-
-import { existsSync } from "node:fs";
-
-// 外部依赖
-import { basename } from "pathe";
 
 // 相对导入
 import { Logger } from "../../lib/logger.js";
-import { appTableDir } from "../../paths.js";
-import { scanFiles } from "../../utils/scanFiles.js";
-
-/**
- * 表文件信息接口
- */
-interface TableFileInfo {
-    /** 表文件路径 */
-    file: string;
-    /** 文件类型：app（项目）或 addon（组件） */
-    type: "app" | "addon";
-    /** 如果是 addon 类型，记录 addon 名称 */
-    addonName?: string;
-    /** 类型名称（用于日志） */
-    typeName: string;
-}
 
 /**
  * 保留字段列表

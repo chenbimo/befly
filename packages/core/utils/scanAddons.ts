@@ -1,24 +1,29 @@
 import { existsSync, readdirSync } from "node:fs";
 
 import { camelCase } from "es-toolkit/string";
-import { join, normalize, resolve } from "pathe";
+import { join, resolve } from "pathe";
 
 import { appDir } from "../paths.js";
 import { isDirentDirectory } from "./isDirentDirectory.js";
 
 export type AddonSource = "addon" | "app";
 
-/**
- * 扫描所有可用的 addon
- * 优先从本地 addons/ 目录加载，其次从 node_modules/@befly-addon/ 加载
- * @param cwd - 项目根目录，默认为 process.cwd()
- * @returns addon 信息数组（包含来源、根目录、常用子目录路径）
- */
+export interface AddonInfo {
+    /** addon 根目录绝对路径（node_modules/@befly-addon/<name>） */
+    fullPath: string;
+
+    /** addon 目录名（通常是 demo/admin 等） */
+    name: string;
+
+    /** camelCase(name) */
+    camelName: string;
+}
+
+/** 从 node_modules/@befly-addon/ 扫描组件列表 */
 export const scanAddons = (): AddonInfo[] => {
-    const addons = [];
+    const addons: AddonInfo[] = [];
 
     const addonDir = join(appDir, "node_modules", "@befly-addon");
-
     if (!existsSync(addonDir)) {
         return [];
     }
@@ -33,11 +38,14 @@ export const scanAddons = (): AddonInfo[] => {
             continue;
         }
 
+        const fullPath = resolve(addonDir, entry.name);
+
         addons.push({
-            fullPath: resolve(addonDir, entry.name),
+            fullPath: fullPath,
             name: entry.name,
             camelName: camelCase(entry.name)
         });
     }
+
     return addons;
 };

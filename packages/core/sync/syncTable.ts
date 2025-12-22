@@ -12,7 +12,7 @@ import type { SQL } from "bun";
 import { existsSync } from "node:fs";
 
 import { snakeCase } from "es-toolkit/string";
-import { resolve } from "pathe";
+import { join, resolve } from "pathe";
 
 import { beflyConfig } from "../befly.config.js";
 import { CacheKeys } from "../lib/cacheKeys.js";
@@ -77,14 +77,17 @@ export async function syncTable(): Promise<void> {
         // 添加所有 addon 的 tables 目录（addon_{name}_ 前缀）
         const addons = scanAddons();
         for (const addon of addons) {
-            if (addon.tablesDir) {
-                directories.push({
-                    path: addon.tablesDir,
-                    type: "addon",
-                    addonName: addon.name,
-                    addonNameSnake: snakeCase(addon.name) // 提前转换，避免每个文件都转换
-                });
+            const addonTablesDir = join(addon.fullPath, "tables");
+            if (!existsSync(addonTablesDir)) {
+                continue;
             }
+
+            directories.push({
+                path: addonTablesDir,
+                type: "addon",
+                addonName: addon.name,
+                addonNameSnake: snakeCase(addon.name) // 提前转换，避免每个文件都转换
+            });
         }
 
         // 处理表文件

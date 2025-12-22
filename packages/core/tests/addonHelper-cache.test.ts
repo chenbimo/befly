@@ -3,31 +3,30 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 
 import { join } from "pathe";
 
-test("scanAddons - should reuse in-process cache for same cwd", async () => {
-    const projectDir = join(process.cwd(), "temp", `addonHelper-cache-test-${Date.now()}`);
+test("scanAddons - should scan node_modules @befly-addon", async () => {
+    const originalCwd = process.cwd();
+    const projectDir = join(originalCwd, "temp", `addonHelper-cache-test-${Date.now()}`);
 
     try {
         // 构造一个最小可扫描的项目结构
-        mkdirSync(join(projectDir, "addons", "demo"), { recursive: true });
         mkdirSync(join(projectDir, "node_modules", "@befly-addon", "demo"), { recursive: true });
+        mkdirSync(join(projectDir, "node_modules", "@befly-addon", "_ignore"), { recursive: true });
 
         // 放一个非目录项，确保扫描逻辑不会误判
-        writeFileSync(join(projectDir, "addons", "README.md"), "x", { encoding: "utf8" });
+        writeFileSync(join(projectDir, "node_modules", "@befly-addon", "README.md"), "x", { encoding: "utf8" });
+
+        // scanAddons 依赖 appDir=process.cwd()（模块初始化时取值），所以先切 cwd 再动态 import
+        process.chdir(projectDir);
 
         const mod = await import(`../utils/scanAddons.js?cacheTest=${Date.now()}`);
-        const scanAddons = mod.scanAddons as (cwd?: string) => any[];
+        const scanAddons = mod.scanAddons as () => any[];
 
-        const first = scanAddons(projectDir);
-        expect(first.length).toBe(2);
-
-        // 删除目录：如果第二次调用仍返回相同结果，说明命中进程内缓存（而不是重新扫磁盘）。
-        rmSync(join(projectDir, "addons"), { recursive: true, force: true });
-        rmSync(join(projectDir, "node_modules"), { recursive: true, force: true });
-
-        // 用不同的 cwd 字符串形式触发 key 规范化逻辑（Windows 下大小写不敏感）
-        const second = scanAddons(projectDir.toUpperCase());
-        expect(second).toEqual(first);
+        const addons = scanAddons();
+        expect(addons.map((a) => a.name)).toEqual(["demo"]);
+        expect(addons[0].fullPath.endsWith("node_modules/@befly-addon/demo")).toBe(true);
+        expect(addons[0].camelName).toBe("demo");
     } finally {
+        process.chdir(originalCwd);
         rmSync(projectDir, { recursive: true, force: true });
     }
 });
