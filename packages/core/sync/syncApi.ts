@@ -18,7 +18,7 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
         where: { state$gte: 0 }
     } as any);
 
-    const dbLists = allDbApis.lists || allDbApis;
+    const dbLists = allDbApis.lists || [];
     const allDbApiMap = keyBy(dbLists, (item: any) => item.routePath);
 
     const insData: ScanFileResult[] = [];
@@ -33,11 +33,7 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
 
     // 2) 插入 / 更新（存在不一定更新：仅当 name/routePath/addonName 任一不匹配时更新）
     for (const api of apis) {
-        const routePath = (api as any)?.routePath;
-        if (typeof routePath !== "string" || !routePath) {
-            Logger.warn({ api: api }, "同步接口失败：缺少 routePath");
-            continue;
-        }
+        const routePath = (api as any).routePath;
 
         const item = (allDbApiMap as any)[routePath];
         if (item) {
@@ -52,7 +48,6 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
 
     // 3) 删除：用差集（DB - 当前扫描）得到要删除的 id
     for (const record of dbLists) {
-        if (typeof record?.routePath !== "string" || !record.routePath) continue;
         if (!apiRouteKeys.has(record.routePath)) {
             delData.push(record.id);
         }
