@@ -5,7 +5,6 @@ import { camelCase } from "es-toolkit/string";
 import { relative, normalize, parse, join } from "pathe";
 
 import { importDefault } from "./importDefault.js";
-import { processFields } from "./processFields.js";
 
 export type ScanFileSource = "app" | "addon" | "core";
 
@@ -144,7 +143,6 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             if (type === "api") {
                 base.routePrefix = source === "core" ? "/core/" : source === "app" ? "/app/" : "/addon/";
                 base.routePath = `/api/${base.routePrefix}${relativePath}`;
-                base.fields = processFields(base.fields || {}, base.name, base.routePath);
             }
 
             results.push(base as ScanFileResult);

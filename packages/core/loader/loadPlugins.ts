@@ -10,14 +10,14 @@ import type { ScanFileResult } from "../utils/scanFiles.js";
 import { Logger } from "../lib/logger.js";
 import { sortModules } from "../utils/sortModules.js";
 
-export async function loadPlugins(pluginItems: ScanFileResult[], context: BeflyContext, disablePlugins: string[] = []): Promise<Plugin[]> {
-    const loadedPlugins: Plugin[] = [];
+export async function loadPlugins(plugins: ScanFileResult[], context: BeflyContext, disablePlugins: string[] = []): Promise<Plugin[]> {
+    const pluginsMap: Plugin[] = [];
 
     if (disablePlugins.length > 0) {
         Logger.info({ plugins: disablePlugins }, "禁用插件");
     }
 
-    const enabledPluginItems = pluginItems.filter((item: any) => {
+    const enabledPlugins = plugins.filter((item: any) => {
         const moduleName = item?.moduleName;
         if (typeof moduleName !== "string" || moduleName.trim() === "") {
             return false;
@@ -28,12 +28,12 @@ export async function loadPlugins(pluginItems: ScanFileResult[], context: BeflyC
         return true;
     });
 
-    const sortedPluginItems = sortModules(enabledPluginItems, { moduleLabel: "插件" });
-    if (sortedPluginItems === false) {
+    const sortedPlugins = sortModules(enabledPlugins, { moduleLabel: "插件" });
+    if (sortedPlugins === false) {
         throw new Error("插件依赖关系错误");
     }
 
-    for (const item of sortedPluginItems) {
+    for (const item of sortedPlugins) {
         const pluginName = (item as any).moduleName as string;
         const plugin = item as any as Plugin;
 
@@ -41,7 +41,7 @@ export async function loadPlugins(pluginItems: ScanFileResult[], context: BeflyC
             const pluginInstance = typeof plugin.handler === "function" ? await plugin.handler(context) : {};
             (context as any)[pluginName] = pluginInstance;
 
-            loadedPlugins.push({
+            pluginsMap.push({
                 name: pluginName,
                 deps: plugin.deps,
                 handler: plugin.handler
@@ -52,5 +52,5 @@ export async function loadPlugins(pluginItems: ScanFileResult[], context: BeflyC
         }
     }
 
-    return loadedPlugins;
+    return pluginsMap;
 }
