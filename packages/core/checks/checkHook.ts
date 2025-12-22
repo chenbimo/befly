@@ -3,7 +3,7 @@ import { omit } from "es-toolkit/object";
 
 import { Logger } from "../lib/logger.js";
 
-export async function checkApi(hooks): Promise<void> {
+export async function checkHook(hooks): Promise<void> {
     for (const item of hooks) {
         try {
             const hook = item?.content || {};

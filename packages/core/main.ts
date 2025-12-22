@@ -26,7 +26,10 @@ import { syncMenu } from "./sync/syncMenu.js";
 import { syncTable } from "./sync/syncTable.js";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
-import { checkApi } from "./utils/checkApi.js";
+import { checkApi } from "./checks/checkApi.js";
+import { checkTable } from "./checks/checkTable.js";
+import { checkHook } from "./checks/checkHook.js";
+import { checkPlugins } from "./checks/checkPlugin.js";
 import { isPrimaryProcess, getProcessRole } from "./utils/process.js";
 import { scanSources } from "./utils/scanSources.js";
 
@@ -66,8 +69,8 @@ export class Befly {
 
             await checkApi(apis);
             await checkTable(tables);
-            await checkPlugins(plugins);
-            await checkHooks(hooks);
+            await checkPlugin(plugins);
+            await checkHook(hooks);
 
             // 2. 加载插件
             await loadPlugins(this.plugins, this.context as BeflyContext);
