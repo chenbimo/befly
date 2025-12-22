@@ -7,6 +7,8 @@ import type { Plugin } from "../types/plugin.js";
 import { beflyConfig } from "../befly.config.js";
 
 const plugin: Plugin = {
+    name: "",
+    deps: [],
     handler: () => {
         return beflyConfig;
     }

@@ -114,6 +114,8 @@ export function Raw(ctx: RequestContext, data: Record<string, any> | string, opt
 }
 
 const plugin: Plugin = {
+    name: "",
+    deps: [],
     handler: () => {
         return {
             Yes: Yes,

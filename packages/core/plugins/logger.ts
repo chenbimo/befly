@@ -12,7 +12,8 @@ import { Logger } from "../lib/logger.js";
  * 日志插件
  */
 const loggerPlugin: Plugin = {
-    after: [],
+    name: "",
+    deps: [],
     async handler(): Promise<typeof Logger> {
         // 配置 Logger
         if (beflyConfig.logger) {

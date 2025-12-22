@@ -33,10 +33,6 @@ export async function scanModules<T extends Plugin | Hook>(dir: string, type: "c
             const item = moduleImport.default;
 
             item.name = moduleName;
-            // 为 addon 模块记录 addon 名称
-            if (type === "addon" && addonName) {
-                item.addonName = addonName;
-            }
             items.push(item);
         } catch (err: any) {
             const typeLabel = type === "core" ? "核心" : type === "addon" ? `组件${addonName}` : "项目";

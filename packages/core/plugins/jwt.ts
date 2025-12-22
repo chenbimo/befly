@@ -8,6 +8,8 @@ import { beflyConfig } from "../befly.config.js";
 import { Jwt } from "../lib/jwt.js";
 
 const jwtPlugin: Plugin = {
+    name: "",
+    deps: [],
     handler: () => {
         return new Jwt(beflyConfig.auth);
     }

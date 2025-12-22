@@ -14,7 +14,8 @@ import { RedisHelper } from "../lib/redisHelper.js";
  * Redis 插件
  */
 const redisPlugin: Plugin = {
-    after: ["logger"],
+    name: "",
+    deps: ["logger"],
     async handler(): Promise<RedisHelper | Record<string, never>> {
         const redisConfig = beflyConfig.redis || {};
         try {

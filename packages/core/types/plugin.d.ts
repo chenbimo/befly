@@ -3,49 +3,19 @@
  */
 
 import type { BeflyContext } from "./befly.js";
-import type { RequestContext } from "./context.js";
-
-/**
- * 插件初始化函数类型
- */
-export type PluginInitFunction = (befly: BeflyContext) => Promise<any> | any;
-
-/**
- * 插件请求处理钩子函数类型
- */
-export type Next = () => Promise<void>;
-
-/**
- * 插件请求钩子类型
- */
-export type PluginRequestHook = (ctx: RequestContext, next: Next) => Promise<void> | void;
 
 /**
  * 插件配置类型
  */
 export interface Plugin {
     /** 插件名称（运行时动态添加，由文件名生成） */
-    name?: string;
-    /** @deprecated use name instead */
-    pluginName?: string;
+    name: string;
 
     /** 依赖的插件列表（在这些插件之后执行） */
-    after?: string[];
+    deps: string[];
 
     /** 插件初始化函数 */
-    handler?: (context: BeflyContext) => any | Promise<any>;
-
-    /** @deprecated use handler instead */
-    onInit?: PluginInitFunction;
-
-    /** 插件描述 */
-    description?: string;
-
-    /** 插件版本 */
-    version?: string;
-
-    /** 插件作者 */
-    author?: string;
+    handler: (context: BeflyContext) => any | Promise<any>;
 }
 
 /**

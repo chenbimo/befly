@@ -14,7 +14,8 @@ import { Logger } from "../lib/logger.js";
  * 数据库插件
  */
 const dbPlugin: Plugin = {
-    after: ["logger"],
+    name: "",
+    deps: ["logger"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
         let sql: any = null;
 
