@@ -21,7 +21,6 @@ export interface ScanFileResult {
     addonName?: string;
 
     fileBaseName: string;
-    routePrefix: string;
     fileDir: string;
     content: any;
 }
@@ -102,7 +101,6 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
                 moduleName: moduleName,
                 addonName: addonName,
                 fileBaseName: parse(normalizedFile).base,
-                routePrefix: source === "app" ? "/app/" : "/addon/",
                 fileDir: dir,
                 content: content
             });

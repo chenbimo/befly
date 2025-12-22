@@ -85,7 +85,7 @@ export class Befly {
             this.hooks = await loadHooks(hooks as any, this.config!.disableHooks || []);
 
             // 4. 加载所有 API
-            await loadApis(this.apis);
+            this.apis = await loadApis(apis as any);
 
             // 6. 启动 HTTP服务器
             const apiFetch = apiHandler(this.apis, this.hooks, this.context as BeflyContext);

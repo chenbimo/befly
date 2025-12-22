@@ -5,13 +5,10 @@
 
 // 类型导入
 import type { ApiRoute } from "../types/api.js";
+import type { ScanFileResult } from "../utils/scanFiles.js";
 
 import { Logger } from "../lib/logger.js";
-import { appApiDir } from "../paths.js";
 import { makeRouteKey } from "../utils/route.js";
-import { scanAddons } from "../utils/scanAddons.js";
-// 相对导入
-import { scanFiles } from "../utils/scanFiles.js";
 
 /**
  * 预定义的默认字段
@@ -50,27 +47,31 @@ function processFields(fields: Record<string, any>, apiName: string, routePath: 
 
 /**
  * 加载所有 API 路由
- * @param apis - API 跁由映射表
+ * @param apiItems - scanSources/scanFiles 扫描到的 API 条目数组
+ * @returns API 路由映射表
  */
-export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
+export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, ApiRoute>> {
+    const apis = new Map<string, ApiRoute>();
+
     try {
         // 4. 遍历处理所有 API 文件
-        for (const item of apis) {
+        for (const apiFile of apiItems) {
             try {
-                const api = item?.content || {};
+                const api = (apiFile as any)?.content || {};
 
-                api.name = api.name || apiFile.relativePath;
+                const apiName = typeof api.name === "string" && api.name.trim() !== "" ? api.name : apiFile.relativePath;
 
                 // 设置默认值
                 const methodStr = (api.method || "POST").toUpperCase();
-                api.auth = api.auth !== undefined ? api.auth : true;
+                const auth = api.auth !== undefined ? api.auth : true;
 
                 // 构建路由路径（用于错误提示）
-                const routePath = `/api${apiFile.routePrefix}${apiFile.relativePath}`;
+                const sourcePrefix = apiFile.source === "core" ? "/core/" : apiFile.source === "app" ? "/app/" : "/addon/";
+                const routePath = `/api${sourcePrefix}${apiFile.relativePath}`;
 
                 // 处理字段定义，将 @ 引用替换为实际字段定义
-                api.fields = processFields(api.fields || {}, api.name, routePath);
-                api.required = api.required || [];
+                const fields = processFields(api.fields || {}, apiName, routePath);
+                const required = api.required || [];
 
                 // 支持逗号分隔的多方法，拆分后分别注册
                 const methods = methodStr
@@ -81,19 +82,19 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
                     const route = makeRouteKey(method, routePath);
                     // 为每个方法创建独立的路由对象
                     const routeApi: ApiRoute = {
-                        name: api.name,
+                        name: apiName,
                         handler: api.handler,
                         method: method,
-                        auth: api.auth,
-                        fields: api.fields,
-                        required: api.required,
+                        auth: auth,
+                        fields: fields,
+                        required: required,
                         rawBody: api.rawBody,
                         route: route
                     };
                     apis.set(route, routeApi);
                 }
             } catch (error: any) {
-                Logger.error({ err: error, api: apiFile.relativePath, type: apiFile.typeName }, "接口加载失败");
+                Logger.error({ err: error, api: apiFile.relativePath, file: apiFile.filePath }, "接口加载失败");
                 process.exit(1);
             }
         }
@@ -101,4 +102,6 @@ export async function loadApis(apis: Map<string, ApiRoute>): Promise<void> {
         Logger.error({ err: error }, "加载 API 时发生错误");
         process.exit(1);
     }
+
+    return apis;
 }
