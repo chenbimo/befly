@@ -5,6 +5,7 @@ import { camelCase } from "es-toolkit/string";
 import { relative, normalize, parse, join } from "pathe";
 
 import { importDefault } from "./importDefault.js";
+import { processFields } from "./processFields.js";
 
 export type ScanFileSource = "app" | "addon" | "core";
 
@@ -52,9 +53,9 @@ function parseAddonNameFromPath(normalizedPath: string): string | null {
  * @param dir 目录路径
  * @param source 文件来源（app/addon/core）
  * @param type 文件类型（api/table/plugin/hook）
- * @param pattern Glob 模式
+ * @param pattern Glob模式
  */
-export async function scanFiles(dir: string, source: ScanFileSource, type: ScanFileType, pattern: string, defaultValue): Promise<ScanFileResult[]> {
+export async function scanFiles(dir: string, source: ScanFileSource, type: ScanFileType, pattern: string): Promise<ScanFileResult[]> {
     if (!existsSync(dir)) return [];
 
     const normalizedDir = normalize(dir);
@@ -143,6 +144,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             if (type === "api") {
                 base.routePrefix = source === "core" ? "/core/" : source === "app" ? "/app/" : "/addon/";
                 base.routePath = `/api/${base.routePrefix}${relativePath}`;
+                base.fields = processFields(base.fields || {}, base.name, base.routePath);
             }
 
             results.push(base as ScanFileResult);
