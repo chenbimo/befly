@@ -139,21 +139,6 @@ export class DbHelper {
             }
         }
     }
-
-    /**
-     * 转换数据库 BIGINT 字段为数字类型（私有方法）
-     * 当 bigint: false 时，Bun SQL 会将大于 u32 的 BIGINT 返回为字符串，此方法将其转换为 number
-     *
-     * 转换规则：
-     * 1. 白名单中的字段会被转换
-     * 2. 所有以 'Id' 或 '_id' 结尾的字段会被自动转换
-     * 3. 所有以 'At' 或 '_at' 结尾的字段会被自动转换（时间戳字段）
-     * 4. 其他字段保持不变
-     */
-    private convertBigIntFields<T = any>(arr: Record<string, any>[], fields: string[] = ["id", "pid", "sort"]): T[] {
-        return convertBigIntFields<T>(arr, fields);
-    }
-
     /**
      * 执行 SQL（使用 sql.unsafe，带慢查询日志和错误处理）
      */
@@ -310,7 +295,7 @@ export class DbHelper {
         if (!deserialized) return null;
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        return this.convertBigIntFields<T>([deserialized])[0];
+        return convertBigIntFields<T>([deserialized])[0];
     }
 
     /**
@@ -393,7 +378,7 @@ export class DbHelper {
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
-            lists: this.convertBigIntFields<T>(deserializedList),
+            lists: convertBigIntFields<T>(deserializedList),
             total: total,
             page: prepared.page,
             limit: prepared.limit,
@@ -475,7 +460,7 @@ export class DbHelper {
         const deserializedList = camelResult.map((item) => this.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        const lists = this.convertBigIntFields<T>(deserializedList);
+        const lists = convertBigIntFields<T>(deserializedList);
 
         return {
             lists: lists,
