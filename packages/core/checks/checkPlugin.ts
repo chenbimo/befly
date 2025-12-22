@@ -1,39 +1,35 @@
 import { isPlainObject } from "es-toolkit/compat";
+import { omit } from "es-toolkit/object";
 
 import { Logger } from "../lib/logger.js";
 
-export async function checkApi(plugins): Promise<void> {
+export async function checkPlugin(plugins): Promise<void> {
+    let hasError = false;
+
     for (const item of plugins) {
         try {
-            const api = item?.content || {};
-            if (typeof api?.name !== "string" || api.name.trim() === "") {
-                Logger.warn(item, "接口的 name 属性必须是非空字符串");
+            const plugin = item?.content;
+            if (!isPlainObject(plugin)) {
+                Logger.warn(omit(item, ["content"]), "插件导出必须是对象（export default { deps, handler }）");
+                hasError = true;
                 continue;
             }
 
-            if (typeof api?.handler !== "function") {
-                Logger.warn(item, "接口的 handler 属性必须是函数");
+            if (!Array.isArray((plugin as any).deps)) {
+                Logger.warn(omit(item, ["content"]), "插件的 deps 属性必须是字符串数组");
+                hasError = true;
                 continue;
             }
 
-            if (api.method && !["GET", "POST", "GET,POST", "POST,GET"].includes(String(api.method).toUpperCase())) {
-                Logger.warn(item, "接口的 method 属性必须是有效的 HTTP 方法 (GET, POST, GET,POST, POST,GET)");
+            if ((plugin as any).deps.some((depItem: any) => typeof depItem !== "string")) {
+                Logger.warn(omit(item, ["content"]), "插件的 deps 属性必须是字符串数组");
+                hasError = true;
             }
 
-            if (api.auth !== undefined && typeof api.auth !== "boolean") {
-                Logger.warn(item, "接口的 auth 属性必须是布尔值 (true=需登录, false=公开)");
-            }
-
-            if (api.fields && !isPlainObject(api.fields)) {
-                Logger.warn(item, "接口的 fields 属性必须是对象");
-            }
-
-            if (api.required && !Array.isArray(api.required)) {
-                Logger.warn(item, "接口的 required 属性必须是数组");
-            }
-
-            if (api.required && api.required.some((reqItem: any) => typeof reqItem !== "string")) {
-                Logger.warn(item, "接口的 required 属性必须是字符串数组");
+            if (typeof (plugin as any).handler !== "function") {
+                Logger.warn(omit(item, ["content"]), "插件的 handler 属性必须是函数");
+                hasError = true;
+                continue;
             }
         } catch (error: any) {
             Logger.error(
@@ -41,8 +37,13 @@ export async function checkApi(plugins): Promise<void> {
                     err: error,
                     item: item
                 },
-                "接口解析失败"
+                "插件解析失败"
             );
+            hasError = true;
         }
+    }
+
+    if (hasError) {
+        throw new Error("插件结构检查失败");
     }
 }

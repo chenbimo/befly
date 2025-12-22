@@ -9,6 +9,10 @@ import type { BeflyContext, BeflyOptions } from "./types/befly.js";
 import type { Hook } from "./types/hook.js";
 import type { Plugin } from "./types/plugin.js";
 
+import { checkApi } from "./checks/checkApi.js";
+import { checkHook } from "./checks/checkHook.js";
+import { checkPlugin } from "./checks/checkPlugin.js";
+import { checkTable } from "./checks/checkTable.js";
 // ========== 相对导入（项目内部文件） ==========
 // 基础设施
 import { Connect } from "./lib/connect.js";
@@ -23,14 +27,9 @@ import { staticHandler } from "./router/static.js";
 // 同步
 import { syncApi } from "./sync/syncApi.js";
 import { syncMenu } from "./sync/syncMenu.js";
-import { syncTable } from "./sync/syncTable.js";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
-import { checkApi } from "./checks/checkApi.js";
-import { checkTable } from "./checks/checkTable.js";
-import { checkHook } from "./checks/checkHook.js";
-import { checkPlugins } from "./checks/checkPlugin.js";
-import { isPrimaryProcess, getProcessRole } from "./utils/process.js";
+import { getProcessRole } from "./utils/process.js";
 import { scanSources } from "./utils/scanSources.js";
 
 /**
