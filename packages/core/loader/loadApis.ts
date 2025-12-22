@@ -56,7 +56,7 @@ export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, 
     // 4. 遍历处理所有 API 文件
     for (const apiFile of apiItems) {
         try {
-            const api = (apiFile as any)?.content || {};
+            const api = apiFile as any;
 
             // 设置默认值
             const methodStr = (api.method || "POST").toUpperCase();

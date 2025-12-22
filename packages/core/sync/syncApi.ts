@@ -29,7 +29,7 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
     const allApis: ApiInfo[] = [];
 
     for (const item of apis) {
-        const api = item?.content || {};
+        const api = item as any;
 
         const methodStr = (api.method || "POST").toUpperCase();
         const methods = methodStr

@@ -35,7 +35,7 @@ export async function loadPlugins(pluginItems: ScanFileResult[], context: BeflyC
 
     for (const item of sortedPluginItems) {
         const pluginName = (item as any).moduleName as string;
-        const plugin = (item as any).content as Plugin;
+        const plugin = item as any as Plugin;
 
         try {
             const pluginInstance = typeof plugin.handler === "function" ? await plugin.handler(context) : {};

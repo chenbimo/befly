@@ -9,7 +9,7 @@ export type ScanFileSource = "app" | "addon" | "core";
 
 export type ScanFileType = "api" | "table" | "plugin" | "hook";
 
-export interface ScanFileResult {
+export interface ScanFileResultBase {
     source: ScanFileSource; // 文件来源
     type: ScanFileType; // 文件类型（api/table/plugin/hook）
     sourceName: string; // 来源名称（用于日志展示）
@@ -25,8 +25,16 @@ export interface ScanFileResult {
 
     fileBaseName: string;
     fileDir: string;
-    content: any;
 }
+
+export type ScanFileResult =
+    | (ScanFileResultBase & {
+          type: "table";
+          content: any;
+      })
+    | (ScanFileResultBase & {
+          type: Exclude<ScanFileType, "table">;
+      } & Record<string, any>);
 
 function parseAddonNameFromPath(normalizedPath: string): string | null {
     // 期望路径中包含：/node_modules/@befly-addon/<addonName>/...
@@ -96,7 +104,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
                 moduleName = `addon_${camelCase(addonName)}_${baseName}`;
             }
 
-            results.push({
+            const base: Record<string, any> = {
                 source: source,
                 type: type,
                 sourceName: { core: "核心", addon: "组件", app: "项目" }[source],
@@ -106,9 +114,26 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
                 moduleName: moduleName,
                 addonName: addonName,
                 fileBaseName: parse(normalizedFile).base,
-                fileDir: dir,
-                content: content
-            });
+                fileDir: dir
+            };
+
+            if (type === "table") {
+                base.content = content;
+                results.push(base as ScanFileResult);
+                continue;
+            }
+
+            // api/plugin/hook：把 default export 的字段映射到与元数据同级（不保留 content 字段）
+            if (typeof content === "object" && content !== null && !Array.isArray(content)) {
+                for (const key of Object.keys(content)) {
+                    if (Object.prototype.hasOwnProperty.call(base, key)) {
+                        continue;
+                    }
+                    base[key] = (content as any)[key];
+                }
+            }
+
+            results.push(base as ScanFileResult);
         }
     } catch (error: any) {
         const wrappedError = new Error(`scanFiles failed: source=${source} type=${type} dir=${normalizedDir} pattern=${pattern}`);

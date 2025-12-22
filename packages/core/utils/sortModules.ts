@@ -16,7 +16,7 @@ export type SortModulesByDepsOptions<T> = {
 
     /**
      * 获取 deps。
-     * 默认：item.content.deps
+     * 默认：item.deps
      */
     getDeps?: (item: T) => string[];
 };
@@ -25,11 +25,11 @@ export type SortModulesByDepsOptions<T> = {
  * 按 deps 拓扑排序 scanSources 扫描得到的插件/钩子。
  *
  * 说明：
- * - 输入为 scanSources/scanFiles 的条目数组：每个条目包含 fileName 与 content。
+ * - 输入为 scanSources/scanFiles 的条目数组：每个条目包含 fileName 与 deps。
  * - deps 里的字符串会与 getName(item) 的结果匹配。
  * - 若出现：重复 name、缺失依赖、循环依赖，则返回 false。
  */
-export function sortModules<T extends { fileName: string; content?: any }>(items: T[], options: SortModulesByDepsOptions<T> = {}): T[] | false {
+export function sortModules<T extends { fileName: string; deps?: any }>(items: T[], options: SortModulesByDepsOptions<T> = {}): T[] | false {
     const moduleLabel = options.moduleLabel || "模块";
     const getName =
         options.getName ||
@@ -40,7 +40,7 @@ export function sortModules<T extends { fileName: string; content?: any }>(items
             }
             return camelCase(item.fileName);
         });
-    const getDeps = options.getDeps || ((item: T) => (item.content ? item.content.deps : undefined));
+    const getDeps = options.getDeps || ((item: T) => (item as any).deps);
 
     const result: T[] = [];
     const visited = new Set<string>();

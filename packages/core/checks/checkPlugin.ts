@@ -6,28 +6,27 @@ import { Logger } from "../lib/logger.js";
 export async function checkPlugin(plugins): Promise<void> {
     let hasError = false;
 
-    for (const item of plugins) {
+    for (const plugin of plugins) {
         try {
-            const plugin = item?.content;
             if (!isPlainObject(plugin)) {
-                Logger.warn(omit(item, ["content"]), "插件导出必须是对象（export default { deps, handler }）");
+                Logger.warn(omit(plugin, ["handler"]), "插件导出必须是对象（export default { deps, handler }）");
                 hasError = true;
                 continue;
             }
 
             if (!Array.isArray((plugin as any).deps)) {
-                Logger.warn(omit(item, ["content"]), "插件的 deps 属性必须是字符串数组");
+                Logger.warn(omit(plugin, ["handler"]), "插件的 deps 属性必须是字符串数组");
                 hasError = true;
                 continue;
             }
 
             if ((plugin as any).deps.some((depItem: any) => typeof depItem !== "string")) {
-                Logger.warn(omit(item, ["content"]), "插件的 deps 属性必须是字符串数组");
+                Logger.warn(omit(plugin, ["handler"]), "插件的 deps 属性必须是字符串数组");
                 hasError = true;
             }
 
             if (typeof (plugin as any).handler !== "function") {
-                Logger.warn(omit(item, ["content"]), "插件的 handler 属性必须是函数");
+                Logger.warn(omit(plugin, ["handler"]), "插件的 handler 属性必须是函数");
                 hasError = true;
                 continue;
             }

@@ -6,28 +6,27 @@ import { Logger } from "../lib/logger.js";
 export async function checkHook(hooks): Promise<void> {
     let hasError = false;
 
-    for (const item of hooks) {
+    for (const hook of hooks) {
         try {
-            const hook = item?.content;
             if (!isPlainObject(hook)) {
-                Logger.warn(omit(item, ["content"]), "钩子导出必须是对象（export default { deps, handler }）");
+                Logger.warn(omit(hook, ["handler"]), "钩子导出必须是对象（export default { deps, handler }）");
                 hasError = true;
                 continue;
             }
 
             if (!Array.isArray((hook as any).deps)) {
-                Logger.warn(omit(item, ["content"]), "钩子的 deps 属性必须是字符串数组");
+                Logger.warn(omit(hook, ["handler"]), "钩子的 deps 属性必须是字符串数组");
                 hasError = true;
                 continue;
             }
 
             if ((hook as any).deps.some((depItem: any) => typeof depItem !== "string")) {
-                Logger.warn(omit(item, ["content"]), "钩子的 deps 属性必须是字符串数组");
+                Logger.warn(omit(hook, ["handler"]), "钩子的 deps 属性必须是字符串数组");
                 hasError = true;
             }
 
             if (typeof (hook as any).handler !== "function") {
-                Logger.warn(omit(item, ["content"]), "钩子的 handler 属性必须是函数");
+                Logger.warn(omit(hook, ["handler"]), "钩子的 handler 属性必须是函数");
                 hasError = true;
                 continue;
             }

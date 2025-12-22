@@ -38,7 +38,7 @@ export async function loadHooks(hookItems: ScanFileResult[], disableHooks: strin
 
     for (const item of sortedHookItems) {
         const hookName = (item as any).moduleName as string;
-        const hook = (item as any).content as Hook;
+        const hook = item as any as Hook;
 
         loadedHooks.push({
             name: hookName,
