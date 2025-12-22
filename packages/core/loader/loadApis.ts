@@ -92,7 +92,7 @@ export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, 
             }
         } catch (error: any) {
             Logger.error({ err: error, api: apiFile.relativePath, file: apiFile.filePath }, "接口加载失败");
-            process.exit(1);
+            throw error;
         }
     }
 
