@@ -9,10 +9,12 @@ import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListRes
 import { snakeCase } from "es-toolkit/string";
 
 import { arrayKeysToCamel } from "../utils/arrayKeysToCamel.js";
+import { convertBigIntFields } from "../utils/convertBigIntFields.js";
 import { fieldClear } from "../utils/fieldClear.js";
 import { keysToCamel } from "../utils/keysToCamel.js";
 import { keysToSnake } from "../utils/keysToSnake.js";
 import { CacheKeys } from "./cacheKeys.js";
+import { DbUtils } from "./dbUtils.js";
 import { Logger } from "./logger.js";
 import { SqlBuilder } from "./sqlBuilder.js";
 
@@ -41,50 +43,6 @@ export class DbHelper {
         this.redis = redis;
         this.sql = sql;
         this.isTransaction = !!sql;
-    }
-
-    /**
-     * 验证 fields 格式并分类
-     * @returns { type: 'all' | 'include' | 'exclude', fields: string[] }
-     * @throws 如果 fields 格式非法
-     */
-    private validateAndClassifyFields(fields?: string[]): {
-        type: "all" | "include" | "exclude";
-        fields: string[];
-    } {
-        // 情况1：空数组或 undefined，表示查询所有
-        if (!fields || fields.length === 0) {
-            return { type: "all", fields: [] };
-        }
-
-        // 检测是否有星号（禁止）
-        if (fields.some((f) => f === "*")) {
-            throw new Error("fields 不支持 * 星号，请使用空数组 [] 或不传参数表示查询所有字段");
-        }
-
-        // 检测是否有空字符串或无效值
-        if (fields.some((f) => !f || typeof f !== "string" || f.trim() === "")) {
-            throw new Error("fields 不能包含空字符串或无效值");
-        }
-
-        // 统计包含字段和排除字段
-        const includeFields = fields.filter((f) => !f.startsWith("!"));
-        const excludeFields = fields.filter((f) => f.startsWith("!"));
-
-        // 情况2：全部是包含字段
-        if (includeFields.length > 0 && excludeFields.length === 0) {
-            return { type: "include", fields: includeFields };
-        }
-
-        // 情况3：全部是排除字段
-        if (excludeFields.length > 0 && includeFields.length === 0) {
-            // 去掉感叹号前缀
-            const cleanExcludeFields = excludeFields.map((f) => f.substring(1));
-            return { type: "exclude", fields: cleanExcludeFields };
-        }
-
-        // 混用情况：报错
-        throw new Error('fields 不能同时包含普通字段和排除字段（! 开头）。只能使用以下3种方式之一：\n1. 空数组 [] 或不传（查询所有）\n2. 全部指定字段 ["id", "name"]\n3. 全部排除字段 ["!password", "!token"]');
     }
 
     /**
@@ -121,172 +79,6 @@ export class DbHelper {
     }
 
     /**
-     * 字段数组转下划线格式（私有方法）
-     * 支持排除字段语法
-     */
-    private async fieldsToSnake(table: string, fields: string[]): Promise<string[]> {
-        if (!fields || !Array.isArray(fields)) return ["*"];
-
-        // 验证并分类字段
-        const { type, fields: classifiedFields } = this.validateAndClassifyFields(fields);
-
-        // 情况1：查询所有字段
-        if (type === "all") {
-            return ["*"];
-        }
-
-        // 情况2：指定包含字段
-        if (type === "include") {
-            return classifiedFields.map((field) => {
-                // 保留函数和特殊字段
-                if (field.includes("(") || field.includes(" ")) {
-                    return field;
-                }
-                return snakeCase(field);
-            });
-        }
-
-        // 情况3：排除字段
-        if (type === "exclude") {
-            // 获取表的所有字段
-            const allColumns = await this.getTableColumns(table);
-
-            // 转换排除字段为下划线格式
-            const excludeSnakeFields = classifiedFields.map((f) => snakeCase(f));
-
-            // 过滤掉排除字段
-            const resultFields = allColumns.filter((col) => !excludeSnakeFields.includes(col));
-
-            if (resultFields.length === 0) {
-                throw new Error(`排除字段后没有剩余字段可查询。表: ${table}, 排除: ${excludeSnakeFields.join(", ")}`);
-            }
-
-            return resultFields;
-        }
-
-        return ["*"];
-    }
-
-    /**
-     * orderBy 数组转下划线格式（私有方法）
-     */
-    private orderByToSnake(orderBy: string[]): string[] {
-        if (!orderBy || !Array.isArray(orderBy)) return orderBy;
-        return orderBy.map((item) => {
-            if (typeof item !== "string" || !item.includes("#")) return item;
-            const [field, direction] = item.split("#");
-            return `${snakeCase(field.trim())}#${direction.trim()}`;
-        });
-    }
-
-    /**
-     * 处理表名（转下划线格式）
-     * 'userProfile' -> 'user_profile'
-     */
-    private processTableName(table: string): string {
-        return snakeCase(table.trim());
-    }
-
-    /**
-     * 处理联查字段（支持表名.字段名格式）
-     * 'user.userId' -> 'user.user_id'
-     * 'username' -> 'user_name'
-     */
-    private processJoinField(field: string): string {
-        // 跳过函数、星号、已处理的字段
-        if (field.includes("(") || field === "*" || field.startsWith("`")) {
-            return field;
-        }
-
-        // 处理别名 AS
-        if (field.toUpperCase().includes(" AS ")) {
-            const [fieldPart, aliasPart] = field.split(/\s+AS\s+/i);
-            return `${this.processJoinField(fieldPart.trim())} AS ${aliasPart.trim()}`;
-        }
-
-        // 处理表名.字段名
-        if (field.includes(".")) {
-            const [tableName, fieldName] = field.split(".");
-            return `${snakeCase(tableName)}.${snakeCase(fieldName)}`;
-        }
-
-        // 普通字段
-        return snakeCase(field);
-    }
-
-    /**
-     * 处理联查的 where 条件键名
-     * 'user.userId': 1 -> 'user.user_id': 1
-     * 'user.status$in': [...] -> 'user.status$in': [...]
-     */
-    private processJoinWhereKey(key: string): string {
-        // 保留逻辑操作符
-        if (key === "$or" || key === "$and") {
-            return key;
-        }
-
-        // 处理带操作符的字段名（如 user.userId$gt）
-        if (key.includes("$")) {
-            const lastDollarIndex = key.lastIndexOf("$");
-            const fieldPart = key.substring(0, lastDollarIndex);
-            const operator = key.substring(lastDollarIndex);
-
-            if (fieldPart.includes(".")) {
-                const [tableName, fieldName] = fieldPart.split(".");
-                return `${snakeCase(tableName)}.${snakeCase(fieldName)}${operator}`;
-            }
-            return `${snakeCase(fieldPart)}${operator}`;
-        }
-
-        // 处理表名.字段名
-        if (key.includes(".")) {
-            const [tableName, fieldName] = key.split(".");
-            return `${snakeCase(tableName)}.${snakeCase(fieldName)}`;
-        }
-
-        // 普通字段
-        return snakeCase(key);
-    }
-
-    /**
-     * 递归处理联查的 where 条件
-     */
-    private processJoinWhere(where: any): any {
-        if (!where || typeof where !== "object") return where;
-
-        if (Array.isArray(where)) {
-            return where.map((item) => this.processJoinWhere(item));
-        }
-
-        const result: any = {};
-        for (const [key, value] of Object.entries(where)) {
-            const newKey = this.processJoinWhereKey(key);
-
-            if (key === "$or" || key === "$and") {
-                result[newKey] = (value as any[]).map((item) => this.processJoinWhere(item));
-            } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-                result[newKey] = this.processJoinWhere(value);
-            } else {
-                result[newKey] = value;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * 处理联查的 orderBy
-     * 'o.createdAt#DESC' -> 'o.created_at#DESC'
-     */
-    private processJoinOrderBy(orderBy: string[]): string[] {
-        if (!orderBy || !Array.isArray(orderBy)) return orderBy;
-        return orderBy.map((item) => {
-            if (typeof item !== "string" || !item.includes("#")) return item;
-            const [field, direction] = item.split("#");
-            return `${this.processJoinField(field.trim())}#${direction.trim()}`;
-        });
-    }
-
-    /**
      * 统一的查询参数预处理方法
      */
     private async prepareQueryOptions(options: QueryOptions) {
@@ -296,28 +88,28 @@ export class DbHelper {
         // 联查时使用特殊处理逻辑
         if (hasJoins) {
             // 联查时字段直接处理（支持表名.字段名格式）
-            const processedFields = (options.fields || []).map((f) => this.processJoinField(f));
+            const processedFields = (options.fields || []).map((f) => DbUtils.processJoinField(f));
 
             return {
-                table: this.processTableName(options.table),
+                table: DbUtils.processTableName(options.table),
                 fields: processedFields.length > 0 ? processedFields : ["*"],
-                where: this.processJoinWhere(cleanWhere),
+                where: DbUtils.processJoinWhere(cleanWhere),
                 joins: options.joins,
-                orderBy: this.processJoinOrderBy(options.orderBy || []),
+                orderBy: DbUtils.processJoinOrderBy(options.orderBy || []),
                 page: options.page || 1,
                 limit: options.limit || 10
             };
         }
 
         // 单表查询使用原有逻辑
-        const processedFields = await this.fieldsToSnake(snakeCase(options.table), options.fields || []);
+        const processedFields = await DbUtils.fieldsToSnake(snakeCase(options.table), options.fields || [], this.getTableColumns.bind(this));
 
         return {
             table: snakeCase(options.table),
             fields: processedFields,
-            where: this.whereKeysToSnake(cleanWhere),
+            where: DbUtils.whereKeysToSnake(cleanWhere),
             joins: undefined,
-            orderBy: this.orderByToSnake(options.orderBy || []),
+            orderBy: DbUtils.orderByToSnake(options.orderBy || []),
             page: options.page || 1,
             limit: options.limit || 10
         };
@@ -330,7 +122,7 @@ export class DbHelper {
         if (!joins || joins.length === 0) return;
 
         for (const join of joins) {
-            const processedTable = this.processTableName(join.table);
+            const processedTable = DbUtils.processTableName(join.table);
             const type = join.type || "left";
 
             switch (type) {
@@ -346,36 +138,6 @@ export class DbHelper {
                     break;
             }
         }
-    }
-
-    /**
-     * 添加默认的 state 过滤条件
-     * 默认查询 state > 0 的数据（排除已删除和特殊状态）
-     * @param where - where 条件
-     * @param table - 主表名（JOIN 查询时需要，用于添加表名前缀避免歧义）
-     * @param hasJoins - 是否有 JOIN 查询
-     */
-    private addDefaultStateFilter(where: WhereConditions = {}, table?: string, hasJoins: boolean = false): WhereConditions {
-        // 如果用户已经指定了 state 条件，优先使用用户的条件
-        const hasStateCondition = Object.keys(where).some((key) => key.startsWith("state") || key.includes(".state"));
-
-        if (hasStateCondition) {
-            return where;
-        }
-
-        // JOIN 查询时需要指定主表名前缀避免歧义
-        if (hasJoins && table) {
-            return {
-                ...where,
-                [`${table}.state$gt`]: 0
-            };
-        }
-
-        // 默认查询 state > 0 的数据
-        return {
-            ...where,
-            state$gt: 0
-        };
     }
 
     /**
@@ -396,129 +158,7 @@ export class DbHelper {
      * 4. 其他字段保持不变
      */
     private convertBigIntFields<T = any>(arr: Record<string, any>[], fields: string[] = ["id", "pid", "sort"]): T[] {
-        if (!arr || !Array.isArray(arr)) return arr as T[];
-
-        return arr.map((item) => {
-            const converted = { ...item };
-
-            // 遍历对象的所有字段
-            for (const [key, value] of Object.entries(converted)) {
-                // 跳过 undefined 和 null
-                if (value === undefined || value === null) {
-                    continue;
-                }
-
-                // 判断是否需要转换：
-                // 1. 在白名单中
-                // 2. 以 'Id' 结尾（如 userId, roleId, categoryId）
-                // 3. 以 '_id' 结尾（如 user_id, role_id）
-                // 4. 以 'At' 结尾（如 createdAt, updatedAt）
-                // 5. 以 '_at' 结尾（如 created_at, updated_at）
-                const shouldConvert = fields.includes(key) || key.endsWith("Id") || key.endsWith("_id") || key.endsWith("At") || key.endsWith("_at");
-
-                if (shouldConvert && typeof value === "string") {
-                    const num = Number(value);
-                    if (!isNaN(num)) {
-                        converted[key] = num;
-                    }
-                }
-                // number 类型保持不变（小于 u32 的值）
-            }
-
-            return converted as T;
-        }) as T[];
-    }
-
-    /**
-     * 序列化数组字段（写入数据库前）
-     * 将数组类型的字段转换为 JSON 字符串
-     */
-    private serializeArrayFields(data: Record<string, any>): Record<string, any> {
-        const serialized = { ...data };
-
-        for (const [key, value] of Object.entries(serialized)) {
-            // 跳过 null 和 undefined
-            if (value === null || value === undefined) continue;
-
-            // 数组类型序列化为 JSON 字符串
-            if (Array.isArray(value)) {
-                serialized[key] = JSON.stringify(value);
-            }
-        }
-
-        return serialized;
-    }
-
-    /**
-     * 反序列化数组字段（从数据库读取后）
-     * 将 JSON 字符串转换回数组
-     */
-    private deserializeArrayFields<T = any>(data: Record<string, any> | null): T | null {
-        if (!data) return null;
-
-        const deserialized = { ...data };
-
-        for (const [key, value] of Object.entries(deserialized)) {
-            // 跳过非字符串值
-            if (typeof value !== "string") continue;
-
-            // 尝试解析 JSON 数组字符串
-            // 只解析符合 JSON 数组格式的字符串（以 [ 开头，以 ] 结尾）
-            if (value.startsWith("[") && value.endsWith("]")) {
-                try {
-                    const parsed = JSON.parse(value);
-                    if (Array.isArray(parsed)) {
-                        deserialized[key] = parsed;
-                    }
-                } catch {
-                    // 解析失败则保持原值
-                }
-            }
-        }
-
-        return deserialized as T;
-    }
-
-    /**
-     * Where 条件键名转下划线格式（递归处理嵌套）（私有方法）
-     * 支持操作符字段（如 userId$gt）和逻辑操作符（$or, $and）
-     */
-    private whereKeysToSnake(where: any): any {
-        if (!where || typeof where !== "object") return where;
-
-        // 处理数组（$or, $and 等）
-        if (Array.isArray(where)) {
-            return where.map((item) => this.whereKeysToSnake(item));
-        }
-
-        const result: any = {};
-        for (const [key, value] of Object.entries(where)) {
-            // 保留 $or, $and 等逻辑操作符
-            if (key === "$or" || key === "$and") {
-                result[key] = (value as any[]).map((item) => this.whereKeysToSnake(item));
-                continue;
-            }
-
-            // 处理带操作符的字段名（如 userId$gt）
-            if (key.includes("$")) {
-                const lastDollarIndex = key.lastIndexOf("$");
-                const fieldName = key.substring(0, lastDollarIndex);
-                const operator = key.substring(lastDollarIndex);
-                const snakeKey = snakeCase(fieldName) + operator;
-                result[snakeKey] = value;
-                continue;
-            }
-
-            // 普通字段：转换键名，递归处理值（支持嵌套对象）
-            const snakeKey = snakeCase(key);
-            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-                result[snakeKey] = this.whereKeysToSnake(value);
-            } else {
-                result[snakeKey] = value;
-            }
-        }
-
-        return result;
+        return convertBigIntFields<T>(arr, fields);
     }
 
     /**
@@ -625,7 +265,7 @@ export class DbHelper {
         const builder = new SqlBuilder()
             .select(["COUNT(*) as count"])
             .from(table)
-            .where(this.addDefaultStateFilter(where, table, !!joins));
+            .where(DbUtils.addDefaultStateFilter(where, table, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -658,7 +298,7 @@ export class DbHelper {
         const builder = new SqlBuilder()
             .select(fields)
             .from(table)
-            .where(this.addDefaultStateFilter(where, table, !!joins));
+            .where(DbUtils.addDefaultStateFilter(where, table, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -673,7 +313,7 @@ export class DbHelper {
         const camelRow = keysToCamel<T>(row);
 
         // 反序列化数组字段（JSON 字符串 → 数组）
-        const deserialized = this.deserializeArrayFields<T>(camelRow);
+        const deserialized = DbUtils.deserializeArrayFields<T>(camelRow);
         if (!deserialized) return null;
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
@@ -714,7 +354,7 @@ export class DbHelper {
         }
 
         // 构建查询
-        const whereFiltered = this.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
+        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
 
         // 查询总数
         const countBuilder = new SqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
@@ -792,7 +432,7 @@ export class DbHelper {
 
         const prepared = await this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
 
-        const whereFiltered = this.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
+        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
 
         // 查询真实总数
         const countBuilder = new SqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
@@ -868,7 +508,7 @@ export class DbHelper {
         const snakeData = keysToSnake(cleanData);
 
         // 序列化数组字段（数组 → JSON 字符串）
-        const serializedData = this.serializeArrayFields(snakeData);
+        const serializedData = DbUtils.serializeArrayFields(snakeData);
 
         // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
         const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, state: _state, ...userData } = serializedData;
@@ -938,7 +578,7 @@ export class DbHelper {
             const snakeData = keysToSnake(cleanData);
 
             // 序列化数组字段（数组 → JSON 字符串）
-            const serializedData = this.serializeArrayFields(snakeData);
+            const serializedData = DbUtils.serializeArrayFields(snakeData);
 
             // 移除系统字段（防止用户尝试覆盖）
             const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, state: _state, ...userData } = serializedData;
@@ -994,7 +634,7 @@ export class DbHelper {
         for (const item of dataList) {
             const cleanData = this.cleanFields(item.data);
             const snakeData = keysToSnake(cleanData);
-            const serializedData = this.serializeArrayFields(snakeData);
+            const serializedData = DbUtils.serializeArrayFields(snakeData);
 
             // 移除系统字段（防止用户尝试修改）
             // 注意：state 允许用户修改（用于设置禁用状态 state=2）
@@ -1074,10 +714,10 @@ export class DbHelper {
 
         // 字段名转换：小驼峰 → 下划线
         const snakeData = keysToSnake(cleanData);
-        const snakeWhere = this.whereKeysToSnake(cleanWhere);
+        const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
 
         // 序列化数组字段（数组 → JSON 字符串）
-        const serializedData = this.serializeArrayFields(snakeData);
+        const serializedData = DbUtils.serializeArrayFields(snakeData);
 
         // 移除系统字段（防止用户尝试修改）
         // 注意：state 允许用户修改（用于设置禁用状态 state=2）
@@ -1090,7 +730,7 @@ export class DbHelper {
         };
 
         // 构建 SQL
-        const whereFiltered = this.addDefaultStateFilter(snakeWhere, snakeTable, false);
+        const whereFiltered = DbUtils.addDefaultStateFilter(snakeWhere, snakeTable, false);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql, params } = builder.toUpdateSql(snakeTable, processed);
 
@@ -1125,7 +765,7 @@ export class DbHelper {
 
         // 清理条件字段
         const cleanWhere = this.cleanFields(where);
-        const snakeWhere = this.whereKeysToSnake(cleanWhere);
+        const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
 
         // 物理删除
         const builder = new SqlBuilder().where(snakeWhere);
@@ -1203,7 +843,7 @@ export class DbHelper {
         const builder = new SqlBuilder()
             .select(["COUNT(1) as cnt"])
             .from(table)
-            .where(this.addDefaultStateFilter(where, table, false))
+            .where(DbUtils.addDefaultStateFilter(where, table, false))
             .limit(1);
 
         const { sql, params } = builder.toSelectSql();
@@ -1282,10 +922,10 @@ export class DbHelper {
         const cleanWhere = this.cleanFields(where);
 
         // 转换 where 条件字段名：小驼峰 → 下划线
-        const snakeWhere = this.whereKeysToSnake(cleanWhere);
+        const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
 
         // 使用 SqlBuilder 构建安全的 WHERE 条件
-        const whereFiltered = this.addDefaultStateFilter(snakeWhere, snakeTable, false);
+        const whereFiltered = DbUtils.addDefaultStateFilter(snakeWhere, snakeTable, false);
         const builder = new SqlBuilder().where(whereFiltered);
         const { sql: whereClause, params: whereParams } = builder.getWhereConditions();
 
