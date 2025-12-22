@@ -11,4 +11,4 @@ export default {
     handler: () => {
         return beflyConfig;
     }
-} as Plugin;
+} satisfies Plugin;

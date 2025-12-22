@@ -22,4 +22,4 @@ export default {
             ctx.user = {};
         }
     }
-} as Hook;
+} satisfies Hook;

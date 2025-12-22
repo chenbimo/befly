@@ -31,4 +31,4 @@ export default {
 
         return new EmailHelper(befly, emailConfig);
     }
-} as Plugin;
+} satisfies Plugin;

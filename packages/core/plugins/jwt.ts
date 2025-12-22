@@ -12,4 +12,4 @@ export default {
     handler: () => {
         return new Jwt(beflyConfig.auth);
     }
-} as Plugin;
+} satisfies Plugin;

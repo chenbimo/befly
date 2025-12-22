@@ -271,4 +271,4 @@ export default {
             return;
         }
     }
-} as Hook;
+} satisfies Hook;

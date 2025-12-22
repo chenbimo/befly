@@ -103,4 +103,4 @@ export default {
             }
         }
     }
-} as Hook;
+} satisfies Hook;

@@ -20,4 +20,4 @@ export default {
         }
         return Logger;
     }
-} as Plugin;
+} satisfies Plugin;

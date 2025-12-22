@@ -16,4 +16,4 @@ export default {
     async handler(befly: BeflyContext): Promise<CacheHelper> {
         return new CacheHelper({ db: befly.db, redis: befly.redis });
     }
-} as Plugin;
+} satisfies Plugin;

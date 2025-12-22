@@ -122,4 +122,4 @@ export default {
             Raw: Raw
         };
     }
-} as Plugin;
+} satisfies Plugin;

@@ -40,4 +40,4 @@ export default {
             throw error;
         }
     }
-} as Plugin;
+} satisfies Plugin;

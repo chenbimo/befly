@@ -11,4 +11,4 @@ export default {
     handler: () => {
         return Cipher;
     }
-} as Plugin;
+} satisfies Plugin;
