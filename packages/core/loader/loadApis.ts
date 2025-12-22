@@ -53,52 +53,47 @@ function processFields(fields: Record<string, any>, apiName: string, routePath: 
 export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, ApiRoute>> {
     const apis = new Map<string, ApiRoute>();
 
-    try {
-        // 4. 遍历处理所有 API 文件
-        for (const apiFile of apiItems) {
-            try {
-                const api = (apiFile as any)?.content || {};
+    // 4. 遍历处理所有 API 文件
+    for (const apiFile of apiItems) {
+        try {
+            const api = (apiFile as any)?.content || {};
 
-                // 设置默认值
-                const methodStr = (api.method || "POST").toUpperCase();
-                const auth = api.auth !== undefined ? api.auth : true;
+            // 设置默认值
+            const methodStr = (api.method || "POST").toUpperCase();
+            const auth = api.auth !== undefined ? api.auth : true;
 
-                // 构建路由路径（用于错误提示）
-                const sourcePrefix = apiFile.source === "core" ? "/core/" : apiFile.source === "app" ? "/app/" : "/addon/";
-                const routePath = `/api${sourcePrefix}${apiFile.relativePath}`;
+            // 构建路由路径（用于错误提示）
+            const sourcePrefix = apiFile.source === "core" ? "/core/" : apiFile.source === "app" ? "/app/" : "/addon/";
+            const routePath = `/api${sourcePrefix}${apiFile.relativePath}`;
 
-                // 处理字段定义，将 @ 引用替换为实际字段定义
-                const fields = processFields(api.fields || {}, api.name, routePath);
-                const required = api.required || [];
+            // 处理字段定义，将 @ 引用替换为实际字段定义
+            const fields = processFields(api.fields || {}, api.name, routePath);
+            const required = api.required || [];
 
-                // 支持逗号分隔的多方法，拆分后分别注册
-                const methods = methodStr
-                    .split(",")
-                    .map((m: string) => m.trim())
-                    .filter((m: string) => m);
-                for (const method of methods) {
-                    const route = makeRouteKey(method, routePath);
-                    // 为每个方法创建独立的路由对象
-                    const routeApi: ApiRoute = {
-                        name: api.name,
-                        handler: api.handler,
-                        method: method,
-                        auth: auth,
-                        fields: fields,
-                        required: required,
-                        rawBody: api.rawBody,
-                        route: route
-                    };
-                    apis.set(route, routeApi);
-                }
-            } catch (error: any) {
-                Logger.error({ err: error, api: apiFile.relativePath, file: apiFile.filePath }, "接口加载失败");
-                process.exit(1);
+            // 支持逗号分隔的多方法，拆分后分别注册
+            const methods = methodStr
+                .split(",")
+                .map((m: string) => m.trim())
+                .filter((m: string) => m);
+            for (const method of methods) {
+                const route = makeRouteKey(method, routePath);
+                // 为每个方法创建独立的路由对象
+                const routeApi: ApiRoute = {
+                    name: api.name,
+                    handler: api.handler,
+                    method: method,
+                    auth: auth,
+                    fields: fields,
+                    required: required,
+                    rawBody: api.rawBody,
+                    route: route
+                };
+                apis.set(route, routeApi);
             }
+        } catch (error: any) {
+            Logger.error({ err: error, api: apiFile.relativePath, file: apiFile.filePath }, "接口加载失败");
+            process.exit(1);
         }
-    } catch (error: any) {
-        Logger.error({ err: error }, "加载 API 时发生错误");
-        process.exit(1);
     }
 
     return apis;
