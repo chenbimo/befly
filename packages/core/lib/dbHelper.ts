@@ -18,6 +18,7 @@ import { MySqlDialect } from "./dbDialect.js";
 import { DbUtils } from "./dbUtils.js";
 import { Logger } from "./logger.js";
 import { SqlBuilder } from "./sqlBuilder.js";
+import { SqlCheck } from "./sqlCheck.js";
 
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 
@@ -503,6 +504,9 @@ export class DbHelper {
 
         const processed = DbUtils.buildInsertRow({ data: data, id: id, now: now });
 
+        // 入口校验：保证进入 SqlBuilder 的数据无 undefined
+        SqlCheck.assertNoUndefinedInRecord(processed as any, `insData 插入数据 (table: ${snakeTable})`);
+
         // 构建 SQL
         const builder = this.createSqlBuilder();
         const { sql, params } = builder.toInsertSql(snakeTable, processed);
@@ -545,6 +549,9 @@ export class DbHelper {
             return DbUtils.buildInsertRow({ data: data, id: ids[index], now: now });
         });
 
+        // 入口校验：保证进入 SqlBuilder 的批量数据结构一致且无 undefined
+        const insertFields = SqlCheck.assertBatchInsertRowsConsistent(processedList as any, { table: snakeTable });
+
         // 构建批量插入 SQL
         const builder = this.createSqlBuilder();
         const { sql, params } = builder.toInsertSql(snakeTable, processedList);
@@ -554,7 +561,16 @@ export class DbHelper {
             await this.executeWithConn(sql, params);
             return ids;
         } catch (error: any) {
-            Logger.error({ err: error, table: table }, "批量插入失败");
+            Logger.error(
+                {
+                    err: error,
+                    table: table,
+                    snakeTable: snakeTable,
+                    count: dataList.length,
+                    fields: insertFields
+                },
+                "批量插入失败"
+            );
             throw error;
         }
     }

@@ -5,6 +5,63 @@
 
 import type { WhereConditions, WhereOperator, OrderDirection, SqlQuery, InsertData, UpdateData, SqlValue } from "../types/common.js";
 
+import { SqlCheck } from "./sqlCheck.js";
+
+const SqlBuilderError = {
+    QUOTE_IDENT_NEED_STRING: (identifier: unknown) => `quoteIdent 需要字符串类型标识符 (identifier: ${String(identifier)})`,
+    IDENT_EMPTY: "SQL 标识符不能为空",
+
+    FIELD_EXPR_NOT_ALLOWED: (field: string) => `字段包含函数/表达式，请使用 selectRaw/whereRaw (field: ${field})`,
+
+    FROM_EMPTY: "FROM 表名不能为空",
+    FROM_NEED_NON_EMPTY: (table: unknown) => `FROM 表名必须是非空字符串 (table: ${String(table)})`,
+    FROM_REQUIRED: "FROM 表名是必需的",
+    COUNT_NEED_FROM: "COUNT 需要 FROM 表名",
+
+    TABLE_REF_TOO_MANY_PARTS: (table: string) => `不支持的表引用格式（包含过多片段）。请使用 fromRaw 显式传入复杂表达式 (table: ${table})`,
+    TABLE_REF_SCHEMA_TOO_DEEP: (table: string) => `不支持的表引用格式（schema 层级过深）。请使用 fromRaw (table: ${table})`,
+    SCHEMA_QUOTE_NOT_PAIRED: (schema: string) => `schema 标识符引用不完整，请使用成对的 \`...\` 或 "..." (schema: ${schema})`,
+    TABLE_QUOTE_NOT_PAIRED: (tableName: string) => `table 标识符引用不完整，请使用成对的 \`...\` 或 "..." (table: ${tableName})`,
+
+    SELECT_FIELDS_INVALID: "SELECT 字段必须是字符串或数组",
+    SELECT_RAW_NEED_NON_EMPTY: (expr: unknown) => `selectRaw 需要非空字符串 (expr: ${String(expr)})`,
+    FROM_RAW_NEED_NON_EMPTY: (tableExpr: unknown) => `fromRaw 需要非空字符串 (tableExpr: ${String(tableExpr)})`,
+    WHERE_RAW_NEED_NON_EMPTY: (sql: unknown) => `whereRaw 需要非空字符串 (sql: ${String(sql)})`,
+    WHERE_VALUE_REQUIRED: "where(field, value) 不允许省略 value。若需传入原始 WHERE，请使用 whereRaw",
+
+    JOIN_NEED_STRING: (table: unknown, on: unknown) => `JOIN 表名和条件必须是字符串 (table: ${String(table)}, on: ${String(on)})`,
+
+    ORDER_BY_NEED_ARRAY: 'orderBy 必须是字符串数组，格式为 "字段#方向"',
+    ORDER_BY_ITEM_NEED_HASH: (item: unknown) => `orderBy 字段必须是 "字段#方向" 格式的字符串（例如："name#ASC", "id#DESC"） (item: ${String(item)})`,
+    ORDER_BY_FIELD_EMPTY: (item: string) => `orderBy 中字段名不能为空 (item: ${item})`,
+    ORDER_BY_DIR_INVALID: (direction: string) => `ORDER BY 方向必须是 ASC 或 DESC (direction: ${direction})`,
+
+    LIMIT_MUST_NON_NEGATIVE: (count: unknown) => `LIMIT 数量必须是非负数 (count: ${String(count)})`,
+    OFFSET_MUST_NON_NEGATIVE: (offset: unknown) => `OFFSET 必须是非负数 (offset: ${String(offset)})`,
+    OFFSET_COUNT_MUST_NON_NEGATIVE: (count: unknown) => `OFFSET 必须是非负数 (count: ${String(count)})`,
+
+    INSERT_NEED_TABLE: (table: unknown) => `INSERT 需要表名 (table: ${String(table)})`,
+    INSERT_NEED_DATA: (table: unknown, data: unknown) => `INSERT 需要数据 (table: ${String(table)}, data: ${JSON.stringify(data)})`,
+    INSERT_NEED_AT_LEAST_ONE_FIELD: (table: string) => `插入数据必须至少有一个字段 (table: ${table})`,
+
+    UPDATE_NEED_TABLE: "UPDATE 需要表名",
+    UPDATE_NEED_OBJECT: "UPDATE 需要数据对象",
+    UPDATE_NEED_AT_LEAST_ONE_FIELD: "更新数据必须至少有一个字段",
+    UPDATE_NEED_WHERE: "为安全起见，UPDATE 需要 WHERE 条件",
+
+    DELETE_NEED_TABLE: "DELETE 需要表名",
+    DELETE_NEED_WHERE: "为安全起见，DELETE 需要 WHERE 条件",
+
+    TO_DELETE_IN_NEED_TABLE: (table: unknown) => `toDeleteInSql 需要非空表名 (table: ${String(table)})`,
+    TO_DELETE_IN_NEED_ID_FIELD: (idField: unknown) => `toDeleteInSql 需要非空 idField (idField: ${String(idField)})`,
+    TO_DELETE_IN_NEED_IDS: "toDeleteInSql 需要 ids 数组",
+
+    TO_UPDATE_CASE_NEED_TABLE: (table: unknown) => `toUpdateCaseByIdSql 需要非空表名 (table: ${String(table)})`,
+    TO_UPDATE_CASE_NEED_ID_FIELD: (idField: unknown) => `toUpdateCaseByIdSql 需要非空 idField (idField: ${String(idField)})`,
+    TO_UPDATE_CASE_NEED_ROWS: "toUpdateCaseByIdSql 需要 rows 数组",
+    TO_UPDATE_CASE_NEED_FIELDS: "toUpdateCaseByIdSql 需要 fields 数组"
+} as const;
+
 /**
  * SQL 构建器类
  */
@@ -27,12 +84,12 @@ export class SqlBuilder {
         } else {
             this._quoteIdent = (identifier: string) => {
                 if (typeof identifier !== "string") {
-                    throw new Error(`quoteIdent 需要字符串类型标识符 (identifier: ${String(identifier)})`);
+                    throw new Error(SqlBuilderError.QUOTE_IDENT_NEED_STRING(identifier));
                 }
 
                 const trimmed = identifier.trim();
                 if (!trimmed) {
-                    throw new Error("SQL 标识符不能为空");
+                    throw new Error(SqlBuilderError.IDENT_EMPTY);
                 }
 
                 // 默认行为（MySQL 风格）：允许特殊字符，但对反引号进行转义
@@ -43,21 +100,11 @@ export class SqlBuilder {
     }
 
     private _isQuotedIdent(value: string): boolean {
-        const trimmed = value.trim();
-        if (trimmed.length < 2) return false;
-
-        const first = trimmed[0];
-        const last = trimmed[trimmed.length - 1];
-
-        if (first === "`" && last === "`") return true;
-        if (first === '"' && last === '"') return true;
-
-        return false;
+        return SqlCheck.isQuotedIdentPaired(value);
     }
 
     private _startsWithQuote(value: string): boolean {
-        const trimmed = value.trim();
-        return trimmed.startsWith("`") || trimmed.startsWith('"');
+        return SqlCheck.startsWithQuote(value);
     }
 
     /**
@@ -88,19 +135,18 @@ export class SqlBuilder {
         field = field.trim();
 
         // 防止不完整引用被误认为“已安全引用”
-        if (this._startsWithQuote(field) && !this._isQuotedIdent(field)) {
-            throw new Error(`字段标识符引用不完整，请使用成对的 \`...\` 或 "..." (field: ${field})`);
-        }
+        SqlCheck.assertPairedQuotedIdentIfStartsWithQuote(field, "字段标识符");
 
         // 如果是 * 或已经被引用，直接返回
         if (field === "*" || this._isQuotedIdent(field)) {
             return field;
         }
 
-        // 收紧：包含函数/表达式（括号）不允许走自动转义路径
-        // 这类表达式应显式使用 selectRaw/whereRaw 以避免误拼接和注入风险
-        if (field.includes("(") || field.includes(")")) {
-            throw new Error(`字段包含函数/表达式，请使用 selectRaw/whereRaw (field: ${field})`);
+        try {
+            SqlCheck.assertNoExprField(field);
+        } catch {
+            // 保持 SqlBuilder 报错文案统一
+            throw new Error(SqlBuilderError.FIELD_EXPR_NOT_ALLOWED(field));
         }
 
         // 处理别名（AS关键字）
@@ -109,9 +155,7 @@ export class SqlBuilder {
             const fieldPart = parts[0].trim();
             const aliasPart = parts[1].trim();
             // alias 仅允许安全标识符或已被引用
-            if (!this._isQuotedIdent(aliasPart) && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(aliasPart)) {
-                throw new Error(`无效的字段别名: ${aliasPart}`);
-            }
+            SqlCheck.assertSafeAlias(aliasPart);
             return `${this._escapeField(fieldPart)} AS ${aliasPart}`;
         }
 
@@ -124,10 +168,7 @@ export class SqlBuilder {
                     if (part === "*" || this._isQuotedIdent(part)) {
                         return part;
                     }
-
-                    if (this._startsWithQuote(part) && !this._isQuotedIdent(part)) {
-                        throw new Error(`字段标识符引用不完整，请使用成对的 \`...\` 或 "..." (field: ${field})`);
-                    }
+                    SqlCheck.assertPairedQuotedIdentIfStartsWithQuote(part, "字段标识符");
                     return this._quoteIdent(part);
                 })
                 .join(".");
@@ -138,9 +179,7 @@ export class SqlBuilder {
     }
 
     private _validateIdentifierPart(part: string, kind: "table" | "schema" | "alias" | "field"): void {
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(part)) {
-            throw new Error(`无效的 ${kind} 标识符: ${part}`);
-        }
+        SqlCheck.assertSafeIdentifierPart(part, kind);
     }
 
     /**
@@ -165,11 +204,11 @@ export class SqlBuilder {
 
         const parts = table.split(/\s+/).filter((p) => p.length > 0);
         if (parts.length === 0) {
-            throw new Error("FROM 表名不能为空");
+            throw new Error(SqlBuilderError.FROM_EMPTY);
         }
 
         if (parts.length > 2) {
-            throw new Error(`不支持的表引用格式（包含过多片段）。请使用 fromRaw 显式传入复杂表达式 (table: ${table})`);
+            throw new Error(SqlBuilderError.TABLE_REF_TOO_MANY_PARTS(table));
         }
 
         const namePart = parts[0].trim();
@@ -177,7 +216,7 @@ export class SqlBuilder {
 
         const nameSegments = namePart.split(".");
         if (nameSegments.length > 2) {
-            throw new Error(`不支持的表引用格式（schema 层级过深）。请使用 fromRaw (table: ${table})`);
+            throw new Error(SqlBuilderError.TABLE_REF_SCHEMA_TOO_DEEP(table));
         }
 
         let escapedName = "";
@@ -189,7 +228,7 @@ export class SqlBuilder {
                 ? schema
                 : (() => {
                       if (this._startsWithQuote(schema) && !this._isQuotedIdent(schema)) {
-                          throw new Error(`schema 标识符引用不完整，请使用成对的 \`...\` 或 "..." (schema: ${schema})`);
+                          throw new Error(SqlBuilderError.SCHEMA_QUOTE_NOT_PAIRED(schema));
                       }
                       this._validateIdentifierPart(schema, "schema");
                       return this._quoteIdent(schema);
@@ -199,7 +238,7 @@ export class SqlBuilder {
                 ? tableName
                 : (() => {
                       if (this._startsWithQuote(tableName) && !this._isQuotedIdent(tableName)) {
-                          throw new Error(`table 标识符引用不完整，请使用成对的 \`...\` 或 "..." (table: ${tableName})`);
+                          throw new Error(SqlBuilderError.TABLE_QUOTE_NOT_PAIRED(tableName));
                       }
                       this._validateIdentifierPart(tableName, "table");
                       return this._quoteIdent(tableName);
@@ -213,7 +252,7 @@ export class SqlBuilder {
                 escapedName = tableName;
             } else {
                 if (this._startsWithQuote(tableName) && !this._isQuotedIdent(tableName)) {
-                    throw new Error(`table 标识符引用不完整，请使用成对的 \`...\` 或 "..." (table: ${tableName})`);
+                    throw new Error(SqlBuilderError.TABLE_QUOTE_NOT_PAIRED(tableName));
                 }
                 this._validateIdentifierPart(tableName, "table");
                 escapedName = this._quoteIdent(tableName);
@@ -232,9 +271,7 @@ export class SqlBuilder {
      * 验证参数
      */
     private _validateParam(value: any): void {
-        if (value === undefined) {
-            throw new Error(`参数值不能为 undefined`);
-        }
+        SqlCheck.assertNoUndefinedParam(value, "SQL 参数值");
     }
 
     /**
@@ -430,7 +467,7 @@ export class SqlBuilder {
         } else if (typeof fields === "string") {
             this._select.push(this._escapeField(fields));
         } else {
-            throw new Error("SELECT 字段必须是字符串或数组");
+            throw new Error(SqlBuilderError.SELECT_FIELDS_INVALID);
         }
         return this;
     }
@@ -440,7 +477,7 @@ export class SqlBuilder {
      */
     selectRaw(expr: string): this {
         if (typeof expr !== "string" || !expr.trim()) {
-            throw new Error(`selectRaw 需要非空字符串 (expr: ${String(expr)})`);
+            throw new Error(SqlBuilderError.SELECT_RAW_NEED_NON_EMPTY(expr));
         }
         this._select.push(expr);
         return this;
@@ -451,7 +488,7 @@ export class SqlBuilder {
      */
     from(table: string): this {
         if (typeof table !== "string" || !table.trim()) {
-            throw new Error(`FROM 表名必须是非空字符串 (table: ${table})`);
+            throw new Error(SqlBuilderError.FROM_NEED_NON_EMPTY(table));
         }
         this._from = this._escapeTable(table.trim());
         return this;
@@ -462,7 +499,7 @@ export class SqlBuilder {
      */
     fromRaw(tableExpr: string): this {
         if (typeof tableExpr !== "string" || !tableExpr.trim()) {
-            throw new Error(`fromRaw 需要非空字符串 (tableExpr: ${String(tableExpr)})`);
+            throw new Error(SqlBuilderError.FROM_RAW_NEED_NON_EMPTY(tableExpr));
         }
         this._from = tableExpr;
         return this;
@@ -481,7 +518,7 @@ export class SqlBuilder {
 
         if (typeof conditionOrField === "string") {
             if (value === undefined) {
-                throw new Error("where(field, value) 不允许省略 value。若需传入原始 WHERE，请使用 whereRaw");
+                throw new Error(SqlBuilderError.WHERE_VALUE_REQUIRED);
             }
             this._validateParam(value);
             const escapedCondition = this._escapeField(conditionOrField);
@@ -498,7 +535,7 @@ export class SqlBuilder {
      */
     whereRaw(sql: string, params?: SqlValue[]): this {
         if (typeof sql !== "string" || !sql.trim()) {
-            throw new Error(`whereRaw 需要非空字符串 (sql: ${String(sql)})`);
+            throw new Error(SqlBuilderError.WHERE_RAW_NEED_NON_EMPTY(sql));
         }
 
         this._where.push(sql);
@@ -514,7 +551,7 @@ export class SqlBuilder {
      */
     leftJoin(table: string, on: string): this {
         if (typeof table !== "string" || typeof on !== "string") {
-            throw new Error(`JOIN 表名和条件必须是字符串 (table: ${table}, on: ${on})`);
+            throw new Error(SqlBuilderError.JOIN_NEED_STRING(table, on));
         }
         const escapedTable = this._escapeTable(table);
         this._joins.push(`LEFT JOIN ${escapedTable} ON ${on}`);
@@ -526,7 +563,7 @@ export class SqlBuilder {
      */
     rightJoin(table: string, on: string): this {
         if (typeof table !== "string" || typeof on !== "string") {
-            throw new Error(`JOIN 表名和条件必须是字符串 (table: ${table}, on: ${on})`);
+            throw new Error(SqlBuilderError.JOIN_NEED_STRING(table, on));
         }
         const escapedTable = this._escapeTable(table);
         this._joins.push(`RIGHT JOIN ${escapedTable} ON ${on}`);
@@ -538,7 +575,7 @@ export class SqlBuilder {
      */
     innerJoin(table: string, on: string): this {
         if (typeof table !== "string" || typeof on !== "string") {
-            throw new Error(`JOIN 表名和条件必须是字符串 (table: ${table}, on: ${on})`);
+            throw new Error(SqlBuilderError.JOIN_NEED_STRING(table, on));
         }
         const escapedTable = this._escapeTable(table);
         this._joins.push(`INNER JOIN ${escapedTable} ON ${on}`);
@@ -551,12 +588,12 @@ export class SqlBuilder {
      */
     orderBy(fields: string[]): this {
         if (!Array.isArray(fields)) {
-            throw new Error('orderBy 必须是字符串数组，格式为 "字段#方向"');
+            throw new Error(SqlBuilderError.ORDER_BY_NEED_ARRAY);
         }
 
         fields.forEach((item) => {
             if (typeof item !== "string" || !item.includes("#")) {
-                throw new Error(`orderBy 字段必须是 "字段#方向" 格式的字符串（例如："name#ASC", "id#DESC"） (item: ${item})`);
+                throw new Error(SqlBuilderError.ORDER_BY_ITEM_NEED_HASH(item));
             }
 
             const [fieldName, direction] = item.split("#");
@@ -564,11 +601,11 @@ export class SqlBuilder {
             const cleanDir = direction.trim().toUpperCase() as OrderDirection;
 
             if (!cleanField) {
-                throw new Error(`orderBy 中字段名不能为空 (item: ${item})`);
+                throw new Error(SqlBuilderError.ORDER_BY_FIELD_EMPTY(item));
             }
 
             if (!["ASC", "DESC"].includes(cleanDir)) {
-                throw new Error(`ORDER BY 方向必须是 ASC 或 DESC (direction: ${cleanDir})`);
+                throw new Error(SqlBuilderError.ORDER_BY_DIR_INVALID(cleanDir));
             }
 
             const escapedField = this._escapeField(cleanField);
@@ -606,12 +643,12 @@ export class SqlBuilder {
      */
     limit(count: number, offset?: number): this {
         if (typeof count !== "number" || count < 0) {
-            throw new Error(`LIMIT 数量必须是非负数 (count: ${count})`);
+            throw new Error(SqlBuilderError.LIMIT_MUST_NON_NEGATIVE(count));
         }
         this._limit = Math.floor(count);
         if (offset !== undefined && offset !== null) {
             if (typeof offset !== "number" || offset < 0) {
-                throw new Error(`OFFSET 必须是非负数 (offset: ${offset})`);
+                throw new Error(SqlBuilderError.OFFSET_MUST_NON_NEGATIVE(offset));
             }
             this._offset = Math.floor(offset);
         }
@@ -623,7 +660,7 @@ export class SqlBuilder {
      */
     offset(count: number): this {
         if (typeof count !== "number" || count < 0) {
-            throw new Error(`OFFSET 必须是非负数 (count: ${count})`);
+            throw new Error(SqlBuilderError.OFFSET_COUNT_MUST_NON_NEGATIVE(count));
         }
         this._offset = Math.floor(count);
         return this;
@@ -638,7 +675,7 @@ export class SqlBuilder {
         sql += this._select.length > 0 ? this._select.join(", ") : "*";
 
         if (!this._from) {
-            throw new Error("FROM 表名是必需的");
+            throw new Error(SqlBuilderError.FROM_REQUIRED);
         }
         sql += ` FROM ${this._from}`;
 
@@ -677,52 +714,17 @@ export class SqlBuilder {
      */
     toInsertSql(table: string, data: InsertData): SqlQuery {
         if (!table || typeof table !== "string") {
-            throw new Error(`INSERT 需要表名 (table: ${table})`);
+            throw new Error(SqlBuilderError.INSERT_NEED_TABLE(table));
         }
 
         if (!data || typeof data !== "object") {
-            throw new Error(`INSERT 需要数据 (table: ${table}, data: ${JSON.stringify(data)})`);
+            throw new Error(SqlBuilderError.INSERT_NEED_DATA(table, data));
         }
 
         const escapedTable = this._escapeTable(table);
 
         if (Array.isArray(data)) {
-            if (data.length === 0) {
-                throw new Error(`插入数据不能为空 (table: ${table})`);
-            }
-
-            const fields = Object.keys(data[0]);
-            if (fields.length === 0) {
-                throw new Error(`插入数据必须至少有一个字段 (table: ${table})`);
-            }
-
-            // 批量 INSERT：要求每行字段集合一致，且参数不可为 undefined
-            const fieldSet = new Set(fields);
-            for (let i = 0; i < data.length; i++) {
-                const row = data[i];
-                if (!row || typeof row !== "object" || Array.isArray(row)) {
-                    throw new Error(`批量插入的每一行必须是对象 (table: ${table}, rowIndex: ${i})`);
-                }
-
-                const rowKeys = Object.keys(row);
-                if (rowKeys.length !== fields.length) {
-                    throw new Error(`批量插入每行字段必须一致 (table: ${table}, rowIndex: ${i})`);
-                }
-
-                for (const key of rowKeys) {
-                    if (!fieldSet.has(key)) {
-                        throw new Error(`批量插入每行字段必须一致 (table: ${table}, rowIndex: ${i}, extraField: ${key})`);
-                    }
-                }
-
-                for (const field of fields) {
-                    // 缺字段或 undefined 都不允许
-                    if (!(field in row)) {
-                        throw new Error(`批量插入缺少字段 (table: ${table}, rowIndex: ${i}, field: ${field})`);
-                    }
-                    this._validateParam((row as any)[field]);
-                }
-            }
+            const fields = SqlCheck.assertBatchInsertRowsConsistent(data as Array<Record<string, unknown>>, { table: table });
 
             const escapedFields = fields.map((field) => this._escapeField(field));
             const placeholders = fields.map(() => "?").join(", ");
@@ -741,7 +743,7 @@ export class SqlBuilder {
         } else {
             const fields = Object.keys(data);
             if (fields.length === 0) {
-                throw new Error(`插入数据必须至少有一个字段 (table: ${table})`);
+                throw new Error(SqlBuilderError.INSERT_NEED_AT_LEAST_ONE_FIELD(table));
             }
 
             for (const field of fields) {
@@ -762,16 +764,16 @@ export class SqlBuilder {
      */
     toUpdateSql(table: string, data: UpdateData): SqlQuery {
         if (!table || typeof table !== "string") {
-            throw new Error("UPDATE 需要表名");
+            throw new Error(SqlBuilderError.UPDATE_NEED_TABLE);
         }
 
         if (!data || typeof data !== "object" || Array.isArray(data)) {
-            throw new Error("UPDATE 需要数据对象");
+            throw new Error(SqlBuilderError.UPDATE_NEED_OBJECT);
         }
 
         const fields = Object.keys(data);
         if (fields.length === 0) {
-            throw new Error("更新数据必须至少有一个字段");
+            throw new Error(SqlBuilderError.UPDATE_NEED_AT_LEAST_ONE_FIELD);
         }
 
         const escapedTable = this._escapeTable(table);
@@ -783,7 +785,7 @@ export class SqlBuilder {
         if (this._where.length > 0) {
             sql += " WHERE " + this._where.join(" AND ");
         } else {
-            throw new Error("为安全起见，UPDATE 需要 WHERE 条件");
+            throw new Error(SqlBuilderError.UPDATE_NEED_WHERE);
         }
 
         return { sql, params };
@@ -794,7 +796,7 @@ export class SqlBuilder {
      */
     toDeleteSql(table: string): SqlQuery {
         if (!table || typeof table !== "string") {
-            throw new Error("DELETE 需要表名");
+            throw new Error(SqlBuilderError.DELETE_NEED_TABLE);
         }
 
         const escapedTable = this._escapeTable(table);
@@ -803,7 +805,7 @@ export class SqlBuilder {
         if (this._where.length > 0) {
             sql += " WHERE " + this._where.join(" AND ");
         } else {
-            throw new Error("为安全起见，DELETE 需要 WHERE 条件");
+            throw new Error(SqlBuilderError.DELETE_NEED_WHERE);
         }
 
         return { sql, params: [...this._params] };
@@ -816,7 +818,7 @@ export class SqlBuilder {
         let sql = "SELECT COUNT(*) as total";
 
         if (!this._from) {
-            throw new Error("COUNT 需要 FROM 表名");
+            throw new Error(SqlBuilderError.COUNT_NEED_FROM);
         }
         sql += ` FROM ${this._from}`;
 
@@ -833,13 +835,13 @@ export class SqlBuilder {
 
     static toDeleteInSql(options: { table: string; idField: string; ids: SqlValue[]; quoteIdent: (identifier: string) => string }): SqlQuery {
         if (typeof options.table !== "string" || !options.table.trim()) {
-            throw new Error(`toDeleteInSql 需要非空表名 (table: ${String(options.table)})`);
+            throw new Error(SqlBuilderError.TO_DELETE_IN_NEED_TABLE(options.table));
         }
         if (typeof options.idField !== "string" || !options.idField.trim()) {
-            throw new Error(`toDeleteInSql 需要非空 idField (idField: ${String(options.idField)})`);
+            throw new Error(SqlBuilderError.TO_DELETE_IN_NEED_ID_FIELD(options.idField));
         }
         if (!Array.isArray(options.ids)) {
-            throw new Error("toDeleteInSql 需要 ids 数组");
+            throw new Error(SqlBuilderError.TO_DELETE_IN_NEED_IDS);
         }
         if (options.ids.length === 0) {
             return { sql: "", params: [] };
@@ -862,19 +864,19 @@ export class SqlBuilder {
         stateGtZero?: boolean;
     }): SqlQuery {
         if (typeof options.table !== "string" || !options.table.trim()) {
-            throw new Error(`toUpdateCaseByIdSql 需要非空表名 (table: ${String(options.table)})`);
+            throw new Error(SqlBuilderError.TO_UPDATE_CASE_NEED_TABLE(options.table));
         }
         if (typeof options.idField !== "string" || !options.idField.trim()) {
-            throw new Error(`toUpdateCaseByIdSql 需要非空 idField (idField: ${String(options.idField)})`);
+            throw new Error(SqlBuilderError.TO_UPDATE_CASE_NEED_ID_FIELD(options.idField));
         }
         if (!Array.isArray(options.rows)) {
-            throw new Error("toUpdateCaseByIdSql 需要 rows 数组");
+            throw new Error(SqlBuilderError.TO_UPDATE_CASE_NEED_ROWS);
         }
         if (options.rows.length === 0) {
             return { sql: "", params: [] };
         }
         if (!Array.isArray(options.fields)) {
-            throw new Error("toUpdateCaseByIdSql 需要 fields 数组");
+            throw new Error(SqlBuilderError.TO_UPDATE_CASE_NEED_FIELDS);
         }
         if (options.fields.length === 0) {
             return { sql: "", params: [] };
