@@ -31,7 +31,15 @@ export type SortModulesByDepsOptions<T> = {
  */
 export function sortModules<T extends { fileName: string; content?: any }>(items: T[], options: SortModulesByDepsOptions<T> = {}): T[] | false {
     const moduleLabel = options.moduleLabel || "模块";
-    const getName = options.getName || ((item: T) => camelCase(item.fileName));
+    const getName =
+        options.getName ||
+        ((item: T) => {
+            const moduleName = (item as any).moduleName;
+            if (typeof moduleName === "string" && moduleName.trim() !== "") {
+                return moduleName;
+            }
+            return camelCase(item.fileName);
+        });
     const getDeps = options.getDeps || ((item: T) => (item.content ? item.content.deps : undefined));
 
     const result: T[] = [];

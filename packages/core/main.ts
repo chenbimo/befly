@@ -72,7 +72,7 @@ export class Befly {
             await checkHook(hooks);
 
             // 2. 加载插件
-            await loadPlugins(this.plugins, this.context as BeflyContext);
+            this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             // await syncTable();
@@ -82,7 +82,7 @@ export class Befly {
             await syncDev(this.context as BeflyContext);
 
             // 3. 加载钩子
-            await loadHooks(this.hooks);
+            this.hooks = await loadHooks(hooks as any, this.config!.disableHooks || []);
 
             // 4. 加载所有 API
             await loadApis(this.apis);

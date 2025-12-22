@@ -165,12 +165,6 @@ export interface BeflyOptions {
     disableHooks?: string[];
     /** 禁用的插件列表 */
     disablePlugins?: string[];
-
-    /** 是否启用组件钩子扫描（默认 false，仅加载 core hooks） */
-    enableAddonHooks?: boolean;
-
-    /** 是否启用项目钩子扫描（默认 false，仅加载 core hooks） */
-    enableAppHooks?: boolean;
     /**
      * Addon 运行时配置
      * 按 addon 名称分组，如 addons.admin.email

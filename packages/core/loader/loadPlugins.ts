@@ -5,47 +5,52 @@
 
 import type { BeflyContext } from "../types/befly.js";
 import type { Plugin } from "../types/plugin.js";
+import type { ScanFileResult } from "../utils/scanFiles.js";
 
-import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
-import { corePluginDir, appPluginDir } from "../paths.js";
-import { sortModules, scanModules } from "../utils/modules.js";
-import { scanAddons } from "../utils/scanAddons.js";
+import { sortModules } from "../utils/sortModules.js";
 
-export async function loadPlugins(plugins: Plugin[], context: BeflyContext): Promise<void> {
-    try {
-        const allPlugins: Plugin[] = [];
+export async function loadPlugins(pluginItems: ScanFileResult[], context: BeflyContext, disablePlugins: string[] = []): Promise<Plugin[]> {
+    const loadedPlugins: Plugin[] = [];
 
-        // 5. 过滤禁用的插件
-        const disablePlugins = beflyConfig.disablePlugins || [];
-        const enabledPlugins = allPlugins.filter((plugin) => plugin.name && !disablePlugins.includes(plugin.name));
-
-        if (disablePlugins.length > 0) {
-            Logger.info({ plugins: disablePlugins }, "禁用插件");
-        }
-
-        // 6. 排序与初始化
-        const sortedPlugins = sortModules(enabledPlugins);
-        if (sortedPlugins === false) {
-            Logger.error("插件依赖关系错误，请检查 after 属性");
-            process.exit(1);
-        }
-
-        for (const plugin of sortedPlugins) {
-            try {
-                plugins.push(plugin);
-
-                const pluginInstance = typeof plugin.handler === "function" ? await plugin.handler(context) : {};
-
-                // 直接挂载到 befly 下
-                (context as any)[plugin.name!] = pluginInstance;
-            } catch (error: any) {
-                Logger.error({ err: error, plugin: plugin.name }, "插件初始化失败");
-                process.exit(1);
-            }
-        }
-    } catch (error: any) {
-        Logger.error({ err: error }, "加载插件时发生错误");
-        process.exit(1);
+    if (disablePlugins.length > 0) {
+        Logger.info({ plugins: disablePlugins }, "禁用插件");
     }
+
+    const enabledPluginItems = pluginItems.filter((item: any) => {
+        const moduleName = item?.moduleName;
+        if (typeof moduleName !== "string" || moduleName.trim() === "") {
+            return false;
+        }
+        if (disablePlugins.includes(moduleName)) {
+            return false;
+        }
+        return true;
+    });
+
+    const sortedPluginItems = sortModules(enabledPluginItems, { moduleLabel: "插件" });
+    if (sortedPluginItems === false) {
+        throw new Error("插件依赖关系错误");
+    }
+
+    for (const item of sortedPluginItems) {
+        const pluginName = (item as any).moduleName as string;
+        const plugin = (item as any).content as Plugin;
+
+        try {
+            const pluginInstance = typeof plugin.handler === "function" ? await plugin.handler(context) : {};
+            (context as any)[pluginName] = pluginInstance;
+
+            loadedPlugins.push({
+                name: pluginName,
+                deps: plugin.deps,
+                handler: plugin.handler
+            });
+        } catch (error: any) {
+            Logger.error({ err: error, plugin: pluginName }, "插件初始化失败");
+            throw error;
+        }
+    }
+
+    return loadedPlugins;
 }

@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { camelCase } from "es-toolkit/string";
 import { relative, normalize, parse, join } from "pathe";
 
 import { importDefault } from "./importDefault.js";
@@ -8,9 +9,31 @@ export type ScanFileSource = "app" | "addon" | "core";
 
 export interface ScanFileResult {
     source: ScanFileSource; // 文件来源
+    sourceName: string; // 来源名称（用于日志展示）
     filePath: string; // 绝对路径
     relativePath: string; // 相对路径（无扩展名）
     fileName: string; // 文件名（无扩展名）
+
+    /** 模块名（用于 deps 依赖图 key 与运行时挂载 key） */
+    moduleName: string;
+
+    /** addon 名（仅 source='addon' 时存在，便于排查） */
+    addonName?: string;
+
+    fileBaseName: string;
+    routePrefix: string;
+    fileDir: string;
+    content: any;
+}
+
+function parseAddonNameFromPath(normalizedPath: string): string | null {
+    // 期望路径中包含：/node_modules/@befly-addon/<addonName>/...
+    const parts = normalizedPath.split("/").filter(Boolean);
+    const idx = parts.indexOf("@befly-addon");
+    if (idx < 0) return null;
+    const addonName = parts[idx + 1];
+    if (typeof addonName !== "string" || addonName.trim() === "") return null;
+    return addonName;
 }
 
 /**
@@ -53,12 +76,31 @@ export async function scanFiles(dir: string, source: ScanFileSource, pattern: st
             if (relativePath.split("/").some((part) => part.startsWith("_"))) continue;
             const content = await importDefault(normalizedFile, defaultValue);
 
+            const baseName = camelCase(fileName);
+            let addonName: string | undefined = undefined;
+            let moduleName = "";
+
+            if (source === "core") {
+                moduleName = baseName;
+            } else if (source === "app") {
+                moduleName = `app_${baseName}`;
+            } else {
+                const parsedAddonName = parseAddonNameFromPath(normalizedFile);
+                if (!parsedAddonName) {
+                    throw new Error(`scanFiles addon moduleName 解析失败：未找到 @befly-addon/<addon>/ 段落：${normalizedFile}`);
+                }
+                addonName = parsedAddonName;
+                moduleName = `addon_${camelCase(addonName)}_${baseName}`;
+            }
+
             results.push({
                 source: source,
                 sourceName: { core: "核心", addon: "组件", app: "项目" }[source],
                 filePath: normalizedFile,
                 relativePath: relativePath,
                 fileName: fileName,
+                moduleName: moduleName,
+                addonName: addonName,
                 fileBaseName: parse(normalizedFile).base,
                 routePrefix: source === "app" ? "/app/" : "/addon/",
                 fileDir: dir,
