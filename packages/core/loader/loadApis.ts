@@ -8,42 +8,8 @@ import type { ApiRoute } from "../types/api.js";
 import type { ScanFileResult } from "../utils/scanFiles.js";
 
 import { Logger } from "../lib/logger.js";
+import { processFields } from "../utils/processFields.js";
 import { makeRouteKey } from "../utils/route.js";
-
-/**
- * 预定义的默认字段
- */
-const PRESET_FIELDS: Record<string, any> = {
-    "@id": { name: "ID", type: "number", min: 1, max: null },
-    "@page": { name: "页码", type: "number", min: 1, max: 9999, default: 1 },
-    "@limit": { name: "每页数量", type: "number", min: 1, max: 100, default: 30 },
-    "@keyword": { name: "关键词", type: "string", min: 0, max: 50 },
-    "@state": { name: "状态", type: "number", regex: "^[0-2]$" }
-};
-
-/**
- * 处理字段定义：将 @ 符号引用替换为实际字段定义
- */
-function processFields(fields: Record<string, any>, apiName: string, routePath: string): Record<string, any> {
-    if (!fields || typeof fields !== "object") return fields;
-
-    const processed: Record<string, any> = {};
-    for (const [key, value] of Object.entries(fields)) {
-        if (typeof value === "string" && value.startsWith("@")) {
-            if (PRESET_FIELDS[value]) {
-                processed[key] = PRESET_FIELDS[value];
-                continue;
-            }
-
-            const validKeys = Object.keys(PRESET_FIELDS).join(", ");
-            throw new Error(`API [${apiName}] (${routePath}) 字段 [${key}] 引用了未定义的预设字段 "${value}"。可用的预设字段有: ${validKeys}`);
-        }
-
-        processed[key] = value;
-    }
-
-    return processed;
-}
 
 /**
  * 加载所有 API 路由

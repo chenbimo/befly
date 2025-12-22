@@ -5,7 +5,7 @@
 
 import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from "../types/validate.js";
 
-import { RegexAliases, getCompiledRegex } from "../utils/regex.js";
+import { RegexAliases, getCompiledRegex } from "../configs/presetRegexp.js";
 
 /**
  * 验证器类
