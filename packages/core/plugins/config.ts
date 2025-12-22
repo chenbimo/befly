@@ -6,12 +6,9 @@ import type { Plugin } from "../types/plugin.js";
 
 import { beflyConfig } from "../befly.config.js";
 
-const plugin: Plugin = {
-    name: "",
+export default {
     deps: [],
     handler: () => {
         return beflyConfig;
     }
-};
-
-export default plugin;
+} as Plugin;

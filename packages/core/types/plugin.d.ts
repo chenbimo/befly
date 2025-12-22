@@ -9,7 +9,7 @@ import type { BeflyContext } from "./befly.js";
  */
 export interface Plugin {
     /** 插件名称（运行时动态添加，由文件名生成） */
-    name: string;
+    name?: string;
 
     /** 依赖的插件列表（在这些插件之后执行） */
     deps: string[];

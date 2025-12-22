@@ -10,8 +10,8 @@ import { setCorsOptions } from "../utils/cors.js";
  * CORS 跨域处理钩子
  * 设置跨域响应头并处理 OPTIONS 预检请求
  */
-const hook: Hook = {
-    order: 2,
+export default {
+    deps: [],
     handler: async (befly, ctx) => {
         const req = ctx.req;
 
@@ -41,5 +41,4 @@ const hook: Hook = {
             return;
         }
     }
-};
-export default hook;
+} as Hook;

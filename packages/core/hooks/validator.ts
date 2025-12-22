@@ -9,8 +9,8 @@ import { ErrorResponse } from "../utils/response.js";
  * 参数验证钩子
  * 根据 API 定义的 fields 和 required 验证请求参数
  */
-const hook: Hook = {
-    order: 8,
+export default {
+    deps: ["parser"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;
 
@@ -35,5 +35,4 @@ const hook: Hook = {
             return;
         }
     }
-};
-export default hook;
+} as Hook;

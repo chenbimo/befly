@@ -18,8 +18,8 @@ const xmlParser = new XMLParser();
  * - 根据 API 定义的 fields 过滤字段
  * - rawBody: true 时跳过解析，由 handler 自行处理原始请求
  */
-const hook: Hook = {
-    order: 4,
+export default {
+    deps: ["auth"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;
 
@@ -103,5 +103,4 @@ const hook: Hook = {
             }
         }
     }
-};
-export default hook;
+} as Hook;

@@ -2,8 +2,8 @@ import type { Hook } from "../types/hook.js";
 
 import { setCtxUser } from "../lib/asyncContext.js";
 
-const hook: Hook = {
-    order: 3,
+export default {
+    deps: ["cors"],
     handler: async (befly, ctx) => {
         const authHeader = ctx.req.headers.get("authorization");
 
@@ -22,5 +22,4 @@ const hook: Hook = {
             ctx.user = {};
         }
     }
-};
-export default hook;
+} as Hook;

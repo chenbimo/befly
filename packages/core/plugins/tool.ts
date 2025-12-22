@@ -113,8 +113,7 @@ export function Raw(ctx: RequestContext, data: Record<string, any> | string, opt
     });
 }
 
-const plugin: Plugin = {
-    name: "",
+export default {
     deps: [],
     handler: () => {
         return {
@@ -123,6 +122,4 @@ const plugin: Plugin = {
             Raw: Raw
         };
     }
-};
-
-export default plugin;
+} as Plugin;

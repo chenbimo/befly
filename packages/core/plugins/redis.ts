@@ -13,8 +13,7 @@ import { RedisHelper } from "../lib/redisHelper.js";
 /**
  * Redis 插件
  */
-const redisPlugin: Plugin = {
-    name: "",
+export default {
     deps: ["logger"],
     async handler(): Promise<RedisHelper | Record<string, never>> {
         const redisConfig = beflyConfig.redis || {};
@@ -29,6 +28,4 @@ const redisPlugin: Plugin = {
             throw error;
         }
     }
-};
-
-export default redisPlugin;
+} as Plugin;

@@ -7,12 +7,9 @@ import type { Plugin } from "../types/plugin.js";
 import { beflyConfig } from "../befly.config.js";
 import { Jwt } from "../lib/jwt.js";
 
-const jwtPlugin: Plugin = {
-    name: "",
+export default {
     deps: [],
     handler: () => {
         return new Jwt(beflyConfig.auth);
     }
-};
-
-export default jwtPlugin;
+} as Plugin;

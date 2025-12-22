@@ -226,8 +226,8 @@ function hitMemoryBucket(key: string, windowSeconds: number): number {
  * - 通过 beflyConfig.rateLimit 开启/配置
  * - 默认启用：可通过配置禁用或调整阈值
  */
-const hook: Hook = {
-    order: 7,
+export default {
+    deps: ["permission"],
     handler: async (befly, ctx) => {
         const config = beflyConfig.rateLimit as RateLimitConfig | undefined;
 
@@ -271,6 +271,4 @@ const hook: Hook = {
             return;
         }
     }
-};
-
-export default hook;
+} as Hook;

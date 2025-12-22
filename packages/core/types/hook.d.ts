@@ -18,17 +18,8 @@ export interface Hook {
     name?: string;
 
     /** 依赖的钩子列表（在这些钩子之后执行） */
-    after?: string[];
-
-    /** 执行顺序（数字越小越先执行） */
-    order?: number;
+    deps: string[];
 
     /** 钩子处理函数 */
     handler: HookHandler;
-
-    /** 钩子配置 */
-    config?: Record<string, any>;
-
-    /** 钩子描述 */
-    description?: string;
 }

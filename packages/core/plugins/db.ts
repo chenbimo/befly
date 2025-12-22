@@ -13,8 +13,7 @@ import { Logger } from "../lib/logger.js";
 /**
  * 数据库插件
  */
-const dbPlugin: Plugin = {
-    name: "",
+export default {
     deps: ["logger"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
         let sql: any = null;
@@ -41,6 +40,4 @@ const dbPlugin: Plugin = {
             throw error;
         }
     }
-};
-
-export default dbPlugin;
+} as Plugin;

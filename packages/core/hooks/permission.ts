@@ -13,8 +13,8 @@ import { ErrorResponse } from "../utils/response.js";
  * - 开发者角色（dev）：最高权限，直接通过
  * - 其他角色：检查 Redis 中的角色权限集合
  */
-const hook: Hook = {
-    order: 6,
+export default {
+    deps: ["validator"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;
 
@@ -65,5 +65,4 @@ const hook: Hook = {
             return;
         }
     }
-};
-export default hook;
+} as Hook;

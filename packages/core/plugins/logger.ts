@@ -11,8 +11,7 @@ import { Logger } from "../lib/logger.js";
 /**
  * 日志插件
  */
-const loggerPlugin: Plugin = {
-    name: "",
+export default {
     deps: [],
     async handler(): Promise<typeof Logger> {
         // 配置 Logger
@@ -21,6 +20,4 @@ const loggerPlugin: Plugin = {
         }
         return Logger;
     }
-};
-
-export default loggerPlugin;
+} as Plugin;

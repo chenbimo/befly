@@ -9,10 +9,6 @@ import type { Hook } from "../types/hook.js";
 
 import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
-import { coreHookDir, appHookDir } from "../paths.js";
-import { scanModules } from "../utils/modules.js";
-// 相对导入
-import { scanAddons } from "../utils/scanAddons.js";
 
 export async function loadHooks(hooks: Hook[]): Promise<void> {
     try {
@@ -26,12 +22,54 @@ export async function loadHooks(hooks: Hook[]): Promise<void> {
             Logger.info({ hooks: disableHooks }, "禁用钩子");
         }
 
-        // 5. 按 order 排序
-        const sortedHooks = enabledHooks.sort((a, b) => {
-            const orderA = a.order ?? 999999;
-            const orderB = b.order ?? 999999;
-            return orderA - orderB;
-        });
+        // 5. 按 deps 拓扑排序
+        const sortedHooks = (() => {
+            const result: Hook[] = [];
+            const visited = new Set<string>();
+            const visiting = new Set<string>();
+
+            const hookMap: Record<string, Hook> = Object.fromEntries(enabledHooks.map((h) => [h.name, h]));
+            let isPass = true;
+
+            // 检查依赖是否存在
+            for (const hook of enabledHooks) {
+                for (const dep of hook.deps) {
+                    if (!hookMap[dep]) {
+                        Logger.error({ hook: hook.name, dependency: dep }, "依赖的钩子未找到");
+                        isPass = false;
+                    }
+                }
+            }
+
+            if (!isPass) return false as const;
+
+            const visit = (name: string): void => {
+                if (visited.has(name)) return;
+                if (visiting.has(name)) {
+                    Logger.error({ hook: name }, "钩子循环依赖");
+                    isPass = false;
+                    return;
+                }
+
+                const hook = hookMap[name];
+                if (!hook) return;
+
+                visiting.add(name);
+                hook.deps.forEach(visit);
+                visiting.delete(name);
+                visited.add(name);
+                result.push(hook);
+            };
+
+            enabledHooks.forEach((h) => visit(h.name));
+
+            return isPass ? result : (false as const);
+        })();
+
+        if (sortedHooks === false) {
+            Logger.error("钩子依赖关系错误，请检查 deps 属性");
+            process.exit(1);
+        }
 
         hooks.push(...sortedHooks);
     } catch (error: any) {

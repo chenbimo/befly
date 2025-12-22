@@ -19,11 +19,7 @@ const defaultConfig: EmailConfig = {
     fromName: "Befly System"
 };
 
-/**
- * 邮件插件
- */
-const emailPlugin: Plugin = {
-    name: "",
+export default {
     deps: ["db", "logger", "config"],
     async handler(befly: BeflyContext): Promise<EmailHelper> {
         // 从 befly.config.addons.admin.email 获取配置
@@ -35,6 +31,4 @@ const emailPlugin: Plugin = {
 
         return new EmailHelper(befly, emailConfig);
     }
-};
-
-export default emailPlugin;
+} as Plugin;
