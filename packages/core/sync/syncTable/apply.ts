@@ -8,13 +8,16 @@
 
 import type { FieldChange, TablePlan, ColumnInfo } from "../../types/sync.js";
 import type { FieldDefinition } from "../../types/validate.js";
-import type { SQL } from "bun";
 
 import { Logger } from "../../lib/logger.js";
 import { isMySQL, isPG, isSQLite, getTypeMapping } from "./constants.js";
 import { executeDDLSafely, buildIndexSQL } from "./ddl.js";
 import { rebuildSqliteTable } from "./sqlite.js";
 import { isStringOrArrayType, resolveDefaultValue } from "./types.js";
+
+type SqlExecutor = {
+    unsafe(sqlStr: string, params?: any[]): Promise<any>;
+};
 
 /**
  * 构建 ALTER TABLE SQL 语句
@@ -29,7 +32,9 @@ import { isStringOrArrayType, resolveDefaultValue } from "./types.js";
  */
 function buildAlterTableSQL(tableName: string, clauses: string[]): string {
     if (isMySQL()) {
-        return `ALTER TABLE \`${tableName}\` ${clauses.join(", ")}, ALGORITHM=INSTANT, LOCK=NONE`;
+        // MySQL: 建议将 ALGORITHM/LOCK 放在表名后，避免部分版本/驱动对“末尾附加选项”解析差异
+        // 语法形态：ALTER TABLE `t` ALGORITHM=INSTANT, LOCK=NONE, <clauses...>
+        return `ALTER TABLE \`${tableName}\` ALGORITHM=INSTANT, LOCK=NONE, ${clauses.join(", ")}`;
     }
     return `ALTER TABLE "${tableName}" ${clauses.join(", ")}`;
 }
@@ -125,25 +130,25 @@ export function compareFieldDefinition(existingColumn: ColumnInfo, fieldDef: Fie
  * @param fields - 字段定义对象
  * @param plan - 表结构变更计划
  */
-export async function applyTablePlan(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan): Promise<void> {
+export async function applyTablePlan(db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan): Promise<void> {
     if (!plan || !plan.changed) return;
 
     // SQLite: 仅支持部分 ALTER；需要时走重建
     if (isSQLite()) {
         if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
-            await rebuildSqliteTable(sql, tableName, fields);
+            await rebuildSqliteTable(db, tableName, fields);
         } else {
             for (const c of plan.addClauses) {
                 const stmt = `ALTER TABLE "${tableName}" ${c}`;
-                await sql.unsafe(stmt);
+                await db.unsafe(stmt);
             }
         }
     } else {
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
             const stmt = buildAlterTableSQL(tableName, clauses);
-            if (isMySQL()) await executeDDLSafely(sql, stmt);
-            else await sql.unsafe(stmt);
+            if (isMySQL()) await executeDDLSafely(db, stmt);
+            else await db.unsafe(stmt);
         }
     }
 
@@ -153,8 +158,8 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
         } else {
             const stmt = buildAlterTableSQL(tableName, plan.defaultClauses);
-            if (isMySQL()) await executeDDLSafely(sql, stmt);
-            else await sql.unsafe(stmt);
+            if (isMySQL()) await executeDDLSafely(db, stmt);
+            else await db.unsafe(stmt);
         }
     }
 
@@ -162,7 +167,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     for (const act of plan.indexActions) {
         const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
         try {
-            await sql.unsafe(stmt);
+            await db.unsafe(stmt);
             if (act.action === "create") {
                 Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
             } else {
@@ -177,7 +182,7 @@ export async function applyTablePlan(sql: SQL, tableName: string, fields: Record
     // PG 列注释
     if (isPG() && plan.commentActions && plan.commentActions.length > 0) {
         for (const stmt of plan.commentActions) {
-            await sql.unsafe(stmt);
+            await db.unsafe(stmt);
         }
     }
 }

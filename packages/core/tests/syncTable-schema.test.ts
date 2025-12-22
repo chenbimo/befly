@@ -30,38 +30,31 @@ beforeAll(async () => {
 describe("tableExists", () => {
     test("sql 客户端未初始化时抛出错误", async () => {
         try {
-            await tableExists(null, "user");
+            await tableExists(null, "user", "test_db");
             expect(true).toBe(false); // 不应该到这里
         } catch (error: any) {
-            expect(error.message).toBe("SQL 客户端未初始化");
+            expect(error.message).toBe("SQL 执行器未初始化");
         }
     });
 
     test("传入有效 sql 客户端时正常执行", async () => {
         // 创建模拟 SQL 客户端
-        const mockSql = Object.assign(
-            async function (_strings: TemplateStringsArray, ..._values: any[]) {
-                // 模拟 MySQL 查询返回
+        const mockSql = {
+            unsafe: async (_query: string, _params?: any[]) => {
                 return [{ count: 1 }];
-            },
-            {
-                unsafe: async (_query: string) => []
             }
-        );
+        };
 
         const result = await tableExists(mockSql, "user", "test_db");
         expect(result).toBe(true);
     });
 
     test("表不存在时返回 false", async () => {
-        const mockSql = Object.assign(
-            async function (_strings: TemplateStringsArray, ..._values: any[]) {
+        const mockSql = {
+            unsafe: async (_query: string, _params?: any[]) => {
                 return [{ count: 0 }];
-            },
-            {
-                unsafe: async (_query: string) => []
             }
-        );
+        };
 
         const result = await tableExists(mockSql, "nonexistent", "test_db");
         expect(result).toBe(false);
@@ -70,8 +63,8 @@ describe("tableExists", () => {
 
 describe("getTableColumns", () => {
     test("返回正确的列信息结构", async () => {
-        const mockSql = Object.assign(
-            async function (_strings: TemplateStringsArray, ..._values: any[]) {
+        const mockSql = {
+            unsafe: async (_query: string, _params?: any[]) => {
                 // 模拟 MySQL information_schema 返回
                 return [
                     {
@@ -102,11 +95,8 @@ describe("getTableColumns", () => {
                         COLUMN_TYPE: "bigint"
                     }
                 ];
-            },
-            {
-                unsafe: async (_query: string) => []
             }
-        );
+        };
 
         const columns = await getTableColumns(mockSql, "user", "test_db");
 
@@ -129,19 +119,16 @@ describe("getTableColumns", () => {
 
 describe("getTableIndexes", () => {
     test("返回正确的索引信息结构", async () => {
-        const mockSql = Object.assign(
-            async function (_strings: TemplateStringsArray, ..._values: any[]) {
+        const mockSql = {
+            unsafe: async (_query: string, _params?: any[]) => {
                 // 模拟 MySQL information_schema.STATISTICS 返回
                 // 注意：PRIMARY 索引被排除
                 return [
                     { INDEX_NAME: "idx_created_at", COLUMN_NAME: "created_at" },
                     { INDEX_NAME: "idx_user_name", COLUMN_NAME: "user_name" }
                 ];
-            },
-            {
-                unsafe: async (_query: string) => []
             }
-        );
+        };
 
         const indexes = await getTableIndexes(mockSql, "user", "test_db");
 
@@ -156,18 +143,15 @@ describe("getTableIndexes", () => {
     });
 
     test("复合索引包含多个列", async () => {
-        const mockSql = Object.assign(
-            async function (_strings: TemplateStringsArray, ..._values: any[]) {
+        const mockSql = {
+            unsafe: async (_query: string, _params?: any[]) => {
                 // 模拟复合索引，同一索引名包含多个列
                 return [
                     { INDEX_NAME: "idx_composite", COLUMN_NAME: "user_id" },
                     { INDEX_NAME: "idx_composite", COLUMN_NAME: "created_at" }
                 ];
-            },
-            {
-                unsafe: async (_query: string) => []
             }
-        );
+        };
 
         const indexes = await getTableIndexes(mockSql, "user", "test_db");
 

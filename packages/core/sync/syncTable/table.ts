@@ -9,7 +9,6 @@
 
 import type { TablePlan } from "../../types/sync.js";
 import type { FieldDefinition } from "../../types/validate.js";
-import type { SQL } from "bun";
 
 import { snakeCase } from "es-toolkit/string";
 
@@ -20,6 +19,10 @@ import { generateDDLClause, getSystemColumnDef, isCompatibleTypeChange } from ".
 import { logFieldChange } from "./helpers.js";
 import { getTableColumns, getTableIndexes } from "./schema.js";
 import { generateDefaultSql, isStringOrArrayType, resolveDefaultValue } from "./types.js";
+
+type SqlExecutor = {
+    unsafe(sqlStr: string, params?: any[]): Promise<any>;
+};
 
 /**
  * 同步表结构（对比和应用变更）
@@ -35,9 +38,9 @@ import { generateDefaultSql, isStringOrArrayType, resolveDefaultValue } from "./
  * @param fields - 字段定义
  * @param dbName - 数据库名称
  */
-export async function modifyTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan> {
-    const existingColumns = await getTableColumns(sql, tableName, dbName || "");
-    const existingIndexes = await getTableIndexes(sql, tableName, dbName || "");
+export async function modifyTable(db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan> {
+    const existingColumns = await getTableColumns(db, tableName, dbName || "");
+    const existingIndexes = await getTableIndexes(db, tableName, dbName || "");
     let changed = false;
 
     const addClauses: string[] = [];
@@ -195,7 +198,7 @@ export async function modifyTable(sql: SQL, tableName: string, fields: Record<st
 
     // 将计划应用
     if (plan.changed) {
-        await applyTablePlan(sql, tableName, fields, plan);
+        await applyTablePlan(db, tableName, fields, plan);
     }
 
     return plan;

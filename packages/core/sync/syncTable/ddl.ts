@@ -9,13 +9,16 @@
  */
 
 import type { FieldDefinition } from "../../types/validate.js";
-import type { SQL } from "bun";
 
 import { snakeCase } from "es-toolkit/string";
 
 import { isMySQL, isPG } from "./constants.js";
 import { quoteIdentifier, escapeComment } from "./helpers.js";
 import { resolveDefaultValue, generateDefaultSql, getSqlType } from "./types.js";
+
+type SqlExecutor = {
+    unsafe(sqlStr: string, params?: any[]): Promise<any>;
+};
 
 /**
  * 构建索引操作 SQL（统一使用在线策略）
@@ -32,16 +35,14 @@ export function buildIndexSQL(tableName: string, indexName: string, fieldName: s
     const fieldQuoted = quoteIdentifier(fieldName);
 
     if (isMySQL()) {
-        const parts = [];
+        const parts: string[] = [];
         if (action === "create") {
             parts.push(`ADD INDEX ${indexQuoted} (${fieldQuoted})`);
         } else {
             parts.push(`DROP INDEX ${indexQuoted}`);
         }
-        // 始终使用在线算法
-        parts.push("ALGORITHM=INPLACE");
-        parts.push("LOCK=NONE");
-        return `ALTER TABLE ${tableQuoted} ${parts.join(", ")}`;
+        // 始终使用在线算法（放在表名后，兼容性更好）
+        return `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${parts.join(", ")}`;
     }
 
     if (isPG()) {
@@ -175,24 +176,32 @@ export function generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, i
  * @returns 是否执行成功
  * @throws {Error} 如果所有尝试都失败
  */
-export async function executeDDLSafely(sql: SQL, stmt: string): Promise<boolean> {
+export async function executeDDLSafely(db: SqlExecutor, stmt: string): Promise<boolean> {
     try {
-        await sql.unsafe(stmt);
+        await db.unsafe(stmt);
         return true;
     } catch (error: any) {
         // MySQL 专用降级路径
         if (stmt.includes("ALGORITHM=INSTANT")) {
             const inplaceSql = stmt.replace(/ALGORITHM=INSTANT/g, "ALGORITHM=INPLACE");
             try {
-                await sql.unsafe(inplaceSql);
+                await db.unsafe(inplaceSql);
                 return true;
             } catch {
                 // 最后尝试传统DDL：移除 ALGORITHM/LOCK 附加子句后执行
-                const traditionSql = stmt
-                    .replace(/,\s*ALGORITHM=INPLACE/g, "")
-                    .replace(/,\s*ALGORITHM=INSTANT/g, "")
-                    .replace(/,\s*LOCK=(NONE|SHARED|EXCLUSIVE)/g, "");
-                await sql.unsafe(traditionSql);
+                // 需要兼容两种写法：
+                // 1) ALTER TABLE t <clauses...>, ALGORITHM=..., LOCK=...
+                // 2) ALTER TABLE t ALGORITHM=..., LOCK=..., <clauses...>
+                let traditionSql = stmt;
+                traditionSql = traditionSql.replace(/\bALGORITHM\s*=\s*(INPLACE|INSTANT)\b\s*,?\s*/g, "").replace(/\bLOCK\s*=\s*(NONE|SHARED|EXCLUSIVE)\b\s*,?\s*/g, "");
+
+                // 清理多余逗号与尾逗号
+                traditionSql = traditionSql
+                    .replace(/,\s*,/g, ", ")
+                    .replace(/,\s*$/g, "")
+                    .replace(/\s{2,}/g, " ")
+                    .trim();
+                await db.unsafe(traditionSql);
                 return true;
             }
         } else {

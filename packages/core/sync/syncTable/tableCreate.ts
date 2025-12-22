@@ -9,7 +9,6 @@
  * 注意：此模块从 table.ts 中提取，用于解除循环依赖
  */
 import type { FieldDefinition } from "../../types/validate.js";
-import type { SQL } from "bun";
 
 import { snakeCase } from "es-toolkit/string";
 
@@ -18,6 +17,10 @@ import { buildSystemColumnDefs, buildBusinessColumnDefs, buildIndexSQL } from ".
 import { quoteIdentifier } from "./helpers.js";
 import { getTableIndexes } from "./schema.js";
 
+type SqlExecutor = {
+    unsafe(sqlStr: string, params?: any[]): Promise<any>;
+};
+
 /**
  * 为 PostgreSQL 表添加列注释（使用字段的 name 作为注释）
  *
@@ -25,7 +28,7 @@ import { getTableIndexes } from "./schema.js";
  * @param tableName - 表名
  * @param fields - 字段定义对象
  */
-async function addPostgresComments(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>): Promise<void> {
+async function addPostgresComments(db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>): Promise<void> {
     // 系统字段注释
     const systemComments = [
         ["id", "主键ID"],
@@ -38,7 +41,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     for (const [name, comment] of systemComments) {
         const escaped = String(comment).replace(/'/g, "''");
         const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${escaped}'`;
-        await sql.unsafe(stmt);
+        await db.unsafe(stmt);
     }
 
     // 业务字段注释（使用 fieldDef.name 作为数据库列注释）
@@ -50,7 +53,7 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
         const escaped = fieldName.replace(/'/g, "''");
         const valueSql = fieldName ? `'${escaped}'` : "NULL";
         const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS ${valueSql}`;
-        await sql.unsafe(stmt);
+        await db.unsafe(stmt);
     }
 }
 
@@ -63,13 +66,13 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
  * @param systemIndexFields - 系统字段索引列表
  * @param dbName - 数据库名称（用于检查索引是否存在）
  */
-async function createTableIndexes(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[], dbName?: string): Promise<void> {
+async function createTableIndexes(db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[], dbName?: string): Promise<void> {
     const indexTasks: Promise<void>[] = [];
 
     // 获取现有索引（MySQL 不支持 IF NOT EXISTS，需要先检查）
     let existingIndexes: Record<string, string[]> = {};
     if (isMySQL()) {
-        existingIndexes = await getTableIndexes(sql, tableName, dbName || "");
+        existingIndexes = await getTableIndexes(db, tableName, dbName || "");
     }
 
     // 系统字段索引
@@ -80,7 +83,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
             continue;
         }
         const stmt = buildIndexSQL(tableName, indexName, sysField, "create");
-        indexTasks.push(sql.unsafe(stmt));
+        indexTasks.push(db.unsafe(stmt));
     }
 
     // 业务字段索引
@@ -95,7 +98,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
                 continue;
             }
             const stmt = buildIndexSQL(tableName, indexName, dbFieldName, "create");
-            indexTasks.push(sql.unsafe(stmt));
+            indexTasks.push(db.unsafe(stmt));
         }
     }
 
@@ -114,7 +117,7 @@ async function createTableIndexes(sql: SQL, tableName: string, fields: Record<st
  * @param systemIndexFields - 系统字段索引列表（可选，默认使用 ['created_at', 'updated_at', 'state']）
  * @param dbName - 数据库名称（用于检查索引是否存在）
  */
-export async function createTable(sql: SQL, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[] = ["created_at", "updated_at", "state"], dbName?: string): Promise<void> {
+export async function createTable(db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: string[] = ["created_at", "updated_at", "state"], dbName?: string): Promise<void> {
     // 构建列定义
     const colDefs = [...buildSystemColumnDefs(), ...buildBusinessColumnDefs(fields)];
 
@@ -130,11 +133,11 @@ export async function createTable(sql: SQL, tableName: string, fields: Record<st
             ${cols}
         )`;
 
-    await sql.unsafe(createSQL);
+    await db.unsafe(createSQL);
 
     // PostgreSQL: 添加列注释（使用字段 name 作为数据库列注释）
-    if (isPG()) await addPostgresComments(sql, tableName, fields);
+    if (isPG()) await addPostgresComments(db, tableName, fields);
 
     // 创建索引
-    await createTableIndexes(sql, tableName, fields, systemIndexFields, dbName);
+    await createTableIndexes(db, tableName, fields, systemIndexFields, dbName);
 }

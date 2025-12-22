@@ -8,9 +8,12 @@
  */
 
 import type { ColumnInfo, IndexInfo } from "../../types/sync.js";
-import type { SQL } from "bun";
 
 import { isMySQL, isPG, isSQLite } from "./constants.js";
+
+type SqlExecutor = {
+    unsafe(sqlStr: string, params?: any[]): Promise<any>;
+};
 
 /**
  * 判断表是否存在（返回布尔值）
@@ -20,22 +23,22 @@ import { isMySQL, isPG, isSQLite } from "./constants.js";
  * @param dbName - 数据库名称
  * @returns 表是否存在
  */
-export async function tableExists(sql: SQL, tableName: string, dbName: string): Promise<boolean> {
-    if (!sql) throw new Error("SQL 客户端未初始化");
+export async function tableExists(db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
+    if (!db) throw new Error("SQL 执行器未初始化");
 
     try {
         if (isMySQL()) {
-            const res = await sql`SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ${dbName} AND TABLE_NAME = ${tableName}`;
+            const res = await db.unsafe("SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [dbName, tableName]);
             return (res[0]?.count || 0) > 0;
         }
 
         if (isPG()) {
-            const res = await sql`SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ${tableName}`;
+            const res = await db.unsafe("SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ?", [tableName]);
             return (res[0]?.count || 0) > 0;
         }
 
         if (isSQLite()) {
-            const res = await sql`SELECT name FROM sqlite_master WHERE type='table' AND name = ${tableName}`;
+            const res = await db.unsafe("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", [tableName]);
             return res.length > 0;
         }
 
@@ -61,17 +64,12 @@ export async function tableExists(sql: SQL, tableName: string, dbName: string): 
  * @param dbName - 数据库名称
  * @returns 列信息对象，键为列名，值为列详情
  */
-export async function getTableColumns(sql: SQL, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
+export async function getTableColumns(db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
     const columns: { [key: string]: ColumnInfo } = {};
 
     try {
         if (isMySQL()) {
-            const result = await sql`
-                SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE
-                FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = ${dbName} AND TABLE_NAME = ${tableName}
-                ORDER BY ORDINAL_POSITION
-            `;
+            const result = await db.unsafe("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", [dbName, tableName]);
             for (const row of result) {
                 // MySQL 的 COLUMN_DEFAULT 已经是解析后的实际值，无需处理：
                 // - 空字符串 DEFAULT '': 返回 '' (空字符串)
@@ -92,20 +90,12 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName: strin
                 };
             }
         } else if (isPG()) {
-            const result = await sql`
-                SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
-                FROM information_schema.columns
-                WHERE table_schema = 'public' AND table_name = ${tableName}
-                ORDER BY ordinal_position
-            `;
+            const result = await db.unsafe("SELECT column_name, data_type, character_maximum_length, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? ORDER BY ordinal_position", [tableName]);
             // 获取列注释
-            const comments = await sql`
-                SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment
-                FROM pg_class c
-                JOIN pg_attribute a ON a.attrelid = c.oid
-                JOIN pg_namespace n ON n.oid = c.relnamespace
-                WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relname = ${tableName} AND a.attnum > 0
-            `;
+            const comments = await db.unsafe(
+                "SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relname = ? AND a.attnum > 0",
+                [tableName]
+            );
             const commentMap: { [key: string]: string } = {};
             for (const r of comments) commentMap[r.column_name] = r.column_comment;
 
@@ -121,7 +111,7 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName: strin
                 };
             }
         } else if (isSQLite()) {
-            const result = await sql.unsafe(`PRAGMA table_info(${tableName})`);
+            const result = await db.unsafe(`PRAGMA table_info("${tableName}")`);
             for (const row of result) {
                 let baseType = String(row.type || "").toUpperCase();
                 let max = null;
@@ -156,29 +146,18 @@ export async function getTableColumns(sql: SQL, tableName: string, dbName: strin
  * @param dbName - 数据库名称
  * @returns 索引信息对象，键为索引名，值为列名数组
  */
-export async function getTableIndexes(sql: SQL, tableName: string, dbName: string): Promise<IndexInfo> {
+export async function getTableIndexes(db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
     const indexes: IndexInfo = {};
 
     try {
         if (isMySQL()) {
-            const result = await sql`
-                SELECT INDEX_NAME, COLUMN_NAME
-                FROM information_schema.STATISTICS
-                WHERE TABLE_SCHEMA = ${dbName}
-                    AND TABLE_NAME = ${tableName}
-                    AND INDEX_NAME != 'PRIMARY'
-                ORDER BY INDEX_NAME
-            `;
+            const result = await db.unsafe("SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME", [dbName, tableName]);
             for (const row of result) {
                 if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
                 indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
             }
         } else if (isPG()) {
-            const result = await sql`
-                SELECT indexname, indexdef
-                FROM pg_indexes
-                WHERE schemaname = 'public' AND tablename = ${tableName}
-            `;
+            const result = await db.unsafe("SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ?", [tableName]);
             for (const row of result) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {
@@ -187,9 +166,9 @@ export async function getTableIndexes(sql: SQL, tableName: string, dbName: strin
                 }
             }
         } else if (isSQLite()) {
-            const list = await sql.unsafe(`PRAGMA index_list(${tableName})`);
+            const list = await db.unsafe(`PRAGMA index_list("${tableName}")`);
             for (const idx of list) {
-                const info = await sql.unsafe(`PRAGMA index_info(${idx.name})`);
+                const info = await db.unsafe(`PRAGMA index_info("${idx.name}")`);
                 const cols = info.map((r: any) => r.name);
                 if (cols.length === 1) indexes[idx.name] = cols;
             }

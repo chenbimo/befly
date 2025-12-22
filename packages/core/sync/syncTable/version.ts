@@ -5,9 +5,11 @@
  * - 数据库版本验证（MySQL/PostgreSQL/SQLite）
  */
 
-import type { SQL } from "bun";
-
 import { DB_VERSION_REQUIREMENTS, isMySQL, isPG, isSQLite } from "./constants.js";
+
+type SqlExecutor = {
+    unsafe(sqlStr: string, params?: any[]): Promise<any>;
+};
 
 /**
  * 数据库版本检查（按方言）
@@ -20,11 +22,11 @@ import { DB_VERSION_REQUIREMENTS, isMySQL, isPG, isSQLite } from "./constants.js
  * @param sql - SQL 客户端实例
  * @throws {Error} 如果数据库版本不符合要求或无法获取版本信息
  */
-export async function ensureDbVersion(sql: SQL): Promise<void> {
-    if (!sql) throw new Error("SQL 客户端未初始化");
+export async function ensureDbVersion(db: SqlExecutor): Promise<void> {
+    if (!db) throw new Error("SQL 执行器未初始化");
 
     if (isMySQL()) {
-        const r = await sql`SELECT VERSION() AS version`;
+        const r = await db.unsafe("SELECT VERSION() AS version");
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error("无法获取 MySQL 版本信息");
         }
@@ -37,7 +39,7 @@ export async function ensureDbVersion(sql: SQL): Promise<void> {
     }
 
     if (isPG()) {
-        const r = await sql`SELECT version() AS version`;
+        const r = await db.unsafe("SELECT version() AS version");
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error("无法获取 PostgreSQL 版本信息");
         }
@@ -51,7 +53,7 @@ export async function ensureDbVersion(sql: SQL): Promise<void> {
     }
 
     if (isSQLite()) {
-        const r = await sql`SELECT sqlite_version() AS version`;
+        const r = await db.unsafe("SELECT sqlite_version() AS version");
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error("无法获取 SQLite 版本信息");
         }

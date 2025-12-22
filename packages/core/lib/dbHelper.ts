@@ -222,6 +222,16 @@ export class DbHelper {
     }
 
     /**
+     * 执行原生 SQL（内部工具/同步脚本专用）
+     *
+     * - 复用当前 DbHelper 持有的连接/事务
+     * - 统一走 executeWithConn，保持参数校验与错误行为一致
+     */
+    public async unsafe(sqlStr: string, params?: any[]): Promise<any> {
+        return await this.executeWithConn(sqlStr, params);
+    }
+
+    /**
      * 检查表是否存在
      * @param tableName - 表名（支持小驼峰，会自动转换为下划线）
      * @returns 表是否存在
