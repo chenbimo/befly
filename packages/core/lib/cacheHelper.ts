@@ -3,7 +3,6 @@
  * 负责在服务器启动时缓存接口、菜单和角色权限到 Redis
  */
 
-import { makeRouteKey } from "../utils/route.js";
 import { CacheKeys } from "./cacheKeys.js";
 import { Logger } from "./logger.js";
 
@@ -119,14 +118,14 @@ export class CacheHelper {
         for (const chunk of chunks) {
             const apis = await this.db.getAll({
                 table: "addon_admin_api",
-                fields: ["id", "method", "path"],
+                fields: ["id", "path"],
                 where: {
                     id$in: chunk
                 }
             });
 
             for (const api of apis.lists) {
-                apiMap.set(api.id, makeRouteKey(api.method, api.path));
+                apiMap.set(api.id, api.path);
             }
         }
 

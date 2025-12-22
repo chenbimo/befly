@@ -45,7 +45,6 @@ export interface SyncApiOptions {
 export interface ApiInfo {
     name: string;
     path: string;
-    method: string;
     description: string;
     addonName: string;
     addonTitle: string;

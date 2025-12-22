@@ -5,8 +5,8 @@ import { syncApi } from "../sync/syncApi.js";
 describe("syncApi - delete obsolete records", () => {
     test("应删除不在配置中的接口记录", async () => {
         const existingRecords = [
-            { id: 1, path: "/api/app/testSyncKeep", method: "POST", state: 0 },
-            { id: 2, path: "/api/app/testSyncRemove", method: "POST", state: 0 }
+            { id: 1, path: "POST/api/app/testSyncKeep", state: 0 },
+            { id: 2, path: "POST/api/app/testSyncRemove", state: 0 }
         ];
 
         const existingByPath = new Map<string, any>();
@@ -20,9 +20,6 @@ describe("syncApi - delete obsolete records", () => {
         };
 
         const dbHelper = {
-            getOne: async (options: any) => {
-                return existingByPath.get(options.where.path) ?? null;
-            },
             updData: async () => {},
             insData: async () => 999,
             getAll: async (options: any) => {
@@ -60,7 +57,7 @@ describe("syncApi - delete obsolete records", () => {
 
         await syncApi(apiItems, ctx);
 
-        expect(calls.getAllArgs?.fields).toEqual(["id", "path", "method", "state"]);
+        expect(calls.getAllArgs?.fields).toEqual(["id", "path", "name", "description", "addonName", "addonTitle", "state"]);
 
         expect(calls.delForce).toHaveLength(1);
         expect(calls.delForce[0].where.id).toBe(2);

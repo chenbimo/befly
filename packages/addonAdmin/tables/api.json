@@ -13,15 +13,6 @@
         "max": 200,
         "index": true
     },
-    "method": {
-        "name": "请求方法",
-        "type": "string",
-        "min": 3,
-        "max": 10,
-        "default": "POST",
-        "index": true,
-        "regexp": "^(GET|POST|PUT|DELETE|PATCH)$"
-    },
     "description": {
         "name": "接口描述",
         "type": "string",

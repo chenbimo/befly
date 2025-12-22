@@ -69,8 +69,8 @@ describe("CacheHelper", () => {
 
         it("正常缓存接口列表", async () => {
             const apis = [
-                { id: 1, name: "登录", path: "/api/login", method: "POST" },
-                { id: 2, name: "用户列表", path: "/api/user/list", method: "GET" }
+                { id: 1, name: "登录", path: "POST/api/login" },
+                { id: 2, name: "用户列表", path: "GET/api/user/list" }
             ];
             mockDb.getAll = mock(() => Promise.resolve({ lists: apis, total: apis.length }));
 
@@ -138,9 +138,9 @@ describe("CacheHelper", () => {
                 { id: 2, code: "user", apis: [1] }
             ];
             const apis = [
-                { id: 1, path: "/api/login", method: "POST" },
-                { id: 2, path: "/api/user/list", method: "GET" },
-                { id: 3, path: "/api/user/del", method: "POST" }
+                { id: 1, path: "POST/api/login" },
+                { id: 2, path: "GET/api/user/list" },
+                { id: 3, path: "POST/api/user/del" }
             ];
 
             mockDb.getAll = mock((opts: any) => {
@@ -176,7 +176,7 @@ describe("CacheHelper", () => {
 
         it("无权限时仍会清理旧缓存，但不写入成员", async () => {
             const roles = [{ id: 1, code: "empty", apis: [] }];
-            const apis = [{ id: 1, path: "/api/login", method: "POST" }];
+            const apis = [{ id: 1, path: "POST/api/login" }];
 
             mockDb.getAll = mock((opts: any) => {
                 if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
@@ -207,8 +207,8 @@ describe("CacheHelper", () => {
 
         it("apiIds 非空时使用 $in 查询并重建该角色缓存（覆盖更新）", async () => {
             const apis = [
-                { id: 1, path: "/api/login", method: "POST" },
-                { id: 2, path: "/api/user/list", method: "GET" }
+                { id: 1, path: "POST/api/login" },
+                { id: 2, path: "GET/api/user/list" }
             ];
 
             mockDb.getAll = mock((opts: any) => {

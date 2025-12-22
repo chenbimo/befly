@@ -9,7 +9,6 @@ import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupB
 import { join } from "pathe";
 
 import { Logger } from "../lib/logger.js";
-import { appDir } from "../paths.js";
 import { isDirentDirectory } from "../utils/isDirentDirectory.js";
 
 async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
@@ -174,7 +173,7 @@ async function loadMenuConfigs(ctx): Promise<MenuConfig[]> {
         }
     }
 
-    const menusJsonPath = join(appDir, "menus.json");
+    const menusJsonPath = join(process.cwd(), "menus.json");
     if (existsSync(menusJsonPath)) {
         try {
             const content = await readFile(menusJsonPath, "utf-8");
