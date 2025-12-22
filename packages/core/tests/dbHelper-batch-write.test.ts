@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 
+import { MySqlDialect } from "../lib/dbDialect.js";
 import { DbHelper } from "../lib/dbHelper.js";
 
 function createRedisMock() {
@@ -16,7 +17,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 0 }))
         };
 
-        const dbHelper = new DbHelper(createRedisMock() as any, sqlMock);
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
 
         const changes = await (dbHelper as any).delForceBatch("addon_admin_api", []);
 
@@ -29,7 +30,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 2 }))
         };
 
-        const dbHelper = new DbHelper(createRedisMock() as any, sqlMock);
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
 
         const changes = await (dbHelper as any).delForceBatch("addon_admin_api", [1, 2]);
 
@@ -37,7 +38,7 @@ describe("DbHelper - batch write helpers", () => {
         expect(sqlMock.unsafe).toHaveBeenCalledTimes(1);
 
         const call = (sqlMock.unsafe as any).mock.calls[0];
-        expect(call[0]).toBe("DELETE FROM addon_admin_api WHERE id IN (?,?)");
+        expect(call[0]).toBe("DELETE FROM `addon_admin_api` WHERE `id` IN (?,?)");
         expect(call[1]).toEqual([1, 2]);
     });
 
@@ -46,7 +47,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 0 }))
         };
 
-        const dbHelper = new DbHelper(createRedisMock() as any, sqlMock);
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
 
         const changes = await (dbHelper as any).updBatch("addon_admin_api", []);
 
@@ -59,7 +60,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 2 }))
         };
 
-        const dbHelper = new DbHelper(createRedisMock() as any, sqlMock);
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
 
         const changes = await (dbHelper as any).updBatch("addon_admin_api", [
             { id: 1, data: { name: "A", routePath: "POST/api/a", addonName: "x" } },
@@ -73,12 +74,12 @@ describe("DbHelper - batch write helpers", () => {
         const sql = String(call[0]);
         const params = call[1] as any[];
 
-        expect(sql.startsWith("UPDATE addon_admin_api SET")).toBe(true);
-        expect(sql.includes("name = CASE id")).toBe(true);
-        expect(sql.includes("route_path = CASE id")).toBe(true);
-        expect(sql.includes("addon_name = CASE id")).toBe(true);
-        expect(sql.includes("updated_at = ?")).toBe(true);
-        expect(sql.endsWith("WHERE id IN (?,?) AND state > 0")).toBe(true);
+        expect(sql.startsWith("UPDATE `addon_admin_api` SET")).toBe(true);
+        expect(sql.includes("`name` = CASE `id`")).toBe(true);
+        expect(sql.includes("`route_path` = CASE `id`")).toBe(true);
+        expect(sql.includes("`addon_name` = CASE `id`")).toBe(true);
+        expect(sql.includes("`updated_at` = ?")).toBe(true);
+        expect(sql.endsWith("WHERE `id` IN (?,?) AND `state` > 0")).toBe(true);
 
         // 参数数量应包含：每个字段 2 行 * (id,value) *3字段 => 12，+ updated_at 1，+ where ids 2 => 15
         expect(params.length).toBe(15);

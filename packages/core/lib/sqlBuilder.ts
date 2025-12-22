@@ -19,6 +19,33 @@ export class SqlBuilder {
     private _limit: number | null = null;
     private _offset: number | null = null;
     private _params: SqlValue[] = [];
+    private _quoteIdent: (identifier: string) => string;
+
+    constructor(options?: { quoteIdent?: (identifier: string) => string }) {
+        if (options && options.quoteIdent) {
+            this._quoteIdent = options.quoteIdent;
+        } else {
+            this._quoteIdent = (identifier: string) => {
+                if (typeof identifier !== "string") {
+                    throw new Error(`quoteIdent 需要字符串类型标识符 (identifier: ${String(identifier)})`);
+                }
+
+                const trimmed = identifier.trim();
+                if (!trimmed) {
+                    throw new Error("SQL 标识符不能为空");
+                }
+
+                // 默认行为（MySQL 风格）：允许特殊字符，但对反引号进行转义
+                const escaped = trimmed.replace(/`/g, "``");
+                return `\`${escaped}\``;
+            };
+        }
+    }
+
+    private _isQuotedIdent(value: string): boolean {
+        const trimmed = value.trim();
+        return trimmed.startsWith("`") || trimmed.startsWith('"');
+    }
 
     /**
      * 重置构建器状态
@@ -47,8 +74,8 @@ export class SqlBuilder {
 
         field = field.trim();
 
-        // 如果是 * 或已经有着重号或包含函数，直接返回
-        if (field === "*" || field.startsWith("`") || field.includes("(")) {
+        // 如果是 * 或已经被引用或包含函数，直接返回
+        if (field === "*" || this._isQuotedIdent(field) || field.includes("(")) {
             return field;
         }
 
@@ -57,6 +84,10 @@ export class SqlBuilder {
             const parts = field.split(/\s+AS\s+/i);
             const fieldPart = parts[0].trim();
             const aliasPart = parts[1].trim();
+            // alias 仅允许安全标识符或已被引用
+            if (!this._isQuotedIdent(aliasPart) && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(aliasPart)) {
+                throw new Error(`无效的字段别名: ${aliasPart}`);
+            }
             return `${this._escapeField(fieldPart)} AS ${aliasPart}`;
         }
 
@@ -66,16 +97,22 @@ export class SqlBuilder {
             return parts
                 .map((part) => {
                     part = part.trim();
-                    if (part === "*" || part.startsWith("`")) {
+                    if (part === "*" || this._isQuotedIdent(part)) {
                         return part;
                     }
-                    return `\`${part}\``;
+                    return this._quoteIdent(part);
                 })
                 .join(".");
         }
 
         // 处理单个字段名
-        return `\`${field}\``;
+        return this._quoteIdent(field);
+    }
+
+    private _validateIdentifierPart(part: string, kind: "table" | "schema" | "alias" | "field"): void {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(part)) {
+            throw new Error(`无效的 ${kind} 标识符: ${part}`);
+        }
     }
 
     /**
@@ -88,23 +125,46 @@ export class SqlBuilder {
 
         table = table.trim();
 
-        if (table.startsWith("`")) {
+        if (this._isQuotedIdent(table)) {
             return table;
         }
 
-        // 处理表别名（表名 + 空格 + 别名）
-        if (table.includes(" ")) {
-            const parts = table.split(/\s+/);
-            if (parts.length === 2) {
-                const tableName = parts[0].trim();
-                const alias = parts[1].trim();
-                return `\`${tableName}\` ${alias}`;
-            } else {
-                return table;
-            }
+        const parts = table.split(/\s+/).filter((p) => p.length > 0);
+        if (parts.length === 0) {
+            throw new Error("FROM 表名不能为空");
         }
 
-        return `\`${table}\``;
+        if (parts.length > 2) {
+            throw new Error(`不支持的表引用格式（包含过多片段）。请使用 fromRaw 显式传入复杂表达式 (table: ${table})`);
+        }
+
+        const namePart = parts[0].trim();
+        const aliasPart = parts.length === 2 ? parts[1].trim() : null;
+
+        const nameSegments = namePart.split(".");
+        if (nameSegments.length > 2) {
+            throw new Error(`不支持的表引用格式（schema 层级过深）。请使用 fromRaw (table: ${table})`);
+        }
+
+        let escapedName = "";
+        if (nameSegments.length === 2) {
+            const schema = nameSegments[0].trim();
+            const tableName = nameSegments[1].trim();
+            this._validateIdentifierPart(schema, "schema");
+            this._validateIdentifierPart(tableName, "table");
+            escapedName = `${this._quoteIdent(schema)}.${this._quoteIdent(tableName)}`;
+        } else {
+            const tableName = nameSegments[0].trim();
+            this._validateIdentifierPart(tableName, "table");
+            escapedName = this._quoteIdent(tableName);
+        }
+
+        if (aliasPart) {
+            this._validateIdentifierPart(aliasPart, "alias");
+            return `${escapedName} ${aliasPart}`;
+        }
+
+        return escapedName;
     }
 
     /**
@@ -253,7 +313,7 @@ export class SqlBuilder {
                     const tempParams: SqlValue[] = [];
 
                     value.forEach((condition) => {
-                        const tempBuilder = new SqlBuilder();
+                        const tempBuilder = new SqlBuilder({ quoteIdent: this._quoteIdent });
                         tempBuilder._processWhereConditions(condition);
                         if (tempBuilder._where.length > 0) {
                             orConditions.push(`(${tempBuilder._where.join(" AND ")})`);
@@ -315,6 +375,17 @@ export class SqlBuilder {
     }
 
     /**
+     * SELECT 原始表达式（不做转义）
+     */
+    selectRaw(expr: string): this {
+        if (typeof expr !== "string" || !expr.trim()) {
+            throw new Error(`selectRaw 需要非空字符串 (expr: ${String(expr)})`);
+        }
+        this._select.push(expr);
+        return this;
+    }
+
+    /**
      * FROM 表名
      */
     from(table: string): this {
@@ -326,19 +397,54 @@ export class SqlBuilder {
     }
 
     /**
+     * FROM 原始表达式（不做转义）
+     */
+    fromRaw(tableExpr: string): this {
+        if (typeof tableExpr !== "string" || !tableExpr.trim()) {
+            throw new Error(`fromRaw 需要非空字符串 (tableExpr: ${String(tableExpr)})`);
+        }
+        this._from = tableExpr;
+        return this;
+    }
+
+    /**
      * WHERE 条件
      */
-    where(condition: WhereConditions | string, value?: SqlValue): this {
-        if (typeof condition === "object" && condition !== null) {
-            this._processWhereConditions(condition);
-        } else if (value !== undefined && value !== null) {
+    where(condition: WhereConditions): this;
+    where(field: string, value: SqlValue): this;
+    where(conditionOrField: WhereConditions | string, value?: SqlValue): this {
+        if (typeof conditionOrField === "object" && conditionOrField !== null) {
+            this._processWhereConditions(conditionOrField);
+            return this;
+        }
+
+        if (typeof conditionOrField === "string") {
+            if (value === undefined) {
+                throw new Error("where(field, value) 不允许省略 value。若需传入原始 WHERE，请使用 whereRaw");
+            }
             this._validateParam(value);
-            const escapedCondition = this._escapeField(condition as string);
+            const escapedCondition = this._escapeField(conditionOrField);
             this._where.push(`${escapedCondition} = ?`);
             this._params.push(value);
-        } else if (typeof condition === "string") {
-            this._where.push(condition);
+            return this;
         }
+
+        return this;
+    }
+
+    /**
+     * WHERE 原始片段（不做转义），可附带参数。
+     */
+    whereRaw(sql: string, params?: SqlValue[]): this {
+        if (typeof sql !== "string" || !sql.trim()) {
+            throw new Error(`whereRaw 需要非空字符串 (sql: ${String(sql)})`);
+        }
+
+        this._where.push(sql);
+        if (params && params.length > 0) {
+            this._params.push(...params);
+        }
+
         return this;
     }
 
@@ -624,6 +730,99 @@ export class SqlBuilder {
         }
 
         return { sql, params: [...this._params] };
+    }
+
+    static toDeleteInSql(options: { table: string; idField: string; ids: SqlValue[]; quoteIdent: (identifier: string) => string }): SqlQuery {
+        if (typeof options.table !== "string" || !options.table.trim()) {
+            throw new Error(`toDeleteInSql 需要非空表名 (table: ${String(options.table)})`);
+        }
+        if (typeof options.idField !== "string" || !options.idField.trim()) {
+            throw new Error(`toDeleteInSql 需要非空 idField (idField: ${String(options.idField)})`);
+        }
+        if (!Array.isArray(options.ids)) {
+            throw new Error("toDeleteInSql 需要 ids 数组");
+        }
+        if (options.ids.length === 0) {
+            return { sql: "", params: [] };
+        }
+
+        const placeholders = options.ids.map(() => "?").join(",");
+        const sql = `DELETE FROM ${options.quoteIdent(options.table)} WHERE ${options.quoteIdent(options.idField)} IN (${placeholders})`;
+        return { sql: sql, params: [...options.ids] };
+    }
+
+    static toUpdateCaseByIdSql(options: {
+        table: string;
+        idField: string;
+        rows: Array<{ id: SqlValue; data: Record<string, SqlValue> }>;
+        fields: string[];
+        quoteIdent: (identifier: string) => string;
+        updatedAtField: string;
+        updatedAtValue: SqlValue;
+        stateField?: string;
+        stateGtZero?: boolean;
+    }): SqlQuery {
+        if (typeof options.table !== "string" || !options.table.trim()) {
+            throw new Error(`toUpdateCaseByIdSql 需要非空表名 (table: ${String(options.table)})`);
+        }
+        if (typeof options.idField !== "string" || !options.idField.trim()) {
+            throw new Error(`toUpdateCaseByIdSql 需要非空 idField (idField: ${String(options.idField)})`);
+        }
+        if (!Array.isArray(options.rows)) {
+            throw new Error("toUpdateCaseByIdSql 需要 rows 数组");
+        }
+        if (options.rows.length === 0) {
+            return { sql: "", params: [] };
+        }
+        if (!Array.isArray(options.fields)) {
+            throw new Error("toUpdateCaseByIdSql 需要 fields 数组");
+        }
+        if (options.fields.length === 0) {
+            return { sql: "", params: [] };
+        }
+
+        const ids: SqlValue[] = options.rows.map((r) => r.id);
+        const placeholders = ids.map(() => "?").join(",");
+
+        const setSqlList: string[] = [];
+        const args: SqlValue[] = [];
+
+        const quotedId = options.quoteIdent(options.idField);
+
+        for (const field of options.fields) {
+            const whenList: string[] = [];
+
+            for (const row of options.rows) {
+                if (!(field in row.data)) {
+                    continue;
+                }
+
+                whenList.push("WHEN ? THEN ?");
+                args.push(row.id);
+                args.push(row.data[field]);
+            }
+
+            if (whenList.length === 0) {
+                continue;
+            }
+
+            const quotedField = options.quoteIdent(field);
+            setSqlList.push(`${quotedField} = CASE ${quotedId} ${whenList.join(" ")} ELSE ${quotedField} END`);
+        }
+
+        setSqlList.push(`${options.quoteIdent(options.updatedAtField)} = ?`);
+        args.push(options.updatedAtValue);
+
+        for (const id of ids) {
+            args.push(id);
+        }
+
+        let sql = `UPDATE ${options.quoteIdent(options.table)} SET ${setSqlList.join(", ")} WHERE ${quotedId} IN (${placeholders})`;
+        if (options.stateGtZero && options.stateField) {
+            sql += ` AND ${options.quoteIdent(options.stateField)} > 0`;
+        }
+
+        return { sql: sql, params: args };
     }
 }
 

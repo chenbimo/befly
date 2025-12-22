@@ -5,6 +5,7 @@
 
 import { test, expect, mock } from "bun:test";
 
+import { MySqlDialect } from "../lib/dbDialect.js";
 import { DbHelper } from "../lib/dbHelper.js";
 
 function createMockRedis() {
@@ -25,7 +26,7 @@ test("executeWithConn - 正常执行（无参数）", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     // 使用反射访问私有方法
     const result = await (dbHelper as any).executeWithConn("SELECT * FROM users");
@@ -41,7 +42,7 @@ test("executeWithConn - 正常执行（带参数）", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     const result = await (dbHelper as any).executeWithConn("SELECT * FROM users WHERE id = ?", [1]);
 
@@ -58,7 +59,7 @@ test("executeWithConn - SQL 错误捕获", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     try {
         await (dbHelper as any).executeWithConn("SELECT * FROM invalid_table");
@@ -81,7 +82,7 @@ test("executeWithConn - 错误信息包含完整信息", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     const testSql = "SHOW COLUMNS FROM ??";
     const testParams = ["users"];
@@ -106,7 +107,7 @@ test("executeWithConn - 超长 SQL 保留在错误对象中", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     try {
         await (dbHelper as any).executeWithConn(longSql);
@@ -128,7 +129,7 @@ test("executeWithConn - 慢查询检测（>1000ms）", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     const result = await (dbHelper as any).executeWithConn("SELECT SLEEP(1)");
 
@@ -138,7 +139,7 @@ test("executeWithConn - 慢查询检测（>1000ms）", async () => {
 
 test("executeWithConn - 数据库未连接错误", async () => {
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, null); // 没有 sql 实例
+    const dbHelper = new DbHelper({ redis: redis as any, sql: null, dialect: new MySqlDialect() }); // 没有 sql 实例
 
     try {
         await (dbHelper as any).executeWithConn("SELECT * FROM users");
@@ -155,7 +156,7 @@ test("executeWithConn - 空参数数组", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     const result = await (dbHelper as any).executeWithConn("SELECT COUNT(*) as count FROM users", []);
 
@@ -172,7 +173,7 @@ test("executeWithConn - 复杂参数处理", async () => {
     };
 
     const redis = createMockRedis();
-    const dbHelper = new DbHelper(redis as any, sqlMock);
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
 
     const complexParams = [1, "test", { nested: "object" }, [1, 2, 3], null, undefined];
 

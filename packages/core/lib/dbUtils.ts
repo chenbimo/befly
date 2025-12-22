@@ -2,7 +2,69 @@ import type { WhereConditions } from "../types/common.js";
 
 import { snakeCase } from "es-toolkit/string";
 
+import { fieldClear } from "../utils/fieldClear.js";
+import { keysToSnake } from "../utils/keysToSnake.js";
+
 export class DbUtils {
+    static parseTableRef(tableRef: string): { schema: string | null; table: string; alias: string | null } {
+        if (typeof tableRef !== "string") {
+            throw new Error(`tableRef 必须是字符串 (tableRef: ${String(tableRef)})`);
+        }
+
+        const trimmed = tableRef.trim();
+        if (!trimmed) {
+            throw new Error("tableRef 不能为空");
+        }
+
+        const parts = trimmed.split(/\s+/).filter((p) => p.length > 0);
+        if (parts.length > 2) {
+            throw new Error(`不支持的表引用格式（包含过多片段）。请使用最简形式：table 或 table alias 或 schema.table 或 schema.table alias (tableRef: ${trimmed})`);
+        }
+
+        const namePart = parts[0];
+        const aliasPart = parts.length === 2 ? parts[1] : null;
+
+        const nameSegments = namePart.split(".");
+        if (nameSegments.length > 2) {
+            throw new Error(`不支持的表引用格式（schema 层级过深） (tableRef: ${trimmed})`);
+        }
+
+        const schema = nameSegments.length === 2 ? nameSegments[0] : null;
+        const table = nameSegments.length === 2 ? nameSegments[1] : nameSegments[0];
+
+        return { schema: schema, table: table, alias: aliasPart };
+    }
+
+    /**
+     * 规范化表引用：只 snakeCase schema/table，本身 alias 保持原样。
+     * - 支持：table / table alias / schema.table / schema.table alias
+     */
+    static normalizeTableRef(tableRef: string): string {
+        const parsed = DbUtils.parseTableRef(tableRef);
+
+        const schemaPart = parsed.schema ? snakeCase(parsed.schema) : null;
+        const tablePart = snakeCase(parsed.table);
+
+        let result = schemaPart ? `${schemaPart}.${tablePart}` : tablePart;
+        if (parsed.alias) {
+            result = `${result} ${parsed.alias}`;
+        }
+
+        return result;
+    }
+
+    /**
+     * JOIN 场景下主表的限定符：优先使用 alias；没有 alias 时使用 snakeCase(table)。
+     * 用于构造类似 "o.state$gt" 的 where key，避免出现 "order o.state$gt" 这种带空格的非法 key。
+     */
+    static getJoinMainQualifier(tableRef: string): string {
+        const parsed = DbUtils.parseTableRef(tableRef);
+        if (parsed.alias) {
+            return parsed.alias;
+        }
+        return snakeCase(parsed.table);
+    }
+
     /**
      * 字段数组转下划线格式
      * 支持排除字段语法：['!password', '!token']
@@ -102,10 +164,6 @@ export class DbUtils {
         });
     }
 
-    static processTableName(table: string): string {
-        return snakeCase(table.trim());
-    }
-
     static processJoinField(field: string): string {
         // 跳过函数、星号、已处理的字段
         if (field.includes("(") || field === "*" || field.startsWith("`")) {
@@ -120,12 +178,12 @@ export class DbUtils {
             return `${DbUtils.processJoinField(fieldPart)} AS ${aliasPart}`;
         }
 
-        // 处理表名.字段名
+        // 处理表别名.字段名（JOIN 模式下，点号前面通常是别名，不应被 snakeCase 改写）
         if (field.includes(".")) {
             const parts = field.split(".");
             const tableName = parts[0];
             const fieldName = parts[1];
-            return `${snakeCase(tableName)}.${snakeCase(fieldName)}`;
+            return `${tableName.trim()}.${snakeCase(fieldName)}`;
         }
 
         // 普通字段
@@ -148,7 +206,7 @@ export class DbUtils {
                 const parts = fieldPart.split(".");
                 const tableName = parts[0];
                 const fieldName = parts[1];
-                return `${snakeCase(tableName)}.${snakeCase(fieldName)}${operator}`;
+                return `${tableName.trim()}.${snakeCase(fieldName)}${operator}`;
             }
 
             return `${snakeCase(fieldPart)}${operator}`;
@@ -159,7 +217,7 @@ export class DbUtils {
             const parts = key.split(".");
             const tableName = parts[0];
             const fieldName = parts[1];
-            return `${snakeCase(tableName)}.${snakeCase(fieldName)}`;
+            return `${tableName.trim()}.${snakeCase(fieldName)}`;
         }
 
         // 普通字段
@@ -216,6 +274,7 @@ export class DbUtils {
 
         // JOIN 查询时需要指定主表名前缀避免歧义
         if (hasJoins && table) {
+            // table 可能带别名（"order o"），这里只需要别名/主表引用本身，不做 snakeCase 改写
             const result: any = {};
             for (const [key, value] of Object.entries(where)) {
                 result[key] = value;
@@ -333,5 +392,59 @@ export class DbUtils {
         }
 
         return deserialized as T;
+    }
+
+    static cleanAndSnakeAndSerializeWriteData(data: Record<string, any>, excludeValues: any[] = [null, undefined]): Record<string, any> {
+        const cleanData = fieldClear(data, { excludeValues: excludeValues });
+        const snakeData = keysToSnake(cleanData);
+        return DbUtils.serializeArrayFields(snakeData);
+    }
+
+    static stripSystemFieldsForWrite(data: Record<string, any>, options: { allowState: boolean }): Record<string, any> {
+        const result: Record<string, any> = {};
+        for (const [key, value] of Object.entries(data)) {
+            // 系统字段不可由用户覆盖
+            if (key === "id") continue;
+            if (key === "created_at") continue;
+            if (key === "updated_at") continue;
+            if (key === "deleted_at") continue;
+            if (!options.allowState && key === "state") continue;
+            result[key] = value;
+        }
+
+        return result;
+    }
+
+    static buildInsertRow(options: { data: Record<string, any>; id: number; now: number }): Record<string, any> {
+        const serializedData = DbUtils.cleanAndSnakeAndSerializeWriteData(options.data);
+        const userData = DbUtils.stripSystemFieldsForWrite(serializedData, { allowState: false });
+
+        const result: Record<string, any> = {};
+        for (const [key, value] of Object.entries(userData)) {
+            result[key] = value;
+        }
+
+        result.id = options.id;
+        result.created_at = options.now;
+        result.updated_at = options.now;
+        result.state = 1;
+        return result;
+    }
+
+    static buildUpdateRow(options: { data: Record<string, any>; now: number; allowState: boolean }): Record<string, any> {
+        const serializedData = DbUtils.cleanAndSnakeAndSerializeWriteData(options.data);
+        const userData = DbUtils.stripSystemFieldsForWrite(serializedData, { allowState: options.allowState });
+
+        const result: Record<string, any> = {};
+        for (const [key, value] of Object.entries(userData)) {
+            result[key] = value;
+        }
+        result.updated_at = options.now;
+        return result;
+    }
+
+    static buildPartialUpdateData(options: { data: Record<string, any>; allowState: boolean }): Record<string, any> {
+        const serializedData = DbUtils.cleanAndSnakeAndSerializeWriteData(options.data);
+        return DbUtils.stripSystemFieldsForWrite(serializedData, { allowState: options.allowState });
     }
 }

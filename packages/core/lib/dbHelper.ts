@@ -5,6 +5,7 @@
 
 import type { WhereConditions, JoinOption } from "../types/common.js";
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback } from "../types/database.js";
+import type { DbDialect } from "./dbDialect.js";
 
 import { snakeCase } from "es-toolkit/string";
 
@@ -12,8 +13,8 @@ import { arrayKeysToCamel } from "../utils/arrayKeysToCamel.js";
 import { convertBigIntFields } from "../utils/convertBigIntFields.js";
 import { fieldClear } from "../utils/fieldClear.js";
 import { keysToCamel } from "../utils/keysToCamel.js";
-import { keysToSnake } from "../utils/keysToSnake.js";
 import { CacheKeys } from "./cacheKeys.js";
+import { MySqlDialect } from "./dbDialect.js";
 import { DbUtils } from "./dbUtils.js";
 import { Logger } from "./logger.js";
 import { SqlBuilder } from "./sqlBuilder.js";
@@ -31,6 +32,7 @@ type RedisCacheLike = {
  */
 export class DbHelper {
     private redis: RedisCacheLike;
+    private dialect: DbDialect;
     private sql: any = null;
     private isTransaction: boolean = false;
 
@@ -39,10 +41,17 @@ export class DbHelper {
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(redis: RedisCacheLike, sql: any = null) {
-        this.redis = redis;
-        this.sql = sql;
-        this.isTransaction = !!sql;
+    constructor(options: { redis: RedisCacheLike; sql?: any | null; dialect?: DbDialect }) {
+        this.redis = options.redis;
+        this.sql = options.sql || null;
+        this.isTransaction = !!options.sql;
+
+        // 默认使用 MySQL 方言（当前 core 的表结构/语法也主要基于 MySQL）
+        this.dialect = options.dialect ? options.dialect : new MySqlDialect();
+    }
+
+    private createSqlBuilder(): SqlBuilder {
+        return new SqlBuilder({ quoteIdent: this.dialect.quoteIdent.bind(this.dialect) });
     }
 
     /**
@@ -60,14 +69,14 @@ export class DbHelper {
         }
 
         // 2. 缓存未命中，查询数据库
-        const sql = `SHOW COLUMNS FROM \`${table}\``;
-        const result = await this.executeWithConn(sql);
+        const query = this.dialect.getTableColumnsQuery(table);
+        const result = await this.executeWithConn(query.sql, query.params);
 
         if (!result || result.length === 0) {
             throw new Error(`表 ${table} 不存在或没有字段`);
         }
 
-        const columnNames = result.map((row: any) => row.Field) as string[];
+        const columnNames = this.dialect.getTableColumnsFromResult(result);
 
         // 3. 写入 Redis 缓存
         const cacheRes = await this.redis.setObject(cacheKey, columnNames, TABLE_COLUMNS_CACHE_TTL_SECONDS);
@@ -90,8 +99,12 @@ export class DbHelper {
             // 联查时字段直接处理（支持表名.字段名格式）
             const processedFields = (options.fields || []).map((f) => DbUtils.processJoinField(f));
 
+            const normalizedTableRef = DbUtils.normalizeTableRef(options.table);
+            const mainQualifier = DbUtils.getJoinMainQualifier(options.table);
+
             return {
-                table: DbUtils.processTableName(options.table),
+                table: normalizedTableRef,
+                tableQualifier: mainQualifier,
                 fields: processedFields.length > 0 ? processedFields : ["*"],
                 where: DbUtils.processJoinWhere(cleanWhere),
                 joins: options.joins,
@@ -106,6 +119,7 @@ export class DbHelper {
 
         return {
             table: snakeCase(options.table),
+            tableQualifier: snakeCase(options.table),
             fields: processedFields,
             where: DbUtils.whereKeysToSnake(cleanWhere),
             joins: undefined,
@@ -122,7 +136,7 @@ export class DbHelper {
         if (!joins || joins.length === 0) return;
 
         for (const join of joins) {
-            const processedTable = DbUtils.processTableName(join.table);
+            const processedTable = DbUtils.normalizeTableRef(join.table);
             const type = join.type || "left";
 
             switch (type) {
@@ -215,7 +229,8 @@ export class DbHelper {
         // 将表名转换为下划线格式
         const snakeTableName = snakeCase(tableName);
 
-        const result = await this.executeWithConn("SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", [snakeTableName]);
+        const query = this.dialect.tableExistsQuery(snakeTableName);
+        const result = await this.executeWithConn(query.sql, query.params);
 
         return result?.[0]?.count > 0;
     }
@@ -238,12 +253,12 @@ export class DbHelper {
      * });
      */
     async getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<number> {
-        const { table, where, joins } = await this.prepareQueryOptions(options as QueryOptions);
+        const { table, where, joins, tableQualifier } = await this.prepareQueryOptions(options as QueryOptions);
 
-        const builder = new SqlBuilder()
+        const builder = this.createSqlBuilder()
             .select(["COUNT(*) as count"])
             .from(table)
-            .where(DbUtils.addDefaultStateFilter(where, table, !!joins));
+            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -271,12 +286,12 @@ export class DbHelper {
      * })
      */
     async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<T | null> {
-        const { table, fields, where, joins } = await this.prepareQueryOptions(options);
+        const { table, fields, where, joins, tableQualifier } = await this.prepareQueryOptions(options);
 
-        const builder = new SqlBuilder()
+        const builder = this.createSqlBuilder()
             .select(fields)
             .from(table)
-            .where(DbUtils.addDefaultStateFilter(where, table, !!joins));
+            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, !!joins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -332,10 +347,10 @@ export class DbHelper {
         }
 
         // 构建查询
-        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
+        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, !!prepared.joins);
 
         // 查询总数
-        const countBuilder = new SqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
+        const countBuilder = this.createSqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
 
         // 添加 JOIN（计数也需要）
         this.applyJoins(countBuilder, prepared.joins);
@@ -357,7 +372,7 @@ export class DbHelper {
 
         // 查询数据
         const offset = (prepared.page - 1) * prepared.limit;
-        const dataBuilder = new SqlBuilder().select(prepared.fields).from(prepared.table).where(whereFiltered).limit(prepared.limit).offset(offset);
+        const dataBuilder = this.createSqlBuilder().select(prepared.fields).from(prepared.table).where(whereFiltered).limit(prepared.limit).offset(offset);
 
         // 添加 JOIN
         this.applyJoins(dataBuilder, prepared.joins);
@@ -374,7 +389,7 @@ export class DbHelper {
         const camelList = arrayKeysToCamel<T>(list);
 
         // 反序列化数组字段
-        const deserializedList = camelList.map((item) => this.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
+        const deserializedList = camelList.map((item) => DbUtils.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
@@ -410,10 +425,10 @@ export class DbHelper {
 
         const prepared = await this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
 
-        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.table, !!prepared.joins);
+        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, !!prepared.joins);
 
         // 查询真实总数
-        const countBuilder = new SqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
+        const countBuilder = this.createSqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
 
         // 添加 JOIN（计数也需要）
         this.applyJoins(countBuilder, prepared.joins);
@@ -431,7 +446,7 @@ export class DbHelper {
         }
 
         // 查询数据（受上限保护）
-        const dataBuilder = new SqlBuilder().select(prepared.fields).from(prepared.table).where(whereFiltered).limit(MAX_LIMIT);
+        const dataBuilder = this.createSqlBuilder().select(prepared.fields).from(prepared.table).where(whereFiltered).limit(MAX_LIMIT);
 
         // 添加 JOIN
         this.applyJoins(dataBuilder, prepared.joins);
@@ -457,7 +472,7 @@ export class DbHelper {
         const camelResult = arrayKeysToCamel<T>(result);
 
         // 反序列化数组字段
-        const deserializedList = camelResult.map((item) => this.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
+        const deserializedList = camelResult.map((item) => DbUtils.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         const lists = convertBigIntFields<T>(deserializedList);
@@ -475,43 +490,21 @@ export class DbHelper {
     async insData(options: InsertOptions): Promise<number> {
         const { table, data } = options;
 
-        // 清理数据（排除 null 和 undefined）
-        const cleanData = fieldClear(data, { excludeValues: [null, undefined] });
-
-        // 转换表名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
 
-        // 处理数据（自动添加必要字段）
-        // 字段名转换：小驼峰 → 下划线
-        const snakeData = keysToSnake(cleanData);
+        const now = Date.now();
 
-        // 序列化数组字段（数组 → JSON 字符串）
-        const serializedData = DbUtils.serializeArrayFields(snakeData);
-
-        // 复制用户数据，但移除系统字段（防止用户尝试覆盖）
-        const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, state: _state, ...userData } = serializedData;
-
-        const processed: Record<string, any> = { ...userData };
-
-        // 强制生成 ID（不可被用户覆盖）
+        let id: number;
         try {
-            processed.id = await this.redis.genTimeID();
+            id = await this.redis.genTimeID();
         } catch (error: any) {
-            throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table})`, error);
+            throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table})`, { cause: error });
         }
 
-        // 强制生成时间戳（不可被用户覆盖）
-        const now = Date.now();
-        processed.created_at = now;
-        processed.updated_at = now;
-
-        // 强制设置 state 为 1（激活状态，不可被用户覆盖）
-        processed.state = 1;
-
-        // 注意：deleted_at 字段不在插入时生成，只在软删除时设置
+        const processed = DbUtils.buildInsertRow({ data: data, id: id, now: now });
 
         // 构建 SQL
-        const builder = new SqlBuilder();
+        const builder = this.createSqlBuilder();
         const { sql, params } = builder.toInsertSql(snakeTable, processed);
 
         // 执行
@@ -549,30 +542,11 @@ export class DbHelper {
 
         // 处理所有数据（自动添加系统字段）
         const processedList = dataList.map((data, index) => {
-            // 清理数据（排除 null 和 undefined）
-            const cleanData = fieldClear(data, { excludeValues: [null, undefined] });
-
-            // 字段名转换：小驼峰 → 下划线
-            const snakeData = keysToSnake(cleanData);
-
-            // 序列化数组字段（数组 → JSON 字符串）
-            const serializedData = DbUtils.serializeArrayFields(snakeData);
-
-            // 移除系统字段（防止用户尝试覆盖）
-            const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, state: _state, ...userData } = serializedData;
-
-            // 强制生成系统字段（不可被用户覆盖）
-            return {
-                ...userData,
-                id: ids[index],
-                created_at: now,
-                updated_at: now,
-                state: 1
-            };
+            return DbUtils.buildInsertRow({ data: data, id: ids[index], now: now });
         });
 
         // 构建批量插入 SQL
-        const builder = new SqlBuilder();
+        const builder = this.createSqlBuilder();
         const { sql, params } = builder.toInsertSql(snakeTable, processedList);
 
         // 在事务中执行批量插入
@@ -591,10 +565,14 @@ export class DbHelper {
         }
 
         const snakeTable = snakeCase(table);
-        const placeholders = ids.map(() => "?").join(",");
-        const sql = `DELETE FROM ${snakeTable} WHERE id IN (${placeholders})`;
 
-        const result: any = await this.executeWithConn(sql, ids);
+        const query = SqlBuilder.toDeleteInSql({
+            table: snakeTable,
+            idField: "id",
+            ids: ids,
+            quoteIdent: this.dialect.quoteIdent.bind(this.dialect)
+        });
+        const result: any = await this.executeWithConn(query.sql, query.params);
         return result?.changes || 0;
     }
 
@@ -610,20 +588,7 @@ export class DbHelper {
         const fieldSet = new Set<string>();
 
         for (const item of dataList) {
-            const cleanData = fieldClear(item.data, { excludeValues: [null, undefined] });
-            const snakeData = keysToSnake(cleanData);
-            const serializedData = DbUtils.serializeArrayFields(snakeData);
-
-            // 移除系统字段（防止用户尝试修改）
-            // 注意：state 允许用户修改（用于设置禁用状态 state=2）
-            const userData: Record<string, any> = {};
-            for (const [key, value] of Object.entries(serializedData)) {
-                userData[key] = value;
-            }
-            delete userData.id;
-            delete userData.created_at;
-            delete userData.updated_at;
-            delete userData.deleted_at;
+            const userData = DbUtils.buildPartialUpdateData({ data: item.data, allowState: true });
 
             for (const key of Object.keys(userData)) {
                 fieldSet.add(key);
@@ -637,42 +602,19 @@ export class DbHelper {
             return 0;
         }
 
-        const setSqlList: string[] = [];
-        const args: any[] = [];
+        const query = SqlBuilder.toUpdateCaseByIdSql({
+            table: snakeTable,
+            idField: "id",
+            rows: processedList,
+            fields: fields,
+            quoteIdent: this.dialect.quoteIdent.bind(this.dialect),
+            updatedAtField: "updated_at",
+            updatedAtValue: now,
+            stateField: "state",
+            stateGtZero: true
+        });
 
-        for (const field of fields) {
-            const whenList: string[] = [];
-
-            for (const item of processedList) {
-                if (!(field in item.data)) {
-                    continue;
-                }
-
-                whenList.push("WHEN ? THEN ?");
-                args.push(item.id);
-                args.push(item.data[field]);
-            }
-
-            if (whenList.length === 0) {
-                continue;
-            }
-
-            setSqlList.push(`${field} = CASE id ${whenList.join(" ")} ELSE ${field} END`);
-        }
-
-        // 统一更新时间
-        setSqlList.push("updated_at = ?");
-        args.push(now);
-
-        const ids: number[] = processedList.map((item) => item.id);
-        const placeholders = ids.map(() => "?").join(",");
-
-        for (const id of ids) {
-            args.push(id);
-        }
-
-        const sql = `UPDATE ${snakeTable} SET ${setSqlList.join(", ")} WHERE id IN (${placeholders}) AND state > 0`;
-        const result: any = await this.executeWithConn(sql, args);
+        const result: any = await this.executeWithConn(query.sql, query.params);
         return result?.changes || 0;
     }
 
@@ -683,33 +625,18 @@ export class DbHelper {
     async updData(options: UpdateOptions): Promise<number> {
         const { table, data, where } = options;
 
-        // 清理数据和条件（排除 null 和 undefined）
-        const cleanData = fieldClear(data, { excludeValues: [null, undefined] });
+        // 清理条件（排除 null 和 undefined）
         const cleanWhere = fieldClear(where, { excludeValues: [null, undefined] });
 
         // 转换表名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
-
-        // 字段名转换：小驼峰 → 下划线
-        const snakeData = keysToSnake(cleanData);
         const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
 
-        // 序列化数组字段（数组 → JSON 字符串）
-        const serializedData = DbUtils.serializeArrayFields(snakeData);
-
-        // 移除系统字段（防止用户尝试修改）
-        // 注意：state 允许用户修改（用于设置禁用状态 state=2）
-        const { id: _id, created_at: _created_at, updated_at: _updated_at, deleted_at: _deleted_at, ...userData } = serializedData;
-
-        // 强制更新时间戳（不可被用户覆盖）
-        const processed: Record<string, any> = {
-            ...userData,
-            updated_at: Date.now()
-        };
+        const processed = DbUtils.buildUpdateRow({ data: data, now: Date.now(), allowState: true });
 
         // 构建 SQL
         const whereFiltered = DbUtils.addDefaultStateFilter(snakeWhere, snakeTable, false);
-        const builder = new SqlBuilder().where(whereFiltered);
+        const builder = this.createSqlBuilder().where(whereFiltered);
         const { sql, params } = builder.toUpdateSql(snakeTable, processed);
 
         // 执行
@@ -746,7 +673,7 @@ export class DbHelper {
         const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
 
         // 物理删除
-        const builder = new SqlBuilder().where(snakeWhere);
+        const builder = this.createSqlBuilder().where(snakeWhere);
         const { sql, params } = builder.toDeleteSql(snakeTable);
 
         const result = await this.executeWithConn(sql, params);
@@ -798,7 +725,7 @@ export class DbHelper {
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
         return await this.sql.begin(async (tx: any) => {
-            const trans = new DbHelper(this.redis, tx);
+            const trans = new DbHelper({ redis: this.redis, sql: tx, dialect: this.dialect });
             return await callback(trans);
         });
     }
@@ -815,13 +742,13 @@ export class DbHelper {
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<boolean> {
-        const { table, where } = await this.prepareQueryOptions({ ...options, page: 1, limit: 1 });
+        const { table, where, tableQualifier } = await this.prepareQueryOptions({ ...options, page: 1, limit: 1 } as any);
 
         // 使用 COUNT(1) 性能更好
-        const builder = new SqlBuilder()
+        const builder = this.createSqlBuilder()
             .select(["COUNT(1) as cnt"])
             .from(table)
-            .where(DbUtils.addDefaultStateFilter(where, table, false))
+            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, false))
             .limit(1);
 
         const { sql, params } = builder.toSelectSql();
@@ -904,11 +831,13 @@ export class DbHelper {
 
         // 使用 SqlBuilder 构建安全的 WHERE 条件
         const whereFiltered = DbUtils.addDefaultStateFilter(snakeWhere, snakeTable, false);
-        const builder = new SqlBuilder().where(whereFiltered);
+        const builder = this.createSqlBuilder().where(whereFiltered);
         const { sql: whereClause, params: whereParams } = builder.getWhereConditions();
 
         // 构建安全的 UPDATE SQL（表名和字段名使用反引号转义，已经是下划线格式）
-        const sql = whereClause ? `UPDATE \`${snakeTable}\` SET \`${snakeField}\` = \`${snakeField}\` + ? WHERE ${whereClause}` : `UPDATE \`${snakeTable}\` SET \`${snakeField}\` = \`${snakeField}\` + ?`;
+        const quotedTable = this.dialect.quoteIdent(snakeTable);
+        const quotedField = this.dialect.quoteIdent(snakeField);
+        const sql = whereClause ? `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ? WHERE ${whereClause}` : `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ?`;
 
         const result = await this.executeWithConn(sql, [value, ...whereParams]);
         return result?.changes || 0;

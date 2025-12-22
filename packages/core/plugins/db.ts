@@ -7,6 +7,7 @@ import type { BeflyContext } from "../types/befly.js";
 import type { Plugin } from "../types/plugin.js";
 
 import { Connect } from "../lib/connect.js";
+import { MySqlDialect } from "../lib/dbDialect.js";
 import { DbHelper } from "../lib/dbHelper.js";
 import { Logger } from "../lib/logger.js";
 
@@ -21,8 +22,8 @@ export default {
         try {
             sql = await Connect.connectSql();
 
-            // 创建数据库管理器实例，直接传入 sql 对象
-            const dbManager = new DbHelper(befly.redis, sql);
+            // 创建数据库管理器实例
+            const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: new MySqlDialect() });
 
             return dbManager;
         } catch (error: any) {

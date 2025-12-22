@@ -183,7 +183,7 @@ describe("SqlBuilder - 复杂 WHERE 条件", () => {
         const result = builder.select(["*"]).from("users").where({ $or: [] }).toSelectSql();
 
         // **问题**：空 $or 应该跳过还是报错？
-        console.log("$or 空数组生成的 SQL:", result.sql);
+        expect(typeof result.sql).toBe("string");
     });
 
     test("$and + $or 嵌套", () => {
@@ -234,7 +234,7 @@ describe("SqlBuilder - 复杂 WHERE 条件", () => {
             .toSelectSql();
 
         expect(result.sql).toBeDefined();
-        console.log("深层嵌套生成的 SQL:", result.sql);
+        expect(typeof result.sql).toBe("string");
     });
 });
 
