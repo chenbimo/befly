@@ -967,6 +967,97 @@ export class DbHelper {
         }
     }
 
+    async delForceBatch(table: string, ids: number[]): Promise<number> {
+        if (ids.length === 0) {
+            return 0;
+        }
+
+        const snakeTable = snakeCase(table);
+        const placeholders = ids.map(() => "?").join(",");
+        const sql = `DELETE FROM ${snakeTable} WHERE id IN (${placeholders})`;
+
+        const result: any = await this.executeWithConn(sql, ids);
+        return result?.changes || 0;
+    }
+
+    async updBatch(table: string, dataList: Array<{ id: number; data: Record<string, any> }>): Promise<number> {
+        if (dataList.length === 0) {
+            return 0;
+        }
+
+        const snakeTable = snakeCase(table);
+        const now = Date.now();
+
+        const processedList: Array<{ id: number; data: Record<string, any> }> = [];
+        const fieldSet = new Set<string>();
+
+        for (const item of dataList) {
+            const cleanData = this.cleanFields(item.data);
+            const snakeData = keysToSnake(cleanData);
+            const serializedData = this.serializeArrayFields(snakeData);
+
+            // 移除系统字段（防止用户尝试修改）
+            // 注意：state 允许用户修改（用于设置禁用状态 state=2）
+            const userData: Record<string, any> = {};
+            for (const [key, value] of Object.entries(serializedData)) {
+                userData[key] = value;
+            }
+            delete userData.id;
+            delete userData.created_at;
+            delete userData.updated_at;
+            delete userData.deleted_at;
+
+            for (const key of Object.keys(userData)) {
+                fieldSet.add(key);
+            }
+
+            processedList.push({ id: item.id, data: userData });
+        }
+
+        const fields = Array.from(fieldSet).sort();
+        if (fields.length === 0) {
+            return 0;
+        }
+
+        const setSqlList: string[] = [];
+        const args: any[] = [];
+
+        for (const field of fields) {
+            const whenList: string[] = [];
+
+            for (const item of processedList) {
+                if (!(field in item.data)) {
+                    continue;
+                }
+
+                whenList.push("WHEN ? THEN ?");
+                args.push(item.id);
+                args.push(item.data[field]);
+            }
+
+            if (whenList.length === 0) {
+                continue;
+            }
+
+            setSqlList.push(`${field} = CASE id ${whenList.join(" ")} ELSE ${field} END`);
+        }
+
+        // 统一更新时间
+        setSqlList.push("updated_at = ?");
+        args.push(now);
+
+        const ids: number[] = processedList.map((item) => item.id);
+        const placeholders = ids.map(() => "?").join(",");
+
+        for (const id of ids) {
+            args.push(id);
+        }
+
+        const sql = `UPDATE ${snakeTable} SET ${setSqlList.join(", ")} WHERE id IN (${placeholders}) AND state > 0`;
+        const result: any = await this.executeWithConn(sql, args);
+        return result?.changes || 0;
+    }
+
     /**
      * 更新数据（强制更新时间戳，系统字段不可修改）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）

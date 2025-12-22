@@ -50,45 +50,48 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
         }
     }
 
-    for (const item of updData) {
+    if (updData.length > 0) {
         try {
-            await ctx.dbHelper.updData({
-                table: tableName,
-                where: { id: item.id },
-                data: {
-                    name: (item.api as any).name,
-                    routePath: (item.api as any).routePath,
-                    addonName: (item.api as any).addonName
-                }
-            });
+            await ctx.dbHelper.updBatch(
+                tableName,
+                updData.map((item) => {
+                    return {
+                        id: item.id,
+                        data: {
+                            name: (item.api as any).name,
+                            routePath: (item.api as any).routePath,
+                            addonName: (item.api as any).addonName
+                        }
+                    };
+                })
+            );
         } catch (error: any) {
-            Logger.error({ err: error, api: (item.api as any)?.name }, "同步接口更新失败");
+            Logger.error({ err: error }, "同步接口批量更新失败");
         }
     }
 
-    for (const api of insData) {
+    if (insData.length > 0) {
         try {
-            await ctx.dbHelper.insData({
-                table: tableName,
-                data: {
-                    name: (api as any).name,
-                    routePath: (api as any).routePath,
-                    addonName: (api as any).addonName
-                }
-            });
+            await ctx.dbHelper.insBatch(
+                tableName,
+                insData.map((api) => {
+                    return {
+                        name: (api as any).name,
+                        routePath: (api as any).routePath,
+                        addonName: (api as any).addonName
+                    };
+                })
+            );
         } catch (error: any) {
-            Logger.error({ err: error, api: (api as any)?.name }, "同步接口新增失败");
+            Logger.error({ err: error }, "同步接口批量新增失败");
         }
     }
 
-    for (const id of delData) {
+    if (delData.length > 0) {
         try {
-            await ctx.dbHelper.delForce({
-                table: tableName,
-                where: { id: id }
-            });
+            await ctx.dbHelper.delForceBatch(tableName, delData);
         } catch (error: any) {
-            Logger.error({ err: error, id: id }, "同步接口删除失败");
+            Logger.error({ err: error }, "同步接口批量删除失败");
         }
     }
     await ctx.cacheHelper.cacheApis();
