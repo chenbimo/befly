@@ -65,6 +65,8 @@ export class Befly {
             this.config = beflyConfig;
 
             const { apis, tables, plugins, hooks } = await scanSources();
+            console.log("🔥[ apis ]-68", apis);
+            process.exit(0);
 
             await checkApi(apis);
             await checkTable(tables);

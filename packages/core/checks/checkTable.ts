@@ -2,7 +2,7 @@
 import type { FieldDefinition } from "../../types/validate.js";
 
 // 相对导入
-import { Logger } from "../../lib/logger.js";
+import { Logger } from "../lib/logger.js";
 
 /**
  * 保留字段列表

@@ -54,17 +54,15 @@ export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, 
     const apis = new Map<string, ApiRoute>();
 
     // 4. 遍历处理所有 API 文件
-    for (const apiFile of apiItems) {
+    for (const api of apiItems) {
         try {
-            const api = apiFile as any;
-
             // 设置默认值
             const methodStr = (api.method || "POST").toUpperCase();
             const auth = api.auth !== undefined ? api.auth : true;
 
             // 构建路由路径（用于错误提示）
-            const sourcePrefix = apiFile.source === "core" ? "/core/" : apiFile.source === "app" ? "/app/" : "/addon/";
-            const routePath = `/api${sourcePrefix}${apiFile.relativePath}`;
+            const sourcePrefix = api.source === "core" ? "/core/" : api.source === "app" ? "/app/" : "/addon/";
+            const routePath = `/api${sourcePrefix}${api.relativePath}`;
 
             // 处理字段定义，将 @ 引用替换为实际字段定义
             const fields = processFields(api.fields || {}, api.name, routePath);
