@@ -48,12 +48,12 @@ const processedTables: string[] = [];
  * 2. 消费传入的表定义数据（来自 scanSources 的 tables）
  * 3. 对比并应用表结构变更
  */
-export async function syncTable(items: SyncTableInputItem[]): Promise<void> {
+export async function syncTable(tables: SyncTableInputItem[]): Promise<void> {
     try {
         // 清空处理记录
         processedTables.length = 0;
 
-        if (!Array.isArray(items)) {
+        if (!Array.isArray(tables)) {
             throw new Error("syncTable(items) 参数必须是数组");
         }
 
@@ -69,7 +69,7 @@ export async function syncTable(items: SyncTableInputItem[]): Promise<void> {
         await Connect.connectRedis();
 
         // 处理传入的 tables 数据（来自 scanSources）
-        for (const item of items) {
+        for (const item of tables) {
             if (!item || item.type !== "table") {
                 continue;
             }
