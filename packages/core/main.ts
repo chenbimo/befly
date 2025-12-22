@@ -26,7 +26,9 @@ import { apiHandler } from "./router/api.js";
 import { staticHandler } from "./router/static.js";
 // 同步
 import { syncApi } from "./sync/syncApi.js";
+import { syncDev } from "./sync/syncDev.js";
 import { syncMenu } from "./sync/syncMenu.js";
+import { syncTable } from "./sync/syncTable.js";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime.js";
 import { getProcessRole } from "./utils/process.js";
@@ -75,7 +77,7 @@ export class Befly {
             this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
-            await syncTable();
+            await syncTable(tables as any);
             await syncApi(apis as any, this.context as BeflyContext);
 
             await syncMenu(this.context as BeflyContext);

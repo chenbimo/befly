@@ -36,7 +36,8 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
     ];
 
     for (const [name, comment] of systemComments) {
-        const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${comment}'`;
+        const escaped = String(comment).replace(/'/g, "''");
+        const stmt = `COMMENT ON COLUMN "${tableName}"."${name}" IS '${escaped}'`;
         await sql.unsafe(stmt);
     }
 
@@ -45,8 +46,10 @@ async function addPostgresComments(sql: SQL, tableName: string, fields: Record<s
         // 转换字段名为下划线格式
         const dbFieldName = snakeCase(fieldKey);
 
-        const { name: fieldName } = fieldDef;
-        const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS '${fieldName}'`;
+        const fieldName = fieldDef.name && fieldDef.name !== "null" ? String(fieldDef.name) : "";
+        const escaped = fieldName.replace(/'/g, "''");
+        const valueSql = fieldName ? `'${escaped}'` : "NULL";
+        const stmt = `COMMENT ON COLUMN "${tableName}"."${dbFieldName}" IS ${valueSql}`;
         await sql.unsafe(stmt);
     }
 }

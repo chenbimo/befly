@@ -8,6 +8,8 @@
 import type { FieldDefinition } from "../../types/validate.js";
 import type { SQL } from "bun";
 
+import { snakeCase } from "es-toolkit/string";
+
 import { createTable } from "./tableCreate.js";
 
 /**
@@ -29,7 +31,8 @@ export async function rebuildSqliteTable(sql: SQL, tableName: string, fields: Re
     // 1. 读取现有列顺序
     const info = await sql.unsafe(`PRAGMA table_info(${tableName})`);
     const existingCols = info.map((r: any) => r.name);
-    const targetCols = ["id", "created_at", "updated_at", "deleted_at", "state", ...Object.keys(fields)];
+    const businessCols = Object.keys(fields).map((k) => snakeCase(k));
+    const targetCols = ["id", "created_at", "updated_at", "deleted_at", "state", ...businessCols];
     const tmpTable = `${tableName}__tmp__${Date.now()}`;
 
     // 2. 创建新表（使用当前定义）
