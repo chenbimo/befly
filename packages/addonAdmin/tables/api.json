@@ -6,26 +6,16 @@
         "max": 100,
         "index": true
     },
-    "path": {
+    "routePath": {
         "name": "接口路径",
         "type": "string",
         "min": 1,
         "max": 200,
         "index": true
     },
-    "description": {
-        "name": "接口描述",
-        "type": "string",
-        "max": 500
-    },
     "addonName": {
         "name": "所属插件",
         "type": "string",
         "max": 50
-    },
-    "addonTitle": {
-        "name": "插件标题",
-        "type": "string",
-        "max": 100
     }
 }

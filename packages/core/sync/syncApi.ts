@@ -1,22 +1,9 @@
 import type { ApiInfo } from "../types/sync.js";
 import type { ScanFileResult } from "../utils/scanFiles.js";
 
+import { keyBy } from "es-toolkit/array";
+
 import { Logger } from "../lib/logger.js";
-import { makeRouteKey } from "../utils/route.js";
-
-function getAddonTitleFromCtx(ctx: any, addonName: string): string {
-    const addons = ctx?.addons;
-    if (!Array.isArray(addons) || addons.length === 0) {
-        return "";
-    }
-
-    const addon = addons.find((a: any) => a?.name === addonName);
-    const title = addon?.title ?? addon?.addonTitle;
-    if (typeof title !== "string") {
-        return "";
-    }
-    return title;
-}
 
 export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
     const tableName = "addon_admin_api";
@@ -26,69 +13,28 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
         return;
     }
 
-    const allApis: ApiInfo[] = [];
-
-    for (const item of apis) {
-        const api = item as any;
-
-        const methodStr = (api.method || "POST").toUpperCase();
-        const methods = methodStr
-            .split(",")
-            .map((m: string) => m.trim())
-            .filter((m: string) => m);
-
-        const sourcePrefix = item.source === "core" ? "/core/" : item.source === "app" ? "/app/" : "/addon/";
-        const routePath = `/api${sourcePrefix}${item.relativePath}`;
-
-        const description = typeof api.description === "string" ? api.description : "";
-        const addonName = item.source === "addon" ? item.addonName || "" : "";
-        const addonTitle = addonName ? getAddonTitleFromCtx(ctx, addonName) : "";
-
-        for (const method of methods) {
-            allApis.push({
-                name: api.name,
-                path: makeRouteKey(method, routePath),
-                description: description,
-                addonName: addonName,
-                addonTitle: addonTitle
-            });
-        }
-    }
-
-    const apiKeys = new Set(allApis.map((api) => api.path));
-
-    const existingRecordsResult = await ctx.dbHelper.getAll({
+    const allDbApis = await ctx.dbHelper.getAll({
         table: tableName,
-        fields: ["id", "path", "name", "description", "addonName", "addonTitle", "state"],
+        fields: ["id", "path", "name"],
         where: { state$gte: 0 }
     } as any);
 
-    const existingByPath = new Map<string, any>();
-    for (const record of existingRecordsResult.lists) {
-        if (typeof record?.state !== "number" || record.state < 0) {
-            continue;
-        }
-        if (typeof record?.path !== "string" || !record.path) {
-            continue;
-        }
-        existingByPath.set(record.path, record);
-    }
+    const allDbApiMap = keyBy(allDbApis, (item) => item.routePath);
 
-    const toInsert: ApiInfo[] = [];
-    const toUpdate: Array<{ id: number; api: ApiInfo }> = [];
-    const toDelete: number[] = [];
+    const insData: ApiInfo[] = [];
+    const updData: Array<{ id: number; api: ApiInfo }> = [];
+    const delData: number[] = [];
 
-    for (const api of allApis) {
-        const existing = existingByPath.get(api.path);
-        if (!existing) {
-            toInsert.push(api);
-            continue;
-        }
-
-        const needUpdate = existing.name !== api.name || existing.description !== api.description || existing.addonName !== api.addonName || existing.addonTitle !== api.addonTitle;
-
-        if (needUpdate) {
-            toUpdate.push({ id: existing.id, api: api });
+    for (const api of apis) {
+        const item = allDbApiMap[api.routePath];
+        if (item) {
+            // 更新
+            if (api.name !== item.name || api.routePath !== item.routePath || api.addonName !== item.addonName) {
+                updData.push({ id: item.id, ...api });
+            }
+        } else {
+            // 添加
+            insData.push(api);
         }
     }
 
@@ -98,7 +44,7 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
         }
     }
 
-    for (const item of toUpdate) {
+    for (const item of updData) {
         try {
             await ctx.dbHelper.updData({
                 table: tableName,
@@ -115,7 +61,7 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
         }
     }
 
-    for (const api of toInsert) {
+    for (const api of insData) {
         try {
             await ctx.dbHelper.insData({
                 table: tableName,
@@ -132,7 +78,7 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
         }
     }
 
-    for (const id of toDelete) {
+    for (const id of delData) {
         try {
             await ctx.dbHelper.delForce({
                 table: tableName,
@@ -146,6 +92,4 @@ export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
 
     // API 表发生变更后，重建角色接口权限缓存
     await ctx.cacheHelper.rebuildRoleApiPermissions();
-
-    return;
 }
