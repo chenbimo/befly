@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { forOwn } from "es-toolkit/compat";
 import { camelCase } from "es-toolkit/string";
 import { relative, normalize, parse, join } from "pathe";
 
@@ -85,7 +86,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             // 固定默认过滤（不可关闭）：忽略下划线开头的文件/目录
             if (fileName.startsWith("_")) continue;
             if (relativePath.split("/").some((part) => part.startsWith("_"))) continue;
-            const content = await importDefault(normalizedFile, defaultValue);
+            const content = await importDefault(normalizedFile, {});
 
             const baseName = camelCase(fileName);
             let addonName: string | undefined = undefined;
@@ -118,19 +119,30 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             };
 
             if (type === "table") {
-                base.content = content;
+                base.tables = content;
                 results.push(base as ScanFileResult);
                 continue;
             }
+            if (type === "api") {
+                base.auth = true;
+                base.rawBody = false;
+                base.method = "POST";
+                base.fields = {};
+                base.required = [];
+            }
+            if (type === "plugin" || type === "hook") {
+                base.deps = [];
+                base.name = "";
+                base.handler = null;
+            }
 
-            // api/plugin/hook：把 default export 的字段映射到与元数据同级（不保留 content 字段）
-            if (typeof content === "object" && content !== null && !Array.isArray(content)) {
-                for (const key of Object.keys(content)) {
-                    if (Object.prototype.hasOwnProperty.call(base, key)) {
-                        continue;
-                    }
-                    base[key] = (content as any)[key];
-                }
+            forOwn(content, (value, key) => {
+                base[key] = value;
+            });
+
+            if (type === "api") {
+                base.routePrefix = source === "core" ? "/core/" : source === "app" ? "/app/" : "/addon/";
+                base.routePath = `/api/${base.routePrefix}${relativePath}`;
             }
 
             results.push(base as ScanFileResult);

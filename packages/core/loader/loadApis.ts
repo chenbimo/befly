@@ -50,15 +50,13 @@ function processFields(fields: Record<string, any>, apiName: string, routePath: 
  * @param apiItems - scanSources/scanFiles 扫描到的 API 条目数组
  * @returns API 路由映射表
  */
-export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, ApiRoute>> {
-    const apis = new Map<string, ApiRoute>();
+export async function loadApis(apis: ScanFileResult[]): Promise<Map<string, ApiRoute>> {
+    const apisMap = new Map<string, ApiRoute>();
 
     // 4. 遍历处理所有 API 文件
-    for (const api of apiItems) {
+    for (const api of apis) {
         try {
             // 设置默认值
-            const methodStr = (api.method || "POST").toUpperCase();
-            const auth = api.auth !== undefined ? api.auth : true;
 
             // 构建路由路径（用于错误提示）
             const sourcePrefix = api.source === "core" ? "/core/" : api.source === "app" ? "/app/" : "/addon/";
@@ -94,5 +92,5 @@ export async function loadApis(apiItems: ScanFileResult[]): Promise<Map<string, 
         }
     }
 
-    return apis;
+    return apisMap;
 }

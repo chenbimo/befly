@@ -11,7 +11,7 @@ import type { TableDefinition } from "./validate.js";
  * HTTP 方法类型
  * 支持 GET、POST 或逗号分隔的组合
  */
-export type HttpMethod = "GET" | "POST" | "GET,POST" | "POST,GET";
+export type HttpMethod = "GET" | "POST" | "GET,POST";
 
 /**
  * 用户信息类型
