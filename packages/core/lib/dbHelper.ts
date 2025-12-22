@@ -82,7 +82,7 @@ export class DbHelper {
      * 统一的查询参数预处理方法
      */
     private async prepareQueryOptions(options: QueryOptions) {
-        const cleanWhere = this.cleanFields(options.where || {});
+        const cleanWhere = fieldClear(options.where || {}, { excludeValues: [null, undefined] });
         const hasJoins = options.joins && options.joins.length > 0;
 
         // 联查时使用特殊处理逻辑
@@ -138,13 +138,6 @@ export class DbHelper {
                     break;
             }
         }
-    }
-
-    /**
-     * 清理数据或 where 条件（默认排除 null 和 undefined）
-     */
-    public cleanFields<T extends Record<string, any>>(data: T, excludeValues: any[] = [null, undefined], keepValues: Record<string, any> = {}): Partial<T> {
-        return fieldClear(data || ({} as T), { excludeValues, keepMap: keepValues });
     }
 
     /**
@@ -498,7 +491,7 @@ export class DbHelper {
         const { table, data } = options;
 
         // 清理数据（排除 null 和 undefined）
-        const cleanData = this.cleanFields(data);
+        const cleanData = fieldClear(data, { excludeValues: [null, undefined] });
 
         // 转换表名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
@@ -572,7 +565,7 @@ export class DbHelper {
         // 处理所有数据（自动添加系统字段）
         const processedList = dataList.map((data, index) => {
             // 清理数据（排除 null 和 undefined）
-            const cleanData = this.cleanFields(data);
+            const cleanData = fieldClear(data, { excludeValues: [null, undefined] });
 
             // 字段名转换：小驼峰 → 下划线
             const snakeData = keysToSnake(cleanData);
@@ -632,7 +625,7 @@ export class DbHelper {
         const fieldSet = new Set<string>();
 
         for (const item of dataList) {
-            const cleanData = this.cleanFields(item.data);
+            const cleanData = fieldClear(item.data, { excludeValues: [null, undefined] });
             const snakeData = keysToSnake(cleanData);
             const serializedData = DbUtils.serializeArrayFields(snakeData);
 
@@ -706,8 +699,8 @@ export class DbHelper {
         const { table, data, where } = options;
 
         // 清理数据和条件（排除 null 和 undefined）
-        const cleanData = this.cleanFields(data);
-        const cleanWhere = this.cleanFields(where);
+        const cleanData = fieldClear(data, { excludeValues: [null, undefined] });
+        const cleanWhere = fieldClear(where, { excludeValues: [null, undefined] });
 
         // 转换表名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
@@ -764,7 +757,7 @@ export class DbHelper {
         const snakeTable = snakeCase(table);
 
         // 清理条件字段
-        const cleanWhere = this.cleanFields(where);
+        const cleanWhere = fieldClear(where, { excludeValues: [null, undefined] });
         const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
 
         // 物理删除
@@ -919,7 +912,7 @@ export class DbHelper {
         }
 
         // 清理 where 条件（排除 null 和 undefined）
-        const cleanWhere = this.cleanFields(where);
+        const cleanWhere = fieldClear(where, { excludeValues: [null, undefined] });
 
         // 转换 where 条件字段名：小驼峰 → 下划线
         const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
