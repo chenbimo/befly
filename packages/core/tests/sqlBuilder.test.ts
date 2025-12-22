@@ -132,6 +132,30 @@ describe("SqlBuilder - INSERT", () => {
         expect(result.sql).toContain("VALUES (?, ?)");
         expect(result.params).toEqual(["John", 25]);
     });
+
+    test("插入单条数据 - 参数为 undefined 应抛错", () => {
+        const builder = new SqlBuilder();
+        expect(() => {
+            builder.toInsertSql("users", { name: undefined as any, age: 25 });
+        }).toThrow("undefined");
+    });
+
+    test("批量插入 - 行字段不一致应抛错", () => {
+        const builder = new SqlBuilder();
+        expect(() => {
+            builder.toInsertSql("users", [{ name: "John", age: 25 }, { name: "Jane" }] as any);
+        }).toThrow("字段必须一致");
+    });
+
+    test("批量插入 - 缺字段或 undefined 应抛错", () => {
+        const builder = new SqlBuilder();
+        expect(() => {
+            builder.toInsertSql("users", [
+                { name: "John", age: 25 },
+                { name: "Jane", age: undefined as any }
+            ] as any);
+        }).toThrow("undefined");
+    });
 });
 
 describe("SqlBuilder - UPDATE", () => {

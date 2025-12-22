@@ -256,7 +256,7 @@ export class DbHelper {
         const { table, where, joins, tableQualifier } = await this.prepareQueryOptions(options as QueryOptions);
 
         const builder = this.createSqlBuilder()
-            .select(["COUNT(*) as count"])
+            .selectRaw("COUNT(*) as count")
             .from(table)
             .where(DbUtils.addDefaultStateFilter(where, tableQualifier, !!joins));
 
@@ -350,7 +350,7 @@ export class DbHelper {
         const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, !!prepared.joins);
 
         // 查询总数
-        const countBuilder = this.createSqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
+        const countBuilder = this.createSqlBuilder().selectRaw("COUNT(*) as total").from(prepared.table).where(whereFiltered);
 
         // 添加 JOIN（计数也需要）
         this.applyJoins(countBuilder, prepared.joins);
@@ -428,7 +428,7 @@ export class DbHelper {
         const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, !!prepared.joins);
 
         // 查询真实总数
-        const countBuilder = this.createSqlBuilder().select(["COUNT(*) as total"]).from(prepared.table).where(whereFiltered);
+        const countBuilder = this.createSqlBuilder().selectRaw("COUNT(*) as total").from(prepared.table).where(whereFiltered);
 
         // 添加 JOIN（计数也需要）
         this.applyJoins(countBuilder, prepared.joins);

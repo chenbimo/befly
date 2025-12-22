@@ -272,9 +272,15 @@ describe("SqlBuilder - 字段名转义", () => {
         expect(result.sql).toContain("`profiles`.`bio`");
     });
 
-    test("函数调用不应转义", () => {
+    test("函数调用必须使用 selectRaw", () => {
         const builder = new SqlBuilder();
-        const result = builder.select(["COUNT(*)", "MAX(age)"]).from("users").toSelectSql();
+
+        expect(() => {
+            builder.select(["COUNT(*)", "MAX(age)"]).from("users").toSelectSql();
+        }).toThrow("selectRaw");
+
+        const builder2 = new SqlBuilder();
+        const result = builder2.selectRaw("COUNT(*)").selectRaw("MAX(age)").from("users").toSelectSql();
 
         expect(result.sql).toContain("COUNT(*)");
         expect(result.sql).toContain("MAX(age)");
@@ -283,7 +289,7 @@ describe("SqlBuilder - 字段名转义", () => {
 
     test("AS 别名应正确处理", () => {
         const builder = new SqlBuilder();
-        const result = builder.select(["name AS userName", "COUNT(*) AS total"]).from("users").toSelectSql();
+        const result = builder.select(["name AS userName"]).selectRaw("COUNT(*) AS total").from("users").toSelectSql();
 
         expect(result.sql).toContain("`name` AS userName");
         expect(result.sql).toContain("COUNT(*) AS total");
@@ -321,6 +327,13 @@ describe("SqlBuilder - 表名转义", () => {
 
         expect(result.sql).toContain("FROM `user_profiles`");
         expect(result.sql).not.toContain("``");
+    });
+
+    test("已有反引号的表名带别名应正确处理", () => {
+        const builder = new SqlBuilder();
+        const result = builder.select(["*"]).from("`user_profiles` up").toSelectSql();
+
+        expect(result.sql).toContain("FROM `user_profiles` up");
     });
 });
 

@@ -44,6 +44,19 @@ export class SqlBuilder {
 
     private _isQuotedIdent(value: string): boolean {
         const trimmed = value.trim();
+        if (trimmed.length < 2) return false;
+
+        const first = trimmed[0];
+        const last = trimmed[trimmed.length - 1];
+
+        if (first === "`" && last === "`") return true;
+        if (first === '"' && last === '"') return true;
+
+        return false;
+    }
+
+    private _startsWithQuote(value: string): boolean {
+        const trimmed = value.trim();
         return trimmed.startsWith("`") || trimmed.startsWith('"');
     }
 
@@ -74,9 +87,20 @@ export class SqlBuilder {
 
         field = field.trim();
 
-        // 如果是 * 或已经被引用或包含函数，直接返回
-        if (field === "*" || this._isQuotedIdent(field) || field.includes("(")) {
+        // 防止不完整引用被误认为“已安全引用”
+        if (this._startsWithQuote(field) && !this._isQuotedIdent(field)) {
+            throw new Error(`字段标识符引用不完整，请使用成对的 \`...\` 或 "..." (field: ${field})`);
+        }
+
+        // 如果是 * 或已经被引用，直接返回
+        if (field === "*" || this._isQuotedIdent(field)) {
             return field;
+        }
+
+        // 收紧：包含函数/表达式（括号）不允许走自动转义路径
+        // 这类表达式应显式使用 selectRaw/whereRaw 以避免误拼接和注入风险
+        if (field.includes("(") || field.includes(")")) {
+            throw new Error(`字段包含函数/表达式，请使用 selectRaw/whereRaw (field: ${field})`);
         }
 
         // 处理别名（AS关键字）
@@ -99,6 +123,10 @@ export class SqlBuilder {
                     part = part.trim();
                     if (part === "*" || this._isQuotedIdent(part)) {
                         return part;
+                    }
+
+                    if (this._startsWithQuote(part) && !this._isQuotedIdent(part)) {
+                        throw new Error(`字段标识符引用不完整，请使用成对的 \`...\` 或 "..." (field: ${field})`);
                     }
                     return this._quoteIdent(part);
                 })
@@ -125,6 +153,12 @@ export class SqlBuilder {
 
         table = table.trim();
 
+        // 防止不完整引用被误认为“已安全引用”
+        if (this._startsWithQuote(table) && !this._isQuotedIdent(table)) {
+            // 注意：这里可能是 `table` alias 的形式，整体不成对，但 namePart 可能成对。
+            // 因此这里只做“整体是单段引用”的判断，具体在后续 namePart 分支里校验。
+        }
+
         if (this._isQuotedIdent(table)) {
             return table;
         }
@@ -150,13 +184,40 @@ export class SqlBuilder {
         if (nameSegments.length === 2) {
             const schema = nameSegments[0].trim();
             const tableName = nameSegments[1].trim();
-            this._validateIdentifierPart(schema, "schema");
-            this._validateIdentifierPart(tableName, "table");
-            escapedName = `${this._quoteIdent(schema)}.${this._quoteIdent(tableName)}`;
+
+            const escapedSchema = this._isQuotedIdent(schema)
+                ? schema
+                : (() => {
+                      if (this._startsWithQuote(schema) && !this._isQuotedIdent(schema)) {
+                          throw new Error(`schema 标识符引用不完整，请使用成对的 \`...\` 或 "..." (schema: ${schema})`);
+                      }
+                      this._validateIdentifierPart(schema, "schema");
+                      return this._quoteIdent(schema);
+                  })();
+
+            const escapedTableName = this._isQuotedIdent(tableName)
+                ? tableName
+                : (() => {
+                      if (this._startsWithQuote(tableName) && !this._isQuotedIdent(tableName)) {
+                          throw new Error(`table 标识符引用不完整，请使用成对的 \`...\` 或 "..." (table: ${tableName})`);
+                      }
+                      this._validateIdentifierPart(tableName, "table");
+                      return this._quoteIdent(tableName);
+                  })();
+
+            escapedName = `${escapedSchema}.${escapedTableName}`;
         } else {
             const tableName = nameSegments[0].trim();
-            this._validateIdentifierPart(tableName, "table");
-            escapedName = this._quoteIdent(tableName);
+
+            if (this._isQuotedIdent(tableName)) {
+                escapedName = tableName;
+            } else {
+                if (this._startsWithQuote(tableName) && !this._isQuotedIdent(tableName)) {
+                    throw new Error(`table 标识符引用不完整，请使用成对的 \`...\` 或 "..." (table: ${tableName})`);
+                }
+                this._validateIdentifierPart(tableName, "table");
+                escapedName = this._quoteIdent(tableName);
+            }
         }
 
         if (aliasPart) {
@@ -635,18 +696,56 @@ export class SqlBuilder {
                 throw new Error(`插入数据必须至少有一个字段 (table: ${table})`);
             }
 
+            // 批量 INSERT：要求每行字段集合一致，且参数不可为 undefined
+            const fieldSet = new Set(fields);
+            for (let i = 0; i < data.length; i++) {
+                const row = data[i];
+                if (!row || typeof row !== "object" || Array.isArray(row)) {
+                    throw new Error(`批量插入的每一行必须是对象 (table: ${table}, rowIndex: ${i})`);
+                }
+
+                const rowKeys = Object.keys(row);
+                if (rowKeys.length !== fields.length) {
+                    throw new Error(`批量插入每行字段必须一致 (table: ${table}, rowIndex: ${i})`);
+                }
+
+                for (const key of rowKeys) {
+                    if (!fieldSet.has(key)) {
+                        throw new Error(`批量插入每行字段必须一致 (table: ${table}, rowIndex: ${i}, extraField: ${key})`);
+                    }
+                }
+
+                for (const field of fields) {
+                    // 缺字段或 undefined 都不允许
+                    if (!(field in row)) {
+                        throw new Error(`批量插入缺少字段 (table: ${table}, rowIndex: ${i}, field: ${field})`);
+                    }
+                    this._validateParam((row as any)[field]);
+                }
+            }
+
             const escapedFields = fields.map((field) => this._escapeField(field));
             const placeholders = fields.map(() => "?").join(", ");
             const values = data.map(() => `(${placeholders})`).join(", ");
 
             const sql = `INSERT INTO ${escapedTable} (${escapedFields.join(", ")}) VALUES ${values}`;
-            const params = data.flatMap((row) => fields.map((field) => row[field]));
+            const params: SqlValue[] = [];
+            for (let i = 0; i < data.length; i++) {
+                const row = data[i] as Record<string, SqlValue>;
+                for (const field of fields) {
+                    params.push(row[field]);
+                }
+            }
 
             return { sql, params };
         } else {
             const fields = Object.keys(data);
             if (fields.length === 0) {
                 throw new Error(`插入数据必须至少有一个字段 (table: ${table})`);
+            }
+
+            for (const field of fields) {
+                this._validateParam((data as any)[field]);
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));
