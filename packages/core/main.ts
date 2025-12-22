@@ -65,8 +65,6 @@ export class Befly {
             this.config = beflyConfig;
 
             const { apis, tables, plugins, hooks } = await scanSources();
-            console.log("🔥[ apis ]-68", apis);
-            process.exit(0);
 
             await checkApi(apis);
             await checkTable(tables);
@@ -77,7 +75,7 @@ export class Befly {
             this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
-            // await syncTable();
+            await syncTable();
             await syncApi(apis as any, this.context as BeflyContext);
 
             await syncMenu(this.context as BeflyContext);
