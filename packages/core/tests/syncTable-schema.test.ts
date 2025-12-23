@@ -9,23 +9,12 @@
  * 注意：这些是模拟测试，实际数据库操作需要集成测试
  */
 
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, test, expect } from "bun:test";
 
-import { setDbType } from "../sync/syncTable/constants.js";
+import { setDbType, tableExists, getTableColumns, getTableIndexes } from "../sync/syncTable.js";
 
 // 设置数据库类型为 MySQL
 setDbType("mysql");
-
-let tableExists: any;
-let getTableColumns: any;
-let getTableIndexes: any;
-
-beforeAll(async () => {
-    const schema = await import("../sync/syncTable/schema.js");
-    tableExists = schema.tableExists;
-    getTableColumns = schema.getTableColumns;
-    getTableIndexes = schema.getTableIndexes;
-});
 
 describe("tableExists", () => {
     test("sql 客户端未初始化时抛出错误", async () => {

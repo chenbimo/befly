@@ -4,7 +4,9 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { getSqlType, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from "../sync/syncTable/types.js";
+import { setDbType, getSqlType, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from "../sync/syncTable.js";
+
+setDbType("mysql");
 
 describe("syncTable - array_number 类型支持", () => {
     // ==================== 类型判断测试 ====================

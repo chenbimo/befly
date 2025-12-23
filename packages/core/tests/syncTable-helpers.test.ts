@@ -7,23 +7,12 @@
  * - applyFieldDefaults
  */
 
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, test, expect } from "bun:test";
 
-import { setDbType } from "../sync/syncTable/constants.js";
+import { setDbType, quoteIdentifier, escapeComment, applyFieldDefaults } from "../sync/syncTable.js";
 
 // 设置数据库类型为 MySQL
 setDbType("mysql");
-
-let quoteIdentifier: any;
-let escapeComment: any;
-let applyFieldDefaults: any;
-
-beforeAll(async () => {
-    const helpers = await import("../sync/syncTable/helpers.js");
-    quoteIdentifier = helpers.quoteIdentifier;
-    escapeComment = helpers.escapeComment;
-    applyFieldDefaults = helpers.applyFieldDefaults;
-});
 
 describe("quoteIdentifier (MySQL)", () => {
     test("使用反引号包裹标识符", () => {

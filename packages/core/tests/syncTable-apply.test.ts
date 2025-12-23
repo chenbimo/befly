@@ -5,19 +5,12 @@
  * - compareFieldDefinition
  */
 
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, test, expect } from "bun:test";
 
-import { setDbType } from "../sync/syncTable/constants.js";
+import { setDbType, compareFieldDefinition } from "../sync/syncTable.js";
 
 // 设置数据库类型为 MySQL
 setDbType("mysql");
-
-let compareFieldDefinition: any;
-
-beforeAll(async () => {
-    const apply = await import("../sync/syncTable/apply.js");
-    compareFieldDefinition = apply.compareFieldDefinition;
-});
 
 describe("compareFieldDefinition", () => {
     describe("长度变化检测", () => {

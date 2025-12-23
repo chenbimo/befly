@@ -8,26 +8,12 @@
  * - generateDefaultSql
  */
 
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, test, expect } from "bun:test";
 
-import { setDbType } from "../sync/syncTable/constants.js";
+import { setDbType, isStringOrArrayType, getSqlType, resolveDefaultValue, generateDefaultSql } from "../sync/syncTable.js";
 
 // 设置数据库类型为 MySQL
 setDbType("mysql");
-
-// 动态导入以确保环境变量生效
-let isStringOrArrayType: any;
-let getSqlType: any;
-let resolveDefaultValue: any;
-let generateDefaultSql: any;
-
-beforeAll(async () => {
-    const types = await import("../sync/syncTable/types.js");
-    isStringOrArrayType = types.isStringOrArrayType;
-    getSqlType = types.getSqlType;
-    resolveDefaultValue = types.resolveDefaultValue;
-    generateDefaultSql = types.generateDefaultSql;
-});
 
 describe("isStringOrArrayType", () => {
     test("string 类型返回 true", () => {

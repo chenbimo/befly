@@ -9,27 +9,12 @@
  * - isCompatibleTypeChange
  */
 
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, test, expect } from "bun:test";
 
-import { setDbType } from "../sync/syncTable/constants.js";
+import { setDbType, buildIndexSQL, buildSystemColumnDefs, buildBusinessColumnDefs, generateDDLClause, isCompatibleTypeChange } from "../sync/syncTable.js";
 
 // 设置数据库类型为 MySQL
 setDbType("mysql");
-
-let buildIndexSQL: any;
-let buildSystemColumnDefs: any;
-let buildBusinessColumnDefs: any;
-let generateDDLClause: any;
-let isCompatibleTypeChange: any;
-
-beforeAll(async () => {
-    const ddl = await import("../sync/syncTable/ddl.js");
-    buildIndexSQL = ddl.buildIndexSQL;
-    buildSystemColumnDefs = ddl.buildSystemColumnDefs;
-    buildBusinessColumnDefs = ddl.buildBusinessColumnDefs;
-    generateDDLClause = ddl.generateDDLClause;
-    isCompatibleTypeChange = ddl.isCompatibleTypeChange;
-});
 
 describe("buildIndexSQL (MySQL)", () => {
     test("创建索引 SQL", () => {
