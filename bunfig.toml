@@ -4,12 +4,4 @@ linker = "isolated"
 
 
 # 提升类型定义和工具到根目录
-publicHoistPattern = [
-    "@types/*",
-    "prettier",
-    "lerna",
-    "ci-info",
-    "vue-router",
-    "tdesign-vue-next",
-    "vite-bundle-analyzer",
-]
+publicHoistPattern = ["@types/*", "lerna", "ci-info", "vue-router", "tdesign-vue-next", "vite-bundle-analyzer"]

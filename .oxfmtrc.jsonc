@@ -7,7 +7,7 @@
     "printWidth": 300,
     "useTabs": false,
     "endOfLine": "lf",
-    "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/logs/**", "**/coverage/**", "**/.vite-inspect/**", "**/*.d.ts", "**/*.vue", "**/*.css", "**/*.scss", "**/*.less", "**/*.html"],
+    "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/logs/**", "**/coverage/**", "**/.vite-inspect/**", "**/*.d.ts"],
     "experimentalSortImports": {
         "groups": [["type-import"], ["value-builtin"], ["value-external", "value-internal"], ["value-parent", "value-sibling", "value-index"], ["unknown"]],
         "ignoreCase": true,

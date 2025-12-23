@@ -21,8 +21,6 @@
     "author": "chensuiyi <bimostyle@qq.com>",
     "files": [
         ".npmrc",
-        ".prettierignore",
-        ".prettierrc",
         "befly.config.ts",
         "bunfig.toml",
         "checks",

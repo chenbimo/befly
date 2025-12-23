@@ -3,16 +3,11 @@
 
 pre-commit:
     jobs:
-        # 1. 格式化代码（oxfmt 支持的格式用 oxfmt，其余用 prettier）
-        # - name: Format JS/TS/JSON/JSONC (oxfmt)
+        # 1. 格式化代码（统一使用 oxfmt）
+        # - name: Format files (oxfmt)
         #   priority: 1
-        #   glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc}"
-        #   run: bunx oxfmt --no-error-on-unmatched-pattern {staged_files}
-
-        # - name: Format other files (prettier)
-        #   priority: 1
-        #   glob: "*.{vue,md,yaml,yml,css,scss,less,html}"
-        #   run: bunx --bun prettier --write --cache --ignore-unknown {staged_files}
+        #   glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,json5,yml,yaml,toml,html,vue,mjml,hbs,handlebars,graphql,gql,md,mdx,css,scss,less}"
+        #   run: bunx oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
 
         # 2. Oxlint 代码检查（门禁）
         # - name: Oxlint

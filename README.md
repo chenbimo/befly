@@ -199,6 +199,13 @@ DB_NAME=:memory:
 
 完整文档请访问 [`/docs` 目录](./docs/)：
 
+## 🧹 代码格式化
+
+本仓库统一使用 **oxfmt** 进行格式化（已移除 Prettier）。
+
+- 格式化：`bun run format`
+- 检查：`bunx oxfmt --check .`
+
 - [快速开始](./docs/02-快速上手/01-10分钟体验.md)
 - [核心概念](./docs/03-核心概念/)
 - [API 开发](./docs/04-API开发/)

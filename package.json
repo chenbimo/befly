@@ -13,9 +13,8 @@
         "test:core": "bun --filter 'befly' test",
         "test:bail": "bun --filter '*' test --bail",
         "test:coverage": "bun --filter '*' test --coverage",
-        "format:oxfmt": "bunx oxfmt .",
-        "format:prettier": "bunx --bun prettier --write --cache --ignore-unknown \"**/*.{vue,md,yaml,yml,css,scss,less,html}\"",
-        "format": "bun run format:oxfmt && bun run format:prettier",
+        "format:oxfmt": "bunx oxfmt -c ./.oxfmtrc.jsonc .",
+        "format": "bun run format:oxfmt",
         "lint": "bunx oxlint .",
         "r": "lerna publish"
     },
@@ -24,9 +23,8 @@
         "@typescript/native-preview": "^7.0.0-dev.20251218.3",
         "lefthook": "^2.0.11",
         "lerna": "^9.0.3",
-        "oxfmt": "0.19.0",
-        "oxlint": "1.34.0",
-        "prettier": "^3.7.4"
+        "oxfmt": "0.20.0",
+        "oxlint": "1.34.0"
     },
     "engines": {
         "bun": ">=1.3.0"

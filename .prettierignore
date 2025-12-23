@@ -1,9 +1,0 @@
-LICENSE
-LICENSE.md
-
-# 常见产物/缓存目录（与 oxfmt ignorePatterns 对齐）
-**/node_modules/**
-**/dist/**
-**/logs/**
-**/coverage/**
-**/.vite-inspect/**
