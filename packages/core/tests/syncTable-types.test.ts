@@ -10,10 +10,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { setDbType, isStringOrArrayType, getSqlType, resolveDefaultValue, generateDefaultSql } from "../sync/syncTable.js";
-
-// 设置数据库类型为 MySQL
-setDbType("mysql");
+import { isStringOrArrayType, getSqlType, resolveDefaultValue, generateDefaultSql } from "../sync/syncTable.js";
 
 describe("isStringOrArrayType", () => {
     test("string 类型返回 true", () => {
@@ -99,27 +96,27 @@ describe("generateDefaultSql", () => {
 
 describe("getSqlType", () => {
     test("string 类型带长度", () => {
-        const result = getSqlType("string", 100);
+        const result = getSqlType("mysql", "string", 100);
         expect(result).toBe("VARCHAR(100)");
     });
 
     test("array_string 类型带长度", () => {
-        const result = getSqlType("array_string", 500);
+        const result = getSqlType("mysql", "array_string", 500);
         expect(result).toBe("VARCHAR(500)");
     });
 
     test("number 类型无符号", () => {
-        const result = getSqlType("number", null, true);
+        const result = getSqlType("mysql", "number", null, true);
         expect(result).toBe("BIGINT UNSIGNED");
     });
 
     test("number 类型有符号", () => {
-        const result = getSqlType("number", null, false);
+        const result = getSqlType("mysql", "number", null, false);
         expect(result).toBe("BIGINT");
     });
 
     test("text 类型", () => {
-        const result = getSqlType("text", null);
+        const result = getSqlType("mysql", "text", null);
         expect(result).toBe("MEDIUMTEXT");
     });
 });

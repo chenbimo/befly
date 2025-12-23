@@ -14,9 +14,6 @@ import { describe, test, expect } from "bun:test";
 
 import * as syncTable from "../sync/syncTable.js";
 
-// 设置数据库类型为 MySQL
-syncTable.setDbType("mysql");
-
 describe("DB_VERSION_REQUIREMENTS", () => {
     test("MySQL 最低版本为 8", () => {
         expect(syncTable.DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR).toBe(8);
@@ -83,36 +80,36 @@ describe("MYSQL_TABLE_CONFIG", () => {
 
 describe("getTypeMapping (MySQL)", () => {
     test("number 映射为 BIGINT", () => {
-        expect(syncTable.getTypeMapping().number).toBe("BIGINT");
+        expect(syncTable.getTypeMapping("mysql").number).toBe("BIGINT");
     });
 
     test("string 映射为 VARCHAR", () => {
-        expect(syncTable.getTypeMapping().string).toBe("VARCHAR");
+        expect(syncTable.getTypeMapping("mysql").string).toBe("VARCHAR");
     });
 
     test("text 映射为 MEDIUMTEXT", () => {
-        expect(syncTable.getTypeMapping().text).toBe("MEDIUMTEXT");
+        expect(syncTable.getTypeMapping("mysql").text).toBe("MEDIUMTEXT");
     });
 
     test("array_string 映射为 VARCHAR", () => {
-        expect(syncTable.getTypeMapping().array_string).toBe("VARCHAR");
+        expect(syncTable.getTypeMapping("mysql").array_string).toBe("VARCHAR");
     });
 
     test("array_text 映射为 MEDIUMTEXT", () => {
-        expect(syncTable.getTypeMapping().array_text).toBe("MEDIUMTEXT");
+        expect(syncTable.getTypeMapping("mysql").array_text).toBe("MEDIUMTEXT");
     });
 });
 
 describe("数据库类型判断 (MySQL)", () => {
     test("isMySQL 为 true", () => {
-        expect(syncTable.isMySQL()).toBe(true);
+        expect(syncTable.isMySQL("mysql")).toBe(true);
     });
 
     test("isPG 为 false", () => {
-        expect(syncTable.isPG()).toBe(false);
+        expect(syncTable.isPG("mysql")).toBe(false);
     });
 
     test("isSQLite 为 false", () => {
-        expect(syncTable.isSQLite()).toBe(false);
+        expect(syncTable.isSQLite("mysql")).toBe(false);
     });
 });

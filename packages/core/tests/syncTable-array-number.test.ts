@@ -4,9 +4,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { setDbType, getSqlType, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from "../sync/syncTable.js";
-
-setDbType("mysql");
+import { getSqlType, resolveDefaultValue, generateDefaultSql, isStringOrArrayType } from "../sync/syncTable.js";
 
 describe("syncTable - array_number 类型支持", () => {
     // ==================== 类型判断测试 ====================
@@ -22,18 +20,18 @@ describe("syncTable - array_number 类型支持", () => {
     // ==================== SQL 类型映射测试 ====================
 
     test("getSqlType: array_number_string 生成 VARCHAR(max)", () => {
-        const sqlType = getSqlType("array_number_string", 500);
+        const sqlType = getSqlType("mysql", "array_number_string", 500);
         expect(sqlType).toMatch(/VARCHAR\(500\)/i);
     });
 
     test("getSqlType: array_number_text 生成 TEXT/MEDIUMTEXT", () => {
-        const sqlType = getSqlType("array_number_text", null);
+        const sqlType = getSqlType("mysql", "array_number_text", null);
         expect(sqlType).toMatch(/TEXT/i);
     });
 
     test("getSqlType: array_number_string 使用 max 参数", () => {
-        const sqlType1 = getSqlType("array_number_string", 200);
-        const sqlType2 = getSqlType("array_number_string", 1000);
+        const sqlType1 = getSqlType("mysql", "array_number_string", 200);
+        const sqlType2 = getSqlType("mysql", "array_number_string", 1000);
 
         expect(sqlType1).toMatch(/VARCHAR\(200\)/i);
         expect(sqlType2).toMatch(/VARCHAR\(1000\)/i);
@@ -110,7 +108,7 @@ describe("syncTable - array_number 类型支持", () => {
         expect(isStringOrArrayType(fieldType)).toBe(true);
 
         // 2. 获取 SQL 类型
-        const sqlType = getSqlType(fieldType, fieldMax);
+        const sqlType = getSqlType("mysql", fieldType, fieldMax);
         expect(sqlType).toMatch(/VARCHAR\(500\)/i);
 
         // 3. 处理默认值
@@ -132,7 +130,7 @@ describe("syncTable - array_number 类型支持", () => {
         expect(isStringOrArrayType(fieldType)).toBe(false);
 
         // 2. 获取 SQL 类型
-        const sqlType = getSqlType(fieldType, fieldMax);
+        const sqlType = getSqlType("mysql", fieldType, fieldMax);
         expect(sqlType).toMatch(/TEXT/i);
 
         // 3. 处理默认值
@@ -150,7 +148,7 @@ describe("syncTable - array_number 类型支持", () => {
         const fieldMax = 10;
         const fieldDefault = "[60,70,80]";
 
-        const sqlType = getSqlType(fieldType, fieldMax);
+        const sqlType = getSqlType("mysql", fieldType, fieldMax);
         expect(sqlType).toMatch(/VARCHAR\(10\)/i);
 
         const actualDefault = resolveDefaultValue(fieldDefault, fieldType);

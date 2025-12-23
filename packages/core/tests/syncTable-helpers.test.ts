@@ -9,22 +9,19 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { setDbType, quoteIdentifier, escapeComment, applyFieldDefaults } from "../sync/syncTable.js";
-
-// 设置数据库类型为 MySQL
-setDbType("mysql");
+import { quoteIdentifier, escapeComment, applyFieldDefaults } from "../sync/syncTable.js";
 
 describe("quoteIdentifier (MySQL)", () => {
     test("使用反引号包裹标识符", () => {
-        expect(quoteIdentifier("user_table")).toBe("`user_table`");
+        expect(quoteIdentifier("mysql", "user_table")).toBe("`user_table`");
     });
 
     test("处理普通表名", () => {
-        expect(quoteIdentifier("admin")).toBe("`admin`");
+        expect(quoteIdentifier("mysql", "admin")).toBe("`admin`");
     });
 
     test("处理带下划线的表名", () => {
-        expect(quoteIdentifier("addon_admin_menu")).toBe("`addon_admin_menu`");
+        expect(quoteIdentifier("mysql", "addon_admin_menu")).toBe("`addon_admin_menu`");
     });
 });
 

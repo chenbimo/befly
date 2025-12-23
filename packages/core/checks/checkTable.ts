@@ -49,6 +49,7 @@ export async function checkTable(tables): Promise<void> {
     // 合并进行验证逻辑
     for (const item of tables) {
         try {
+            const fileName = item.fileName;
             const table = item.content || {};
             // 1) 文件名小驼峰校验
             if (!LOWER_CAMEL_CASE_REGEX.test(item.fileBaseName)) {
@@ -187,7 +188,7 @@ export async function checkTable(tables): Promise<void> {
                 }
             }
         } catch (error: any) {
-            Logger.error(`${item.typeName}表 ${fileName} 解析失败`, error);
+            Logger.error(`${item.typeName}表 ${item.fileName} 解析失败`, error);
             hasError = true;
         }
     }

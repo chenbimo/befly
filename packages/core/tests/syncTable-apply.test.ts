@@ -7,10 +7,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { setDbType, compareFieldDefinition } from "../sync/syncTable.js";
-
-// 设置数据库类型为 MySQL
-setDbType("mysql");
+import { compareFieldDefinition } from "../sync/syncTable.js";
 
 describe("compareFieldDefinition", () => {
     describe("长度变化检测", () => {
@@ -30,7 +27,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const lengthChange = changes.find((c: any) => c.type === "length");
 
             expect(lengthChange).toBeDefined();
@@ -54,7 +51,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const lengthChange = changes.find((c: any) => c.type === "length");
 
             expect(lengthChange).toBeUndefined();
@@ -78,7 +75,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const commentChange = changes.find((c: any) => c.type === "comment");
 
             expect(commentChange).toBeDefined();
@@ -102,7 +99,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const commentChange = changes.find((c: any) => c.type === "comment");
 
             expect(commentChange).toBeUndefined();
@@ -126,7 +123,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const typeChange = changes.find((c: any) => c.type === "datatype");
 
             expect(typeChange).toBeDefined();
@@ -150,7 +147,7 @@ describe("compareFieldDefinition", () => {
                 default: 0
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const typeChange = changes.find((c: any) => c.type === "datatype");
 
             expect(typeChange).toBeUndefined();
@@ -174,7 +171,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const nullableChange = changes.find((c: any) => c.type === "nullable");
 
             expect(nullableChange).toBeDefined();
@@ -200,7 +197,7 @@ describe("compareFieldDefinition", () => {
                 default: "new"
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const defaultChange = changes.find((c: any) => c.type === "default");
 
             expect(defaultChange).toBeDefined();
@@ -224,7 +221,7 @@ describe("compareFieldDefinition", () => {
                 default: null // null 会被解析为空字符串
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
             const defaultChange = changes.find((c: any) => c.type === "default");
 
             // null -> '' (空字符串)，与现有值相同，无变化
@@ -249,7 +246,7 @@ describe("compareFieldDefinition", () => {
                 default: "new"
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
 
             expect(changes.length).toBe(4); // length, comment, nullable, default
             expect(changes.some((c: any) => c.type === "length")).toBe(true);
@@ -274,7 +271,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             };
 
-            const changes = compareFieldDefinition(existingColumn, fieldDef);
+            const changes = compareFieldDefinition("mysql", existingColumn as any, fieldDef as any);
 
             expect(changes.length).toBe(0);
         });

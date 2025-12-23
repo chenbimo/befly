@@ -11,14 +11,11 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { setDbType, buildIndexSQL, buildSystemColumnDefs, buildBusinessColumnDefs, generateDDLClause, isCompatibleTypeChange } from "../sync/syncTable.js";
-
-// 设置数据库类型为 MySQL
-setDbType("mysql");
+import { buildIndexSQL, buildSystemColumnDefs, buildBusinessColumnDefs, generateDDLClause, isCompatibleTypeChange } from "../sync/syncTable.js";
 
 describe("buildIndexSQL (MySQL)", () => {
     test("创建索引 SQL", () => {
-        const sql = buildIndexSQL("user", "idx_created_at", "created_at", "create");
+        const sql = buildIndexSQL("mysql", "user", "idx_created_at", "created_at", "create");
         expect(sql).toContain("ALTER TABLE `user`");
         expect(sql).toContain("ADD INDEX `idx_created_at`");
         expect(sql).toContain("(`created_at`)");
@@ -27,7 +24,7 @@ describe("buildIndexSQL (MySQL)", () => {
     });
 
     test("删除索引 SQL", () => {
-        const sql = buildIndexSQL("user", "idx_created_at", "created_at", "drop");
+        const sql = buildIndexSQL("mysql", "user", "idx_created_at", "created_at", "drop");
         expect(sql).toContain("ALTER TABLE `user`");
         expect(sql).toContain("DROP INDEX `idx_created_at`");
     });
@@ -35,12 +32,12 @@ describe("buildIndexSQL (MySQL)", () => {
 
 describe("buildSystemColumnDefs (MySQL)", () => {
     test("返回 5 个系统字段定义", () => {
-        const defs = buildSystemColumnDefs();
+        const defs = buildSystemColumnDefs("mysql");
         expect(defs.length).toBe(5);
     });
 
     test("包含 id 主键", () => {
-        const defs = buildSystemColumnDefs();
+        const defs = buildSystemColumnDefs("mysql");
         const idDef = defs.find((d: string) => d.includes("`id`"));
         expect(idDef).toContain("PRIMARY KEY");
         expect(idDef).toContain("AUTO_INCREMENT");
@@ -48,7 +45,7 @@ describe("buildSystemColumnDefs (MySQL)", () => {
     });
 
     test("包含 created_at 字段", () => {
-        const defs = buildSystemColumnDefs();
+        const defs = buildSystemColumnDefs("mysql");
         const def = defs.find((d: string) => d.includes("`created_at`"));
         expect(def).toContain("BIGINT UNSIGNED");
         expect(def).toContain("NOT NULL");
@@ -56,7 +53,7 @@ describe("buildSystemColumnDefs (MySQL)", () => {
     });
 
     test("包含 state 字段", () => {
-        const defs = buildSystemColumnDefs();
+        const defs = buildSystemColumnDefs("mysql");
         const def = defs.find((d: string) => d.includes("`state`"));
         expect(def).toContain("BIGINT UNSIGNED");
         expect(def).toContain("NOT NULL");
@@ -77,7 +74,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         };
-        const defs = buildBusinessColumnDefs(fields);
+        const defs = buildBusinessColumnDefs("mysql", fields);
         expect(defs.length).toBe(1);
         expect(defs[0]).toContain("`user_name`");
         expect(defs[0]).toContain("VARCHAR(50)");
@@ -98,7 +95,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         };
-        const defs = buildBusinessColumnDefs(fields);
+        const defs = buildBusinessColumnDefs("mysql", fields);
         expect(defs[0]).toContain("`age`");
         expect(defs[0]).toContain("BIGINT UNSIGNED");
         expect(defs[0]).toContain("DEFAULT 0");
@@ -116,7 +113,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         };
-        const defs = buildBusinessColumnDefs(fields);
+        const defs = buildBusinessColumnDefs("mysql", fields);
         expect(defs[0]).toContain("UNIQUE");
     });
 
@@ -132,7 +129,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         };
-        const defs = buildBusinessColumnDefs(fields);
+        const defs = buildBusinessColumnDefs("mysql", fields);
         expect(defs[0]).toContain("NULL");
         expect(defs[0]).not.toContain("NOT NULL");
     });
@@ -149,7 +146,7 @@ describe("generateDDLClause (MySQL)", () => {
             nullable: false,
             unsigned: true
         };
-        const clause = generateDDLClause("userName", fieldDef, true);
+        const clause = generateDDLClause("mysql", "userName", fieldDef, true);
         expect(clause).toContain("ADD COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(50)");
@@ -165,7 +162,7 @@ describe("generateDDLClause (MySQL)", () => {
             nullable: false,
             unsigned: true
         };
-        const clause = generateDDLClause("userName", fieldDef, false);
+        const clause = generateDDLClause("mysql", "userName", fieldDef, false);
         expect(clause).toContain("MODIFY COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(100)");
