@@ -21,6 +21,12 @@ type SqlExecutor = {
     unsafe(sqlStr: string, params?: any[]): Promise<any>;
 };
 
+type SyncRuntime = {
+    dbDialect: DbDialect;
+    db: SqlExecutor;
+    dbName: string;
+};
+
 export type DbDialect = DbDialectName;
 
 const DIALECT_IMPLS: Record<DbDialect, MySqlDialect | PostgresDialect | SqliteDialect> = {
@@ -461,21 +467,25 @@ export function isCompatibleTypeChange(currentType: string, newType: string): bo
  * 判断表是否存在（返回布尔值）
  */
 export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
-    if (!db) throw new Error("SQL 执行器未初始化");
+    return await tableExistsRuntime({ dbDialect: dbDialect, db: db, dbName: dbName }, tableName);
+}
+
+async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
+    if (!runtime.db) throw new Error("SQL 执行器未初始化");
 
     try {
-        if (isMySQL(dbDialect)) {
-            const res = await db.unsafe("SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [dbName, tableName]);
+        if (isMySQL(runtime.dbDialect)) {
+            const res = await runtime.db.unsafe("SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [runtime.dbName, tableName]);
             return (res[0]?.count || 0) > 0;
         }
 
-        if (isPG(dbDialect)) {
-            const res = await db.unsafe("SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ?", [tableName]);
+        if (isPG(runtime.dbDialect)) {
+            const res = await runtime.db.unsafe("SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ?", [tableName]);
             return (res[0]?.count || 0) > 0;
         }
 
-        if (isSQLite(dbDialect)) {
-            const res = await db.unsafe("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", [tableName]);
+        if (isSQLite(runtime.dbDialect)) {
+            const res = await runtime.db.unsafe("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", [tableName]);
             return res.length > 0;
         }
 
@@ -489,11 +499,15 @@ export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableNa
  * 获取表的现有列信息（按方言）
  */
 export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
+    return await getTableColumnsRuntime({ dbDialect: dbDialect, db: db, dbName: dbName }, tableName);
+}
+
+async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
     const columns: { [key: string]: ColumnInfo } = {};
 
     try {
-        if (isMySQL(dbDialect)) {
-            const result = await db.unsafe("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", [dbName, tableName]);
+        if (isMySQL(runtime.dbDialect)) {
+            const result = await runtime.db.unsafe("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", [runtime.dbName, tableName]);
             for (const row of result) {
                 const defaultValue = row.COLUMN_DEFAULT;
 
@@ -507,9 +521,9 @@ export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tab
                     comment: row.COLUMN_COMMENT
                 };
             }
-        } else if (isPG(dbDialect)) {
-            const result = await db.unsafe("SELECT column_name, data_type, character_maximum_length, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? ORDER BY ordinal_position", [tableName]);
-            const comments = await db.unsafe(
+        } else if (isPG(runtime.dbDialect)) {
+            const result = await runtime.db.unsafe("SELECT column_name, data_type, character_maximum_length, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? ORDER BY ordinal_position", [tableName]);
+            const comments = await runtime.db.unsafe(
                 "SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relname = ? AND a.attnum > 0",
                 [tableName]
             );
@@ -527,9 +541,9 @@ export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tab
                     comment: commentMap[row.column_name] ?? null
                 };
             }
-        } else if (isSQLite(dbDialect)) {
+        } else if (isSQLite(runtime.dbDialect)) {
             const quotedTable = quoteIdentifier("sqlite", tableName);
-            const result = await db.unsafe(`PRAGMA table_info(${quotedTable})`);
+            const result = await runtime.db.unsafe(`PRAGMA table_info(${quotedTable})`);
             for (const row of result) {
                 let baseType = String(row.type || "").toUpperCase();
                 let max = null;
@@ -560,17 +574,21 @@ export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tab
  * 获取表的现有索引信息（单列索引）
  */
 export async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
+    return await getTableIndexesRuntime({ dbDialect: dbDialect, db: db, dbName: dbName }, tableName);
+}
+
+async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): Promise<IndexInfo> {
     const indexes: IndexInfo = {};
 
     try {
-        if (isMySQL(dbDialect)) {
-            const result = await db.unsafe("SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME", [dbName, tableName]);
+        if (isMySQL(runtime.dbDialect)) {
+            const result = await runtime.db.unsafe("SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME", [runtime.dbName, tableName]);
             for (const row of result) {
                 if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
                 indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
             }
-        } else if (isPG(dbDialect)) {
-            const result = await db.unsafe("SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ?", [tableName]);
+        } else if (isPG(runtime.dbDialect)) {
+            const result = await runtime.db.unsafe("SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ?", [tableName]);
             for (const row of result) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {
@@ -578,12 +596,12 @@ export async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tab
                     indexes[row.indexname] = [col];
                 }
             }
-        } else if (isSQLite(dbDialect)) {
+        } else if (isSQLite(runtime.dbDialect)) {
             const quotedTable = quoteIdentifier("sqlite", tableName);
-            const list = await db.unsafe(`PRAGMA index_list(${quotedTable})`);
+            const list = await runtime.db.unsafe(`PRAGMA index_list(${quotedTable})`);
             for (const idx of list) {
                 const quotedIndex = quoteIdentifier("sqlite", idx.name);
-                const info = await db.unsafe(`PRAGMA index_info(${quotedIndex})`);
+                const info = await runtime.db.unsafe(`PRAGMA index_info(${quotedIndex})`);
                 const cols = info.map((r: any) => r.name);
                 if (cols.length === 1) indexes[idx.name] = cols;
             }
@@ -708,68 +726,72 @@ export function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Col
 /**
  * SQLite 重建表迁移（简化版）
  */
-export async function rebuildSqliteTable(db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>): Promise<void> {
+export async function rebuildSqliteTable(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>): Promise<void> {
+    if (!isSQLite(runtime.dbDialect)) {
+        throw new Error(`rebuildSqliteTable 仅支持 sqlite 方言，当前: ${String(runtime.dbDialect)}`);
+    }
+
     const quotedSourceTable = quoteIdentifier("sqlite", tableName);
-    const info = await db.unsafe(`PRAGMA table_info(${quotedSourceTable})`);
+    const info = await runtime.db.unsafe(`PRAGMA table_info(${quotedSourceTable})`);
     const existingCols = info.map((r: any) => r.name);
     const businessCols = Object.keys(fields).map((k) => snakeCase(k));
     const targetCols = ["id", "created_at", "updated_at", "deleted_at", "state", ...businessCols];
     const tmpTable = `${tableName}__tmp__${Date.now()}`;
 
-    await createTable("sqlite", db, tmpTable, fields);
+    await createTable(runtime, tmpTable, fields);
 
     const commonCols = targetCols.filter((c) => existingCols.includes(c));
     if (commonCols.length > 0) {
         const colsSql = commonCols.map((c) => quoteIdentifier("sqlite", c)).join(", ");
         const quotedTmpTable = quoteIdentifier("sqlite", tmpTable);
-        await db.unsafe(`INSERT INTO ${quotedTmpTable} (${colsSql}) SELECT ${colsSql} FROM ${quotedSourceTable}`);
+        await runtime.db.unsafe(`INSERT INTO ${quotedTmpTable} (${colsSql}) SELECT ${colsSql} FROM ${quotedSourceTable}`);
     }
 
-    await db.unsafe(`DROP TABLE ${quotedSourceTable}`);
+    await runtime.db.unsafe(`DROP TABLE ${quotedSourceTable}`);
     const quotedTmpTable = quoteIdentifier("sqlite", tmpTable);
-    await db.unsafe(`ALTER TABLE ${quotedTmpTable} RENAME TO ${quotedSourceTable}`);
+    await runtime.db.unsafe(`ALTER TABLE ${quotedTmpTable} RENAME TO ${quotedSourceTable}`);
 }
 
 /**
  * 将表结构计划应用到数据库
  */
-export async function applyTablePlan(dbDialect: DbDialect, db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan): Promise<void> {
+export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan): Promise<void> {
     if (!plan || !plan.changed) return;
 
-    if (isSQLite(dbDialect)) {
+    if (isSQLite(runtime.dbDialect)) {
         if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
-            await rebuildSqliteTable(db, tableName, fields);
+            await rebuildSqliteTable(runtime, tableName, fields);
         } else {
             for (const c of plan.addClauses) {
-                const stmt = `ALTER TABLE ${quoteIdentifier(dbDialect, tableName)} ${c}`;
-                await db.unsafe(stmt);
+                const stmt = `ALTER TABLE ${quoteIdentifier(runtime.dbDialect, tableName)} ${c}`;
+                await runtime.db.unsafe(stmt);
             }
         }
     } else {
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
-            const tableQuoted = quoteIdentifier(dbDialect, tableName);
-            const stmt = isMySQL(dbDialect) ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${clauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${clauses.join(", ")}`;
-            if (isMySQL(dbDialect)) await executeDDLSafely(db, stmt);
-            else await db.unsafe(stmt);
+            const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
+            const stmt = isMySQL(runtime.dbDialect) ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${clauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${clauses.join(", ")}`;
+            if (isMySQL(runtime.dbDialect)) await executeDDLSafely(runtime.db, stmt);
+            else await runtime.db.unsafe(stmt);
         }
     }
 
     if (plan.defaultClauses.length > 0) {
-        if (isSQLite(dbDialect)) {
+        if (isSQLite(runtime.dbDialect)) {
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
         } else {
-            const tableQuoted = quoteIdentifier(dbDialect, tableName);
-            const stmt = isMySQL(dbDialect) ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${plan.defaultClauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${plan.defaultClauses.join(", ")}`;
-            if (isMySQL(dbDialect)) await executeDDLSafely(db, stmt);
-            else await db.unsafe(stmt);
+            const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
+            const stmt = isMySQL(runtime.dbDialect) ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${plan.defaultClauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${plan.defaultClauses.join(", ")}`;
+            if (isMySQL(runtime.dbDialect)) await executeDDLSafely(runtime.db, stmt);
+            else await runtime.db.unsafe(stmt);
         }
     }
 
     for (const act of plan.indexActions) {
-        const stmt = buildIndexSQL(dbDialect, tableName, act.indexName, act.fieldName, act.action);
+        const stmt = buildIndexSQL(runtime.dbDialect, tableName, act.indexName, act.fieldName, act.action);
         try {
-            await db.unsafe(stmt);
+            await runtime.db.unsafe(stmt);
             if (act.action === "create") {
                 Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
             } else {
@@ -781,9 +803,9 @@ export async function applyTablePlan(dbDialect: DbDialect, db: SqlExecutor, tabl
         }
     }
 
-    if (isPG(dbDialect) && plan.commentActions && plan.commentActions.length > 0) {
+    if (isPG(runtime.dbDialect) && plan.commentActions && plan.commentActions.length > 0) {
         for (const stmt of plan.commentActions) {
-            await db.unsafe(stmt);
+            await runtime.db.unsafe(stmt);
         }
     }
 }
@@ -791,50 +813,50 @@ export async function applyTablePlan(dbDialect: DbDialect, db: SqlExecutor, tabl
 /**
  * 创建表（包含系统字段和业务字段）
  */
-export async function createTable(dbDialect: DbDialect, db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: ReadonlyArray<string> = SYSTEM_INDEX_FIELDS, dbName?: string): Promise<void> {
-    const colDefs = [...buildSystemColumnDefs(dbDialect), ...buildBusinessColumnDefs(dbDialect, fields)];
+export async function createTable(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>, systemIndexFields: ReadonlyArray<string> = SYSTEM_INDEX_FIELDS): Promise<void> {
+    const colDefs = [...buildSystemColumnDefs(runtime.dbDialect), ...buildBusinessColumnDefs(runtime.dbDialect, fields)];
 
     const cols = colDefs.join(",\n            ");
-    const tableQuoted = quoteIdentifier(dbDialect, tableName);
+    const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
     const { ENGINE, CHARSET, COLLATE } = MYSQL_TABLE_CONFIG;
-    const createSQL = isMySQL(dbDialect) ? `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        ) ENGINE=${ENGINE} DEFAULT CHARSET=${CHARSET} COLLATE=${COLLATE}` : `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        )`;
+    const createSQL = isMySQL(runtime.dbDialect) ? `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        ) ENGINE=${ENGINE} DEFAULT CHARSET=${CHARSET} COLLATE=${COLLATE}` : `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        )`;
 
-    await db.unsafe(createSQL);
+    await runtime.db.unsafe(createSQL);
 
-    if (isPG(dbDialect)) {
+    if (isPG(runtime.dbDialect)) {
         for (const f of SYSTEM_FIELDS) {
             const escaped = String(f.comment).replace(/'/g, "''");
-            const colQuoted = quoteIdentifier(dbDialect, f.name);
+            const colQuoted = quoteIdentifier(runtime.dbDialect, f.name);
             const stmt = `COMMENT ON COLUMN ${tableQuoted}.${colQuoted} IS '${escaped}'`;
-            await db.unsafe(stmt);
+            await runtime.db.unsafe(stmt);
         }
 
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             const dbFieldName = snakeCase(fieldKey);
-            const colQuoted = quoteIdentifier(dbDialect, dbFieldName);
+            const colQuoted = quoteIdentifier(runtime.dbDialect, dbFieldName);
 
             const fieldName = fieldDef.name && fieldDef.name !== "null" ? String(fieldDef.name) : "";
             const escaped = fieldName.replace(/'/g, "''");
             const valueSql = fieldName ? `'${escaped}'` : "NULL";
             const stmt = `COMMENT ON COLUMN ${tableQuoted}.${colQuoted} IS ${valueSql}`;
-            await db.unsafe(stmt);
+            await runtime.db.unsafe(stmt);
         }
     }
 
     const indexTasks: Promise<void>[] = [];
 
     let existingIndexes: Record<string, string[]> = {};
-    if (isMySQL(dbDialect)) {
-        existingIndexes = await getTableIndexes(dbDialect, db, tableName, dbName || "");
+    if (isMySQL(runtime.dbDialect)) {
+        existingIndexes = await getTableIndexesRuntime(runtime, tableName);
     }
 
     for (const sysField of systemIndexFields) {
         const indexName = `idx_${sysField}`;
-        if (isMySQL(dbDialect) && existingIndexes[indexName]) {
+        if (isMySQL(runtime.dbDialect) && existingIndexes[indexName]) {
             continue;
         }
-        const stmt = buildIndexSQL(dbDialect, tableName, indexName, sysField, "create");
-        indexTasks.push(db.unsafe(stmt));
+        const stmt = buildIndexSQL(runtime.dbDialect, tableName, indexName, sysField, "create");
+        indexTasks.push(runtime.db.unsafe(stmt));
     }
 
     for (const [fieldKey, fieldDef] of Object.entries(fields)) {
@@ -842,11 +864,11 @@ export async function createTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
 
         if (fieldDef.index === true) {
             const indexName = `idx_${dbFieldName}`;
-            if (isMySQL(dbDialect) && existingIndexes[indexName]) {
+            if (isMySQL(runtime.dbDialect) && existingIndexes[indexName]) {
                 continue;
             }
-            const stmt = buildIndexSQL(dbDialect, tableName, indexName, dbFieldName, "create");
-            indexTasks.push(db.unsafe(stmt));
+            const stmt = buildIndexSQL(runtime.dbDialect, tableName, indexName, dbFieldName, "create");
+            indexTasks.push(runtime.db.unsafe(stmt));
         }
     }
 
@@ -859,8 +881,13 @@ export async function createTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
  * 同步表结构（对比和应用变更）
  */
 export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan> {
-    const existingColumns = await getTableColumns(dbDialect, db, tableName, dbName || "");
-    const existingIndexes = await getTableIndexes(dbDialect, db, tableName, dbName || "");
+    const runtime: SyncRuntime = { dbDialect: dbDialect, db: db, dbName: dbName || "" };
+    return await modifyTableWithRuntime(runtime, tableName, fields);
+}
+
+async function modifyTableWithRuntime(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan> {
+    const existingColumns = await getTableColumnsRuntime(runtime, tableName);
+    const existingIndexes = await getTableIndexesRuntime(runtime, tableName);
     let changed = false;
 
     const addClauses: string[] = [];
@@ -872,7 +899,7 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
         const dbFieldName = snakeCase(fieldKey);
 
         if (existingColumns[dbFieldName]) {
-            const comparison = compareFieldDefinition(dbDialect, existingColumns[dbFieldName], fieldDef);
+            const comparison = compareFieldDefinition(runtime.dbDialect, existingColumns[dbFieldName], fieldDef);
             if (comparison.length > 0) {
                 for (const c of comparison) {
                     const changeLabel = CHANGE_TYPE_LABELS[c.type as keyof typeof CHANGE_TYPE_LABELS] || "未知";
@@ -893,7 +920,7 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
                 if (hasTypeChange) {
                     const typeChange = comparison.find((c) => c.type === "datatype");
                     const currentType = String(typeChange?.current || "").toLowerCase();
-                    const typeMapping = getTypeMapping(dbDialect);
+                    const typeMapping = getTypeMapping(runtime.dbDialect);
                     const expectedType = typeMapping[fieldDef.type]?.toLowerCase() || "";
 
                     if (!isCompatibleTypeChange(currentType, expectedType)) {
@@ -913,12 +940,12 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
                     }
 
                     if (v !== null && v !== "") {
-                        if (isPG(dbDialect)) {
-                            const colQuoted = quoteIdentifier(dbDialect, dbFieldName);
+                        if (isPG(runtime.dbDialect)) {
+                            const colQuoted = quoteIdentifier(runtime.dbDialect, dbFieldName);
                             defaultClauses.push(`ALTER COLUMN ${colQuoted} SET DEFAULT ${v}`);
-                        } else if (isMySQL(dbDialect) && onlyDefaultChanged) {
+                        } else if (isMySQL(runtime.dbDialect) && onlyDefaultChanged) {
                             if (fieldDef.type !== "text") {
-                                const colQuoted = quoteIdentifier(dbDialect, dbFieldName);
+                                const colQuoted = quoteIdentifier(runtime.dbDialect, dbFieldName);
                                 defaultClauses.push(`ALTER COLUMN ${colQuoted} SET DEFAULT ${v}`);
                             }
                         }
@@ -932,12 +959,12 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
                         if (isShrink) skipModify = true;
                     }
 
-                    if (!skipModify) modifyClauses.push(generateDDLClause(dbDialect, fieldKey, fieldDef, false));
+                    if (!skipModify) modifyClauses.push(generateDDLClause(runtime.dbDialect, fieldKey, fieldDef, false));
                 }
                 changed = true;
             }
         } else {
-            addClauses.push(generateDDLClause(dbDialect, fieldKey, fieldDef, true));
+            addClauses.push(generateDDLClause(runtime.dbDialect, fieldKey, fieldDef, true));
             changed = true;
         }
     }
@@ -945,7 +972,7 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
     const systemFieldNames = SYSTEM_FIELDS.filter((f) => f.name !== "id").map((f) => f.name);
     for (const sysFieldName of systemFieldNames) {
         if (!existingColumns[sysFieldName]) {
-            const colDef = getSystemColumnDef(dbDialect, sysFieldName);
+            const colDef = getSystemColumnDef(runtime.dbDialect, sysFieldName);
             if (colDef) {
                 Logger.debug(`  + 新增系统字段 ${sysFieldName}`);
                 addClauses.push(`ADD COLUMN ${colDef}`);
@@ -977,11 +1004,11 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
     }
 
     const commentActions: string[] = [];
-    if (isPG(dbDialect)) {
-        const tableQuoted = quoteIdentifier(dbDialect, tableName);
+    if (isPG(runtime.dbDialect)) {
+        const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             const dbFieldName = snakeCase(fieldKey);
-            const colQuoted = quoteIdentifier(dbDialect, dbFieldName);
+            const colQuoted = quoteIdentifier(runtime.dbDialect, dbFieldName);
 
             if (existingColumns[dbFieldName]) {
                 const curr = existingColumns[dbFieldName].comment || "";
@@ -1007,7 +1034,7 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
     };
 
     if (plan.changed) {
-        await applyTablePlan(dbDialect, db, tableName, fields, plan);
+        await applyTablePlan(runtime, tableName, fields, plan);
     }
 
     return plan;
@@ -1091,12 +1118,18 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
             }
 
             const dbName = ctx.config.db?.database || "";
-            const existsTable = await tableExists(dbDialect, ctx.db, tableName, dbName);
+            const runtime: SyncRuntime = {
+                dbDialect: dbDialect,
+                db: ctx.db,
+                dbName: dbName
+            };
+
+            const existsTable = await tableExistsRuntime(runtime, tableName);
 
             if (existsTable) {
-                await modifyTable(dbDialect, ctx.db, tableName, tableDefinition as any, dbName);
+                await modifyTableWithRuntime(runtime, tableName, tableDefinition as any);
             } else {
-                await createTable(dbDialect, ctx.db, tableName, tableDefinition as any, SYSTEM_INDEX_FIELDS, dbName);
+                await createTable(runtime, tableName, tableDefinition as any);
             }
 
             // 记录处理过的表名（用于清理缓存）
