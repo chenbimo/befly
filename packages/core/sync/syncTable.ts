@@ -415,6 +415,10 @@ export function generateDefaultSql(actualDefault: any, fieldType: string): strin
  * 构建索引操作 SQL（统一使用在线策略）
  */
 export function buildIndexSQL(dbDialect: DbDialect, tableName: string, indexName: string, fieldName: string, action: "create" | "drop"): string {
+    // 说明（策略取舍）：
+    // - MySQL：通过 ALTER TABLE 在线添加/删除索引；配合 ALGORITHM/LOCK 以降低阻塞。
+    // - PostgreSQL：CREATE/DROP INDEX CONCURRENTLY 尽量减少锁表（代价是执行更慢/有并发限制）。
+    // - SQLite：DDL 能力有限，使用 IF NOT EXISTS/IF EXISTS 尽量做到幂等。
     const tableQuoted = quoteIdentifier(dbDialect, tableName);
     const indexQuoted = quoteIdentifier(dbDialect, indexName);
     const fieldQuoted = quoteIdentifier(dbDialect, fieldName);
@@ -505,6 +509,10 @@ export function buildBusinessColumnDefs(dbDialect: DbDialect, fields: Record<str
  * 生成字段 DDL 子句（不含 ALTER TABLE 前缀）
  */
 export function generateDDLClause(dbDialect: DbDialect, fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string {
+    // 说明（策略取舍）：
+    // - MySQL：ADD/MODIFY 一条子句内可同时表达类型/可空/默认值/注释（同步成本低）。
+    // - PostgreSQL：modify 场景这里仅生成 TYPE 变更；默认值/注释等由其他子句或 commentActions 处理。
+    // - SQLite：不支持标准化的 MODIFY COLUMN，这里仅提供 ADD COLUMN；复杂变更通过 rebuildSqliteTable 完成。
     const dbFieldName = snakeCase(fieldKey);
     const colQuoted = quoteIdentifier(dbDialect, dbFieldName);
 
@@ -531,6 +539,10 @@ export function generateDDLClause(dbDialect: DbDialect, fieldKey: string, fieldD
  * 安全执行 DDL 语句（MySQL 降级策略）
  */
 export async function executeDDLSafely(db: SqlExecutor, stmt: string): Promise<boolean> {
+    // MySQL DDL 兼容性/可用性兜底：
+    // - 优先执行原语句（通常含 ALGORITHM=INSTANT）。
+    // - 若 INSTANT 不可用（版本/表结构限制），降级为 INPLACE 再试。
+    // - 若仍失败，去掉 ALGORITHM/LOCK 提示字段，以最大兼容性执行传统 ALTER。
     try {
         await db.unsafe(stmt);
         return true;
@@ -562,6 +574,12 @@ export async function executeDDLSafely(db: SqlExecutor, stmt: string): Promise<b
  * 判断是否为兼容的类型变更（宽化型变更，无数据丢失风险）
  */
 export function isCompatibleTypeChange(currentType: string, newType: string): boolean {
+    // 说明：该函数用于“自动同步”里的安全阈值判断。
+    // - 允许：宽化型变更（不收缩、不改变语义大类），例如：
+    //   - INT -> BIGINT（或 tinyint/smallint/mediumint -> 更宽的整型）
+    //   - VARCHAR -> TEXT/MEDIUMTEXT/LONGTEXT
+    //   - character varying -> text（PG 常见）
+    // - 禁止：收缩型变更（BIGINT -> INT、TEXT -> VARCHAR）以及跨大类变更（需人工评估/迁移）。
     const c = String(currentType || "").toLowerCase();
     const n = String(newType || "").toLowerCase();
 
@@ -648,6 +666,11 @@ export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableNa
 async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
     if (!runtime.db) throw new Error("SQL 执行器未初始化");
 
+    // 方言差异说明：
+    // - MySQL：information_schema.tables + TABLE_SCHEMA 精确判断（依赖 runtime.dbName）。
+    // - PostgreSQL：这里固定检查 public schema（项目约定）；若未来引入多 schema，需要扩展此处查询条件。
+    // - SQLite：通过 sqlite_master 判断。
+
     try {
         if (isMySQL(runtime.dbDialect)) {
             const res = await runtime.db.unsafe("SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [runtime.dbName, tableName]);
@@ -666,7 +689,8 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
 
         return false;
     } catch (error: any) {
-        throw new Error(`查询表是否存在失败 [${tableName}]: ${error.message}`);
+        const errMsg = String(error?.message || error);
+        throw new Error(`runtime I/O 失败: op=tableExists table=${tableName} err=${errMsg}`);
     }
 }
 
@@ -685,6 +709,10 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
     const columns: { [key: string]: ColumnInfo } = {};
 
     try {
+        // 方言差异说明：
+        // - MySQL：information_schema.columns 最完整，包含 COLUMN_TYPE 与 COLUMN_COMMENT。
+        // - PostgreSQL：information_schema.columns 给基础列信息；注释需额外从 pg_class/pg_attribute 获取。
+        // - SQLite：PRAGMA table_info 仅提供 type/notnull/default 等有限信息，无列注释。
         if (isMySQL(runtime.dbDialect)) {
             const result = await runtime.db.unsafe("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", [runtime.dbName, tableName]);
             for (const row of result) {
@@ -745,7 +773,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
 
         return columns;
     } catch (error: any) {
-        throw new Error(`获取表列信息失败 [${tableName}]: ${error.message}`);
+        const errMsg = String(error?.message || error);
+        throw new Error(`runtime I/O 失败: op=getTableColumns table=${tableName} err=${errMsg}`);
     }
 }
 
@@ -764,6 +793,10 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
     const indexes: IndexInfo = {};
 
     try {
+        // 方言差异说明：
+        // - MySQL：information_schema.statistics 直接给出 index -> column 映射。
+        // - PostgreSQL：pg_indexes 只有 indexdef，需要从定义里解析列名（这里仅取单列索引）。
+        // - SQLite：PRAGMA index_list + index_info；同样仅收集单列索引，避免多列索引误判。
         if (isMySQL(runtime.dbDialect)) {
             const result = await runtime.db.unsafe("SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME", [runtime.dbName, tableName]);
             for (const row of result) {
@@ -792,7 +825,8 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
 
         return indexes;
     } catch (error: any) {
-        throw new Error(`获取表索引信息失败 [${tableName}]: ${error.message}`);
+        const errMsg = String(error?.message || error);
+        throw new Error(`runtime I/O 失败: op=getTableIndexes table=${tableName} err=${errMsg}`);
     }
 }
 
@@ -922,6 +956,10 @@ export function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Col
  * SQLite 重建表迁移（简化版）
  */
 export async function rebuildSqliteTable(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>): Promise<void> {
+    // 说明：SQLite ALTER TABLE 能力有限（尤其是修改列类型/默认值/约束）。
+    // 策略：创建临时表 -> 复制“交集列”数据 -> 删除旧表 -> 临时表改名。
+    // - 只复制 targetCols 与 existingCols 的交集，避免因新增列/删除列导致 INSERT 失败。
+    // - 不做额外的数据转换/回填：保持迁移路径尽量“纯结构同步”。
     if (!isSQLite(runtime.dbDialect)) {
         throw new Error(`rebuildSqliteTable 仅支持 sqlite 方言，当前: ${String(runtime.dbDialect)}`);
     }
