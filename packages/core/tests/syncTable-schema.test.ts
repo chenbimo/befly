@@ -11,12 +11,12 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { SyncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.js";
 
 describe("tableExists", () => {
     test("sql 客户端未初始化时抛出错误", async () => {
         try {
-            await SyncTable.TestKit.tableExistsRuntime(SyncTable.TestKit.createRuntime("mysql", null as any, "test_db"), "user");
+            await syncTable.TestKit.tableExistsRuntime(syncTable.TestKit.createRuntime("mysql", null as any, "test_db"), "user");
             expect(true).toBe(false); // 不应该到这里
         } catch (error: any) {
             expect(error.message).toBe("SQL 执行器未初始化");
@@ -26,23 +26,23 @@ describe("tableExists", () => {
     test("传入有效 sql 客户端时正常执行", async () => {
         // 创建模拟 SQL 客户端
         const mockSql = {
-            unsafe: async (_query: string, _params?: any[]) => {
+            unsafe: async (_query: string, _params?: unknown[]) => {
                 return [{ count: 1 }];
             }
         };
 
-        const result = await SyncTable.TestKit.tableExistsRuntime(SyncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
+        const result = await syncTable.TestKit.tableExistsRuntime(syncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
         expect(result).toBe(true);
     });
 
     test("表不存在时返回 false", async () => {
         const mockSql = {
-            unsafe: async (_query: string, _params?: any[]) => {
+            unsafe: async (_query: string, _params?: unknown[]) => {
                 return [{ count: 0 }];
             }
         };
 
-        const result = await SyncTable.TestKit.tableExistsRuntime(SyncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "nonexistent");
+        const result = await syncTable.TestKit.tableExistsRuntime(syncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "nonexistent");
         expect(result).toBe(false);
     });
 });
@@ -84,7 +84,7 @@ describe("getTableColumns", () => {
             }
         };
 
-        const columns = await SyncTable.TestKit.getTableColumnsRuntime(SyncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
+        const columns = await syncTable.TestKit.getTableColumnsRuntime(syncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
 
         expect(columns.id).toBeDefined();
         expect(columns.id.type).toBe("bigint");
@@ -106,7 +106,7 @@ describe("getTableColumns", () => {
 describe("getTableIndexes", () => {
     test("返回正确的索引信息结构", async () => {
         const mockSql = {
-            unsafe: async (_query: string, _params?: any[]) => {
+            unsafe: async (_query: string, _params?: unknown[]) => {
                 // 模拟 MySQL information_schema.STATISTICS 返回
                 // 注意：PRIMARY 索引被排除
                 return [
@@ -116,7 +116,7 @@ describe("getTableIndexes", () => {
             }
         };
 
-        const indexes = await SyncTable.TestKit.getTableIndexesRuntime(SyncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
+        const indexes = await syncTable.TestKit.getTableIndexesRuntime(syncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
 
         // PRIMARY 索引被排除，不应存在
         expect(indexes.PRIMARY).toBeUndefined();
@@ -130,7 +130,7 @@ describe("getTableIndexes", () => {
 
     test("复合索引包含多个列", async () => {
         const mockSql = {
-            unsafe: async (_query: string, _params?: any[]) => {
+            unsafe: async (_query: string, _params?: unknown[]) => {
                 // 模拟复合索引，同一索引名包含多个列
                 return [
                     { INDEX_NAME: "idx_composite", COLUMN_NAME: "user_id" },
@@ -139,7 +139,7 @@ describe("getTableIndexes", () => {
             }
         };
 
-        const indexes = await SyncTable.TestKit.getTableIndexesRuntime(SyncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
+        const indexes = await syncTable.TestKit.getTableIndexesRuntime(syncTable.TestKit.createRuntime("mysql", mockSql as any, "test_db"), "user");
 
         expect(indexes.idx_composite).toBeDefined();
         expect(indexes.idx_composite.length).toBe(2);

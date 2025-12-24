@@ -25,8 +25,77 @@ export function getDialectByName(name: DbDialectName): DbDialect {
 
 export type SqlTextQuery = {
     sql: string;
-    params: any[];
+    params: unknown[];
 };
+
+export type SyncTableColumnsInfoQuery = {
+    columns: SqlTextQuery;
+    comments?: SqlTextQuery;
+};
+
+export type SyncTableIndexesQuery = SqlTextQuery;
+
+/**
+ * SyncTable 专用：获取“列元信息”查询。
+ *
+ * 说明：
+ * - 这里仅负责 SQL + 参数构造（方言差异）；
+ * - 解析为 ColumnInfo 的逻辑仍放在 syncTable.ts（保持同步算法聚合）。
+ */
+export function getSyncTableColumnsInfoQuery(options: { dialect: DbDialectName; table: string; dbName: string; schema?: string }): SyncTableColumnsInfoQuery {
+    if (options.dialect === "mysql") {
+        const columns: SqlTextQuery = {
+            sql: "SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",
+            params: [options.dbName, options.table]
+        };
+        return { columns: columns };
+    }
+
+    if (options.dialect === "postgresql") {
+        const schema = options.schema && options.schema.trim() !== "" ? options.schema : "public";
+        const columns: SqlTextQuery = {
+            sql: "SELECT column_name, data_type, character_maximum_length, is_nullable, column_default FROM information_schema.columns WHERE table_schema = ? AND table_name = ? ORDER BY ordinal_position",
+            params: [schema, options.table]
+        };
+
+        const comments: SqlTextQuery = {
+            sql: "SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'r' AND n.nspname = ? AND c.relname = ? AND a.attnum > 0",
+            params: [schema, options.table]
+        };
+
+        return { columns: columns, comments: comments };
+    }
+
+    const sqlite = getDialectByName("sqlite");
+    const columns = sqlite.getTableColumnsQuery(options.table);
+    return { columns: columns };
+}
+
+/**
+ * SyncTable 专用：获取“索引元信息”查询（只负责 SQL + 参数构造）。
+ *
+ * 约束：
+ * - 仅下沉 MySQL / PostgreSQL；SQLite 仍走 PRAGMA（需要多次查询）。
+ * - 解析（比如 PG indexdef 解析列名）仍留在 syncTable.ts。
+ */
+export function getSyncTableIndexesQuery(options: { dialect: DbDialectName; table: string; dbName: string; schema?: string }): SyncTableIndexesQuery {
+    if (options.dialect === "mysql") {
+        return {
+            sql: "SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME",
+            params: [options.dbName, options.table]
+        };
+    }
+
+    if (options.dialect === "postgresql") {
+        const schema = options.schema && options.schema.trim() !== "" ? options.schema : "public";
+        return {
+            sql: "SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = ? AND tablename = ?",
+            params: [schema, options.table]
+        };
+    }
+
+    throw new Error(`getSyncTableIndexesQuery 不支持方言: ${String(options.dialect)}`);
+}
 
 export interface DbDialect {
     name: DbDialectName;
@@ -41,13 +110,13 @@ export interface DbDialect {
      * 获取表字段列表的查询。
      * 约定：返回结果应能通过 getTableColumnsFromResult 提取列名。
      */
-    getTableColumnsQuery(table: string): SqlTextQuery;
+    getTableColumnsQuery(table: string, schema?: string): SqlTextQuery;
 
     /** 从 getTableColumnsQuery 的结果中提取列名数组 */
     getTableColumnsFromResult(result: any): string[];
 
     /** 检查表是否存在的查询 */
-    tableExistsQuery(table: string): SqlTextQuery;
+    tableExistsQuery(table: string, schema?: string): SqlTextQuery;
 
     /**
      * 是否支持 schema.table 形式（仅用于校验；具体 quoting 仍由 SqlBuilder 处理）。
@@ -72,7 +141,7 @@ export class MySqlDialect implements DbDialect {
         return `\`${trimmed}\``;
     }
 
-    getTableColumnsQuery(table: string): SqlTextQuery {
+    getTableColumnsQuery(table: string, _schema?: string): SqlTextQuery {
         const quotedTable = this.quoteIdent(table);
         return { sql: `SHOW COLUMNS FROM ${quotedTable}`, params: [] };
     }
@@ -93,11 +162,14 @@ export class MySqlDialect implements DbDialect {
         return columnNames;
     }
 
-    tableExistsQuery(table: string): SqlTextQuery {
-        return {
-            sql: "SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
-            params: [table]
-        };
+    tableExistsQuery(table: string, schema?: string): SqlTextQuery {
+        if (typeof schema === "string" && schema.trim() !== "") {
+            return {
+                sql: "SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+                params: [schema, table]
+            };
+        }
+        return { sql: "SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", params: [table] };
     }
 }
 
@@ -119,11 +191,14 @@ export class PostgresDialect implements DbDialect {
         return `"${trimmed}"`;
     }
 
-    getTableColumnsQuery(table: string): SqlTextQuery {
-        return {
-            sql: "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? ORDER BY ordinal_position",
-            params: [table]
-        };
+    getTableColumnsQuery(table: string, schema?: string): SqlTextQuery {
+        if (typeof schema === "string" && schema.trim() !== "") {
+            return {
+                sql: "SELECT column_name FROM information_schema.columns WHERE table_schema = ? AND table_name = ? ORDER BY ordinal_position",
+                params: [schema, table]
+            };
+        }
+        return { sql: "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? ORDER BY ordinal_position", params: [table] };
     }
 
     getTableColumnsFromResult(result: any): string[] {
@@ -142,11 +217,14 @@ export class PostgresDialect implements DbDialect {
         return columnNames;
     }
 
-    tableExistsQuery(table: string): SqlTextQuery {
-        return {
-            sql: "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = ?",
-            params: [table]
-        };
+    tableExistsQuery(table: string, schema?: string): SqlTextQuery {
+        if (typeof schema === "string" && schema.trim() !== "") {
+            return {
+                sql: "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema = ? AND table_name = ?",
+                params: [schema, table]
+            };
+        }
+        return { sql: "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = ?", params: [table] };
     }
 }
 
@@ -171,7 +249,7 @@ export class SqliteDialect implements DbDialect {
         return `"${trimmed}"`;
     }
 
-    getTableColumnsQuery(table: string): SqlTextQuery {
+    getTableColumnsQuery(table: string, _schema?: string): SqlTextQuery {
         // PRAGMA 不支持参数占位符；此处通过 quoteIdent 限制输入并安全拼接
         const quotedTable = this.quoteIdent(table);
         return { sql: `PRAGMA table_info(${quotedTable})`, params: [] };
@@ -193,7 +271,7 @@ export class SqliteDialect implements DbDialect {
         return columnNames;
     }
 
-    tableExistsQuery(table: string): SqlTextQuery {
+    tableExistsQuery(table: string, _schema?: string): SqlTextQuery {
         return {
             sql: "SELECT COUNT(*) as count FROM sqlite_master WHERE type = 'table' AND name = ?",
             params: [table]

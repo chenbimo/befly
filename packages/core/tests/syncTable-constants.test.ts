@@ -12,90 +12,90 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { SyncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.js";
 
 describe("DB_VERSION_REQUIREMENTS", () => {
     test("MySQL 最低版本为 8", () => {
-        expect(SyncTable.TestKit.DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR).toBe(8);
+        expect(syncTable.TestKit.DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR).toBe(8);
     });
 
     test("PostgreSQL 最低版本为 17", () => {
-        expect(SyncTable.TestKit.DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR).toBe(17);
+        expect(syncTable.TestKit.DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR).toBe(17);
     });
 
     test("SQLite 最低版本为 3.50.0", () => {
-        expect(SyncTable.TestKit.DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION).toBe("3.50.0");
+        expect(syncTable.TestKit.DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION).toBe("3.50.0");
     });
 });
 
 describe("SYSTEM_INDEX_FIELDS", () => {
     test("包含 created_at", () => {
-        expect(SyncTable.TestKit.SYSTEM_INDEX_FIELDS).toContain("created_at");
+        expect(syncTable.TestKit.SYSTEM_INDEX_FIELDS).toContain("created_at");
     });
 
     test("包含 updated_at", () => {
-        expect(SyncTable.TestKit.SYSTEM_INDEX_FIELDS).toContain("updated_at");
+        expect(syncTable.TestKit.SYSTEM_INDEX_FIELDS).toContain("updated_at");
     });
 
     test("包含 state", () => {
-        expect(SyncTable.TestKit.SYSTEM_INDEX_FIELDS).toContain("state");
+        expect(syncTable.TestKit.SYSTEM_INDEX_FIELDS).toContain("state");
     });
 
     test("共 3 个系统索引字段", () => {
-        expect(SyncTable.TestKit.SYSTEM_INDEX_FIELDS.length).toBe(3);
+        expect(syncTable.TestKit.SYSTEM_INDEX_FIELDS.length).toBe(3);
     });
 });
 
 describe("CHANGE_TYPE_LABELS", () => {
     test('length 对应 "长度"', () => {
-        expect((SyncTable.TestKit.CHANGE_TYPE_LABELS as any).length).toBe("长度");
+        expect((syncTable.TestKit.CHANGE_TYPE_LABELS as any).length).toBe("长度");
     });
 
     test('datatype 对应 "类型"', () => {
-        expect(SyncTable.TestKit.CHANGE_TYPE_LABELS.datatype).toBe("类型");
+        expect(syncTable.TestKit.CHANGE_TYPE_LABELS.datatype).toBe("类型");
     });
 
     test('comment 对应 "注释"', () => {
-        expect(SyncTable.TestKit.CHANGE_TYPE_LABELS.comment).toBe("注释");
+        expect(syncTable.TestKit.CHANGE_TYPE_LABELS.comment).toBe("注释");
     });
 
     test('default 对应 "默认值"', () => {
-        expect(SyncTable.TestKit.CHANGE_TYPE_LABELS.default).toBe("默认值");
+        expect(syncTable.TestKit.CHANGE_TYPE_LABELS.default).toBe("默认值");
     });
 });
 
 describe("MYSQL_TABLE_CONFIG", () => {
     test("ENGINE 为 InnoDB", () => {
-        expect(SyncTable.TestKit.MYSQL_TABLE_CONFIG.ENGINE).toBe("InnoDB");
+        expect(syncTable.TestKit.MYSQL_TABLE_CONFIG.ENGINE).toBe("InnoDB");
     });
 
     test("CHARSET 为 utf8mb4", () => {
-        expect(SyncTable.TestKit.MYSQL_TABLE_CONFIG.CHARSET).toBe("utf8mb4");
+        expect(syncTable.TestKit.MYSQL_TABLE_CONFIG.CHARSET).toBe("utf8mb4");
     });
 
     test("COLLATE 为 utf8mb4_0900_ai_ci", () => {
-        expect(SyncTable.TestKit.MYSQL_TABLE_CONFIG.COLLATE).toBe("utf8mb4_0900_ai_ci");
+        expect(syncTable.TestKit.MYSQL_TABLE_CONFIG.COLLATE).toBe("utf8mb4_0900_ai_ci");
     });
 });
 
 describe("getTypeMapping (MySQL)", () => {
     test("number 映射为 BIGINT", () => {
-        expect(SyncTable.TestKit.getTypeMapping("mysql").number).toBe("BIGINT");
+        expect(syncTable.TestKit.getTypeMapping("mysql").number).toBe("BIGINT");
     });
 
     test("string 映射为 VARCHAR", () => {
-        expect(SyncTable.TestKit.getTypeMapping("mysql").string).toBe("VARCHAR");
+        expect(syncTable.TestKit.getTypeMapping("mysql").string).toBe("VARCHAR");
     });
 
     test("text 映射为 MEDIUMTEXT", () => {
-        expect(SyncTable.TestKit.getTypeMapping("mysql").text).toBe("MEDIUMTEXT");
+        expect(syncTable.TestKit.getTypeMapping("mysql").text).toBe("MEDIUMTEXT");
     });
 
     test("array_string 映射为 VARCHAR", () => {
-        expect(SyncTable.TestKit.getTypeMapping("mysql").array_string).toBe("VARCHAR");
+        expect(syncTable.TestKit.getTypeMapping("mysql").array_string).toBe("VARCHAR");
     });
 
     test("array_text 映射为 MEDIUMTEXT", () => {
-        expect(SyncTable.TestKit.getTypeMapping("mysql").array_text).toBe("MEDIUMTEXT");
+        expect(syncTable.TestKit.getTypeMapping("mysql").array_text).toBe("MEDIUMTEXT");
     });
 });

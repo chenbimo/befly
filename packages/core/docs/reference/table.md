@@ -512,17 +512,17 @@ interface FieldDefinition {
 
 ### 触发方式
 
-服务启动时会在**主进程**自动执行 `SyncTable.run()`。
+服务启动时会在**主进程**自动执行 `syncTable()`。
 
 如需在代码中手动触发：
 
 ```typescript
-import { SyncTable } from "../../sync/syncTable.js";
+import { syncTable } from "../../sync/syncTable.js";
 import { scanSources } from "../../utils/scanSources.js";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
 const sources = await scanSources();
-await SyncTable.run(ctx, sources.tables);
+await syncTable(ctx, sources.tables);
 ```
 
 ### 同步流程

@@ -15,11 +15,11 @@ import type { ScanFileResult } from "../utils/scanFiles.js";
 import { snakeCase } from "es-toolkit/string";
 
 import { CacheKeys } from "../lib/cacheKeys.js";
-import { getDialectByName } from "../lib/dbDialect.js";
+import { getDialectByName, getSyncTableColumnsInfoQuery, getSyncTableIndexesQuery } from "../lib/dbDialect.js";
 import { Logger } from "../lib/logger.js";
 
 type SqlExecutor = {
-    unsafe(sqlStr: string, params?: any[]): Promise<any>;
+    unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<T[]>;
 };
 
 type DbDialect = DbDialectName;
@@ -27,157 +27,136 @@ type DbDialect = DbDialectName;
 /* ========================================================================== */
 /* 对外导出面
  *
- * 约束：本文件仅导出一个 class：SyncTable。
- * - 生产代码：通过 new SyncTable(ctx).run(...) 执行同步。
- * - 测试：通过 SyncTable.TestKit 访问纯函数/常量（不再导出零散函数）。
+ * 约束：本文件仅导出一个函数：syncTable。
+ * - 生产代码：通过 await syncTable(ctx, items) 执行同步。
+ * - 测试：通过 syncTable.TestKit 访问纯函数/常量（不再导出零散函数）。
  */
 /* ========================================================================== */
 
 /**
  * 文件导航（推荐阅读顺序）
- * 1) SyncTable.run(ctx, tables) 入口（本段下方）
+ * 1) syncTable(ctx, items) 入口（本段下方）
  * 2) 版本/常量/方言判断（DB_VERSION_REQUIREMENTS 等）
  * 3) 通用 DDL 工具（quote/type/default/ddl/index SQL）
  * 4) Runtime I/O（只读元信息：表/列/索引/版本）
  * 5) plan/apply（写变更：建表/改表/SQLite 重建）
  */
 
-export class SyncTable {
-    private ctx: BeflyContext;
+type SyncTableFn = ((ctx: BeflyContext, items: ScanFileResult[]) => Promise<void>) & {
+    TestKit: typeof SYNC_TABLE_TEST_KIT;
+};
 
-    constructor(ctx: BeflyContext) {
-        this.ctx = ctx;
-    }
+/**
+ * 数据库同步命令入口（函数模式）
+ */
+export const syncTable = (async (ctx: BeflyContext, items: ScanFileResult[]): Promise<void> => {
+    try {
+        // 记录处理过的表名（用于清理缓存）
+        const processedTables: string[] = [];
 
-    /**
-     * 数据库同步命令入口（实例方法）
-     */
-    async run(items: ScanFileResult[]): Promise<void> {
-        try {
-            // 记录处理过的表名（用于清理缓存）
-            const processedTables: string[] = [];
-
-            if (!Array.isArray(items)) {
-                throw new Error("SyncTable.run(items) 参数必须是数组");
-            }
-
-            const ctx = this.ctx;
-            if (!ctx) {
-                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx");
-            }
-            if (!ctx.db) {
-                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx.db");
-            }
-            if (!ctx.redis) {
-                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx.redis");
-            }
-            if (!ctx.config) {
-                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx.config");
-            }
-
-            // DbDialect 归一化（允许值与映射关系）：
-            //
-            // | ctx.config.db.type 输入 | 归一化 dbDialect |
-            // |------------------------|------------------|
-            // | mysql / 其他 / 空值    | mysql            |
-            // | postgres / postgresql  | postgresql       |
-            // | sqlite                 | sqlite           |
-            //
-            // 约束：后续若新增方言，必须同步更新：
-            // - 这里的归一化
-            // - DIALECT_IMPLS
-            // - ensureDbVersion / runtime I/O / DDL 分支
-            const dbType = String(ctx.config.db?.type || "mysql").toLowerCase();
-            let dbDialect: DbDialect = "mysql";
-            if (dbType === "postgres" || dbType === "postgresql") {
-                dbDialect = "postgresql";
-            } else if (dbType === "sqlite") {
-                dbDialect = "sqlite";
-            }
-
-            // 检查数据库版本（复用 ctx.db 的现有连接/事务）
-            await ensureDbVersion(dbDialect, ctx.db);
-
-            const databaseName = ctx.config.db?.database || "";
-            const runtime: SyncRuntime = {
-                dbDialect: dbDialect,
-                db: ctx.db,
-                dbName: databaseName
-            };
-
-            // 处理传入的 tables 数据（来自 scanSources）
-            for (const item of items) {
-                if (!item || item.type !== "table") {
-                    continue;
-                }
-
-                if (item.source !== "app" && item.source !== "addon" && item.source !== "core") {
-                    Logger.warn(`SyncTable.run 跳过未知来源表定义: source=${String(item.source)} fileName=${String(item.fileName)}`);
-                    continue;
-                }
-
-                // 确定表名：
-                // - addon 表：addon_{addonName}_{fileName}
-                // - app/core 表：{fileName}
-                const baseTableName = snakeCase(item.fileName);
-
-                let tableName = baseTableName;
-                if (item.source === "addon") {
-                    if (!item.addonName || String(item.addonName).trim() === "") {
-                        throw new Error(`SyncTable.run addon 表缺少 addonName: fileName=${String(item.fileName)}`);
-                    }
-                    tableName = `addon_${snakeCase(item.addonName)}_${baseTableName}`;
-                }
-
-                const tableDefinition = item.content;
-                if (!tableDefinition || typeof tableDefinition !== "object") {
-                    throw new Error(`SyncTable.run 表定义无效: table=${tableName}`);
-                }
-
-                // 为字段属性设置默认值：表定义来自 JSON/扫描结果，字段可能缺省。
-                // 缺省会让 diff/DDL 生成出现 undefined vs null 等差异，导致错误的变更判断。
-                for (const fieldDef of Object.values(tableDefinition)) {
-                    applyFieldDefaults(fieldDef);
-                }
-
-                const existsTable = await tableExistsRuntime(runtime, tableName);
-
-                if (existsTable) {
-                    await modifyTableRuntime(runtime, tableName, tableDefinition as any);
-                } else {
-                    await createTable(runtime, tableName, tableDefinition as any);
-                }
-
-                // 记录处理过的表名（用于清理缓存）
-                processedTables.push(tableName);
-            }
-
-            // 清理 Redis 缓存（如果有表被处理）
-            if (processedTables.length > 0) {
-                const cacheKeys = processedTables.map((tableName) => CacheKeys.tableColumns(tableName));
-                await ctx.redis.delBatch(cacheKeys);
-            }
-        } catch (error: any) {
-            Logger.error({ err: error }, "数据库同步失败");
-            throw error;
+        if (!Array.isArray(items)) {
+            throw new Error("syncTable(items) 参数必须是数组");
         }
-    }
 
-    /**
-     * 便捷静态入口（仍只导出 class）
-     */
-    static async run(ctx: BeflyContext, items: ScanFileResult[]): Promise<void> {
-        await new SyncTable(ctx).run(items);
-    }
+        if (!ctx) {
+            throw new Error("syncTable(ctx, items) 缺少 ctx");
+        }
+        if (!ctx.db) {
+            throw new Error("syncTable(ctx, items) 缺少 ctx.db");
+        }
+        if (!ctx.redis) {
+            throw new Error("syncTable(ctx, items) 缺少 ctx.redis");
+        }
+        if (!ctx.config) {
+            throw new Error("syncTable(ctx, items) 缺少 ctx.config");
+        }
 
-    /**
-     * 测试专用入口：尽量减少 class 顶层静态方法暴露面。
-     * 说明：仍然只导出 SyncTable 这个 class；测试用能力统一挂在 TestKit 下。
-     */
-    static get TestKit() {
-        return SYNC_TABLE_TEST_KIT;
+        // DbDialect 归一化（允许值与映射关系）：
+        //
+        // | ctx.config.db.type 输入 | 归一化 dbDialect |
+        // |------------------------|------------------|
+        // | mysql / 其他 / 空值    | mysql            |
+        // | postgres / postgresql  | postgresql       |
+        // | sqlite                 | sqlite           |
+        //
+        // 约束：后续若新增方言，必须同步更新：
+        // - 这里的归一化
+        // - ensureDbVersion / runtime I/O / DDL 分支
+        const dbType = String(ctx.config.db?.type || "mysql").toLowerCase();
+        let dbDialect: DbDialect = "mysql";
+        if (dbType === "postgres" || dbType === "postgresql") {
+            dbDialect = "postgresql";
+        } else if (dbType === "sqlite") {
+            dbDialect = "sqlite";
+        }
+
+        // 检查数据库版本（复用 ctx.db 的现有连接/事务）
+        await ensureDbVersion(dbDialect, ctx.db);
+
+        const databaseName = ctx.config.db?.database || "";
+        const runtime: SyncRuntime = {
+            dbDialect: dbDialect,
+            db: ctx.db,
+            dbName: databaseName
+        };
+
+        // 处理传入的 tables 数据（来自 scanSources）
+        for (const item of items) {
+            if (!item || item.type !== "table") {
+                continue;
+            }
+
+            if (item.source !== "app" && item.source !== "addon" && item.source !== "core") {
+                Logger.warn(`syncTable 跳过未知来源表定义: source=${String(item.source)} fileName=${String(item.fileName)}`);
+                continue;
+            }
+
+            // 确定表名：
+            // - addon 表：addon_{addonName}_{fileName}
+            // - app/core 表：{fileName}
+            const baseTableName = snakeCase(item.fileName);
+
+            let tableName = baseTableName;
+            if (item.source === "addon") {
+                if (!item.addonName || String(item.addonName).trim() === "") {
+                    throw new Error(`syncTable addon 表缺少 addonName: fileName=${String(item.fileName)}`);
+                }
+                tableName = `addon_${snakeCase(item.addonName)}_${baseTableName}`;
+            }
+
+            const tableDefinition = item.content;
+            if (!tableDefinition || typeof tableDefinition !== "object") {
+                throw new Error(`syncTable 表定义无效: table=${tableName}`);
+            }
+
+            // 为字段属性设置默认值：表定义来自 JSON/扫描结果，字段可能缺省。
+            // 缺省会让 diff/DDL 生成出现 undefined vs null 等差异，导致错误的变更判断。
+            for (const fieldDef of Object.values(tableDefinition)) {
+                applyFieldDefaults(fieldDef);
+            }
+
+            const existsTable = await tableExistsRuntime(runtime, tableName);
+
+            if (existsTable) {
+                await modifyTableRuntime(runtime, tableName, tableDefinition as any);
+            } else {
+                await createTable(runtime, tableName, tableDefinition as any);
+            }
+
+            // 记录处理过的表名（用于清理缓存）
+            processedTables.push(tableName);
+        }
+
+        // 清理 Redis 缓存（如果有表被处理）
+        if (processedTables.length > 0) {
+            const cacheKeys = processedTables.map((tableName) => CacheKeys.tableColumns(tableName));
+            await ctx.redis.delBatch(cacheKeys);
+        }
+    } catch (error: any) {
+        Logger.error({ err: error }, "数据库同步失败");
+        throw error;
     }
-}
+}) as SyncTableFn;
 
 /* ========================================================================== */
 /* 版本/常量/运行时方言状态 */
@@ -315,6 +294,9 @@ const SYNC_TABLE_TEST_KIT = {
         };
     }
 };
+
+// 测试能力挂载（避免导出零散函数，同时确保运行时存在）
+syncTable.TestKit = SYNC_TABLE_TEST_KIT;
 
 /**
  * 获取字段类型映射（根据当前数据库类型）
@@ -665,30 +647,21 @@ type SyncRuntime = {
 
 async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
     if (!runtime.db) throw new Error("SQL 执行器未初始化");
-
-    // 方言差异说明：
-    // - MySQL：information_schema.tables + TABLE_SCHEMA 精确判断（依赖 runtime.dbName）。
-    // - PostgreSQL：这里固定检查 public schema（项目约定）；若未来引入多 schema，需要扩展此处查询条件。
-    // - SQLite：通过 sqlite_master 判断。
-
     try {
+        // 统一交由方言层构造 SQL；syncTable 仅决定“要查哪个 schema/db”。
+        // - MySQL：传 runtime.dbName（information_schema.table_schema）
+        // - PostgreSQL：固定 public（项目约定）
+        // - SQLite：忽略 schema
+        let schema: string | undefined = undefined;
         if (runtime.dbDialect === "mysql") {
-            const res = await runtime.db.unsafe("SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [runtime.dbName, tableName]);
-            return (res[0]?.count || 0) > 0;
+            schema = runtime.dbName;
+        } else if (runtime.dbDialect === "postgresql") {
+            schema = "public";
         }
 
-        if (runtime.dbDialect === "postgresql") {
-            const res = await runtime.db.unsafe("SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ?", [tableName]);
-            return (res[0]?.count || 0) > 0;
-        }
-
-        if (runtime.dbDialect === "sqlite") {
-            const q = getDialectByName("sqlite").tableExistsQuery(tableName);
-            const res = await runtime.db.unsafe(q.sql, q.params);
-            return (res[0]?.count || 0) > 0;
-        }
-
-        return false;
+        const q = getDialectByName(runtime.dbDialect).tableExistsQuery(tableName, schema);
+        const res = await runtime.db.unsafe(q.sql, q.params);
+        return (res[0]?.count || 0) > 0;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
         throw new Error(`runtime I/O 失败: op=tableExists table=${tableName} err=${errMsg}`);
@@ -708,7 +681,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
         // - PostgreSQL：information_schema.columns 给基础列信息；注释需额外从 pg_class/pg_attribute 获取。
         // - SQLite：PRAGMA table_info 仅提供 type/notnull/default 等有限信息，无列注释。
         if (runtime.dbDialect === "mysql") {
-            const result = await runtime.db.unsafe("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", [runtime.dbName, tableName]);
+            const q = getSyncTableColumnsInfoQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
+            const result = await runtime.db.unsafe(q.columns.sql, q.columns.params);
             for (const row of result) {
                 const defaultValue = row.COLUMN_DEFAULT;
 
@@ -723,11 +697,9 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                 };
             }
         } else if (runtime.dbDialect === "postgresql") {
-            const result = await runtime.db.unsafe("SELECT column_name, data_type, character_maximum_length, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? ORDER BY ordinal_position", [tableName]);
-            const comments = await runtime.db.unsafe(
-                "SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relname = ? AND a.attnum > 0",
-                [tableName]
-            );
+            const q = getSyncTableColumnsInfoQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
+            const result = await runtime.db.unsafe(q.columns.sql, q.columns.params);
+            const comments = q.comments ? await runtime.db.unsafe(q.comments.sql, q.comments.params) : [];
             const commentMap: { [key: string]: string } = {};
             for (const r of comments) commentMap[r.column_name] = r.column_comment;
 
@@ -743,8 +715,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                 };
             }
         } else if (runtime.dbDialect === "sqlite") {
-            const q = getDialectByName("sqlite").getTableColumnsQuery(tableName);
-            const result = await runtime.db.unsafe(q.sql, q.params);
+            const q = getSyncTableColumnsInfoQuery({ dialect: "sqlite", table: tableName, dbName: runtime.dbName });
+            const result = await runtime.db.unsafe(q.columns.sql, q.columns.params);
             for (const row of result) {
                 let baseType = String(row.type || "").toUpperCase();
                 let max = null;
@@ -785,13 +757,15 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
         // - PostgreSQL：pg_indexes 只有 indexdef，需要从定义里解析列名（这里仅取单列索引）。
         // - SQLite：PRAGMA index_list + index_info；同样仅收集单列索引，避免多列索引误判。
         if (runtime.dbDialect === "mysql") {
-            const result = await runtime.db.unsafe("SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME", [runtime.dbName, tableName]);
+            const q = getSyncTableIndexesQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
+            const result = await runtime.db.unsafe(q.sql, q.params);
             for (const row of result) {
                 if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
                 indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
             }
         } else if (runtime.dbDialect === "postgresql") {
-            const result = await runtime.db.unsafe("SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ?", [tableName]);
+            const q = getSyncTableIndexesQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
+            const result = await runtime.db.unsafe(q.sql, q.params);
             for (const row of result) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {

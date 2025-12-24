@@ -666,7 +666,7 @@ describe("DbHelper - 代码逻辑问题分析", () => {
         // **建议修复**：
         // 添加查询超时机制
 
-        const mockExecuteWithTimeout = async (sql: string, params: any[], timeout: number = 30000) => {
+        const mockExecuteWithTimeout = async (sql: string, params: unknown[], timeout: number = 30000) => {
             const timeoutPromise = new Promise((_, reject) => {
                 setTimeout(() => reject(new Error("查询超时")), timeout);
             });
