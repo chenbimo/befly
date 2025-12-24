@@ -27,7 +27,27 @@ type SyncRuntime = {
     dbName: string;
 };
 
+function createSyncRuntime(params: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }): SyncRuntime {
+    return {
+        dbDialect: params.dbDialect,
+        db: params.db,
+        dbName: params.dbName
+    };
+}
+
 export type DbDialect = DbDialectName;
+
+/* ========================================================================== */
+/* 对外导出面（被 core/main.ts 与 tests 使用）
+ *
+ * - syncTable(ctx, tables)                      : 命令入口
+ * - tableExists/getTableColumns/getTableIndexes : 读库辅助（测试依赖旧签名）
+ * - 其余 export 多为纯函数/常量：DDL 构建与类型映射（测试覆盖）
+ *
+ * internal 约定：
+ * - *Runtime(...) 只在本文件内部使用，避免长参数链；外部如需调用，优先走旧签名 wrapper。
+ */
+/* ========================================================================== */
 
 const DIALECT_IMPLS: Record<DbDialect, MySqlDialect | PostgresDialect | SqliteDialect> = {
     mysql: new MySqlDialect(),
@@ -463,11 +483,25 @@ export function isCompatibleTypeChange(currentType: string, newType: string): bo
     return false;
 }
 
+/* ========================================================================== */
+/* runtime I/O（读库/元信息查询）
+ *
+ * 说明：对外仍保留旧签名 wrapper（测试依赖），内部实现统一走 *Runtime(runtime, ...) 形式。
+ */
+/* ========================================================================== */
+
 /**
  * 判断表是否存在（返回布尔值）
  */
 export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
-    return await tableExistsRuntime({ dbDialect: dbDialect, db: db, dbName: dbName }, tableName);
+    return await tableExistsRuntime(
+        createSyncRuntime({
+            dbDialect: dbDialect,
+            db: db,
+            dbName: dbName
+        }),
+        tableName
+    );
 }
 
 async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
@@ -499,7 +533,14 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
  * 获取表的现有列信息（按方言）
  */
 export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
-    return await getTableColumnsRuntime({ dbDialect: dbDialect, db: db, dbName: dbName }, tableName);
+    return await getTableColumnsRuntime(
+        createSyncRuntime({
+            dbDialect: dbDialect,
+            db: db,
+            dbName: dbName
+        }),
+        tableName
+    );
 }
 
 async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
@@ -574,7 +615,14 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
  * 获取表的现有索引信息（单列索引）
  */
 export async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
-    return await getTableIndexesRuntime({ dbDialect: dbDialect, db: db, dbName: dbName }, tableName);
+    return await getTableIndexesRuntime(
+        createSyncRuntime({
+            dbDialect: dbDialect,
+            db: db,
+            dbName: dbName
+        }),
+        tableName
+    );
 }
 
 async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): Promise<IndexInfo> {
@@ -722,6 +770,10 @@ export function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Col
 
     return changes;
 }
+
+/* ========================================================================== */
+/* plan/apply & 建表/改表（核心同步逻辑） */
+/* ========================================================================== */
 
 /**
  * SQLite 重建表迁移（简化版）
@@ -881,11 +933,15 @@ export async function createTable(runtime: SyncRuntime, tableName: string, field
  * 同步表结构（对比和应用变更）
  */
 export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan> {
-    const runtime: SyncRuntime = { dbDialect: dbDialect, db: db, dbName: dbName || "" };
-    return await modifyTableWithRuntime(runtime, tableName, fields);
+    const runtime = createSyncRuntime({
+        dbDialect: dbDialect,
+        db: db,
+        dbName: dbName || ""
+    });
+    return await modifyTableRuntime(runtime, tableName, fields);
 }
 
-async function modifyTableWithRuntime(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan> {
+async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan> {
     const existingColumns = await getTableColumnsRuntime(runtime, tableName);
     const existingIndexes = await getTableIndexesRuntime(runtime, tableName);
     let changed = false;
@@ -1085,6 +1141,13 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
         // 检查数据库版本（复用 ctx.db 的现有连接/事务）
         await ensureDbVersion(dbDialect, ctx.db);
 
+        const dbName = ctx.config.db?.database || "";
+        const runtime = createSyncRuntime({
+            dbDialect: dbDialect,
+            db: ctx.db,
+            dbName: dbName
+        });
+
         // 处理传入的 tables 数据（来自 scanSources）
         for (const item of tables) {
             if (!item || item.type !== "table") {
@@ -1097,15 +1160,18 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
             }
 
             // 确定表名：
-            // - addon 表：addon_{addonName}_{表名}
-            // - 项目表/core 表：{表名}
-            let tableName = snakeCase(item.fileName);
-            if (item.source === "addon") {
-                if (!item.addonName || String(item.addonName).trim() === "") {
-                    throw new Error(`syncTable addon 表缺少 addonName: fileName=${String(item.fileName)}`);
-                }
-                tableName = `addon_${snakeCase(item.addonName)}_${tableName}`;
-            }
+            // - addon 表：addon_{addonName}_{fileName}
+            // - app/core 表：{fileName}
+            const baseTableName = snakeCase(item.fileName);
+            const tableName =
+                item.source === "addon"
+                    ? (() => {
+                          if (!item.addonName || String(item.addonName).trim() === "") {
+                              throw new Error(`syncTable addon 表缺少 addonName: fileName=${String(item.fileName)}`);
+                          }
+                          return `addon_${snakeCase(item.addonName)}_${baseTableName}`;
+                      })()
+                    : baseTableName;
 
             const tableDefinition = item.tables;
             if (!tableDefinition || typeof tableDefinition !== "object") {
@@ -1117,17 +1183,10 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
                 applyFieldDefaults(fieldDef);
             }
 
-            const dbName = ctx.config.db?.database || "";
-            const runtime: SyncRuntime = {
-                dbDialect: dbDialect,
-                db: ctx.db,
-                dbName: dbName
-            };
-
             const existsTable = await tableExistsRuntime(runtime, tableName);
 
             if (existsTable) {
-                await modifyTableWithRuntime(runtime, tableName, tableDefinition as any);
+                await modifyTableRuntime(runtime, tableName, tableDefinition as any);
             } else {
                 await createTable(runtime, tableName, tableDefinition as any);
             }
