@@ -1,6 +1,6 @@
 export type DbDialectName = "mysql" | "postgresql" | "sqlite";
 
-let DIALECT_CACHE: Record<DbDialectName, DbDialect> | null = null;
+let DIALECT_CACHE: Map<DbDialectName, DbDialect> | null = null;
 
 /**
  * 获取方言实例（内部缓存，避免到处 new）。
@@ -13,14 +13,18 @@ export function getDialectByName(name: DbDialectName): DbDialect {
     }
 
     if (!DIALECT_CACHE) {
-        DIALECT_CACHE = {
-            mysql: new MySqlDialect(),
-            postgresql: new PostgresDialect(),
-            sqlite: new SqliteDialect()
-        };
+        DIALECT_CACHE = new Map<DbDialectName, DbDialect>();
+        DIALECT_CACHE.set("mysql", new MySqlDialect());
+        DIALECT_CACHE.set("postgresql", new PostgresDialect());
+        DIALECT_CACHE.set("sqlite", new SqliteDialect());
     }
 
-    return DIALECT_CACHE[name];
+    const dialect = DIALECT_CACHE.get(name);
+    if (!dialect) {
+        throw new Error(`未知数据库方言: ${String(name)}`);
+    }
+
+    return dialect;
 }
 
 export type SqlTextQuery = {

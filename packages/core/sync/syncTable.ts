@@ -298,6 +298,14 @@ const SYNC_TABLE_TEST_KIT = {
 // 测试能力挂载（避免导出零散函数，同时确保运行时存在）
 syncTable.TestKit = SYNC_TABLE_TEST_KIT;
 
+// 防御性：避免运行时被误覆盖（只读），但仍保持可枚举/可访问。
+Object.defineProperty(syncTable, "TestKit", {
+    value: SYNC_TABLE_TEST_KIT,
+    writable: false,
+    enumerable: true,
+    configurable: false
+});
+
 /**
  * 获取字段类型映射（根据当前数据库类型）
  */
