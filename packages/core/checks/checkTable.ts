@@ -143,6 +143,12 @@ export async function checkTable(tables): Promise<void> {
                     hasError = true;
                 }
 
+                // unsigned 仅对 number 类型有效（且仅 MySQL 语义上生效）
+                if (fieldType !== "number" && field.unsigned !== undefined) {
+                    Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 字段类型为 ${fieldType}，不允许设置 unsigned（仅 number 类型有效）`);
+                    hasError = true;
+                }
+
                 // 检查 unique 和 index 冲突（警告但不阻断）
                 if (field.unique && field.index) {
                     Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 同时设置了 unique=true 和 index=true，` + `unique 约束会自动创建唯一索引，index=true 将被忽略以避免重复索引`);
@@ -157,18 +163,27 @@ export async function checkTable(tables): Promise<void> {
                 }
 
                 // 类型联动校验 + 默认值规则
-                if (fieldType === "text") {
-                    // text：min/max 应该为 null，默认值必须为 null
+                if (fieldType === "text" || fieldType === "array_text" || fieldType === "array_number_text") {
+                    // text / array_text / array_number_text：min/max 必须为 null，默认值必须为 null，且不支持索引/唯一约束
                     if (fieldMin !== undefined && fieldMin !== null) {
-                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最小值应为 null，当前为 "${fieldMin}"`);
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 ${fieldType} 类型最小值应为 null，当前为 "${fieldMin}"`);
                         hasError = true;
                     }
                     if (fieldMax !== undefined && fieldMax !== null) {
-                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 text 类型最大长度应为 null，当前为 "${fieldMax}"`);
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 的 ${fieldType} 类型最大长度应为 null，当前为 "${fieldMax}"`);
                         hasError = true;
                     }
                     if (fieldDefault !== undefined && fieldDefault !== null) {
-                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 text 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
+                        hasError = true;
+                    }
+
+                    if (field.index === true) {
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，不支持创建索引（index=true 无效）`);
+                        hasError = true;
+                    }
+                    if (field.unique === true) {
+                        Logger.warn(`${item.typeName}表 ${fileName} 文件 ${colKey} 为 ${fieldType} 类型，不支持唯一约束（unique=true 无效）`);
                         hasError = true;
                     }
                 } else if (fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string") {

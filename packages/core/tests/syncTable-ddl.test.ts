@@ -61,6 +61,38 @@ describe("buildSystemColumnDefs (MySQL)", () => {
     });
 });
 
+describe("buildSystemColumnDefs (PostgreSQL)", () => {
+    test("返回 5 个系统字段定义", () => {
+        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
+        expect(defs.length).toBe(5);
+    });
+
+    test("包含 id 主键 identity", () => {
+        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
+        const idDef = defs.find((d: string) => d.includes('"id"'));
+        expect(idDef).toContain("BIGINT");
+        expect(idDef).toContain("PRIMARY KEY");
+        expect(idDef).toContain("GENERATED");
+        expect(idDef).toContain("IDENTITY");
+    });
+
+    test("包含 created_at BIGINT 默认值", () => {
+        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
+        const def = defs.find((d: string) => d.includes('"created_at"'));
+        expect(def).toContain("BIGINT");
+        expect(def).toContain("NOT NULL");
+        expect(def).toContain("DEFAULT 0");
+    });
+
+    test("包含 state BIGINT 默认值", () => {
+        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
+        const def = defs.find((d: string) => d.includes('"state"'));
+        expect(def).toContain("BIGINT");
+        expect(def).toContain("NOT NULL");
+        expect(def).toContain("DEFAULT 1");
+    });
+});
+
 describe("buildBusinessColumnDefs (MySQL)", () => {
     test("生成 string 类型字段", () => {
         const fields = {
