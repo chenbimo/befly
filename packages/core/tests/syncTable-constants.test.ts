@@ -100,16 +100,20 @@ describe("getTypeMapping (MySQL)", () => {
     });
 });
 
-describe("数据库类型判断 (MySQL)", () => {
-    test("isMySQL 为 true", () => {
-        expect(syncTable.isMySQL("mysql")).toBe(true);
+describe("normalizeDbDialect", () => {
+    test("postgres 归一化为 postgresql", () => {
+        expect(syncTable.normalizeDbDialect("postgres")).toBe("postgresql");
     });
 
-    test("isPG 为 false", () => {
-        expect(syncTable.isPG("mysql")).toBe(false);
+    test("postgresql 保持为 postgresql", () => {
+        expect(syncTable.normalizeDbDialect("postgresql")).toBe("postgresql");
     });
 
-    test("isSQLite 为 false", () => {
-        expect(syncTable.isSQLite("mysql")).toBe(false);
+    test("sqlite 保持为 sqlite", () => {
+        expect(syncTable.normalizeDbDialect("sqlite")).toBe("sqlite");
+    });
+
+    test("空值默认 mysql", () => {
+        expect(syncTable.normalizeDbDialect(undefined)).toBe("mysql");
     });
 });

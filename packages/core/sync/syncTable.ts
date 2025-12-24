@@ -50,10 +50,6 @@ const DIALECT_IMPLS: Record<DbDialect, MySqlDialect | PostgresDialect | SqliteDi
     sqlite: new SqliteDialect()
 };
 
-function getDialectImpl(name: DbDialect): MySqlDialect | PostgresDialect | SqliteDialect {
-    return DIALECT_IMPLS[name];
-}
-
 export function normalizeDbDialect(dbType: string | undefined | null): DbDialect {
     const v = String(dbType || "mysql").toLowerCase();
     if (v === "postgres") return "postgresql";
@@ -108,11 +104,11 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
         await ensureDbVersion(dbDialect, ctx.db);
 
         const databaseName = ctx.config.db?.database || "";
-        const runtime = createSyncRuntime({
+        const runtime: SyncRuntime = {
             dbDialect: dbDialect,
             db: ctx.db,
             dbName: databaseName
-        });
+        };
 
         // 处理传入的 tables 数据（来自 scanSources）
         for (const item of tables) {
@@ -207,18 +203,6 @@ export const MYSQL_TABLE_CONFIG = {
     COLLATE: "utf8mb4_0900_ai_ci"
 } as const;
 
-export function isMySQL(dbDialect: DbDialect): boolean {
-    return dbDialect === "mysql";
-}
-
-export function isPG(dbDialect: DbDialect): boolean {
-    return dbDialect === "postgresql";
-}
-
-export function isSQLite(dbDialect: DbDialect): boolean {
-    return dbDialect === "sqlite";
-}
-
 type SystemFieldMeta = {
     name: "id" | "created_at" | "updated_at" | "deleted_at" | "state";
     comment: string;
@@ -282,20 +266,18 @@ const SYSTEM_FIELDS: ReadonlyArray<SystemFieldMeta> = [
  */
 export const SYSTEM_INDEX_FIELDS: ReadonlyArray<string> = SYSTEM_FIELDS.filter((f) => f.needsIndex).map((f) => f.name);
 
-function getSystemFieldMeta(fieldName: string): SystemFieldMeta | null {
-    for (const f of SYSTEM_FIELDS) {
-        if (f.name === fieldName) return f;
-    }
-    return null;
+const SYSTEM_FIELD_META_MAP: Record<string, SystemFieldMeta> = {};
+for (const f of SYSTEM_FIELDS) {
+    SYSTEM_FIELD_META_MAP[f.name] = f;
 }
 
 /**
  * 获取字段类型映射（根据当前数据库类型）
  */
 export function getTypeMapping(dbDialect: DbDialect): Record<string, string> {
-    const isSqlite = isSQLite(dbDialect);
-    const isPg = isPG(dbDialect);
-    const isMysql = isMySQL(dbDialect);
+    const isSqlite = dbDialect === "sqlite";
+    const isPg = dbDialect === "postgresql";
+    const isMysql = dbDialect === "mysql";
 
     return {
         number: isSqlite ? "INTEGER" : isPg ? "BIGINT" : "BIGINT",
@@ -316,7 +298,7 @@ export function getTypeMapping(dbDialect: DbDialect): Record<string, string> {
  * 根据数据库类型引用标识符
  */
 export function quoteIdentifier(dbDialect: DbDialect, identifier: string): string {
-    return getDialectImpl(dbDialect).quoteIdent(identifier);
+    return DIALECT_IMPLS[dbDialect].quoteIdent(identifier);
 }
 
 /**
@@ -360,7 +342,7 @@ export function getSqlType(dbDialect: DbDialect, fieldType: string, fieldMax: nu
         return `${typeMapping[fieldType]}(${fieldMax})`;
     }
     const baseType = typeMapping[fieldType] || "TEXT";
-    if (isMySQL(dbDialect) && fieldType === "number" && unsigned) {
+    if (dbDialect === "mysql" && fieldType === "number" && unsigned) {
         return `${baseType} UNSIGNED`;
     }
     return baseType;
@@ -423,7 +405,7 @@ export function buildIndexSQL(dbDialect: DbDialect, tableName: string, indexName
     const indexQuoted = quoteIdentifier(dbDialect, indexName);
     const fieldQuoted = quoteIdentifier(dbDialect, fieldName);
 
-    if (isMySQL(dbDialect)) {
+    if (dbDialect === "mysql") {
         const parts: string[] = [];
         if (action === "create") {
             parts.push(`ADD INDEX ${indexQuoted} (${fieldQuoted})`);
@@ -433,7 +415,7 @@ export function buildIndexSQL(dbDialect: DbDialect, tableName: string, indexName
         return `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${parts.join(", ")}`;
     }
 
-    if (isPG(dbDialect)) {
+    if (dbDialect === "postgresql") {
         if (action === "create") {
             return `CREATE INDEX CONCURRENTLY IF NOT EXISTS ${indexQuoted} ON ${tableQuoted}(${fieldQuoted})`;
         }
@@ -450,15 +432,15 @@ export function buildIndexSQL(dbDialect: DbDialect, tableName: string, indexName
  * 获取单个系统字段的列定义（用于 ADD COLUMN 或 CREATE TABLE）
  */
 export function getSystemColumnDef(dbDialect: DbDialect, fieldName: string): string | null {
-    const meta = getSystemFieldMeta(fieldName);
+    const meta = SYSTEM_FIELD_META_MAP[fieldName];
     if (!meta) return null;
 
     const colQuoted = quoteIdentifier(dbDialect, meta.name);
-    if (isMySQL(dbDialect)) {
+    if (dbDialect === "mysql") {
         return `${colQuoted} ${meta.mysqlDdl} COMMENT "${escapeComment(meta.comment)}"`;
     }
 
-    if (isPG(dbDialect)) {
+    if (dbDialect === "postgresql") {
         return `${colQuoted} ${meta.pgDdl}`;
     }
 
@@ -495,7 +477,7 @@ export function buildBusinessColumnDefs(dbDialect: DbDialect, fields: Record<str
         const uniqueSql = fieldDef.unique ? " UNIQUE" : "";
         const nullableSql = fieldDef.nullable ? " NULL" : " NOT NULL";
 
-        if (isMySQL(dbDialect)) {
+        if (dbDialect === "mysql") {
             colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`);
         } else {
             colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`);
@@ -524,10 +506,10 @@ export function generateDDLClause(dbDialect: DbDialect, fieldKey: string, fieldD
     const uniqueSql = fieldDef.unique ? " UNIQUE" : "";
     const nullableSql = fieldDef.nullable ? " NULL" : " NOT NULL";
 
-    if (isMySQL(dbDialect)) {
+    if (dbDialect === "mysql") {
         return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`;
     }
-    if (isPG(dbDialect)) {
+    if (dbDialect === "postgresql") {
         if (isAdd) return `ADD COLUMN IF NOT EXISTS ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
         return `ALTER COLUMN ${colQuoted} TYPE ${sqlType}`;
     }
@@ -626,22 +608,6 @@ type SyncRuntime = {
     dbName: string;
 };
 
-function createSyncRuntime(params: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }): SyncRuntime {
-    return {
-        dbDialect: params.dbDialect,
-        db: params.db,
-        dbName: params.dbName
-    };
-}
-
-function createSyncRuntimeFromLegacyArgs(dbDialect: DbDialect, db: SqlExecutor, dbName: string): SyncRuntime {
-    return createSyncRuntime({
-        dbDialect: dbDialect,
-        db: db,
-        dbName: dbName
-    });
-}
-
 /* ========================================================================== */
 /* runtime I/O（只读：读库/元信息查询）
  *
@@ -660,7 +626,14 @@ function createSyncRuntimeFromLegacyArgs(dbDialect: DbDialect, db: SqlExecutor, 
  * 判断表是否存在（返回布尔值）
  */
 export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
-    return await tableExistsRuntime(createSyncRuntimeFromLegacyArgs(dbDialect, db, dbName), tableName);
+    return await tableExistsRuntime(
+        {
+            dbDialect: dbDialect,
+            db: db,
+            dbName: dbName
+        },
+        tableName
+    );
 }
 
 async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
@@ -672,17 +645,17 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
     // - SQLite：通过 sqlite_master 判断。
 
     try {
-        if (isMySQL(runtime.dbDialect)) {
+        if (runtime.dbDialect === "mysql") {
             const res = await runtime.db.unsafe("SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [runtime.dbName, tableName]);
             return (res[0]?.count || 0) > 0;
         }
 
-        if (isPG(runtime.dbDialect)) {
+        if (runtime.dbDialect === "postgresql") {
             const res = await runtime.db.unsafe("SELECT COUNT(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ?", [tableName]);
             return (res[0]?.count || 0) > 0;
         }
 
-        if (isSQLite(runtime.dbDialect)) {
+        if (runtime.dbDialect === "sqlite") {
             const res = await runtime.db.unsafe("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", [tableName]);
             return res.length > 0;
         }
@@ -702,7 +675,14 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
  * 获取表的现有列信息（按方言）
  */
 export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
-    return await getTableColumnsRuntime(createSyncRuntimeFromLegacyArgs(dbDialect, db, dbName), tableName);
+    return await getTableColumnsRuntime(
+        {
+            dbDialect: dbDialect,
+            db: db,
+            dbName: dbName
+        },
+        tableName
+    );
 }
 
 async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
@@ -713,7 +693,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
         // - MySQL：information_schema.columns 最完整，包含 COLUMN_TYPE 与 COLUMN_COMMENT。
         // - PostgreSQL：information_schema.columns 给基础列信息；注释需额外从 pg_class/pg_attribute 获取。
         // - SQLite：PRAGMA table_info 仅提供 type/notnull/default 等有限信息，无列注释。
-        if (isMySQL(runtime.dbDialect)) {
+        if (runtime.dbDialect === "mysql") {
             const result = await runtime.db.unsafe("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION", [runtime.dbName, tableName]);
             for (const row of result) {
                 const defaultValue = row.COLUMN_DEFAULT;
@@ -728,7 +708,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                     comment: row.COLUMN_COMMENT
                 };
             }
-        } else if (isPG(runtime.dbDialect)) {
+        } else if (runtime.dbDialect === "postgresql") {
             const result = await runtime.db.unsafe("SELECT column_name, data_type, character_maximum_length, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? ORDER BY ordinal_position", [tableName]);
             const comments = await runtime.db.unsafe(
                 "SELECT a.attname AS column_name, col_description(c.oid, a.attnum) AS column_comment FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relname = ? AND a.attnum > 0",
@@ -748,7 +728,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                     comment: commentMap[row.column_name] ?? null
                 };
             }
-        } else if (isSQLite(runtime.dbDialect)) {
+        } else if (runtime.dbDialect === "sqlite") {
             const quotedTable = quoteIdentifier("sqlite", tableName);
             const result = await runtime.db.unsafe(`PRAGMA table_info(${quotedTable})`);
             for (const row of result) {
@@ -786,7 +766,14 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
  * 获取表的现有索引信息（单列索引）
  */
 export async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
-    return await getTableIndexesRuntime(createSyncRuntimeFromLegacyArgs(dbDialect, db, dbName), tableName);
+    return await getTableIndexesRuntime(
+        {
+            dbDialect: dbDialect,
+            db: db,
+            dbName: dbName
+        },
+        tableName
+    );
 }
 
 async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): Promise<IndexInfo> {
@@ -797,13 +784,13 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
         // - MySQL：information_schema.statistics 直接给出 index -> column 映射。
         // - PostgreSQL：pg_indexes 只有 indexdef，需要从定义里解析列名（这里仅取单列索引）。
         // - SQLite：PRAGMA index_list + index_info；同样仅收集单列索引，避免多列索引误判。
-        if (isMySQL(runtime.dbDialect)) {
+        if (runtime.dbDialect === "mysql") {
             const result = await runtime.db.unsafe("SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME != 'PRIMARY' ORDER BY INDEX_NAME", [runtime.dbName, tableName]);
             for (const row of result) {
                 if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
                 indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
             }
-        } else if (isPG(runtime.dbDialect)) {
+        } else if (runtime.dbDialect === "postgresql") {
             const result = await runtime.db.unsafe("SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = ?", [tableName]);
             for (const row of result) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
@@ -812,7 +799,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
                     indexes[row.indexname] = [col];
                 }
             }
-        } else if (isSQLite(runtime.dbDialect)) {
+        } else if (runtime.dbDialect === "sqlite") {
             const quotedTable = quoteIdentifier("sqlite", tableName);
             const list = await runtime.db.unsafe(`PRAGMA index_list(${quotedTable})`);
             for (const idx of list) {
@@ -840,7 +827,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
 export async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<void> {
     if (!db) throw new Error("SQL 执行器未初始化");
 
-    if (isMySQL(dbDialect)) {
+    if (dbDialect === "mysql") {
         const r = await db.unsafe("SELECT VERSION() AS version");
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error("无法获取 MySQL 版本信息");
@@ -853,7 +840,7 @@ export async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Pr
         return;
     }
 
-    if (isPG(dbDialect)) {
+    if (dbDialect === "postgresql") {
         const r = await db.unsafe("SELECT version() AS version");
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error("无法获取 PostgreSQL 版本信息");
@@ -867,7 +854,7 @@ export async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Pr
         return;
     }
 
-    if (isSQLite(dbDialect)) {
+    if (dbDialect === "sqlite") {
         const r = await db.unsafe("SELECT sqlite_version() AS version");
         if (!r || r.length === 0 || !r[0]?.version) {
             throw new Error("无法获取 SQLite 版本信息");
@@ -894,7 +881,7 @@ export function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Col
     // - 列注释：sqlite 无 information_schema 注释，PRAGMA table_info 也不提供 comment
     // - 字符串长度：sqlite 类型系统宽松，长度/类型信息不稳定（易产生误报）
     // 因此在 sqlite 下跳过 comment/length 的 diff，仅保留更可靠的对比项。
-    if (!isSQLite(dbDialect) && isStringOrArrayType(fieldDef.type)) {
+    if (dbDialect !== "sqlite" && isStringOrArrayType(fieldDef.type)) {
         if (existingColumn.max !== fieldDef.max) {
             changes.push({
                 type: "length",
@@ -904,7 +891,7 @@ export function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Col
         }
     }
 
-    if (!isSQLite(dbDialect)) {
+    if (dbDialect !== "sqlite") {
         const currentComment = existingColumn.comment || "";
         if (currentComment !== fieldDef.name) {
             changes.push({
@@ -960,7 +947,7 @@ export async function rebuildSqliteTable(runtime: SyncRuntime, tableName: string
     // 策略：创建临时表 -> 复制“交集列”数据 -> 删除旧表 -> 临时表改名。
     // - 只复制 targetCols 与 existingCols 的交集，避免因新增列/删除列导致 INSERT 失败。
     // - 不做额外的数据转换/回填：保持迁移路径尽量“纯结构同步”。
-    if (!isSQLite(runtime.dbDialect)) {
+    if (runtime.dbDialect !== "sqlite") {
         throw new Error(`rebuildSqliteTable 仅支持 sqlite 方言，当前: ${String(runtime.dbDialect)}`);
     }
 
@@ -992,7 +979,7 @@ export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fi
     if (!plan || !plan.changed) return;
 
     // A) 结构变更（ADD/MODIFY）：SQLite 走重建表；其余方言走 ALTER TABLE
-    if (isSQLite(runtime.dbDialect)) {
+    if (runtime.dbDialect === "sqlite") {
         if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
             await rebuildSqliteTable(runtime, tableName, fields);
         } else {
@@ -1005,20 +992,20 @@ export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fi
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
             const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
-            const stmt = isMySQL(runtime.dbDialect) ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${clauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${clauses.join(", ")}`;
-            if (isMySQL(runtime.dbDialect)) await executeDDLSafely(runtime.db, stmt);
+            const stmt = runtime.dbDialect === "mysql" ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${clauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${clauses.join(", ")}`;
+            if (runtime.dbDialect === "mysql") await executeDDLSafely(runtime.db, stmt);
             else await runtime.db.unsafe(stmt);
         }
     }
 
     // B) 默认值变更：SQLite 不支持在线修改默认值（需要重建表），其余方言按子句执行
     if (plan.defaultClauses.length > 0) {
-        if (isSQLite(runtime.dbDialect)) {
+        if (runtime.dbDialect === "sqlite") {
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
         } else {
             const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
-            const stmt = isMySQL(runtime.dbDialect) ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${plan.defaultClauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${plan.defaultClauses.join(", ")}`;
-            if (isMySQL(runtime.dbDialect)) await executeDDLSafely(runtime.db, stmt);
+            const stmt = runtime.dbDialect === "mysql" ? `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${plan.defaultClauses.join(", ")}` : `ALTER TABLE ${tableQuoted} ${plan.defaultClauses.join(", ")}`;
+            if (runtime.dbDialect === "mysql") await executeDDLSafely(runtime.db, stmt);
             else await runtime.db.unsafe(stmt);
         }
     }
@@ -1040,7 +1027,7 @@ export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fi
     }
 
     // D) PG 列注释：独立 SQL 执行（COMMENT ON COLUMN）
-    if (isPG(runtime.dbDialect) && plan.commentActions && plan.commentActions.length > 0) {
+    if (runtime.dbDialect === "postgresql" && plan.commentActions && plan.commentActions.length > 0) {
         for (const stmt of plan.commentActions) {
             await runtime.db.unsafe(stmt);
         }
@@ -1056,11 +1043,11 @@ export async function createTable(runtime: SyncRuntime, tableName: string, field
     const cols = colDefs.join(",\n            ");
     const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
     const { ENGINE, CHARSET, COLLATE } = MYSQL_TABLE_CONFIG;
-    const createSQL = isMySQL(runtime.dbDialect) ? `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        ) ENGINE=${ENGINE} DEFAULT CHARSET=${CHARSET} COLLATE=${COLLATE}` : `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        )`;
+    const createSQL = runtime.dbDialect === "mysql" ? `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        ) ENGINE=${ENGINE} DEFAULT CHARSET=${CHARSET} COLLATE=${COLLATE}` : `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        )`;
 
     await runtime.db.unsafe(createSQL);
 
-    if (isPG(runtime.dbDialect)) {
+    if (runtime.dbDialect === "postgresql") {
         for (const f of SYSTEM_FIELDS) {
             const escaped = String(f.comment).replace(/'/g, "''");
             const colQuoted = quoteIdentifier(runtime.dbDialect, f.name);
@@ -1083,13 +1070,13 @@ export async function createTable(runtime: SyncRuntime, tableName: string, field
     const indexTasks: Promise<void>[] = [];
 
     let existingIndexes: Record<string, string[]> = {};
-    if (isMySQL(runtime.dbDialect)) {
+    if (runtime.dbDialect === "mysql") {
         existingIndexes = await getTableIndexesRuntime(runtime, tableName);
     }
 
     for (const sysField of systemIndexFields) {
         const indexName = `idx_${sysField}`;
-        if (isMySQL(runtime.dbDialect) && existingIndexes[indexName]) {
+        if (runtime.dbDialect === "mysql" && existingIndexes[indexName]) {
             continue;
         }
         const stmt = buildIndexSQL(runtime.dbDialect, tableName, indexName, sysField, "create");
@@ -1101,7 +1088,7 @@ export async function createTable(runtime: SyncRuntime, tableName: string, field
 
         if (fieldDef.index === true) {
             const indexName = `idx_${dbFieldName}`;
-            if (isMySQL(runtime.dbDialect) && existingIndexes[indexName]) {
+            if (runtime.dbDialect === "mysql" && existingIndexes[indexName]) {
                 continue;
             }
             const stmt = buildIndexSQL(runtime.dbDialect, tableName, indexName, dbFieldName, "create");
@@ -1118,11 +1105,11 @@ export async function createTable(runtime: SyncRuntime, tableName: string, field
  * 同步表结构（对比和应用变更）
  */
 export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan> {
-    const runtime = createSyncRuntime({
+    const runtime: SyncRuntime = {
         dbDialect: dbDialect,
         db: db,
         dbName: dbName || ""
-    });
+    };
     return await modifyTableRuntime(runtime, tableName, fields);
 }
 
@@ -1185,10 +1172,10 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
                     }
 
                     if (v !== null && v !== "") {
-                        if (isPG(runtime.dbDialect)) {
+                        if (runtime.dbDialect === "postgresql") {
                             const colQuoted = quoteIdentifier(runtime.dbDialect, dbFieldName);
                             defaultClauses.push(`ALTER COLUMN ${colQuoted} SET DEFAULT ${v}`);
-                        } else if (isMySQL(runtime.dbDialect) && onlyDefaultChanged) {
+                        } else if (runtime.dbDialect === "mysql" && onlyDefaultChanged) {
                             if (fieldDef.type !== "text") {
                                 const colQuoted = quoteIdentifier(runtime.dbDialect, dbFieldName);
                                 defaultClauses.push(`ALTER COLUMN ${colQuoted} SET DEFAULT ${v}`);
@@ -1252,7 +1239,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
 
     // 6) PG 注释动作（MySQL 在列定义里带 COMMENT；SQLite 无列注释）
     const commentActions: string[] = [];
-    if (isPG(runtime.dbDialect)) {
+    if (runtime.dbDialect === "postgresql") {
         const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             const dbFieldName = snakeCase(fieldKey);
