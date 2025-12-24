@@ -472,9 +472,12 @@ A: 服务启动时（主进程）会自动执行 `syncTable()`，会同步项目
 如需手动触发：
 
 ```typescript
-import { syncTable } from "../../sync/syncTable.js";
+import { SyncTable } from "../../sync/syncTable.js";
+import { scanSources } from "../../utils/scanSources.js";
 
-await syncTable();
+// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
+const sources = await scanSources();
+await SyncTable.run(ctx, sources.tables as any);
 ```
 
 ### Q: 如何在 Addon 中访问项目配置？

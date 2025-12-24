@@ -9,33 +9,33 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { quoteIdentifier, escapeComment, applyFieldDefaults } from "../sync/syncTable.js";
+import { SyncTable } from "../sync/syncTable.js";
 
 describe("quoteIdentifier (MySQL)", () => {
     test("使用反引号包裹标识符", () => {
-        expect(quoteIdentifier("mysql", "user_table")).toBe("`user_table`");
+        expect(SyncTable.quoteIdentifier("mysql", "user_table")).toBe("`user_table`");
     });
 
     test("处理普通表名", () => {
-        expect(quoteIdentifier("mysql", "admin")).toBe("`admin`");
+        expect(SyncTable.quoteIdentifier("mysql", "admin")).toBe("`admin`");
     });
 
     test("处理带下划线的表名", () => {
-        expect(quoteIdentifier("mysql", "addon_admin_menu")).toBe("`addon_admin_menu`");
+        expect(SyncTable.quoteIdentifier("mysql", "addon_admin_menu")).toBe("`addon_admin_menu`");
     });
 });
 
 describe("escapeComment", () => {
     test("普通注释不变", () => {
-        expect(escapeComment("用户名称")).toBe("用户名称");
+        expect(SyncTable.escapeComment("用户名称")).toBe("用户名称");
     });
 
     test("双引号被转义", () => {
-        expect(escapeComment('用户"昵称"')).toBe('用户\\"昵称\\"');
+        expect(SyncTable.escapeComment('用户"昵称"')).toBe('用户\\"昵称\\"');
     });
 
     test("空字符串", () => {
-        expect(escapeComment("")).toBe("");
+        expect(SyncTable.escapeComment("")).toBe("");
     });
 });
 
@@ -46,7 +46,7 @@ describe("applyFieldDefaults", () => {
             type: "string"
         };
 
-        applyFieldDefaults(fieldDef);
+        SyncTable.applyFieldDefaults(fieldDef);
 
         expect(fieldDef.detail).toBe("");
         expect(fieldDef.min).toBe(0);
@@ -69,7 +69,7 @@ describe("applyFieldDefaults", () => {
             nullable: true
         };
 
-        applyFieldDefaults(fieldDef);
+        SyncTable.applyFieldDefaults(fieldDef);
 
         expect(fieldDef.max).toBe(200);
         expect(fieldDef.index).toBe(true);
@@ -88,7 +88,7 @@ describe("applyFieldDefaults", () => {
             unsigned: false
         };
 
-        applyFieldDefaults(fieldDef);
+        SyncTable.applyFieldDefaults(fieldDef);
 
         expect(fieldDef.min).toBe(0);
         expect(fieldDef.max).toBe(0);

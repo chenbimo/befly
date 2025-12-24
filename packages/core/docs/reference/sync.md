@@ -41,9 +41,12 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 默认会在服务启动时自动执行（仅主进程）。如需在代码中手动执行：
 
 ```typescript
-import { syncTable } from "../sync/syncTable.js";
+import { SyncTable } from "../sync/syncTable.js";
+import { scanSources } from "../utils/scanSources.js";
 
-await syncTable();
+// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
+const sources = await scanSources();
+await SyncTable.run(ctx, sources.tables as any);
 ```
 
 ### 命令选项
@@ -56,21 +59,12 @@ await syncTable();
 ┌─────────────────────────────────────────────────────┐
 │                  syncTable                          │
 ├─────────────────────────────────────────────────────┤
-│  1. 设置数据库类型 (setDbType)                       │
-│  2. 连接数据库 (Connect.connectSql)                 │
-│  3. 确保版本表存在 (ensureDbVersion)                 │
-│  4. 初始化 Redis 连接 (Connect.connectRedis)         │
-│         ↓                                           │
-│  5. 扫描表定义文件：                                 │
-│     - 项目表：tpl/tables/*.json                     │
-│     - Addon 表：addons/*/tables/*.json              │
-│         ↓                                           │
-│  6. 对每个表：                                       │
+│  1. 校验 ctx.db / ctx.redis / ctx.config             │
+│  2. 检查数据库版本 (ensureDbVersion)                 │
+│  3. 同步传入的表定义列表（通常来自 scanSources）      │
 │     ├── 表存在？→ modifyTable (修改)                │
 │     └── 表不存在？→ createTable (新建)              │
-│         ↓                                           │
-│  7. 清理 Redis 缓存 (tableColumns)                  │
-│  8. 关闭数据库连接                                   │
+│  4. 清理 Redis 缓存 (tableColumns)                  │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -311,11 +305,14 @@ export default {
 ## 代码调用
 
 ```typescript
-import { syncTable } from "./sync/syncTable";
+import { SyncTable } from "./sync/syncTable.js";
+import { scanSources } from "./utils/scanSources.js";
 import { syncData } from "./sync/syncData";
 
 // 启动前/启动中手动触发同步
-await syncTable();
+// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
+const sources = await scanSources();
+await SyncTable.run(ctx, sources.tables as any);
 await syncData();
 
 // 说明：syncData 内部会固定顺序执行：syncApi → syncMenu → syncDev

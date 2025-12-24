@@ -11,12 +11,12 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { tableExists, getTableColumns, getTableIndexes } from "../sync/syncTable.js";
+import { SyncTable } from "../sync/syncTable.js";
 
 describe("tableExists", () => {
     test("sql 客户端未初始化时抛出错误", async () => {
         try {
-            await tableExists("mysql", null as any, "user", "test_db");
+            await SyncTable.tableExists("mysql", null as any, "user", "test_db");
             expect(true).toBe(false); // 不应该到这里
         } catch (error: any) {
             expect(error.message).toBe("SQL 执行器未初始化");
@@ -31,7 +31,7 @@ describe("tableExists", () => {
             }
         };
 
-        const result = await tableExists("mysql", mockSql as any, "user", "test_db");
+        const result = await SyncTable.tableExists("mysql", mockSql as any, "user", "test_db");
         expect(result).toBe(true);
     });
 
@@ -42,7 +42,7 @@ describe("tableExists", () => {
             }
         };
 
-        const result = await tableExists("mysql", mockSql as any, "nonexistent", "test_db");
+        const result = await SyncTable.tableExists("mysql", mockSql as any, "nonexistent", "test_db");
         expect(result).toBe(false);
     });
 });
@@ -84,7 +84,7 @@ describe("getTableColumns", () => {
             }
         };
 
-        const columns = await getTableColumns("mysql", mockSql as any, "user", "test_db");
+        const columns = await SyncTable.getTableColumns("mysql", mockSql as any, "user", "test_db");
 
         expect(columns.id).toBeDefined();
         expect(columns.id.type).toBe("bigint");
@@ -116,7 +116,7 @@ describe("getTableIndexes", () => {
             }
         };
 
-        const indexes = await getTableIndexes("mysql", mockSql as any, "user", "test_db");
+        const indexes = await SyncTable.getTableIndexes("mysql", mockSql as any, "user", "test_db");
 
         // PRIMARY 索引被排除，不应存在
         expect(indexes.PRIMARY).toBeUndefined();
@@ -139,7 +139,7 @@ describe("getTableIndexes", () => {
             }
         };
 
-        const indexes = await getTableIndexes("mysql", mockSql as any, "user", "test_db");
+        const indexes = await SyncTable.getTableIndexes("mysql", mockSql as any, "user", "test_db");
 
         expect(indexes.idx_composite).toBeDefined();
         expect(indexes.idx_composite.length).toBe(2);

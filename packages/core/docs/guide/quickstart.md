@@ -219,9 +219,12 @@ CREATE DATABASE my_api CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ```typescript
 import { syncData } from "../sync/syncData.js";
-import { syncTable } from "../sync/syncTable.js";
+import { SyncTable } from "../sync/syncTable.js";
+import { scanSources } from "../utils/scanSources.js";
 
-await syncTable();
+// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
+const sources = await scanSources();
+await SyncTable.run(ctx, sources.tables as any);
 await syncData();
 ```
 
