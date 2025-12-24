@@ -44,6 +44,7 @@ import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from "
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
+import { buildTreeByParentPath } from "befly-shared/utils/buildTreeByParentPath";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
 definePage({
@@ -82,38 +83,10 @@ const $Method = {
             const res = await $Http("/addon/admin/menu/all");
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
-            const menuMap = new Map();
-            const flatMenus = lists.map((menu) => {
-                const path = typeof menu?.path === "string" ? menu.path : "";
-                const parentPath = typeof menu?.parentPath === "string" ? menu.parentPath : "";
-
-                const nextMenu = Object.assign({}, menu, {
-                    path: path,
-                    parentPath: parentPath,
-                    children: []
-                });
-
-                if (typeof nextMenu.path === "string" && nextMenu.path.length > 0) {
-                    menuMap.set(nextMenu.path, nextMenu);
-                }
-
-                return nextMenu;
-            });
-
-            const treeMenus = [];
-            for (const menu of flatMenus) {
-                if (typeof menu.parentPath === "string" && menu.parentPath.length > 0) {
-                    const parent = menuMap.get(menu.parentPath);
-                    if (parent && Array.isArray(parent.children)) {
-                        parent.children.push(menu);
-                        continue;
-                    }
-                }
-                treeMenus.push(menu);
-            }
+            const treeResult = buildTreeByParentPath(lists);
 
             // 构建树形结构（TTable tree）
-            $Data.tableData = treeMenus;
+            $Data.tableData = treeResult.tree;
 
             // 自动高亮第一行
             if ($Data.tableData.length > 0) {

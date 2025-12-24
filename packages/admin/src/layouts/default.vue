@@ -76,6 +76,7 @@
 
 <script setup>
 import { DialogPlugin } from "tdesign-vue-next";
+import { buildTreeByParentPath } from "befly-shared/utils/buildTreeByParentPath";
 
 const router = useRouter();
 const route = useRoute();
@@ -178,39 +179,10 @@ const $Method = {
 
             const mergedLists = bizMenusFlat.concat(normalizedLists);
 
-            // 保存一维数据（data 是 { lists: [] } 格式）
-            const menuMap = new Map();
-            const flatMenus = mergedLists.map((menu) => {
-                const normalizedPath = normalizePath(menu?.path);
-                const normalizedParentPath = normalizePath(menu?.parentPath);
+            const treeResult = buildTreeByParentPath(mergedLists, { normalize: normalizePath });
 
-                const nextMenu = Object.assign({}, menu, {
-                    path: normalizedPath,
-                    parentPath: normalizedParentPath,
-                    children: []
-                });
-
-                if (typeof nextMenu.path === "string" && nextMenu.path.length > 0) {
-                    menuMap.set(nextMenu.path, nextMenu);
-                }
-
-                return nextMenu;
-            });
-
-            const treeMenus = [];
-            for (const menu of flatMenus) {
-                if (typeof menu.parentPath === "string" && menu.parentPath.length > 0) {
-                    const parent = menuMap.get(menu.parentPath);
-                    if (parent && Array.isArray(parent.children)) {
-                        parent.children.push(menu);
-                        continue;
-                    }
-                }
-                treeMenus.push(menu);
-            }
-
-            $Data.userMenusFlat = flatMenus;
-            $Data.userMenus = treeMenus;
+            $Data.userMenusFlat = treeResult.flat;
+            $Data.userMenus = treeResult.tree;
             $Method.setActiveMenu();
         } catch (error) {
             MessagePlugin.error("获取用户菜单失败");

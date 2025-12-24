@@ -207,13 +207,74 @@ export async function syncMenu(ctx): Promise<void> {
         const existingList = allExistingMenus.lists || [];
 
         const existingMenuMap = new Map<string, any>();
+        const duplicateIdSet = new Set<number>();
+        const duplicatePathInfoMap = new Map<string, { keptId: number; removedIds: number[] }>();
 
         for (const record of existingList) {
             if (typeof record?.path !== "string" || !record.path) {
                 continue;
             }
+            if (typeof record?.id !== "number") {
+                continue;
+            }
 
-            existingMenuMap.set(record.path, record);
+            const existing = existingMenuMap.get(record.path);
+            if (!existing) {
+                existingMenuMap.set(record.path, record);
+                continue;
+            }
+
+            const existingId = typeof existing?.id === "number" ? existing.id : 0;
+            const recordId = record.id;
+
+            // 保留 id 最大的一条（genTimeID 越大通常越新），其余标记为重复并清理
+            if (recordId > existingId) {
+                existingMenuMap.set(record.path, record);
+
+                if (existingId > 0) {
+                    duplicateIdSet.add(existingId);
+                }
+
+                const info = duplicatePathInfoMap.get(record.path) || { keptId: recordId, removedIds: [] };
+                info.keptId = recordId;
+                if (existingId > 0) {
+                    info.removedIds.push(existingId);
+                }
+                duplicatePathInfoMap.set(record.path, info);
+            } else {
+                if (recordId > 0) {
+                    duplicateIdSet.add(recordId);
+                }
+
+                const info = duplicatePathInfoMap.get(record.path) || { keptId: existingId, removedIds: [] };
+                info.keptId = existingId;
+                if (recordId > 0) {
+                    info.removedIds.push(recordId);
+                }
+                duplicatePathInfoMap.set(record.path, info);
+            }
+        }
+
+        if (duplicatePathInfoMap.size > 0) {
+            const examples: Array<{ path: string; keptId: number; removedIds: number[] }> = [];
+            for (const entry of duplicatePathInfoMap.entries()) {
+                const path = entry[0];
+                const info = entry[1];
+                examples.push({ path: path, keptId: info.keptId, removedIds: info.removedIds });
+                if (examples.length >= 10) {
+                    break;
+                }
+            }
+
+            Logger.warn(
+                {
+                    table: tableName,
+                    duplicatePaths: duplicatePathInfoMap.size,
+                    duplicateIds: duplicateIdSet.size,
+                    examples: examples
+                },
+                "addon_admin_menu 检测到重复 path 记录：已保留 id 最大的一条并删除其余记录"
+            );
         }
 
         // 2) 一次性算出 insert/update（仅依赖 path diff，不使用 pid，不预生成 id）
@@ -254,18 +315,26 @@ export async function syncMenu(ctx): Promise<void> {
             await dbHelper.insBatch(tableName, insList);
         }
 
-        // 3) 删除差集（DB - 配置）
-        const delIds: number[] = [];
+        // 3) 删除差集（DB - 配置） + 删除重复 path 的多余记录
+        const delIdSet = new Set<number>();
         for (const record of existingList) {
             if (typeof record?.path !== "string" || !record.path) {
                 continue;
             }
             if (!configPaths.has(record.path)) {
                 if (typeof record?.id === "number") {
-                    delIds.push(record.id);
+                    delIdSet.add(record.id);
                 }
             }
         }
+
+        for (const id of duplicateIdSet) {
+            if (typeof id === "number" && id > 0) {
+                delIdSet.add(id);
+            }
+        }
+
+        const delIds = Array.from(delIdSet);
 
         if (delIds.length > 0) {
             await dbHelper.delForceBatch(tableName, delIds);

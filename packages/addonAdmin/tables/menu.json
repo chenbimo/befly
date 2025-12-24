@@ -11,7 +11,8 @@
         "type": "string",
         "min": 1,
         "max": 200,
-        "index": true
+        "index": true,
+        "unique": true
     },
     "sort": {
         "name": "排序",

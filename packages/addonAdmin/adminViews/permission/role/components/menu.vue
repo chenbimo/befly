@@ -13,6 +13,7 @@
 <script setup>
 import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
+import { buildTreeByParentPath } from "befly-shared/utils/buildTreeByParentPath";
 
 const $Prop = defineProps({
     modelValue: {
@@ -60,37 +61,8 @@ const $Method = {
             const res = await $Http("/addon/admin/menu/all");
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
-            const menuMap = new Map();
-            const flatMenus = lists.map((menu) => {
-                const path = typeof menu?.path === "string" ? menu.path : "";
-                const parentPath = typeof menu?.parentPath === "string" ? menu.parentPath : "";
-
-                const nextMenu = Object.assign({}, menu, {
-                    path: path,
-                    parentPath: parentPath,
-                    children: []
-                });
-
-                if (typeof nextMenu.path === "string" && nextMenu.path.length > 0) {
-                    menuMap.set(nextMenu.path, nextMenu);
-                }
-
-                return nextMenu;
-            });
-
-            const treeMenus = [];
-            for (const menu of flatMenus) {
-                if (typeof menu.parentPath === "string" && menu.parentPath.length > 0) {
-                    const parent = menuMap.get(menu.parentPath);
-                    if (parent && Array.isArray(parent.children)) {
-                        parent.children.push(menu);
-                        continue;
-                    }
-                }
-                treeMenus.push(menu);
-            }
-
-            $Data.menuTreeData = treeMenus;
+            const treeResult = buildTreeByParentPath(lists);
+            $Data.menuTreeData = treeResult.tree;
         } catch (error) {
             MessagePlugin.error("加载菜单失败");
         }
