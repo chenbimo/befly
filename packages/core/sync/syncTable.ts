@@ -1,5 +1,5 @@
 /**
- * SyncTable 命令 - 同步数据库表结构（单文件版）
+ * syncTable 命令 - 同步数据库表结构（单文件版）
  *
  * 说明：
  * - 历史上该能力拆分在 packages/core/sync/syncTable/* 多个模块中

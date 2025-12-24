@@ -36,7 +36,7 @@ export type SyncTableColumnsInfoQuery = {
 export type SyncTableIndexesQuery = SqlTextQuery;
 
 /**
- * SyncTable 专用：获取“列元信息”查询。
+ * syncTable 专用：获取“列元信息”查询。
  *
  * 说明：
  * - 这里仅负责 SQL + 参数构造（方言差异）；
@@ -72,7 +72,7 @@ export function getSyncTableColumnsInfoQuery(options: { dialect: DbDialectName; 
 }
 
 /**
- * SyncTable 专用：获取“索引元信息”查询（只负责 SQL + 参数构造）。
+ * syncTable 专用：获取“索引元信息”查询（只负责 SQL + 参数构造）。
  *
  * 约束：
  * - 仅下沉 MySQL / PostgreSQL；SQLite 仍走 PRAGMA（需要多次查询）。
