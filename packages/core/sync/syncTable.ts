@@ -21,20 +21,6 @@ type SqlExecutor = {
     unsafe(sqlStr: string, params?: any[]): Promise<any>;
 };
 
-type SyncRuntime = {
-    dbDialect: DbDialect;
-    db: SqlExecutor;
-    dbName: string;
-};
-
-function createSyncRuntime(params: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }): SyncRuntime {
-    return {
-        dbDialect: params.dbDialect,
-        db: params.db,
-        dbName: params.dbName
-    };
-}
-
 export type DbDialect = DbDialectName;
 
 /* ========================================================================== */
@@ -48,6 +34,15 @@ export type DbDialect = DbDialectName;
  * - *Runtime(...) 只在本文件内部使用，避免长参数链；外部如需调用，优先走旧签名 wrapper。
  */
 /* ========================================================================== */
+
+/**
+ * 文件导航（推荐阅读顺序）
+ * 1) syncTable(ctx, tables) 入口（本段下方）
+ * 2) 版本/常量/方言判断（DB_VERSION_REQUIREMENTS 等）
+ * 3) 通用 DDL 工具（quote/type/default/ddl/index SQL）
+ * 4) Runtime I/O（只读元信息：表/列/索引/版本）
+ * 5) plan/apply（写变更：建表/改表/SQLite 重建）
+ */
 
 const DIALECT_IMPLS: Record<DbDialect, MySqlDialect | PostgresDialect | SqliteDialect> = {
     mysql: new MySqlDialect(),
@@ -65,6 +60,115 @@ export function normalizeDbDialect(dbType: string | undefined | null): DbDialect
     if (v === "postgresql") return "postgresql";
     if (v === "sqlite") return "sqlite";
     return "mysql";
+}
+
+type SyncTableSource = "app" | "addon" | "core";
+
+export type SyncTableInputItem = {
+    source: SyncTableSource;
+    type: "table";
+    fileName: string;
+    addonName?: string;
+    tables: Record<string, any>;
+};
+
+/**
+ * syncTable - 数据库同步命令入口
+ *
+ * 流程：
+ * 1. 复用 ctx.db 的连接并检查版本
+ * 2. 消费传入的表定义数据（来自 scanSources 的 tables）
+ * 3. 对比并应用表结构变更
+ */
+export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[]): Promise<void> {
+    try {
+        // 记录处理过的表名（用于清理缓存）
+        const processedTables: string[] = [];
+
+        if (!Array.isArray(tables)) {
+            throw new Error("syncTable(items) 参数必须是数组");
+        }
+
+        if (!ctx) {
+            throw new Error("syncTable(ctx, tables) 缺少 ctx");
+        }
+        if (!ctx.db) {
+            throw new Error("syncTable(ctx, tables) 缺少 ctx.db");
+        }
+        if (!ctx.redis) {
+            throw new Error("syncTable(ctx, tables) 缺少 ctx.redis");
+        }
+        if (!ctx.config) {
+            throw new Error("syncTable(ctx, tables) 缺少 ctx.config");
+        }
+
+        const dbDialect = normalizeDbDialect(ctx.config.db?.type || "mysql");
+
+        // 检查数据库版本（复用 ctx.db 的现有连接/事务）
+        await ensureDbVersion(dbDialect, ctx.db);
+
+        const databaseName = ctx.config.db?.database || "";
+        const runtime = createSyncRuntime({
+            dbDialect: dbDialect,
+            db: ctx.db,
+            dbName: databaseName
+        });
+
+        // 处理传入的 tables 数据（来自 scanSources）
+        for (const item of tables) {
+            if (!item || item.type !== "table") {
+                continue;
+            }
+
+            if (item.source !== "app" && item.source !== "addon" && item.source !== "core") {
+                Logger.warn(`syncTable 跳过未知来源表定义: source=${String(item.source)} fileName=${String(item.fileName)}`);
+                continue;
+            }
+
+            // 确定表名：
+            // - addon 表：addon_{addonName}_{fileName}
+            // - app/core 表：{fileName}
+            const baseTableName = snakeCase(item.fileName);
+
+            let tableName = baseTableName;
+            if (item.source === "addon") {
+                if (!item.addonName || String(item.addonName).trim() === "") {
+                    throw new Error(`syncTable addon 表缺少 addonName: fileName=${String(item.fileName)}`);
+                }
+                tableName = `addon_${snakeCase(item.addonName)}_${baseTableName}`;
+            }
+
+            const tableDefinition = item.tables;
+            if (!tableDefinition || typeof tableDefinition !== "object") {
+                throw new Error(`syncTable 表定义无效: table=${tableName}`);
+            }
+
+            // 为字段属性设置默认值
+            for (const fieldDef of Object.values(tableDefinition)) {
+                applyFieldDefaults(fieldDef);
+            }
+
+            const existsTable = await tableExistsRuntime(runtime, tableName);
+
+            if (existsTable) {
+                await modifyTableRuntime(runtime, tableName, tableDefinition as any);
+            } else {
+                await createTable(runtime, tableName, tableDefinition as any);
+            }
+
+            // 记录处理过的表名（用于清理缓存）
+            processedTables.push(tableName);
+        }
+
+        // 清理 Redis 缓存（如果有表被处理）
+        if (processedTables.length > 0) {
+            const cacheKeys = processedTables.map((tableName) => CacheKeys.tableColumns(tableName));
+            await ctx.redis.delBatch(cacheKeys);
+        }
+    } catch (error: any) {
+        Logger.error({ err: error }, "数据库同步失败");
+        throw error;
+    }
 }
 
 /* ========================================================================== */
@@ -483,25 +587,59 @@ export function isCompatibleTypeChange(currentType: string, newType: string): bo
     return false;
 }
 
+type SyncRuntime = {
+    /**
+     * 当前数据库方言（mysql/postgresql/sqlite），决定 SQL 片段与元信息查询方式。
+     * 约束：必须与 ctx.config.db.type 一致（经 normalizeDbDialect 归一化）。
+     */
+    dbDialect: DbDialect;
+    /**
+     * SQL 执行器：必须复用 ctx.db。
+     * 约束：syncTable 内部禁止新建 DB 连接/事务；runtime 仅保存引用，不拥有生命周期。
+     */
+    db: SqlExecutor;
+    /**
+     * 数据库名：主要用于 MySQL information_schema 查询。
+     * 约束：PG/SQLite 可以传空字符串；不要在非 MySQL 方言依赖该值。
+     */
+    dbName: string;
+};
+
+function createSyncRuntime(params: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }): SyncRuntime {
+    return {
+        dbDialect: params.dbDialect,
+        db: params.db,
+        dbName: params.dbName
+    };
+}
+
+function createSyncRuntimeFromLegacyArgs(dbDialect: DbDialect, db: SqlExecutor, dbName: string): SyncRuntime {
+    return createSyncRuntime({
+        dbDialect: dbDialect,
+        db: db,
+        dbName: dbName
+    });
+}
+
 /* ========================================================================== */
-/* runtime I/O（读库/元信息查询）
+/* runtime I/O（只读：读库/元信息查询）
  *
- * 说明：对外仍保留旧签名 wrapper（测试依赖），内部实现统一走 *Runtime(runtime, ...) 形式。
+ * 说明：
+ * - 本区块只负责“查询元信息”（表/列/索引/版本）。
+ * - 写变更（DDL 执行）统一在下方 plan/apply 区块中完成。
+ * - 对外仍保留旧签名 wrapper（测试依赖），内部统一走 *Runtime(runtime, ...) 形式。
  */
 /* ========================================================================== */
+
+// ---------------------------------------------------------------------------
+// 读：表是否存在
+// ---------------------------------------------------------------------------
 
 /**
  * 判断表是否存在（返回布尔值）
  */
 export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
-    return await tableExistsRuntime(
-        createSyncRuntime({
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        }),
-        tableName
-    );
+    return await tableExistsRuntime(createSyncRuntimeFromLegacyArgs(dbDialect, db, dbName), tableName);
 }
 
 async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
@@ -529,18 +667,15 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
     }
 }
 
+// ---------------------------------------------------------------------------
+// 读：列信息
+// ---------------------------------------------------------------------------
+
 /**
  * 获取表的现有列信息（按方言）
  */
 export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
-    return await getTableColumnsRuntime(
-        createSyncRuntime({
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        }),
-        tableName
-    );
+    return await getTableColumnsRuntime(createSyncRuntimeFromLegacyArgs(dbDialect, db, dbName), tableName);
 }
 
 async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
@@ -611,18 +746,15 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
     }
 }
 
+// ---------------------------------------------------------------------------
+// 读：索引信息（单列索引）
+// ---------------------------------------------------------------------------
+
 /**
  * 获取表的现有索引信息（单列索引）
  */
 export async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
-    return await getTableIndexesRuntime(
-        createSyncRuntime({
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        }),
-        tableName
-    );
+    return await getTableIndexesRuntime(createSyncRuntimeFromLegacyArgs(dbDialect, db, dbName), tableName);
 }
 
 async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): Promise<IndexInfo> {
@@ -660,6 +792,10 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
         throw new Error(`获取表索引信息失败 [${tableName}]: ${error.message}`);
     }
 }
+
+// ---------------------------------------------------------------------------
+// 读：数据库版本
+// ---------------------------------------------------------------------------
 
 /**
  * 数据库版本检查（按方言）
@@ -1094,114 +1230,4 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
     }
 
     return plan;
-}
-
-type SyncTableSource = "app" | "addon" | "core";
-
-export type SyncTableInputItem = {
-    source: SyncTableSource;
-    type: "table";
-    fileName: string;
-    addonName?: string;
-    tables: Record<string, any>;
-};
-
-/**
- * syncTable - 数据库同步命令入口
- *
- * 流程：
- * 1. 复用 ctx.db 的连接并检查版本
- * 2. 消费传入的表定义数据（来自 scanSources 的 tables）
- * 3. 对比并应用表结构变更
- */
-export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[]): Promise<void> {
-    try {
-        // 记录处理过的表名（用于清理缓存）
-        const processedTables: string[] = [];
-
-        if (!Array.isArray(tables)) {
-            throw new Error("syncTable(items) 参数必须是数组");
-        }
-
-        if (!ctx) {
-            throw new Error("syncTable(ctx, tables) 缺少 ctx");
-        }
-        if (!ctx.db) {
-            throw new Error("syncTable(ctx, tables) 缺少 ctx.db");
-        }
-        if (!ctx.redis) {
-            throw new Error("syncTable(ctx, tables) 缺少 ctx.redis");
-        }
-        if (!ctx.config) {
-            throw new Error("syncTable(ctx, tables) 缺少 ctx.config");
-        }
-
-        const dbDialect = normalizeDbDialect(ctx.config.db?.type || "mysql");
-
-        // 检查数据库版本（复用 ctx.db 的现有连接/事务）
-        await ensureDbVersion(dbDialect, ctx.db);
-
-        const dbName = ctx.config.db?.database || "";
-        const runtime = createSyncRuntime({
-            dbDialect: dbDialect,
-            db: ctx.db,
-            dbName: dbName
-        });
-
-        // 处理传入的 tables 数据（来自 scanSources）
-        for (const item of tables) {
-            if (!item || item.type !== "table") {
-                continue;
-            }
-
-            if (item.source !== "app" && item.source !== "addon" && item.source !== "core") {
-                Logger.warn(`syncTable 跳过未知来源表定义: source=${String(item.source)} fileName=${String(item.fileName)}`);
-                continue;
-            }
-
-            // 确定表名：
-            // - addon 表：addon_{addonName}_{fileName}
-            // - app/core 表：{fileName}
-            const baseTableName = snakeCase(item.fileName);
-            const tableName =
-                item.source === "addon"
-                    ? (() => {
-                          if (!item.addonName || String(item.addonName).trim() === "") {
-                              throw new Error(`syncTable addon 表缺少 addonName: fileName=${String(item.fileName)}`);
-                          }
-                          return `addon_${snakeCase(item.addonName)}_${baseTableName}`;
-                      })()
-                    : baseTableName;
-
-            const tableDefinition = item.tables;
-            if (!tableDefinition || typeof tableDefinition !== "object") {
-                throw new Error(`syncTable 表定义无效: table=${tableName}`);
-            }
-
-            // 为字段属性设置默认值
-            for (const fieldDef of Object.values(tableDefinition)) {
-                applyFieldDefaults(fieldDef);
-            }
-
-            const existsTable = await tableExistsRuntime(runtime, tableName);
-
-            if (existsTable) {
-                await modifyTableRuntime(runtime, tableName, tableDefinition as any);
-            } else {
-                await createTable(runtime, tableName, tableDefinition as any);
-            }
-
-            // 记录处理过的表名（用于清理缓存）
-            processedTables.push(tableName);
-        }
-
-        // 清理 Redis 缓存（如果有表被处理）
-        if (processedTables.length > 0) {
-            const cacheKeys = processedTables.map((tableName) => CacheKeys.tableColumns(tableName));
-            await ctx.redis.delBatch(cacheKeys);
-        }
-    } catch (error: any) {
-        Logger.error({ err: error }, "数据库同步失败");
-        throw error;
-    }
 }
