@@ -39,18 +39,25 @@ type DialectImpl = {
 
 /**
  * 文件导航（推荐阅读顺序）
- * 1) syncTable(ctx, tables) 入口（本段下方）
+ * 1) SyncTable.run(ctx, tables) 入口（本段下方）
  * 2) 版本/常量/方言判断（DB_VERSION_REQUIREMENTS 等）
  * 3) 通用 DDL 工具（quote/type/default/ddl/index SQL）
  * 4) Runtime I/O（只读元信息：表/列/索引/版本）
  * 5) plan/apply（写变更：建表/改表/SQLite 重建）
  */
 
-const DIALECT_IMPLS = {
-    mysql: new MySqlDialect(),
-    postgresql: new PostgresDialect(),
-    sqlite: new SqliteDialect()
-} satisfies Record<DbDialect, DialectImpl>;
+let DIALECT_IMPLS: Record<DbDialect, DialectImpl> | null = null;
+
+function getDialectImpl(dbDialect: DbDialect): DialectImpl {
+    if (!DIALECT_IMPLS) {
+        DIALECT_IMPLS = {
+            mysql: new MySqlDialect(),
+            postgresql: new PostgresDialect(),
+            sqlite: new SqliteDialect()
+        } satisfies Record<DbDialect, DialectImpl>;
+    }
+    return DIALECT_IMPLS[dbDialect];
+}
 
 export class SyncTable {
     private ctx: BeflyContext;
@@ -68,21 +75,21 @@ export class SyncTable {
             const processedTables: string[] = [];
 
             if (!Array.isArray(items)) {
-                throw new Error("syncTable(items) 参数必须是数组");
+                throw new Error("SyncTable.run(items) 参数必须是数组");
             }
 
             const ctx = this.ctx;
             if (!ctx) {
-                throw new Error("syncTable(ctx, tables) 缺少 ctx");
+                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx");
             }
             if (!ctx.db) {
-                throw new Error("syncTable(ctx, tables) 缺少 ctx.db");
+                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx.db");
             }
             if (!ctx.redis) {
-                throw new Error("syncTable(ctx, tables) 缺少 ctx.redis");
+                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx.redis");
             }
             if (!ctx.config) {
-                throw new Error("syncTable(ctx, tables) 缺少 ctx.config");
+                throw new Error("SyncTable.run(ctx, tables) 缺少 ctx.config");
             }
 
             // DbDialect 归一化（允许值与映射关系）：
@@ -122,7 +129,7 @@ export class SyncTable {
                 }
 
                 if (item.source !== "app" && item.source !== "addon" && item.source !== "core") {
-                    Logger.warn(`syncTable 跳过未知来源表定义: source=${String(item.source)} fileName=${String(item.fileName)}`);
+                    Logger.warn(`SyncTable.run 跳过未知来源表定义: source=${String(item.source)} fileName=${String(item.fileName)}`);
                     continue;
                 }
 
@@ -134,14 +141,14 @@ export class SyncTable {
                 let tableName = baseTableName;
                 if (item.source === "addon") {
                     if (!item.addonName || String(item.addonName).trim() === "") {
-                        throw new Error(`syncTable addon 表缺少 addonName: fileName=${String(item.fileName)}`);
+                        throw new Error(`SyncTable.run addon 表缺少 addonName: fileName=${String(item.fileName)}`);
                     }
                     tableName = `addon_${snakeCase(item.addonName)}_${baseTableName}`;
                 }
 
                 const tableDefinition = item.content;
                 if (!tableDefinition || typeof tableDefinition !== "object") {
-                    throw new Error(`syncTable 表定义无效: table=${tableName}`);
+                    throw new Error(`SyncTable.run 表定义无效: table=${tableName}`);
                 }
 
                 // 为字段属性设置默认值：表定义来自 JSON/扫描结果，字段可能缺省。
@@ -298,57 +305,31 @@ const SYNC_TABLE_TEST_KIT = {
     MYSQL_TABLE_CONFIG: MYSQL_TABLE_CONFIG,
     SYSTEM_INDEX_FIELDS: SYSTEM_INDEX_FIELDS,
 
-    getTypeMapping: (dbDialect: DbDialect): Record<string, string> => {
-        return getTypeMapping(dbDialect);
-    },
-    quoteIdentifier: (dbDialect: DbDialect, identifier: string): string => {
-        return quoteIdentifier(dbDialect, identifier);
-    },
-    escapeComment: (str: string): string => {
-        return escapeComment(str);
-    },
-    applyFieldDefaults: (fieldDef: any): void => {
-        applyFieldDefaults(fieldDef);
-    },
-    isStringOrArrayType: (fieldType: string): boolean => {
-        return isStringOrArrayType(fieldType);
-    },
-    getSqlType: (dbDialect: DbDialect, fieldType: string, fieldMax: number | null, unsigned: boolean = false): string => {
-        return getSqlType(dbDialect, fieldType, fieldMax, unsigned);
-    },
-    resolveDefaultValue: (fieldDefault: any, fieldType: string): any => {
-        return resolveDefaultValue(fieldDefault, fieldType);
-    },
-    generateDefaultSql: (actualDefault: any, fieldType: string): string => {
-        return generateDefaultSql(actualDefault, fieldType);
-    },
-    buildIndexSQL: (dbDialect: DbDialect, tableName: string, indexName: string, fieldName: string, action: "create" | "drop"): string => {
-        return buildIndexSQL(dbDialect, tableName, indexName, fieldName, action);
-    },
-    buildSystemColumnDefs: (dbDialect: DbDialect): string[] => {
-        return buildSystemColumnDefs(dbDialect);
-    },
-    buildBusinessColumnDefs: (dbDialect: DbDialect, fields: Record<string, FieldDefinition>): string[] => {
-        return buildBusinessColumnDefs(dbDialect, fields);
-    },
-    generateDDLClause: (dbDialect: DbDialect, fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string => {
-        return generateDDLClause(dbDialect, fieldKey, fieldDef, isAdd);
-    },
-    isCompatibleTypeChange: (currentType: string, newType: string): boolean => {
-        return isCompatibleTypeChange(currentType as any, newType as any);
-    },
-    compareFieldDefinition: (dbDialect: DbDialect, existingColumn: ColumnInfo, fieldDef: FieldDefinition): FieldChange[] => {
-        return compareFieldDefinition(dbDialect, existingColumn, fieldDef);
-    },
+    getTypeMapping: getTypeMapping,
+    quoteIdentifier: quoteIdentifier,
+    escapeComment: escapeComment,
+    applyFieldDefaults: applyFieldDefaults,
+    isStringOrArrayType: isStringOrArrayType,
+    getSqlType: getSqlType,
+    resolveDefaultValue: resolveDefaultValue,
+    generateDefaultSql: generateDefaultSql,
+    buildIndexSQL: buildIndexSQL,
+    buildSystemColumnDefs: buildSystemColumnDefs,
+    buildBusinessColumnDefs: buildBusinessColumnDefs,
+    generateDDLClause: generateDDLClause,
+    isCompatibleTypeChange: isCompatibleTypeChange,
+    compareFieldDefinition: compareFieldDefinition,
 
-    tableExists: async (dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> => {
-        return await tableExists(dbDialect, db, tableName, dbName);
-    },
-    getTableColumns: async (dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> => {
-        return await getTableColumns(dbDialect, db, tableName, dbName);
-    },
-    getTableIndexes: async (dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> => {
-        return await getTableIndexes(dbDialect, db, tableName, dbName);
+    tableExistsRuntime: tableExistsRuntime,
+    getTableColumnsRuntime: getTableColumnsRuntime,
+    getTableIndexesRuntime: getTableIndexesRuntime,
+
+    createRuntime: (dbDialect: DbDialect, db: SqlExecutor, dbName: string = ""): SyncRuntime => {
+        return {
+            dbDialect: dbDialect,
+            db: db,
+            dbName: dbName
+        };
     }
 };
 
@@ -375,7 +356,7 @@ function getTypeMapping(dbDialect: DbDialect): Record<string, string> {
  * 根据数据库类型引用标识符
  */
 function quoteIdentifier(dbDialect: DbDialect, identifier: string): string {
-    return DIALECT_IMPLS[dbDialect].quoteIdent(identifier);
+    return getDialectImpl(dbDialect).quoteIdent(identifier);
 }
 
 /**
@@ -644,15 +625,15 @@ function isCompatibleTypeChange(currentType: string, newType: string): boolean {
 
     if (c === n) return false;
 
-    const extractBaseType = (t: string): string => {
-        return t
-            .replace(/\s*unsigned/gi, "")
-            .replace(/\([^)]*\)/g, "")
-            .trim();
-    };
+    const cBase = c
+        .replace(/\s*unsigned/gi, "")
+        .replace(/\([^)]*\)/g, "")
+        .trim();
 
-    const cBase = extractBaseType(c);
-    const nBase = extractBaseType(n);
+    const nBase = n
+        .replace(/\s*unsigned/gi, "")
+        .replace(/\([^)]*\)/g, "")
+        .trim();
 
     const intTypes = ["tinyint", "smallint", "mediumint", "int", "integer", "bigint"];
     const cIntIdx = intTypes.indexOf(cBase);
@@ -691,27 +672,13 @@ type SyncRuntime = {
  * 说明：
  * - 本区块只负责“查询元信息”（表/列/索引/版本）。
  * - 写变更（DDL 执行）统一在下方 plan/apply 区块中完成。
- * - 对外保留旧签名（测试依赖），本文件内部可直接用 runtime 形态调用以减少参数链。
+ * - 对外不再保留 dbDialect/db/dbName 形式的 wrapper；统一使用 runtime 形态（更直写）。
  */
 /* ========================================================================== */
 
 // ---------------------------------------------------------------------------
 // 读：表是否存在
 // ---------------------------------------------------------------------------
-
-/**
- * 判断表是否存在（返回布尔值）
- */
-async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
-    return await tableExistsRuntime(
-        {
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        },
-        tableName
-    );
-}
 
 async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
     if (!runtime.db) throw new Error("SQL 执行器未初始化");
@@ -747,20 +714,6 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
 // ---------------------------------------------------------------------------
 // 读：列信息
 // ---------------------------------------------------------------------------
-
-/**
- * 获取表的现有列信息（按方言）
- */
-async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
-    return await getTableColumnsRuntime(
-        {
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        },
-        tableName
-    );
-}
 
 async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
     const columns: { [key: string]: ColumnInfo } = {};
@@ -838,20 +791,6 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
 // ---------------------------------------------------------------------------
 // 读：索引信息（单列索引）
 // ---------------------------------------------------------------------------
-
-/**
- * 获取表的现有索引信息（单列索引）
- */
-async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
-    return await getTableIndexesRuntime(
-        {
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        },
-        tableName
-    );
-}
 
 async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): Promise<IndexInfo> {
     const indexes: IndexInfo = {};
