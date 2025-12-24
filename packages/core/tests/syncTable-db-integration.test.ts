@@ -11,7 +11,7 @@ import type { BeflyContext } from "../types/befly.js";
 import type { FieldDefinition } from "../types/validate.js";
 import type { ScanFileResult } from "../utils/scanFiles.js";
 
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 
 import { beflyConfig } from "../befly.config.js";
 import { Connect } from "../lib/connect.js";
@@ -23,8 +23,6 @@ let originalRedisPrefix = "";
 let sql: any = null;
 let redis: RedisHelper | null = null;
 let ctx: BeflyContext | null = null;
-
-const cleanupTables: Array<{ dialect: "mysql" | "postgresql" | "sqlite"; tableName: string }> = [];
 
 function resolveDialect(): "mysql" | "postgresql" | "sqlite" {
     const t = String(beflyConfig.db?.type || "mysql").toLowerCase();
@@ -154,17 +152,20 @@ beforeAll(async () => {
     }
 });
 
-afterEach(async () => {
+// 约束：每个用例开始前清理；用例结束后不清理（保留表与数据用于人工检查）。
+beforeEach(async () => {
     if (!sql) return;
+    const dialect = resolveDialect();
 
-    const items = cleanupTables.splice(0, cleanupTables.length);
-    for (const item of items) {
-        try {
-            await dropTable(item.dialect, item.tableName);
-        } catch {
-            // 清理兜底：忽略（表可能不存在或权限不足），避免影响主断言
-        }
-    }
+    try {
+        await dropTable(dialect, "test_sync_table_integration_user");
+    } catch {}
+    try {
+        await dropTable(dialect, "test_sync_table_integration_profile");
+    } catch {}
+    try {
+        await dropTable(dialect, "test_sync_table_integration_data");
+    } catch {}
 });
 
 afterAll(async () => {
@@ -186,10 +187,6 @@ describe("syncTable(ctx, items) - 真实同步入库", () => {
         const dialect = resolveDialect();
         const tableFileName = "test_sync_table_integration_user";
         const tableName = tableFileName; // snakeCase 后仍为下划线
-
-        cleanupTables.push({ dialect: dialect, tableName: tableName });
-
-        await dropTable(dialect, tableName);
 
         const item = buildTableItem({
             tableFileName: tableFileName,
@@ -218,18 +215,12 @@ describe("syncTable(ctx, items) - 真实同步入库", () => {
         expect(columns.email).toBeDefined();
         expect(columns.nickname).toBeDefined();
         expect(columns.age).toBeDefined();
-
-        await dropTable(dialect, tableName);
     });
 
     test("二次同步：新增字段应落库（ALTER/重建）", async () => {
         const dialect = resolveDialect();
         const tableFileName = "test_sync_table_integration_profile";
         const tableName = tableFileName;
-
-        cleanupTables.push({ dialect: dialect, tableName: tableName });
-
-        await dropTable(dialect, tableName);
 
         const itemV1 = buildTableItem({
             tableFileName: tableFileName,
@@ -254,18 +245,12 @@ describe("syncTable(ctx, items) - 真实同步入库", () => {
         const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
         expect(columns.nickname).toBeDefined();
         expect(columns.bio).toBeDefined();
-
-        await dropTable(dialect, tableName);
     });
 
     test("写入数据：同步建表后应可真实入库并查询", async () => {
         const dialect = resolveDialect();
         const tableFileName = "test_sync_table_integration_data";
         const tableName = tableFileName;
-
-        cleanupTables.push({ dialect: dialect, tableName: tableName });
-
-        await dropTable(dialect, tableName);
 
         const item = buildTableItem({
             tableFileName: tableFileName,

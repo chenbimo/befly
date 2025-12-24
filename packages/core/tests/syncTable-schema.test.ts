@@ -9,7 +9,7 @@
 
 import type { DbDialectName } from "../lib/dbDialect.js";
 
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 
 import { beflyConfig } from "../befly.config.js";
 import { Connect } from "../lib/connect.js";
@@ -21,8 +21,6 @@ let originalRedisPrefix = "";
 let sql: any = null;
 let redis: RedisHelper | null = null;
 let dialect: DbDialectName = "mysql";
-
-const cleanupTables: string[] = [];
 
 function resolveDialect(): DbDialectName {
     const t = String(beflyConfig.db?.type || "mysql").toLowerCase();
@@ -161,17 +159,18 @@ beforeAll(async () => {
     }
 });
 
-afterEach(async () => {
+// 约束：每个用例开始前清理；用例结束后不清理（保留表/索引用于人工检查）。
+beforeEach(async () => {
     if (!sql) return;
-
-    const items = cleanupTables.splice(0, cleanupTables.length);
-    for (const tableName of items) {
-        try {
-            await dropTable(tableName);
-        } catch {
-            // 清理兜底：忽略（表可能不存在或权限不足），避免影响主断言
-        }
-    }
+    try {
+        await dropTable("test_sync_table_exists");
+    } catch {}
+    try {
+        await dropTable("test_sync_table_columns");
+    } catch {}
+    try {
+        await dropTable("test_sync_table_indexes");
+    } catch {}
 });
 
 afterAll(async () => {
@@ -200,8 +199,6 @@ describe("tableExistsRuntime", () => {
 
     test("真实数据库：表存在返回 true；表不存在返回 false", async () => {
         const tableName = "test_sync_table_exists";
-        cleanupTables.push(tableName);
-        await dropTable(tableName);
         await createSchemaTestTable(tableName);
 
         const runtime = syncTable.TestKit.createRuntime(dialect, sql as any, "befly_test");
@@ -211,16 +208,12 @@ describe("tableExistsRuntime", () => {
 
         const notExist = await syncTable.TestKit.tableExistsRuntime(runtime, "test_sync_table_not_exist_12345");
         expect(notExist).toBe(false);
-
-        await dropTable(tableName);
     });
 });
 
 describe("getTableColumnsRuntime", () => {
     test("真实数据库：返回列信息结构（至少包含我们创建的列）", async () => {
         const tableName = "test_sync_table_columns";
-        cleanupTables.push(tableName);
-        await dropTable(tableName);
         await createSchemaTestTable(tableName);
 
         const runtime = syncTable.TestKit.createRuntime(dialect, sql as any, "befly_test");
@@ -233,16 +226,12 @@ describe("getTableColumnsRuntime", () => {
         expect(columns.created_at).toBeDefined();
 
         expect(columns.user_name.nullable).toBe(false);
-
-        await dropTable(tableName);
     });
 });
 
 describe("getTableIndexesRuntime", () => {
     test("真实数据库：返回索引信息结构（包含单列索引与复合索引）", async () => {
         const tableName = "test_sync_table_indexes";
-        cleanupTables.push(tableName);
-        await dropTable(tableName);
         await createSchemaTestTable(tableName);
         await createSchemaTestIndexes(tableName);
 
@@ -259,7 +248,5 @@ describe("getTableIndexesRuntime", () => {
         expect(indexes.idx_composite.length).toBe(2);
         expect(indexes.idx_composite).toContain("user_id");
         expect(indexes.idx_composite).toContain("created_at");
-
-        await dropTable(tableName);
     });
 });
