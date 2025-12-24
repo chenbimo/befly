@@ -99,21 +99,3 @@ describe("getTypeMapping (MySQL)", () => {
         expect(syncTable.getTypeMapping("mysql").array_text).toBe("MEDIUMTEXT");
     });
 });
-
-describe("normalizeDbDialect", () => {
-    test("postgres 归一化为 postgresql", () => {
-        expect(syncTable.normalizeDbDialect("postgres")).toBe("postgresql");
-    });
-
-    test("postgresql 保持为 postgresql", () => {
-        expect(syncTable.normalizeDbDialect("postgresql")).toBe("postgresql");
-    });
-
-    test("sqlite 保持为 sqlite", () => {
-        expect(syncTable.normalizeDbDialect("sqlite")).toBe("sqlite");
-    });
-
-    test("空值默认 mysql", () => {
-        expect(syncTable.normalizeDbDialect(undefined)).toBe("mysql");
-    });
-});

@@ -50,14 +50,6 @@ const DIALECT_IMPLS: Record<DbDialect, MySqlDialect | PostgresDialect | SqliteDi
     sqlite: new SqliteDialect()
 };
 
-export function normalizeDbDialect(dbType: string | undefined | null): DbDialect {
-    const v = String(dbType || "mysql").toLowerCase();
-    if (v === "postgres") return "postgresql";
-    if (v === "postgresql") return "postgresql";
-    if (v === "sqlite") return "sqlite";
-    return "mysql";
-}
-
 type SyncTableSource = "app" | "addon" | "core";
 
 export type SyncTableInputItem = {
@@ -98,7 +90,13 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
             throw new Error("syncTable(ctx, tables) 缺少 ctx.config");
         }
 
-        const dbDialect = normalizeDbDialect(ctx.config.db?.type || "mysql");
+        const dbType = String(ctx.config.db?.type || "mysql").toLowerCase();
+        let dbDialect: DbDialect = "mysql";
+        if (dbType === "postgres" || dbType === "postgresql") {
+            dbDialect = "postgresql";
+        } else if (dbType === "sqlite") {
+            dbDialect = "sqlite";
+        }
 
         // 检查数据库版本（复用 ctx.db 的现有连接/事务）
         await ensureDbVersion(dbDialect, ctx.db);
@@ -593,7 +591,7 @@ export function isCompatibleTypeChange(currentType: string, newType: string): bo
 type SyncRuntime = {
     /**
      * 当前数据库方言（mysql/postgresql/sqlite），决定 SQL 片段与元信息查询方式。
-     * 约束：必须与 ctx.config.db.type 一致（经 normalizeDbDialect 归一化）。
+     * 约束：必须与 ctx.config.db.type 一致（经归一化）。
      */
     dbDialect: DbDialect;
     /**
