@@ -7,6 +7,12 @@ describe("syncTable - TestKit 挂载", () => {
         expect(typeof syncTable).toBe("function");
         expect(syncTable.TestKit).toBeDefined();
 
+        const descriptor = Object.getOwnPropertyDescriptor(syncTable, "TestKit");
+        expect(descriptor).toBeDefined();
+        expect(descriptor?.writable).toBe(false);
+        expect(descriptor?.configurable).toBe(false);
+        expect(descriptor?.enumerable).toBe(true);
+
         expect(typeof syncTable.TestKit.quoteIdentifier).toBe("function");
         expect(typeof syncTable.TestKit.getTypeMapping).toBe("function");
 

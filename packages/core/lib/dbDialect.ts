@@ -8,8 +8,9 @@ let DIALECT_CACHE: Map<DbDialectName, DbDialect> | null = null;
  * 约束：dialect 实例应当是纯逻辑对象（无连接/无 IO/无状态副作用），可全局复用。
  */
 export function getDialectByName(name: DbDialectName): DbDialect {
+    const unknownDialectError = new Error(`未知数据库方言: ${String(name)}`);
     if (name !== "mysql" && name !== "postgresql" && name !== "sqlite") {
-        throw new Error(`未知数据库方言: ${String(name)}`);
+        throw unknownDialectError;
     }
 
     if (!DIALECT_CACHE) {
@@ -21,7 +22,7 @@ export function getDialectByName(name: DbDialectName): DbDialect {
 
     const dialect = DIALECT_CACHE.get(name);
     if (!dialect) {
-        throw new Error(`未知数据库方言: ${String(name)}`);
+        throw unknownDialectError;
     }
 
     return dialect;
