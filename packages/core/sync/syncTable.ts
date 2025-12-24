@@ -23,6 +23,10 @@ type SqlExecutor = {
 
 export type DbDialect = DbDialectName;
 
+type DialectImpl = {
+    quoteIdent(identifier: string): string;
+};
+
 /* ========================================================================== */
 /* 对外导出面（被 core/main.ts 与 tests 使用）
  *
@@ -44,7 +48,7 @@ export type DbDialect = DbDialectName;
  * 5) plan/apply（写变更：建表/改表/SQLite 重建）
  */
 
-const DIALECT_IMPLS: Record<DbDialect, MySqlDialect | PostgresDialect | SqliteDialect> = {
+const DIALECT_IMPLS: Record<DbDialect, DialectImpl> = {
     mysql: new MySqlDialect(),
     postgresql: new PostgresDialect(),
     sqlite: new SqliteDialect()
