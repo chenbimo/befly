@@ -257,4 +257,60 @@ describe("syncTable(ctx, items) - 真实同步入库", () => {
 
         await dropTable(dialect, tableName);
     });
+
+    test("写入数据：同步建表后应可真实入库并查询", async () => {
+        const dialect = resolveDialect();
+        const tableFileName = "test_sync_table_integration_data";
+        const tableName = tableFileName;
+
+        cleanupTables.push({ dialect: dialect, tableName: tableName });
+
+        await dropTable(dialect, tableName);
+
+        const item = buildTableItem({
+            tableFileName: tableFileName,
+            content: {
+                email: fdString({ name: "邮箱", min: 0, max: 100, defaultValue: null, nullable: false }),
+                nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
+                age: fdNumber({ name: "年龄", min: 0, max: 999, defaultValue: 0, nullable: true })
+            }
+        });
+
+        await syncTable(ctx as any, [item]);
+
+        const runtime = syncTable.TestKit.createRuntime(dialect, sql as any, "befly_test");
+        const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableName);
+        expect(exists).toBe(true);
+
+        const quotedTable = syncTable.TestKit.quoteIdentifier(dialect, tableName);
+        const colId = syncTable.TestKit.quoteIdentifier(dialect, "id");
+        const colEmail = syncTable.TestKit.quoteIdentifier(dialect, "email");
+        const colNickname = syncTable.TestKit.quoteIdentifier(dialect, "nickname");
+        const colAge = syncTable.TestKit.quoteIdentifier(dialect, "age");
+        const colCreatedAt = syncTable.TestKit.quoteIdentifier(dialect, "created_at");
+        const colUpdatedAt = syncTable.TestKit.quoteIdentifier(dialect, "updated_at");
+        const colDeletedAt = syncTable.TestKit.quoteIdentifier(dialect, "deleted_at");
+        const colState = syncTable.TestKit.quoteIdentifier(dialect, "state");
+
+        const id = 1001;
+        const email = "data_write@test.com";
+        const nickname = "写入测试";
+        const age = 18;
+        const now = Date.now();
+
+        const insertSql = `INSERT INTO ${quotedTable} (${colId}, ${colEmail}, ${colNickname}, ${colAge}, ${colCreatedAt}, ${colUpdatedAt}, ${colDeletedAt}, ${colState}) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        await sql.unsafe(insertSql, [id, email, nickname, age, now, now, 0, 1]);
+
+        const selectSql = `SELECT ${colId} AS id, ${colEmail} AS email, ${colNickname} AS nickname, ${colAge} AS age, ${colState} AS state FROM ${quotedTable} WHERE ${colId} = ?`;
+        const rows = await sql.unsafe(selectSql, [id]);
+
+        expect(Array.isArray(rows)).toBe(true);
+        expect(rows.length).toBe(1);
+
+        expect(Number(rows[0].id)).toBe(id);
+        expect(String(rows[0].email)).toBe(email);
+        expect(String(rows[0].nickname)).toBe(nickname);
+        expect(Number(rows[0].age)).toBe(age);
+        expect(Number(rows[0].state)).toBe(1);
+    });
 });
