@@ -143,7 +143,8 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
                 throw new Error(`syncTable 表定义无效: table=${tableName}`);
             }
 
-            // 为字段属性设置默认值
+            // 为字段属性设置默认值：表定义来自 JSON/扫描结果，字段可能缺省。
+            // 缺省会让 diff/DDL 生成出现 undefined vs null 等差异，导致错误的变更判断。
             for (const fieldDef of Object.values(tableDefinition)) {
                 applyFieldDefaults(fieldDef);
             }
@@ -184,10 +185,6 @@ export const DB_VERSION_REQUIREMENTS = {
     SQLITE_MIN_VERSION: "3.50.0",
     SQLITE_MIN_VERSION_NUM: 35000 // 3 * 10000 + 50 * 100
 } as const;
-
-/**
- * 需要创建索引的系统字段
- */
 
 /**
  * 字段变更类型的中文标签映射
@@ -1078,8 +1075,11 @@ export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableNa
 }
 
 async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan> {
+    // 1) 读取现有元信息（列/索引）
     const existingColumns = await getTableColumnsRuntime(runtime, tableName);
     const existingIndexes = await getTableIndexesRuntime(runtime, tableName);
+
+    // 2) 规划变更（先 plan，后统一 apply）
     let changed = false;
 
     const addClauses: string[] = [];
@@ -1087,6 +1087,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
     const defaultClauses: string[] = [];
     const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [];
 
+    // 3) 对比业务字段：新增/变更（类型/长度/可空/默认值/注释）
     for (const [fieldKey, fieldDef] of Object.entries(fields)) {
         const dbFieldName = snakeCase(fieldKey);
 
@@ -1161,6 +1162,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
         }
     }
 
+    // 4) 补齐系统字段（除 id 外）
     const systemFieldNames = SYSTEM_FIELDS.filter((f) => f.name !== "id").map((f) => f.name);
     for (const sysFieldName of systemFieldNames) {
         if (!existingColumns[sysFieldName]) {
@@ -1173,6 +1175,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
         }
     }
 
+    // 5) 索引动作：系统字段索引 + 业务字段单列索引
     for (const sysField of SYSTEM_INDEX_FIELDS) {
         const idxName = `idx_${sysField}`;
         const fieldWillExist = existingColumns[sysField] || systemFieldNames.includes(sysField);
@@ -1195,6 +1198,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
         }
     }
 
+    // 6) PG 注释动作（MySQL 在列定义里带 COMMENT；SQLite 无列注释）
     const commentActions: string[] = [];
     if (isPG(runtime.dbDialect)) {
         const tableQuoted = quoteIdentifier(runtime.dbDialect, tableName);
@@ -1214,6 +1218,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
         }
     }
 
+    // 7) 汇总计划并应用
     changed = addClauses.length > 0 || modifyClauses.length > 0 || defaultClauses.length > 0 || indexActions.length > 0 || commentActions.length > 0;
 
     const plan: TablePlan = {
