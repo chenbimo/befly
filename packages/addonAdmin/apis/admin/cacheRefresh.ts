@@ -46,8 +46,8 @@ export default {
 
                 await befly.redis.setObject(CacheKeys.menusAll(), menus.lists);
 
-                const parentCount = menus.lists.filter((m: any) => m.pid === 0).length;
-                const childCount = menus.lists.filter((m: any) => m.pid !== 0).length;
+                const parentCount = menus.lists.filter((m: any) => typeof m.parentPath !== "string" || m.parentPath.length === 0).length;
+                const childCount = menus.lists.filter((m: any) => typeof m.parentPath === "string" && m.parentPath.length > 0).length;
 
                 results.menus = {
                     success: true,

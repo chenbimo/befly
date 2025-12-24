@@ -75,8 +75,6 @@
 </template>
 
 <script setup>
-import { arrayToTree } from "befly-vite/utils/arrayToTree";
-
 import { DialogPlugin } from "tdesign-vue-next";
 
 const router = useRouter();
@@ -152,7 +150,7 @@ const $Method = {
 
                 bizMenus.push({
                     id: `biz_${path.replace(/[^a-zA-Z0-9]+/g, "_")}`,
-                    pid: "biz",
+                    parentPath: "__biz__",
                     name: title,
                     path: path
                 });
@@ -165,23 +163,54 @@ const $Method = {
                     ? [
                           {
                               id: "biz",
-                              pid: 0,
+                              parentPath: "",
                               name: "业务",
-                              path: ""
+                              path: "__biz__"
                           }
                       ].concat(bizMenus)
                     : [];
 
             const normalizedLists = lists.map((menu) => {
                 const menuPath = normalizePath(menu?.path);
-                return Object.assign({}, menu, { path: menuPath });
+                const menuParentPath = normalizePath(menu?.parentPath);
+                return Object.assign({}, menu, { path: menuPath, parentPath: menuParentPath });
             });
 
             const mergedLists = bizMenusFlat.concat(normalizedLists);
 
             // 保存一维数据（data 是 { lists: [] } 格式）
-            $Data.userMenusFlat = mergedLists;
-            $Data.userMenus = arrayToTree(mergedLists);
+            const menuMap = new Map();
+            const flatMenus = mergedLists.map((menu) => {
+                const normalizedPath = normalizePath(menu?.path);
+                const normalizedParentPath = normalizePath(menu?.parentPath);
+
+                const nextMenu = Object.assign({}, menu, {
+                    path: normalizedPath,
+                    parentPath: normalizedParentPath,
+                    children: []
+                });
+
+                if (typeof nextMenu.path === "string" && nextMenu.path.length > 0) {
+                    menuMap.set(nextMenu.path, nextMenu);
+                }
+
+                return nextMenu;
+            });
+
+            const treeMenus = [];
+            for (const menu of flatMenus) {
+                if (typeof menu.parentPath === "string" && menu.parentPath.length > 0) {
+                    const parent = menuMap.get(menu.parentPath);
+                    if (parent && Array.isArray(parent.children)) {
+                        parent.children.push(menu);
+                        continue;
+                    }
+                }
+                treeMenus.push(menu);
+            }
+
+            $Data.userMenusFlat = flatMenus;
+            $Data.userMenus = treeMenus;
             $Method.setActiveMenu();
         } catch (error) {
             MessagePlugin.error("获取用户菜单失败");
@@ -208,15 +237,21 @@ const $Method = {
         const expandedKeys = [];
         let menu = currentMenu;
 
-        // 向上查找所有父级
-        while (menu.pid) {
-            const parent = $Data.userMenusFlat.find((m) => m.id === menu.pid);
+        // 向上查找所有父级（通过 parentPath 关联）
+        while (typeof menu.parentPath === "string" && menu.parentPath.length > 0) {
+            const parent = $Data.userMenusFlat.find((m) => {
+                const parentMenuPath = normalizePath(m?.path);
+                const currentParentPath = normalizePath(menu?.parentPath);
+                return parentMenuPath === currentParentPath;
+            });
+
             if (parent) {
                 expandedKeys.unshift(String(parent.id));
                 menu = parent;
-            } else {
-                break;
+                continue;
             }
+
+            break;
         }
 
         // 设置展开的父级和当前激活的菜单

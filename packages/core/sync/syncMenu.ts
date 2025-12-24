@@ -1,4 +1,3 @@
-import type { DbHelper } from "../lib/dbHelper.js";
 import type { MenuConfig } from "../types/sync.js";
 import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 
@@ -84,63 +83,14 @@ async function scanViewsDir(viewsDir: string, prefix: string, parentPath: string
     return menus;
 }
 
-function collectPaths(menus: MenuConfig[]): Set<string> {
-    const paths = new Set<string>();
-
-    function collect(items: MenuConfig[]): void {
-        for (const menu of items) {
-            if (menu.path) {
-                paths.add(menu.path);
-            }
-            if (menu.children && menu.children.length > 0) {
-                collect(menu.children);
-            }
-        }
+function getParentPath(path: string): string {
+    // "/a/b" => "/a"
+    // "/a" => ""
+    const parts = path.split("/").filter((p) => !!p);
+    if (parts.length <= 1) {
+        return "";
     }
-
-    collect(menus);
-    return paths;
-}
-
-async function syncMenuRecursive(dbHelper: DbHelper, menu: MenuConfig, pid: number, existingMenuMap: Map<string, any>): Promise<number> {
-    const existing = existingMenuMap.get(menu.path || "");
-    let menuId: number;
-
-    if (existing) {
-        menuId = existing.id;
-
-        const needUpdate = existing.pid !== pid || existing.name !== menu.name || existing.sort !== (menu.sort ?? 999);
-
-        if (needUpdate) {
-            await dbHelper.updData({
-                table: "addon_admin_menu",
-                where: { id: existing.id },
-                data: {
-                    pid: pid,
-                    name: menu.name,
-                    sort: menu.sort ?? 999
-                }
-            });
-        }
-    } else {
-        menuId = await dbHelper.insData({
-            table: "addon_admin_menu",
-            data: {
-                pid: pid,
-                name: menu.name,
-                path: menu.path || "",
-                sort: menu.sort ?? 999
-            }
-        });
-    }
-
-    if (menu.children && menu.children.length > 0) {
-        for (const child of menu.children) {
-            await syncMenuRecursive(dbHelper, child, menuId, existingMenuMap);
-        }
-    }
-
-    return menuId;
+    return `/${parts.slice(0, -1).join("/")}`;
 }
 
 async function loadMenuConfigs(ctx): Promise<MenuConfig[]> {
@@ -198,44 +148,129 @@ export async function syncMenu(ctx): Promise<void> {
         return;
     }
 
-    const configPaths = collectPaths(mergedMenus);
-
-    const allExistingMenus = await ctx.dbHelper.getAll({
-        table: "addon_admin_menu"
-    } as any);
-    const existingMenuMap = new Map<string, any>();
-    for (const menu of allExistingMenus.lists) {
-        if (menu.path) {
-            existingMenuMap.set(menu.path, menu);
-        }
+    // 1) 读取配置菜单：扁平化为 path => { name, sort, parentPath }
+    // - 以 path 为唯一键：后出现的覆盖先出现的（与旧逻辑“同 path 多次同步同一条记录”一致）
+    const menuDefMap = new Map<string, { path: string; name: string; sort: number; parentPath: string }>();
+    const stack: MenuConfig[] = [];
+    for (const m of mergedMenus) {
+        stack.push(m);
     }
 
-    for (const menu of mergedMenus) {
-        try {
-            await syncMenuRecursive(ctx.dbHelper, menu, 0, existingMenuMap);
-        } catch (error: any) {
-            Logger.error({ err: error, menu: menu.name }, "同步菜单失败");
-            throw error;
-        }
-    }
-
-    // 复用首次 getAll 结果：删除菜单只依赖 id/path/state。
-    for (const record of allExistingMenus.lists) {
-        if (typeof record?.state !== "number" || record.state < 0) {
+    while (stack.length > 0) {
+        const menu = stack.pop() as any;
+        if (!menu) {
             continue;
         }
 
-        if (typeof record?.path !== "string" || !record.path) {
+        if (menu.children && Array.isArray(menu.children) && menu.children.length > 0) {
+            for (const child of menu.children) {
+                stack.push(child);
+            }
+        }
+
+        const path = typeof menu.path === "string" ? menu.path : "";
+        if (!path) {
             continue;
         }
 
-        if (!configPaths.has(record.path)) {
-            await ctx.dbHelper.delForce({
-                table: "addon_admin_menu",
-                where: { id: record.id }
-            });
+        const name = typeof menu.name === "string" ? menu.name : "";
+        if (!name) {
+            continue;
         }
+
+        const sort = typeof menu.sort === "number" ? menu.sort : 999;
+        const parentPath = getParentPath(path);
+
+        menuDefMap.set(path, {
+            path: path,
+            name: name,
+            sort: sort,
+            parentPath: parentPath
+        });
     }
+
+    const configPaths = new Set<string>();
+    for (const p of menuDefMap.keys()) {
+        configPaths.add(p);
+    }
+
+    const tableName = "addon_admin_menu";
+
+    // 2) 批量同步（事务内）：按 path diff 执行批量 insert/update/delete
+    await ctx.dbHelper.trans(async (dbHelper: any) => {
+        const allExistingMenus = await dbHelper.getAll({
+            table: tableName,
+            fields: ["id", "name", "path", "parentPath", "sort", "state"],
+            where: { state$gte: 0 }
+        } as any);
+
+        const existingList = allExistingMenus.lists || [];
+
+        const existingMenuMap = new Map<string, any>();
+
+        for (const record of existingList) {
+            if (typeof record?.path !== "string" || !record.path) {
+                continue;
+            }
+
+            existingMenuMap.set(record.path, record);
+        }
+
+        // 2) 一次性算出 insert/update（仅依赖 path diff，不使用 pid，不预生成 id）
+        const updList: Array<{ id: number; data: Record<string, any> }> = [];
+        const insList: Array<Record<string, any>> = [];
+
+        for (const def of menuDefMap.values()) {
+            const existing = existingMenuMap.get(def.path);
+            if (existing) {
+                const existingParentPath = typeof existing.parentPath === "string" ? existing.parentPath : "";
+                const needUpdate = existing.name !== def.name || existing.sort !== def.sort || existingParentPath !== def.parentPath;
+                if (needUpdate) {
+                    updList.push({
+                        id: existing.id,
+                        data: {
+                            name: def.name,
+                            path: def.path,
+                            parentPath: def.parentPath,
+                            sort: def.sort
+                        }
+                    });
+                }
+            } else {
+                insList.push({
+                    name: def.name,
+                    path: def.path,
+                    parentPath: def.parentPath,
+                    sort: def.sort
+                });
+            }
+        }
+
+        if (updList.length > 0) {
+            await dbHelper.updBatch(tableName, updList);
+        }
+
+        if (insList.length > 0) {
+            await dbHelper.insBatch(tableName, insList);
+        }
+
+        // 3) 删除差集（DB - 配置）
+        const delIds: number[] = [];
+        for (const record of existingList) {
+            if (typeof record?.path !== "string" || !record.path) {
+                continue;
+            }
+            if (!configPaths.has(record.path)) {
+                if (typeof record?.id === "number") {
+                    delIds.push(record.id);
+                }
+            }
+        }
+
+        if (delIds.length > 0) {
+            await dbHelper.delForceBatch(tableName, delIds);
+        }
+    });
 
     await ctx.cacheHelper.cacheMenus();
 }

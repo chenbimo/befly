@@ -13,11 +13,6 @@
         "max": 200,
         "index": true
     },
-    "icon": {
-        "name": "图标名称",
-        "type": "string",
-        "max": 50
-    },
     "sort": {
         "name": "排序",
         "type": "number",
@@ -25,11 +20,11 @@
         "max": 9999,
         "default": 0
     },
-    "pid": {
-        "name": "父级ID",
-        "type": "number",
-        "min": 0,
-        "default": 0,
+    "parentPath": {
+        "name": "父级路径",
+        "type": "string",
+        "max": 200,
+        "default": "",
         "index": true
     }
 }

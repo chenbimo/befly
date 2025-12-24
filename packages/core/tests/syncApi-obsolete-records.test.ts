@@ -59,7 +59,7 @@ describe("syncApi - delete obsolete records", () => {
             }
         ] as any;
 
-        await syncApi(apiItems, ctx);
+        await syncApi(ctx, apiItems);
 
         expect(calls.getAllArgs?.fields).toEqual(["id", "routePath", "name", "addonName", "state"]);
 

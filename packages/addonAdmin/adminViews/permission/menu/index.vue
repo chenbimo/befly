@@ -44,7 +44,6 @@ import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from "
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { arrayToTree } from "befly-vite/utils/arrayToTree";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
 definePage({
@@ -62,7 +61,7 @@ const $Data = $ref({
         { colKey: "name", title: "菜单名称" },
         { colKey: "id", title: "序号" },
         { colKey: "path", title: "路由路径" },
-        { colKey: "icon", title: "图标" },
+        { colKey: "parentPath", title: "父级路径" },
         { colKey: "sort", title: "排序" },
         { colKey: "state", title: "状态" }
     ]),
@@ -83,8 +82,38 @@ const $Method = {
             const res = await $Http("/addon/admin/menu/all");
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
-            // 构建树形结构
-            $Data.tableData = arrayToTree(lists);
+            const menuMap = new Map();
+            const flatMenus = lists.map((menu) => {
+                const path = typeof menu?.path === "string" ? menu.path : "";
+                const parentPath = typeof menu?.parentPath === "string" ? menu.parentPath : "";
+
+                const nextMenu = Object.assign({}, menu, {
+                    path: path,
+                    parentPath: parentPath,
+                    children: []
+                });
+
+                if (typeof nextMenu.path === "string" && nextMenu.path.length > 0) {
+                    menuMap.set(nextMenu.path, nextMenu);
+                }
+
+                return nextMenu;
+            });
+
+            const treeMenus = [];
+            for (const menu of flatMenus) {
+                if (typeof menu.parentPath === "string" && menu.parentPath.length > 0) {
+                    const parent = menuMap.get(menu.parentPath);
+                    if (parent && Array.isArray(parent.children)) {
+                        parent.children.push(menu);
+                        continue;
+                    }
+                }
+                treeMenus.push(menu);
+            }
+
+            // 构建树形结构（TTable tree）
+            $Data.tableData = treeMenus;
 
             // 自动高亮第一行
             if ($Data.tableData.length > 0) {

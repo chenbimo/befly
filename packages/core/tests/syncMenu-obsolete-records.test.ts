@@ -11,26 +11,38 @@ describe("syncMenu - delete obsolete records", () => {
         const menusJsonPath = join(projectDir, "menus.json");
 
         const existingMenus = [
-            { id: 1, path: "/a", state: 0 },
-            { id: 2, path: "/b", state: -1 },
-            { id: 3, path: "", state: 0 }
+            { id: 1, path: "/a", parentPath: "", state: 0 },
+            { id: 2, path: "/b", parentPath: "", state: -1 },
+            { id: 3, path: "", parentPath: "", state: 0 }
         ];
 
         const calls = {
             getAllCount: 0,
-            delForce: [] as any[]
+            delForceBatch: [] as any[]
         };
 
         const dbHelper = {
-            getAll: async () => {
+            trans: async (callback: any) => {
+                return await callback(dbHelper);
+            },
+            getAll: async (options: any) => {
                 calls.getAllCount += 1;
+                const stateGte = options?.where?.state$gte;
+                if (typeof stateGte === "number") {
+                    return { lists: existingMenus.filter((m) => typeof m.state === "number" && m.state >= stateGte) };
+                }
                 return { lists: existingMenus };
             },
-            delForce: async (options: any) => {
-                calls.delForce.push(options);
+            updBatch: async () => {
+                return 0;
             },
-            insData: async () => 999,
-            updData: async () => {}
+            insBatch: async () => {
+                return [];
+            },
+            delForceBatch: async (table: string, ids: number[]) => {
+                calls.delForceBatch.push({ table: table, ids: ids });
+                return ids.length;
+            }
         } as any;
 
         const ctx = {
@@ -56,8 +68,9 @@ describe("syncMenu - delete obsolete records", () => {
         }
 
         expect(calls.getAllCount).toBe(1);
-        expect(calls.delForce).toHaveLength(1);
-        expect(calls.delForce[0].where.id).toBe(1);
+        expect(calls.delForceBatch).toHaveLength(1);
+        expect(calls.delForceBatch[0].table).toBe("addon_admin_menu");
+        expect(calls.delForceBatch[0].ids).toEqual([1]);
     });
 
     test("不应删除仍在配置中的菜单记录", async () => {
@@ -66,23 +79,37 @@ describe("syncMenu - delete obsolete records", () => {
         const menusJsonPath = join(projectDir, "menus.json");
 
         const existingMenus = [
-            { id: 1, path: "/keep", state: 0 },
-            { id: 2, path: "/remove", state: 0 }
+            { id: 1, path: "/keep", parentPath: "", name: "Keep", sort: 999, state: 0 },
+            { id: 2, path: "/remove", parentPath: "", name: "Remove", sort: 999, state: 0 }
         ];
 
         const calls = {
-            delForce: [] as any[]
+            delForceBatch: [] as any[],
+            updBatchCount: 0
         };
 
         const dbHelper = {
-            getAll: async () => {
+            trans: async (callback: any) => {
+                return await callback(dbHelper);
+            },
+            getAll: async (options: any) => {
+                const stateGte = options?.where?.state$gte;
+                if (typeof stateGte === "number") {
+                    return { lists: existingMenus.filter((m) => typeof m.state === "number" && m.state >= stateGte) };
+                }
                 return { lists: existingMenus };
             },
-            delForce: async (options: any) => {
-                calls.delForce.push(options);
+            updBatch: async () => {
+                calls.updBatchCount += 1;
+                return 0;
             },
-            insData: async () => 999,
-            updData: async () => {}
+            insBatch: async () => {
+                return [];
+            },
+            delForceBatch: async (table: string, ids: number[]) => {
+                calls.delForceBatch.push({ table: table, ids: ids });
+                return ids.length;
+            }
         } as any;
 
         const ctx = {
@@ -121,7 +148,9 @@ describe("syncMenu - delete obsolete records", () => {
             rmSync(projectDir, { recursive: true, force: true });
         }
 
-        expect(calls.delForce).toHaveLength(1);
-        expect(calls.delForce[0].where.id).toBe(2);
+        expect(calls.delForceBatch).toHaveLength(1);
+        expect(calls.delForceBatch[0].table).toBe("addon_admin_menu");
+        expect(calls.delForceBatch[0].ids).toEqual([2]);
+        expect(calls.updBatchCount).toBe(0);
     });
 });
