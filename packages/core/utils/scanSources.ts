@@ -1,3 +1,6 @@
+import type { AddonInfo } from "./scanAddons.js";
+import type { ScanFileResult } from "./scanFiles.js";
+
 import { join } from "pathe";
 
 import { coreDir, appDir } from "../paths.js";
@@ -5,20 +8,20 @@ import { scanAddons } from "./scanAddons.js";
 import { scanFiles } from "./scanFiles.js";
 
 export type ScanSourcesResult = {
-    hooks: any[];
-    plugins: any[];
-    apis: any[];
-    tables: any[];
-    adddons: any[];
+    hooks: ScanFileResult[];
+    plugins: ScanFileResult[];
+    apis: ScanFileResult[];
+    tables: ScanFileResult[];
+    adddons: AddonInfo[];
 };
 
 export const scanSources = async (): Promise<ScanSourcesResult> => {
-    const apis = [];
-    const plugins = [];
-    const hooks = [];
-    const tables = [];
+    const apis: ScanFileResult[] = [];
+    const plugins: ScanFileResult[] = [];
+    const hooks: ScanFileResult[] = [];
+    const tables: ScanFileResult[] = [];
 
-    const adddons = await scanAddons();
+    const adddons: AddonInfo[] = await scanAddons();
 
     // 处理表格
     tables.push(...(await scanFiles(join(appDir, "tables"), "app", "table", "*.json")));

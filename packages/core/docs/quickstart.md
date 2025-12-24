@@ -212,7 +212,7 @@ CREATE DATABASE my_api CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 服务启动时会在**主进程**自动执行同步流程：
 
-1. `syncTable()`：同步表结构
+1. `SyncTable.run()`：同步表结构
 2. `syncData()`：固定顺序执行 `syncApi` → `syncMenu` → `syncDev`
 
 如需手动触发，可在代码中调用（一般不建议在请求路径中调用）：
@@ -224,7 +224,7 @@ import { scanSources } from "../utils/scanSources.js";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
 const sources = await scanSources();
-await SyncTable.run(ctx, sources.tables as any);
+await SyncTable.run(ctx, sources.tables);
 await syncData();
 ```
 

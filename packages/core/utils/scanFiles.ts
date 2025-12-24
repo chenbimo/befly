@@ -119,7 +119,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             };
 
             if (type === "table") {
-                base.tables = content;
+                base.content = content;
                 results.push(base as ScanFileResult);
                 continue;
             }

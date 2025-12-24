@@ -512,7 +512,7 @@ interface FieldDefinition {
 
 ### 触发方式
 
-服务启动时会在**主进程**自动执行 `syncTable()`。
+服务启动时会在**主进程**自动执行 `SyncTable.run()`。
 
 如需在代码中手动触发：
 
@@ -522,7 +522,7 @@ import { scanSources } from "../../utils/scanSources.js";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
 const sources = await scanSources();
-await SyncTable.run(ctx, sources.tables as any);
+await SyncTable.run(ctx, sources.tables);
 ```
 
 ### 同步流程

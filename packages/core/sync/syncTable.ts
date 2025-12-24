@@ -10,6 +10,7 @@ import type { DbDialectName } from "../lib/dbDialect.js";
 import type { BeflyContext } from "../types/befly.js";
 import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/sync.js";
 import type { FieldDefinition } from "../types/validate.js";
+import type { ScanFileResult } from "../utils/scanFiles.js";
 
 import { snakeCase } from "es-toolkit/string";
 
@@ -32,7 +33,7 @@ type DialectImpl = {
  *
  * 约束：本文件仅导出一个 class：SyncTable。
  * - 生产代码：通过 new SyncTable(ctx).run(...) 执行同步。
- * - 测试：通过 SyncTable.xxx 静态方法访问纯函数/常量（不再导出零散函数）。
+ * - 测试：通过 SyncTable.TestKit 访问纯函数/常量（不再导出零散函数）。
  */
 /* ========================================================================== */
 
@@ -51,16 +52,6 @@ const DIALECT_IMPLS = {
     sqlite: new SqliteDialect()
 } satisfies Record<DbDialect, DialectImpl>;
 
-type SyncTableSource = "app" | "addon" | "core";
-
-type SyncTableInputItem = {
-    source: SyncTableSource;
-    type: "table";
-    fileName: string;
-    addonName?: string;
-    tables: Record<string, any>;
-};
-
 export class SyncTable {
     private ctx: BeflyContext;
 
@@ -71,12 +62,12 @@ export class SyncTable {
     /**
      * 数据库同步命令入口（实例方法）
      */
-    async run(tables: SyncTableInputItem[]): Promise<void> {
+    async run(items: ScanFileResult[]): Promise<void> {
         try {
             // 记录处理过的表名（用于清理缓存）
             const processedTables: string[] = [];
 
-            if (!Array.isArray(tables)) {
+            if (!Array.isArray(items)) {
                 throw new Error("syncTable(items) 参数必须是数组");
             }
 
@@ -125,7 +116,7 @@ export class SyncTable {
             };
 
             // 处理传入的 tables 数据（来自 scanSources）
-            for (const item of tables) {
+            for (const item of items) {
                 if (!item || item.type !== "table") {
                     continue;
                 }
@@ -148,7 +139,7 @@ export class SyncTable {
                     tableName = `addon_${snakeCase(item.addonName)}_${baseTableName}`;
                 }
 
-                const tableDefinition = item.tables;
+                const tableDefinition = item.content;
                 if (!tableDefinition || typeof tableDefinition !== "object") {
                     throw new Error(`syncTable 表定义无效: table=${tableName}`);
                 }
@@ -185,104 +176,16 @@ export class SyncTable {
     /**
      * 便捷静态入口（仍只导出 class）
      */
-    static async run(ctx: BeflyContext, tables: SyncTableInputItem[]): Promise<void> {
-        await new SyncTable(ctx).run(tables);
+    static async run(ctx: BeflyContext, items: ScanFileResult[]): Promise<void> {
+        await new SyncTable(ctx).run(items);
     }
 
-    // -------------------------
-    // 静态导出：常量
-    // -------------------------
-
-    static get DB_VERSION_REQUIREMENTS() {
-        return DB_VERSION_REQUIREMENTS;
-    }
-
-    static get CHANGE_TYPE_LABELS() {
-        return CHANGE_TYPE_LABELS;
-    }
-
-    static get MYSQL_TABLE_CONFIG() {
-        return MYSQL_TABLE_CONFIG;
-    }
-
-    static get SYSTEM_INDEX_FIELDS() {
-        return SYSTEM_INDEX_FIELDS;
-    }
-
-    // -------------------------
-    // 静态导出：纯函数/工具
-    // -------------------------
-
-    static getTypeMapping(dbDialect: DbDialect): Record<string, string> {
-        return getTypeMapping(dbDialect);
-    }
-
-    static quoteIdentifier(dbDialect: DbDialect, identifier: string): string {
-        return quoteIdentifier(dbDialect, identifier);
-    }
-
-    static escapeComment(str: string): string {
-        return escapeComment(str);
-    }
-
-    static applyFieldDefaults(fieldDef: any): void {
-        applyFieldDefaults(fieldDef);
-    }
-
-    static isStringOrArrayType(fieldType: string): boolean {
-        return isStringOrArrayType(fieldType);
-    }
-
-    static getSqlType(dbDialect: DbDialect, fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
-        return getSqlType(dbDialect, fieldType, fieldMax, unsigned);
-    }
-
-    static resolveDefaultValue(fieldDefault: any, fieldType: string): any {
-        return resolveDefaultValue(fieldDefault, fieldType);
-    }
-
-    static generateDefaultSql(actualDefault: any, fieldType: string): string {
-        return generateDefaultSql(actualDefault, fieldType);
-    }
-
-    static buildIndexSQL(dbDialect: DbDialect, tableName: string, indexName: string, fieldName: string, action: "create" | "drop"): string {
-        return buildIndexSQL(dbDialect, tableName, indexName, fieldName, action);
-    }
-
-    static buildSystemColumnDefs(dbDialect: DbDialect): string[] {
-        return buildSystemColumnDefs(dbDialect);
-    }
-
-    static buildBusinessColumnDefs(dbDialect: DbDialect, fields: Record<string, FieldDefinition>): string[] {
-        return buildBusinessColumnDefs(dbDialect, fields);
-    }
-
-    static generateDDLClause(dbDialect: DbDialect, fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string {
-        return generateDDLClause(dbDialect, fieldKey, fieldDef, isAdd);
-    }
-
-    static isCompatibleTypeChange(currentType: string, newType: string): boolean {
-        return isCompatibleTypeChange(currentType as any, newType as any);
-    }
-
-    static compareFieldDefinition(dbDialect: DbDialect, existingColumn: ColumnInfo, fieldDef: FieldDefinition): FieldChange[] {
-        return compareFieldDefinition(dbDialect, existingColumn, fieldDef);
-    }
-
-    // -------------------------
-    // 静态导出：runtime I/O（供测试）
-    // -------------------------
-
-    static async tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
-        return await tableExists(dbDialect, db, tableName, dbName);
-    }
-
-    static async getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
-        return await getTableColumns(dbDialect, db, tableName, dbName);
-    }
-
-    static async getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
-        return await getTableIndexes(dbDialect, db, tableName, dbName);
+    /**
+     * 测试专用入口：尽量减少 class 顶层静态方法暴露面。
+     * 说明：仍然只导出 SyncTable 这个 class；测试用能力统一挂在 TestKit 下。
+     */
+    static get TestKit() {
+        return SYNC_TABLE_TEST_KIT;
     }
 }
 
@@ -388,6 +291,66 @@ const SYSTEM_FIELD_META_MAP: Record<string, SystemFieldMeta> = {};
 for (const f of SYSTEM_FIELDS) {
     SYSTEM_FIELD_META_MAP[f.name] = f;
 }
+
+const SYNC_TABLE_TEST_KIT = {
+    DB_VERSION_REQUIREMENTS: DB_VERSION_REQUIREMENTS,
+    CHANGE_TYPE_LABELS: CHANGE_TYPE_LABELS,
+    MYSQL_TABLE_CONFIG: MYSQL_TABLE_CONFIG,
+    SYSTEM_INDEX_FIELDS: SYSTEM_INDEX_FIELDS,
+
+    getTypeMapping: (dbDialect: DbDialect): Record<string, string> => {
+        return getTypeMapping(dbDialect);
+    },
+    quoteIdentifier: (dbDialect: DbDialect, identifier: string): string => {
+        return quoteIdentifier(dbDialect, identifier);
+    },
+    escapeComment: (str: string): string => {
+        return escapeComment(str);
+    },
+    applyFieldDefaults: (fieldDef: any): void => {
+        applyFieldDefaults(fieldDef);
+    },
+    isStringOrArrayType: (fieldType: string): boolean => {
+        return isStringOrArrayType(fieldType);
+    },
+    getSqlType: (dbDialect: DbDialect, fieldType: string, fieldMax: number | null, unsigned: boolean = false): string => {
+        return getSqlType(dbDialect, fieldType, fieldMax, unsigned);
+    },
+    resolveDefaultValue: (fieldDefault: any, fieldType: string): any => {
+        return resolveDefaultValue(fieldDefault, fieldType);
+    },
+    generateDefaultSql: (actualDefault: any, fieldType: string): string => {
+        return generateDefaultSql(actualDefault, fieldType);
+    },
+    buildIndexSQL: (dbDialect: DbDialect, tableName: string, indexName: string, fieldName: string, action: "create" | "drop"): string => {
+        return buildIndexSQL(dbDialect, tableName, indexName, fieldName, action);
+    },
+    buildSystemColumnDefs: (dbDialect: DbDialect): string[] => {
+        return buildSystemColumnDefs(dbDialect);
+    },
+    buildBusinessColumnDefs: (dbDialect: DbDialect, fields: Record<string, FieldDefinition>): string[] => {
+        return buildBusinessColumnDefs(dbDialect, fields);
+    },
+    generateDDLClause: (dbDialect: DbDialect, fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string => {
+        return generateDDLClause(dbDialect, fieldKey, fieldDef, isAdd);
+    },
+    isCompatibleTypeChange: (currentType: string, newType: string): boolean => {
+        return isCompatibleTypeChange(currentType as any, newType as any);
+    },
+    compareFieldDefinition: (dbDialect: DbDialect, existingColumn: ColumnInfo, fieldDef: FieldDefinition): FieldChange[] => {
+        return compareFieldDefinition(dbDialect, existingColumn, fieldDef);
+    },
+
+    tableExists: async (dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> => {
+        return await tableExists(dbDialect, db, tableName, dbName);
+    },
+    getTableColumns: async (dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> => {
+        return await getTableColumns(dbDialect, db, tableName, dbName);
+    },
+    getTableIndexes: async (dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> => {
+        return await getTableIndexes(dbDialect, db, tableName, dbName);
+    }
+};
 
 /**
  * 获取字段类型映射（根据当前数据库类型）

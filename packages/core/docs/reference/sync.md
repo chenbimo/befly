@@ -46,7 +46,7 @@ import { scanSources } from "../utils/scanSources.js";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
 const sources = await scanSources();
-await SyncTable.run(ctx, sources.tables as any);
+await SyncTable.run(ctx, sources.tables);
 ```
 
 ### 命令选项
@@ -298,7 +298,7 @@ export default {
 };
 ```
 
-**注意**：此命令仅用于开发环境，生产环境应通过正式流程创建管理员。
+await SyncTable.run(ctx, sources.tables);
 
 ---
 
@@ -312,7 +312,7 @@ import { syncData } from "./sync/syncData";
 // 启动前/启动中手动触发同步
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
 const sources = await scanSources();
-await SyncTable.run(ctx, sources.tables as any);
+await SyncTable.run(ctx, sources.tables);
 await syncData();
 
 // 说明：syncData 内部会固定顺序执行：syncApi → syncMenu → syncDev
@@ -398,7 +398,7 @@ Sync 命令会自动管理数据库和 Redis 连接：
 
 ### Q: sync 命令报错 "表不存在" 怎么办？
 
-A: 确保 `syncTable()` 已先执行（服务启动时会自动执行）。`syncApi/syncMenu/syncDev` 依赖对应的表结构存在。
+A: 确保 `SyncTable.run()` 已先执行（服务启动时会自动执行）。`syncApi/syncMenu/syncDev` 依赖对应的表结构存在。
 
 ### Q: 为什么修改了表定义但数据库没变化？
 
@@ -411,7 +411,7 @@ A: 检查以下几点：
 
 ### Q: 如何处理“字段长度收缩”这类危险变更？
 
-A: `syncTable` 会跳过长度收缩并告警；请手动评估并处理（例如先清理/截断数据，再手动执行 DDL），再重新启动服务或再次调用 `syncTable()`。
+A: `SyncTable.run()` 会跳过长度收缩并告警；请手动评估并处理（例如先清理/截断数据，再手动执行 DDL），再重新启动服务或再次调用 `SyncTable.run()`。
 
 ### Q: Addon 表名太长怎么办？
 
@@ -426,11 +426,12 @@ A: Addon 表名格式为 `addon_{addonName}_{tableName}`，建议：
 A:
 
 1. 检查错误日志确定失败原因
-2. 修复问题后重新执行 sync 命令
-3. sync 命令是幂等的，可以安全地多次执行
+   A: `SyncTable.run()` 会跳过长度收缩并告警；请手动评估并处理（例如先清理/截断数据，再手动执行 DDL），再重新启动服务或再次调用 `SyncTable.run()`。
+2. sync 命令是幂等的，可以安全地多次执行
 
 ### Q: 如何只同步某个 Addon 的表？
 
+await SyncTable.run(ctx, sources.tables);
 A: 当前不支持按 Addon 或单表筛选；会同步项目与所有 Addon 的表定义。
 
 ### Q: 开发账户密码在哪里配置？
@@ -448,3 +449,4 @@ export default {
 ```
 
 （不再提供 CLI 参数/命令；按配置文件机制设置即可。）
+await SyncTable.run(ctx, sources.tables);

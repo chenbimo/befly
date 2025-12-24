@@ -77,7 +77,7 @@ export class Befly {
             this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
-            await new SyncTable(this.context as BeflyContext).run(tables as any);
+            await new SyncTable(this.context as BeflyContext).run(tables);
             await syncApi(apis as any, this.context as BeflyContext);
 
             await syncMenu(this.context as BeflyContext);
