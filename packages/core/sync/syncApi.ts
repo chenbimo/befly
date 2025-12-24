@@ -4,7 +4,7 @@ import { keyBy } from "es-toolkit/array";
 
 import { Logger } from "../lib/logger.js";
 
-export async function syncApi(apis: ScanFileResult[], ctx: any): Promise<void> {
+export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
     const tableName = "addon_admin_api";
 
     if (!(await ctx.db.tableExists(tableName))) {
