@@ -15,7 +15,7 @@ import type { ScanFileResult } from "../utils/scanFiles.js";
 import { snakeCase } from "es-toolkit/string";
 
 import { CacheKeys } from "../lib/cacheKeys.js";
-import { MySqlDialect, PostgresDialect, SqliteDialect } from "../lib/dbDialect.js";
+import { getDialectByName } from "../lib/dbDialect.js";
 import { Logger } from "../lib/logger.js";
 
 type SqlExecutor = {
@@ -23,10 +23,6 @@ type SqlExecutor = {
 };
 
 type DbDialect = DbDialectName;
-
-type DialectImpl = {
-    quoteIdent(identifier: string): string;
-};
 
 /* ========================================================================== */
 /* 对外导出面
@@ -45,19 +41,6 @@ type DialectImpl = {
  * 4) Runtime I/O（只读元信息：表/列/索引/版本）
  * 5) plan/apply（写变更：建表/改表/SQLite 重建）
  */
-
-let DIALECT_IMPLS: Record<DbDialect, DialectImpl> | null = null;
-
-function getDialectImpl(dbDialect: DbDialect): DialectImpl {
-    if (!DIALECT_IMPLS) {
-        DIALECT_IMPLS = {
-            mysql: new MySqlDialect(),
-            postgresql: new PostgresDialect(),
-            sqlite: new SqliteDialect()
-        } satisfies Record<DbDialect, DialectImpl>;
-    }
-    return DIALECT_IMPLS[dbDialect];
-}
 
 export class SyncTable {
     private ctx: BeflyContext;
@@ -356,7 +339,7 @@ function getTypeMapping(dbDialect: DbDialect): Record<string, string> {
  * 根据数据库类型引用标识符
  */
 function quoteIdentifier(dbDialect: DbDialect, identifier: string): string {
-    return getDialectImpl(dbDialect).quoteIdent(identifier);
+    return getDialectByName(dbDialect).quoteIdent(identifier);
 }
 
 /**
@@ -700,8 +683,9 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
         }
 
         if (runtime.dbDialect === "sqlite") {
-            const res = await runtime.db.unsafe("SELECT name FROM sqlite_master WHERE type='table' AND name = ?", [tableName]);
-            return res.length > 0;
+            const q = getDialectByName("sqlite").tableExistsQuery(tableName);
+            const res = await runtime.db.unsafe(q.sql, q.params);
+            return (res[0]?.count || 0) > 0;
         }
 
         return false;
@@ -759,8 +743,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                 };
             }
         } else if (runtime.dbDialect === "sqlite") {
-            const quotedTable = quoteIdentifier("sqlite", tableName);
-            const result = await runtime.db.unsafe(`PRAGMA table_info(${quotedTable})`);
+            const q = getDialectByName("sqlite").getTableColumnsQuery(tableName);
+            const result = await runtime.db.unsafe(q.sql, q.params);
             for (const row of result) {
                 let baseType = String(row.type || "").toUpperCase();
                 let max = null;

@@ -1,5 +1,28 @@
 export type DbDialectName = "mysql" | "postgresql" | "sqlite";
 
+let DIALECT_CACHE: Record<DbDialectName, DbDialect> | null = null;
+
+/**
+ * 获取方言实例（内部缓存，避免到处 new）。
+ *
+ * 约束：dialect 实例应当是纯逻辑对象（无连接/无 IO/无状态副作用），可全局复用。
+ */
+export function getDialectByName(name: DbDialectName): DbDialect {
+    if (name !== "mysql" && name !== "postgresql" && name !== "sqlite") {
+        throw new Error(`未知数据库方言: ${String(name)}`);
+    }
+
+    if (!DIALECT_CACHE) {
+        DIALECT_CACHE = {
+            mysql: new MySqlDialect(),
+            postgresql: new PostgresDialect(),
+            sqlite: new SqliteDialect()
+        };
+    }
+
+    return DIALECT_CACHE[name];
+}
+
 export type SqlTextQuery = {
     sql: string;
     params: any[];
@@ -129,7 +152,10 @@ export class PostgresDialect implements DbDialect {
 
 export class SqliteDialect implements DbDialect {
     name: DbDialectName = "sqlite";
-    supportsSchema: boolean = true;
+    // SQLite 的“schema”语义与 MySQL/PG 不同：常规使用下没有独立 schema；
+    // 虽然存在 main/temp/attached db 的 database_name.table_name 形式，但这里
+    // 统一视为不支持传统 schema.table 校验语义。
+    supportsSchema: boolean = false;
 
     quoteIdent(identifier: string): string {
         if (typeof identifier !== "string") {
