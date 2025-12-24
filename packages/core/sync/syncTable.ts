@@ -35,7 +35,9 @@ type DialectImpl = {
  * - 其余 export 多为纯函数/常量：DDL 构建与类型映射（测试覆盖）
  *
  * internal 约定：
- * - *Runtime(...) 只在本文件内部使用，避免长参数链；外部如需调用，优先走旧签名 wrapper。
+ * - runtime I/O 函数支持两种调用形态：
+ *   - 旧签名：fn(dbDialect, db, tableName, dbName)
+ *   - runtime 形态：fn({ dbDialect, db, dbName }, tableName)
  */
 /* ========================================================================== */
 
@@ -48,11 +50,11 @@ type DialectImpl = {
  * 5) plan/apply（写变更：建表/改表/SQLite 重建）
  */
 
-const DIALECT_IMPLS: Record<DbDialect, DialectImpl> = {
+const DIALECT_IMPLS = {
     mysql: new MySqlDialect(),
     postgresql: new PostgresDialect(),
     sqlite: new SqliteDialect()
-};
+} satisfies Record<DbDialect, DialectImpl>;
 
 type SyncTableSource = "app" | "addon" | "core";
 
@@ -159,10 +161,10 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
                 applyFieldDefaults(fieldDef);
             }
 
-            const existsTable = await tableExistsRuntime(runtime, tableName);
+            const existsTable = await tableExists(runtime, tableName);
 
             if (existsTable) {
-                await modifyTableRuntime(runtime, tableName, tableDefinition as any);
+                await modifyTable(runtime, tableName, tableDefinition as any);
             } else {
                 await createTable(runtime, tableName, tableDefinition as any);
             }
@@ -229,7 +231,7 @@ type SystemFieldMeta = {
 /**
  * 系统字段定义：三处会用到
  * - createTable：建表时追加系统字段列定义
- * - modifyTableRuntime：对已存在的表补齐缺失的系统字段
+ * - modifyTable：对已存在的表补齐缺失的系统字段
  * - SYSTEM_INDEX_FIELDS：从 needsIndex 派生默认系统索引集合
  */
 const SYSTEM_FIELDS: ReadonlyArray<SystemFieldMeta> = [
@@ -289,18 +291,14 @@ for (const f of SYSTEM_FIELDS) {
  * 获取字段类型映射（根据当前数据库类型）
  */
 export function getTypeMapping(dbDialect: DbDialect): Record<string, string> {
-    const isSqlite = dbDialect === "sqlite";
-    const isPg = dbDialect === "postgresql";
-    const isMysql = dbDialect === "mysql";
-
     return {
-        number: isSqlite ? "INTEGER" : isPg ? "BIGINT" : "BIGINT",
-        string: isSqlite ? "TEXT" : isPg ? "character varying" : "VARCHAR",
-        text: isMysql ? "MEDIUMTEXT" : "TEXT",
-        array_string: isSqlite ? "TEXT" : isPg ? "character varying" : "VARCHAR",
-        array_text: isMysql ? "MEDIUMTEXT" : "TEXT",
-        array_number_string: isSqlite ? "TEXT" : isPg ? "character varying" : "VARCHAR",
-        array_number_text: isMysql ? "MEDIUMTEXT" : "TEXT"
+        number: dbDialect === "sqlite" ? "INTEGER" : dbDialect === "postgresql" ? "BIGINT" : "BIGINT",
+        string: dbDialect === "sqlite" ? "TEXT" : dbDialect === "postgresql" ? "character varying" : "VARCHAR",
+        text: dbDialect === "mysql" ? "MEDIUMTEXT" : "TEXT",
+        array_string: dbDialect === "sqlite" ? "TEXT" : dbDialect === "postgresql" ? "character varying" : "VARCHAR",
+        array_text: dbDialect === "mysql" ? "MEDIUMTEXT" : "TEXT",
+        array_number_string: dbDialect === "sqlite" ? "TEXT" : dbDialect === "postgresql" ? "character varying" : "VARCHAR",
+        array_number_text: dbDialect === "mysql" ? "MEDIUMTEXT" : "TEXT"
     };
 }
 
@@ -628,7 +626,7 @@ type SyncRuntime = {
  * 说明：
  * - 本区块只负责“查询元信息”（表/列/索引/版本）。
  * - 写变更（DDL 执行）统一在下方 plan/apply 区块中完成。
- * - 对外仍保留旧签名 wrapper（测试依赖），内部统一走 *Runtime(runtime, ...) 形式。
+ * - 对外保留旧签名（测试依赖），本文件内部可直接用 runtime 形态调用以减少参数链。
  */
 /* ========================================================================== */
 
@@ -639,18 +637,23 @@ type SyncRuntime = {
 /**
  * 判断表是否存在（返回布尔值）
  */
-export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean> {
-    return await tableExistsRuntime(
-        {
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        },
-        tableName
-    );
-}
+export async function tableExists(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<boolean>;
+export async function tableExists(runtime: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }, tableName: string): Promise<boolean>;
+export async function tableExists(a: any, b: any, c?: any, d?: any): Promise<boolean> {
+    let runtime: { dbDialect: DbDialect; db: SqlExecutor; dbName: string };
+    let tableName: string;
+    if (typeof a === "string") {
+        runtime = {
+            dbDialect: a,
+            db: b,
+            dbName: d
+        };
+        tableName = c;
+    } else {
+        runtime = a;
+        tableName = b;
+    }
 
-async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
     if (!runtime.db) throw new Error("SQL 执行器未初始化");
 
     // 方言差异说明：
@@ -688,18 +691,23 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
 /**
  * 获取表的现有列信息（按方言）
  */
-export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }> {
-    return await getTableColumnsRuntime(
-        {
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        },
-        tableName
-    );
-}
+export async function getTableColumns(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<{ [key: string]: ColumnInfo }>;
+export async function getTableColumns(runtime: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }, tableName: string): Promise<{ [key: string]: ColumnInfo }>;
+export async function getTableColumns(a: any, b: any, c?: any, d?: any): Promise<{ [key: string]: ColumnInfo }> {
+    let runtime: { dbDialect: DbDialect; db: SqlExecutor; dbName: string };
+    let tableName: string;
+    if (typeof a === "string") {
+        runtime = {
+            dbDialect: a,
+            db: b,
+            dbName: d
+        };
+        tableName = c;
+    } else {
+        runtime = a;
+        tableName = b;
+    }
 
-async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
     const columns: { [key: string]: ColumnInfo } = {};
 
     try {
@@ -779,18 +787,23 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
 /**
  * 获取表的现有索引信息（单列索引）
  */
-export async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo> {
-    return await getTableIndexesRuntime(
-        {
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        },
-        tableName
-    );
-}
+export async function getTableIndexes(dbDialect: DbDialect, db: SqlExecutor, tableName: string, dbName: string): Promise<IndexInfo>;
+export async function getTableIndexes(runtime: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }, tableName: string): Promise<IndexInfo>;
+export async function getTableIndexes(a: any, b: any, c?: any, d?: any): Promise<IndexInfo> {
+    let runtime: { dbDialect: DbDialect; db: SqlExecutor; dbName: string };
+    let tableName: string;
+    if (typeof a === "string") {
+        runtime = {
+            dbDialect: a,
+            db: b,
+            dbName: d
+        };
+        tableName = c;
+    } else {
+        runtime = a;
+        tableName = b;
+    }
 
-async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): Promise<IndexInfo> {
     const indexes: IndexInfo = {};
 
     try {
@@ -1085,7 +1098,7 @@ export async function createTable(runtime: SyncRuntime, tableName: string, field
 
     let existingIndexes: Record<string, string[]> = {};
     if (runtime.dbDialect === "mysql") {
-        existingIndexes = await getTableIndexesRuntime(runtime, tableName);
+        existingIndexes = await getTableIndexes(runtime, tableName);
     }
 
     for (const sysField of systemIndexFields) {
@@ -1118,19 +1131,30 @@ export async function createTable(runtime: SyncRuntime, tableName: string, field
 /**
  * 同步表结构（对比和应用变更）
  */
-export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan> {
-    const runtime: SyncRuntime = {
-        dbDialect: dbDialect,
-        db: db,
-        dbName: dbName || ""
-    };
-    return await modifyTableRuntime(runtime, tableName, fields);
-}
+export async function modifyTable(dbDialect: DbDialect, db: SqlExecutor, tableName: string, fields: Record<string, FieldDefinition>, dbName?: string): Promise<TablePlan>;
+export async function modifyTable(runtime: { dbDialect: DbDialect; db: SqlExecutor; dbName: string }, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan>;
+export async function modifyTable(a: any, b: any, c: any, d?: any, e?: any): Promise<TablePlan> {
+    let runtime: SyncRuntime;
+    let tableName: string;
+    let fields: Record<string, FieldDefinition>;
 
-async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan> {
+    if (typeof a === "string") {
+        runtime = {
+            dbDialect: a,
+            db: b,
+            dbName: e || ""
+        };
+        tableName = c;
+        fields = d;
+    } else {
+        runtime = a;
+        tableName = b;
+        fields = c;
+    }
+
     // 1) 读取现有元信息（列/索引）
-    const existingColumns = await getTableColumnsRuntime(runtime, tableName);
-    const existingIndexes = await getTableIndexesRuntime(runtime, tableName);
+    const existingColumns = await getTableColumns(runtime, tableName);
+    const existingIndexes = await getTableIndexes(runtime, tableName);
 
     // 2) 规划变更（先 plan，后统一 apply）
     let changed = false;
