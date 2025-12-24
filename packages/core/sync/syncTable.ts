@@ -90,6 +90,18 @@ export async function syncTable(ctx: BeflyContext, tables: SyncTableInputItem[])
             throw new Error("syncTable(ctx, tables) 缺少 ctx.config");
         }
 
+        // DbDialect 归一化（允许值与映射关系）：
+        //
+        // | ctx.config.db.type 输入 | 归一化 dbDialect |
+        // |------------------------|------------------|
+        // | mysql / 其他 / 空值    | mysql            |
+        // | postgres / postgresql  | postgresql       |
+        // | sqlite                 | sqlite           |
+        //
+        // 约束：后续若新增方言，必须同步更新：
+        // - 这里的归一化
+        // - DIALECT_IMPLS
+        // - ensureDbVersion / runtime I/O / DDL 分支
         const dbType = String(ctx.config.db?.type || "mysql").toLowerCase();
         let dbDialect: DbDialect = "mysql";
         if (dbType === "postgres" || dbType === "postgresql") {
