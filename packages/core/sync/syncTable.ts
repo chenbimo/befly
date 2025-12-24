@@ -228,6 +228,12 @@ type SystemFieldMeta = {
     sqliteDdl: string;
 };
 
+/**
+ * 系统字段定义：三处会用到
+ * - createTable：建表时追加系统字段列定义
+ * - modifyTableRuntime：对已存在的表补齐缺失的系统字段
+ * - SYSTEM_INDEX_FIELDS：从 needsIndex 派生默认系统索引集合
+ */
 const SYSTEM_FIELDS: ReadonlyArray<SystemFieldMeta> = [
     {
         name: "id",
@@ -850,6 +856,10 @@ export async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Pr
 export function compareFieldDefinition(dbDialect: DbDialect, existingColumn: ColumnInfo, fieldDef: FieldDefinition): FieldChange[] {
     const changes: FieldChange[] = [];
 
+    // SQLite 元信息能力较弱：
+    // - 列注释：sqlite 无 information_schema 注释，PRAGMA table_info 也不提供 comment
+    // - 字符串长度：sqlite 类型系统宽松，长度/类型信息不稳定（易产生误报）
+    // 因此在 sqlite 下跳过 comment/length 的 diff，仅保留更可靠的对比项。
     if (!isSQLite(dbDialect) && isStringOrArrayType(fieldDef.type)) {
         if (existingColumn.max !== fieldDef.max) {
             changes.push({
@@ -943,6 +953,7 @@ export async function rebuildSqliteTable(runtime: SyncRuntime, tableName: string
 export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fields: Record<string, FieldDefinition>, plan: TablePlan): Promise<void> {
     if (!plan || !plan.changed) return;
 
+    // A) 结构变更（ADD/MODIFY）：SQLite 走重建表；其余方言走 ALTER TABLE
     if (isSQLite(runtime.dbDialect)) {
         if (plan.modifyClauses.length > 0 || plan.defaultClauses.length > 0) {
             await rebuildSqliteTable(runtime, tableName, fields);
@@ -962,6 +973,7 @@ export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fi
         }
     }
 
+    // B) 默认值变更：SQLite 不支持在线修改默认值（需要重建表），其余方言按子句执行
     if (plan.defaultClauses.length > 0) {
         if (isSQLite(runtime.dbDialect)) {
             Logger.warn(`SQLite 不支持修改默认值，表 ${tableName} 的默认值变更已跳过`);
@@ -973,6 +985,7 @@ export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fi
         }
     }
 
+    // C) 索引动作：不同方言的 DDL 策略由 buildIndexSQL 统一生成
     for (const act of plan.indexActions) {
         const stmt = buildIndexSQL(runtime.dbDialect, tableName, act.indexName, act.fieldName, act.action);
         try {
@@ -988,6 +1001,7 @@ export async function applyTablePlan(runtime: SyncRuntime, tableName: string, fi
         }
     }
 
+    // D) PG 列注释：独立 SQL 执行（COMMENT ON COLUMN）
     if (isPG(runtime.dbDialect) && plan.commentActions && plan.commentActions.length > 0) {
         for (const stmt of plan.commentActions) {
             await runtime.db.unsafe(stmt);
