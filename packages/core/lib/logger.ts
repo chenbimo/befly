@@ -6,7 +6,7 @@ import type { LoggerConfig } from "../types/logger.js";
 
 import { existsSync, mkdirSync } from "node:fs";
 import { readdir, stat, unlink } from "node:fs/promises";
-import { join as nodePathJoin } from "node:path";
+import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
 import { isPlainObject } from "es-toolkit/compat";
 import { escapeRegExp } from "es-toolkit/string";
@@ -14,6 +14,10 @@ import { join } from "pathe";
 import pino from "pino";
 
 import { getCtx } from "./asyncContext.js";
+
+// 注意：Logger 可能在运行时/测试中被 process.chdir() 影响。
+// 为避免相对路径的 logs 目录随着 cwd 变化，使用模块加载时的初始 cwd 作为锚点。
+const INITIAL_CWD = process.cwd();
 
 const MAX_LOG_STRING_LEN = 100;
 const MAX_LOG_ARRAY_ITEMS = 100;
@@ -41,11 +45,19 @@ let config: LoggerConfig = {
     maxSize: 10
 };
 
+function resolveLogDir(): string {
+    const rawDir = config.dir || "./logs";
+    if (nodePathIsAbsolute(rawDir)) {
+        return rawDir;
+    }
+    return nodePathResolve(INITIAL_CWD, rawDir);
+}
+
 function ensureLogDirExists(): void {
     if (didEnsureLogDir) return;
     didEnsureLogDir = true;
 
-    const dir = config.dir || "./logs";
+    const dir = resolveLogDir();
     try {
         if (!existsSync(dir)) {
             mkdirSync(dir, { recursive: true });
@@ -60,7 +72,7 @@ async function pruneOldLogFiles(): Promise<void> {
     if (didPruneOldLogFiles) return;
     didPruneOldLogFiles = true;
 
-    const dir = config.dir || "./logs";
+    const dir = resolveLogDir();
     const now = Date.now();
     const cutoff = now - ONE_YEAR_MS;
 
@@ -203,7 +215,7 @@ export function getLogger(): pino.Logger {
         target: "pino-roll",
         level: level,
         options: {
-            file: join(config.dir || "./logs", "app"),
+            file: join(resolveLogDir(), "app"),
             frequency: "daily",
             size: `${config.maxSize || 10}m`,
             mkdir: true,
@@ -245,7 +257,7 @@ function getSlowLogger(): pino.Logger {
                     target: "pino-roll",
                     level: level,
                     options: {
-                        file: join(config.dir || "./logs", "slow"),
+                        file: join(resolveLogDir(), "slow"),
                         // 只按大小分割（frequency 默认不启用）
                         size: `${config.maxSize || 10}m`,
                         mkdir: true
@@ -275,7 +287,7 @@ function getErrorLogger(): pino.Logger {
                     target: "pino-roll",
                     level: "error",
                     options: {
-                        file: join(config.dir || "./logs", "error"),
+                        file: join(resolveLogDir(), "error"),
                         // 只按大小分割（frequency 默认不启用）
                         size: `${config.maxSize || 10}m`,
                         mkdir: true

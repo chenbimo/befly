@@ -15,7 +15,6 @@ import { Logger } from "../lib/logger.js";
 import { genShortId } from "../utils/genShortId.js";
 import { getClientIp } from "../utils/getClientIp.js";
 import { FinalResponse } from "../utils/response.js";
-import { makeRouteKey } from "../utils/route.js";
 
 /**
  * API处理器工厂函数
@@ -30,7 +29,9 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
 
         // 2. 创建请求上下文
         const url = new URL(req.url);
-        const apiPath = makeRouteKey(req.method, url.pathname);
+        // 只用接口路径做存在性判断与匹配：不要把 method 拼进 key
+        // 说明：apisMap 的 key 来源于 scanFiles/loadApis 生成的 routePath（例如 /api/core/xxx）
+        const apiPath = url.pathname || "/";
 
         const clientIp = getClientIp(req, server);
 
