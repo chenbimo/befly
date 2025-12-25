@@ -93,6 +93,26 @@ const normalizePath = (path) => {
     return normalized.length === 0 ? "/" : normalized;
 };
 
+// parentPath 的归一化规则与 path 不同：
+// - parentPath 为空/"/" 视为根节点（空字符串）
+// - 避免把所有一级菜单挂到 "/"（首页）下面
+const normalizeParentPath = (parentPath) => {
+    if (typeof parentPath !== "string") {
+        return "";
+    }
+
+    const normalized = parentPath.replace(/\/+$/, "");
+    if (normalized.length === 0) {
+        return "";
+    }
+
+    if (normalized === "/") {
+        return "";
+    }
+
+    return normalized;
+};
+
 const $From = {
     treeMenuRef: null
 };
@@ -173,7 +193,7 @@ const $Method = {
 
             const normalizedLists = lists.map((menu) => {
                 const menuPath = normalizePath(menu?.path);
-                const menuParentPath = normalizePath(menu?.parentPath);
+                const menuParentPath = normalizeParentPath(menu?.parentPath);
                 return Object.assign({}, menu, { path: menuPath, parentPath: menuParentPath });
             });
 
@@ -213,7 +233,7 @@ const $Method = {
         while (typeof menu.parentPath === "string" && menu.parentPath.length > 0) {
             const parent = $Data.userMenusFlat.find((m) => {
                 const parentMenuPath = normalizePath(m?.path);
-                const currentParentPath = normalizePath(menu?.parentPath);
+                const currentParentPath = normalizeParentPath(menu?.parentPath);
                 return parentMenuPath === currentParentPath;
             });
 

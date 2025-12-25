@@ -3,6 +3,69 @@ import type { MenuConfig } from "../types/sync.js";
 import { Logger } from "../lib/logger.js";
 import { getParentPath } from "../utils/loadMenuConfigs.js";
 
+type MenuDef = {
+    path: string;
+    name: string;
+    sort: number;
+    parentPath: string;
+};
+
+function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
+    // 读取配置菜单：扁平化为 path => { name, sort, parentPath }
+    // - 以 path 为唯一键：后出现的覆盖先出现的（与旧逻辑“同 path 多次同步同一条记录”一致）
+    // parentPath 规则：
+    // 1) 若 menu 显式携带 parentPath（包括空字符串），以其为准
+    // 2) 否则使用“树结构”推导的父级（由 children 嵌套关系决定；根级为 ""）
+    // 3) 保底：若无法推导（极端情况），回退到 getParentPath(path)
+    const menuDefMap = new Map<string, MenuDef>();
+
+    const stack: Array<{ menu: MenuConfig; parentPathFromTree: string }> = [];
+    for (const m of mergedMenus) {
+        stack.push({ menu: m, parentPathFromTree: "" });
+    }
+
+    while (stack.length > 0) {
+        const item = stack.pop();
+        const menu = item ? item.menu : null;
+        if (!menu) {
+            continue;
+        }
+
+        const path = typeof (menu as any).path === "string" ? (menu as any).path : "";
+
+        const rawChildren = (menu as any).children;
+        if (rawChildren && Array.isArray(rawChildren) && rawChildren.length > 0) {
+            const nextParentPathFromTree = typeof path === "string" ? path : "";
+            for (const child of rawChildren) {
+                stack.push({ menu: child, parentPathFromTree: nextParentPathFromTree });
+            }
+        }
+
+        if (!path) {
+            continue;
+        }
+
+        const name = typeof (menu as any).name === "string" ? (menu as any).name : "";
+        if (!name) {
+            continue;
+        }
+
+        const sort = typeof (menu as any).sort === "number" ? (menu as any).sort : 999;
+
+        const hasExplicitParentPath = typeof (menu as any).parentPath === "string";
+        const parentPath = hasExplicitParentPath ? ((menu as any).parentPath as string) : typeof item?.parentPathFromTree === "string" ? item.parentPathFromTree : getParentPath(path);
+
+        menuDefMap.set(path, {
+            path: path,
+            name: name,
+            sort: sort,
+            parentPath: parentPath
+        });
+    }
+
+    return menuDefMap;
+}
+
 export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<void> {
     if (!ctx.db) {
         throw new Error("syncMenu: ctx.db 未初始化（Db 插件未加载或注入失败）");
@@ -17,46 +80,7 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
         return;
     }
 
-    // 1) 读取配置菜单：扁平化为 path => { name, sort, parentPath }
-    // - 以 path 为唯一键：后出现的覆盖先出现的（与旧逻辑“同 path 多次同步同一条记录”一致）
-    const menuDefMap = new Map<string, { path: string; name: string; sort: number; parentPath: string }>();
-    const stack: MenuConfig[] = [];
-    for (const m of mergedMenus) {
-        stack.push(m);
-    }
-
-    while (stack.length > 0) {
-        const menu = stack.pop() as any;
-        if (!menu) {
-            continue;
-        }
-
-        if (menu.children && Array.isArray(menu.children) && menu.children.length > 0) {
-            for (const child of menu.children) {
-                stack.push(child);
-            }
-        }
-
-        const path = typeof menu.path === "string" ? menu.path : "";
-        if (!path) {
-            continue;
-        }
-
-        const name = typeof menu.name === "string" ? menu.name : "";
-        if (!name) {
-            continue;
-        }
-
-        const sort = typeof menu.sort === "number" ? menu.sort : 999;
-        const parentPath = getParentPath(path);
-
-        menuDefMap.set(path, {
-            path: path,
-            name: name,
-            sort: sort,
-            parentPath: parentPath
-        });
-    }
+    const menuDefMap = flattenMenusToDefMap(mergedMenus);
 
     const configPaths = new Set<string>();
     for (const p of menuDefMap.keys()) {
@@ -218,5 +242,8 @@ export const __test__ = {
     scanViewsDir: async (viewsDir: string, prefix: string, parentPath: string = "") => {
         const mod = await import("../utils/loadMenuConfigs.js");
         return await mod.scanViewsDirToMenuConfigs(viewsDir, prefix, parentPath);
+    },
+    flattenMenusToDefMap: (mergedMenus: MenuConfig[]) => {
+        return flattenMenusToDefMap(mergedMenus);
     }
 };
