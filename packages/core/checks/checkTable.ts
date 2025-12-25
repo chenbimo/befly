@@ -58,7 +58,7 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
             const table = item.content || {};
             // 1) 文件名小驼峰校验
             if (!LOWER_CAMEL_CASE_REGEX.test(fileName)) {
-                Logger.warn(`${sourceName}表 ${item.fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
+                Logger.warn(`${sourceName}表 ${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);
                 hasError = true;
                 continue;
             }
