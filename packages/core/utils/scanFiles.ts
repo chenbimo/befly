@@ -21,8 +21,8 @@ export interface ScanFileResultBase {
     /** 模块名（用于 deps 依赖图 key 与运行时挂载 key） */
     moduleName: string;
 
-    /** addon 名（仅 source='addon' 时存在，便于排查） */
-    addonName?: string;
+    /** addon 名：addon 来源为真实值；core/app 统一为空字符串（""） */
+    addonName: string;
 
     fileBaseName: string;
     fileDir: string;
@@ -89,7 +89,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             const content = await importDefault(normalizedFile, {});
 
             const baseName = camelCase(fileName);
-            let addonName: string | undefined = undefined;
+            let addonName = "";
             let moduleName = "";
 
             if (source === "core") {

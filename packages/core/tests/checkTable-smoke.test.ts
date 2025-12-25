@@ -16,6 +16,7 @@ describe("checkTable - smoke", () => {
                 relativePath: "DUMMY",
                 fileName: "dummy",
                 moduleName: "app_dummy",
+                addonName: "",
                 content: {}
             } as any,
             {
@@ -26,6 +27,7 @@ describe("checkTable - smoke", () => {
                 relativePath: "testCustomers",
                 fileName: "testCustomers",
                 moduleName: "app_testCustomers",
+                addonName: "",
                 content: {
                     customerName: { name: "客户名", type: "string", max: 32 }
                 }
@@ -64,6 +66,7 @@ describe("checkTable - smoke", () => {
                     relativePath: "TestCustomers",
                     fileName: "TestCustomers",
                     moduleName: "app_TestCustomers",
+                    addonName: "",
                     content: {}
                 } as any
             ]);
@@ -108,6 +111,7 @@ describe("checkTable - smoke", () => {
                     relativePath: "TestCustomers",
                     fileName: "TestCustomers",
                     moduleName: "app_TestCustomers",
+                    addonName: "",
                     content: {}
                 } as any
             ]);

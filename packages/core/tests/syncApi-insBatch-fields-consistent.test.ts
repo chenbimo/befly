@@ -33,9 +33,11 @@ describe("syncApi - insBatch rows consistency", () => {
             }
         };
 
+        // 根因修复后：scanFiles 会确保 API 记录总是携带 addonName（app/core 为 ""）。
+        // 因此这里模拟真实扫描结果：第二条的 addonName 应该是空字符串而非 undefined。
         const apis: any[] = [
             { type: "api", name: "A", routePath: "POST/api/a", addonName: "admin" },
-            { name: "B", routePath: "POST/api/b" }
+            { name: "B", routePath: "POST/api/b", addonName: "" }
         ];
 
         await syncApi(ctx, apis as any);

@@ -21,6 +21,7 @@ function buildTableItem(options: { tableFileName: string; content: any }): ScanF
         relativePath: options.tableFileName,
         fileName: options.tableFileName,
         moduleName: `app_${options.tableFileName}`,
+        addonName: "",
         fileBaseName: "",
         fileDir: "",
         content: options.content

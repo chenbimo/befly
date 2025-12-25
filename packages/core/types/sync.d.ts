@@ -40,6 +40,18 @@ export interface SyncApiOptions {
 }
 
 /**
+ * syncApi 入参条目（来自 scanFiles 扫描结果的最小子集）
+ * - addonName 必须为 string（app/core 为 ""，addon 为真实 addonName）
+ * - type 可选：历史/测试数据可能缺失；存在且不为 "api" 时在 syncApi 中会被跳过
+ */
+export type SyncApiItem = {
+    type?: string;
+    routePath: string;
+    name: string;
+    addonName: string;
+} & Record<string, any>;
+
+/**
  * API 信息
  */
 export interface ApiInfo {
