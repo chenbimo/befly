@@ -106,7 +106,7 @@ export class CacheHelper {
         return chunks;
     }
 
-    private async buildApiPathMapByIds(apiIds: number[]): Promise<Map<number, string>> {
+    private async buildApiRoutePathMapByIds(apiIds: number[]): Promise<Map<number, string>> {
         const uniqueIds = Array.from(new Set(apiIds));
         if (uniqueIds.length === 0) {
             return new Map();
@@ -118,14 +118,14 @@ export class CacheHelper {
         for (const chunk of chunks) {
             const apis = await this.db.getAll({
                 table: "addon_admin_api",
-                fields: ["id", "path"],
+                fields: ["id", "routePath"],
                 where: {
                     id$in: chunk
                 }
             });
 
             for (const api of apis.lists) {
-                apiMap.set(api.id, api.path);
+                apiMap.set(api.id, api.routePath);
             }
         }
 
@@ -239,7 +239,7 @@ export class CacheHelper {
 
             // 构建所有需要的 API 映射（按 ID 分块使用 $in，避免全表扫描/避免超长 IN）
             const allApiIds = Array.from(allApiIdsSet);
-            const apiMap = await this.buildApiPathMapByIds(allApiIds);
+            const apiMap = await this.buildApiRoutePathMapByIds(allApiIds);
 
             // 清理所有角色的缓存 key（保证幂等）
             const roleKeys = roleCodes.map((code) => CacheKeys.roleApis(code));
@@ -272,7 +272,8 @@ export class CacheHelper {
 
             // 极简方案不做版本/ready/meta：重建完成即生效
         } catch (error: any) {
-            Logger.warn({ err: error }, "⚠️ 角色权限缓存异常");
+            Logger.error({ err: error }, "⚠️ 角色权限缓存异常（将阻断启动）");
+            throw error;
         }
     }
 
@@ -294,7 +295,7 @@ export class CacheHelper {
             return;
         }
 
-        const apiMap = await this.buildApiPathMapByIds(normalizedIds);
+        const apiMap = await this.buildApiRoutePathMapByIds(normalizedIds);
         const membersSet = new Set<string>();
         for (const id of normalizedIds) {
             const apiPath = apiMap.get(id);
