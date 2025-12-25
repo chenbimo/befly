@@ -31,7 +31,7 @@ describe("syncApi - type compatibility", () => {
         const ctx = {
             db: dbHelper,
             addons: [],
-            cacheHelper: {
+            cache: {
                 cacheApis: async () => {},
                 rebuildRoleApiPermissions: async () => {}
             }

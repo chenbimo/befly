@@ -11,6 +11,10 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
         throw new Error("syncApi: ctx.db 未初始化（Db 插件未加载或注入失败）");
     }
 
+    if (!ctx.cache) {
+        throw new Error("syncApi: ctx.cache 未初始化（cache 插件未加载或注入失败）");
+    }
+
     if (!(await ctx.db.tableExists(tableName))) {
         Logger.debug(`${tableName} 表不存在`);
         return;
@@ -107,8 +111,8 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
             Logger.error({ err: error }, "同步接口批量删除失败");
         }
     }
-    await ctx.cacheHelper.cacheApis();
+    await ctx.cache.cacheApis();
 
     // API 表发生变更后，重建角色接口权限缓存
-    await ctx.cacheHelper.rebuildRoleApiPermissions();
+    await ctx.cache.rebuildRoleApiPermissions();
 }

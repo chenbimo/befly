@@ -11,6 +11,10 @@ export async function syncDev(ctx: any): Promise<void> {
         throw new Error("syncDev: ctx.db 未初始化（Db 插件未加载或注入失败）");
     }
 
+    if (!ctx.cache) {
+        throw new Error("syncDev: ctx.cache 未初始化（cache 插件未加载或注入失败）");
+    }
+
     if (!(await ctx.db.tableExists("addon_admin_admin"))) {
         Logger.debug(`addon_admin_admin 表不存在`);
         return;
@@ -159,5 +163,5 @@ export async function syncDev(ctx: any): Promise<void> {
         });
     }
 
-    await ctx.cacheHelper.rebuildRoleApiPermissions();
+    await ctx.cache.rebuildRoleApiPermissions();
 }

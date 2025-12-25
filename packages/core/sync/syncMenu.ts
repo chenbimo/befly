@@ -8,6 +8,10 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
         throw new Error("syncMenu: ctx.db 未初始化（Db 插件未加载或注入失败）");
     }
 
+    if (!ctx.cache) {
+        throw new Error("syncMenu: ctx.cache 未初始化（cache 插件未加载或注入失败）");
+    }
+
     if (!(await ctx.db.tableExists("addon_admin_menu"))) {
         Logger.debug(`addon_admin_menu 表不存在`);
         return;
@@ -206,7 +210,7 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
         }
     });
 
-    await ctx.cacheHelper.cacheMenus();
+    await ctx.cache.cacheMenus();
 }
 
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）

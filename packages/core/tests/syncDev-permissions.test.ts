@@ -29,7 +29,6 @@ describe("syncDev - dev role permissions", () => {
                             ]
                         };
                     }
-
                     if (options?.table === "addon_admin_api") {
                         return {
                             lists: [
@@ -55,7 +54,7 @@ describe("syncDev - dev role permissions", () => {
                     return 1;
                 }
             },
-            cacheHelper: {
+            cache: {
                 rebuildRoleApiPermissions: async () => {
                     calls.rebuildRoleApiPermissionsCount += 1;
                 }

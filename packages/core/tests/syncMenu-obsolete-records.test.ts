@@ -50,7 +50,7 @@ describe("syncMenu - delete obsolete records", () => {
         const ctx = {
             db: dbHelper,
             addons: [],
-            cacheHelper: {
+            cache: {
                 cacheMenus: async () => {}
             }
         } as any;
@@ -116,7 +116,7 @@ describe("syncMenu - delete obsolete records", () => {
         const ctx = {
             db: dbHelper,
             addons: [],
-            cacheHelper: {
+            cache: {
                 cacheMenus: async () => {}
             }
         } as any;

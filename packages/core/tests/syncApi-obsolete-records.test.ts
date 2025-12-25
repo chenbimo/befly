@@ -36,7 +36,7 @@ describe("syncApi - delete obsolete records", () => {
         const ctx = {
             db: dbHelper,
             addons: [],
-            cacheHelper: {
+            cache: {
                 cacheApis: async () => {},
                 rebuildRoleApiPermissions: async () => {}
             }
