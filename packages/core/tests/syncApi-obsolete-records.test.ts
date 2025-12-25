@@ -20,6 +20,7 @@ describe("syncApi - delete obsolete records", () => {
         };
 
         const dbHelper = {
+            tableExists: async () => true,
             updBatch: async () => 0,
             insBatch: async () => [],
             getAll: async (options: any) => {
@@ -33,8 +34,7 @@ describe("syncApi - delete obsolete records", () => {
         } as any;
 
         const ctx = {
-            db: { tableExists: async () => true },
-            dbHelper: dbHelper,
+            db: dbHelper,
             addons: [],
             cacheHelper: {
                 cacheApis: async () => {},

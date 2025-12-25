@@ -46,6 +46,7 @@ describe("syncMenu - duplicate path records", () => {
         };
 
         const dbHelper = {
+            tableExists: async () => true,
             trans: async (callback: any) => {
                 return await callback(dbHelper);
             },
@@ -71,10 +72,7 @@ describe("syncMenu - duplicate path records", () => {
         } as any;
 
         const ctx = {
-            db: {
-                tableExists: async () => true
-            },
-            dbHelper: dbHelper,
+            db: dbHelper,
             addons: [],
             cacheHelper: {
                 cacheMenus: async () => {}

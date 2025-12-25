@@ -12,7 +12,7 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
         return;
     }
 
-    const allDbApis = await ctx.dbHelper.getAll({
+    const allDbApis = await ctx.db.getAll({
         table: tableName,
         fields: ["id", "routePath", "name", "addonName", "state"],
         where: { state$gte: 0 }
@@ -61,7 +61,7 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
 
     if (updData.length > 0) {
         try {
-            await ctx.dbHelper.updBatch(
+            await ctx.db.updBatch(
                 tableName,
                 updData.map((item) => {
                     return {
@@ -81,7 +81,7 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
 
     if (insData.length > 0) {
         try {
-            await ctx.dbHelper.insBatch(
+            await ctx.db.insBatch(
                 tableName,
                 insData.map((api) => {
                     return {
@@ -98,7 +98,7 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
 
     if (delData.length > 0) {
         try {
-            await ctx.dbHelper.delForceBatch(tableName, delData);
+            await ctx.db.delForceBatch(tableName, delData);
         } catch (error: any) {
             Logger.error({ err: error }, "同步接口批量删除失败");
         }

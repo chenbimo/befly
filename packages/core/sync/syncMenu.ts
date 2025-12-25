@@ -58,7 +58,7 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
     const tableName = "addon_admin_menu";
 
     // 2) 批量同步（事务内）：按 path diff 执行批量 insert/update/delete
-    await ctx.dbHelper.trans(async (dbHelper: any) => {
+    await ctx.db.trans(async (dbHelper: any) => {
         const allExistingMenus = await dbHelper.getAll({
             table: tableName,
             fields: ["id", "name", "path", "parentPath", "sort", "state"],

@@ -20,7 +20,7 @@ export async function syncDev(ctx: any): Promise<void> {
         return;
     }
 
-    const allMenus = await ctx.dbHelper.getAll({
+    const allMenus = await ctx.db.getAll({
         table: "addon_admin_menu",
         fields: ["id"],
         where: { state$gte: 0 },
@@ -29,10 +29,10 @@ export async function syncDev(ctx: any): Promise<void> {
 
     const menuIds = allMenus.lists.map((m: any) => m.id);
 
-    const existApi = await ctx.dbHelper.tableExists("addon_admin_api");
+    const existApi = await ctx.db.tableExists("addon_admin_api");
     let apiIds: number[] = [];
     if (existApi) {
-        const allApis = await ctx.dbHelper.getAll({
+        const allApis = await ctx.db.getAll({
             table: "addon_admin_api",
             fields: ["id"],
             where: { state$gte: 0 },
@@ -79,7 +79,7 @@ export async function syncDev(ctx: any): Promise<void> {
 
     let devRole = null;
     for (const roleConfig of roles) {
-        const existingRole = await ctx.dbHelper.getOne({
+        const existingRole = await ctx.db.getOne({
             table: "addon_admin_role",
             where: { code: roleConfig.code }
         });
@@ -94,7 +94,7 @@ export async function syncDev(ctx: any): Promise<void> {
             const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || menusChanged || apisChanged || existingRole.sort !== roleConfig.sort;
 
             if (hasChanges) {
-                await ctx.dbHelper.updData({
+                await ctx.db.updData({
                     table: "addon_admin_role",
                     where: { code: roleConfig.code },
                     data: {
@@ -110,7 +110,7 @@ export async function syncDev(ctx: any): Promise<void> {
                 devRole = existingRole;
             }
         } else {
-            const roleId = await ctx.dbHelper.insData({
+            const roleId = await ctx.db.insData({
                 table: "addon_admin_role",
                 data: roleConfig
             });
@@ -137,19 +137,19 @@ export async function syncDev(ctx: any): Promise<void> {
         roleType: "admin"
     };
 
-    const existing = await ctx.dbHelper.getOne({
+    const existing = await ctx.db.getOne({
         table: "addon_admin_admin",
         where: { email: beflyConfig.devEmail }
     });
 
     if (existing) {
-        await ctx.dbHelper.updData({
+        await ctx.db.updData({
             table: "addon_admin_admin",
             where: { email: beflyConfig.devEmail },
             data: devData
         });
     } else {
-        await ctx.dbHelper.insData({
+        await ctx.db.insData({
             table: "addon_admin_admin",
             data: devData
         });

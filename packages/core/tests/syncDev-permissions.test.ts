@@ -16,12 +16,7 @@ describe("syncDev - dev role permissions", () => {
         const ctx = {
             db: {
                 tableExists: async (table: string) => {
-                    return table === "addon_admin_admin" || table === "addon_admin_role" || table === "addon_admin_menu";
-                }
-            },
-            dbHelper: {
-                tableExists: async (table: string) => {
-                    return table === "addon_admin_api";
+                    return table === "addon_admin_admin" || table === "addon_admin_role" || table === "addon_admin_menu" || table === "addon_admin_api";
                 },
                 getAll: async (options: any) => {
                     calls.getAll.push(options);

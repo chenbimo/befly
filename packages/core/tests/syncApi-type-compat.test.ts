@@ -15,6 +15,7 @@ describe("syncApi - type compatibility", () => {
         };
 
         const dbHelper = {
+            tableExists: async () => true,
             updBatch: async () => 0,
             insBatch: async () => [],
             getAll: async (options: any) => {
@@ -28,8 +29,7 @@ describe("syncApi - type compatibility", () => {
         } as any;
 
         const ctx = {
-            db: { tableExists: async () => true },
-            dbHelper: dbHelper,
+            db: dbHelper,
             addons: [],
             cacheHelper: {
                 cacheApis: async () => {},
