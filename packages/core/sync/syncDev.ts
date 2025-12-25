@@ -23,15 +23,11 @@ export async function syncDev(ctx): Promise<void> {
     const allMenus = await ctx.dbHelper.getAll({
         table: "addon_admin_menu",
         fields: ["id"],
+        where: { state$gte: 0 },
         orderBy: ["id#ASC"]
     } as any);
 
-    if (!allMenus || !Array.isArray(allMenus.lists)) {
-        Logger.debug("[SyncDev] 菜单数据为空，跳过开发者账号同步");
-        return;
-    }
-
-    const menuIds = allMenus.lists.length > 0 ? allMenus.lists.map((m: any) => m.id) : [];
+    const menuIds = allMenus.lists.map((m: any) => m.id);
 
     const existApi = await ctx.dbHelper.tableExists("addon_admin_api");
     let apiIds: number[] = [];
@@ -39,12 +35,11 @@ export async function syncDev(ctx): Promise<void> {
         const allApis = await ctx.dbHelper.getAll({
             table: "addon_admin_api",
             fields: ["id"],
+            where: { state$gte: 0 },
             orderBy: ["id#ASC"]
         } as any);
 
-        if (allApis && Array.isArray(allApis.lists) && allApis.lists.length > 0) {
-            apiIds = allApis.lists.map((a: any) => a.id);
-        }
+        apiIds = allApis.lists.map((a: any) => a.id);
     }
 
     const roles = [
@@ -90,8 +85,8 @@ export async function syncDev(ctx): Promise<void> {
         });
 
         if (existingRole) {
-            const existingMenusJson = JSON.stringify(existingRole.menus || []);
-            const existingApisJson = JSON.stringify(existingRole.apis || []);
+            const existingMenusJson = JSON.stringify(existingRole.menus);
+            const existingApisJson = JSON.stringify(existingRole.apis);
             const nextMenusJson = JSON.stringify(roleConfig.menus);
             const nextApisJson = JSON.stringify(roleConfig.apis);
 
