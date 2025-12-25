@@ -85,12 +85,13 @@ export async function syncDev(ctx): Promise<void> {
         });
 
         if (existingRole) {
-            const existingMenusJson = JSON.stringify(existingRole.menus);
-            const existingApisJson = JSON.stringify(existingRole.apis);
-            const nextMenusJson = JSON.stringify(roleConfig.menus);
-            const nextApisJson = JSON.stringify(roleConfig.apis);
+            const nextMenus = roleConfig.menus;
+            const nextApis = roleConfig.apis;
 
-            const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || existingMenusJson !== nextMenusJson || existingApisJson !== nextApisJson || existingRole.sort !== roleConfig.sort;
+            const menusChanged = existingRole.menus.length !== nextMenus.length || existingRole.menus.some((v: any, i: number) => v !== nextMenus[i]);
+            const apisChanged = existingRole.apis.length !== nextApis.length || existingRole.apis.some((v: any, i: number) => v !== nextApis[i]);
+
+            const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || menusChanged || apisChanged || existingRole.sort !== roleConfig.sort;
 
             if (hasChanges) {
                 await ctx.dbHelper.updData({
