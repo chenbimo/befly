@@ -3,7 +3,7 @@ import { omit } from "es-toolkit/object";
 
 import { Logger } from "../lib/logger.js";
 
-export async function checkHook(hooks): Promise<void> {
+export async function checkHook(hooks: any[]): Promise<void> {
     let hasError = false;
 
     for (const hook of hooks) {
@@ -34,7 +34,7 @@ export async function checkHook(hooks): Promise<void> {
             Logger.error(
                 {
                     err: error,
-                    item: item
+                    item: hook
                 },
                 "钩子解析失败"
             );

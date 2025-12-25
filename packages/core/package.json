@@ -59,7 +59,8 @@
         "registry": "https://registry.npmjs.org"
     },
     "scripts": {
-        "test": "bun test"
+        "test": "bun test",
+        "typecheck": "bunx tsgo --noEmit"
     },
     "dependencies": {
         "befly-shared": "workspace:*",

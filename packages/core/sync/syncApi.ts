@@ -30,11 +30,20 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
 
     // 2) 插入 / 更新（存在不一定更新：仅当 name/routePath/addonName 任一不匹配时更新）
     for (const api of apis) {
-        const routePath = (api as any).routePath;
-        apiRouteKeys.add((api as any).routePath);
+        const apiType = (api as any).type;
+        // 兼容：历史/测试构造的数据可能没有 type 字段；此时应按 API 处理。
+        // 因此仅当 type **显式存在** 且不为 "api" 时才跳过，避免误把真实 API 条目过滤掉。
+        if (apiType && apiType !== "api") {
+            continue;
+        }
+
+        const apiRoute = api as any;
+
+        const routePath = apiRoute.routePath;
+        apiRouteKeys.add(apiRoute.routePath);
         const item = (allDbApiMap as any)[routePath];
         if (item) {
-            const shouldUpdate = api.name !== item.name || api.routePath !== item.routePath || api.addonName !== item.addonName;
+            const shouldUpdate = apiRoute.name !== item.name || apiRoute.routePath !== item.routePath || apiRoute.addonName !== item.addonName;
             if (shouldUpdate) {
                 updData.push({ id: item.id, api: api });
             }

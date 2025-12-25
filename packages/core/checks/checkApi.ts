@@ -3,7 +3,7 @@ import { omit } from "es-toolkit/object";
 
 import { Logger } from "../lib/logger.js";
 
-export async function checkApi(apis): Promise<void> {
+export async function checkApi(apis: any[]): Promise<void> {
     let hasError = false;
 
     for (const api of apis) {
@@ -48,7 +48,7 @@ export async function checkApi(apis): Promise<void> {
             Logger.error(
                 {
                     err: error,
-                    item: item
+                    item: api
                 },
                 "接口解析失败"
             );

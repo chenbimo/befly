@@ -96,7 +96,7 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
                     duplicateIdSet.add(existingId);
                 }
 
-                const info = duplicatePathInfoMap.get(record.path) || { keptId: recordId, removedIds: [] };
+                const info = duplicatePathInfoMap.get(record.path) || { keptId: recordId, removedIds: [] as number[] };
                 info.keptId = recordId;
                 if (existingId > 0) {
                     info.removedIds.push(existingId);
@@ -107,7 +107,7 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
                     duplicateIdSet.add(recordId);
                 }
 
-                const info = duplicatePathInfoMap.get(record.path) || { keptId: existingId, removedIds: [] };
+                const info = duplicatePathInfoMap.get(record.path) || { keptId: existingId, removedIds: [] as number[] };
                 info.keptId = existingId;
                 if (recordId > 0) {
                     info.removedIds.push(recordId);

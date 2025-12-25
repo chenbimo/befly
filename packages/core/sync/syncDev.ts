@@ -2,7 +2,7 @@ import { beflyConfig } from "../befly.config.js";
 import { Cipher } from "../lib/cipher.js";
 import { Logger } from "../lib/logger.js";
 
-export async function syncDev(ctx): Promise<void> {
+export async function syncDev(ctx: any): Promise<void> {
     if (!beflyConfig.devPassword) {
         return;
     }

@@ -1049,7 +1049,7 @@ async function createTable(runtime: SyncRuntime, tableName: string, fields: Reco
         }
     }
 
-    const indexTasks: Promise<void>[] = [];
+    const indexTasks: Array<Promise<unknown>> = [];
 
     let existingIndexes: Record<string, string[]> = {};
     if (runtime.dbDialect === "mysql") {
@@ -1172,7 +1172,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
     }
 
     // 4) 补齐系统字段（除 id 外）
-    const systemFieldNames = SYSTEM_FIELDS.filter((f) => f.name !== "id").map((f) => f.name);
+    const systemFieldNames = SYSTEM_FIELDS.filter((f) => f.name !== "id").map((f) => f.name) as string[];
     for (const sysFieldName of systemFieldNames) {
         if (!existingColumns[sysFieldName]) {
             const colDef = getSystemColumnDef(runtime.dbDialect, sysFieldName);

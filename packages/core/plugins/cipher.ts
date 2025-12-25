@@ -8,6 +8,7 @@ import type { Plugin } from "../types/plugin.js";
 import { Cipher } from "../lib/cipher.js";
 
 export default {
+    deps: [],
     handler: () => {
         return Cipher;
     }

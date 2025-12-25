@@ -16,6 +16,15 @@
         "format:oxfmt": "bunx oxfmt -c ./.oxfmtrc.jsonc .",
         "format": "bun run format:oxfmt",
         "lint": "bunx oxlint .",
+        "typecheck:core": "bun run --cwd packages/core typecheck",
+        "typecheck": "bun run typecheck:core",
+        "gate:format": "bun run format:oxfmt",
+        "gate:lint": "bun run lint",
+        "gate:typecheck": "bun run typecheck",
+        "gate:test": "bun test",
+        "gate:test:bail": "bun test --bail",
+        "gate:smoke": "bun test packages/core/tests/smoke-sql.test.ts",
+        "gate": "bun run gate:format && bun run gate:lint && bun run gate:typecheck && bun run gate:test",
         "r": "lerna publish"
     },
     "devDependencies": {

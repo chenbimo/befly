@@ -10,19 +10,16 @@ pre-commit:
           run: bunx oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
 
         # 2. Oxlint 代码检查（门禁）
-        - name: Oxlint
+        - name: Gate - lint
           priority: 2
-          glob: "*.{js,ts,jsx,tsx,vue}"
-          run: bunx oxlint {staged_files}
+          run: bun run gate:lint
 
         # 3. TypeScript 语法检查 (core)
-        - name: TypeScript check (core)
+        - name: Gate - typecheck (core)
           priority: 2
-          root: packages/core
-          glob: "packages/core/**/*.ts"
-          run: bunx tsgo --noEmit
+          run: bun run gate:typecheck
 
         # 4. 运行测试
-        - name: Run tests
+        - name: Gate - test
           priority: 3
-          run: bun test
+          run: bun run gate:test:bail

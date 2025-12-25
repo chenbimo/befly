@@ -1,21 +1,26 @@
 {
     "name": "befly-admin",
     "version": "3.5.37",
+    "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc",
     "private": false,
     "description": "Befly Admin - 基于 Vue3 + TDesign Vue Next 的后台管理系统",
-    "type": "module",
     "files": [
         ".env",
         ".env.development",
         ".env.production",
         ".gitignore",
-        "README.md",
         "bunfig.toml",
         "index.html",
         "public",
+        "README.md",
         "src",
         "vite.config.js"
     ],
+    "type": "module",
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    },
     "scripts": {
         "dev": "vite",
         "build": "vite build",
@@ -37,10 +42,5 @@
         "bun": ">=1.3.0",
         "node": ">=24.0.0",
         "pnpm": ">=10.0.0"
-    },
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://registry.npmjs.org"
-    },
-    "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc"
+    }
 }

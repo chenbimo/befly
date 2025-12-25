@@ -3,7 +3,7 @@ import { omit } from "es-toolkit/object";
 
 import { Logger } from "../lib/logger.js";
 
-export async function checkPlugin(plugins): Promise<void> {
+export async function checkPlugin(plugins: any[]): Promise<void> {
     let hasError = false;
 
     for (const plugin of plugins) {
@@ -34,7 +34,7 @@ export async function checkPlugin(plugins): Promise<void> {
             Logger.error(
                 {
                     err: error,
-                    item: item
+                    item: plugin
                 },
                 "插件解析失败"
             );
