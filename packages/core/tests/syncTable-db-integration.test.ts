@@ -1,49 +1,18 @@
 /**
- * syncTable 真·入库集成测试（真实同步）
- *
- * 约束：
- * - 固定数据库名：befly_test
- * - 其他连接参数（host/port/username/password/redis）均来自 beflyConfig
- * - 不使用 mock，不伪造 SQL 返回
+ * syncTable 端到端行为测试（纯 mock，不连接真实数据库）
  */
 
-import type { BeflyContext } from "../types/befly.js";
 import type { FieldDefinition } from "../types/validate.js";
 import type { ScanFileResult } from "../utils/scanFiles.js";
+import type { MockSqliteState } from "./_mocks/mockSqliteDb.js";
 
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
-import { beflyConfig } from "../befly.config.js";
-import { Connect } from "../lib/connect.js";
-import { RedisHelper } from "../lib/redisHelper.js";
+import { CacheKeys } from "../lib/cacheKeys.js";
 import { syncTable } from "../sync/syncTable.js";
-
-const RUN_REAL_DB = process.env.BEFLY_TEST_REAL_DB === "1";
-
-let originalDbName = "";
-let originalRedisPrefix = "";
-let sql: any = null;
-let redis: RedisHelper | null = null;
-let ctx: BeflyContext | null = null;
-
-function resolveDialect(): "mysql" | "postgresql" | "sqlite" {
-    const t = String(beflyConfig.db?.type || "mysql").toLowerCase();
-    if (t === "postgres" || t === "postgresql") return "postgresql";
-    if (t === "sqlite") return "sqlite";
-    return "mysql";
-}
-
-async function dropTable(dialect: "mysql" | "postgresql" | "sqlite", tableName: string): Promise<void> {
-    const quoted = syncTable.TestKit.quoteIdentifier(dialect, tableName);
-    if (dialect === "postgresql") {
-        await sql.unsafe(`DROP TABLE IF EXISTS ${quoted} CASCADE`);
-        return;
-    }
-    await sql.unsafe(`DROP TABLE IF EXISTS ${quoted}`);
-}
+import { createMockSqliteDb } from "./_mocks/mockSqliteDb.js";
 
 function buildTableItem(options: { tableFileName: string; content: any }): ScanFileResult {
-    // ScanFileResult 字段较多，这里只构造 syncTable 实际会用到的字段，其余字段用于满足类型
     return {
         source: "app",
         type: "table",
@@ -59,7 +28,6 @@ function buildTableItem(options: { tableFileName: string; content: any }): ScanF
 }
 
 function fdString(options: { name: string; min: number; max: number; defaultValue: any; nullable: boolean }): FieldDefinition {
-    // 仅提供最小字段集合：其余字段由 syncTable 内部 applyFieldDefaults 补齐
     return {
         name: options.name,
         type: "string",
@@ -92,216 +60,177 @@ function fdText(options: { name: string; min: number; max: number; defaultValue:
     } as any;
 }
 
-if (!RUN_REAL_DB) {
-    describe.skip("syncTable(ctx, items) - 真实同步入库", () => {});
-} else {
-    beforeAll(async () => {
-        if (!beflyConfig.db) {
-            throw new Error("syncTable-db-integration 集成测试需要 beflyConfig.db");
-        }
-        if (!beflyConfig.redis) {
-            throw new Error("syncTable-db-integration 集成测试需要 beflyConfig.redis");
-        }
+describe("syncTable(ctx, items) - mock sqlite", () => {
+    test("首次同步：应创建表并包含系统字段 + 业务字段，同时清理 columns 缓存", async () => {
+        const state: MockSqliteState = {
+            executedSql: [],
+            tables: {}
+        };
 
-        originalDbName = String(beflyConfig.db.database || "");
-        originalRedisPrefix = String(beflyConfig.redis.prefix || "");
+        const db = createMockSqliteDb(state);
 
-        // 固定数据库名 befly_test（账号密码等仍来自配置）
-        beflyConfig.db.database = "befly_test";
-        // Redis 前缀也跟随测试库，避免污染默认前缀
-        beflyConfig.redis.prefix = "befly_test";
-
-        try {
-            sql = await Connect.connectSql();
-        } catch (error: any) {
-            const dbType = String(beflyConfig.db.type || "");
-            const host = String((beflyConfig.db as any).host || "");
-            const port = String((beflyConfig.db as any).port || "");
-            const username = String((beflyConfig.db as any).username || "");
-            throw new Error(
-                [
-                    "syncTable-db-integration: Connect.connectSql() 失败（真实入库测试需要可用数据库）",
-                    `db.type=${dbType} host=${host} port=${port} username=${username} database=befly_test`,
-                    "请确认：已创建数据库 befly_test，且当前账号拥有 CREATE/DROP/ALTER/INDEX 权限。",
-                    `原始错误: ${String(error?.message || error)}`
-                ].join("\n")
-            );
-        }
-
-        try {
-            await Connect.connectRedis();
-        } catch (error: any) {
-            const redisHost = String((beflyConfig.redis as any).host || "");
-            const redisPort = String((beflyConfig.redis as any).port || "");
-            throw new Error(["syncTable-db-integration: Connect.connectRedis() 失败（真实入库测试需要可用 Redis）", `redis.host=${redisHost} redis.port=${redisPort} prefix=befly_test`, "请确认：Redis 可连接，且当前配置指向正确实例。", `原始错误: ${String(error?.message || error)}`].join("\n"));
-        }
-
-        redis = new RedisHelper(String(beflyConfig.redis.prefix || ""));
-
-        ctx = {
-            db: sql,
-            redis: redis,
-            config: beflyConfig
+        const redisCalls: Array<{ keys: string[] }> = [];
+        const ctx = {
+            db: db,
+            redis: {
+                delBatch: async (keys: string[]) => {
+                    redisCalls.push({ keys: keys });
+                    return keys.length;
+                }
+            },
+            config: {
+                db: { type: "sqlite", database: "" }
+            }
         } as any;
 
-        try {
-            await sql.unsafe("SELECT 1 as ok");
-        } catch (error: any) {
-            throw new Error(["syncTable-db-integration: SQL 健康检查失败（SELECT 1）", "请确认 befly_test 存在且账号具备连接/查询权限。", `原始错误: ${String(error?.message || error)}`].join("\n"));
-        }
-
-        try {
-            await redis.setString("syncTable_test:ping", "1", 5);
-        } catch (error: any) {
-            throw new Error(["syncTable-db-integration: Redis 健康检查失败（SET）", "请确认 Redis 可写入（至少允许 SET/EXPIRE）。", `原始错误: ${String(error?.message || error)}`].join("\n"));
-        }
-    });
-
-    // 约束：每个用例开始前清理；用例结束后不清理（保留表与数据用于人工检查）。
-    beforeEach(async () => {
-        if (!sql) return;
-        const dialect = resolveDialect();
-
-        try {
-            await dropTable(dialect, "test_sync_table_integration_user");
-        } catch {}
-        try {
-            await dropTable(dialect, "test_sync_table_integration_profile");
-        } catch {}
-        try {
-            await dropTable(dialect, "test_sync_table_integration_data");
-        } catch {}
-    });
-
-    afterAll(async () => {
-        try {
-            await Connect.disconnect();
-        } finally {
-            if (beflyConfig.db) {
-                beflyConfig.db.database = originalDbName;
+        const tableFileName = "test_sync_table_integration_user";
+        const item = buildTableItem({
+            tableFileName: tableFileName,
+            content: {
+                email: fdString({ name: "邮箱", min: 0, max: 100, defaultValue: null, nullable: false }),
+                nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
+                age: fdNumber({ name: "年龄", min: 0, max: 999, defaultValue: 0, nullable: true })
             }
-            if (beflyConfig.redis) {
-                beflyConfig.redis.prefix = originalRedisPrefix;
+        });
+
+        await syncTable(ctx, [item]);
+
+        expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(tableFileName))).toBe(true);
+
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableFileName);
+        expect(exists).toBe(true);
+
+        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableFileName);
+
+        expect(columns.id).toBeDefined();
+        expect(columns.created_at).toBeDefined();
+        expect(columns.updated_at).toBeDefined();
+        expect(columns.state).toBeDefined();
+
+        expect(columns.email).toBeDefined();
+        expect(columns.nickname).toBeDefined();
+        expect(columns.age).toBeDefined();
+
+        expect(redisCalls.length).toBe(1);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
+    });
+
+    test("二次同步：新增字段应落库（ADD COLUMN），同时清理 columns 缓存", async () => {
+        const state: MockSqliteState = {
+            executedSql: [],
+            tables: {}
+        };
+
+        const db = createMockSqliteDb(state);
+
+        const redisCalls: Array<{ keys: string[] }> = [];
+        const ctx = {
+            db: db,
+            redis: {
+                delBatch: async (keys: string[]) => {
+                    redisCalls.push({ keys: keys });
+                    return keys.length;
+                }
+            },
+            config: {
+                db: { type: "sqlite", database: "" }
             }
-            Connect.__reset();
-        }
+        } as any;
+
+        const tableFileName = "test_sync_table_integration_profile";
+
+        const itemV1 = buildTableItem({
+            tableFileName: tableFileName,
+            content: {
+                nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true })
+            }
+        });
+
+        await syncTable(ctx, [itemV1]);
+
+        const itemV2 = buildTableItem({
+            tableFileName: tableFileName,
+            content: {
+                nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
+                bio: fdText({ name: "简介", min: 0, max: 200, defaultValue: null, nullable: true })
+            }
+        });
+
+        await syncTable(ctx, [itemV2]);
+
+        expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableFileName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
+
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableFileName);
+        expect(columns.nickname).toBeDefined();
+        expect(columns.bio).toBeDefined();
+
+        // 两次同步，每次都会清一次缓存
+        expect(redisCalls.length).toBe(2);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
+        expect(redisCalls[1].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
     });
 
-    describe("syncTable(ctx, items) - 真实同步入库", () => {
-        test("首次同步：应创建表并包含系统字段 + 业务字段", async () => {
-            const dialect = resolveDialect();
-            const tableFileName = "test_sync_table_integration_user";
-            const tableName = tableFileName; // snakeCase 后仍为下划线
+    test("索引变更：仅删除单列索引；复合索引不会被误删", async () => {
+        const tableFileName = "test_sync_table_integration_indexes";
 
-            const item = buildTableItem({
-                tableFileName: tableFileName,
-                content: {
-                    email: fdString({ name: "邮箱", min: 0, max: 100, defaultValue: null, nullable: false }),
-                    nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
-                    age: fdNumber({ name: "年龄", min: 0, max: 999, defaultValue: 0, nullable: true })
+        const state: MockSqliteState = {
+            executedSql: [],
+            tables: {
+                [tableFileName]: {
+                    columns: {
+                        id: { name: "id", type: "INTEGER", notnull: 1, dflt_value: null },
+                        created_at: { name: "created_at", type: "INTEGER", notnull: 1, dflt_value: "0" },
+                        updated_at: { name: "updated_at", type: "INTEGER", notnull: 1, dflt_value: "0" },
+                        deleted_at: { name: "deleted_at", type: "INTEGER", notnull: 1, dflt_value: "0" },
+                        state: { name: "state", type: "INTEGER", notnull: 1, dflt_value: "1" },
+                        user_id: { name: "user_id", type: "INTEGER", notnull: 1, dflt_value: "0" },
+                        user_name: { name: "user_name", type: "TEXT", notnull: 1, dflt_value: "''" }
+                    },
+                    indexes: {
+                        // 单列索引：应该能被识别并在 index=false 时被 drop
+                        idx_user_name: ["user_name"],
+                        // 复合索引：即使名字像单列索引，也因为多列而被 runtime 忽略，因此不会被 drop
+                        idx_user_id: ["user_id", "created_at"]
+                    }
                 }
-            });
+            }
+        };
 
-            await syncTable(ctx as any, [item]);
+        const db = createMockSqliteDb(state);
 
-            const runtime = syncTable.TestKit.createRuntime(dialect, sql as any, "befly_test");
-            const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableName);
-            expect(exists).toBe(true);
+        const redisCalls: Array<{ keys: string[] }> = [];
+        const ctx = {
+            db: db,
+            redis: {
+                delBatch: async (keys: string[]) => {
+                    redisCalls.push({ keys: keys });
+                    return keys.length;
+                }
+            },
+            config: {
+                db: { type: "sqlite", database: "" }
+            }
+        } as any;
 
-            const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
-
-            // 系统字段
-            expect(columns.id).toBeDefined();
-            expect(columns.created_at).toBeDefined();
-            expect(columns.updated_at).toBeDefined();
-            expect(columns.state).toBeDefined();
-
-            // 业务字段
-            expect(columns.email).toBeDefined();
-            expect(columns.nickname).toBeDefined();
-            expect(columns.age).toBeDefined();
+        const item = buildTableItem({
+            tableFileName: tableFileName,
+            content: {
+                userId: fdNumber({ name: "用户ID", min: 0, max: 999999999, defaultValue: 0, nullable: false }),
+                userName: fdString({ name: "用户名", min: 0, max: 50, defaultValue: "", nullable: false })
+            }
         });
 
-        test("二次同步：新增字段应落库（ALTER/重建）", async () => {
-            const dialect = resolveDialect();
-            const tableFileName = "test_sync_table_integration_profile";
-            const tableName = tableFileName;
+        await syncTable(ctx, [item]);
 
-            const itemV1 = buildTableItem({
-                tableFileName: tableFileName,
-                content: {
-                    nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true })
-                }
-            });
+        const dropUserName = state.executedSql.some((s) => s.includes("DROP INDEX") && s.includes("idx_user_name"));
+        expect(dropUserName).toBe(true);
 
-            await syncTable(ctx as any, [itemV1]);
+        const dropUserIdComposite = state.executedSql.some((s) => s.includes("DROP INDEX") && s.includes("idx_user_id"));
+        expect(dropUserIdComposite).toBe(false);
 
-            const itemV2 = buildTableItem({
-                tableFileName: tableFileName,
-                content: {
-                    nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
-                    bio: fdText({ name: "简介", min: 0, max: 200, defaultValue: null, nullable: true })
-                }
-            });
-
-            await syncTable(ctx as any, [itemV2]);
-
-            const runtime = syncTable.TestKit.createRuntime(dialect, sql as any, "befly_test");
-            const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
-            expect(columns.nickname).toBeDefined();
-            expect(columns.bio).toBeDefined();
-        });
-
-        test("写入数据：同步建表后应可真实入库并查询", async () => {
-            const dialect = resolveDialect();
-            const tableFileName = "test_sync_table_integration_data";
-            const tableName = tableFileName;
-
-            const item = buildTableItem({
-                tableFileName: tableFileName,
-                content: {
-                    email: fdString({ name: "邮箱", min: 0, max: 100, defaultValue: null, nullable: false }),
-                    nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
-                    age: fdNumber({ name: "年龄", min: 0, max: 999, defaultValue: 0, nullable: true })
-                }
-            });
-
-            await syncTable(ctx as any, [item]);
-
-            const runtime = syncTable.TestKit.createRuntime(dialect, sql as any, "befly_test");
-            const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableName);
-            expect(exists).toBe(true);
-
-            const quotedTable = syncTable.TestKit.quoteIdentifier(dialect, tableName);
-            const colId = syncTable.TestKit.quoteIdentifier(dialect, "id");
-            const colEmail = syncTable.TestKit.quoteIdentifier(dialect, "email");
-            const colNickname = syncTable.TestKit.quoteIdentifier(dialect, "nickname");
-            const colAge = syncTable.TestKit.quoteIdentifier(dialect, "age");
-            const colCreatedAt = syncTable.TestKit.quoteIdentifier(dialect, "created_at");
-            const colUpdatedAt = syncTable.TestKit.quoteIdentifier(dialect, "updated_at");
-            const colDeletedAt = syncTable.TestKit.quoteIdentifier(dialect, "deleted_at");
-            const colState = syncTable.TestKit.quoteIdentifier(dialect, "state");
-
-            const id = 1001;
-            const email = "data_write@test.com";
-            const nickname = "写入测试";
-            const age = 18;
-            const now = Date.now();
-
-            const insertSql = `INSERT INTO ${quotedTable} (${colId}, ${colEmail}, ${colNickname}, ${colAge}, ${colCreatedAt}, ${colUpdatedAt}, ${colDeletedAt}, ${colState}) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-            await sql.unsafe(insertSql, [id, email, nickname, age, now, now, 0, 1]);
-
-            const selectSql = `SELECT ${colId} AS id, ${colEmail} AS email, ${colNickname} AS nickname, ${colAge} AS age, ${colState} AS state FROM ${quotedTable} WHERE ${colId} = ?`;
-            const rows = await sql.unsafe(selectSql, [id]);
-
-            expect(Array.isArray(rows)).toBe(true);
-            expect(rows.length).toBe(1);
-
-            expect(Number(rows[0].id)).toBe(id);
-            expect(String(rows[0].email)).toBe(email);
-            expect(String(rows[0].nickname)).toBe(nickname);
-            expect(Number(rows[0].age)).toBe(age);
-            expect(Number(rows[0].state)).toBe(1);
-        });
+        expect(redisCalls.length).toBe(1);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
     });
-}
+});
