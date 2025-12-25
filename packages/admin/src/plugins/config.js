@@ -21,7 +21,7 @@ export const $Config = {
     loginPath: import.meta.env.VITE_LOGIN_PATH || "/addon/admin/login",
 
     /** 首页路径（可通过 VITE_HOME_PATH 覆盖） */
-    homePath: import.meta.env.VITE_HOME_PATH || "/dashboard",
+    homePath: import.meta.env.VITE_HOME_PATH || "/addon/admin",
     /** 是否开发环境 */
     isDev: import.meta.env.DEV,
     /** 是否生产环境 */
