@@ -12,8 +12,16 @@ import { CacheHelper } from "../lib/cacheHelper.js";
  * 缓存插件
  */
 export default {
-    deps: [],
+    deps: ["logger", "redis", "db"],
     async handler(befly: BeflyContext): Promise<CacheHelper> {
+        if (!(befly as any).db) {
+            throw new Error("缓存初始化失败：ctx.db 未初始化（Db 插件未加载或注入失败）");
+        }
+
+        if (!(befly as any).redis) {
+            throw new Error("缓存初始化失败：ctx.redis 未初始化（Redis 插件未加载或注入失败）");
+        }
+
         return new CacheHelper({ db: befly.db, redis: befly.redis });
     }
 } satisfies Plugin;

@@ -83,6 +83,9 @@ export class Befly {
 
             // 启动期依赖完整性检查：避免 sync 阶段出现 undefined 调用
             // 注意：这里不做兼容别名（例如 dbHelper=db），要求上下文必须注入标准字段。
+            if (!(this.context as any).redis) {
+                throw new Error("启动失败：ctx.redis 未初始化（Redis 插件未加载或注入失败）");
+            }
             if (!(this.context as any).db) {
                 throw new Error("启动失败：ctx.db 未初始化（Db 插件未加载或注入失败）");
             }

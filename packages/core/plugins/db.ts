@@ -15,9 +15,13 @@ import { Logger } from "../lib/logger.js";
  * 数据库插件
  */
 export default {
-    deps: ["logger"],
+    deps: ["logger", "redis"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
         let sql: any = null;
+
+        if (!(befly as any).redis) {
+            throw new Error("数据库初始化失败：ctx.redis 未初始化（Redis 插件未加载或注入失败）");
+        }
 
         try {
             sql = await Connect.connectSql();

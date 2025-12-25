@@ -72,7 +72,7 @@ import type { Plugin } from "befly/types/plugin";
 
 const plugin: Plugin = {
     // 依赖的插件列表（可选）
-    after: ["logger", "db"],
+    deps: ["logger", "db"],
 
     // 初始化函数（必填）
     handler: (befly) => {
@@ -96,10 +96,10 @@ interface Plugin {
     name?: string;
 
     /** 依赖的插件列表（在这些插件之后执行） */
-    after?: string[];
+    deps: string[];
 
     /** 插件初始化函数 */
-    handler?: (context: BeflyContext) => any | Promise<any>;
+    handler: (context: BeflyContext) => any | Promise<any>;
 
     /** 插件描述（可选） */
     description?: string;
@@ -171,12 +171,12 @@ interface Plugin {
 
 ### 依赖排序
 
-使用 `after` 属性声明依赖关系：
+使用 `deps` 属性声明依赖关系：
 
 ```typescript
 // redis.ts - 依赖 logger
 const plugin: Plugin = {
-    after: ["logger"], // 在 logger 插件之后初始化
+    deps: ["logger"], // 在 logger 插件之后初始化
     handler: () => {
         /* ... */
     }
@@ -199,7 +199,7 @@ const plugin: Plugin = {
 ```typescript
 // 插件源码
 const loggerPlugin: Plugin = {
-    after: [],
+    deps: [],
     async handler(): Promise<typeof Logger> {
         if (beflyConfig.logger) {
             Logger.configure(beflyConfig.logger);
@@ -250,7 +250,7 @@ const redisConfig = befly.config.redis;
 ```typescript
 // 插件源码
 const dbPlugin: Plugin = {
-    after: ["logger"],
+    deps: ["logger", "redis"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
         const sql = await Connect.connectSql();
         return new DbHelper(befly, sql);
@@ -285,7 +285,7 @@ await befly.db.delData({ table: "user", where: { id: 1 } });
 ```typescript
 // 插件源码
 const redisPlugin: Plugin = {
-    after: ["logger"],
+    deps: ["logger"],
     async handler(): Promise<RedisHelper | Record<string, never>> {
         await Connect.connectRedis();
         return new RedisHelper(redisConfig.prefix);
@@ -384,9 +384,9 @@ const decrypted = befly.cipher.decrypt(encrypted);
 ```typescript
 // 插件源码
 const cachePlugin: Plugin = {
-    after: [],
+    deps: ["logger", "redis", "db"],
     async handler(befly: BeflyContext): Promise<CacheHelper> {
-        return new CacheHelper(befly);
+        return new CacheHelper({ db: befly.db, redis: befly.redis });
     }
 };
 ```
@@ -473,7 +473,7 @@ import type { Plugin } from "befly/types/plugin";
 import type { BeflyContext } from "befly/types/befly";
 
 const plugin: Plugin = {
-    after: ["db", "redis"], // 依赖数据库和 Redis
+    deps: ["db", "redis"], // 依赖数据库和 Redis
     handler: (befly: BeflyContext) => {
         return {
             async getUser(id: number) {
@@ -513,7 +513,7 @@ import type { Plugin } from "befly/types/plugin";
 import { Client } from "@elastic/elasticsearch";
 
 const plugin: Plugin = {
-    after: ["logger", "config"],
+    deps: ["logger", "config"],
     async handler(befly) {
         const config = befly.config.elasticsearch || {};
 
@@ -580,7 +580,7 @@ class SmsHelper {
 }
 
 const plugin: Plugin = {
-    after: ["logger", "config"],
+    deps: ["logger", "config"],
     handler: (befly: BeflyContext) => {
         const smsConfig = befly.config.sms || {};
         return new SmsHelper(befly, smsConfig);
@@ -688,7 +688,7 @@ class EmailHelper {
  * 邮件插件
  */
 const emailPlugin: Plugin = {
-    after: ["db", "logger", "config"],
+    deps: ["db", "logger", "config"],
     async handler(befly: BeflyContext): Promise<EmailHelper> {
         const emailConfig = befly.config?.addons?.admin?.email || {};
         return new EmailHelper(befly, emailConfig);
@@ -801,7 +801,7 @@ class WechatPayHelper {
 }
 
 const plugin: Plugin = {
-    after: ["logger", "config"],
+    deps: ["logger", "config"],
     handler: (befly: BeflyContext) => {
         return new WechatPayHelper(befly);
     }
@@ -851,7 +851,7 @@ const plugin: Plugin = {
 ```typescript
 // ✅ 推荐：明确声明所有依赖
 const plugin: Plugin = {
-    after: ["logger", "db", "redis"], // 声明所有使用的插件
+    deps: ["logger", "db", "redis"], // 声明所有使用的插件
     handler: (befly) => {
         /* ... */
     }
@@ -929,7 +929,7 @@ class DatabasePool {
 插件按以下顺序加载：
 
 1. 核心插件 → Addon 插件 → 项目插件
-2. 同一类型内根据 `after` 依赖关系排序
+2. 同一类型内根据 `deps` 依赖关系排序
 3. 无依赖的插件按文件名字母顺序
 
 ### Q2: 如何在插件中访问其他插件？
@@ -938,7 +938,7 @@ class DatabasePool {
 
 ```typescript
 const plugin: Plugin = {
-    after: ["db"], // 声明依赖
+    deps: ["db"], // 声明依赖
     handler: (befly) => {
         return {
             async getUser(id: number) {
