@@ -154,9 +154,10 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                     hasError = true;
                 }
 
-                // 检查 unique 和 index 冲突（警告但不阻断）
-                if (field.unique && field.index) {
-                    Logger.warn(`${sourceName}表 ${fileName} 文件 ${colKey} 同时设置了 unique=true 和 index=true，` + `unique 约束会自动创建唯一索引，index=true 将被忽略以避免重复索引`);
+                // 约束：unique 与 index 不能同时为 true（否则会重复索引），必须阻断启动。
+                if (field.unique === true && field.index === true) {
+                    Logger.warn(`${sourceName}表 ${fileName} 文件 ${colKey} 同时设置了 unique=true 和 index=true，` + `unique 和 index 不能同时设置，请删除其一（否则会创建重复索引）`);
+                    hasError = true;
                 }
 
                 // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
