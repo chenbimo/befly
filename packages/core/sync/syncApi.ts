@@ -7,6 +7,10 @@ import { Logger } from "../lib/logger.js";
 export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
     const tableName = "addon_admin_api";
 
+    if (!ctx.db) {
+        throw new Error("syncApi: ctx.db 未初始化（Db 插件未加载或注入失败）");
+    }
+
     if (!(await ctx.db.tableExists(tableName))) {
         Logger.debug(`${tableName} 表不存在`);
         return;

@@ -4,6 +4,10 @@ import { Logger } from "../lib/logger.js";
 import { getParentPath } from "../utils/loadMenuConfigs.js";
 
 export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<void> {
+    if (!ctx.db) {
+        throw new Error("syncMenu: ctx.db 未初始化（Db 插件未加载或注入失败）");
+    }
+
     if (!(await ctx.db.tableExists("addon_admin_menu"))) {
         Logger.debug(`addon_admin_menu 表不存在`);
         return;
@@ -58,8 +62,8 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
     const tableName = "addon_admin_menu";
 
     // 2) 批量同步（事务内）：按 path diff 执行批量 insert/update/delete
-    await ctx.db.trans(async (dbHelper: any) => {
-        const allExistingMenus = await dbHelper.getAll({
+    await ctx.db.trans(async (trans: any) => {
+        const allExistingMenus = await trans.getAll({
             table: tableName,
             fields: ["id", "name", "path", "parentPath", "sort", "state"],
             where: { state$gte: 0 }
@@ -169,11 +173,11 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
         }
 
         if (updList.length > 0) {
-            await dbHelper.updBatch(tableName, updList);
+            await trans.updBatch(tableName, updList);
         }
 
         if (insList.length > 0) {
-            await dbHelper.insBatch(tableName, insList);
+            await trans.insBatch(tableName, insList);
         }
 
         // 3) 删除差集（DB - 配置） + 删除重复 path 的多余记录
@@ -198,7 +202,7 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
         const delIds = Array.from(delIdSet);
 
         if (delIds.length > 0) {
-            await dbHelper.delForceBatch(tableName, delIds);
+            await trans.delForceBatch(tableName, delIds);
         }
     });
 

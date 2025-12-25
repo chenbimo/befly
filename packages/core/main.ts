@@ -81,6 +81,15 @@ export class Befly {
             // 2. 加载插件
             this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);
 
+            // 启动期依赖完整性检查：避免 sync 阶段出现 undefined 调用
+            // 注意：这里不做兼容别名（例如 dbHelper=db），要求上下文必须注入标准字段。
+            if (!(this.context as any).db) {
+                throw new Error("启动失败：ctx.db 未初始化（Db 插件未加载或注入失败）");
+            }
+            if (!(this.context as any).cacheHelper) {
+                throw new Error("启动失败：ctx.cacheHelper 未初始化（cacheHelper 插件未加载或注入失败）");
+            }
+
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             await syncTable(this.context as BeflyContext, tables);
             await syncApi(this.context as BeflyContext, apis as any);

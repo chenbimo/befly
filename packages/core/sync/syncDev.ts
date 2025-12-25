@@ -7,6 +7,10 @@ export async function syncDev(ctx: any): Promise<void> {
         return;
     }
 
+    if (!ctx.db) {
+        throw new Error("syncDev: ctx.db 未初始化（Db 插件未加载或注入失败）");
+    }
+
     if (!(await ctx.db.tableExists("addon_admin_admin"))) {
         Logger.debug(`addon_admin_admin 表不存在`);
         return;
