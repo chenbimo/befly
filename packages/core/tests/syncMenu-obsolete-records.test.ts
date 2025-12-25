@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { checkMenu } from "../checks/checkMenu.js";
 import { syncMenu } from "../sync/syncMenu.js";
 
 describe("syncMenu - delete obsolete records", () => {
@@ -61,7 +62,8 @@ describe("syncMenu - delete obsolete records", () => {
             process.chdir(projectDir);
 
             writeFileSync(menusJsonPath, "[]", { encoding: "utf8" });
-            await syncMenu(ctx);
+            const menus = await checkMenu(ctx.addons);
+            await syncMenu(ctx, menus);
         } finally {
             process.chdir(originalCwd);
             rmSync(projectDir, { recursive: true, force: true });
@@ -142,7 +144,8 @@ describe("syncMenu - delete obsolete records", () => {
                 ),
                 { encoding: "utf8" }
             );
-            await syncMenu(ctx);
+            const menus = await checkMenu(ctx.addons);
+            await syncMenu(ctx, menus);
         } finally {
             process.chdir(originalCwd);
             rmSync(projectDir, { recursive: true, force: true });

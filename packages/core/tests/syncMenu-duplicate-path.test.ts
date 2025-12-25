@@ -2,6 +2,7 @@ import { describe, expect, test, beforeEach, afterEach, mock } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { checkMenu } from "../checks/checkMenu.js";
 import { setMockLogger } from "../lib/logger.js";
 import { syncMenu } from "../sync/syncMenu.js";
 
@@ -100,7 +101,8 @@ describe("syncMenu - duplicate path records", () => {
                 { encoding: "utf8" }
             );
 
-            await syncMenu(ctx);
+            const menus = await checkMenu(ctx.addons);
+            await syncMenu(ctx, menus);
         } finally {
             process.chdir(originalCwd);
             rmSync(projectDir, { recursive: true, force: true });

@@ -12,7 +12,7 @@ export type ScanSourcesResult = {
     plugins: ScanFileResult[];
     apis: ScanFileResult[];
     tables: ScanFileResult[];
-    adddons: AddonInfo[];
+    addons: AddonInfo[];
 };
 
 export const scanSources = async (): Promise<ScanSourcesResult> => {
@@ -21,12 +21,12 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     const hooks: ScanFileResult[] = [];
     const tables: ScanFileResult[] = [];
 
-    const adddons: AddonInfo[] = await scanAddons();
+    const addons: AddonInfo[] = await scanAddons();
 
     // 处理表格
     tables.push(...(await scanFiles(join(appDir, "tables"), "app", "table", "*.json")));
 
-    for (const addon of adddons) {
+    for (const addon of addons) {
         tables.push(...(await scanFiles(join(addon.fullPath, "tables"), "addon", "table", "*.json")));
     }
 
@@ -34,7 +34,7 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     plugins.push(...(await scanFiles(join(coreDir, "plugins"), "core", "plugin", "*.ts")));
     plugins.push(...(await scanFiles(join(appDir, "plugins"), "app", "plugin", "*.ts")));
 
-    for (const addon of adddons) {
+    for (const addon of addons) {
         plugins.push(...(await scanFiles(join(addon.fullPath, "plugins"), "addon", "plugin", "*.ts")));
     }
 
@@ -42,7 +42,7 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     apis.push(...(await scanFiles(join(coreDir, "apis"), "core", "api", "**/*.ts")));
     apis.push(...(await scanFiles(join(appDir, "apis"), "app", "api", "**/*.ts")));
 
-    for (const addon of adddons) {
+    for (const addon of addons) {
         apis.push(...(await scanFiles(join(addon.fullPath, "apis"), "addon", "api", "**/*.ts")));
     }
 
@@ -50,7 +50,7 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     hooks.push(...(await scanFiles(join(coreDir, "hooks"), "core", "hook", "*.ts")));
     hooks.push(...(await scanFiles(join(appDir, "hooks"), "app", "hook", "*.ts")));
 
-    for (const addon of adddons) {
+    for (const addon of addons) {
         hooks.push(...(await scanFiles(join(addon.fullPath, "hooks"), "addon", "hook", "*.ts")));
     }
 
@@ -59,6 +59,6 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
         plugins: plugins,
         apis: apis,
         tables: tables,
-        adddons: adddons
+        addons: addons
     };
 };

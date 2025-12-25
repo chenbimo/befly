@@ -11,6 +11,7 @@ import type { Plugin } from "./types/plugin.js";
 
 import { checkApi } from "./checks/checkApi.js";
 import { checkHook } from "./checks/checkHook.js";
+import { checkMenu } from "./checks/checkMenu.js";
 import { checkPlugin } from "./checks/checkPlugin.js";
 import { checkTable } from "./checks/checkTable.js";
 // ========== 相对导入（项目内部文件） ==========
@@ -66,12 +67,16 @@ export class Befly {
             const { beflyConfig } = await import("./befly.config.js");
             this.config = beflyConfig;
 
-            const { apis, tables, plugins, hooks } = await scanSources();
+            const { apis, tables, plugins, hooks, addons } = await scanSources();
+
+            // 让后续 syncMenu 能拿到 addon 的 views 路径等信息
+            this.context.addons = addons;
 
             await checkApi(apis);
             await checkTable(tables);
             await checkPlugin(plugins);
             await checkHook(hooks);
+            const checkedMenus = await checkMenu(addons);
 
             // 2. 加载插件
             this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);
@@ -80,7 +85,7 @@ export class Befly {
             await syncTable(this.context as BeflyContext, tables);
             await syncApi(this.context as BeflyContext, apis as any);
 
-            await syncMenu(this.context as BeflyContext);
+            await syncMenu(this.context as BeflyContext, checkedMenus);
             await syncDev(this.context as BeflyContext);
 
             // 3. 加载钩子

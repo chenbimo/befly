@@ -3,49 +3,70 @@ import { existsSync, readdirSync } from "node:fs";
 import { camelCase } from "es-toolkit/string";
 import { join, resolve } from "pathe";
 
-import { appDir } from "../paths.js";
+import { appAddonsDir, appDir } from "../paths.js";
 import { isDirentDirectory } from "./isDirentDirectory.js";
 
 export type AddonSource = "addon" | "app";
 
 export interface AddonInfo {
-    /** addon 根目录绝对路径（node_modules/@befly-addon/<name>） */
-    fullPath: string;
+    /** addon 来源 */
+    source: AddonSource;
 
-    /** addon 目录名（通常是 demo/admin 等） */
+    /** addon 来源中文名 */
+    sourceName: string;
+
+    /** addon 名称（目录名，通常是 demo/admin 等） */
     name: string;
 
     /** camelCase(name) */
     camelName: string;
+
+    /** addon 根目录绝对路径 */
+    rootDir: string;
+
+    /** 兼容字段：历史上使用 fullPath 表示 rootDir */
+    fullPath: string;
 }
 
-/** 从 node_modules/@befly-addon/ 扫描组件列表 */
+/** 扫描 node_modules/@befly-addon + 项目 addons/（项目优先级更高） */
 export const scanAddons = (): AddonInfo[] => {
-    const addons: AddonInfo[] = [];
+    const addonMap = new Map<string, AddonInfo>();
 
-    const addonDir = join(appDir, "node_modules", "@befly-addon");
-    if (!existsSync(addonDir)) {
-        return [];
-    }
-
-    const entries = readdirSync(addonDir, { withFileTypes: true });
-    for (const entry of entries) {
-        if (entry.name.startsWith("_")) {
-            continue;
+    const scanBaseDir = (baseDir: string, source: AddonSource, sourceName: string) => {
+        if (!existsSync(baseDir)) {
+            return;
         }
 
-        if (!isDirentDirectory(addonDir, entry)) {
-            continue;
+        const entries = readdirSync(baseDir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name.startsWith("_")) {
+                continue;
+            }
+
+            if (!isDirentDirectory(baseDir, entry)) {
+                continue;
+            }
+
+            const rootDir = resolve(baseDir, entry.name);
+
+            const info: AddonInfo = {
+                source: source,
+                sourceName: sourceName,
+                name: entry.name,
+                camelName: camelCase(entry.name),
+                rootDir: rootDir,
+                fullPath: rootDir
+            };
+
+            addonMap.set(entry.name, info);
         }
+    };
 
-        const fullPath = resolve(addonDir, entry.name);
+    // node_modules 中的 @befly-addon
+    scanBaseDir(join(appDir, "node_modules", "@befly-addon"), "addon", "组件");
 
-        addons.push({
-            fullPath: fullPath,
-            name: entry.name,
-            camelName: camelCase(entry.name)
-        });
-    }
+    // 项目本地 addons（同名覆盖 node_modules）
+    scanBaseDir(appAddonsDir, "app", "项目");
 
-    return addons;
+    return Array.from(addonMap.values());
 };
