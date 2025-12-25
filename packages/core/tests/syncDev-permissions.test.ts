@@ -5,9 +5,9 @@ import { syncDev } from "../sync/syncDev.js";
 describe("syncDev - dev role permissions", () => {
     test("dev 角色应拥有所有菜单和接口（state>=0）", async () => {
         const calls = {
-            getAll: [] as any[],
-            insData: [] as any[],
-            updData: [] as any[],
+            getAll: [],
+            insData: [],
+            updData: [],
             rebuildRoleApiPermissionsCount: 0
         };
 
@@ -15,10 +15,10 @@ describe("syncDev - dev role permissions", () => {
 
         const ctx = {
             db: {
-                tableExists: async (table: string) => {
+                tableExists: async (table) => {
                     return table === "addon_admin_admin" || table === "addon_admin_role" || table === "addon_admin_menu" || table === "addon_admin_api";
                 },
-                getAll: async (options: any) => {
+                getAll: async (options) => {
                     calls.getAll.push(options);
 
                     if (options?.table === "addon_admin_menu") {
@@ -40,16 +40,16 @@ describe("syncDev - dev role permissions", () => {
 
                     return { lists: [] };
                 },
-                getOne: async (_options: any) => {
+                getOne: async (_options) => {
                     // 让所有角色/管理员都走插入逻辑，便于断言插入数据
                     return null;
                 },
-                insData: async (options: any) => {
+                insData: async (options) => {
                     calls.insData.push(options);
                     nextId += 1;
                     return nextId;
                 },
-                updData: async (options: any) => {
+                updData: async (options) => {
                     calls.updData.push(options);
                     return 1;
                 }
@@ -59,7 +59,7 @@ describe("syncDev - dev role permissions", () => {
                     calls.rebuildRoleApiPermissionsCount += 1;
                 }
             }
-        } as any;
+        };
 
         await syncDev(ctx);
 
