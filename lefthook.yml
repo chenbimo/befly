@@ -4,25 +4,25 @@
 pre-commit:
     jobs:
         # 1. 格式化代码（统一使用 oxfmt）
-        # - name: Format files (oxfmt)
-        #   priority: 1
-        #   glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,json5,yml,yaml,toml,html,vue,mjml,hbs,handlebars,graphql,gql,md,mdx,css,scss,less}"
-        #   run: bunx oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
+        - name: Format files (oxfmt)
+          priority: 1
+          glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,json5,yml,yaml,toml,html,vue,mjml,hbs,handlebars,graphql,gql,md,mdx,css,scss,less}"
+          run: bunx oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
 
         # 2. Oxlint 代码检查（门禁）
-        # - name: Oxlint
-        #   priority: 2
-        #   glob: "*.{js,ts,jsx,tsx,vue}"
-        #   run: bunx oxlint {staged_files}
+        - name: Oxlint
+          priority: 2
+          glob: "*.{js,ts,jsx,tsx,vue}"
+          run: bunx oxlint {staged_files}
 
         # 3. TypeScript 语法检查 (core)
-        # - name: TypeScript check (core)
-        #   priority: 2
-        #   root: packages/core
-        #   glob: "packages/core/**/*.ts"
-        #   run: bunx tsgo --noEmit
+        - name: TypeScript check (core)
+          priority: 2
+          root: packages/core
+          glob: "packages/core/**/*.ts"
+          run: bunx tsgo --noEmit
 
         # 4. 运行测试
-        # - name: Run tests
-        #   priority: 3
-        #   run: bun test
+        - name: Run tests
+          priority: 3
+          run: bun test
