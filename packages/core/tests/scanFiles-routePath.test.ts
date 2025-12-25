@@ -19,7 +19,14 @@ describe("scanFiles - api routePath formatting", () => {
             expect(typeof api.routePrefix).toBe("string");
             expect(typeof api.routePath).toBe("string");
 
-            expect(["/core", "/app", "/addon"].includes(api.routePrefix)).toBe(true);
+            if (api.source === "addon") {
+                expect(api.routePrefix.startsWith("/addon/")).toBe(true);
+                expect(typeof api.addonName).toBe("string");
+                expect(api.addonName.length > 0).toBe(true);
+                expect(api.routePrefix).toBe(`/addon/${api.addonName}`);
+            } else {
+                expect(["/core", "/app"].includes(api.routePrefix)).toBe(true);
+            }
             expect(api.routePath.includes("/api//")).toBe(false);
         }
 
@@ -32,7 +39,8 @@ describe("scanFiles - api routePath formatting", () => {
         expect(appB.routePath).toBe("/api/app/sub/b");
 
         const addonB = (addonApis as any[]).find((item) => item.relativePath === "sub/b");
-        expect(addonB.routePrefix).toBe("/addon");
-        expect(addonB.routePath).toBe("/api/addon/sub/b");
+        expect(addonB.addonName).toBe("demo");
+        expect(addonB.routePrefix).toBe("/addon/demo");
+        expect(addonB.routePath).toBe("/api/addon/demo/sub/b");
     });
 });
