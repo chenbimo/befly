@@ -141,8 +141,8 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             });
 
             if (type === "api") {
-                base.routePrefix = source === "core" ? "/core/" : source === "app" ? "/app/" : "/addon/";
-                base.routePath = `/api/${base.routePrefix}${relativePath}`;
+                base.routePrefix = source === "core" ? "/core" : source === "app" ? "/app" : "/addon";
+                base.routePath = `/api${base.routePrefix}/${relativePath}`;
             }
 
             results.push(base as ScanFileResult);
