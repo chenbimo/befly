@@ -76,7 +76,7 @@ export class Befly {
             await checkTable(tables);
             await checkPlugin(plugins);
             await checkHook(hooks);
-            const checkedMenus = await checkMenu(addons);
+            const checkedMenus = await checkMenu(addons, { disableMenus: this.config.disableMenus || [] });
 
             // 2. 加载插件
             this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);

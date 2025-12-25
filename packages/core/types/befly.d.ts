@@ -166,6 +166,12 @@ export interface BeflyOptions {
     /** 禁用的插件列表 */
     disablePlugins?: string[];
     /**
+     * 禁用的菜单 path 规则（用于菜单同步与加载前过滤）
+     * - 精确："/addon/admin/log"
+     * - 前缀："/addon/admin/log/*"（禁用该前缀及其子路径）
+     */
+    disableMenus?: string[];
+    /**
      * Addon 运行时配置
      * 按 addon 名称分组，如 addons.admin.email
      */

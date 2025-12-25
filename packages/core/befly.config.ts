@@ -80,6 +80,7 @@ const defaultOptions: BeflyOptions = {
     // ========== 禁用配置 ==========
     disableHooks: [],
     disablePlugins: [],
+    disableMenus: [],
 
     // ========== Addon 配置 ==========
     addons: {}

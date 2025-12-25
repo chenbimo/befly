@@ -53,15 +53,121 @@ describe("checkMenu", () => {
 
             writeFileSync(menusJsonPath, JSON.stringify([{ name: "B", path: "/a/b", sort: 1 }], null, 4), { encoding: "utf8" });
 
-            let thrown: any = null;
-            try {
-                await checkMenu([]);
-            } catch (error: any) {
-                thrown = error;
-            }
+            // 菜单层级应以配置树（children）为准，而非按 URL path 分段强制推导父级。
+            // 因此单个菜单（即使 path 含多段）也允许作为根级菜单存在。
+            const menus = await checkMenu([]);
+            expect(Array.isArray(menus)).toBe(true);
+            expect(menus).toHaveLength(1);
+            expect(menus[0]?.path).toBe("/a/b");
+        } finally {
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
+        }
+    });
 
-            expect(thrown).toBeTruthy();
-            expect(thrown.message).toBe("菜单结构检查失败");
+    test("disableMenus（精确）应过滤指定菜单", async () => {
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `checkMenu-disableMenus-exact-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
+
+        try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
+            writeFileSync(
+                menusJsonPath,
+                JSON.stringify(
+                    [
+                        {
+                            name: "A",
+                            path: "/a",
+                            sort: 1,
+                            children: [
+                                {
+                                    name: "B",
+                                    path: "/a/b",
+                                    sort: 2
+                                }
+                            ]
+                        },
+                        {
+                            name: "C",
+                            path: "/c",
+                            sort: 3
+                        }
+                    ],
+                    null,
+                    4
+                ),
+                { encoding: "utf8" }
+            );
+
+            const menus = await checkMenu([], { disableMenus: ["/a/b"] });
+            expect(menus).toHaveLength(2);
+            expect(menus[0]?.path).toBe("/a");
+            expect(menus[1]?.path).toBe("/c");
+            expect(Array.isArray((menus[0] as any)?.children)).toBe(false);
+        } finally {
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
+        }
+    });
+
+    test("disableMenus（前缀 /*）应过滤子树", async () => {
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `checkMenu-disableMenus-prefix-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
+
+        try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
+            writeFileSync(
+                menusJsonPath,
+                JSON.stringify(
+                    [
+                        { name: "A", path: "/a", sort: 1 },
+                        { name: "A-1", path: "/a/1", sort: 2 },
+                        { name: "B", path: "/b", sort: 3 }
+                    ],
+                    null,
+                    4
+                ),
+                { encoding: "utf8" }
+            );
+
+            const menus = await checkMenu([], { disableMenus: ["/a/*"] });
+            expect(menus).toHaveLength(1);
+            expect(menus[0]?.path).toBe("/b");
+        } finally {
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
+        }
+    });
+
+    test("disableMenus 规则不合法应阻断启动", async () => {
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `checkMenu-disableMenus-invalid-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
+
+        try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
+            writeFileSync(menusJsonPath, JSON.stringify([{ name: "A", path: "/a", sort: 1 }], null, 4), { encoding: "utf8" });
+
+            for (const rule of ["a", "*"]) {
+                let thrown: any = null;
+                try {
+                    await checkMenu([], { disableMenus: [rule] });
+                } catch (error: any) {
+                    thrown = error;
+                }
+
+                expect(thrown).toBeTruthy();
+                expect(typeof thrown.message).toBe("string");
+                expect(thrown.message.includes("disableMenus")).toBe(true);
+            }
         } finally {
             process.chdir(originalCwd);
             rmSync(projectDir, { recursive: true, force: true });

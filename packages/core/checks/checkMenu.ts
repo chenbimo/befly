@@ -2,17 +2,7 @@ import type { MenuConfig } from "../types/sync.js";
 import type { AddonInfo } from "../utils/scanAddons.js";
 
 import { Logger } from "../lib/logger.js";
-import { getParentPath, loadMenuConfigs } from "../utils/loadMenuConfigs.js";
-
-function isAddonRootPath(path: string): boolean {
-    // addon/app 的根菜单路径：/addon/<name> 或 /app/<name>
-    // 它的 parentPath 会是 /addon 或 /app（允许不存在）
-    const parts = path.split("/").filter((p) => !!p);
-    if (parts.length !== 2) {
-        return false;
-    }
-    return parts[0] === "addon" || parts[0] === "app";
-}
+import { loadMenuConfigs } from "../utils/loadMenuConfigs.js";
 
 function isValidMenuPath(path: string): { ok: boolean; reason: string } {
     if (!path) {
@@ -33,13 +23,122 @@ function isValidMenuPath(path: string): { ok: boolean; reason: string } {
     return { ok: true, reason: "" };
 }
 
-export const checkMenu = async (addons: AddonInfo[]): Promise<MenuConfig[]> => {
+type CheckMenuOptions = {
+    disableMenus?: string[];
+};
+
+type DisableMenuRule = { type: "exact"; path: string } | { type: "prefix"; prefix: string };
+
+function toDisableMenuRules(disableMenus: unknown): DisableMenuRule[] {
+    if (typeof disableMenus === "undefined") {
+        return [];
+    }
+
+    if (!Array.isArray(disableMenus)) {
+        throw new Error("disableMenus 配置不合法：必须是 string[]");
+    }
+
+    const rules: DisableMenuRule[] = [];
+
+    for (const rawRule of disableMenus) {
+        if (typeof rawRule !== "string") {
+            throw new Error("disableMenus 配置不合法：数组元素必须是 string");
+        }
+
+        const rule = rawRule.trim();
+        if (!rule) {
+            throw new Error("disableMenus 配置不合法：不允许空字符串");
+        }
+
+        if (rule === "*") {
+            throw new Error("disableMenus 配置不合法：不支持 * 全量规则，只支持精确 /path 与前缀 /prefix/*");
+        }
+
+        if (!rule.startsWith("/")) {
+            throw new Error("disableMenus 配置不合法：规则必须以 / 开头");
+        }
+
+        if (rule.endsWith("/*")) {
+            const prefix = rule.slice(0, -2);
+            const prefixCheck = isValidMenuPath(prefix);
+            if (!prefixCheck.ok) {
+                throw new Error(`disableMenus 配置不合法：前缀规则 ${rule} 不合法：${prefixCheck.reason}`);
+            }
+            rules.push({ type: "prefix", prefix: prefix });
+            continue;
+        }
+
+        const exactCheck = isValidMenuPath(rule);
+        if (!exactCheck.ok) {
+            throw new Error(`disableMenus 配置不合法：精确规则 ${rule} 不合法：${exactCheck.reason}`);
+        }
+
+        rules.push({ type: "exact", path: rule });
+    }
+
+    return rules;
+}
+
+function isDisabledMenuPath(path: string, rules: DisableMenuRule[]): boolean {
+    for (const rule of rules) {
+        if (rule.type === "exact") {
+            if (path === rule.path) {
+                return true;
+            }
+            continue;
+        }
+        if (rule.type === "prefix") {
+            if (path === rule.prefix || path.startsWith(`${rule.prefix}/`)) {
+                return true;
+            }
+            continue;
+        }
+    }
+    return false;
+}
+
+function filterMenusByDisableRules(mergedMenus: MenuConfig[], rules: DisableMenuRule[]): MenuConfig[] {
+    if (rules.length === 0) {
+        return mergedMenus;
+    }
+
+    const filtered: MenuConfig[] = [];
+
+    for (const menu of mergedMenus) {
+        const menuPath = typeof (menu as any)?.path === "string" ? String((menu as any).path).trim() : "";
+        if (menuPath && isDisabledMenuPath(menuPath, rules)) {
+            continue;
+        }
+
+        const children = Array.isArray((menu as any)?.children) ? ((menu as any).children as MenuConfig[]) : null;
+        if (children && children.length > 0) {
+            const nextChildren = filterMenusByDisableRules(children, rules);
+            if (nextChildren.length > 0) {
+                (menu as any).children = nextChildren;
+            } else {
+                delete (menu as any).children;
+            }
+        }
+
+        filtered.push(menu);
+    }
+
+    return filtered;
+}
+
+export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions = {}): Promise<MenuConfig[]> => {
     let hasError = false;
 
     const mergedMenus = await loadMenuConfigs(addons);
 
+    const disableRules = toDisableMenuRules(options.disableMenus);
+    const filteredMenus = filterMenusByDisableRules(mergedMenus, disableRules);
+    if (disableRules.length > 0) {
+        Logger.info({ disableMenus: options.disableMenus, before: mergedMenus.length, after: filteredMenus.length }, "菜单禁用规则已生效");
+    }
+
     const stack: Array<{ menu: any; depth: number }> = [];
-    for (const m of mergedMenus) {
+    for (const m of filteredMenus) {
         stack.push({ menu: m, depth: 1 });
     }
 
@@ -126,50 +225,9 @@ export const checkMenu = async (addons: AddonInfo[]): Promise<MenuConfig[]> => {
         pathSet.add(path);
     }
 
-    // 父级路径完整性检查
-    for (const path of pathSet.values()) {
-        const parentPath = getParentPath(path);
-
-        if (!parentPath) {
-            continue;
-        }
-
-        // /addon/<name> 与 /app/<name>：允许其父级 /addon 或 /app 不存在
-        if (isAddonRootPath(path)) {
-            continue;
-        }
-
-        if (!pathSet.has(parentPath)) {
-            hasError = true;
-            Logger.warn({ path: path, parentPath: parentPath }, "菜单父级路径不存在（会导致树结构不完整）");
-        }
-
-        // 递归检查更上层父级（避免 /a/b/c 只缺 /a/b，或只缺 /a）
-        let p = parentPath;
-        while (p) {
-            const pp = getParentPath(p);
-            if (!pp) {
-                break;
-            }
-
-            // 上层同样允许 /addon 与 /app 缺失
-            if (pp === "/addon" || pp === "/app") {
-                break;
-            }
-
-            if (!pathSet.has(pp)) {
-                hasError = true;
-                Logger.warn({ path: path, missingParentPath: pp }, "菜单父级链缺失（会导致树结构不完整）");
-                break;
-            }
-
-            p = pp;
-        }
-    }
-
     if (hasError) {
         throw new Error("菜单结构检查失败");
     }
 
-    return mergedMenus;
+    return filteredMenus;
 };
