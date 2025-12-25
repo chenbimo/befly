@@ -38,18 +38,27 @@ export const checkMenu = async (addons: AddonInfo[]): Promise<MenuConfig[]> => {
 
     const mergedMenus = await loadMenuConfigs(addons);
 
-    const stack: MenuConfig[] = [];
+    const stack: Array<{ menu: any; depth: number }> = [];
     for (const m of mergedMenus) {
-        stack.push(m);
+        stack.push({ menu: m, depth: 1 });
     }
 
     const pathSet = new Set<string>();
 
     while (stack.length > 0) {
-        const menu = stack.pop() as any;
-        if (!menu || typeof menu !== "object") {
+        const current = stack.pop() as { menu: any; depth: number };
+        const menu = current?.menu;
+        const depth = typeof current?.depth === "number" ? current.depth : 0;
+
+        if (menu === null || typeof menu !== "object") {
             hasError = true;
             Logger.warn({ menu: menu }, "菜单节点必须是对象");
+            continue;
+        }
+
+        if (depth > 3) {
+            hasError = true;
+            Logger.warn({ path: menu?.path, depth: depth }, "菜单层级超过 3 级（最多三级）");
             continue;
         }
 
@@ -61,8 +70,13 @@ export const checkMenu = async (addons: AddonInfo[]): Promise<MenuConfig[]> => {
         }
 
         if (Array.isArray(children) && children.length > 0) {
-            for (const child of children) {
-                stack.push(child);
+            if (depth >= 3) {
+                hasError = true;
+                Logger.warn({ path: menu?.path, depth: depth }, "菜单层级超过 3 级（最多三级）");
+            } else {
+                for (const child of children) {
+                    stack.push({ menu: child, depth: depth + 1 });
+                }
             }
         }
 

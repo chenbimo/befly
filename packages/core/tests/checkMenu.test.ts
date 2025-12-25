@@ -87,4 +87,65 @@ describe("checkMenu", () => {
             rmSync(projectDir, { recursive: true, force: true });
         }
     });
+
+    test("超过三级菜单应阻断同步", async () => {
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `checkMenu-depth-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
+
+        try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
+            writeFileSync(
+                menusJsonPath,
+                JSON.stringify(
+                    [
+                        {
+                            name: "A",
+                            path: "/a",
+                            sort: 1,
+                            children: [
+                                {
+                                    name: "B",
+                                    path: "/a/b",
+                                    sort: 2,
+                                    children: [
+                                        {
+                                            name: "C",
+                                            path: "/a/b/c",
+                                            sort: 3,
+                                            children: [
+                                                {
+                                                    name: "D",
+                                                    path: "/a/b/c/d",
+                                                    sort: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    null,
+                    4
+                ),
+                { encoding: "utf8" }
+            );
+
+            let thrown: any = null;
+            try {
+                await checkMenu([]);
+            } catch (error: any) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeTruthy();
+            expect(thrown.message).toBe("菜单结构检查失败");
+        } finally {
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
+        }
+    });
 });
