@@ -77,7 +77,7 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
                         data: {
                             name: (item.api as any).name,
                             routePath: (item.api as any).routePath,
-                            addonName: (item.api as any).addonName
+                            addonName: typeof (item.api as any).addonName === "string" ? (item.api as any).addonName : ""
                         }
                     };
                 })
@@ -95,7 +95,7 @@ export async function syncApi(ctx: any, apis: ScanFileResult[]): Promise<void> {
                     return {
                         name: (api as any).name,
                         routePath: (api as any).routePath,
-                        addonName: (api as any).addonName
+                        addonName: typeof (api as any).addonName === "string" ? (api as any).addonName : ""
                     };
                 })
             );
