@@ -379,7 +379,7 @@ NODE_ENV=production bun run start
     },
 
     "redis": {
-        "prefix": "myapp:"
+        "prefix": "myapp"
     },
 
     "cors": {

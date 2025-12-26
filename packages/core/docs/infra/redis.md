@@ -220,9 +220,11 @@ const count = await befly.redis.expireBatch([
 ### saddBatch - 批量添加 Set 成员
 
 ```typescript
+import { CacheKeys } from "befly/lib/cacheKeys";
+
 const count = await befly.redis.saddBatch([
-    { key: "role:admin:apis", members: ["/api/user"] },
-    { key: "role:editor:apis", members: ["/api/article"] }
+    { key: CacheKeys.roleApis("admin"), members: ["/api/user"] },
+    { key: CacheKeys.roleApis("editor"), members: ["/api/article"] }
 ]);
 // 返回: 成功添加的总成员数量
 ```
@@ -230,9 +232,11 @@ const count = await befly.redis.saddBatch([
 ### sismemberBatch - 批量检查 Set 成员
 
 ```typescript
+import { CacheKeys } from "befly/lib/cacheKeys";
+
 const results = await befly.redis.sismemberBatch([
-    { key: "role:admin:apis", member: "/api/user" },
-    { key: "role:admin:apis", member: "/api/user/delete" }
+    { key: CacheKeys.roleApis("admin"), member: "/api/user" },
+    { key: CacheKeys.roleApis("admin"), member: "/api/user/delete" }
 ]);
 // 返回: [true, false]
 ```
@@ -285,11 +289,11 @@ const id = await befly.db.insData({
 import { CacheKeys } from "befly/lib/cacheKeys";
 
 // 获取键名
-const key = CacheKeys.apisAll(); // 'befly:apis:all'
-const key = CacheKeys.menusAll(); // 'befly:menus:all'
-const key = CacheKeys.roleInfo("admin"); // 'befly:role:info:admin'
-const key = CacheKeys.roleApis("admin"); // 'befly:role:apis:admin'
-const key = CacheKeys.tableColumns("user"); // 'befly:table:columns:user'
+const apisAllKey = CacheKeys.apisAll(); // 'befly:apis:all'
+const menusAllKey = CacheKeys.menusAll(); // 'befly:menus:all'
+const adminRoleInfoKey = CacheKeys.roleInfo("admin"); // 'befly:role:info:admin'
+const adminRoleApisKey = CacheKeys.roleApis("admin"); // 'befly:role:apis:admin'
+const userTableColumnsKey = CacheKeys.tableColumns("user"); // 'befly:table:columns:user'
 ```
 
 ### 键名前缀
@@ -304,7 +308,12 @@ Redis 插件支持配置全局前缀，避免键名冲突：
 }
 ```
 
-所有键会自动添加前缀：`myapp:user:1`
+所有键会自动添加前缀，最终写入 Redis 的 key 形如：`myapp:<key>`。
+
+- 例如：你调用 `befly.redis.getString("user:1")`，实际访问的是 `myapp:user:1`
+- 例如：你调用 `befly.redis.sismember(CacheKeys.roleApis("admin"), "/api/user")`，实际访问的是 `myapp:befly:role:apis:admin`
+
+> 注意：`redis.prefix` **不允许包含** `:`，因为 RedisHelper 会自动拼接分隔符 `:`。
 
 ---
 
@@ -313,6 +322,8 @@ Redis 插件支持配置全局前缀，避免键名冲突：
 ### 场景1：表结构缓存
 
 DbHelper 自动缓存表字段信息，避免重复查询数据库。
+
+```typescript
 // 计数 + 过期：常用于限流/风控
 // 更推荐：直接使用 Befly Core 内置的 rateLimit hook（通过 configs 配置即可）
 
@@ -323,8 +334,9 @@ const key = `ratelimit:${ctx.ip}:${ctx.route}`;
 const count = await befly.redis.incrWithExpire(key, windowSeconds);
 
 if (count > limit) {
-return befly.tool.No("请求过于频繁");
+    return befly.tool.No("请求过于频繁");
 }
+```
 
 ### 场景2：接口权限缓存
 

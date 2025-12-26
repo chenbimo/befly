@@ -9,6 +9,7 @@
 - [syncApi 接口同步](#syncapi-接口同步)
 - [syncMenu 菜单同步](#syncmenu-菜单同步)
 - [syncDev 开发账户同步](#syncdev-开发账户同步)
+- [syncCache 缓存同步](#synccache-缓存同步)
 - [表名规则](#表名规则)
 - [注意事项](#注意事项)
 - [FAQ](#faq)
@@ -25,8 +26,9 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 | `syncApi`   | 同步 API 路由信息 | `addon_admin_api`                       |
 | `syncMenu`  | 同步菜单配置      | `addon_admin_menu`                      |
 | `syncDev`   | 创建开发者账户    | `addon_admin_role`, `addon_admin_admin` |
+| `syncCache` | 同步缓存          | Redis（apis/menu/role-permissions）     |
 
-**执行顺序**：`syncTable` → `syncApi` → `syncMenu` → `syncDev`
+**执行顺序**：`syncTable` → `syncApi` → `syncMenu` → `syncDev` → `syncCache`
 
 > 说明：当前版本不提供 CLI 同步命令；同步逻辑在服务启动时由主进程自动执行（见 `packages/core/main.ts`）。
 
@@ -44,7 +46,7 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 import { syncTable } from "../sync/syncTable.js";
 import { scanSources } from "../utils/scanSources.js";
 
-// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
+// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）
 const sources = await scanSources();
 await syncTable(ctx, sources.tables);
 ```
@@ -103,14 +105,16 @@ await syncTable(ctx, sources.tables);
 
 ### 基本用法
 
-通常无需单独调用：`syncData()` 会按顺序执行 `syncApi` → `syncMenu` → `syncDev`。
+通常无需单独调用：服务启动流程会按顺序执行 `syncTable` → `syncApi` → `syncMenu` → `syncDev` → `syncCache`。
 
-如需在代码中手动触发整套数据同步：
+如需在代码中手动调用：
 
 ```typescript
-import { syncData } from "../sync/syncData.js";
+import { syncApi } from "../sync/syncApi.js";
+import { scanSources } from "../utils/scanSources.js";
 
-await syncData();
+const sources = await scanSources();
+await syncApi(ctx, sources.apis as any);
 ```
 
 ### 同步逻辑
@@ -137,20 +141,15 @@ await syncData();
 └─────────────────────────────────────────────────────┘
 ```
 
-### API 信息提取
+### 存储字段（重要）
 
-从 API 文件中提取以下信息：
+`syncApi` 会把扫描到的 API 信息同步到 `addon_admin_api` 表，核心字段为：
 
-```typescript
-interface ApiInfo {
-    name: string; // 接口名称（name 属性）
-    path: string; // 路由路径（由文件路径生成）
-    method: string; // 请求方法（method 属性，默认 POST）
-    description: string; // 接口描述（desc 属性）
-    addonName: string; // 所属 Addon 名称
-    addonTitle: string; // Addon 标题
-}
-```
+- `routePath`：只存 `url.pathname`（例如 `/api/user/login`），与 method 无关
+- `name`：接口名称
+- `addonName`：所属 addon（无 addon 时为空字符串）
+
+> 注意：`routePath` 必须是 pathname（以 `/` 开头），不允许写成 `POST /api/...` 或 `POST/api/...`。
 
 ### 统计信息
 
@@ -171,7 +170,19 @@ interface SyncApiStats {
 
 ### 基本用法
 
-同 `syncApi`，通常由 `syncData()` 统一触发。
+同 `syncApi`，通常由启动流程统一触发。
+
+如需手动调用，需要先对菜单配置做校验/过滤（例如 disableMenus）：
+
+```typescript
+import { checkMenu } from "../checks/checkMenu.js";
+import { syncMenu } from "../sync/syncMenu.js";
+import { scanSources } from "../utils/scanSources.js";
+
+const sources = await scanSources();
+const checkedMenus = await checkMenu(sources.addons, { disableMenus: ctx.config.disableMenus || [] });
+await syncMenu(ctx, checkedMenus);
+```
 
 ### 菜单配置文件
 
@@ -256,7 +267,7 @@ interface SyncMenuStats {
 
 ### 基本用法
 
-同 `syncApi`，通常由 `syncData()` 统一触发。
+同 `syncApi`，通常由启动流程统一触发。
 
 ### 同步逻辑
 
@@ -269,13 +280,13 @@ interface SyncMenuStats {
 │     - 角色标识：dev                                 │
 │     - 权限：所有菜单 + 所有 API                     │
 │         ↓                                           │
-│  2. 获取所有菜单 ID 列表                            │
+│  2. 获取所有菜单 path 列表                           │
 │         ↓                                           │
-│  3. 获取所有 API ID 列表                            │
+│  3. 获取所有 API routePath 列表                      │
 │         ↓                                           │
 │  4. 更新角色权限：                                   │
-│     - menus: 所有菜单 ID                           │
-│     - apis: 所有 API ID                            │
+│     - menus: 所有菜单 path（字符串数组）             │
+│     - apis: 所有 API routePath（pathname 字符串数组）│
 │         ↓                                           │
 │  5. 创建/更新开发管理员：                            │
 │     - 用户名：dev                                   │
@@ -286,19 +297,26 @@ interface SyncMenuStats {
 
 ### 配置说明
 
-开发账户配置在 `befly.config.ts` 或环境配置文件中：
+开发账户配置在 `befly.config.ts` 或环境配置文件中（仅当 `devPassword` 有值时才会创建 dev 账号）：
 
-```typescript
-// befly.config.ts
-export default {
-    dev: {
-        username: "dev", // 开发账户用户名
-        password: "dev123456" // 开发账户密码
-    }
-};
+```json
+{
+    "devEmail": "dev@qq.com",
+    "devPassword": "beflydev123456"
+}
 ```
 
-await syncTable(ctx, sources.tables);
+> 注意：`syncDev` 会把 `menus/apis` 写入角色表，并且 `apis` 必须是 pathname 字符串数组（严格模式下不允许 numeric id）。
+
+---
+
+## syncCache 缓存同步
+
+同步缓存（统一收敛到启动流程末尾执行）：
+
+- `cacheApis()`：缓存接口列表
+- `cacheMenus()`：缓存菜单列表
+- `rebuildRoleApiPermissions()`：重建角色接口权限 Set（member 为 pathname，与 method 无关）
 
 ---
 
@@ -306,16 +324,23 @@ await syncTable(ctx, sources.tables);
 
 ```typescript
 import { syncTable } from "./sync/syncTable.js";
+import { syncApi } from "./sync/syncApi.js";
+import { syncCache } from "./sync/syncCache.js";
+import { syncDev } from "./sync/syncDev.js";
+import { syncMenu } from "./sync/syncMenu.js";
 import { scanSources } from "./utils/scanSources.js";
-import { syncData } from "./sync/syncData";
+import { checkMenu } from "./checks/checkMenu.js";
 
 // 启动前/启动中手动触发同步
-// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
+// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）
 const sources = await scanSources();
-await syncTable(ctx, sources.tables);
-await syncData();
+const checkedMenus = await checkMenu(sources.addons, { disableMenus: ctx.config.disableMenus || [] });
 
-// 说明：syncData 内部会固定顺序执行：syncApi → syncMenu → syncDev
+await syncTable(ctx, sources.tables);
+await syncApi(ctx, sources.apis as any);
+await syncMenu(ctx, checkedMenus);
+await syncDev(ctx, { devEmail: ctx.config.devEmail, devPassword: ctx.config.devPassword });
+await syncCache(ctx);
 ```
 
 ---
@@ -357,7 +382,7 @@ addons/demo/tables/article.json   → addon_demo_article
 
 ### 1. 执行顺序
 
-**必须按顺序执行**：`syncTable` → `syncApi` → `syncMenu` → `syncDev`
+**必须按顺序执行**：`syncTable` → `syncApi` → `syncMenu` → `syncDev` → `syncCache`
 
 - `syncApi` 依赖 `addon_admin_api` 表（由 `syncTable` 创建）
 - `syncMenu` 依赖 `addon_admin_menu` 表（由 `syncTable` 创建）
@@ -386,11 +411,10 @@ CacheKeys.tableColumns(tableName); // table:columns:{tableName}
 
 ### 4. 连接管理
 
-Sync 命令会自动管理数据库和 Redis 连接：
+`sync*` 函数本身不会负责建立连接/加载插件：
 
-- 执行前建立连接
-- 执行后关闭连接
-- 出错时正确清理资源
+- 你需要在调用前确保 `Connect.connect(...)` 已执行，并且 `Db/Redis/cache` 插件已注入到 `ctx`。
+- 服务启动流程已内置这套顺序（见 `packages/core/main.ts`）。
 
 ---
 

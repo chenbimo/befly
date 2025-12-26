@@ -121,6 +121,8 @@ export default {
 | `apis/user/register.ts` | `POST /api/user/register` |
 | `apis/article/list.ts`  | `POST /api/article/list`  |
 
+> 注意：上面的写法是“HTTP 请求方法 + url.pathname”。系统内部生成并存储的 `routePath`、角色权限 `role.apis` 以及 Redis 权限缓存都只使用 `url.pathname`（例如 `/api/user/login`），与 method 无关，且禁止写成 `POST/api/...` 或 `POST /api/...`。
+
 ---
 
 ## 配置数据库
@@ -135,7 +137,7 @@ export default {
         "type": "mysql",
         "host": "127.0.0.1",
         "port": 3306,
-        "user": "root",
+        "username": "root",
         "password": "your_password",
         "database": "my_api"
     },
@@ -213,19 +215,31 @@ CREATE DATABASE my_api CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 服务启动时会在**主进程**自动执行同步流程：
 
 1. `syncTable()`：同步表结构
-2. `syncData()`：固定顺序执行 `syncApi` → `syncMenu` → `syncDev`
+2. `syncApi()`：同步接口定义
+3. `syncMenu()`：同步菜单定义
+4. `syncDev()`：同步开发账户/开发角色
+5. `syncCache()`：缓存同步收尾（cacheApis + cacheMenus + rebuildRoleApiPermissions）
 
 如需手动触发，可在代码中调用（一般不建议在请求路径中调用）：
 
 ```typescript
-import { syncData } from "../sync/syncData.js";
 import { syncTable } from "../sync/syncTable.js";
+import { syncApi } from "../sync/syncApi.js";
+import { syncMenu } from "../sync/syncMenu.js";
+import { syncDev } from "../sync/syncDev.js";
+import { syncCache } from "../sync/syncCache.js";
+import { checkMenu } from "../checks/checkMenu.js";
 import { scanSources } from "../utils/scanSources.js";
 
-// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
+// ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）
 const sources = await scanSources();
+const checkedMenus = await checkMenu(sources.addons, { disableMenus: ctx.config.disableMenus || [] });
+
 await syncTable(ctx, sources.tables);
-await syncData();
+await syncApi(ctx, sources.apis as any);
+await syncMenu(ctx, checkedMenus);
+await syncDev(ctx, { devEmail: ctx.config.devEmail, devPassword: ctx.config.devPassword });
+await syncCache(ctx);
 ```
 
 ### 验证同步结果

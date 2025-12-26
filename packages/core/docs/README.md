@@ -77,7 +77,7 @@
 
 ### 运维篇
 
-13. **[Sync](./reference/sync.md)** - syncTable、syncData（内部：syncApi、syncMenu、syncDev）
+13. **[Sync](./reference/sync.md)** - syncTable、syncApi、syncMenu、syncDev、syncCache
 
 ## 常用链接
 
