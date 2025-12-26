@@ -289,11 +289,11 @@ const id = await befly.db.insData({
 import { CacheKeys } from "befly/lib/cacheKeys";
 
 // 获取键名
-const apisAllKey = CacheKeys.apisAll(); // 'befly:apis:all'
-const menusAllKey = CacheKeys.menusAll(); // 'befly:menus:all'
-const adminRoleInfoKey = CacheKeys.roleInfo("admin"); // 'befly:role:info:admin'
-const adminRoleApisKey = CacheKeys.roleApis("admin"); // 'befly:role:apis:admin'
-const userTableColumnsKey = CacheKeys.tableColumns("user"); // 'befly:table:columns:user'
+const apisAllKey = CacheKeys.apisAll(); // 'apis:all'
+const menusAllKey = CacheKeys.menusAll(); // 'menus:all'
+const adminRoleInfoKey = CacheKeys.roleInfo("admin"); // 'role:info:admin'
+const adminRoleApisKey = CacheKeys.roleApis("admin"); // 'role:apis:admin'
+const userTableColumnsKey = CacheKeys.tableColumns("user"); // 'table:columns:user'
 ```
 
 ### 键名前缀
@@ -311,7 +311,7 @@ Redis 插件支持配置全局前缀，避免键名冲突：
 所有键会自动添加前缀，最终写入 Redis 的 key 形如：`myapp:<key>`。
 
 - 例如：你调用 `befly.redis.getString("user:1")`，实际访问的是 `myapp:user:1`
-- 例如：你调用 `befly.redis.sismember(CacheKeys.roleApis("admin"), "/api/user")`，实际访问的是 `myapp:befly:role:apis:admin`
+- 例如：你调用 `befly.redis.sismember(CacheKeys.roleApis("admin"), "/api/user")`，实际访问的是 `myapp:role:apis:admin`
 
 > 注意：`redis.prefix` **不允许包含** `:`，因为 RedisHelper 会自动拼接分隔符 `:`。
 

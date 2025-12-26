@@ -9,30 +9,30 @@
 export class CacheKeys {
     /** 所有接口缓存 */
     static apisAll(): string {
-        return "befly:apis:all";
+        return "apis:all";
     }
 
     /** 所有菜单缓存 */
     static menusAll(): string {
-        return "befly:menus:all";
+        return "menus:all";
     }
 
     /** 角色信息缓存（完整角色对象） */
     static roleInfo(roleCode: string): string {
-        return `befly:role:info:${roleCode}`;
+        return `role:info:${roleCode}`;
     }
 
     /**
      * 角色接口权限缓存（Set 集合）
-     * - key: befly:role:apis:${roleCode}
+     * - key: role:apis:${roleCode}
      * - member: url.pathname（例如 /api/user/login；与 method 无关）
      */
     static roleApis(roleCode: string): string {
-        return `befly:role:apis:${roleCode}`;
+        return `role:apis:${roleCode}`;
     }
 
     /** 表结构缓存 */
     static tableColumns(table: string): string {
-        return `befly:table:columns:${table}`;
+        return `table:columns:${table}`;
     }
 }
