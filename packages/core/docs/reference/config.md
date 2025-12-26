@@ -207,14 +207,14 @@ befly.development.json 或 befly.production.json（环境配置）
 
 ### Redis 配置 (redis)
 
-| 配置项     | 类型   | 默认值          | 说明             |
-| ---------- | ------ | --------------- | ---------------- |
-| `host`     | string | `'127.0.0.1'`   | Redis 主机       |
-| `port`     | number | `6379`          | Redis 端口       |
-| `username` | string | `''`            | Redis 用户名     |
-| `password` | string | `''`            | Redis 密码       |
-| `db`       | number | `0`             | Redis 数据库索引 |
-| `prefix`   | string | `'befly_demo:'` | Redis Key 前缀   |
+| 配置项     | 类型   | 默认值         | 说明                                                   |
+| ---------- | ------ | -------------- | ------------------------------------------------------ |
+| `host`     | string | `'127.0.0.1'`  | Redis 主机                                             |
+| `port`     | number | `6379`         | Redis 端口                                             |
+| `username` | string | `''`           | Redis 用户名                                           |
+| `password` | string | `''`           | Redis 密码                                             |
+| `db`       | number | `0`            | Redis 数据库索引                                       |
+| `prefix`   | string | `'befly_demo'` | Redis Key 前缀（不允许包含 `:`，分隔符由系统自动拼接） |
 
 ```json
 {
@@ -223,7 +223,7 @@ befly.development.json 或 befly.production.json（环境配置）
         "port": 6379,
         "password": "redis_password",
         "db": 1,
-        "prefix": "myapp:"
+        "prefix": "myapp"
     }
 }
 ```
