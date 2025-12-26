@@ -1,6 +1,6 @@
 {
     "name": "befly",
-    "version": "3.9.40",
+    "version": "3.10.0",
     "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc",
     "private": false,
     "description": "Befly - 为 Bun 专属打造的 TypeScript API 接口框架核心引擎",
