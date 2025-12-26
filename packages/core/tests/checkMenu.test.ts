@@ -202,7 +202,7 @@ describe("checkMenu", () => {
         }
     });
 
-    test("默认应屏蔽 /404 /403 /500 /login /addon/admin/login 菜单路由", async () => {
+    test("默认应屏蔽 /404 /403 /500 以及所有以 /login 结尾的菜单路由", async () => {
         const originalCwd = process.cwd();
         const projectDir = join(originalCwd, "temp", `checkMenu-default-disable-${Date.now()}-${Math.random().toString(16).slice(2)}`);
         const menusJsonPath = join(projectDir, "menus.json");
