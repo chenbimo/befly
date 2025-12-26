@@ -7,7 +7,6 @@
     "files": [
         ".env",
         ".env.development",
-        ".env.local",
         ".env.production",
         ".gitignore",
         "bunfig.toml",
