@@ -1,3 +1,5 @@
+import type { BeflyContext } from "../types/befly.js";
+
 import { Cipher } from "../lib/cipher.js";
 import { Logger } from "../lib/logger.js";
 
@@ -6,7 +8,7 @@ export type SyncDevConfig = {
     devPassword?: string;
 };
 
-export async function syncDev(ctx: any, config: SyncDevConfig = {}): Promise<void> {
+export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Promise<void> {
     if (!config.devPassword) {
         return;
     }

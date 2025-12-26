@@ -18,8 +18,8 @@ export default {
     async handler(context: BeflyContext): Promise<RedisHelper | Record<string, never>> {
         const redisConfig = context.config && context.config.redis ? context.config.redis : {};
         try {
-            // 初始化 Redis 客户端
-            await Connect.connectRedis(redisConfig);
+            // 启动期已建立 Redis 连接；这里仅校验连接存在
+            Connect.getRedis();
 
             // 返回 RedisHelper 实例
             return new RedisHelper(redisConfig.prefix);

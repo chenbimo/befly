@@ -17,14 +17,12 @@ import { Logger } from "../lib/logger.js";
 export default {
     deps: ["logger", "redis"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
-        let sql: any = null;
-
         if (!(befly as any).redis) {
             throw new Error("数据库初始化失败：ctx.redis 未初始化（Redis 插件未加载或注入失败）");
         }
 
         try {
-            sql = await Connect.connectSql(befly.config ? befly.config.db : undefined);
+            const sql = Connect.getSql();
 
             // 创建数据库管理器实例
             const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: new MySqlDialect() });
@@ -32,16 +30,6 @@ export default {
             return dbManager;
         } catch (error: any) {
             Logger.error({ err: error }, "数据库初始化失败");
-
-            // 清理资源
-            if (sql) {
-                try {
-                    await sql.close();
-                } catch (cleanupError: any) {
-                    Logger.error({ err: cleanupError }, "清理连接池失败");
-                }
-            }
-
             throw error;
         }
     }

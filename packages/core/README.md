@@ -240,19 +240,50 @@ export const beflyConfig = {
 
 ### 数据库连接
 
-框架会自动从 `beflyConfig` 获取配置并建立连接，无需手动传参：
+通常你不需要手动连接（框架启动期会完成连接并注入插件实例）。
+
+如果你在自定义脚本/测试中需要手动连接，请显式传入配置片段（不要依赖全局单例配置）：
 
 ```typescript
 import { Connect } from "befly/lib/connect";
 
-// 连接 SQL 数据库（配置自动从 beflyConfig.db 获取）
-await Connect.connectSql();
+// 连接 SQL 数据库
+await Connect.connectSql({
+    type: "mysql",
+    host: "127.0.0.1",
+    port: 3306,
+    username: "root",
+    password: "root",
+    database: "befly_demo",
+    poolMax: 1
+});
 
-// 连接 Redis（配置自动从 beflyConfig.redis 获取）
-await Connect.connectRedis();
+// 连接 Redis
+await Connect.connectRedis({
+    host: "127.0.0.1",
+    port: 6379,
+    db: 0,
+    prefix: "befly:"
+});
 
-// 同时连接 SQL 和 Redis
-await Connect.connect();
+// 或：同时连接 SQL 和 Redis
+await Connect.connect({
+    db: {
+        type: "mysql",
+        host: "127.0.0.1",
+        port: 3306,
+        username: "root",
+        password: "root",
+        database: "befly_demo",
+        poolMax: 1
+    },
+    redis: {
+        host: "127.0.0.1",
+        port: 6379,
+        db: 0,
+        prefix: "befly:"
+    }
+});
 
 // 获取连接状态
 const status = Connect.getStatus();

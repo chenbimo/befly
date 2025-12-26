@@ -12,7 +12,12 @@ let redis: RedisHelper;
 
 beforeAll(async () => {
     // 连接 Redis
-    await Connect.connectRedis();
+    await Connect.connectRedis({
+        host: "127.0.0.1",
+        port: 6379,
+        db: 0,
+        prefix: "befly:"
+    });
     redis = new RedisHelper();
 });
 

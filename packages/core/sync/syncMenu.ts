@@ -1,3 +1,4 @@
+import type { BeflyContext } from "../types/befly.js";
 import type { MenuConfig } from "../types/sync.js";
 
 import { Logger } from "../lib/logger.js";
@@ -67,7 +68,7 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
     return menuDefMap;
 }
 
-export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<void> {
+export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Promise<void> {
     if (!ctx.db) {
         throw new Error("syncMenu: ctx.db 未初始化（Db 插件未加载或注入失败）");
     }
@@ -86,7 +87,7 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
     }
 
     // 防御性过滤：保证禁用菜单不会进入 DB（即使上游遗漏了 checkMenu 的过滤）
-    const disableRules = compileDisableMenuGlobRules((ctx as any)?.config?.disableMenus);
+    const disableRules = compileDisableMenuGlobRules(ctx.config?.disableMenus);
     const filteredMergedMenus: MenuConfig[] =
         disableRules.length === 0
             ? mergedMenus

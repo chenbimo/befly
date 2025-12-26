@@ -462,28 +462,13 @@ export default {
 ### 在插件中访问
 
 ```typescript
-import { beflyConfig } from "../befly.config.js";
-
 const plugin: Plugin = {
-    handler: () => {
-        const port = beflyConfig.appPort;
-        const dbConfig = beflyConfig.db;
+    handler: (context) => {
+        const port = context.config.appPort;
+        const dbConfig = context.config.db;
         // ...
     }
 };
-```
-
-### 直接导入（仅 Befly 源码/单仓内）
-
-> 说明：`befly` 包的 `exports` 仅暴露 `befly`、`befly/lib/*`、`befly/utils/*`、`befly/types/*`。
-> 因此不支持 `befly/befly.config` 这种子路径导入。
-
-如果你在 Befly 源码/单仓内开发（例如编写内置插件/命令），可以使用相对路径导入：
-
-```typescript
-import { beflyConfig } from "../befly.config.js";
-
-console.log(beflyConfig.appName);
 ```
 
 ---

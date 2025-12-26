@@ -252,8 +252,9 @@ const redisConfig = befly.config.redis;
 const dbPlugin: Plugin = {
     deps: ["logger", "redis"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
-        const sql = await Connect.connectSql();
-        return new DbHelper(befly, sql);
+        // 连接由启动期统一完成；插件仅消费已连接实例
+        const sql = Connect.getSql();
+        return new DbHelper({ redis: befly.redis, sql: sql, dialect: new MySqlDialect() });
     }
 };
 ```
@@ -287,7 +288,8 @@ await befly.db.delData({ table: "user", where: { id: 1 } });
 const redisPlugin: Plugin = {
     deps: ["logger"],
     async handler(): Promise<RedisHelper | Record<string, never>> {
-        await Connect.connectRedis();
+        // 连接由启动期统一完成；插件仅校验连接存在
+        Connect.getRedis();
         return new RedisHelper(redisConfig.prefix);
     }
 };
