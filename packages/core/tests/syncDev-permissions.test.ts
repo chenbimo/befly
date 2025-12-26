@@ -76,6 +76,6 @@ describe("syncDev - dev role permissions", () => {
         expect(devRoleInsert.data.menus).toEqual(["/dashboard", "/permission/role"]);
         expect(devRoleInsert.data.apis).toEqual(["/api/health", "/api/addon/addonAdmin/auth/login"]);
 
-        expect(calls.rebuildRoleApiPermissionsCount).toBe(1);
+        expect(calls.rebuildRoleApiPermissionsCount).toBe(0);
     });
 });

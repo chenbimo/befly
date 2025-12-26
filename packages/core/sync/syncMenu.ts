@@ -292,7 +292,7 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
         }
     });
 
-    await ctx.cache.cacheMenus();
+    // 缓存同步职责已收敛到 syncCache（启动流程单点调用），此处只负责 DB 同步。
 }
 
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）

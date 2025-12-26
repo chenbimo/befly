@@ -27,6 +27,7 @@ import { apiHandler } from "./router/api.js";
 import { staticHandler } from "./router/static.js";
 // 同步
 import { syncApi } from "./sync/syncApi.js";
+import { syncCache } from "./sync/syncCache.js";
 import { syncDev } from "./sync/syncDev.js";
 import { syncMenu } from "./sync/syncMenu.js";
 import { syncTable } from "./sync/syncTable.js";
@@ -109,6 +110,9 @@ export class Befly {
 
             await syncMenu(this.context as BeflyContext, checkedMenus);
             await syncDev(this.context as BeflyContext, { devEmail: this.config.devEmail, devPassword: this.config.devPassword });
+
+            // 缓存同步：统一在所有同步完成后执行（cacheApis + cacheMenus + rebuildRoleApiPermissions）
+            await syncCache(this.context as BeflyContext);
 
             // 3. 加载钩子
             this.hooks = await loadHooks(hooks as any, this.config!.disableHooks || []);

@@ -110,8 +110,5 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
             Logger.error({ err: error }, "同步接口批量删除失败");
         }
     }
-    await ctx.cache.cacheApis();
-
-    // API 表发生变更后，重建角色接口权限缓存
-    await ctx.cache.rebuildRoleApiPermissions();
+    // 缓存同步职责已收敛到 syncCache（启动流程单点调用），此处只负责 DB 同步。
 }

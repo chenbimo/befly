@@ -192,6 +192,4 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
             data: devData
         });
     }
-
-    await ctx.cache.rebuildRoleApiPermissions();
 }

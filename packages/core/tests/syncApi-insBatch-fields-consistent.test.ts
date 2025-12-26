@@ -54,7 +54,8 @@ describe("syncApi - insBatch rows consistency", () => {
         expect(typeof rows[1].addonName).toBe("string");
         expect(rows[1].addonName).toBe("");
 
-        expect(calls.cacheApis).toBe(1);
-        expect(calls.rebuildRoleApiPermissions).toBe(1);
+        // 缓存同步职责已收敛到 syncCache（启动流程单点调用）
+        expect(calls.cacheApis).toBe(0);
+        expect(calls.rebuildRoleApiPermissions).toBe(0);
     });
 });
