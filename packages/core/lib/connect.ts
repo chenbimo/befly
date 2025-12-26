@@ -30,7 +30,7 @@ export class Connect {
      * 连接 SQL 数据库
      * @returns SQL 客户端实例
      */
-    static async connectSql(dbConfig: DatabaseConfig | undefined = undefined): Promise<SQL> {
+    static async connectSql(dbConfig: DatabaseConfig): Promise<SQL> {
         const config = dbConfig || {};
 
         // 构建数据库连接字符串
@@ -137,7 +137,7 @@ export class Connect {
      * 连接 Redis
      * @returns Redis 客户端实例
      */
-    static async connectRedis(redisConfig: RedisConfig | undefined = undefined): Promise<RedisClient> {
+    static async connectRedis(redisConfig: RedisConfig): Promise<RedisClient> {
         const config = redisConfig || {};
 
         try {
@@ -210,13 +210,13 @@ export class Connect {
     /**
      * 连接所有数据库（SQL + Redis）
      */
-    static async connect(config: { db?: DatabaseConfig; redis?: RedisConfig } = {}): Promise<void> {
+    static async connect(config: { db: DatabaseConfig; redis: RedisConfig }): Promise<void> {
         try {
             // 连接 SQL
-            await this.connectSql(config.db);
+            await this.connectSql(config.db || {});
 
             // 连接 Redis
-            await this.connectRedis(config.redis);
+            await this.connectRedis(config.redis || {});
         } catch (error: any) {
             Logger.error({ err: error }, "数据库初始化失败");
             await this.disconnect();

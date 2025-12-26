@@ -7,7 +7,7 @@ import type { BeflyContext } from "../types/befly.js";
 import type { Plugin } from "../types/plugin.js";
 
 import { Connect } from "../lib/connect.js";
-import { MySqlDialect } from "../lib/dbDialect.js";
+import { getDialectByName } from "../lib/dbDialect.js";
 import { DbHelper } from "../lib/dbHelper.js";
 import { Logger } from "../lib/logger.js";
 
@@ -24,8 +24,12 @@ export default {
         try {
             const sql = Connect.getSql();
 
+            const rawDbType = befly.config && befly.config.db ? befly.config.db.type : undefined;
+            const resolvedDbType = rawDbType === "postgres" ? "postgresql" : rawDbType;
+            const dialect = getDialectByName(resolvedDbType === "postgresql" || resolvedDbType === "sqlite" ? resolvedDbType : "mysql");
+
             // 创建数据库管理器实例
-            const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: new MySqlDialect() });
+            const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: dialect });
 
             return dbManager;
         } catch (error: any) {

@@ -84,8 +84,8 @@ export class Befly {
             // 1. 启动期建立基础连接（SQL + Redis）
             // 说明：连接职责收敛到启动期单点；插件只消费已连接实例（Connect.getSql/getRedis）。
             await Connect.connect({
-                db: this.config.db,
-                redis: this.config.redis
+                db: this.config.db || {},
+                redis: this.config.redis || {}
             });
 
             // 2. 加载插件
