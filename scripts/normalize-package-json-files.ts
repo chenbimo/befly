@@ -9,6 +9,7 @@ const SKIP_DIR_NAMES = new Set([
     ".git",
     ".bun",
     "node_modules",
+    ".env.local",
     // 临时目录不参与（避免处理脚本自身或用户临时文件）
     "temp"
 ]);
