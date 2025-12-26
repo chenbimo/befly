@@ -100,11 +100,13 @@ export function arrayToTree<T extends Record<string, any>>(items: T[], id: strin
     };
 
     const sortTreeInPlace = (nodes: Array<T>, seen: WeakSet<object>): void => {
-        if (!Array.isArray(nodes) || nodes.length <= 1) {
+        if (!Array.isArray(nodes)) {
             return;
         }
 
-        nodes.sort(compareNode);
+        if (nodes.length > 1) {
+            nodes.sort(compareNode);
+        }
 
         for (const node of nodes) {
             if (typeof node !== "object" || node === null) {
