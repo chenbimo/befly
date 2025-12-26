@@ -122,7 +122,7 @@ export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions =
 
         const path = typeof menu.path === "string" ? menu.path.trim() : "";
         const name = typeof menu.name === "string" ? menu.name.trim() : "";
-        const sort = typeof menu.sort === "number" ? menu.sort : 999;
+        const sort = typeof menu.sort === "number" ? menu.sort : 999999;
 
         // 标准化输出（用于后续 syncMenu 直接使用）
         if (typeof menu.path === "string") {

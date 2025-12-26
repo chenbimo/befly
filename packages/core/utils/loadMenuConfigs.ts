@@ -68,7 +68,7 @@ export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string
         const menu: MenuConfig = {
             name: meta.title,
             path: fullPath,
-            sort: meta.order ?? 999
+            sort: meta.order ?? 999999
         };
 
         const children = await scanViewsDirToMenuConfigs(dirPath, prefix, menuPath);
@@ -79,7 +79,7 @@ export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string
         menus.push(menu);
     }
 
-    menus.sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999));
+    menus.sort((a, b) => (a.sort ?? 999999) - (b.sort ?? 999999));
 
     return menus;
 }

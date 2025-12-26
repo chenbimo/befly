@@ -51,7 +51,7 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
             continue;
         }
 
-        const sort = typeof (menu as any).sort === "number" ? (menu as any).sort : 999;
+        const sort = typeof (menu as any).sort === "number" ? (menu as any).sort : 999999;
 
         const hasExplicitParentPath = typeof (menu as any).parentPath === "string";
         const parentPath = hasExplicitParentPath ? ((menu as any).parentPath as string) : typeof item?.parentPathFromTree === "string" ? item.parentPathFromTree : getParentPath(path);
