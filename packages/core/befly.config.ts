@@ -47,7 +47,7 @@ const defaultOptions: BeflyOptions = {
         username: "",
         password: "",
         db: 0,
-        prefix: "befly_demo:"
+        prefix: "befly_demo"
     },
 
     // ========== 认证配置 ==========
@@ -106,6 +106,16 @@ export async function loadBeflyConfig(options: LoadBeflyConfigOptions = {}): Pro
         mode: "merge",
         defaults: defaultOptions
     });
+
+    // 配置校验：redis.prefix 作为 key 前缀，由 RedisHelper 统一拼接 ":"。
+    // 因此 prefix 不允许以 ":" 结尾，否则会出现 "prefix::key"，在 RedisInsight 等工具里会显示 [NO NAME] 空分组。
+    const redisPrefix = (config as any)?.redis?.prefix;
+    if (typeof redisPrefix === "string") {
+        const trimmedPrefix = redisPrefix.trim();
+        if (trimmedPrefix.endsWith(":")) {
+            throw new Error(`配置错误：redis.prefix 不允许以 ':' 结尾（请改为不带尾随冒号，例如 'befly_demo'），当前值=${redisPrefix}`);
+        }
+    }
 
     // 预编译 disableMenus 的 Bun.Glob 规则：
     // - 提前暴露配置错误（fail-fast）
