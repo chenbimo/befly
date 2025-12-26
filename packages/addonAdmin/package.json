@@ -47,11 +47,11 @@
     "dependencies": {
         "befly": "^3.9.40",
         "befly-vite": "^1.1.13",
-        "nodemailer": "^7.0.11",
+        "nodemailer": "^7.0.12",
         "ua-parser-js": "^2.0.7"
     },
     "devDependencies": {
-        "@iconify-json/lucide": "^1.2.80",
+        "@iconify-json/lucide": "^1.2.82",
         "@types/nodemailer": "^7.0.4",
         "@types/ua-parser-js": "^0.7.39",
         "pinia": "^3.0.4",
@@ -60,7 +60,7 @@
         "vue-router": "^4.6.4"
     },
     "peerDependencies": {
-        "@iconify-json/lucide": "^1.2.80",
+        "@iconify-json/lucide": "^1.2.82",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.17.7",
         "vue": "^3.5.26",

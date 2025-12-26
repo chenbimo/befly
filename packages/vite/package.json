@@ -36,13 +36,13 @@
         "scanViewsDir": "bun ./bin/scanViewsDir.ts"
     },
     "dependencies": {
-        "@unocss/preset-attributify": "^66.5.10",
-        "@unocss/preset-uno": "^66.5.10",
+        "@unocss/preset-attributify": "^66.5.11",
+        "@unocss/preset-uno": "^66.5.11",
         "@vitejs/plugin-vue": "^6.0.3",
         "@vue-macros/reactivity-transform": "^3.1.1",
         "befly-shared": "workspace:*",
-        "sass": "^1.96.0",
-        "unocss": "^66.5.10",
+        "sass": "^1.97.1",
+        "unocss": "^66.5.11",
         "unplugin-auto-import": "^20.3.0",
         "unplugin-icons": "^22.5.0",
         "unplugin-vue-components": "^30.0.0",
@@ -52,7 +52,7 @@
         "vite-plugin-vue-devtools": "^8.0.5"
     },
     "peerDependencies": {
-        "vite": "^8.0.0-beta.3",
+        "vite": "^8.0.0-beta.5",
         "vue": "^3.5.26"
     },
     "engines": {
