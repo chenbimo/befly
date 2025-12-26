@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { beflyConfig } from "../befly.config.js";
 import { checkMenu } from "../checks/checkMenu.js";
 
 describe("checkMenu", () => {
@@ -168,6 +169,42 @@ describe("checkMenu", () => {
                 expect(typeof thrown.message).toBe("string");
                 expect(thrown.message.includes("disableMenus")).toBe(true);
             }
+        } finally {
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
+        }
+    });
+
+    test("默认应屏蔽 /404 /403 /500 /login /addon/admin/login 菜单路由", async () => {
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `checkMenu-default-disable-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
+
+        try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
+            writeFileSync(
+                menusJsonPath,
+                JSON.stringify(
+                    [
+                        { name: "Login", path: "/login", sort: 1 },
+                        { name: "AddonLogin", path: "/addon/admin/login", sort: 2 },
+                        { name: "404", path: "/404", sort: 3 },
+                        { name: "403", path: "/403", sort: 4 },
+                        { name: "500", path: "/500", sort: 5 },
+                        { name: "A", path: "/a", sort: 6 }
+                    ],
+                    null,
+                    4
+                ),
+                { encoding: "utf8" }
+            );
+
+            const menus = await checkMenu([], { disableMenus: beflyConfig.disableMenus || [] });
+            expect(Array.isArray(menus)).toBe(true);
+            expect(menus).toHaveLength(1);
+            expect(menus[0]?.path).toBe("/a");
         } finally {
             process.chdir(originalCwd);
             rmSync(projectDir, { recursive: true, force: true });
