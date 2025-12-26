@@ -5,6 +5,7 @@
 ## 目录
 
 - [概述](#概述)
+- [强约束清单](#强约束清单)
 - [syncTable 数据库同步](#synctable-数据库同步)
 - [syncApi 接口同步](#syncapi-接口同步)
 - [syncMenu 菜单同步](#syncmenu-菜单同步)
@@ -29,6 +30,15 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 | `syncCache` | 同步缓存          | Redis（apis/menu/role-permissions）     |
 
 **执行顺序**：`syncTable` → `syncApi` → `syncMenu` → `syncDev` → `syncCache`
+
+---
+
+## 强约束清单
+
+- **API routePath 必须是 pathname**：`syncApi` 写入数据库的 `routePath` 仅允许 `url.pathname`（例如 `/api/user/login`），禁止出现 method 前缀（`POST/api/...`、`POST /api/...`）。
+- **角色权限 apis 仅允许 pathname 字符串数组**：`syncDev` 写入角色表的 `apis` 必须是 pathname 字符串数组（严格模式不允许 numeric id）。
+- **权限缓存 Set member 仅允许 pathname**：角色接口权限缓存的 Set 成员为 pathname，与 method 无关。
+- **Redis prefix 不允许包含冒号**：配置 `redis.prefix` 不要包含 `:`（系统会自动拼接分隔符）。例如写 `befly`，不要写 `befly:`。
 
 > 说明：当前版本不提供 CLI 同步命令；同步逻辑在服务启动时由主进程自动执行（见 `packages/core/main.ts`）。
 
@@ -273,25 +283,25 @@ interface SyncMenuStats {
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   syncDev                           │
+│ syncDev │
 ├─────────────────────────────────────────────────────┤
-│  1. 创建/更新开发角色：                              │
-│     - 角色名称：开发者                              │
-│     - 角色标识：dev                                 │
-│     - 权限：所有菜单 + 所有 API                     │
-│         ↓                                           │
-│  2. 获取所有菜单 path 列表                           │
-│         ↓                                           │
-│  3. 获取所有 API routePath 列表                      │
-│         ↓                                           │
-│  4. 更新角色权限：                                   │
-│     - menus: 所有菜单 path（字符串数组）             │
-│     - apis: 所有 API routePath（pathname 字符串数组）│
-│         ↓                                           │
-│  5. 创建/更新开发管理员：                            │
-│     - 用户名：dev                                   │
-│     - 密码：从配置读取                              │
-│     - 角色：开发者角色                              │
+│ 1. 创建/更新开发角色： │
+│ - 角色名称：开发者 │
+│ - 角色标识：dev │
+│ - 权限：所有菜单 + 所有 API │
+│ ↓ │
+│ 2. 获取所有菜单 path 列表 │
+│ ↓ │
+│ 3. 获取所有 API routePath 列表 │
+│ ↓ │
+│ 4. 更新角色权限： │
+│ - menus: 所有菜单 path（字符串数组） │
+│ - apis: 所有 API routePath（pathname 字符串数组）│
+│ ↓ │
+│ 5. 创建/更新开发管理员： │
+│ - 用户名：dev │
+│ - 密码：从配置读取 │
+│ - 角色：开发者角色 │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -449,28 +459,20 @@ A: Addon 表名格式为 `addon_{addonName}_{tableName}`，建议：
 
 A:
 
-1. 检查错误日志确定失败原因
-   A: `syncTable()` 会跳过长度收缩并告警；请手动评估并处理（例如先清理/截断数据，再手动执行 DDL），再重新启动服务或再次调用 `syncTable()`。
+1. 检查错误日志确定失败原因（例如表不存在、字段变更被跳过等）
 2. sync 命令是幂等的，可以安全地多次执行
 
 ### Q: 如何只同步某个 Addon 的表？
 
-await syncTable(ctx, sources.tables);
 A: 当前不支持按 Addon 或单表筛选；会同步项目与所有 Addon 的表定义。
 
 ### Q: 开发账户密码在哪里配置？
 
-A: 在配置文件中设置：
+A: 在配置文件中设置（仅当 `devPassword` 有值时才会创建 dev 账号）：
 
-```typescript
-// befly.config.ts
-export default {
-    dev: {
-        username: "dev",
-        password: "your_password"
-    }
-};
+```json
+{
+    "devEmail": "dev@qq.com",
+    "devPassword": "beflydev123456"
+}
 ```
-
-（不再提供 CLI 参数/命令；按配置文件机制设置即可。）
-await syncTable(ctx, sources.tables);

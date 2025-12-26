@@ -98,8 +98,8 @@ Logger.info("用户登录成功");
 Logger.info({ userId: 123 }, "用户登录成功");
 
 // 警告日志
-Logger.warn("配置项已弃用");
-Logger.warn({ config: "oldOption" }, "配置项已弃用");
+Logger.warn("配置项不合法");
+Logger.warn({ config: "oldOption" }, "配置项不合法");
 
 // 错误日志
 Logger.error("数据库连接失败");
@@ -393,7 +393,7 @@ Logger.debug({ sql: query, params: params }, "SQL 查询");
 Logger.info({ userId: 123 }, "用户登录成功");
 
 // warn: 潜在问题，但不影响功能
-Logger.warn({ config: "deprecated" }, "配置项已弃用");
+Logger.warn({ config: "invalidOption" }, "配置项不合法");
 
 // error: 操作失败
 Logger.error({ err: error }, "数据库连接失败");

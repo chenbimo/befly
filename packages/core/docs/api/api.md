@@ -8,6 +8,7 @@
     - [目录](#目录)
     - [概述](#概述)
         - [核心特性](#核心特性)
+    - [强约束清单](#强约束清单)
     - [目录结构](#目录结构-1)
         - [项目 API](#项目-api)
         - [Addon API](#addon-api)
@@ -78,6 +79,15 @@ Befly 框架的 API 系统是一套基于约定优于配置的接口开发体系
 
 ---
 
+## 强约束清单
+
+- **权限/路由匹配只看 pathname**：系统内部用于路由匹配与权限判断的值均为 `url.pathname`（例如 `/api/user/login`），与 method 无关。
+- **禁止写法**：禁止把权限或路由路径写成 `POST/api/...` 或 `POST /api/...`（这些只是一种“请求行展示写法”，不能进入任何存储/配置/权限集合）。
+- **routePath 必须严格合法**：必须以 `/api/` 开头、不得包含空格、不得出现 `/api//`。
+- **同一路径多方法共用权限**：同一个 pathname（例如 `/api/user/login`）即使同时注册 GET/POST，也共用同一套权限集合。
+
+---
+
 ## 目录结构
 
 ### 项目 API
@@ -139,7 +149,7 @@ export default {
     fields: {}, // 字段定义（验证规则）
     required: [], // 必填字段列表
     rawBody: false // 是否保留原始请求体
-    // 缓存/限流：已统一迁移为 Hook 能力（见 hook 文档/配置），不再挂载在接口定义上
+    // 缓存/限流：当前实现为 Hook 能力（见 hook 文档/配置），不再挂载在接口定义上
 } as ApiRoute;
 ```
 
@@ -1276,12 +1286,16 @@ if (!ctx.user?.id) {
 | `addonAdmin/apis/auth/login.ts` | `POST /api/addon/addonAdmin/auth/login` |
 | `addonAdmin/apis/admin/list.ts` | `POST /api/addon/addonAdmin/admin/list` |
 
+> 注意：上表中的 `POST /api/...` 是“请求行示意”。系统内部生成并存储的 `ctx.route` / 数据库 `routePath` / 角色权限 `role.apis` / Redis 权限缓存都只使用 `url.pathname`（例如 `/api/user/login`），与 method 无关；权限数据禁止写成 `POST /api/...` 或 `POST/api/...`。
+
 ### 多方法注册
 
 当 `method: 'GET,POST'` 时，会同时注册两个路由：
 
 - `GET /api/user/search`
 - `POST /api/user/search`
+
+> 权限校验只看 pathname：如果同一个 pathname 同时注册了多个 method，它们共享同一套权限（以 `/api/user/search` 作为权限值）。
 
 ---
 

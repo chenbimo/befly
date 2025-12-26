@@ -220,7 +220,7 @@ export const beflyConfig = {
     redis: {
         host: "127.0.0.1",
         port: 6379,
-        prefix: "befly:"
+        prefix: "befly"
     },
 
     // CORS 跨域配置
@@ -237,6 +237,8 @@ export const beflyConfig = {
     }
 };
 ```
+
+> 注意：`redis.prefix` 不要包含 `:`（系统会自动拼接分隔符）。
 
 ### 数据库连接
 
@@ -263,7 +265,7 @@ await Connect.connectRedis({
     host: "127.0.0.1",
     port: 6379,
     db: 0,
-    prefix: "befly:"
+    prefix: "befly"
 });
 
 // 或：同时连接 SQL 和 Redis
@@ -281,7 +283,7 @@ await Connect.connect({
         host: "127.0.0.1",
         port: 6379,
         db: 0,
-        prefix: "befly:"
+        prefix: "befly"
     }
 });
 
@@ -294,19 +296,14 @@ console.log(status.redis.connected); // true/false
 await Connect.disconnect();
 ```
 
-### 配置文件迁移指南
+### 配置文件（当前约定）
 
-如果你的项目之前使用 `app.config.ts`，请按以下步骤迁移：
-
-1. **重命名文件**：`app.config.ts` → `befly.config.ts`
-2. **更新导出名**：`config` → `beflyConfig`
+配置文件名为 `befly.config.ts`，导出名为 `beflyConfig`：
 
 ```typescript
-// 旧写法
-export const config = { ... };
-
-// 新写法
-export const beflyConfig = { ... };
+export const beflyConfig = {
+    // ...
+};
 ```
 
 ## 📖 文档

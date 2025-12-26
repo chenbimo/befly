@@ -2,18 +2,24 @@
 
 > Befly 是基于 Bun 的高性能 API 框架
 
+## 文档原则
+
+- 文档只描述**当前实现**：不提供迁移指引、不保留兼容说明、不出现“已迁移/跳转页/占位页”。
+- 如文档与代码行为不一致：**以代码为准**，应直接修正文档。
+- 规则以“可执行/可验证”为标准：给出明确约束（例如 pathname-only、严格校验规则），避免含糊表述。
+
 ## 快速开始
 
 - [Quickstart 快速入门](./guide/quickstart.md) - 5 分钟搭建第一个 API 服务
 
 ## 核心概念
 
-| 文档                                     | 说明                         |
-| ---------------------------------------- | ---------------------------- |
-| [API 开发](./api/api.md)                 | API 定义、字段验证、权限控制 |
-| [Table 表结构](./reference/table.md)     | JSON 表定义格式、字段类型    |
-| [Database 数据库](./plugins/database.md) | CRUD 操作、事务、批量操作    |
-| [Config 配置](./reference/config.md)     | 配置文件、环境分离           |
+| 文档                                     | 说明                                                                  |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| [API 开发](./api/api.md)                 | API 定义、字段验证、权限控制（[强约束清单](./api/api.md#强约束清单)） |
+| [Table 表结构](./reference/table.md)     | JSON 表定义格式、字段类型                                             |
+| [Database 数据库](./plugins/database.md) | CRUD 操作、事务、批量操作                                             |
+| [Config 配置](./reference/config.md)     | 配置文件、环境分离                                                    |
 
 ## 扩展开发
 
@@ -41,9 +47,9 @@
 
 ## 命令工具
 
-| 文档                             | 说明                  |
-| -------------------------------- | --------------------- |
-| [Sync 同步](./reference/sync.md) | 数据库、API、菜单同步 |
+| 文档                             | 说明                                                                  |
+| -------------------------------- | --------------------------------------------------------------------- |
+| [Sync 同步](./reference/sync.md) | 数据库、API、菜单同步（[强约束清单](./reference/sync.md#强约束清单)） |
 
 ## 实战示例
 
@@ -57,7 +63,7 @@
 
 ### 开发篇
 
-2. **[API](./api/api.md)** - API 路由定义、字段验证、权限控制、响应格式
+2. **[API](./api/api.md)** - API 路由定义、字段验证、权限控制、响应格式（[强约束清单](./api/api.md#强约束清单)）
 3. **[Table](./reference/table.md)** - 表定义格式、字段类型、系统字段、命名规范
 4. **[Database](./plugins/database.md)** - 数据库连接、CRUD 操作、事务处理、批量操作
 5. **[Config](./reference/config.md)** - 配置文件结构、环境分离、运行时配置
@@ -77,7 +83,7 @@
 
 ### 运维篇
 
-13. **[Sync](./reference/sync.md)** - syncTable、syncApi、syncMenu、syncDev、syncCache
+13. **[Sync](./reference/sync.md)** - syncTable、syncApi、syncMenu、syncDev、syncCache（[强约束清单](./reference/sync.md#强约束清单)）
 
 ## 常用链接
 
