@@ -44,7 +44,7 @@ import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from "
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { buildTreeByParentPath } from "befly-shared/utils/buildTreeByParentPath";
+import { arrayToTree } from "befly-shared/utils/arrayToTree";
 import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
 
 definePage({
@@ -83,7 +83,7 @@ const $Method = {
             const res = await $Http("/addon/admin/menu/all");
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
-            const treeResult = buildTreeByParentPath(lists);
+            const treeResult = arrayToTree(lists, "path", "parentPath", "children", "sort");
 
             // 构建树形结构（TTable tree）
             $Data.tableData = treeResult.tree;

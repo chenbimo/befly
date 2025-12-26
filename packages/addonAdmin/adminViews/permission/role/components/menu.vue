@@ -13,7 +13,7 @@
 <script setup>
 import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
-import { buildTreeByParentPath } from "befly-shared/utils/buildTreeByParentPath";
+import { arrayToTree } from "befly-shared/utils/arrayToTree";
 
 const $Prop = defineProps({
     modelValue: {
@@ -61,7 +61,7 @@ const $Method = {
             const res = await $Http("/addon/admin/menu/all");
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
-            const treeResult = buildTreeByParentPath(lists);
+            const treeResult = arrayToTree(lists, "path", "parentPath", "children", "sort");
             $Data.menuTreeData = treeResult.tree;
         } catch (error) {
             MessagePlugin.error("加载菜单失败");

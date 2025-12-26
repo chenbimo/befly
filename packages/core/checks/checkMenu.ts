@@ -157,6 +157,11 @@ export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions =
             Logger.warn({ path: path, sort: menu.sort }, "菜单 sort 必须是 number");
         }
 
+        if (typeof menu.sort === "number" && (!Number.isFinite(menu.sort) || menu.sort < 1)) {
+            hasError = true;
+            Logger.warn({ path: path, sort: menu.sort }, "菜单 sort 最小值为 1");
+        }
+
         if (pathSet.has(path)) {
             hasError = true;
             Logger.warn({ path: path }, "菜单 path 重复（严格模式禁止重复 path）");

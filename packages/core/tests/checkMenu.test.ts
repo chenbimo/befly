@@ -318,4 +318,30 @@ describe("checkMenu", () => {
             rmSync(projectDir, { recursive: true, force: true });
         }
     });
+
+    test("sort 最小值应为 1（sort=0 应阻断启动）", async () => {
+        const originalCwd = process.cwd();
+        const projectDir = join(originalCwd, "temp", `checkMenu-sort-min-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const menusJsonPath = join(projectDir, "menus.json");
+
+        try {
+            mkdirSync(projectDir, { recursive: true });
+            process.chdir(projectDir);
+
+            writeFileSync(menusJsonPath, JSON.stringify([{ name: "A", path: "/a", sort: 0 }], null, 4), { encoding: "utf8" });
+
+            let thrown: any = null;
+            try {
+                await checkMenu([]);
+            } catch (error: any) {
+                thrown = error;
+            }
+
+            expect(thrown).toBeTruthy();
+            expect(thrown.message).toBe("菜单结构检查失败");
+        } finally {
+            process.chdir(originalCwd);
+            rmSync(projectDir, { recursive: true, force: true });
+        }
+    });
 });

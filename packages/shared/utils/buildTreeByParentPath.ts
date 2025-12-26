@@ -17,6 +17,7 @@ export type BuildTreeByParentPathResult<T extends Record<string, any>> = {
  * - 默认字段：path / parentPath / children
  * - parentPath 为空字符串或父节点不存在时，视为根节点
  * - 内部会 clone 一份节点对象，并写入 children: []
+ * - 默认自带递归排序：按 sort 升序；sort 缺省/非法或 < 1 视为 999999；sort 相同按 path 自然序
  */
 export function buildTreeByParentPath<T extends Record<string, any>>(items: T[], options?: BuildTreeByParentPathOptions): BuildTreeByParentPathResult<T> {
     const pathKey = typeof options?.pathKey === "string" && options.pathKey.length > 0 ? options.pathKey : "path";
@@ -68,6 +69,55 @@ export function buildTreeByParentPath<T extends Record<string, any>>(items: T[],
 
         tree.push(node);
     }
+
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+    const getSortValue = (node: T): number => {
+        const raw = node ? (node as any).sort : undefined;
+        if (typeof raw !== "number") {
+            return 999999;
+        }
+
+        if (!Number.isFinite(raw)) {
+            return 999999;
+        }
+
+        if (raw < 1) {
+            return 999999;
+        }
+
+        return raw;
+    };
+
+    const compareNode = (a: T, b: T): number => {
+        const aSort = getSortValue(a);
+        const bSort = getSortValue(b);
+
+        if (aSort !== bSort) {
+            return aSort - bSort;
+        }
+
+        const aPath = a ? (a as any)[pathKey] : "";
+        const bPath = b ? (b as any)[pathKey] : "";
+        return collator.compare(typeof aPath === "string" ? aPath : "", typeof bPath === "string" ? bPath : "");
+    };
+
+    const sortTreeInPlace = (nodes: Array<T>): void => {
+        if (!Array.isArray(nodes) || nodes.length <= 1) {
+            return;
+        }
+
+        nodes.sort(compareNode);
+
+        for (const node of nodes) {
+            const children = node ? (node as any)[childrenKey] : undefined;
+            if (Array.isArray(children) && children.length > 0) {
+                sortTreeInPlace(children);
+            }
+        }
+    };
+
+    sortTreeInPlace(tree);
 
     return {
         flat: flat,

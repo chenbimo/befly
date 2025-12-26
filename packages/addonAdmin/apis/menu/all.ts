@@ -35,8 +35,7 @@ export default {
             // 如果缓存不存在，从数据库查询
             if (allMenus.length === 0) {
                 const result = await befly.db.getAll({
-                    table: "addon_admin_menu",
-                    orderBy: ["sort#ASC", "id#ASC"]
+                    table: "addon_admin_menu"
                 });
                 allMenus = result.lists;
             }

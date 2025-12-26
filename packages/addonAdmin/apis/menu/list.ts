@@ -9,8 +9,7 @@ export default {
     handler: async (befly) => {
         try {
             const menus = await befly.db.getAll({
-                table: "addon_admin_menu",
-                orderBy: ["sort#ASC", "id#ASC"]
+                table: "addon_admin_menu"
             });
 
             return befly.tool.Yes("操作成功", { lists: menus.lists });

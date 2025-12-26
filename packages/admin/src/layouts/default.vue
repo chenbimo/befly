@@ -76,7 +76,7 @@
 
 <script setup>
 import { DialogPlugin } from "tdesign-vue-next";
-import { buildTreeByParentPath } from "befly-shared/utils/buildTreeByParentPath";
+import { arrayToTree } from "befly-shared/utils/arrayToTree";
 
 const router = useRouter();
 const route = useRoute();
@@ -186,9 +186,14 @@ const $Method = {
                               id: "biz",
                               parentPath: "",
                               name: "业务",
-                              path: "__biz__"
+                              path: "__biz__",
+                              sort: 2
                           }
-                      ].concat(bizMenus)
+                      ].concat(
+                          bizMenus.map((m) => {
+                              return Object.assign({}, m, { sort: 2 });
+                          })
+                      )
                     : [];
 
             const normalizedLists = lists.map((menu) => {
@@ -199,7 +204,7 @@ const $Method = {
 
             const mergedLists = bizMenusFlat.concat(normalizedLists);
 
-            const treeResult = buildTreeByParentPath(mergedLists, { normalize: normalizePath });
+            const treeResult = arrayToTree(mergedLists, "path", "parentPath", "children", "sort");
 
             $Data.userMenusFlat = treeResult.flat;
             $Data.userMenus = treeResult.tree;
