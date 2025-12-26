@@ -10,7 +10,7 @@ export type ArrayToTreeResult<T extends Record<string, any>> = {
  * - 默认字段：id / pid / children / sort
  * - pid 为空字符串或父节点不存在时，视为根节点
  * - 内部会 clone 一份节点对象，并写入 children: []
- * - 默认自带递归排序：按 sort 升序；sort 缺省/非法或 < 1 视为 999999；sort 相同按 id 自然序
+ * - 默认自带递归排序：按 sort 升序；sort 缺省/非法或 < 1 视为 999999；sort 相同按 id 自然序1
  */
 export function arrayToTree<T extends Record<string, any>>(items: T[], id: string = "id", pid: string = "pid", children: string = "children", sort: string = "sort"): ArrayToTreeResult<T> {
     const idKey = typeof id === "string" && id.length > 0 ? id : "id";
