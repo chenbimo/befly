@@ -22,7 +22,7 @@ export interface RequestContext {
     ip: string;
     /** 请求头 */
     headers: Headers;
-    /** API 路由路径（如 POST/api/user/login） */
+    /** API 路由路径（url.pathname，例如 /api/user/login；与 method 无关） */
     route: string;
     /** 请求唯一 ID */
     requestId: string;

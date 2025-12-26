@@ -39,62 +39,43 @@ export class CacheHelper {
         this.redis = deps.redis;
     }
 
-    private normalizeApiPathname(value: unknown): string {
-        if (typeof value !== "string") return "";
-        const trimmed = value.trim();
-        if (!trimmed) return "";
-
-        // 允许存入/传入 "POST/api/xxx" 或 "POST /api/xxx"，统一转为 "/api/xxx"
-        const methodMatch = trimmed.match(/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*(.*)$/i);
-        if (methodMatch) {
-            const rest = String(methodMatch[2] || "").trim();
-            if (!rest) return "";
-            if (rest.startsWith("/")) return rest;
-            if (rest.startsWith("api/")) return `/${rest}`;
-            return rest.includes("/") ? `/${rest}` : rest;
+    private assertApiPathname(value: unknown, errorPrefix: string): string {
+        if (typeof value !== "string") {
+            throw new Error(`${errorPrefix} 必须是字符串`);
         }
 
-        if (trimmed.startsWith("/")) return trimmed;
-        if (trimmed.startsWith("api/")) return `/${trimmed}`;
-        return trimmed.includes("/") ? `/${trimmed}` : trimmed;
+        const trimmed = value.trim();
+        if (!trimmed) {
+            throw new Error(`${errorPrefix} 不允许为空字符串`);
+        }
+
+        if (/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/i.test(trimmed)) {
+            throw new Error(`${errorPrefix} 不允许包含 method 前缀，应为 url.pathname（例如 /api/app/xxx）`);
+        }
+
+        if (!trimmed.startsWith("/")) {
+            throw new Error(`${errorPrefix} 必须是 pathname（以 / 开头）`);
+        }
+
+        if (trimmed.includes(" ")) {
+            throw new Error(`${errorPrefix} 不允许包含空格`);
+        }
+
+        return trimmed;
     }
 
-    private normalizeApiPathList(value: unknown): string[] {
+    private assertApiPathList(value: unknown, roleCode: string): string[] {
         if (value === null || value === undefined) return [];
 
-        const normalizeSingle = (item: unknown): string | null => {
-            const p = this.normalizeApiPathname(item);
-            return p ? p : null;
-        };
-
-        if (Array.isArray(value)) {
-            const out: string[] = [];
-            for (const item of value) {
-                const p = normalizeSingle(item);
-                if (p !== null) out.push(p);
-            }
-            return out;
+        if (!Array.isArray(value)) {
+            throw new Error(`角色权限数据不合法：addon_admin_role.apis 必须是字符串数组，roleCode=${roleCode}`);
         }
 
-        if (typeof value === "string") {
-            const str = value.trim();
-            if (!str) return [];
-
-            if (str.startsWith("[")) {
-                try {
-                    const parsed = JSON.parse(str);
-                    return this.normalizeApiPathList(parsed);
-                } catch {
-                    // ignore
-                }
-            }
-
-            const single = normalizeSingle(str);
-            return single === null ? [] : [single];
+        const out: string[] = [];
+        for (const item of value) {
+            out.push(this.assertApiPathname(item, `角色权限数据不合法：addon_admin_role.apis 元素，roleCode=${roleCode}`));
         }
-
-        const single = normalizeSingle(value);
-        return single === null ? [] : [single];
+        return out;
     }
 
     /**
@@ -178,7 +159,7 @@ export class CacheHelper {
 
             for (const role of roles.lists) {
                 if (!role?.code) continue;
-                const apiPaths = this.normalizeApiPathList(role.apis);
+                const apiPaths = this.assertApiPathList(role.apis, role.code);
                 roleApiPathsMap.set(role.code, apiPaths);
             }
 
@@ -197,7 +178,7 @@ export class CacheHelper {
 
             for (const roleCode of roleCodes) {
                 const apiPaths = roleApiPathsMap.get(roleCode) || [];
-                const members = Array.from(new Set(apiPaths.map((p) => this.normalizeApiPathname(p)).filter((p) => p.length > 0))).sort();
+                const members = Array.from(new Set(apiPaths)).sort();
 
                 if (members.length > 0) {
                     items.push({ key: CacheKeys.roleApis(roleCode), members: members });
@@ -224,7 +205,11 @@ export class CacheHelper {
         if (!roleCode || typeof roleCode !== "string") {
             throw new Error("roleCode 必须是非空字符串");
         }
-        const normalizedPaths = this.normalizeApiPathList(apiPaths);
+        if (!Array.isArray(apiPaths)) {
+            throw new Error("apiPaths 必须是数组");
+        }
+
+        const normalizedPaths = apiPaths.map((p) => this.assertApiPathname(p, `refreshRoleApiPermissions: apiPaths 元素，roleCode=${roleCode}`));
         const roleKey = CacheKeys.roleApis(roleCode);
 
         // 空数组短路：保证清理残留
@@ -233,7 +218,7 @@ export class CacheHelper {
             return;
         }
 
-        const members = Array.from(new Set(normalizedPaths.map((p) => this.normalizeApiPathname(p)).filter((p) => p.length > 0)));
+        const members = Array.from(new Set(normalizedPaths));
 
         await this.redis.del(roleKey);
         if (members.length > 0) {
@@ -306,8 +291,8 @@ export class CacheHelper {
      */
     async checkRolePermission(roleCode: string, apiPath: string): Promise<boolean> {
         try {
-            const normalizedPath = this.normalizeApiPathname(apiPath);
-            return await this.redis.sismember(CacheKeys.roleApis(roleCode), normalizedPath);
+            const pathname = this.assertApiPathname(apiPath, "checkRolePermission: apiPath");
+            return await this.redis.sismember(CacheKeys.roleApis(roleCode), pathname);
         } catch (error: any) {
             Logger.error({ err: error, roleCode: roleCode }, "检查角色权限失败");
             return false;

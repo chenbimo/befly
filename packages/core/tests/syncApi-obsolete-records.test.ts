@@ -5,8 +5,8 @@ import { syncApi } from "../sync/syncApi.js";
 describe("syncApi - delete obsolete records", () => {
     test("应删除不在配置中的接口记录", async () => {
         const existingRecords = [
-            { id: 1, routePath: "POST/api/app/testSyncKeep", name: "Keep", addonName: "", state: 0 },
-            { id: 2, routePath: "POST/api/app/testSyncRemove", name: "Remove", addonName: "", state: 0 }
+            { id: 1, routePath: "/api/app/testSyncKeep", name: "Keep", addonName: "", state: 0 },
+            { id: 2, routePath: "/api/app/testSyncRemove", name: "Remove", addonName: "", state: 0 }
         ];
 
         const existingByPath = new Map<string, any>();
@@ -51,7 +51,7 @@ describe("syncApi - delete obsolete records", () => {
                 fileName: "testSyncKeep",
                 moduleName: "app_testSyncKeep",
                 name: "Keep",
-                routePath: "POST/api/app/testSyncKeep",
+                routePath: "/api/app/testSyncKeep",
                 addonName: "",
                 fileBaseName: "testSyncKeep.ts",
                 fileDir: "DUMMY",

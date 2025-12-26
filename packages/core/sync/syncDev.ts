@@ -8,26 +8,6 @@ export type SyncDevConfig = {
     devPassword?: string;
 };
 
-function normalizeApiPathname(value: unknown): string {
-    if (typeof value !== "string") return "";
-    const trimmed = value.trim();
-    if (!trimmed) return "";
-
-    // 允许传入 "POST/api/xxx" 或 "POST /api/xxx"，统一转为 "/api/xxx"
-    const methodMatch = trimmed.match(/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*(.*)$/i);
-    if (methodMatch) {
-        const rest = String(methodMatch[2] || "").trim();
-        if (!rest) return "";
-        if (rest.startsWith("/")) return rest;
-        if (rest.startsWith("api/")) return `/${rest}`;
-        return rest.includes("/") ? `/${rest}` : rest;
-    }
-
-    if (trimmed.startsWith("/")) return trimmed;
-    if (trimmed.startsWith("api/")) return `/${trimmed}`;
-    return trimmed.includes("/") ? `/${trimmed}` : trimmed;
-}
-
 export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Promise<void> {
     if (!config.devPassword) {
         return;
@@ -75,7 +55,26 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
             orderBy: ["id#ASC"]
         } as any);
 
-        apiPaths = Array.from(new Set((allApis.lists || []).map((a: any) => normalizeApiPathname(a?.routePath)).filter((p: string) => p.length > 0)));
+        apiPaths = Array.from(
+            new Set(
+                (allApis.lists || []).map((a: any) => {
+                    if (typeof a?.routePath !== "string") {
+                        throw new Error("syncDev: addon_admin_api.routePath 必须是字符串");
+                    }
+
+                    const routePath = a.routePath.trim();
+                    if (routePath.length === 0) {
+                        throw new Error("syncDev: addon_admin_api.routePath 不允许为空字符串");
+                    }
+
+                    if (!routePath.startsWith("/")) {
+                        throw new Error(`syncDev: addon_admin_api.routePath 必须是 pathname（以 / 开头），当前值=${routePath}`);
+                    }
+
+                    return routePath;
+                })
+            )
+        );
     }
 
     const roles = [

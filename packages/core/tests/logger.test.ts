@@ -145,7 +145,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
             {
                 requestId: "rid_1",
                 method: "POST",
-                route: "POST/api/test",
+                route: "/api/test",
                 ip: "127.0.0.1",
                 now: 123,
                 userId: 9,
@@ -160,7 +160,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(calls.length).toBe(1);
         expect(calls[0].args[0].requestId).toBe("rid_1");
         expect(calls[0].args[0].method).toBe("POST");
-        expect(calls[0].args[0].route).toBe("POST/api/test");
+        expect(calls[0].args[0].route).toBe("/api/test");
         expect(calls[0].args[0].userId).toBe(9);
         expect(typeof calls[0].args[0].durationSinceNowMs).toBe("number");
         expect(calls[0].args[0].durationSinceNowMs).toBeGreaterThanOrEqual(0);
@@ -190,7 +190,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
             {
                 requestId: "rid_2",
                 method: "POST",
-                route: "POST/api/test",
+                route: "/api/test",
                 ip: "127.0.0.1",
                 now: 456
             },
@@ -202,7 +202,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
 
         expect(calls.length).toBe(1);
         expect(calls[0].args[0].requestId).toBe("explicit");
-        expect(calls[0].args[0].route).toBe("POST/api/test");
+        expect(calls[0].args[0].route).toBe("/api/test");
         expect(calls[0].args[0].foo).toBe(1);
         expect(calls[0].args[1]).toBe("m");
     });
@@ -230,7 +230,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
             {
                 requestId: "rid_3",
                 method: "POST",
-                route: "POST/api/test",
+                route: "/api/test",
                 ip: "127.0.0.1",
                 now: 789
             },
@@ -276,7 +276,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
             {
                 requestId: "rid_trim",
                 method: "POST",
-                route: "POST/api/test",
+                route: "/api/test",
                 ip: "127.0.0.1",
                 now: 1
             },

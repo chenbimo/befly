@@ -5,8 +5,8 @@ import { syncApi } from "../sync/syncApi.js";
 describe("syncApi - type compatibility", () => {
     test("缺少 type 时应视为 api；非 api type 应被跳过", async () => {
         const existingRecords = [
-            { id: 1, routePath: "POST/api/app/keep", name: "Keep", addonName: "", state: 0 },
-            { id: 2, routePath: "POST/api/app/skip", name: "Skip", addonName: "", state: 0 }
+            { id: 1, routePath: "/api/app/keep", name: "Keep", addonName: "", state: 0 },
+            { id: 2, routePath: "/api/app/skip", name: "Skip", addonName: "", state: 0 }
         ];
 
         const calls = {
@@ -47,7 +47,7 @@ describe("syncApi - type compatibility", () => {
                 fileName: "keep",
                 moduleName: "app_keep",
                 name: "Keep",
-                routePath: "POST/api/app/keep",
+                routePath: "/api/app/keep",
                 addonName: "",
                 fileBaseName: "keep.ts",
                 fileDir: "DUMMY",
@@ -57,7 +57,7 @@ describe("syncApi - type compatibility", () => {
             {
                 type: "menu",
                 name: "Skip",
-                routePath: "POST/api/app/skip",
+                routePath: "/api/app/skip",
                 addonName: ""
             }
         ] as any;

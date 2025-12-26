@@ -133,7 +133,7 @@ describe("CacheHelper", () => {
 
         it("正常重建角色权限（覆盖更新）", async () => {
             const roles = [
-                { id: 1, code: "admin", apis: ["/api/login", "GET /api/user/list", "POST/api/user/del"] },
+                { id: 1, code: "admin", apis: ["/api/login", "/api/user/list", "/api/user/del"] },
                 { id: 2, code: "user", apis: ["/api/login"] }
             ];
 
@@ -190,7 +190,7 @@ describe("CacheHelper", () => {
         });
 
         it("apiPaths 非空时直接覆盖更新该角色缓存（DEL + SADD）", async () => {
-            await cacheHelper.refreshRoleApiPermissions("admin", ["/api/login", "POST /api/user/list"]);
+            await cacheHelper.refreshRoleApiPermissions("admin", ["/api/login", "/api/user/list"]);
 
             expect(mockRedis.del).toHaveBeenCalledWith(CacheKeys.roleApis("admin"));
             expect(mockRedis.sadd).toHaveBeenCalledWith(CacheKeys.roleApis("admin"), ["/api/login", "/api/user/list"]);
@@ -259,7 +259,7 @@ describe("CacheHelper", () => {
         it("有权限时返回 true", async () => {
             mockRedis.sismember = mock(() => Promise.resolve(true));
 
-            const result = await cacheHelper.checkRolePermission("admin", "POST/api/login");
+            const result = await cacheHelper.checkRolePermission("admin", "/api/login");
 
             expect(mockRedis.sismember).toHaveBeenCalledWith(CacheKeys.roleApis("admin"), "/api/login");
             expect(result).toBe(true);
@@ -268,7 +268,7 @@ describe("CacheHelper", () => {
         it("无权限时返回 false", async () => {
             mockRedis.sismember = mock(() => Promise.resolve(false));
 
-            const result = await cacheHelper.checkRolePermission("user", "POST/api/admin/del");
+            const result = await cacheHelper.checkRolePermission("user", "/api/admin/del");
 
             expect(result).toBe(false);
         });

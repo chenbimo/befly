@@ -541,7 +541,7 @@ export default hook;
         "defaultLimit": 1000,
         "defaultWindow": 60,
         "key": "ip",
-        "skipRoutes": ["/api/health", "GET/api/metrics"],
+        "skipRoutes": ["/api/health", "/api/metrics"],
         "rules": [
             {
                 "route": "/api/auth/*",
@@ -550,7 +550,7 @@ export default hook;
                 "key": "ip"
             },
             {
-                "route": "POST/api/order/create",
+                "route": "/api/order/create",
                 "limit": 5,
                 "window": 60,
                 "key": "user"

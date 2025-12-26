@@ -221,8 +221,8 @@ const count = await befly.redis.expireBatch([
 
 ```typescript
 const count = await befly.redis.saddBatch([
-    { key: "role:admin:apis", members: ["GET/api/user", "POST/api/user"] },
-    { key: "role:editor:apis", members: ["GET/api/article", "POST/api/article"] }
+    { key: "role:admin:apis", members: ["/api/user"] },
+    { key: "role:editor:apis", members: ["/api/article"] }
 ]);
 // 返回: 成功添加的总成员数量
 ```
@@ -231,8 +231,8 @@ const count = await befly.redis.saddBatch([
 
 ```typescript
 const results = await befly.redis.sismemberBatch([
-    { key: "role:admin:apis", member: "GET/api/user" },
-    { key: "role:admin:apis", member: "DELETE/api/user" }
+    { key: "role:admin:apis", member: "/api/user" },
+    { key: "role:admin:apis", member: "/api/user/delete" }
 ]);
 // 返回: [true, false]
 ```
@@ -333,7 +333,7 @@ return befly.tool.No("请求过于频繁");
 ```typescript
 // 极简方案：每个角色一个 Set
 const roleApisKey = CacheKeys.roleApis("admin");
-const hasPermission = await befly.redis.sismember(roleApisKey, "POST/api/user/add");
+const hasPermission = await befly.redis.sismember(roleApisKey, "/api/user/add");
 // 返回: true
 ```
 
@@ -473,14 +473,14 @@ const menus = await befly.cache.getMenus();
 
 // 获取角色权限
 const permissions = await befly.cache.getRolePermissions("admin");
-// 返回: ['GET/api/user/list', 'POST/api/user/add', ...]
+// 返回: ['/api/user/list', '/api/user/add', ...]
 ```
 
 ### 权限检查
 
 ```typescript
 // 检查角色是否有指定接口权限
-const hasPermission = await befly.cache.checkRolePermission("admin", "POST/api/user/add");
+const hasPermission = await befly.cache.checkRolePermission("admin", "/api/user/add");
 // 返回: true 或 false
 ```
 

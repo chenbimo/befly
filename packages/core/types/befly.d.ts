@@ -93,8 +93,8 @@ export interface CorsConfig {
 export interface RateLimitRule {
     /**
      * 路由匹配串
-     * - 精确："POST/api/auth/login"
-     * - 前缀："POST/api/auth/*" 或 "/api/auth/*"
+    * - 精确："/api/auth/login"
+    * - 前缀："/api/auth/*"
      * - 全量："*"
      */
     route: string;
@@ -117,8 +117,8 @@ export interface RateLimitConfig {
     key?: "ip" | "user" | "ip_user";
     /**
      * 直接跳过限流的路由列表（优先级最高）
-     * - 精确："POST/api/health" 或 "/api/health"
-     * - 前缀："POST/api/health/*" 或 "/api/health/*"
+     * - 精确："/api/health"
+     * - 前缀："/api/health/*"
      */
     skipRoutes?: string[];
     /** 路由规则列表 */

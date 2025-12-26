@@ -22,7 +22,7 @@
                 "key": "ip"
             }
         ],
-        "skipRoutes": ["GET/api/health"]
+        "skipRoutes": ["/api/health"]
     }
 }
 ```

@@ -20,6 +20,40 @@ export async function checkApi(apis: any[]): Promise<void> {
                 continue;
             }
 
+            // routePath / routePrefix 由 scanFiles 系统生成：必须是严格的 pathname
+            if (typeof api?.routePath !== "string" || api.routePath.trim() === "") {
+                Logger.warn(omit(api, ["handler"]), "接口的 routePath 属性必须是非空字符串（由系统生成）");
+                hasError = true;
+            } else {
+                const routePath = api.routePath.trim();
+
+                // 不允许出现 "POST/api/..." 等 method 前缀
+                if (/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/i.test(routePath)) {
+                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 不允许包含 method 前缀，应为 url.pathname（例如 /api/app/xxx）");
+                    hasError = true;
+                }
+
+                if (!routePath.startsWith("/api/")) {
+                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 必须以 /api/ 开头");
+                    hasError = true;
+                }
+
+                if (routePath.includes(" ")) {
+                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 不允许包含空格");
+                    hasError = true;
+                }
+
+                if (routePath.includes("/api//")) {
+                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 不允许出现 /api//（重复斜杠）");
+                    hasError = true;
+                }
+            }
+
+            if (typeof api?.routePrefix !== "string" || api.routePrefix.trim() === "") {
+                Logger.warn(omit(api, ["handler"]), "接口的 routePrefix 属性必须是非空字符串（由系统生成）");
+                hasError = true;
+            }
+
             if (api.method && !["GET", "POST", "GET,POST", "POST,GET"].includes(String(api.method).toUpperCase())) {
                 Logger.warn(omit(api, ["handler"]), "接口的 method 属性必须是有效的 HTTP 方法 (GET, POST, GET,POST, POST,GET)");
                 hasError = true;

@@ -63,8 +63,8 @@ describe("DbHelper - batch write helpers", () => {
         const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
 
         const changes = await (dbHelper as any).updBatch("addon_admin_api", [
-            { id: 1, data: { name: "A", routePath: "POST/api/a", addonName: "x" } },
-            { id: 2, data: { name: "B", routePath: "POST/api/b", addonName: "y" } }
+            { id: 1, data: { name: "A", routePath: "/api/a", addonName: "x" } },
+            { id: 2, data: { name: "B", routePath: "/api/b", addonName: "y" } }
         ]);
 
         expect(changes).toBe(2);

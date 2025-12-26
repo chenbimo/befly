@@ -21,7 +21,7 @@ describe("apiHandler - route matching", () => {
 
         const handler = apiHandler(apis as any, hooks as any, context as any);
 
-        // 如果 key 里拼了 method，这里会变成 POST/api/hello，从而导致接口不存在
+        // 如果 key 里拼了 method，这里会变成 "POST /api/hello" 之类，从而导致接口不存在
         const res = await handler(new Request("http://localhost/api/hello", { method: "POST" }));
         expect(res.status).toBe(200);
 
