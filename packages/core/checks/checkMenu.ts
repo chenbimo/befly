@@ -67,17 +67,6 @@ export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions =
     const disableRules = compileDisableMenuGlobRules(options.disableMenus);
     const filteredMenus = filterMenusByDisableRules(mergedMenus, disableRules);
 
-    if (disableRules.length > 0) {
-        Logger.info(
-            {
-                disableMenus: options.disableMenus,
-                before: mergedMenus.length,
-                after: filteredMenus.length
-            },
-            "菜单禁用规则已生效"
-        );
-    }
-
     const stack: Array<{ menu: any; depth: number }> = [];
     for (const m of filteredMenus) {
         stack.push({ menu: m, depth: 1 });
