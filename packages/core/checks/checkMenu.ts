@@ -2,6 +2,7 @@ import type { MenuConfig } from "../types/sync.js";
 import type { AddonInfo } from "../utils/scanAddons.js";
 
 import { Logger } from "../lib/logger.js";
+import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob.js";
 import { loadMenuConfigs } from "../utils/loadMenuConfigs.js";
 
 function isValidMenuPath(path: string): { ok: boolean; reason: string } {
@@ -27,75 +28,7 @@ type CheckMenuOptions = {
     disableMenus?: string[];
 };
 
-type DisableMenuRule = { type: "exact"; path: string } | { type: "prefix"; prefix: string };
-
-function toDisableMenuRules(disableMenus: unknown): DisableMenuRule[] {
-    if (typeof disableMenus === "undefined") {
-        return [];
-    }
-
-    if (!Array.isArray(disableMenus)) {
-        throw new Error("disableMenus 配置不合法：必须是 string[]");
-    }
-
-    const rules: DisableMenuRule[] = [];
-
-    for (const rawRule of disableMenus) {
-        if (typeof rawRule !== "string") {
-            throw new Error("disableMenus 配置不合法：数组元素必须是 string");
-        }
-
-        const rule = rawRule.trim();
-        if (!rule) {
-            throw new Error("disableMenus 配置不合法：不允许空字符串");
-        }
-
-        if (rule === "*") {
-            throw new Error("disableMenus 配置不合法：不支持 * 全量规则，只支持精确 /path 与前缀 /prefix/*");
-        }
-
-        if (!rule.startsWith("/")) {
-            throw new Error("disableMenus 配置不合法：规则必须以 / 开头");
-        }
-
-        if (rule.endsWith("/*")) {
-            const prefix = rule.slice(0, -2);
-            const prefixCheck = isValidMenuPath(prefix);
-            if (!prefixCheck.ok) {
-                throw new Error(`disableMenus 配置不合法：前缀规则 ${rule} 不合法：${prefixCheck.reason}`);
-            }
-            rules.push({ type: "prefix", prefix: prefix });
-            continue;
-        }
-
-        const exactCheck = isValidMenuPath(rule);
-        if (!exactCheck.ok) {
-            throw new Error(`disableMenus 配置不合法：精确规则 ${rule} 不合法：${exactCheck.reason}`);
-        }
-
-        rules.push({ type: "exact", path: rule });
-    }
-
-    return rules;
-}
-
-function isDisabledMenuPath(path: string, rules: DisableMenuRule[]): boolean {
-    for (const rule of rules) {
-        if (rule.type === "exact") {
-            if (path === rule.path) {
-                return true;
-            }
-            continue;
-        }
-        if (rule.type === "prefix") {
-            if (path === rule.prefix || path.startsWith(`${rule.prefix}/`)) {
-                return true;
-            }
-            continue;
-        }
-    }
-    return false;
-}
+type DisableMenuRule = ReturnType<typeof compileDisableMenuGlobRules>[number];
 
 function filterMenusByDisableRules(mergedMenus: MenuConfig[], rules: DisableMenuRule[]): MenuConfig[] {
     if (rules.length === 0) {
@@ -106,7 +39,7 @@ function filterMenusByDisableRules(mergedMenus: MenuConfig[], rules: DisableMenu
 
     for (const menu of mergedMenus) {
         const menuPath = typeof (menu as any)?.path === "string" ? String((menu as any).path).trim() : "";
-        if (menuPath && isDisabledMenuPath(menuPath, rules)) {
+        if (menuPath && isMenuPathDisabledByGlobRules(menuPath, rules)) {
             continue;
         }
 
@@ -131,8 +64,19 @@ export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions =
 
     const mergedMenus = await loadMenuConfigs(addons);
 
-    const disableRules = toDisableMenuRules(options.disableMenus);
+    const disableRules = compileDisableMenuGlobRules(options.disableMenus);
     const filteredMenus = filterMenusByDisableRules(mergedMenus, disableRules);
+
+    if (disableRules.length > 0) {
+        Logger.info(
+            {
+                disableMenus: options.disableMenus,
+                before: mergedMenus.length,
+                after: filteredMenus.length
+            },
+            "菜单禁用规则已生效"
+        );
+    }
 
     const stack: Array<{ menu: any; depth: number }> = [];
     for (const m of filteredMenus) {

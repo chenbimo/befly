@@ -114,9 +114,9 @@ describe("checkMenu", () => {
         }
     });
 
-    test("disableMenus（前缀 /*）应过滤子树", async () => {
+    test("disableMenus（glob）应按 Bun.Glob 语义过滤匹配的菜单", async () => {
         const originalCwd = process.cwd();
-        const projectDir = join(originalCwd, "temp", `checkMenu-disableMenus-prefix-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const projectDir = join(originalCwd, "temp", `checkMenu-disableMenus-glob-${Date.now()}-${Math.random().toString(16).slice(2)}`);
         const menusJsonPath = join(projectDir, "menus.json");
 
         try {
@@ -137,9 +137,13 @@ describe("checkMenu", () => {
                 { encoding: "utf8" }
             );
 
+            // 注意：此处完全遵循 Bun.Glob 的 match 语义。
+            // 通常 "*" 不跨路径分隔符，因此 "/a/*" 仅匹配 "/a/1"，不会匹配 "/a"。
             const menus = await checkMenu([], { disableMenus: ["/a/*"] });
-            expect(menus).toHaveLength(1);
-            expect(menus[0]?.path).toBe("/b");
+            const paths = menus.map((m) => m.path);
+            expect(paths).toContain("/a");
+            expect(paths).toContain("/b");
+            expect(paths).not.toContain("/a/1");
         } finally {
             process.chdir(originalCwd);
             rmSync(projectDir, { recursive: true, force: true });
@@ -157,17 +161,40 @@ describe("checkMenu", () => {
 
             writeFileSync(menusJsonPath, JSON.stringify([{ name: "A", path: "/a", sort: 1 }], null, 4), { encoding: "utf8" });
 
-            for (const rule of ["a", "*"]) {
+            // 1) disableMenus 必须是数组
+            {
                 let thrown: any = null;
                 try {
-                    await checkMenu([], { disableMenus: [rule] });
+                    await checkMenu([], { disableMenus: "not-array" as any });
                 } catch (error: any) {
                     thrown = error;
                 }
-
                 expect(thrown).toBeTruthy();
-                expect(typeof thrown.message).toBe("string");
-                expect(thrown.message.includes("disableMenus")).toBe(true);
+                expect(String(thrown.message).includes("disableMenus")).toBe(true);
+            }
+
+            // 2) 数组元素必须是 string
+            {
+                let thrown: any = null;
+                try {
+                    await checkMenu([], { disableMenus: [123 as any] });
+                } catch (error: any) {
+                    thrown = error;
+                }
+                expect(thrown).toBeTruthy();
+                expect(String(thrown.message).includes("disableMenus")).toBe(true);
+            }
+
+            // 3) 不允许空字符串
+            {
+                let thrown: any = null;
+                try {
+                    await checkMenu([], { disableMenus: ["  "] });
+                } catch (error: any) {
+                    thrown = error;
+                }
+                expect(thrown).toBeTruthy();
+                expect(String(thrown.message).includes("disableMenus")).toBe(true);
             }
         } finally {
             process.chdir(originalCwd);

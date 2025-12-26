@@ -5,6 +5,7 @@
  */
 import type { BeflyOptions } from "./types/befly.js";
 
+import { compileDisableMenuGlobRules } from "./utils/disableMenusGlob.js";
 import { scanConfig } from "./utils/scanConfig.js";
 
 /** 默认配置 */
@@ -105,6 +106,11 @@ export async function loadBeflyConfig(options: LoadBeflyConfigOptions = {}): Pro
         mode: "merge",
         defaults: defaultOptions
     });
+
+    // 预编译 disableMenus 的 Bun.Glob 规则：
+    // - 提前暴露配置错误（fail-fast）
+    // - 后续 checkMenu 会复用同一进程级缓存
+    compileDisableMenuGlobRules((config as any)?.disableMenus);
 
     return config as BeflyOptions;
 }

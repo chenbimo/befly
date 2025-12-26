@@ -166,9 +166,12 @@ export interface BeflyOptions {
     /** 禁用的插件列表 */
     disablePlugins?: string[];
     /**
-     * 禁用的菜单 path 规则（用于菜单同步与加载前过滤）
-     * - 精确："/addon/admin/log"
-     * - 前缀："/addon/admin/log/*"（禁用该前缀及其子路径）
+        * 禁用的菜单 path 规则（用于菜单同步与加载前过滤）
+        *
+        * 仅支持 Bun.Glob 的 glob pattern 语法与 API（即把每条规则当作 glob 模式匹配菜单 path）。
+        * 示例：
+        * - 精确："/addon/admin/login"
+        * - 通配："/addon/admin/log/*"、"/addon/admin/**"、"**\/login"
      */
     disableMenus?: string[];
     /**
