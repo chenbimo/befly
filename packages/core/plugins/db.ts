@@ -24,7 +24,7 @@ export default {
         }
 
         try {
-            sql = await Connect.connectSql();
+            sql = await Connect.connectSql(befly.config ? befly.config.db : undefined);
 
             // 创建数据库管理器实例
             const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: new MySqlDialect() });

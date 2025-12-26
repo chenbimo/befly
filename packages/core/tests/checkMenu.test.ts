@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { beflyConfig } from "../befly.config.js";
 import { checkMenu } from "../checks/checkMenu.js";
 
 describe("checkMenu", () => {
@@ -228,7 +227,7 @@ describe("checkMenu", () => {
                 { encoding: "utf8" }
             );
 
-            const menus = await checkMenu([], { disableMenus: beflyConfig.disableMenus || [] });
+            const menus = await checkMenu([], { disableMenus: ["**/404", "**/403", "**/500", "**/login"] });
             expect(Array.isArray(menus)).toBe(true);
             expect(menus).toHaveLength(1);
             expect(menus[0]?.path).toBe("/a");

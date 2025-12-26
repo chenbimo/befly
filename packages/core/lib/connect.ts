@@ -1,18 +1,17 @@
 /**
  * 数据库连接管理器
  * 统一管理 SQL 和 Redis 连接
- * 配置从 beflyConfig 全局对象获取
  */
+
+import type { DatabaseConfig, RedisConfig } from "../types/befly.js";
 
 import { SQL, RedisClient } from "bun";
 
-import { beflyConfig } from "../befly.config.js";
 import { Logger } from "./logger.js";
 
 /**
  * 数据库连接管理器
  * 使用静态方法管理全局单例连接
- * 所有配置从 beflyConfig 自动获取
  */
 export class Connect {
     private static sqlClient: SQL | null = null;
@@ -29,11 +28,10 @@ export class Connect {
 
     /**
      * 连接 SQL 数据库
-     * 配置从 beflyConfig.db 获取
      * @returns SQL 客户端实例
      */
-    static async connectSql(): Promise<SQL> {
-        const config = beflyConfig.db || {};
+    static async connectSql(dbConfig: DatabaseConfig | undefined = undefined): Promise<SQL> {
+        const config = dbConfig || {};
 
         // 构建数据库连接字符串
         const type = config.type || "mysql";
@@ -137,11 +135,10 @@ export class Connect {
 
     /**
      * 连接 Redis
-     * 配置从 beflyConfig.redis 获取
      * @returns Redis 客户端实例
      */
-    static async connectRedis(): Promise<RedisClient> {
-        const config = beflyConfig.redis || {};
+    static async connectRedis(redisConfig: RedisConfig | undefined = undefined): Promise<RedisClient> {
+        const config = redisConfig || {};
 
         try {
             // 构建 Redis URL
@@ -212,15 +209,14 @@ export class Connect {
 
     /**
      * 连接所有数据库（SQL + Redis）
-     * 配置从 beflyConfig 自动获取
      */
-    static async connect(): Promise<void> {
+    static async connect(config: { db?: DatabaseConfig; redis?: RedisConfig } = {}): Promise<void> {
         try {
             // 连接 SQL
-            await this.connectSql();
+            await this.connectSql(config.db);
 
             // 连接 Redis
-            await this.connectRedis();
+            await this.connectRedis(config.redis);
         } catch (error: any) {
             Logger.error({ err: error }, "数据库初始化失败");
             await this.disconnect();

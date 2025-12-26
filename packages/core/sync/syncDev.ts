@@ -1,11 +1,17 @@
-import { beflyConfig } from "../befly.config.js";
 import { Cipher } from "../lib/cipher.js";
 import { Logger } from "../lib/logger.js";
 
-export async function syncDev(ctx: any): Promise<void> {
-    if (!beflyConfig.devPassword) {
+export type SyncDevConfig = {
+    devEmail?: string;
+    devPassword?: string;
+};
+
+export async function syncDev(ctx: any, config: SyncDevConfig = {}): Promise<void> {
+    if (!config.devPassword) {
         return;
     }
+
+    const devEmail = typeof config.devEmail === "string" && config.devEmail.length > 0 ? config.devEmail : "dev@qq.com";
 
     if (!ctx.db) {
         throw new Error("syncDev: ctx.db 未初始化（Db 插件未加载或注入失败）");
@@ -133,12 +139,12 @@ export async function syncDev(ctx: any): Promise<void> {
         return;
     }
 
-    const sha256Hashed = Cipher.sha256(beflyConfig.devPassword + "befly");
+    const sha256Hashed = Cipher.sha256(config.devPassword + "befly");
     const hashed = await Cipher.hashPassword(sha256Hashed);
 
     const devData = {
         nickname: "开发者",
-        email: beflyConfig.devEmail,
+        email: devEmail,
         username: "dev",
         password: hashed,
         roleCode: "dev",
@@ -147,13 +153,13 @@ export async function syncDev(ctx: any): Promise<void> {
 
     const existing = await ctx.db.getOne({
         table: "addon_admin_admin",
-        where: { email: beflyConfig.devEmail }
+        where: { email: devEmail }
     });
 
     if (existing) {
         await ctx.db.updData({
             table: "addon_admin_admin",
-            where: { email: beflyConfig.devEmail },
+            where: { email: devEmail },
             data: devData
         });
     } else {

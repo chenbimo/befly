@@ -61,7 +61,7 @@ describe("syncDev - dev role permissions", () => {
             }
         };
 
-        await syncDev(ctx);
+        await syncDev(ctx, { devEmail: "dev@qq.com", devPassword: "dev-password" });
 
         // 断言读取菜单/接口时按 state>=0 查询
         const menuGetAll = calls.getAll.find((c) => c?.table === "addon_admin_menu");

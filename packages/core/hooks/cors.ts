@@ -2,7 +2,6 @@ import type { CorsConfig } from "../types/befly.js";
 // 类型导入
 import type { Hook } from "../types/hook.js";
 
-import { beflyConfig } from "../befly.config.js";
 // 相对导入
 import { setCorsOptions } from "../utils/cors.js";
 
@@ -25,7 +24,7 @@ export default {
             credentials: "true"
         };
 
-        const corsConfig = { ...defaultConfig, ...beflyConfig.cors };
+        const corsConfig = Object.assign({}, defaultConfig, befly.config && befly.config.cors ? befly.config.cors : {});
 
         // 设置 CORS 响应头
         const headers = setCorsOptions(req, corsConfig);

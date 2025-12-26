@@ -67,6 +67,9 @@ export class Befly {
             const { beflyConfig } = await import("./befly.config.js");
             this.config = beflyConfig;
 
+            // 将配置注入到 ctx，供插件/Hook/sync 等按需读取
+            this.context.config = this.config;
+
             const { apis, tables, plugins, hooks, addons } = await scanSources();
 
             // 让后续 syncMenu 能拿到 addon 的 views 路径等信息
@@ -98,7 +101,7 @@ export class Befly {
             await syncApi(this.context as BeflyContext, apis as any);
 
             await syncMenu(this.context as BeflyContext, checkedMenus);
-            await syncDev(this.context as BeflyContext);
+            await syncDev(this.context as BeflyContext, { devEmail: this.config.devEmail, devPassword: this.config.devPassword });
 
             // 3. 加载钩子
             this.hooks = await loadHooks(hooks as any, this.config!.disableHooks || []);
@@ -108,7 +111,7 @@ export class Befly {
 
             // 6. 启动 HTTP服务器
             const apiFetch = apiHandler(this.apis, this.hooks, this.context as BeflyContext);
-            const staticFetch = staticHandler();
+            const staticFetch = staticHandler(this.config!.cors);
 
             const server = Bun.serve({
                 port: this.config!.appPort,

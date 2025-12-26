@@ -38,7 +38,7 @@ describe("sync - init guard", () => {
 
         let error: any = null;
         try {
-            await syncDev(ctx);
+            await syncDev(ctx, { devEmail: "dev@qq.com", devPassword: "dev-password" });
         } catch (err: any) {
             error = err;
         }
@@ -52,7 +52,7 @@ describe("sync - init guard", () => {
 
         let error: any = null;
         try {
-            await syncDev(ctx);
+            await syncDev(ctx, { devEmail: "dev@qq.com", devPassword: "dev-password" });
         } catch (err: any) {
             error = err;
         }

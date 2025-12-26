@@ -3,9 +3,9 @@
  * 提供全局日志功能
  */
 
+import type { BeflyContext } from "../types/befly.js";
 import type { Plugin } from "../types/plugin.js";
 
-import { beflyConfig } from "../befly.config.js";
 import { Logger } from "../lib/logger.js";
 
 /**
@@ -13,10 +13,10 @@ import { Logger } from "../lib/logger.js";
  */
 export default {
     deps: [],
-    async handler(): Promise<typeof Logger> {
+    async handler(context: BeflyContext): Promise<typeof Logger> {
         // 配置 Logger
-        if (beflyConfig.logger) {
-            Logger.configure(beflyConfig.logger);
+        if (context.config && context.config.logger) {
+            Logger.configure(context.config.logger);
         }
         return Logger;
     }
