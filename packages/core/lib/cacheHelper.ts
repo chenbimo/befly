@@ -36,6 +36,11 @@ export class CacheHelper {
 
     private static readonly API_ID_IN_CHUNK_SIZE = 1000;
 
+    constructor(deps: CacheHelperDeps) {
+        this.db = deps.db;
+        this.redis = deps.redis;
+    }
+
     private normalizeNumberIdList(value: unknown): number[] {
         if (value === null || value === undefined) return [];
 
@@ -130,15 +135,6 @@ export class CacheHelper {
         }
 
         return apiMap;
-    }
-
-    /**
-     * 构造函数
-     * @param deps - 依赖注入（db + redis）
-     */
-    constructor(deps: CacheHelperDeps) {
-        this.db = deps.db;
-        this.redis = deps.redis;
     }
 
     /**

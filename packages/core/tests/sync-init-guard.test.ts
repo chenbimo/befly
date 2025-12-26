@@ -88,4 +88,18 @@ describe("sync - init guard", () => {
         expect(typeof error?.message).toBe("string");
         expect(error.message).toBe("syncMenu: ctx.cache 未初始化（cache 插件未加载或注入失败）");
     });
+
+    test("syncMenu: ctx.config 缺失时应给出明确错误", async () => {
+        const ctx = { db: {}, cache: {} } as any;
+
+        let error: any = null;
+        try {
+            await syncMenu(ctx, [] as any);
+        } catch (err: any) {
+            error = err;
+        }
+
+        expect(typeof error?.message).toBe("string");
+        expect(error.message).toBe("syncMenu: ctx.config 未初始化（config 插件未加载或注入失败）");
+    });
 });

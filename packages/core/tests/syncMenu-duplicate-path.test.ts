@@ -74,6 +74,9 @@ describe("syncMenu - duplicate path records", () => {
         const ctx = {
             db: dbHelper,
             addons: [],
+            config: {
+                disableMenus: []
+            },
             cache: {
                 cacheMenus: async () => {}
             }

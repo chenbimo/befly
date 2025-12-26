@@ -1,6 +1,7 @@
 import type { MenuConfig } from "../types/sync.js";
 
 import { Logger } from "../lib/logger.js";
+import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob.js";
 import { getParentPath } from "../utils/loadMenuConfigs.js";
 
 type MenuDef = {
@@ -75,12 +76,50 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
         throw new Error("syncMenu: ctx.cache 未初始化（cache 插件未加载或注入失败）");
     }
 
+    if (!ctx.config) {
+        throw new Error("syncMenu: ctx.config 未初始化（config 插件未加载或注入失败）");
+    }
+
     if (!(await ctx.db.tableExists("addon_admin_menu"))) {
         Logger.debug(`addon_admin_menu 表不存在`);
         return;
     }
 
-    const menuDefMap = flattenMenusToDefMap(mergedMenus);
+    // 防御性过滤：保证禁用菜单不会进入 DB（即使上游遗漏了 checkMenu 的过滤）
+    const disableRules = compileDisableMenuGlobRules((ctx as any)?.config?.disableMenus);
+    const filteredMergedMenus: MenuConfig[] =
+        disableRules.length === 0
+            ? mergedMenus
+            : (() => {
+                  const filterMenusByDisableRules = (menus: MenuConfig[]): MenuConfig[] => {
+                      const filtered: MenuConfig[] = [];
+
+                      for (const menu of menus) {
+                          const menuPath = typeof (menu as any)?.path === "string" ? String((menu as any).path).trim() : "";
+                          if (menuPath && isMenuPathDisabledByGlobRules(menuPath, disableRules)) {
+                              continue;
+                          }
+
+                          const children = Array.isArray((menu as any)?.children) ? ((menu as any).children as MenuConfig[]) : null;
+                          if (children && children.length > 0) {
+                              const nextChildren = filterMenusByDisableRules(children);
+                              if (nextChildren.length > 0) {
+                                  (menu as any).children = nextChildren;
+                              } else {
+                                  delete (menu as any).children;
+                              }
+                          }
+
+                          filtered.push(menu);
+                      }
+
+                      return filtered;
+                  };
+
+                  return filterMenusByDisableRules(mergedMenus);
+              })();
+
+    const menuDefMap = flattenMenusToDefMap(filteredMergedMenus);
 
     const configPaths = new Set<string>();
     for (const p of menuDefMap.keys()) {
@@ -91,13 +130,14 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
 
     // 2) 批量同步（事务内）：按 path diff 执行批量 insert/update/delete
     await ctx.db.trans(async (trans: any) => {
-        const allExistingMenus = await trans.getAll({
+        // 读取全部菜单（用于清理禁用菜单：不分 state）
+        const allExistingMenusAllState = await trans.getAll({
             table: tableName,
-            fields: ["id", "name", "path", "parentPath", "sort", "state"],
-            where: { state$gte: 0 }
+            fields: ["id", "name", "path", "parentPath", "sort", "state"]
         } as any);
 
-        const existingList = allExistingMenus.lists || [];
+        const existingListAllState = allExistingMenusAllState.lists || [];
+        const existingList = existingListAllState.filter((m: any) => typeof m?.state === "number" && m.state >= 0);
 
         const existingMenuMap = new Map<string, any>();
         const duplicateIdSet = new Set<number>();
@@ -208,8 +248,25 @@ export async function syncMenu(ctx: any, mergedMenus: MenuConfig[]): Promise<voi
             await trans.insBatch(tableName, insList);
         }
 
-        // 3) 删除差集（DB - 配置） + 删除重复 path 的多余记录
+        // 3) 删除差集（DB - 配置，仅 state>=0） + 删除重复 path 的多余记录 + 删除禁用菜单（不分 state）
         const delIdSet = new Set<number>();
+
+        // 3.1) 清理禁用菜单：只要命中 disableMenus，就强制删除（避免 menu/list 之类接口还能查到）
+        if (disableRules.length > 0) {
+            for (const record of existingListAllState) {
+                const recordPath = typeof record?.path === "string" ? String(record.path).trim() : "";
+                if (!recordPath) {
+                    continue;
+                }
+
+                if (isMenuPathDisabledByGlobRules(recordPath, disableRules)) {
+                    if (typeof record?.id === "number" && record.id > 0) {
+                        delIdSet.add(record.id);
+                    }
+                }
+            }
+        }
+
         for (const record of existingList) {
             if (typeof record?.path !== "string" || !record.path) {
                 continue;

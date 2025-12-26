@@ -81,7 +81,7 @@ const defaultOptions: BeflyOptions = {
     // ========== 禁用配置 ==========
     disableHooks: [],
     disablePlugins: [],
-    disableMenus: ["/404", "/403", "/500", "**/login"],
+    disableMenus: ["**/404", "**/403", "**/500", "**/login"],
 
     // ========== Addon 配置 ==========
     addons: {}
