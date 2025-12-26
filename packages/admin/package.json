@@ -5,8 +5,6 @@
     "private": false,
     "description": "Befly Admin - 基于 Vue3 + TDesign Vue Next 的后台管理系统",
     "files": [
-        "public/",
-        "src/",
         ".env",
         ".env.development",
         ".env.local",
@@ -17,7 +15,9 @@
         "package.json",
         "README.md",
         "uno.config.js",
-        "vite.config.js"
+        "vite.config.js",
+        "public/",
+        "src/"
     ],
     "type": "module",
     "publishConfig": {

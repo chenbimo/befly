@@ -20,16 +20,16 @@
         "directory": "packages/addon-admin"
     },
     "files": [
+        "package.json",
+        "README.md",
+        "tsconfig.json",
         "adminViews/",
         "apis/",
         "appViews/",
         "libs/",
         "plugins/",
         "styles/",
-        "tables/",
-        "package.json",
-        "README.md",
-        "tsconfig.json"
+        "tables/"
     ],
     "type": "module",
     "main": "package.json",
