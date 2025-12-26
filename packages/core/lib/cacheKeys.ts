@@ -25,7 +25,7 @@ export class CacheKeys {
     /**
      * 角色接口权限缓存（Set 集合）
      * - key: befly:role:apis:${roleCode}
-     * - member: METHOD/path
+     * - member: url.pathname（例如 /api/user/login；与 method 无关）
      */
     static roleApis(roleCode: string): string {
         return `befly:role:apis:${roleCode}`;

@@ -4,7 +4,7 @@ export default {
     name: "保存角色菜单权限",
     fields: {
         roleCode: adminRoleTable.code,
-        menuIds: adminRoleTable.menus
+        menuPaths: adminRoleTable.menus
     },
     handler: async (befly, ctx) => {
         // 查询角色是否存在
@@ -22,7 +22,7 @@ export default {
             table: "addon_admin_role",
             where: { code: ctx.body.roleCode },
             data: {
-                menus: ctx.body.menuIds
+                menus: ctx.body.menuPaths
             }
         });
 

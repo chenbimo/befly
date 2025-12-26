@@ -1,7 +1,7 @@
 ﻿<template>
     <TDialog v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
         <div class="comp-role-menu">
-            <TTree v-model:value="$Data.menuTreeCheckedKeys" :data="$Data.menuTreeData" value-mode="all" :keys="{ value: 'id', label: 'name', children: 'children' }" checkable expand-all />
+            <TTree v-model:value="$Data.menuTreeCheckedKeys" :data="$Data.menuTreeData" value-mode="all" :keys="{ value: 'path', label: 'name', children: 'children' }" checkable expand-all />
         </div>
         <template #footer>
             <TButton @click="$Method.onClose">取消</TButton>
@@ -77,7 +77,7 @@ const $Method = {
                 roleCode: $Prop.rowData.code
             });
 
-            // menus 返回的 data 直接就是菜单 ID 数组
+            // menus 返回的 data 直接就是菜单 path 数组
             $Data.menuTreeCheckedKeys = Array.isArray(res.data) ? res.data : [];
         } catch (error) {
             MessagePlugin.error("加载数据失败");
@@ -91,7 +91,7 @@ const $Method = {
 
             const res = await $Http("/addon/admin/role/menuSave", {
                 roleCode: $Prop.rowData.code,
-                menuIds: $Data.menuTreeCheckedKeys
+                menuPaths: $Data.menuTreeCheckedKeys
             });
 
             if (res.code === 0) {

@@ -4,7 +4,7 @@ export default {
     name: "保存角色接口权限",
     fields: {
         roleCode: adminRoleTable.code,
-        apiIds: adminRoleTable.apis
+        apiPaths: adminRoleTable.apis
     },
     handler: async (befly, ctx) => {
         // 查询角色是否存在
@@ -22,12 +22,12 @@ export default {
             table: "addon_admin_role",
             where: { code: ctx.body.roleCode },
             data: {
-                apis: ctx.body.apiIds
+                apis: ctx.body.apiPaths
             }
         });
 
         // 增量刷新 Redis 权限缓存
-        await befly.cache.refreshRoleApiPermissions(role.code, ctx.body.apiIds || []);
+        await befly.cache.refreshRoleApiPermissions(role.code, ctx.body.apiPaths || []);
 
         return befly.tool.Yes("操作成功");
     }

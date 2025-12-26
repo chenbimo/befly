@@ -21,13 +21,13 @@
     },
     "menus": {
         "name": "菜单权限",
-        "type": "array_number_text",
-        "detail": "菜单ID数组，如 [1,2,3]"
+        "type": "array_text",
+        "detail": "菜单路径数组（menu.path），如 [\"/permission/role\",\"/dashboard\"]"
     },
     "apis": {
         "name": "接口权限",
-        "type": "array_number_text",
-        "detail": "接口ID数组，如 [1,2,3]"
+        "type": "array_text",
+        "detail": "接口路径数组（url.pathname），如 [\"/api/addon/addonAdmin/auth/login\"]"
     },
     "sort": {
         "name": "排序",

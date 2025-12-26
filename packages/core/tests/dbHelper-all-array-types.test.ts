@@ -252,14 +252,14 @@ describe("所有数组类型的序列化/反序列化支持", () => {
             id: 1,
             name: "管理员",
             code: "admin",
-            menus: [1, 2, 3, 10, 11, 12, 20, 21], // array_number_string
-            apis: [100, 101, 102, 200, 201, 202] // array_number_string
+            menus: ["/dashboard", "/permission/role"], // array_text
+            apis: ["/api/login", "/api/user/list"] // array_text
         };
 
         // 模拟写入数据库
         const serialized = serializeArrayFields(roleData);
-        expect(serialized.menus).toBe("[1,2,3,10,11,12,20,21]");
-        expect(serialized.apis).toBe("[100,101,102,200,201,202]");
+        expect(serialized.menus).toBe('["/dashboard","/permission/role"]');
+        expect(serialized.apis).toBe('["/api/login","/api/user/list"]');
 
         // 模拟从数据库查询
         const deserialized = deserializeArrayFields(serialized);
@@ -267,8 +267,8 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.apis).toEqual(roleData.apis);
 
         // 验证可以直接使用数组方法
-        expect(deserialized.menus.includes(1)).toBe(true);
-        expect(deserialized.apis.length).toBe(6);
+        expect(deserialized.menus.includes("/dashboard")).toBe(true);
+        expect(deserialized.apis.length).toBe(2);
     });
 
     test("实际场景: 文章标签和分类", () => {
@@ -292,25 +292,25 @@ describe("所有数组类型的序列化/反序列化支持", () => {
 
     test("完整流程: 批量插入场景", () => {
         const roles = [
-            { name: "管理员", menus: [1, 2, 3], apis: [10, 20] },
-            { name: "编辑", menus: [2, 3], apis: [20] },
-            { name: "访客", menus: [3], apis: [] }
+            { name: "管理员", menus: ["/dashboard", "/permission/role"], apis: ["/api/login", "/api/user/list"] },
+            { name: "编辑", menus: ["/dashboard"], apis: ["/api/user/list"] },
+            { name: "访客", menus: ["/dashboard"], apis: [] }
         ];
 
         // 模拟批量序列化
         const serializedRoles = roles.map((role) => serializeArrayFields(role));
 
-        expect(serializedRoles[0].menus).toBe("[1,2,3]");
-        expect(serializedRoles[1].menus).toBe("[2,3]");
-        expect(serializedRoles[2].menus).toBe("[3]");
+        expect(serializedRoles[0].menus).toBe('["/dashboard","/permission/role"]');
+        expect(serializedRoles[1].menus).toBe('["/dashboard"]');
+        expect(serializedRoles[2].menus).toBe('["/dashboard"]');
         expect(serializedRoles[2].apis).toBe("[]");
 
         // 模拟批量反序列化
         const deserializedRoles = serializedRoles.map((role) => deserializeArrayFields(role));
 
-        expect(deserializedRoles[0].menus).toEqual([1, 2, 3]);
-        expect(deserializedRoles[1].menus).toEqual([2, 3]);
-        expect(deserializedRoles[2].menus).toEqual([3]);
+        expect(deserializedRoles[0].menus).toEqual(["/dashboard", "/permission/role"]);
+        expect(deserializedRoles[1].menus).toEqual(["/dashboard"]);
+        expect(deserializedRoles[2].menus).toEqual(["/dashboard"]);
         expect(deserializedRoles[2].apis).toEqual([]);
     });
 });

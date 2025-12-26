@@ -8,6 +8,26 @@ export type SyncDevConfig = {
     devPassword?: string;
 };
 
+function normalizeApiPathname(value: unknown): string {
+    if (typeof value !== "string") return "";
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+
+    // 允许传入 "POST/api/xxx" 或 "POST /api/xxx"，统一转为 "/api/xxx"
+    const methodMatch = trimmed.match(/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*(.*)$/i);
+    if (methodMatch) {
+        const rest = String(methodMatch[2] || "").trim();
+        if (!rest) return "";
+        if (rest.startsWith("/")) return rest;
+        if (rest.startsWith("api/")) return `/${rest}`;
+        return rest.includes("/") ? `/${rest}` : rest;
+    }
+
+    if (trimmed.startsWith("/")) return trimmed;
+    if (trimmed.startsWith("api/")) return `/${trimmed}`;
+    return trimmed.includes("/") ? `/${trimmed}` : trimmed;
+}
+
 export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Promise<void> {
     if (!config.devPassword) {
         return;
@@ -38,24 +58,24 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
 
     const allMenus = await ctx.db.getAll({
         table: "addon_admin_menu",
-        fields: ["id"],
+        fields: ["path"],
         where: { state$gte: 0 },
         orderBy: ["id#ASC"]
     } as any);
 
-    const menuIds = allMenus.lists.map((m: any) => m.id);
+    const menuPaths = Array.from(new Set((allMenus.lists || []).map((m: any) => (typeof m?.path === "string" ? m.path.trim() : "")).filter((p: string) => p.length > 0)));
 
     const existApi = await ctx.db.tableExists("addon_admin_api");
-    let apiIds: number[] = [];
+    let apiPaths: string[] = [];
     if (existApi) {
         const allApis = await ctx.db.getAll({
             table: "addon_admin_api",
-            fields: ["id"],
+            fields: ["routePath"],
             where: { state$gte: 0 },
             orderBy: ["id#ASC"]
         } as any);
 
-        apiIds = allApis.lists.map((a: any) => a.id);
+        apiPaths = Array.from(new Set((allApis.lists || []).map((a: any) => normalizeApiPathname(a?.routePath)).filter((p: string) => p.length > 0)));
     }
 
     const roles = [
@@ -63,8 +83,8 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
             code: "dev",
             name: "开发者角色",
             description: "拥有所有菜单和接口权限的开发者角色",
-            menus: menuIds,
-            apis: apiIds,
+            menus: menuPaths,
+            apis: apiPaths,
             sort: 0
         },
         {
@@ -104,8 +124,11 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
             const nextMenus = roleConfig.menus;
             const nextApis = roleConfig.apis;
 
-            const menusChanged = existingRole.menus.length !== nextMenus.length || existingRole.menus.some((v: any, i: number) => v !== nextMenus[i]);
-            const apisChanged = existingRole.apis.length !== nextApis.length || existingRole.apis.some((v: any, i: number) => v !== nextApis[i]);
+            const existingMenus = Array.isArray(existingRole.menus) ? existingRole.menus : [];
+            const existingApis = Array.isArray(existingRole.apis) ? existingRole.apis : [];
+
+            const menusChanged = existingMenus.length !== nextMenus.length || existingMenus.some((v: any, i: number) => v !== nextMenus[i]);
+            const apisChanged = existingApis.length !== nextApis.length || existingApis.some((v: any, i: number) => v !== nextApis[i]);
 
             const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || menusChanged || apisChanged || existingRole.sort !== roleConfig.sort;
 

@@ -24,16 +24,16 @@ describe("syncDev - dev role permissions", () => {
                     if (options?.table === "addon_admin_menu") {
                         return {
                             lists: [
-                                { id: 1, state: 0 },
-                                { id: 3, state: 0 }
+                                { path: "/dashboard", state: 0 },
+                                { path: "/permission/role", state: 0 }
                             ]
                         };
                     }
                     if (options?.table === "addon_admin_api") {
                         return {
                             lists: [
-                                { id: 7, state: 0 },
-                                { id: 9, state: 0 }
+                                { routePath: "/api/health", state: 0 },
+                                { routePath: "/api/addon/addonAdmin/auth/login", state: 0 }
                             ]
                         };
                     }
@@ -70,11 +70,11 @@ describe("syncDev - dev role permissions", () => {
         const apiGetAll = calls.getAll.find((c) => c?.table === "addon_admin_api");
         expect(apiGetAll?.where?.state$gte).toBe(0);
 
-        // 断言 dev 角色写入时包含“所有 id”（按查询结果原样写入；数据库保证合法，不做额外修正）
+        // 断言 dev 角色写入时包含“所有路径”（按查询结果写入；统一为 pathname，不包含 method）
         const devRoleInsert = calls.insData.find((c) => c?.table === "addon_admin_role" && c?.data?.code === "dev");
         expect(devRoleInsert).toBeTruthy();
-        expect(devRoleInsert.data.menus).toEqual([1, 3]);
-        expect(devRoleInsert.data.apis).toEqual([7, 9]);
+        expect(devRoleInsert.data.menus).toEqual(["/dashboard", "/permission/role"]);
+        expect(devRoleInsert.data.apis).toEqual(["/api/health", "/api/addon/addonAdmin/auth/login"]);
 
         expect(calls.rebuildRoleApiPermissionsCount).toBe(1);
     });

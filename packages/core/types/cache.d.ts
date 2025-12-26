@@ -27,7 +27,7 @@ export interface CacheHelper {
     /**
      * 增量刷新单个角色的接口权限缓存
      */
-    refreshRoleApiPermissions(roleCode: string, apiIds: number[]): Promise<void>;
+    refreshRoleApiPermissions(roleCode: string, apiPaths: string[]): Promise<void>;
 
     /**
      * 缓存所有数据（接口、菜单、角色权限）
@@ -56,7 +56,7 @@ export interface CacheHelper {
     /**
      * 检查角色是否有指定接口权限
      * @param roleCode - 角色代码
-     * @param apiPath - 接口路径（格式：METHOD/path）
+        * @param apiPath - 接口路径（url.pathname，例如 /api/user/login；与 method 无关）
      * @returns 是否有权限
      */
     checkRolePermission(roleCode: string, apiPath: string): Promise<boolean>;

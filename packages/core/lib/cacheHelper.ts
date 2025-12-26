@@ -34,42 +34,46 @@ export class CacheHelper {
     private db: CacheHelperDb;
     private redis: CacheHelperRedis;
 
-    private static readonly API_ID_IN_CHUNK_SIZE = 1000;
-
     constructor(deps: CacheHelperDeps) {
         this.db = deps.db;
         this.redis = deps.redis;
     }
 
-    private normalizeNumberIdList(value: unknown): number[] {
+    private normalizeApiPathname(value: unknown): string {
+        if (typeof value !== "string") return "";
+        const trimmed = value.trim();
+        if (!trimmed) return "";
+
+        // 允许存入/传入 "POST/api/xxx" 或 "POST /api/xxx"，统一转为 "/api/xxx"
+        const methodMatch = trimmed.match(/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*(.*)$/i);
+        if (methodMatch) {
+            const rest = String(methodMatch[2] || "").trim();
+            if (!rest) return "";
+            if (rest.startsWith("/")) return rest;
+            if (rest.startsWith("api/")) return `/${rest}`;
+            return rest.includes("/") ? `/${rest}` : rest;
+        }
+
+        if (trimmed.startsWith("/")) return trimmed;
+        if (trimmed.startsWith("api/")) return `/${trimmed}`;
+        return trimmed.includes("/") ? `/${trimmed}` : trimmed;
+    }
+
+    private normalizeApiPathList(value: unknown): string[] {
         if (value === null || value === undefined) return [];
 
-        const normalizeSingle = (item: unknown): number | null => {
-            if (typeof item === "number") {
-                if (!Number.isFinite(item)) return null;
-                const intValue = Math.trunc(item);
-                return Number.isSafeInteger(intValue) ? intValue : null;
-            }
-            if (typeof item === "bigint") {
-                const intValue = Number(item);
-                return Number.isSafeInteger(intValue) ? intValue : null;
-            }
-            if (typeof item === "string") {
-                const trimmed = item.trim();
-                if (!trimmed) return null;
-                const intValue = Number.parseInt(trimmed, 10);
-                return Number.isSafeInteger(intValue) ? intValue : null;
-            }
-            return null;
+        const normalizeSingle = (item: unknown): string | null => {
+            const p = this.normalizeApiPathname(item);
+            return p ? p : null;
         };
 
         if (Array.isArray(value)) {
-            const ids: number[] = [];
+            const out: string[] = [];
             for (const item of value) {
-                const id = normalizeSingle(item);
-                if (id !== null) ids.push(id);
+                const p = normalizeSingle(item);
+                if (p !== null) out.push(p);
             }
-            return ids;
+            return out;
         }
 
         if (typeof value === "string") {
@@ -79,62 +83,18 @@ export class CacheHelper {
             if (str.startsWith("[")) {
                 try {
                     const parsed = JSON.parse(str);
-                    return this.normalizeNumberIdList(parsed);
+                    return this.normalizeApiPathList(parsed);
                 } catch {
                     // ignore
                 }
             }
 
-            const ids: number[] = [];
-            const parts = str.split(",");
-            for (const part of parts) {
-                const id = normalizeSingle(part);
-                if (id !== null) ids.push(id);
-            }
-            return ids;
+            const single = normalizeSingle(str);
+            return single === null ? [] : [single];
         }
 
         const single = normalizeSingle(value);
         return single === null ? [] : [single];
-    }
-
-    private chunkNumberArray(arr: number[], chunkSize: number): number[][] {
-        if (chunkSize <= 0) {
-            throw new Error(`chunkSize 必须为正整数 (chunkSize: ${chunkSize})`);
-        }
-        if (arr.length === 0) return [];
-
-        const chunks: number[][] = [];
-        for (let i = 0; i < arr.length; i += chunkSize) {
-            chunks.push(arr.slice(i, i + chunkSize));
-        }
-        return chunks;
-    }
-
-    private async buildApiRoutePathMapByIds(apiIds: number[]): Promise<Map<number, string>> {
-        const uniqueIds = Array.from(new Set(apiIds));
-        if (uniqueIds.length === 0) {
-            return new Map();
-        }
-
-        const apiMap = new Map<number, string>();
-        const chunks = this.chunkNumberArray(uniqueIds, CacheHelper.API_ID_IN_CHUNK_SIZE);
-
-        for (const chunk of chunks) {
-            const apis = await this.db.getAll({
-                table: "addon_admin_api",
-                fields: ["id", "routePath"],
-                where: {
-                    id$in: chunk
-                }
-            });
-
-            for (const api of apis.lists) {
-                apiMap.set(api.id, api.routePath);
-            }
-        }
-
-        return apiMap;
     }
 
     /**
@@ -201,11 +161,10 @@ export class CacheHelper {
     async rebuildRoleApiPermissions(): Promise<void> {
         try {
             // 检查表是否存在
-            const apiTableExists = await this.db.tableExists("addon_admin_api");
             const roleTableExists = await this.db.tableExists("addon_admin_role");
 
-            if (!apiTableExists || !roleTableExists) {
-                Logger.warn("⚠️ 接口或角色表不存在，跳过角色权限缓存");
+            if (!roleTableExists) {
+                Logger.warn("⚠️ 角色表不存在，跳过角色权限缓存");
                 return;
             }
 
@@ -215,27 +174,19 @@ export class CacheHelper {
                 fields: ["code", "apis"]
             });
 
-            const roleApiIdsMap = new Map<string, number[]>();
-            const allApiIdsSet = new Set<number>();
+            const roleApiPathsMap = new Map<string, string[]>();
 
             for (const role of roles.lists) {
                 if (!role?.code) continue;
-                const apiIds = this.normalizeNumberIdList(role.apis);
-                roleApiIdsMap.set(role.code, apiIds);
-                for (const id of apiIds) {
-                    allApiIdsSet.add(id);
-                }
+                const apiPaths = this.normalizeApiPathList(role.apis);
+                roleApiPathsMap.set(role.code, apiPaths);
             }
 
-            const roleCodes = Array.from(roleApiIdsMap.keys());
+            const roleCodes = Array.from(roleApiPathsMap.keys());
             if (roleCodes.length === 0) {
                 Logger.info("✅ 没有需要缓存的角色权限");
                 return;
             }
-
-            // 构建所有需要的 API 映射（按 ID 分块使用 $in，避免全表扫描/避免超长 IN）
-            const allApiIds = Array.from(allApiIdsSet);
-            const apiMap = await this.buildApiRoutePathMapByIds(allApiIds);
 
             // 清理所有角色的缓存 key（保证幂等）
             const roleKeys = roleCodes.map((code) => CacheKeys.roleApis(code));
@@ -245,17 +196,8 @@ export class CacheHelper {
             const items: Array<{ key: string; members: string[] }> = [];
 
             for (const roleCode of roleCodes) {
-                const apiIds = roleApiIdsMap.get(roleCode) || [];
-                const membersSet = new Set<string>();
-
-                for (const id of apiIds) {
-                    const apiPath = apiMap.get(id);
-                    if (apiPath) {
-                        membersSet.add(apiPath);
-                    }
-                }
-
-                const members = Array.from(membersSet).sort();
+                const apiPaths = roleApiPathsMap.get(roleCode) || [];
+                const members = Array.from(new Set(apiPaths.map((p) => this.normalizeApiPathname(p)).filter((p) => p.length > 0))).sort();
 
                 if (members.length > 0) {
                     items.push({ key: CacheKeys.roleApis(roleCode), members: members });
@@ -278,29 +220,20 @@ export class CacheHelper {
      * - apiIds 为空数组：仅清理缓存（防止残留）
      * - apiIds 非空：使用 $in 最小查询，DEL 后 SADD
      */
-    async refreshRoleApiPermissions(roleCode: string, apiIds: number[]): Promise<void> {
+    async refreshRoleApiPermissions(roleCode: string, apiPaths: string[]): Promise<void> {
         if (!roleCode || typeof roleCode !== "string") {
             throw new Error("roleCode 必须是非空字符串");
         }
-        const normalizedIds = this.normalizeNumberIdList(apiIds);
+        const normalizedPaths = this.normalizeApiPathList(apiPaths);
         const roleKey = CacheKeys.roleApis(roleCode);
 
-        // 空数组短路：避免触发 $in 空数组异常，同时保证清理残留
-        if (normalizedIds.length === 0) {
+        // 空数组短路：保证清理残留
+        if (normalizedPaths.length === 0) {
             await this.redis.del(roleKey);
             return;
         }
 
-        const apiMap = await this.buildApiRoutePathMapByIds(normalizedIds);
-        const membersSet = new Set<string>();
-        for (const id of normalizedIds) {
-            const apiPath = apiMap.get(id);
-            if (apiPath) {
-                membersSet.add(apiPath);
-            }
-        }
-
-        const members = Array.from(membersSet);
+        const members = Array.from(new Set(normalizedPaths.map((p) => this.normalizeApiPathname(p)).filter((p) => p.length > 0)));
 
         await this.redis.del(roleKey);
         if (members.length > 0) {
@@ -368,12 +301,13 @@ export class CacheHelper {
     /**
      * 检查角色是否有指定接口权限
      * @param roleCode - 角色代码
-     * @param apiPath - 接口路径（格式：METHOD/path）
+     * @param apiPath - 接口路径（url.pathname，例如 /api/user/login；与 method 无关）
      * @returns 是否有权限
      */
     async checkRolePermission(roleCode: string, apiPath: string): Promise<boolean> {
         try {
-            return await this.redis.sismember(CacheKeys.roleApis(roleCode), apiPath);
+            const normalizedPath = this.normalizeApiPathname(apiPath);
+            return await this.redis.sismember(CacheKeys.roleApis(roleCode), normalizedPath);
         } catch (error: any) {
             Logger.error({ err: error, roleCode: roleCode }, "检查角色权限失败");
             return false;

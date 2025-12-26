@@ -15,8 +15,8 @@
                 <div class="api-group" v-for="group in $Data.filteredApiData" :key="group.name">
                     <div class="group-header">{{ group.title }}</div>
                     <div class="api-checkbox-list">
-                        <TCheckboxGroup v-model="$Data.checkedApiIds">
-                            <TCheckbox v-for="api in group.apis" :key="api.id" :value="api.id">
+                        <TCheckboxGroup v-model="$Data.checkedApiPaths">
+                            <TCheckbox v-for="api in group.apis" :key="api.value" :value="api.value">
                                 {{ api.label }}
                             </TCheckbox>
                         </TCheckboxGroup>
@@ -60,7 +60,7 @@ const $Data = $ref({
     apiData: [],
     filteredApiData: [],
     searchText: "",
-    checkedApiIds: []
+    checkedApiPaths: []
 });
 
 // 方法集合
@@ -105,8 +105,8 @@ const $Method = {
                 }
 
                 apiMap.get(addonName).apis.push({
-                    id: api.id,
-                    label: `${api.name}`,
+                    value: api.routePath,
+                    label: `${api.name} ${api.routePath ? `(${api.routePath})` : ""}`.trim(),
                     description: api.description
                 });
             });
@@ -126,7 +126,7 @@ const $Method = {
                 roleCode: $Prop.rowData.code
             });
 
-            $Data.checkedApiIds = res.data.apiIds || [];
+            $Data.checkedApiPaths = res.data.apiPaths || [];
         } catch (error) {
             MessagePlugin.error("加载数据失败");
         }
@@ -155,7 +155,7 @@ const $Method = {
 
             const res = await $Http("/addon/admin/role/apiSave", {
                 roleCode: $Prop.rowData.code,
-                apiIds: $Data.checkedApiIds
+                apiPaths: $Data.checkedApiPaths
             });
 
             if (res.code === 0) {

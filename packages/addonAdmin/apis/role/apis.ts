@@ -16,9 +16,9 @@ export default {
             return befly.tool.No("角色不存在");
         }
 
-        // 数据库自动将 array_number_string 转换为数组
-        const apiIds = role.apis || [];
+        // 数据库自动将 array_text 转换为数组
+        const apiPaths = role.apis || [];
 
-        return befly.tool.Yes("操作成功", { apiIds });
+        return befly.tool.Yes("操作成功", { apiPaths: apiPaths });
     }
 };
