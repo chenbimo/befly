@@ -10,6 +10,7 @@ export function withDefaultColumns(columns, customConfig = {}) {
         {
             operation: { width: 100, align: "center", fixed: "right" },
             state: { width: 100, align: "center" },
+            sort: { width: 100, align: "center" },
             id: { width: 200, align: "center" }
         },
         customConfig

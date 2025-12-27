@@ -33,6 +33,12 @@
                         <TTag v-else-if="row.state === 2" shape="round" theme="warning" variant="light-outline">禁用</TTag>
                         <TTag v-else shape="round" theme="danger" variant="light-outline">已删除</TTag>
                     </template>
+                    <template #menuCount="{ row }">
+                        {{ $Method.getPathCount(row.menus) }}
+                    </template>
+                    <template #apiCount="{ row }">
+                        {{ $Method.getPathCount(row.apis) }}
+                    </template>
                     <template #operation="{ row }">
                         <TDropdown trigger="click" placement="bottom-right" @click="(data) => $Method.onAction(data.value, row)">
                             <TButton theme="primary" size="small">
@@ -116,6 +122,8 @@ const $Data = $ref({
         { colKey: "name", title: "角色名称" },
         { colKey: "code", title: "角色代码" },
         { colKey: "description", title: "描述" },
+        { colKey: "menuCount", title: "菜单数量", align: "center",width:100 },
+        { colKey: "apiCount", title: "接口数量", align: "center",width:100 },
         { colKey: "sort", title: "排序" },
         { colKey: "state", title: "状态" },
         { colKey: "operation", title: "操作" }
@@ -136,6 +144,10 @@ const $Data = $ref({
 
 // 方法
 const $Method = {
+    getPathCount(value) {
+        if (!Array.isArray(value)) return 0;
+        return value.filter((p) => typeof p === "string" && p.trim().length > 0).length;
+    },
     async initData() {
         await $Method.apiRoleList();
     },
