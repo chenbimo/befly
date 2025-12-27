@@ -72,7 +72,9 @@ const props = defineProps({
  * 标准化字段配置，支持 columns 和 fields 两种格式
  */
 const normalizedFields = computed(() => {
-    return props.fields
+    const dataId = props.data && typeof props.data.id !== "undefined" ? props.data.id : undefined;
+
+    const fields = props.fields
         .filter((item) => {
             const key = item.colKey || item.key;
             return key && !props.excludeKeys.includes(key);
@@ -83,6 +85,18 @@ const normalizedFields = computed(() => {
             default: item.default,
             formatter: item.formatter
         }));
+
+    // 约定：页面表格不展示 id，但右侧详情始终展示 id（如果 data.id 存在）
+    if (typeof dataId !== "undefined" && !fields.some((f) => f.key === "id")) {
+        fields.unshift({
+            key: "id",
+            label: "ID",
+            default: "-",
+            formatter: undefined
+        });
+    }
+
+    return fields;
 });
 
 /**

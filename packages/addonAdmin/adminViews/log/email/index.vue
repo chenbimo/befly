@@ -107,7 +107,6 @@ const $Data = $ref({
     loading: false,
     columns: withDefaultColumns([
         { colKey: "username", title: "发送人", fixed: "left" },
-        { colKey: "id", title: "序号" },
         { colKey: "toEmail", title: "收件人" },
         { colKey: "subject", title: "主题" },
         { colKey: "sendTime", title: "发送时间" },

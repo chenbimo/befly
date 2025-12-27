@@ -106,7 +106,6 @@ const $Data = $ref({
     loading: false,
     columns: withDefaultColumns([
         { colKey: "name", title: "配置名称", fixed: "left", width: 150 },
-        { colKey: "id", title: "序号", width: 80 },
         { colKey: "code", title: "配置代码", ellipsis: true },
         { colKey: "value", title: "配置值", ellipsis: true, width: 200 },
         { colKey: "valueType", title: "值类型", width: 100 },

@@ -73,7 +73,6 @@ const $Data = $ref({
     searchKeyword: "",
     columns: withDefaultColumns([
         { colKey: "name", title: "接口名称" },
-        { colKey: "id", title: "序号" },
         { colKey: "path", title: "接口路径" },
         { colKey: "method", title: "请求方法" },
         { colKey: "addonName", title: "所属组件" }

@@ -118,14 +118,13 @@ const $Data = $ref({
     activeRowKeys: [],
     currentRow: null,
     columns: withDefaultColumns([
-        { colKey: "id", title: "ID" },
         { colKey: "name", title: "角色名称" },
-        { colKey: "code", title: "角色代码" },
-        { colKey: "description", title: "描述" },
+        { colKey: "code", title: "角色代码",width:150 },
         { colKey: "menuCount", title: "菜单数量", align: "center",width:100 },
         { colKey: "apiCount", title: "接口数量", align: "center",width:100 },
         { colKey: "sort", title: "排序" },
         { colKey: "state", title: "状态" },
+        { colKey: "description", title: "描述" },
         { colKey: "operation", title: "操作" }
     ]),
     pagerConfig: {

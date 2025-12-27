@@ -89,7 +89,6 @@ const $Data = $ref({
     loading: false,
     columns: withDefaultColumns([
         { colKey: "username", title: "操作人", fixed: "left", width: 100 },
-        { colKey: "id", title: "序号", width: 80 },
         { colKey: "module", title: "模块", width: 100 },
         { colKey: "action", title: "操作", width: 80 },
         { colKey: "path", title: "请求路径", ellipsis: true },

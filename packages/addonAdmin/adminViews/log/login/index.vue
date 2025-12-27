@@ -69,7 +69,6 @@ const $Data = $ref({
     loading: false,
     columns: withDefaultColumns([
         { colKey: "username", title: "用户名", fixed: "left" },
-        { colKey: "id", title: "序号" },
         { colKey: "ip", title: "登录IP" },
         { colKey: "browserName", title: "浏览器" },
         { colKey: "osName", title: "操作系统" },

@@ -101,7 +101,6 @@ const $Data = $ref({
     searchTypeCode: "",
     searchKeyword: "",
     columns: withDefaultColumns([
-        { colKey: "id", title: "ID" },
         { colKey: "typeName", title: "类型名称" },
         { colKey: "typeCode", title: "类型代码" },
         { colKey: "label", title: "标签" },

@@ -60,7 +60,6 @@ const $Data = $ref({
     loading: false,
     columns: withDefaultColumns([
         { colKey: "name", title: "菜单名称" },
-        { colKey: "id", title: "序号" },
         { colKey: "path", title: "路由路径" },
         { colKey: "parentPath", title: "父级路径" },
         { colKey: "sort", title: "排序" },

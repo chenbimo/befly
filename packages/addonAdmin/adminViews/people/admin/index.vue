@@ -94,7 +94,6 @@ const $Data = $ref({
     loading: false,
     columns: withDefaultColumns([
         { colKey: "username", title: "用户名", fixed: "left" },
-        { colKey: "id", title: "序号" },
         { colKey: "nickname", title: "昵称" },
         { colKey: "roleCode", title: "角色" },
         { colKey: "state", title: "状态" },

@@ -96,7 +96,6 @@ const $Data = $ref({
     currentRow: null,
     searchKeyword: "",
     columns: withDefaultColumns([
-        { colKey: "id", title: "ID" },
         { colKey: "code", title: "类型代码" },
         { colKey: "name", title: "类型名称" },
         { colKey: "description", title: "描述" },
