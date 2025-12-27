@@ -7,14 +7,19 @@
     "author": "chensuiyi <bimostyle@qq.com>",
     "files": [
         "package.json",
+        "types/",
         "utils/"
     ],
     "type": "module",
     "exports": {
-        "./utils/*": "./utils/*.ts"
+        "./utils/*": "./utils/*.ts",
+        "./types/*": "./types/*.ts"
     },
     "scripts": {
         "test": "bun test"
+    },
+    "dependencies": {
+        "es-toolkit": "^1.43.0"
     },
     "engines": {
         "bun": ">=1.3.0"
