@@ -57,5 +57,5 @@ export function notifyError(params: { error?: unknown; errors?: unknown[]; fallb
         return;
     }
 
-    MessagePlugin.error(msg);
+    return msg;
 }
