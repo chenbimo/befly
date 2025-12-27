@@ -1,17 +1,33 @@
 ﻿<template>
-    <TDialog v-model:visible="$Data.visible" title="菜单权限" width="600px" :append-to-body="true" :show-footer="true" top="10vh" @close="$Method.onClose">
+    <TDialog v-model:visible="$Data.visible" title="菜单权限" width="900px" :append-to-body="true" :show-footer="true" top="5vh" @close="$Method.onClose">
         <div class="comp-role-menu">
-            <TTree v-model:value="$Data.menuTreeCheckedKeys" :data="$Data.menuTreeData" value-mode="all" :keys="{ value: 'path', label: 'name', children: 'children' }" checkable expand-all />
+            <!-- 搜索框 -->
+            <div class="search-box">
+                <TInput v-model="$Data.searchText" placeholder="搜索菜单名称或路径" clearable @change="$Method.onSearch">
+                    <template #prefix-icon>
+                        <ILucideSearch />
+                    </template>
+                </TInput>
+            </div>
+
+            <div class="menu-container">
+                <TTree v-model:value="$Data.menuTreeCheckedKeys" :data="$Data.menuTreeData" value-mode="all" :keys="{ value: 'path', label: 'name', children: 'children' }" checkable expand-all />
+            </div>
         </div>
         <template #footer>
-            <TButton @click="$Method.onClose">取消</TButton>
-            <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">保存</TButton>
+            <div class="dialog-footer">
+                <t-space>
+                    <TButton theme="default" @click="$Method.onClose">取消</TButton>
+                    <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">保存</TButton>
+                </t-space>
+            </div>
         </template>
     </TDialog>
 </template>
 
 <script setup>
-import { Dialog as TDialog, Tree as TTree, Button as TButton, MessagePlugin } from "tdesign-vue-next";
+import { Dialog as TDialog, Tree as TTree, Button as TButton, Input as TInput, MessagePlugin } from "tdesign-vue-next";
+import ILucideSearch from "~icons/lucide/search";
 import { $Http } from "@/plugins/http";
 import { arrayToTree } from "befly-shared/utils/arrayToTree";
 
@@ -31,6 +47,8 @@ const $Emit = defineEmits(["update:modelValue", "success"]);
 const $Data = $ref({
     visible: false,
     submitting: false,
+    searchText: "",
+    menuTreeDataAll: [],
     menuTreeData: [],
     menuTreeCheckedKeys: []
 });
@@ -62,6 +80,7 @@ const $Method = {
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
             const treeResult = arrayToTree(lists, "path", "parentPath", "children", "sort");
+            $Data.menuTreeDataAll = treeResult.tree;
             $Data.menuTreeData = treeResult.tree;
         } catch (error) {
             MessagePlugin.error("加载菜单失败");
@@ -82,6 +101,39 @@ const $Method = {
         } catch (error) {
             MessagePlugin.error("加载数据失败");
         }
+    },
+
+    // 搜索过滤（保留命中的节点及其祖先节点）
+    onSearch() {
+        const kw = typeof $Data.searchText === "string" ? $Data.searchText.trim().toLowerCase() : "";
+        if (!kw) {
+            $Data.menuTreeData = $Data.menuTreeDataAll;
+            return;
+        }
+
+        const filterTree = (nodes) => {
+            if (!Array.isArray(nodes)) return [];
+
+            const out = [];
+            for (const node of nodes) {
+                const name = typeof node?.name === "string" ? node.name : "";
+                const path = typeof node?.path === "string" ? node.path : "";
+
+                const hit = `${name} ${path}`.toLowerCase().includes(kw);
+                const children = filterTree(node?.children);
+
+                if (hit || children.length > 0) {
+                    out.push({
+                        ...node,
+                        children
+                    });
+                }
+            }
+
+            return out;
+        };
+
+        $Data.menuTreeData = filterTree($Data.menuTreeDataAll);
     },
 
     // 提交表单
@@ -114,5 +166,24 @@ $Method.initData();
 
 <style scoped lang="scss">
 .comp-role-menu {
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .menu-container {
+        flex: 1;
+        overflow: auto;
+
+        :deep(.t-tree) {
+            width: 100%;
+        }
+    }
+}
+
+.dialog-footer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 </style>

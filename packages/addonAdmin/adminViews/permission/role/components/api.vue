@@ -19,13 +19,8 @@
                             <TCheckbox v-for="api in group.apis" :key="api.value" :value="api.value">
                                 <div class="api-checkbox-label">
                                     <div class="api-label-main">
-                                        <div class="api-name" :title="api.name">{{ api.name }}</div>
-                                        <div class="api-path" :title="api.path">{{ api.path }}</div>
+                                        <div class="api-name" :title="api.path ? `${api.name}\n${api.path}` : api.name">{{ api.name }}</div>
                                     </div>
-
-                                    <span class="api-copy" title="复制路径" @click.stop="$Method.copyApiPath(api.path)">
-                                        <ILucideCopy :size="14" />
-                                    </span>
                                 </div>
                             </TCheckbox>
                         </TCheckboxGroup>
@@ -47,7 +42,6 @@
 
 <script setup>
 import { Dialog as TDialog, Input as TInput, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, MessagePlugin } from "tdesign-vue-next";
-import ILucideCopy from "~icons/lucide/copy";
 import ILucideSearch from "~icons/lucide/search";
 import { $Http } from "@/plugins/http";
 
@@ -162,47 +156,6 @@ const $Method = {
                 };
             })
             .filter((group) => group.apis.length > 0);
-    },
-
-    async copyApiPath(path) {
-        if (typeof path !== "string" || path.trim().length === 0) {
-            MessagePlugin.warning("路径为空");
-            return;
-        }
-
-        const value = path.trim();
-
-        try {
-            if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(value);
-                MessagePlugin.success("已复制");
-                return;
-            }
-        } catch (error) {
-            // ignore and fallback
-        }
-
-        try {
-            const textarea = document.createElement("textarea");
-            textarea.value = value;
-            textarea.setAttribute("readonly", "readonly");
-            textarea.style.position = "fixed";
-            textarea.style.left = "-9999px";
-            textarea.style.top = "-9999px";
-            document.body.appendChild(textarea);
-            textarea.select();
-            const ok = document.execCommand("copy");
-            document.body.removeChild(textarea);
-
-            if (ok) {
-                MessagePlugin.success("已复制");
-                return;
-            }
-
-            MessagePlugin.error("复制失败");
-        } catch (error) {
-            MessagePlugin.error("复制失败");
-        }
     },
 
     // 提交表单
@@ -327,30 +280,6 @@ $Method.initData();
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.api-path {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    opacity: 0.7;
-    font-size: 12px;
-}
-
-.api-copy {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.api-copy:hover {
-    background: rgba(0, 0, 0, 0.06);
 }
 
 .dialog-footer {
