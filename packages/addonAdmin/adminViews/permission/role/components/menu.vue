@@ -11,7 +11,22 @@
             </div>
 
             <div class="menu-container">
-                <TTree v-model:value="$Data.menuTreeCheckedKeys" :data="$Data.menuTreeData" value-mode="all" :keys="{ value: 'path', label: 'name', children: 'children' }" checkable expand-all />
+                <div class="menu-group" v-for="group in $Data.filteredMenuGroups" :key="group.name">
+                    <div class="group-header">{{ group.title }}</div>
+                    <div class="menu-checkbox-list">
+                        <TCheckboxGroup v-model="$Data.checkedMenuPaths">
+                            <TCheckbox v-for="menu in group.menus" :key="menu.value" :value="menu.value">
+                                <div class="menu-checkbox-label">
+                                    <div class="menu-label-main">
+                                        <div class="menu-name" :title="menu.path ? `${menu.name}\n${menu.path}` : menu.name">
+                                            {{ menu.name }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </TCheckbox>
+                        </TCheckboxGroup>
+                    </div>
+                </div>
             </div>
         </div>
         <template #footer>
@@ -26,7 +41,7 @@
 </template>
 
 <script setup>
-import { Dialog as TDialog, Tree as TTree, Button as TButton, Input as TInput, MessagePlugin } from "tdesign-vue-next";
+import { Dialog as TDialog, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, Input as TInput, MessagePlugin } from "tdesign-vue-next";
 import ILucideSearch from "~icons/lucide/search";
 import { $Http } from "@/plugins/http";
 import { arrayToTree } from "befly-shared/utils/arrayToTree";
@@ -48,15 +63,16 @@ const $Data = $ref({
     visible: false,
     submitting: false,
     searchText: "",
-    menuTreeDataAll: [],
-    menuTreeData: [],
-    menuTreeCheckedKeys: []
+    menuGroups: [],
+    filteredMenuGroups: [],
+    checkedMenuPaths: []
 });
 
 // 方法集合
 const $Method = {
     async initData() {
         await Promise.all([$Method.apiMenuAll(), $Method.apiRoleMenuDetail()]);
+        $Data.filteredMenuGroups = $Data.menuGroups;
         $Method.onShow();
     },
 
@@ -80,8 +96,45 @@ const $Method = {
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
             const treeResult = arrayToTree(lists, "path", "parentPath", "children", "sort");
-            $Data.menuTreeDataAll = treeResult.tree;
-            $Data.menuTreeData = treeResult.tree;
+            const roots = Array.isArray(treeResult?.tree) ? treeResult.tree : [];
+
+            const groups = [];
+            for (const root of roots) {
+                const rootPath = typeof root?.path === "string" ? root.path : "";
+                const rootName = typeof root?.name === "string" ? root.name : "";
+
+                const menus = [];
+
+                const walk = (node, depth) => {
+                    const name = typeof node?.name === "string" ? node.name : "";
+                    const path = typeof node?.path === "string" ? node.path : "";
+                    if (path.length > 0) {
+                        menus.push({
+                            value: path,
+                            name: name,
+                            path: path,
+                            depth: depth,
+                            label: `${name} ${path}`.trim()
+                        });
+                    }
+
+                    const children = Array.isArray(node?.children) ? node.children : [];
+                    for (const child of children) {
+                        walk(child, depth + 1);
+                    }
+                };
+
+                walk(root, 0);
+
+                const groupTitle = rootName.length > 0 ? rootName : rootPath;
+                groups.push({
+                    name: rootPath.length > 0 ? rootPath : groupTitle,
+                    title: groupTitle.length > 0 ? groupTitle : "未命名菜单",
+                    menus: menus
+                });
+            }
+
+            $Data.menuGroups = groups;
         } catch (error) {
             MessagePlugin.error("加载菜单失败");
         }
@@ -97,43 +150,36 @@ const $Method = {
             });
 
             // menus 返回的 data 直接就是菜单 path 数组
-            $Data.menuTreeCheckedKeys = Array.isArray(res.data) ? res.data : [];
+            $Data.checkedMenuPaths = Array.isArray(res.data) ? res.data : [];
         } catch (error) {
             MessagePlugin.error("加载数据失败");
         }
     },
 
-    // 搜索过滤（保留命中的节点及其祖先节点）
+    // 搜索过滤（按“名称 + 路径”匹配；展示结构与接口弹框一致）
     onSearch() {
         const kw = typeof $Data.searchText === "string" ? $Data.searchText.trim().toLowerCase() : "";
-        if (!kw) {
-            $Data.menuTreeData = $Data.menuTreeDataAll;
+        if (kw.length === 0) {
+            $Data.filteredMenuGroups = $Data.menuGroups;
             return;
         }
 
-        const filterTree = (nodes) => {
-            if (!Array.isArray(nodes)) return [];
+        $Data.filteredMenuGroups = $Data.menuGroups
+            .map((group) => {
+                const menus = Array.isArray(group?.menus)
+                    ? group.menus.filter((menu) => {
+                          const label = typeof menu?.label === "string" ? menu.label : "";
+                          return label.toLowerCase().includes(kw);
+                      })
+                    : [];
 
-            const out = [];
-            for (const node of nodes) {
-                const name = typeof node?.name === "string" ? node.name : "";
-                const path = typeof node?.path === "string" ? node.path : "";
-
-                const hit = `${name} ${path}`.toLowerCase().includes(kw);
-                const children = filterTree(node?.children);
-
-                if (hit || children.length > 0) {
-                    out.push({
-                        ...node,
-                        children
-                    });
-                }
-            }
-
-            return out;
-        };
-
-        $Data.menuTreeData = filterTree($Data.menuTreeDataAll);
+                return {
+                    name: group.name,
+                    title: group.title,
+                    menus: menus
+                };
+            })
+            .filter((group) => Array.isArray(group.menus) && group.menus.length > 0);
     },
 
     // 提交表单
@@ -143,7 +189,7 @@ const $Method = {
 
             const res = await $Http("/addon/admin/role/menuSave", {
                 roleCode: $Prop.rowData.code,
-                menuPaths: $Data.menuTreeCheckedKeys
+                menuPaths: $Data.checkedMenuPaths
             });
 
             if (res.code === 0) {
@@ -173,12 +219,83 @@ $Method.initData();
 
     .menu-container {
         flex: 1;
-        overflow: auto;
+        overflow-y: auto;
 
-        :deep(.t-tree) {
-            width: 100%;
+        .menu-group {
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-small);
+            overflow: hidden;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+
+            .group-header {
+                padding: 12px 16px;
+                background-color: var(--bg-color-hover);
+                font-weight: 500;
+                font-size: var(--font-size-sm);
+                color: var(--text-primary);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                &::before {
+                    content: "";
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background-color: var(--primary-color);
+                    opacity: 0.3;
+                    flex-shrink: 0;
+                }
+            }
+
+            .menu-checkbox-list {
+                padding: 10px;
+
+                :deep(.t-checkbox-group) {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    width: 100%;
+                }
+
+                :deep(.t-checkbox) {
+                    flex: 0 0 calc(33.333% - 8px);
+                    margin: 0;
+                    min-width: 0;
+                }
+
+                :deep(.t-checkbox__label) {
+                    min-width: 0;
+                }
+            }
         }
     }
+}
+
+.menu-checkbox-label {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.menu-label-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.menu-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .dialog-footer {
