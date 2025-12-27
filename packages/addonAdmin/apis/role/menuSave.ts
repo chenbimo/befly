@@ -1,3 +1,5 @@
+import { normalizePathnameListInput } from "befly-shared/utils/normalizePathnameListInput";
+
 import adminRoleTable from "../../tables/role.json";
 
 export default {
@@ -7,6 +9,13 @@ export default {
         menuPaths: adminRoleTable.menus
     },
     handler: async (befly, ctx) => {
+        let menuPaths: string[] = [];
+        try {
+            menuPaths = normalizePathnameListInput(ctx.body.menuPaths, "menuPaths", false);
+        } catch (error: any) {
+            return befly.tool.No(`参数不合法：${error?.message || "未知错误"}`);
+        }
+
         // 查询角色是否存在
         const role = await befly.db.getOne({
             table: "addon_admin_role",
@@ -22,7 +31,7 @@ export default {
             table: "addon_admin_role",
             where: { code: ctx.body.roleCode },
             data: {
-                menus: ctx.body.menuPaths
+                menus: menuPaths
             }
         });
 

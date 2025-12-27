@@ -17,7 +17,7 @@ export default {
         }
 
         // 数据库自动将 array_text 转换为数组
-        const apiPaths = role.apis || [];
+        const apiPaths = Array.isArray(role.apis) ? role.apis : [];
 
         return befly.tool.Yes("操作成功", { apiPaths: apiPaths });
     }

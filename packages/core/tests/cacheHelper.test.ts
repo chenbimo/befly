@@ -177,6 +177,43 @@ describe("CacheHelper", () => {
             expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
             expect(mockRedis.saddBatch).not.toHaveBeenCalled();
         });
+
+        it('apis 为字符串 "null" 时应视为空数组（仍会清理旧缓存）', async () => {
+            const roles = [{ id: 1, code: "user", apis: "null" }];
+
+            mockDb.getAll = mock((opts: any) => {
+                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
+                return Promise.resolve({ lists: [], total: 0 });
+            });
+
+            await cacheHelper.rebuildRoleApiPermissions();
+
+            expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
+            const delBatchArgs = (mockRedis.delBatch as any).mock.calls[0][0] as string[];
+            expect(delBatchArgs).toEqual([CacheKeys.roleApis("user")]);
+            expect(mockRedis.saddBatch).not.toHaveBeenCalled();
+        });
+
+        it("apis 为 JSON 数组字符串时应解析并写入成员", async () => {
+            const roles = [{ id: 1, code: "user", apis: '["/api/login","/api/user/list"]' }];
+
+            mockDb.getAll = mock((opts: any) => {
+                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
+                return Promise.resolve({ lists: [], total: 0 });
+            });
+
+            await cacheHelper.rebuildRoleApiPermissions();
+
+            expect(mockRedis.delBatch).toHaveBeenCalledTimes(1);
+            expect(mockRedis.saddBatch).toHaveBeenCalledTimes(1);
+            const saddBatchArgs = (mockRedis.saddBatch as any).mock.calls[0][0] as Array<{ key: string; members: string[] }>;
+            expect(saddBatchArgs).toEqual([
+                {
+                    key: CacheKeys.roleApis("user"),
+                    members: ["/api/login", "/api/user/list"]
+                }
+            ]);
+        });
     });
 
     describe("refreshRoleApiPermissions", () => {

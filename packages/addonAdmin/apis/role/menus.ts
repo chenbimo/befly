@@ -17,7 +17,7 @@ export default {
         }
 
         // 数据库自动将 array_text 转换为数组
-        const menuPaths = role.menus || [];
+        const menuPaths = Array.isArray(role.menus) ? role.menus : [];
 
         return befly.tool.Yes("操作成功", menuPaths);
     }

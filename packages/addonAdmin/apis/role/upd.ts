@@ -1,9 +1,22 @@
+import { normalizePathnameListInput } from "befly-shared/utils/normalizePathnameListInput";
+
 import adminRoleTable from "../../tables/role.json";
 
 export default {
     name: "更新角色",
     fields: adminRoleTable,
     handler: async (befly, ctx) => {
+        let apiPaths: string[] = [];
+        let menuPaths: string[] = [];
+
+        try {
+            apiPaths = normalizePathnameListInput(ctx.body.apis, "apis", true);
+
+            menuPaths = normalizePathnameListInput(ctx.body.menus, "menus", false);
+        } catch (error: any) {
+            return befly.tool.No(`参数不合法：${error?.message || "未知错误"}`);
+        }
+
         // 检查角色代码是否被其他角色占用
         const existing = await befly.db.getList({
             table: "addon_admin_role",
@@ -24,15 +37,15 @@ export default {
                 name: ctx.body.name,
                 code: ctx.body.code,
                 description: ctx.body.description,
-                menus: ctx.body.menus || [],
-                apis: ctx.body.apis || [],
+                menus: menuPaths,
+                apis: apiPaths,
                 sort: ctx.body.sort
                 // state 字段不在此处更新，需要禁用/启用时单独处理
             }
         });
 
         // 增量刷新角色权限缓存
-        await befly.cache.refreshRoleApiPermissions(ctx.body.code, ctx.body.apis || []);
+        await befly.cache.refreshRoleApiPermissions(ctx.body.code, apiPaths);
 
         return befly.tool.Yes("操作成功");
     }

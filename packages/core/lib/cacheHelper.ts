@@ -67,14 +67,36 @@ export class CacheHelper {
     private assertApiPathList(value: unknown, roleCode: string): string[] {
         if (value === null || value === undefined) return [];
 
-        if (!Array.isArray(value)) {
-            throw new Error(`角色权限数据不合法：addon_admin_role.apis 必须是字符串数组，roleCode=${roleCode}`);
+        let list: unknown = value;
+
+        // 兼容历史/手工数据：apis 可能被存成 JSON 字符串或 "null"
+        if (typeof list === "string") {
+            const trimmed = list.trim();
+
+            // TEXT 字段常见历史值："null"（表示空）
+            if (trimmed === "" || trimmed === "null") {
+                return [];
+            }
+
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    list = JSON.parse(trimmed);
+                } catch {
+                    throw new Error(`角色权限数据不合法：addon_admin_role.apis JSON 解析失败，roleCode=${roleCode}`);
+                }
+            }
+        }
+
+        if (!Array.isArray(list)) {
+            const typeLabel = typeof list;
+            throw new Error(`角色权限数据不合法：addon_admin_role.apis 必须是字符串数组或 JSON 数组字符串，roleCode=${roleCode}，type=${typeLabel}`);
         }
 
         const out: string[] = [];
-        for (const item of value) {
+        for (const item of list) {
             out.push(this.assertApiPathname(item, `角色权限数据不合法：addon_admin_role.apis 元素，roleCode=${roleCode}`));
         }
+
         return out;
     }
 
