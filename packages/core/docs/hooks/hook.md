@@ -452,7 +452,8 @@ const hook: Hook = {
         }
 
         if (!hasPermission) {
-            ctx.response = ErrorResponse(ctx, "无权访问");
+            const apiLabel = ctx.api?.name ? ctx.api.name : apiPath;
+            ctx.response = ErrorResponse(ctx, `无权访问 ${apiLabel} 接口`);
             return;
         }
     }

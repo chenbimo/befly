@@ -35,12 +35,12 @@ export default {
         }
 
         // 4. 角色权限检查
-        let hasPermission = false;
-        if (ctx.user.roleCode && befly.redis) {
-            // apiPath 在 apiHandler 中已统一生成并写入 ctx.route
-            const apiPath = ctx.route;
-            const roleCode = ctx.user.roleCode;
+        // apiPath 在 apiHandler 中已统一生成并写入 ctx.route
+        const apiPath = ctx.route;
+        const roleCode = ctx.user.roleCode;
 
+        let hasPermission = false;
+        if (roleCode && befly.redis) {
             try {
                 // 极简方案：每个角色一个 Set，直接判断成员是否存在
                 const roleApisKey = CacheKeys.roleApis(roleCode);
@@ -61,7 +61,10 @@ export default {
         }
 
         if (!hasPermission) {
-            ctx.response = ErrorResponse(ctx, "无权访问", 1, null, null, "permission");
+            const apiNameLabel = typeof ctx.api.name === "string" && ctx.api.name.length > 0 ? ctx.api.name : null;
+            const apiPathLabel = typeof apiPath === "string" && apiPath.length > 0 ? apiPath : null;
+            const apiLabel = apiNameLabel ? apiNameLabel : apiPathLabel ? apiPathLabel : "未知接口";
+            ctx.response = ErrorResponse(ctx, `无权访问 ${apiLabel} 接口`, 1, null, { apiLabel: apiLabel }, "permission");
             return;
         }
     }
