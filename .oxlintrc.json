@@ -7,24 +7,7 @@
     "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/logs/**", "temp/**", "**/*.d.ts"],
     "rules": {
         "no-console": "error",
-        "no-debugger": "error",
-        "eslint/no-restricted-imports": [
-            "error",
-            {
-                "paths": [
-                    {
-                        "name": "befly-shared",
-                        "message": "禁止从 'befly-shared' 导入（已移除）。服务端请使用 'befly/lib/*'；前端/Vite 请使用 'befly-vite/utils/*'。"
-                    }
-                ],
-                "patterns": [
-                    {
-                        "group": ["befly-shared/*"],
-                        "message": "禁止从 'befly-shared/*' 导入（已移除）。服务端请使用 'befly/lib/*'；前端/Vite 请使用 'befly-vite/utils/*'。"
-                    }
-                ]
-            }
-        ]
+        "no-debugger": "error"
     },
     "overrides": [
         {
