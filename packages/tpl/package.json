@@ -1,7 +1,7 @@
 {
     "name": "befly-tpl",
     "version": "3.11.7",
-    "gitHead": "e8b3ead2d701829faa0b7d3202304d18052dfafc",
+    "gitHead": "9b0a0d79c3c22371be5c08e65ede4c3ba7583865",
     "private": false,
     "description": "Befly 3.0 TypeScript Template",
     "files": [
