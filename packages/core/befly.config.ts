@@ -39,8 +39,7 @@ const defaultOptions: BeflyOptions = {
         username: "root",
         password: "root",
         database: "befly_demo",
-        poolMax: 10,
-        debug: 0
+        poolMax: 10
     },
 
     // ========== Redis 配置 ==========

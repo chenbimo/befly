@@ -1,3 +1,5 @@
+import type { DbResult, SqlInfo } from "../../types/database.js";
+
 export type MockColumn = { name: string; type: string; notnull: 0 | 1; dflt_value: any };
 
 export type MockSqliteState = {
@@ -80,48 +82,61 @@ export function createMockSqliteDb(state: MockSqliteState) {
             const sql = String(sqlStr);
             state.executedSql.push(sql);
 
+            const safeParams = Array.isArray(params) ? params : [];
+            const sqlInfo: SqlInfo = { sql: sql, params: safeParams as any[], duration: 0 };
+
+            const ok = <T>(data: T): DbResult<T, SqlInfo> => {
+                return { data: data, sql: sqlInfo };
+            };
+
             if (sql.includes("sqlite_version()")) {
-                return [{ version: "3.50.1" }];
+                return ok([{ version: "3.50.1" }]);
             }
 
             if (sql.includes("sqlite_master")) {
                 const tableName = String(params?.[0] || "");
-                return [{ count: state.tables[tableName] ? 1 : 0 }];
+                return ok([{ count: state.tables[tableName] ? 1 : 0 }]);
             }
 
             if (/^PRAGMA\s+table_info\s*\(/i.test(sql)) {
                 const tableName = extractPragmaIdent(sql);
                 const t = state.tables[tableName];
-                if (!t) return [];
-                return Object.values(t.columns).map((c) => {
-                    return {
-                        name: c.name,
-                        type: c.type,
-                        notnull: c.notnull,
-                        dflt_value: c.dflt_value
-                    };
-                });
+                if (!t) return ok([]);
+                return ok(
+                    Object.values(t.columns).map((c) => {
+                        return {
+                            name: c.name,
+                            type: c.type,
+                            notnull: c.notnull,
+                            dflt_value: c.dflt_value
+                        };
+                    })
+                );
             }
 
             if (/^PRAGMA\s+index_list\s*\(/i.test(sql)) {
                 const tableName = extractPragmaIdent(sql);
                 const t = state.tables[tableName];
-                if (!t) return [];
-                return Object.keys(t.indexes).map((name) => {
-                    return { name: name };
-                });
+                if (!t) return ok([]);
+                return ok(
+                    Object.keys(t.indexes).map((name) => {
+                        return { name: name };
+                    })
+                );
             }
 
             if (/^PRAGMA\s+index_info\s*\(/i.test(sql)) {
                 const indexName = extractPragmaIdent(sql);
                 for (const table of Object.values(state.tables)) {
                     if (table.indexes[indexName]) {
-                        return table.indexes[indexName].map((col) => {
-                            return { name: col };
-                        });
+                        return ok(
+                            table.indexes[indexName].map((col) => {
+                                return { name: col };
+                            })
+                        );
                     }
                 }
-                return [];
+                return ok([]);
             }
 
             const createTable = parseCreateTable(sql);
@@ -160,7 +175,7 @@ export function createMockSqliteDb(state: MockSqliteState) {
                     indexes: {}
                 };
 
-                return [];
+                return ok([]);
             }
 
             const addColumn = parseAlterAddColumn(sql);
@@ -175,7 +190,7 @@ export function createMockSqliteDb(state: MockSqliteState) {
                         dflt_value: addColumn.dflt
                     };
                 }
-                return [];
+                return ok([]);
             }
 
             const createIndex = parseCreateIndex(sql);
@@ -183,7 +198,7 @@ export function createMockSqliteDb(state: MockSqliteState) {
                 const t = state.tables[createIndex.tableName];
                 if (!t) throw new Error(`mock sqlite db: 表不存在，无法 CREATE INDEX: ${createIndex.tableName}`);
                 t.indexes[createIndex.indexName] = createIndex.columns;
-                return [];
+                return ok([]);
             }
 
             const dropIndex = parseDropIndex(sql);
@@ -191,11 +206,11 @@ export function createMockSqliteDb(state: MockSqliteState) {
                 for (const t of Object.values(state.tables)) {
                     delete t.indexes[dropIndex.indexName];
                 }
-                return [];
+                return ok([]);
             }
 
             if (/^DROP\s+TABLE/i.test(sql)) {
-                return [];
+                return ok([]);
             }
 
             throw new Error(`mock sqlite db: 未处理的 SQL: ${sql}`);

@@ -11,7 +11,7 @@ export default {
                     table: "addon_admin_api",
                     orderBy: ["id#ASC"]
                 });
-                allApis = result.lists;
+                allApis = result.data.lists;
 
                 // 缓存到 Redis
                 if (allApis.length > 0) {

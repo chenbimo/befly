@@ -11,6 +11,6 @@ export default {
             orderBy: ["sort#ASC", "id#ASC"]
         });
 
-        return befly.tool.Yes("操作成功", { lists: roles.lists, total: roles.total });
+        return befly.tool.Yes("操作成功", { lists: roles.data.lists, total: roles.data.total });
     }
 };

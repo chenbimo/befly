@@ -187,6 +187,32 @@ export interface SqlQuery {
 }
 
 /**
+ * SQL 信息（用于 DbHelper 统一返回结构）
+ */
+export interface SqlInfo extends SqlQuery {
+    /** 执行耗时（毫秒） */
+    duration: number;
+}
+
+/**
+ * 列表/全量查询常见的两段 SQL 调试信息
+ * - count: 计数 SQL
+ * - data: 数据 SQL（在 total=0 等情况下可能不会执行）
+ */
+export interface ListSql {
+    count: SqlInfo;
+    data?: SqlInfo;
+}
+
+/**
+ * DbHelper 统一返回结构：全部用 data 承载原返回值，并附带 sql
+ */
+export interface DbResult<TData = any, TSql = SqlInfo> {
+    data: TData;
+    sql: TSql;
+}
+
+/**
  * 插入数据类型
  */
 export type InsertData = Record<string, SqlValue> | Record<string, SqlValue>[];
@@ -258,46 +284,46 @@ export interface DbHelper {
      * 查询记录数（类型安全版本）
      * @template K - 表名类型
      */
-    getCount<K extends TableName>(options: Omit<TypedQueryOptions<K>, "fields" | "page" | "limit" | "orderBy">): Promise<number>;
+    getCount<K extends TableName>(options: Omit<TypedQueryOptions<K>, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>>;
 
     /**
      * 查询单条数据（类型安全版本）
      * @template K - 表名类型
      * @returns 返回类型自动推断为对应表的记录类型
      */
-    getOne<K extends TableName>(options: TypedQueryOptions<K>): Promise<TableType<K> | null>;
+    getOne<K extends TableName>(options: TypedQueryOptions<K>): Promise<DbResult<TableType<K> | null>>;
 
     /**
      * 查询列表（类型安全版本）
      * @template K - 表名类型
      * @returns 返回类型自动推断为对应表的记录列表
      */
-    getList<K extends TableName>(options: TypedQueryOptions<K>): Promise<ListResult<TableType<K>>>;
+    getList<K extends TableName>(options: TypedQueryOptions<K>): Promise<DbResult<ListResult<TableType<K>>, ListSql>>;
 
     /**
      * 查询所有数据（类型安全版本）
      * @template K - 表名类型
      * @returns 返回类型自动推断为对应表的记录数组
      */
-    getAll<K extends TableName>(options: Omit<TypedQueryOptions<K>, "page" | "limit">): Promise<AllResult<TableType<K>>>;
+    getAll<K extends TableName>(options: Omit<TypedQueryOptions<K>, "page" | "limit">): Promise<DbResult<AllResult<TableType<K>>, ListSql>>;
 
     /**
      * 插入数据（类型安全版本）
      * @template K - 表名类型
      */
-    insData<K extends TableName>(options: TypedInsertOptions<K>): Promise<number>;
+    insData<K extends TableName>(options: TypedInsertOptions<K>): Promise<DbResult<number>>;
 
     /**
      * 更新数据（类型安全版本）
      * @template K - 表名类型
      */
-    updData<K extends TableName>(options: TypedUpdateOptions<K>): Promise<number>;
+    updData<K extends TableName>(options: TypedUpdateOptions<K>): Promise<DbResult<number>>;
 
     /**
      * 删除数据（类型安全版本）
      * @template K - 表名类型
      */
-    delData<K extends TableName>(options: TypedDeleteOptions<K>): Promise<number>;
+    delData<K extends TableName>(options: TypedDeleteOptions<K>): Promise<DbResult<number>>;
 
     // ============================================
     // 兼容旧版方法（手动指定返回类型）
@@ -306,40 +332,40 @@ export interface DbHelper {
     /**
      * 查询记录数（兼容版本）
      */
-    getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<number>;
+    getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>>;
 
     /**
      * 查询单条数据（兼容版本，需手动指定泛型）
      * @template T - 返回类型
      */
-    getOne<T = any>(options: QueryOptions): Promise<T | null>;
+    getOne<T = any>(options: QueryOptions): Promise<DbResult<T | null>>;
 
     /**
      * 查询列表（兼容版本，需手动指定泛型）
      * @template T - 列表项类型
      */
-    getList<T = any>(options: QueryOptions): Promise<ListResult<T>>;
+    getList<T = any>(options: QueryOptions): Promise<DbResult<ListResult<T>, ListSql>>;
 
     /**
      * 查询所有数据（兼容版本，需手动指定泛型）
      * @template T - 返回类型
      */
-    getAll<T = any>(options: Omit<QueryOptions, "page" | "limit">): Promise<AllResult<T>>;
+    getAll<T = any>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<AllResult<T>, ListSql>>;
 
     /**
      * 插入数据（兼容版本）
      */
-    insData(options: InsertOptions): Promise<number>;
+    insData(options: InsertOptions): Promise<DbResult<number>>;
 
     /**
      * 更新数据（兼容版本）
      */
-    updData(options: UpdateOptions): Promise<number>;
+    updData(options: UpdateOptions): Promise<DbResult<number>>;
 
     /**
      * 删除数据（兼容版本）
      */
-    delData(options: DeleteOptions): Promise<number>;
+    delData(options: DeleteOptions): Promise<DbResult<number>>;
 
     // ============================================
     // 通用方法
@@ -354,52 +380,52 @@ export interface DbHelper {
     /**
      * 执行原始 SQL
      */
-    query(sql: string, params?: any[]): Promise<any>;
+    query(sql: string, params?: any[]): Promise<DbResult<any>>;
 
     /**
      * 检查数据是否存在
      */
-    exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<boolean>;
+    exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>>;
 
     /**
      * 检查表是否存在
      */
-    tableExists(tableName: string): Promise<boolean>;
+    tableExists(tableName: string): Promise<DbResult<boolean>>;
 
     /**
      * 批量插入数据
      */
-    insBatch(table: string, dataList: Record<string, any>[]): Promise<number[]>;
+    insBatch(table: string, dataList: Record<string, any>[]): Promise<DbResult<number[]>>;
 
     /**
      * 禁用数据（设置 state=2）
      */
-    disableData(options: Omit<DeleteOptions, "hard">): Promise<number>;
+    disableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
 
     /**
      * 启用数据（设置 state=1）
      */
-    enableData(options: Omit<DeleteOptions, "hard">): Promise<number>;
+    enableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
 
     /**
      * 硬删除数据（物理删除）
      */
-    delForce(options: Omit<DeleteOptions, "hard">): Promise<number>;
+    delForce(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
 
     /**
      * 自增字段
      */
-    increment(table: string, field: string, where: WhereConditions, value?: number): Promise<number>;
+    increment(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
 
     /**
      * 自减字段
      */
-    decrement(table: string, field: string, where: WhereConditions, value?: number): Promise<number>;
+    decrement(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
 
     /**
      * 查询单个字段值
      */
-    getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<T | null>;
+    getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<T | null>>;
 }
 
 /**

@@ -16,7 +16,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
         throw new Error("syncApi: ctx.cache 未初始化（cache 插件未加载或注入失败）");
     }
 
-    if (!(await ctx.db.tableExists(tableName))) {
+    if (!(await ctx.db.tableExists(tableName)).data) {
         Logger.debug(`${tableName} 表不存在`);
         return;
     }
@@ -27,7 +27,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
         where: { state$gte: 0 }
     } as any);
 
-    const dbLists = allDbApis.lists || [];
+    const dbLists = allDbApis.data.lists || [];
     const allDbApiMap = keyBy(dbLists, (item: any) => item.routePath);
 
     const insData: SyncApiItem[] = [];

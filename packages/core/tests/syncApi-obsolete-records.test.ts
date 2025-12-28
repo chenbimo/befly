@@ -20,16 +20,16 @@ describe("syncApi - delete obsolete records", () => {
         };
 
         const dbHelper = {
-            tableExists: async () => true,
-            updBatch: async () => 0,
-            insBatch: async () => [],
+            tableExists: async () => ({ data: true }),
+            updBatch: async () => ({ data: 0 }),
+            insBatch: async () => ({ data: [] }),
             getAll: async (options: any) => {
                 calls.getAllArgs = options;
-                return { lists: existingRecords };
+                return { data: { lists: existingRecords } };
             },
             delForceBatch: async (_table: any, ids: any[]) => {
                 calls.delForceBatch.push(ids);
-                return ids.length;
+                return { data: ids.length };
             }
         } as any;
 

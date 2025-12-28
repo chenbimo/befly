@@ -11,7 +11,7 @@ export default {
             where: { code: ctx.body.typeCode }
         });
 
-        if (!dictType?.id) {
+        if (!dictType.data?.id) {
             return befly.tool.No("字典类型不存在");
         }
 
@@ -24,7 +24,7 @@ export default {
             }
         });
 
-        if (existing?.id) {
+        if (existing.data?.id) {
             return befly.tool.No("该类型下已存在相同的键名");
         }
 
@@ -39,6 +39,6 @@ export default {
             }
         });
 
-        return befly.tool.Yes("添加成功", { id: dictId });
+        return befly.tool.Yes("添加成功", { id: dictId.data });
     }
 };

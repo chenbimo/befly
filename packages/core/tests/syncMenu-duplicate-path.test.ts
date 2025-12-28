@@ -46,28 +46,28 @@ describe("syncMenu - duplicate path records", () => {
         };
 
         const dbHelper = {
-            tableExists: async () => true,
+            tableExists: async () => ({ data: true }),
             trans: async (callback: any) => {
                 return await callback(dbHelper);
             },
             getAll: async (options: any) => {
                 const stateGte = options?.where?.state$gte;
                 if (typeof stateGte === "number") {
-                    return { lists: existingMenus.filter((m) => typeof m.state === "number" && m.state >= stateGte) };
+                    return { data: { lists: existingMenus.filter((m) => typeof m.state === "number" && m.state >= stateGte) } };
                 }
-                return { lists: existingMenus };
+                return { data: { lists: existingMenus } };
             },
             updBatch: async () => {
                 calls.updBatchCount += 1;
-                return 0;
+                return { data: 0 };
             },
             insBatch: async () => {
                 calls.insBatchCount += 1;
-                return [];
+                return { data: [] };
             },
             delForceBatch: async (table: string, ids: number[]) => {
                 calls.delForceBatch.push({ table: table, ids: ids });
-                return ids.length;
+                return { data: ids.length };
             }
         } as any;
 

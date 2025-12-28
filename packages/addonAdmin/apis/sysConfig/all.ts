@@ -6,6 +6,6 @@ export default {
             orderBy: ["id#ASC"]
         });
 
-        return befly.tool.Yes("操作成功", { lists: result.lists });
+        return befly.tool.Yes("操作成功", { lists: result.data.lists });
     }
 };

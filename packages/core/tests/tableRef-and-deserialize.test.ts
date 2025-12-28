@@ -59,9 +59,9 @@ describe("DbHelper.getList deserialize", () => {
             where: {}
         });
 
-        expect(result.total).toBe(1);
-        expect(result.lists.length).toBe(1);
-        expect(Array.isArray(result.lists[0].tags)).toBe(true);
-        expect(result.lists[0].tags).toEqual(["a", "b"]);
+        expect(result.data.total).toBe(1);
+        expect(result.data.lists.length).toBe(1);
+        expect(Array.isArray(result.data.lists[0].tags)).toBe(true);
+        expect(result.data.lists[0].tags).toEqual(["a", "b"]);
     });
 });

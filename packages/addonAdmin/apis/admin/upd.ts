@@ -13,39 +13,39 @@ export default {
             where: { id }
         });
 
-        if (!admin?.id) {
+        if (!admin.data?.id) {
             return befly.tool.No("管理员不存在");
         }
 
         // 检查用户名是否已被其他管理员使用
-        if (username && username !== admin.username) {
+        if (username && username !== admin.data.username) {
             const existingUsername = await befly.db.getOne({
                 table: "addon_admin_admin",
                 where: { username, id: { $ne: id } }
             });
-            if (existingUsername?.id) {
+            if (existingUsername.data?.id) {
                 return befly.tool.No("用户名已被使用");
             }
         }
 
         // 检查昵称是否已被其他管理员使用
-        if (nickname && nickname !== admin.nickname) {
+        if (nickname && nickname !== admin.data.nickname) {
             const existingNickname = await befly.db.getOne({
                 table: "addon_admin_admin",
                 where: { nickname, id: { $ne: id } }
             });
-            if (existingNickname?.id) {
+            if (existingNickname.data?.id) {
                 return befly.tool.No("昵称已被使用");
             }
         }
 
         // 检查角色是否存在
-        if (roleCode && roleCode !== admin.roleCode) {
+        if (roleCode && roleCode !== admin.data.roleCode) {
             const role = await befly.db.getOne({
                 table: "addon_admin_role",
                 where: { code: roleCode }
             });
-            if (!role?.id) {
+            if (!role.data?.id) {
                 return befly.tool.No("角色不存在");
             }
         }

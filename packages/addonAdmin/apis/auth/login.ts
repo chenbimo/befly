@@ -62,20 +62,20 @@ export default {
             where: whereCondition
         });
 
-        if (!admin?.id) {
+        if (!admin.data?.id) {
             logData.failReason = "账号不存在";
             await befly.db.insData({ table: "addon_admin_login_log", data: logData });
             return befly.tool.No("账号或密码错误");
         }
 
         // 更新日志数据（已找到用户）
-        logData.adminId = admin.id;
-        logData.username = admin.username;
-        logData.nickname = admin.nickname || "";
+        logData.adminId = admin.data.id;
+        logData.username = admin.data.username;
+        logData.nickname = admin.data.nickname || "";
 
         // 验证密码
         try {
-            const isValid = await befly.cipher.verifyPassword(ctx.body.password, admin.password);
+            const isValid = await befly.cipher.verifyPassword(ctx.body.password, admin.data.password);
             if (!isValid) {
                 logData.failReason = "密码错误";
                 await befly.db.insData({ table: "addon_admin_login_log", data: logData });
@@ -89,7 +89,7 @@ export default {
         }
 
         // 检查账号状态（state=1 表示正常，state=2 表示禁用）
-        if (admin.state === 2) {
+        if (admin.data.state === 2) {
             logData.failReason = "账号已被禁用";
             await befly.db.insData({ table: "addon_admin_login_log", data: logData });
             return befly.tool.No("账号已被禁用");
@@ -102,10 +102,10 @@ export default {
         // 生成 JWT Token（包含核心身份信息）
         const token = await befly.jwt.sign(
             {
-                id: admin.id,
-                nickname: admin.nickname,
-                roleCode: admin.roleCode,
-                roleType: admin.roleType
+                id: admin.data.id,
+                nickname: admin.data.nickname,
+                roleCode: admin.data.roleCode,
+                roleType: admin.data.roleType
             },
             {
                 expiresIn: "30d"
@@ -113,7 +113,7 @@ export default {
         );
 
         // 返回用户信息（不包含密码）
-        const { password: _, ...userWithoutPassword } = admin;
+        const { password: _, ...userWithoutPassword } = admin.data;
 
         return befly.tool.Yes("登录成功", {
             token: token,

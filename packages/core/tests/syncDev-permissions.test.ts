@@ -16,42 +16,46 @@ describe("syncDev - dev role permissions", () => {
         const ctx = {
             db: {
                 tableExists: async (table) => {
-                    return table === "addon_admin_admin" || table === "addon_admin_role" || table === "addon_admin_menu" || table === "addon_admin_api";
+                    return { data: table === "addon_admin_admin" || table === "addon_admin_role" || table === "addon_admin_menu" || table === "addon_admin_api" };
                 },
                 getAll: async (options) => {
                     calls.getAll.push(options);
 
                     if (options?.table === "addon_admin_menu") {
                         return {
-                            lists: [
-                                { path: "/dashboard", state: 0 },
-                                { path: "/permission/role", state: 0 }
-                            ]
+                            data: {
+                                lists: [
+                                    { path: "/dashboard", state: 0 },
+                                    { path: "/permission/role", state: 0 }
+                                ]
+                            }
                         };
                     }
                     if (options?.table === "addon_admin_api") {
                         return {
-                            lists: [
-                                { routePath: "/api/health", state: 0 },
-                                { routePath: "/api/addon/addonAdmin/auth/login", state: 0 }
-                            ]
+                            data: {
+                                lists: [
+                                    { routePath: "/api/health", state: 0 },
+                                    { routePath: "/api/addon/addonAdmin/auth/login", state: 0 }
+                                ]
+                            }
                         };
                     }
 
-                    return { lists: [] };
+                    return { data: { lists: [] } };
                 },
                 getOne: async (_options) => {
                     // 让所有角色/管理员都走插入逻辑，便于断言插入数据
-                    return null;
+                    return { data: null };
                 },
                 insData: async (options) => {
                     calls.insData.push(options);
                     nextId += 1;
-                    return nextId;
+                    return { data: nextId };
                 },
                 updData: async (options) => {
                     calls.updData.push(options);
-                    return 1;
+                    return { data: 1 };
                 }
             },
             cache: {

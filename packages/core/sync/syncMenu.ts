@@ -81,7 +81,7 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
         throw new Error("syncMenu: ctx.config 未初始化（config 插件未加载或注入失败）");
     }
 
-    if (!(await ctx.db.tableExists("addon_admin_menu"))) {
+    if (!(await ctx.db.tableExists("addon_admin_menu")).data) {
         Logger.debug(`addon_admin_menu 表不存在`);
         return;
     }
@@ -137,7 +137,7 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
             fields: ["id", "name", "path", "parentPath", "sort", "state"]
         } as any);
 
-        const existingListAllState = allExistingMenusAllState.lists || [];
+        const existingListAllState = allExistingMenusAllState.data.lists || [];
         const existingList = existingListAllState.filter((m: any) => typeof m?.state === "number" && m.state >= 0);
 
         const existingMenuMap = new Map<string, any>();

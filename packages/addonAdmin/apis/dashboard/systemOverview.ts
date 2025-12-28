@@ -18,9 +18,9 @@ export default {
         });
 
         return befly.tool.Yes("获取成功", {
-            menuCount,
-            roleCount,
-            apiCount
+            menuCount: menuCount.data,
+            roleCount: roleCount.data,
+            apiCount: apiCount.data
         });
     }
 };

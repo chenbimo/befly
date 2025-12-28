@@ -4,7 +4,7 @@
  */
 
 import type { WhereConditions, JoinOption } from "../types/common.js";
-import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback } from "../types/database.js";
+import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database.js";
 import type { DbDialect } from "./dbDialect.js";
 
 import { snakeCase } from "es-toolkit/string";
@@ -36,18 +36,16 @@ export class DbHelper {
     private dialect: DbDialect;
     private sql: any = null;
     private isTransaction: boolean = false;
-    private debug: number = 0;
 
     /**
      * 构造函数
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(options: { redis: RedisCacheLike; sql?: any | null; dialect?: DbDialect; debug?: number }) {
+    constructor(options: { redis: RedisCacheLike; sql?: any | null; dialect?: DbDialect }) {
         this.redis = options.redis;
         this.sql = options.sql || null;
         this.isTransaction = !!options.sql;
-        this.debug = options.debug === 1 ? 1 : 0;
 
         // 默认使用 MySQL 方言（当前 core 的表结构/语法也主要基于 MySQL）
         this.dialect = options.dialect ? options.dialect : new MySqlDialect();
@@ -73,7 +71,8 @@ export class DbHelper {
 
         // 2. 缓存未命中，查询数据库
         const query = this.dialect.getTableColumnsQuery(table);
-        const result = await this.executeWithConn(query.sql, query.params);
+        const execRes = await this.executeWithConn(query.sql, query.params);
+        const result = execRes.data;
 
         if (!result || result.length === 0) {
             throw new Error(`表 ${table} 不存在或没有字段`);
@@ -157,9 +156,12 @@ export class DbHelper {
         }
     }
     /**
-     * 执行 SQL（使用 sql.unsafe，带慢查询日志和错误处理）
+     * 执行 SQL（使用 sql.unsafe）
+     *
+     * - DbHelper 不再负责打印 SQL 调试日志
+     * - SQL 信息由调用方基于返回值中的 sql 自行输出
      */
-    private async executeWithConn(sqlStr: string, params?: any[]): Promise<any> {
+    private async executeWithConn(sqlStr: string, params?: any[]): Promise<DbResult<any>> {
         if (!this.sql) {
             throw new Error("数据库连接未初始化");
         }
@@ -172,11 +174,13 @@ export class DbHelper {
         // 记录开始时间
         const startTime = Date.now();
 
+        const safeParams = Array.isArray(params) ? params : [];
+
         try {
             // 使用 sql.unsafe 执行查询
             let result;
-            if (params && params.length > 0) {
-                result = await this.sql.unsafe(sqlStr, params);
+            if (safeParams.length > 0) {
+                result = await this.sql.unsafe(sqlStr, safeParams);
             } else {
                 result = await this.sql.unsafe(sqlStr);
             }
@@ -184,58 +188,28 @@ export class DbHelper {
             // 计算执行时间
             const duration = Date.now() - startTime;
 
-            if (this.debug === 1) {
-                Logger.debug(
-                    {
-                        subsystem: "db",
-                        event: "db_sql",
-                        dbEvent: "query",
-                        duration: duration,
-                        sqlPreview: sqlStr,
-                        paramsCount: (params || []).length,
-                        params: params || []
-                    },
-                    "DB"
-                );
-            }
+            const sql: SqlInfo = {
+                sql: sqlStr,
+                params: safeParams,
+                duration: duration
+            };
 
-            // 慢查询警告（超过 5000ms）
-            if (duration > 5000) {
-                Logger.warn(
-                    {
-                        subsystem: "db",
-                        event: "db_sql",
-                        dbEvent: "slow",
-                        duration: duration,
-                        sqlPreview: sqlStr,
-                        params: params || [],
-                        paramsCount: (params || []).length
-                    },
-                    "🐌 检测到慢查询"
-                );
-            }
-
-            return result;
+            return {
+                data: result,
+                sql: sql
+            };
         } catch (error: any) {
             const duration = Date.now() - startTime;
-            Logger.error(
-                {
-                    subsystem: "db",
-                    event: "db_sql",
-                    dbEvent: "error",
-                    err: error,
-                    sqlPreview: sqlStr,
-                    params: params || [],
-                    duration: duration
-                },
-                "SQL 执行错误"
-            );
 
             const enhancedError: any = new Error(`SQL执行失败: ${error.message}`);
             enhancedError.originalError = error;
-            enhancedError.sql = sqlStr;
-            enhancedError.params = params || [];
+            enhancedError.params = safeParams;
             enhancedError.duration = duration;
+            enhancedError.sqlInfo = {
+                sql: sqlStr,
+                params: safeParams,
+                duration: duration
+            };
             throw enhancedError;
         }
     }
@@ -246,7 +220,7 @@ export class DbHelper {
      * - 复用当前 DbHelper 持有的连接/事务
      * - 统一走 executeWithConn，保持参数校验与错误行为一致
      */
-    public async unsafe(sqlStr: string, params?: any[]): Promise<any> {
+    public async unsafe(sqlStr: string, params?: any[]): Promise<DbResult<any>> {
         return await this.executeWithConn(sqlStr, params);
     }
 
@@ -255,14 +229,18 @@ export class DbHelper {
      * @param tableName - 表名（支持小驼峰，会自动转换为下划线）
      * @returns 表是否存在
      */
-    async tableExists(tableName: string): Promise<boolean> {
+    async tableExists(tableName: string): Promise<DbResult<boolean>> {
         // 将表名转换为下划线格式
         const snakeTableName = snakeCase(tableName);
 
         const query = this.dialect.tableExistsQuery(snakeTableName);
-        const result = await this.executeWithConn(query.sql, query.params);
+        const execRes = await this.executeWithConn(query.sql, query.params);
+        const exists = (execRes.data?.[0]?.count || 0) > 0;
 
-        return result?.[0]?.count > 0;
+        return {
+            data: exists,
+            sql: execRes.sql
+        };
     }
 
     /**
@@ -282,7 +260,7 @@ export class DbHelper {
      *     where: { 'o.state': 1 }
      * });
      */
-    async getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<number> {
+    async getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>> {
         const { table, where, joins, tableQualifier } = await this.prepareQueryOptions(options as QueryOptions);
 
         const builder = this.createSqlBuilder()
@@ -294,9 +272,13 @@ export class DbHelper {
         this.applyJoins(builder, joins);
 
         const { sql, params } = builder.toSelectSql();
-        const result = await this.executeWithConn(sql, params);
+        const execRes = await this.executeWithConn(sql, params);
+        const count = execRes.data?.[0]?.count || 0;
 
-        return result?.[0]?.count || 0;
+        return {
+            data: count,
+            sql: execRes.sql
+        };
     }
 
     /**
@@ -315,7 +297,7 @@ export class DbHelper {
      *     where: { 'o.id': 1 }
      * })
      */
-    async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<T | null> {
+    async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<T | null>> {
         const { table, fields, where, joins, tableQualifier } = await this.prepareQueryOptions(options);
 
         const builder = this.createSqlBuilder()
@@ -327,20 +309,35 @@ export class DbHelper {
         this.applyJoins(builder, joins);
 
         const { sql, params } = builder.toSelectSql();
-        const result = await this.executeWithConn(sql, params);
+        const execRes = await this.executeWithConn(sql, params);
+        const result = execRes.data;
 
         // 字段名转换：下划线 → 小驼峰
         const row = result?.[0] || null;
-        if (!row) return null;
+        if (!row) {
+            return {
+                data: null,
+                sql: execRes.sql
+            };
+        }
 
         const camelRow = keysToCamel<T>(row);
 
         // 反序列化数组字段（JSON 字符串 → 数组）
         const deserialized = DbUtils.deserializeArrayFields<T>(camelRow);
-        if (!deserialized) return null;
+        if (!deserialized) {
+            return {
+                data: null,
+                sql: execRes.sql
+            };
+        }
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        return convertBigIntFields<T>([deserialized])[0];
+        const data = convertBigIntFields<T>([deserialized])[0];
+        return {
+            data: data,
+            sql: execRes.sql
+        };
     }
 
     /**
@@ -365,7 +362,7 @@ export class DbHelper {
      *     limit: 10
      * })
      */
-    async getList<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<ListResult<T>> {
+    async getList<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<ListResult<T>, ListSql>> {
         const prepared = await this.prepareQueryOptions(options);
 
         // 参数上限校验
@@ -386,17 +383,22 @@ export class DbHelper {
         this.applyJoins(countBuilder, prepared.joins);
 
         const { sql: countSql, params: countParams } = countBuilder.toSelectSql();
-        const countResult = await this.executeWithConn(countSql, countParams);
-        const total = countResult?.[0]?.total || 0;
+        const countExecRes = await this.executeWithConn(countSql, countParams);
+        const total = countExecRes.data?.[0]?.total || 0;
 
         // 如果总数为 0，直接返回，不执行第二次查询
         if (total === 0) {
             return {
-                lists: [],
-                total: 0,
-                page: prepared.page,
-                limit: prepared.limit,
-                pages: 0
+                data: {
+                    lists: [],
+                    total: 0,
+                    page: prepared.page,
+                    limit: prepared.limit,
+                    pages: 0
+                },
+                sql: {
+                    count: countExecRes.sql
+                }
             };
         }
 
@@ -413,7 +415,8 @@ export class DbHelper {
         }
 
         const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
-        const list = (await this.executeWithConn(dataSql, dataParams)) || [];
+        const dataExecRes = await this.executeWithConn(dataSql, dataParams);
+        const list = dataExecRes.data || [];
 
         // 字段名转换：下划线 → 小驼峰
         const camelList = arrayKeysToCamel<T>(list);
@@ -423,11 +426,17 @@ export class DbHelper {
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
-            lists: convertBigIntFields<T>(deserializedList),
-            total: total,
-            page: prepared.page,
-            limit: prepared.limit,
-            pages: Math.ceil(total / prepared.limit)
+            data: {
+                lists: convertBigIntFields<T>(deserializedList),
+                total: total,
+                page: prepared.page,
+                limit: prepared.limit,
+                pages: Math.ceil(total / prepared.limit)
+            },
+            sql: {
+                count: countExecRes.sql,
+                data: dataExecRes.sql
+            }
         };
     }
 
@@ -448,7 +457,7 @@ export class DbHelper {
      *     where: { 'o.state': 1 }
      * })
      */
-    async getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, "page" | "limit">): Promise<AllResult<T>> {
+    async getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<AllResult<T>, ListSql>> {
         // 添加硬性上限保护，防止内存溢出
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
@@ -464,14 +473,19 @@ export class DbHelper {
         this.applyJoins(countBuilder, prepared.joins);
 
         const { sql: countSql, params: countParams } = countBuilder.toSelectSql();
-        const countResult = await this.executeWithConn(countSql, countParams);
-        const total = countResult?.[0]?.total || 0;
+        const countExecRes = await this.executeWithConn(countSql, countParams);
+        const total = countExecRes.data?.[0]?.total || 0;
 
         // 如果总数为 0，直接返回
         if (total === 0) {
             return {
-                lists: [],
-                total: 0
+                data: {
+                    lists: [],
+                    total: 0
+                },
+                sql: {
+                    count: countExecRes.sql
+                }
             };
         }
 
@@ -486,7 +500,8 @@ export class DbHelper {
         }
 
         const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
-        const result = (await this.executeWithConn(dataSql, dataParams)) || [];
+        const dataExecRes = await this.executeWithConn(dataSql, dataParams);
+        const result = dataExecRes.data || [];
 
         // 警告日志：返回数据超过警告阈值
         if (result.length >= WARNING_LIMIT) {
@@ -508,8 +523,14 @@ export class DbHelper {
         const lists = convertBigIntFields<T>(deserializedList);
 
         return {
-            lists: lists,
-            total: total
+            data: {
+                lists: lists,
+                total: total
+            },
+            sql: {
+                count: countExecRes.sql,
+                data: dataExecRes.sql
+            }
         };
     }
 
@@ -517,7 +538,7 @@ export class DbHelper {
      * 插入数据（自动生成 ID、时间戳、state）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async insData(options: InsertOptions): Promise<number> {
+    async insData(options: InsertOptions): Promise<DbResult<number>> {
         const { table, data } = options;
 
         const snakeTable = snakeCase(table);
@@ -541,8 +562,12 @@ export class DbHelper {
         const { sql, params } = builder.toInsertSql(snakeTable, processed);
 
         // 执行
-        const result = await this.executeWithConn(sql, params);
-        return processed.id || result?.lastInsertRowid || 0;
+        const execRes = await this.executeWithConn(sql, params);
+        const insertedId = processed.id || execRes.data?.lastInsertRowid || 0;
+        return {
+            data: insertedId,
+            sql: execRes.sql
+        };
     }
 
     /**
@@ -551,10 +576,14 @@ export class DbHelper {
      * 自动生成系统字段并包装在事务中
      * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async insBatch(table: string, dataList: Record<string, any>[]): Promise<number[]> {
+    async insBatch(table: string, dataList: Record<string, any>[]): Promise<DbResult<number[]>> {
         // 空数组直接返回
         if (dataList.length === 0) {
-            return [];
+            const sql: SqlInfo = { sql: "", params: [], duration: 0 };
+            return {
+                data: [],
+                sql: sql
+            };
         }
 
         // 限制批量大小
@@ -587,8 +616,11 @@ export class DbHelper {
 
         // 在事务中执行批量插入
         try {
-            await this.executeWithConn(sql, params);
-            return ids;
+            const execRes = await this.executeWithConn(sql, params);
+            return {
+                data: ids,
+                sql: execRes.sql
+            };
         } catch (error: any) {
             Logger.error(
                 {
@@ -604,9 +636,13 @@ export class DbHelper {
         }
     }
 
-    async delForceBatch(table: string, ids: number[]): Promise<number> {
+    async delForceBatch(table: string, ids: number[]): Promise<DbResult<number>> {
         if (ids.length === 0) {
-            return 0;
+            const sql: SqlInfo = { sql: "", params: [], duration: 0 };
+            return {
+                data: 0,
+                sql: sql
+            };
         }
 
         const snakeTable = snakeCase(table);
@@ -617,13 +653,21 @@ export class DbHelper {
             ids: ids,
             quoteIdent: this.dialect.quoteIdent.bind(this.dialect)
         });
-        const result: any = await this.executeWithConn(query.sql, query.params);
-        return result?.changes || 0;
+        const execRes = await this.executeWithConn(query.sql, query.params);
+        const changes = execRes.data?.changes || 0;
+        return {
+            data: changes,
+            sql: execRes.sql
+        };
     }
 
-    async updBatch(table: string, dataList: Array<{ id: number; data: Record<string, any> }>): Promise<number> {
+    async updBatch(table: string, dataList: Array<{ id: number; data: Record<string, any> }>): Promise<DbResult<number>> {
         if (dataList.length === 0) {
-            return 0;
+            const sql: SqlInfo = { sql: "", params: [], duration: 0 };
+            return {
+                data: 0,
+                sql: sql
+            };
         }
 
         const snakeTable = snakeCase(table);
@@ -644,7 +688,11 @@ export class DbHelper {
 
         const fields = Array.from(fieldSet).sort();
         if (fields.length === 0) {
-            return 0;
+            const sql: SqlInfo = { sql: "", params: [], duration: 0 };
+            return {
+                data: 0,
+                sql: sql
+            };
         }
 
         const query = SqlBuilder.toUpdateCaseByIdSql({
@@ -659,15 +707,19 @@ export class DbHelper {
             stateGtZero: true
         });
 
-        const result: any = await this.executeWithConn(query.sql, query.params);
-        return result?.changes || 0;
+        const execRes = await this.executeWithConn(query.sql, query.params);
+        const changes = execRes.data?.changes || 0;
+        return {
+            data: changes,
+            sql: execRes.sql
+        };
     }
 
     /**
      * 更新数据（强制更新时间戳，系统字段不可修改）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async updData(options: UpdateOptions): Promise<number> {
+    async updData(options: UpdateOptions): Promise<DbResult<number>> {
         const { table, data, where } = options;
 
         // 清理条件（排除 null 和 undefined）
@@ -685,15 +737,19 @@ export class DbHelper {
         const { sql, params } = builder.toUpdateSql(snakeTable, processed);
 
         // 执行
-        const result = await this.executeWithConn(sql, params);
-        return result?.changes || 0;
+        const execRes = await this.executeWithConn(sql, params);
+        const changes = execRes.data?.changes || 0;
+        return {
+            data: changes,
+            sql: execRes.sql
+        };
     }
 
     /**
      * 软删除数据（deleted_at 设置为当前时间，state 设置为 0）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async delData(options: DeleteOptions): Promise<number> {
+    async delData(options: DeleteOptions): Promise<DbResult<number>> {
         const { table, where } = options;
 
         return await this.updData({
@@ -707,7 +763,7 @@ export class DbHelper {
      * 硬删除数据（物理删除，不可恢复）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async delForce(options: Omit<DeleteOptions, "hard">): Promise<number> {
+    async delForce(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>> {
         const { table, where } = options;
 
         // 转换表名：小驼峰 → 下划线
@@ -721,15 +777,19 @@ export class DbHelper {
         const builder = this.createSqlBuilder().where(snakeWhere);
         const { sql, params } = builder.toDeleteSql(snakeTable);
 
-        const result = await this.executeWithConn(sql, params);
-        return result?.changes || 0;
+        const execRes = await this.executeWithConn(sql, params);
+        const changes = execRes.data?.changes || 0;
+        return {
+            data: changes,
+            sql: execRes.sql
+        };
     }
 
     /**
      * 禁用数据（设置 state=2）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async disableData(options: Omit<DeleteOptions, "hard">): Promise<number> {
+    async disableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>> {
         const { table, where } = options;
 
         return await this.updData({
@@ -745,7 +805,7 @@ export class DbHelper {
      * 启用数据（设置 state=1）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async enableData(options: Omit<DeleteOptions, "hard">): Promise<number> {
+    async enableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>> {
         const { table, where } = options;
 
         return await this.updData({
@@ -770,7 +830,7 @@ export class DbHelper {
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
         return await this.sql.begin(async (tx: any) => {
-            const trans = new DbHelper({ redis: this.redis, sql: tx, dialect: this.dialect, debug: this.debug });
+            const trans = new DbHelper({ redis: this.redis, sql: tx, dialect: this.dialect });
             return await callback(trans);
         });
     }
@@ -778,7 +838,7 @@ export class DbHelper {
     /**
      * 执行原始 SQL
      */
-    async query(sql: string, params?: any[]): Promise<any> {
+    async query(sql: string, params?: any[]): Promise<DbResult<any>> {
         return await this.executeWithConn(sql, params);
     }
 
@@ -786,27 +846,31 @@ export class DbHelper {
      * 检查数据是否存在（优化性能）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<boolean> {
+    async exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>> {
         const { table, where, tableQualifier } = await this.prepareQueryOptions({ ...options, page: 1, limit: 1 } as any);
 
         // 使用 COUNT(1) 性能更好
         const builder = this.createSqlBuilder()
-            .select(["COUNT(1) as cnt"])
+            .selectRaw("COUNT(1) as cnt")
             .from(table)
             .where(DbUtils.addDefaultStateFilter(where, tableQualifier, false))
             .limit(1);
 
         const { sql, params } = builder.toSelectSql();
-        const result = await this.executeWithConn(sql, params);
+        const execRes = await this.executeWithConn(sql, params);
+        const exists = (execRes.data?.[0]?.cnt || 0) > 0;
 
-        return (result?.[0]?.cnt || 0) > 0;
+        return {
+            data: exists,
+            sql: execRes.sql
+        };
     }
 
     /**
      * 查询单个字段值（带字段名验证）
      * @param field - 字段名（支持小驼峰或下划线格式）
      */
-    async getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<T | null> {
+    async getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<T | null>> {
         const { field, ...queryOptions } = options;
 
         // 验证字段名格式（只允许字母、数字、下划线）
@@ -814,33 +878,49 @@ export class DbHelper {
             throw new Error(`无效的字段名: ${field}，只允许字母、数字和下划线`);
         }
 
-        const result = await this.getOne({
+        const oneRes = await this.getOne({
             ...queryOptions,
             fields: [field]
         });
 
+        const result = oneRes.data;
         if (!result) {
-            return null;
+            return {
+                data: null,
+                sql: oneRes.sql
+            };
         }
 
         // 尝试直接访问字段（小驼峰）
         if (field in result) {
-            return result[field];
+            return {
+                data: result[field],
+                sql: oneRes.sql
+            };
         }
 
         // 转换为小驼峰格式再尝试访问（支持用户传入下划线格式）
         const camelField = field.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
         if (camelField !== field && camelField in result) {
-            return result[camelField];
+            return {
+                data: result[camelField],
+                sql: oneRes.sql
+            };
         }
 
         // 转换为下划线格式再尝试访问（支持用户传入小驼峰格式）
         const snakeField = field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
         if (snakeField !== field && snakeField in result) {
-            return result[snakeField];
+            return {
+                data: result[snakeField],
+                sql: oneRes.sql
+            };
         }
 
-        return null;
+        return {
+            data: null,
+            sql: oneRes.sql
+        };
     }
 
     /**
@@ -848,7 +928,7 @@ export class DbHelper {
      * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
      * @param field - 字段名（支持小驼峰或下划线格式，会自动转换）
      */
-    async increment(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
+    async increment(table: string, field: string, where: WhereConditions, value: number = 1): Promise<DbResult<number>> {
         // 转换表名和字段名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
         const snakeField = snakeCase(field);
@@ -884,8 +964,12 @@ export class DbHelper {
         const quotedField = this.dialect.quoteIdent(snakeField);
         const sql = whereClause ? `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ? WHERE ${whereClause}` : `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ?`;
 
-        const result = await this.executeWithConn(sql, [value, ...whereParams]);
-        return result?.changes || 0;
+        const execRes = await this.executeWithConn(sql, [value, ...whereParams]);
+        const changes = execRes.data?.changes || 0;
+        return {
+            data: changes,
+            sql: execRes.sql
+        };
     }
 
     /**
@@ -893,7 +977,7 @@ export class DbHelper {
      * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
      * @param field - 字段名（支持小驼峰或下划线格式，会自动转换）
      */
-    async decrement(table: string, field: string, where: WhereConditions, value: number = 1): Promise<number> {
+    async decrement(table: string, field: string, where: WhereConditions, value: number = 1): Promise<DbResult<number>> {
         return await this.increment(table, field, where, -value);
     }
 }

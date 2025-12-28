@@ -17,19 +17,19 @@ export default {
                 where: { code: ctx.body.roleCode }
             });
 
-            if (!role?.id) {
+            if (!role.data?.id) {
                 return befly.tool.No("角色不存在");
             }
 
             // 根据角色编码判断角色类型（硬编码规则）
-            const roleType = role.code === "dev" || role.code === "admin" ? "admin" : "user";
+            const roleType = role.data.code === "dev" || role.data.code === "admin" ? "admin" : "user";
 
             // 更新管理员的角色编码和角色类型
             await befly.db.updData({
                 table: "addon_admin_admin",
                 where: { id: ctx.body.adminId },
                 data: {
-                    roleCode: role.code,
+                    roleCode: role.data.code,
                     roleType: roleType
                 }
             });

@@ -23,7 +23,7 @@ export default {
             where: { code: ctx.body.code }
         });
 
-        if (existing) {
+        if (existing.data?.id) {
             return befly.tool.No("角色代码已存在");
         }
 
@@ -43,6 +43,6 @@ export default {
         // 增量刷新角色权限缓存
         await befly.cache.refreshRoleApiPermissions(ctx.body.code, apiPaths);
 
-        return befly.tool.Yes("操作成功", { id: roleId });
+        return befly.tool.Yes("操作成功", { id: roleId.data });
     }
 };

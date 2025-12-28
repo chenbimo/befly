@@ -27,10 +27,10 @@ export default {
             where: { "addon_admin_dict.id": ctx.body.id }
         });
 
-        if (!dict?.id) {
+        if (!dict.data?.id) {
             return befly.tool.No("字典项不存在");
         }
 
-        return befly.tool.Yes("获取成功", dict);
+        return befly.tool.Yes("获取成功", dict.data);
     }
 };

@@ -17,7 +17,7 @@ export default {
                 where: { code: typeCode }
             });
 
-            if (!dictType?.id) {
+            if (!dictType.data?.id) {
                 return befly.tool.No("字典类型不存在");
             }
         }
@@ -29,8 +29,8 @@ export default {
                 where: { id: id }
             });
 
-            const checkTypeCode = typeCode || current?.typeCode;
-            const checkKey = key || current?.key;
+            const checkTypeCode = typeCode || current.data?.typeCode;
+            const checkKey = key || current.data?.key;
 
             const existing = await befly.db.getOne({
                 table: "addon_admin_dict",
@@ -41,7 +41,7 @@ export default {
                 }
             });
 
-            if (existing?.id) {
+            if (existing.data?.id) {
                 return befly.tool.No("该类型下已存在相同的键名");
             }
         }

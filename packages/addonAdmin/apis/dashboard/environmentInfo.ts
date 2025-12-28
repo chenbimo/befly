@@ -7,7 +7,7 @@ export default {
         let databaseVersion = "Unknown";
         try {
             const versionResult = await befly.db.query("SELECT VERSION() as version");
-            databaseVersion = versionResult?.[0]?.version || "Unknown";
+            databaseVersion = versionResult.data?.[0]?.version || "Unknown";
         } catch {
             // 忽略错误
         }

@@ -11,7 +11,7 @@ export default {
             where: { code: ctx.body.code }
         });
 
-        if (existing?.id) {
+        if (existing.data?.id) {
             return befly.tool.No("类型代码已存在");
         }
 
@@ -25,6 +25,6 @@ export default {
             }
         });
 
-        return befly.tool.Yes("添加成功", { id: typeId });
+        return befly.tool.Yes("添加成功", { id: typeId.data });
     }
 };

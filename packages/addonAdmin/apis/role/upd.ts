@@ -26,7 +26,7 @@ export default {
             }
         });
 
-        if (existing.total > 0) {
+        if (existing.data.total > 0) {
             return befly.tool.No("角色代码已被其他角色使用");
         }
 

@@ -17,6 +17,6 @@ export default {
             limit: ctx.body.limit
         });
 
-        return befly.tool.Yes("操作成功", result);
+        return befly.tool.Yes("操作成功", result.data);
     }
 };

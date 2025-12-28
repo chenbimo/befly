@@ -12,16 +12,16 @@ describe("syncApi - insBatch rows consistency", () => {
 
         const ctx: any = {
             db: {
-                tableExists: async () => true,
+                tableExists: async () => ({ data: true }),
                 getAll: async () => {
-                    return { lists: [], total: 0 };
+                    return { data: { lists: [], total: 0 } };
                 },
                 insBatch: async (_table: string, dataList: any[]) => {
                     calls.insBatch.push({ table: _table, dataList: dataList });
-                    return [1, 2];
+                    return { data: [1, 2] };
                 },
-                updBatch: async () => 0,
-                delForceBatch: async () => 0
+                updBatch: async () => ({ data: 0 }),
+                delForceBatch: async () => ({ data: 0 })
             },
             cache: {
                 cacheApis: async () => {

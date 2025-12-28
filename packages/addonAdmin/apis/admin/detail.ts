@@ -10,10 +10,10 @@ export default {
             where: { id: ctx.user?.id }
         });
 
-        if (!adminData?.id) {
+        if (!adminData.data?.id) {
             return befly.tool.No("管理员不存在");
         }
 
-        return befly.tool.Yes("查询成功", adminData);
+        return befly.tool.Yes("查询成功", adminData.data);
     }
 };

@@ -14,6 +14,6 @@ export default {
             orderBy: ["operateTime#DESC"]
         });
 
-        return befly.tool.Yes("获取成功", result);
+        return befly.tool.Yes("获取成功", result.data);
     }
 };

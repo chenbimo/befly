@@ -11,7 +11,7 @@ export default {
             where: { code: ctx.body.typeCode }
         });
 
-        if (!dictType?.id) {
+        if (!dictType.data?.id) {
             return befly.tool.No("字典类型不存在");
         }
 
@@ -22,6 +22,6 @@ export default {
             orderBy: ["sort#ASC", "id#ASC"]
         });
 
-        return befly.tool.Yes("获取成功", items);
+        return befly.tool.Yes("获取成功", items.data);
     }
 };

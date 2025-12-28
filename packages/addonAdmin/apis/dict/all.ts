@@ -24,6 +24,6 @@ export default {
             orderBy: ["addon_admin_dict.sort#ASC", "addon_admin_dict.id#ASC"]
         });
 
-        return befly.tool.Yes("获取成功", result);
+        return befly.tool.Yes("获取成功", result.data);
     }
 };

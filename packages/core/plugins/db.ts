@@ -28,11 +28,8 @@ export default {
             const resolvedDbType = rawDbType === "postgres" ? "postgresql" : rawDbType;
             const dialect = getDialectByName(resolvedDbType === "postgresql" || resolvedDbType === "sqlite" ? resolvedDbType : "mysql");
 
-            const dbDebug = befly.config && befly.config.db ? befly.config.db.debug : undefined;
-            const debug = dbDebug === 1 ? 1 : 0;
-
             // 创建数据库管理器实例
-            const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: dialect, debug: debug });
+            const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: dialect });
 
             return dbManager;
         } catch (error: any) {

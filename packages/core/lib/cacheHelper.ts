@@ -7,8 +7,8 @@ import { CacheKeys } from "./cacheKeys.js";
 import { Logger } from "./logger.js";
 
 type CacheHelperDb = {
-    tableExists(table: string): Promise<boolean>;
-    getAll(options: any): Promise<{ lists: any[] }>;
+    tableExists(table: string): Promise<{ data: boolean }>;
+    getAll(options: any): Promise<{ data: { lists: any[] } }>;
 };
 
 type CacheHelperRedis = {
@@ -107,7 +107,7 @@ export class CacheHelper {
         try {
             // 检查表是否存在
             const tableExists = await this.db.tableExists("addon_admin_api");
-            if (!tableExists) {
+            if (!tableExists.data) {
                 Logger.warn("⚠️ 接口表不存在，跳过接口缓存");
                 return;
             }
@@ -118,7 +118,7 @@ export class CacheHelper {
             });
 
             // 缓存到 Redis
-            const result = await this.redis.setObject(CacheKeys.apisAll(), apiList.lists);
+            const result = await this.redis.setObject(CacheKeys.apisAll(), apiList.data.lists);
 
             if (result === null) {
                 Logger.warn("⚠️ 接口缓存失败");
@@ -135,7 +135,7 @@ export class CacheHelper {
         try {
             // 检查表是否存在
             const tableExists = await this.db.tableExists("addon_admin_menu");
-            if (!tableExists) {
+            if (!tableExists.data) {
                 Logger.warn("⚠️ 菜单表不存在，跳过菜单缓存");
                 return;
             }
@@ -146,7 +146,7 @@ export class CacheHelper {
             });
 
             // 缓存到 Redis
-            const result = await this.redis.setObject(CacheKeys.menusAll(), menus.lists);
+            const result = await this.redis.setObject(CacheKeys.menusAll(), menus.data.lists);
 
             if (result === null) {
                 Logger.warn("⚠️ 菜单缓存失败");
@@ -166,7 +166,7 @@ export class CacheHelper {
             // 检查表是否存在
             const roleTableExists = await this.db.tableExists("addon_admin_role");
 
-            if (!roleTableExists) {
+            if (!roleTableExists.data) {
                 Logger.warn("⚠️ 角色表不存在，跳过角色权限缓存");
                 return;
             }
@@ -179,7 +179,7 @@ export class CacheHelper {
 
             const roleApiPathsMap = new Map<string, string[]>();
 
-            for (const role of roles.lists) {
+            for (const role of roles.data.lists) {
                 if (!role?.code) continue;
                 const apiPaths = this.assertApiPathList(role.apis, role.code);
                 roleApiPathsMap.set(role.code, apiPaths);

@@ -12,22 +12,22 @@ export default {
                 fields: ["code"]
             });
 
-            if (!role?.code) {
+            if (!role.data?.code) {
                 return befly.tool.No("角色不存在");
             }
 
             // 禁止删除系统角色
             const systemRoles = ["dev", "user", "admin", "guest"];
-            if (systemRoles.includes(role.code)) {
-                return befly.tool.No(`系统角色 [${role.code}] 不允许删除`);
+            if (systemRoles.includes(role.data.code)) {
+                return befly.tool.No(`系统角色 [${role.data.code}] 不允许删除`);
             }
 
             const adminList = await befly.db.getList({
                 table: "addon_admin_admin",
-                where: { roleCode: role.code }
+                where: { roleCode: role.data.code }
             });
 
-            if (adminList.total > 0) {
+            if (adminList.data.total > 0) {
                 return befly.tool.No("该角色已分配给用户，无法删除");
             }
 
@@ -38,7 +38,7 @@ export default {
             });
 
             // 删除角色权限缓存
-            await befly.cache.deleteRolePermissions(role.code);
+            await befly.cache.deleteRolePermissions(role.data.code);
 
             return befly.tool.Yes("操作成功");
         } catch (error: any) {

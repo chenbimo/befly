@@ -9,17 +9,17 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 检查是否为系统配置
-            const config = await befly.db.getDetail({
+            const config = await befly.db.getOne({
                 table: "addon_admin_sys_config",
                 where: { id: ctx.body.id }
             });
 
-            if (!config?.id) {
+            if (!config.data?.id) {
                 return befly.tool.No("配置不存在");
             }
 
             // 系统配置只能修改 value
-            if (config.isSystem === 1) {
+            if (config.data.isSystem === 1) {
                 await befly.db.updData({
                     table: "addon_admin_sys_config",
                     data: {

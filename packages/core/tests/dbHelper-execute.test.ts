@@ -32,7 +32,10 @@ test("executeWithConn - 正常执行（无参数）", async () => {
     // 使用反射访问私有方法
     const result = await (dbHelper as any).executeWithConn("SELECT * FROM users");
 
-    expect(result).toEqual(mockResult);
+    expect(result.data).toEqual(mockResult);
+    expect(result.sql.sql).toBe("SELECT * FROM users");
+    expect(result.sql.params).toEqual([]);
+    expect(typeof result.sql.duration).toBe("number");
     expect(sqlMock.unsafe).toHaveBeenCalledWith("SELECT * FROM users");
 });
 
@@ -47,7 +50,10 @@ test("executeWithConn - 正常执行（带参数）", async () => {
 
     const result = await (dbHelper as any).executeWithConn("SELECT * FROM users WHERE id = ?", [1]);
 
-    expect(result).toEqual(mockResult);
+    expect(result.data).toEqual(mockResult);
+    expect(result.sql.sql).toBe("SELECT * FROM users WHERE id = ?");
+    expect(result.sql.params).toEqual([1]);
+    expect(typeof result.sql.duration).toBe("number");
     expect(sqlMock.unsafe).toHaveBeenCalledWith("SELECT * FROM users WHERE id = ?", [1]);
 });
 
@@ -69,13 +75,15 @@ test("executeWithConn - SQL 错误捕获", async () => {
         // 验证错误信息
         expect(error.message).toContain("SQL执行失败");
         expect(error.originalError).toBe(sqlError);
-        expect(error.sql).toBe("SELECT * FROM invalid_table");
         expect(error.params).toEqual([]);
         expect(error.duration).toBeGreaterThanOrEqual(0);
+        expect(error.sqlInfo).toBeTruthy();
+        expect(error.sqlInfo.sql).toBe("SELECT * FROM invalid_table");
+        expect(error.sqlInfo.params).toEqual([]);
     }
 });
 
-test("executeWithConn - SQL 错误日志应带 event=db_sql", async () => {
+test("executeWithConn - DbHelper 不再全局打印 SQL 日志", async () => {
     const calls: any[] = [];
 
     const loggerMock: any = {
@@ -110,13 +118,8 @@ test("executeWithConn - SQL 错误日志应带 event=db_sql", async () => {
     }
     Logger.setMock(null);
 
-    const errorCall = calls.find((item) => item.level === "error");
-    expect(errorCall).toBeTruthy();
-    const payload = errorCall.args[0];
-    expect(payload.subsystem).toBe("db");
-    expect(payload.event).toBe("db_sql");
-    expect(payload.dbEvent).toBe("error");
-    expect(payload.sqlPreview).toBe("SELECT * FROM invalid_table");
+    // executeWithConn 只负责抛错并在 error 上携带 sql 信息，不再做 Logger.error
+    expect(calls.length).toBe(0);
 });
 
 test("executeWithConn - 错误信息包含完整信息", async () => {
@@ -136,10 +139,11 @@ test("executeWithConn - 错误信息包含完整信息", async () => {
         await (dbHelper as any).executeWithConn(testSql, testParams);
     } catch (error: any) {
         // 验证增强的错误对象
-        expect(error.sql).toBe(testSql);
         expect(error.params).toEqual(testParams);
         expect(typeof error.duration).toBe("number");
         expect(error.originalError.message).toBe('Syntax error near "??"');
+        expect(error.sqlInfo.sql).toBe(testSql);
+        expect(error.sqlInfo.params).toEqual(testParams);
     }
 });
 
@@ -158,12 +162,12 @@ test("executeWithConn - 超长 SQL 保留在错误对象中", async () => {
         await (dbHelper as any).executeWithConn(longSql);
     } catch (error: any) {
         // SQL 完整保存在错误对象中
-        expect(error.sql).toBe(longSql);
         expect(error.params).toEqual([]);
+        expect(error.sqlInfo.sql).toBe(longSql);
     }
 });
 
-test("executeWithConn - 慢查询检测（>1000ms）", async () => {
+test("executeWithConn - 慢查询仍返回 sql（不在 DbHelper 内部打日志）", async () => {
     const mockResult = [{ id: 1 }];
     const sqlMock = {
         unsafe: mock(async () => {
@@ -179,7 +183,9 @@ test("executeWithConn - 慢查询检测（>1000ms）", async () => {
     const result = await (dbHelper as any).executeWithConn("SELECT SLEEP(1)");
 
     // 功能仍正常返回结果
-    expect(result).toEqual(mockResult);
+    expect(result.data).toEqual(mockResult);
+    expect(result.sql.sql).toBe("SELECT SLEEP(1)");
+    expect(typeof result.sql.duration).toBe("number");
 });
 
 test("executeWithConn - 数据库未连接错误", async () => {
@@ -205,7 +211,7 @@ test("executeWithConn - 空参数数组", async () => {
 
     const result = await (dbHelper as any).executeWithConn("SELECT COUNT(*) as count FROM users", []);
 
-    expect(result).toEqual(mockResult);
+    expect(result.data).toEqual(mockResult);
     // 空数组应该走 else 分支（不传参数）
     expect(sqlMock.unsafe).toHaveBeenCalledWith("SELECT COUNT(*) as count FROM users");
 });
@@ -227,6 +233,6 @@ test("executeWithConn - 复杂参数处理", async () => {
     } catch (error: any) {
         // 验证参数被正确保存
         expect(error.params).toEqual(complexParams);
-        expect(error.sql).toBe("SELECT ?");
+        expect(error.sqlInfo.sql).toBe("SELECT ?");
     }
 });

@@ -20,7 +20,7 @@ export default {
                 }
             });
 
-            if (existing?.id) {
+            if (existing.data?.id) {
                 return befly.tool.No("类型代码已被使用");
             }
         }

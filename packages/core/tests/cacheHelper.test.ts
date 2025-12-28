@@ -32,8 +32,8 @@ describe("CacheHelper", () => {
 
         // Mock 数据库方法
         mockDb = {
-            tableExists: mock(() => Promise.resolve(true)),
-            getAll: mock(() => Promise.resolve({ lists: [], total: 0 }))
+            tableExists: mock(() => Promise.resolve({ data: true })),
+            getAll: mock(() => Promise.resolve({ data: { lists: [], total: 0 } }))
         };
 
         // Mock Redis 方法
@@ -59,7 +59,7 @@ describe("CacheHelper", () => {
 
     describe("cacheApis", () => {
         it("表不存在时跳过缓存", async () => {
-            mockDb.tableExists = mock(() => Promise.resolve(false));
+            mockDb.tableExists = mock(() => Promise.resolve({ data: false }));
 
             await cacheHelper.cacheApis();
 
@@ -72,7 +72,7 @@ describe("CacheHelper", () => {
                 { id: 1, name: "登录", routePath: "/api/login" },
                 { id: 2, name: "用户列表", routePath: "/api/user/list" }
             ];
-            mockDb.getAll = mock(() => Promise.resolve({ lists: apis, total: apis.length }));
+            mockDb.getAll = mock(() => Promise.resolve({ data: { lists: apis, total: apis.length } }));
 
             await cacheHelper.cacheApis();
 
@@ -98,7 +98,7 @@ describe("CacheHelper", () => {
 
     describe("cacheMenus", () => {
         it("表不存在时跳过缓存", async () => {
-            mockDb.tableExists = mock(() => Promise.resolve(false));
+            mockDb.tableExists = mock(() => Promise.resolve({ data: false }));
 
             await cacheHelper.cacheMenus();
 
@@ -111,7 +111,7 @@ describe("CacheHelper", () => {
                 { id: 1, pid: 0, name: "首页", path: "/home", sort: 1 },
                 { id: 2, pid: 0, name: "用户管理", path: "/user", sort: 2 }
             ];
-            mockDb.getAll = mock(() => Promise.resolve({ lists: menus, total: menus.length }));
+            mockDb.getAll = mock(() => Promise.resolve({ data: { lists: menus, total: menus.length } }));
 
             await cacheHelper.cacheMenus();
 
@@ -122,8 +122,8 @@ describe("CacheHelper", () => {
     describe("rebuildRoleApiPermissions", () => {
         it("表不存在时跳过缓存", async () => {
             mockDb.tableExists = mock((table: string) => {
-                if (table === "addon_admin_role") return Promise.resolve(false);
-                return Promise.resolve(false);
+                if (table === "addon_admin_role") return Promise.resolve({ data: false });
+                return Promise.resolve({ data: false });
             });
 
             await cacheHelper.rebuildRoleApiPermissions();
@@ -138,8 +138,8 @@ describe("CacheHelper", () => {
             ];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
-                return Promise.resolve({ lists: [], total: 0 });
+                if (opts.table === "addon_admin_role") return Promise.resolve({ data: { lists: roles, total: roles.length } });
+                return Promise.resolve({ data: { lists: [], total: 0 } });
             });
 
             await cacheHelper.rebuildRoleApiPermissions();
@@ -168,8 +168,8 @@ describe("CacheHelper", () => {
             const roles = [{ id: 1, code: "empty", apis: [] }];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
-                return Promise.resolve({ lists: [], total: 0 });
+                if (opts.table === "addon_admin_role") return Promise.resolve({ data: { lists: roles, total: roles.length } });
+                return Promise.resolve({ data: { lists: [], total: 0 } });
             });
 
             await cacheHelper.rebuildRoleApiPermissions();
@@ -182,8 +182,8 @@ describe("CacheHelper", () => {
             const roles = [{ id: 1, code: "user", apis: "null" }];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
-                return Promise.resolve({ lists: [], total: 0 });
+                if (opts.table === "addon_admin_role") return Promise.resolve({ data: { lists: roles, total: roles.length } });
+                return Promise.resolve({ data: { lists: [], total: 0 } });
             });
 
             await cacheHelper.rebuildRoleApiPermissions();
@@ -198,8 +198,8 @@ describe("CacheHelper", () => {
             const roles = [{ id: 1, code: "user", apis: '["/api/login","/api/user/list"]' }];
 
             mockDb.getAll = mock((opts: any) => {
-                if (opts.table === "addon_admin_role") return Promise.resolve({ lists: roles, total: roles.length });
-                return Promise.resolve({ lists: [], total: 0 });
+                if (opts.table === "addon_admin_role") return Promise.resolve({ data: { lists: roles, total: roles.length } });
+                return Promise.resolve({ data: { lists: [], total: 0 } });
             });
 
             await cacheHelper.rebuildRoleApiPermissions();
@@ -218,7 +218,7 @@ describe("CacheHelper", () => {
 
     describe("refreshRoleApiPermissions", () => {
         it("apiPaths 为空数组时只清理缓存，不查询 DB", async () => {
-            mockDb.getAll = mock(() => Promise.resolve({ lists: [], total: 0 }));
+            mockDb.getAll = mock(() => Promise.resolve({ data: { lists: [], total: 0 } }));
 
             await cacheHelper.refreshRoleApiPermissions("admin", []);
 

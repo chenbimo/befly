@@ -17,12 +17,12 @@ export default {
                 where: { code: ctx.user.roleCode }
             });
 
-            if (!role?.id) {
+            if (!role.data?.id) {
                 return befly.tool.No("角色不存在", { lists: [] });
             }
 
             // 3. 解析菜单路径列表（menu.path 数组，array_text）
-            const rawMenuPaths = Array.isArray(role.menus) ? role.menus : [];
+            const rawMenuPaths = Array.isArray(role.data.menus) ? role.data.menus : [];
             const menuPaths = rawMenuPaths.map((p: any) => (typeof p === "string" ? p.trim() : "")).filter((p: string) => p.length > 0);
 
             if (menuPaths.length === 0) {
@@ -37,7 +37,7 @@ export default {
                 const result = await befly.db.getAll({
                     table: "addon_admin_menu"
                 });
-                allMenus = result.lists;
+                allMenus = result.data.lists;
             }
 
             if (allMenus.length === 0) {

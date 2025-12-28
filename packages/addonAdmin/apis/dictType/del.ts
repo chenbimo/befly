@@ -5,20 +5,24 @@ export default {
     handler: async (befly, ctx) => {
         const { id } = ctx.body;
 
+        const dictType = await befly.db.getOne({
+            table: "addon_admin_dict_type",
+            where: { id: id }
+        });
+
+        if (!dictType.data?.code) {
+            return befly.tool.No("字典类型不存在");
+        }
+
         // 检查是否有字典项引用此类型
         const dictItems = await befly.db.getOne({
             table: "addon_admin_dict",
             where: {
-                typeCode: (
-                    await befly.db.getOne({
-                        table: "addon_admin_dict_type",
-                        where: { id: id }
-                    })
-                )?.code
+                typeCode: dictType.data.code
             }
         });
 
-        if (dictItems?.id) {
+        if (dictItems.data?.id) {
             return befly.tool.No("该类型下存在字典项，无法删除");
         }
 

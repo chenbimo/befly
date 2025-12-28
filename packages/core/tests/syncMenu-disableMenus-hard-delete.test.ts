@@ -22,22 +22,22 @@ describe("syncMenu - disableMenus hard delete", () => {
         };
 
         const dbHelper = {
-            tableExists: async () => true,
+            tableExists: async () => ({ data: true }),
             trans: async (callback: any) => {
                 return await callback(dbHelper);
             },
             getAll: async (options: any) => {
                 // syncMenu 会调用一次“全量不带 where”，一次 state>=0 的逻辑已在内存过滤
                 if (options?.table === "addon_admin_menu") {
-                    return { lists: existingMenus };
+                    return { data: { lists: existingMenus } };
                 }
-                return { lists: [] };
+                return { data: { lists: [] } };
             },
-            updBatch: async () => 0,
-            insBatch: async () => [],
+            updBatch: async () => ({ data: 0 }),
+            insBatch: async () => ({ data: [] }),
             delForceBatch: async (table: string, ids: number[]) => {
                 calls.delForceBatch.push({ table: table, ids: ids });
-                return ids.length;
+                return { data: ids.length };
             }
         } as any;
 

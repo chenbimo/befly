@@ -22,7 +22,7 @@ export default {
             where: { code: ctx.body.roleCode }
         });
 
-        if (!role?.id) {
+        if (!role.data?.id) {
             return befly.tool.No("角色不存在");
         }
 
@@ -36,7 +36,7 @@ export default {
         });
 
         // 增量刷新 Redis 权限缓存
-        await befly.cache.refreshRoleApiPermissions(role.code, apiPaths);
+        await befly.cache.refreshRoleApiPermissions(role.data.code, apiPaths);
 
         return befly.tool.Yes("操作成功");
     }

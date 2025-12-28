@@ -21,7 +21,7 @@ describe("DbHelper - batch write helpers", () => {
 
         const changes = await (dbHelper as any).delForceBatch("addon_admin_api", []);
 
-        expect(changes).toBe(0);
+        expect(changes.data).toBe(0);
         expect(sqlMock.unsafe).toHaveBeenCalledTimes(0);
     });
 
@@ -34,7 +34,7 @@ describe("DbHelper - batch write helpers", () => {
 
         const changes = await (dbHelper as any).delForceBatch("addon_admin_api", [1, 2]);
 
-        expect(changes).toBe(2);
+        expect(changes.data).toBe(2);
         expect(sqlMock.unsafe).toHaveBeenCalledTimes(1);
 
         const call = (sqlMock.unsafe as any).mock.calls[0];
@@ -51,7 +51,7 @@ describe("DbHelper - batch write helpers", () => {
 
         const changes = await (dbHelper as any).updBatch("addon_admin_api", []);
 
-        expect(changes).toBe(0);
+        expect(changes.data).toBe(0);
         expect(sqlMock.unsafe).toHaveBeenCalledTimes(0);
     });
 
@@ -67,7 +67,7 @@ describe("DbHelper - batch write helpers", () => {
             { id: 2, data: { name: "B", routePath: "/api/b", addonName: "y" } }
         ]);
 
-        expect(changes).toBe(2);
+        expect(changes.data).toBe(2);
         expect(sqlMock.unsafe).toHaveBeenCalledTimes(1);
 
         const call = (sqlMock.unsafe as any).mock.calls[0];

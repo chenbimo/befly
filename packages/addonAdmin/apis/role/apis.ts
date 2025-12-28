@@ -12,12 +12,12 @@ export default {
             where: { code: ctx.body.roleCode }
         });
 
-        if (!role?.id) {
+        if (!role.data?.id) {
             return befly.tool.No("角色不存在");
         }
 
         // 数据库自动将 array_text 转换为数组
-        const apiPaths = Array.isArray(role.apis) ? role.apis : [];
+        const apiPaths = Array.isArray(role.data.apis) ? role.data.apis : [];
 
         return befly.tool.Yes("操作成功", { apiPaths: apiPaths });
     }

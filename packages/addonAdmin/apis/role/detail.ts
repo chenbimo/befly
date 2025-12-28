@@ -6,10 +6,12 @@ export default {
     handler: async (befly, ctx) => {
         let roleInfo = null;
         if (ctx.body.id && ctx.user.roleType === "admin") {
-            roleInfo = await befly.db.getOne({
+            const roleInfoResult = await befly.db.getOne({
                 table: "addon_admin_role",
                 where: { code: ctx.body.id }
             });
+
+            roleInfo = roleInfoResult.data;
         }
 
         return befly.tool.Yes("操作成功", {

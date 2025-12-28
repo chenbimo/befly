@@ -6,12 +6,12 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 检查 code 是否已存在
-            const existing = await befly.db.getDetail({
+            const existing = await befly.db.getOne({
                 table: "addon_admin_sys_config",
                 where: { code: ctx.body.code }
             });
 
-            if (existing) {
+            if (existing.data) {
                 return befly.tool.No("配置代码已存在");
             }
 
@@ -29,7 +29,7 @@ export default {
                 }
             });
 
-            return befly.tool.Yes("操作成功", { id: configId });
+            return befly.tool.Yes("操作成功", { id: configId.data });
         } catch (error) {
             befly.logger.error({ err: error }, "添加系统配置失败");
             return befly.tool.No("操作失败");

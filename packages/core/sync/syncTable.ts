@@ -8,6 +8,7 @@
 
 import type { DbDialectName } from "../lib/dbDialect.js";
 import type { BeflyContext } from "../types/befly.js";
+import type { DbResult, SqlInfo } from "../types/database.js";
 import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/sync.js";
 import type { FieldDefinition } from "../types/validate.js";
 import type { ScanFileResult } from "../utils/scanFiles.js";
@@ -19,8 +20,52 @@ import { getDialectByName, getSyncTableColumnsInfoQuery, getSyncTableIndexesQuer
 import { Logger } from "../lib/logger.js";
 
 type SqlExecutor = {
-    unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<T[]>;
+    unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
 };
+
+type MySqlTableExistsRow = { count: number };
+type MySqlColumnInfoRow = {
+    COLUMN_NAME: string;
+    DATA_TYPE: string;
+    COLUMN_TYPE: string;
+    CHARACTER_MAXIMUM_LENGTH: number | null;
+    IS_NULLABLE: "YES" | "NO";
+    COLUMN_DEFAULT: any;
+    COLUMN_COMMENT: string | null;
+};
+
+type PgTableExistsRow = { count: number };
+type PgColumnInfoRow = {
+    column_name: string;
+    data_type: string;
+    character_maximum_length: number | null;
+    is_nullable: string;
+    column_default: any;
+};
+type PgColumnCommentRow = {
+    column_name: string;
+    column_comment: string;
+};
+
+type MySqlIndexRow = {
+    INDEX_NAME: string;
+    COLUMN_NAME: string;
+};
+
+type PgIndexRow = {
+    indexname: string;
+    indexdef: string;
+};
+
+type SqliteTableInfoRow = {
+    name: string;
+    type: string;
+    notnull: number;
+    dflt_value: any;
+};
+
+type SqliteIndexListRow = { name: string };
+type SqliteIndexInfoRow = { name: string };
 
 type DbDialect = DbDialectName;
 
@@ -668,8 +713,8 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
         }
 
         const q = getDialectByName(runtime.dbDialect).tableExistsQuery(tableName, schema);
-        const res = await runtime.db.unsafe(q.sql, q.params);
-        return (res[0]?.count || 0) > 0;
+        const res = await runtime.db.unsafe<MySqlTableExistsRow[] | PgTableExistsRow[]>(q.sql, q.params);
+        return (res.data?.[0]?.count || 0) > 0;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
         throw new Error(`runtime I/O 失败: op=tableExists table=${tableName} err=${errMsg}`);
@@ -690,8 +735,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
         // - SQLite：PRAGMA table_info 仅提供 type/notnull/default 等有限信息，无列注释。
         if (runtime.dbDialect === "mysql") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe(q.columns.sql, q.columns.params);
-            for (const row of result) {
+            const result = await runtime.db.unsafe<MySqlColumnInfoRow[]>(q.columns.sql, q.columns.params);
+            for (const row of result.data) {
                 const defaultValue = row.COLUMN_DEFAULT;
 
                 columns[row.COLUMN_NAME] = {
@@ -706,12 +751,12 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
             }
         } else if (runtime.dbDialect === "postgresql") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe(q.columns.sql, q.columns.params);
-            const comments = q.comments ? await runtime.db.unsafe(q.comments.sql, q.comments.params) : [];
+            const result = await runtime.db.unsafe<PgColumnInfoRow[]>(q.columns.sql, q.columns.params);
+            const comments = q.comments ? (await runtime.db.unsafe<PgColumnCommentRow[]>(q.comments.sql, q.comments.params)).data : [];
             const commentMap: { [key: string]: string } = {};
             for (const r of comments) commentMap[r.column_name] = r.column_comment;
 
-            for (const row of result) {
+            for (const row of result.data) {
                 columns[row.column_name] = {
                     type: row.data_type,
                     columnType: row.data_type,
@@ -724,8 +769,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
             }
         } else if (runtime.dbDialect === "sqlite") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "sqlite", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe(q.columns.sql, q.columns.params);
-            for (const row of result) {
+            const result = await runtime.db.unsafe<SqliteTableInfoRow[]>(q.columns.sql, q.columns.params);
+            for (const row of result.data) {
                 let baseType = String(row.type || "").toUpperCase();
                 let max = null;
                 const m = /^(\w+)\s*\((\d+)\)/.exec(baseType);
@@ -766,15 +811,15 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
         // - SQLite：PRAGMA index_list + index_info；同样仅收集单列索引，避免多列索引误判。
         if (runtime.dbDialect === "mysql") {
             const q = getSyncTableIndexesQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe(q.sql, q.params);
-            for (const row of result) {
+            const result = await runtime.db.unsafe<MySqlIndexRow[]>(q.sql, q.params);
+            for (const row of result.data) {
                 if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
                 indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
             }
         } else if (runtime.dbDialect === "postgresql") {
             const q = getSyncTableIndexesQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe(q.sql, q.params);
-            for (const row of result) {
+            const result = await runtime.db.unsafe<PgIndexRow[]>(q.sql, q.params);
+            for (const row of result.data) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {
                     const col = m[1].replace(/"/g, "").trim();
@@ -783,11 +828,11 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
             }
         } else if (runtime.dbDialect === "sqlite") {
             const quotedTable = quoteIdentifier("sqlite", tableName);
-            const list = await runtime.db.unsafe(`PRAGMA index_list(${quotedTable})`);
-            for (const idx of list) {
+            const list = await runtime.db.unsafe<SqliteIndexListRow[]>(`PRAGMA index_list(${quotedTable})`);
+            for (const idx of list.data) {
                 const quotedIndex = quoteIdentifier("sqlite", idx.name);
-                const info = await runtime.db.unsafe(`PRAGMA index_info(${quotedIndex})`);
-                const cols = info.map((r: any) => r.name);
+                const info = await runtime.db.unsafe<SqliteIndexInfoRow[]>(`PRAGMA index_info(${quotedIndex})`);
+                const cols = info.data.map((r) => r.name);
                 if (cols.length === 1) indexes[idx.name] = cols;
             }
         }
@@ -810,11 +855,11 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
     if (!db) throw new Error("SQL 执行器未初始化");
 
     if (dbDialect === "mysql") {
-        const r = await db.unsafe("SELECT VERSION() AS version");
-        if (!r || r.length === 0 || !r[0]?.version) {
+        const r = await db.unsafe<Array<{ version: string }>>("SELECT VERSION() AS version");
+        if (!r.data || r.data.length === 0 || !r.data[0]?.version) {
             throw new Error("无法获取 MySQL 版本信息");
         }
-        const version = r[0].version;
+        const version = r.data[0].version;
         const majorVersion = parseInt(String(version).split(".")[0], 10);
         if (!Number.isFinite(majorVersion) || majorVersion < DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR) {
             throw new Error(`此脚本仅支持 MySQL ${DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR}.0+，当前版本: ${version}`);
@@ -823,11 +868,11 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
     }
 
     if (dbDialect === "postgresql") {
-        const r = await db.unsafe("SELECT version() AS version");
-        if (!r || r.length === 0 || !r[0]?.version) {
+        const r = await db.unsafe<Array<{ version: string }>>("SELECT version() AS version");
+        if (!r.data || r.data.length === 0 || !r.data[0]?.version) {
             throw new Error("无法获取 PostgreSQL 版本信息");
         }
-        const versionText = r[0].version;
+        const versionText = r.data[0].version;
         const m = /PostgreSQL\s+(\d+)/i.exec(versionText);
         const major = m ? parseInt(m[1], 10) : NaN;
         if (!Number.isFinite(major) || major < DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR) {
@@ -837,11 +882,11 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
     }
 
     if (dbDialect === "sqlite") {
-        const r = await db.unsafe("SELECT sqlite_version() AS version");
-        if (!r || r.length === 0 || !r[0]?.version) {
+        const r = await db.unsafe<Array<{ version: string }>>("SELECT sqlite_version() AS version");
+        if (!r.data || r.data.length === 0 || !r.data[0]?.version) {
             throw new Error("无法获取 SQLite 版本信息");
         }
-        const version = r[0].version;
+        const version = r.data[0].version;
         const [maj, min, patch] = String(version)
             .split(".")
             .map((v) => parseInt(v, 10) || 0);
@@ -934,8 +979,8 @@ async function rebuildSqliteTable(runtime: SyncRuntime, tableName: string, field
     }
 
     const quotedSourceTable = quoteIdentifier("sqlite", tableName);
-    const info = await runtime.db.unsafe(`PRAGMA table_info(${quotedSourceTable})`);
-    const existingCols = info.map((r: any) => r.name);
+    const info = await runtime.db.unsafe<SqliteTableInfoRow[]>(`PRAGMA table_info(${quotedSourceTable})`);
+    const existingCols = info.data.map((r) => r.name);
     const businessCols = Object.keys(fields).map((k) => snakeCase(k));
     const targetCols = ["id", "created_at", "updated_at", "deleted_at", "state", ...businessCols];
     const tmpTable = `${tableName}__tmp__${Date.now()}`;

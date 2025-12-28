@@ -11,12 +11,12 @@ export default {
             where: { id: ctx.body.id }
         });
 
-        if (!adminData?.id) {
+        if (!adminData.data?.id) {
             return befly.tool.No("管理员不存在");
         }
 
         // 不能删除 dev 角色的管理员
-        if (adminData.roleCode === "dev") {
+        if (adminData.data.roleCode === "dev") {
             return befly.tool.No("不能删除开发管理员");
         }
 

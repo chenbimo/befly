@@ -11,7 +11,7 @@ export default {
             where: { username: ctx.body.username }
         });
 
-        if (existingByUsername?.id) {
+        if (existingByUsername.data?.id) {
             return befly.tool.No("用户名已被使用");
         }
 
@@ -22,7 +22,7 @@ export default {
                 where: { nickname: ctx.body.nickname }
             });
 
-            if (existingByNickname?.id) {
+            if (existingByNickname.data?.id) {
                 return befly.tool.No("昵称已被使用");
             }
         }
@@ -33,7 +33,7 @@ export default {
             where: { code: ctx.body.roleCode }
         });
 
-        if (!roleData?.id) {
+        if (!roleData.data?.id) {
             return befly.tool.No("角色不存在");
         }
 
@@ -52,7 +52,7 @@ export default {
         });
 
         return befly.tool.Yes("添加成功", {
-            id: adminId
+            id: adminId.data
         });
     }
 };

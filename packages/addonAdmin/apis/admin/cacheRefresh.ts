@@ -31,8 +31,8 @@ export default {
                     table: "addon_admin_api"
                 });
 
-                await befly.redis.setObject(CacheKeys.apisAll(), apis.lists);
-                results.apis = { success: true, count: apis.lists.length };
+                await befly.redis.setObject(CacheKeys.apisAll(), apis.data.lists);
+                results.apis = { success: true, count: apis.data.lists.length };
             } catch (error: any) {
                 befly.logger.error({ err: error }, "刷新接口缓存失败");
                 results.apis = { success: false, error: error.message };
@@ -44,14 +44,14 @@ export default {
                     table: "addon_admin_menu"
                 });
 
-                await befly.redis.setObject(CacheKeys.menusAll(), menus.lists);
+                await befly.redis.setObject(CacheKeys.menusAll(), menus.data.lists);
 
-                const parentCount = menus.lists.filter((m: any) => typeof m.parentPath !== "string" || m.parentPath.length === 0).length;
-                const childCount = menus.lists.filter((m: any) => typeof m.parentPath === "string" && m.parentPath.length > 0).length;
+                const parentCount = menus.data.lists.filter((m: any) => typeof m.parentPath !== "string" || m.parentPath.length === 0).length;
+                const childCount = menus.data.lists.filter((m: any) => typeof m.parentPath === "string" && m.parentPath.length > 0).length;
 
                 results.menus = {
                     success: true,
-                    count: menus.lists.length,
+                    count: menus.data.lists.length,
                     parentCount: parentCount,
                     childCount: childCount
                 };
@@ -68,7 +68,7 @@ export default {
 
                 // 使用 setBatch 批量缓存所有角色
                 const count = await befly.redis.setBatch(
-                    roles.lists.map((role: any) => ({
+                    roles.data.lists.map((role: any) => ({
                         key: CacheKeys.roleInfo(role.code),
                         value: role
                     }))

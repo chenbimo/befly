@@ -23,15 +23,15 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         throw new Error("syncDev: ctx.cache 未初始化（cache 插件未加载或注入失败）");
     }
 
-    if (!(await ctx.db.tableExists("addon_admin_admin"))) {
+    if (!(await ctx.db.tableExists("addon_admin_admin")).data) {
         Logger.debug(`addon_admin_admin 表不存在`);
         return;
     }
-    if (!(await ctx.db.tableExists("addon_admin_role"))) {
+    if (!(await ctx.db.tableExists("addon_admin_role")).data) {
         Logger.debug(`addon_admin_role 表不存在`);
         return;
     }
-    if (!(await ctx.db.tableExists("addon_admin_menu"))) {
+    if (!(await ctx.db.tableExists("addon_admin_menu")).data) {
         Logger.debug(`addon_admin_menu 表不存在`);
         return;
     }
@@ -43,11 +43,11 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         orderBy: ["id#ASC"]
     } as any);
 
-    const menuPaths = Array.from(new Set((allMenus.lists || []).map((m: any) => (typeof m?.path === "string" ? m.path.trim() : "")).filter((p: string) => p.length > 0)));
+    const menuPaths = Array.from(new Set((allMenus.data.lists || []).map((m: any) => (typeof m?.path === "string" ? m.path.trim() : "")).filter((p: string) => p.length > 0)));
 
     const existApi = await ctx.db.tableExists("addon_admin_api");
     let apiPaths: string[] = [];
-    if (existApi) {
+    if (existApi.data) {
         const allApis = await ctx.db.getAll({
             table: "addon_admin_api",
             fields: ["routePath"],
@@ -57,7 +57,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
 
         apiPaths = Array.from(
             new Set(
-                (allApis.lists || []).map((a: any) => {
+                (allApis.data.lists || []).map((a: any) => {
                     if (typeof a?.routePath !== "string") {
                         throw new Error("syncDev: addon_admin_api.routePath 必须是字符串");
                     }
@@ -119,17 +119,17 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
             where: { code: roleConfig.code }
         });
 
-        if (existingRole) {
+        if (existingRole.data) {
             const nextMenus = roleConfig.menus;
             const nextApis = roleConfig.apis;
 
-            const existingMenus = Array.isArray(existingRole.menus) ? existingRole.menus : [];
-            const existingApis = Array.isArray(existingRole.apis) ? existingRole.apis : [];
+            const existingMenus = Array.isArray((existingRole.data as any).menus) ? (existingRole.data as any).menus : [];
+            const existingApis = Array.isArray((existingRole.data as any).apis) ? (existingRole.data as any).apis : [];
 
             const menusChanged = existingMenus.length !== nextMenus.length || existingMenus.some((v: any, i: number) => v !== nextMenus[i]);
             const apisChanged = existingApis.length !== nextApis.length || existingApis.some((v: any, i: number) => v !== nextApis[i]);
 
-            const hasChanges = existingRole.name !== roleConfig.name || existingRole.description !== roleConfig.description || menusChanged || apisChanged || existingRole.sort !== roleConfig.sort;
+            const hasChanges = (existingRole.data as any).name !== roleConfig.name || (existingRole.data as any).description !== roleConfig.description || menusChanged || apisChanged || (existingRole.data as any).sort !== roleConfig.sort;
 
             if (hasChanges) {
                 await ctx.db.updData({
@@ -145,7 +145,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
                 });
             }
             if (roleConfig.code === "dev") {
-                devRole = existingRole;
+                devRole = existingRole.data;
             }
         } else {
             const roleId = await ctx.db.insData({
@@ -153,7 +153,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
                 data: roleConfig
             });
             if (roleConfig.code === "dev") {
-                devRole = { id: roleId };
+                devRole = { id: roleId.data };
             }
         }
     }
@@ -180,7 +180,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         where: { email: devEmail }
     });
 
-    if (existing) {
+    if (existing.data) {
         await ctx.db.updData({
             table: "addon_admin_admin",
             where: { email: devEmail },

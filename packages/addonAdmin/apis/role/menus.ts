@@ -12,12 +12,12 @@ export default {
             where: { code: ctx.body.roleCode }
         });
 
-        if (!role?.id) {
+        if (!role.data?.id) {
             return befly.tool.No("角色不存在");
         }
 
         // 数据库自动将 array_text 转换为数组
-        const menuPaths = Array.isArray(role.menus) ? role.menus : [];
+        const menuPaths = Array.isArray(role.data.menus) ? role.data.menus : [];
 
         return befly.tool.Yes("操作成功", menuPaths);
     }

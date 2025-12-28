@@ -18,7 +18,7 @@ export default {
                 limit: ctx.body.limit
             });
 
-            return befly.tool.Yes("操作成功", result);
+            return befly.tool.Yes("操作成功", result.data);
         } catch (error: any) {
             befly.logger.error({ err: error }, "获取接口列表失败");
             return befly.tool.No("获取接口列表失败");
