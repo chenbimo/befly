@@ -280,11 +280,13 @@ export default {
     required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 使用 addon 表时需要完整表名
-        const admin = await befly.db.getDetail({
+        const adminRes = await befly.db.getOne({
             table: "addon_admin_admin",
-            columns: ["id", "email", "password", "nickname"],
+            fields: ["id", "email", "password", "nickname"],
             where: { email: ctx.body.email }
         });
+
+        const admin = adminRes.data;
 
         // ... 业务逻辑
 
@@ -325,7 +327,7 @@ export default {
 // 使用完整表名
 await befly.db.getList({
     table: "addon_admin_role", // addon_{name}_{table}
-    columns: ["id", "name", "code"]
+    fields: ["id", "name", "code"]
 });
 ```
 

@@ -54,21 +54,21 @@ export default {
     required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 检查邮箱是否已存在
-        const exists = await befly.db.getDetail({
+        const existsRes = await befly.db.getOne({
             table: "user",
-            columns: ["id"],
+            fields: ["id"],
             where: { email: ctx.body.email }
         });
 
-        if (exists?.id) {
-            return No("该邮箱已被注册");
+        if (existsRes.data?.id) {
+            return befly.tool.No("该邮箱已被注册");
         }
 
         // 加密密码
         const hashedPassword = await befly.cipher.hashPassword(ctx.body.password);
 
         // 创建用户
-        const result = await befly.db.insData({
+        const idRes = await befly.db.insData({
             table: "user",
             data: {
                 email: ctx.body.email,
@@ -77,7 +77,7 @@ export default {
             }
         });
 
-        return Yes("注册成功", { id: result.insertId });
+        return befly.tool.Yes("注册成功", { id: idRes.data });
     }
 } as ApiRoute;
 ```
@@ -100,31 +100,33 @@ export default {
     required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 查询用户
-        const user = await befly.db.getDetail({
+        const userRes = await befly.db.getOne({
             table: "user",
-            columns: ["id", "email", "password", "nickname", "avatar", "role", "state"],
+            fields: ["id", "email", "password", "nickname", "avatar", "role", "state", "loginCount"],
             where: { email: ctx.body.email }
         });
 
+        const user = userRes.data;
+
         if (!user?.id) {
-            return No("用户不存在");
+            return befly.tool.No("用户不存在");
         }
 
         if (user.state !== 1) {
-            return No("账户已被禁用");
+            return befly.tool.No("账户已被禁用");
         }
 
         // 验证密码
         const isValid = await befly.cipher.verifyPassword(ctx.body.password, user.password);
         if (!isValid) {
-            return No("密码错误");
+            return befly.tool.No("密码错误");
         }
 
         // 更新登录信息
         await befly.db.updData({
             table: "user",
             data: {
-                loginCount: user.loginCount + 1,
+                loginCount: (user.loginCount || 0) + 1,
                 lastLoginAt: Date.now()
             },
             where: { id: user.id }
@@ -132,11 +134,11 @@ export default {
 
         // 签发令牌
         const token = befly.jwt.sign({
-            userId: user.id,
+            id: user.id,
             role: user.role
         });
 
-        return Yes("登录成功", {
+        return befly.tool.Yes("登录成功", {
             token: token,
             user: {
                 id: user.id,
@@ -162,17 +164,19 @@ export default {
     method: "GET",
     auth: true,
     handler: async (befly, ctx) => {
-        const user = await befly.db.getDetail({
+        const userRes = await befly.db.getOne({
             table: "user",
-            columns: ["id", "email", "nickname", "avatar", "phone", "gender", "birthday", "bio", "role", "createdAt"],
-            where: { id: ctx.user.userId }
+            fields: ["id", "email", "nickname", "avatar", "phone", "gender", "birthday", "bio", "role", "createdAt"],
+            where: { id: ctx.user?.id }
         });
 
+        const user = userRes.data;
+
         if (!user?.id) {
-            return No("用户不存在");
+            return befly.tool.No("用户不存在");
         }
 
-        return Yes("获取成功", user);
+        return befly.tool.Yes("获取成功", user);
     }
 } as ApiRoute;
 ```
@@ -208,16 +212,16 @@ export default {
         if (ctx.body.bio !== undefined) updateData.bio = ctx.body.bio;
 
         if (Object.keys(updateData).length === 0) {
-            return No("没有需要更新的字段");
+            return befly.tool.No("没有需要更新的字段");
         }
 
         await befly.db.updData({
             table: "user",
             data: updateData,
-            where: { id: ctx.user.userId }
+            where: { id: ctx.user?.id }
         });
 
-        return Yes("更新成功");
+        return befly.tool.Yes("更新成功");
     }
 } as ApiRoute;
 ```
@@ -240,20 +244,22 @@ export default {
     required: ["oldPassword", "newPassword"],
     handler: async (befly, ctx) => {
         // 获取用户密码
-        const user = await befly.db.getDetail({
+        const userRes = await befly.db.getOne({
             table: "user",
-            columns: ["id", "password"],
-            where: { id: ctx.user.userId }
+            fields: ["id", "password"],
+            where: { id: ctx.user?.id }
         });
 
+        const user = userRes.data;
+
         if (!user?.id) {
-            return No("用户不存在");
+            return befly.tool.No("用户不存在");
         }
 
         // 验证原密码
         const isValid = await befly.cipher.verifyPassword(ctx.body.oldPassword, user.password);
         if (!isValid) {
-            return No("原密码错误");
+            return befly.tool.No("原密码错误");
         }
 
         // 加密新密码
@@ -263,10 +269,10 @@ export default {
         await befly.db.updData({
             table: "user",
             data: { password: hashedPassword },
-            where: { id: ctx.user.userId }
+            where: { id: ctx.user?.id }
         });
 
-        return Yes("密码修改成功");
+        return befly.tool.Yes("密码修改成功");
     }
 } as ApiRoute;
 ```
@@ -310,14 +316,14 @@ export default {
 
         const result = await befly.db.getList({
             table: "user",
-            columns: ["id", "email", "nickname", "avatar", "phone", "role", "state", "loginCount", "lastLoginAt", "createdAt"],
+            fields: ["id", "email", "nickname", "avatar", "phone", "role", "state", "loginCount", "lastLoginAt", "createdAt"],
             where: where,
             page: page || 1,
             limit: limit || 20,
-            orderBy: { id: "desc" }
+            orderBy: ["id#DESC"]
         });
 
-        return Yes("获取成功", result);
+        return befly.tool.Yes("获取成功", result.data);
     }
 } as ApiRoute;
 ```
@@ -398,7 +404,7 @@ export default {
                 cover: cover || "",
                 categoryId: categoryId || 0,
                 tags: tags || [],
-                authorId: ctx.user.userId,
+                authorId: ctx.user?.id,
                 publishedAt: Date.now()
             }
         });
@@ -412,7 +418,7 @@ export default {
             });
         }
 
-        return Yes("发布成功", { id: result.insertId });
+        return befly.tool.Yes("发布成功", { id: result.data });
     }
 } as ApiRoute;
 ```
@@ -442,19 +448,21 @@ export default {
         const { id, title, content, summary, cover, categoryId, tags } = ctx.body;
 
         // 检查文章是否存在
-        const article = await befly.db.getDetail({
+        const articleRes = await befly.db.getOne({
             table: "article",
-            columns: ["id", "authorId", "categoryId"],
+            fields: ["id", "authorId", "categoryId"],
             where: { id: id }
         });
 
+        const article = articleRes.data;
+
         if (!article?.id) {
-            return No("文章不存在");
+            return befly.tool.No("文章不存在");
         }
 
         // 检查权限（只能编辑自己的文章，管理员除外）
-        if (article.authorId !== ctx.user.userId && ctx.user.role !== "admin") {
-            return No("没有权限编辑此文章");
+        if (article.authorId !== ctx.user?.id && ctx.user?.role !== "admin") {
+            return befly.tool.No("没有权限编辑此文章");
         }
 
         const updateData: Record<string, any> = {};
@@ -466,7 +474,7 @@ export default {
         if (tags !== undefined) updateData.tags = tags;
 
         if (Object.keys(updateData).length === 0) {
-            return No("没有需要更新的字段");
+            return befly.tool.No("没有需要更新的字段");
         }
 
         await befly.db.updData({
@@ -493,7 +501,7 @@ export default {
             }
         }
 
-        return Yes("更新成功");
+        return befly.tool.Yes("更新成功");
     }
 } as ApiRoute;
 ```
@@ -514,19 +522,21 @@ export default {
     },
     required: ["id"],
     handler: async (befly, ctx) => {
-        const article = await befly.db.getDetail({
+        const articleRes = await befly.db.getOne({
             table: "article",
-            columns: ["id", "authorId", "categoryId"],
+            fields: ["id", "authorId", "categoryId"],
             where: { id: ctx.body.id }
         });
 
+        const article = articleRes.data;
+
         if (!article?.id) {
-            return No("文章不存在");
+            return befly.tool.No("文章不存在");
         }
 
         // 检查权限
-        if (article.authorId !== ctx.user.userId && ctx.user.role !== "admin") {
-            return No("没有权限删除此文章");
+        if (article.authorId !== ctx.user?.id && ctx.user?.role !== "admin") {
+            return befly.tool.No("没有权限删除此文章");
         }
 
         // 软删除
@@ -544,7 +554,7 @@ export default {
             });
         }
 
-        return Yes("删除成功");
+        return befly.tool.Yes("删除成功");
     }
 } as ApiRoute;
 ```
@@ -585,20 +595,20 @@ export default {
         }
 
         // 排序
-        let order: Record<string, "asc" | "desc"> = { isTop: "desc", publishedAt: "desc" };
-        if (orderBy === "views") order = { viewCount: "desc" };
-        if (orderBy === "likes") order = { likeCount: "desc" };
+        let orderByList: string[] = ["isTop#DESC", "publishedAt#DESC"];
+        if (orderBy === "views") orderByList = ["viewCount#DESC"];
+        if (orderBy === "likes") orderByList = ["likeCount#DESC"];
 
         const result = await befly.db.getList({
             table: "article",
-            columns: ["id", "title", "summary", "cover", "categoryId", "tags", "authorId", "viewCount", "likeCount", "commentCount", "isTop", "isRecommend", "publishedAt"],
+            fields: ["id", "title", "summary", "cover", "categoryId", "tags", "authorId", "viewCount", "likeCount", "commentCount", "isTop", "isRecommend", "publishedAt"],
             where: where,
             page: page || 1,
             limit: limit || 10,
-            orderBy: order
+            orderBy: orderByList
         });
 
-        return Yes("获取成功", result);
+        return befly.tool.Yes("获取成功", result.data);
     }
 } as ApiRoute;
 ```
@@ -619,13 +629,15 @@ export default {
     },
     required: ["id"],
     handler: async (befly, ctx) => {
-        const article = await befly.db.getDetail({
+        const articleRes = await befly.db.getOne({
             table: "article",
             where: { id: ctx.body.id, state: 1 }
         });
 
+        const article = articleRes.data;
+
         if (!article?.id) {
-            return No("文章不存在");
+            return befly.tool.No("文章不存在");
         }
 
         // 增加浏览量
@@ -636,25 +648,41 @@ export default {
         });
 
         // 获取作者信息
-        const author = await befly.db.getDetail({
+        const authorRes = await befly.db.getOne({
             table: "user",
-            columns: ["id", "nickname", "avatar"],
+            fields: ["id", "nickname", "avatar"],
             where: { id: article.authorId }
         });
+
+        const author = authorRes.data;
 
         // 获取分类信息
         let category = null;
         if (article.categoryId) {
-            category = await befly.db.getDetail({
+            const categoryRes = await befly.db.getOne({
                 table: "category",
-                columns: ["id", "name", "slug"],
+                fields: ["id", "name", "slug"],
                 where: { id: article.categoryId }
             });
+
+            category = categoryRes.data;
         }
 
-        return Yes("获取成功", {
-            ...article,
-            viewCount: article.viewCount + 1,
+        return befly.tool.Yes("获取成功", {
+            id: article.id,
+            title: article.title,
+            content: article.content,
+            summary: article.summary,
+            cover: article.cover,
+            categoryId: article.categoryId,
+            tags: article.tags,
+            authorId: article.authorId,
+            viewCount: (article.viewCount || 0) + 1,
+            likeCount: article.likeCount,
+            commentCount: article.commentCount,
+            isTop: article.isTop,
+            isRecommend: article.isRecommend,
+            publishedAt: article.publishedAt,
             author: author,
             category: category
         });
@@ -684,18 +712,18 @@ export default {
         const file = formData.get("file") as File | null;
 
         if (!file) {
-            return No("请选择文件");
+            return befly.tool.No("请选择文件");
         }
 
         // 检查文件大小（10MB）
         if (file.size > 10 * 1024 * 1024) {
-            return No("文件大小不能超过 10MB");
+            return befly.tool.No("文件大小不能超过 10MB");
         }
 
         // 检查文件类型
         const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
         if (!allowedTypes.includes(file.type)) {
-            return No("只支持 jpg/png/gif/webp 格式");
+            return befly.tool.No("只支持 jpg/png/gif/webp 格式");
         }
 
         // 生成文件名
@@ -716,7 +744,7 @@ export default {
         // 返回 URL
         const url = `/uploads/${new Date().toISOString().slice(0, 7)}/${fileName}`;
 
-        return Yes("上传成功", {
+        return befly.tool.Yes("上传成功", {
             url: url,
             name: file.name,
             size: file.size,
@@ -746,7 +774,7 @@ export default {
         // 获取所有用户
         const result = await befly.db.getList({
             table: "user",
-            columns: ["id", "email", "nickname", "phone", "role", "state", "createdAt"],
+            fields: ["id", "email", "nickname", "phone", "role", "state", "createdAt"],
             where: { state: { $gte: 0 } },
             page: 1,
             limit: 10000
@@ -754,7 +782,7 @@ export default {
 
         // 生成 CSV
         const headers = ["ID", "邮箱", "昵称", "手机号", "角色", "状态", "注册时间"];
-        const rows = result.list.map((user: any) => [user.id, user.email, user.nickname, user.phone || "", user.role, user.state === 1 ? "正常" : "禁用", new Date(user.createdAt).toLocaleString()]);
+        const rows = result.data.lists.map((user: any) => [user.id, user.email, user.nickname, user.phone || "", user.role, user.state === 1 ? "正常" : "禁用", new Date(user.createdAt).toLocaleString()]);
 
         const csv = [headers.join(","), ...rows.map((row: any[]) => row.map((cell) => `"${cell}"`).join(","))].join("\n");
 
@@ -794,43 +822,49 @@ if (Object.keys(updateData).length === 0) {
 await befly.db.updData({
     table: "user",
     data: updateData,
-    where: { id: ctx.user.userId }
+    where: { id: ctx.user?.id }
 });
 ```
 
 #### 优化写法（简洁）
 
 ```typescript
+import { fieldClear } from "befly/utils/fieldClear";
+
 // ✅ 直接传入，undefined 值自动过滤
-const { nickname, avatar, phone, gender, birthday, bio } = ctx.body;
+const data = {
+    nickname: ctx.body.nickname,
+    avatar: ctx.body.avatar,
+    phone: ctx.body.phone,
+    gender: ctx.body.gender,
+    birthday: ctx.body.birthday,
+    bio: ctx.body.bio
+};
 
-const data = { nickname: nickname, avatar: avatar, phone: phone, gender: gender, birthday: birthday, bio: bio };
-
-// 使用 cleanFields 检查是否有有效数据
-const cleanData = befly.tool.cleanFields(data);
+// 使用 fieldClear 检查是否有有效数据
+const cleanData = fieldClear(data, { excludeValues: [null, undefined] });
 if (Object.keys(cleanData).length === 0) {
-    return No("没有需要更新的字段");
+    return befly.tool.No("没有需要更新的字段");
 }
 
 await befly.db.updData({
     table: "user",
     data: cleanData,
-    where: { id: ctx.user.userId }
+    where: { id: ctx.user?.id }
 });
 ```
 
-### 使用 cleanFields 进行精细控制
+### 使用 fieldClear 进行精细控制
 
-当需要保留特定值（如 0、空字符串）时，使用 `cleanFields` 的高级参数：
+当需要保留特定值（如 0、空字符串）时，使用 `fieldClear` 的高级参数：
 
 ```typescript
 const { nickname, sort, state, remark } = ctx.body;
 
 // 保留 0 值（sort 和 state 允许为 0）
-const data = befly.tool.cleanFields(
+const data = fieldClear(
     { nickname: nickname, sort: sort, state: state, remark: remark },
-    [null, undefined], // 排除 null 和 undefined
-    { sort: true, state: true } // 保留这些字段的 0 值
+    { excludeValues: [null, undefined], keepMap: { sort: 0, state: 0 } }
 );
 
 await befly.db.updData({
@@ -850,7 +884,7 @@ const { keyword, state, categoryId, startDate, endDate } = ctx.body;
 
 const result = await befly.db.getList({
     table: "article",
-    columns: ["id", "title", "createdAt"],
+    fields: ["id", "title", "createdAt"],
     where: {
         state: state, // undefined 时忽略
         categoryId: categoryId, // undefined 时忽略

@@ -535,7 +535,7 @@ await syncTable(ctx, sources.tables);
    └─ 保留字段检查
 
 2. 建立数据库连接
-   └─ 检查数据库版本（MySQL 8+, PostgreSQL 17+）
+    └─ 检查数据库版本（MySQL 8+, PostgreSQL 17+, SQLite 3.50+）
 
 3. 扫描表定义文件
    ├─ 项目 tables 目录

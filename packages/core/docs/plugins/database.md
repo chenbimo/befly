@@ -1,128 +1,189 @@
-# Befly 数据库操作指南
+# Befly 数据库（DbHelper）
 
-> 本文档详细介绍 Befly 框架的数据库操作 API，包括 CRUD 操作、事务、条件查询等。
+本文档只描述 **当前实现**：所有数据库操作统一返回 `DbResult`（`{ data, sql }`），调用方必须读取 `.data`。
 
-## 目录
+## 核心约定：DbResult（必须读 data）
 
-- [核心概念](#核心概念)
-- [字段命名规范](#字段命名规范)
-- [查询方法](#查询方法)
-- [写入方法](#写入方法)
-- [数值操作](#数值操作)
-- [事务操作](#事务操作)
-- [多表联查](#多表联查)
-- [Where 条件语法](#where-条件语法)
-- [字段选择语法](#字段选择语法)
-- [排序语法](#排序语法)
-- [系统字段说明](#系统字段说明)
-- [完整示例](#完整示例)
+`DbHelper` 的所有方法都会返回：
 
----
-
-## 核心概念
-
-### DbHelper
-
-`DbHelper` 是 Befly 的数据库操作核心类，提供了完整的 CRUD 封装。通过 `befly.db` 访问。
+- `data`：你真正要用的结果
+- `sql`：本次执行的 SQL 信息（用于调试/排错）
 
 ```typescript
-// 在 API handler 中使用
-handler: async (befly, ctx) => {
-    const user = await befly.db.getOne({
-        table: "user",
-        where: { id: 1 }
-    });
+type DbResult<TData = any, TSql = SqlInfo> = {
+    data: TData;
+    sql: TSql;
 };
 ```
 
-### 自动转换
+### SQL 信息（SqlInfo / ListSql）
 
-- **表名**：小驼峰 `userProfile` 自动转换为下划线 `user_profile`
-- **字段名**：写入时小驼峰转下划线，查询时下划线转小驼峰
-- **BIGINT 字段**：`id`、`*Id`、`*_id`、`*At`、`*_at` 自动转为 number
+- 单条/写入类操作的 `sql` 为 `SqlInfo`：
+    - `sql`：SQL 字符串
+    - `params`：参数数组
+    - `duration`：耗时（毫秒）
+- 列表/全量查询的 `sql` 为 `ListSql`：
+    - `count`：统计 SQL（用于 total）
+    - `data?`：数据 SQL（当 total=0 时可能不会执行第二次查询）
 
-### 自动过滤 null 和 undefined
+> 注意：不要把整个 `DbResult` 直接返回给客户端；应只返回 `result.data`。
 
-所有写入方法（`insData`、`insBatch`、`updData`）和条件查询（`where`）都会**自动过滤值为 `null` 或 `undefined` 的字段**。
+## 常用查询
 
----
+### getOne（单条）
 
-## 字段命名规范
+```typescript
+const userRes = await befly.db.getOne({
+    table: "user",
+    fields: ["id", "email", "nickname"],
+    where: { id: ctx.user?.id }
+});
 
-| 位置                  | 格式   | 示例                    |
-| --------------------- | ------ | ----------------------- |
-| 代码中（参数/返回值） | 小驼峰 | `userId`, `createdAt`   |
-| 数据库中              | 下划线 | `user_id`, `created_at` |
+const user = userRes.data;
+if (!user?.id) {
+    return befly.tool.No("用户不存在");
+}
 
----
+return befly.tool.Yes("获取成功", user);
+```
 
-## 查询方法
+### getList（分页）
 
-- `getOne`：查询单条
-- `getList`：分页查询
-- `getAll`：查询全部（有上限保护）
-- `getCount`：查询数量
-- `exists`：检查存在
-- `getFieldValue`：查询单字段
+```typescript
+const listRes = await befly.db.getList({
+    table: "user",
+    fields: ["id", "email", "nickname"],
+    where: { state: 1 },
+    page: 1,
+    limit: 20,
+    orderBy: ["id#DESC"]
+});
 
----
+return befly.tool.Yes("获取成功", listRes.data);
+// listRes.data: { lists, total, page, limit, pages }
+```
 
-## 写入方法
+### getAll（不分页，有上限保护）
 
-- `insData`：插入单条（自动生成系统字段）
-- `insBatch`：批量插入
-- `updData`：更新（自动更新 `updated_at`）
-- `delData`：软删除
-- `delForce`：硬删除
-- `disableData` / `enableData`：禁用/启用
+```typescript
+const allRes = await befly.db.getAll({
+    table: "user",
+    fields: ["id", "email"],
+    where: { state: 1 },
+    orderBy: ["createdAt#DESC"]
+});
 
----
+return befly.tool.Yes("获取成功", allRes.data);
+// allRes.data: { lists, total }
+```
 
-## 数值操作
+## 写入与返回值
 
-- `increment`：自增
-- `decrement`：自减
+### insData（插入单条）
 
----
+`insData` 返回插入的 ID（数值）：
 
-## 事务操作
+```typescript
+const idRes = await befly.db.insData({
+    table: "user",
+    data: {
+        email: ctx.body.email,
+        nickname: ctx.body.nickname
+    }
+});
 
-使用 `trans` 方法执行事务，自动处理 commit/rollback。
+return befly.tool.Yes("创建成功", { id: idRes.data });
+```
 
----
+### updData / delData
 
-## 多表联查
+`updData` / `delData` 返回影响行数（数值）：
 
-查询方法支持通过 `joins` 参数进行多表联查。
+```typescript
+const updRes = await befly.db.updData({
+    table: "user",
+    data: { nickname: ctx.body.nickname },
+    where: { id: ctx.user?.id }
+});
 
----
+return befly.tool.Yes("更新成功", { changed: updRes.data });
+```
 
-## Where 条件语法
+### insBatch（批量插入）
 
-支持 `$or/$and` 与 `$gt/$gte/$lt/$lte/$in/$between/$null/$like` 等。
+`insBatch` 返回插入的 ID 列表：
 
----
+```typescript
+const idsRes = await befly.db.insBatch("user", [
+    { email: "a@qq.com", nickname: "A" },
+    { email: "b@qq.com", nickname: "B" }
+]);
 
-## 字段选择语法
+return befly.tool.Yes("导入成功", { ids: idsRes.data });
+```
 
-- `fields: []` / 不传：查询所有字段
-- `fields: ["id", "name"]`：指定字段
-- `fields: ["!password"]`：排除字段（不能混用包含与排除）
+## 字段/排序
 
----
+### fields（字段选择）
 
-## 排序语法
+- 不传或 `[]`：查询所有字段
+- 仅包含字段：`["id", "email"]`
+- 仅排除字段：`["!password"]`
 
-使用 `字段#方向` 格式：`ASC` / `DESC`。
+> 禁止混用包含与排除。
 
----
+### orderBy（排序）
 
-## 系统字段说明
+格式：`"字段#ASC" | "字段#DESC"`，例如：`["id#DESC"]`。
 
-每条记录自动包含：`id`、`created_at`、`updated_at`、`deleted_at`、`state`。
+## null/undefined 自动过滤
 
----
+DbHelper 在写入（`insData/insBatch/updData`）以及查询条件（`where`）中，会自动过滤 `null/undefined`。
 
-## 完整示例
+如果你希望在业务侧更精细控制（例如：保留 `0` / 空字符串），请使用 `fieldClear`：
 
-更完整示例与细节说明请参考仓库中的 `DbHelper` 相关测试用例与源码实现。
+```typescript
+import { fieldClear } from "befly/utils/fieldClear";
+
+const data = fieldClear(
+    { nickname: ctx.body.nickname, sort: ctx.body.sort, state: ctx.body.state },
+    { excludeValues: [null, undefined], keepMap: { sort: 0, state: 0 } }
+);
+```
+
+## 事务（trans）
+
+```typescript
+const out = await befly.db.trans(async (trx) => {
+    const idRes = await trx.insData({
+        table: "order",
+        data: { userId: ctx.user?.id, status: "pending" }
+    });
+    return { orderId: idRes.data };
+});
+
+return befly.tool.Yes("创建成功", out);
+```
+
+## 原生 SQL（query / unsafe）
+
+```typescript
+const r = await befly.db.query("SELECT 1 AS cnt");
+return befly.tool.Yes("ok", r.data);
+```
+
+`unsafe` 用于内部脚本/同步逻辑（行为与 `query` 相同，返回 `DbResult`）。
+
+## 错误定位：error.sqlInfo
+
+当 SQL 执行失败，抛出的错误对象会带 `sqlInfo`：
+
+```typescript
+try {
+    await befly.db.query("SELECT * FROM not_exists");
+} catch (error: any) {
+    // error.sqlInfo: { sql, params, duration }
+    befly.logger.error({ sqlInfo: error?.sqlInfo }, "SQL 执行失败");
+    throw error;
+}
+```

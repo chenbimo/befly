@@ -518,14 +518,14 @@ export default {
 
         const result = await befly.db.getList({
             table: "article",
-            columns: ["id", "title", "summary", "createdAt"],
+            fields: ["id", "title", "summary", "createdAt"],
             where: where,
             page: page || 1,
             limit: limit || 10,
-            orderBy: { id: "desc" }
+            orderBy: ["id#DESC"]
         });
 
-        return befly.tool.Yes("获取成功", result);
+        return befly.tool.Yes("获取成功", result.data);
     }
 } as ApiRoute;
 ```
@@ -542,10 +542,12 @@ export default {
     },
     required: ["id"],
     handler: async (befly, ctx) => {
-        const article = await befly.db.getDetail({
+        const articleRes = await befly.db.getOne({
             table: "article",
             where: { id: ctx.body.id, state: 1 }
         });
+
+        const article = articleRes.data;
 
         if (!article?.id) {
             return befly.tool.No("文章不存在");
@@ -1336,29 +1338,23 @@ interface BeflyContext {
 
 ### 常用工具方法
 
-#### befly.db.cleanFields - 清理数据字段
+#### fieldClear - 清理数据字段
 
-清理对象中的 `null` 和 `undefined` 值，适用于处理可选参数：
-
-```typescript
-// 方法签名
-befly.db.cleanFields<T>(
-    data: T,                           // 要清理的数据对象
-    excludeValues?: any[],             // 要排除的值，默认 [null, undefined]
-    keepValues?: Record<string, any>   // 强制保留的键值对
-): Partial<T>
-```
-
-**基本用法：**
+清理对象中的指定值（常用：`null/undefined`），适用于处理可选参数。
 
 ```typescript
-// 默认排除 null 和 undefined
-const cleanData = befly.db.cleanFields({
-    name: "John",
-    age: null,
-    email: undefined,
-    phone: ""
-});
+import { fieldClear } from "befly/utils/fieldClear";
+
+// 常用：排除 null 和 undefined
+const cleanData = fieldClear(
+    {
+        name: "John",
+        age: null,
+        email: undefined,
+        phone: ""
+    },
+    { excludeValues: [null, undefined] }
+);
 // 结果: { name: 'John', phone: '' }
 ```
 
@@ -1366,19 +1362,22 @@ const cleanData = befly.db.cleanFields({
 
 ```typescript
 // 同时排除 null、undefined 和空字符串
-const cleanData = befly.db.cleanFields({ name: "John", phone: "", age: null }, [null, undefined, ""]);
+const cleanData = fieldClear({ name: "John", phone: "", age: null }, { excludeValues: [null, undefined, ""] });
 // 结果: { name: 'John' }
 ```
 
 **保留特定字段的特定值：**
 
 ```typescript
-// 即使值在排除列表中，也保留 status 字段的 null 值
-const cleanData = befly.db.cleanFields({ name: "John", status: null, count: 0 }, [null, undefined], { status: null });
-// 结果: { name: 'John', status: null, count: 0 }
+// 保留 count 的 0 值
+const cleanData = fieldClear(
+    { name: "John", status: null, count: 0 },
+    { excludeValues: [null, undefined], keepMap: { count: 0 } }
+);
+// 结果: { name: 'John', count: 0 }
 ```
 
-> **注意**：`insData`、`updData` 和 `where` 条件会自动调用 `cleanFields`，通常无需手动调用。
+> **注意**：DbHelper 的写入（`insData/insBatch/updData`）与查询条件（`where`）会自动过滤 `null/undefined`，通常无需手动调用。
 
 ---
 
@@ -1562,15 +1561,16 @@ export default {
     required: ["productId", "quantity"],
     handler: async (befly, ctx) => {
         // 使用事务确保库存扣减和订单创建的原子性
-        const result = await befly.db.transaction(async (trx) => {
+        const result = await befly.db.trans(async (trx) => {
             // 1. 查询商品信息（带锁）
-            const product = await trx.getOne({
+            const productRes = await trx.getOne({
                 table: "product",
-                where: { id: ctx.body.productId },
-                forUpdate: true // 行锁
+                where: { id: ctx.body.productId }
             });
 
-            if (!product) {
+            const product = productRes.data;
+
+            if (!product?.id) {
                 throw new Error("商品不存在");
             }
 
@@ -1588,7 +1588,7 @@ export default {
             });
 
             // 3. 创建订单
-            const orderId = await trx.insData({
+            const orderIdRes = await trx.insData({
                 table: "order",
                 data: {
                     userId: ctx.user.id,
@@ -1598,6 +1598,8 @@ export default {
                     status: "pending"
                 }
             });
+
+            const orderId = orderIdRes.data;
 
             // 4. 创建订单明细
             await trx.insData({
@@ -1640,19 +1642,21 @@ export default {
         }
 
         // 批量插入
-        const result = await befly.db.batchInsert({
-            table: "user",
-            data: users.map((user: any) => ({
-                username: user.username,
-                email: user.email,
-                nickname: user.nickname || user.username,
-                state: 1
-            }))
-        });
+        const idsRes = await befly.db.insBatch(
+            "user",
+            users.map((user: any) => {
+                return {
+                    username: user.username,
+                    email: user.email,
+                    nickname: user.nickname || user.username,
+                    state: 1
+                };
+            })
+        );
 
         return befly.tool.Yes("导入成功", {
             total: users.length,
-            inserted: result.affectedRows
+            ids: idsRes.data
         });
     }
 };
@@ -1682,7 +1686,7 @@ export default {
         });
 
         return befly.tool.Yes("更新成功", {
-            updated: result.affectedRows
+            updated: result.data
         });
     }
 };
@@ -1711,7 +1715,7 @@ export default {
         });
 
         return befly.tool.Yes("删除成功", {
-            deleted: result.affectedRows
+            deleted: result.data
         });
     }
 };
@@ -1728,12 +1732,14 @@ export default {
     required: ['id'],
     handler: async (befly, ctx) => {
         // 查询订单基本信息
-        const order = await befly.db.getOne({
+        const orderRes = await befly.db.getOne({
             table: 'order',
             where: { id: ctx.body.id }
         });
 
-        if (!order) {
+        const order = orderRes.data;
+
+        if (!order?.id) {
             return befly.tool.No('订单不存在');
         }
 
@@ -1744,23 +1750,17 @@ export default {
         });
 
         // 查询用户信息
-        const user = await befly.db.getOne({
+        const userRes = await befly.db.getOne({
             table: 'user',
+            fields: ['id', 'username', 'nickname', 'phone'],
             where: { id: order.userId }
         });
 
+        const user = userRes.data;
+
         return befly.tool.Yes('查询成功', {
             order: order,
-            items: itemsResult.lists,  // 订单明细列表
-            user: user
-        });
-            where: { id: order.userId },
-            columns: ['id', 'username', 'nickname', 'phone']
-        });
-
-        return befly.tool.Yes('获取成功', {
-            ...order,
-            items: items,
+            items: itemsResult.data.lists, // 订单明细列表
             user: user
         });
     }
@@ -1784,13 +1784,13 @@ export default {
                     on: { "article.authorId": "author.id" }
                 }
             ],
-            columns: ["article.id", "article.title", "article.createdAt", "author.nickname AS authorName"],
+            fields: ["article.id", "article.title", "article.createdAt", "author.nickname AS authorName"],
             page: ctx.body.page || 1,
             limit: ctx.body.limit || 10,
             orderBy: ["article.createdAt#DESC"]
         });
 
-        return befly.tool.Yes("获取成功", result);
+        return befly.tool.Yes("获取成功", result.data);
     }
 };
 ```
@@ -1866,14 +1866,14 @@ export default {
         // 查询所有用户（不分页，注意上限 10000 条）
         const result = await befly.db.getAll({
             table: "user",
-            columns: ["id", "username", "nickname", "email", "phone", "createdAt"],
+            fields: ["id", "username", "nickname", "email", "phone", "createdAt"],
             where: { state: 1 },
             orderBy: ["createdAt#DESC"]
         });
 
         // 转换为 CSV 格式
         const headers = ["ID", "用户名", "昵称", "邮箱", "手机", "注册时间"];
-        const rows = result.lists.map((u: any) => [u.id, u.username, u.nickname, u.email, u.phone, new Date(u.createdAt).toLocaleString()]);
+        const rows = result.data.lists.map((u: any) => [u.id, u.username, u.nickname, u.email, u.phone, new Date(u.createdAt).toLocaleString()]);
 
         const csv = [headers.join(","), ...rows.map((r: any[]) => r.join(","))].join("\n");
 

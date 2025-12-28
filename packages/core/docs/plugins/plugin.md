@@ -263,16 +263,20 @@ const dbPlugin: Plugin = {
 
 ```typescript
 // 查询
-const user = await befly.db.getOne({ table: "user", where: { id: 1 } });
+const userRes = await befly.db.getOne({ table: "user", where: { id: 1 } });
+const user = userRes.data;
 
 // 插入
-const id = await befly.db.insData({ table: "user", data: { name: "张三" } });
+const idRes = await befly.db.insData({ table: "user", data: { name: "张三" } });
+const id = idRes.data;
 
 // 更新
-await befly.db.updData({ table: "user", data: { name: "李四" }, where: { id: 1 } });
+const updRes = await befly.db.updData({ table: "user", data: { name: "李四" }, where: { id: 1 } });
+const changed = updRes.data;
 
 // 删除
-await befly.db.delData({ table: "user", where: { id: 1 } });
+const delRes = await befly.db.delData({ table: "user", where: { id: 1 } });
+const deleted = delRes.data;
 ```
 
 > 详细用法请参考 [database.md](./database.md)

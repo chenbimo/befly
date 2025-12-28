@@ -87,26 +87,28 @@ export default {
     required: ["email", "password"],
     handler: async (befly, ctx) => {
         // 查询用户
-        const user = await befly.db.getDetail({
+        const userRes = await befly.db.getOne({
             table: "user",
-            columns: ["id", "email", "password", "nickname"],
+            fields: ["id", "email", "password", "nickname"],
             where: { email: ctx.body.email }
         });
 
+        const user = userRes.data;
+
         if (!user?.id) {
-            return No("用户不存在");
+            return befly.tool.No("用户不存在");
         }
 
         // 验证密码
         const isValid = await befly.cipher.verifyPassword(ctx.body.password, user.password);
         if (!isValid) {
-            return No("密码错误");
+            return befly.tool.No("密码错误");
         }
 
         // 签发令牌
-        const token = befly.jwt.sign({ userId: user.id });
+        const token = befly.jwt.sign({ id: user.id });
 
-        return Yes("登录成功", { token: token, user: { id: user.id, nickname: user.nickname } });
+        return befly.tool.Yes("登录成功", { token: token, user: { id: user.id, nickname: user.nickname } });
     }
 } as ApiRoute;
 ```
