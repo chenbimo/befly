@@ -66,10 +66,151 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             }
         };
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
 
         const exists = await syncTable.TestKit.tableExistsRuntime(runtime, "any_table");
         expect(exists).toBe(true);
+
+        const cols = await syncTable.TestKit.getTableColumnsRuntime(runtime, "any_table");
+        expect(cols.id).toBeDefined();
+        expect(cols.user_name).toBeDefined();
+        expect(cols.user_name.nullable).toBe(true);
+
+        const idx = await syncTable.TestKit.getTableIndexesRuntime(runtime, "any_table");
+        expect(idx.idx_user_name).toEqual(["user_name"]);
+    });
+
+    test("runtime I/O 抛错时应保留 error.sqlInfo（便于定位 SQL）", async () => {
+        const injectedSqlInfo = makeSqlInfo({ sql: "SELECT 1", params: [] });
+
+        const db: SqlExecutor = {
+            unsafe: async (_sqlStr: string, _params?: unknown[]) => {
+                const err: any = new Error("boom");
+                err.sqlInfo = injectedSqlInfo;
+                throw err;
+            }
+        };
+
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
+
+        let thrown: any = null;
+        try {
+            await syncTable.TestKit.tableExistsRuntime(runtime, "t_any");
+        } catch (e: any) {
+            thrown = e;
+        }
+
+        expect(thrown).toBeTruthy();
+        expect(thrown.sqlInfo).toEqual(injectedSqlInfo);
+    });
+
+    test("mysql: getTableColumnsRuntime / getTableIndexesRuntime 必须读取 .data", async () => {
+        const db: SqlExecutor = {
+            unsafe: async (sqlStr: string, params?: unknown[]) => {
+                const sql = String(sqlStr);
+                const safeParams = Array.isArray(params) ? params : [];
+
+                if (sql.includes("information_schema") && sql.toLowerCase().includes("columns")) {
+                    return {
+                        data: [
+                            {
+                                COLUMN_NAME: "id",
+                                DATA_TYPE: "bigint",
+                                COLUMN_TYPE: "bigint",
+                                CHARACTER_MAXIMUM_LENGTH: null,
+                                IS_NULLABLE: "NO",
+                                COLUMN_DEFAULT: null,
+                                COLUMN_COMMENT: ""
+                            },
+                            {
+                                COLUMN_NAME: "user_name",
+                                DATA_TYPE: "varchar",
+                                COLUMN_TYPE: "varchar(64)",
+                                CHARACTER_MAXIMUM_LENGTH: 64,
+                                IS_NULLABLE: "YES",
+                                COLUMN_DEFAULT: "",
+                                COLUMN_COMMENT: ""
+                            }
+                        ],
+                        sql: makeSqlInfo({ sql: sql, params: safeParams })
+                    };
+                }
+
+                if (sql.includes("information_schema") && sql.toLowerCase().includes("statistics")) {
+                    return {
+                        data: [
+                            { INDEX_NAME: "idx_user_name", COLUMN_NAME: "user_name" },
+                            { INDEX_NAME: "idx_user_name", COLUMN_NAME: "id" }
+                        ],
+                        sql: makeSqlInfo({ sql: sql, params: safeParams })
+                    };
+                }
+
+                throw new Error(`unexpected SQL in test: ${sql}`);
+            }
+        };
+
+        const runtime = syncTable.TestKit.createRuntime("mysql", db, "test");
+
+        const cols = await syncTable.TestKit.getTableColumnsRuntime(runtime, "any_table");
+        expect(cols.id).toBeDefined();
+        expect(cols.user_name).toBeDefined();
+        expect(cols.user_name.nullable).toBe(true);
+
+        const idx = await syncTable.TestKit.getTableIndexesRuntime(runtime, "any_table");
+        expect(idx.idx_user_name).toEqual(["user_name", "id"]);
+    });
+
+    test("postgresql: getTableColumnsRuntime / getTableIndexesRuntime 必须读取 .data", async () => {
+        const db: SqlExecutor = {
+            unsafe: async (sqlStr: string, params?: unknown[]) => {
+                const sql = String(sqlStr);
+                const safeParams = Array.isArray(params) ? params : [];
+
+                // columns
+                if (sql.toLowerCase().includes("information_schema") && sql.toLowerCase().includes("columns")) {
+                    return {
+                        data: [
+                            {
+                                column_name: "id",
+                                data_type: "bigint",
+                                character_maximum_length: null,
+                                is_nullable: "NO",
+                                column_default: null
+                            },
+                            {
+                                column_name: "user_name",
+                                data_type: "text",
+                                character_maximum_length: null,
+                                is_nullable: "YES",
+                                column_default: null
+                            }
+                        ],
+                        sql: makeSqlInfo({ sql: sql, params: safeParams })
+                    };
+                }
+
+                // comments
+                if (sql.toLowerCase().includes("pg_description") || sql.toLowerCase().includes("col_description")) {
+                    return {
+                        data: [{ column_name: "user_name", column_comment: "" }],
+                        sql: makeSqlInfo({ sql: sql, params: safeParams })
+                    };
+                }
+
+                // indexes
+                if (sql.toLowerCase().includes("pg_indexes")) {
+                    return {
+                        data: [{ indexname: "idx_user_name", indexdef: 'CREATE INDEX idx_user_name ON any_table ("user_name")' }],
+                        sql: makeSqlInfo({ sql: sql, params: safeParams })
+                    };
+                }
+
+                throw new Error(`unexpected SQL in test: ${sql}`);
+            }
+        };
+
+        const runtime = syncTable.TestKit.createRuntime("postgresql", db, "");
 
         const cols = await syncTable.TestKit.getTableColumnsRuntime(runtime, "any_table");
         expect(cols.id).toBeDefined();

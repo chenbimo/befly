@@ -717,7 +717,9 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
         return (res.data?.[0]?.count || 0) > 0;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
-        throw new Error(`runtime I/O 失败: op=tableExists table=${tableName} err=${errMsg}`);
+        const outErr: any = new Error(`runtime I/O 失败: op=tableExists table=${tableName} err=${errMsg}`);
+        if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
+        throw outErr;
     }
 }
 
@@ -793,7 +795,9 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
         return columns;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
-        throw new Error(`runtime I/O 失败: op=getTableColumns table=${tableName} err=${errMsg}`);
+        const outErr: any = new Error(`runtime I/O 失败: op=getTableColumns table=${tableName} err=${errMsg}`);
+        if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
+        throw outErr;
     }
 }
 
@@ -840,7 +844,9 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
         return indexes;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
-        throw new Error(`runtime I/O 失败: op=getTableIndexes table=${tableName} err=${errMsg}`);
+        const outErr: any = new Error(`runtime I/O 失败: op=getTableIndexes table=${tableName} err=${errMsg}`);
+        if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
+        throw outErr;
     }
 }
 

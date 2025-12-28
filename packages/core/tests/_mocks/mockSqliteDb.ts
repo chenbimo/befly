@@ -1,5 +1,9 @@
 import type { DbResult, SqlInfo } from "../../types/database.js";
 
+type SqlExecutor = {
+    unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
+};
+
 export type MockColumn = { name: string; type: string; notnull: 0 | 1; dflt_value: any };
 
 export type MockSqliteState = {
@@ -76,7 +80,7 @@ function extractPragmaIdent(sqlStr: string): string {
     return normalizeQuotedIdent(m ? m[1] : "");
 }
 
-export function createMockSqliteDb(state: MockSqliteState) {
+export function createMockSqliteDb(state: MockSqliteState): SqlExecutor {
     return {
         unsafe: async (sqlStr: string, params?: unknown[]) => {
             const sql = String(sqlStr);
