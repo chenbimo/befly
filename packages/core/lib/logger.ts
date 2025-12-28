@@ -483,10 +483,12 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
 
         // 深度/节点数上限：超出则降级为字符串预览
         if (depth >= sanitizeDepthLimit) {
+            stats.depthLimited = (stats.depthLimited || 0) + 1;
             dst[key] = stringifyPreview(child, visited, stats);
             return;
         }
         if (nodes >= sanitizeNodesLimit) {
+            stats.nodesLimited = (stats.nodesLimited || 0) + 1;
             dst[key] = stringifyPreview(child, visited, stats);
             return;
         }
@@ -509,6 +511,7 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
         nodes = nodes + 1;
         if (nodes > sanitizeNodesLimit) {
             // 超出节点上限：不再深入（已入栈的节点会被忽略，留空结构由上层兜底预览）。
+            stats.nodesLimited = (stats.nodesLimited || 0) + 1;
             break;
         }
 
@@ -546,8 +549,8 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
             }
 
             if (len > sanitizeObjectKeysLimit) {
-                // 不额外记录新的 stats 字段，避免扩散；仅降级丢弃多余 key。
-                stats.valuesStringified = (stats.valuesStringified || 0) + 1;
+                stats.objectKeysLimited = (stats.objectKeysLimited || 0) + 1;
+                stats.objectKeysOmitted = (stats.objectKeysOmitted || 0) + (len - sanitizeObjectKeysLimit);
             }
 
             continue;
@@ -571,7 +574,11 @@ function sanitizeLogObject(obj: Record<string, any>): Record<string, any> {
         arraysTruncated: 0,
         arrayItemsOmitted: 0,
         valuesStringified: 0,
-        circularRefs: 0
+        circularRefs: 0,
+        depthLimited: 0,
+        nodesLimited: 0,
+        objectKeysLimited: 0,
+        objectKeysOmitted: 0
     };
 
     const out: Record<string, any> = {};
@@ -584,7 +591,8 @@ function sanitizeLogObject(obj: Record<string, any>): Record<string, any> {
         out[key] = sanitizeTopValue(val, visited, stats);
     }
 
-    const hasChanges = stats.maskedKeys > 0 || stats.truncatedStrings > 0 || stats.arraysTruncated > 0 || stats.arrayItemsOmitted > 0 || stats.valuesStringified > 0 || stats.circularRefs > 0;
+    const hasChanges =
+        stats.maskedKeys > 0 || stats.truncatedStrings > 0 || stats.arraysTruncated > 0 || stats.arrayItemsOmitted > 0 || stats.valuesStringified > 0 || stats.circularRefs > 0 || stats.depthLimited > 0 || stats.nodesLimited > 0 || stats.objectKeysLimited > 0 || stats.objectKeysOmitted > 0;
 
     if (hasChanges) {
         out.logTrimStats = {
@@ -593,7 +601,11 @@ function sanitizeLogObject(obj: Record<string, any>): Record<string, any> {
             arraysTruncated: stats.arraysTruncated,
             arrayItemsOmitted: stats.arrayItemsOmitted,
             valuesStringified: stats.valuesStringified,
-            circularRefs: stats.circularRefs
+            circularRefs: stats.circularRefs,
+            depthLimited: stats.depthLimited,
+            nodesLimited: stats.nodesLimited,
+            objectKeysLimited: stats.objectKeysLimited,
+            objectKeysOmitted: stats.objectKeysOmitted
         };
     }
 

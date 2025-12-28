@@ -172,9 +172,6 @@ export class DbHelper {
         // 记录开始时间
         const startTime = Date.now();
 
-        const lowerSql = String(sqlStr).toLowerCase();
-        const isSensitiveSql = lowerSql.includes("password") || lowerSql.includes("token") || lowerSql.includes("secret") || lowerSql.includes("authorization") || lowerSql.includes("cookie");
-
         try {
             // 使用 sql.unsafe 执行查询
             let result;
@@ -190,31 +187,17 @@ export class DbHelper {
             if (this.debug === 1) {
                 const sqlPreview = sqlStr.length > 500 ? sqlStr.substring(0, 500) + "..." : sqlStr;
 
-                if (isSensitiveSql) {
-                    Logger.info(
-                        {
-                            subsystem: "db",
-                            event: "query",
-                            duration: duration,
-                            sqlPreview: sqlPreview,
-                            paramsCount: (params || []).length,
-                            params: ["[MASKED]"]
-                        },
-                        "DB"
-                    );
-                } else {
-                    Logger.info(
-                        {
-                            subsystem: "db",
-                            event: "query",
-                            duration: duration,
-                            sqlPreview: sqlPreview,
-                            paramsCount: (params || []).length,
-                            params: params || []
-                        },
-                        "DB"
-                    );
-                }
+                Logger.info(
+                    {
+                        subsystem: "db",
+                        event: "query",
+                        duration: duration,
+                        sqlPreview: sqlPreview,
+                        paramsCount: (params || []).length,
+                        params: params || []
+                    },
+                    "DB"
+                );
             }
 
             // 慢查询警告（超过 5000ms）

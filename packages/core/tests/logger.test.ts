@@ -321,6 +321,10 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(obj.logTrimStats.truncatedStrings).toBeGreaterThan(0);
         expect(obj.logTrimStats.arraysTruncated).toBeGreaterThanOrEqual(1);
         expect(obj.logTrimStats.arrayItemsOmitted).toBeGreaterThanOrEqual(30);
+        expect(obj.logTrimStats.depthLimited).toBeGreaterThanOrEqual(0);
+        expect(obj.logTrimStats.nodesLimited).toBeGreaterThanOrEqual(0);
+        expect(obj.logTrimStats.objectKeysLimited).toBeGreaterThanOrEqual(0);
+        expect(obj.logTrimStats.objectKeysOmitted).toBeGreaterThanOrEqual(0);
     });
 
     test("对象裁剪：最大深度限制时的字符串预览也应掩码敏感 key", () => {
@@ -453,5 +457,303 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(obj.deep.a.b.includes("[MASKED]")).toBe(true);
         expect(obj.deep.a.b.includes('"password":"p"')).toBe(false);
         expect(obj.deep.a.b.includes('"token":"t"')).toBe(false);
+    });
+
+    test("配置归一化：sanitizeDepth 非法值应回退默认；超大值应被 clamp", () => {
+        const calls: any[] = [];
+
+        const mock: any = {
+            info(...args: any[]) {
+                calls.push({ level: "info", args: args });
+            },
+            warn(...args: any[]) {
+                calls.push({ level: "warn", args: args });
+            },
+            error(...args: any[]) {
+                calls.push({ level: "error", args: args });
+            },
+            debug(...args: any[]) {
+                calls.push({ level: "debug", args: args });
+            }
+        };
+
+        // 非法值（0）应回退到默认 3
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeDepth: 0
+        });
+
+        Logger.setMock(mock);
+        withCtx(
+            {
+                requestId: "rid_norm_0",
+                method: "POST",
+                route: "/api/test",
+                ip: "127.0.0.1",
+                now: 1
+            },
+            () => {
+                Logger.info(
+                    {
+                        deep: {
+                            a: {
+                                b: {
+                                    c: {
+                                        d: {
+                                            password: "p"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "norm-0"
+                );
+            }
+        );
+        Logger.setMock(null);
+
+        expect(calls.length).toBe(1);
+        const obj0 = calls[0].args[0];
+        // 默认 depth=3：deep(1)->a(2)->b(3)，因此 b 的子节点 c 会被降级为字符串预览
+        expect(typeof obj0.deep.a.b.c).toBe("string");
+        expect(obj0.deep.a.b.c.includes("[MASKED]")).toBe(true);
+        calls.length = 0;
+
+        // 超大值应被 clamp（sanitizeDepth 最大 10）
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeDepth: 999
+        });
+
+        Logger.setMock(mock);
+        withCtx(
+            {
+                requestId: "rid_norm_999",
+                method: "POST",
+                route: "/api/test",
+                ip: "127.0.0.1",
+                now: 1
+            },
+            () => {
+                Logger.info(
+                    {
+                        deep: {
+                            a: {
+                                b: {
+                                    c: {
+                                        d: {
+                                            e: {
+                                                f: {
+                                                    g: {
+                                                        h: {
+                                                            i: {
+                                                                j: {
+                                                                    k: {
+                                                                        password: "p",
+                                                                        ok: "v"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "norm-999"
+                );
+            }
+        );
+        Logger.setMock(null);
+
+        expect(calls.length).toBe(1);
+        const obj999 = calls[0].args[0];
+        // clamp 后 depth=10：... h(9)->i(10)，因此 i 的子节点 j 会被降级为字符串预览
+        expect(typeof obj999.deep.a.b.c.d.e.f.g.h.i.j).toBe("string");
+        expect(obj999.deep.a.b.c.d.e.f.g.h.i.j.includes("[MASKED]")).toBe(true);
+        expect(obj999.deep.a.b.c.d.e.f.g.h.i.j.includes('"password":"p"')).toBe(false);
+
+        // 恢复默认配置（避免影响本文件后续用例）
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeDepth: 3,
+            sanitizeNodes: 500,
+            sanitizeObjectKeys: 100
+        });
+    });
+
+    test("统计增强：objectKeys/nodes 限制触发时应输出对应计数", () => {
+        const calls: any[] = [];
+
+        const mock: any = {
+            info(...args: any[]) {
+                calls.push({ level: "info", args: args });
+            },
+            warn(...args: any[]) {
+                calls.push({ level: "warn", args: args });
+            },
+            error(...args: any[]) {
+                calls.push({ level: "error", args: args });
+            },
+            debug(...args: any[]) {
+                calls.push({ level: "debug", args: args });
+            }
+        };
+
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeObjectKeys: 10,
+            sanitizeNodes: 50
+        });
+
+        const bigObj: Record<string, any> = {};
+        // 确保敏感字段在前 10 个 key 内（不会被丢弃），并触发 key 截断
+        bigObj.password = "p";
+        for (let i = 0; i < 40; i++) {
+            bigObj["k" + i] = i;
+        }
+
+        const items: Array<Record<string, any>> = [];
+        for (let i = 0; i < 100; i++) {
+            items.push({ a: { b: { c: { i: i, token: "t" } } } });
+        }
+
+        Logger.setMock(mock);
+        withCtx(
+            {
+                requestId: "rid_limits",
+                method: "POST",
+                route: "/api/test",
+                ip: "127.0.0.1",
+                now: 1
+            },
+            () => {
+                Logger.info(
+                    {
+                        big: bigObj,
+                        items: items
+                    },
+                    "limits"
+                );
+            }
+        );
+        Logger.setMock(null);
+
+        // 恢复默认配置（避免影响本文件后续用例）
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeObjectKeys: 100,
+            sanitizeNodes: 500,
+            sanitizeDepth: 3
+        });
+
+        expect(calls.length).toBe(1);
+        const obj = calls[0].args[0];
+
+        // objectKeys 限制：big 只保留前 10 个 key（包含 password）
+        expect(obj.big.password).toBe("[MASKED]");
+        expect(Object.keys(obj.big).length).toBe(10);
+
+        // 统计字段：应体现 key 丢弃与 nodes 限制触发
+        expect(obj.logTrimStats).toBeTruthy();
+        expect(obj.logTrimStats.objectKeysLimited).toBeGreaterThanOrEqual(1);
+        expect(obj.logTrimStats.objectKeysOmitted).toBeGreaterThanOrEqual(1);
+        expect(obj.logTrimStats.nodesLimited).toBeGreaterThanOrEqual(1);
+    });
+
+    test("压力：大对象/深层结构在限制下不应抛错，输出结构应稳定", () => {
+        const calls: any[] = [];
+
+        const mock: any = {
+            info(...args: any[]) {
+                calls.push({ level: "info", args: args });
+            },
+            warn(...args: any[]) {
+                calls.push({ level: "warn", args: args });
+            },
+            error(...args: any[]) {
+                calls.push({ level: "error", args: args });
+            },
+            debug(...args: any[]) {
+                calls.push({ level: "debug", args: args });
+            }
+        };
+
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeDepth: 3,
+            sanitizeNodes: 120,
+            sanitizeObjectKeys: 30
+        });
+
+        const huge: Record<string, any> = {};
+        for (let i = 0; i < 80; i++) {
+            huge["key_" + i] = {
+                level1: {
+                    level2: {
+                        level3: {
+                            password: "p".repeat(20),
+                            token: "t".repeat(20),
+                            arr: Array.from({ length: 100 }, (_, j) => ({ j: j, mySecret: "s" }))
+                        }
+                    }
+                }
+            };
+        }
+
+        Logger.setMock(mock);
+        withCtx(
+            {
+                requestId: "rid_stress",
+                method: "POST",
+                route: "/api/test",
+                ip: "127.0.0.1",
+                now: 1
+            },
+            () => {
+                Logger.info({ huge: huge }, "stress");
+            }
+        );
+        Logger.setMock(null);
+
+        // 恢复默认配置（避免影响本文件后续用例）
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeDepth: 3,
+            sanitizeNodes: 500,
+            sanitizeObjectKeys: 100
+        });
+
+        expect(calls.length).toBe(1);
+        const obj = calls[0].args[0];
+        expect(obj.huge).toBeTruthy();
+        expect(obj.logTrimStats).toBeTruthy();
+        expect(obj.logTrimStats.maskedKeys).toBeGreaterThan(0);
     });
 });
