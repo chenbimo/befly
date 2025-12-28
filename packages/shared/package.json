@@ -23,5 +23,6 @@
     },
     "engines": {
         "bun": ">=1.3.0"
-    }
+    },
+    "gitHead": "79270d11fb0ff1a5dafada0d12812f4335ef9f45"
 }

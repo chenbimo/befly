@@ -8,7 +8,7 @@
             "ignoreScripts": true,
             "yes": true,
             "registry": "https://registry.npmjs.org",
-            "verifyAccess": false,
+            "verifyAccess": true,
             "ignoreChanges": ["**/*.md", "**/*.test.ts", "**/tests/**", "**/docs/**", "**/temp/**", "**/__tests__/**"]
         },
         "version": {

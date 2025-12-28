@@ -1,7 +1,7 @@
 {
     "name": "befly-admin",
     "version": "3.6.10",
-    "gitHead": "9b0a0d79c3c22371be5c08e65ede4c3ba7583865",
+    "gitHead": "79270d11fb0ff1a5dafada0d12812f4335ef9f45",
     "private": false,
     "description": "Befly Admin - 基于 Vue3 + TDesign Vue Next 的后台管理系统",
     "files": [
