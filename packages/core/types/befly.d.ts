@@ -37,6 +37,9 @@ export interface DatabaseConfig {
     database?: string;
     /** 连接池最大连接数 @default 1 */
     poolMax?: number;
+
+    /** 是否打印数据库操作日志 (0: 关闭, 1: 开启) @default 0 */
+    debug?: number;
 }
 
 /**

@@ -322,4 +322,136 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(obj.logTrimStats.arraysTruncated).toBeGreaterThanOrEqual(1);
         expect(obj.logTrimStats.arrayItemsOmitted).toBeGreaterThanOrEqual(30);
     });
+
+    test("对象裁剪：最大深度限制时的字符串预览也应掩码敏感 key", () => {
+        const calls: any[] = [];
+
+        const mock: any = {
+            info(...args: any[]) {
+                calls.push({ level: "info", args: args });
+            },
+            warn(...args: any[]) {
+                calls.push({ level: "warn", args: args });
+            },
+            error(...args: any[]) {
+                calls.push({ level: "error", args: args });
+            },
+            debug(...args: any[]) {
+                calls.push({ level: "debug", args: args });
+            }
+        };
+
+        Logger.setMock(mock);
+        withCtx(
+            {
+                requestId: "rid_depth",
+                method: "POST",
+                route: "/api/test",
+                ip: "127.0.0.1",
+                now: 1
+            },
+            () => {
+                Logger.info(
+                    {
+                        deep: {
+                            a: {
+                                b: {
+                                    c: {
+                                        d: {
+                                            password: "p",
+                                            token: "t",
+                                            ok: "v"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "depth"
+                );
+            }
+        );
+        Logger.setMock(null);
+
+        expect(calls.length).toBe(1);
+        const obj = calls[0].args[0];
+        // 注意：sanitizeValueLimited 是以 top-level 字段 deep 作为根节点开始计深度。
+        // MAX_LOG_SANITIZE_DEPTH=3：deep(1) -> a(2) -> b(3)；此时 b 的子节点（c）会被降级为字符串预览。
+        expect(typeof obj.deep.a.b.c).toBe("string");
+        expect(obj.deep.a.b.c.includes("[MASKED]")).toBe(true);
+        expect(obj.deep.a.b.c.includes('"password":"p"')).toBe(false);
+        expect(obj.deep.a.b.c.includes('"token":"t"')).toBe(false);
+    });
+
+    test("对象裁剪：sanitizeDepth 配置应生效（更早降级）", () => {
+        const calls: any[] = [];
+
+        const mock: any = {
+            info(...args: any[]) {
+                calls.push({ level: "info", args: args });
+            },
+            warn(...args: any[]) {
+                calls.push({ level: "warn", args: args });
+            },
+            error(...args: any[]) {
+                calls.push({ level: "error", args: args });
+            },
+            debug(...args: any[]) {
+                calls.push({ level: "debug", args: args });
+            }
+        };
+
+        // depth=2：deep(1) -> a(2)，因此 a 的子节点 b 会被降级为字符串预览
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeDepth: 2
+        });
+
+        Logger.setMock(mock);
+        withCtx(
+            {
+                requestId: "rid_depth2",
+                method: "POST",
+                route: "/api/test",
+                ip: "127.0.0.1",
+                now: 1
+            },
+            () => {
+                Logger.info(
+                    {
+                        deep: {
+                            a: {
+                                b: {
+                                    password: "p",
+                                    token: "t",
+                                    ok: "v"
+                                }
+                            }
+                        }
+                    },
+                    "depth2"
+                );
+            }
+        );
+        Logger.setMock(null);
+
+        // 恢复默认配置（避免影响本文件后续用例）
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            sanitizeDepth: 3
+        });
+
+        expect(calls.length).toBe(1);
+        const obj = calls[0].args[0];
+        expect(typeof obj.deep.a.b).toBe("string");
+        expect(obj.deep.a.b.includes("[MASKED]")).toBe(true);
+        expect(obj.deep.a.b.includes('"password":"p"')).toBe(false);
+        expect(obj.deep.a.b.includes('"token":"t"')).toBe(false);
+    });
 });

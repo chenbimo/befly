@@ -27,4 +27,24 @@ export interface LoggerConfig {
     console?: number;
     /** 单个日志文件最大大小 (MB) @default 10 */
     maxSize?: number;
+
+    /**
+     * 结构化日志清洗：最大清洗深度（非递归遍历的 depth 上限）
+     * - 值越大，日志更“完整”，但 CPU/内存开销更高
+     * - 建议：生产环境保持较小值（默认 3），开发环境可调大（例如 5）
+     * @default 3
+     */
+    sanitizeDepth?: number;
+
+    /**
+     * 结构化日志清洗：最大遍历节点数（防止超大对象/数组导致性能抖动）
+     * @default 500
+     */
+    sanitizeNodes?: number;
+
+    /**
+     * 结构化日志清洗：对象最多保留的 key 数（超出部分丢弃）
+     * @default 100
+     */
+    sanitizeObjectKeys?: number;
 }

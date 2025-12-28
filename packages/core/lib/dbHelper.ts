@@ -36,16 +36,18 @@ export class DbHelper {
     private dialect: DbDialect;
     private sql: any = null;
     private isTransaction: boolean = false;
+    private debug: number = 0;
 
     /**
      * 构造函数
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(options: { redis: RedisCacheLike; sql?: any | null; dialect?: DbDialect }) {
+    constructor(options: { redis: RedisCacheLike; sql?: any | null; dialect?: DbDialect; debug?: number }) {
         this.redis = options.redis;
         this.sql = options.sql || null;
         this.isTransaction = !!options.sql;
+        this.debug = options.debug === 1 ? 1 : 0;
 
         // 默认使用 MySQL 方言（当前 core 的表结构/语法也主要基于 MySQL）
         this.dialect = options.dialect ? options.dialect : new MySqlDialect();
@@ -170,6 +172,9 @@ export class DbHelper {
         // 记录开始时间
         const startTime = Date.now();
 
+        const lowerSql = String(sqlStr).toLowerCase();
+        const isSensitiveSql = lowerSql.includes("password") || lowerSql.includes("token") || lowerSql.includes("secret") || lowerSql.includes("authorization") || lowerSql.includes("cookie");
+
         try {
             // 使用 sql.unsafe 执行查询
             let result;
@@ -181,6 +186,36 @@ export class DbHelper {
 
             // 计算执行时间
             const duration = Date.now() - startTime;
+
+            if (this.debug === 1) {
+                const sqlPreview = sqlStr.length > 500 ? sqlStr.substring(0, 500) + "..." : sqlStr;
+
+                if (isSensitiveSql) {
+                    Logger.info(
+                        {
+                            subsystem: "db",
+                            event: "query",
+                            duration: duration,
+                            sqlPreview: sqlPreview,
+                            paramsCount: (params || []).length,
+                            params: ["[MASKED]"]
+                        },
+                        "DB"
+                    );
+                } else {
+                    Logger.info(
+                        {
+                            subsystem: "db",
+                            event: "query",
+                            duration: duration,
+                            sqlPreview: sqlPreview,
+                            paramsCount: (params || []).length,
+                            params: params || []
+                        },
+                        "DB"
+                    );
+                }
+            }
 
             // 慢查询警告（超过 5000ms）
             if (duration > 5000) {
@@ -751,7 +786,7 @@ export class DbHelper {
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
         return await this.sql.begin(async (tx: any) => {
-            const trans = new DbHelper({ redis: this.redis, sql: tx, dialect: this.dialect });
+            const trans = new DbHelper({ redis: this.redis, sql: tx, dialect: this.dialect, debug: this.debug });
             return await callback(trans);
         });
     }
