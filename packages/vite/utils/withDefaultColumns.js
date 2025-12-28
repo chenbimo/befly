@@ -26,7 +26,7 @@ export function withDefaultColumns(columns, customConfig = {}) {
         }
 
         const base = {
-            width: 200,
+            width: 150,
             ellipsis: true
         };
 
