@@ -26,7 +26,9 @@ const defaultOptions: BeflyOptions = {
         excludeFields: ["password", "token", "secret"],
         dir: "./logs",
         console: 1,
-        maxSize: 10485760 // 10MB
+        maxSize: 10485760, // 10MB
+        maxStringLen: 100,
+        maxArrayItems: 100
     },
 
     // ========== 数据库配置 ==========

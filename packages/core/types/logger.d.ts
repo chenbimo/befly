@@ -29,6 +29,21 @@ export interface LoggerConfig {
     maxSize?: number;
 
     /**
+     * 字符串最大长度（超过会被截断）
+     * - 影响所有结构化字段中的 string（包括 db.debug 打印的 sqlPreview）
+     * - 生产环境建议保持较小值；需要更完整 SQL 时可在开发环境调大
+     * @default 100
+     */
+    maxStringLen?: number;
+
+    /**
+     * 数组最多保留的元素数量（超出部分丢弃）
+     * - 仅影响结构化日志清洗（数组裁剪）
+     * @default 100
+     */
+    maxArrayItems?: number;
+
+    /**
      * 结构化日志清洗：最大清洗深度（非递归遍历的 depth 上限）
      * - 值越大，日志更“完整”，但 CPU/内存开销更高
      * - 建议：生产环境保持较小值（默认 3），开发环境可调大（例如 5）

@@ -185,14 +185,13 @@ export class DbHelper {
             const duration = Date.now() - startTime;
 
             if (this.debug === 1) {
-                const sqlPreview = sqlStr.length > 500 ? sqlStr.substring(0, 500) + "..." : sqlStr;
-
-                Logger.info(
+                Logger.debug(
                     {
                         subsystem: "db",
-                        event: "query",
+                        event: "db_sql",
+                        dbEvent: "query",
                         duration: duration,
-                        sqlPreview: sqlPreview,
+                        sqlPreview: sqlStr,
                         paramsCount: (params || []).length,
                         params: params || []
                     },
@@ -205,7 +204,8 @@ export class DbHelper {
                 Logger.warn(
                     {
                         subsystem: "db",
-                        event: "slow",
+                        event: "db_sql",
+                        dbEvent: "slow",
                         duration: duration,
                         sqlPreview: sqlStr,
                         params: params || [],
@@ -218,12 +218,13 @@ export class DbHelper {
             return result;
         } catch (error: any) {
             const duration = Date.now() - startTime;
-
-            const sqlPreview = sqlStr.length > 200 ? sqlStr.substring(0, 200) + "..." : sqlStr;
             Logger.error(
                 {
+                    subsystem: "db",
+                    event: "db_sql",
+                    dbEvent: "error",
                     err: error,
-                    sqlPreview: sqlPreview,
+                    sqlPreview: sqlStr,
                     params: params || [],
                     duration: duration
                 },

@@ -7,6 +7,7 @@ import { test, expect, mock } from "bun:test";
 
 import { MySqlDialect } from "../lib/dbDialect.js";
 import { DbHelper } from "../lib/dbHelper.js";
+import { Logger } from "../lib/logger.js";
 
 function createMockRedis() {
     return {
@@ -72,6 +73,50 @@ test("executeWithConn - SQL 错误捕获", async () => {
         expect(error.params).toEqual([]);
         expect(error.duration).toBeGreaterThanOrEqual(0);
     }
+});
+
+test("executeWithConn - SQL 错误日志应带 event=db_sql", async () => {
+    const calls: any[] = [];
+
+    const loggerMock: any = {
+        info(...args: any[]) {
+            calls.push({ level: "info", args: args });
+        },
+        warn(...args: any[]) {
+            calls.push({ level: "warn", args: args });
+        },
+        error(...args: any[]) {
+            calls.push({ level: "error", args: args });
+        },
+        debug(...args: any[]) {
+            calls.push({ level: "debug", args: args });
+        }
+    };
+
+    const sqlMock = {
+        unsafe: mock(async () => {
+            throw new Error("Test error");
+        })
+    };
+
+    const redis = createMockRedis();
+    const dbHelper = new DbHelper({ redis: redis as any, sql: sqlMock, dialect: new MySqlDialect() });
+
+    Logger.setMock(loggerMock);
+    try {
+        await (dbHelper as any).executeWithConn("SELECT * FROM invalid_table");
+    } catch {
+        // ignore
+    }
+    Logger.setMock(null);
+
+    const errorCall = calls.find((item) => item.level === "error");
+    expect(errorCall).toBeTruthy();
+    const payload = errorCall.args[0];
+    expect(payload.subsystem).toBe("db");
+    expect(payload.event).toBe("db_sql");
+    expect(payload.dbEvent).toBe("error");
+    expect(payload.sqlPreview).toBe("SELECT * FROM invalid_table");
 });
 
 test("executeWithConn - 错误信息包含完整信息", async () => {

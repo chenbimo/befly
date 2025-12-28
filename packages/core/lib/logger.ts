@@ -19,8 +19,11 @@ import { getCtx } from "./asyncContext.js";
 // 为避免相对路径的 logs 目录随着 cwd 变化，使用模块加载时的初始 cwd 作为锚点。
 const INITIAL_CWD = process.cwd();
 
-const MAX_LOG_STRING_LEN = 100;
-const MAX_LOG_ARRAY_ITEMS = 100;
+const DEFAULT_LOG_STRING_LEN = 100;
+const DEFAULT_LOG_ARRAY_ITEMS = 100;
+
+let maxLogStringLen = DEFAULT_LOG_STRING_LEN;
+let maxLogArrayItems = DEFAULT_LOG_ARRAY_ITEMS;
 
 // 为避免递归导致栈溢出/性能抖动：使用非递归遍历，并对深度/节点数做硬限制。
 // 说明：这不是业务数据结构的“真实深度”，而是日志清洗的最大深入层级（越大越重）。
@@ -144,6 +147,10 @@ export function configure(cfg: LoggerConfig): void {
     sanitizeDepthLimit = normalizePositiveInt(config.sanitizeDepth, DEFAULT_LOG_SANITIZE_DEPTH, 1, 10);
     sanitizeNodesLimit = normalizePositiveInt(config.sanitizeNodes, DEFAULT_LOG_SANITIZE_NODES, 50, 20000);
     sanitizeObjectKeysLimit = normalizePositiveInt(config.sanitizeObjectKeys, DEFAULT_LOG_OBJECT_KEYS, 10, 5000);
+
+    // 运行时截断上限（可配置）
+    maxLogStringLen = normalizePositiveInt(config.maxStringLen, DEFAULT_LOG_STRING_LEN, 20, 200000);
+    maxLogArrayItems = normalizePositiveInt(config.maxArrayItems, DEFAULT_LOG_ARRAY_ITEMS, 10, 5000);
 
     // 仅支持数组配置：excludeFields?: string[]
     const userPatterns = Array.isArray(config.excludeFields) ? config.excludeFields : [];
@@ -325,9 +332,9 @@ function getErrorLogger(): pino.Logger {
 }
 
 function truncateString(val: string, stats: Record<string, number>): string {
-    if (val.length <= MAX_LOG_STRING_LEN) return val;
+    if (val.length <= maxLogStringLen) return val;
     stats.truncatedStrings = (stats.truncatedStrings || 0) + 1;
-    return val.slice(0, MAX_LOG_STRING_LEN);
+    return val.slice(0, maxLogStringLen);
 }
 
 function isSensitiveKey(key: string): boolean {
@@ -518,15 +525,15 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
         if (Array.isArray(frame.src)) {
             const arr = frame.src as any[];
             const len = arr.length;
-            const limit = len > MAX_LOG_ARRAY_ITEMS ? MAX_LOG_ARRAY_ITEMS : len;
+            const limit = len > maxLogArrayItems ? maxLogArrayItems : len;
 
             for (let i = 0; i < limit; i++) {
                 tryAssign(frame.dst, i, arr[i], frame.depth);
             }
 
-            if (len > MAX_LOG_ARRAY_ITEMS) {
+            if (len > maxLogArrayItems) {
                 stats.arraysTruncated = (stats.arraysTruncated || 0) + 1;
-                stats.arrayItemsOmitted = (stats.arrayItemsOmitted || 0) + (len - MAX_LOG_ARRAY_ITEMS);
+                stats.arrayItemsOmitted = (stats.arrayItemsOmitted || 0) + (len - maxLogArrayItems);
             }
 
             continue;

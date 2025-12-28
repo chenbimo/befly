@@ -459,6 +459,64 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(obj.deep.a.b.includes('"token":"t"')).toBe(false);
     });
 
+    test("字符串截断：maxStringLen 配置应生效（sqlPreview 不应固定 100）", () => {
+        const calls: any[] = [];
+
+        const mock: any = {
+            info(...args: any[]) {
+                calls.push({ level: "info", args: args });
+            },
+            warn(...args: any[]) {
+                calls.push({ level: "warn", args: args });
+            },
+            error(...args: any[]) {
+                calls.push({ level: "error", args: args });
+            },
+            debug(...args: any[]) {
+                calls.push({ level: "debug", args: args });
+            }
+        };
+
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            maxStringLen: 200
+        });
+
+        const longSql = "S".repeat(150);
+
+        Logger.setMock(mock);
+        withCtx(
+            {
+                requestId: "rid_maxStringLen",
+                method: "POST",
+                route: "/api/test",
+                ip: "127.0.0.1",
+                now: 1
+            },
+            () => {
+                Logger.info({ sqlPreview: longSql }, "maxStringLen");
+            }
+        );
+        Logger.setMock(null);
+
+        // 恢复默认配置（避免影响本文件后续用例）
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"],
+            maxStringLen: 100,
+            maxArrayItems: 100
+        });
+
+        expect(calls.length).toBe(1);
+        const obj = calls[0].args[0];
+        expect(obj.sqlPreview).toBe(longSql);
+    });
+
     test("配置归一化：sanitizeDepth 非法值应回退默认；超大值应被 clamp", () => {
         const calls: any[] = [];
 
