@@ -9,11 +9,12 @@
 - `data`：你真正要用的结果
 - `sql`：本次执行的 SQL 信息（用于调试/排错）
 
-```typescript
+```js
 type DbResult<TData = any, TSql = SqlInfo> = {
-    data: TData;
-    sql: TSql;
+data: TData;
+sql: TSql;
 };
+
 ```
 
 ### SQL 信息（SqlInfo / ListSql）
@@ -153,7 +154,7 @@ const data = fieldClear(
 
 ## 事务（trans）
 
-```typescript
+````typescript
 const out = await befly.db.trans(async (trx) => {
     const idRes = await trx.insData({
         table: "order",
@@ -163,14 +164,13 @@ const out = await befly.db.trans(async (trx) => {
 });
 
 return befly.tool.Yes("创建成功", out);
-```
 
 ## 原生 SQL（query / unsafe）
 
 ```typescript
 const r = await befly.db.query("SELECT 1 AS cnt");
 return befly.tool.Yes("ok", r.data);
-```
+````
 
 `unsafe` 用于内部脚本/同步逻辑（行为与 `query` 相同，返回 `DbResult`）。
 
