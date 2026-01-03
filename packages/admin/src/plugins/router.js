@@ -1,5 +1,5 @@
 import { $Storage } from "@/plugins/storage";
-import { applyTokenAuthGuard, buildLayoutRoutes, createLayoutComponentResolver } from "befly-vite";
+import { buildLayoutRoutes, createLayoutComponentResolver } from "befly-vite";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
 
@@ -29,12 +29,55 @@ export const router = createRouter({
     routes: finalRoutes
 });
 
-// 路由守卫 - 基础验证
-applyTokenAuthGuard(router, {
-    getToken: () => $Storage.local.get("token"),
-    loginPath: $Config.loginPath,
-    homePath: $Config.homePath
-});
+// 路由守卫 - 基础鉴权（最小实现：public 放行；未登录跳登录；已登录访问登录页跳首页）
+{
+    const normalizePath = (path) => {
+        if (typeof path !== "string") {
+            return "/";
+        }
+
+        const trimmed = path.trim();
+        if (!trimmed) {
+            return "/";
+        }
+
+        if (trimmed.startsWith("/")) {
+            return trimmed;
+        }
+
+        return `/${trimmed}`;
+    };
+
+    const loginPath = normalizePath($Config.loginPath);
+    const homePath = normalizePath($Config.homePath);
+
+    router.beforeEach((to, _from, next) => {
+        const token = $Storage.local.get("token");
+        const toPath = normalizePath(to.path);
+
+        // 根路径：按是否登录分流（兜底，避免 / 永远重定向到首页）
+        if (toPath === "/") {
+            return next(token ? homePath : loginPath);
+        }
+
+        // 公开路由放行
+        if (to.meta?.public === true) {
+            return next();
+        }
+
+        // 未登录访问非公开路由 → 登录页
+        if (!token && toPath !== loginPath) {
+            return next(loginPath);
+        }
+
+        // 已登录访问登录页 → 首页
+        if (token && toPath === loginPath) {
+            return next(homePath);
+        }
+
+        next();
+    });
+}
 
 // 路由就绪后处理
 router.afterEach((_to) => {
