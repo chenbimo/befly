@@ -1,10 +1,10 @@
 import { $Storage } from "@/plugins/storage";
-import { buildLayoutRoutes } from "befly-vite";
+import { Layouts } from "befly-vite";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
 
 // 应用自定义布局系统
-const layoutRoutes = buildLayoutRoutes(routes, (layoutName) => {
+const layoutRoutes = Layouts(routes, (layoutName) => {
     if (layoutName === "default") {
         return () => import("@/layouts/default.vue");
     }

@@ -23,11 +23,13 @@
 /**
  * 根据文件名后缀 _数字 判断使用哪个布局，输出扁平布局配置。
  *
+ * 注意：该函数仅供 befly-vite 包内部使用，不作为对外 API。
+ *
  * @param {RouteConfig[]} routes
  * @param {string=} inheritLayout
  * @returns {LayoutConfig[]}
  */
-export function layouts(routes, inheritLayout = "") {
+export function buildLayoutConfigs(routes, inheritLayout = "") {
     /** @type {LayoutConfig[]} */
     const result = [];
 
@@ -40,7 +42,7 @@ export function layouts(routes, inheritLayout = "") {
         // 中间节点：递归处理子路由，不包裹布局
         if (route.children && route.children.length > 0) {
             const cleanPath = pathMatch ? currentPath.replace(/_\d+$/, "") : currentPath;
-            const childConfigs = layouts(route.children, currentLayout);
+            const childConfigs = buildLayoutConfigs(route.children, currentLayout);
 
             for (const child of childConfigs) {
                 const mergedPath = cleanPath ? `${cleanPath}/${child.path}`.replace(/\/+/, "/") : child.path;
@@ -77,31 +79,6 @@ export function layouts(routes, inheritLayout = "") {
     }
 
     return result;
-}
-
-/**
- * 将 layouts 输出的扁平配置转换为 Vue Router 的 RouteRecordRaw。
- *
- * @param {LayoutConfig[]} configs
- * @param {(layoutName: string) => any} resolveLayoutComponent
- * @returns {import('vue-router').RouteRecordRaw[]}
- */
-export function applyLayouts(configs, resolveLayoutComponent) {
-    return configs.map((config) => {
-        const layoutComponent = resolveLayoutComponent(config.layoutName);
-
-        return {
-            path: config.path,
-            component: layoutComponent,
-            meta: config.meta,
-            children: [
-                {
-                    path: "",
-                    component: config.component
-                }
-            ]
-        };
-    });
 }
 
 /**
