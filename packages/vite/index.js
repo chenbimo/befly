@@ -66,15 +66,10 @@ function defaultManualChunks(id) {
         return "vue-macros";
     }
 
-    // befly-addon（必须在 Vue 判断之后）
-    if (id.includes("@befly-addon/") || id.includes("packages/addonAdmin/") || id.includes("packages\\addonAdmin\\")) {
-        return "befly-addon";
-    }
-
-    // 其他 node_modules 依赖
-    if (id.includes("node_modules/")) {
-        return "vendor";
-    }
+    // 注意：不要把所有 addon 或 node_modules 强制合并到单个 chunk。
+    // - addon 路由（importMode: async）应按页面懒加载自然拆分。
+    // - node_modules 让 Rollup 按共享与动态导入边界自动拆分即可。
+    // 如需进一步细分，可通过 createBeflyViteConfig({ manualChunks }) 注入自定义策略。
 }
 
 /**
