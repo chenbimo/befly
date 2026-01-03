@@ -155,6 +155,69 @@ describe("befly-vite Layouts (browser)", () => {
         expect(result.map((r) => r.path)).toEqual(["a", "b", "p/c", "p/d"]);
     });
 
+    test("同路径不同后缀：a 与 a_2 会生成重复 path（保留当前实现行为）", () => {
+        const calls: string[] = [];
+        const result = Layouts(
+            [
+                { path: "a", component: "PageA" },
+                { path: "a_2", component: "PageA2" }
+            ],
+            (layoutName) => {
+                calls.push(layoutName);
+                return `Layout:${layoutName}`;
+            }
+        );
+
+        expect(calls).toEqual(["default", "2"]);
+        expect(result).toHaveLength(2);
+        expect(result.map((r) => r.path)).toEqual(["a", "a"]);
+
+        expect(result[0]?.component).toBe("Layout:default");
+        expect(result[0]?.children?.[0]?.path).toBe("");
+        expect(result[0]?.children?.[0]?.component).toBe("PageA");
+
+        expect(result[1]?.component).toBe("Layout:2");
+        expect(result[1]?.children?.[0]?.path).toBe("");
+        expect(result[1]?.children?.[0]?.component).toBe("PageA2");
+    });
+
+    test("尾随斜杠：p/index 与 p_3/index 与 p_3/index_2 均会生成 p/（保留当前实现行为）", () => {
+        const calls: string[] = [];
+        const result = Layouts(
+            [
+                {
+                    path: "p",
+                    children: [{ path: "index", component: "PIndex" }]
+                },
+                {
+                    path: "p_3",
+                    children: [{ path: "index", component: "P3Index" }]
+                },
+                {
+                    path: "p_3",
+                    children: [{ path: "index_2", component: "P3Index2" }]
+                }
+            ],
+            (layoutName) => {
+                calls.push(layoutName);
+                return `Layout:${layoutName}`;
+            }
+        );
+
+        // layout 选择：无后缀 -> default；继承后缀 3；index_2 明确覆盖为 2
+        expect(calls).toEqual(["default", "3", "2"]);
+        expect(result.map((r) => r.path)).toEqual(["p/", "p/", "p/"]);
+
+        expect(result[0]?.component).toBe("Layout:default");
+        expect(result[0]?.children?.[0]?.component).toBe("PIndex");
+
+        expect(result[1]?.component).toBe("Layout:3");
+        expect(result[1]?.children?.[0]?.component).toBe("P3Index");
+
+        expect(result[2]?.component).toBe("Layout:2");
+        expect(result[2]?.children?.[0]?.component).toBe("P3Index2");
+    });
+
     test("复杂嵌套：多兄弟节点的输出结构应稳定", () => {
         const calls: string[] = [];
         const result = Layouts(
