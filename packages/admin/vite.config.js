@@ -1,10 +1,10 @@
 import { fileURLToPath } from "node:url";
 
-import { createBeflyViteConfig, scanViews } from "befly-vite";
+import { createBeflyViteConfig } from "befly-vite";
 
 export default createBeflyViteConfig({
     root: fileURLToPath(new URL(".", import.meta.url)),
-    scanViews: scanViews,
+    scanViews: "src/views",
     optimizeDeps: {
         include: []
     }
