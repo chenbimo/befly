@@ -2,8 +2,6 @@
 import { Table as TTable } from "tdesign-vue-next";
 // 引入 TDesign 样式
 import "tdesign-vue-next/es/style/index.css";
-// 引入 UnoCSS 样式
-import "virtual:uno.css";
 // 引入 addonAdmin 的 CSS 变量
 import "@befly-addon/admin/styles/variables.scss";
 // 引入全局基础样式（reset、通用类、滚动条等）

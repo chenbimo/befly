@@ -13,7 +13,6 @@
         "index.html",
         "package.json",
         "README.md",
-        "uno.config.js",
         "vite.config.js",
         "public/",
         "src/"
@@ -36,7 +35,7 @@
         "befly-vite": "^1.2.9",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.17.7",
-        "unplugin-vue-router": "^0.19.0",
+        "unplugin-vue-router": "^0.19.2",
         "vite": "^8.0.0-beta.5",
         "vue": "^3.5.26",
         "vue-router": "^4.6.4"

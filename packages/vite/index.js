@@ -10,7 +10,6 @@ import { createDevToolsPlugin } from "./plugins/devtools.js";
 import { createIconsPlugin } from "./plugins/icons.js";
 import { createReactivityTransformPlugin } from "./plugins/reactivity-transform.js";
 import { createRouterPlugin } from "./plugins/router.js";
-import { createUnoCSSPlugin } from "./plugins/unocss.js";
 import { createVuePlugin } from "./plugins/vue.js";
 
 /**
@@ -93,7 +92,6 @@ export function createBeflyViteConfig(options = {}) {
 
         plugins: [
             //
-            createUnoCSSPlugin(),
             createRouterPlugin({ scanViews: scanViews }),
             createVuePlugin(),
             createReactivityTransformPlugin(),

@@ -13,9 +13,9 @@
         "test:core": "bun --filter 'befly' test",
         "test:bail": "bun --filter '*' test --bail",
         "test:coverage": "bun --filter '*' test --coverage",
-        "format:oxfmt": "bunx oxfmt -c ./.oxfmtrc.jsonc .",
+        "format:oxfmt": "oxfmt -c ./.oxfmtrc.jsonc .",
         "format": "bun run format:oxfmt",
-        "lint": "bunx oxlint .",
+        "lint": "oxlint .",
         "typecheck:core": "bun run --cwd packages/core typecheck",
         "typecheck": "bun run typecheck:core",
         "gate:format": "bun run format:oxfmt",
@@ -29,11 +29,8 @@
     },
     "devDependencies": {
         "@types/bun": "^1.3.5",
-        "@typescript/native-preview": "^7.0.0-dev.20251226.1",
         "lefthook": "^2.0.13",
-        "lerna": "^9.0.3",
-        "oxfmt": "^0.20.0",
-        "oxlint": "^1.35.0"
+        "lerna": "^9.0.3"
     },
     "engines": {
         "bun": ">=1.3.0"

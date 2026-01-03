@@ -7,7 +7,7 @@ pre-commit:
         - name: Format files (oxfmt)
           priority: 1
           glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,json5,yml,yaml,toml,html,vue,mjml,hbs,handlebars,graphql,gql,md,mdx,css,scss,less}"
-          run: bunx oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
+          run: oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
 
         # 2. Oxlint 代码检查（门禁）
         - name: Gate - lint
