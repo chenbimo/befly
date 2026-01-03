@@ -5,7 +5,9 @@ import { createBeflyViteConfig } from "befly-vite";
 export default createBeflyViteConfig({
     root: fileURLToPath(new URL(".", import.meta.url)),
     addonView: "adminViews",
-    optimizeDeps: {
-        include: []
+    viteConfig: {
+        // optimizeDeps: {
+        //     exclude: ["lightningcss"]
+        // }
     }
 });

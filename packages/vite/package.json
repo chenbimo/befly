@@ -32,9 +32,6 @@
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
-    "scripts": {
-        "scanViewsDir": "bun ./bin/scanViewsDir.ts"
-    },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.3",
         "@vue-macros/reactivity-transform": "^3.1.1",
