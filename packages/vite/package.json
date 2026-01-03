@@ -19,7 +19,6 @@
         "index.js",
         "package.json",
         "README.md",
-        "util.js",
         "plugins/"
     ],
     "type": "module",
