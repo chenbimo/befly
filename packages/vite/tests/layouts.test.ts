@@ -4,13 +4,58 @@ import { Layouts } from "../index.browser.js";
 
 describe("befly-vite Layouts (browser)", () => {
     test("参数校验：routes 不是数组应抛错", () => {
-        expect(() => Layouts(null as any, (() => null) as any)).toThrow();
-        expect(() => Layouts({} as any, (() => null) as any)).toThrow();
+        expect(() => Layouts(null as any, "", (() => null) as any)).toThrow();
+        expect(() => Layouts({} as any, "", (() => null) as any)).toThrow();
+    });
+
+    test("参数校验：rootRedirectPath 为 truthy 非字符串应抛错", () => {
+        expect(() => Layouts([], 1 as any, (() => null) as any)).toThrow();
+        expect(() => Layouts([], {} as any, (() => null) as any)).toThrow();
     });
 
     test("参数校验：resolveLayoutComponent 不是函数应抛错", () => {
-        expect(() => Layouts([], null as any)).toThrow();
-        expect(() => Layouts([], "x" as any)).toThrow();
+        expect(() => Layouts([], "", null as any)).toThrow();
+        expect(() => Layouts([], "", "x" as any)).toThrow();
+    });
+
+    test("根路径重定向：rootRedirectPath 非空时应自动 prepend / redirect", () => {
+        const result = Layouts(
+            [
+                {
+                    path: "a",
+                    component: "PageA"
+                }
+            ],
+            "  /home  ",
+            (layoutName) => {
+                return `Layout:${layoutName}`;
+            }
+        );
+
+        expect(result).toHaveLength(2);
+        expect(result[0]).toEqual({
+            path: "/",
+            redirect: "/home"
+        });
+        expect(result[1]?.path).toBe("a");
+    });
+
+    test("根路径重定向：rootRedirectPath 为空或假值时不应注入", () => {
+        const result = Layouts(
+            [
+                {
+                    path: "a",
+                    component: "PageA"
+                }
+            ],
+            "",
+            (layoutName) => {
+                return `Layout:${layoutName}`;
+            }
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0]?.path).toBe("a");
     });
 
     test("默认行为：无后缀且无继承时使用 default 布局", () => {
@@ -22,6 +67,7 @@ describe("befly-vite Layouts (browser)", () => {
                     component: "PageA"
                 }
             ],
+            "",
             (layoutName) => {
                 calls.push(layoutName);
                 return `Layout:${layoutName}`;
@@ -45,6 +91,7 @@ describe("befly-vite Layouts (browser)", () => {
                     component: "PageA2"
                 }
             ],
+            "",
             (layoutName) => {
                 calls.push(layoutName);
                 return `Layout:${layoutName}`;
@@ -64,6 +111,7 @@ describe("befly-vite Layouts (browser)", () => {
                 { path: "index", component: "PageIndex" },
                 { path: "index_2", component: "PageIndex2" }
             ],
+            "",
             (layoutName) => {
                 calls.push(layoutName);
                 return `Layout:${layoutName}`;
@@ -93,6 +141,7 @@ describe("befly-vite Layouts (browser)", () => {
                     ]
                 }
             ],
+            "",
             (layoutName) => {
                 calls.push(layoutName);
                 return `Layout:${layoutName}`;
@@ -121,6 +170,7 @@ describe("befly-vite Layouts (browser)", () => {
                     ]
                 }
             ],
+            "",
             (layoutName) => {
                 return `Layout:${layoutName}`;
             }
@@ -145,6 +195,7 @@ describe("befly-vite Layouts (browser)", () => {
                     ]
                 }
             ],
+            "",
             (layoutName) => {
                 callCount += 1;
                 return `Layout:${layoutName}`;
@@ -162,6 +213,7 @@ describe("befly-vite Layouts (browser)", () => {
                 { path: "a", component: "PageA" },
                 { path: "a_2", component: "PageA2" }
             ],
+            "",
             (layoutName) => {
                 calls.push(layoutName);
                 return `Layout:${layoutName}`;
@@ -198,6 +250,7 @@ describe("befly-vite Layouts (browser)", () => {
                     children: [{ path: "index_2", component: "P3Index2" }]
                 }
             ],
+            "",
             (layoutName) => {
                 calls.push(layoutName);
                 return `Layout:${layoutName}`;
@@ -244,6 +297,7 @@ describe("befly-vite Layouts (browser)", () => {
                     ]
                 }
             ],
+            "",
             (layoutName) => {
                 calls.push(layoutName);
                 return `Layout:${layoutName}`;

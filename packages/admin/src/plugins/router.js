@@ -3,22 +3,14 @@ import { Layouts } from "befly-vite";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
 
-// 应用自定义布局系统
-const layoutRoutes = Layouts(routes, (layoutName) => {
+// 应用自定义布局系统（同时可选注入根路径重定向）
+const finalRoutes = Layouts(routes, $Config.homePath, (layoutName) => {
     if (layoutName === "default") {
         return () => import("@/layouts/default.vue");
     }
 
     return () => import(`@/layouts/${layoutName}.vue`);
 });
-
-// 添加根路径重定向
-const finalRoutes = [
-    {
-        path: "/",
-        redirect: $Config.homePath
-    }
-].concat(layoutRoutes);
 
 /**
  * 创建并导出路由实例

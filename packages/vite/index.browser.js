@@ -81,21 +81,28 @@ function buildLayoutConfigs(routes, inheritLayout = "") {
  * 将 auto-routes 的 routes 按 `_数字` 规则套用布局组件，并输出 Vue Router 的 RouteRecordRaw[]。
  *
  * @param {any[]} routes
+ * @param {string=} rootRedirectPath
  * @param {(layoutName: string) => any} resolveLayoutComponent
  * @returns {import('vue-router').RouteRecordRaw[]}
  */
-export function Layouts(routes, resolveLayoutComponent) {
+export function Layouts(routes, rootRedirectPath, resolveLayoutComponent) {
     if (!Array.isArray(routes)) {
-        throw new Error("Layouts(routes, resolveLayoutComponent) 中 routes 必须是数组。");
+        throw new Error("Layouts(routes, rootRedirectPath, resolveLayoutComponent) 中 routes 必须是数组。");
+    }
+
+    if (rootRedirectPath && typeof rootRedirectPath !== "string") {
+        throw new Error("Layouts(routes, rootRedirectPath, resolveLayoutComponent) 中 rootRedirectPath 必须是字符串或假值。");
     }
 
     if (typeof resolveLayoutComponent !== "function") {
-        throw new Error("Layouts(routes, resolveLayoutComponent) 中 resolveLayoutComponent 必须是函数。");
+        throw new Error("Layouts(routes, rootRedirectPath, resolveLayoutComponent) 中 resolveLayoutComponent 必须是函数。");
     }
+
+    const trimmedRootRedirectPath = typeof rootRedirectPath === "string" ? rootRedirectPath.trim() : "";
 
     const configs = buildLayoutConfigs(routes);
 
-    return configs.map((config) => {
+    const layoutRoutes = configs.map((config) => {
         const layoutComponent = resolveLayoutComponent(config.layoutName);
 
         return {
@@ -110,4 +117,15 @@ export function Layouts(routes, resolveLayoutComponent) {
             ]
         };
     });
+
+    if (trimmedRootRedirectPath) {
+        return [
+            {
+                path: "/",
+                redirect: trimmedRootRedirectPath
+            }
+        ].concat(layoutRoutes);
+    }
+
+    return layoutRoutes;
 }
