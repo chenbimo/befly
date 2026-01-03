@@ -35,8 +35,11 @@ import { fileURLToPath } from "node:url";
 export default createBeflyViteConfig({
     root: fileURLToPath(new URL(".", import.meta.url)),
 
+    // 说明：项目 views 固定扫描 "src/views"；如需扫描 addon 内的视图目录，可配置 addonView（单级目录名）
+    // addonView: "adminViews",
+
     // 自定义配置
-    userConfig: {
+    viteConfig: {
         server: {
             port: 5600
         }

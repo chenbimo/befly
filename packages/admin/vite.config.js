@@ -4,7 +4,7 @@ import { createBeflyViteConfig } from "befly-vite";
 
 export default createBeflyViteConfig({
     root: fileURLToPath(new URL(".", import.meta.url)),
-    scanViews: "src/views",
+    addonView: "adminViews",
     optimizeDeps: {
         include: []
     }

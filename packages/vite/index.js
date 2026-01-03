@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, realpathSync } from "node:fs";
-import { isAbsolute, join } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { defineConfig, mergeConfig } from "vite";
@@ -78,7 +78,6 @@ function defaultManualChunks(id) {
  * 创建 Befly Vite 配置
  * @param {Object} options - 配置选项
  * @param {string} options.root - 项目根目录（可选）
- * @param {string} options.pageView - 要扫描的 views 目录（可选，默认 "src/views"）
  * @param {string} options.addonView - addon 内要扫描的视图目录名（可选，默认 "adminViews"）
  * @param {Object} options.resolvers - 自定义 resolvers（可选）
  * @param {Function} options.manualChunks - 自定义分包配置（可选）
@@ -86,20 +85,29 @@ function defaultManualChunks(id) {
  * @returns {Object} Vite 配置对象
  */
 export function createBeflyViteConfig(options = {}) {
-    const { root, pageView = "src/views", addonView = "adminViews", resolvers = {}, manualChunks, viteConfig = {} } = options;
+    const { root, addonView = "adminViews", resolvers = {}, manualChunks, viteConfig = {} } = options;
 
     // 计算根目录（如果未提供）
     const appRoot = root || process.cwd();
-
-    if (typeof pageView !== "string") {
-        throw new Error('createBeflyViteConfig({ pageView }) 中 pageView 必须是字符串目录路径。\n例如：pageView: "src/views"');
-    }
 
     if (typeof addonView !== "string") {
         throw new Error('createBeflyViteConfig({ addonView }) 中 addonView 必须是字符串目录名。\n例如：addonView: "adminViews"');
     }
 
-    const routesFolders = scanViewsInternal(appRoot, pageView, addonView);
+    if (addonView.trim() !== addonView) {
+        throw new Error('createBeflyViteConfig({ addonView }) 中 addonView 不能包含首尾空格。\n例如：addonView: "adminViews"');
+    }
+
+    if (!addonView) {
+        throw new Error('createBeflyViteConfig({ addonView }) 中 addonView 不能为空。\n例如：addonView: "adminViews"');
+    }
+
+    // 只能是单级目录名：禁止多级路径与路径穿越
+    if (addonView === "." || addonView === ".." || addonView.includes("/") || addonView.includes("\\") || addonView.includes("..") || addonView.includes("\0")) {
+        throw new Error('createBeflyViteConfig({ addonView }) 中 addonView 必须是单级目录名（不能是多级路径）。\n例如：addonView: "adminViews"');
+    }
+
+    const routesFolders = scanViewsInternal(appRoot, addonView);
 
     const baseConfig = defineConfig({
         base: "./",
@@ -238,18 +246,17 @@ export function buildLayoutRoutes(routes, resolveLayoutComponent) {
 /**
  * 内部实现：扫描项目和所有 @befly-addon 包的视图目录
  * @param {string} appRoot
- * @param {string} pageView
  * @param {string} addonView
  * @returns {Array<{ src: string, path: string, exclude: string[] }>}
  */
-function scanViewsInternal(appRoot, pageView, addonView = "adminViews") {
+function scanViewsInternal(appRoot, addonView = "adminViews") {
     const addonBasePath = join(appRoot, "node_modules", "@befly-addon");
 
     /** @type {Array<{ src: string, path: string, exclude: string[] }>} */
     const routesFolders = [];
 
     // 1. 项目自身 views
-    const appViewsPath = isAbsolute(pageView) ? pageView : join(appRoot, pageView);
+    const appViewsPath = join(appRoot, "src", "views");
     if (existsSync(appViewsPath)) {
         routesFolders.push({
             src: realpathSync(appViewsPath),
@@ -258,7 +265,7 @@ function scanViewsInternal(appRoot, pageView, addonView = "adminViews") {
         });
     }
 
-    // 2. 扫描 @befly-addon/*/adminViews（仅此目录允许生成 addon 路由）
+    // 2. 扫描 @befly-addon/*/<addonView>（仅此目录允许生成 addon 路由）
     if (!existsSync(addonBasePath)) {
         return routesFolders;
     }
@@ -272,10 +279,10 @@ function scanViewsInternal(appRoot, pageView, addonView = "adminViews") {
                 continue;
             }
 
-            const adminViewsPath = join(addonPath, addonView);
-            if (existsSync(adminViewsPath)) {
+            const addonViewPath = join(addonPath, addonView);
+            if (existsSync(addonViewPath)) {
                 routesFolders.push({
-                    src: realpathSync(adminViewsPath),
+                    src: realpathSync(addonViewPath),
                     path: `addon/${addonName}/`,
                     exclude: ["**/components/**"]
                 });
