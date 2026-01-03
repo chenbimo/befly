@@ -45,7 +45,7 @@ import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
 import { arrayToTree } from "befly-shared/utils/arrayToTree";
-import { withDefaultColumns } from "befly-vite/utils/withDefaultColumns";
+import { withDefaultColumns } from "befly-shared/utils/withDefaultColumns";
 
 definePage({
     meta: {

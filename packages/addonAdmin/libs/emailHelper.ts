@@ -3,7 +3,6 @@
  * 提供邮件发送功能，支持 SMTP 配置
  */
 
-import type { BeflyContext } from "befly/types/befly";
 import type { Transporter } from "nodemailer";
 
 import nodemailer from "nodemailer";
@@ -53,9 +52,9 @@ export interface SendEmailResult {
 export class EmailHelper {
     private config: EmailConfig;
     private transporter: Transporter | null = null;
-    private befly: BeflyContext;
+    private befly;
 
-    constructor(befly: BeflyContext, config: EmailConfig) {
+    constructor(befly, config: EmailConfig) {
         this.befly = befly;
         this.config = config;
 

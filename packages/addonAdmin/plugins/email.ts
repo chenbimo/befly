@@ -4,8 +4,6 @@
  */
 
 import type { EmailConfig } from "../libs/emailHelper.js";
-import type { BeflyContext } from "befly/types/befly";
-import type { Plugin } from "befly/types/plugin";
 
 import { EmailHelper } from "../libs/emailHelper.js";
 
@@ -21,7 +19,7 @@ const defaultConfig: EmailConfig = {
 
 export default {
     deps: ["db", "logger", "config"],
-    async handler(befly: BeflyContext): Promise<EmailHelper> {
+    async handler(befly): Promise<EmailHelper> {
         // 从 befly.config.addons.admin.email 获取配置
         const addonEmailConfig = befly.config?.addons?.admin?.email || {};
         const emailConfig: EmailConfig = {
@@ -31,4 +29,4 @@ export default {
 
         return new EmailHelper(befly, emailConfig);
     }
-} satisfies Plugin;
+};
