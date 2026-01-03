@@ -15,6 +15,7 @@
     "license": "Apache-2.0",
     "author": "chensuiyi <bimostyle@qq.com>",
     "files": [
+        "index.browser.js",
         "index.js",
         "package.json",
         "README.md",
@@ -24,6 +25,7 @@
     "type": "module",
     "exports": {
         ".": {
+            "browser": "./index.browser.js",
             "import": "./index.js",
             "default": "./index.js"
         }
