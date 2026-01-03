@@ -7,7 +7,6 @@ import { defineConfig, mergeConfig } from "vite";
 import { createAnalyzerPlugin } from "./plugins/analyzer.js";
 import { createAutoImportPlugin } from "./plugins/auto-import.js";
 import { createComponentsPlugin } from "./plugins/components.js";
-import { createCompressionPlugin } from "./plugins/compression.js";
 import { createDevToolsPlugin } from "./plugins/devtools.js";
 import { createIconsPlugin } from "./plugins/icons.js";
 import { createReactivityTransformPlugin } from "./plugins/reactivity-transform.js";
@@ -121,8 +120,7 @@ export function createBeflyViteConfig(options = {}) {
             createAutoImportPlugin({ resolvers: resolvers }),
             createComponentsPlugin({ resolvers: resolvers }),
             createIconsPlugin(),
-            createAnalyzerPlugin(),
-            createCompressionPlugin()
+            createAnalyzerPlugin()
         ],
 
         resolve: {
