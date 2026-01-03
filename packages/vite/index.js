@@ -99,11 +99,7 @@ export function createBeflyViteConfig(options = {}) {
         throw new Error('createBeflyViteConfig({ addonView }) 中 addonView 必须是字符串目录名。\n例如：addonView: "adminViews"');
     }
 
-    const routesFolders = scanViewsInternal({
-        root: appRoot,
-        pageView: pageView,
-        addonView: addonView
-    });
+    const routesFolders = scanViewsInternal(appRoot, pageView, addonView);
 
     const baseConfig = defineConfig({
         base: "./",
@@ -241,14 +237,12 @@ export function buildLayoutRoutes(routes, resolveLayoutComponent) {
 
 /**
  * 内部实现：扫描项目和所有 @befly-addon 包的视图目录
- * @param {{ root: string, pageView: string, addonView?: string }} options
+ * @param {string} appRoot
+ * @param {string} pageView
+ * @param {string} addonView
  * @returns {Array<{ src: string, path: string, exclude: string[] }>}
  */
-function scanViewsInternal(options) {
-    const appRoot = options.root;
-    const pageView = options.pageView;
-    const addonView = options.addonView || "adminViews";
-
+function scanViewsInternal(appRoot, pageView, addonView = "adminViews") {
     const addonBasePath = join(appRoot, "node_modules", "@befly-addon");
 
     /** @type {Array<{ src: string, path: string, exclude: string[] }>} */
