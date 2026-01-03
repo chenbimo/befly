@@ -1,4 +1,5 @@
 /**
+ * auto-routes 的 route 结构（我们只依赖以下字段）。
  * @typedef {Object} RouteConfig
  * @property {string=} path
  * @property {any=} component
@@ -7,6 +8,7 @@
  */
 
 /**
+ * 内部扁平结构：一条“最终路由 path + 选用布局 + 页面组件”。
  * @typedef {Object} LayoutConfig
  * @property {string} path
  * @property {string} layoutName
@@ -83,6 +85,14 @@ function buildLayoutConfigs(routes, inheritLayout = "") {
  * @returns {import('vue-router').RouteRecordRaw[]}
  */
 export function Layouts(routes, resolveLayoutComponent) {
+    if (!Array.isArray(routes)) {
+        throw new Error("Layouts(routes, resolveLayoutComponent) 中 routes 必须是数组。");
+    }
+
+    if (typeof resolveLayoutComponent !== "function") {
+        throw new Error("Layouts(routes, resolveLayoutComponent) 中 resolveLayoutComponent 必须是函数。");
+    }
+
     const configs = buildLayoutConfigs(routes);
 
     return configs.map((config) => {
