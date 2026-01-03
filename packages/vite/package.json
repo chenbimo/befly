@@ -18,16 +18,15 @@
         "index.js",
         "package.json",
         "README.md",
-        "bin/",
-        "configs/",
-        "plugins/",
-        "utils/"
+        "util.js",
+        "plugins/"
     ],
     "type": "module",
-    "main": "index.js",
     "exports": {
-        ".": "./index.js",
-        "./utils/*": "./utils/*.js"
+        ".": {
+            "import": "./index.js",
+            "default": "./index.js"
+        }
     },
     "publishConfig": {
         "access": "public",

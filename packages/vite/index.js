@@ -1,3 +1,5 @@
+import { existsSync, readdirSync, realpathSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { defineConfig, mergeConfig } from "vite";
@@ -11,6 +13,7 @@ import { createIconsPlugin } from "./plugins/icons.js";
 import { createReactivityTransformPlugin } from "./plugins/reactivity-transform.js";
 import { createRouterPlugin } from "./plugins/router.js";
 import { createVuePlugin } from "./plugins/vue.js";
+import { applyLayouts, layouts, toLazyComponent, normalizeRoutePath } from "./util.js";
 
 /**
  * 默认分包策略
@@ -82,7 +85,7 @@ function defaultManualChunks(id) {
  * @returns {Object} Vite 配置对象
  */
 export function createBeflyViteConfig(options = {}) {
-    const { root, scanViews, resolvers = {}, manualChunks, userConfig = {} } = options;
+    const { root, scanViews: scanViewsFn, resolvers = {}, manualChunks, userConfig = {} } = options;
 
     // 计算根目录（如果未提供）
     const appRoot = root || process.cwd();
@@ -92,7 +95,7 @@ export function createBeflyViteConfig(options = {}) {
 
         plugins: [
             //
-            createRouterPlugin({ scanViews: scanViews }),
+            createRouterPlugin({ scanViews: scanViewsFn || scanViews }),
             createVuePlugin(),
             createReactivityTransformPlugin(),
             createDevToolsPlugin(),
@@ -147,4 +150,133 @@ export function createBeflyViteConfig(options = {}) {
     });
 
     return mergeConfig(baseConfig, userConfig);
+}
+
+/**
+ * 应用一个最小可用的 token 鉴权守卫（业务方提供 token 获取方式与路径）。
+ *
+ * 约定：当路由 meta.public === true 时认为是公开路由。
+ *
+ * @param {import('vue-router').Router} router
+ * @param {{
+ *   getToken: () => any,
+ *   loginPath: string,
+ *   homePath: string
+ * }} options
+ */
+export function applyTokenAuthGuard(router, options) {
+    const normalizedLoginPath = normalizeRoutePath(options.loginPath);
+    const normalizedHomePath = normalizeRoutePath(options.homePath);
+
+    router.beforeEach(async (to, _from, next) => {
+        const token = options.getToken();
+        const toPath = normalizeRoutePath(to.path);
+
+        // 0. 根路径重定向
+        if (toPath === "/") {
+            return next(token ? normalizedHomePath : normalizedLoginPath);
+        }
+
+        // 1. 未登录且访问非公开路由 → 跳转登录
+        if (!token && to.meta?.public !== true && toPath !== normalizedLoginPath) {
+            return next(normalizedLoginPath);
+        }
+
+        // 2. 已登录访问登录页 → 跳转首页
+        if (token && toPath === normalizedLoginPath) {
+            return next(normalizedHomePath);
+        }
+
+        next();
+    });
+}
+
+/**
+ * 创建布局组件解析器（resolver）。
+ *
+ * @param {{
+ *   resolveDefaultLayout: () => any,
+ *   resolveNamedLayout: (layoutName: string) => any,
+ *   defaultLayoutName?: string
+ * }} options
+ * @returns {(layoutName: string) => any}
+ */
+export function createLayoutComponentResolver(options) {
+    const defaultLayoutName = options.defaultLayoutName || "default";
+
+    return (layoutName) => {
+        if (layoutName === defaultLayoutName) {
+            return toLazyComponent(options.resolveDefaultLayout());
+        }
+
+        return toLazyComponent(options.resolveNamedLayout(layoutName));
+    };
+}
+
+/**
+ * 将 auto-routes 的 routes 按 `_数字` 规则套用布局组件，并输出 Vue Router 的 RouteRecordRaw[]。
+ *
+ * @param {any[]} routes
+ * @param {(layoutName: string) => any} resolveLayoutComponent
+ * @returns {import('vue-router').RouteRecordRaw[]}
+ */
+export function buildLayoutRoutes(routes, resolveLayoutComponent) {
+    return applyLayouts(layouts(routes), resolveLayoutComponent);
+}
+
+/**
+ * 扫描项目和所有 @befly-addon 包的视图目录
+ * 用于 unplugin-vue-router 的 routesFolder 配置
+ *
+ * 约定：addon 只允许从 adminViews 扫描路由：
+ * - <addonRoot>/adminViews
+ *
+ * 注意：此函数只能在 vite.config.js 中使用（Node.js 环境），不能在浏览器中使用
+ * @returns {Array<{ src: string, path: string, exclude: string[] }>} 路由文件夹配置数组
+ */
+export function scanViews() {
+    const appRoot = process.cwd();
+    const addonBasePath = join(appRoot, "node_modules", "@befly-addon");
+
+    /** @type {Array<{ src: string, path: string, exclude: string[] }>} */
+    const routesFolders = [];
+
+    // 1. 项目自身 views
+    const appViewsPath = join(appRoot, "src", "views");
+    if (existsSync(appViewsPath)) {
+        routesFolders.push({
+            src: realpathSync(appViewsPath),
+            path: "",
+            exclude: ["**/components/**"]
+        });
+    }
+
+    // 2. 扫描 @befly-addon/*/adminViews（仅此目录允许生成 addon 路由）
+    if (!existsSync(addonBasePath)) {
+        return routesFolders;
+    }
+
+    try {
+        const addonDirs = readdirSync(addonBasePath);
+
+        for (const addonName of addonDirs) {
+            const addonPath = join(addonBasePath, addonName);
+            if (!existsSync(addonPath)) {
+                continue;
+            }
+
+            const adminViewsPath = join(addonPath, "adminViews");
+            if (existsSync(adminViewsPath)) {
+                routesFolders.push({
+                    src: realpathSync(adminViewsPath),
+                    path: `addon/${addonName}/`,
+                    exclude: ["**/components/**"]
+                });
+            }
+        }
+    } catch {
+        // 扫描失败保持静默，避免影响 Vite 启动
+    }
+
+    return routesFolders;
 }

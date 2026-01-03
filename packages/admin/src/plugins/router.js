@@ -1,5 +1,5 @@
 import { $Storage } from "@/plugins/storage";
-import { applyTokenAuthGuard, buildLayoutRoutes, createLayoutComponentResolver } from "befly-vite/utils/router";
+import { applyTokenAuthGuard, buildLayoutRoutes, createLayoutComponentResolver } from "befly-vite";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
 

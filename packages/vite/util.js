@@ -1,6 +1,7 @@
 /**
- * 自定义布局处理函数
- * 根据文件名后缀 _数字 判断使用哪个布局
+ * 内部工具函数集合（不对外导出）
+ *
+ * 说明：该文件仅供 befly-vite 包内部模块使用。
  */
 
 /**
@@ -20,11 +21,13 @@
  */
 
 /**
+ * 根据文件名后缀 _数字 判断使用哪个布局，输出扁平布局配置。
+ *
  * @param {RouteConfig[]} routes
  * @param {string=} inheritLayout
  * @returns {LayoutConfig[]}
  */
-export function Layouts(routes, inheritLayout = "") {
+export function layouts(routes, inheritLayout = "") {
     /** @type {LayoutConfig[]} */
     const result = [];
 
@@ -37,7 +40,7 @@ export function Layouts(routes, inheritLayout = "") {
         // 中间节点：递归处理子路由，不包裹布局
         if (route.children && route.children.length > 0) {
             const cleanPath = pathMatch ? currentPath.replace(/_\d+$/, "") : currentPath;
-            const childConfigs = Layouts(route.children, currentLayout);
+            const childConfigs = layouts(route.children, currentLayout);
 
             for (const child of childConfigs) {
                 const mergedPath = cleanPath ? `${cleanPath}/${child.path}`.replace(/\/+/, "/") : child.path;
@@ -77,8 +80,7 @@ export function Layouts(routes, inheritLayout = "") {
 }
 
 /**
- * 将 Layouts 输出的扁平配置转换为 Vue Router 的 RouteRecordRaw
- * 说明：resolveLayoutComponent 由业务方提供，以避免 utils 强耦合具体项目的布局路径。
+ * 将 layouts 输出的扁平配置转换为 Vue Router 的 RouteRecordRaw。
  *
  * @param {LayoutConfig[]} configs
  * @param {(layoutName: string) => any} resolveLayoutComponent
@@ -100,4 +102,33 @@ export function applyLayouts(configs, resolveLayoutComponent) {
             ]
         };
     });
+}
+
+/**
+ * 将“组件/懒加载函数/Promise”统一转换为 Vue Router 可接受的懒加载 component 函数。
+ *
+ * @param {any} value
+ * @returns {any}
+ */
+export function toLazyComponent(value) {
+    if (typeof value === "function") {
+        return value;
+    }
+
+    return () => value;
+}
+
+/**
+ * 规范化路由 path：去尾随 "/"（根路径 "/" 例外）。
+ *
+ * @param {any} path
+ * @returns {any}
+ */
+export function normalizeRoutePath(path) {
+    if (typeof path !== "string") {
+        return path;
+    }
+
+    const normalized = path.replace(/\/+$/, "");
+    return normalized.length === 0 ? "/" : normalized;
 }
