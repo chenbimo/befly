@@ -14,7 +14,7 @@ const app = createApp(App);
 app.use(createPinia());
 
 // 使用路由
-app.use(router);
+app.use($Router);
 
 // 全局配置 TTable 默认属性
 app.component("TTable", {
