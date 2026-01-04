@@ -52,7 +52,7 @@
         "clean": "rimraf dist",
         "test": "bun test",
         "build": "bunx tsgo -p tsconfig.build.json",
-        "prepack": "bun run build",
+        "prepack": "bun run build && bun run ./scripts/ensureDist.ts",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
     },
     "dependencies": {
