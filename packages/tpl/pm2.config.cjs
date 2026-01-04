@@ -6,7 +6,7 @@ module.exports = {
             interpreter: "bun",
 
             // 集群模式配置
-            instances: 2, // 实例数量，可设置为 'max' 使用所有 CPU
+            instances: 1, // 实例数量，可设置为 'max' 使用所有 CPU
             exec_mode: "cluster", // 集群模式
 
             // 自动重启配置

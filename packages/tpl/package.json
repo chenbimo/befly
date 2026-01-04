@@ -25,7 +25,7 @@
     "scripts": {
         "dev": "NODE_ENV=development bun run main.ts",
         "start": "NODE_ENV=production bun run main.ts",
-        "pm2": "bun --bun pm2 start pm2.config.cjs",
+        "serve": "bun --bun pm2 start pm2.config.cjs",
         "test": "bun test"
     },
     "dependencies": {
