@@ -37,7 +37,7 @@ export type AuthType = boolean | "admin" | "user" | string[];
 /**
  * API 处理器函数类型
  */
-export type ApiHandler<_T = any, R = any> = (befly: BeflyContext, ctx: RequestContext) => Promise<Response | R> | Response | R;
+export type ApiHandler<TBody = any, R = any> = (befly: BeflyContext, ctx: RequestContext<TBody>) => Promise<Response | R> | Response | R;
 
 /**
  * 字段规则定义
@@ -48,7 +48,7 @@ export type FieldRules = Record<string, string>;
 /**
  * API 配置选项
  */
-export interface ApiOptions {
+export interface ApiOptions<TBody = any, R = any> {
     /** HTTP 方法 */
     method: HttpMethod;
     /** 是否需要认证（true/false/角色数组） */
@@ -58,18 +58,18 @@ export interface ApiOptions {
     /** 必填字段 */
     required?: string[];
     /** 处理函数 */
-    handler: ApiHandler;
+    handler: ApiHandler<TBody, R>;
 }
 
 /**
  * API 路由配置
  */
-export interface ApiRoute<T = any, R = any> {
+export interface ApiRoute<TBody = any, R = any> {
     /** 接口名称（必填） */
     name: string;
 
     /** 处理器函数（必填） */
-    handler: ApiHandler<T, R>;
+    handler: ApiHandler<TBody, R>;
 
     /** HTTP 方法（可选，默认 POST，支持逗号分隔多个方法） */
     method?: HttpMethod;
@@ -119,7 +119,7 @@ export interface ApiBuilder {
     required(fields: string[]): this;
 
     /** 设置处理器 */
-    handler(handler: ApiHandler): this;
+    handler<TBody = any, R = any>(handler: ApiHandler<TBody, R>): this;
 
     /** 构建路由 */
     build(): ApiRoute;

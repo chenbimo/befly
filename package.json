@@ -9,6 +9,7 @@
         "packages/*"
     ],
     "scripts": {
+        "clean": "bun run clean:libs",
         "build:core": "bun run --cwd packages/core build",
         "build:shared": "bun run --cwd packages/shared build",
         "build:libs": "bun run build:shared && bun run build:core",
@@ -25,9 +26,9 @@
         "format": "bun run format:oxfmt",
         "lint": "oxlint .",
         "typecheck:core": "bun run --cwd packages/core typecheck",
-        "typecheck": "bun run typecheck:core",
+        "typecheck": "bun run build:shared && bun run typecheck:core",
         "typecheck:all": "lerna run typecheck --stream",
-        "verify": "bun run format && bun run lint && bun run typecheck && bun run test",
+        "verify": "bun run format && bun run lint && bun run build:libs && bun run typecheck:core && bun run test",
         "r": "lerna publish"
     },
     "devDependencies": {

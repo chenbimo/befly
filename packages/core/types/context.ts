@@ -7,11 +7,11 @@ import type { ApiRoute } from "./api.ts";
 /**
  * 请求上下文接口
  */
-export interface RequestContext {
+export interface RequestContext<TBody = Record<string, any>> {
     /** 请求方法 (GET/POST) */
     method: string;
     /** 请求体参数 */
-    body: Record<string, any>;
+    body: TBody;
     /** 用户信息 */
     user: Record<string, any>;
     /** 原始请求对象 */
