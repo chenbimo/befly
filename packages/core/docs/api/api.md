@@ -400,10 +400,20 @@ export default {
 在 Hook 中使用，用于提前拦截请求：
 
 ```typescript
-import { ErrorResponse } from "befly/utils/response";
+const errorResponse = (msg: string, code: number = 1, data: any = null, detail: any = null) => {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data,
+            detail: detail
+        },
+        { status: 200 }
+    );
+};
 
-// 在 Hook 中使用
-ctx.response = ErrorResponse(ctx, "未授权", 1, null);
+// 在 Hook 中使用（提前中断请求）
+ctx.response = errorResponse("未授权", 1, null);
 ```
 
 ### FinalResponse - 最终响应
@@ -1343,7 +1353,7 @@ interface BeflyContext {
 清理对象中的指定值（常用：`null/undefined`），适用于处理可选参数。
 
 ```typescript
-import { fieldClear } from "befly/utils/fieldClear";
+import { fieldClear } from "befly-shared/utils/fieldClear";
 
 // 常用：排除 null 和 undefined
 const cleanData = fieldClear(

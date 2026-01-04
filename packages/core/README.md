@@ -25,51 +25,10 @@ Befly 是专为 Bun 运行时设计的现代化 API 框架，提供：
 ```bash
 # 创建新项目
 mkdir my-api && cd my-api
+如果你在自定义脚本/测试中需要“脱离框架启动流程”去连接数据库/Redis：
 
-# 安装 Befly
-bun add befly
-
-# 初始化项目（即将支持）
-bunx befly init
-```
-
-### 最简示例
-
-```typescript
-// main.ts
-import { Befly } from "befly";
-
-const app = new Befly({
-    appName: "My API",
-    appPort: 3000
-});
-
-await app.start();
-```
-
-运行项目：
-
-```bash
-bun run main.ts
-```
-
-### 创建第一个接口
-
-```typescript
-// apis/user/hello.ts
-import type { ApiRoute } from "befly/types/api";
-
-export default {
-    name: "问候接口",
-    auth: false, // 公开接口
-    fields: {},
-    handler: async (befly, ctx) => {
-        return {
-            msg: "Hello, Befly!",
-            data: {
-                timestamp: Date.now()
-            }
-        };
+- 推荐直接使用你选用的 DB/Redis 客户端在脚本中自行建立连接（因为 Befly 的连接管理属于框架内部实现，不作为默认入口的 public API 导出）。
+- 或者在脚本里通过 `new Befly().start()` 走完整启动流程（会执行启动检查、加载插件与同步逻辑）。
     }
 } as ApiRoute;
 ```
@@ -91,32 +50,10 @@ export default {
     fields: {
         id: "用户ID|number|1|999999|null|1|null"
     },
-    required: ["id"],
-    handler: async (befly: BeflyContext, ctx) => {
-        const { id } = ctx.body;
+    如果你在自定义脚本/测试中需要“脱离框架启动流程”去连接数据库/Redis：
 
-        // 类型安全的数据库查询
-        const user = await befly.db.getOne<User>({
-            table: "user",
-            where: { id }
-        });
-
-        return { msg: "查询成功", data: user };
-    }
-} as ApiRoute;
-```
-
-### 增强的数据库操作
-
-```typescript
-// 查询单条
-const user = await befly.db.getOne<User>({
-    table: "user",
-    where: { id: 1 }
-});
-
-// 分页列表
-const result = await befly.db.getList<Product>({
+    - 推荐直接使用你选用的 DB/Redis 客户端在脚本中自行建立连接（Befly 的连接管理属于内部实现，不作为默认入口的 public API 导出）。
+    - 或者在脚本里通过 `new Befly().start()` 走完整启动流程（会执行启动检查、加载插件与同步逻辑）。
     table: "product",
     where: { category: "electronics" },
     page: 1,
@@ -244,57 +181,10 @@ export const beflyConfig = {
 
 通常你不需要手动连接（框架启动期会完成连接并注入插件实例）。
 
-如果你在自定义脚本/测试中需要手动连接，请显式传入配置片段（不要依赖全局单例配置）：
+如果你在自定义脚本/测试中需要“脱离框架启动流程”去连接数据库/Redis：
 
-```typescript
-import { Connect } from "befly/lib/connect";
-
-// 连接 SQL 数据库
-await Connect.connectSql({
-    type: "mysql",
-    host: "127.0.0.1",
-    port: 3306,
-    username: "root",
-    password: "root",
-    database: "befly_demo",
-    poolMax: 1
-});
-
-// 连接 Redis
-await Connect.connectRedis({
-    host: "127.0.0.1",
-    port: 6379,
-    db: 0,
-    prefix: "befly"
-});
-
-// 或：同时连接 SQL 和 Redis
-await Connect.connect({
-    db: {
-        type: "mysql",
-        host: "127.0.0.1",
-        port: 3306,
-        username: "root",
-        password: "root",
-        database: "befly_demo",
-        poolMax: 1
-    },
-    redis: {
-        host: "127.0.0.1",
-        port: 6379,
-        db: 0,
-        prefix: "befly"
-    }
-});
-
-// 获取连接状态
-const status = Connect.getStatus();
-console.log(status.sql.connected); // true/false
-console.log(status.redis.connected); // true/false
-
-// 断开连接
-await Connect.disconnect();
-```
+- 推荐直接使用你选用的 DB/Redis 客户端在脚本中自行建立连接（Befly 的连接管理属于内部实现，不作为默认入口的 public API 导出）。
+- 或者在脚本里通过 `new Befly().start()` 走完整启动流程（会执行启动检查、加载插件与同步逻辑）。
 
 ### 配置文件（当前约定）
 

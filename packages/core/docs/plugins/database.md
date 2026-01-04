@@ -144,7 +144,7 @@ DbHelper 在写入（`insData/insBatch/updData`）以及查询条件（`where`�
 如果你希望在业务侧更精细控制（例如：保留 `0` / 空字符串），请使用 `fieldClear`：
 
 ```typescript
-import { fieldClear } from "befly/utils/fieldClear";
+import { fieldClear } from "befly-shared/utils/fieldClear";
 
 const data = fieldClear(
     { nickname: ctx.body.nickname, sort: ctx.body.sort, state: ctx.body.state },

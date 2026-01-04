@@ -385,6 +385,18 @@ const hook: Hook = {
 
 ```typescript
 // hooks/validator.ts
+const errorResponse = (msg: string, code: number = 1, data: any = null, detail: any = null) => {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data,
+            detail: detail
+        },
+        { status: 200 }
+    );
+};
+
 const hook: Hook = {
     order: 6,
     handler: async (befly, ctx) => {
@@ -395,7 +407,7 @@ const hook: Hook = {
         const result = Validator.validate(ctx.body, ctx.api.fields, ctx.api.required || []);
 
         if (result.code !== 0) {
-            ctx.response = ErrorResponse(ctx, result.firstError || "参数验证失败", 1, null, result.fieldErrors);
+            ctx.response = errorResponse(result.firstError || "参数验证失败", 1, null, result.fieldErrors);
             return;
         }
     }
@@ -417,7 +429,22 @@ const hook: Hook = {
 
 ```typescript
 // hooks/permission.ts
-import { CacheKeys } from "befly/lib/cacheKeys";
+const CACHE_KEYS = {
+    roleApis(roleCode: string) {
+        return `role:apis:${roleCode}`;
+    }
+};
+
+const errorResponse = (msg: string, code: number = 1, data: any = null) => {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data
+        },
+        { status: 200 }
+    );
+};
 
 const hook: Hook = {
     order: 6,
@@ -431,7 +458,7 @@ const hook: Hook = {
 
         // 2. 用户未登录
         if (!ctx.user || !ctx.user.id) {
-            ctx.response = ErrorResponse(ctx, "未登录");
+            ctx.response = errorResponse("未登录");
             return;
         }
 
@@ -447,13 +474,13 @@ const hook: Hook = {
             const apiPath = normalizeApiPath(ctx.req.method, new URL(ctx.req.url).pathname);
 
             // 极简方案：每个角色一个 Set，直接判断成员是否存在
-            const roleApisKey = CacheKeys.roleApis(ctx.user.roleCode);
+            const roleApisKey = CACHE_KEYS.roleApis(ctx.user.roleCode);
             hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
         }
 
         if (!hasPermission) {
             const apiLabel = ctx.api?.name ? ctx.api.name : apiPath;
-            ctx.response = ErrorResponse(ctx, `无权访问 ${apiLabel} 接口`);
+            ctx.response = errorResponse(`无权访问 ${apiLabel} 接口`);
             return;
         }
     }
@@ -496,7 +523,17 @@ export default hook;
 ```typescript
 // hooks/blacklist.ts
 import type { Hook } from "befly/types/hook";
-import { ErrorResponse } from "befly/utils/response";
+
+const errorResponse = (msg: string, code: number = 1, data: any = null) => {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data
+        },
+        { status: 200 }
+    );
+};
 
 const hook: Hook = {
     order: 1, // 最先执行
@@ -505,7 +542,7 @@ const hook: Hook = {
         const blacklist = ["192.168.1.100", "10.0.0.1"];
 
         if (blacklist.includes(ctx.ip)) {
-            ctx.response = ErrorResponse(ctx, "您的 IP 已被禁止访问", 403);
+            ctx.response = errorResponse("您的 IP 已被禁止访问", 403);
             return;
         }
     }
@@ -564,7 +601,17 @@ export default hook;
 ```typescript
 // hooks/rateLimit.ts
 import type { Hook } from "befly/types/hook";
-import { ErrorResponse } from "befly/utils/response";
+
+const errorResponse = (msg: string, code: number = 1, data: any = null) => {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data
+        },
+        { status: 200 }
+    );
+};
 
 const hook: Hook = {
     order: 7,
@@ -583,7 +630,7 @@ const hook: Hook = {
 
         // 超过限制
         if (count > limit) {
-            ctx.response = ErrorResponse(ctx, "请求过于频繁，请稍后再试", 1);
+            ctx.response = errorResponse("请求过于频繁，请稍后再试", 1);
             return;
         }
     }
@@ -639,7 +686,17 @@ export default hook;
 设置 `ctx.response` 可以中断后续 Hook 和 API Handler 的执行：
 
 ```typescript
-import { ErrorResponse } from "befly/utils/response";
+const errorResponse = (msg: string, code: number = 1, data: any = null, detail: any = null) => {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data,
+            detail: detail
+        },
+        { status: 200 }
+    );
+};
 
 const hook: Hook = {
     order: 5,
@@ -647,7 +704,7 @@ const hook: Hook = {
         // 条件判断
         if (someCondition) {
             // 设置 response 中断请求
-            ctx.response = ErrorResponse(ctx, "请求被拦截", 1);
+            ctx.response = errorResponse("请求被拦截", 1);
             return; // 必须 return
         }
 
@@ -656,11 +713,10 @@ const hook: Hook = {
 };
 ```
 
-**ErrorResponse 函数**：
+**示例中的 errorResponse 函数**：
 
 ```typescript
-ErrorResponse(ctx, msg, code?, data?, detail?)
-// ctx: RequestContext - 请求上下文
+errorResponse(msg, code?, data?, detail?)
 // msg: string - 错误消息
 // code: number - 错误码（默认 1）
 // data: any - 附加数据（默认 null）

@@ -220,11 +220,15 @@ const count = await befly.redis.expireBatch([
 ### saddBatch - 批量添加 Set 成员
 
 ```typescript
-import { CacheKeys } from "befly/lib/cacheKeys";
+const CACHE_KEYS = {
+    roleApis(roleCode: string) {
+        return `role:apis:${roleCode}`;
+    }
+};
 
 const count = await befly.redis.saddBatch([
-    { key: CacheKeys.roleApis("admin"), members: ["/api/user"] },
-    { key: CacheKeys.roleApis("editor"), members: ["/api/article"] }
+    { key: CACHE_KEYS.roleApis("admin"), members: ["/api/user"] },
+    { key: CACHE_KEYS.roleApis("editor"), members: ["/api/article"] }
 ]);
 // 返回: 成功添加的总成员数量
 ```
@@ -232,11 +236,15 @@ const count = await befly.redis.saddBatch([
 ### sismemberBatch - 批量检查 Set 成员
 
 ```typescript
-import { CacheKeys } from "befly/lib/cacheKeys";
+const CACHE_KEYS = {
+    roleApis(roleCode: string) {
+        return `role:apis:${roleCode}`;
+    }
+};
 
 const results = await befly.redis.sismemberBatch([
-    { key: CacheKeys.roleApis("admin"), member: "/api/user" },
-    { key: CacheKeys.roleApis("admin"), member: "/api/user/delete" }
+    { key: CACHE_KEYS.roleApis("admin"), member: "/api/user" },
+    { key: CACHE_KEYS.roleApis("admin"), member: "/api/user/delete" }
 ]);
 // 返回: [true, false]
 ```
@@ -286,14 +294,30 @@ const id = await befly.db.insData({
 避免硬编码，统一管理所有缓存键。
 
 ```typescript
-import { CacheKeys } from "befly/lib/cacheKeys";
+const CACHE_KEYS = {
+    apisAll() {
+        return "apis:all";
+    },
+    menusAll() {
+        return "menus:all";
+    },
+    roleInfo(roleCode: string) {
+        return `role:info:${roleCode}`;
+    },
+    roleApis(roleCode: string) {
+        return `role:apis:${roleCode}`;
+    },
+    tableColumns(tableName: string) {
+        return `table:columns:${tableName}`;
+    }
+};
 
 // 获取键名
-const apisAllKey = CacheKeys.apisAll(); // 'apis:all'
-const menusAllKey = CacheKeys.menusAll(); // 'menus:all'
-const adminRoleInfoKey = CacheKeys.roleInfo("admin"); // 'role:info:admin'
-const adminRoleApisKey = CacheKeys.roleApis("admin"); // 'role:apis:admin'
-const userTableColumnsKey = CacheKeys.tableColumns("user"); // 'table:columns:user'
+const apisAllKey = CACHE_KEYS.apisAll(); // 'apis:all'
+const menusAllKey = CACHE_KEYS.menusAll(); // 'menus:all'
+const adminRoleInfoKey = CACHE_KEYS.roleInfo("admin"); // 'role:info:admin'
+const adminRoleApisKey = CACHE_KEYS.roleApis("admin"); // 'role:apis:admin'
+const userTableColumnsKey = CACHE_KEYS.tableColumns("user"); // 'table:columns:user'
 ```
 
 ### 键名前缀
@@ -311,7 +335,7 @@ Redis 插件支持配置全局前缀，避免键名冲突：
 所有键会自动添加前缀，最终写入 Redis 的 key 形如：`myapp:<key>`。
 
 - 例如：你调用 `befly.redis.getString("user:1")`，实际访问的是 `myapp:user:1`
-- 例如：你调用 `befly.redis.sismember(CacheKeys.roleApis("admin"), "/api/user")`，实际访问的是 `myapp:role:apis:admin`
+- 例如：你调用 `befly.redis.sismember("role:apis:admin", "/api/user")`，实际访问的是 `myapp:role:apis:admin`
 
 > 注意：`redis.prefix` **不允许包含** `:`，因为 RedisHelper 会自动拼接分隔符 `:`。
 
@@ -344,7 +368,7 @@ if (count > limit) {
 
 ```typescript
 // 极简方案：每个角色一个 Set
-const roleApisKey = CacheKeys.roleApis("admin");
+const roleApisKey = "role:apis:admin";
 const hasPermission = await befly.redis.sismember(roleApisKey, "/api/user/add");
 // 返回: true
 ```

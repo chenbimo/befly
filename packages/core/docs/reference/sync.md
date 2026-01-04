@@ -416,7 +416,7 @@ addons/demo/tables/article.json   → addon_demo_article
 
 ```typescript
 // 自动清理以下缓存键
-CacheKeys.tableColumns(tableName); // table:columns:{tableName}
+`table:columns:${tableName}`;
 ```
 
 ### 4. 连接管理

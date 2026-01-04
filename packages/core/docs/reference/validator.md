@@ -311,6 +311,18 @@ Validator Hook 自动验证 API 请求参数：
 
 ```typescript
 // hooks/validator.ts
+const errorResponse = (msg: string, code: number = 1, data: any = null, detail: any = null) => {
+    return Response.json(
+        {
+            code: code,
+            msg: msg,
+            data: data,
+            detail: detail
+        },
+        { status: 200 }
+    );
+};
+
 const hook: Hook = {
     order: 6, // 在 parser 之后执行
     handler: async (befly, ctx) => {
@@ -319,7 +331,7 @@ const hook: Hook = {
         const result = Validator.validate(ctx.body, ctx.api.fields, ctx.api.required || []);
 
         if (result.code !== 0) {
-            ctx.response = ErrorResponse(ctx, result.firstError || "参数验证失败", 1, null, result.fieldErrors);
+            ctx.response = errorResponse(result.firstError || "参数验证失败", 1, null, result.fieldErrors);
         }
     }
 };
@@ -573,7 +585,7 @@ A: 目前只支持扁平对象验证。嵌套对象需要在 handler 中手动�
 
 ### Q: 正则别名可以扩展吗？
 
-A: 正则别名定义在 `befly/lib/regex` 中，可以直接使用自定义正则字符串，不需要扩展别名。
+A: 正则别名由框架内置维护，目前不对外暴露扩展接口；如需自定义规则，直接在字段定义里填写自定义正则字符串即可。
 
 ### Q: 类型转换失败会怎样？
 
@@ -592,7 +604,7 @@ A: 数组类型会验证：
 A: 使用 `fieldClear` 工具函数：
 
 ```typescript
-import { fieldClear } from "befly/utils/fieldClear";
+import { fieldClear } from "befly-shared/utils/fieldClear";
 
 // 在 API handler 中使用
 handler: async (befly, ctx) => {

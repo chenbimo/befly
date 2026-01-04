@@ -829,7 +829,7 @@ await befly.db.updData({
 #### 优化写法（简洁）
 
 ```typescript
-import { fieldClear } from "befly/utils/fieldClear";
+import { fieldClear } from "befly-shared/utils/fieldClear";
 
 // ✅ 直接传入，undefined 值自动过滤
 const data = {

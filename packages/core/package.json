@@ -32,14 +32,6 @@
             "types": "./dist/main.d.ts",
             "default": "./dist/main.js"
         },
-        "./lib/*": {
-            "types": "./dist/lib/*.d.ts",
-            "default": "./dist/lib/*.js"
-        },
-        "./utils/*": {
-            "types": "./dist/utils/*.d.ts",
-            "default": "./dist/utils/*.js"
-        },
         "./types/*": {
             "types": "./dist/types/*.d.ts"
         }
