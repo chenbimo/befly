@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { checkMenu } from "../checks/checkMenu.js";
-import { syncMenu } from "../sync/syncMenu.js";
+import { checkMenu } from "../checks/checkMenu.ts";
+import { syncMenu } from "../sync/syncMenu.ts";
 
 describe("syncMenu - delete obsolete records", () => {
     test("应删除不在配置中的菜单记录（仅 state>=0）", async () => {

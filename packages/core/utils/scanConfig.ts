@@ -38,7 +38,7 @@ export async function scanConfig(options: LoadConfigOptions): Promise<Record<str
         cwd = process.cwd(),
         dirs,
         files,
-        extensions = [".js", ".ts", ".json"],
+        extensions = [".ts", ".ts", ".json"],
         mode = "first",
         paths,
         defaults = {}

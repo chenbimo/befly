@@ -517,8 +517,8 @@ interface FieldDefinition {
 如需在代码中手动触发：
 
 ```typescript
-import { syncTable } from "../../sync/syncTable.js";
-import { scanSources } from "../../utils/scanSources.js";
+import { syncTable } from "../../sync/syncTable.ts";
+import { scanSources } from "../../utils/scanSources.ts";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.config）
 const sources = await scanSources();

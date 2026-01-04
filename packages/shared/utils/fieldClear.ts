@@ -1,39 +1,33 @@
-/**
- * @typedef {Object} FieldClearOptions
- * @property {string[]=} pickKeys
- * @property {string[]=} omitKeys
- * @property {any[]=} keepValues
- * @property {any[]=} excludeValues
- * @property {Record<string, any>=} keepMap
- */
+// fieldClear 工具函数实现（shared 版）
+// 支持 pick/omit/keepValues/excludeValues/keepMap，处理对象和数组
 
-function isObject(val) {
+export interface FieldClearOptions {
+    pickKeys?: string[];
+    omitKeys?: string[];
+    keepValues?: any[];
+    excludeValues?: any[];
+    keepMap?: Record<string, any>;
+}
+
+export type FieldClearResult<T> = T extends Array<infer U> ? Array<FieldClearResult<U>> : T extends object ? { [K in keyof T]?: T[K] } : T;
+
+function isObject(val: unknown): val is Record<string, any> {
     return val !== null && typeof val === "object" && !Array.isArray(val);
 }
 
-function isArray(val) {
+function isArray(val: unknown): val is any[] {
     return Array.isArray(val);
 }
 
-/**
- * 清理对象/数组字段
- * - 支持 pick/omit/keepValues/excludeValues
- * - 支持 keepMap 强制保留
- * @template T
- * @param {T|T[]} data
- * @param {FieldClearOptions=} options
- * @returns {any}
- */
-export function fieldClear(data, options = {}) {
+export function fieldClear<T = any>(data: T | T[], options: FieldClearOptions = {}): FieldClearResult<T> {
     const pickKeys = options.pickKeys;
     const omitKeys = options.omitKeys;
     const keepValues = options.keepValues;
     const excludeValues = options.excludeValues;
     const keepMap = options.keepMap;
 
-    const filterObj = (obj) => {
-        /** @type {Record<string, any>} */
-        const result = {};
+    const filterObj = (obj: Record<string, any>) => {
+        const result: Record<string, any> = {};
 
         let keys = Object.keys(obj);
         if (pickKeys && pickKeys.length) {
@@ -71,7 +65,7 @@ export function fieldClear(data, options = {}) {
     };
 
     if (isArray(data)) {
-        return data
+        return (data as any[])
             .map((item) => {
                 if (isObject(item)) {
                     return filterObj(item);
@@ -83,12 +77,12 @@ export function fieldClear(data, options = {}) {
                     return Object.keys(item).length > 0;
                 }
                 return true;
-            });
+            }) as FieldClearResult<T>;
     }
 
     if (isObject(data)) {
-        return filterObj(data);
+        return filterObj(data as Record<string, any>) as FieldClearResult<T>;
     }
 
-    return data;
+    return data as FieldClearResult<T>;
 }

@@ -7,7 +7,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 describe("compareFieldDefinition", () => {
     describe("长度变化检测", () => {

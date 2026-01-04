@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { MySqlDialect, PostgresDialect, SqliteDialect } from "../lib/dbDialect.js";
+import { MySqlDialect, PostgresDialect, SqliteDialect } from "../lib/dbDialect.ts";
 
 describe("DbDialect - quoteIdent", () => {
     it("MySqlDialect: 使用反引号", () => {

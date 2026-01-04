@@ -4,11 +4,11 @@
  */
 
 // 类型导入
-import type { ApiRoute } from "../types/api.js";
-import type { ScanFileResult } from "../utils/scanFiles.js";
+import type { ApiRoute } from "../types/api.ts";
+import type { ScanFileResult } from "../utils/scanFiles.ts";
 
-import { Logger } from "../lib/logger.js";
-import { processFields } from "../utils/processFields.js";
+import { Logger } from "../lib/logger.ts";
+import { processFields } from "../utils/processFields.ts";
 
 /**
  * 加载所有 API 路由

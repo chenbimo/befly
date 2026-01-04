@@ -2,10 +2,10 @@
  * Befly API 类型定义
  */
 
-import type { BeflyContext } from "./befly.js";
-import type { KeyValue } from "./common.js";
-import type { RequestContext } from "./context.js";
-import type { TableDefinition } from "./validate.js";
+import type { BeflyContext } from "./befly.ts";
+import type { KeyValue } from "./common.ts";
+import type { RequestContext } from "./context.ts";
+import type { TableDefinition } from "./validate.ts";
 
 /**
  * HTTP 方法类型

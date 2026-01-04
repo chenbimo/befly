@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { syncApi } from "../sync/syncApi.js";
+import { syncApi } from "../sync/syncApi.ts";
 
 describe("syncApi - insBatch rows consistency", () => {
     test("当部分 api 缺少 addonName 时，insBatch 仍应传入稳定字段（addonName 为空字符串）", async () => {

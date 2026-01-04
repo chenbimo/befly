@@ -4,37 +4,37 @@
  */
 
 // ========== 类型导入 ==========
-import type { ApiRoute } from "./types/api.js";
-import type { BeflyContext, BeflyOptions } from "./types/befly.js";
-import type { Hook } from "./types/hook.js";
-import type { Plugin } from "./types/plugin.js";
+import type { ApiRoute } from "./types/api.ts";
+import type { BeflyContext, BeflyOptions } from "./types/befly.ts";
+import type { Hook } from "./types/hook.ts";
+import type { Plugin } from "./types/plugin.ts";
 
-import { checkApi } from "./checks/checkApi.js";
-import { checkHook } from "./checks/checkHook.js";
-import { checkMenu } from "./checks/checkMenu.js";
-import { checkPlugin } from "./checks/checkPlugin.js";
-import { checkTable } from "./checks/checkTable.js";
+import { checkApi } from "./checks/checkApi.ts";
+import { checkHook } from "./checks/checkHook.ts";
+import { checkMenu } from "./checks/checkMenu.ts";
+import { checkPlugin } from "./checks/checkPlugin.ts";
+import { checkTable } from "./checks/checkTable.ts";
 // ========== 相对导入（项目内部文件） ==========
 // 基础设施
-import { Connect } from "./lib/connect.js";
-import { Logger } from "./lib/logger.js";
+import { Connect } from "./lib/connect.ts";
+import { Logger } from "./lib/logger.ts";
 // 加载器
-import { loadApis } from "./loader/loadApis.js";
-import { loadHooks } from "./loader/loadHooks.js";
-import { loadPlugins } from "./loader/loadPlugins.js";
+import { loadApis } from "./loader/loadApis.ts";
+import { loadHooks } from "./loader/loadHooks.ts";
+import { loadPlugins } from "./loader/loadPlugins.ts";
 // 路由处理
-import { apiHandler } from "./router/api.js";
-import { staticHandler } from "./router/static.js";
+import { apiHandler } from "./router/api.ts";
+import { staticHandler } from "./router/static.ts";
 // 同步
-import { syncApi } from "./sync/syncApi.js";
-import { syncCache } from "./sync/syncCache.js";
-import { syncDev } from "./sync/syncDev.js";
-import { syncMenu } from "./sync/syncMenu.js";
-import { syncTable } from "./sync/syncTable.js";
+import { syncApi } from "./sync/syncApi.ts";
+import { syncCache } from "./sync/syncCache.ts";
+import { syncDev } from "./sync/syncDev.ts";
+import { syncMenu } from "./sync/syncMenu.ts";
+import { syncTable } from "./sync/syncTable.ts";
 // 工具
-import { calcPerfTime } from "./utils/calcPerfTime.js";
-import { getProcessRole } from "./utils/process.js";
-import { scanSources } from "./utils/scanSources.js";
+import { calcPerfTime } from "./utils/calcPerfTime.ts";
+import { getProcessRole } from "./utils/process.ts";
+import { scanSources } from "./utils/scanSources.ts";
 
 /**
  * Befly 框架核心类
@@ -65,7 +65,7 @@ export class Befly {
             const serverStartTime = Bun.nanoseconds();
 
             // 0. 延迟加载配置（避免循环依赖）
-            const { loadBeflyConfig } = await import("./befly.config.js");
+            const { loadBeflyConfig } = await import("./befly.config.ts");
             this.config = await loadBeflyConfig();
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取

@@ -33,7 +33,7 @@ Validator 是 Befly 的参数验证系统，提供：
 ### 基本结构
 
 ```typescript
-import { Validator } from "../lib/validator.js";
+import { Validator } from "../lib/validator.ts";
 
 class Validator {
     // 验证数据对象
@@ -362,7 +362,7 @@ export default {
 可以引用表定义中的字段：
 
 ```typescript
-import { adminTable } from "../../../tables/admin.js";
+import { adminTable } from "../../../tables/admin.ts";
 
 export default {
     name: "创建管理员",
@@ -381,7 +381,7 @@ export default {
 ### 使用公共字段
 
 ```typescript
-import { Fields } from "../../../config/fields.js";
+import { Fields } from "../../../config/fields.ts";
 
 export default {
     name: "获取列表",

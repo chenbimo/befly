@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { syncDev } from "../sync/syncDev.js";
+import { syncDev } from "../sync/syncDev.ts";
 
 describe("syncDev - dev role permissions", () => {
     test("dev 角色应拥有所有菜单和接口（state>=0）", async () => {

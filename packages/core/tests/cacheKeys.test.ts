@@ -4,7 +4,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { CacheKeys } from "../lib/cacheKeys.js";
+import { CacheKeys } from "../lib/cacheKeys.ts";
 
 describe("CacheKeys - Key 生成函数", () => {
     test("apisAll - 返回固定的接口缓存键", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { syncApi } from "../sync/syncApi.js";
+import { syncApi } from "../sync/syncApi.ts";
 
 describe("syncApi - type compatibility", () => {
     test("缺少 type 时应视为 api；非 api type 应被跳过", async () => {

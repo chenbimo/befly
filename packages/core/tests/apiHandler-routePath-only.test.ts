@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { apiHandler } from "../router/api.js";
+import { apiHandler } from "../router/api.ts";
 
 describe("apiHandler - route matching", () => {
     test("接口存在性判断应仅使用 url.pathname（不附加 method）", async () => {

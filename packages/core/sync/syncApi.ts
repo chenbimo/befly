@@ -1,9 +1,9 @@
-import type { BeflyContext } from "../types/befly.js";
-import type { SyncApiItem } from "../types/sync.js";
+import type { BeflyContext } from "../types/befly.ts";
+import type { SyncApiItem } from "../types/sync.ts";
 
 import { keyBy } from "es-toolkit/array";
 
-import { Logger } from "../lib/logger.js";
+import { Logger } from "../lib/logger.ts";
 
 export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: SyncApiItem[]): Promise<void> {
     const tableName = "addon_admin_api";

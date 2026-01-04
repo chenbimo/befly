@@ -4,7 +4,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 describe("syncTable - array_number 类型支持", () => {
     // ==================== 类型判断测试 ====================

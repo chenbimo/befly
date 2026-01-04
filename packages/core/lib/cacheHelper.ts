@@ -3,8 +3,8 @@
  * 负责在服务器启动时缓存接口、菜单和角色权限到 Redis
  */
 
-import { CacheKeys } from "./cacheKeys.js";
-import { Logger } from "./logger.js";
+import { CacheKeys } from "./cacheKeys.ts";
+import { Logger } from "./logger.ts";
 
 type CacheHelperDb = {
     tableExists(table: string): Promise<{ data: boolean }>;

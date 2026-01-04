@@ -1,4 +1,4 @@
-import type { CorsConfig } from "../types/befly.js";
+import type { CorsConfig } from "../types/befly.ts";
 
 /**
  * 设置 CORS 响应头

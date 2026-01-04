@@ -1,4 +1,4 @@
-import type { ListSql, SqlInfo } from "../types/database.js";
+import type { ListSql, SqlInfo } from "../types/database.ts";
 
 export function toSqlLogFields(sqlInfo: SqlInfo): { sqlPreview: string; sqlParams: any[]; sqlDurationMs: number } {
     return {

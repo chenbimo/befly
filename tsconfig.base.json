@@ -4,11 +4,21 @@
         "module": "ESNext",
         "moduleResolution": "bundler",
         "lib": ["ESNext"],
+
+        "noEmit": true,
+
         "strict": true,
+
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitOverride": true,
+
         "skipLibCheck": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "allowImportingTsExtensions": true,
+        "allowJs": false
     }
 }

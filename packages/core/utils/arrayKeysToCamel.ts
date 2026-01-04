@@ -1,4 +1,4 @@
-import { keysToCamel } from "./keysToCamel.js";
+import { keysToCamel } from "./keysToCamel.ts";
 
 /**
  * 数组对象字段名批量转小驼峰

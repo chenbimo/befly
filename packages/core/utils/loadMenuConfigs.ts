@@ -1,5 +1,5 @@
-import type { MenuConfig } from "../types/sync.js";
-import type { AddonInfo } from "./scanAddons.js";
+import type { MenuConfig } from "../types/sync.ts";
+import type { AddonInfo } from "./scanAddons.ts";
 import type { ViewDirMeta } from "befly-shared/utils/scanViewsDir";
 
 import { existsSync } from "node:fs";
@@ -8,8 +8,8 @@ import { readdir, readFile } from "node:fs/promises";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "befly-shared/utils/scanViewsDir";
 import { join } from "pathe";
 
-import { Logger } from "../lib/logger.js";
-import { isDirentDirectory } from "./isDirentDirectory.js";
+import { Logger } from "../lib/logger.ts";
+import { isDirentDirectory } from "./isDirentDirectory.ts";
 
 export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string, parentPath: string = ""): Promise<MenuConfig[]> {
     if (!existsSync(viewsDir)) {

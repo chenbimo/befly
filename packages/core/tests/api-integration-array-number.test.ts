@@ -8,7 +8,7 @@ import type { TableDefinition } from "befly/types/validate";
 
 import { describe, expect, test } from "bun:test";
 
-import { Validator } from "../lib/validator.js";
+import { Validator } from "../lib/validator.ts";
 
 describe("API 集成测试 - array_number_string 数据流", () => {
     // 模拟角色表定义

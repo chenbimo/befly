@@ -2,7 +2,7 @@
  * 验证 Redis 缓存的字段查询功能
  */
 
-import { CacheKeys } from "../lib/cacheKeys.js";
+import { CacheKeys } from "../lib/cacheKeys.ts";
 
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 

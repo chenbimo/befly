@@ -53,8 +53,8 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 默认会在服务启动时自动执行（仅主进程）。如需在代码中手动执行：
 
 ```typescript
-import { syncTable } from "../sync/syncTable.js";
-import { scanSources } from "../utils/scanSources.js";
+import { syncTable } from "../sync/syncTable.ts";
+import { scanSources } from "../utils/scanSources.ts";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）
 const sources = await scanSources();
@@ -120,8 +120,8 @@ await syncTable(ctx, sources.tables);
 如需在代码中手动调用：
 
 ```typescript
-import { syncApi } from "../sync/syncApi.js";
-import { scanSources } from "../utils/scanSources.js";
+import { syncApi } from "../sync/syncApi.ts";
+import { scanSources } from "../utils/scanSources.ts";
 
 const sources = await scanSources();
 await syncApi(ctx, sources.apis as any);
@@ -185,9 +185,9 @@ interface SyncApiStats {
 如需手动调用，需要先对菜单配置做校验/过滤（例如 disableMenus）：
 
 ```typescript
-import { checkMenu } from "../checks/checkMenu.js";
-import { syncMenu } from "../sync/syncMenu.js";
-import { scanSources } from "../utils/scanSources.js";
+import { checkMenu } from "../checks/checkMenu.ts";
+import { syncMenu } from "../sync/syncMenu.ts";
+import { scanSources } from "../utils/scanSources.ts";
 
 const sources = await scanSources();
 const checkedMenus = await checkMenu(sources.addons, { disableMenus: ctx.config.disableMenus || [] });
@@ -333,13 +333,13 @@ interface SyncMenuStats {
 ## 代码调用
 
 ```typescript
-import { syncTable } from "./sync/syncTable.js";
-import { syncApi } from "./sync/syncApi.js";
-import { syncCache } from "./sync/syncCache.js";
-import { syncDev } from "./sync/syncDev.js";
-import { syncMenu } from "./sync/syncMenu.js";
-import { scanSources } from "./utils/scanSources.js";
-import { checkMenu } from "./checks/checkMenu.js";
+import { syncTable } from "./sync/syncTable.ts";
+import { syncApi } from "./sync/syncApi.ts";
+import { syncCache } from "./sync/syncCache.ts";
+import { syncDev } from "./sync/syncDev.ts";
+import { syncMenu } from "./sync/syncMenu.ts";
+import { scanSources } from "./utils/scanSources.ts";
+import { checkMenu } from "./checks/checkMenu.ts";
 
 // 启动前/启动中手动触发同步
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）

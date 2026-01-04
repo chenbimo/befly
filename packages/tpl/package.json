@@ -25,7 +25,8 @@
     "scripts": {
         "dev": "NODE_ENV=development bun run main.ts",
         "start": "NODE_ENV=production bun run main.ts",
-        "serve": "bun --bun pm2 start pm2.config.cjs",
+        "serve": "bunx --bun pm2 start pm2.config.cjs",
+        "typecheck": "bunx tsgo -p tsconfig.json --noEmit",
         "test": "bun test"
     },
     "dependencies": {

@@ -17,7 +17,8 @@
         "./types/*": "./types/*.ts"
     },
     "scripts": {
-        "test": "bun test"
+        "test": "bun test",
+        "typecheck": "bunx tsgo --noEmit"
     },
     "dependencies": {
         "es-toolkit": "^1.43.0"

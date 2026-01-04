@@ -6,7 +6,7 @@ import type { FieldDefinition } from "befly/types/validate";
 
 import { describe, expect, test } from "bun:test";
 
-import { Validator } from "../lib/validator.js";
+import { Validator } from "../lib/validator.ts";
 
 describe("Validator - array_number 类型验证", () => {
     // ==================== 类型转换测试 ====================

@@ -9,7 +9,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 describe("quoteIdentifier (MySQL)", () => {
     test("使用反引号包裹标识符", () => {

@@ -4,7 +4,7 @@
  */
 import { describe, test, expect, afterEach } from "bun:test";
 
-import { Connect } from "../lib/connect.js";
+import { Connect } from "../lib/connect.ts";
 
 describe("sync 模块连接管理", () => {
     afterEach(() => {

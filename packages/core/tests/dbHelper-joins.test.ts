@@ -5,7 +5,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { DbUtils } from "../lib/dbUtils.js";
+import { DbUtils } from "../lib/dbUtils.ts";
 
 describe("DbUtils tableRef - normalizeTableRef/getJoinMainQualifier", () => {
     test("普通表名转下划线（无 alias）", () => {

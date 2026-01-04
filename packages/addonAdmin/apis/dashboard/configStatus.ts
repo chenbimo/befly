@@ -2,8 +2,8 @@ export default {
     name: "获取配置状态",
     handler: async (befly) => {
         const status = {
-            database: { status: "ok", latency: 0 },
-            redis: { status: "ok", latency: 0 },
+            database: { status: "ok", latency: 0, message: "" },
+            redis: { status: "ok", latency: 0, message: "" },
             fileSystem: { status: "ok" },
             email: { status: "warning", message: "未配置" },
             oss: { status: "warning", message: "未配置" }

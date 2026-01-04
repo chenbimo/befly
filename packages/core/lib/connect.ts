@@ -3,11 +3,11 @@
  * 统一管理 SQL 和 Redis 连接
  */
 
-import type { DatabaseConfig, RedisConfig } from "../types/befly.js";
+import type { DatabaseConfig, RedisConfig } from "../types/befly.ts";
 
 import { SQL, RedisClient } from "bun";
 
-import { Logger } from "./logger.js";
+import { Logger } from "./logger.ts";
 
 /**
  * 数据库连接管理器

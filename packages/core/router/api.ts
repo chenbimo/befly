@@ -3,18 +3,18 @@
  * 处理 /api/* 路径的请求
  */
 
-import type { ApiRoute } from "../types/api.js";
-import type { BeflyContext } from "../types/befly.js";
+import type { ApiRoute } from "../types/api.ts";
+import type { BeflyContext } from "../types/befly.ts";
 // 类型导入
-import type { RequestContext } from "../types/context.js";
-import type { Hook } from "../types/hook.js";
+import type { RequestContext } from "../types/context.ts";
+import type { Hook } from "../types/hook.ts";
 
-import { withCtx } from "../lib/asyncContext.js";
-import { Logger } from "../lib/logger.js";
+import { withCtx } from "../lib/asyncContext.ts";
+import { Logger } from "../lib/logger.ts";
 // 相对导入
-import { genShortId } from "../utils/genShortId.js";
-import { getClientIp } from "../utils/getClientIp.js";
-import { FinalResponse } from "../utils/response.js";
+import { genShortId } from "../utils/genShortId.ts";
+import { getClientIp } from "../utils/getClientIp.ts";
+import { FinalResponse } from "../utils/response.ts";
 
 /**
  * API处理器工厂函数

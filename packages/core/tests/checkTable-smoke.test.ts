@@ -1,9 +1,9 @@
-import type { ScanFileResult } from "../utils/scanFiles.js";
+import type { ScanFileResult } from "../utils/scanFiles.ts";
 
 import { describe, expect, test } from "bun:test";
 
-import { checkTable } from "../checks/checkTable.js";
-import { Logger } from "../lib/logger.js";
+import { checkTable } from "../checks/checkTable.ts";
+import { Logger } from "../lib/logger.ts";
 
 describe("checkTable - smoke", () => {
     test("应忽略非 table 项；合法表定义不应抛错", async () => {

@@ -5,11 +5,11 @@
  */
 
 // 类型导入
-import type { Hook } from "../types/hook.js";
-import type { ScanFileResult } from "../utils/scanFiles.js";
+import type { Hook } from "../types/hook.ts";
+import type { ScanFileResult } from "../utils/scanFiles.ts";
 
-import { Logger } from "../lib/logger.js";
-import { sortModules } from "../utils/sortModules.js";
+import { Logger } from "../lib/logger.ts";
+import { sortModules } from "../utils/sortModules.ts";
 
 export async function loadHooks(hooks: ScanFileResult[], disableHooks: string[] = []): Promise<Hook[]> {
     const hooksMap: Hook[] = [];

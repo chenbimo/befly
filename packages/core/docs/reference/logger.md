@@ -87,7 +87,7 @@ interface LoggerConfig {
 ### 导入 Logger
 
 ```typescript
-import { Logger } from "../lib/logger.js";
+import { Logger } from "../lib/logger.ts";
 ```
 
 ### 日志方法
@@ -297,7 +297,7 @@ export default {
 
 ```typescript
 // 直接导入使用
-import { Logger } from "../lib/logger.js";
+import { Logger } from "../lib/logger.ts";
 
 Logger.info("直接使用");
 ```
@@ -311,7 +311,7 @@ Logger.info("直接使用");
 测试时可以设置 Mock 实例：
 
 ```typescript
-import { Logger, setMockLogger } from "../lib/logger.js";
+import { Logger, setMockLogger } from "../lib/logger.ts";
 import pino from "pino";
 
 // 创建 mock logger
@@ -331,7 +331,7 @@ setMockLogger(null);
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Logger, setMockLogger } from "../lib/logger.js";
+import { Logger, setMockLogger } from "../lib/logger.ts";
 import pino from "pino";
 
 describe("Logger", () => {

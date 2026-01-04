@@ -3,10 +3,10 @@
  * 自动加载 configs 目录下的配置文件并与默认配置合并
  * 支持环境分离：befly.common.json + befly.development/production.json
  */
-import type { BeflyOptions } from "./types/befly.js";
+import type { BeflyOptions } from "./types/befly.ts";
 
-import { compileDisableMenuGlobRules } from "./utils/disableMenusGlob.js";
-import { scanConfig } from "./utils/scanConfig.js";
+import { compileDisableMenuGlobRules } from "./utils/disableMenusGlob.ts";
+import { scanConfig } from "./utils/scanConfig.ts";
 
 /** 默认配置 */
 const defaultOptions: BeflyOptions = {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import permissionHook from "../hooks/permission.js";
+import permissionHook from "../hooks/permission.ts";
 
 describe("permission hook - deny message", () => {
     test("应优先使用 ctx.api.name 作为接口标识", async () => {

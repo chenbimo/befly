@@ -10,7 +10,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 describe("isStringOrArrayType", () => {
     test("string 类型返回 true", () => {

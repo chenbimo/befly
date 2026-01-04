@@ -2,7 +2,7 @@
  * Befly 插件系统类型定义
  */
 
-import type { BeflyContext } from "./befly.js";
+import type { BeflyContext } from "./befly.ts";
 
 /**
  * 插件配置类型

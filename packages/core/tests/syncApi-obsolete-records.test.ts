@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { syncApi } from "../sync/syncApi.js";
+import { syncApi } from "../sync/syncApi.ts";
 
 describe("syncApi - delete obsolete records", () => {
     test("应删除不在配置中的接口记录", async () => {

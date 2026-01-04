@@ -1,11 +1,11 @@
-import type { AddonInfo } from "./scanAddons.js";
-import type { ScanFileResult } from "./scanFiles.js";
+import type { AddonInfo } from "./scanAddons.ts";
+import type { ScanFileResult } from "./scanFiles.ts";
 
 import { join } from "pathe";
 
-import { coreDir, appDir } from "../paths.js";
-import { scanAddons } from "./scanAddons.js";
-import { scanFiles } from "./scanFiles.js";
+import { coreDir, appDir } from "../paths.ts";
+import { scanAddons } from "./scanAddons.ts";
+import { scanFiles } from "./scanFiles.ts";
 
 export type ScanSourcesResult = {
     hooks: ScanFileResult[];

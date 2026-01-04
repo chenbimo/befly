@@ -4,8 +4,8 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
-import { createMockSqliteDb } from "./_mocks/mockSqliteDb.js";
+import { syncTable } from "../sync/syncTable.ts";
+import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
 
 describe("tableExistsRuntime", () => {
     test("sql 执行器未初始化时抛出错误", async () => {

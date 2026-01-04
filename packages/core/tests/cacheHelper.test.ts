@@ -4,9 +4,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 
-import { CacheHelper } from "../lib/cacheHelper.js";
-import { CacheKeys } from "../lib/cacheKeys.js";
-import { setMockLogger } from "../lib/logger.js";
+import { CacheHelper } from "../lib/cacheHelper.ts";
+import { CacheKeys } from "../lib/cacheKeys.ts";
+import { setMockLogger } from "../lib/logger.ts";
 
 // Mock pino logger
 const mockPino = {

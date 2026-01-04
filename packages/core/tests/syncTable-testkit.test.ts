@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 describe("syncTable - TestKit 挂载", () => {
     it("should expose TestKit as a stable object", () => {

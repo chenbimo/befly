@@ -1,4 +1,4 @@
-import type { DbResult, SqlInfo } from "../../types/database.js";
+import type { DbResult, SqlInfo } from "../../types/database.ts";
 
 type SqlExecutor = {
     unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;

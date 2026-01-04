@@ -2,7 +2,7 @@
  * 日志系统 - 基于 pino 实现
  */
 
-import type { LoggerConfig } from "../types/logger.js";
+import type { LoggerConfig } from "../types/logger.ts";
 
 import { existsSync, mkdirSync } from "node:fs";
 import { readdir, stat, unlink } from "node:fs/promises";
@@ -13,7 +13,7 @@ import { escapeRegExp } from "es-toolkit/string";
 import { join } from "pathe";
 import pino from "pino";
 
-import { getCtx } from "./asyncContext.js";
+import { getCtx } from "./asyncContext.ts";
 
 // 注意：Logger 可能在运行时/测试中被 process.chdir() 影响。
 // 为避免相对路径的 logs 目录随着 cwd 变化，使用模块加载时的初始 cwd 作为锚点。

@@ -2,7 +2,7 @@ import { describe, test, expect } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { loadBeflyConfig } from "../befly.config.js";
+import { loadBeflyConfig } from "../befly.config.ts";
 
 describe("Config - NODE_ENV 选择 development/production", () => {
     test("production -> befly.production.json；其他 -> befly.development.json（common 总是生效）", async () => {

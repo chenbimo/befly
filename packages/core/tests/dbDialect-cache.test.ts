@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { getDialectByName } from "../lib/dbDialect.js";
+import { getDialectByName } from "../lib/dbDialect.ts";
 
 describe("dbDialect - getDialectByName cache", () => {
     it("should return stable singleton instances", () => {

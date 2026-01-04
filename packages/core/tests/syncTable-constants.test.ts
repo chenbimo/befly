@@ -12,7 +12,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 describe("DB_VERSION_REQUIREMENTS", () => {
     test("MySQL 最低版本为 8", () => {

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { checkMenu } from "../checks/checkMenu.js";
+import { checkMenu } from "../checks/checkMenu.ts";
 
 describe("checkMenu", () => {
     test("重复 path 应阻断菜单同步", async () => {

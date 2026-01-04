@@ -5,8 +5,8 @@
 
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 
-import { Connect } from "../lib/connect.js";
-import { RedisHelper } from "../lib/redisHelper.js";
+import { Connect } from "../lib/connect.ts";
+import { RedisHelper } from "../lib/redisHelper.ts";
 
 let redis: RedisHelper;
 

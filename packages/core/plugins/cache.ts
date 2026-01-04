@@ -3,10 +3,10 @@
  * 负责在服务器启动时缓存接口、菜单和角色权限到 Redis
  */
 
-import type { BeflyContext } from "../types/befly.js";
-import type { Plugin } from "../types/plugin.js";
+import type { BeflyContext } from "../types/befly.ts";
+import type { Plugin } from "../types/plugin.ts";
 
-import { CacheHelper } from "../lib/cacheHelper.js";
+import { CacheHelper } from "../lib/cacheHelper.ts";
 
 /**
  * 缓存插件

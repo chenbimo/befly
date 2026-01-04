@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { checkApi } from "../checks/checkApi.js";
+import { checkApi } from "../checks/checkApi.ts";
 
 describe("checkApi - routePath strict", () => {
     test("合法 routePath 应通过", async () => {

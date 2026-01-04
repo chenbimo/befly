@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fileURLToPath } from "node:url";
 
-import { scanFiles } from "../utils/scanFiles.js";
+import { scanFiles } from "../utils/scanFiles.ts";
 
 describe("scanFiles - api routePath formatting", () => {
     test("routePrefix 应为 /core|/app|/addon 且 routePath 不应出现 /api//", async () => {

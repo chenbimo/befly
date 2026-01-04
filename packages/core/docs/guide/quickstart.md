@@ -225,13 +225,13 @@ CREATE DATABASE my_api CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 如需手动触发，可在代码中调用（一般不建议在请求路径中调用）：
 
 ```typescript
-import { syncTable } from "../sync/syncTable.js";
-import { syncApi } from "../sync/syncApi.js";
-import { syncMenu } from "../sync/syncMenu.js";
-import { syncDev } from "../sync/syncDev.js";
-import { syncCache } from "../sync/syncCache.js";
-import { checkMenu } from "../checks/checkMenu.js";
-import { scanSources } from "../utils/scanSources.js";
+import { syncTable } from "../sync/syncTable.ts";
+import { syncApi } from "../sync/syncApi.ts";
+import { syncMenu } from "../sync/syncMenu.ts";
+import { syncDev } from "../sync/syncDev.ts";
+import { syncCache } from "../sync/syncCache.ts";
+import { checkMenu } from "../checks/checkMenu.ts";
+import { scanSources } from "../utils/scanSources.ts";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）
 const sources = await scanSources();

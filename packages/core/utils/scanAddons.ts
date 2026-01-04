@@ -3,8 +3,8 @@ import { existsSync, readdirSync } from "node:fs";
 import { camelCase } from "es-toolkit/string";
 import { join, resolve } from "pathe";
 
-import { appAddonsDir, appDir } from "../paths.js";
-import { isDirentDirectory } from "./isDirentDirectory.js";
+import { appAddonsDir, appDir } from "../paths.ts";
+import { isDirentDirectory } from "./isDirentDirectory.ts";
 
 export type AddonSource = "addon" | "app";
 

@@ -18,7 +18,7 @@ describe("befly-shared - exports/types sanity", () => {
         expect(pkg.exports["./utils/*"]).toBe("./utils/*.ts");
         expect(pkg.exports["./types/*"]).toBe("./types/*.ts");
 
-        // 防止误加 "./*": "./index.js" 之类的导出（项目规范禁止）
+        // 防止误加 "./*": "./index.ts" 之类的导出（项目规范禁止）
         expect(Object.prototype.hasOwnProperty.call(pkg.exports, "./*")).toBe(false);
     });
 

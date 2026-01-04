@@ -8,7 +8,7 @@ export default {
         const uptime = Math.floor(process.uptime() * 1000);
 
         // 环境
-        const environment = Env.NODE_ENV || "development";
+        const environment = process.env.NODE_ENV || "development";
 
         return befly.tool.Yes("获取成功", {
             environment: environment,

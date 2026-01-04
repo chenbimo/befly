@@ -1,7 +1,7 @@
 import { isPlainObject } from "es-toolkit/compat";
 import { omit } from "es-toolkit/object";
 
-import { Logger } from "../lib/logger.js";
+import { Logger } from "../lib/logger.ts";
 
 export async function checkApi(apis: any[]): Promise<void> {
     let hasError = false;

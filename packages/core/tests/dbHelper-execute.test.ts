@@ -5,9 +5,9 @@
 
 import { test, expect, mock } from "bun:test";
 
-import { MySqlDialect } from "../lib/dbDialect.js";
-import { DbHelper } from "../lib/dbHelper.js";
-import { Logger } from "../lib/logger.js";
+import { MySqlDialect } from "../lib/dbDialect.ts";
+import { DbHelper } from "../lib/dbHelper.ts";
+import { Logger } from "../lib/logger.ts";
 
 function createMockRedis() {
     return {

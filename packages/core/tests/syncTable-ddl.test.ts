@@ -11,7 +11,7 @@
 
 import { describe, test, expect } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 describe("buildIndexSQL (MySQL)", () => {
     test("创建索引 SQL", () => {

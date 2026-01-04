@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { SqlBuilder } from "../lib/sqlBuilder.js";
+import { SqlBuilder } from "../lib/sqlBuilder.ts";
 
 describe("smoke - sql", () => {
     test("SqlBuilder: should build a simple SELECT with params", () => {

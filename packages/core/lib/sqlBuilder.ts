@@ -3,9 +3,9 @@
  * 提供链式 API 构建 SQL 查询
  */
 
-import type { WhereConditions, WhereOperator, OrderDirection, SqlQuery, InsertData, UpdateData, SqlValue } from "../types/common.js";
+import type { WhereConditions, WhereOperator, OrderDirection, SqlQuery, InsertData, UpdateData, SqlValue } from "../types/common.ts";
 
-import { SqlCheck } from "./sqlCheck.js";
+import { SqlCheck } from "./sqlCheck.ts";
 
 const SqlBuilderError = {
     QUOTE_IDENT_NEED_STRING: (identifier: unknown) => `quoteIdent 需要字符串类型标识符 (identifier: ${String(identifier)})`,

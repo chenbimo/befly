@@ -3,22 +3,22 @@
  * 提供数据库 CRUD 操作的封装
  */
 
-import type { WhereConditions, JoinOption } from "../types/common.js";
-import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database.js";
-import type { DbDialect } from "./dbDialect.js";
+import type { WhereConditions, JoinOption } from "../types/common.ts";
+import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database.ts";
+import type { DbDialect } from "./dbDialect.ts";
 
 import { snakeCase } from "es-toolkit/string";
 
-import { arrayKeysToCamel } from "../utils/arrayKeysToCamel.js";
-import { convertBigIntFields } from "../utils/convertBigIntFields.js";
-import { fieldClear } from "../utils/fieldClear.js";
-import { keysToCamel } from "../utils/keysToCamel.js";
-import { CacheKeys } from "./cacheKeys.js";
-import { MySqlDialect } from "./dbDialect.js";
-import { DbUtils } from "./dbUtils.js";
-import { Logger } from "./logger.js";
-import { SqlBuilder } from "./sqlBuilder.js";
-import { SqlCheck } from "./sqlCheck.js";
+import { arrayKeysToCamel } from "../utils/arrayKeysToCamel.ts";
+import { convertBigIntFields } from "../utils/convertBigIntFields.ts";
+import { fieldClear } from "../utils/fieldClear.ts";
+import { keysToCamel } from "../utils/keysToCamel.ts";
+import { CacheKeys } from "./cacheKeys.ts";
+import { MySqlDialect } from "./dbDialect.ts";
+import { DbUtils } from "./dbUtils.ts";
+import { Logger } from "./logger.ts";
+import { SqlBuilder } from "./sqlBuilder.ts";
+import { SqlCheck } from "./sqlCheck.ts";
 
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 

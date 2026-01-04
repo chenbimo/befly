@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { syncApi } from "../sync/syncApi.js";
-import { syncDev } from "../sync/syncDev.js";
-import { syncMenu } from "../sync/syncMenu.js";
+import { syncApi } from "../sync/syncApi.ts";
+import { syncDev } from "../sync/syncDev.ts";
+import { syncMenu } from "../sync/syncMenu.ts";
 
 describe("sync - init guard", () => {
     test("syncApi: ctx.db 缺失时应给出明确错误", async () => {

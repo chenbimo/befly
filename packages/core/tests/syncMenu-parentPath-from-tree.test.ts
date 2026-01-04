@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { __test__ } from "../sync/syncMenu.js";
+import { __test__ } from "../sync/syncMenu.ts";
 
 describe("syncMenu - parentPath derived from tree", () => {
     test("根级菜单不应强制按 URL path 推导 parentPath（避免把同级菜单挂到首页下面）", () => {

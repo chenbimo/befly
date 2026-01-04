@@ -1,10 +1,10 @@
 // 类型导入
-import type { Hook } from "../types/hook.js";
+import type { Hook } from "../types/hook.ts";
 
-import { CacheKeys } from "../lib/cacheKeys.js";
-import { Logger } from "../lib/logger.js";
+import { CacheKeys } from "../lib/cacheKeys.ts";
+import { Logger } from "../lib/logger.ts";
 // 相对导入
-import { ErrorResponse } from "../utils/response.js";
+import { ErrorResponse } from "../utils/response.ts";
 
 /**
  * 权限检查钩子

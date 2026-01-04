@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { loadPlugins } from "../loader/loadPlugins.js";
+import { loadPlugins } from "../loader/loadPlugins.ts";
 
 describe("loadPlugins - order smoke", () => {
     test("deps 应确保 redis 在 db/cache 之前初始化", async () => {

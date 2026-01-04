@@ -4,15 +4,15 @@
  */
 
 // 类型导入
-import type { CorsConfig } from "../types/befly.js";
+import type { CorsConfig } from "../types/befly.ts";
 
 // 外部依赖
 import { join } from "pathe";
 
-import { Logger } from "../lib/logger.js";
+import { Logger } from "../lib/logger.ts";
 // 相对导入
-import { appDir } from "../paths.js";
-import { setCorsOptions } from "../utils/cors.js";
+import { appDir } from "../paths.ts";
+import { setCorsOptions } from "../utils/cors.ts";
 
 /**
  * 静态文件处理器工厂

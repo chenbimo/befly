@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { checkMenu } from "../checks/checkMenu.js";
-import { syncMenu } from "../sync/syncMenu.js";
+import { checkMenu } from "../checks/checkMenu.ts";
+import { syncMenu } from "../sync/syncMenu.ts";
 
 describe("syncMenu - disableMenus hard delete", () => {
     test("命中 disableMenus 的菜单应被强制删除（不分 state）", async () => {

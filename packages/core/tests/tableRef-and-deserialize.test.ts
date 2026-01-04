@@ -1,9 +1,9 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { MySqlDialect } from "../lib/dbDialect.js";
-import { DbHelper } from "../lib/dbHelper.js";
-import { DbUtils } from "../lib/dbUtils.js";
-import { SqlBuilder } from "../lib/sqlBuilder.js";
+import { MySqlDialect } from "../lib/dbDialect.ts";
+import { DbHelper } from "../lib/dbHelper.ts";
+import { DbUtils } from "../lib/dbUtils.ts";
+import { SqlBuilder } from "../lib/sqlBuilder.ts";
 
 describe("tableRef normalize + escape", () => {
     it("DbUtils.normalizeTableRef: 保留 alias，仅 snakeCase 表名", () => {

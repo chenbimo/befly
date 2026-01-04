@@ -2,15 +2,15 @@
  * syncTable 端到端行为测试（纯 mock，不连接真实数据库）
  */
 
-import type { FieldDefinition } from "../types/validate.js";
-import type { ScanFileResult } from "../utils/scanFiles.js";
-import type { MockSqliteState } from "./_mocks/mockSqliteDb.js";
+import type { FieldDefinition } from "../types/validate.ts";
+import type { ScanFileResult } from "../utils/scanFiles.ts";
+import type { MockSqliteState } from "./_mocks/mockSqliteDb.ts";
 
 import { describe, expect, test } from "bun:test";
 
-import { CacheKeys } from "../lib/cacheKeys.js";
-import { syncTable } from "../sync/syncTable.js";
-import { createMockSqliteDb } from "./_mocks/mockSqliteDb.js";
+import { CacheKeys } from "../lib/cacheKeys.ts";
+import { syncTable } from "../sync/syncTable.ts";
+import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
 
 function buildTableItem(options: { tableFileName: string; content: any }): ScanFileResult {
     return {

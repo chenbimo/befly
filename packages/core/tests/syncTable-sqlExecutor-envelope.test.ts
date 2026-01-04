@@ -4,11 +4,11 @@
  * 一旦有人把代码改回旧风格（把 unsafe() 当成直接返回数组），这里会立刻失败。
  */
 
-import type { DbResult, SqlInfo } from "../types/database.js";
+import type { DbResult, SqlInfo } from "../types/database.ts";
 
 import { describe, expect, test } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.js";
+import { syncTable } from "../sync/syncTable.ts";
 
 type SqlExecutor = {
     unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;

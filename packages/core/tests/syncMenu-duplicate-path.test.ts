@@ -2,9 +2,9 @@ import { describe, expect, test, beforeEach, afterEach, mock } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { checkMenu } from "../checks/checkMenu.js";
-import { setMockLogger } from "../lib/logger.js";
-import { syncMenu } from "../sync/syncMenu.js";
+import { checkMenu } from "../checks/checkMenu.ts";
+import { setMockLogger } from "../lib/logger.ts";
+import { syncMenu } from "../sync/syncMenu.ts";
 
 // Mock pino logger
 const mockPino = {

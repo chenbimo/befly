@@ -5,9 +5,9 @@
 
 import { test, expect, mock } from "bun:test";
 
-import { CacheKeys } from "../lib/cacheKeys.js";
-import { MySqlDialect } from "../lib/dbDialect.js";
-import { DbHelper } from "../lib/dbHelper.js";
+import { CacheKeys } from "../lib/cacheKeys.ts";
+import { MySqlDialect } from "../lib/dbDialect.ts";
+import { DbHelper } from "../lib/dbHelper.ts";
 
 function createRedisMock(options?: { getObject?: any; setObject?: any; del?: any; genTimeID?: any }) {
     const getObject = options?.getObject ? options.getObject : mock(async () => null);
