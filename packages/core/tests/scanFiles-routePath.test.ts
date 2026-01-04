@@ -8,9 +8,9 @@ describe("scanFiles - api routePath formatting", () => {
         const fixturesDir = fileURLToPath(new URL("./fixtures/scanFilesApis", import.meta.url));
         const addonApisDir = fileURLToPath(new URL("./fixtures/scanFilesAddon/node_modules/@befly-addon/demo/apis", import.meta.url));
 
-        const coreApis = await scanFiles(fixturesDir, "core", "api", "**/*.ts");
-        const appApis = await scanFiles(fixturesDir, "app", "api", "**/*.ts");
-        const addonApis = await scanFiles(addonApisDir, "addon", "api", "**/*.ts");
+        const coreApis = await scanFiles(fixturesDir, "core", "api", "**/*.{ts,js}");
+        const appApis = await scanFiles(fixturesDir, "app", "api", "**/*.{ts,js}");
+        const addonApis = await scanFiles(addonApisDir, "addon", "api", "**/*.{ts,js}");
 
         const all = ([] as any[]).concat(coreApis as any, appApis as any, addonApis as any);
         expect(all.length).toBeGreaterThan(0);

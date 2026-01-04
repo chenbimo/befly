@@ -12,7 +12,7 @@
 
 import { fileURLToPath } from "node:url";
 
-import { dirname, join } from "pathe";
+import { dirname, join, normalize } from "pathe";
 
 // 当前文件的路径信息
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +25,12 @@ const __dirname = dirname(__filename);
  * @description packages/core/
  */
 export const coreDir = __dirname;
+
+/**
+ * Core 框架 dist 目录
+ * @description 源码态为 packages/core/dist；dist 运行态为 packages/core/dist
+ */
+export const coreDistDir = normalize(__dirname).endsWith("/dist") ? __dirname : join(__dirname, "dist");
 
 /**
  * Core 框架检查目录
