@@ -12,11 +12,11 @@
 
 ## API 接口
 
-所有接口路由前缀: `/api/admin/`
+所有接口路由前缀: `/api/addon/admin/`
 
 ### 1. 注册接口
 
-**路由**: `POST /api/admin/register`
+**路由**: `POST /api/addon/admin/admin/register`
 
 **请求参数**:
 
@@ -44,7 +44,7 @@
 
 ### 2. 登录接口
 
-**路由**: `POST /api/admin/login`
+**路由**: `POST /api/addon/admin/admin/login`
 
 **邮箱登录**:
 
@@ -85,7 +85,7 @@
 
 ### 3. 发送短信验证码
 
-**路由**: `POST /api/admin/sendSmsCode`
+**路由**: `POST /api/addon/admin/admin/sendSmsCode`
 
 **请求参数**:
 
@@ -109,7 +109,7 @@
 
 ### 4. 获取用户信息
 
-**路由**: `GET /api/admin/userInfo`
+**路由**: `GET /api/addon/admin/admin/userInfo`
 
 **请求头**:
 
@@ -135,7 +135,7 @@ Authorization: Bearer {token}
 
 ### 5. 退出登录
 
-**路由**: `POST /api/admin/logout`
+**路由**: `POST /api/addon/admin/admin/logout`
 
 **请求头**:
 

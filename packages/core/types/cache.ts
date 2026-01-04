@@ -2,7 +2,8 @@
  * 缓存助手类型定义
  */
 
-import type { BeflyContext } from "./befly.ts";
+import type { DbHelper } from "./database.ts";
+import type { RedisHelper } from "./redis.ts";
 
 /**
  * 缓存助手类
@@ -73,5 +74,5 @@ export interface CacheHelper {
  * CacheHelper 构造函数类型
  */
 export interface CacheHelperConstructor {
-    new (befly: BeflyContext): CacheHelper;
+    new (deps: { db: DbHelper; redis: RedisHelper }): CacheHelper;
 }

@@ -117,13 +117,13 @@ export default {
 
 文件路径自动转换为路由：
 
-| 文件路径                | 路由路径                  |
-| ----------------------- | ------------------------- |
-| `apis/user/login.ts`    | `POST /api/user/login`    |
-| `apis/user/register.ts` | `POST /api/user/register` |
-| `apis/article/list.ts`  | `POST /api/article/list`  |
+| 文件路径                | 路由路径                 |
+| ----------------------- | ------------------------ |
+| `apis/user/login.ts`    | `/api/app/user/login`    |
+| `apis/user/register.ts` | `/api/app/user/register` |
+| `apis/article/list.ts`  | `/api/app/article/list`  |
 
-> 注意：上面的写法是“HTTP 请求方法 + url.pathname”。系统内部生成并存储的 `routePath`、角色权限 `role.apis` 以及 Redis 权限缓存都只使用 `url.pathname`（例如 `/api/user/login`），与 method 无关，且禁止写成 `POST/api/...` 或 `POST /api/...`。
+> 注意：上表展示的是系统内部生成并存储的 **pathname**（`url.pathname`，例如 `/api/app/user/login`），与 method 无关。你可以在“HTTP 请求示例”里写 `POST /api/...` / `GET /api/...`，但**禁止**把带 method 的写法写入任何存储/配置/权限集合（例如 `routePath`、`role.apis`、Redis 权限缓存）。
 
 ---
 
@@ -279,7 +279,7 @@ bun run dev
 
 ```bash
 # 测试登录接口
-curl -X POST http://localhost:3000/api/user/login \
+curl -X POST http://localhost:3000/api/app/user/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"123456"}'
 ```

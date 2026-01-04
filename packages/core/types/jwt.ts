@@ -67,3 +67,16 @@ export interface JwtDecoded {
     payload: JwtPayload;
     signature: string;
 }
+
+/**
+ * Jwt 实例接口（类型层）。
+ *
+ * runtime 实现位于 core 内部，但对外类型应从 `befly/types/*` 获取。
+ */
+export interface Jwt {
+    sign(payload: JwtPayload, options?: JwtSignOptions): string;
+    verify<T = JwtPayload>(token: string, options?: JwtVerifyOptions): T;
+
+    decode(token: string, complete?: false): JwtPayload;
+    decode(token: string, complete: true): JwtDecoded;
+}

@@ -2,9 +2,6 @@
  * Redis 助手类型定义
  */
 
-import type { BeflyContext } from "./befly.ts";
-import type { RedisClient } from "bun";
-
 /**
  * Redis Key 类型
  */
@@ -30,93 +27,52 @@ export interface RedisOptions {
  * Redis 助手接口
  */
 export interface RedisHelper {
-    /** Redis 客户端实例 */
-    client: RedisClient;
+    // ===== object helpers =====
+    setObject<T = any>(key: string, obj: T, ttl?: number | null): Promise<string | null>;
+    getObject<T = any>(key: string): Promise<T | null>;
+    delObject(key: string): Promise<void>;
 
-    /**
-     * 设置值
-     */
-    set(key: RedisKey, value: RedisValue, ttl?: number): Promise<boolean>;
+    // ===== id generator (used by DbHelper) =====
+    genTimeID(): Promise<number>;
 
-    /**
-     * 获取值
-     */
-    get<T = RedisValue>(key: RedisKey): Promise<T | null>;
+    // ===== string helpers =====
+    setString(key: string, value: string, ttl?: number | null): Promise<string | null>;
+    getString(key: string): Promise<string | null>;
 
-    /**
-     * 删除键
-     */
-    del(key: RedisKey | RedisKey[]): Promise<number>;
+    // ===== basic key ops =====
+    exists(key: string): Promise<boolean>;
+    incr(key: string): Promise<number>;
+    incrWithExpire(key: string, seconds: number): Promise<number>;
+    expire(key: string, seconds: number): Promise<number>;
+    ttl(key: string): Promise<number>;
+    ttlBatch(keys: string[]): Promise<number[]>;
 
-    /**
-     * 检查键是否存在
-     */
-    exists(key: RedisKey): Promise<boolean>;
+    // ===== set ops =====
+    sadd(key: string, members: string[]): Promise<number>;
+    sismember(key: string, member: string): Promise<boolean>;
+    scard(key: string): Promise<number>;
+    smembers(key: string): Promise<string[]>;
+    saddBatch(items: Array<{ key: string; members: string[] }>): Promise<number>;
+    sismemberBatch(items: Array<{ key: string; member: string }>): Promise<boolean[]>;
 
-    /**
-     * 设置过期时间
-     */
-    expire(key: RedisKey, ttl: number): Promise<boolean>;
+    // ===== batch ops =====
+    del(key: string): Promise<number>;
+    delBatch(keys: string[]): Promise<number>;
+    setBatch<T = any>(items: Array<{ key: string; value: T; ttl?: number | null }>): Promise<number>;
+    getBatch<T = any>(keys: string[]): Promise<Array<T | null>>;
+    existsBatch(keys: string[]): Promise<boolean[]>;
+    expireBatch(items: Array<{ key: string; seconds: number }>): Promise<number>;
 
-    /**
-     * 获取剩余生存时间
-     */
-    ttl(key: RedisKey): Promise<number>;
+    // ===== misc =====
+    ping(): Promise<string>;
 
-    /**
-     * 获取所有匹配的键
-     */
-    keys(pattern: string): Promise<RedisKey[]>;
-
-    /**
-     * 哈希表设置字段
-     */
-    hset(key: RedisKey, field: string, value: RedisValue): Promise<number>;
-
-    /**
-     * 哈希表获取字段
-     */
-    hget<T = RedisValue>(key: RedisKey, field: string): Promise<T | null>;
-
-    /**
-     * 哈希表删除字段
-     */
-    hdel(key: RedisKey, field: string | string[]): Promise<number>;
-
-    /**
-     * 哈希表获取所有字段和值
-     */
-    hgetall<T = RedisValue>(key: RedisKey): Promise<Record<string, T>>;
-
-    /**
-     * 列表左侧推入
-     */
-    lpush(key: RedisKey, value: RedisValue): Promise<number>;
-
-    /**
-     * 列表右侧推入
-     */
-    rpush(key: RedisKey, value: RedisValue): Promise<number>;
-
-    /**
-     * 列表左侧弹出
-     */
-    lpop<T = RedisValue>(key: RedisKey): Promise<T | null>;
-
-    /**
-     * 列表右侧弹出
-     */
-    rpop<T = RedisValue>(key: RedisKey): Promise<T | null>;
-
-    /**
-     * 获取列表范围
-     */
-    lrange<T = RedisValue>(key: RedisKey, start: number, stop: number): Promise<T[]>;
+    // 兜底：允许实现层新增方法而不阻断使用方（保持兼容）
+    [key: string]: any;
 }
 
 /**
  * RedisHelper 构造函数类型
  */
 export interface RedisHelperConstructor {
-    new (befly: BeflyContext, options?: RedisOptions): RedisHelper;
+    new (prefix?: string): RedisHelper;
 }

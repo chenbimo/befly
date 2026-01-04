@@ -42,3 +42,19 @@ export interface LoggerConfig {
      */
     excludeFields?: string[];
 }
+
+/**
+ * Logger 接口（类型层）。
+ *
+ * 说明：core/runtime 内部使用的是 pino 封装后的 Logger 对象；
+ * 对外只承诺常用的 `info/warn/error/debug` 等调用形式。
+ */
+export interface Logger {
+    info(...args: any[]): any;
+    warn(...args: any[]): any;
+    error(...args: any[]): any;
+    debug(...args: any[]): any;
+
+    configure(cfg: LoggerConfig): void;
+    setMock(mock: any | null): void;
+}

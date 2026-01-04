@@ -59,3 +59,15 @@ export interface SingleResult {
     value: any;
     error: string | null;
 }
+
+/**
+ * Validator 静态类类型（对外）。
+ *
+ * 说明：runtime 实现是 `export class Validator`，以静态方法形式提供：
+ * - `Validator.validate(data, rules, required)`
+ * - `Validator.single(value, fieldDef)`
+ */
+export interface ValidatorStatic {
+    validate(data: Record<string, any>, rules: TableDefinition, required?: string[]): ValidateResult;
+    single(value: any, fieldDef: FieldDefinition): SingleResult;
+}

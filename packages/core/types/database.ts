@@ -113,3 +113,50 @@ export interface AllResult<T = any> {
  * 事务回调
  */
 export type TransactionCallback<T = any> = (db: any) => Promise<T>;
+
+/**
+ * DbHelper 公开接口（类型层）。
+ *
+ * 说明：runtime 的实现位于 core 内部（dist/lib），但对外类型应只从 `befly/types/*` 获取。
+ * 这里提供一个与实际实现对齐的接口，用于 BeflyContext.db 的类型标注。
+ */
+export interface DbHelper {
+    // ========== schema / meta ==========
+    tableExists(tableName: string): Promise<DbResult<boolean>>;
+
+    // ========== query ==========
+    getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>>;
+    getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<T | null>>;
+    getList<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<ListResult<T>, ListSql>>;
+    getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<AllResult<T>, ListSql>>;
+
+    exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>>;
+
+    getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<T | null>>;
+
+    // ========== write ==========
+    insData(options: InsertOptions): Promise<DbResult<number>>;
+    insBatch(table: string, dataList: Record<string, any>[]): Promise<DbResult<number[]>>;
+
+    updData(options: UpdateOptions): Promise<DbResult<number>>;
+    updBatch(table: string, dataList: Array<{ id: number; data: Record<string, any> }>): Promise<DbResult<number>>;
+
+    delData(options: DeleteOptions): Promise<DbResult<number>>;
+    delForce(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
+    delForceBatch(table: string, ids: number[]): Promise<DbResult<number>>;
+
+    enableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
+    disableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
+
+    // ========== raw / transaction ==========
+    query(sql: string, params?: any[]): Promise<DbResult<any>>;
+    unsafe(sqlStr: string, params?: any[]): Promise<DbResult<any>>;
+    trans<T = any>(callback: TransactionCallback<T>): Promise<T>;
+
+    // ========== numeric helpers ==========
+    increment(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
+    decrement(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
+
+    // 兜底：允许实现层新增方法而不阻断使用方（保持兼容）
+    [key: string]: any;
+}

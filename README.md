@@ -28,9 +28,6 @@ mkdir my-api && cd my-api
 
 # 安装 Befly
 bun add befly
-
-# 初始化项目（即将支持）
-bunx befly init
 ```
 
 ### 最简示例
@@ -39,11 +36,8 @@ bunx befly init
 // main.ts
 import { Befly } from "befly";
 
-const app = new Befly({
-    appName: "My API",
-    appPort: 3000
-});
-
+// 配置从 configs/befly.*.json 扫描加载（见 packages/core/befly.config.ts）
+const app = new Befly();
 await app.start();
 ```
 
@@ -74,7 +68,13 @@ export default {
 } as ApiRoute;
 ```
 
-访问：`http://localhost:3000/api/user/hello`
+访问：`http://localhost:3000/api/app/user/hello`
+
+### 路由命名空间速查
+
+- **核心 API**：`/api/core/...`（来自 `packages/core/dist/apis/**/*.js`）
+- **项目 API**：`/api/app/...`（来自项目 `apis/**/*.{ts,js}`）
+- **Addon API**：`/api/addon/<addonName>/...`（来自 `addons/<addonName>/apis/**/*.{ts,js}` 或 `node_modules/@befly-addon/<addonName>/apis/**/*.{ts,js}`）
 
 ## 🔥 新版本特性（3.0）
 

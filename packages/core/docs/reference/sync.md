@@ -35,7 +35,7 @@ Sync 同步系统用于将代码定义同步到数据库，包括：
 
 ## 强约束清单
 
-- **API routePath 必须是 pathname**：`syncApi` 写入数据库的 `routePath` 仅允许 `url.pathname`（例如 `/api/user/login`），禁止出现 method 前缀（`POST/api/...`、`POST /api/...`）。
+- **API routePath 必须是 pathname**：`syncApi` 写入数据库的 `routePath` 仅允许 `url.pathname`（例如 `/api/app/user/login`），禁止出现 method 前缀（`POST/api/...`、`POST /api/...`）。
 - **角色权限 apis 仅允许 pathname 字符串数组**：`syncDev` 写入角色表的 `apis` 必须是 pathname 字符串数组（严格模式不允许 numeric id）。
 - **权限缓存 Set member 仅允许 pathname**：角色接口权限缓存的 Set 成员为 pathname，与 method 无关。
 - **Redis prefix 不允许包含冒号**：配置 `redis.prefix` 不要包含 `:`（系统会自动拼接分隔符）。例如写 `befly`，不要写 `befly:`。
@@ -134,8 +134,10 @@ await syncApi(ctx, sources.apis as any);
 │                    syncApi                          │
 ├─────────────────────────────────────────────────────┤
 │  1. 扫描 API 文件：                                  │
-│     - 项目 API：tpl/apis/**/*.ts                    │
-│     - Addon API：addons/*/apis/**/*.ts              │
+│     - 核心 API：dist/apis/**/*.js                   │
+│     - 项目 API：apis/**/*.{ts,js}                  │
+│     - Addon API：addons/*/apis/**/*.{ts,js}         │
+│       - 也支持：node_modules/@befly-addon/*/apis/**/*.{ts,js} │
 │         ↓                                           │
 │  2. 提取 API 信息：                                  │
 │     - name: 接口名称                                │
@@ -155,7 +157,7 @@ await syncApi(ctx, sources.apis as any);
 
 `syncApi` 会把扫描到的 API 信息同步到 `addon_admin_api` 表，核心字段为：
 
-- `routePath`：只存 `url.pathname`（例如 `/api/user/login`），与 method 无关
+- `routePath`：只存 `url.pathname`（例如 `/api/app/user/login`），与 method 无关
 - `name`：接口名称
 - `addonName`：所属 addon（无 addon 时为空字符串）
 

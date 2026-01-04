@@ -227,8 +227,8 @@ const CACHE_KEYS = {
 };
 
 const count = await befly.redis.saddBatch([
-    { key: CACHE_KEYS.roleApis("admin"), members: ["/api/user"] },
-    { key: CACHE_KEYS.roleApis("editor"), members: ["/api/article"] }
+    { key: CACHE_KEYS.roleApis("admin"), members: ["/api/app/user"] },
+    { key: CACHE_KEYS.roleApis("editor"), members: ["/api/app/article"] }
 ]);
 // 返回: 成功添加的总成员数量
 ```
@@ -243,8 +243,8 @@ const CACHE_KEYS = {
 };
 
 const results = await befly.redis.sismemberBatch([
-    { key: CACHE_KEYS.roleApis("admin"), member: "/api/user" },
-    { key: CACHE_KEYS.roleApis("admin"), member: "/api/user/delete" }
+    { key: CACHE_KEYS.roleApis("admin"), member: "/api/app/user" },
+    { key: CACHE_KEYS.roleApis("admin"), member: "/api/app/user/delete" }
 ]);
 // 返回: [true, false]
 ```
@@ -335,7 +335,7 @@ Redis 插件支持配置全局前缀，避免键名冲突：
 所有键会自动添加前缀，最终写入 Redis 的 key 形如：`myapp:<key>`。
 
 - 例如：你调用 `befly.redis.getString("user:1")`，实际访问的是 `myapp:user:1`
-- 例如：你调用 `befly.redis.sismember("role:apis:admin", "/api/user")`，实际访问的是 `myapp:role:apis:admin`
+- 例如：你调用 `befly.redis.sismember("role:apis:admin", "/api/app/user")`，实际访问的是 `myapp:role:apis:admin`
 
 > 注意：`redis.prefix` **不允许包含** `:`，因为 RedisHelper 会自动拼接分隔符 `:`。
 
@@ -369,7 +369,7 @@ if (count > limit) {
 ```typescript
 // 极简方案：每个角色一个 Set
 const roleApisKey = "role:apis:admin";
-const hasPermission = await befly.redis.sismember(roleApisKey, "/api/user/add");
+const hasPermission = await befly.redis.sismember(roleApisKey, "/api/app/user/add");
 // 返回: true
 ```
 
@@ -509,14 +509,14 @@ const menus = await befly.cache.getMenus();
 
 // 获取角色权限
 const permissions = await befly.cache.getRolePermissions("admin");
-// 返回: ['/api/user/list', '/api/user/add', ...]
+// 返回: ['/api/app/user/list', '/api/app/user/add', ...]
 ```
 
 ### 权限检查
 
 ```typescript
 // 检查角色是否有指定接口权限
-const hasPermission = await befly.cache.checkRolePermission("admin", "/api/user/add");
+const hasPermission = await befly.cache.checkRolePermission("admin", "/api/app/user/add");
 // 返回: true 或 false
 ```
 
@@ -528,8 +528,11 @@ const hasPermission = await befly.cache.checkRolePermission("admin", "/api/user/
 // 删除指定角色的权限缓存
 await befly.cache.deleteRolePermissions("admin");
 
-// 重新缓存所有角色权限
-await befly.cache.cacheRolePermissions();
+// 重新缓存所有角色权限（全量重建）
+await befly.cache.rebuildRoleApiPermissions();
+
+// 或：只刷新某个角色（覆盖更新）
+await befly.cache.refreshRoleApiPermissions("admin", ["/api/app/user/list", "/api/app/user/add"]);
 ```
 
 ---

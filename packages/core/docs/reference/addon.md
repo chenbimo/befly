@@ -239,12 +239,12 @@ Addon 的表自动添加 `addon_{name}_` 前缀：
 
 ### API 路由前缀
 
-Addon 的 API 自动添加 `/addon/{name}/` 前缀：
+Addon 的 API 自动添加 `/api/addon/{name}/` 前缀：
 
-| Addon   | API 文件              | 路由                                |
-| ------- | --------------------- | ----------------------------------- |
-| `admin` | `apis/admin/login.ts` | `POST /api/addon/admin/admin/login` |
-| `admin` | `apis/role/list.ts`   | `POST /api/addon/admin/role/list`   |
+| Addon   | API 文件              | 路由                           |
+| ------- | --------------------- | ------------------------------ |
+| `admin` | `apis/admin/login.ts` | `/api/addon/admin/admin/login` |
+| `admin` | `apis/role/list.ts`   | `/api/addon/admin/role/list`   |
 
 ---
 

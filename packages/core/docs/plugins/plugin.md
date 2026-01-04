@@ -237,7 +237,7 @@ const plugin: Plugin = {
 
 ```typescript
 const port = befly.config.appPort;
-const dbConfig = befly.config.database;
+const dbConfig = befly.config.db;
 const redisConfig = befly.config.redis;
 ```
 
@@ -248,15 +248,9 @@ const redisConfig = befly.config.redis;
 提供数据库操作能力，依赖 `logger` 插件。
 
 ```typescript
-// 插件源码
-const dbPlugin: Plugin = {
-    deps: ["logger", "redis"],
-    async handler(befly: BeflyContext): Promise<DbHelper> {
-        // 连接由启动期统一完成；插件仅消费已连接实例
-        const sql = Connect.getSql();
-        return new DbHelper({ redis: befly.redis, sql: sql, dialect: new MySqlDialect() });
-    }
-};
+// 内置插件：db
+// 说明：db 插件的实现依赖框架内部连接管理与 Dialect，不作为 public API 暴露。
+// 启动期会完成 SQL/Redis 连接，随后把 DbHelper 实例注入到 ctx.db。
 ```
 
 **使用方式**：
@@ -311,7 +305,7 @@ await befly.redis.setObject("user:1", { name: "张三" });
 const user = await befly.redis.getObject("user:1");
 
 // 集合操作
-await befly.redis.sadd("set:key", "member1", "member2");
+await befly.redis.sadd("set:key", ["member1", "member2"]);
 const isMember = await befly.redis.sismember("set:key", "member1");
 ```
 
@@ -324,12 +318,8 @@ const isMember = await befly.redis.sismember("set:key", "member1");
 提供 JWT Token 签发和验证功能。
 
 ```typescript
-// 插件源码
-const jwtPlugin: Plugin = {
-    handler: () => {
-        return new Jwt(beflyConfig.auth);
-    }
-};
+// 内置插件：jwt
+// 启动期根据配置创建 Jwt 实例，并注入到 ctx.jwt。
 ```
 
 **使用方式**：
@@ -352,15 +342,11 @@ const payload = await befly.jwt.verify(token);
 
 ### cipher - 加密插件
 
-提供密码哈希、加密解密等功能。
+提供哈希/HMAC、密码哈希、Base64、随机串、文件哈希等功能。
 
 ```typescript
-// 插件源码
-const plugin: Plugin = {
-    handler: () => {
-        return Cipher;
-    }
-};
+// 内置插件：cipher
+// 说明：cipher 注入的是静态方法集合（ctx.cipher.xxx）。
 ```
 
 **使用方式**：
@@ -372,11 +358,13 @@ const hashedPassword = await befly.cipher.hashPassword("123456");
 // 密码验证
 const isValid = await befly.cipher.verifyPassword("123456", hashedPassword);
 
-// AES 加密
-const encrypted = befly.cipher.encrypt("敏感数据");
+// 哈希/HMAC
+const digest = befly.cipher.sha256("hello");
+const sig = befly.cipher.hmacSha256("secret", "payload");
 
-// AES 解密
-const decrypted = befly.cipher.decrypt(encrypted);
+// Base64（注意：这是编码，不是加密）
+const encoded = befly.cipher.base64Encode("hello");
+const decoded = befly.cipher.base64Decode(encoded);
 ```
 
 > 详细用法请参考 [cipher.md](./cipher.md)
@@ -388,26 +376,24 @@ const decrypted = befly.cipher.decrypt(encrypted);
 提供应用级缓存管理功能。
 
 ```typescript
-// 插件源码
-const cachePlugin: Plugin = {
-    deps: ["logger", "redis", "db"],
-    async handler(befly: BeflyContext): Promise<CacheHelper> {
-        return new CacheHelper({ db: befly.db, redis: befly.redis });
-    }
-};
+// 内置插件：cache
+// 启动期会创建 CacheHelper，并注入到 ctx.cache。
 ```
 
 **使用方式**：
 
 ```typescript
-// 刷新角色权限缓存
-await befly.cache.refreshRoleApis("admin");
+// 全量重建所有角色权限缓存
+await befly.cache.rebuildRoleApiPermissions();
+
+// 增量刷新某个角色的权限（直接覆盖更新）
+await befly.cache.refreshRoleApiPermissions("admin", ["/api/app/user/list", "/api/app/user/detail"]);
 
 // 获取菜单缓存
 const menus = await befly.cache.getMenus();
 
-// 刷新所有缓存
-await befly.cache.refreshAll();
+// 重新缓存全部（apis + menus + role permissions）
+await befly.cache.cacheAll();
 ```
 
 ---

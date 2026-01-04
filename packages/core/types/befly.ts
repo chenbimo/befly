@@ -2,17 +2,14 @@
  * Befly 核心框架类型定义
  */
 
-import type { CacheHelper } from "../lib/cacheHelper.ts";
-import type { Cipher } from "../lib/cipher.ts";
-import type { DbHelper } from "../lib/dbHelper.ts";
-import type { Jwt } from "../lib/jwt.ts";
-import type { Logger } from "../lib/logger.ts";
-import type { RedisHelper } from "../lib/redisHelper.ts";
-import type { Validator } from "../lib/validator.ts";
-import type { ApiRoute } from "./api.ts";
+import type { CacheHelper } from "./cache.ts";
+import type { CipherStatic } from "./cipher.ts";
 import type { KeyValue } from "./common.ts";
-import type { LoggerConfig } from "./logger.ts";
-import type { Plugin } from "./plugin.ts";
+import type { DbHelper } from "./database.ts";
+import type { Jwt } from "./jwt.ts";
+import type { Logger, LoggerConfig } from "./logger.ts";
+import type { RedisHelper } from "./redis.ts";
+import type { ValidatorStatic } from "./validate.ts";
 
 export type { LoggerConfig };
 
@@ -195,7 +192,7 @@ export interface BeflyContext extends KeyValue {
     redis: RedisHelper;
 
     /** 日志器 */
-    logger: typeof Logger;
+    logger: Logger;
 
     /** 缓存助手 */
     cache: CacheHelper;
@@ -207,7 +204,7 @@ export interface BeflyContext extends KeyValue {
     };
 
     /** 加密解密 */
-    cipher: typeof Cipher;
+    cipher: CipherStatic;
 
     /** JWT 令牌 */
     jwt: Jwt;
@@ -222,178 +219,8 @@ export interface BeflyContext extends KeyValue {
 }
 
 /**
- * Befly 核心类
+ * Validator 静态类（注入到 ctx 的用法）
+ *
+ * 说明：这不是 befly 默认入口的运行时导出；仅用于在框架内部/插件中提供类型约束。
  */
-export interface Befly {
-    /** API 路由映射 */
-    apis: Map<string, ApiRoute>;
-
-    /** 插件列表 */
-    plugins: Plugin[];
-
-    /** 应用上下文 */
-    context: KeyValue;
-
-    /** 应用选项 */
-    appOptions: BeflyOptions;
-
-    /** 日志器 */
-    logger: typeof Logger;
-
-    /** JWT 工具 */
-    jwt: Jwt;
-
-    /** 验证器 */
-    validator: Validator;
-
-    /** SQL 管理器 */
-    sql: DbHelper;
-
-    /** 加密工具 */
-    crypto: Cipher;
-
-    /** 数据库连接 */
-    db: any;
-
-    /** Redis 连接 */
-    redis: any;
-
-    /**
-     * 初始化检查器
-     */
-    initCheck(): Promise<void>;
-
-    /**
-     * 加载插件
-     */
-    loadPlugins(): Promise<void>;
-
-    /**
-     * 加载 API 路由
-     */
-    loadApis(): Promise<void>;
-
-    /**
-     * 启动服务器
-     */
-    start(): Promise<void>;
-
-    /**
-     * 停止服务器
-     */
-    stop(): Promise<void>;
-
-    /**
-     * 处理请求
-     */
-    handleRequest(request: Request): Promise<Response>;
-
-    /**
-     * 注册钩子
-     */
-    use(hook: Function): void;
-
-    /**
-     * 获取配置
-     */
-    getConfig(key: string): any;
-
-    /**
-     * 设置配置
-     */
-    setConfig(key: string, value: any): void;
-}
-
-/**
- * Befly 构造函数类型
- */
-export interface BeflyConstructor {
-    new (options?: BeflyOptions): Befly;
-}
-
-/**
- * 服务器启动选项
- */
-export interface ServerOptions {
-    /** 主机名 */
-    hostname: string;
-
-    /** 端口 */
-    port: number;
-
-    /** 请求处理函数 */
-    fetch: (request: Request) => Promise<Response>;
-
-    /** 错误处理函数 */
-    error?: (error: Error) => Response;
-
-    /** 开发模式 */
-    development?: boolean;
-}
-
-/**
- * 服务器实例
- */
-export interface Server {
-    /** 主机名 */
-    hostname: string;
-
-    /** 端口 */
-    port: number;
-
-    /** 停止服务器 */
-    stop(): Promise<void>;
-
-    /** 重启服务器 */
-    reload(options: ServerOptions): void;
-}
-
-/**
- * 检查函数类型
- */
-export type CheckFunction = (befly: Befly) => Promise<void> | void;
-
-/**
- * 检查结果
- */
-export interface CheckResult {
-    /** 文件名 */
-    filename: string;
-
-    /** 检查名称 */
-    checkName: string;
-
-    /** 是否通过 */
-    passed: boolean;
-
-    /** 执行时间（纳秒） */
-    duration: number;
-
-    /** 错误信息 */
-    error?: Error;
-}
-
-/**
- * 性能统计
- */
-export interface PerformanceStats {
-    /** 启动时间 */
-    startTime: number;
-
-    /** 检查时间 */
-    checkTime: number;
-
-    /** 插件加载时间 */
-    pluginTime: number;
-
-    /** API 加载时间 */
-    apiTime: number;
-
-    /** 总时间 */
-    totalTime: number;
-}
-
-/**
- * 导出 Befly 实例创建函数
- */
-export declare function createBefly(options?: BeflyOptions): Befly;
+export type Validator = ValidatorStatic;

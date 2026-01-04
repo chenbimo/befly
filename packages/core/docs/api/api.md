@@ -81,10 +81,12 @@ Befly 框架的 API 系统是一套基于约定优于配置的接口开发体系
 
 ## 强约束清单
 
-- **权限/路由匹配只看 pathname**：系统内部用于路由匹配与权限判断的值均为 `url.pathname`（例如 `/api/user/login`），与 method 无关。
+- **权限/路由匹配只看 pathname**：系统内部用于路由匹配与权限判断的值均为 `url.pathname`（例如 `/api/app/user/login`），与 method 无关。
 - **禁止写法**：禁止把权限或路由路径写成 `POST/api/...` 或 `POST /api/...`（这些只是一种“请求行展示写法”，不能进入任何存储/配置/权限集合）。
 - **routePath 必须严格合法**：必须以 `/api/` 开头、不得包含空格、不得出现 `/api//`。
-- **同一路径多方法共用权限**：同一个 pathname（例如 `/api/user/login`）即使同时注册 GET/POST，也共用同一套权限集合。
+- **同一路径多方法共用权限**：同一个 pathname（例如 `/api/app/user/login`）即使同时注册 GET/POST，也共用同一套权限集合。
+
+> 说明：项目 API 的 pathname 默认带 `/api/app/` 前缀；Addon API 为 `/api/addon/<addonName>/...`；核心 API 为 `/api/core/...`。
 
 ---
 
@@ -93,26 +95,26 @@ Befly 框架的 API 系统是一套基于约定优于配置的接口开发体系
 ### 项目 API
 
 ```
-tpl/apis/
+apis/
 ├── user/
-│   ├── login.ts      → POST /api/user/login
-│   ├── register.ts   → POST /api/user/register
-│   └── info.ts       → POST /api/user/info
+│   ├── login.ts      → /api/app/user/login
+│   ├── register.ts   → /api/app/user/register
+│   └── info.ts       → /api/app/user/info
 └── article/
-    ├── list.ts       → POST /api/article/list
-    └── detail.ts     → POST /api/article/detail
+    ├── list.ts       → /api/app/article/list
+    └── detail.ts     → /api/app/article/detail
 ```
 
 ### Addon API
 
 ```
-addonAdmin/apis/
+addons/admin/apis/
 ├── auth/
-│   ├── login.ts      → POST /api/addon/addonAdmin/auth/login
-│   └── logout.ts     → POST /api/addon/addonAdmin/auth/logout
+│   ├── login.ts      → /api/addon/admin/auth/login
+│   └── logout.ts     → /api/addon/admin/auth/logout
 └── admin/
-    ├── list.ts       → POST /api/addon/addonAdmin/admin/list
-    └── ins.ts        → POST /api/addon/addonAdmin/admin/ins
+    ├── list.ts       → /api/addon/admin/admin/list
+    └── ins.ts        → /api/addon/admin/admin/ins
 ```
 
 ### 文件命名规范
@@ -218,7 +220,7 @@ interface RequestContext {
     /** 请求头 */
     headers: Headers;
 
-    /** API 路由路径（url.pathname，例如 /api/user/login；与 method 无关） */
+    /** API 路由路径（url.pathname，例如 /api/app/user/login；与 method 无关） */
     route: string;
 
     /** 请求唯一 ID */
@@ -880,12 +882,14 @@ export default {
     auth: false,
     rawBody: true,
     handler: async (befly, ctx) => {
-        // 获取加密的请求体
-        const encryptedBody = await ctx.req.text();
+        // 说明：Befly 的 cipher 主要提供 hash/HMAC/密码哈希/Base64 等能力，
+        // 不提供对称加密 encrypt/decrypt。
+        // 如果你确实需要 AES/GCM 等加密，请在业务侧使用 WebCrypto 或 node:crypto 自行实现。
 
-        // 解密数据
-        const decrypted = befly.cipher.decrypt(encryptedBody);
-        const data = JSON.parse(decrypted);
+        // 示例：接收 base64(JSON) 数据（注意：这是编码，不是加密）
+        const encoded = await ctx.req.text();
+        const json = befly.cipher.base64Decode(encoded);
+        const data = JSON.parse(json);
 
         // 处理解密后的数据
         // ...
@@ -1286,28 +1290,31 @@ if (!ctx.user?.id) {
 
 ### 加载顺序
 
-1. **项目 API**：`tpl/apis/**/*.ts` → `/api/...`
-2. **Addon API**：`addonXxx/apis/**/*.ts` → `/api/addon/addonXxx/...`
+1. **核心 API**：`dist/apis/**/*.js` → `/api/core/...`
+2. **项目 API**：`apis/**/*.{ts,js}` → `/api/app/...`
+3. **Addon API**：
+    - `addons/<addonName>/apis/**/*.{ts,js}` → `/api/addon/<addonName>/...`
+    - `node_modules/@befly-addon/<addonName>/apis/**/*.{ts,js}` → `/api/addon/<addonName>/...`
 
 ### 路由映射规则
 
-| 文件路径                        | 生成路由                                |
-| ------------------------------- | --------------------------------------- |
-| `tpl/apis/user/login.ts`        | `POST /api/user/login`                  |
-| `tpl/apis/article/list.ts`      | `POST /api/article/list`                |
-| `addonAdmin/apis/auth/login.ts` | `POST /api/addon/addonAdmin/auth/login` |
-| `addonAdmin/apis/admin/list.ts` | `POST /api/addon/addonAdmin/admin/list` |
+| 文件路径                          | 生成路由                      |
+| --------------------------------- | ----------------------------- |
+| `apis/user/login.ts`              | `/api/app/user/login`         |
+| `apis/article/list.ts`            | `/api/app/article/list`       |
+| `addons/admin/apis/auth/login.ts` | `/api/addon/admin/auth/login` |
+| `addons/admin/apis/admin/list.ts` | `/api/addon/admin/admin/list` |
 
-> 注意：上表中的 `POST /api/...` 是“请求行示意”。系统内部生成并存储的 `ctx.route` / 数据库 `routePath` / 角色权限 `role.apis` / Redis 权限缓存都只使用 `url.pathname`（例如 `/api/user/login`），与 method 无关；权限数据禁止写成 `POST /api/...` 或 `POST/api/...`。
+> 注意：上表展示的是系统内部生成并存储的 **pathname**（`url.pathname`，例如 `/api/app/user/login`），与 method 无关。你可以在“HTTP 请求示例”里写 `POST /api/...` / `GET /api/...`，但**禁止**把带 method 的写法写入任何存储/配置/权限集合（例如 `routePath`、`role.apis`、Redis 权限缓存）。
 
 ### 多方法注册
 
 当 `method: 'GET,POST'` 时，会同时注册两个路由：
 
-- `GET /api/user/search`
-- `POST /api/user/search`
+- `GET /api/app/user/search`
+- `POST /api/app/user/search`
 
-> 权限校验只看 pathname：如果同一个 pathname 同时注册了多个 method，它们共享同一套权限（以 `/api/user/search` 作为权限值）。
+> 权限校验只看 pathname：如果同一个 pathname 同时注册了多个 method，它们共享同一套权限（以 `/api/app/user/search` 作为权限值）。
 
 ---
 
