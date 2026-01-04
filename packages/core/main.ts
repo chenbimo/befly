@@ -65,8 +65,8 @@ export class Befly {
             const serverStartTime = Bun.nanoseconds();
 
             // 0. 延迟加载配置（避免循环依赖）
-            const { beflyConfig } = await import("./befly.config.js");
-            this.config = beflyConfig;
+            const { loadBeflyConfig } = await import("./befly.config.js");
+            this.config = await loadBeflyConfig();
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取
             this.context.config = this.config;

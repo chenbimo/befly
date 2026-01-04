@@ -94,38 +94,54 @@ export type LoadBeflyConfigOptions = {
     nodeEnv?: string;
 };
 
+const beflyConfigCache: Map<string, Promise<BeflyOptions>> = new Map();
+
 export async function loadBeflyConfig(options: LoadBeflyConfigOptions = {}): Promise<BeflyOptions> {
     const nodeEnv = options.nodeEnv || process.env.NODE_ENV || "development";
     const envSuffix = nodeEnv === "production" ? "production" : "development";
 
-    // 使用 scanConfig 一次性加载并合并所有配置文件
-    // 合并顺序：defaultOptions ← befly.common.json ← befly.development/production.json
-    const config = await scanConfig({
-        cwd: options.cwd,
-        dirs: ["configs"],
-        files: ["befly.common", `befly.${envSuffix}`],
-        extensions: [".json"],
-        mode: "merge",
-        defaults: defaultOptions
-    });
-
-    // 配置校验：redis.prefix 作为 key 前缀，由 RedisHelper 统一拼接 ":"。
-    // 因此 prefix 本身不允许包含 ":"，否则会导致 key 结构出现空段或多段分隔（例如 "prefix::key"），
-    // 在 RedisInsight 等工具里可能显示 [NO NAME] 空分组，且容易造成 key 管理混乱。
-    const redisPrefix = (config as any)?.redis?.prefix;
-    if (typeof redisPrefix === "string") {
-        const trimmedPrefix = redisPrefix.trim();
-        if (trimmedPrefix.includes(":")) {
-            throw new Error(`配置错误：redis.prefix 不允许包含 ':'（RedisHelper 会自动拼接分隔符 ':'），请改为不带冒号的前缀，例如 'befly_demo'，当前值=${redisPrefix}`);
-        }
+    const cacheKey = `${options.cwd || ""}::${nodeEnv}`;
+    const cached = beflyConfigCache.get(cacheKey);
+    if (cached) {
+        return await cached;
     }
 
-    // 预编译 disableMenus 的 Bun.Glob 规则：
-    // - 提前暴露配置错误（fail-fast）
-    // - 后续 checkMenu 会复用同一进程级缓存
-    compileDisableMenuGlobRules((config as any)?.disableMenus);
+    const promise = (async () => {
+        // 使用 scanConfig 一次性加载并合并所有配置文件
+        // 合并顺序：defaultOptions ← befly.common.json ← befly.development/production.json
+        const config = await scanConfig({
+            cwd: options.cwd,
+            dirs: ["configs"],
+            files: ["befly.common", `befly.${envSuffix}`],
+            extensions: [".json"],
+            mode: "merge",
+            defaults: defaultOptions
+        });
 
-    return config as BeflyOptions;
+        // 配置校验：redis.prefix 作为 key 前缀，由 RedisHelper 统一拼接 ":"。
+        // 因此 prefix 本身不允许包含 ":"，否则会导致 key 结构出现空段或多段分隔（例如 "prefix::key"），
+        // 在 RedisInsight 等工具里可能显示 [NO NAME] 空分组，且容易造成 key 管理混乱。
+        const redisPrefix = (config as any)?.redis?.prefix;
+        if (typeof redisPrefix === "string") {
+            const trimmedPrefix = redisPrefix.trim();
+            if (trimmedPrefix.includes(":")) {
+                throw new Error(`配置错误：redis.prefix 不允许包含 ':'（RedisHelper 会自动拼接分隔符 ':'），请改为不带冒号的前缀，例如 'befly_demo'，当前值=${redisPrefix}`);
+            }
+        }
+
+        // 预编译 disableMenus 的 Bun.Glob 规则：
+        // - 提前暴露配置错误（fail-fast）
+        // - 后续 checkMenu 会复用同一进程级缓存
+        compileDisableMenuGlobRules((config as any)?.disableMenus);
+
+        return config as BeflyOptions;
+    })();
+
+    beflyConfigCache.set(cacheKey, promise);
+    try {
+        return await promise;
+    } catch (error: any) {
+        beflyConfigCache.delete(cacheKey);
+        throw error;
+    }
 }
-
-export const beflyConfig = await loadBeflyConfig();
