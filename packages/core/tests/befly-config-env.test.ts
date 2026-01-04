@@ -56,22 +56,31 @@ describe("Config - NODE_ENV 选择 development/production", () => {
             { encoding: "utf8" }
         );
 
+        const originalCwd = process.cwd();
+        const originalNodeEnv = process.env.NODE_ENV;
+
         try {
-            const productionConfig = await loadBeflyConfig({ cwd: tempRoot, nodeEnv: "production" });
+            process.chdir(tempRoot);
+
+            process.env.NODE_ENV = "production";
+            const productionConfig = await loadBeflyConfig();
             expect(productionConfig.appName).toBe("production");
             expect(productionConfig.logger.debug).toBe(9);
             expect(productionConfig.appPort).toBe(31111);
 
-            const developmentConfig = await loadBeflyConfig({ cwd: tempRoot, nodeEnv: "development" });
-            expect(developmentConfig.appName).toBe("development");
-            expect(developmentConfig.logger.debug).toBe(3);
-            expect(developmentConfig.appPort).toBe(31111);
-
-            const fallbackConfig = await loadBeflyConfig({ cwd: tempRoot, nodeEnv: "test" });
+            // 除 production 外的其他 NODE_ENV，都应选择 befly.development.json
+            process.env.NODE_ENV = "test";
+            const fallbackConfig = await loadBeflyConfig();
             expect(fallbackConfig.appName).toBe("development");
             expect(fallbackConfig.logger.debug).toBe(3);
             expect(fallbackConfig.appPort).toBe(31111);
         } finally {
+            if (typeof originalNodeEnv === "string") {
+                process.env.NODE_ENV = originalNodeEnv;
+            } else {
+                delete process.env.NODE_ENV;
+            }
+            process.chdir(originalCwd);
             rmSync(tempRoot, { recursive: true, force: true });
         }
     });

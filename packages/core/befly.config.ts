@@ -89,18 +89,13 @@ const defaultOptions: BeflyOptions = {
     addons: {}
 };
 
-export type LoadBeflyConfigOptions = {
-    cwd?: string;
-    nodeEnv?: string;
-};
-
 const beflyConfigCache: Map<string, Promise<BeflyOptions>> = new Map();
 
-export async function loadBeflyConfig(options: LoadBeflyConfigOptions = {}): Promise<BeflyOptions> {
-    const nodeEnv = options.nodeEnv || process.env.NODE_ENV || "development";
+export async function loadBeflyConfig(): Promise<BeflyOptions> {
+    const nodeEnv = process.env.NODE_ENV || defaultOptions.nodeEnv || "development";
     const envSuffix = nodeEnv === "production" ? "production" : "development";
 
-    const cacheKey = `${options.cwd || ""}::${nodeEnv}`;
+    const cacheKey = nodeEnv;
     const cached = beflyConfigCache.get(cacheKey);
     if (cached) {
         return await cached;
@@ -110,7 +105,6 @@ export async function loadBeflyConfig(options: LoadBeflyConfigOptions = {}): Pro
         // 使用 scanConfig 一次性加载并合并所有配置文件
         // 合并顺序：defaultOptions ← befly.common.json ← befly.development/production.json
         const config = await scanConfig({
-            cwd: options.cwd,
             dirs: ["configs"],
             files: ["befly.common", `befly.${envSuffix}`],
             extensions: [".json"],
