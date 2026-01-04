@@ -20,45 +20,39 @@
     "license": "Apache-2.0",
     "author": "chensuiyi <bimostyle@qq.com>",
     "files": [
-        ".gitignore",
-        "befly.config.ts",
-        "bunfig.toml",
         "LICENSE",
-        "main.ts",
-        "package.json",
-        "paths.ts",
         "README.md",
-        "tsconfig.json",
-        "checks/",
-        "configs/",
-        "docs/",
-        "hooks/",
-        "lib/",
-        "loader/",
-        "plugins/",
-        "router/",
-        "sync/",
-        "types/",
-        "utils/"
+        "dist/"
     ],
     "type": "module",
-    "main": "main.ts",
-    "types": "main.ts",
+    "main": "./dist/main.js",
+    "types": "./dist/main.d.ts",
     "exports": {
         ".": {
-            "types": "./main.ts",
-            "default": "./main.ts"
+            "types": "./dist/main.d.ts",
+            "default": "./dist/main.js"
         },
-        "./lib/*": "./lib/*.ts",
-        "./types/*": "./types/*.d.ts",
-        "./utils/*": "./utils/*.ts"
+        "./lib/*": {
+            "types": "./dist/lib/*.d.ts",
+            "default": "./dist/lib/*.js"
+        },
+        "./utils/*": {
+            "types": "./dist/utils/*.d.ts",
+            "default": "./dist/utils/*.js"
+        },
+        "./types/*": {
+            "types": "./dist/types/*.d.ts"
+        }
     },
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org"
     },
     "scripts": {
+        "clean": "rimraf dist",
         "test": "bun test",
+        "build": "bunx tsgo -p tsconfig.build.json",
+        "prepack": "bun run build",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
     },
     "dependencies": {

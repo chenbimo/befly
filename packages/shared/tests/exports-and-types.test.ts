@@ -11,12 +11,16 @@ describe("befly-shared - exports/types sanity", () => {
         expect(pkg.name).toBe("befly-shared");
 
         expect(Array.isArray(pkg.files)).toBe(true);
-        expect(pkg.files.includes("types/")).toBe(true);
-        expect(pkg.files.includes("utils/")).toBe(true);
+        expect(pkg.files.includes("dist/")).toBe(true);
 
         expect(pkg.exports && typeof pkg.exports === "object").toBe(true);
-        expect(pkg.exports["./utils/*"]).toBe("./utils/*.ts");
-        expect(pkg.exports["./types/*"]).toBe("./types/*.ts");
+        expect(pkg.exports["./utils/*"] && typeof pkg.exports["./utils/*"] === "object").toBe(true);
+        expect(pkg.exports["./utils/*"].types).toBe("./dist/utils/*.d.ts");
+        expect(pkg.exports["./utils/*"].default).toBe("./dist/utils/*.js");
+
+        expect(pkg.exports["./types/*"] && typeof pkg.exports["./types/*"] === "object").toBe(true);
+        expect(pkg.exports["./types/*"].types).toBe("./dist/types/*.d.ts");
+        expect(pkg.exports["./types/*"].default).toBe("./dist/types/*.js");
 
         // 防止误加 "./*": "./index.ts" 之类的导出（项目规范禁止）
         expect(Object.prototype.hasOwnProperty.call(pkg.exports, "./*")).toBe(false);

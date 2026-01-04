@@ -37,7 +37,7 @@ export type AuthType = boolean | "admin" | "user" | string[];
 /**
  * API 处理器函数类型
  */
-export type ApiHandler<T = any, R = any> = (befly: BeflyContext, ctx: RequestContext) => Promise<Response | R> | Response | R;
+export type ApiHandler<_T = any, R = any> = (befly: BeflyContext, ctx: RequestContext) => Promise<Response | R> | Response | R;
 
 /**
  * 字段规则定义
@@ -74,7 +74,7 @@ export interface ApiRoute<T = any, R = any> {
     /** HTTP 方法（可选，默认 POST，支持逗号分隔多个方法） */
     method?: HttpMethod;
 
-    /** 认证类型（可选，默认 true）
+    /** 认证类型（可选，默认 true)
      * - true: 需要登录
      * - false: 公开访问（无需登录）
      */
@@ -86,7 +86,7 @@ export interface ApiRoute<T = any, R = any> {
     /** 必填字段（可选，默认 []） */
     required?: string[];
 
-    /** 是否保留原始请求体（可选，默认 false）
+    /** 是否保留原始请求体（可选，默认 false)
      * - true: 不过滤字段，保留完整请求体（适用于微信回调、webhook 等场景）
      * - false: 根据 fields 定义过滤字段
      */

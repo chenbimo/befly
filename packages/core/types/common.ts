@@ -6,7 +6,7 @@
 /**
  * SQL 值类型
  */
-export type SqlValue = string | number | boolean | null | Date;
+export type SqlValue = string | number | boolean | null | Date | Record<string, any> | any[];
 
 /**
  * 通用键值对类型

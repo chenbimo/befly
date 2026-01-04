@@ -10,16 +10,16 @@ pre-commit:
           run: oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
 
         # 2. Oxlint 代码检查（门禁）
-        - name: Gate - lint
+        - name: lint
           priority: 2
-          run: bun run gate:lint
+          run: bun run lint
 
         # 3. TypeScript 语法检查 (core)
-        - name: Gate - typecheck (core)
+        - name: typecheck (core)
           priority: 2
-          run: bun run gate:typecheck
+          run: bun run typecheck
 
         # 4. 运行测试
-        - name: Gate - test
+        - name: test
           priority: 3
-          run: bun run gate:test:bail
+          run: bun run test:bail

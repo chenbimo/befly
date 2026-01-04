@@ -9,11 +9,10 @@ import type { Jwt } from "../lib/jwt.ts";
 import type { Logger } from "../lib/logger.ts";
 import type { RedisHelper } from "../lib/redisHelper.ts";
 import type { Validator } from "../lib/validator.ts";
-import type { ApiRoute, HttpMethod } from "./api.ts";
+import type { ApiRoute } from "./api.ts";
 import type { KeyValue } from "./common.ts";
 import type { LoggerConfig } from "./logger.ts";
 import type { Plugin } from "./plugin.ts";
-import type { Database } from "bun:sqlite";
 
 export type { LoggerConfig };
 
@@ -93,8 +92,8 @@ export interface CorsConfig {
 export interface RateLimitRule {
     /**
      * 路由匹配串
-    * - 精确："/api/auth/login"
-    * - 前缀："/api/auth/*"
+     * - 精确："/api/auth/login"
+     * - 前缀："/api/auth/*"
      * - 全量："*"
      */
     route: string;
@@ -166,12 +165,12 @@ export interface BeflyOptions {
     /** 禁用的插件列表 */
     disablePlugins?: string[];
     /**
-        * 禁用的菜单 path 规则（用于菜单同步与加载前过滤）
-        *
-        * 仅支持 Bun.Glob 的 glob pattern 语法与 API（即把每条规则当作 glob 模式匹配菜单 path）。
-        * 示例：
-        * - 精确："/addon/admin/login"
-        * - 通配："/addon/admin/log/*"、"/addon/admin/**"、"**\/login"
+     * 禁用的菜单 path 规则（用于菜单同步与加载前过滤）
+     *
+     * 仅支持 Bun.Glob 的 glob pattern 语法与 API（即把每条规则当作 glob 模式匹配菜单 path）。
+     * 示例：
+     * - 精确："/addon/admin/login"
+     * - 通配："/addon/admin/log/*"、"/addon/admin/**"、"**\/login"
      */
     disableMenus?: string[];
     /**
@@ -239,7 +238,7 @@ export interface Befly {
     appOptions: BeflyOptions;
 
     /** 日志器 */
-    logger: Logger;
+    logger: typeof Logger;
 
     /** JWT 工具 */
     jwt: Jwt;
@@ -397,4 +396,4 @@ export interface PerformanceStats {
 /**
  * 导出 Befly 实例创建函数
  */
-export function createBefly(options?: BeflyOptions): Befly;
+export declare function createBefly(options?: BeflyOptions): Befly;

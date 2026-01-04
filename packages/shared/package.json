@@ -7,18 +7,25 @@
     "license": "Apache-2.0",
     "author": "chensuiyi <bimostyle@qq.com>",
     "files": [
-        "package.json",
-        "types/",
-        "utils/"
+        "dist/"
     ],
     "type": "module",
     "exports": {
-        "./utils/*": "./utils/*.ts",
-        "./types/*": "./types/*.ts"
+        "./utils/*": {
+            "types": "./dist/utils/*.d.ts",
+            "default": "./dist/utils/*.js"
+        },
+        "./types/*": {
+            "types": "./dist/types/*.d.ts",
+            "default": "./dist/types/*.js"
+        }
     },
     "scripts": {
+        "clean": "rimraf dist",
+        "build": "bunx tsgo -p tsconfig.build.json",
         "test": "bun test",
-        "typecheck": "bunx tsgo --noEmit"
+        "prepack": "bun run build",
+        "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
     },
     "dependencies": {
         "es-toolkit": "^1.43.0"

@@ -9,31 +9,33 @@
         "packages/*"
     ],
     "scripts": {
-        "test": "bun --filter '*' test",
+        "build:core": "bun run --cwd packages/core build",
+        "build:shared": "bun run --cwd packages/shared build",
+        "build:libs": "bun run build:shared && bun run build:core",
+        "postinstall": "bun run build:libs",
+        "clean:core": "rimraf packages/core/dist",
+        "clean:shared": "rimraf packages/shared/dist",
+        "clean:libs": "rimraf packages/shared/dist packages/core/dist",
+        "test": "bun test",
         "test:core": "bun --filter 'befly' test",
-        "test:bail": "bun --filter '*' test --bail",
-        "test:coverage": "bun --filter '*' test --coverage",
+        "test:bail": "bun test --bail",
+        "test:smoke:sql": "bun test packages/core/tests/smoke-sql.test.ts",
+        "test:coverage": "bun test --coverage",
         "format:oxfmt": "oxfmt -c ./.oxfmtrc.jsonc .",
         "format": "bun run format:oxfmt",
         "lint": "oxlint .",
         "typecheck:core": "bun run --cwd packages/core typecheck",
         "typecheck": "bun run typecheck:core",
         "typecheck:all": "lerna run typecheck --stream",
-        "gate:typecheck:all": "bun run typecheck:all",
-        "gate:format": "bun run format:oxfmt",
-        "gate:lint": "bun run lint",
-        "gate:typecheck": "bun run typecheck",
-        "gate:test": "bun test",
-        "gate:test:bail": "bun test --bail",
-        "gate:smoke": "bun test packages/core/tests/smoke-sql.test.ts",
-        "gate": "bun run gate:format && bun run gate:lint && bun run gate:typecheck && bun run gate:test",
+        "verify": "bun run format && bun run lint && bun run typecheck && bun run test",
         "r": "lerna publish"
     },
     "devDependencies": {
         "@types/bun": "^1.3.5",
         "@typescript/native-preview": "7.0.0-dev.20260103.1",
         "lefthook": "^2.0.13",
-        "lerna": "^9.0.3"
+        "lerna": "^9.0.3",
+        "rimraf": "^6.1.2"
     },
     "engines": {
         "bun": ">=1.3.0"
