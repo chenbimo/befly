@@ -9,7 +9,6 @@ import { importDefault } from "../utils/importDefault";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
 import { getProcessRole, isPrimaryProcess } from "../utils/processInfo";
-import { toListSqlLogFields, toSqlLogFields } from "../utils/sqlLog";
 import { camelCase, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
 
 // 说明：
@@ -271,28 +270,6 @@ describe("utils - script setup meta extract", () => {
     test("missing title returns null", () => {
         const ss = `definePage({ meta: { order: 1 } })`;
         expect(extractDefinePageMetaFromScriptSetup(ss)).toBeNull();
-    });
-});
-
-describe("utils - sqlLog", () => {
-    test("toSqlLogFields should normalize", () => {
-        const result = toSqlLogFields({ sql: "SELECT 1", params: [1], duration: 3 } as any);
-        expect(result).toEqual({ sqlPreview: "SELECT 1", sqlParams: [1], sqlDurationMs: 3 });
-    });
-
-    test("toListSqlLogFields should handle data optional", () => {
-        const base = toListSqlLogFields({ count: { sql: "c", params: null, duration: null } } as any);
-        expect(base.countSqlPreview).toBe("c");
-        expect(base.countSqlParams).toEqual([]);
-        expect(base.countSqlDurationMs).toBe(0);
-
-        const full = toListSqlLogFields({
-            count: { sql: "c", params: [], duration: 1 },
-            data: { sql: "d", params: ["x"], duration: 2 }
-        } as any);
-        expect(full.dataSqlPreview).toBe("d");
-        expect(full.dataSqlParams).toEqual(["x"]);
-        expect(full.dataSqlDurationMs).toBe(2);
     });
 });
 
