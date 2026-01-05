@@ -23,25 +23,37 @@ function findTsImportSpecifiers(content: string): string[] {
     return matches;
 }
 
-function collectDtsFiles(dirPath: string): string[] {
+function collectDtsFilesRecursive(dirPath: string): string[] {
+    const files: string[] = [];
+
     if (!existsSync(dirPath)) {
-        return [];
+        return files;
     }
 
-    const files = readdirSync(dirPath);
-    return files.filter((file) => file.endsWith(".d.ts")).map((file) => join(dirPath, file));
+    const entries = readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+        const absPath = join(dirPath, entry.name);
+        if (entry.isDirectory()) {
+            files.push(...collectDtsFilesRecursive(absPath));
+            continue;
+        }
+
+        if (entry.isFile() && entry.name.endsWith(".d.ts")) {
+            files.push(absPath);
+        }
+    }
+
+    return files;
 }
 
 describe("befly-shared - dist declarations should not reference .ts", () => {
     test("dist/utils/*.d.ts and dist/types/*.d.ts should not contain import specifiers ending with .ts", () => {
         const sharedRootDir = getSharedRootDir();
         const distDir = join(sharedRootDir, "dist");
-        const distUtilsDir = join(distDir, "utils");
-        const distTypesDir = join(distDir, "types");
 
         expect(existsSync(distDir)).toBe(true);
 
-        const dtsPaths = [...collectDtsFiles(distUtilsDir), ...collectDtsFiles(distTypesDir)];
+        const dtsPaths = collectDtsFilesRecursive(distDir);
         expect(dtsPaths.length).toBeGreaterThan(0);
 
         const offenders: Array<{ filePath: string; matches: string[] }> = [];

@@ -1,5 +1,5 @@
 // 内部依赖（Node.js 内置模块）
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 type PackageJson = {
@@ -121,6 +121,40 @@ function assertPathExists(packageRoot: string, relativeOrBare: string): void {
     }
 }
 
+function findTsImportSpecifiers(content: string): string[] {
+    const matches: string[] = [];
+
+    const patterns = [/from\s+["'][^"']+\.ts["']/g, /import\(\s*["'][^"']+\.ts["']\s*\)/g, /<reference\s+path=["'][^"']+\.ts["']\s*\/>/g];
+
+    for (const pattern of patterns) {
+        const found = content.match(pattern);
+        if (found && found.length > 0) {
+            matches.push(...found);
+        }
+    }
+
+    return matches;
+}
+
+function collectDtsFilesRecursive(dirPath: string, out: string[]): void {
+    if (!existsSync(dirPath)) {
+        return;
+    }
+
+    const entries = readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+        const absPath = resolve(dirPath, entry.name);
+        if (entry.isDirectory()) {
+            collectDtsFilesRecursive(absPath, out);
+            continue;
+        }
+
+        if (entry.isFile() && entry.name.endsWith(".d.ts")) {
+            out.push(absPath);
+        }
+    }
+}
+
 function main(): void {
     const packageRoot = process.cwd();
 
@@ -145,6 +179,27 @@ function main(): void {
     if (!existsSync(distDir)) {
         process.stderr.write("[ensureDist] dist/ not found (did you run build?)\n");
         process.exit(1);
+    }
+
+    // dist-only 发布规范：任何 dist/**/*.d.ts 都不允许引用源码 .ts（防止消费者类型解析回退到源码）。
+    {
+        const dtsPaths: string[] = [];
+        collectDtsFilesRecursive(distDir, dtsPaths);
+
+        const offenders: Array<{ filePath: string; matches: string[] }> = [];
+        for (const absPath of dtsPaths) {
+            const content = readFileSync(absPath, { encoding: "utf8" });
+            const matches = findTsImportSpecifiers(content);
+            if (matches.length > 0) {
+                offenders.push({ filePath: absPath, matches: matches });
+            }
+        }
+
+        if (offenders.length > 0) {
+            process.stderr.write("[ensureDist] dist/**/*.d.ts must not reference .ts source files\n");
+            process.stderr.write(`${JSON.stringify(offenders, null, 4)}\n`);
+            process.exit(1);
+        }
     }
 
     const paths: string[] = [];

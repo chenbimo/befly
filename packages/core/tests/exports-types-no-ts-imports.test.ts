@@ -31,10 +31,6 @@ describe("befly - dist/types declarations should not reference .ts", () => {
 
         expect(existsSync(distTypesDir)).toBe(true);
 
-        const files = readdirSync(distTypesDir);
-        const dtsFiles = files.filter((file) => file.endsWith(".d.ts"));
-        expect(dtsFiles.length).toBeGreaterThan(0);
-
         const offenders: Array<{ filePath: string; matches: string[] }> = [];
 
         // 默认入口的声明也必须保持 dist-only（不引用 .ts 源码）。
@@ -46,6 +42,10 @@ describe("befly - dist/types declarations should not reference .ts", () => {
                 offenders.push({ filePath: distIndexDtsPath, matches: matches });
             }
         }
+
+        const files = readdirSync(distTypesDir);
+        const dtsFiles = files.filter((file) => file.endsWith(".d.ts"));
+        expect(dtsFiles.length).toBeGreaterThan(0);
 
         for (const dtsFile of dtsFiles) {
             const absPath = join(distTypesDir, dtsFile);
