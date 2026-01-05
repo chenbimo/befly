@@ -557,46 +557,7 @@ export default hook;
 
 基于 Redis 的请求限流：
 
-> 说明：Befly Core 已内置 `rateLimit` 钩子（默认启用）。
->
-> 默认行为：按 IP 对所有 API 进行限流（默认阈值：$1000/60$，即 60 秒最多 1000 次）。
->
-> - 关闭：`rateLimit.enable = 0`
-> - 覆盖：配置 `rules`（更细粒度）或调整 `defaultLimit/defaultWindow`
-> - 跳过：配置 `skipRoutes`（命中后直接跳过限流，优先级最高）
->
-> 规则选择：当多条 `rules` 同时命中时，会优先选择更“具体”的规则（精确 > 前缀 > 通配）；
-> 同等具体度按 `rules` 的先后顺序。
->
-> key 行为：当 `key = user` 且请求上下文中没有 `ctx.user.id` 时，会回退为按 IP 计数，避免所有匿名请求共享同一个计数桶。
-
-配置示例（`configs/befly.common.json`）：
-
-```json
-{
-    "rateLimit": {
-        "enable": 1,
-        "defaultLimit": 1000,
-        "defaultWindow": 60,
-        "key": "ip",
-        "skipRoutes": ["/api/health", "/api/metrics"],
-        "rules": [
-            {
-                "route": "/api/auth/*",
-                "limit": 20,
-                "window": 60,
-                "key": "ip"
-            },
-            {
-                "route": "/api/order/create",
-                "limit": 5,
-                "window": 60,
-                "key": "user"
-            }
-        ]
-    }
-}
-```
+> 说明：Core 不再内置 `rateLimit` 钩子。如需限流，请在项目（或 addon）的 `hooks/` 目录中自行实现；并通过 `enable: true/false` 控制是否启用。
 
 ```typescript
 // hooks/rateLimit.ts
@@ -614,6 +575,7 @@ const errorResponse = (msg: string, code: number = 1, data: any = null) => {
 };
 
 const hook: Hook = {
+    enable: true,
     order: 7,
     handler: async (befly, ctx) => {
         if (!ctx.api || !befly.redis) return;

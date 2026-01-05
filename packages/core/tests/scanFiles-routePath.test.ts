@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { scanFiles } from "../utils/scanFiles.ts";
 
 describe("scanFiles - api routePath formatting", () => {
-    test("routePrefix 应为 /core|/app|/addon 且 routePath 不应出现 /api//", async () => {
+    test("routePrefix 应为 /app 或 /addon/<name> 且 routePath 不应出现 /api//", async () => {
         const fixturesDir = fileURLToPath(new URL("./fixtures/scanFilesApis", import.meta.url));
         const addonApisDir = fileURLToPath(new URL("./fixtures/scanFilesAddon/node_modules/@befly-addon/demo/apis", import.meta.url));
 

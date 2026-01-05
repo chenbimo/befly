@@ -16,14 +16,8 @@ import corePluginTool from "../plugins/tool";
 
 type CoreBuiltinType = "hook" | "plugin";
 
-function getCoreBuiltinName(value: any): string {
-    // 直接使用导出对象的 name，不在工具层做任何“去空白/纠错”。
-    // 合法性校验统一交给 checks（例如：必须是小写字母+下划线）。
-    return value && typeof value.name === "string" ? value.name : "";
-}
-
 function toCoreBuiltinScanFileResult(type: CoreBuiltinType, item: any): ScanFileResult {
-    const name = getCoreBuiltinName(item);
+    const name = item.name;
 
     return {
         source: "core",
