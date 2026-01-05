@@ -37,6 +37,11 @@
             "import": "./dist/befly.js",
             "default": "./dist/befly.js"
         },
+        "./min": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/befly.min.js",
+            "default": "./dist/befly.min.js"
+        },
         "./types/*": {
             "types": "./dist/types/*.d.ts"
         }
@@ -49,7 +54,8 @@
         "clean": "rimraf dist",
         "test": "bun test",
         "bundle": "bun build ./index.ts --outfile ./dist/befly.js --target bun --format esm --packages bundle",
-        "build": "rimraf dist && bunx tsgo -p tsconfig.build.json && bun run bundle",
+        "bundle:min": "bun build ./index.ts --outdir ./dist --entry-naming befly.min.js --target bun --format esm --packages bundle --minify",
+        "build": "rimraf dist && bunx tsgo -p tsconfig.build.json && bun run bundle && bun run bundle:min",
         "prepack": "bun run build && bun run ./scripts/ensureDist.ts",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
     },
