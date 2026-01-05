@@ -1,9 +1,12 @@
 import { test, expect } from "bun:test";
 
+import { join } from "pathe";
+
 import { scanFiles } from "../utils/scanFiles.ts";
 
 test("scanFiles 扫描 core：moduleName=文件名；core 不支持 api", async () => {
-    const hooks = await scanFiles("./packages/core/tests/fixtures/scanFilesCore/hooks", "core" as any, "hook", "*.ts");
+    const hooksDir = join(import.meta.dir, "fixtures/scanFilesCore/hooks");
+    const hooks = await scanFiles(hooksDir, "core" as any, "hook", "*.ts");
     expect(Array.isArray(hooks)).toBe(true);
     expect(hooks.length).toBe(1);
 

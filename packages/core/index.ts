@@ -9,6 +9,7 @@ import type { BeflyContext, BeflyOptions } from "./types/befly";
 import type { Hook } from "./types/hook";
 import type { Plugin } from "./types/plugin";
 
+import { loadBeflyConfig } from "./befly.config";
 import { checkApi } from "./checks/checkApi";
 import { checkHook } from "./checks/checkHook";
 import { checkMenu } from "./checks/checkMenu";
@@ -64,8 +65,7 @@ export class Befly {
         try {
             const serverStartTime = Bun.nanoseconds();
 
-            // 0. 延迟加载配置（避免循环依赖）
-            const { loadBeflyConfig } = await import("./befly.config");
+            // 0. 加载配置
             this.config = await loadBeflyConfig();
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取
