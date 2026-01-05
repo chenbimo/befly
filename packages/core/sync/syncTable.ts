@@ -13,11 +13,10 @@ import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/syn
 import type { FieldDefinition } from "../types/validate";
 import type { ScanFileResult } from "../utils/scanFiles";
 
-import { snakeCase } from "es-toolkit/string";
-
 import { CacheKeys } from "../lib/cacheKeys";
 import { getDialectByName, getSyncTableColumnsInfoQuery, getSyncTableIndexesQuery } from "../lib/dbDialect";
 import { Logger } from "../lib/logger";
+import { snakeCase } from "../utils/snakeCase";
 
 type SqlExecutor = {
     unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;

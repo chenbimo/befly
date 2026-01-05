@@ -1,7 +1,6 @@
-import { isPlainObject } from "es-toolkit/compat";
-import { omit } from "es-toolkit/object";
-
 import { Logger } from "../lib/logger";
+import { isPlainObject } from "../utils/isPlainObject";
+import { omit } from "../utils/omit";
 
 export async function checkHook(hooks: any[]): Promise<void> {
     let hasError = false;

@@ -9,9 +9,8 @@ import { readdir, stat, unlink } from "node:fs/promises";
 import { hostname as osHostname } from "node:os";
 import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
-import { isPlainObject } from "es-toolkit/compat";
-import { escapeRegExp } from "es-toolkit/string";
-
+import { escapeRegExp } from "../utils/escapeRegExp";
+import { isPlainObject } from "../utils/isPlainObject";
 import { getCtx } from "./asyncContext";
 
 // 注意：Logger 可能在运行时/测试中被 process.chdir() 影响。

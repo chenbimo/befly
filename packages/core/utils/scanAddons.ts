@@ -1,9 +1,9 @@
 import { existsSync, readdirSync } from "node:fs";
 
-import { camelCase } from "es-toolkit/string";
 import { join, resolve } from "pathe";
 
 import { appAddonsDir, appDir } from "../paths";
+import { camelCase } from "./camelCase";
 import { isDirentDirectory } from "./isDirentDirectory";
 
 export type AddonSource = "addon" | "app";

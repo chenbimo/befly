@@ -2,9 +2,10 @@ import { existsSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { isPlainObject } from "es-toolkit";
-import { get, set } from "es-toolkit/compat";
-import { mergeAndConcat } from "merge-anything";
+import { getByPath } from "./getByPath";
+import { isPlainObject } from "./isPlainObject";
+import { mergeAndConcat } from "./mergeAndConcat";
+import { setByPath } from "./setByPath";
 
 /**
  * 加载配置选项
@@ -101,9 +102,9 @@ export async function scanConfig(options: LoadConfigOptions): Promise<Record<str
                             if (paths && paths.length > 0) {
                                 const result: Record<string, any> = {};
                                 for (const path of paths) {
-                                    const value = get(firstConfig, path);
+                                    const value = getByPath(firstConfig, path);
                                     if (value !== undefined) {
-                                        set(result, path, value);
+                                        setByPath(result, path, value);
                                     }
                                 }
                                 return result;
@@ -130,9 +131,9 @@ export async function scanConfig(options: LoadConfigOptions): Promise<Record<str
     if (paths && paths.length > 0) {
         const result: Record<string, any> = {};
         for (const path of paths) {
-            const value = get(finalConfig, path);
+            const value = getByPath(finalConfig, path);
             if (value !== undefined) {
-                set(result, path, value);
+                setByPath(result, path, value);
             }
         }
         return result;

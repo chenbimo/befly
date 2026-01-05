@@ -1,5 +1,5 @@
-import { isPlainObject } from "es-toolkit/compat";
-import { snakeCase } from "es-toolkit/string";
+import { isPlainObject } from "./isPlainObject";
+import { snakeCase } from "./snakeCase";
 
 /**
  * 对象字段名转下划线

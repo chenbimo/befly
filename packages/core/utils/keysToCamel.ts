@@ -1,5 +1,5 @@
-import { isPlainObject } from "es-toolkit/compat";
-import { camelCase } from "es-toolkit/string";
+import { camelCase } from "./camelCase";
+import { isPlainObject } from "./isPlainObject";
 
 /**
  * 对象字段名转小驼峰

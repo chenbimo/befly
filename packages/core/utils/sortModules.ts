@@ -1,6 +1,5 @@
-import { camelCase } from "es-toolkit/string";
-
 import { Logger } from "../lib/logger";
+import { camelCase } from "./camelCase";
 
 export type SortModulesByDepsOptions<T> = {
     /**

@@ -1,4 +1,4 @@
-import { isPlainObject } from "es-toolkit/compat";
+import { isPlainObject } from "./isPlainObject";
 
 /**
  * 挑选指定字段
