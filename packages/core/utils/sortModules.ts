@@ -1,5 +1,5 @@
 import { Logger } from "../lib/logger";
-import { camelCase } from "./camelCase";
+import { camelCase } from "./util";
 
 export type SortModulesByDepsOptions<T> = {
     /**

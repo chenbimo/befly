@@ -6,8 +6,7 @@ import { Cipher } from "../lib/cipher";
 import { Jwt } from "../lib/jwt";
 import { SqlBuilder } from "../lib/sqlBuilder";
 import { Validator } from "../lib/validator";
-import { keysToCamel } from "../utils/keysToCamel";
-import { keysToSnake } from "../utils/keysToSnake";
+import { keysToCamel, keysToSnake } from "../utils/util";
 
 describe("Integration - 密码验证流程", () => {
     test("用户注册：密码加密 + 验证", async () => {

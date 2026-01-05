@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { getByPath } from "../utils/getByPath";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
-import { setByPath } from "../utils/setByPath";
+import { getByPath, setByPath } from "../utils/util";
 
 describe("utils - getByPath / setByPath extra", () => {
     test("setByPath should overwrite existing leaf", () => {

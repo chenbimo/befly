@@ -1,4 +1,4 @@
-import { isPlainObject } from "./isPlainObject";
+import { isPlainObject } from "./util";
 
 function cloneDeepLoose(value: any): any {
     if (Array.isArray(value)) {

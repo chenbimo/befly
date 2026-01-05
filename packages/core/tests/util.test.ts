@@ -1,10 +1,8 @@
 import { describe, test, expect } from "bun:test";
 
-import { arrayKeysToCamel } from "../utils/arrayKeysToCamel.ts";
 import { calcPerfTime } from "../utils/calcPerfTime.ts";
 import { fieldClear } from "../utils/fieldClear.ts";
-import { keysToCamel } from "../utils/keysToCamel.ts";
-import { keysToSnake } from "../utils/keysToSnake.ts";
+import { arrayKeysToCamel, keysToCamel, keysToSnake } from "../utils/util";
 
 describe("Util - keysToCamel", () => {
     test("转换对象键名为驼峰", () => {

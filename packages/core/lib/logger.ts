@@ -9,7 +9,7 @@ import { readdir, stat, unlink } from "node:fs/promises";
 import { hostname as osHostname } from "node:os";
 import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
-import { isPlainObject } from "../utils/isPlainObject";
+import { isPlainObject } from "../utils/util";
 import { getCtx } from "./asyncContext";
 
 const REGEXP_SPECIAL = /[\\^$.*+?()[\]{}|]/g;

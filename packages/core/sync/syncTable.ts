@@ -16,7 +16,7 @@ import type { ScanFileResult } from "../utils/scanFiles";
 import { CacheKeys } from "../lib/cacheKeys";
 import { getDialectByName, getSyncTableColumnsInfoQuery, getSyncTableIndexesQuery } from "../lib/dbDialect";
 import { Logger } from "../lib/logger";
-import { snakeCase } from "../utils/snakeCase";
+import { snakeCase } from "../utils/util";
 
 type SqlExecutor = {
     unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;

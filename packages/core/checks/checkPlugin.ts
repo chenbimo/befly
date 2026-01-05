@@ -1,6 +1,5 @@
 import { Logger } from "../lib/logger";
-import { isPlainObject } from "../utils/isPlainObject";
-import { omit } from "../utils/omit";
+import { isPlainObject, omit } from "../utils/util";
 
 export async function checkPlugin(plugins: any[]): Promise<void> {
     let hasError = false;

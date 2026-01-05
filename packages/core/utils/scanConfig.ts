@@ -2,10 +2,8 @@ import { existsSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { getByPath } from "./getByPath";
-import { isPlainObject } from "./isPlainObject";
 import { mergeAndConcat } from "./mergeAndConcat";
-import { setByPath } from "./setByPath";
+import { getByPath, isPlainObject, setByPath } from "./util";
 
 /**
  * 加载配置选项

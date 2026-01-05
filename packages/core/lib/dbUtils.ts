@@ -1,8 +1,7 @@
 import type { WhereConditions } from "../types/common";
 
 import { fieldClear } from "../utils/fieldClear";
-import { keysToSnake } from "../utils/keysToSnake";
-import { snakeCase } from "../utils/snakeCase";
+import { keysToSnake, snakeCase } from "../utils/util";
 
 export class DbUtils {
     static parseTableRef(tableRef: string): { schema: string | null; table: string; alias: string | null } {

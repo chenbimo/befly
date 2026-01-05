@@ -2,7 +2,7 @@ import type { BeflyContext } from "../types/befly";
 import type { SyncApiItem } from "../types/sync";
 
 import { Logger } from "../lib/logger";
-import { keyBy } from "../utils/keyBy";
+import { keyBy } from "../utils/util";
 
 export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: SyncApiItem[]): Promise<void> {
     const tableName = "addon_admin_api";

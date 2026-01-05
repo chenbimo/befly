@@ -4,11 +4,9 @@ import type { Hook } from "../types/hook";
 // 外部依赖
 import { XMLParser } from "fast-xml-parser";
 
-// 相对导入
-import { isEmpty } from "../utils/isEmpty";
-import { isPlainObject } from "../utils/isPlainObject";
-import { pickFields } from "../utils/pickFields";
 import { ErrorResponse } from "../utils/response";
+// 相对导入
+import { isEmpty, isPlainObject, pickFields } from "../utils/util";
 
 const xmlParser = new XMLParser();
 

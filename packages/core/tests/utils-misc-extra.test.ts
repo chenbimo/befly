@@ -8,8 +8,8 @@ import { setCorsOptions } from "../utils/cors";
 import { compileDisableMenuGlobRules } from "../utils/disableMenusGlob";
 import { genShortId } from "../utils/genShortId";
 import { isDirentDirectory } from "../utils/isDirentDirectory";
-import { pickFields } from "../utils/pickFields";
 import { processFields } from "../utils/processFields";
+import { pickFields } from "../utils/util";
 
 function ensureEmptyDir(dir: string): void {
     rmSync(dir, { recursive: true, force: true });

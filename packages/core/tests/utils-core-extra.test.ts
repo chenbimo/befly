@@ -4,21 +4,13 @@ import { join } from "node:path";
 
 import { clearRegexCache, getCompiledRegex, getRegex, getRegexCacheSize, matchRegex } from "../configs/presetRegexp";
 import { escapeRegExp } from "../lib/logger";
-import { camelCase } from "../utils/camelCase";
 import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob";
-import { forOwn } from "../utils/forOwn";
-import { getByPath } from "../utils/getByPath";
 import { importDefault } from "../utils/importDefault";
-import { isEmpty } from "../utils/isEmpty";
-import { isPlainObject } from "../utils/isPlainObject";
-import { keyBy } from "../utils/keyBy";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
-import { omit } from "../utils/omit";
 import { getProcessRole, isPrimaryProcess } from "../utils/process";
-import { setByPath } from "../utils/setByPath";
-import { snakeCase } from "../utils/snakeCase";
 import { toListSqlLogFields, toSqlLogFields } from "../utils/sqlLog";
+import { camelCase, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
 
 // 说明：
 // - 这里的测试目标是“utils 纯函数/小工具”的边界与异常分支覆盖。

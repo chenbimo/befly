@@ -2,9 +2,8 @@ import { existsSync } from "node:fs";
 
 import { relative, normalize, parse, join } from "pathe";
 
-import { camelCase } from "./camelCase";
-import { forOwn } from "./forOwn";
 import { importDefault } from "./importDefault";
+import { camelCase, forOwn } from "./util";
 
 export type ScanFileSource = "app" | "addon" | "core";
 
