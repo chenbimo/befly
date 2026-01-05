@@ -809,7 +809,7 @@ function buildLogLine(level: LogLevelName, args: any[]): string {
 
     // 兼容：logger.(level)(err, msg?)
     if (first instanceof Error) {
-        base.err = sanitizeErrorValue(first, {});
+        base.err = sanitizeErrorValue(first);
         if (typeof second === "string") {
             const extraMsg = formatExtrasToMsg(args.slice(2));
             base.msg = extraMsg ? `${second} ${extraMsg}` : second;
@@ -872,7 +872,7 @@ function createSinkLogger(options: { kind: "app" | "slow" | "error"; minLevel: L
     };
 }
 
-function truncateString(val: string, stats: Record<string, number>): string {
+function truncateString(val: string): string {
     if (val.length <= maxLogStringLen) return val;
     return val.slice(0, maxLogStringLen);
 }
@@ -892,7 +892,7 @@ function isSensitiveKey(key: string): boolean {
     return false;
 }
 
-function safeToStringMasked(val: any, visited: WeakSet<object>, stats: Record<string, number>): string {
+function safeToStringMasked(val: any, visited: WeakSet<object>): string {
     if (typeof val === "string") return val;
 
     if (val instanceof Error) {
@@ -943,38 +943,38 @@ function safeToStringMasked(val: any, visited: WeakSet<object>, stats: Record<st
     }
 }
 
-function sanitizeErrorValue(err: Error, stats: Record<string, number>): Record<string, any> {
+function sanitizeErrorValue(err: Error): Record<string, any> {
     const errObj: Record<string, any> = {
         name: err.name || "Error",
-        message: truncateString(err.message || "", stats)
+        message: truncateString(err.message || "")
     };
     if (typeof err.stack === "string") {
-        errObj.stack = truncateString(err.stack, stats);
+        errObj.stack = truncateString(err.stack);
     }
     return errObj;
 }
 
-function stringifyPreview(val: any, visited: WeakSet<object>, stats: Record<string, number>): string {
-    const str = safeToStringMasked(val, visited, stats);
-    return truncateString(str, stats);
+function stringifyPreview(val: any, visited: WeakSet<object>): string {
+    const str = safeToStringMasked(val, visited);
+    return truncateString(str);
 }
 
-function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<string, number>): any {
+function sanitizeValueLimited(val: any, visited: WeakSet<object>): any {
     if (val === null || val === undefined) return val;
-    if (typeof val === "string") return truncateString(val, stats);
+    if (typeof val === "string") return truncateString(val);
     if (typeof val === "number") return val;
     if (typeof val === "boolean") return val;
     if (typeof val === "bigint") return val;
 
     if (val instanceof Error) {
-        return sanitizeErrorValue(val, stats);
+        return sanitizeErrorValue(val);
     }
 
     // 仅支持数组 + plain object 的结构化清洗，其余类型走字符串预览。
     const isArr = Array.isArray(val);
     const isObj = isPlainObject(val);
     if (!isArr && !isObj) {
-        return stringifyPreview(val, visited, stats);
+        return stringifyPreview(val, visited);
     }
 
     // 防环（根节点）
@@ -996,7 +996,7 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
             return;
         }
         if (typeof child === "string") {
-            dst[key] = truncateString(child, stats);
+            dst[key] = truncateString(child);
             return;
         }
         if (typeof child === "number" || typeof child === "boolean" || typeof child === "bigint") {
@@ -1004,7 +1004,7 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
             return;
         }
         if (child instanceof Error) {
-            dst[key] = sanitizeErrorValue(child, stats);
+            dst[key] = sanitizeErrorValue(child);
             return;
         }
 
@@ -1012,17 +1012,17 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
         const childIsObj = isPlainObject(child);
 
         if (!childIsArr && !childIsObj) {
-            dst[key] = stringifyPreview(child, visited, stats);
+            dst[key] = stringifyPreview(child, visited);
             return;
         }
 
         // 深度/节点数上限：超出则降级为字符串预览
         if (depth >= sanitizeDepthLimit) {
-            dst[key] = stringifyPreview(child, visited, stats);
+            dst[key] = stringifyPreview(child, visited);
             return;
         }
         if (nodes >= sanitizeNodesLimit) {
-            dst[key] = stringifyPreview(child, visited, stats);
+            dst[key] = stringifyPreview(child, visited);
             return;
         }
 
@@ -1091,7 +1091,7 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
 }
 
 function sanitizeTopValue(val: any, visited: WeakSet<object>): any {
-    return sanitizeValueLimited(val, visited, {});
+    return sanitizeValueLimited(val, visited);
 }
 
 function sanitizeLogObject(obj: Record<string, any>): Record<string, any> {
