@@ -43,7 +43,8 @@
     "scripts": {
         "clean": "rimraf dist",
         "test": "bun test",
-        "build": "rimraf dist && bunx tsgo -p tsconfig.build.json",
+        "bundle": "bun build ./index.ts --outdir ./dist --target bun --format esm --packages bundle --entry-naming \"[name].bundler.[ext]\"",
+        "build": "rimraf dist && bunx tsgo -p tsconfig.build.json && bun run bundle",
         "prepack": "bun run build && bun run ./scripts/ensureDist.ts",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
     },

@@ -8,6 +8,17 @@ type PackageJson = {
     exports?: unknown;
 };
 
+function isTsSourcePath(p: string): boolean {
+    // 注意：.d.ts 是构建产物，必须允许；这里仅阻断指向源码的 .ts 入口。
+    if (!p.endsWith(".ts")) {
+        return false;
+    }
+    if (p.endsWith(".d.ts") || p.endsWith(".d.mts") || p.endsWith(".d.cts")) {
+        return false;
+    }
+    return true;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
 }
@@ -254,7 +265,7 @@ function main(): void {
         process.exit(1);
     }
 
-    if (pkg.main.endsWith(".ts") || pkg.types.endsWith(".ts")) {
+    if (isTsSourcePath(pkg.main) || isTsSourcePath(pkg.types)) {
         process.stderr.write("[ensureDist] package.json main/types must not point to .ts source files\n");
         process.exit(1);
     }
@@ -278,12 +289,12 @@ function main(): void {
         process.exit(1);
     }
 
-    if (typeof dotTypes === "string" && dotTypes.endsWith(".ts")) {
+    if (typeof dotTypes === "string" && isTsSourcePath(dotTypes)) {
         process.stderr.write("[ensureDist] exports['.'].types must not point to .ts source files\n");
         process.exit(1);
     }
 
-    if (typeof dotDefault === "string" && dotDefault.endsWith(".ts")) {
+    if (typeof dotDefault === "string" && isTsSourcePath(dotDefault)) {
         process.stderr.write("[ensureDist] exports['.'].default must not point to .ts source files\n");
         process.exit(1);
     }
