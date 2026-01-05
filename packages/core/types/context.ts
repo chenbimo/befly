@@ -2,7 +2,7 @@
  * 请求上下文类型定义
  */
 
-import type { ApiRoute } from "./api.ts";
+import type { ApiRoute } from "./api";
 
 /**
  * 请求上下文接口

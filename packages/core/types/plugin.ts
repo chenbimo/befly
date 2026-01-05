@@ -4,7 +4,7 @@
  * 说明：当前 core 插件的默认导出形态是：{ deps?: string[], handler(ctx): any }
  */
 
-import type { BeflyContext } from "./befly.ts";
+import type { BeflyContext } from "./befly";
 
 export interface Plugin {
     /** 运行时由 loader 注入（默认导出对象中通常不需要写） */

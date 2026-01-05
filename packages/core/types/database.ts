@@ -2,7 +2,7 @@
  * 数据库操作相关类型定义
  */
 
-import type { JoinOption, SqlValue, WhereConditions } from "./common.ts";
+import type { JoinOption, SqlValue, WhereConditions } from "./common";
 
 /**
  * 数据库类型

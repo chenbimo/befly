@@ -2,8 +2,8 @@
  * 缓存助手类型定义
  */
 
-import type { DbHelper } from "./database.ts";
-import type { RedisHelper } from "./redis.ts";
+import type { DbHelper } from "./database";
+import type { RedisHelper } from "./redis";
 
 /**
  * 缓存助手类

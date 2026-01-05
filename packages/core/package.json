@@ -25,12 +25,12 @@
         "dist/"
     ],
     "type": "module",
-    "main": "./dist/main.js",
-    "types": "./dist/main.d.ts",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "types": "./dist/main.d.ts",
-            "default": "./dist/main.js"
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
         },
         "./types/*": {
             "types": "./dist/types/*.d.ts"
@@ -43,7 +43,7 @@
     "scripts": {
         "clean": "rimraf dist",
         "test": "bun test",
-        "build": "bunx tsgo -p tsconfig.build.json",
+        "build": "rimraf dist && bunx tsgo -p tsconfig.build.json",
         "prepack": "bun run build && bun run ./scripts/ensureDist.ts",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
     },

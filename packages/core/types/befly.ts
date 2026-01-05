@@ -2,14 +2,14 @@
  * Befly 核心框架类型定义
  */
 
-import type { CacheHelper } from "./cache.ts";
-import type { CipherStatic } from "./cipher.ts";
-import type { KeyValue } from "./common.ts";
-import type { DbHelper } from "./database.ts";
-import type { Jwt } from "./jwt.ts";
-import type { Logger, LoggerConfig } from "./logger.ts";
-import type { RedisHelper } from "./redis.ts";
-import type { ValidatorStatic } from "./validate.ts";
+import type { CacheHelper } from "./cache";
+import type { CipherStatic } from "./cipher";
+import type { KeyValue } from "./common";
+import type { DbHelper } from "./database";
+import type { Jwt } from "./jwt";
+import type { Logger, LoggerConfig } from "./logger";
+import type { RedisHelper } from "./redis";
+import type { ValidatorStatic } from "./validate";
 
 export type { LoggerConfig };
 

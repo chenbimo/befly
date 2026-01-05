@@ -5,7 +5,7 @@
  * 此处仅描述 Befly 注入的 `befly.cipher`（静态方法集合）。
  */
 
-import type { EncodingType, HashAlgorithm, PasswordHashOptions } from "./crypto.ts";
+import type { EncodingType, HashAlgorithm, PasswordHashOptions } from "./crypto";
 
 export interface CipherStatic {
     md5(data: string | Uint8Array, encoding?: EncodingType): string;

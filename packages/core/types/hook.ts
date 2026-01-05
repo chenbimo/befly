@@ -4,8 +4,8 @@
  * 说明：当前 core 的 hook 执行模型是“顺序执行 handler(befly, ctx)”，无 next / 洋葱链。
  */
 
-import type { BeflyContext } from "./befly.ts";
-import type { RequestContext } from "./context.ts";
+import type { BeflyContext } from "./befly";
+import type { RequestContext } from "./context";
 
 export interface Hook {
     /** 运行时由 loader 注入（默认导出对象中通常不需要写） */

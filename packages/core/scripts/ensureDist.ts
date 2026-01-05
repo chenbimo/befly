@@ -80,6 +80,51 @@ function main(): void {
 
     const pkg = JSON.parse(readFileSync(pkgPath, { encoding: "utf8" })) as PackageJson;
 
+    // 额外一致性校验：默认入口必须走 dist 产物（JS + DTS 分离）。
+    if (typeof pkg.main !== "string" || !pkg.main.startsWith("./dist/")) {
+        process.stderr.write("[ensureDist] package.json main must be a string under ./dist/\n");
+        process.exit(1);
+    }
+
+    if (typeof pkg.types !== "string" || !pkg.types.startsWith("./dist/")) {
+        process.stderr.write("[ensureDist] package.json types must be a string under ./dist/\n");
+        process.exit(1);
+    }
+
+    if (pkg.main.endsWith(".ts") || pkg.types.endsWith(".ts")) {
+        process.stderr.write("[ensureDist] package.json main/types must not point to .ts source files\n");
+        process.exit(1);
+    }
+
+    if (!isRecord(pkg.exports) || !isRecord(pkg.exports["."])) {
+        process.stderr.write("[ensureDist] package.json exports['.'] must be an object with { types, default }\n");
+        process.exit(1);
+    }
+
+    const dotExport = pkg.exports["."] as Record<string, unknown>;
+    const dotTypes = dotExport["types"];
+    const dotDefault = dotExport["default"];
+
+    if (dotTypes !== pkg.types) {
+        process.stderr.write("[ensureDist] exports['.'].types must equal package.json types\n");
+        process.exit(1);
+    }
+
+    if (dotDefault !== pkg.main) {
+        process.stderr.write("[ensureDist] exports['.'].default must equal package.json main\n");
+        process.exit(1);
+    }
+
+    if (typeof dotTypes === "string" && dotTypes.endsWith(".ts")) {
+        process.stderr.write("[ensureDist] exports['.'].types must not point to .ts source files\n");
+        process.exit(1);
+    }
+
+    if (typeof dotDefault === "string" && dotDefault.endsWith(".ts")) {
+        process.stderr.write("[ensureDist] exports['.'].default must not point to .ts source files\n");
+        process.exit(1);
+    }
+
     const distDir = resolve(packageRoot, "dist");
     if (!existsSync(distDir)) {
         process.stderr.write("[ensureDist] dist/ not found (did you run build?)\n");

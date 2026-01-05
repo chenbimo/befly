@@ -34,6 +34,58 @@ function collectExportPaths(exportsValue: unknown, out: string[]): void {
     }
 }
 
+function assertExportPathInDist(pathValue: string): void {
+    if (!pathValue.startsWith("./")) {
+        return;
+    }
+
+    if (!pathValue.startsWith("./dist/")) {
+        process.stderr.write(`[ensureDist] export path must be under ./dist/: ${pathValue}\n`);
+        process.exit(1);
+    }
+
+    if (pathValue.endsWith(".ts")) {
+        process.stderr.write(`[ensureDist] export path must not point to .ts source files: ${pathValue}\n`);
+        process.exit(1);
+    }
+}
+
+function validateExportsShapeAndPaths(exportsValue: unknown): void {
+    if (!isRecord(exportsValue)) {
+        return;
+    }
+
+    for (const [key, value] of Object.entries(exportsValue)) {
+        if (typeof value === "string") {
+            assertExportPathInDist(value);
+            continue;
+        }
+
+        if (!isRecord(value)) {
+            continue;
+        }
+
+        const typesPath = value["types"];
+        const defaultPath = value["default"];
+
+        if (typeof typesPath === "string") {
+            assertExportPathInDist(typesPath);
+            if (!typesPath.includes("*") && !typesPath.endsWith(".d.ts")) {
+                process.stderr.write(`[ensureDist] export '${key}'.types should end with .d.ts: ${typesPath}\n`);
+                process.exit(1);
+            }
+        }
+
+        if (typeof defaultPath === "string") {
+            assertExportPathInDist(defaultPath);
+            if (!defaultPath.includes("*") && !defaultPath.endsWith(".js")) {
+                process.stderr.write(`[ensureDist] export '${key}'.default should end with .js: ${defaultPath}\n`);
+                process.exit(1);
+            }
+        }
+    }
+}
+
 function assertPathExists(packageRoot: string, relativeOrBare: string): void {
     if (!relativeOrBare.startsWith("./")) {
         return;
@@ -79,6 +131,15 @@ function main(): void {
     }
 
     const pkg = JSON.parse(readFileSync(pkgPath, { encoding: "utf8" })) as PackageJson;
+
+    // dist-only 发布规范：exports/main/types 均不得指向源码 .ts，且必须在 dist 下。
+    if (typeof pkg.main === "string") {
+        assertExportPathInDist(pkg.main);
+    }
+    if (typeof pkg.types === "string") {
+        assertExportPathInDist(pkg.types);
+    }
+    validateExportsShapeAndPaths(pkg.exports);
 
     const distDir = resolve(packageRoot, "dist");
     if (!existsSync(distDir)) {

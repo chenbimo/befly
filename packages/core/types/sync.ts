@@ -2,8 +2,8 @@
  * 数据同步相关类型定义
  */
 
-import type { BeflyContext } from "./befly.ts";
-import type { KeyValue } from "./common.ts";
+import type { BeflyContext } from "./befly";
+import type { KeyValue } from "./common";
 
 /**
  * 同步结果

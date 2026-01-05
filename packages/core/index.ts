@@ -4,10 +4,10 @@
  */
 
 // ========== 类型导入 ==========
-import type { ApiRoute } from "./types/api.ts";
-import type { BeflyContext, BeflyOptions } from "./types/befly.ts";
-import type { Hook } from "./types/hook.ts";
-import type { Plugin } from "./types/plugin.ts";
+import type { ApiRoute } from "./types/api";
+import type { BeflyContext, BeflyOptions } from "./types/befly";
+import type { Hook } from "./types/hook";
+import type { Plugin } from "./types/plugin";
 
 import { checkApi } from "./checks/checkApi.ts";
 import { checkHook } from "./checks/checkHook.ts";

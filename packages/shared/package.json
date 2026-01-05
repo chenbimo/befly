@@ -22,7 +22,7 @@
     },
     "scripts": {
         "clean": "rimraf dist",
-        "build": "bunx tsgo -p tsconfig.build.json",
+        "build": "rimraf dist && bunx tsgo -p tsconfig.build.json",
         "test": "bun test",
         "prepack": "bun run build && bun run ./scripts/ensureDist.ts",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
