@@ -12,11 +12,11 @@ test("befly - all entry should export Befly", async () => {
     expect(pkgJson.exports).toBeDefined();
     expect(pkgJson.exports["./all"]).toBeDefined();
     expect(pkgJson.exports["./all"].types).toBe("./dist/index.d.ts");
-    expect(pkgJson.exports["./all"].import).toBe("./dist/index.all.js");
-    expect(pkgJson.exports["./all"].default).toBe("./dist/index.all.js");
+    expect(pkgJson.exports["./all"].import).toBe("./dist/befly.js");
+    expect(pkgJson.exports["./all"].default).toBe("./dist/befly.js");
 
     const distDir = resolve(pkgRoot, "dist");
-    const distAllEntryPath = resolve(distDir, "index.all.js");
+    const distAllEntryPath = resolve(distDir, "befly.js");
 
     if (!existsSync(distAllEntryPath)) {
         if (!existsSync(distDir)) {

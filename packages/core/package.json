@@ -34,8 +34,8 @@
         },
         "./all": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.all.js",
-            "default": "./dist/index.all.js"
+            "import": "./dist/befly.js",
+            "default": "./dist/befly.js"
         },
         "./types/*": {
             "types": "./dist/types/*.d.ts"
@@ -48,7 +48,7 @@
     "scripts": {
         "clean": "rimraf dist",
         "test": "bun test",
-        "bundle": "bun build ./index.ts --outdir ./dist --target bun --format esm --packages bundle --entry-naming \"[name].all.[ext]\"",
+        "bundle": "bun build ./index.ts --outfile ./dist/befly.js --target bun --format esm --packages bundle",
         "build": "rimraf dist && bunx tsgo -p tsconfig.build.json && bun run bundle",
         "prepack": "bun run build && bun run ./scripts/ensureDist.ts",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
