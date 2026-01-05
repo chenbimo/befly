@@ -243,7 +243,6 @@ logs/
 ├── app.2024-01-01.1.log
 ├── app.2024-01-02.log
 ├── app.2024-01-03.log
-├── slow.2024-01-01.log
 └── error.2024-01-01.log
 └── ...
 ```
@@ -251,7 +250,6 @@ logs/
 说明：
 
 - `app.*.log`：普通日志
-- `slow.*.log`：慢日志镜像（见下方“慢日志”）
 - `error.*.log`：错误日志镜像（`Logger.error()` 会额外写一份到这里）
 - 当同一天文件超过 `maxSize`（MB）时，会滚动为 `.<n>` 后缀（如 `.1`、`.2`）。
 
@@ -262,11 +260,11 @@ logs/
 - **按日期轮转**：每天创建新文件（`<prefix>.YYYY-MM-DD.log`）
 - **按大小轮转**：同一天单文件超过 `maxSize`（MB）会生成 `.<n>` 后缀文件
 - **自动创建目录**：目录不存在时会自动创建
-- **清理旧文件**：启动后会异步清理超过 1 年的历史日志（只清理 `app./slow./error.` 前缀文件）
+- **清理旧文件**：启动后会异步清理超过 1 年的历史日志（只清理 `app./error.` 前缀文件）
 
-### 慢日志
+### 慢日志（标记）
 
-当日志对象中包含 `event: "slow"` 时，会将这条日志额外镜像一份到 `slow.*.log`：
+当日志对象中包含 `event: "slow"` 时，不会额外生成单独文件；它仍会写入 `app.*.log`，但你可以在日志系统/查询侧按字段筛选：
 
 ```typescript
 Logger.info({ event: "slow", sqlPreview: "SELECT ...", durationMs: 1234 }, "slow query");
@@ -500,6 +498,11 @@ A: Logger 在首次初始化后会尝试注册 `SIGINT` / `SIGTERM` 的优雅退
 - 收到信号时会先调用 `Logger.shutdown()` 尝试 flush 并关闭文件句柄
 - 最多等待 2 秒后强制退出（避免卡死）
 - 如果业务侧已经注册了同名 signal handler，Logger 会跳过注册，避免改变既有行为
+
+补充：
+
+- `Logger.flush()`：仅 flush（尽量把缓冲区内容写出），**不会**关闭文件句柄
+- `Logger.shutdown()`：flush 并关闭文件句柄（用于测试/进程退出）
 
 ### Q: 如何在测试中捕获日志？
 

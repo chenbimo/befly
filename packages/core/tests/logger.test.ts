@@ -251,7 +251,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(calls[0].args[1]).toBe("Redis getObject 错误");
     });
 
-    test("对象裁剪：敏感 key 掩码 + 字符串截断 + 数组截断 + 统计字段", () => {
+    test("对象裁剪：敏感 key 掩码 + 字符串截断 + 数组截断", () => {
         const calls: any[] = [];
 
         const mock: any = {
@@ -320,15 +320,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(obj.items[0].mySecret).toBe("[MASKED]");
         expect(obj.okNumber).toBe(123);
         expect(obj.okBool).toBe(true);
-        expect(obj.logTrimStats).toBeTruthy();
-        expect(obj.logTrimStats.maskedKeys).toBeGreaterThan(0);
-        expect(obj.logTrimStats.truncatedStrings).toBeGreaterThan(0);
-        expect(obj.logTrimStats.arraysTruncated).toBeGreaterThanOrEqual(1);
-        expect(obj.logTrimStats.arrayItemsOmitted).toBeGreaterThanOrEqual(30);
-        expect(obj.logTrimStats.depthLimited).toBeGreaterThanOrEqual(0);
-        expect(obj.logTrimStats.nodesLimited).toBeGreaterThanOrEqual(0);
-        expect(obj.logTrimStats.objectKeysLimited).toBeGreaterThanOrEqual(0);
-        expect(obj.logTrimStats.objectKeysOmitted).toBeGreaterThanOrEqual(0);
+        expect(obj.logTrimStats).toBeUndefined();
     });
 
     test("对象裁剪：最大深度限制时的字符串预览也应掩码敏感 key", () => {
@@ -736,11 +728,11 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(obj.big.password).toBe("[MASKED]");
         expect(Object.keys(obj.big).length).toBe(10);
 
-        // 统计字段：应体现 key 丢弃与 nodes 限制触发
-        expect(obj.logTrimStats).toBeTruthy();
-        expect(obj.logTrimStats.objectKeysLimited).toBeGreaterThanOrEqual(1);
-        expect(obj.logTrimStats.objectKeysOmitted).toBeGreaterThanOrEqual(1);
-        expect(obj.logTrimStats.nodesLimited).toBeGreaterThanOrEqual(1);
+        // nodes/objectKeys 限制：不要求输出统计字段，但输出结构应稳定
+        const itemsOut = obj.items;
+        const itemsIsOk = Array.isArray(itemsOut) || typeof itemsOut === "string";
+        expect(itemsIsOk).toBe(true);
+        expect(obj.logTrimStats).toBeUndefined();
     });
 
     test("压力：大对象/深层结构在限制下不应抛错，输出结构应稳定", () => {
@@ -815,7 +807,48 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(calls.length).toBe(1);
         const obj = calls[0].args[0];
         expect(obj.huge).toBeTruthy();
-        expect(obj.logTrimStats).toBeTruthy();
-        expect(obj.logTrimStats.maskedKeys).toBeGreaterThan(0);
+
+        const hugeOut = obj.huge;
+        // 在 nodes 限制下，可能是结构化对象，也可能被降级为字符串预览；两者都必须保证敏感字段不会裸露。
+        if (typeof hugeOut === "string") {
+            expect(hugeOut.includes("[MASKED]")).toBe(true);
+            expect(hugeOut.includes("token")).toBe(false);
+            expect(hugeOut.includes("password")).toBe(false);
+        } else {
+            const key0 = (hugeOut as any).key_0;
+            if (typeof key0 === "string") {
+                expect(key0.includes("[MASKED]")).toBe(true);
+                expect(key0.includes("token")).toBe(false);
+                expect(key0.includes("password")).toBe(false);
+            } else {
+                // 在 nodes/objectKeys 限制下，内部结构可能被截断；只要不泄露敏感值即可。
+                const json = JSON.stringify(key0);
+                expect(json.includes("p".repeat(20))).toBe(false);
+                expect(json.includes("t".repeat(20))).toBe(false);
+                expect(json.includes('"mySecret":"s"')).toBe(false);
+                // 尽量保证出现掩码标记（如果对应字段仍在输出内）
+                expect(json.includes("[MASKED]") || json.includes("password") === false).toBe(true);
+            }
+        }
+
+        expect(obj.logTrimStats).toBeUndefined();
+    });
+
+    test("Logger.flush：不关闭句柄，只负责尽快 flush", async () => {
+        Logger.configure({
+            dir: testLogDir,
+            console: 0,
+            debug: 1,
+            excludeFields: ["*Secret", "*nick*"]
+        });
+
+        Logger.info({ token: "t", mySecret: "s" }, "flush");
+        await Logger.flush();
+
+        // flush 不应影响后续写入
+        Logger.info("after flush");
+        await Logger.flush();
+
+        await Logger.shutdown();
     });
 });

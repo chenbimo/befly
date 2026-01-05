@@ -43,8 +43,6 @@ const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const BUILTIN_SENSITIVE_KEYS = ["*password*", "pass", "pwd", "*token*", "access_token", "refresh_token", "accessToken", "refreshToken", "authorization", "cookie", "set-cookie", "*secret*", "apiKey", "api_key", "privateKey", "private_key"];
 
 let sensitiveKeySet: Set<string> = new Set();
-let sensitiveSuffixMatchers: string[] = [];
-let sensitivePrefixMatchers: string[] = [];
 let sensitiveContainsMatchers: string[] = [];
 let sensitiveContainsRegex: RegExp | null = null;
 
@@ -77,12 +75,10 @@ const DEFAULT_FLUSH_DELAY_MS = 10;
 const DEFAULT_MAX_BATCH_BYTES = 64 * 1024;
 
 let instance: SinkLogger | null = null;
-let slowInstance: SinkLogger | null = null;
 let errorInstance: SinkLogger | null = null;
 let mockInstance: SinkLogger | null = null;
 
 let appFileSink: LogFileSink | null = null;
-let slowFileSink: LogFileSink | null = null;
 let errorFileSink: LogFileSink | null = null;
 
 let appConsoleSink: LogStreamSink | null = null;
@@ -179,6 +175,24 @@ function safeWriteStderrOnce(msg: string): void {
 
 type StreamKind = "stdout" | "stderr";
 
+function shiftBatchFromPending(pending: string[], maxBatchBytes: number): { chunk: string; bytes: number } {
+    const parts: string[] = [];
+    let bytes = 0;
+
+    while (pending.length > 0) {
+        const next = pending[0] as string;
+        const nextBytes = Buffer.byteLength(next);
+        if (parts.length > 0 && bytes + nextBytes > maxBatchBytes) {
+            break;
+        }
+        parts.push(next);
+        bytes += nextBytes;
+        pending.shift();
+    }
+
+    return { chunk: parts.join(""), bytes: bytes };
+}
+
 class LogStreamSink {
     private kind: StreamKind;
     private minLevel: LogLevelName;
@@ -186,7 +200,6 @@ class LogStreamSink {
     private pendingBytes: number;
     private scheduled: boolean;
     private flushing: boolean;
-    private droppedLow: number;
     private maxBufferBytes: number;
     private flushDelayMs: number;
     private maxBatchBytes: number;
@@ -199,7 +212,6 @@ class LogStreamSink {
         this.pendingBytes = 0;
         this.scheduled = false;
         this.flushing = false;
-        this.droppedLow = 0;
 
         this.maxBufferBytes = DEFAULT_MAX_BUFFER_BYTES;
         this.flushDelayMs = DEFAULT_FLUSH_DELAY_MS;
@@ -213,7 +225,6 @@ class LogStreamSink {
         if (this.pendingBytes + bytes > this.maxBufferBytes) {
             // stream sink：优先丢 debug/info，保留 warn/error
             if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) {
-                this.droppedLow += 1;
                 return;
             }
         }
@@ -223,15 +234,19 @@ class LogStreamSink {
         this.scheduleFlush();
     }
 
+    public async flushNow(): Promise<void> {
+        await this.flush();
+    }
+
     public async shutdown(): Promise<void> {
-        await this.flush(true);
+        await this.flush();
     }
 
     private scheduleFlush(): void {
         if (this.scheduled) return;
         this.scheduled = true;
         setTimeout(() => {
-            void this.flush(false);
+            void this.flush();
         }, this.flushDelayMs);
     }
 
@@ -239,7 +254,7 @@ class LogStreamSink {
         return this.kind === "stderr" ? process.stderr : process.stdout;
     }
 
-    private async flush(force: boolean): Promise<void> {
+    private async flush(): Promise<void> {
         if (this.flushing) return;
         this.scheduled = false;
         this.flushing = true;
@@ -247,32 +262,11 @@ class LogStreamSink {
         try {
             const stream = this.getStream();
 
-            // 丢弃提示（仅在 force 关停时输出，避免刷屏）
-            if (force && this.droppedLow > 0) {
-                try {
-                    stream.write(`[Logger] dropped ${this.droppedLow} low-level logs due to backpressure\n`);
-                } catch {
-                    // ignore
-                }
-                this.droppedLow = 0;
-            }
-
             while (this.pending.length > 0) {
-                const parts: string[] = [];
-                let bytes = 0;
-                while (this.pending.length > 0) {
-                    const next = this.pending[0] as string;
-                    const nextBytes = Buffer.byteLength(next);
-                    if (parts.length > 0 && bytes + nextBytes > this.maxBatchBytes) {
-                        break;
-                    }
-                    parts.push(next);
-                    bytes += nextBytes;
-                    this.pending.shift();
-                }
-
-                const chunk = parts.join("");
-                this.pendingBytes = this.pendingBytes - Buffer.byteLength(chunk);
+                const batch = shiftBatchFromPending(this.pending, this.maxBatchBytes);
+                const chunk = batch.chunk;
+                const chunkBytes = Buffer.byteLength(chunk);
+                this.pendingBytes = this.pendingBytes - chunkBytes;
 
                 const ok = stream.write(chunk);
                 if (!ok) {
@@ -293,7 +287,7 @@ class LogStreamSink {
 }
 
 class LogFileSink {
-    private prefix: "app" | "slow" | "error";
+    private prefix: "app" | "error";
     private minLevel: LogLevelName;
     private maxFileBytes: number;
 
@@ -301,7 +295,6 @@ class LogFileSink {
     private pendingBytes: number;
     private scheduled: boolean;
     private flushing: boolean;
-    private droppedLow: number;
 
     private maxBufferBytes: number;
     private flushDelayMs: number;
@@ -313,7 +306,7 @@ class LogFileSink {
     private streamSizeBytes: number;
     private disabled: boolean;
 
-    public constructor(options: { prefix: "app" | "slow" | "error"; minLevel: LogLevelName; maxFileBytes: number }) {
+    public constructor(options: { prefix: "app" | "error"; minLevel: LogLevelName; maxFileBytes: number }) {
         this.prefix = options.prefix;
         this.minLevel = options.minLevel;
         this.maxFileBytes = options.maxFileBytes;
@@ -322,7 +315,6 @@ class LogFileSink {
         this.pendingBytes = 0;
         this.scheduled = false;
         this.flushing = false;
-        this.droppedLow = 0;
 
         this.maxBufferBytes = DEFAULT_MAX_BUFFER_BYTES;
         this.flushDelayMs = DEFAULT_FLUSH_DELAY_MS;
@@ -343,7 +335,6 @@ class LogFileSink {
         if (this.pendingBytes + bytes > this.maxBufferBytes) {
             // 文件 sink：优先丢 debug/info，保留 warn/error
             if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) {
-                this.droppedLow += 1;
                 return;
             }
         }
@@ -353,8 +344,12 @@ class LogFileSink {
         this.scheduleFlush();
     }
 
+    public async flushNow(): Promise<void> {
+        await this.flush();
+    }
+
     public async shutdown(): Promise<void> {
-        await this.flush(true);
+        await this.flush();
         await this.closeStream();
     }
 
@@ -362,7 +357,7 @@ class LogFileSink {
         if (this.scheduled) return;
         this.scheduled = true;
         setTimeout(() => {
-            void this.flush(false);
+            void this.flush();
         }, this.flushDelayMs);
     }
 
@@ -448,7 +443,7 @@ class LogFileSink {
         }
     }
 
-    private async flush(force: boolean): Promise<void> {
+    private async flush(): Promise<void> {
         if (this.disabled) {
             this.pending = [];
             this.pendingBytes = 0;
@@ -459,31 +454,9 @@ class LogFileSink {
         this.flushing = true;
 
         try {
-            // 丢弃提示（仅在 force 关停时输出，避免刷屏）
-            if (force && this.droppedLow > 0) {
-                try {
-                    process.stderr.write(`[Logger] dropped ${this.droppedLow} low-level logs to file '${this.prefix}' due to buffer limit\n`);
-                } catch {
-                    // ignore
-                }
-                this.droppedLow = 0;
-            }
-
             while (this.pending.length > 0 && !this.disabled) {
-                const parts: string[] = [];
-                let bytes = 0;
-                while (this.pending.length > 0) {
-                    const next = this.pending[0] as string;
-                    const nextBytes = Buffer.byteLength(next);
-                    if (parts.length > 0 && bytes + nextBytes > this.maxBatchBytes) {
-                        break;
-                    }
-                    parts.push(next);
-                    bytes += nextBytes;
-                    this.pending.shift();
-                }
-
-                const chunk = parts.join("");
+                const batch = shiftBatchFromPending(this.pending, this.maxBatchBytes);
+                const chunk = batch.chunk;
                 const chunkBytes = Buffer.byteLength(chunk);
                 this.pendingBytes = this.pendingBytes - chunkBytes;
 
@@ -512,13 +485,30 @@ class LogFileSink {
     }
 }
 
+export async function flush(): Promise<void> {
+    // 测试场景：mock logger 不需要 flush
+    if (mockInstance) return;
+
+    const sinks: Array<{ flush: () => Promise<void> }> = [];
+    if (appFileSink) sinks.push({ flush: () => (appFileSink ? appFileSink.flushNow() : Promise.resolve()) });
+    if (errorFileSink) sinks.push({ flush: () => (errorFileSink ? errorFileSink.flushNow() : Promise.resolve()) });
+    if (appConsoleSink) sinks.push({ flush: () => (appConsoleSink ? appConsoleSink.flushNow() : Promise.resolve()) });
+
+    for (const item of sinks) {
+        try {
+            await item.flush();
+        } catch {
+            // ignore
+        }
+    }
+}
+
 export async function shutdown(): Promise<void> {
     // 测试场景：mock logger 不需要 shutdown
     if (mockInstance) return;
 
     const sinks: Array<{ shutdown: () => Promise<void> }> = [];
     if (appFileSink) sinks.push({ shutdown: () => (appFileSink ? appFileSink.shutdown() : Promise.resolve()) });
-    if (slowFileSink) sinks.push({ shutdown: () => (slowFileSink ? slowFileSink.shutdown() : Promise.resolve()) });
     if (errorFileSink) sinks.push({ shutdown: () => (errorFileSink ? errorFileSink.shutdown() : Promise.resolve()) });
     if (appConsoleSink) sinks.push({ shutdown: () => (appConsoleSink ? appConsoleSink.shutdown() : Promise.resolve()) });
 
@@ -531,12 +521,10 @@ export async function shutdown(): Promise<void> {
     }
 
     appFileSink = null;
-    slowFileSink = null;
     errorFileSink = null;
     appConsoleSink = null;
 
     instance = null;
-    slowInstance = null;
     errorInstance = null;
 }
 
@@ -588,7 +576,7 @@ async function pruneOldLogFiles(): Promise<void> {
             const name = entry.name;
 
             // 只处理本项目的日志文件前缀
-            const isTarget = name.startsWith("app.") || name.startsWith("slow.") || name.startsWith("error.");
+            const isTarget = name.startsWith("app.") || name.startsWith("error.");
             if (!isTarget) continue;
 
             const fullPath = nodePathJoin(dir, name);
@@ -621,15 +609,13 @@ export function configure(cfg: LoggerConfig): void {
     // 旧实例可能仍持有文件句柄；这里异步关闭（不阻塞主流程）
     void shutdown();
 
-    config = { ...config, ...cfg };
+    config = Object.assign({}, config, cfg);
     instance = null;
-    slowInstance = null;
     errorInstance = null;
     didPruneOldLogFiles = false;
     didEnsureLogDir = false;
     didWarnIoError = false;
     appFileSink = null;
-    slowFileSink = null;
     errorFileSink = null;
     appConsoleSink = null;
 
@@ -644,52 +630,36 @@ export function configure(cfg: LoggerConfig): void {
 
     // 仅支持数组配置：excludeFields?: string[]
     const userPatterns = Array.isArray(config.excludeFields) ? config.excludeFields : [];
-    const patterns = [...BUILTIN_SENSITIVE_KEYS, ...userPatterns]
-        .map((item) => String(item).trim())
-        .filter((item) => item.length > 0)
-        .map((item) => item.toLowerCase());
+    const patterns: string[] = [];
+    for (const item of BUILTIN_SENSITIVE_KEYS) {
+        const trimmed = String(item).trim();
+        if (trimmed.length > 0) patterns.push(trimmed.toLowerCase());
+    }
+    for (const item of userPatterns) {
+        const trimmed = String(item).trim();
+        if (trimmed.length > 0) patterns.push(trimmed.toLowerCase());
+    }
 
     const exactSet = new Set<string>();
-    const suffixMatchers: string[] = [];
-    const prefixMatchers: string[] = [];
     const containsMatchers: string[] = [];
 
     for (const pat of patterns) {
-        // 支持通配符：
-        // - *secret  -> 后缀匹配
-        // - secret*  -> 前缀匹配
-        // - *secret* -> 包含匹配
-        // - 无 *     -> 精确匹配（建议用 *x* 显式开启模糊匹配）
-        const hasStar = pat.includes("*");
-        if (!hasStar) {
+        // 精简策略：
+        // - 无 *：精确匹配
+        // - 有 *：统一按“包含匹配”处理（*x*、x*、*x、a*b 都视为包含 core）
+        if (!pat.includes("*")) {
             exactSet.add(pat);
             continue;
         }
 
-        const trimmed = pat.replace(/\*+/g, "*");
-        const startsStar = trimmed.startsWith("*");
-        const endsStar = trimmed.endsWith("*");
-        const core = trimmed.replace(/^\*+|\*+$/g, "");
+        const core = pat.replace(/\*+/g, "").trim();
         if (!core) {
             continue;
         }
-
-        if (startsStar && !endsStar) {
-            suffixMatchers.push(core);
-            continue;
-        }
-        if (!startsStar && endsStar) {
-            prefixMatchers.push(core);
-            continue;
-        }
-
-        // *core* 或类似 a*b：都降级为包含匹配
         containsMatchers.push(core);
     }
 
     sensitiveKeySet = exactSet;
-    sensitiveSuffixMatchers = suffixMatchers;
-    sensitivePrefixMatchers = prefixMatchers;
     sensitiveContainsMatchers = containsMatchers;
 
     // 预编译包含匹配：减少每次 isSensitiveKey 的循环开销
@@ -741,25 +711,6 @@ export function getLogger(): SinkLogger {
 
     instance = createSinkLogger({ kind: "app", minLevel: minLevel, fileSink: appFileSink, consoleSink: config.console === 1 ? appConsoleSink : null });
     return instance;
-}
-
-function getSlowLogger(): SinkLogger {
-    if (mockInstance) return mockInstance;
-    if (slowInstance) return slowInstance;
-
-    ensureLogDirExists();
-    installGracefulExitHooks();
-
-    void pruneOldLogFiles();
-
-    const minLevel = normalizeLogLevelName();
-    const maxFileBytes = (typeof config.maxSize === "number" && config.maxSize > 0 ? config.maxSize : 10) * 1024 * 1024;
-    if (!slowFileSink) {
-        slowFileSink = new LogFileSink({ prefix: "slow", minLevel: minLevel, maxFileBytes: maxFileBytes });
-    }
-
-    slowInstance = createSinkLogger({ kind: "slow", minLevel: minLevel, fileSink: slowFileSink, consoleSink: null });
-    return slowInstance;
 }
 
 function getErrorLogger(): SinkLogger {
@@ -923,20 +874,12 @@ function createSinkLogger(options: { kind: "app" | "slow" | "error"; minLevel: L
 
 function truncateString(val: string, stats: Record<string, number>): string {
     if (val.length <= maxLogStringLen) return val;
-    stats.truncatedStrings = (stats.truncatedStrings || 0) + 1;
     return val.slice(0, maxLogStringLen);
 }
 
 function isSensitiveKey(key: string): boolean {
     const lower = String(key).toLowerCase();
     if (sensitiveKeySet.has(lower)) return true;
-
-    for (const suffix of sensitiveSuffixMatchers) {
-        if (lower.endsWith(suffix)) return true;
-    }
-    for (const prefix of sensitivePrefixMatchers) {
-        if (lower.startsWith(prefix)) return true;
-    }
 
     if (sensitiveContainsRegex) {
         return sensitiveContainsRegex.test(lower);
@@ -970,7 +913,6 @@ function safeToStringMasked(val: any, visited: WeakSet<object>, stats: Record<st
 
     if (val && typeof val === "object") {
         if (visited.has(val as object)) {
-            stats.circularRefs = (stats.circularRefs || 0) + 1;
             return "[Circular]";
         }
     }
@@ -980,13 +922,11 @@ function safeToStringMasked(val: any, visited: WeakSet<object>, stats: Record<st
         const replacer = (k: string, v: any) => {
             // JSON.stringify 的根节点 key 为空字符串
             if (k && isSensitiveKey(k)) {
-                stats.maskedKeys = (stats.maskedKeys || 0) + 1;
                 return "[MASKED]";
             }
 
             if (v && typeof v === "object") {
                 if (localVisited.has(v as object)) {
-                    stats.circularRefs = (stats.circularRefs || 0) + 1;
                     return "[Circular]";
                 }
                 localVisited.add(v as object);
@@ -1015,7 +955,6 @@ function sanitizeErrorValue(err: Error, stats: Record<string, number>): Record<s
 }
 
 function stringifyPreview(val: any, visited: WeakSet<object>, stats: Record<string, number>): string {
-    stats.valuesStringified = (stats.valuesStringified || 0) + 1;
     const str = safeToStringMasked(val, visited, stats);
     return truncateString(str, stats);
 }
@@ -1040,7 +979,6 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
 
     // 防环（根节点）
     if (visited.has(val as object)) {
-        stats.circularRefs = (stats.circularRefs || 0) + 1;
         return "[Circular]";
     }
     visited.add(val as object);
@@ -1080,19 +1018,16 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
 
         // 深度/节点数上限：超出则降级为字符串预览
         if (depth >= sanitizeDepthLimit) {
-            stats.depthLimited = (stats.depthLimited || 0) + 1;
             dst[key] = stringifyPreview(child, visited, stats);
             return;
         }
         if (nodes >= sanitizeNodesLimit) {
-            stats.nodesLimited = (stats.nodesLimited || 0) + 1;
             dst[key] = stringifyPreview(child, visited, stats);
             return;
         }
 
         // 防环
         if (visited.has(child as object)) {
-            stats.circularRefs = (stats.circularRefs || 0) + 1;
             dst[key] = "[Circular]";
             return;
         }
@@ -1108,7 +1043,6 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
         nodes = nodes + 1;
         if (nodes > sanitizeNodesLimit) {
             // 超出节点上限：不再深入（已入栈的节点会被忽略，留空结构由上层兜底预览）。
-            stats.nodesLimited = (stats.nodesLimited || 0) + 1;
             break;
         }
 
@@ -1122,8 +1056,7 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
             }
 
             if (len > maxLogArrayItems) {
-                stats.arraysTruncated = (stats.arraysTruncated || 0) + 1;
-                stats.arrayItemsOmitted = (stats.arrayItemsOmitted || 0) + (len - maxLogArrayItems);
+                // ignore omitted items
             }
 
             continue;
@@ -1138,7 +1071,6 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
                 const key = entries[i][0];
                 const child = entries[i][1];
                 if (isSensitiveKey(key)) {
-                    stats.maskedKeys = (stats.maskedKeys || 0) + 1;
                     frame.dst[key] = "[MASKED]";
                     continue;
                 }
@@ -1146,8 +1078,7 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
             }
 
             if (len > sanitizeObjectKeysLimit) {
-                stats.objectKeysLimited = (stats.objectKeysLimited || 0) + 1;
-                stats.objectKeysOmitted = (stats.objectKeysOmitted || 0) + (len - sanitizeObjectKeysLimit);
+                // ignore omitted keys
             }
 
             continue;
@@ -1159,51 +1090,20 @@ function sanitizeValueLimited(val: any, visited: WeakSet<object>, stats: Record<
     return rootOut;
 }
 
-function sanitizeTopValue(val: any, visited: WeakSet<object>, stats: Record<string, number>): any {
-    return sanitizeValueLimited(val, visited, stats);
+function sanitizeTopValue(val: any, visited: WeakSet<object>): any {
+    return sanitizeValueLimited(val, visited, {});
 }
 
 function sanitizeLogObject(obj: Record<string, any>): Record<string, any> {
     const visited = new WeakSet<object>();
-    const stats: Record<string, number> = {
-        maskedKeys: 0,
-        truncatedStrings: 0,
-        arraysTruncated: 0,
-        arrayItemsOmitted: 0,
-        valuesStringified: 0,
-        circularRefs: 0,
-        depthLimited: 0,
-        nodesLimited: 0,
-        objectKeysLimited: 0,
-        objectKeysOmitted: 0
-    };
 
     const out: Record<string, any> = {};
     for (const [key, val] of Object.entries(obj)) {
         if (isSensitiveKey(key)) {
-            stats.maskedKeys = stats.maskedKeys + 1;
             out[key] = "[MASKED]";
             continue;
         }
-        out[key] = sanitizeTopValue(val, visited, stats);
-    }
-
-    const hasChanges =
-        stats.maskedKeys > 0 || stats.truncatedStrings > 0 || stats.arraysTruncated > 0 || stats.arrayItemsOmitted > 0 || stats.valuesStringified > 0 || stats.circularRefs > 0 || stats.depthLimited > 0 || stats.nodesLimited > 0 || stats.objectKeysLimited > 0 || stats.objectKeysOmitted > 0;
-
-    if (hasChanges) {
-        out.logTrimStats = {
-            maskedKeys: stats.maskedKeys,
-            truncatedStrings: stats.truncatedStrings,
-            arraysTruncated: stats.arraysTruncated,
-            arrayItemsOmitted: stats.arrayItemsOmitted,
-            valuesStringified: stats.valuesStringified,
-            circularRefs: stats.circularRefs,
-            depthLimited: stats.depthLimited,
-            nodesLimited: stats.nodesLimited,
-            objectKeysLimited: stats.objectKeysLimited,
-            objectKeysOmitted: stats.objectKeysOmitted
-        };
+        out[key] = sanitizeTopValue(val, visited);
     }
 
     return out;
@@ -1291,24 +1191,6 @@ function withRequestMeta(args: any[]): any[] {
     return args;
 }
 
-function shouldMirrorToSlow(args: any[]): boolean {
-    // 测试场景：启用 mock 时不做镜像，避免调用次数翻倍
-    if (mockInstance) return false;
-    if (!args || args.length === 0) return false;
-    const first = args[0];
-    if (!isPlainObject(first)) return false;
-
-    // 优先使用显式标记：event=slow
-    const event = (first as any).event;
-    if (event === "slow") return true;
-
-    // 兼容旧写法：仅通过 message emoji 判断（尽量少用）
-    const msg = args.length > 1 ? args[1] : undefined;
-    if (typeof msg === "string" && msg.includes("🐌")) return true;
-
-    return false;
-}
-
 type LoggerObject = Record<string, any>;
 
 // 兼容 pino 常用调用形式 + 本项目的 Logger.error("msg", err)
@@ -1332,11 +1214,6 @@ export const Logger = {
             finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>);
         }
         const ret = (logger.info as any).apply(logger, finalArgs);
-        if (mockInstance) return ret;
-        if (shouldMirrorToSlow(finalArgs as any[])) {
-            const slowLogger = getSlowLogger();
-            (slowLogger.info as any).apply(slowLogger, finalArgs);
-        }
         return ret;
     },
     warn(...args: LoggerCallArgs) {
@@ -1348,11 +1225,6 @@ export const Logger = {
             finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>);
         }
         const ret = (logger.warn as any).apply(logger, finalArgs);
-        if (mockInstance) return ret;
-        if (shouldMirrorToSlow(finalArgs as any[])) {
-            const slowLogger = getSlowLogger();
-            (slowLogger.warn as any).apply(slowLogger, finalArgs);
-        }
         return ret;
     },
     error(...args: LoggerCallArgs) {
@@ -1372,12 +1244,6 @@ export const Logger = {
         const errorLogger = getErrorLogger();
         (errorLogger.error as any).apply(errorLogger, finalArgs);
 
-        // error 同时也属于 slow？一般不会，但允许显式 event=slow
-        if (shouldMirrorToSlow(finalArgs as any[])) {
-            const slowLogger = getSlowLogger();
-            (slowLogger.error as any).apply(slowLogger, finalArgs);
-        }
-
         return ret;
     },
     debug(...args: LoggerCallArgs) {
@@ -1389,12 +1255,10 @@ export const Logger = {
             finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>);
         }
         const ret = (logger.debug as any).apply(logger, finalArgs);
-        if (mockInstance) return ret;
-        if (shouldMirrorToSlow(finalArgs as any[])) {
-            const slowLogger = getSlowLogger();
-            (slowLogger.debug as any).apply(slowLogger, finalArgs);
-        }
         return ret;
+    },
+    async flush() {
+        await flush();
     },
     configure: configure,
     setMock: setMockLogger,

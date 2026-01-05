@@ -57,4 +57,18 @@ export interface Logger {
 
     configure(cfg: LoggerConfig): void;
     setMock(mock: any | null): void;
+
+    /**
+     * 将当前 buffer 尽快刷入 sink（不会关闭文件句柄）。
+     *
+     * 说明：主要用于测试或进程即将退出前的“尽快落盘”。
+     */
+    flush(): Promise<void>;
+
+    /**
+     * 刷新并关闭 sink（会关闭文件句柄）。
+     *
+     * 说明：主要用于测试（避免 Windows 句柄占用导致的删除/轮转失败）。
+     */
+    shutdown(): Promise<void>;
 }
