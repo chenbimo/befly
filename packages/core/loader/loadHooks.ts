@@ -1,7 +1,6 @@
 /**
  * 钩子加载器
  * 默认加载所有来源钩子（core/addon/app）
- * 可通过 disableHooks 禁用指定钩子
  */
 
 import type { Hook } from "../types/hook";
@@ -10,12 +9,8 @@ import type { ScanFileResult } from "../utils/scanFiles";
 import { Logger } from "../lib/logger";
 import { sortModules } from "../utils/sortModules";
 
-export async function loadHooks(hooks: ScanFileResult[], disableHooks: string[] = []): Promise<Hook[]> {
+export async function loadHooks(hooks: ScanFileResult[]): Promise<Hook[]> {
     const hooksMap: Hook[] = [];
-
-    if (disableHooks.length > 0) {
-        Logger.info({ hooks: disableHooks }, "禁用钩子");
-    }
 
     const enabledHooks = hooks.filter((item: any) => {
         const moduleName = item?.moduleName;
@@ -23,7 +18,8 @@ export async function loadHooks(hooks: ScanFileResult[], disableHooks: string[] 
             return false;
         }
 
-        if (disableHooks.includes(moduleName)) {
+        // enable=false 表示禁用（替代 disableHooks 列表）。
+        if (item?.enable === false || item?.enable === 0) {
             return false;
         }
 

@@ -10,6 +10,7 @@ import { setCorsOptions } from "../utils/cors";
  * 设置跨域响应头并处理 OPTIONS 预检请求
  */
 export default {
+    name: "cors",
     deps: [],
     handler: async (befly, ctx) => {
         const req = ctx.req;

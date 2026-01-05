@@ -12,6 +12,7 @@ import { CacheHelper } from "../lib/cacheHelper";
  * 缓存插件
  */
 export default {
+    name: "cache",
     deps: ["logger", "redis", "db"],
     async handler(befly: BeflyContext): Promise<CacheHelper> {
         if (!(befly as any).db) {

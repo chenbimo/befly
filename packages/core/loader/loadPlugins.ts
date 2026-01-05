@@ -10,19 +10,17 @@ import type { ScanFileResult } from "../utils/scanFiles";
 import { Logger } from "../lib/logger";
 import { sortModules } from "../utils/sortModules";
 
-export async function loadPlugins(plugins: ScanFileResult[], context: BeflyContext, disablePlugins: string[] = []): Promise<Plugin[]> {
+export async function loadPlugins(plugins: ScanFileResult[], context: BeflyContext): Promise<Plugin[]> {
     const pluginsMap: Plugin[] = [];
-
-    if (disablePlugins.length > 0) {
-        Logger.info({ plugins: disablePlugins }, "禁用插件");
-    }
 
     const enabledPlugins = plugins.filter((item: any) => {
         const moduleName = item?.moduleName;
         if (typeof moduleName !== "string" || moduleName.trim() === "") {
             return false;
         }
-        if (disablePlugins.includes(moduleName)) {
+
+        // enable=false 表示禁用（替代 disablePlugins 列表）。
+        if (item?.enable === false || item?.enable === 0) {
             return false;
         }
         return true;

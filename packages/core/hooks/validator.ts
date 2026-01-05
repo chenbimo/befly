@@ -10,6 +10,7 @@ import { ErrorResponse } from "../utils/response";
  * 根据 API 定义的 fields 和 required 验证请求参数
  */
 export default {
+    name: "validator",
     deps: ["parser"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;

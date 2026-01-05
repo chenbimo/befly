@@ -1,20 +1,15 @@
 import { test, expect } from "bun:test";
-import { existsSync } from "node:fs";
 
-import { join } from "pathe";
-
-import { coreDir } from "../paths.ts";
 import { scanFiles } from "../utils/scanFiles.ts";
 
-const distHooksDir = join(coreDir, "dist", "hooks");
+test("scanFiles 不允许扫描 core（core 内置模块必须静态导入注册）", async () => {
+    let thrown: any = null;
+    try {
+        await scanFiles(".", "core" as any, "hook", "*.js");
+    } catch (error: any) {
+        thrown = error;
+    }
 
-if (!existsSync(distHooksDir)) {
-    test.skip("scanFiles 可扫描 dist/hooks/*.js（dist 不存在时跳过）", () => {
-        expect(true).toBe(true);
-    });
-} else {
-    test("scanFiles 可扫描 dist/hooks/*.js", async () => {
-        const results = await scanFiles(distHooksDir, "core", "hook", "*.js");
-        expect(results.length).toBeGreaterThan(0);
-    });
-}
+    expect(thrown).toBeTruthy();
+    expect(String(thrown?.message || "").includes("不允许扫描 core")).toBe(true);
+});

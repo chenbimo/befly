@@ -19,6 +19,7 @@ const xmlParser = new XMLParser();
  * - rawBody: true 时跳过解析，由 handler 自行处理原始请求
  */
 export default {
+    name: "parser",
     deps: ["auth"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;

@@ -3,6 +3,7 @@ import type { Hook } from "../types/hook";
 import { setCtxUser } from "../lib/asyncContext";
 
 export default {
+    name: "auth",
     deps: ["cors"],
     handler: async (befly, ctx) => {
         const authHeader = ctx.req.headers.get("authorization");

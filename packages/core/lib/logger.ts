@@ -49,6 +49,10 @@ let instance: pino.Logger | null = null;
 let slowInstance: pino.Logger | null = null;
 let errorInstance: pino.Logger | null = null;
 let mockInstance: pino.Logger | null = null;
+let didWarnTransportError: boolean = false;
+let appTransport: any = null;
+let slowTransport: any = null;
+let errorTransport: any = null;
 let didPruneOldLogFiles: boolean = false;
 let didEnsureLogDir: boolean = false;
 let config: LoggerConfig = {
@@ -57,6 +61,109 @@ let config: LoggerConfig = {
     console: 1,
     maxSize: 10
 };
+
+function createStdoutLogger(level: string): pino.Logger {
+    // 使用同步 stdout 目的地，避免 pino transport 的 worker 线程与运行时动态解析。
+    return pino({ level: level }, pino.destination(1));
+}
+
+function attachTransportErrorHandler(kind: "app" | "slow" | "error", level: string, transport: any): void {
+    if (!transport || typeof transport.on !== "function") return;
+
+    transport.on("error", (error: any) => {
+        // 避免重复刷屏
+        if (!didWarnTransportError) {
+            didWarnTransportError = true;
+            try {
+                const msg = error && error.message ? String(error.message) : String(error);
+                process.stderr.write(`[Logger] transport error; fallback to stdout. ${msg}\n`);
+            } catch {
+                // ignore
+            }
+        }
+
+        // 尝试关闭 transport，避免残留 worker 继续抛错
+        try {
+            if (typeof transport.close === "function") {
+                transport.close();
+            } else if (typeof transport.end === "function") {
+                transport.end();
+            }
+        } catch {
+            // ignore
+        }
+
+        const fallback = createStdoutLogger(level);
+        if (kind === "app") instance = fallback;
+        if (kind === "slow") slowInstance = fallback;
+        if (kind === "error") errorInstance = fallback;
+
+        if (kind === "app") appTransport = null;
+        if (kind === "slow") slowTransport = null;
+        if (kind === "error") errorTransport = null;
+    });
+}
+
+function createTransportLogger(kind: "app" | "slow" | "error", level: string, targets: pino.TransportTargetOptions[]): pino.Logger {
+    try {
+        // 显式创建 transport，方便挂载 error 监听，避免未处理的 worker 异常。
+        const transport = (pino as any).transport({ targets: targets });
+
+        if (kind === "app") appTransport = transport;
+        if (kind === "slow") slowTransport = transport;
+        if (kind === "error") errorTransport = transport;
+
+        attachTransportErrorHandler(kind, level, transport);
+        return pino({ level: level }, transport);
+    } catch (error: any) {
+        // 例如：bundle 单文件场景下 transport target 运行时无法解析。
+        if (!didWarnTransportError) {
+            didWarnTransportError = true;
+            try {
+                const msg = error && error.message ? String(error.message) : String(error);
+                process.stderr.write(`[Logger] transport init failed; fallback to stdout. ${msg}\n`);
+            } catch {
+                // ignore
+            }
+        }
+        return createStdoutLogger(level);
+    }
+}
+
+export async function shutdown(): Promise<void> {
+    // 测试场景：mock logger 不需要 shutdown
+    if (mockInstance) return;
+
+    const transports = [appTransport, slowTransport, errorTransport].filter((item) => item);
+
+    for (const transport of transports) {
+        try {
+            if (typeof transport.flush === "function") {
+                await transport.flush();
+            }
+        } catch {
+            // ignore
+        }
+
+        try {
+            if (typeof transport.close === "function") {
+                transport.close();
+            } else if (typeof transport.end === "function") {
+                transport.end();
+            }
+        } catch {
+            // ignore
+        }
+    }
+
+    appTransport = null;
+    slowTransport = null;
+    errorTransport = null;
+
+    instance = null;
+    slowInstance = null;
+    errorInstance = null;
+}
 
 function normalizePositiveInt(value: any, fallback: number, min: number, max: number): number {
     if (typeof value !== "number") return fallback;
@@ -142,6 +249,10 @@ export function configure(cfg: LoggerConfig): void {
     errorInstance = null;
     didPruneOldLogFiles = false;
     didEnsureLogDir = false;
+    didWarnTransportError = false;
+    appTransport = null;
+    slowTransport = null;
+    errorTransport = null;
 
     // 运行时清洗上限（可配置）
     sanitizeDepthLimit = normalizePositiveInt(config.sanitizeDepth, DEFAULT_LOG_SANITIZE_DEPTH, 1, 10);
@@ -263,10 +374,7 @@ export function getLogger(): pino.Logger {
         });
     }
 
-    instance = pino({
-        level: level,
-        transport: { targets: targets }
-    });
+    instance = createTransportLogger("app", level, targets);
 
     return instance;
 }
@@ -280,23 +388,18 @@ function getSlowLogger(): pino.Logger {
     void pruneOldLogFiles();
 
     const level = config.debug === 1 ? "debug" : "info";
-    slowInstance = pino({
-        level: level,
-        transport: {
-            targets: [
-                {
-                    target: "pino-roll",
-                    level: level,
-                    options: {
-                        file: join(resolveLogDir(), "slow"),
-                        // 只按大小分割（frequency 默认不启用）
-                        size: `${config.maxSize || 10}m`,
-                        mkdir: true
-                    }
-                }
-            ]
+    slowInstance = createTransportLogger("slow", level, [
+        {
+            target: "pino-roll",
+            level: level,
+            options: {
+                file: join(resolveLogDir(), "slow"),
+                // 只按大小分割（frequency 默认不启用）
+                size: `${config.maxSize || 10}m`,
+                mkdir: true
+            }
         }
-    });
+    ]);
 
     return slowInstance;
 }
@@ -310,23 +413,18 @@ function getErrorLogger(): pino.Logger {
     void pruneOldLogFiles();
 
     // error 专属文件：只关注 error 及以上
-    errorInstance = pino({
-        level: "error",
-        transport: {
-            targets: [
-                {
-                    target: "pino-roll",
-                    level: "error",
-                    options: {
-                        file: join(resolveLogDir(), "error"),
-                        // 只按大小分割（frequency 默认不启用）
-                        size: `${config.maxSize || 10}m`,
-                        mkdir: true
-                    }
-                }
-            ]
+    errorInstance = createTransportLogger("error", "error", [
+        {
+            target: "pino-roll",
+            level: "error",
+            options: {
+                file: join(resolveLogDir(), "error"),
+                // 只按大小分割（frequency 默认不启用）
+                size: `${config.maxSize || 10}m`,
+                mkdir: true
+            }
         }
-    });
+    ]);
 
     return errorInstance;
 }
@@ -807,5 +905,6 @@ export const Logger = {
         return ret;
     },
     configure: configure,
-    setMock: setMockLogger
+    setMock: setMockLogger,
+    shutdown: shutdown
 };

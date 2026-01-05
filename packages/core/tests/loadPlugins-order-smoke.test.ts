@@ -56,7 +56,7 @@ describe("loadPlugins - order smoke", () => {
             }
         ];
 
-        await loadPlugins(plugins as any, ctx as any, []);
+        await loadPlugins(plugins as any, ctx as any);
 
         const loggerIndex = executed.indexOf("logger");
         const redisIndex = executed.indexOf("redis");

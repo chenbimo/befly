@@ -157,10 +157,6 @@ export interface BeflyOptions {
 
     /** 全局请求限流配置（Hook） */
     rateLimit?: RateLimitConfig;
-    /** 禁用的钩子列表 */
-    disableHooks?: string[];
-    /** 禁用的插件列表 */
-    disablePlugins?: string[];
     /**
      * 禁用的菜单 path 规则（用于菜单同步与加载前过滤）
      *

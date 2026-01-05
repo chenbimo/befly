@@ -55,6 +55,10 @@ function parseAddonNameFromPath(normalizedPath: string): string | null {
  * @param pattern Glob模式
  */
 export async function scanFiles(dir: string, source: ScanFileSource, type: ScanFileType, pattern: string): Promise<ScanFileResult[]> {
+    if (source === "core") {
+        throw new Error("scanFiles 不允许扫描 core 内置模块（为支持 bun bundle 单文件）；core hooks/plugins 请改用静态导入注册");
+    }
+
     if (!existsSync(dir)) return [];
 
     const normalizedDir = normalize(dir);
@@ -92,9 +96,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             let addonName = "";
             let moduleName = "";
 
-            if (source === "core") {
-                moduleName = baseName;
-            } else if (source === "app") {
+            if (source === "app") {
                 moduleName = `app_${baseName}`;
             } else {
                 const parsedAddonName = parseAddonNameFromPath(normalizedFile);
@@ -141,7 +143,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             });
 
             if (type === "api") {
-                base.routePrefix = source === "core" ? "/core" : source === "app" ? "/app" : `/addon/${addonName}`;
+                base.routePrefix = source === "app" ? "/app" : `/addon/${addonName}`;
                 base.routePath = `/api${base.routePrefix}/${relativePath}`;
             }
 

@@ -22,6 +22,10 @@ beforeAll(() => {
 afterAll(async () => {
     // 延迟清理，等待 pino-roll 完成写入
     await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // 尽可能关闭 transport，避免后台 worker/句柄影响后续测试或清理
+    await Logger.shutdown();
+
     if (existsSync(testLogDir)) {
         rmSync(testLogDir, { recursive: true, force: true });
     }

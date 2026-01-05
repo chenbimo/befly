@@ -90,7 +90,7 @@ export class Befly {
             });
 
             // 2. 加载插件
-            this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext, this.config!.disablePlugins || []);
+            this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext);
 
             // 启动期依赖完整性检查：避免 sync 阶段出现 undefined 调用
             // 注意：这里不做兼容别名（例如 dbHelper=db），要求上下文必须注入标准字段。
@@ -115,7 +115,7 @@ export class Befly {
             await syncCache(this.context as BeflyContext);
 
             // 3. 加载钩子
-            this.hooks = await loadHooks(hooks as any, this.config!.disableHooks || []);
+            this.hooks = await loadHooks(hooks as any);
 
             // 4. 加载所有 API
             this.apis = await loadApis(apis as any);

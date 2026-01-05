@@ -14,6 +14,7 @@ import { ErrorResponse } from "../utils/response";
  * - 其他角色：检查 Redis 中的角色权限集合
  */
 export default {
+    name: "permission",
     deps: ["validator"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;

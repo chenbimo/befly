@@ -12,6 +12,7 @@ import { Logger } from "../lib/logger";
  * 日志插件
  */
 export default {
+    name: "logger",
     deps: [],
     async handler(context: BeflyContext): Promise<typeof Logger> {
         // 配置 Logger

@@ -8,6 +8,7 @@ import type { Plugin } from "../types/plugin";
 import { Jwt } from "../lib/jwt";
 
 export default {
+    name: "jwt",
     deps: [],
     handler: (context: BeflyContext) => {
         return new Jwt(context.config ? context.config.auth : undefined);
