@@ -16,6 +16,7 @@ import { Logger } from "../lib/logger";
  */
 export default {
     name: "db",
+    enable: true,
     deps: ["logger", "redis"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
         if (!(befly as any).redis) {

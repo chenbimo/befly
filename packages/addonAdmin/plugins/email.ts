@@ -18,6 +18,7 @@ const defaultConfig: EmailConfig = {
 };
 
 export default {
+    enable: true,
     deps: ["db", "logger", "config"],
     async handler(befly): Promise<EmailHelper> {
         // 从 befly.config.addons.admin.email 获取配置

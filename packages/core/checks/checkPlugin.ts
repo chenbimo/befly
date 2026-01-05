@@ -14,6 +14,19 @@ export async function checkPlugin(plugins: any[]): Promise<void> {
                 continue;
             }
 
+            // enable 必须显式声明且只能为 boolean（true/false），不允许 0/1 等其他类型。
+            if (!Object.prototype.hasOwnProperty.call(plugin as any, "enable")) {
+                Logger.warn(omit(plugin, ["handler"]), "插件的 enable 属性是必填项，且必须显式声明为 true 或 false");
+                hasError = true;
+                continue;
+            }
+
+            if (typeof (plugin as any).enable !== "boolean") {
+                Logger.warn(omit(plugin, ["handler"]), "插件的 enable 属性必须是 boolean（true/false），不允许 0/1 等其他类型");
+                hasError = true;
+                continue;
+            }
+
             if (!Array.isArray((plugin as any).deps)) {
                 Logger.warn(omit(plugin, ["handler"]), "插件的 deps 属性必须是字符串数组");
                 hasError = true;

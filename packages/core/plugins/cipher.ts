@@ -9,6 +9,7 @@ import { Cipher } from "../lib/cipher";
 
 export default {
     name: "cipher",
+    enable: true,
     deps: [],
     handler: () => {
         return Cipher;

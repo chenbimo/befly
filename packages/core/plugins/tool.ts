@@ -114,6 +114,7 @@ export function Raw(ctx: RequestContext, data: Record<string, any> | string, opt
 
 export default {
     name: "tool",
+    enable: true,
     deps: [],
     handler: () => {
         return {

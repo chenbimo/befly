@@ -11,8 +11,8 @@ export interface Hook {
     /** 运行时由 loader 注入（默认导出对象中通常不需要写） */
     name?: string;
 
-    /** enable=false 表示禁用该 Hook（用于替代 disableHooks 列表） */
-    enable?: boolean;
+    /** 是否启用该 Hook；必填（true/false） */
+    enable: boolean;
 
     /** 依赖的 hook（按文件名推导的 hookName），用于排序 */
     deps?: string[];

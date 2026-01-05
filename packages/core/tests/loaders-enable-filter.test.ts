@@ -3,7 +3,7 @@ import { test, expect } from "bun:test";
 import { loadHooks } from "../loader/loadHooks";
 import { loadPlugins } from "../loader/loadPlugins";
 
-test("loadHooks should skip enable=false/0", async () => {
+test("loadHooks should skip enable=false", async () => {
     const hooks: any[] = [
         {
             source: "core",
@@ -33,21 +33,6 @@ test("loadHooks should skip enable=false/0", async () => {
             enable: false,
             deps: [],
             handler: () => {}
-        },
-        {
-            source: "core",
-            type: "hook",
-            sourceName: "核心",
-            filePath: "core:hook:disabledZero",
-            relativePath: "disabledZero",
-            fileName: "disabledZero",
-            moduleName: "disabledZero",
-            addonName: "",
-            fileBaseName: "disabledZero",
-            fileDir: "(builtin)",
-            enable: 0,
-            deps: [],
-            handler: () => {}
         }
     ];
 
@@ -56,10 +41,9 @@ test("loadHooks should skip enable=false/0", async () => {
 
     expect(names.includes("ok")).toBe(true);
     expect(names.includes("disabledFalse")).toBe(false);
-    expect(names.includes("disabledZero")).toBe(false);
 });
 
-test("loadPlugins should skip enable=false/0 and not mount them", async () => {
+test("loadPlugins should skip enable=false and not mount them", async () => {
     const context: any = {};
 
     const plugins: any[] = [
@@ -91,21 +75,6 @@ test("loadPlugins should skip enable=false/0 and not mount them", async () => {
             enable: false,
             deps: [],
             handler: () => ({ v: 2 })
-        },
-        {
-            source: "core",
-            type: "plugin",
-            sourceName: "核心",
-            filePath: "core:plugin:disabledZero",
-            relativePath: "disabledZero",
-            fileName: "disabledZero",
-            moduleName: "disabledZero",
-            addonName: "",
-            fileBaseName: "disabledZero",
-            fileDir: "(builtin)",
-            enable: 0,
-            deps: [],
-            handler: () => ({ v: 3 })
         }
     ];
 
@@ -114,9 +83,7 @@ test("loadPlugins should skip enable=false/0 and not mount them", async () => {
 
     expect(names.includes("ok")).toBe(true);
     expect(names.includes("disabledFalse")).toBe(false);
-    expect(names.includes("disabledZero")).toBe(false);
 
     expect(context.ok).toEqual({ v: 1 });
     expect("disabledFalse" in context).toBe(false);
-    expect("disabledZero" in context).toBe(false);
 });

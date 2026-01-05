@@ -15,6 +15,7 @@ import { RedisHelper } from "../lib/redisHelper";
  */
 export default {
     name: "redis",
+    enable: true,
     deps: ["logger"],
     async handler(context: BeflyContext): Promise<RedisHelper | Record<string, never>> {
         const redisConfig = context.config && context.config.redis ? context.config.redis : {};

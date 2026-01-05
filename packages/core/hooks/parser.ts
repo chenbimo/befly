@@ -20,6 +20,7 @@ const xmlParser = new XMLParser();
  */
 export default {
     name: "parser",
+    enable: true,
     deps: ["auth"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;

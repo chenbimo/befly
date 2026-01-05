@@ -20,7 +20,8 @@ export async function loadPlugins(plugins: ScanFileResult[], context: BeflyConte
         }
 
         // enable=false 表示禁用（替代 disablePlugins 列表）。
-        if (item?.enable === false || item?.enable === 0) {
+        // enable 仅允许 boolean；缺失 enable 的默认值应在 checkPlugin 阶段被补全为 true。
+        if (item?.enable === false) {
             return false;
         }
         return true;
@@ -41,6 +42,7 @@ export async function loadPlugins(plugins: ScanFileResult[], context: BeflyConte
 
             pluginsMap.push({
                 name: pluginName,
+                enable: true,
                 deps: plugin.deps,
                 handler: plugin.handler
             });

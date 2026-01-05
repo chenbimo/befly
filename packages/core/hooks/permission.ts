@@ -15,6 +15,7 @@ import { ErrorResponse } from "../utils/response";
  */
 export default {
     name: "permission",
+    enable: true,
     deps: ["validator"],
     handler: async (befly, ctx) => {
         if (!ctx.api) return;

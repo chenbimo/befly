@@ -7,6 +7,7 @@ import type { Plugin } from "../types/plugin";
 
 export default {
     name: "config",
+    enable: true,
     deps: [],
     handler: (context: BeflyContext) => {
         return context.config;

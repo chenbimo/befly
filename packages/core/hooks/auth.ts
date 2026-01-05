@@ -4,6 +4,7 @@ import { setCtxUser } from "../lib/asyncContext";
 
 export default {
     name: "auth",
+    enable: true,
     deps: ["cors"],
     handler: async (befly, ctx) => {
         const authHeader = ctx.req.headers.get("authorization");

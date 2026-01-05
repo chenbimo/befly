@@ -11,6 +11,7 @@ import { setCorsOptions } from "../utils/cors";
  */
 export default {
     name: "cors",
+    enable: true,
     deps: [],
     handler: async (befly, ctx) => {
         const req = ctx.req;
