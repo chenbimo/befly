@@ -47,6 +47,17 @@ function parseAddonNameFromPath(normalizedPath: string): string | null {
     return addonName;
 }
 
+function parseLocalAddonNameFromPath(normalizedPath: string): string | null {
+    // 兼容项目本地 addons：/addons/<addonName>/...
+    // 注意：normalizedPath 已通过 pathe.normalize 统一为 /
+    const parts = normalizedPath.split("/").filter(Boolean);
+    const idx = parts.lastIndexOf("addons");
+    if (idx < 0) return null;
+    const addonName = parts[idx + 1];
+    if (typeof addonName !== "string" || addonName.trim() === "") return null;
+    return addonName;
+}
+
 /**
  * 扫描指定目录下的文件
  * @param dir 目录路径
@@ -99,7 +110,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             } else if (source === "app") {
                 moduleName = `app_${baseName}`;
             } else {
-                const parsedAddonName = parseAddonNameFromPath(normalizedFile);
+                const parsedAddonName = parseAddonNameFromPath(normalizedFile) || parseLocalAddonNameFromPath(normalizedFile);
                 if (!parsedAddonName) {
                     throw new Error(`scanFiles addon moduleName 解析失败：未找到 @befly-addon/<addon>/ 段落：${normalizedFile}`);
                 }

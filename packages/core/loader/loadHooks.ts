@@ -6,7 +6,6 @@
 import type { Hook } from "../types/hook";
 import type { ScanFileResult } from "../utils/scanFiles";
 
-import { Logger } from "../lib/logger";
 import { sortModules } from "../utils/sortModules";
 
 export async function loadHooks(hooks: ScanFileResult[]): Promise<Hook[]> {

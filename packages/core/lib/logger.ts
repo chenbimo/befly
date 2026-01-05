@@ -9,9 +9,14 @@ import { readdir, stat, unlink } from "node:fs/promises";
 import { hostname as osHostname } from "node:os";
 import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
-import { escapeRegExp } from "../utils/escapeRegExp";
 import { isPlainObject } from "../utils/isPlainObject";
 import { getCtx } from "./asyncContext";
+
+const REGEXP_SPECIAL = /[\\^$.*+?()[\]{}|]/g;
+
+export function escapeRegExp(input: string): string {
+    return String(input).replace(REGEXP_SPECIAL, "\\$&");
+}
 
 // 注意：Logger 可能在运行时/测试中被 process.chdir() 影响。
 // 为避免相对路径的 logs 目录随着 cwd 变化，使用模块加载时的初始 cwd 作为锚点。
