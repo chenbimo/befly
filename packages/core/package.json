@@ -32,6 +32,11 @@
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         },
+        "./all": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.all.js",
+            "default": "./dist/index.all.js"
+        },
         "./types/*": {
             "types": "./dist/types/*.d.ts"
         }
@@ -43,7 +48,7 @@
     "scripts": {
         "clean": "rimraf dist",
         "test": "bun test",
-        "bundle": "bun build ./index.ts --outdir ./dist --target bun --format esm --packages bundle --entry-naming \"[name].bundler.[ext]\"",
+        "bundle": "bun build ./index.ts --outdir ./dist --target bun --format esm --packages bundle --entry-naming \"[name].all.[ext]\"",
         "build": "rimraf dist && bunx tsgo -p tsconfig.build.json && bun run bundle",
         "prepack": "bun run build && bun run ./scripts/ensureDist.ts",
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
