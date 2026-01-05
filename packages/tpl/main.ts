@@ -1,4 +1,4 @@
-import { Befly } from "befly";
+import { Befly } from "befly/all";
 
 const app = new Befly();
 

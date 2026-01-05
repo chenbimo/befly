@@ -20,7 +20,7 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
-    // 延迟清理，等待 pino-roll 完成写入
+    // 延迟清理，等待异步写入完成（避免 Windows 下句柄占用导致 rmSync 失败）
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // 尽可能关闭 transport，避免后台 worker/句柄影响后续测试或清理

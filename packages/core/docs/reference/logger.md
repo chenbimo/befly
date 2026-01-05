@@ -1,6 +1,6 @@
 # Logger 日志系统
 
-> 基于 pino 的高性能日志系统
+> Bun 环境下的高性能结构化日志（自定义实现，兼容常见 pino 调用风格）
 
 ## 目录
 
@@ -19,10 +19,10 @@
 
 ## 概述
 
-Logger 是 Befly 的日志系统，基于 [pino](https://github.com/pinojs/pino) 实现：
+Logger 是 Befly 的日志系统，采用 **Bun 环境自定义实现**：
 
-- **高性能**：pino 是 Node.js 最快的日志库之一
-- **文件轮转**：自动按日期分割日志文件
+- **高性能**：异步队列 + 批量写入（不阻塞正常逻辑）
+- **文件轮转**：按日期切分 + 文件大小滚动
 - **多目标**：同时输出到文件和控制台
 - **延迟初始化**：首次使用时才创建实例
 
@@ -40,17 +40,31 @@ interface LoggerConfig {
     dir?: string; // 日志目录
     console?: number; // 是否输出到控制台 (0: 关闭, 1: 开启)
     maxSize?: number; // 单个日志文件最大大小 (MB)
+
+    // 以下为“日志清洗/截断”配置（可选）：用于避免大对象导致性能抖动
+    sanitizeDepth?: number;
+    sanitizeNodes?: number;
+    sanitizeObjectKeys?: number;
+    maxStringLen?: number;
+    maxArrayItems?: number;
+    excludeFields?: string[];
 }
 ```
 
 ### 配置说明
 
-| 属性      | 类型   | 默认值     | 说明                       |
-| --------- | ------ | ---------- | -------------------------- |
-| `debug`   | number | `0`        | 调试模式：0=关闭，1=开启   |
-| `dir`     | string | `'./logs'` | 日志文件存放目录           |
-| `console` | number | `1`        | 控制台输出：0=关闭，1=开启 |
-| `maxSize` | number | `10`       | 单文件最大大小（MB）       |
+| 属性                 | 类型     | 默认值     | 说明                                        |
+| -------------------- | -------- | ---------- | ------------------------------------------- |
+| `debug`              | number   | `0`        | 调试模式：0=关闭，1=开启                    |
+| `dir`                | string   | `'./logs'` | 日志文件存放目录                            |
+| `console`            | number   | `1`        | 控制台输出：0=关闭，1=开启                  |
+| `maxSize`            | number   | `10`       | 单文件最大大小（MB）                        |
+| `sanitizeDepth`      | number   | `3`        | 日志清洗最大深度（范围 1..10）              |
+| `sanitizeNodes`      | number   | `500`      | 日志清洗最大节点数（范围 50..20000）        |
+| `sanitizeObjectKeys` | number   | `100`      | 单对象最大 key 数（范围 10..5000）          |
+| `maxStringLen`       | number   | `100`      | 单条字符串最大长度（范围 20..200000）       |
+| `maxArrayItems`      | number   | `100`      | 数组最大展开元素数（范围 10..5000）         |
+| `excludeFields`      | string[] | 内置+用户  | 脱敏字段匹配（支持通配符，如 `*password*`） |
 
 ### 配置示例
 
@@ -87,7 +101,7 @@ interface LoggerConfig {
 ### 导入 Logger
 
 ```typescript
-import { Logger } from "../lib/logger.ts";
+import { Logger } from "../lib/logger";
 ```
 
 ### 日志方法
@@ -112,7 +126,7 @@ Logger.debug({ sql: "SELECT * FROM user", params: [] }, "SQL 查询");
 
 ### 带上下文的日志
 
-pino 风格：第一个参数为对象时作为上下文，第二个参数为消息：
+兼容常见 pino 风格：第一个参数为对象时作为上下文，第二个参数为消息：
 
 ```typescript
 // 推荐：上下文 + 消息
@@ -149,12 +163,10 @@ Logger.configure({
 
 | 级别    | 数值 | 说明     | 使用场景     |
 | ------- | ---- | -------- | ------------ |
-| `trace` | 10   | 最详细   | 跟踪代码执行 |
 | `debug` | 20   | 调试信息 | 开发调试     |
 | `info`  | 30   | 一般信息 | 正常操作记录 |
 | `warn`  | 40   | 警告     | 潜在问题     |
 | `error` | 50   | 错误     | 操作失败     |
-| `fatal` | 60   | 致命错误 | 系统崩溃     |
 
 ### 级别控制
 
@@ -228,34 +240,36 @@ Logger.info("这条会输出"); // ✅
 ```
 logs/
 ├── app.2024-01-01.log
+├── app.2024-01-01.1.log
 ├── app.2024-01-02.log
 ├── app.2024-01-03.log
+├── slow.2024-01-01.log
+└── error.2024-01-01.log
 └── ...
 ```
 
+说明：
+
+- `app.*.log`：普通日志
+- `slow.*.log`：慢日志镜像（见下方“慢日志”）
+- `error.*.log`：错误日志镜像（`Logger.error()` 会额外写一份到这里）
+- 当同一天文件超过 `maxSize`（MB）时，会滚动为 `.<n>` 后缀（如 `.1`、`.2`）。
+
 ### 文件轮转
 
-使用 [pino-roll](https://github.com/flarelabs-net/pino-roll) 实现：
+内置轮转策略：
 
-- **按日期轮转**：每天创建新文件
-- **按大小轮转**：单文件超过 `maxSize` 时创建新文件
-- **自动创建目录**：目录不存在时自动创建
+- **按日期轮转**：每天创建新文件（`<prefix>.YYYY-MM-DD.log`）
+- **按大小轮转**：同一天单文件超过 `maxSize`（MB）会生成 `.<n>` 后缀文件
+- **自动创建目录**：目录不存在时会自动创建
+- **清理旧文件**：启动后会异步清理超过 1 年的历史日志（只清理 `app./slow./error.` 前缀文件）
 
-### 配置示例
+### 慢日志
+
+当日志对象中包含 `event: "slow"` 时，会将这条日志额外镜像一份到 `slow.*.log`：
 
 ```typescript
-// 轮转配置（内部实现）
-{
-    target: 'pino-roll',
-    level: level,
-    options: {
-        file: join(config.dir, 'app'),  // 基础文件名
-        frequency: 'daily',              // 按日轮转
-        size: `${config.maxSize}m`,      // 大小限制
-        mkdir: true,                     // 自动创建目录
-        dateFormat: 'yyyy-MM-dd'         // 日期格式
-    }
-}
+Logger.info({ event: "slow", sqlPreview: "SELECT ...", durationMs: 1234 }, "slow query");
 ```
 
 ---
@@ -311,46 +325,51 @@ Logger.info("直接使用");
 测试时可以设置 Mock 实例：
 
 ```typescript
-import { Logger, setMockLogger } from "../lib/logger.ts";
-import pino from "pino";
+import { Logger } from "../lib/logger";
 
-// 创建 mock logger
-const mockLogger = pino({ level: "silent" });
+const mockLogger = {
+    info: (...args: any[]) => args,
+    warn: (...args: any[]) => args,
+    error: (...args: any[]) => args,
+    debug: (...args: any[]) => args
+};
 
-// 设置 mock
-setMockLogger(mockLogger);
+// 设置 mock（也可用 setMockLogger(mockLogger)）
+Logger.setMock(mockLogger);
 
 // 测试代码...
 Logger.info("这条日志会被 mock 处理");
 
 // 清除 mock
-setMockLogger(null);
+Logger.setMock(null);
 ```
 
 ### 测试示例
 
 ```typescript
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Logger, setMockLogger } from "../lib/logger.ts";
-import pino from "pino";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+
+import { Logger } from "../lib/logger";
 
 describe("Logger", () => {
-    let mockLogger: pino.Logger;
-    let infoSpy: any;
+    const mockLogger = {
+        info: mock(() => undefined),
+        warn: mock(() => undefined),
+        error: mock(() => undefined),
+        debug: mock(() => undefined)
+    };
 
     beforeEach(() => {
-        mockLogger = pino({ level: "debug" });
-        infoSpy = vi.spyOn(mockLogger, "info");
-        setMockLogger(mockLogger);
+        Logger.setMock(mockLogger);
     });
 
     afterEach(() => {
-        setMockLogger(null);
+        Logger.setMock(null);
     });
 
     it("should log info message", () => {
         Logger.info("test message");
-        expect(infoSpy).toHaveBeenCalledWith("test message");
+        expect(mockLogger.info).toHaveBeenCalledWith("test message");
     });
 });
 ```
@@ -450,26 +469,20 @@ A:
 # 使用 tail 命令
 tail -f logs/app.2024-01-01.log
 
-# 使用 pino-pretty 格式化
+# 可选：使用 pino-pretty 格式化（本项目不内置，仅作为外部查看工具）
 tail -f logs/app.2024-01-01.log | npx pino-pretty
 ```
 
 ### Q: debug 模式对性能有影响吗？
 
-A: pino 的日志过滤非常高效，关闭 debug 时 debug 级别的日志几乎没有性能开销。但在生产环境仍建议关闭 debug。
+A: Logger 内部会做级别过滤；关闭 debug 时 `Logger.debug()` 依然会走一次轻量的参数处理，但不会落盘/输出。生产环境建议 `debug=0`。
 
 ### Q: 如何添加全局上下文？
 
-A: 可以创建 child logger：
+A: 当前不提供 `child()` 风格的子 Logger。推荐做法是：
 
-```typescript
-const childLogger = getLogger().child({
-    service: "user-service",
-    version: "1.0.0"
-});
-
-childLogger.info("所有日志都会包含 service 和 version");
-```
+- 在每次调用时显式带上结构化字段（如 `service`、`version`）
+- 或者在框架层通过 AsyncLocalStorage 注入请求级 meta（框架已内置）
 
 ### Q: 日志没有输出怎么排查？
 
@@ -482,14 +495,13 @@ A: 检查以下几点：
 
 ### Q: 如何在测试中捕获日志？
 
-A: 使用 `setMockLogger` 设置 mock 实例，然后用 spy 捕获调用：
+A: 使用 `Logger.setMock()` 设置 mock 实例，然后断言 mock 函数的调用参数：
 
 ```typescript
-const mockLogger = pino({ level: "debug" });
-const spy = vi.spyOn(mockLogger, "info");
-setMockLogger(mockLogger);
+const mockLogger = { info: mock(() => undefined), warn: mock(() => undefined), error: mock(() => undefined), debug: mock(() => undefined) };
+Logger.setMock(mockLogger);
 
 // 执行测试...
 
-expect(spy).toHaveBeenCalledWith(expect.objectContaining({ userId: 123 }), expect.any(String));
+expect(mockLogger.info).toHaveBeenCalledWith(expect.objectContaining({ userId: 123 }), expect.any(String));
 ```

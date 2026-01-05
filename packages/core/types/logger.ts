@@ -46,8 +46,8 @@ export interface LoggerConfig {
 /**
  * Logger 接口（类型层）。
  *
- * 说明：core/runtime 内部使用的是 pino 封装后的 Logger 对象；
- * 对外只承诺常用的 `info/warn/error/debug` 等调用形式。
+ * 说明：core/runtime 内部使用的是 Bun 环境的自定义 Logger 实现（异步批量写入）。
+ * 对外只承诺常用的 `info/warn/error/debug` 等调用形式（兼容常见 pino 调用风格）。
  */
 export interface Logger {
     info(...args: any[]): any;

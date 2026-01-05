@@ -1,17 +1,16 @@
 /**
- * 日志系统 - 基于 pino 实现
+ * 日志系统 - Bun 环境自定义实现（替换 pino / pino-roll）
  */
 
 import type { LoggerConfig } from "../types/logger";
 
-import { existsSync, mkdirSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync } from "node:fs";
 import { readdir, stat, unlink } from "node:fs/promises";
+import { hostname as osHostname } from "node:os";
 import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
 import { isPlainObject } from "es-toolkit/compat";
 import { escapeRegExp } from "es-toolkit/string";
-import { join } from "pathe";
-import pino from "pino";
 
 import { getCtx } from "./asyncContext";
 
@@ -45,14 +44,46 @@ let sensitivePrefixMatchers: string[] = [];
 let sensitiveContainsMatchers: string[] = [];
 let sensitiveContainsRegex: RegExp | null = null;
 
-let instance: pino.Logger | null = null;
-let slowInstance: pino.Logger | null = null;
-let errorInstance: pino.Logger | null = null;
-let mockInstance: pino.Logger | null = null;
-let didWarnTransportError: boolean = false;
-let appTransport: any = null;
-let slowTransport: any = null;
-let errorTransport: any = null;
+type LogLevelName = "debug" | "info" | "warn" | "error";
+
+type SinkLogger = {
+    info(...args: any[]): any;
+    warn(...args: any[]): any;
+    error(...args: any[]): any;
+    debug(...args: any[]): any;
+};
+
+const HOSTNAME = (() => {
+    try {
+        return osHostname();
+    } catch {
+        return "unknown";
+    }
+})();
+
+const LOG_LEVEL_NUM: Record<LogLevelName, number> = {
+    debug: 20,
+    info: 30,
+    warn: 40,
+    error: 50
+};
+
+const DEFAULT_MAX_BUFFER_BYTES = 10 * 1024 * 1024;
+const DEFAULT_FLUSH_DELAY_MS = 10;
+const DEFAULT_MAX_BATCH_BYTES = 64 * 1024;
+
+let instance: SinkLogger | null = null;
+let slowInstance: SinkLogger | null = null;
+let errorInstance: SinkLogger | null = null;
+let mockInstance: SinkLogger | null = null;
+
+let appFileSink: LogFileSink | null = null;
+let slowFileSink: LogFileSink | null = null;
+let errorFileSink: LogFileSink | null = null;
+
+let appConsoleSink: LogStreamSink | null = null;
+
+let didWarnIoError: boolean = false;
 let didPruneOldLogFiles: boolean = false;
 let didEnsureLogDir: boolean = false;
 let config: LoggerConfig = {
@@ -62,84 +93,366 @@ let config: LoggerConfig = {
     maxSize: 10
 };
 
-function createStdoutLogger(level: string): pino.Logger {
-    // 使用同步 stdout 目的地，避免 pino transport 的 worker 线程与运行时动态解析。
-    return pino({ level: level }, pino.destination(1));
+function formatLocalDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
+    const mm = m < 10 ? `0${m}` : String(m);
+    const dd = d < 10 ? `0${d}` : String(d);
+    return `${y}-${mm}-${dd}`;
 }
 
-function attachTransportErrorHandler(kind: "app" | "slow" | "error", level: string, transport: any): void {
-    if (!transport || typeof transport.on !== "function") return;
+function normalizeLogLevelName(): LogLevelName {
+    // 与旧行为保持一致：debug=1 -> debug，否则 -> info
+    return config.debug === 1 ? "debug" : "info";
+}
 
-    const handleError = (error: any) => {
-        // 避免重复刷屏
-        if (!didWarnTransportError) {
-            didWarnTransportError = true;
-            try {
-                const msg = error && error.message ? String(error.message) : String(error);
-                process.stderr.write(`[Logger] transport error; fallback to stdout. ${msg}\n`);
-            } catch {
-                // ignore
-            }
-        }
+function shouldAccept(minLevel: LogLevelName, level: LogLevelName): boolean {
+    return LOG_LEVEL_NUM[level] >= LOG_LEVEL_NUM[minLevel];
+}
 
-        // 尝试关闭 transport，避免残留 worker 继续抛错
-        try {
-            if (typeof transport.close === "function") {
-                transport.close();
-            } else if (typeof transport.end === "function") {
-                transport.end();
-            }
-        } catch {
-            // ignore
-        }
-
-        const fallback = createStdoutLogger(level);
-        if (kind === "app") instance = fallback;
-        if (kind === "slow") slowInstance = fallback;
-        if (kind === "error") errorInstance = fallback;
-
-        if (kind === "app") appTransport = null;
-        if (kind === "slow") slowTransport = null;
-        if (kind === "error") errorTransport = null;
-
-        return;
-    };
-
-    // transport 本体错误
-    transport.on("error", handleError);
-
-    // pino transport 底层通常会创建 Worker（ThreadStream）。
-    // Bun/Node 环境下偶发 worker error 未被转发到 transport，会直接触发未处理的 'error' 事件导致测试中断。
-    const maybeWorkers: any[] = [(transport as any).worker, (transport as any)._worker, (transport as any).thread, (transport as any)._thread, (transport as any).stream ? (transport as any).stream.worker : null, (transport as any).stream ? (transport as any).stream._worker : null];
-    for (const worker of maybeWorkers) {
-        if (!worker || typeof worker.on !== "function") continue;
-        worker.on("error", handleError);
+function safeWriteStderrOnce(msg: string): void {
+    if (didWarnIoError) return;
+    didWarnIoError = true;
+    try {
+        process.stderr.write(`${msg}\n`);
+    } catch {
+        // ignore
     }
 }
 
-function createTransportLogger(kind: "app" | "slow" | "error", level: string, targets: pino.TransportTargetOptions[]): pino.Logger {
-    try {
-        // 显式创建 transport，方便挂载 error 监听，避免未处理的 worker 异常。
-        const transport = (pino as any).transport({ targets: targets });
+type StreamKind = "stdout" | "stderr";
 
-        if (kind === "app") appTransport = transport;
-        if (kind === "slow") slowTransport = transport;
-        if (kind === "error") errorTransport = transport;
+class LogStreamSink {
+    private kind: StreamKind;
+    private minLevel: LogLevelName;
+    private pending: string[];
+    private pendingBytes: number;
+    private scheduled: boolean;
+    private flushing: boolean;
+    private droppedLow: number;
+    private maxBufferBytes: number;
+    private flushDelayMs: number;
+    private maxBatchBytes: number;
 
-        attachTransportErrorHandler(kind, level, transport);
-        return pino({ level: level }, transport);
-    } catch (error: any) {
-        // 例如：bundle 单文件场景下 transport target 运行时无法解析。
-        if (!didWarnTransportError) {
-            didWarnTransportError = true;
-            try {
-                const msg = error && error.message ? String(error.message) : String(error);
-                process.stderr.write(`[Logger] transport init failed; fallback to stdout. ${msg}\n`);
-            } catch {
-                // ignore
+    public constructor(options: { kind: StreamKind; minLevel: LogLevelName }) {
+        this.kind = options.kind;
+        this.minLevel = options.minLevel;
+
+        this.pending = [];
+        this.pendingBytes = 0;
+        this.scheduled = false;
+        this.flushing = false;
+        this.droppedLow = 0;
+
+        this.maxBufferBytes = DEFAULT_MAX_BUFFER_BYTES;
+        this.flushDelayMs = DEFAULT_FLUSH_DELAY_MS;
+        this.maxBatchBytes = DEFAULT_MAX_BATCH_BYTES;
+    }
+
+    public enqueue(level: LogLevelName, line: string): void {
+        if (!shouldAccept(this.minLevel, level)) return;
+
+        const bytes = Buffer.byteLength(line);
+        if (this.pendingBytes + bytes > this.maxBufferBytes) {
+            // stream sink：优先丢 debug/info，保留 warn/error
+            if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) {
+                this.droppedLow += 1;
+                return;
             }
         }
-        return createStdoutLogger(level);
+
+        this.pending.push(line);
+        this.pendingBytes += bytes;
+        this.scheduleFlush();
+    }
+
+    public async shutdown(): Promise<void> {
+        await this.flush(true);
+    }
+
+    private scheduleFlush(): void {
+        if (this.scheduled) return;
+        this.scheduled = true;
+        setTimeout(() => {
+            void this.flush(false);
+        }, this.flushDelayMs);
+    }
+
+    private getStream(): NodeJS.WritableStream {
+        return this.kind === "stderr" ? process.stderr : process.stdout;
+    }
+
+    private async flush(force: boolean): Promise<void> {
+        if (this.flushing) return;
+        this.scheduled = false;
+        this.flushing = true;
+
+        try {
+            const stream = this.getStream();
+
+            // 丢弃提示（仅在 force 关停时输出，避免刷屏）
+            if (force && this.droppedLow > 0) {
+                try {
+                    stream.write(`[Logger] dropped ${this.droppedLow} low-level logs due to backpressure\n`);
+                } catch {
+                    // ignore
+                }
+                this.droppedLow = 0;
+            }
+
+            while (this.pending.length > 0) {
+                const parts: string[] = [];
+                let bytes = 0;
+                while (this.pending.length > 0) {
+                    const next = this.pending[0] as string;
+                    const nextBytes = Buffer.byteLength(next);
+                    if (parts.length > 0 && bytes + nextBytes > this.maxBatchBytes) {
+                        break;
+                    }
+                    parts.push(next);
+                    bytes += nextBytes;
+                    this.pending.shift();
+                }
+
+                const chunk = parts.join("");
+                this.pendingBytes = this.pendingBytes - Buffer.byteLength(chunk);
+
+                const ok = stream.write(chunk);
+                if (!ok) {
+                    await new Promise<void>((resolve) => {
+                        (stream as any).once("drain", () => resolve());
+                    });
+                }
+            }
+        } catch (error: any) {
+            safeWriteStderrOnce(`[Logger] stream sink error: ${error?.message || error}`);
+        } finally {
+            this.flushing = false;
+            if (this.pending.length > 0) {
+                this.scheduleFlush();
+            }
+        }
+    }
+}
+
+class LogFileSink {
+    private prefix: "app" | "slow" | "error";
+    private minLevel: LogLevelName;
+    private maxFileBytes: number;
+
+    private pending: string[];
+    private pendingBytes: number;
+    private scheduled: boolean;
+    private flushing: boolean;
+    private droppedLow: number;
+
+    private maxBufferBytes: number;
+    private flushDelayMs: number;
+    private maxBatchBytes: number;
+
+    private stream: ReturnType<typeof createWriteStream> | null;
+    private streamDate: string;
+    private streamIndex: number;
+    private streamSizeBytes: number;
+    private disabled: boolean;
+
+    public constructor(options: { prefix: "app" | "slow" | "error"; minLevel: LogLevelName; maxFileBytes: number }) {
+        this.prefix = options.prefix;
+        this.minLevel = options.minLevel;
+        this.maxFileBytes = options.maxFileBytes;
+
+        this.pending = [];
+        this.pendingBytes = 0;
+        this.scheduled = false;
+        this.flushing = false;
+        this.droppedLow = 0;
+
+        this.maxBufferBytes = DEFAULT_MAX_BUFFER_BYTES;
+        this.flushDelayMs = DEFAULT_FLUSH_DELAY_MS;
+        this.maxBatchBytes = DEFAULT_MAX_BATCH_BYTES;
+
+        this.stream = null;
+        this.streamDate = "";
+        this.streamIndex = 0;
+        this.streamSizeBytes = 0;
+        this.disabled = false;
+    }
+
+    public enqueue(level: LogLevelName, line: string): void {
+        if (this.disabled) return;
+        if (!shouldAccept(this.minLevel, level)) return;
+
+        const bytes = Buffer.byteLength(line);
+        if (this.pendingBytes + bytes > this.maxBufferBytes) {
+            // 文件 sink：优先丢 debug/info，保留 warn/error
+            if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) {
+                this.droppedLow += 1;
+                return;
+            }
+        }
+
+        this.pending.push(line);
+        this.pendingBytes += bytes;
+        this.scheduleFlush();
+    }
+
+    public async shutdown(): Promise<void> {
+        await this.flush(true);
+        await this.closeStream();
+    }
+
+    private scheduleFlush(): void {
+        if (this.scheduled) return;
+        this.scheduled = true;
+        setTimeout(() => {
+            void this.flush(false);
+        }, this.flushDelayMs);
+    }
+
+    private async closeStream(): Promise<void> {
+        if (!this.stream) return;
+        const st = this.stream;
+        this.stream = null;
+
+        await new Promise<void>((resolve) => {
+            try {
+                st.end(() => resolve());
+            } catch {
+                resolve();
+            }
+        });
+    }
+
+    private getFilePath(date: string, index: number): string {
+        const suffix = index > 0 ? `.${index}` : "";
+        const filename = `${this.prefix}.${date}${suffix}.log`;
+        return nodePathJoin(resolveLogDir(), filename);
+    }
+
+    private async ensureStreamReady(nextChunkBytes: number): Promise<void> {
+        const date = formatLocalDate(new Date());
+
+        // 日期变化：切新文件
+        if (this.stream && this.streamDate && date !== this.streamDate) {
+            await this.closeStream();
+            this.streamDate = "";
+            this.streamIndex = 0;
+            this.streamSizeBytes = 0;
+        }
+
+        // 首次打开
+        if (!this.stream) {
+            const filePath = this.getFilePath(date, 0);
+            let size = 0;
+            try {
+                const st = await stat(filePath);
+                size = typeof st.size === "number" ? st.size : 0;
+            } catch {
+                size = 0;
+            }
+
+            this.streamDate = date;
+            this.streamIndex = 0;
+            this.streamSizeBytes = size;
+
+            try {
+                this.stream = createWriteStream(filePath, { flags: "a" });
+                this.stream.on("error", (error: any) => {
+                    safeWriteStderrOnce(`[Logger] file sink error (${this.prefix}): ${error?.message || error}`);
+                    this.disabled = true;
+                    void this.closeStream();
+                });
+            } catch (error: any) {
+                safeWriteStderrOnce(`[Logger] createWriteStream failed (${this.prefix}): ${error?.message || error}`);
+                this.disabled = true;
+                return;
+            }
+        }
+
+        // 大小滚动
+        if (this.stream && this.maxFileBytes > 0 && this.streamSizeBytes + nextChunkBytes > this.maxFileBytes) {
+            await this.closeStream();
+            this.streamIndex = this.streamIndex + 1;
+            const filePath = this.getFilePath(date, this.streamIndex);
+            this.streamDate = date;
+            this.streamSizeBytes = 0;
+            try {
+                this.stream = createWriteStream(filePath, { flags: "a" });
+                this.stream.on("error", (error: any) => {
+                    safeWriteStderrOnce(`[Logger] file sink error (${this.prefix}): ${error?.message || error}`);
+                    this.disabled = true;
+                    void this.closeStream();
+                });
+            } catch (error: any) {
+                safeWriteStderrOnce(`[Logger] createWriteStream failed (${this.prefix}): ${error?.message || error}`);
+                this.disabled = true;
+                return;
+            }
+        }
+    }
+
+    private async flush(force: boolean): Promise<void> {
+        if (this.disabled) {
+            this.pending = [];
+            this.pendingBytes = 0;
+            return;
+        }
+        if (this.flushing) return;
+        this.scheduled = false;
+        this.flushing = true;
+
+        try {
+            // 丢弃提示（仅在 force 关停时输出，避免刷屏）
+            if (force && this.droppedLow > 0) {
+                try {
+                    process.stderr.write(`[Logger] dropped ${this.droppedLow} low-level logs to file '${this.prefix}' due to buffer limit\n`);
+                } catch {
+                    // ignore
+                }
+                this.droppedLow = 0;
+            }
+
+            while (this.pending.length > 0 && !this.disabled) {
+                const parts: string[] = [];
+                let bytes = 0;
+                while (this.pending.length > 0) {
+                    const next = this.pending[0] as string;
+                    const nextBytes = Buffer.byteLength(next);
+                    if (parts.length > 0 && bytes + nextBytes > this.maxBatchBytes) {
+                        break;
+                    }
+                    parts.push(next);
+                    bytes += nextBytes;
+                    this.pending.shift();
+                }
+
+                const chunk = parts.join("");
+                const chunkBytes = Buffer.byteLength(chunk);
+                this.pendingBytes = this.pendingBytes - chunkBytes;
+
+                await this.ensureStreamReady(chunkBytes);
+                if (!this.stream) {
+                    // 文件 sink 已被禁用或打开失败
+                    break;
+                }
+
+                const ok = this.stream.write(chunk);
+                if (!ok) {
+                    await new Promise<void>((resolve) => {
+                        (this.stream as any).once("drain", () => resolve());
+                    });
+                }
+                this.streamSizeBytes = this.streamSizeBytes + chunkBytes;
+            }
+        } catch (error: any) {
+            safeWriteStderrOnce(`[Logger] file sink flush error (${this.prefix}): ${error?.message || error}`);
+        } finally {
+            this.flushing = false;
+            if (this.pending.length > 0 && !this.disabled) {
+                this.scheduleFlush();
+            }
+        }
     }
 }
 
@@ -147,31 +460,24 @@ export async function shutdown(): Promise<void> {
     // 测试场景：mock logger 不需要 shutdown
     if (mockInstance) return;
 
-    const transports = [appTransport, slowTransport, errorTransport].filter((item) => item);
+    const sinks: Array<{ shutdown: () => Promise<void> }> = [];
+    if (appFileSink) sinks.push({ shutdown: () => (appFileSink ? appFileSink.shutdown() : Promise.resolve()) });
+    if (slowFileSink) sinks.push({ shutdown: () => (slowFileSink ? slowFileSink.shutdown() : Promise.resolve()) });
+    if (errorFileSink) sinks.push({ shutdown: () => (errorFileSink ? errorFileSink.shutdown() : Promise.resolve()) });
+    if (appConsoleSink) sinks.push({ shutdown: () => (appConsoleSink ? appConsoleSink.shutdown() : Promise.resolve()) });
 
-    for (const transport of transports) {
+    for (const item of sinks) {
         try {
-            if (typeof transport.flush === "function") {
-                await transport.flush();
-            }
-        } catch {
-            // ignore
-        }
-
-        try {
-            if (typeof transport.close === "function") {
-                transport.close();
-            } else if (typeof transport.end === "function") {
-                transport.end();
-            }
+            await item.shutdown();
         } catch {
             // ignore
         }
     }
 
-    appTransport = null;
-    slowTransport = null;
-    errorTransport = null;
+    appFileSink = null;
+    slowFileSink = null;
+    errorFileSink = null;
+    appConsoleSink = null;
 
     instance = null;
     slowInstance = null;
@@ -256,16 +562,20 @@ async function pruneOldLogFiles(): Promise<void> {
  * 配置日志
  */
 export function configure(cfg: LoggerConfig): void {
+    // 旧实例可能仍持有文件句柄；这里异步关闭（不阻塞主流程）
+    void shutdown();
+
     config = { ...config, ...cfg };
     instance = null;
     slowInstance = null;
     errorInstance = null;
     didPruneOldLogFiles = false;
     didEnsureLogDir = false;
-    didWarnTransportError = false;
-    appTransport = null;
-    slowTransport = null;
-    errorTransport = null;
+    didWarnIoError = false;
+    appFileSink = null;
+    slowFileSink = null;
+    errorFileSink = null;
+    appConsoleSink = null;
 
     // 运行时清洗上限（可配置）
     sanitizeDepthLimit = normalizePositiveInt(config.sanitizeDepth, DEFAULT_LOG_SANITIZE_DEPTH, 1, 10);
@@ -342,16 +652,16 @@ export function configure(cfg: LoggerConfig): void {
 
 /**
  * 设置 Mock Logger（用于测试）
- * @param mock - Mock pino 实例，传 null 清除 mock
+ * @param mock - Mock Logger 实例（形如 {info/warn/error/debug}），传 null 清除 mock
  */
-export function setMockLogger(mock: pino.Logger | null): void {
+export function setMockLogger(mock: SinkLogger | null): void {
     mockInstance = mock;
 }
 
 /**
- * 获取 pino 日志实例
+ * 获取 Logger 实例（延迟初始化）
  */
-export function getLogger(): pino.Logger {
+export function getLogger(): SinkLogger {
     // 优先返回 mock 实例（用于测试）
     if (mockInstance) return mockInstance;
 
@@ -362,37 +672,21 @@ export function getLogger(): pino.Logger {
     // 启动时清理过期日志（异步，不阻塞初始化）
     void pruneOldLogFiles();
 
-    const level = config.debug === 1 ? "debug" : "info";
-    const targets: pino.TransportTargetOptions[] = [];
+    const minLevel = normalizeLogLevelName();
+    const maxFileBytes = (typeof config.maxSize === "number" && config.maxSize > 0 ? config.maxSize : 10) * 1024 * 1024;
 
-    // 文件输出
-    targets.push({
-        target: "pino-roll",
-        level: level,
-        options: {
-            file: join(resolveLogDir(), "app"),
-            frequency: "daily",
-            size: `${config.maxSize || 10}m`,
-            mkdir: true,
-            dateFormat: "yyyy-MM-dd"
-        }
-    });
-
-    // 控制台输出
-    if (config.console === 1) {
-        targets.push({
-            target: "pino/file",
-            level: level,
-            options: { destination: 1 }
-        });
+    if (!appFileSink) {
+        appFileSink = new LogFileSink({ prefix: "app", minLevel: minLevel, maxFileBytes: maxFileBytes });
+    }
+    if (config.console === 1 && !appConsoleSink) {
+        appConsoleSink = new LogStreamSink({ kind: "stdout", minLevel: minLevel });
     }
 
-    instance = createTransportLogger("app", level, targets);
-
+    instance = createSinkLogger({ kind: "app", minLevel: minLevel, fileSink: appFileSink, consoleSink: config.console === 1 ? appConsoleSink : null });
     return instance;
 }
 
-function getSlowLogger(): pino.Logger {
+function getSlowLogger(): SinkLogger {
     if (mockInstance) return mockInstance;
     if (slowInstance) return slowInstance;
 
@@ -400,24 +694,17 @@ function getSlowLogger(): pino.Logger {
 
     void pruneOldLogFiles();
 
-    const level = config.debug === 1 ? "debug" : "info";
-    slowInstance = createTransportLogger("slow", level, [
-        {
-            target: "pino-roll",
-            level: level,
-            options: {
-                file: join(resolveLogDir(), "slow"),
-                // 只按大小分割（frequency 默认不启用）
-                size: `${config.maxSize || 10}m`,
-                mkdir: true
-            }
-        }
-    ]);
+    const minLevel = normalizeLogLevelName();
+    const maxFileBytes = (typeof config.maxSize === "number" && config.maxSize > 0 ? config.maxSize : 10) * 1024 * 1024;
+    if (!slowFileSink) {
+        slowFileSink = new LogFileSink({ prefix: "slow", minLevel: minLevel, maxFileBytes: maxFileBytes });
+    }
 
+    slowInstance = createSinkLogger({ kind: "slow", minLevel: minLevel, fileSink: slowFileSink, consoleSink: null });
     return slowInstance;
 }
 
-function getErrorLogger(): pino.Logger {
+function getErrorLogger(): SinkLogger {
     if (mockInstance) return mockInstance;
     if (errorInstance) return errorInstance;
 
@@ -425,21 +712,154 @@ function getErrorLogger(): pino.Logger {
 
     void pruneOldLogFiles();
 
-    // error 专属文件：只关注 error 及以上
-    errorInstance = createTransportLogger("error", "error", [
-        {
-            target: "pino-roll",
-            level: "error",
-            options: {
-                file: join(resolveLogDir(), "error"),
-                // 只按大小分割（frequency 默认不启用）
-                size: `${config.maxSize || 10}m`,
-                mkdir: true
-            }
-        }
-    ]);
+    const maxFileBytes = (typeof config.maxSize === "number" && config.maxSize > 0 ? config.maxSize : 10) * 1024 * 1024;
+    if (!errorFileSink) {
+        // error logger：固定 minLevel=error
+        errorFileSink = new LogFileSink({ prefix: "error", minLevel: "error", maxFileBytes: maxFileBytes });
+    }
 
+    errorInstance = createSinkLogger({ kind: "error", minLevel: "error", fileSink: errorFileSink, consoleSink: null });
     return errorInstance;
+}
+
+function formatExtrasToMsg(extras: any[]): string {
+    if (!extras || extras.length === 0) return "";
+
+    const parts: string[] = [];
+    for (const item of extras) {
+        if (item === null) {
+            parts.push("null");
+            continue;
+        }
+        if (item === undefined) {
+            parts.push("undefined");
+            continue;
+        }
+        if (typeof item === "string") {
+            parts.push(item);
+            continue;
+        }
+        if (typeof item === "number" || typeof item === "boolean" || typeof item === "bigint") {
+            parts.push(String(item));
+            continue;
+        }
+        if (item instanceof Error) {
+            parts.push(item.stack || item.message || item.name);
+            continue;
+        }
+        if (isPlainObject(item) || Array.isArray(item)) {
+            try {
+                parts.push(JSON.stringify(item));
+            } catch {
+                parts.push("[Unserializable]");
+            }
+            continue;
+        }
+        try {
+            parts.push(String(item));
+        } catch {
+            parts.push("[Unknown]");
+        }
+    }
+
+    return parts.join(" ");
+}
+
+function buildLogLine(level: LogLevelName, args: any[]): string {
+    const time = Date.now();
+    const base: Record<string, any> = {
+        level: LOG_LEVEL_NUM[level],
+        time: time,
+        pid: process.pid,
+        hostname: HOSTNAME
+    };
+
+    if (!args || args.length === 0) {
+        base.msg = "";
+        return `${JSON.stringify(base)}\n`;
+    }
+
+    const first = args[0];
+    const second = args.length > 1 ? args[1] : undefined;
+
+    // 兼容：logger.(level)(obj, msg?, ...)
+    if (isPlainObject(first)) {
+        for (const [k, v] of Object.entries(first as Record<string, any>)) {
+            base[k] = v;
+        }
+        if (typeof second === "string") {
+            const extraMsg = formatExtrasToMsg(args.slice(2));
+            base.msg = extraMsg ? `${second} ${extraMsg}` : second;
+        } else {
+            const extraMsg = formatExtrasToMsg(args.slice(1));
+            base.msg = extraMsg;
+        }
+        return `${safeJsonStringify(base)}\n`;
+    }
+
+    // 兼容：logger.(level)(err, msg?)
+    if (first instanceof Error) {
+        base.err = sanitizeErrorValue(first, {});
+        if (typeof second === "string") {
+            const extraMsg = formatExtrasToMsg(args.slice(2));
+            base.msg = extraMsg ? `${second} ${extraMsg}` : second;
+        } else {
+            base.msg = formatExtrasToMsg(args.slice(1));
+        }
+        return `${safeJsonStringify(base)}\n`;
+    }
+
+    // 兼容：logger.(level)(msg, ...)
+    if (typeof first === "string") {
+        const extraMsg = formatExtrasToMsg(args.slice(1));
+        base.msg = extraMsg ? `${first} ${extraMsg}` : first;
+        return `${safeJsonStringify(base)}\n`;
+    }
+
+    // 兜底
+    base.msg = formatExtrasToMsg(args);
+    return `${safeJsonStringify(base)}\n`;
+}
+
+function safeJsonStringify(obj: Record<string, any>): string {
+    try {
+        return JSON.stringify(obj);
+    } catch {
+        try {
+            return JSON.stringify({ level: obj.level, time: obj.time, pid: obj.pid, hostname: obj.hostname, msg: "[Unserializable log record]" });
+        } catch {
+            return '{"msg":"[Unserializable log record]"}';
+        }
+    }
+}
+
+function createSinkLogger(options: { kind: "app" | "slow" | "error"; minLevel: LogLevelName; fileSink: LogFileSink; consoleSink: LogStreamSink | null }): SinkLogger {
+    const minLevel = options.minLevel;
+
+    const write = (level: LogLevelName, args: any[]) => {
+        if (!shouldAccept(minLevel, level)) return;
+
+        const line = buildLogLine(level, args);
+        options.fileSink.enqueue(level, line);
+        if (options.consoleSink) {
+            options.consoleSink.enqueue(level, line);
+        }
+    };
+
+    return {
+        info(...args: any[]) {
+            write("info", args);
+        },
+        warn(...args: any[]) {
+            write("warn", args);
+        },
+        error(...args: any[]) {
+            write("error", args);
+        },
+        debug(...args: any[]) {
+            write("debug", args);
+        }
+    };
 }
 
 function truncateString(val: string, stats: Record<string, number>): string {
