@@ -1,0 +1,9 @@
+{
+    "name": "befly-perf",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "bench:logger": "bun run benches/logger-overhead.bench.ts"
+    }
+}

@@ -493,6 +493,14 @@ A: 检查以下几点：
 3. 是否设置了 mock logger
 4. 配置是否正确加载
 
+### Q: 进程退出时如何尽量避免丢日志？
+
+A: Logger 在首次初始化后会尝试注册 `SIGINT` / `SIGTERM` 的优雅退出钩子：
+
+- 收到信号时会先调用 `Logger.shutdown()` 尝试 flush 并关闭文件句柄
+- 最多等待 2 秒后强制退出（避免卡死）
+- 如果业务侧已经注册了同名 signal handler，Logger 会跳过注册，避免改变既有行为
+
 ### Q: 如何在测试中捕获日志？
 
 A: 使用 `Logger.setMock()` 设置 mock 实例，然后断言 mock 函数的调用参数：
