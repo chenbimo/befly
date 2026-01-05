@@ -70,7 +70,7 @@ function createStdoutLogger(level: string): pino.Logger {
 function attachTransportErrorHandler(kind: "app" | "slow" | "error", level: string, transport: any): void {
     if (!transport || typeof transport.on !== "function") return;
 
-    transport.on("error", (error: any) => {
+    const handleError = (error: any) => {
         // 避免重复刷屏
         if (!didWarnTransportError) {
             didWarnTransportError = true;
@@ -101,7 +101,20 @@ function attachTransportErrorHandler(kind: "app" | "slow" | "error", level: stri
         if (kind === "app") appTransport = null;
         if (kind === "slow") slowTransport = null;
         if (kind === "error") errorTransport = null;
-    });
+
+        return;
+    };
+
+    // transport 本体错误
+    transport.on("error", handleError);
+
+    // pino transport 底层通常会创建 Worker（ThreadStream）。
+    // Bun/Node 环境下偶发 worker error 未被转发到 transport，会直接触发未处理的 'error' 事件导致测试中断。
+    const maybeWorkers: any[] = [(transport as any).worker, (transport as any)._worker, (transport as any).thread, (transport as any)._thread, (transport as any).stream ? (transport as any).stream.worker : null, (transport as any).stream ? (transport as any).stream._worker : null];
+    for (const worker of maybeWorkers) {
+        if (!worker || typeof worker.on !== "function") continue;
+        worker.on("error", handleError);
+    }
 }
 
 function createTransportLogger(kind: "app" | "slow" | "error", level: string, targets: pino.TransportTargetOptions[]): pino.Logger {

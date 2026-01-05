@@ -6,10 +6,19 @@ import { Logger } from "../lib/logger";
 export async function checkHook(hooks: any[]): Promise<void> {
     let hasError = false;
 
+    const coreBuiltinNameRegexp = /^[a-z]+(?:_[a-z]+)*$/;
+
     for (const hook of hooks) {
         try {
             if (!isPlainObject(hook)) {
                 Logger.warn(omit(hook, ["handler"]), "钩子导出必须是对象（export default { deps, handler }）");
+                hasError = true;
+                continue;
+            }
+
+            // moduleName 必须存在（用于依赖排序与运行时挂载）。
+            if (typeof (hook as any).moduleName !== "string" || (hook as any).moduleName.trim() === "") {
+                Logger.warn(omit(hook, ["handler"]), "钩子的 moduleName 必须是非空字符串（由系统生成，用于 deps 与运行时挂载）");
                 hasError = true;
                 continue;
             }
@@ -25,6 +34,41 @@ export async function checkHook(hooks: any[]): Promise<void> {
                 Logger.warn(omit(hook, ["handler"]), "钩子的 enable 属性必须是 boolean（true/false），不允许 0/1 等其他类型");
                 hasError = true;
                 continue;
+            }
+
+            // core 内置钩子：必须来自静态注册（filePath 以 core:hook: 开头），且 name 必须显式指定并与 moduleName 一致。
+            if ((hook as any).source === "core") {
+                const name = typeof (hook as any).name === "string" ? (hook as any).name : "";
+                if (name === "") {
+                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子必须显式设置 name（string），用于确定钩子名称");
+                    hasError = true;
+                    continue;
+                }
+
+                // name 必须满足：小写字母 + 下划线（不允许空格、驼峰、数字等）。
+                if (!coreBuiltinNameRegexp.test(name)) {
+                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子的 name 必须满足小写字母+下划线格式（例如 auth / rate_limit），不允许空格、驼峰或其他字符");
+                    hasError = true;
+                    continue;
+                }
+
+                if (!coreBuiltinNameRegexp.test((hook as any).moduleName)) {
+                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子的 moduleName 必须满足小写字母+下划线格式（由系统生成，且必须与 name 一致）");
+                    hasError = true;
+                    continue;
+                }
+
+                if (name !== (hook as any).moduleName) {
+                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子的 name 必须与 moduleName 完全一致");
+                    hasError = true;
+                    continue;
+                }
+
+                if (typeof (hook as any).filePath !== "string" || !(hook as any).filePath.startsWith(`core:hook:${name}`)) {
+                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子必须来自静态注册（filePath 必须以 core:hook:<name> 开头），不允许通过扫描目录加载");
+                    hasError = true;
+                    continue;
+                }
             }
 
             if (!Array.isArray((hook as any).deps)) {

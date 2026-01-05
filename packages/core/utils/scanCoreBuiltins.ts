@@ -16,17 +16,14 @@ import corePluginTool from "../plugins/tool";
 
 type CoreBuiltinType = "hook" | "plugin";
 
-function ensureCoreBuiltinName(value: any, type: CoreBuiltinType): string {
-    const name = value && typeof value.name === "string" ? value.name.trim() : "";
-    if (name === "") {
-        const label = type === "hook" ? "钩子" : "插件";
-        throw new Error(`core 内置${label}必须显式设置 name 属性（string）`);
-    }
-    return name;
+function getCoreBuiltinName(value: any): string {
+    // 直接使用导出对象的 name，不在工具层做任何“去空白/纠错”。
+    // 合法性校验统一交给 checks（例如：必须是小写字母+下划线）。
+    return value && typeof value.name === "string" ? value.name : "";
 }
 
 function toCoreBuiltinScanFileResult(type: CoreBuiltinType, item: any): ScanFileResult {
-    const name = ensureCoreBuiltinName(item, type);
+    const name = getCoreBuiltinName(item);
 
     return {
         source: "core",
