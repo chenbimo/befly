@@ -3,12 +3,12 @@
  * 负责扫描和初始化所有插件（核心、组件、项目）
  */
 
-import type { BeflyContext } from "../types/befly.ts";
-import type { Plugin } from "../types/plugin.ts";
-import type { ScanFileResult } from "../utils/scanFiles.ts";
+import type { BeflyContext } from "../types/befly";
+import type { Plugin } from "../types/plugin";
+import type { ScanFileResult } from "../utils/scanFiles";
 
-import { Logger } from "../lib/logger.ts";
-import { sortModules } from "../utils/sortModules.ts";
+import { Logger } from "../lib/logger";
+import { sortModules } from "../utils/sortModules";
 
 export async function loadPlugins(plugins: ScanFileResult[], context: BeflyContext, disablePlugins: string[] = []): Promise<Plugin[]> {
     const pluginsMap: Plugin[] = [];

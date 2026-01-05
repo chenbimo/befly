@@ -3,16 +3,15 @@
  * 处理 /* 路径的静态文件请求
  */
 
-// 类型导入
-import type { CorsConfig } from "../types/befly.ts";
+import type { CorsConfig } from "../types/befly";
 
 // 外部依赖
 import { join } from "pathe";
 
-import { Logger } from "../lib/logger.ts";
+import { Logger } from "../lib/logger";
 // 相对导入
-import { appDir } from "../paths.ts";
-import { setCorsOptions } from "../utils/cors.ts";
+import { appDir } from "../paths";
+import { setCorsOptions } from "../utils/cors";
 
 /**
  * 静态文件处理器工厂

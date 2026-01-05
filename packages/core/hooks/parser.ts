@@ -1,13 +1,13 @@
 // 类型导入
-import type { Hook } from "../types/hook.ts";
+import type { Hook } from "../types/hook";
 
 // 外部依赖
 import { isPlainObject, isEmpty } from "es-toolkit/compat";
 import { XMLParser } from "fast-xml-parser";
 
 // 相对导入
-import { pickFields } from "../utils/pickFields.ts";
-import { ErrorResponse } from "../utils/response.ts";
+import { pickFields } from "../utils/pickFields";
+import { ErrorResponse } from "../utils/response";
 
 const xmlParser = new XMLParser();
 

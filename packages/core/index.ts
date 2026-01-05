@@ -9,32 +9,32 @@ import type { BeflyContext, BeflyOptions } from "./types/befly";
 import type { Hook } from "./types/hook";
 import type { Plugin } from "./types/plugin";
 
-import { checkApi } from "./checks/checkApi.ts";
-import { checkHook } from "./checks/checkHook.ts";
-import { checkMenu } from "./checks/checkMenu.ts";
-import { checkPlugin } from "./checks/checkPlugin.ts";
-import { checkTable } from "./checks/checkTable.ts";
+import { checkApi } from "./checks/checkApi";
+import { checkHook } from "./checks/checkHook";
+import { checkMenu } from "./checks/checkMenu";
+import { checkPlugin } from "./checks/checkPlugin";
+import { checkTable } from "./checks/checkTable";
 // ========== 相对导入（项目内部文件） ==========
 // 基础设施
-import { Connect } from "./lib/connect.ts";
-import { Logger } from "./lib/logger.ts";
+import { Connect } from "./lib/connect";
+import { Logger } from "./lib/logger";
 // 加载器
-import { loadApis } from "./loader/loadApis.ts";
-import { loadHooks } from "./loader/loadHooks.ts";
-import { loadPlugins } from "./loader/loadPlugins.ts";
+import { loadApis } from "./loader/loadApis";
+import { loadHooks } from "./loader/loadHooks";
+import { loadPlugins } from "./loader/loadPlugins";
 // 路由处理
-import { apiHandler } from "./router/api.ts";
-import { staticHandler } from "./router/static.ts";
+import { apiHandler } from "./router/api";
+import { staticHandler } from "./router/static";
 // 同步
-import { syncApi } from "./sync/syncApi.ts";
-import { syncCache } from "./sync/syncCache.ts";
-import { syncDev } from "./sync/syncDev.ts";
-import { syncMenu } from "./sync/syncMenu.ts";
-import { syncTable } from "./sync/syncTable.ts";
+import { syncApi } from "./sync/syncApi";
+import { syncCache } from "./sync/syncCache";
+import { syncDev } from "./sync/syncDev";
+import { syncMenu } from "./sync/syncMenu";
+import { syncTable } from "./sync/syncTable";
 // 工具
-import { calcPerfTime } from "./utils/calcPerfTime.ts";
-import { getProcessRole } from "./utils/process.ts";
-import { scanSources } from "./utils/scanSources.ts";
+import { calcPerfTime } from "./utils/calcPerfTime";
+import { getProcessRole } from "./utils/process";
+import { scanSources } from "./utils/scanSources";
 
 /**
  * Befly 框架核心类
@@ -65,7 +65,7 @@ export class Befly {
             const serverStartTime = Bun.nanoseconds();
 
             // 0. 延迟加载配置（避免循环依赖）
-            const { loadBeflyConfig } = await import("./befly.config.ts");
+            const { loadBeflyConfig } = await import("./befly.config");
             this.config = await loadBeflyConfig();
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取

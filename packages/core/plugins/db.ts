@@ -3,13 +3,13 @@
  * 初始化数据库连接和 SQL 管理器
  */
 
-import type { BeflyContext } from "../types/befly.ts";
-import type { Plugin } from "../types/plugin.ts";
+import type { BeflyContext } from "../types/befly";
+import type { Plugin } from "../types/plugin";
 
-import { Connect } from "../lib/connect.ts";
-import { getDialectByName } from "../lib/dbDialect.ts";
-import { DbHelper } from "../lib/dbHelper.ts";
-import { Logger } from "../lib/logger.ts";
+import { Connect } from "../lib/connect";
+import { getDialectByName } from "../lib/dbDialect";
+import { DbHelper } from "../lib/dbHelper";
+import { Logger } from "../lib/logger";
 
 /**
  * 数据库插件

@@ -2,10 +2,10 @@
  * JWT 插件
  */
 
-import type { BeflyContext } from "../types/befly.ts";
-import type { Plugin } from "../types/plugin.ts";
+import type { BeflyContext } from "../types/befly";
+import type { Plugin } from "../types/plugin";
 
-import { Jwt } from "../lib/jwt.ts";
+import { Jwt } from "../lib/jwt";
 
 export default {
     deps: [],

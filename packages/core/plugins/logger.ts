@@ -3,10 +3,10 @@
  * 提供全局日志功能
  */
 
-import type { BeflyContext } from "../types/befly.ts";
-import type { Plugin } from "../types/plugin.ts";
+import type { BeflyContext } from "../types/befly";
+import type { Plugin } from "../types/plugin";
 
-import { Logger } from "../lib/logger.ts";
+import { Logger } from "../lib/logger";
 
 /**
  * 日志插件

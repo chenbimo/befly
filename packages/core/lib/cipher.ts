@@ -3,7 +3,7 @@
  * 提供各种哈希、HMAC、密码加密等功能
  */
 
-import type { EncodingType, HashAlgorithm, PasswordHashOptions } from "../types/crypto.ts";
+import type { EncodingType, HashAlgorithm, PasswordHashOptions } from "../types/crypto";
 
 import { createSign } from "node:crypto";
 

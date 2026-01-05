@@ -3,9 +3,9 @@
  * 纯静态类设计，简洁易用
  */
 
-import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from "../types/validate.ts";
+import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from "../types/validate";
 
-import { RegexAliases, getCompiledRegex } from "../configs/presetRegexp.ts";
+import { RegexAliases, getCompiledRegex } from "../configs/presetRegexp";
 
 /**
  * 验证器类

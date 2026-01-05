@@ -4,7 +4,7 @@ import { forOwn } from "es-toolkit/compat";
 import { camelCase } from "es-toolkit/string";
 import { relative, normalize, parse, join } from "pathe";
 
-import { importDefault } from "./importDefault.ts";
+import { importDefault } from "./importDefault";
 
 export type ScanFileSource = "app" | "addon" | "core";
 

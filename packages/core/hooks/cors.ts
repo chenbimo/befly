@@ -1,9 +1,9 @@
-import type { CorsConfig } from "../types/befly.ts";
+import type { CorsConfig } from "../types/befly";
 // 类型导入
-import type { Hook } from "../types/hook.ts";
+import type { Hook } from "../types/hook";
 
 // 相对导入
-import { setCorsOptions } from "../utils/cors.ts";
+import { setCorsOptions } from "../utils/cors";
 
 /**
  * CORS 跨域处理钩子

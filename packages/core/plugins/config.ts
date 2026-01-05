@@ -2,8 +2,8 @@
  * 配置插件
  * 提供访问项目配置的能力
  */
-import type { BeflyContext } from "../types/befly.ts";
-import type { Plugin } from "../types/plugin.ts";
+import type { BeflyContext } from "../types/befly";
+import type { Plugin } from "../types/plugin";
 
 export default {
     deps: [],

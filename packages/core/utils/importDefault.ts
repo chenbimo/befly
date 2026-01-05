@@ -4,7 +4,7 @@
  * - import() 报错：返回 defaultValue
  * - default 导出为 null/undefined：返回 defaultValue
  */
-import { Logger } from "../lib/logger.ts";
+import { Logger } from "../lib/logger";
 
 export async function importDefault<T>(file: string, defaultValue: T): Promise<T> {
     try {

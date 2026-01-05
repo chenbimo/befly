@@ -1,6 +1,6 @@
 // 内部依赖（Node.js 内置模块）
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 
 type PackageJson = {
     main?: string;
@@ -84,13 +84,152 @@ function findTsImportSpecifiers(content: string): string[] {
     return matches;
 }
 
-function collectDtsFiles(dirPath: string): string[] {
+function collectExportTypePaths(exportsValue: unknown, out: string[]): void {
+    if (!isRecord(exportsValue)) {
+        return;
+    }
+
+    for (const value of Object.values(exportsValue)) {
+        if (typeof value === "string") {
+            continue;
+        }
+
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                collectExportTypePaths(item, out);
+            }
+            continue;
+        }
+
+        if (!isRecord(value)) {
+            continue;
+        }
+
+        const typesPath = value["types"];
+        if (typeof typesPath === "string") {
+            out.push(typesPath);
+        }
+
+        collectExportTypePaths(value, out);
+    }
+}
+
+function expandDtsExportPath(packageRoot: string, exportPath: string): string[] {
+    if (!exportPath.startsWith("./")) {
+        return [];
+    }
+
+    if (!exportPath.includes("*")) {
+        return [resolve(packageRoot, exportPath)];
+    }
+
+    const beforeStar = exportPath.split("*")[0] ?? "";
+    const dirPath = resolve(packageRoot, beforeStar);
     if (!existsSync(dirPath)) {
+        return [];
+    }
+
+    const stat = statSync(dirPath);
+    if (!stat.isDirectory()) {
         return [];
     }
 
     const files = readdirSync(dirPath);
     return files.filter((file) => file.endsWith(".d.ts")).map((file) => resolve(dirPath, file));
+}
+
+function findDtsSpecifiers(content: string): string[] {
+    const specifiers: string[] = [];
+
+    const patterns: Array<RegExp> = [/from\s+["']([^"']+)["']/g, /import\(\s*["']([^"']+)["']\s*\)/g, /<reference\s+path=["']([^"']+)["']\s*\/>/g];
+
+    for (const pattern of patterns) {
+        for (const match of content.matchAll(pattern)) {
+            const spec = match[1];
+            if (typeof spec === "string" && spec.length > 0) {
+                specifiers.push(spec);
+            }
+        }
+    }
+
+    return specifiers;
+}
+
+function resolveLocalDtsDependency(fromDtsPath: string, specifier: string): string | null {
+    if (!specifier.startsWith("./") && !specifier.startsWith("../")) {
+        return null;
+    }
+
+    if (specifier.endsWith(".json")) {
+        return null;
+    }
+
+    const baseDir = dirname(fromDtsPath);
+    const absNoCheck = resolve(baseDir, specifier);
+
+    const tryPaths: string[] = [];
+
+    if (specifier.endsWith(".d.ts")) {
+        tryPaths.push(absNoCheck);
+    } else if (specifier.endsWith(".js") || specifier.endsWith(".mjs") || specifier.endsWith(".cjs")) {
+        const replaced = absNoCheck.replace(/\.(mjs|cjs|js)$/u, ".d.ts");
+        tryPaths.push(replaced);
+        tryPaths.push(`${absNoCheck}.d.ts`);
+    } else {
+        tryPaths.push(`${absNoCheck}.d.ts`);
+    }
+
+    tryPaths.push(resolve(absNoCheck, "index.d.ts"));
+
+    for (const p of tryPaths) {
+        if (existsSync(p)) {
+            return p;
+        }
+    }
+
+    return null;
+}
+
+function collectReachableDtsFromEntrypoints(distDir: string, entrypoints: string[]): string[] {
+    const visited = new Set<string>();
+    const queue: string[] = [];
+
+    for (const entry of entrypoints) {
+        if (!entry.startsWith(distDir)) {
+            continue;
+        }
+        if (existsSync(entry) && entry.endsWith(".d.ts")) {
+            queue.push(entry);
+        }
+    }
+
+    while (queue.length > 0) {
+        const current = queue.pop();
+        if (!current) {
+            continue;
+        }
+        if (visited.has(current)) {
+            continue;
+        }
+        visited.add(current);
+
+        const content = readFileSync(current, { encoding: "utf8" });
+        const specifiers = findDtsSpecifiers(content);
+        for (const specifier of specifiers) {
+            const resolved = resolveLocalDtsDependency(current, specifier);
+            if (!resolved) {
+                continue;
+            }
+            if (!resolved.startsWith(distDir)) {
+                continue;
+            }
+            if (!visited.has(resolved)) {
+                queue.push(resolved);
+            }
+        }
+    }
+
+    return Array.from(visited);
 }
 
 function main(): void {
@@ -155,26 +294,36 @@ function main(): void {
         process.exit(1);
     }
 
-    // dist-only 发布规范：对外 types 相关声明不得引用源码 .ts。
-    // - pkg.types (通常为 ./dist/index.d.ts)
-    // - dist/types/*.d.ts（public types）
+    // dist-only 发布规范：从对外可达入口（pkg.types + exports.*.types）出发的声明闭包中，
+    // 任何 .d.ts 都不允许引用源码 .ts（防止消费者类型解析回退到源码）。
     {
-        const offenders: Array<{ filePath: string; matches: string[] }> = [];
+        const exportTypePaths: string[] = [];
+        if (typeof pkg.types === "string") {
+            exportTypePaths.push(pkg.types);
+        }
+        collectExportTypePaths(pkg.exports, exportTypePaths);
 
-        if (typeof pkg.types === "string" && pkg.types.startsWith("./")) {
-            const absPath = resolve(packageRoot, pkg.types);
-            if (existsSync(absPath)) {
-                const content = readFileSync(absPath, { encoding: "utf8" });
-                const matches = findTsImportSpecifiers(content);
-                if (matches.length > 0) {
-                    offenders.push({ filePath: absPath, matches: matches });
-                }
+        const entryDtsAbsPaths = new Set<string>();
+        for (const exportPath of exportTypePaths) {
+            for (const absPath of expandDtsExportPath(packageRoot, exportPath)) {
+                entryDtsAbsPaths.add(absPath);
             }
         }
 
-        const distTypesDir = resolve(packageRoot, "dist", "types");
-        const typeDtsPaths = collectDtsFiles(distTypesDir);
-        for (const absPath of typeDtsPaths) {
+        if (entryDtsAbsPaths.size === 0) {
+            process.stderr.write("[ensureDist] no exported .d.ts entrypoints found (types/exports.types)\n");
+            process.exit(1);
+        }
+
+        const reachableDtsPaths = collectReachableDtsFromEntrypoints(distDir, Array.from(entryDtsAbsPaths));
+        if (reachableDtsPaths.length === 0) {
+            process.stderr.write("[ensureDist] no reachable .d.ts files found from exported entrypoints\n");
+            process.exit(1);
+        }
+
+        const offenders: Array<{ filePath: string; matches: string[] }> = [];
+
+        for (const absPath of reachableDtsPaths) {
             const content = readFileSync(absPath, { encoding: "utf8" });
             const matches = findTsImportSpecifiers(content);
             if (matches.length > 0) {

@@ -3,12 +3,12 @@
  * 初始化 Redis 连接和助手工具
  */
 
-import type { BeflyContext } from "../types/befly.ts";
-import type { Plugin } from "../types/plugin.ts";
+import type { BeflyContext } from "../types/befly";
+import type { Plugin } from "../types/plugin";
 
-import { Connect } from "../lib/connect.ts";
-import { Logger } from "../lib/logger.ts";
-import { RedisHelper } from "../lib/redisHelper.ts";
+import { Connect } from "../lib/connect";
+import { Logger } from "../lib/logger";
+import { RedisHelper } from "../lib/redisHelper";
 
 /**
  * Redis 插件

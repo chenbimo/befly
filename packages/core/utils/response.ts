@@ -1,6 +1,6 @@
-import type { RequestContext } from "../types/context.ts";
+import type { RequestContext } from "../types/context";
 
-import { Logger } from "../lib/logger.ts";
+import { Logger } from "../lib/logger";
 
 /**
  * 创建错误响应（专用于 Hook 中间件）

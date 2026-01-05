@@ -1,7 +1,7 @@
 import { isPlainObject } from "es-toolkit/compat";
 import { omit } from "es-toolkit/object";
 
-import { Logger } from "../lib/logger.ts";
+import { Logger } from "../lib/logger";
 
 export async function checkPlugin(plugins: any[]): Promise<void> {
     let hasError = false;

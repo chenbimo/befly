@@ -3,9 +3,8 @@
  * 提供常用的工具函数
  */
 
-import type { RequestContext } from "../types/context.ts";
-// 类型导入
-import type { Plugin } from "../types/plugin.ts";
+import type { RequestContext } from "../types/context";
+import type { Plugin } from "../types/plugin";
 
 /**
  * 成功响应

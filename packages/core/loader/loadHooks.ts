@@ -4,12 +4,11 @@
  * 可通过 disableHooks 禁用指定钩子
  */
 
-// 类型导入
-import type { Hook } from "../types/hook.ts";
-import type { ScanFileResult } from "../utils/scanFiles.ts";
+import type { Hook } from "../types/hook";
+import type { ScanFileResult } from "../utils/scanFiles";
 
-import { Logger } from "../lib/logger.ts";
-import { sortModules } from "../utils/sortModules.ts";
+import { Logger } from "../lib/logger";
+import { sortModules } from "../utils/sortModules";
 
 export async function loadHooks(hooks: ScanFileResult[], disableHooks: string[] = []): Promise<Hook[]> {
     const hooksMap: Hook[] = [];

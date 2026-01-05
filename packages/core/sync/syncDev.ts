@@ -1,7 +1,7 @@
-import type { BeflyContext } from "../types/befly.ts";
+import type { BeflyContext } from "../types/befly";
 
-import { Cipher } from "../lib/cipher.ts";
-import { Logger } from "../lib/logger.ts";
+import { Cipher } from "../lib/cipher";
+import { Logger } from "../lib/logger";
 
 export type SyncDevConfig = {
     devEmail?: string;

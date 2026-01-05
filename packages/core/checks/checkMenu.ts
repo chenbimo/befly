@@ -1,9 +1,9 @@
-import type { MenuConfig } from "../types/sync.ts";
-import type { AddonInfo } from "../utils/scanAddons.ts";
+import type { MenuConfig } from "../types/sync";
+import type { AddonInfo } from "../utils/scanAddons";
 
-import { Logger } from "../lib/logger.ts";
-import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob.ts";
-import { loadMenuConfigs } from "../utils/loadMenuConfigs.ts";
+import { Logger } from "../lib/logger";
+import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob";
+import { loadMenuConfigs } from "../utils/loadMenuConfigs";
 
 function isValidMenuPath(path: string): { ok: boolean; reason: string } {
     if (!path) {

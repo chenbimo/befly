@@ -1,9 +1,9 @@
-import type { BeflyContext } from "../types/befly.ts";
-import type { MenuConfig } from "../types/sync.ts";
+import type { BeflyContext } from "../types/befly";
+import type { MenuConfig } from "../types/sync";
 
-import { Logger } from "../lib/logger.ts";
-import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob.ts";
-import { getParentPath } from "../utils/loadMenuConfigs.ts";
+import { Logger } from "../lib/logger";
+import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob";
+import { getParentPath } from "../utils/loadMenuConfigs";
 
 type MenuDef = {
     path: string;
@@ -298,7 +298,7 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
 // 仅测试用（避免将内部扫描逻辑变成稳定 API）
 export const __test__ = {
     scanViewsDir: async (viewsDir: string, prefix: string, parentPath: string = "") => {
-        const mod = await import("../utils/loadMenuConfigs.ts");
+        const mod = await import("../utils/loadMenuConfigs");
         return await mod.scanViewsDirToMenuConfigs(viewsDir, prefix, parentPath);
     },
     flattenMenusToDefMap: (mergedMenus: MenuConfig[]) => {

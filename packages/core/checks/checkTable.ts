@@ -1,7 +1,7 @@
-import type { FieldDefinition } from "../types/validate.ts";
-import type { ScanFileResult } from "../utils/scanFiles.ts";
+import type { FieldDefinition } from "../types/validate";
+import type { ScanFileResult } from "../utils/scanFiles";
 
-import { Logger } from "../lib/logger.ts";
+import { Logger } from "../lib/logger";
 
 /**
  * 保留字段列表

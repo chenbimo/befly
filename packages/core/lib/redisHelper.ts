@@ -5,8 +5,8 @@
 
 import { RedisClient } from "bun";
 
-import { Connect } from "./connect.ts";
-import { Logger } from "./logger.ts";
+import { Connect } from "./connect";
+import { Logger } from "./logger";
 
 /**
  * Redis 助手类

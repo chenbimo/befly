@@ -1,6 +1,6 @@
-import type { Hook } from "../types/hook.ts";
+import type { Hook } from "../types/hook";
 
-import { setCtxUser } from "../lib/asyncContext.ts";
+import { setCtxUser } from "../lib/asyncContext";
 
 export default {
     deps: ["cors"],

@@ -6,18 +6,18 @@
  * - 现在按项目要求，将所有实现合并到本文件（目录 packages/core/sync/syncTable/ 已删除）
  */
 
-import type { DbDialectName } from "../lib/dbDialect.ts";
-import type { BeflyContext } from "../types/befly.ts";
-import type { DbResult, SqlInfo } from "../types/database.ts";
-import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/sync.ts";
-import type { FieldDefinition } from "../types/validate.ts";
-import type { ScanFileResult } from "../utils/scanFiles.ts";
+import type { DbDialectName } from "../lib/dbDialect";
+import type { BeflyContext } from "../types/befly";
+import type { DbResult, SqlInfo } from "../types/database";
+import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/sync";
+import type { FieldDefinition } from "../types/validate";
+import type { ScanFileResult } from "../utils/scanFiles";
 
 import { snakeCase } from "es-toolkit/string";
 
-import { CacheKeys } from "../lib/cacheKeys.ts";
-import { getDialectByName, getSyncTableColumnsInfoQuery, getSyncTableIndexesQuery } from "../lib/dbDialect.ts";
-import { Logger } from "../lib/logger.ts";
+import { CacheKeys } from "../lib/cacheKeys";
+import { getDialectByName, getSyncTableColumnsInfoQuery, getSyncTableIndexesQuery } from "../lib/dbDialect";
+import { Logger } from "../lib/logger";
 
 type SqlExecutor = {
     unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;

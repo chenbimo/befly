@@ -3,9 +3,9 @@
  * 提供加密解密功能
  */
 
-import type { Plugin } from "../types/plugin.ts";
+import type { Plugin } from "../types/plugin";
 
-import { Cipher } from "../lib/cipher.ts";
+import { Cipher } from "../lib/cipher";
 
 export default {
     deps: [],

@@ -1,9 +1,9 @@
-import type { WhereConditions } from "../types/common.ts";
+import type { WhereConditions } from "../types/common";
 
 import { snakeCase } from "es-toolkit/string";
 
-import { fieldClear } from "../utils/fieldClear.ts";
-import { keysToSnake } from "../utils/keysToSnake.ts";
+import { fieldClear } from "../utils/fieldClear";
+import { keysToSnake } from "../utils/keysToSnake";
 
 export class DbUtils {
     static parseTableRef(tableRef: string): { schema: string | null; table: string; alias: string | null } {

@@ -1,9 +1,9 @@
 // 类型导入
-import type { Hook } from "../types/hook.ts";
+import type { Hook } from "../types/hook";
 
 // 相对导入
-import { Validator } from "../lib/validator.ts";
-import { ErrorResponse } from "../utils/response.ts";
+import { Validator } from "../lib/validator";
+import { ErrorResponse } from "../utils/response";
 
 /**
  * 参数验证钩子

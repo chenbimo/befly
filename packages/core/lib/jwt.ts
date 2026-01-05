@@ -2,8 +2,8 @@
  * JWT 工具类 - 基于 fast-jwt 实现
  */
 
-import type { AuthConfig } from "../types/befly.ts";
-import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtDecoded, JwtHeader } from "../types/jwt.ts";
+import type { AuthConfig } from "../types/befly";
+import type { JwtPayload, JwtSignOptions, JwtVerifyOptions, JwtDecoded, JwtHeader } from "../types/jwt";
 import type { Algorithm as FastJwtAlgorithm } from "fast-jwt";
 
 import { createSigner, createVerifier, createDecoder } from "fast-jwt";

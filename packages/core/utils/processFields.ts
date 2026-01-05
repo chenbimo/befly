@@ -1,4 +1,4 @@
-import { presetFields } from "../configs/presetFields.ts";
+import { presetFields } from "../configs/presetFields";
 
 /**
  * 处理字段定义：将 @ 符号引用替换为实际字段定义

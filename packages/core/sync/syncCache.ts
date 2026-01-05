@@ -1,4 +1,4 @@
-import type { BeflyContext } from "../types/befly.ts";
+import type { BeflyContext } from "../types/befly";
 
 export async function syncCache(ctx: Pick<BeflyContext, "cache">): Promise<void> {
     if (!ctx.cache) {
