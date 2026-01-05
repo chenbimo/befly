@@ -3,7 +3,7 @@ import { presetFields } from "../configs/presetFields";
 /**
  * 处理字段定义：将 @ 符号引用替换为实际字段定义
  */
-export function processFields(fields: Record<string, any>, apiName: string, routePath: string): Record<string, any> {
+export function processAtSymbol(fields: Record<string, any>, apiName: string, routePath: string): Record<string, any> {
     if (!fields || typeof fields !== "object") return fields;
 
     const processed: Record<string, any> = {};

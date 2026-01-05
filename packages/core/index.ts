@@ -34,7 +34,7 @@ import { syncMenu } from "./sync/syncMenu";
 import { syncTable } from "./sync/syncTable";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime";
-import { getProcessRole } from "./utils/process";
+import { getProcessRole } from "./utils/processInfo";
 import { scanSources } from "./utils/scanSources";
 
 /**

@@ -8,7 +8,7 @@ import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../u
 import { importDefault } from "../utils/importDefault";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
-import { getProcessRole, isPrimaryProcess } from "../utils/process";
+import { getProcessRole, isPrimaryProcess } from "../utils/processInfo";
 import { toListSqlLogFields, toSqlLogFields } from "../utils/sqlLog";
 import { camelCase, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
 

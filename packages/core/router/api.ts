@@ -12,9 +12,9 @@ import type { Hook } from "../types/hook";
 import { withCtx } from "../lib/asyncContext";
 import { Logger } from "../lib/logger";
 // 相对导入
-import { genShortId } from "../utils/genShortId";
 import { getClientIp } from "../utils/getClientIp";
 import { FinalResponse } from "../utils/response";
+import { genShortId } from "../utils/util";
 
 /**
  * API处理器工厂函数

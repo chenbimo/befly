@@ -8,7 +8,7 @@ import type { ApiRoute } from "../types/api";
 import type { ScanFileResult } from "../utils/scanFiles";
 
 import { Logger } from "../lib/logger";
-import { processFields } from "../utils/processFields";
+import { processAtSymbol } from "../utils/processAtSymbol";
 
 /**
  * 加载所有 API 路由
@@ -30,7 +30,7 @@ export async function loadApis(apis: ScanFileResult[]): Promise<Map<string, ApiR
             const apiRoute = api as any;
 
             // 处理字段定义，将 @ 引用替换为实际字段定义
-            apiRoute.fields = processFields(apiRoute.fields || {}, apiRoute.name, apiRoute.routePath);
+            apiRoute.fields = processAtSymbol(apiRoute.fields || {}, apiRoute.name, apiRoute.routePath);
 
             apisMap.set(apiRoute.routePath, apiRoute as ApiRoute);
         } catch (error: any) {

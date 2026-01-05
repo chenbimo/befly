@@ -6,10 +6,9 @@ import { presetFields } from "../configs/presetFields";
 import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { setCorsOptions } from "../utils/cors";
 import { compileDisableMenuGlobRules } from "../utils/disableMenusGlob";
-import { genShortId } from "../utils/genShortId";
 import { isDirentDirectory } from "../utils/isDirentDirectory";
-import { processFields } from "../utils/processFields";
-import { pickFields } from "../utils/util";
+import { processAtSymbol } from "../utils/processAtSymbol";
+import { genShortId, pickFields } from "../utils/util";
 
 function ensureEmptyDir(dir: string): void {
     rmSync(dir, { recursive: true, force: true });
@@ -70,9 +69,9 @@ describe("utils - pickFields", () => {
     });
 });
 
-describe("utils - processFields", () => {
+describe("utils - processAtSymbol", () => {
     test("should replace preset fields", () => {
-        const out = processFields({ page: "@page", limit: "@limit" } as any, "hello", "/api/hello");
+        const out = processAtSymbol({ page: "@page", limit: "@limit" } as any, "hello", "/api/hello");
         // presetFields 的具体值不在此 hardcode，只验证替换发生且是 string
         expect(out.page).toBe(presetFields["@page"]);
         expect(out.limit).toBe(presetFields["@limit"]);
@@ -80,7 +79,7 @@ describe("utils - processFields", () => {
 
     test("unknown preset should throw with hint", () => {
         try {
-            processFields({ page: "@not_exist" } as any, "hello", "/api/hello");
+            processAtSymbol({ page: "@not_exist" } as any, "hello", "/api/hello");
             expect.unreachable();
         } catch (err: any) {
             const message = String(err && err.message ? err.message : err);
