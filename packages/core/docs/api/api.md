@@ -1360,7 +1360,26 @@ interface BeflyContext {
 清理对象中的指定值（常用：`null/undefined`），适用于处理可选参数。
 
 ```typescript
-import { fieldClear } from "befly-shared/utils/fieldClear";
+// 说明：框架默认入口不会导出该函数。
+// 你可以在项目中实现一个同名工具函数（例如放到 utils/fieldClear.ts），下面给出一个最小可用示例：
+function fieldClear(data: Record<string, any>, options: { excludeValues?: any[]; keepMap?: Record<string, any> } = {}) {
+    const excludeValues = Array.isArray(options.excludeValues) ? options.excludeValues : [];
+    const keepMap = options.keepMap && typeof options.keepMap === "object" ? options.keepMap : {};
+
+    const out: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+        if (Object.prototype.hasOwnProperty.call(keepMap, key) && Object.is((keepMap as any)[key], value)) {
+            out[key] = value;
+            continue;
+        }
+        if (excludeValues.includes(value)) {
+            continue;
+        }
+        out[key] = value;
+    }
+
+    return out;
+}
 
 // 常用：排除 null 和 undefined
 const cleanData = fieldClear(
@@ -1387,10 +1406,7 @@ const cleanData = fieldClear({ name: "John", phone: "", age: null }, { excludeVa
 
 ```typescript
 // 保留 count 的 0 值
-const cleanData = fieldClear(
-    { name: "John", status: null, count: 0 },
-    { excludeValues: [null, undefined], keepMap: { count: 0 } }
-);
+const cleanData = fieldClear({ name: "John", status: null, count: 0 }, { excludeValues: [null, undefined], keepMap: { count: 0 } });
 // 结果: { name: 'John', count: 0 }
 ```
 
@@ -1745,37 +1761,37 @@ export default {
 ```typescript
 // apis/order/detail.ts
 export default {
-    name: '订单详情',
-    required: ['id'],
+    name: "订单详情",
+    required: ["id"],
     handler: async (befly, ctx) => {
         // 查询订单基本信息
         const orderRes = await befly.db.getOne({
-            table: 'order',
+            table: "order",
             where: { id: ctx.body.id }
         });
 
         const order = orderRes.data;
 
         if (!order?.id) {
-            return befly.tool.No('订单不存在');
+            return befly.tool.No("订单不存在");
         }
 
         // 查询订单明细
         const itemsResult = await befly.db.getAll({
-            table: 'order_item',
+            table: "order_item",
             where: { orderId: order.id }
         });
 
         // 查询用户信息
         const userRes = await befly.db.getOne({
-            table: 'user',
-            fields: ['id', 'username', 'nickname', 'phone'],
+            table: "user",
+            fields: ["id", "username", "nickname", "phone"],
             where: { id: order.userId }
         });
 
         const user = userRes.data;
 
-        return befly.tool.Yes('查询成功', {
+        return befly.tool.Yes("查询成功", {
             order: order,
             items: itemsResult.data.lists, // 订单明细列表
             user: user

@@ -141,15 +141,10 @@ return befly.tool.Yes("导入成功", { ids: idsRes.data });
 
 DbHelper 在写入（`insData/insBatch/updData`）以及查询条件（`where`）中，会自动过滤 `null/undefined`。
 
-如果你希望在业务侧更精细控制（例如：保留 `0` / 空字符串），请使用 `fieldClear`：
+如果你希望在业务侧更精细控制（例如：保留 `0` / 空字符串），可以手动过滤 `null/undefined`：
 
 ```typescript
-import { fieldClear } from "befly-shared/utils/fieldClear";
-
-const data = fieldClear(
-    { nickname: ctx.body.nickname, sort: ctx.body.sort, state: ctx.body.state },
-    { excludeValues: [null, undefined], keepMap: { sort: 0, state: 0 } }
-);
+const data = Object.fromEntries(Object.entries({ nickname: ctx.body.nickname, sort: ctx.body.sort, state: ctx.body.state }).filter(([, value]) => value !== null && value !== undefined));
 ```
 
 ## 事务（trans）

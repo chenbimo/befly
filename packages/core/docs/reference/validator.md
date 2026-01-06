@@ -601,21 +601,15 @@ A: 数组类型会验证：
 
 ### Q: 如何在验证前清理数据中的 null/undefined 值？
 
-A: 使用 `fieldClear` 工具函数：
+A: 业务侧可以在 handler 中手动过滤 `null/undefined`（通常无需额外依赖）。
 
 ```typescript
-import { fieldClear } from "befly-shared/utils/fieldClear";
-
 // 在 API handler 中使用
 handler: async (befly, ctx) => {
     const { nickname, phone, address } = ctx.body;
 
     // 清理 null 和 undefined 值
-    const cleanData = fieldClear({
-        nickname: nickname,
-        phone: phone,
-        address: address
-    }, { excludeValues: [null, undefined] });
+    const cleanData = Object.fromEntries(Object.entries({ nickname: nickname, phone: phone, address: address }).filter(([, value]) => value !== null && value !== undefined));
 
     // cleanData 只包含有效值
     await befly.db.updData({

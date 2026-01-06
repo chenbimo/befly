@@ -829,7 +829,24 @@ await befly.db.updData({
 #### 优化写法（简洁）
 
 ```typescript
-import { fieldClear } from "befly-shared/utils/fieldClear";
+function fieldClear(data: Record<string, any>, options: { excludeValues?: any[]; keepMap?: Record<string, any> } = {}) {
+    const excludeValues = Array.isArray(options.excludeValues) ? options.excludeValues : [];
+    const keepMap = options.keepMap && typeof options.keepMap === "object" ? options.keepMap : {};
+
+    const out: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+        if (Object.prototype.hasOwnProperty.call(keepMap, key) && Object.is((keepMap as any)[key], value)) {
+            out[key] = value;
+            continue;
+        }
+        if (excludeValues.includes(value)) {
+            continue;
+        }
+        out[key] = value;
+    }
+
+    return out;
+}
 
 // ✅ 直接传入，undefined 值自动过滤
 const data = {
@@ -862,10 +879,7 @@ await befly.db.updData({
 const { nickname, sort, state, remark } = ctx.body;
 
 // 保留 0 值（sort 和 state 允许为 0）
-const data = fieldClear(
-    { nickname: nickname, sort: sort, state: state, remark: remark },
-    { excludeValues: [null, undefined], keepMap: { sort: 0, state: 0 } }
-);
+const data = fieldClear({ nickname: nickname, sort: sort, state: state, remark: remark }, { excludeValues: [null, undefined], keepMap: { sort: 0, state: 0 } });
 
 await befly.db.updData({
     table: "menu",
