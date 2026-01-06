@@ -54,7 +54,7 @@ my-api/
         "port": 3306,
         "username": "root",
         "password": "root",
-        "database": "my_api"
+        "database": "my_api2"
     },
 
     "redis": {
