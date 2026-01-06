@@ -54,9 +54,9 @@
 import { Button as TButton, Table as TTable, Tag as TTag, Input as TInput, MessagePlugin } from "tdesign-vue-next";
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import ILucideSearch from "~icons/lucide/search";
-import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "@/utils/withDefaultColumns";
 import DetailPanel from "@/components/DetailPanel.vue";
+import { $Http } from "@/plugins/http";
+import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 definePage({
     meta: {

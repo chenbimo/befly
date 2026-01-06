@@ -47,8 +47,8 @@ import {
     MessagePlugin
 } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
-import { fieldClear } from "@/../utils/fieldClear";
-import { hashPassword } from "@/../utils/hashPassword";
+import { fieldClear } from "../../../../utils/fieldClear";
+import { hashPassword } from "../../../../utils/hashPassword";
 
 const $Prop = defineProps({
     modelValue: {

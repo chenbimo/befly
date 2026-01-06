@@ -102,7 +102,7 @@ import MenuDialog from "./components/menu.vue";
 import ApiDialog from "./components/api.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "@/utils/withDefaultColumns";
+import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 definePage({
     meta: {

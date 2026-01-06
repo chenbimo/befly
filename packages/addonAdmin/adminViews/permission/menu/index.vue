@@ -44,8 +44,8 @@ import { Button as TButton, Table as TTable, Tag as TTag, MessagePlugin } from "
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { arrayToTree } from "@/utils/arrayToTree";
-import { withDefaultColumns } from "@/utils/withDefaultColumns";
+import { arrayToTree } from "../../../utils/arrayToTree";
+import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 definePage({
     meta: {

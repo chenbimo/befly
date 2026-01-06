@@ -43,7 +43,7 @@ import {
     MessagePlugin
 } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
-import { fieldClear } from "@/../utils/fieldClear";
+import { fieldClear } from "../../../../utils/fieldClear";
 
 const $Prop = defineProps({
     modelValue: {

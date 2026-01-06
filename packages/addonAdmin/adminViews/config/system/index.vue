@@ -91,7 +91,7 @@ import ILucideChevronDown from "~icons/lucide/chevron-down";
 import EditDialog from "./components/edit.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "@/utils/withDefaultColumns";
+import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 definePage({
     meta: {
