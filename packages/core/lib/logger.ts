@@ -802,6 +802,15 @@ function createSinkLogger(options: { kind: "app" | "slow" | "error"; minLevel: L
         if (options.consoleSink) {
             options.consoleSink.enqueue(level, line);
         }
+
+        // 关键级别日志应尽快落盘/输出，避免进程快速退出时“只有 exit code，看不到日志”。
+        // 注意：flushNow 内部有 flushing/scheduled 防重入，且会吞掉 I/O 异常，因此这里 fire-and-forget。
+        if (LOG_LEVEL_NUM[level] >= LOG_LEVEL_NUM.warn) {
+            void options.fileSink.flushNow();
+            if (options.consoleSink) {
+                void options.consoleSink.flushNow();
+            }
+        }
     };
 
     return {

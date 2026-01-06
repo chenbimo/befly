@@ -4,6 +4,14 @@ import { isPlainObject, omit } from "../utils/util";
 export async function checkPlugin(plugins: any[]): Promise<void> {
     let hasError = false;
 
+    // 说明：plugins/hook 实际是 scanFiles/scanSources 的结果对象（包含元信息字段）。
+    // 为避免“写错字段但被静默忽略”，对插件对象做严格字段白名单校验。
+    // 注意：白名单包含 scanFiles 生成的元字段；对外导出仅允许：name/enable/deps/handler。
+    const metaKeys = ["source", "type", "sourceName", "filePath", "relativePath", "fileName", "moduleName", "addonName", "fileBaseName", "fileDir"];
+    const exportKeys = ["name", "enable", "deps", "handler"];
+    const allowedKeySet = new Set<string>([...metaKeys, ...exportKeys]);
+    const allowedExportKeyText = exportKeys.join(", ");
+
     const coreBuiltinNameRegexp = /^[a-z]+(?:_[a-z]+)*$/;
 
     for (const plugin of plugins) {
@@ -17,6 +25,15 @@ export async function checkPlugin(plugins: any[]): Promise<void> {
             // moduleName 必须存在（用于依赖排序与运行时挂载）。
             if (typeof (plugin as any).moduleName !== "string" || (plugin as any).moduleName.trim() === "") {
                 Logger.warn(omit(plugin, ["handler"]), "插件的 moduleName 必须是非空字符串（由系统生成，用于 deps 与运行时挂载）");
+                hasError = true;
+                continue;
+            }
+
+            // 严格字段校验：出现任何未支持字段都应视为错误（避免静默忽略导致依赖顺序/行为误判）。
+            const keys = Object.keys(plugin as any);
+            const unknownKeys = keys.filter((k) => !allowedKeySet.has(k));
+            if (unknownKeys.length > 0) {
+                Logger.warn(omit(plugin, ["handler"]), `插件导出存在不支持的属性：${unknownKeys.join(", ")}；仅允许：${allowedExportKeyText}`);
                 hasError = true;
                 continue;
             }

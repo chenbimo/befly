@@ -50,3 +50,47 @@ test("checkPlugin: core builtin name 必须是小写字母+下划线", async () 
     expect(thrown).toBeTruthy();
     expect(String(thrown?.message || "").includes("插件结构检查失败")).toBe(true);
 });
+
+test("checkPlugin: 额外字段应视为结构错误（例如 after）", async () => {
+    let thrown: any = null;
+
+    try {
+        await checkPlugin([
+            {
+                source: "app",
+                moduleName: "weixin",
+                enable: true,
+                deps: [],
+                after: ["redis", "logger"],
+                handler: async () => {}
+            }
+        ]);
+    } catch (error: any) {
+        thrown = error;
+    }
+
+    expect(thrown).toBeTruthy();
+    expect(String(thrown?.message || "").includes("插件结构检查失败")).toBe(true);
+});
+
+test("checkHook: 额外字段应视为结构错误（例如 after）", async () => {
+    let thrown: any = null;
+
+    try {
+        await checkHook([
+            {
+                source: "app",
+                moduleName: "auth",
+                enable: true,
+                deps: [],
+                after: ["cors"],
+                handler: async () => {}
+            }
+        ]);
+    } catch (error: any) {
+        thrown = error;
+    }
+
+    expect(thrown).toBeTruthy();
+    expect(String(thrown?.message || "").includes("钩子结构检查失败")).toBe(true);
+});
