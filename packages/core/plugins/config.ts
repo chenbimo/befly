@@ -9,8 +9,8 @@ const configPlugin: Plugin = {
     name: "config",
     enable: true,
     deps: [],
-    handler: (context: BeflyContext) => {
-        return context.config;
+    handler: (befly: BeflyContext) => {
+        return befly.config;
     }
 };
 
