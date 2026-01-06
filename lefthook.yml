@@ -12,14 +12,38 @@ pre-commit:
         # 2. Oxlint 代码检查（门禁）
         - name: lint
           priority: 2
-          run: bun run lint
+          # 仅 lint 本次提交的代码文件；若没有匹配的 staged files，lefthook 会自动跳过该 job。
+          glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+          run: oxlint {staged_files}
 
         # 3. TypeScript 语法检查 (core)
         - name: typecheck (core)
           priority: 2
+          # 仅当 core 相关文件发生 staged 变更时才执行（减少无关提交的耗时）。
+          glob:
+              - "packages/core/*.ts"
+              - "packages/core/**/*.ts"
+              - "packages/core/*.tsx"
+              - "packages/core/**/*.tsx"
+              - "packages/core/*.mts"
+              - "packages/core/**/*.mts"
+              - "packages/core/*.cts"
+              - "packages/core/**/*.cts"
+              - "packages/core/*.json"
+              - "packages/core/**/*.json"
+              - "packages/core/*.jsonc"
+              - "packages/core/**/*.jsonc"
           run: bun run typecheck
 
         # 4. 运行测试
         - name: test
           priority: 3
+          # 仅当核心库/工具链或测试文件有 staged 变更时才跑全量测试。
+          glob:
+              - "packages/core/*.ts"
+              - "packages/core/**/*.ts"
+              - "packages/vite/*.ts"
+              - "packages/vite/**/*.ts"
+              - "packages/**/*.test.ts"
+              - "packages/**/tests/**"
           run: bun run test:bail

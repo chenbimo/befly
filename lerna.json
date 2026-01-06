@@ -5,6 +5,7 @@
     "npmClient": "bun",
     "command": {
         "publish": {
+            "commitHooks": false,
             "ignoreScripts": true,
             "yes": true,
             "registry": "https://registry.npmjs.org",

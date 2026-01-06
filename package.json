@@ -27,7 +27,7 @@
         "typecheck": "bun run typecheck:core",
         "typecheck:all": "lerna run typecheck --stream",
         "verify": "bun run format && bun run lint && bun run build:libs && bun run typecheck:core && bun run test",
-        "r": "lerna publish --ignore-scripts"
+        "r": "lerna publish"
     },
     "devDependencies": {
         "@types/bun": "^1.3.5",
