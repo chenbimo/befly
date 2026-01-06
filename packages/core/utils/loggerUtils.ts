@@ -236,3 +236,10 @@ export function sanitizeLogObject(obj: Record<string, any>, options: LogSanitize
 
     return out;
 }
+
+export function scheduleDeferredFlush(currentTimer: NodeJS.Timeout | null, flushDelayMs: number, flush: () => Promise<void>): NodeJS.Timeout {
+    if (currentTimer) return currentTimer;
+    return setTimeout(() => {
+        void flush();
+    }, flushDelayMs);
+}

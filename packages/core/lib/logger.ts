@@ -10,7 +10,7 @@ import { hostname as osHostname } from "node:os";
 import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
 import { formatYmdHms } from "../utils/formatYmdHms";
-import { buildSensitiveKeyMatcher, sanitizeLogObject, shiftBatchFromPending } from "../utils/loggerUtils";
+import { buildSensitiveKeyMatcher, sanitizeLogObject, scheduleDeferredFlush, shiftBatchFromPending } from "../utils/loggerUtils";
 import { isPlainObject, normalizePositiveInt } from "../utils/util";
 import { getCtx } from "./asyncContext";
 
@@ -95,13 +95,6 @@ function safeWriteStderr(msg: string): void {
     } catch {
         // ignore
     }
-}
-
-function scheduleDeferredFlush(currentTimer: NodeJS.Timeout | null, flushDelayMs: number, flush: () => Promise<void>): NodeJS.Timeout {
-    if (currentTimer) return currentTimer;
-    return setTimeout(() => {
-        void flush();
-    }, flushDelayMs);
 }
 
 type StreamKind = "stdout" | "stderr";
@@ -594,7 +587,12 @@ function formatExtrasToMsg(extras: any[]): string {
         }
         if (isPlainObject(item) || Array.isArray(item)) {
             try {
-                parts.push(JSON.stringify(item));
+                const sanitized = sanitizeLogObject({ value: item }, sanitizeOptions).value;
+                if (typeof sanitized === "string") {
+                    parts.push(sanitized);
+                } else {
+                    parts.push(JSON.stringify(sanitized));
+                }
             } catch {
                 parts.push("[Unserializable]");
             }
@@ -632,11 +630,10 @@ function formatErrorForLog(err: Error): Record<string, any> {
 
 function buildLogLine(level: LogLevelName, args: any[]): string {
     const time = Date.now();
-    const date = new Date(time);
     const base: Record<string, any> = {
         level: LOG_LEVEL_NUM[level],
         time: time,
-        timeText: formatYmdHms(date),
+        timeText: formatYmdHms(new Date(time)),
         pid: process.pid,
         hostname: HOSTNAME
     };
@@ -702,24 +699,21 @@ function safeJsonStringify(obj: Record<string, any>): string {
 
 function createSinkLogger(options: { kind: "app" | "slow" | "error"; minLevel: LogLevelName; fileSink: LogFileSink; consoleSink: LogStreamSink | null }): SinkLogger {
     const minLevel = options.minLevel;
+    const fileSink = options.fileSink;
+    const consoleSink = options.consoleSink;
 
     const write = (level: LogLevelName, args: any[]) => {
         if (!shouldAccept(minLevel, level)) return;
 
         const line = buildLogLine(level, args);
-        options.fileSink.enqueue(level, line);
-        if (options.consoleSink) {
-            options.consoleSink.enqueue(level, line);
-        }
+        fileSink.enqueue(level, line);
+        if (consoleSink) consoleSink.enqueue(level, line);
 
         // 关键级别日志应尽快落盘/输出，避免进程快速退出时“只有 exit code，看不到日志”。
         // 注意：flushNow 内部有 flushing/scheduled 防重入，且会吞掉 I/O 异常，因此这里 fire-and-forget。
-        if (LOG_LEVEL_NUM[level] >= LOG_LEVEL_NUM.warn) {
-            void options.fileSink.flushNow();
-            if (options.consoleSink) {
-                void options.consoleSink.flushNow();
-            }
-        }
+        if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) return;
+        void fileSink.flushNow();
+        if (consoleSink) void consoleSink.flushNow();
     };
 
     return {
