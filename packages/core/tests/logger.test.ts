@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import { withCtx } from "../lib/asyncContext";
 import { Logger } from "../lib/logger";
+import { formatYmdHms } from "../utils/formatYmdHms.ts";
 
 const testLogDir = join(process.cwd(), "temp", "test-logs");
 
@@ -32,6 +33,21 @@ afterAll(async () => {
 });
 
 describe("Logger - 纯字符串消息", () => {
+    test("timeText 格式化函数：formatYmdHms 支持 date/time/dateTime 三种输出", () => {
+        const date = new Date(1700000000000);
+
+        const dateText = formatYmdHms(date, "date");
+        expect(/^\d{4}-\d{2}-\d{2}$/.test(dateText)).toBe(true);
+
+        const timeText = formatYmdHms(date, "time");
+        expect(/^\d{2}:\d{2}:\d{2}$/.test(timeText)).toBe(true);
+
+        const dateTimeText = formatYmdHms(date);
+        expect(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateTimeText)).toBe(true);
+
+        expect(formatYmdHms(date, "dateTime")).toBe(dateTimeText);
+    });
+
     test("info(msg)", () => {
         Logger.info("Test info message");
         expect(true).toBe(true);

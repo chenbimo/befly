@@ -19,7 +19,7 @@ export interface LoggerConfig {
     /** 是否输出到控制台（0/1） */
     console?: LoggerFlag;
 
-    /** 单文件大小（MB） */
+    /** 单文件最大大小（MB），例如 10 表示 10MB；默认 20MB */
     maxSize?: number;
 
     /** 日志清洗深度限制（1..10） */

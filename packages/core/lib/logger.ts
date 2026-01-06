@@ -9,6 +9,7 @@ import { readdir, stat, unlink } from "node:fs/promises";
 import { hostname as osHostname } from "node:os";
 import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
+import { formatYmdHms } from "../utils/formatYmdHms";
 import { isPlainObject } from "../utils/util";
 import { getCtx } from "./asyncContext";
 
@@ -86,21 +87,14 @@ let appConsoleSink: LogStreamSink | null = null;
 let didWarnIoError: boolean = false;
 let didPruneOldLogFiles: boolean = false;
 let didEnsureLogDir: boolean = false;
-let config: LoggerConfig = {
+const DEFAULT_CONFIG: LoggerConfig = {
     debug: 0,
     dir: "./logs",
     console: 1,
-    maxSize: 10
+    maxSize: 20
 };
 
-function formatLocalDate(date: Date): string {
-    const y = date.getFullYear();
-    const m = date.getMonth() + 1;
-    const d = date.getDate();
-    const mm = m < 10 ? `0${m}` : String(m);
-    const dd = d < 10 ? `0${d}` : String(d);
-    return `${y}-${mm}-${dd}`;
-}
+let config: LoggerConfig = Object.assign({}, DEFAULT_CONFIG);
 
 function normalizeLogLevelName(): LogLevelName {
     // 与旧行为保持一致：debug=1 -> debug，否则 -> info
@@ -147,6 +141,7 @@ class LogStreamSink {
     private pending: string[];
     private pendingBytes: number;
     private scheduled: boolean;
+    private scheduledTimer: NodeJS.Timeout | null;
     private flushing: boolean;
     private maxBufferBytes: number;
     private flushDelayMs: number;
@@ -159,6 +154,7 @@ class LogStreamSink {
         this.pending = [];
         this.pendingBytes = 0;
         this.scheduled = false;
+        this.scheduledTimer = null;
         this.flushing = false;
 
         this.maxBufferBytes = DEFAULT_MAX_BUFFER_BYTES;
@@ -187,13 +183,18 @@ class LogStreamSink {
     }
 
     public async shutdown(): Promise<void> {
+        if (this.scheduledTimer) {
+            clearTimeout(this.scheduledTimer);
+            this.scheduledTimer = null;
+            this.scheduled = false;
+        }
         await this.flush();
     }
 
     private scheduleFlush(): void {
         if (this.scheduled) return;
         this.scheduled = true;
-        setTimeout(() => {
+        this.scheduledTimer = setTimeout(() => {
             void this.flush();
         }, this.flushDelayMs);
     }
@@ -205,6 +206,7 @@ class LogStreamSink {
     private async flush(): Promise<void> {
         if (this.flushing) return;
         this.scheduled = false;
+        this.scheduledTimer = null;
         this.flushing = true;
 
         try {
@@ -242,6 +244,7 @@ class LogFileSink {
     private pending: string[];
     private pendingBytes: number;
     private scheduled: boolean;
+    private scheduledTimer: NodeJS.Timeout | null;
     private flushing: boolean;
 
     private maxBufferBytes: number;
@@ -262,6 +265,7 @@ class LogFileSink {
         this.pending = [];
         this.pendingBytes = 0;
         this.scheduled = false;
+        this.scheduledTimer = null;
         this.flushing = false;
 
         this.maxBufferBytes = DEFAULT_MAX_BUFFER_BYTES;
@@ -297,6 +301,11 @@ class LogFileSink {
     }
 
     public async shutdown(): Promise<void> {
+        if (this.scheduledTimer) {
+            clearTimeout(this.scheduledTimer);
+            this.scheduledTimer = null;
+            this.scheduled = false;
+        }
         await this.flush();
         await this.closeStream();
     }
@@ -304,7 +313,7 @@ class LogFileSink {
     private scheduleFlush(): void {
         if (this.scheduled) return;
         this.scheduled = true;
-        setTimeout(() => {
+        this.scheduledTimer = setTimeout(() => {
             void this.flush();
         }, this.flushDelayMs);
     }
@@ -330,7 +339,7 @@ class LogFileSink {
     }
 
     private async ensureStreamReady(nextChunkBytes: number): Promise<void> {
-        const date = formatLocalDate(new Date());
+        const date = formatYmdHms(new Date(), "date");
 
         // 日期变化：切新文件
         if (this.stream && this.streamDate && date !== this.streamDate) {
@@ -399,6 +408,7 @@ class LogFileSink {
         }
         if (this.flushing) return;
         this.scheduled = false;
+        this.scheduledTimer = null;
         this.flushing = true;
 
         try {
@@ -455,10 +465,18 @@ export async function shutdown(): Promise<void> {
     // 测试场景：mock logger 不需要 shutdown
     if (mockInstance) return;
 
+    // 重要：shutdown 可能与后续 Logger.getLogger() 并发。
+    // 因此这里捕获“当前的旧 sink/instance 快照”，只关闭这些快照，避免把新创建的 sink 一并清掉。
+    const currentInstance = instance;
+    const currentErrorInstance = errorInstance;
+    const currentAppFileSink = appFileSink;
+    const currentErrorFileSink = errorFileSink;
+    const currentAppConsoleSink = appConsoleSink;
+
     const sinks: Array<{ shutdown: () => Promise<void> }> = [];
-    if (appFileSink) sinks.push({ shutdown: () => (appFileSink ? appFileSink.shutdown() : Promise.resolve()) });
-    if (errorFileSink) sinks.push({ shutdown: () => (errorFileSink ? errorFileSink.shutdown() : Promise.resolve()) });
-    if (appConsoleSink) sinks.push({ shutdown: () => (appConsoleSink ? appConsoleSink.shutdown() : Promise.resolve()) });
+    if (currentAppFileSink) sinks.push({ shutdown: () => currentAppFileSink.shutdown() });
+    if (currentErrorFileSink) sinks.push({ shutdown: () => currentErrorFileSink.shutdown() });
+    if (currentAppConsoleSink) sinks.push({ shutdown: () => currentAppConsoleSink.shutdown() });
 
     for (const item of sinks) {
         try {
@@ -468,12 +486,22 @@ export async function shutdown(): Promise<void> {
         }
     }
 
-    appFileSink = null;
-    errorFileSink = null;
-    appConsoleSink = null;
+    if (appFileSink === currentAppFileSink) {
+        appFileSink = null;
+    }
+    if (errorFileSink === currentErrorFileSink) {
+        errorFileSink = null;
+    }
+    if (appConsoleSink === currentAppConsoleSink) {
+        appConsoleSink = null;
+    }
 
-    instance = null;
-    errorInstance = null;
+    if (instance === currentInstance) {
+        instance = null;
+    }
+    if (errorInstance === currentErrorInstance) {
+        errorInstance = null;
+    }
 
     // shutdown 后允许下一次重新初始化时再次校验/创建目录（测试会清理目录，避免 ENOENT）
     didEnsureLogDir = false;
@@ -559,7 +587,18 @@ export function configure(cfg: LoggerConfig): void {
     // 旧实例可能仍持有文件句柄；这里异步关闭（不阻塞主流程）
     void shutdown();
 
-    config = Object.assign({}, config, cfg);
+    // 方案B：每次 configure 都从默认配置重新构建（避免继承上一次配置造成测试/运行时污染）
+    config = Object.assign({}, DEFAULT_CONFIG, cfg);
+
+    // maxSize：仅按 MB 计算，且强制范围 10..100
+    {
+        const raw = config.maxSize;
+        let mb = typeof raw === "number" && Number.isFinite(raw) ? raw : 20;
+        if (mb < 10) mb = 10;
+        if (mb > 100) mb = 100;
+        config.maxSize = mb;
+    }
+
     instance = null;
     errorInstance = null;
     didPruneOldLogFiles = false;
@@ -649,7 +688,8 @@ export function getLogger(): SinkLogger {
     void pruneOldLogFiles();
 
     const minLevel = normalizeLogLevelName();
-    const maxFileBytes = (typeof config.maxSize === "number" && config.maxSize > 0 ? config.maxSize : 10) * 1024 * 1024;
+    const maxSizeMb = typeof config.maxSize === "number" ? config.maxSize : 20;
+    const maxFileBytes = Math.floor(maxSizeMb * 1024 * 1024);
 
     if (!appFileSink) {
         appFileSink = new LogFileSink({ prefix: "app", minLevel: minLevel, maxFileBytes: maxFileBytes });
@@ -670,7 +710,8 @@ function getErrorLogger(): SinkLogger {
 
     void pruneOldLogFiles();
 
-    const maxFileBytes = (typeof config.maxSize === "number" && config.maxSize > 0 ? config.maxSize : 10) * 1024 * 1024;
+    const maxSizeMb = typeof config.maxSize === "number" ? config.maxSize : 20;
+    const maxFileBytes = Math.floor(maxSizeMb * 1024 * 1024);
     if (!errorFileSink) {
         // error logger：固定 minLevel=error
         errorFileSink = new LogFileSink({ prefix: "error", minLevel: "error", maxFileBytes: maxFileBytes });
@@ -725,9 +766,11 @@ function formatExtrasToMsg(extras: any[]): string {
 
 function buildLogLine(level: LogLevelName, args: any[]): string {
     const time = Date.now();
+    const date = new Date(time);
     const base: Record<string, any> = {
         level: LOG_LEVEL_NUM[level],
         time: time,
+        timeText: formatYmdHms(date),
         pid: process.pid,
         hostname: HOSTNAME
     };
