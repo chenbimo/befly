@@ -19,7 +19,7 @@ export default {
         // 合并默认配置和用户配置
         const defaultConfig: CorsConfig = {
             origin: "*",
-            methods: "GET, POST, PUT, DELETE, OPTIONS",
+            methods: "GET, POST, OPTIONS",
             allowedHeaders: "Content-Type, Authorization, authorization, token",
             exposedHeaders: "Content-Range, X-Content-Range, Authorization, authorization, token",
             maxAge: 86400,

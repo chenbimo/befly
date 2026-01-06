@@ -4,12 +4,10 @@ import { isPlainObject, omit } from "../utils/util";
 export async function checkPlugin(plugins: any[]): Promise<void> {
     let hasError = false;
 
-    // 说明：plugins/hook 实际是 scanFiles/scanSources 的结果对象（包含元信息字段）。
-    // 为避免“写错字段但被静默忽略”，对插件对象做严格字段白名单校验。
-    // 注意：白名单包含 scanFiles 生成的元字段；对外导出仅允许：name/enable/deps/handler。
-    const metaKeys = ["source", "type", "sourceName", "filePath", "relativePath", "fileName", "moduleName", "addonName", "fileBaseName", "fileDir"];
+    // 说明：plugins 实际是 scanFiles/scanSources 的结果对象（包含元信息字段）。
+    // 这里不再对白名单枚举 metaKeys（因为它们是系统生成的），只校验“用户 default export 导出的字段”。
     const exportKeys = ["name", "enable", "deps", "handler"];
-    const allowedKeySet = new Set<string>([...metaKeys, ...exportKeys]);
+    const allowedExportKeySet = new Set<string>(exportKeys);
     const allowedExportKeyText = exportKeys.join(", ");
 
     const coreBuiltinNameRegexp = /^[a-z]+(?:_[a-z]+)*$/;
@@ -29,26 +27,41 @@ export async function checkPlugin(plugins: any[]): Promise<void> {
                 continue;
             }
 
-            // 严格字段校验：出现任何未支持字段都应视为错误（避免静默忽略导致依赖顺序/行为误判）。
-            const keys = Object.keys(plugin as any);
-            const unknownKeys = keys.filter((k) => !allowedKeySet.has(k));
-            if (unknownKeys.length > 0) {
-                Logger.warn(omit(plugin, ["handler"]), `插件导出存在不支持的属性：${unknownKeys.join(", ")}；仅允许：${allowedExportKeyText}`);
+            const customKeys = (plugin as any).customKeys;
+            if (!Array.isArray(customKeys)) {
+                Logger.warn(omit(plugin, ["handler"]), "插件扫描结果缺少 customKeys（无法判断用户导出的字段是否合法）");
                 hasError = true;
                 continue;
             }
+
+            if (customKeys.some((k: any) => typeof k !== "string")) {
+                Logger.warn(omit(plugin, ["handler"]), "插件的 customKeys 必须是 string[]（由系统生成）");
+                hasError = true;
+                continue;
+            }
+
+            // 严格字段校验：仅检查用户 default export 的字段集合，出现任何未支持字段都应视为错误。
+            const unknownCustomKeys = (customKeys as string[]).filter((k) => !allowedExportKeySet.has(k));
+            if (unknownCustomKeys.length > 0) {
+                Logger.warn(omit(plugin, ["handler"]), `插件导出存在不支持的属性：${unknownCustomKeys.join(", ")}；仅允许：${allowedExportKeyText}`);
+                hasError = true;
+                continue;
+            }
+
+            const hasCustomEnable = (customKeys as string[]).includes("enable");
+            const hasCustomDeps = (customKeys as string[]).includes("deps");
 
             // enable 必须显式声明且只能为 boolean（true/false），不允许 0/1 等其他类型。
-            if (!Object.prototype.hasOwnProperty.call(plugin as any, "enable")) {
-                Logger.warn(omit(plugin, ["handler"]), "插件的 enable 属性是必填项，且必须显式声明为 true 或 false");
-                hasError = true;
-                continue;
-            }
-
-            if (typeof (plugin as any).enable !== "boolean") {
-                Logger.warn(omit(plugin, ["handler"]), "插件的 enable 属性必须是 boolean（true/false），不允许 0/1 等其他类型");
-                hasError = true;
-                continue;
+            // - 允许缺省：由系统在此处补全默认值 true
+            // - 若用户显式导出 enable：必须是 boolean
+            if (hasCustomEnable) {
+                if (typeof (plugin as any).enable !== "boolean") {
+                    Logger.warn(omit(plugin, ["handler"]), "插件的 enable 属性必须是 boolean（true/false），不允许 0/1 等其他类型");
+                    hasError = true;
+                    continue;
+                }
+            } else {
+                (plugin as any).enable = true;
             }
 
             // core 内置插件：必须来自静态注册（filePath 以 core:plugin: 开头），且 name 必须显式指定并与 moduleName 一致。
@@ -86,15 +99,23 @@ export async function checkPlugin(plugins: any[]): Promise<void> {
                 }
             }
 
-            if (!Array.isArray((plugin as any).deps)) {
-                Logger.warn(omit(plugin, ["handler"]), "插件的 deps 属性必须是字符串数组");
-                hasError = true;
-                continue;
-            }
+            // deps：允许缺省（补全为 []），但如果用户显式导出 deps，则必须是 string[]。
+            if (hasCustomDeps) {
+                if (!Array.isArray((plugin as any).deps)) {
+                    Logger.warn(omit(plugin, ["handler"]), "插件的 deps 属性必须是字符串数组");
+                    hasError = true;
+                    continue;
+                }
 
-            if ((plugin as any).deps.some((depItem: any) => typeof depItem !== "string")) {
-                Logger.warn(omit(plugin, ["handler"]), "插件的 deps 属性必须是字符串数组");
-                hasError = true;
+                if ((plugin as any).deps.some((depItem: any) => typeof depItem !== "string")) {
+                    Logger.warn(omit(plugin, ["handler"]), "插件的 deps 属性必须是字符串数组");
+                    hasError = true;
+                    continue;
+                }
+            } else {
+                if (!Array.isArray((plugin as any).deps)) {
+                    (plugin as any).deps = [];
+                }
             }
 
             if (typeof (plugin as any).handler !== "function") {

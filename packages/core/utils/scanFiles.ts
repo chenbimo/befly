@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { relative, normalize, parse, join } from "pathe";
 
 import { importDefault } from "./importDefault";
-import { camelCase, forOwn } from "./util";
+import { camelCase, forOwn, isPlainObject } from "./util";
 
 export type ScanFileSource = "app" | "addon" | "core";
 
@@ -25,6 +25,9 @@ export interface ScanFileResultBase {
 
     fileBaseName: string;
     fileDir: string;
+
+    /** default export 的自有 key 集合（用于记录模块自定义属性/结构校验） */
+    customKeys?: string[];
 }
 
 export type ScanFileResult =
@@ -98,6 +101,9 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             if (relativePath.split("/").some((part) => part.startsWith("_"))) continue;
             const content = await importDefault(normalizedFile, {});
 
+            // 记录 default export 的自有 key 集合（任何类型都记录，用于自定义属性审计/结构校验）。
+            // 注意：在合并导出对象后还会写回一次 customKeys，避免用户导出同名字段覆盖该元信息。
+
             const baseName = camelCase(fileName);
             let addonName = "";
             let moduleName = "";
@@ -127,7 +133,9 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
                 moduleName: moduleName,
                 addonName: addonName,
                 fileBaseName: parse(normalizedFile).base,
-                fileDir: dir
+                fileDir: dir,
+
+                customKeys: isPlainObject(content) ? Object.keys(content) : []
             };
 
             if (type === "table") {

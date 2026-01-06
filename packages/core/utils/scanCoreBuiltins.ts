@@ -13,11 +13,14 @@ import corePluginJwt from "../plugins/jwt";
 import corePluginLogger from "../plugins/logger";
 import corePluginRedis from "../plugins/redis";
 import corePluginTool from "../plugins/tool";
+import { isPlainObject } from "./util";
 
 type CoreBuiltinType = "hook" | "plugin";
 
 function toCoreBuiltinScanFileResult(type: CoreBuiltinType, item: any): ScanFileResult {
     const name = item.name;
+
+    const customKeys = isPlainObject(item) ? Object.keys(item) : [];
 
     return {
         source: "core",
@@ -34,7 +37,9 @@ function toCoreBuiltinScanFileResult(type: CoreBuiltinType, item: any): ScanFile
         name: name,
         enable: item ? item.enable : undefined,
         deps: Array.isArray(item && item.deps) ? item.deps : [],
-        handler: item ? item.handler : null
+        handler: item ? item.handler : null,
+
+        customKeys: customKeys
     } as any;
 }
 

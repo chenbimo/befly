@@ -17,6 +17,7 @@ describe("scanFiles - api routePath formatting", () => {
         for (const api of all) {
             expect(typeof api.routePrefix).toBe("string");
             expect(typeof api.routePath).toBe("string");
+            expect(Array.isArray(api.customKeys)).toBe(true);
 
             if (api.source === "addon") {
                 expect(api.routePrefix.startsWith("/addon/")).toBe(true);

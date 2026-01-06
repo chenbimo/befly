@@ -14,6 +14,7 @@ test("checkHook: core builtin name 必须是小写字母+下划线", async () =>
                 name: "RateLimit",
                 moduleName: "RateLimit",
                 filePath: "core:hook:RateLimit",
+                customKeys: ["name", "enable", "deps", "handler"],
                 enable: true,
                 deps: [],
                 handler: async () => {}
@@ -38,6 +39,7 @@ test("checkPlugin: core builtin name 必须是小写字母+下划线", async () 
                 name: "redis cache",
                 moduleName: "redis cache",
                 filePath: "core:plugin:redis cache",
+                customKeys: ["name", "enable", "deps", "handler"],
                 enable: true,
                 deps: [],
                 handler: async () => {}
@@ -59,6 +61,7 @@ test("checkPlugin: 额外字段应视为结构错误（例如 after）", async (
             {
                 source: "app",
                 moduleName: "weixin",
+                customKeys: ["enable", "deps", "after", "handler"],
                 enable: true,
                 deps: [],
                 after: ["redis", "logger"],
@@ -81,9 +84,78 @@ test("checkHook: 额外字段应视为结构错误（例如 after）", async () 
             {
                 source: "app",
                 moduleName: "auth",
+                customKeys: ["enable", "deps", "after", "handler"],
                 enable: true,
                 deps: [],
                 after: ["cors"],
+                handler: async () => {}
+            }
+        ]);
+    } catch (error: any) {
+        thrown = error;
+    }
+
+    expect(thrown).toBeTruthy();
+    expect(String(thrown?.message || "").includes("钩子结构检查失败")).toBe(true);
+});
+
+test("checkPlugin: enable 允许缺省（默认值由系统填充为 true）", async () => {
+    await checkPlugin([
+        {
+            source: "app",
+            moduleName: "weixin",
+            customKeys: ["deps", "handler"],
+            deps: [],
+            handler: async () => {}
+        }
+    ]);
+});
+
+test("checkHook: enable 允许缺省（默认值由系统填充为 true）", async () => {
+    await checkHook([
+        {
+            source: "app",
+            moduleName: "auth",
+            customKeys: ["deps", "handler"],
+            deps: [],
+            handler: async () => {}
+        }
+    ]);
+});
+
+test("checkPlugin: enable=1（number）应视为结构错误", async () => {
+    let thrown: any = null;
+
+    try {
+        await checkPlugin([
+            {
+                source: "app",
+                moduleName: "weixin",
+                customKeys: ["enable", "deps", "handler"],
+                enable: 1,
+                deps: [],
+                handler: async () => {}
+            }
+        ]);
+    } catch (error: any) {
+        thrown = error;
+    }
+
+    expect(thrown).toBeTruthy();
+    expect(String(thrown?.message || "").includes("插件结构检查失败")).toBe(true);
+});
+
+test("checkHook: enable=1（number）应视为结构错误", async () => {
+    let thrown: any = null;
+
+    try {
+        await checkHook([
+            {
+                source: "app",
+                moduleName: "auth",
+                customKeys: ["enable", "deps", "handler"],
+                enable: 1,
+                deps: [],
                 handler: async () => {}
             }
         ]);

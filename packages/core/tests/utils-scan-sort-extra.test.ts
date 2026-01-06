@@ -211,7 +211,7 @@ const mod = await import(${JSON.stringify(scanSourcesUrl)});
 const result = await mod.scanSources();
 process.stdout.write(JSON.stringify({
   addons: result.addons,
-  tables: result.tables.map((t) => ({ source: t.source, type: t.type, fileName: t.fileName, content: t.type === 'table' ? t.content : undefined, addonName: t.addonName, moduleName: t.moduleName })),
+        tables: result.tables.map((t) => ({ source: t.source, type: t.type, fileName: t.fileName, content: t.type === 'table' ? t.content : undefined, customKeys: t.customKeys, addonName: t.addonName, moduleName: t.moduleName })),
   plugins: result.plugins.map((p) => ({ source: p.source, fileName: p.fileName, addonName: p.addonName, moduleName: p.moduleName })),
   hooks: result.hooks.map((h) => ({ source: h.source, fileName: h.fileName })),
   apis: result.apis.map((a) => ({ source: a.source, fileName: a.fileName, routePath: a.routePath, addonName: a.addonName, moduleName: a.moduleName }))
@@ -240,6 +240,7 @@ process.stdout.write(JSON.stringify({
             const appUserTable = parsed.tables.find((t: any) => t.source === "app" && t.fileName === "user");
             expect(appUserTable).toBeTruthy();
             expect((appUserTable as any).content.name).toBe("user");
+            expect(Array.isArray((appUserTable as any).customKeys)).toBe(true);
 
             // app plugin (and _skip filtered)
             expect(parsed.plugins.some((p: any) => p.source === "app" && p.fileName === "hello")).toBe(true);
@@ -253,6 +254,7 @@ process.stdout.write(JSON.stringify({
             // local addon scanning should work (tables/plugins/apis under addons/demo)
             const localAddonTable = parsed.tables.find((t: any) => t.source === "addon" && t.fileName === "local");
             expect(localAddonTable).toBeTruthy();
+            expect(Array.isArray((localAddonTable as any).customKeys)).toBe(true);
 
             const localAddonPlugin = parsed.plugins.find((p: any) => p.source === "addon" && p.fileName === "localPlugin");
             expect(localAddonPlugin).toBeTruthy();
