@@ -13,7 +13,7 @@ import { RedisHelper } from "../lib/redisHelper";
 /**
  * Redis 插件
  */
-export default {
+const redisPlugin: Plugin = {
     name: "redis",
     enable: true,
     deps: ["logger"],
@@ -30,4 +30,6 @@ export default {
             throw error;
         }
     }
-} satisfies Plugin;
+};
+
+export default redisPlugin;

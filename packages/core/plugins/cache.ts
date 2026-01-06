@@ -11,7 +11,7 @@ import { CacheHelper } from "../lib/cacheHelper";
 /**
  * 缓存插件
  */
-export default {
+const cachePlugin: Plugin = {
     name: "cache",
     enable: true,
     deps: ["logger", "redis", "db"],
@@ -26,4 +26,6 @@ export default {
 
         return new CacheHelper({ db: befly.db, redis: befly.redis });
     }
-} satisfies Plugin;
+};
+
+export default cachePlugin;

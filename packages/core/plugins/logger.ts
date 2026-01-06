@@ -11,15 +11,17 @@ import { Logger } from "../lib/logger";
 /**
  * 日志插件
  */
-export default {
+const loggerPlugin: Plugin = {
     name: "logger",
     enable: true,
     deps: [],
-    async handler(context: BeflyContext): Promise<typeof Logger> {
+    async handler(context: BeflyContext) {
         // 配置 Logger
         if (context.config && context.config.logger) {
             Logger.configure(context.config.logger);
         }
         return Logger;
     }
-} satisfies Plugin;
+};
+
+export default loggerPlugin;

@@ -14,7 +14,7 @@ import { Logger } from "../lib/logger";
 /**
  * 数据库插件
  */
-export default {
+const dbPlugin: Plugin = {
     name: "db",
     enable: true,
     deps: ["logger", "redis"],
@@ -39,4 +39,6 @@ export default {
             throw error;
         }
     }
-} satisfies Plugin;
+};
+
+export default dbPlugin;

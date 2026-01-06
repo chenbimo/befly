@@ -5,11 +5,13 @@
 import type { BeflyContext } from "../types/befly";
 import type { Plugin } from "../types/plugin";
 
-export default {
+const configPlugin: Plugin = {
     name: "config",
     enable: true,
     deps: [],
     handler: (context: BeflyContext) => {
         return context.config;
     }
-} satisfies Plugin;
+};
+
+export default configPlugin;

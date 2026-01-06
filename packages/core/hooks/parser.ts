@@ -17,7 +17,7 @@ const xmlParser = new XMLParser();
  * - 根据 API 定义的 fields 过滤字段
  * - rawBody: true 时跳过解析，由 handler 自行处理原始请求
  */
-export default {
+const parserHook: Hook = {
     name: "parser",
     enable: true,
     deps: ["auth"],
@@ -104,4 +104,6 @@ export default {
             }
         }
     }
-} satisfies Hook;
+};
+
+export default parserHook;

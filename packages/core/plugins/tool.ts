@@ -112,7 +112,7 @@ export function Raw(ctx: RequestContext, data: Record<string, any> | string, opt
     });
 }
 
-export default {
+const toolPlugin: Plugin = {
     name: "tool",
     enable: true,
     deps: [],
@@ -123,4 +123,6 @@ export default {
             Raw: Raw
         };
     }
-} satisfies Plugin;
+};
+
+export default toolPlugin;

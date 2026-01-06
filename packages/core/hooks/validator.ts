@@ -9,7 +9,7 @@ import { ErrorResponse } from "../utils/response";
  * 参数验证钩子
  * 根据 API 定义的 fields 和 required 验证请求参数
  */
-export default {
+const validatorHook: Hook = {
     name: "validator",
     enable: true,
     deps: ["parser"],
@@ -37,4 +37,6 @@ export default {
             return;
         }
     }
-} satisfies Hook;
+};
+
+export default validatorHook;

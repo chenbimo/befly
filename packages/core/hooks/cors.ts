@@ -9,7 +9,7 @@ import { setCorsOptions } from "../utils/cors";
  * CORS 跨域处理钩子
  * 设置跨域响应头并处理 OPTIONS 预检请求
  */
-export default {
+const corsHook: Hook = {
     name: "cors",
     enable: true,
     deps: [],
@@ -42,4 +42,6 @@ export default {
             return;
         }
     }
-} satisfies Hook;
+};
+
+export default corsHook;

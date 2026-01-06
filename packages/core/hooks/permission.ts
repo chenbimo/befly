@@ -13,7 +13,7 @@ import { ErrorResponse } from "../utils/response";
  * - 开发者角色（dev）：最高权限，直接通过
  * - 其他角色：检查 Redis 中的角色权限集合
  */
-export default {
+const permissionHook: Hook = {
     name: "permission",
     enable: true,
     deps: ["validator"],
@@ -68,4 +68,6 @@ export default {
             return;
         }
     }
-} satisfies Hook;
+};
+
+export default permissionHook;

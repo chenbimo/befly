@@ -7,11 +7,13 @@ import type { Plugin } from "../types/plugin";
 
 import { Cipher } from "../lib/cipher";
 
-export default {
+const cipherPlugin: Plugin = {
     name: "cipher",
     enable: true,
     deps: [],
     handler: () => {
         return Cipher;
     }
-} satisfies Plugin;
+};
+
+export default cipherPlugin;

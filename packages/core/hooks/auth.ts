@@ -2,7 +2,7 @@ import type { Hook } from "../types/hook";
 
 import { setCtxUser } from "../lib/asyncContext";
 
-export default {
+const authHook: Hook = {
     name: "auth",
     enable: true,
     deps: ["cors"],
@@ -24,4 +24,6 @@ export default {
             ctx.user = {};
         }
     }
-} satisfies Hook;
+};
+
+export default authHook;
