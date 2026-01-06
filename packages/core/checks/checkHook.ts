@@ -1,15 +1,13 @@
 import { Logger } from "../lib/logger";
 import { isPlainObject, omit } from "../utils/util";
 
+const exportKeys: readonly string[] = ["name", "enable", "deps", "handler"];
+
 export async function checkHook(hooks: any[]): Promise<void> {
     let hasError = false;
 
     // 说明：hooks 实际是 scanFiles/scanSources 的结果对象（包含元信息字段）。
     // 这里不再对白名单枚举 metaKeys（因为它们是系统生成的），只校验“用户 default export 导出的字段”。
-    const exportKeys = ["name", "enable", "deps", "handler"];
-    const allowedExportKeySet = new Set<string>(exportKeys);
-    const allowedExportKeyText = exportKeys.join(", ");
-
     const coreBuiltinNameRegexp = /^[a-z]+(?:_[a-z]+)*$/;
 
     for (const hook of hooks) {
@@ -41,9 +39,9 @@ export async function checkHook(hooks: any[]): Promise<void> {
             }
 
             // 严格字段校验：仅检查用户 default export 的字段集合，出现任何未支持字段都应视为错误。
-            const unknownCustomKeys = (customKeys as string[]).filter((k) => !allowedExportKeySet.has(k));
+            const unknownCustomKeys = (customKeys as string[]).filter((k) => !exportKeys.includes(k));
             if (unknownCustomKeys.length > 0) {
-                Logger.warn(omit(hook, ["handler"]), `钩子导出存在不支持的属性：${unknownCustomKeys.join(", ")}；仅允许：${allowedExportKeyText}`);
+                Logger.warn(omit(hook, ["handler"]), `钩子导出存在不支持的属性：${unknownCustomKeys.join(", ")}；仅允许：${exportKeys.join(", ")}；当前 customKeys：${(customKeys as string[]).join(", ")}`);
                 hasError = true;
                 continue;
             }
