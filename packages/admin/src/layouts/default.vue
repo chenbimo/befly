@@ -76,7 +76,7 @@
 
 <script setup>
 import { DialogPlugin } from "tdesign-vue-next";
-import { arrayToTree } from "befly-shared/utils/arrayToTree";
+import { arrayToTree } from "@/utils/arrayToTree";
 
 const router = useRouter();
 const route = useRoute();
