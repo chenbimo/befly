@@ -26,6 +26,7 @@
         "typecheck:core": "bun run --cwd packages/core typecheck",
         "typecheck": "bun run typecheck:core",
         "typecheck:all": "lerna run typecheck --stream",
+        "check": "bun run format && bun run lint && bun run typecheck:all",
         "verify": "bun run format && bun run lint && bun run build:libs && bun run typecheck:core && bun run test",
         "r": "lerna publish"
     },
