@@ -13,6 +13,21 @@ export function isPlainObject(value: unknown): value is Record<string, any> {
     return proto === Object.prototype || proto === null;
 }
 
+const REGEXP_SPECIAL = /[\\^$.*+?()[\]{}|]/g;
+
+export function escapeRegExp(input: string): string {
+    return String(input).replace(REGEXP_SPECIAL, "\\$&");
+}
+
+export function normalizePositiveInt(value: any, fallback: number, min: number, max: number): number {
+    if (typeof value !== "number") return fallback;
+    if (!Number.isFinite(value)) return fallback;
+    const v = Math.floor(value);
+    if (v < min) return fallback;
+    if (v > max) return max;
+    return v;
+}
+
 /**
  * 激进空值判断（项目约定）：
  * - null/undefined => empty

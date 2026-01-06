@@ -3,13 +3,12 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 import { clearRegexCache, getCompiledRegex, getRegex, getRegexCacheSize, matchRegex } from "../configs/presetRegexp";
-import { escapeRegExp } from "../lib/logger";
 import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob";
 import { importDefault } from "../utils/importDefault";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
 import { getProcessRole, isPrimaryProcess } from "../utils/processInfo";
-import { camelCase, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
+import { camelCase, escapeRegExp, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
 
 // 说明：
 // - 这里的测试目标是“utils 纯函数/小工具”的边界与异常分支覆盖。
