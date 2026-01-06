@@ -7,7 +7,7 @@
  * Cache Key 生成函数集合
  */
 export class CacheKeys {
-    /** 所有接口缓存 */
+    /** 所有接口缓存2 */
     static apisAll(): string {
         return "apis:all";
     }
