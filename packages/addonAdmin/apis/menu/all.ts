@@ -51,7 +51,7 @@ export default {
             // 6. 返回一维数组（由前端构建树形结构）
             return befly.tool.Yes("获取菜单成功", { lists: authorizedMenus });
         } catch (error: any) {
-            befly.logger.error({ err: error }, "获取用户菜单失败");
+            befly.logger.error({ err: error, msg: "获取用户菜单失败" });
             return befly.tool.No("获取菜单失败");
         }
     }

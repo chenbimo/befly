@@ -10,7 +10,7 @@ import { hostname as osHostname } from "node:os";
 import { isAbsolute as nodePathIsAbsolute, join as nodePathJoin, resolve as nodePathResolve } from "node:path";
 
 import { formatYmdHms } from "../utils/formatYmdHms";
-import { buildSensitiveKeyMatcher, sanitizeLogObject, scheduleDeferredFlush, shiftBatchFromPending } from "../utils/loggerUtils";
+import { buildSensitiveKeyMatcher, sanitizeLogObject } from "../utils/loggerUtils";
 import { isPlainObject, normalizePositiveInt } from "../utils/util";
 import { getCtx } from "./asyncContext";
 
@@ -18,33 +18,37 @@ import { getCtx } from "./asyncContext";
 // 为避免相对路径的 logs 目录随着 cwd 变化，使用模块加载时的初始 cwd 作为锚点。
 const INITIAL_CWD = process.cwd();
 
-const DEFAULT_LOG_STRING_LEN = 100;
-const DEFAULT_LOG_ARRAY_ITEMS = 100;
-
-// 为避免递归导致栈溢出/性能抖动：使用非递归遍历，并对深度/节点数做硬限制。
-// 说明：这不是业务数据结构的“真实深度”，而是日志清洗的最大深入层级（越大越重）。
-const DEFAULT_LOG_SANITIZE_DEPTH = 3;
-const DEFAULT_LOG_OBJECT_KEYS = 100;
-const DEFAULT_LOG_SANITIZE_NODES = 500;
-
 const BUILTIN_SENSITIVE_KEYS = ["*password*", "pass", "pwd", "*token*", "access_token", "refresh_token", "accessToken", "refreshToken", "authorization", "cookie", "set-cookie", "*secret*", "apiKey", "api_key", "privateKey", "private_key"];
 
 let sanitizeOptions = {
-    maxStringLen: DEFAULT_LOG_STRING_LEN,
-    maxArrayItems: DEFAULT_LOG_ARRAY_ITEMS,
-    sanitizeDepth: DEFAULT_LOG_SANITIZE_DEPTH,
-    sanitizeNodes: DEFAULT_LOG_SANITIZE_NODES,
-    sanitizeObjectKeys: DEFAULT_LOG_OBJECT_KEYS,
+    maxStringLen: 100,
+    maxArrayItems: 100,
+    sanitizeDepth: 3,
+    sanitizeNodes: 500,
+    sanitizeObjectKeys: 100,
     sensitiveKeyMatcher: buildSensitiveKeyMatcher({ builtinPatterns: BUILTIN_SENSITIVE_KEYS, userPatterns: [] })
 };
 
 type LogLevelName = "debug" | "info" | "warn" | "error";
 
+type LoggerRecord = {
+    msg?: string;
+    event?: string;
+    err?: unknown;
+    [key: string]: any;
+};
+
 type SinkLogger = {
-    info(...args: any[]): any;
-    warn(...args: any[]): any;
-    error(...args: any[]): any;
-    debug(...args: any[]): any;
+    info(record: unknown): any;
+    warn(record: unknown): any;
+    error(record: unknown): any;
+    debug(record: unknown): any;
+};
+
+type StreamSink = {
+    enqueue(line: string): void;
+    flushNow(): Promise<void>;
+    shutdown(): Promise<void>;
 };
 
 const HOSTNAME = (() => {
@@ -55,13 +59,6 @@ const HOSTNAME = (() => {
     }
 })();
 
-const LOG_LEVEL_NUM: Record<LogLevelName, number> = {
-    debug: 20,
-    info: 30,
-    warn: 40,
-    error: 50
-};
-
 let instance: SinkLogger | null = null;
 let errorInstance: SinkLogger | null = null;
 let mockInstance: SinkLogger | null = null;
@@ -69,25 +66,14 @@ let mockInstance: SinkLogger | null = null;
 let appFileSink: LogFileSink | null = null;
 let errorFileSink: LogFileSink | null = null;
 
-let appConsoleSink: LogStreamSink | null = null;
+let appConsoleSink: StreamSink | null = null;
 
-const DEFAULT_CONFIG: LoggerConfig = {
+let config: LoggerConfig = {
     debug: 0,
     dir: "./logs",
     console: 1,
     maxSize: 20
 };
-
-let config: LoggerConfig = Object.assign({}, DEFAULT_CONFIG);
-
-function normalizeLogLevelName(): LogLevelName {
-    // 与旧行为保持一致：debug=1 -> debug，否则 -> info
-    return config.debug === 1 ? "debug" : "info";
-}
-
-function shouldAccept(minLevel: LogLevelName, level: LogLevelName): boolean {
-    return LOG_LEVEL_NUM[level] >= LOG_LEVEL_NUM[minLevel];
-}
 
 function safeWriteStderr(msg: string): void {
     try {
@@ -99,108 +85,166 @@ function safeWriteStderr(msg: string): void {
 
 type StreamKind = "stdout" | "stderr";
 
-class LogStreamSink {
-    private kind: StreamKind;
-    private minLevel: LogLevelName;
+function shiftBatchFromPending(pending: string[], maxBatchBytes: number): { chunk: string; bytes: number } {
+    const parts: string[] = [];
+    let bytes = 0;
+
+    while (pending.length > 0) {
+        const next = pending[0] as string;
+        const nextBytes = Buffer.byteLength(next);
+        if (parts.length > 0 && bytes + nextBytes > maxBatchBytes) {
+            break;
+        }
+        parts.push(next);
+        bytes = bytes + nextBytes;
+        pending.shift();
+    }
+
+    return { chunk: parts.join(""), bytes: bytes };
+}
+
+class BufferedSink {
     private pending: string[];
     private pendingBytes: number;
     private scheduledTimer: NodeJS.Timeout | null;
     private flushing: boolean;
+
     private maxBufferBytes: number;
     private flushDelayMs: number;
     private maxBatchBytes: number;
 
-    public constructor(options: { kind: StreamKind; minLevel: LogLevelName }) {
-        this.kind = options.kind;
-        this.minLevel = options.minLevel;
+    private writeChunk: (chunk: string, chunkBytes: number) => Promise<boolean>;
+    private onShutdown: (() => Promise<void>) | null;
 
+    public constructor(options: { maxBufferBytes: number; flushDelayMs: number; maxBatchBytes: number; writeChunk: (chunk: string, chunkBytes: number) => Promise<boolean>; onShutdown?: (() => Promise<void>) | null }) {
         this.pending = [];
         this.pendingBytes = 0;
         this.scheduledTimer = null;
         this.flushing = false;
 
-        this.maxBufferBytes = 10 * 1024 * 1024;
-        this.flushDelayMs = 10;
-        this.maxBatchBytes = 64 * 1024;
+        this.maxBufferBytes = options.maxBufferBytes;
+        this.flushDelayMs = options.flushDelayMs;
+        this.maxBatchBytes = options.maxBatchBytes;
+
+        this.writeChunk = options.writeChunk;
+        this.onShutdown = options.onShutdown ? options.onShutdown : null;
     }
 
-    public enqueue(level: LogLevelName, line: string): void {
-        if (!shouldAccept(this.minLevel, level)) return;
+    private scheduleFlush(): void {
+        if (this.scheduledTimer) return;
 
+        this.scheduledTimer = setTimeout(() => {
+            // timer 触发时先清空句柄，避免 flush 内再次 schedule 时被认为“已安排”。
+            this.scheduledTimer = null;
+            void this.flush();
+        }, this.flushDelayMs);
+    }
+
+    private cancelScheduledFlush(): void {
+        if (!this.scheduledTimer) return;
+        clearTimeout(this.scheduledTimer);
+        this.scheduledTimer = null;
+    }
+
+    public enqueue(line: string): void {
         const bytes = Buffer.byteLength(line);
         if (this.pendingBytes + bytes > this.maxBufferBytes) {
-            // stream sink：优先丢 debug/info，保留 warn/error
-            if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) {
-                return;
-            }
+            // buffer 满：统一丢弃新日志（不区分 level）
+            return;
         }
 
         this.pending.push(line);
-        this.pendingBytes += bytes;
-        this.scheduledTimer = scheduleDeferredFlush(this.scheduledTimer, this.flushDelayMs, () => this.flush());
+        this.pendingBytes = this.pendingBytes + bytes;
+
+        this.scheduleFlush();
     }
 
     public async flushNow(): Promise<void> {
+        // 若已安排了定时 flush，flushNow 会覆盖它，避免出现多个 timer 并存。
+        this.cancelScheduledFlush();
         await this.flush();
     }
 
     public async shutdown(): Promise<void> {
-        if (this.scheduledTimer) {
-            clearTimeout(this.scheduledTimer);
-            this.scheduledTimer = null;
-        }
+        this.cancelScheduledFlush();
         await this.flush();
-    }
-
-    private getStream(): NodeJS.WritableStream {
-        return this.kind === "stderr" ? process.stderr : process.stdout;
+        if (this.onShutdown) {
+            await this.onShutdown();
+        }
     }
 
     private async flush(): Promise<void> {
         if (this.flushing) return;
-        this.scheduledTimer = null;
         this.flushing = true;
 
         try {
-            const stream = this.getStream();
-
             while (this.pending.length > 0) {
                 const batch = shiftBatchFromPending(this.pending, this.maxBatchBytes);
                 const chunk = batch.chunk;
                 const chunkBytes = Buffer.byteLength(chunk);
                 this.pendingBytes = this.pendingBytes - chunkBytes;
 
+                const ok = await this.writeChunk(chunk, chunkBytes);
+                if (!ok) {
+                    // writer 已禁用/失败：清空剩余 pending
+                    this.pending = [];
+                    this.pendingBytes = 0;
+                    break;
+                }
+            }
+        } finally {
+            this.flushing = false;
+            if (this.pending.length > 0) {
+                this.scheduleFlush();
+            }
+        }
+    }
+}
+
+function createStreamSink(kind: StreamKind): StreamSink {
+    const getStream = () => {
+        return kind === "stderr" ? process.stderr : process.stdout;
+    };
+
+    const buffer = new BufferedSink({
+        maxBufferBytes: 10 * 1024 * 1024,
+        flushDelayMs: 10,
+        maxBatchBytes: 64 * 1024,
+        writeChunk: async (chunk: string) => {
+            try {
+                const stream = getStream();
                 const ok = stream.write(chunk);
                 if (!ok) {
                     await new Promise<void>((resolve) => {
                         (stream as any).once("drain", () => resolve());
                     });
                 }
-            }
-        } catch (error: any) {
-            safeWriteStderr(`[Logger] stream sink error: ${error?.message || error}`);
-        } finally {
-            this.flushing = false;
-            if (this.pending.length > 0) {
-                this.scheduledTimer = scheduleDeferredFlush(this.scheduledTimer, this.flushDelayMs, () => this.flush());
+                return true;
+            } catch (error: any) {
+                safeWriteStderr(`[Logger] stream sink error: ${error?.message || error}`);
+                return false;
             }
         }
-    }
+    });
+
+    return {
+        enqueue(line: string) {
+            buffer.enqueue(line);
+        },
+        async flushNow() {
+            await buffer.flushNow();
+        },
+        async shutdown() {
+            await buffer.shutdown();
+        }
+    };
 }
 
 class LogFileSink {
     private prefix: "app" | "error";
-    private minLevel: LogLevelName;
     private maxFileBytes: number;
 
-    private pending: string[];
-    private pendingBytes: number;
-    private scheduledTimer: NodeJS.Timeout | null;
-    private flushing: boolean;
-
-    private maxBufferBytes: number;
-    private flushDelayMs: number;
-    private maxBatchBytes: number;
+    private buffer: BufferedSink;
 
     private stream: ReturnType<typeof createWriteStream> | null;
     private streamDate: string;
@@ -208,55 +252,63 @@ class LogFileSink {
     private streamSizeBytes: number;
     private disabled: boolean;
 
-    public constructor(options: { prefix: "app" | "error"; minLevel: LogLevelName; maxFileBytes: number }) {
+    public constructor(options: { prefix: "app" | "error"; maxFileBytes: number }) {
         this.prefix = options.prefix;
-        this.minLevel = options.minLevel;
         this.maxFileBytes = options.maxFileBytes;
-
-        this.pending = [];
-        this.pendingBytes = 0;
-        this.scheduledTimer = null;
-        this.flushing = false;
-
-        this.maxBufferBytes = 10 * 1024 * 1024;
-        this.flushDelayMs = 10;
-        this.maxBatchBytes = 64 * 1024;
 
         this.stream = null;
         this.streamDate = "";
         this.streamIndex = 0;
         this.streamSizeBytes = 0;
         this.disabled = false;
+
+        this.buffer = new BufferedSink({
+            maxBufferBytes: 10 * 1024 * 1024,
+            flushDelayMs: 10,
+            maxBatchBytes: 64 * 1024,
+            writeChunk: async (chunk: string, chunkBytes: number) => {
+                if (this.disabled) return false;
+
+                try {
+                    await this.ensureStreamReady(chunkBytes);
+                    if (!this.stream) {
+                        // 文件 sink 已被禁用或打开失败
+                        return false;
+                    }
+
+                    const ok = this.stream.write(chunk);
+                    if (!ok) {
+                        await new Promise<void>((resolve) => {
+                            (this.stream as any).once("drain", () => resolve());
+                        });
+                    }
+                    this.streamSizeBytes = this.streamSizeBytes + chunkBytes;
+                    return true;
+                } catch (error: any) {
+                    safeWriteStderr(`[Logger] file sink flush error (${this.prefix}): ${error?.message || error}`);
+                    this.disabled = true;
+                    await this.closeStream();
+                    return false;
+                }
+            },
+            onShutdown: async () => {
+                await this.closeStream();
+            }
+        });
     }
 
-    public enqueue(level: LogLevelName, line: string): void {
+    public enqueue(line: string): void {
         if (this.disabled) return;
-        if (!shouldAccept(this.minLevel, level)) return;
 
-        const bytes = Buffer.byteLength(line);
-        if (this.pendingBytes + bytes > this.maxBufferBytes) {
-            // 文件 sink：优先丢 debug/info，保留 warn/error
-            if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) {
-                return;
-            }
-        }
-
-        this.pending.push(line);
-        this.pendingBytes += bytes;
-        this.scheduledTimer = scheduleDeferredFlush(this.scheduledTimer, this.flushDelayMs, () => this.flush());
+        this.buffer.enqueue(line);
     }
 
     public async flushNow(): Promise<void> {
-        await this.flush();
+        await this.buffer.flushNow();
     }
 
     public async shutdown(): Promise<void> {
-        if (this.scheduledTimer) {
-            clearTimeout(this.scheduledTimer);
-            this.scheduledTimer = null;
-        }
-        await this.flush();
-        await this.closeStream();
+        await this.buffer.shutdown();
     }
 
     private async closeStream(): Promise<void> {
@@ -271,6 +323,21 @@ class LogFileSink {
                 resolve();
             }
         });
+    }
+
+    private openStream(filePath: string): void {
+        try {
+            this.stream = createWriteStream(filePath, { flags: "a" });
+            this.stream.on("error", (error: any) => {
+                safeWriteStderr(`[Logger] file sink error (${this.prefix}): ${error?.message || error}`);
+                this.disabled = true;
+                void this.closeStream();
+            });
+        } catch (error: any) {
+            safeWriteStderr(`[Logger] createWriteStream failed (${this.prefix}): ${error?.message || error}`);
+            this.disabled = true;
+            this.stream = null;
+        }
     }
 
     private getFilePath(date: string, index: number): string {
@@ -305,18 +372,8 @@ class LogFileSink {
             this.streamIndex = 0;
             this.streamSizeBytes = size;
 
-            try {
-                this.stream = createWriteStream(filePath, { flags: "a" });
-                this.stream.on("error", (error: any) => {
-                    safeWriteStderr(`[Logger] file sink error (${this.prefix}): ${error?.message || error}`);
-                    this.disabled = true;
-                    void this.closeStream();
-                });
-            } catch (error: any) {
-                safeWriteStderr(`[Logger] createWriteStream failed (${this.prefix}): ${error?.message || error}`);
-                this.disabled = true;
-                return;
-            }
+            this.openStream(filePath);
+            if (!this.stream) return;
         }
 
         // 大小滚动
@@ -326,59 +383,9 @@ class LogFileSink {
             const filePath = this.getFilePath(date, this.streamIndex);
             this.streamDate = date;
             this.streamSizeBytes = 0;
-            try {
-                this.stream = createWriteStream(filePath, { flags: "a" });
-                this.stream.on("error", (error: any) => {
-                    safeWriteStderr(`[Logger] file sink error (${this.prefix}): ${error?.message || error}`);
-                    this.disabled = true;
-                    void this.closeStream();
-                });
-            } catch (error: any) {
-                safeWriteStderr(`[Logger] createWriteStream failed (${this.prefix}): ${error?.message || error}`);
-                this.disabled = true;
-                return;
-            }
-        }
-    }
 
-    private async flush(): Promise<void> {
-        if (this.disabled) {
-            this.pending = [];
-            this.pendingBytes = 0;
-            return;
-        }
-        if (this.flushing) return;
-        this.scheduledTimer = null;
-        this.flushing = true;
-
-        try {
-            while (this.pending.length > 0 && !this.disabled) {
-                const batch = shiftBatchFromPending(this.pending, this.maxBatchBytes);
-                const chunk = batch.chunk;
-                const chunkBytes = Buffer.byteLength(chunk);
-                this.pendingBytes = this.pendingBytes - chunkBytes;
-
-                await this.ensureStreamReady(chunkBytes);
-                if (!this.stream) {
-                    // 文件 sink 已被禁用或打开失败
-                    break;
-                }
-
-                const ok = this.stream.write(chunk);
-                if (!ok) {
-                    await new Promise<void>((resolve) => {
-                        (this.stream as any).once("drain", () => resolve());
-                    });
-                }
-                this.streamSizeBytes = this.streamSizeBytes + chunkBytes;
-            }
-        } catch (error: any) {
-            safeWriteStderr(`[Logger] file sink flush error (${this.prefix}): ${error?.message || error}`);
-        } finally {
-            this.flushing = false;
-            if (this.pending.length > 0 && !this.disabled) {
-                this.scheduledTimer = scheduleDeferredFlush(this.scheduledTimer, this.flushDelayMs, () => this.flush());
-            }
+            this.openStream(filePath);
+            if (!this.stream) return;
         }
     }
 }
@@ -477,7 +484,15 @@ export function configure(cfg: LoggerConfig): void {
     void shutdown();
 
     // 方案B：每次 configure 都从默认配置重新构建（避免继承上一次配置造成测试/运行时污染）
-    config = Object.assign({}, DEFAULT_CONFIG, cfg);
+    config = Object.assign(
+        {
+            debug: 0,
+            dir: "./logs",
+            console: 1,
+            maxSize: 20
+        },
+        cfg
+    );
 
     // maxSize：仅按 MB 计算，且强制范围 10..100
     {
@@ -496,11 +511,11 @@ export function configure(cfg: LoggerConfig): void {
 
     // 运行时清洗/截断上限（可配置）
     sanitizeOptions = {
-        maxStringLen: normalizePositiveInt(config.maxStringLen, DEFAULT_LOG_STRING_LEN, 20, 200000),
-        maxArrayItems: normalizePositiveInt(config.maxArrayItems, DEFAULT_LOG_ARRAY_ITEMS, 10, 5000),
-        sanitizeDepth: normalizePositiveInt(config.sanitizeDepth, DEFAULT_LOG_SANITIZE_DEPTH, 1, 10),
-        sanitizeNodes: normalizePositiveInt(config.sanitizeNodes, DEFAULT_LOG_SANITIZE_NODES, 50, 20000),
-        sanitizeObjectKeys: normalizePositiveInt(config.sanitizeObjectKeys, DEFAULT_LOG_OBJECT_KEYS, 10, 5000),
+        maxStringLen: normalizePositiveInt(config.maxStringLen, 100, 20, 200000),
+        maxArrayItems: normalizePositiveInt(config.maxArrayItems, 100, 10, 5000),
+        sanitizeDepth: normalizePositiveInt(config.sanitizeDepth, 3, 1, 10),
+        sanitizeNodes: normalizePositiveInt(config.sanitizeNodes, 500, 50, 20000),
+        sanitizeObjectKeys: normalizePositiveInt(config.sanitizeObjectKeys, 100, 10, 5000),
         sensitiveKeyMatcher: buildSensitiveKeyMatcher({ builtinPatterns: BUILTIN_SENSITIVE_KEYS, userPatterns: config.excludeFields })
     };
 }
@@ -513,175 +528,74 @@ export function setMockLogger(mock: SinkLogger | null): void {
     mockInstance = mock;
 }
 
+function getSink(kind: "app" | "error"): SinkLogger {
+    // 优先返回 mock 实例（用于测试）
+    if (mockInstance) return mockInstance;
+
+    if (kind === "app") {
+        if (instance) return instance;
+    } else {
+        if (errorInstance) return errorInstance;
+    }
+
+    ensureLogDirExists();
+
+    const maxSizeMb = typeof config.maxSize === "number" ? config.maxSize : 20;
+    const maxFileBytes = Math.floor(maxSizeMb * 1024 * 1024);
+
+    if (kind === "app") {
+        if (!appFileSink) {
+            appFileSink = new LogFileSink({ prefix: "app", maxFileBytes: maxFileBytes });
+        }
+        if (config.console === 1 && !appConsoleSink) {
+            appConsoleSink = createStreamSink("stdout");
+        }
+
+        instance = createSinkLogger({ fileSink: appFileSink, consoleSink: config.console === 1 ? appConsoleSink : null });
+        return instance;
+    }
+
+    if (!errorFileSink) {
+        errorFileSink = new LogFileSink({ prefix: "error", maxFileBytes: maxFileBytes });
+    }
+
+    errorInstance = createSinkLogger({ fileSink: errorFileSink, consoleSink: null });
+    return errorInstance;
+}
+
 /**
  * 获取 Logger 实例（延迟初始化）
  */
 export function getLogger(): SinkLogger {
-    // 优先返回 mock 实例（用于测试）
-    if (mockInstance) return mockInstance;
-
-    if (instance) return instance;
-
-    ensureLogDirExists();
-
-    // 方案B：移除启动清理旧日志（减少 I/O 与复杂度）。
-
-    const minLevel = normalizeLogLevelName();
-    const maxSizeMb = typeof config.maxSize === "number" ? config.maxSize : 20;
-    const maxFileBytes = Math.floor(maxSizeMb * 1024 * 1024);
-
-    if (!appFileSink) {
-        appFileSink = new LogFileSink({ prefix: "app", minLevel: minLevel, maxFileBytes: maxFileBytes });
-    }
-    if (config.console === 1 && !appConsoleSink) {
-        appConsoleSink = new LogStreamSink({ kind: "stdout", minLevel: minLevel });
-    }
-
-    instance = createSinkLogger({ kind: "app", minLevel: minLevel, fileSink: appFileSink, consoleSink: config.console === 1 ? appConsoleSink : null });
-    return instance;
+    return getSink("app");
 }
 
-function getErrorLogger(): SinkLogger {
-    if (mockInstance) return mockInstance;
-    if (errorInstance) return errorInstance;
-
-    ensureLogDirExists();
-
-    // 方案B：移除启动清理旧日志（减少 I/O 与复杂度）。
-
-    const maxSizeMb = typeof config.maxSize === "number" ? config.maxSize : 20;
-    const maxFileBytes = Math.floor(maxSizeMb * 1024 * 1024);
-    if (!errorFileSink) {
-        // error logger：固定 minLevel=error
-        errorFileSink = new LogFileSink({ prefix: "error", minLevel: "error", maxFileBytes: maxFileBytes });
-    }
-
-    errorInstance = createSinkLogger({ kind: "error", minLevel: "error", fileSink: errorFileSink, consoleSink: null });
-    return errorInstance;
-}
-
-function formatExtrasToMsg(extras: any[]): string {
-    if (!extras || extras.length === 0) return "";
-
-    const parts: string[] = [];
-    for (const item of extras) {
-        if (item === null) {
-            parts.push("null");
-            continue;
-        }
-        if (item === undefined) {
-            parts.push("undefined");
-            continue;
-        }
-        if (typeof item === "string") {
-            parts.push(item);
-            continue;
-        }
-        if (typeof item === "number" || typeof item === "boolean" || typeof item === "bigint") {
-            parts.push(String(item));
-            continue;
-        }
-        if (item instanceof Error) {
-            parts.push(item.stack || item.message || item.name);
-            continue;
-        }
-        if (isPlainObject(item) || Array.isArray(item)) {
-            try {
-                const sanitized = sanitizeLogObject({ value: item }, sanitizeOptions).value;
-                if (typeof sanitized === "string") {
-                    parts.push(sanitized);
-                } else {
-                    parts.push(JSON.stringify(sanitized));
-                }
-            } catch {
-                parts.push("[Unserializable]");
-            }
-            continue;
-        }
-        try {
-            parts.push(String(item));
-        } catch {
-            parts.push("[Unknown]");
-        }
-    }
-
-    return parts.join(" ");
-}
-
-function truncateForLog(value: string): string {
-    const maxLen = sanitizeOptions.maxStringLen;
-    if (typeof value !== "string") return "";
-    if (value.length <= maxLen) return value;
-    return value.slice(0, maxLen);
-}
-
-function formatErrorForLog(err: Error): Record<string, any> {
-    const out: Record<string, any> = {
-        name: err.name || "Error",
-        message: truncateForLog(err.message || "")
-    };
-
-    if (typeof err.stack === "string") {
-        out.stack = truncateForLog(err.stack);
-    }
-
-    return out;
-}
-
-function buildLogLine(level: LogLevelName, args: any[]): string {
+function buildLogLine(level: LogLevelName, record: LoggerRecord): string {
     const time = Date.now();
     const base: Record<string, any> = {
-        level: LOG_LEVEL_NUM[level],
+        level: level,
         time: time,
         timeText: formatYmdHms(new Date(time)),
         pid: process.pid,
         hostname: HOSTNAME
     };
 
-    if (!args || args.length === 0) {
+    // record 先写入，再用 base 覆盖基础字段（避免 record 覆盖 level/time/pid/hostname 等）
+    // msg 允许保留 record.msg（若存在），否则补齐空字符串。
+    if (record && isPlainObject(record)) {
+        const out = Object.assign({}, record, base);
+        if ((record as any).msg !== undefined) {
+            out.msg = (record as any).msg;
+        } else if (out.msg === undefined) {
+            out.msg = "";
+        }
+        return `${safeJsonStringify(out)}\n`;
+    }
+
+    if (base.msg === undefined) {
         base.msg = "";
-        return `${JSON.stringify(base)}\n`;
     }
 
-    const first = args[0];
-    const second = args.length > 1 ? args[1] : undefined;
-
-    // 兼容：logger.(level)(obj, msg?, ...)
-    if (isPlainObject(first)) {
-        for (const [k, v] of Object.entries(first as Record<string, any>)) {
-            base[k] = v;
-        }
-        if (typeof second === "string") {
-            const extraMsg = formatExtrasToMsg(args.slice(2));
-            base.msg = extraMsg ? `${second} ${extraMsg}` : second;
-        } else {
-            const extraMsg = formatExtrasToMsg(args.slice(1));
-            base.msg = extraMsg;
-        }
-        return `${safeJsonStringify(base)}\n`;
-    }
-
-    // 兼容：logger.(level)(err, msg?)
-    if (first instanceof Error) {
-        base.err = formatErrorForLog(first);
-        if (typeof second === "string") {
-            const extraMsg = formatExtrasToMsg(args.slice(2));
-            base.msg = extraMsg ? `${second} ${extraMsg}` : second;
-        } else {
-            base.msg = formatExtrasToMsg(args.slice(1));
-        }
-        return `${safeJsonStringify(base)}\n`;
-    }
-
-    // 兼容：logger.(level)(msg, ...)
-    if (typeof first === "string") {
-        const extraMsg = formatExtrasToMsg(args.slice(1));
-        base.msg = extraMsg ? `${first} ${extraMsg}` : first;
-        return `${safeJsonStringify(base)}\n`;
-    }
-
-    // 兜底
-    base.msg = formatExtrasToMsg(args);
     return `${safeJsonStringify(base)}\n`;
 }
 
@@ -697,37 +611,31 @@ function safeJsonStringify(obj: Record<string, any>): string {
     }
 }
 
-function createSinkLogger(options: { kind: "app" | "slow" | "error"; minLevel: LogLevelName; fileSink: LogFileSink; consoleSink: LogStreamSink | null }): SinkLogger {
-    const minLevel = options.minLevel;
+function createSinkLogger(options: { fileSink: LogFileSink; consoleSink: StreamSink | null }): SinkLogger {
     const fileSink = options.fileSink;
     const consoleSink = options.consoleSink;
 
-    const write = (level: LogLevelName, args: any[]) => {
-        if (!shouldAccept(minLevel, level)) return;
+    const write = (level: LogLevelName, record: unknown) => {
+        if (level === "debug" && config.debug !== 1) return;
 
-        const line = buildLogLine(level, args);
-        fileSink.enqueue(level, line);
-        if (consoleSink) consoleSink.enqueue(level, line);
-
-        // 关键级别日志应尽快落盘/输出，避免进程快速退出时“只有 exit code，看不到日志”。
-        // 注意：flushNow 内部有 flushing/scheduled 防重入，且会吞掉 I/O 异常，因此这里 fire-and-forget。
-        if (LOG_LEVEL_NUM[level] < LOG_LEVEL_NUM.warn) return;
-        void fileSink.flushNow();
-        if (consoleSink) void consoleSink.flushNow();
+        const sanitizedRecord = sanitizeLogObject(record as any, sanitizeOptions);
+        const line = buildLogLine(level, sanitizedRecord);
+        fileSink.enqueue(line);
+        if (consoleSink) consoleSink.enqueue(line);
     };
 
     return {
-        info(...args: any[]) {
-            write("info", args);
+        info(record: unknown) {
+            write("info", record);
         },
-        warn(...args: any[]) {
-            write("warn", args);
+        warn(record: unknown) {
+            write("warn", record);
         },
-        error(...args: any[]) {
-            write("error", args);
+        error(record: unknown) {
+            write("error", record);
         },
-        debug(...args: any[]) {
-            write("debug", args);
+        debug(record: unknown) {
+            write("debug", record);
         }
     };
 }
@@ -774,118 +682,101 @@ function mergeMetaIntoObject(input: Record<string, any>, meta: Record<string, an
     return merged;
 }
 
-function withRequestMeta(args: any[]): any[] {
+// 日志仅接受 1 个入参（任意类型）。
+// - plain object（{}）直接作为 record
+// - 其他任何类型：包装成对象再写入（避免 sink 层依赖入参类型）
+function toRecord(input: unknown): LoggerRecord {
+    if (isPlainObject(input)) {
+        return input as LoggerRecord;
+    }
+
+    if (input instanceof Error) {
+        return { err: input, msg: input.message || input.name || "Error" };
+    }
+
+    if (input === undefined) {
+        return { msg: "" };
+    }
+
+    if (input === null) {
+        return { msg: "null" };
+    }
+
+    // 非 plain object（数组/Date/Map/...）也走 value 包装，由 sanitize 负责做安全预览/截断。
+    if (typeof input === "object") {
+        return { value: input };
+    }
+
+    try {
+        return { msg: String(input) };
+    } catch {
+        return { msg: "[Unserializable]" };
+    }
+}
+
+function withRequestMetaRecord(record: LoggerRecord): LoggerRecord {
     const meta = metaToObject();
-    if (!meta) return args;
-    if (args.length === 0) return args;
-
-    const first = args[0];
-    const second = args.length > 1 ? args[1] : undefined;
-
-    // 兼容：Logger.error("xxx", err)
-    if (typeof first === "string" && second instanceof Error) {
-        const obj = {
-            err: second
-        };
-        const merged = mergeMetaIntoObject(obj, meta);
-        return [merged, first, ...args.slice(2)];
-    }
-
-    // pino 原生：logger.error(err, msg)
-    if (first instanceof Error) {
-        const msg = typeof second === "string" ? second : undefined;
-        const obj = {
-            err: first
-        };
-        const merged = mergeMetaIntoObject(obj, meta);
-        if (msg) return [merged, msg, ...args.slice(2)];
-        return [merged, ...args.slice(1)];
-    }
-
-    // 纯字符串：Logger.info("msg") -> logger.info(meta, "msg")
-    if (typeof first === "string") {
-        return [meta, ...args];
-    }
-
-    // 对象：Logger.info(obj, msg?) -> 合并 meta（不覆盖显式字段）
-    if (isPlainObject(first)) {
-        const merged = mergeMetaIntoObject(first as Record<string, any>, meta);
-        return [merged, ...args.slice(1)];
-    }
-
-    return args;
+    if (!meta) return record;
+    return mergeMetaIntoObject(record, meta);
 }
 
-type LoggerObject = Record<string, any>;
+class LoggerFacade {
+    private maybeSanitizeForMock(record: LoggerRecord): LoggerRecord {
+        if (!mockInstance) return record;
+        return sanitizeLogObject(record, sanitizeOptions);
+    }
 
-// 兼容 pino 常用调用形式 + 本项目的 Logger.error("msg", err)
-type LoggerCallArgs = [] | [msg: string, ...args: unknown[]] | [obj: LoggerObject, msg?: string, ...args: unknown[]] | [err: Error, msg?: string, ...args: unknown[]] | [msg: string, err: Error, ...args: unknown[]];
+    public info(input: unknown): any {
+        const record0 = withRequestMetaRecord(toRecord(input));
+        const record = this.maybeSanitizeForMock(record0);
+        return getSink("app").info(record);
+    }
 
-function withRequestMetaTyped(args: LoggerCallArgs): LoggerCallArgs {
-    // 复用现有逻辑（保持行为一致），只收敛类型
-    return withRequestMeta(args as any[]) as unknown as LoggerCallArgs;
-}
+    public warn(input: unknown): any {
+        const record0 = withRequestMetaRecord(toRecord(input));
+        const record = this.maybeSanitizeForMock(record0);
+        return getSink("app").warn(record);
+    }
 
-/**
- * 日志实例（延迟初始化）
- */
-export const Logger = {
-    info(...args: LoggerCallArgs) {
-        if (args.length === 0) return;
-        const logger = getLogger();
-        const finalArgs = withRequestMetaTyped(args);
-        if (finalArgs.length === 0) return;
-        if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
-            finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>, sanitizeOptions);
-        }
-        const ret = (logger.info as any).apply(logger, finalArgs);
-        return ret;
-    },
-    warn(...args: LoggerCallArgs) {
-        if (args.length === 0) return;
-        const logger = getLogger();
-        const finalArgs = withRequestMetaTyped(args);
-        if (finalArgs.length === 0) return;
-        if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
-            finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>, sanitizeOptions);
-        }
-        const ret = (logger.warn as any).apply(logger, finalArgs);
-        return ret;
-    },
-    error(...args: LoggerCallArgs) {
-        if (args.length === 0) return;
-        const logger = getLogger();
-        const finalArgs = withRequestMetaTyped(args);
-        if (finalArgs.length === 0) return;
-        if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
-            finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>, sanitizeOptions);
-        }
-        const ret = (logger.error as any).apply(logger, finalArgs);
+    public error(input: unknown): any {
+        const record0 = withRequestMetaRecord(toRecord(input));
+        const record = this.maybeSanitizeForMock(record0);
+        const ret = getSink("app").error(record);
 
         // 测试场景：启用 mock 时不做镜像，避免调用次数翻倍
         if (mockInstance) return ret;
 
         // error 专属文件：始终镜像一份
-        const errorLogger = getErrorLogger();
-        (errorLogger.error as any).apply(errorLogger, finalArgs);
+        getSink("error").error(record);
+        return ret;
+    }
 
-        return ret;
-    },
-    debug(...args: LoggerCallArgs) {
-        if (args.length === 0) return;
-        const logger = getLogger();
-        const finalArgs = withRequestMetaTyped(args);
-        if (finalArgs.length === 0) return;
-        if (finalArgs.length > 0 && isPlainObject(finalArgs[0])) {
-            finalArgs[0] = sanitizeLogObject(finalArgs[0] as Record<string, any>, sanitizeOptions);
-        }
-        const ret = (logger.debug as any).apply(logger, finalArgs);
-        return ret;
-    },
-    async flush() {
+    public debug(input: unknown): any {
+        // debug!=1 则完全不记录 debug 日志（包括文件与控制台）
+        if (config.debug !== 1) return;
+        const record0 = withRequestMetaRecord(toRecord(input));
+        const record = this.maybeSanitizeForMock(record0);
+        return getSink("app").debug(record);
+    }
+
+    public async flush(): Promise<void> {
         await flush();
-    },
-    configure: configure,
-    setMock: setMockLogger,
-    shutdown: shutdown
-};
+    }
+
+    public configure(cfg: LoggerConfig): void {
+        configure(cfg);
+    }
+
+    public setMock(mock: SinkLogger | null): void {
+        setMockLogger(mock);
+    }
+
+    public async shutdown(): Promise<void> {
+        await shutdown();
+    }
+}
+
+/**
+ * 日志实例（延迟初始化）
+ */
+export const Logger = new LoggerFacade();

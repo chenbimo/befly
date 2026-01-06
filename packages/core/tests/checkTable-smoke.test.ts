@@ -6,6 +6,23 @@ import { checkTable } from "../checks/checkTable.ts";
 import { Logger } from "../lib/logger.ts";
 
 describe("checkTable - smoke", () => {
+    const getMsgFromArgs = (args: unknown[]): string => {
+        const first = args[0];
+
+        if (typeof first === "string") {
+            return first;
+        }
+
+        if (typeof first === "object" && first !== null) {
+            const record = first as any;
+            if (typeof record.msg === "string") {
+                return record.msg;
+            }
+        }
+
+        return String(first);
+    };
+
     test("应忽略非 table 项；合法表定义不应抛错", async () => {
         const items: ScanFileResult[] = [
             {
@@ -104,7 +121,7 @@ describe("checkTable - smoke", () => {
             Logger.setMock(null);
         }
 
-        const warnMessages = calls.filter((item) => item.level === "warn").map((item) => String(item.args[0]));
+        const warnMessages = calls.filter((item) => item.level === "warn").map((item) => getMsgFromArgs(item.args));
 
         expect(warnMessages.some((msg) => msg.includes("表 TestCustomers"))).toBe(true);
         expect(warnMessages.some((msg) => msg.includes("undefined表"))).toBe(false);
@@ -149,7 +166,7 @@ describe("checkTable - smoke", () => {
             Logger.setMock(null);
         }
 
-        const warnMessages = calls.filter((item) => item.level === "warn").map((item) => String(item.args[0]));
+        const warnMessages = calls.filter((item) => item.level === "warn").map((item) => getMsgFromArgs(item.args));
 
         expect(warnMessages.some((msg) => msg.includes("表 TestCustomers"))).toBe(true);
         expect(warnMessages.some((msg) => msg.includes("undefined表"))).toBe(false);

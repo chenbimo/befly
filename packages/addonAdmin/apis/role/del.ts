@@ -42,7 +42,7 @@ export default {
 
             return befly.tool.Yes("操作成功");
         } catch (error: any) {
-            befly.logger.error({ err: error }, "删除角色失败");
+            befly.logger.error({ err: error, msg: "删除角色失败" });
             return befly.tool.No("操作失败");
         }
     }

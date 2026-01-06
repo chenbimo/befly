@@ -20,7 +20,7 @@ export default {
 
             return befly.tool.Yes("操作成功", result.data);
         } catch (error: any) {
-            befly.logger.error({ err: error }, "获取接口列表失败");
+            befly.logger.error({ err: error, msg: "获取接口列表失败" });
             return befly.tool.No("获取接口列表失败");
         }
     }

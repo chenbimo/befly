@@ -80,7 +80,7 @@ export class DbHelper {
         // 3. 写入 Redis 缓存
         const cacheRes = await this.redis.setObject(cacheKey, columnNames, TABLE_COLUMNS_CACHE_TTL_SECONDS);
         if (cacheRes === null) {
-            Logger.warn({ table: table, cacheKey: cacheKey }, "表字段缓存写入 Redis 失败");
+            Logger.warn({ table: table, cacheKey: cacheKey, msg: "表字段缓存写入 Redis 失败" });
         }
 
         return columnNames;
@@ -502,12 +502,12 @@ export class DbHelper {
 
         // 警告日志：返回数据超过警告阈值
         if (result.length >= WARNING_LIMIT) {
-            Logger.warn({ table: options.table, count: result.length, total: total }, "getAll 返回数据过多，建议使用 getList 分页查询");
+            Logger.warn({ table: options.table, count: result.length, total: total, msg: "getAll 返回数据过多，建议使用 getList 分页查询" });
         }
 
         // 如果达到上限，额外警告
         if (result.length >= MAX_LIMIT) {
-            Logger.warn({ table: options.table, limit: MAX_LIMIT, total: total }, `getAll 达到最大限制 ${MAX_LIMIT}，实际总数 ${total}，只返回前 ${MAX_LIMIT} 条`);
+            Logger.warn({ table: options.table, limit: MAX_LIMIT, total: total, msg: `getAll 达到最大限制 ${MAX_LIMIT}，实际总数 ${total}，只返回前 ${MAX_LIMIT} 条` });
         }
 
         // 字段名转换：下划线 → 小驼峰
@@ -619,16 +619,14 @@ export class DbHelper {
                 sql: execRes.sql
             };
         } catch (error: any) {
-            Logger.error(
-                {
-                    err: error,
-                    table: table,
-                    snakeTable: snakeTable,
-                    count: dataList.length,
-                    fields: insertFields
-                },
-                "批量插入失败"
-            );
+            Logger.error({
+                err: error,
+                table: table,
+                snakeTable: snakeTable,
+                count: dataList.length,
+                fields: insertFields,
+                msg: "批量插入失败"
+            });
             throw error;
         }
     }

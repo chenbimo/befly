@@ -124,7 +124,7 @@ export class CacheHelper {
                 Logger.warn("⚠️ 接口缓存失败");
             }
         } catch (error: any) {
-            Logger.error({ err: error }, "⚠️ 接口缓存异常");
+            Logger.error({ err: error, msg: "⚠️ 接口缓存异常" });
         }
     }
 
@@ -152,7 +152,7 @@ export class CacheHelper {
                 Logger.warn("⚠️ 菜单缓存失败");
             }
         } catch (error: any) {
-            Logger.warn({ err: error }, "⚠️ 菜单缓存异常");
+            Logger.warn({ err: error, msg: "⚠️ 菜单缓存异常" });
         }
     }
 
@@ -213,7 +213,7 @@ export class CacheHelper {
 
             // 极简方案不做版本/ready/meta：重建完成即生效
         } catch (error: any) {
-            Logger.error({ err: error }, "⚠️ 角色权限缓存异常（将阻断启动）");
+            Logger.error({ err: error, msg: "⚠️ 角色权限缓存异常（将阻断启动）" });
             throw error;
         }
     }
@@ -271,7 +271,7 @@ export class CacheHelper {
             const apis = await this.redis.getObject<any[]>(CacheKeys.apisAll());
             return apis || [];
         } catch (error: any) {
-            Logger.error({ err: error }, "获取接口缓存失败");
+            Logger.error({ err: error, msg: "获取接口缓存失败" });
             return [];
         }
     }
@@ -285,7 +285,7 @@ export class CacheHelper {
             const menus = await this.redis.getObject<any[]>(CacheKeys.menusAll());
             return menus || [];
         } catch (error: any) {
-            Logger.error({ err: error }, "获取菜单缓存失败");
+            Logger.error({ err: error, msg: "获取菜单缓存失败" });
             return [];
         }
     }
@@ -300,7 +300,7 @@ export class CacheHelper {
             const permissions = await this.redis.smembers(CacheKeys.roleApis(roleCode));
             return permissions || [];
         } catch (error: any) {
-            Logger.error({ err: error, roleCode: roleCode }, "获取角色权限缓存失败");
+            Logger.error({ err: error, roleCode: roleCode, msg: "获取角色权限缓存失败" });
             return [];
         }
     }
@@ -316,7 +316,7 @@ export class CacheHelper {
             const pathname = this.assertApiPathname(apiPath, "checkRolePermission: apiPath");
             return await this.redis.sismember(CacheKeys.roleApis(roleCode), pathname);
         } catch (error: any) {
-            Logger.error({ err: error, roleCode: roleCode }, "检查角色权限失败");
+            Logger.error({ err: error, roleCode: roleCode, msg: "检查角色权限失败" });
             return false;
         }
     }
@@ -335,7 +335,7 @@ export class CacheHelper {
             }
             return false;
         } catch (error: any) {
-            Logger.error({ err: error, roleCode: roleCode }, "删除角色权限缓存失败");
+            Logger.error({ err: error, roleCode: roleCode, msg: "删除角色权限缓存失败" });
             return false;
         }
     }

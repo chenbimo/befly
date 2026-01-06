@@ -13,27 +13,27 @@ export async function checkHook(hooks: any[]): Promise<void> {
     for (const hook of hooks) {
         try {
             if (!isPlainObject(hook)) {
-                Logger.warn(omit(hook, ["handler"]), "钩子导出必须是对象（export default { deps, handler }）");
+                Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子导出必须是对象（export default { deps, handler }）" }));
                 hasError = true;
                 continue;
             }
 
             // moduleName 必须存在（用于依赖排序与运行时挂载）。
             if (typeof (hook as any).moduleName !== "string" || (hook as any).moduleName.trim() === "") {
-                Logger.warn(omit(hook, ["handler"]), "钩子的 moduleName 必须是非空字符串（由系统生成，用于 deps 与运行时挂载）");
+                Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子的 moduleName 必须是非空字符串（由系统生成，用于 deps 与运行时挂载）" }));
                 hasError = true;
                 continue;
             }
 
             const customKeys = (hook as any).customKeys;
             if (!Array.isArray(customKeys)) {
-                Logger.warn(omit(hook, ["handler"]), "钩子扫描结果缺少 customKeys（无法判断用户导出的字段是否合法）");
+                Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子扫描结果缺少 customKeys（无法判断用户导出的字段是否合法）" }));
                 hasError = true;
                 continue;
             }
 
             if (customKeys.some((k: any) => typeof k !== "string")) {
-                Logger.warn(omit(hook, ["handler"]), "钩子的 customKeys 必须是 string[]（由系统生成）");
+                Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子的 customKeys 必须是 string[]（由系统生成）" }));
                 hasError = true;
                 continue;
             }
@@ -41,7 +41,7 @@ export async function checkHook(hooks: any[]): Promise<void> {
             // 严格字段校验：仅检查用户 default export 的字段集合，出现任何未支持字段都应视为错误。
             const unknownCustomKeys = (customKeys as string[]).filter((k) => !exportKeys.includes(k));
             if (unknownCustomKeys.length > 0) {
-                Logger.warn(omit(hook, ["handler"]), `钩子导出存在不支持的属性：${unknownCustomKeys.join(", ")}；仅允许：${exportKeys.join(", ")}；当前 customKeys：${(customKeys as string[]).join(", ")}`);
+                Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: `钩子导出存在不支持的属性：${unknownCustomKeys.join(", ")}；仅允许：${exportKeys.join(", ")}；当前 customKeys：${(customKeys as string[]).join(", ")}` }));
                 hasError = true;
                 continue;
             }
@@ -54,7 +54,7 @@ export async function checkHook(hooks: any[]): Promise<void> {
             // - 若用户显式导出 enable：必须是 boolean
             if (hasCustomEnable) {
                 if (typeof (hook as any).enable !== "boolean") {
-                    Logger.warn(omit(hook, ["handler"]), "钩子的 enable 属性必须是 boolean（true/false），不允许 0/1 等其他类型");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子的 enable 属性必须是 boolean（true/false），不允许 0/1 等其他类型" }));
                     hasError = true;
                     continue;
                 }
@@ -66,32 +66,32 @@ export async function checkHook(hooks: any[]): Promise<void> {
             if ((hook as any).source === "core") {
                 const name = typeof (hook as any).name === "string" ? (hook as any).name : "";
                 if (name === "") {
-                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子必须显式设置 name（string），用于确定钩子名称");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "core 内置钩子必须显式设置 name（string），用于确定钩子名称" }));
                     hasError = true;
                     continue;
                 }
 
                 // name 必须满足：小写字母 + 下划线（不允许空格、驼峰、数字等）。
                 if (!coreBuiltinNameRegexp.test(name)) {
-                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子的 name 必须满足小写字母+下划线格式（例如 auth / rate_limit），不允许空格、驼峰或其他字符");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "core 内置钩子的 name 必须满足小写字母+下划线格式（例如 auth / rate_limit），不允许空格、驼峰或其他字符" }));
                     hasError = true;
                     continue;
                 }
 
                 if (!coreBuiltinNameRegexp.test((hook as any).moduleName)) {
-                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子的 moduleName 必须满足小写字母+下划线格式（由系统生成，且必须与 name 一致）");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "core 内置钩子的 moduleName 必须满足小写字母+下划线格式（由系统生成，且必须与 name 一致）" }));
                     hasError = true;
                     continue;
                 }
 
                 if (name !== (hook as any).moduleName) {
-                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子的 name 必须与 moduleName 完全一致");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "core 内置钩子的 name 必须与 moduleName 完全一致" }));
                     hasError = true;
                     continue;
                 }
 
                 if (typeof (hook as any).filePath !== "string" || !(hook as any).filePath.startsWith(`core:hook:${name}`)) {
-                    Logger.warn(omit(hook, ["handler"]), "core 内置钩子必须来自静态注册（filePath 必须以 core:hook:<name> 开头），不允许通过扫描目录加载");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "core 内置钩子必须来自静态注册（filePath 必须以 core:hook:<name> 开头），不允许通过扫描目录加载" }));
                     hasError = true;
                     continue;
                 }
@@ -100,13 +100,13 @@ export async function checkHook(hooks: any[]): Promise<void> {
             // deps：允许缺省（补全为 []），但如果用户显式导出 deps，则必须是 string[]。
             if (hasCustomDeps) {
                 if (!Array.isArray((hook as any).deps)) {
-                    Logger.warn(omit(hook, ["handler"]), "钩子的 deps 属性必须是字符串数组");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子的 deps 属性必须是字符串数组" }));
                     hasError = true;
                     continue;
                 }
 
                 if ((hook as any).deps.some((depItem: any) => typeof depItem !== "string")) {
-                    Logger.warn(omit(hook, ["handler"]), "钩子的 deps 属性必须是字符串数组");
+                    Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子的 deps 属性必须是字符串数组" }));
                     hasError = true;
                     continue;
                 }
@@ -117,18 +117,12 @@ export async function checkHook(hooks: any[]): Promise<void> {
             }
 
             if (typeof (hook as any).handler !== "function") {
-                Logger.warn(omit(hook, ["handler"]), "钩子的 handler 属性必须是函数");
+                Logger.warn(Object.assign({}, omit(hook, ["handler"]), { msg: "钩子的 handler 属性必须是函数" }));
                 hasError = true;
                 continue;
             }
         } catch (error: any) {
-            Logger.error(
-                {
-                    err: error,
-                    item: hook
-                },
-                "钩子解析失败"
-            );
+            Logger.error({ err: error, item: hook, msg: "钩子解析失败" });
             hasError = true;
         }
     }

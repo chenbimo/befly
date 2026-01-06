@@ -43,17 +43,36 @@ export interface LoggerConfig {
     excludeFields?: string[];
 }
 
+export type LogLevelName = "debug" | "info" | "warn" | "error";
+
+export type LoggerRecord = {
+    /** 文本消息（推荐直接放在 record 里） */
+    msg?: string;
+    /** 错误对象（会在运行时被清洗为可序列化结构） */
+    err?: unknown;
+    /** 其他自定义字段 */
+    [key: string]: unknown;
+};
+
 /**
  * Logger 接口（类型层）。
  *
  * 说明：core/runtime 内部使用的是 Bun 环境的自定义 Logger 实现（异步批量写入）。
- * 对外只承诺常用的 `info/warn/error/debug` 等调用形式（兼容常见 pino 调用风格）。
+ * 对外只承诺常用的 `info/warn/error/debug` 等调用形式（不再兼容 pino 的多签名调用）。
  */
 export interface Logger {
-    info(...args: any[]): any;
-    warn(...args: any[]): any;
-    error(...args: any[]): any;
-    debug(...args: any[]): any;
+    /**
+     * 只接受一个参数（任意类型）：
+     * - plain object（{}）会作为 record 写入
+     * - 其他任何类型会被包装成对象后写入（例如 { msg: "..." } 或 { value: ... }）
+     */
+    info(input: unknown): any;
+
+    warn(input: unknown): any;
+
+    error(input: unknown): any;
+
+    debug(input: unknown): any;
 
     configure(cfg: LoggerConfig): void;
     setMock(mock: any | null): void;

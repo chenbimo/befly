@@ -81,7 +81,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
                 })
             );
         } catch (error: any) {
-            Logger.error({ err: error }, "同步接口批量更新失败");
+            Logger.error({ err: error, msg: "同步接口批量更新失败" });
         }
     }
 
@@ -98,7 +98,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
                 })
             );
         } catch (error: any) {
-            Logger.error({ err: error }, "同步接口批量新增失败");
+            Logger.error({ err: error, msg: "同步接口批量新增失败" });
         }
     }
 
@@ -106,7 +106,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
         try {
             await ctx.db.delForceBatch(tableName, delData);
         } catch (error: any) {
-            Logger.error({ err: error }, "同步接口批量删除失败");
+            Logger.error({ err: error, msg: "同步接口批量删除失败" });
         }
     }
     // 缓存同步职责已收敛到 syncCache（启动流程单点调用），此处只负责 DB 同步。

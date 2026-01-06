@@ -89,17 +89,17 @@ export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string
 
             const scriptSetup = extractScriptSetupBlock(content);
             if (!scriptSetup) {
-                Logger.warn({ path: indexVuePath }, "index.vue 缺少 <script setup>，已跳过该目录菜单同步");
+                Logger.warn({ path: indexVuePath, msg: "index.vue 缺少 <script setup>，已跳过该目录菜单同步" });
                 continue;
             }
 
             meta = extractDefinePageMetaFromScriptSetup(scriptSetup);
             if (!meta?.title) {
-                Logger.warn({ path: indexVuePath }, "index.vue 未声明 definePage({ meta: { title, order? } })，已跳过该目录菜单同步");
+                Logger.warn({ path: indexVuePath, msg: "index.vue 未声明 definePage({ meta: { title, order? } })，已跳过该目录菜单同步" });
                 continue;
             }
         } catch (error: any) {
-            Logger.warn({ err: error, path: indexVuePath }, "读取 index.vue 失败");
+            Logger.warn({ err: error, path: indexVuePath, msg: "读取 index.vue 失败" });
             continue;
         }
 
@@ -166,15 +166,13 @@ export async function loadMenuConfigs(addons: AddonInfo[]): Promise<MenuConfig[]
                 }
             }
         } catch (error: any) {
-            Logger.warn(
-                {
-                    err: error,
-                    addon: addon.name,
-                    addonSource: addon.source,
-                    dir: adminViewsDir
-                },
-                "扫描 addon views 目录失败"
-            );
+            Logger.warn({
+                err: error,
+                addon: addon.name,
+                addonSource: addon.source,
+                dir: adminViewsDir,
+                msg: "扫描 addon views 目录失败"
+            });
         }
     }
 
@@ -189,7 +187,7 @@ export async function loadMenuConfigs(addons: AddonInfo[]): Promise<MenuConfig[]
                 }
             }
         } catch (error: any) {
-            Logger.warn({ err: error }, "读取项目 menus.json 失败");
+            Logger.warn({ err: error, msg: "读取项目 menus.json 失败" });
         }
     }
 

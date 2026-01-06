@@ -26,7 +26,7 @@ export default {
 
             return befly.tool.Yes("操作成功");
         } catch (error) {
-            befly.logger.error({ err: error }, "删除系统配置失败");
+            befly.logger.error({ err: error, msg: "删除系统配置失败" });
             return befly.tool.No("操作失败");
         }
     }

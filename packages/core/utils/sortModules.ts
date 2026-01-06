@@ -53,20 +53,18 @@ export function sortModules<T extends { fileName: string; deps?: any }>(items: T
         const name = getName(item);
 
         if (typeof name !== "string" || name.trim() === "") {
-            Logger.error({ item: item }, `${moduleLabel} 名称解析失败（getName 返回空字符串）`);
+            Logger.error({ item: item, msg: `${moduleLabel} 名称解析失败（getName 返回空字符串）` });
             isPass = false;
             continue;
         }
 
         if (nameToItem[name]) {
-            Logger.error(
-                {
-                    name: name,
-                    first: nameToItem[name],
-                    second: item
-                },
-                `${moduleLabel} 名称重复，无法根据 deps 唯一定位`
-            );
+            Logger.error({
+                name: name,
+                first: nameToItem[name],
+                second: item,
+                msg: `${moduleLabel} 名称重复，无法根据 deps 唯一定位`
+            });
             isPass = false;
             continue;
         }
@@ -82,20 +80,20 @@ export function sortModules<T extends { fileName: string; deps?: any }>(items: T
         const deps = getDeps(item);
 
         if (!Array.isArray(deps)) {
-            Logger.error({ module: name, item: item }, `${moduleLabel} 的 deps 必须是数组`);
+            Logger.error({ module: name, item: item, msg: `${moduleLabel} 的 deps 必须是数组` });
             isPass = false;
             continue;
         }
 
         for (const dep of deps) {
             if (typeof dep !== "string") {
-                Logger.error({ module: name, dependency: dep, item: item }, `${moduleLabel} 的 deps 必须是字符串数组`);
+                Logger.error({ module: name, dependency: dep, item: item, msg: `${moduleLabel} 的 deps 必须是字符串数组` });
                 isPass = false;
                 continue;
             }
 
             if (!nameToItem[dep]) {
-                Logger.error({ module: name, dependency: dep }, `${moduleLabel} 依赖未找到`);
+                Logger.error({ module: name, dependency: dep, msg: `${moduleLabel} 依赖未找到` });
                 isPass = false;
             }
         }
@@ -107,7 +105,7 @@ export function sortModules<T extends { fileName: string; deps?: any }>(items: T
     const visit = (name: string): void => {
         if (visited.has(name)) return;
         if (visiting.has(name)) {
-            Logger.error({ module: name }, `${moduleLabel} 循环依赖`);
+            Logger.error({ module: name, msg: `${moduleLabel} 循环依赖` });
             isPass = false;
             return;
         }

@@ -94,7 +94,7 @@ export class Connect {
             this.sqlPoolMax = config.poolMax ?? 1;
             return sql;
         } catch (error: any) {
-            Logger.error({ err: error }, "[Connect] SQL 连接失败");
+            Logger.error({ err: error, msg: "[Connect] SQL 连接失败" });
             try {
                 await sql?.close();
             } catch {}
@@ -111,7 +111,7 @@ export class Connect {
             try {
                 await this.sqlClient.close();
             } catch (error: any) {
-                Logger.error({ err: error }, "[Connect] 关闭 SQL 连接时出错");
+                Logger.error({ err: error, msg: "[Connect] 关闭 SQL 连接时出错" });
             }
             this.sqlClient = null;
             this.sqlConnectedAt = null;
@@ -172,7 +172,7 @@ export class Connect {
             this.redisConnectedAt = Date.now();
             return redis;
         } catch (error: any) {
-            Logger.error({ err: error }, "[Connect] Redis 连接失败");
+            Logger.error({ err: error, msg: "[Connect] Redis 连接失败" });
             throw new Error(`Redis 连接失败: ${error.message}`);
         }
     }
@@ -186,7 +186,7 @@ export class Connect {
                 this.redisClient.close();
                 this.redisConnectedAt = null;
             } catch (error: any) {
-                Logger.error({ err: error }, "[Connect] 关闭 Redis 连接时出错");
+                Logger.error({ err: error, msg: "[Connect] 关闭 Redis 连接时出错" });
             }
             this.redisClient = null;
         }
@@ -218,7 +218,7 @@ export class Connect {
             // 连接 Redis
             await this.connectRedis(config.redis || {});
         } catch (error: any) {
-            Logger.error({ err: error }, "数据库初始化失败");
+            Logger.error({ err: error, msg: "数据库初始化失败" });
             await this.disconnect();
             throw error;
         }

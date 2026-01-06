@@ -145,7 +145,7 @@ export class Befly {
                     return staticFetch(req);
                 },
                 error: (error: Error) => {
-                    Logger.error({ err: error }, "服务启动时发生错误");
+                    Logger.error({ err: error, msg: "服务启动时发生错误" });
                     // 开发模式下返回详细错误信息
                     if (this.config!.nodeEnv === "development") {
                         return Response.json(
@@ -177,7 +177,7 @@ export class Befly {
             // 注意：这里不能直接 process.exit(1)
             // - Logger 是异步缓冲写入，exit 会导致日志来不及 flush（实际项目里表现为“完全没打印”）
             // - 作为库代码，也不应该强行终止宿主进程
-            Logger.error({ err: error }, "项目启动失败");
+            Logger.error({ err: error, msg: "项目启动失败" });
 
             // 尽力把错误日志落盘/输出后再把异常抛给上层。
             try {

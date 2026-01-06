@@ -86,15 +86,15 @@ async function main(): Promise<void> {
     };
 
     output.teeLine(`# ${base}.bench`);
-    output.teeLine("(no-IO) comparing Logger.info(obj,msg) with setMock vs baseline JSON.stringify");
+    output.teeLine("(no-IO) comparing Logger.info(record) with setMock vs baseline JSON.stringify");
     output.teeLine("");
 
     const cases = [
         {
-            name: "Logger.info(obj,msg) (setMock)",
+            name: "Logger.info(record) (setMock)",
             fn: () => {
                 Logger.setMock(mockLogger as any);
-                Logger.info(payload as any, "hello");
+                Logger.info(Object.assign({}, payload as any, { msg: "hello" }));
                 Logger.setMock(null);
             }
         },

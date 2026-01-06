@@ -32,7 +32,7 @@ export default {
                 await befly.redis.setObject("apis:all", apis.data.lists);
                 results.apis = { success: true, count: apis.data.lists.length };
             } catch (error: any) {
-                befly.logger.error({ err: error }, "刷新接口缓存失败");
+                befly.logger.error({ err: error, msg: "刷新接口缓存失败" });
                 results.apis = { success: false, error: error.message };
             }
 
@@ -54,7 +54,7 @@ export default {
                     childCount: childCount
                 };
             } catch (error: any) {
-                befly.logger.error({ err: error }, "刷新菜单缓存失败");
+                befly.logger.error({ err: error, msg: "刷新菜单缓存失败" });
                 results.menus = { success: false, error: error.message };
             }
 
@@ -74,7 +74,7 @@ export default {
 
                 results.roles = { success: true, count: count };
             } catch (error: any) {
-                befly.logger.error({ err: error }, "刷新角色缓存失败");
+                befly.logger.error({ err: error, msg: "刷新角色缓存失败" });
                 results.roles = { success: false, error: error.message };
             }
 
@@ -83,7 +83,7 @@ export default {
                 await befly.cache.rebuildRoleApiPermissions();
                 results.roleApiPermissions = { success: true };
             } catch (error: any) {
-                befly.logger.error({ err: error }, "重建角色接口权限缓存失败");
+                befly.logger.error({ err: error, msg: "重建角色接口权限缓存失败" });
                 results.roleApiPermissions = { success: false, error: error.message };
             }
 
@@ -96,7 +96,7 @@ export default {
                 return befly.tool.No("部分缓存刷新失败", results);
             }
         } catch (error: any) {
-            befly.logger.error({ err: error }, "刷新全部缓存失败");
+            befly.logger.error({ err: error, msg: "刷新全部缓存失败" });
             return befly.tool.No("刷新全部缓存失败", { error: error.message });
         }
     }

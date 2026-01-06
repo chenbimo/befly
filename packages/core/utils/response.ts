@@ -17,16 +17,14 @@ export function ErrorResponse(ctx: RequestContext, msg: string, code: number = 1
     // 记录拦截日志
     if (ctx.requestId) {
         // requestId/route/user/duration 等字段由 ALS 统一注入，避免在 msg 中重复拼接
-        Logger.info(
-            {
-                event: "request_blocked",
-                reason: msg,
-                reasonCode: reasonCode,
-                code: code,
-                detail: detail
-            },
-            "request blocked"
-        );
+        Logger.info({
+            event: "request_blocked",
+            reason: msg,
+            reasonCode: reasonCode,
+            code: code,
+            detail: detail,
+            msg: "request blocked"
+        });
     }
 
     return Response.json(
@@ -52,12 +50,10 @@ export function FinalResponse(ctx: RequestContext): Response {
     // 记录请求日志
     if (ctx.api && ctx.requestId) {
         // requestId/route/user/duration 等字段由 ALS 统一注入，避免在 msg 中重复拼接
-        Logger.info(
-            {
-                event: "request_done"
-            },
-            "request done"
-        );
+        Logger.info({
+            event: "request_done",
+            msg: "request done"
+        });
     }
 
     // 1. 如果已经有 response，直接返回

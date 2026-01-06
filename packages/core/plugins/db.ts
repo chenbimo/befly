@@ -35,7 +35,7 @@ export default {
 
             return dbManager;
         } catch (error: any) {
-            Logger.error({ err: error }, "数据库初始化失败");
+            Logger.error({ err: error, msg: "数据库初始化失败" });
             throw error;
         }
     }

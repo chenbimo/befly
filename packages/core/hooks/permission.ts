@@ -49,15 +49,13 @@ export default {
                 hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
             } catch (err: any) {
                 // Redis 异常：记录到 error 日志文件（不回传给客户端），并降级为拒绝访问
-                Logger.error(
-                    {
-                        event: "hook_permission_redis_error",
-                        apiPath: apiPath,
-                        roleCode: roleCode,
-                        err: err
-                    },
-                    "hook permission redis error"
-                );
+                Logger.error({
+                    event: "hook_permission_redis_error",
+                    apiPath: apiPath,
+                    roleCode: roleCode,
+                    err: err,
+                    msg: "hook permission redis error"
+                });
                 hasPermission = false;
             }
         }

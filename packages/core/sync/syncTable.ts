@@ -197,7 +197,7 @@ export const syncTable = (async (ctx: BeflyContext, items: ScanFileResult[]): Pr
             await ctx.redis.delBatch(cacheKeys);
         }
     } catch (error: any) {
-        Logger.error({ err: error }, "数据库同步失败");
+        Logger.error({ err: error, msg: "数据库同步失败" });
         throw error;
     }
 }) as SyncTableFn;
@@ -1053,7 +1053,7 @@ async function applyTablePlan(runtime: SyncRuntime, tableName: string, fields: R
                 Logger.debug(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
             }
         } catch (error: any) {
-            Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName }, `${act.action === "create" ? "创建" : "删除"}索引失败`);
+            Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: `${act.action === "create" ? "创建" : "删除"}索引失败` });
             throw error;
         }
     }

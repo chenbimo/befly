@@ -82,7 +82,7 @@ export default {
                 return befly.tool.No("账号或密码错误");
             }
         } catch (error: any) {
-            befly.logger.error({ err: error }, "密码验证失败");
+            befly.logger.error({ err: error, msg: "密码验证失败" });
             logData.failReason = "密码格式错误";
             await befly.db.insData({ table: "addon_admin_login_log", data: logData });
             return befly.tool.No("密码格式错误，请重新设置密码");

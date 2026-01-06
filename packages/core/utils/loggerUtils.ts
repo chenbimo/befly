@@ -1,7 +1,5 @@
 import { isPlainObject } from "./util";
 
-export type LogLevelName = "debug" | "info" | "warn" | "error";
-
 export type SensitiveKeyMatcher = {
     exactSet: Set<string>;
     contains: string[];
@@ -15,24 +13,6 @@ export type LogSanitizeOptions = {
     sanitizeObjectKeys: number;
     sensitiveKeyMatcher: SensitiveKeyMatcher;
 };
-
-export function shiftBatchFromPending(pending: string[], maxBatchBytes: number): { chunk: string; bytes: number } {
-    const parts: string[] = [];
-    let bytes = 0;
-
-    while (pending.length > 0) {
-        const next = pending[0] as string;
-        const nextBytes = Buffer.byteLength(next);
-        if (parts.length > 0 && bytes + nextBytes > maxBatchBytes) {
-            break;
-        }
-        parts.push(next);
-        bytes = bytes + nextBytes;
-        pending.shift();
-    }
-
-    return { chunk: parts.join(""), bytes: bytes };
-}
 
 export function buildSensitiveKeyMatcher(options: { builtinPatterns: string[]; userPatterns: unknown }): SensitiveKeyMatcher {
     const patterns: string[] = [];
@@ -235,11 +215,4 @@ export function sanitizeLogObject(obj: Record<string, any>, options: LogSanitize
     }
 
     return out;
-}
-
-export function scheduleDeferredFlush(currentTimer: NodeJS.Timeout | null, flushDelayMs: number, flush: () => Promise<void>): NodeJS.Timeout {
-    if (currentTimer) return currentTimer;
-    return setTimeout(() => {
-        void flush();
-    }, flushDelayMs);
 }

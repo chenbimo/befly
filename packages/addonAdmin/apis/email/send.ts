@@ -57,7 +57,7 @@ export default {
                 }
             });
         } catch (logError: any) {
-            befly.logger.error({ err: logError }, "记录邮件日志失败");
+            befly.logger.error({ err: logError, msg: "记录邮件日志失败" });
         }
 
         if (result.success) {

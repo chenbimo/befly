@@ -53,7 +53,7 @@ export function staticHandler(corsConfig: CorsConfig | undefined = undefined) {
                 );
             }
         } catch (error: any) {
-            Logger.error({ err: error }, "静态文件处理失败");
+            Logger.error({ err: error, msg: "静态文件处理失败" });
 
             return Response.json(
                 {

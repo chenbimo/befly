@@ -15,7 +15,7 @@ export async function importDefault<T>(file: string, defaultValue: T): Promise<T
         }
         return value as T;
     } catch (err: any) {
-        Logger.warn({ err: err, file: file }, "importDefault 导入失败，已回退到默认值");
+        Logger.warn({ err: err, file: file, msg: "importDefault 导入失败，已回退到默认值" });
         return defaultValue;
     }
 }

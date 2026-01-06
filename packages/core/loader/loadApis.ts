@@ -34,7 +34,7 @@ export async function loadApis(apis: ScanFileResult[]): Promise<Map<string, ApiR
 
             apisMap.set(apiRoute.routePath, apiRoute as ApiRoute);
         } catch (error: any) {
-            Logger.error({ err: error, api: api.relativePath, file: api.filePath }, "接口加载失败");
+            Logger.error({ err: error, api: api.relativePath, file: api.filePath, msg: "接口加载失败" });
             throw error;
         }
     }

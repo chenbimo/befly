@@ -33,17 +33,15 @@ export class RedisHelper {
 
     private logSlow(cmd: string, key: string, duration: number, extra: Record<string, any> = {}): void {
         if (duration <= this.slowThresholdMs) return;
-        Logger.warn(
-            {
-                subsystem: "redis",
-                event: "slow",
-                duration: duration,
-                cmd: cmd,
-                key: key,
-                extra: extra
-            },
-            "🐌 Redis 慢操作"
-        );
+        Logger.warn({
+            subsystem: "redis",
+            event: "slow",
+            duration: duration,
+            cmd: cmd,
+            key: key,
+            extra: extra,
+            msg: "🐌 Redis 慢操作"
+        });
     }
 
     /**
@@ -72,7 +70,7 @@ export class RedisHelper {
             this.logSlow("SET", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis setObject 错误");
+            Logger.error({ err: error, msg: "Redis setObject 错误" });
             return null;
         }
     }
@@ -92,7 +90,7 @@ export class RedisHelper {
             this.logSlow("GET", pkey, duration);
             return data ? JSON.parse(data) : null;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis getObject 错误");
+            Logger.error({ err: error, msg: "Redis getObject 错误" });
             return null;
         }
     }
@@ -110,7 +108,7 @@ export class RedisHelper {
             const duration = Date.now() - startTime;
             this.logSlow("DEL", pkey, duration);
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis delObject 错误");
+            Logger.error({ err: error, msg: "Redis delObject 错误" });
         }
     }
 
@@ -167,7 +165,7 @@ export class RedisHelper {
             this.logSlow("SET", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis setString 错误");
+            Logger.error({ err: error, msg: "Redis setString 错误" });
             return null;
         }
     }
@@ -186,7 +184,7 @@ export class RedisHelper {
             this.logSlow("GET", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis getString 错误");
+            Logger.error({ err: error, msg: "Redis getString 错误" });
             return null;
         }
     }
@@ -206,7 +204,7 @@ export class RedisHelper {
             this.logSlow("EXISTS", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis exists 错误");
+            Logger.error({ err: error, msg: "Redis exists 错误" });
             return false;
         }
     }
@@ -226,7 +224,7 @@ export class RedisHelper {
             this.logSlow("INCR", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis incr 错误");
+            Logger.error({ err: error, msg: "Redis incr 错误" });
             return 0;
         }
     }
@@ -250,7 +248,7 @@ export class RedisHelper {
             this.logSlow("INCR", pkey, duration, { expireSeconds: seconds });
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis incrWithExpire 错误");
+            Logger.error({ err: error, msg: "Redis incrWithExpire 错误" });
             return 0;
         }
     }
@@ -270,7 +268,7 @@ export class RedisHelper {
             this.logSlow("EXPIRE", pkey, duration, { seconds: seconds });
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis expire 错误");
+            Logger.error({ err: error, msg: "Redis expire 错误" });
             return 0;
         }
     }
@@ -289,7 +287,7 @@ export class RedisHelper {
             this.logSlow("TTL", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis ttl 错误");
+            Logger.error({ err: error, msg: "Redis ttl 错误" });
             return -1;
         }
     }
@@ -308,7 +306,7 @@ export class RedisHelper {
             const results = await Promise.all(keys.map((key) => this.ttl(key)));
             return results;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis ttlBatch 错误");
+            Logger.error({ err: error, msg: "Redis ttlBatch 错误" });
             return keys.map(() => -1);
         }
     }
@@ -331,7 +329,7 @@ export class RedisHelper {
             this.logSlow("SADD", pkey, duration, { membersCount: members.length });
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis sadd 错误");
+            Logger.error({ err: error, msg: "Redis sadd 错误" });
             return 0;
         }
     }
@@ -352,7 +350,7 @@ export class RedisHelper {
             this.logSlow("SISMEMBER", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis sismember 错误");
+            Logger.error({ err: error, msg: "Redis sismember 错误" });
             return false;
         }
     }
@@ -372,7 +370,7 @@ export class RedisHelper {
             this.logSlow("SCARD", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis scard 错误");
+            Logger.error({ err: error, msg: "Redis scard 错误" });
             return 0;
         }
     }
@@ -392,7 +390,7 @@ export class RedisHelper {
             this.logSlow("SMEMBERS", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis smembers 错误");
+            Logger.error({ err: error, msg: "Redis smembers 错误" });
             return [];
         }
     }
@@ -411,7 +409,7 @@ export class RedisHelper {
             const results = await Promise.all(items.map((item) => this.sadd(item.key, item.members)));
             return results.reduce((sum, count) => sum + count, 0);
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis saddBatch 错误");
+            Logger.error({ err: error, msg: "Redis saddBatch 错误" });
             return 0;
         }
     }
@@ -429,7 +427,7 @@ export class RedisHelper {
         try {
             return await Promise.all(items.map((item) => this.sismember(item.key, item.member)));
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis sismemberBatch 错误");
+            Logger.error({ err: error, msg: "Redis sismemberBatch 错误" });
             return items.map(() => false);
         }
     }
@@ -449,7 +447,7 @@ export class RedisHelper {
             this.logSlow("DEL", pkey, duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis del 错误");
+            Logger.error({ err: error, msg: "Redis del 错误" });
             return 0;
         }
     }
@@ -473,7 +471,7 @@ export class RedisHelper {
             );
             return results.reduce((sum, count) => sum + count, 0);
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis delBatch 错误");
+            Logger.error({ err: error, msg: "Redis delBatch 错误" });
             return 0;
         }
     }
@@ -492,7 +490,7 @@ export class RedisHelper {
             const results = await Promise.all(items.map((item) => this.setObject(item.key, item.value, item.ttl ?? null)));
             return results.filter((r) => r !== null).length;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis setBatch 错误");
+            Logger.error({ err: error, msg: "Redis setBatch 错误" });
             return 0;
         }
     }
@@ -511,7 +509,7 @@ export class RedisHelper {
             const results = await Promise.all(keys.map((key) => this.getObject<T>(key)));
             return results;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis getBatch 错误");
+            Logger.error({ err: error, msg: "Redis getBatch 错误" });
             return keys.map(() => null);
         }
     }
@@ -529,7 +527,7 @@ export class RedisHelper {
         try {
             return await Promise.all(keys.map((key) => this.exists(key)));
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis existsBatch 错误");
+            Logger.error({ err: error, msg: "Redis existsBatch 错误" });
             return keys.map(() => false);
         }
     }
@@ -548,7 +546,7 @@ export class RedisHelper {
             const results = await Promise.all(items.map((item) => this.expire(item.key, item.seconds)));
             return results.filter((r) => r > 0).length;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis expireBatch 错误");
+            Logger.error({ err: error, msg: "Redis expireBatch 错误" });
             return 0;
         }
     }
@@ -565,7 +563,7 @@ export class RedisHelper {
             this.logSlow("PING", "(no-key)", duration);
             return res;
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis ping 错误");
+            Logger.error({ err: error, msg: "Redis ping 错误" });
             throw error;
         }
     }

@@ -87,7 +87,7 @@ export default {
                 befly.logger.warn("fs.statfs 不可用，无法获取磁盘信息");
             }
         } catch (error) {
-            befly.logger.warn({ err: error }, "获取磁盘信息失败");
+            befly.logger.warn({ err: error, msg: "获取磁盘信息失败" });
             // 获取失败时返回 0
             diskPercentage = 0;
             diskUsed = 0;

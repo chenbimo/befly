@@ -69,25 +69,25 @@ describe("Logger - 纯字符串消息", () => {
     });
 });
 
-describe("Logger - 对象 + 消息 (pino 原生格式)", () => {
-    test("info(obj, msg)", () => {
-        Logger.info({ userId: 1, action: "login" }, "User action");
+describe("Logger - 对象 + msg 字段", () => {
+    test("info(record)", () => {
+        Logger.info({ userId: 1, action: "login", msg: "User action" });
         expect(true).toBe(true);
     });
 
-    test("warn(obj, msg)", () => {
-        Logger.warn({ ip: "127.0.0.1", count: 100 }, "Rate limit warning");
+    test("warn(record)", () => {
+        Logger.warn({ ip: "127.0.0.1", count: 100, msg: "Rate limit warning" });
         expect(true).toBe(true);
     });
 
-    test("error(obj, msg)", () => {
+    test("error(record)", () => {
         const err = new Error("Something went wrong");
-        Logger.error({ err: err }, "Request failed");
+        Logger.error({ err: err, msg: "Request failed" });
         expect(true).toBe(true);
     });
 
-    test("debug(obj, msg)", () => {
-        Logger.debug({ key: "value", nested: { a: 1 } }, "Debug data");
+    test("debug(record)", () => {
+        Logger.debug({ key: "value", nested: { a: 1 }, msg: "Debug data" });
         expect(true).toBe(true);
     });
 });
@@ -134,12 +134,12 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         };
 
         Logger.setMock(mock);
-        Logger.info({ foo: 1 }, "hello");
+        Logger.info({ foo: 1, msg: "hello" });
         Logger.setMock(null);
 
         expect(calls.length).toBe(1);
         expect(calls[0].level).toBe("info");
-        expect(calls[0].args[0]).toEqual({ foo: 1 });
+        expect(calls[0].args[0]).toEqual({ foo: 1, msg: "hello" });
     });
 
     test("纯字符串消息会注入 meta", () => {
@@ -184,7 +184,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(calls[0].args[0].userId).toBe(9);
         expect(typeof calls[0].args[0].durationSinceNowMs).toBe("number");
         expect(calls[0].args[0].durationSinceNowMs).toBeGreaterThanOrEqual(0);
-        expect(calls[0].args[1]).toBe("hello");
+        expect(calls[0].args[0].msg).toBe("hello");
     });
 
     test("对象 + msg：meta 只补齐不覆盖", () => {
@@ -215,7 +215,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 456
             },
             () => {
-                Logger.info({ requestId: "explicit", foo: 1 }, "m");
+                Logger.info({ requestId: "explicit", foo: 1, msg: "m" });
             }
         );
         Logger.setMock(null);
@@ -224,10 +224,10 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(calls[0].args[0].requestId).toBe("explicit");
         expect(calls[0].args[0].route).toBe("/api/test");
         expect(calls[0].args[0].foo).toBe(1);
-        expect(calls[0].args[1]).toBe("m");
+        expect(calls[0].args[0].msg).toBe("m");
     });
 
-    test("兼容 Logger.error(msg, err)", () => {
+    test("error(record) 会注入 meta", () => {
         const calls: any[] = [];
 
         const mock: any = {
@@ -256,7 +256,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
             },
             () => {
                 const err = new Error("boom");
-                Logger.error("Redis getObject 错误", err);
+                Logger.error({ err: err, msg: "Redis getObject 错误" });
             }
         );
         Logger.setMock(null);
@@ -264,7 +264,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
         expect(calls.length).toBe(1);
         expect(calls[0].args[0].requestId).toBe("rid_3");
         expect(calls[0].args[0].err.message).toBe("boom");
-        expect(calls[0].args[1]).toBe("Redis getObject 错误");
+        expect(calls[0].args[0].msg).toBe("Redis getObject 错误");
     });
 
     test("对象裁剪：敏感 key 掩码 + 字符串截断 + 数组截断", () => {
@@ -301,23 +301,21 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info(
-                    {
-                        password: "p".repeat(200),
-                        mySecret: "s".repeat(200),
-                        nickname: "n".repeat(200),
-                        normal: longStr,
-                        nested: {
-                            token: "t".repeat(200),
-                            a: longStr,
-                            deep: { b: longStr }
-                        },
-                        items: longArr,
-                        okNumber: 123,
-                        okBool: true
+                Logger.info({
+                    password: "p".repeat(200),
+                    mySecret: "s".repeat(200),
+                    nickname: "n".repeat(200),
+                    normal: longStr,
+                    nested: {
+                        token: "t".repeat(200),
+                        a: longStr,
+                        deep: { b: longStr }
                     },
-                    "trim"
-                );
+                    items: longArr,
+                    okNumber: 123,
+                    okBool: true,
+                    msg: "trim"
+                });
             }
         );
         Logger.setMock(null);
@@ -367,24 +365,22 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info(
-                    {
-                        deep: {
-                            a: {
-                                b: {
-                                    c: {
-                                        d: {
-                                            password: "p",
-                                            token: "t",
-                                            ok: "v"
-                                        }
+                Logger.info({
+                    deep: {
+                        a: {
+                            b: {
+                                c: {
+                                    d: {
+                                        password: "p",
+                                        token: "t",
+                                        ok: "v"
                                     }
                                 }
                             }
                         }
                     },
-                    "depth"
-                );
+                    msg: "depth"
+                });
             }
         );
         Logger.setMock(null);
@@ -436,20 +432,18 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info(
-                    {
-                        deep: {
-                            a: {
-                                b: {
-                                    password: "p",
-                                    token: "t",
-                                    ok: "v"
-                                }
+                Logger.info({
+                    deep: {
+                        a: {
+                            b: {
+                                password: "p",
+                                token: "t",
+                                ok: "v"
                             }
                         }
                     },
-                    "depth2"
-                );
+                    msg: "depth2"
+                });
             }
         );
         Logger.setMock(null);
@@ -509,7 +503,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info({ sqlPreview: longSql }, "maxStringLen");
+                Logger.info({ sqlPreview: longSql, msg: "maxStringLen" });
             }
         );
         Logger.setMock(null);
@@ -566,22 +560,20 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info(
-                    {
-                        deep: {
-                            a: {
-                                b: {
-                                    c: {
-                                        d: {
-                                            password: "p"
-                                        }
+                Logger.info({
+                    deep: {
+                        a: {
+                            b: {
+                                c: {
+                                    d: {
+                                        password: "p"
                                     }
                                 }
                             }
                         }
                     },
-                    "norm-0"
-                );
+                    msg: "norm-0"
+                });
             }
         );
         Logger.setMock(null);
@@ -612,23 +604,21 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info(
-                    {
-                        deep: {
-                            a: {
-                                b: {
-                                    c: {
-                                        d: {
-                                            e: {
-                                                f: {
-                                                    g: {
-                                                        h: {
-                                                            i: {
-                                                                j: {
-                                                                    k: {
-                                                                        password: "p",
-                                                                        ok: "v"
-                                                                    }
+                Logger.info({
+                    deep: {
+                        a: {
+                            b: {
+                                c: {
+                                    d: {
+                                        e: {
+                                            f: {
+                                                g: {
+                                                    h: {
+                                                        i: {
+                                                            j: {
+                                                                k: {
+                                                                    password: "p",
+                                                                    ok: "v"
                                                                 }
                                                             }
                                                         }
@@ -641,8 +631,8 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                             }
                         }
                     },
-                    "norm-999"
-                );
+                    msg: "norm-999"
+                });
             }
         );
         Logger.setMock(null);
@@ -715,13 +705,11 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info(
-                    {
-                        big: bigObj,
-                        items: items
-                    },
-                    "limits"
-                );
+                Logger.info({
+                    big: bigObj,
+                    items: items,
+                    msg: "limits"
+                });
             }
         );
         Logger.setMock(null);
@@ -804,7 +792,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
                 now: 1
             },
             () => {
-                Logger.info({ huge: huge }, "stress");
+                Logger.info({ huge: huge, msg: "stress" });
             }
         );
         Logger.setMock(null);
@@ -858,7 +846,7 @@ describe("Logger - AsyncLocalStorage 注入", () => {
             excludeFields: ["*Secret", "*nick*"]
         });
 
-        Logger.info({ token: "t", mySecret: "s" }, "flush");
+        Logger.info({ token: "t", mySecret: "s", msg: "flush" });
         await Logger.flush();
 
         // flush 不应影响后续写入

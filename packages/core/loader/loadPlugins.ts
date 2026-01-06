@@ -47,7 +47,7 @@ export async function loadPlugins(plugins: ScanFileResult[], context: BeflyConte
                 handler: plugin.handler
             });
         } catch (error: any) {
-            Logger.error({ err: error, plugin: pluginName }, "插件初始化失败");
+            Logger.error({ err: error, plugin: pluginName, msg: "插件初始化失败" });
             throw error;
         }
     }

@@ -26,7 +26,7 @@ export default {
             // 返回 RedisHelper 实例
             return new RedisHelper(redisConfig.prefix);
         } catch (error: any) {
-            Logger.error({ err: error }, "Redis 初始化失败");
+            Logger.error({ err: error, msg: "Redis 初始化失败" });
             throw error;
         }
     }

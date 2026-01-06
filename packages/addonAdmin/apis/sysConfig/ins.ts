@@ -31,7 +31,7 @@ export default {
 
             return befly.tool.Yes("操作成功", { id: configId.data });
         } catch (error) {
-            befly.logger.error({ err: error }, "添加系统配置失败");
+            befly.logger.error({ err: error, msg: "添加系统配置失败" });
             return befly.tool.No("操作失败");
         }
     }

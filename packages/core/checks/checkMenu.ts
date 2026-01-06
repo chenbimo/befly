@@ -81,27 +81,27 @@ export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions =
 
         if (menu === null || typeof menu !== "object") {
             hasError = true;
-            Logger.warn({ menu: menu }, "菜单节点必须是对象");
+            Logger.warn({ menu: menu, msg: "菜单节点必须是对象" });
             continue;
         }
 
         if (depth > 3) {
             hasError = true;
-            Logger.warn({ path: menu?.path, depth: depth }, "菜单层级超过 3 级（最多三级）");
+            Logger.warn({ path: menu?.path, depth: depth, msg: "菜单层级超过 3 级（最多三级）" });
             continue;
         }
 
         const children = menu.children;
         if (typeof children !== "undefined" && !Array.isArray(children)) {
             hasError = true;
-            Logger.warn({ path: menu?.path, childrenType: typeof children }, "菜单 children 必须是数组");
+            Logger.warn({ path: menu?.path, childrenType: typeof children, msg: "菜单 children 必须是数组" });
             continue;
         }
 
         if (Array.isArray(children) && children.length > 0) {
             if (depth >= 3) {
                 hasError = true;
-                Logger.warn({ path: menu?.path, depth: depth }, "菜单层级超过 3 级（最多三级）");
+                Logger.warn({ path: menu?.path, depth: depth, msg: "菜单层级超过 3 级（最多三级）" });
             } else {
                 for (const child of children) {
                     stack.push({ menu: child, depth: depth + 1 });
@@ -126,34 +126,34 @@ export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions =
 
         if (!path) {
             hasError = true;
-            Logger.warn({ menu: menu }, "菜单缺少 path（必须是非空字符串）");
+            Logger.warn({ menu: menu, msg: "菜单缺少 path（必须是非空字符串）" });
             continue;
         }
 
         const pathCheck = isValidMenuPath(path);
         if (!pathCheck.ok) {
             hasError = true;
-            Logger.warn({ path: path, reason: pathCheck.reason }, "菜单 path 不合法");
+            Logger.warn({ path: path, reason: pathCheck.reason, msg: "菜单 path 不合法" });
         }
 
         if (!name) {
             hasError = true;
-            Logger.warn({ path: path, menu: menu }, "菜单缺少 name（必须是非空字符串）");
+            Logger.warn({ path: path, menu: menu, msg: "菜单缺少 name（必须是非空字符串）" });
         }
 
         if (typeof menu.sort !== "undefined" && typeof menu.sort !== "number") {
             hasError = true;
-            Logger.warn({ path: path, sort: menu.sort }, "菜单 sort 必须是 number");
+            Logger.warn({ path: path, sort: menu.sort, msg: "菜单 sort 必须是 number" });
         }
 
         if (typeof menu.sort === "number" && (!Number.isFinite(menu.sort) || menu.sort < 1)) {
             hasError = true;
-            Logger.warn({ path: path, sort: menu.sort }, "菜单 sort 最小值为 1");
+            Logger.warn({ path: path, sort: menu.sort, msg: "菜单 sort 最小值为 1" });
         }
 
         if (pathSet.has(path)) {
             hasError = true;
-            Logger.warn({ path: path }, "菜单 path 重复（严格模式禁止重复 path）");
+            Logger.warn({ path: path, msg: "菜单 path 重复（严格模式禁止重复 path）" });
             continue;
         }
 

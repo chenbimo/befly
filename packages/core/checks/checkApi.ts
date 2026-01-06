@@ -7,83 +7,77 @@ export async function checkApi(apis: any[]): Promise<void> {
     for (const api of apis) {
         try {
             if (typeof api?.name !== "string" || api.name.trim() === "") {
-                Logger.warn(omit(api, ["handler"]), "接口的 name 属性必须是非空字符串");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 name 属性必须是非空字符串" }));
                 hasError = true;
                 continue;
             }
 
             if (typeof api?.handler !== "function") {
-                Logger.warn(omit(api, ["handler"]), "接口的 handler 属性必须是函数");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 handler 属性必须是函数" }));
                 hasError = true;
                 continue;
             }
 
             // routePath / routePrefix 由 scanFiles 系统生成：必须是严格的 pathname
             if (typeof api?.routePath !== "string" || api.routePath.trim() === "") {
-                Logger.warn(omit(api, ["handler"]), "接口的 routePath 属性必须是非空字符串（由系统生成）");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 属性必须是非空字符串（由系统生成）" }));
                 hasError = true;
             } else {
                 const routePath = api.routePath.trim();
 
                 // 不允许出现 "POST/api/..." 等 method 前缀
                 if (/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/i.test(routePath)) {
-                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 不允许包含 method 前缀，应为 url.pathname（例如 /api/app/xxx）");
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 不允许包含 method 前缀，应为 url.pathname（例如 /api/app/xxx）" }));
                     hasError = true;
                 }
 
                 if (!routePath.startsWith("/api/")) {
-                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 必须以 /api/ 开头");
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 必须以 /api/ 开头" }));
                     hasError = true;
                 }
 
                 if (routePath.includes(" ")) {
-                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 不允许包含空格");
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 不允许包含空格" }));
                     hasError = true;
                 }
 
                 if (routePath.includes("/api//")) {
-                    Logger.warn(omit(api, ["handler"]), "接口的 routePath 不允许出现 /api//（重复斜杠）");
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 不允许出现 /api//（重复斜杠）" }));
                     hasError = true;
                 }
             }
 
             if (typeof api?.routePrefix !== "string" || api.routePrefix.trim() === "") {
-                Logger.warn(omit(api, ["handler"]), "接口的 routePrefix 属性必须是非空字符串（由系统生成）");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePrefix 属性必须是非空字符串（由系统生成）" }));
                 hasError = true;
             }
 
             if (api.method && !["GET", "POST", "GET,POST", "POST,GET"].includes(String(api.method).toUpperCase())) {
-                Logger.warn(omit(api, ["handler"]), "接口的 method 属性必须是有效的 HTTP 方法 (GET, POST, GET,POST, POST,GET)");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 method 属性必须是有效的 HTTP 方法 (GET, POST, GET,POST, POST,GET)" }));
                 hasError = true;
             }
 
             if (api.auth !== undefined && typeof api.auth !== "boolean") {
-                Logger.warn(omit(api, ["handler"]), "接口的 auth 属性必须是布尔值 (true=需登录, false=公开)");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 auth 属性必须是布尔值 (true=需登录, false=公开)" }));
                 hasError = true;
             }
 
             if (api.fields && !isPlainObject(api.fields)) {
-                Logger.warn(omit(api, ["handler"]), "接口的 fields 属性必须是对象");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 fields 属性必须是对象" }));
                 hasError = true;
             }
 
             if (api.required && !Array.isArray(api.required)) {
-                Logger.warn(omit(api, ["handler"]), "接口的 required 属性必须是数组");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 required 属性必须是数组" }));
                 hasError = true;
             }
 
             if (api.required && api.required.some((reqItem: any) => typeof reqItem !== "string")) {
-                Logger.warn(omit(api, ["handler"]), "接口的 required 属性必须是字符串数组");
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 required 属性必须是字符串数组" }));
                 hasError = true;
             }
         } catch (error: any) {
-            Logger.error(
-                {
-                    err: error,
-                    item: api
-                },
-                "接口解析失败"
-            );
+            Logger.error({ err: error, item: api, msg: "接口解析失败" });
             hasError = true;
         }
     }

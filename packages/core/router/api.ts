@@ -86,7 +86,8 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
                             logData.body = ctx.body;
                         }
 
-                        Logger.info(logData, "request");
+                        logData.msg = "request";
+                        Logger.info(logData);
                     }
 
                     // 5. 执行 API handler
@@ -117,7 +118,7 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
                 } catch (err: any) {
                     // 全局错误处理
                     const errorPath = ctx.api ? apiPath : req.url;
-                    Logger.error({ err: err, path: errorPath }, "请求错误");
+                    Logger.error({ err: err, path: errorPath, msg: "请求错误" });
                     ctx.result = {
                         code: 1,
                         msg: "内部服务错误"

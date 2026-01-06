@@ -200,15 +200,13 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
                 }
             }
 
-            Logger.warn(
-                {
-                    table: tableName,
-                    duplicatePaths: duplicatePathInfoMap.size,
-                    duplicateIds: duplicateIdSet.size,
-                    examples: examples
-                },
-                "addon_admin_menu 检测到重复 path 记录：已保留 id 最大的一条并删除其余记录"
-            );
+            Logger.warn({
+                table: tableName,
+                duplicatePaths: duplicatePathInfoMap.size,
+                duplicateIds: duplicateIdSet.size,
+                examples: examples,
+                msg: "addon_admin_menu 检测到重复 path 记录：已保留 id 最大的一条并删除其余记录"
+            });
         }
 
         // 2) 一次性算出 insert/update（仅依赖 path diff，不使用 pid，不预生成 id）
