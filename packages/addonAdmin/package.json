@@ -29,7 +29,8 @@
         "libs/",
         "plugins/",
         "styles/",
-        "tables/"
+        "tables/",
+        "utils/"
     ],
     "type": "module",
     "main": "package.json",
