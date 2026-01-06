@@ -86,64 +86,12 @@ let appConsoleSink: LogStreamSink | null = null;
 let didWarnIoError: boolean = false;
 let didPruneOldLogFiles: boolean = false;
 let didEnsureLogDir: boolean = false;
-let didInstallGracefulExitHooks: boolean = false;
 let config: LoggerConfig = {
     debug: 0,
     dir: "./logs",
     console: 1,
     maxSize: 10
 };
-
-function installGracefulExitHooks(): void {
-    if (didInstallGracefulExitHooks) return;
-    didInstallGracefulExitHooks = true;
-
-    const install = (signal: "SIGINT" | "SIGTERM", exitCode: number): void => {
-        // 若业务侧已经注册了 handler，避免我们抢占默认行为
-        try {
-            if (typeof process.listenerCount === "function" && process.listenerCount(signal) > 0) {
-                return;
-            }
-        } catch {
-            // ignore
-        }
-
-        try {
-            process.once(signal, () => {
-                let exited = false;
-
-                // 给 flush 一个机会；超过上限则强制退出
-                const timer = setTimeout(() => {
-                    if (exited) return;
-                    exited = true;
-                    try {
-                        process.exit(exitCode);
-                    } catch {
-                        // ignore
-                    }
-                }, 2000);
-
-                void shutdown()
-                    .catch(() => undefined)
-                    .finally(() => {
-                        if (exited) return;
-                        exited = true;
-                        clearTimeout(timer);
-                        try {
-                            process.exit(exitCode);
-                        } catch {
-                            // ignore
-                        }
-                    });
-            });
-        } catch {
-            // ignore
-        }
-    };
-
-    install("SIGINT", 130);
-    install("SIGTERM", 143);
-}
 
 function formatLocalDate(date: Date): string {
     const y = date.getFullYear();
@@ -526,6 +474,9 @@ export async function shutdown(): Promise<void> {
 
     instance = null;
     errorInstance = null;
+
+    // shutdown 后允许下一次重新初始化时再次校验/创建目录（测试会清理目录，避免 ENOENT）
+    didEnsureLogDir = false;
 }
 
 function normalizePositiveInt(value: any, fallback: number, min: number, max: number): number {
@@ -546,9 +497,6 @@ function resolveLogDir(): string {
 }
 
 function ensureLogDirExists(): void {
-    if (didEnsureLogDir) return;
-    didEnsureLogDir = true;
-
     const dir = resolveLogDir();
     try {
         if (!existsSync(dir)) {
@@ -558,6 +506,8 @@ function ensureLogDirExists(): void {
         // 不能在 Logger 初始化前调用 Logger 本身，直接抛错即可
         throw new Error(`创建 logs 目录失败: ${dir}. ${error?.message || error}`);
     }
+
+    didEnsureLogDir = true;
 }
 
 async function pruneOldLogFiles(): Promise<void> {
@@ -694,7 +644,6 @@ export function getLogger(): SinkLogger {
     if (instance) return instance;
 
     ensureLogDirExists();
-    installGracefulExitHooks();
 
     // 启动时清理过期日志（异步，不阻塞初始化）
     void pruneOldLogFiles();
@@ -718,7 +667,6 @@ function getErrorLogger(): SinkLogger {
     if (errorInstance) return errorInstance;
 
     ensureLogDirExists();
-    installGracefulExitHooks();
 
     void pruneOldLogFiles();
 

@@ -170,38 +170,32 @@ export class Befly {
             Logger.info(`${this.config!.appName} 启动成功! (${roleLabel}${envLabel})`);
             Logger.info(`服务器启动耗时: ${finalStartupTime}`);
             Logger.info(`服务器监听地址: ${server.url}`);
-
-            // 7. 注册优雅关闭处理
-            const gracefulShutdown = async (signal: string) => {
-                Logger.info(`收到 ${signal} 信号，开始优雅关闭...`);
-
-                // 优雅停止（等待进行中的请求完成）
-                try {
-                    await server.stop();
-                    Logger.info("HTTP 服务器已停止");
-                } catch (error: any) {
-                    Logger.error({ err: error }, "停止 HTTP 服务器时出错");
-                }
-
-                // 关闭数据库连接
-                try {
-                    await Connect.disconnect();
-                    Logger.info("数据库连接已关闭");
-                } catch (error: any) {
-                    Logger.error({ err: error }, "关闭数据库连接时出错");
-                }
-
-                Logger.info("服务器已优雅关闭");
-                process.exit(0);
-            };
-
-            process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-            process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-
+            // 注意：作为库代码，这里不注册 SIGINT/SIGTERM 处理器，也不调用 process.exit。
+            // 宿主应用应自行处理信号并决定退出策略（包括是否调用 server.stop / Connect.disconnect / Logger.flush）。
             return server;
         } catch (error: any) {
+            // 注意：这里不能直接 process.exit(1)
+            // - Logger 是异步缓冲写入，exit 会导致日志来不及 flush（实际项目里表现为“完全没打印”）
+            // - 作为库代码，也不应该强行终止宿主进程
             Logger.error({ err: error }, "项目启动失败");
-            process.exit(1);
+
+            // 尽力把错误日志落盘/输出后再把异常抛给上层。
+            try {
+                await Logger.flush();
+            } catch {
+                // ignore
+            }
+
+            try {
+                await Logger.shutdown();
+            } catch {
+                // ignore
+            }
+
+            if (error instanceof Error) {
+                throw error;
+            }
+            throw new Error(String(error));
         }
     }
 }

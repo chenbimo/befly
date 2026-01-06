@@ -268,6 +268,25 @@ mysql -u root -p my_api -e "SHOW TABLES;"
 bun run dev
 ```
 
+> 说明：如果启动失败（例如配置/插件/表结构检查不通过），`Befly.start()` 会**抛出异常**，Befly Core 不会在库内部强行 `process.exit(1)`。
+>
+> 如果你希望“启动失败就退出进程”，请在你的入口文件（例如 `main.ts`）里捕获异常并自行决定退出码：
+
+```typescript
+import { Befly } from "befly";
+
+const app = new Befly();
+
+app.start().catch((error) => {
+    try {
+        process.stderr.write(`${(error as any)?.stack || String(error)}\n`);
+    } catch {
+        // ignore
+    }
+    process.exit(1);
+});
+```
+
 服务启动后：
 
 ```
