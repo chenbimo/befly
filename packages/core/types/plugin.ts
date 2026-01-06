@@ -1,7 +1,18 @@
 /**
  * 插件类型定义
  *
- * 说明：当前 core 插件的默认导出形态是：{ deps?: string[], handler(ctx): any }
+ * 说明：当前 core 插件推荐的默认导出写法（避免声明文件深推导导致的类型问题）：
+ *
+ * const xxxPlugin: Plugin = {
+ *     name: "xxx",
+ *     enable: true,
+ *     deps: [],
+ *     handler: (context) => {
+ *         return any;
+ *     }
+ * };
+ *
+ * export default xxxPlugin;
  */
 
 import type { BeflyContext } from "./befly";

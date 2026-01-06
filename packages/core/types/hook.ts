@@ -2,6 +2,19 @@
  * Hook 类型定义
  *
  * 说明：当前 core 的 hook 执行模型是“顺序执行 handler(befly, ctx)”，无 next / 洋葱链。
+ *
+ * 说明：当前 core hook 推荐的默认导出写法（避免声明文件深推导导致的类型问题）：
+ *
+ * const xxxHook: Hook = {
+ *     name: "xxx",
+ *     enable: true,
+ *     deps: [],
+ *     handler: async (befly, ctx) => {
+ *         // ...
+ *     }
+ * };
+ *
+ * export default xxxHook;
  */
 
 import type { BeflyContext } from "./befly";
