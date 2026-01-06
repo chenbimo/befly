@@ -25,20 +25,17 @@
         "dist/"
     ],
     "type": "module",
-    "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
             "default": "./dist/index.js"
         },
         "./all": {
-            "types": "./dist/index.d.ts",
             "import": "./dist/befly.js",
             "default": "./dist/befly.js"
         },
         "./min": {
-            "types": "./dist/index.d.ts",
             "import": "./dist/befly.min.js",
             "default": "./dist/befly.min.js"
         },

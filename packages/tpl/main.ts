@@ -1,9 +1,8 @@
-import { Befly } from "befly/min";
+import { Befly } from "befly";
+const befly = new Befly();
 
-const app = new Befly();
-
-app.start().catch((err) => {
+befly.start().catch((err) => {
     const msg = err instanceof Error ? err.stack || err.message : String(err);
-    process.stderr.write(`[befly] start failed: ${msg}\n`);
+    process.stderr.write(`[befly] 启动失败: ${msg}\n`);
     process.exit(1);
 });

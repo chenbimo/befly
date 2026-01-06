@@ -11,9 +11,14 @@ test("befly - all entry should export Befly", async () => {
 
     expect(pkgJson.exports).toBeDefined();
     expect(pkgJson.exports["./all"]).toBeDefined();
-    expect(pkgJson.exports["./all"].types).toBe("./dist/index.d.ts");
     expect(pkgJson.exports["./all"].import).toBe("./dist/befly.js");
     expect(pkgJson.exports["./all"].default).toBe("./dist/befly.js");
+
+    // 类型导出统一到：顶层 types + exports['./types/*']，不要把 types 分散挂到每个运行时入口上。
+    expect(pkgJson.types).toBe("./dist/index.d.ts");
+    expect(pkgJson.exports["./types/*"]).toBeDefined();
+    expect(pkgJson.exports["./types/*"].types).toBe("./dist/types/*.d.ts");
+    expect(pkgJson.exports["./all"].types).toBeUndefined();
 
     const distDir = resolve(pkgRoot, "dist");
     const distAllEntryPath = resolve(distDir, "befly.js");
