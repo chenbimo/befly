@@ -11,12 +11,10 @@
     "scripts": {
         "clean": "bun run clean:libs",
         "build:core": "bun run --cwd packages/core build",
-        "build:shared": "bun run --cwd packages/shared build",
-        "build:libs": "bun run build:shared && bun run build:core",
+        "build:libs": "bun run build:core",
         "postinstall": "bun run build:libs",
         "clean:core": "rimraf packages/core/dist",
-        "clean:shared": "rimraf packages/shared/dist",
-        "clean:libs": "rimraf packages/shared/dist packages/core/dist",
+        "clean:libs": "rimraf packages/core/dist",
         "test": "bun test",
         "test:core": "bun --filter 'befly' test",
         "test:bail": "bun test --bail",
@@ -26,7 +24,7 @@
         "format": "bun run format:oxfmt",
         "lint": "oxlint .",
         "typecheck:core": "bun run --cwd packages/core typecheck",
-        "typecheck": "bun run build:shared && bun run typecheck:core",
+        "typecheck": "bun run typecheck:core",
         "typecheck:all": "lerna run typecheck --stream",
         "verify": "bun run format && bun run lint && bun run build:libs && bun run typecheck:core && bun run test",
         "r": "lerna publish"

@@ -55,7 +55,7 @@ import { Button as TButton, Table as TTable, Tag as TTag, Input as TInput, Messa
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import ILucideSearch from "~icons/lucide/search";
 import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "befly-shared/utils/withDefaultColumns";
+import { withDefaultColumns } from "@/utils/withDefaultColumns";
 import DetailPanel from "@/components/DetailPanel.vue";
 
 definePage({

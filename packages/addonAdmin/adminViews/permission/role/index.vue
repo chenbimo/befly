@@ -102,7 +102,7 @@ import MenuDialog from "./components/menu.vue";
 import ApiDialog from "./components/api.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "befly-shared/utils/withDefaultColumns";
+import { withDefaultColumns } from "@/utils/withDefaultColumns";
 
 definePage({
     meta: {
@@ -119,9 +119,9 @@ const $Data = $ref({
     currentRow: null,
     columns: withDefaultColumns([
         { colKey: "name", title: "角色名称" },
-        { colKey: "code", title: "角色代码",width:150 },
-        { colKey: "menuCount", title: "菜单数量", align: "center",width:100 },
-        { colKey: "apiCount", title: "接口数量", align: "center",width:100 },
+        { colKey: "code", title: "角色代码", width: 150 },
+        { colKey: "menuCount", title: "菜单数量", align: "center", width: 100 },
+        { colKey: "apiCount", title: "接口数量", align: "center", width: 100 },
         { colKey: "sort", title: "排序" },
         { colKey: "state", title: "状态" },
         { colKey: "description", title: "描述" },

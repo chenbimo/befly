@@ -1,6 +1,3 @@
-// fieldClear 工具函数实现（shared 版）
-// 支持 pick/omit/keepValues/excludeValues/keepMap，处理对象和数组
-
 export interface FieldClearOptions {
     pickKeys?: string[];
     omitKeys?: string[];

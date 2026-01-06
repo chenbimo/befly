@@ -42,8 +42,8 @@ import {
     Button as TButton,
     MessagePlugin
 } from "tdesign-vue-next";
-import { fieldClear } from "befly-shared/utils/fieldClear";
 import { $Http } from "@/plugins/http";
+import { fieldClear } from "@/../utils/fieldClear";
 
 const $Prop = defineProps({
     modelValue: {

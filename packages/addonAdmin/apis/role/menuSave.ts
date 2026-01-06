@@ -1,6 +1,5 @@
-import { normalizePathnameListInput } from "befly-shared/utils/normalizePathnameListInput";
-
 import adminRoleTable from "../../tables/role.json";
+import { normalizePathnameListInput } from "../../utils/normalizePathnameListInput";
 
 export default {
     name: "保存角色菜单权限",

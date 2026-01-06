@@ -48,7 +48,6 @@
         "typecheck": "bunx tsgo -p tsconfig.json --noEmit"
     },
     "dependencies": {
-        "befly-shared": "^1.4.1",
         "nodemailer": "^7.0.12",
         "ua-parser-js": "^2.0.7"
     },

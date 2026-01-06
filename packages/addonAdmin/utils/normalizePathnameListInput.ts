@@ -16,7 +16,6 @@ const HTTP_METHOD_PREFIX_RE = /^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/i;
  * 注意：该函数不会做任何隐式修复/转换（例如 trim/split/JSON.parse/去重/排序）。
  */
 export function normalizePathnameListInput(value: unknown, fieldLabel: string, forbidMethodPrefix: boolean): string[] {
-    // “假值”统一视为空数组：null/undefined/""/0/false/NaN
     if (!value) return [];
 
     if (!Array.isArray(value)) {
@@ -37,12 +36,10 @@ export function normalizePathnameListInput(value: unknown, fieldLabel: string, f
             throw new Error(`${itemLabel} 不允许为空字符串`);
         }
 
-        // 优先给出 method 前缀提示（更明确）
         if (forbidMethodPrefix && HTTP_METHOD_PREFIX_RE.test(item)) {
             throw new Error(`${itemLabel} 不允许包含 method 前缀，应为 url.pathname（例如 /api/app/xxx）`);
         }
 
-        // 不做 trim 自动转换：含任何空白字符都视为不合法
         if (/\s/.test(item)) {
             throw new Error(`${itemLabel} 不允许包含空白字符（空格/制表符/换行等）`);
         }
