@@ -575,7 +575,7 @@ function buildLogLine(level: LogLevelName, record: LoggerRecord): string {
     const base: Record<string, any> = {
         level: level,
         time: time,
-        timeText: formatYmdHms(new Date(time)),
+        timeFormat: formatYmdHms(new Date(time)),
         pid: process.pid,
         hostname: HOSTNAME
     };
