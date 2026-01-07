@@ -7,13 +7,14 @@ import { __test__ } from "../sync/syncMenu.ts";
 const testRootDir = join(process.cwd(), "temp", "test-sync-menu-views");
 const viewsDir = join(testRootDir, "views");
 
-function writeMetaJson(dir: string, title: string, order?: number): void {
+function writeViewDir(dir: string, title: string, order?: number): void {
     if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
     }
 
-    const content = JSON.stringify({ title: title, order: order });
-    writeFileSync(join(dir, "meta.json"), content, { encoding: "utf8" });
+    const metaJsonContent = JSON.stringify({ title: title, order: order });
+    writeFileSync(join(dir, "meta.json"), metaJsonContent, { encoding: "utf8" });
+    writeFileSync(join(dir, "index.vue"), "<template></template>\n", { encoding: "utf8" });
 }
 
 beforeAll(() => {
@@ -23,10 +24,10 @@ beforeAll(() => {
     mkdirSync(viewsDir, { recursive: true });
 
     // 根级 index：应映射为 prefix 本身（不带尾随 /）
-    writeMetaJson(join(viewsDir, "index"), "Root", 2);
+    writeViewDir(join(viewsDir, "index"), "Root", 2);
 
     // 带数字后缀目录：应清理后缀
-    writeMetaJson(join(viewsDir, "user_1"), "User", 1);
+    writeViewDir(join(viewsDir, "user_1"), "User", 1);
 });
 
 afterAll(() => {

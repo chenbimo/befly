@@ -15,14 +15,6 @@ type ViewDirMeta = {
     order?: number;
 };
 
-/**
- * 清理目录名中的数字后缀
- * 如：login_1 → login, index_2 → index
- */
-export function cleanDirName(name: string): string {
-    return String(name).replace(/_\d+$/, "");
-}
-
 export function normalizeViewDirMeta(input: any): ViewDirMeta | null {
     if (!input || typeof input !== "object") {
         return null;
@@ -32,7 +24,7 @@ export function normalizeViewDirMeta(input: any): ViewDirMeta | null {
         return null;
     }
 
-    const order = typeof input.order === "number" && Number.isFinite(input.order) && Number.isInteger(input.order) ? input.order : undefined;
+    const order = typeof input.order === "number" && Number.isFinite(input.order) && Number.isInteger(input.order) && input.order >= 0 ? input.order : undefined;
 
     return {
         title: input.title,
@@ -55,9 +47,15 @@ export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string
 
         const dirPath = join(viewsDir, entry.name);
         const metaJsonPath = join(dirPath, "meta.json");
+        const indexVuePath = join(dirPath, "index.vue");
 
         let meta: ViewDirMeta | null = null;
         if (!existsSync(metaJsonPath)) {
+            continue;
+        }
+
+        if (!existsSync(indexVuePath)) {
+            Logger.warn({ path: dirPath, msg: "目录存在 meta.json 但缺少 index.vue，已跳过该目录菜单同步" });
             continue;
         }
 
@@ -72,7 +70,7 @@ export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string
             continue;
         }
 
-        const cleanName = cleanDirName(entry.name);
+        const cleanName = String(entry.name).replace(/_\d+$/, "");
         let menuPath: string;
         if (cleanName === "index") {
             menuPath = parentPath;

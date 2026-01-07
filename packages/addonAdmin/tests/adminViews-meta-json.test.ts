@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 type MetaJson = {
     title: string;
-    order: number;
+    order?: number;
 };
 
 async function scanMetaJsonFiles(rootDir: string): Promise<string[]> {
@@ -53,13 +53,14 @@ function normalizeMeta(data: any): MetaJson | null {
         return null;
     }
 
-    if (typeof data.order !== "number" || !Number.isFinite(data.order) || !Number.isInteger(data.order)) {
+    const order = typeof data.order === "number" && Number.isFinite(data.order) && Number.isInteger(data.order) && data.order >= 0 ? data.order : undefined;
+    if (data.order !== undefined && order === undefined) {
         return null;
     }
 
     return {
         title: data.title,
-        order: data.order
+        order: order
     };
 }
 
@@ -75,13 +76,20 @@ describe("addonAdmin - adminViews meta.json", () => {
 
         for (const file of files) {
             try {
+                const dir = join(file, "..");
+                const indexVuePath = join(dir, "index.vue");
+                if (!existsSync(indexVuePath)) {
+                    invalid.push({ file: file, reason: "missing index.vue" });
+                    continue;
+                }
+
                 const content = await readFile(file, "utf-8");
                 const json = JSON.parse(content);
                 const meta = normalizeMeta(json);
                 if (!meta) {
                     invalid.push({ file: file, reason: "invalid meta shape" });
                 }
-            } catch (err: any) {
+            } catch {
                 invalid.push({ file: file, reason: "parse failed" });
             }
         }

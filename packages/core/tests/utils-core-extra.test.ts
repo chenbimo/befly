@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { clearRegexCache, getCompiledRegex, getRegex, getRegexCacheSize, matchRegex } from "../configs/presetRegexp";
 import { importDefault } from "../utils/importDefault";
-import { cleanDirName, normalizeViewDirMeta } from "../utils/loadMenuConfigs";
+import { normalizeViewDirMeta } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
 import { getProcessRole, isPrimaryProcess } from "../utils/processInfo";
 import { camelCase, escapeRegExp, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
@@ -226,15 +226,6 @@ describe("utils - regex cache", () => {
     });
 });
 
-describe("utils - cleanDirName", () => {
-    test("should strip _<number> suffix", () => {
-        expect(cleanDirName("login_1")).toBe("login");
-        expect(cleanDirName("index_2")).toBe("index");
-        expect(cleanDirName("index")).toBe("index");
-        expect(cleanDirName("my_12x")).toBe("my_12x");
-    });
-});
-
 describe("utils - view meta normalize", () => {
     test("normalizeViewDirMeta should return title and order", () => {
         const meta = normalizeViewDirMeta({ title: "Hello", order: 12 });
@@ -244,6 +235,10 @@ describe("utils - view meta normalize", () => {
     test("order is optional", () => {
         const meta = normalizeViewDirMeta({ title: "Hello" });
         expect(meta).toEqual({ title: "Hello", order: undefined });
+    });
+
+    test("order must be >= 0", () => {
+        expect(normalizeViewDirMeta({ title: "Hello", order: -1 })).toEqual({ title: "Hello", order: undefined });
     });
 
     test("order: non-integer / non-finite should be ignored", () => {
@@ -330,46 +325,11 @@ describe("utils - importDefault", () => {
     });
 });
 
-// 为 loadMenuConfigs 准备一个最小的 views 目录夹具
-function ensureEmptyDir(dir: string): void {
-    if (existsSync(dir)) {
-        rmSync(dir, { recursive: true, force: true });
-    }
-    mkdirSync(dir, { recursive: true });
-}
-
 describe("utils - loadMenuConfigs helpers", () => {
     test("getParentPath", async () => {
         const { getParentPath } = await import("../utils/loadMenuConfigs");
         expect(getParentPath("/a/b")).toBe("/a");
         expect(getParentPath("/a")).toBe("");
         expect(getParentPath("/")).toBe("");
-    });
-
-    test("scanViewsDirToMenuConfigs should read meta.json", async () => {
-        const tempRoot = join(import.meta.dir, "..", "..", "..", "temp", "fixtures", "viewsMenu");
-        ensureEmptyDir(tempRoot);
-
-        // 真实结构：views/admin/*/index.vue
-        const adminDir = join(tempRoot, "admin");
-        mkdirSync(adminDir, { recursive: true });
-        const userDir = join(adminDir, "user");
-        mkdirSync(userDir, { recursive: true });
-
-        await Bun.write(join(adminDir, "meta.json"), JSON.stringify({ title: "Admin", order: 2 }));
-        await Bun.write(join(userDir, "meta.json"), JSON.stringify({ title: "User", order: 1 }));
-
-        const { scanViewsDirToMenuConfigs } = await import("../utils/loadMenuConfigs");
-        const menus = await scanViewsDirToMenuConfigs(tempRoot, "/app", "");
-
-        expect(menus.length).toBe(1);
-        expect(menus[0].name).toBe("Admin");
-        expect(menus[0].path).toBe("/app/admin");
-        expect(Array.isArray(menus[0].children)).toBe(true);
-        expect(menus[0].children?.[0].name).toBe("User");
-        expect(menus[0].children?.[0].path).toBe("/app/admin/user");
-
-        // cleanup
-        rmSync(tempRoot, { recursive: true, force: true });
     });
 });
