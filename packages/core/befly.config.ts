@@ -90,7 +90,7 @@ const defaultOptions: BeflyOptions = {
 };
 
 export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
-    const normalizedNodeEnv = typeof nodeEnv === "string" && nodeEnv.trim() ? nodeEnv.trim() : "development";
+    const normalizedNodeEnv = normalizeNodeEnv(nodeEnv);
     const envSuffix = normalizedNodeEnv === "production" ? "production" : "development";
 
     // 使用 importDefault 加载 configs 目录下的配置文件。
@@ -103,7 +103,7 @@ export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
 
     const config = mergeAndConcat(defaultOptions, commonConfig, envConfig);
 
-    // 重要：nodeEnv 的来源改为 Befly.start(nodeEnv) 显式传参；避免 bundle/编译阶段被常量折叠。
+    // 重要：nodeEnv 的来源只从 Befly.start(env) 的入参 env.NODE_ENV 传入，避免 process.env 在 bundle 阶段被常量折叠。
     // 同时确保运行时行为（例如 Bun.serve development 标记）与实际选择的配置文件一致。
     (config as any).nodeEnv = normalizedNodeEnv;
 
@@ -119,4 +119,12 @@ export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
     }
 
     return config as BeflyOptions;
+}
+
+function normalizeNodeEnv(nodeEnv: string | undefined): string {
+    if (typeof nodeEnv === "string" && nodeEnv.trim()) {
+        return nodeEnv.trim();
+    }
+
+    return "development";
 }

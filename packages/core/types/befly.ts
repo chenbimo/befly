@@ -14,6 +14,11 @@ import type { ValidatorStatic } from "./validate";
 export type { LoggerConfig };
 
 /**
+ * 运行时环境变量快照（由宿主应用传入，Befly.start(env) 注入到 ctx.env）
+ */
+export type BeflyRuntimeEnv = Record<string, string | undefined>;
+
+/**
  * 数据库配置
  */
 export interface DatabaseConfig {
@@ -207,6 +212,9 @@ export interface BeflyContext extends KeyValue {
 
     /** 项目配置 */
     config: BeflyOptions;
+
+    /** 运行时环境变量快照（由宿主传入） */
+    env: BeflyRuntimeEnv;
 
     // ========== 动态插件 ==========
     /** 组件插件：addon_{addonName}_{pluginName} */

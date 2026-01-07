@@ -38,7 +38,7 @@ import { Befly } from "befly";
 
 // 配置从 configs/befly.*.json 扫描加载（见 packages/core/befly.config.ts）
 const app = new Befly();
-await app.start();
+await app.start(Bun.env);
 ```
 
 运行项目：

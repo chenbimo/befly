@@ -277,7 +277,7 @@ import { Befly } from "befly";
 
 const app = new Befly();
 
-app.start().catch((error) => {
+app.start(Bun.env).catch((error) => {
     try {
         process.stderr.write(`${(error as any)?.stack || String(error)}\n`);
     } catch {

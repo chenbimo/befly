@@ -257,56 +257,32 @@ describe("utils - script setup meta extract", () => {
 
 describe("utils - process role", () => {
     test("standalone should be primary", () => {
-        const oldBun = process.env.BUN_WORKER_ID;
-        const oldPm2 = process.env.PM2_INSTANCE_ID;
-
-        delete process.env.BUN_WORKER_ID;
-        delete process.env.PM2_INSTANCE_ID;
-
-        const role = getProcessRole();
+        const role = getProcessRole({});
         expect(role.env).toBe("standalone");
         expect(role.role).toBe("primary");
-        expect(isPrimaryProcess()).toBe(true);
-
-        if (oldBun === undefined) {
-            delete process.env.BUN_WORKER_ID;
-        } else {
-            process.env.BUN_WORKER_ID = oldBun;
-        }
-
-        if (oldPm2 === undefined) {
-            delete process.env.PM2_INSTANCE_ID;
-        } else {
-            process.env.PM2_INSTANCE_ID = oldPm2;
-        }
+        expect(isPrimaryProcess({})).toBe(true);
     });
 
     test("bun-cluster env", () => {
-        const old = process.env.BUN_WORKER_ID;
-        process.env.BUN_WORKER_ID = "";
-        expect(getProcessRole().role).toBe("primary");
-        process.env.BUN_WORKER_ID = "2";
-        expect(getProcessRole().role).toBe("worker");
-
-        if (old === undefined) {
-            delete process.env.BUN_WORKER_ID;
-        } else {
-            process.env.BUN_WORKER_ID = old;
-        }
+        expect(getProcessRole({ BUN_WORKER_ID: "" }).role).toBe("primary");
+        expect(getProcessRole({ BUN_WORKER_ID: "2" }).role).toBe("worker");
     });
 
     test("pm2-cluster env", () => {
-        const old = process.env.PM2_INSTANCE_ID;
-        process.env.PM2_INSTANCE_ID = "0";
-        expect(getProcessRole().role).toBe("primary");
-        process.env.PM2_INSTANCE_ID = "1";
-        expect(getProcessRole().role).toBe("worker");
+        expect(getProcessRole({ PM2_INSTANCE_ID: "0" }).role).toBe("primary");
+        expect(getProcessRole({ PM2_INSTANCE_ID: "1" }).role).toBe("worker");
+    });
 
-        if (old === undefined) {
-            delete process.env.PM2_INSTANCE_ID;
-        } else {
-            process.env.PM2_INSTANCE_ID = old;
-        }
+    test("bun env should win when both bun and pm2 ids exist", () => {
+        // 说明：在某些托管环境下可能同时注入多种进程管理器变量。
+        // 我们约定：只要存在 BUN_WORKER_ID，就按 bun-cluster 判定。
+        const role = getProcessRole({
+            BUN_WORKER_ID: "2",
+            PM2_INSTANCE_ID: "0"
+        });
+        expect(role.env).toBe("bun-cluster");
+        expect(role.role).toBe("worker");
+        expect(role.instanceId).toBe("2");
     });
 });
 

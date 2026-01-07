@@ -1,6 +1,8 @@
 /**
  * 进程角色信息
  */
+type RuntimeEnv = Record<string, string | undefined>;
+
 export interface ProcessRole {
     /** 进程角色：primary（主进程）或 worker（工作进程） */
     role: "primary" | "worker";
@@ -14,9 +16,11 @@ export interface ProcessRole {
  * 获取当前进程角色信息
  * @returns 进程角色、实例 ID 和运行环境
  */
-export function getProcessRole(): ProcessRole {
-    const bunWorkerId = process.env.BUN_WORKER_ID;
-    const pm2InstanceId = process.env.PM2_INSTANCE_ID;
+export function getProcessRole(env?: RuntimeEnv): ProcessRole {
+    const runtimeEnv = env || ({} as RuntimeEnv);
+
+    const bunWorkerId = runtimeEnv.BUN_WORKER_ID;
+    const pm2InstanceId = runtimeEnv.PM2_INSTANCE_ID;
 
     // Bun 集群模式
     if (bunWorkerId !== undefined) {
@@ -51,6 +55,6 @@ export function getProcessRole(): ProcessRole {
  * - PM2 集群：PM2_INSTANCE_ID 为 '0' 或不存在时是主进程
  * @returns 是否为主进程
  */
-export function isPrimaryProcess(): boolean {
-    return getProcessRole().role === "primary";
+export function isPrimaryProcess(env?: RuntimeEnv): boolean {
+    return getProcessRole(env).role === "primary";
 }

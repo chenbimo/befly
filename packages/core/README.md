@@ -81,7 +81,7 @@ my-api/
 import { Befly } from "befly";
 
 const app = new Befly();
-await app.start();
+await app.start(Bun.env);
 ```
 
 ## 编写第一个 API
