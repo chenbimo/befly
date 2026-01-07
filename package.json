@@ -31,6 +31,8 @@
         "@typescript/native-preview": "7.0.0-dev.20260107.1",
         "lefthook": "^2.0.13",
         "lerna": "^9.0.3",
+        "oxfmt": "^0.23.0",
+        "oxlint": "^1.38.0",
         "rimraf": "^6.1.2"
     },
     "engines": {
