@@ -22,32 +22,32 @@ const validatorHook: Hook = {
             return;
         }
 
-        // 仅保留 fields 中声明的字段，并支持 snake_case 入参回退（例如 agent_id -> agentId）
+        // 仅保留 fields 中声明的字段，并支持 snake_case 入参回退（例如 agent_id -> agentId）；同时在同一次遍历中应用默认值
         if (isPlainObject(ctx.api.fields)) {
             const rawBody = isPlainObject(ctx.body) ? (ctx.body as Record<string, any>) : {};
-            const filteredBody: Record<string, any> = {};
+            const nextBody: Record<string, any> = {};
 
-            for (const field of Object.keys(ctx.api.fields)) {
-                if (rawBody[field] !== undefined) {
-                    filteredBody[field] = rawBody[field];
-                    continue;
+            for (const [field, fieldDef] of Object.entries(ctx.api.fields)) {
+                let value = rawBody[field];
+
+                if (value === undefined) {
+                    const snakeField = snakeCase(field);
+                    if (rawBody[snakeField] !== undefined) {
+                        value = rawBody[snakeField];
+                    }
                 }
 
-                const snakeField = snakeCase(field);
-                if (rawBody[snakeField] !== undefined) {
-                    filteredBody[field] = rawBody[snakeField];
+                // 字段未传值且定义了默认值时，应用默认值
+                if (value === undefined && (fieldDef as any)?.default !== undefined && (fieldDef as any)?.default !== null) {
+                    value = (fieldDef as any).default;
+                }
+
+                if (value !== undefined) {
+                    nextBody[field] = value;
                 }
             }
 
-            ctx.body = filteredBody;
-        }
-
-        // 应用字段默认值
-        for (const [field, fieldDef] of Object.entries(ctx.api.fields)) {
-            // 字段未传值且定义了默认值时，应用默认值
-            if (ctx.body[field] === undefined && (fieldDef as any)?.default !== undefined && (fieldDef as any)?.default !== null) {
-                ctx.body[field] = (fieldDef as any).default;
-            }
+            ctx.body = nextBody;
         }
 
         // 验证参数
