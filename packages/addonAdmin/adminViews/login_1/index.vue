@@ -70,7 +70,7 @@ import ILucideUser from "~icons/lucide/user";
 import ILucideLock from "~icons/lucide/lock";
 import { $Http } from "@/plugins/http";
 import { $Storage } from "@/plugins/storage";
-import { hashPassword } from "../../../utils/hashPassword";
+import { hashPassword } from "../../utils/hashPassword";
 
 definePage({
     meta: {
