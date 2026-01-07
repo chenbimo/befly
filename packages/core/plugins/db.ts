@@ -22,7 +22,7 @@ const dbPlugin: Plugin = {
         const env = befly.config ? (befly.config as any).nodeEnv : undefined;
 
         if (!(befly as any).redis) {
-            throw new Error("数据库初始化失败：ctx.redis 未初始化");
+            throw new Error("Redis 未初始化");
         }
 
         try {

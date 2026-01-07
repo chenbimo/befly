@@ -218,7 +218,7 @@ export class Connect {
             // 连接 Redis
             await this.connectRedis(config.redis || {});
         } catch (error: any) {
-            Logger.error({ env: (config as any).nodeEnv, err: error, msg: "数据库初始化失败" });
+            Logger.error({ env: (config as any).nodeEnv, err: error, msg: "数据库连接初始化失败" });
             await this.disconnect();
             throw error;
         }
