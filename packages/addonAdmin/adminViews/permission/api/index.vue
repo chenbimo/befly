@@ -28,6 +28,10 @@
                         <TTag v-else-if="row.method === 'DELETE'" shape="round" theme="danger" variant="light-outline">DELETE</TTag>
                         <TTag v-else shape="round" variant="light-outline">{{ row.method }}</TTag>
                     </template>
+                    <template #auth="{ row }">
+                        <TTag v-if="row.auth === 0" shape="round" theme="success" variant="light-outline">免登录</TTag>
+                        <TTag v-else shape="round" theme="warning" variant="light-outline">需登录</TTag>
+                    </template>
                     <template #addonName="{ row }">
                         <TTag v-if="row.addonName" shape="round" variant="light-outline">{{ row.addonTitle || row.addonName }}</TTag>
                         <span v-else>项目</span>
@@ -43,6 +47,10 @@
                         <TTag v-else-if="value === 'PUT'" shape="round" theme="warning" variant="light-outline">PUT</TTag>
                         <TTag v-else-if="value === 'DELETE'" shape="round" theme="danger" variant="light-outline">DELETE</TTag>
                         <TTag v-else shape="round" variant="light-outline">{{ value }}</TTag>
+                    </template>
+                    <template #auth="{ value }">
+                        <TTag v-if="value === 0" shape="round" theme="success" variant="light-outline">免登录</TTag>
+                        <TTag v-else shape="round" theme="warning" variant="light-outline">需登录</TTag>
                     </template>
                 </DetailPanel>
             </div>
@@ -73,7 +81,8 @@ const $Data = $ref({
     searchKeyword: "",
     columns: withDefaultColumns([
         { colKey: "name", title: "接口名称" },
-        { colKey: "path", title: "接口路径" },
+        { colKey: "auth", title: "登录" },
+        { colKey: "routePath", title: "接口路径" },
         { colKey: "method", title: "请求方法" },
         { colKey: "addonName", title: "所属组件" }
     ]),
@@ -123,7 +132,7 @@ const $Method = {
             return;
         }
         const keyword = $Data.searchKeyword.toLowerCase();
-        $Data.tableData = $Data.allData.filter((item) => item.name?.toLowerCase().includes(keyword) || item.path?.toLowerCase().includes(keyword));
+        $Data.tableData = $Data.allData.filter((item) => item.name?.toLowerCase().includes(keyword) || item.routePath?.toLowerCase().includes(keyword));
     },
 
     // 高亮行变化

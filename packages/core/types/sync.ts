@@ -73,6 +73,8 @@ export interface MenuConfig {
 export interface SyncApiItem {
     type?: "api" | string;
     name: string;
+    /** 是否需要登录：0=免登录，1=需登录（同步时会归一化为 0/1） */
+    auth?: 0 | 1 | boolean;
     routePath: string;
     addonName: string;
     [key: string]: any;

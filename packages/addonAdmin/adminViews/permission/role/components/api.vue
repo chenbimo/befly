@@ -72,6 +72,26 @@ const $Method = {
     async initData() {
         $Method.onShow();
         await Promise.all([$Method.apiApiAll(), $Method.apiRoleApiDetail()]);
+
+        // auth=0（免登录）接口默认选中：与角色已有权限做并集，不覆盖。
+        const merged = new Set();
+        const current = Array.isArray($Data.checkedApiPaths) ? $Data.checkedApiPaths : [];
+        for (const p of current) {
+            merged.add(p);
+        }
+
+        const groups = Array.isArray($Data.apiData) ? $Data.apiData : [];
+        for (const group of groups) {
+            const apis = group && group.apis;
+            const list = Array.isArray(apis) ? apis : [];
+            for (const api of list) {
+                if (api && api.auth === 0 && typeof api.value === "string" && api.value) {
+                    merged.add(api.value);
+                }
+            }
+        }
+
+        $Data.checkedApiPaths = Array.from(merged);
         $Data.filteredApiData = $Data.apiData;
     },
 
@@ -113,7 +133,8 @@ const $Method = {
                     name: api.name || "",
                     path: api.routePath || "",
                     label: `${api.name || ""} ${api.routePath ? `(${api.routePath})` : ""}`.trim(),
-                    description: api.description
+                    description: api.description,
+                    auth: api.auth
                 });
             });
 

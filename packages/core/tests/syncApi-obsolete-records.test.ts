@@ -61,7 +61,7 @@ describe("syncApi - delete obsolete records", () => {
 
         await syncApi(ctx, apiItems);
 
-        expect(calls.getAllArgs?.fields).toEqual(["id", "routePath", "name", "addonName", "state"]);
+        expect(calls.getAllArgs?.fields).toEqual(["id", "routePath", "name", "addonName", "auth", "state"]);
 
         expect(calls.delForceBatch).toHaveLength(1);
         expect(calls.delForceBatch[0]).toEqual([2]);

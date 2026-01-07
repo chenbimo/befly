@@ -22,7 +22,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
 
     const allDbApis = await ctx.db.getAll({
         table: tableName,
-        fields: ["id", "routePath", "name", "addonName", "state"],
+        fields: ["id", "routePath", "name", "addonName", "auth", "state"],
         where: { state$gte: 0 }
     } as any);
 
@@ -36,7 +36,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
     // 1) 先构建当前扫描到的 routePath 集合（用于删除差集）
     const apiRouteKeys = new Set<string>();
 
-    // 2) 插入 / 更新（存在不一定更新：仅当 name/routePath/addonName 任一不匹配时更新）
+    // 2) 插入 / 更新（存在不一定更新：仅当 name/routePath/addonName/auth 任一不匹配时更新）
     for (const api of apis) {
         const apiType = api.type;
         // 兼容：历史/测试构造的数据可能没有 type 字段；此时应按 API 处理。
@@ -45,16 +45,26 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
             continue;
         }
 
-        const routePath = api.routePath;
-        apiRouteKeys.add(api.routePath);
+        const normalizedAuth = api.auth === 0 || api.auth === false ? 0 : 1;
+
+        const normalizedApi: SyncApiItem = {
+            name: api.name,
+            routePath: api.routePath,
+            addonName: api.addonName,
+            auth: normalizedAuth
+        };
+
+        const routePath = normalizedApi.routePath;
+        apiRouteKeys.add(routePath);
         const item = (allDbApiMap as any)[routePath];
         if (item) {
-            const shouldUpdate = api.name !== item.name || api.routePath !== item.routePath || api.addonName !== item.addonName;
+            const dbAuth = item.auth === 0 || item.auth === false ? 0 : 1;
+            const shouldUpdate = normalizedApi.name !== item.name || normalizedApi.routePath !== item.routePath || normalizedApi.addonName !== item.addonName || normalizedAuth !== dbAuth;
             if (shouldUpdate) {
-                updData.push({ id: item.id, api: api });
+                updData.push({ id: item.id, api: normalizedApi });
             }
         } else {
-            insData.push(api);
+            insData.push(normalizedApi);
         }
     }
 
@@ -75,7 +85,8 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
                         data: {
                             name: item.api.name,
                             routePath: item.api.routePath,
-                            addonName: item.api.addonName
+                            addonName: item.api.addonName,
+                            auth: item.api.auth === 0 || item.api.auth === false ? 0 : 1
                         }
                     };
                 })
@@ -93,7 +104,8 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
                     return {
                         name: api.name,
                         routePath: api.routePath,
-                        addonName: api.addonName
+                        addonName: api.addonName,
+                        auth: api.auth === 0 || api.auth === false ? 0 : 1
                     };
                 })
             );
