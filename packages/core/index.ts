@@ -62,20 +62,18 @@ export class Befly {
      * 启动完整的生命周期流程
      * @returns HTTP 服务器实例
      */
-    public async start(env?: BeflyRuntimeEnv): Promise<ReturnType<typeof Bun.serve>> {
+    public async start(env: BeflyRuntimeEnv = {}): Promise<ReturnType<typeof Bun.serve>> {
         try {
             const serverStartTime = Bun.nanoseconds();
 
-            const runtimeEnv = env || {};
-
             // 0. 加载配置
-            this.config = await loadBeflyConfig(runtimeEnv.NODE_ENV);
+            this.config = await loadBeflyConfig(env.NODE_ENV || "development");
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取
             this.context.config = this.config;
 
             // 给插件/Hook/sync 一个统一读取 env 的入口（只从 start 入参注入）
-            this.context.env = runtimeEnv;
+            this.context.env = env;
 
             const { apis, tables, plugins, hooks, addons } = await scanSources();
 
@@ -169,7 +167,7 @@ export class Befly {
             });
 
             const finalStartupTime = calcPerfTime(serverStartTime);
-            const processRole = getProcessRole(runtimeEnv);
+            const processRole = getProcessRole(env);
             const roleLabel = processRole.role === "primary" ? "主进程" : `工作进程 #${processRole.instanceId}`;
             const envLabel = processRole.env === "standalone" ? "" : ` [${processRole.env}]`;
 
