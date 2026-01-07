@@ -61,12 +61,12 @@ export class Befly {
      * 启动完整的生命周期流程
      * @returns HTTP 服务器实例
      */
-    public async start(): Promise<ReturnType<typeof Bun.serve>> {
+    public async start(nodeEnv?: string): Promise<ReturnType<typeof Bun.serve>> {
         try {
             const serverStartTime = Bun.nanoseconds();
 
             // 0. 加载配置
-            this.config = await loadBeflyConfig();
+            this.config = await loadBeflyConfig(nodeEnv);
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取
             this.context.config = this.config;

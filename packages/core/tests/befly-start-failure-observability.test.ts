@@ -8,7 +8,6 @@ import { Logger } from "../lib/logger";
 describe("Befly.start - failure observability", () => {
     test("启动早期失败时：应记录错误、flush/shutdown、并把异常抛给上层", async () => {
         const prevCwd = process.cwd();
-        const prevNodeEnv = process.env.NODE_ENV;
 
         const runId = String(Date.now());
         const tempProjectDir = join(prevCwd, "temp", `start-fail-project-${runId}`);
@@ -51,7 +50,6 @@ describe("Befly.start - failure observability", () => {
         };
 
         try {
-            process.env.NODE_ENV = `test_start_fail_${runId}`;
             process.chdir(tempProjectDir);
 
             // 让 Logger.error 不触发文件 I/O；同时我们只关心 start() 是否调用了 flush/shutdown
@@ -68,7 +66,7 @@ describe("Befly.start - failure observability", () => {
 
             let thrown: any = null;
             try {
-                await app.start();
+                await app.start(`test_start_fail_${runId}`);
             } catch (error: any) {
                 thrown = error;
             }
@@ -85,11 +83,6 @@ describe("Befly.start - failure observability", () => {
             (Logger as any).shutdown = originalShutdown;
 
             process.chdir(prevCwd);
-            if (prevNodeEnv === undefined) {
-                delete process.env.NODE_ENV;
-            } else {
-                process.env.NODE_ENV = prevNodeEnv;
-            }
 
             if (existsSync(tempProjectDir)) {
                 rmSync(tempProjectDir, { recursive: true, force: true });

@@ -89,9 +89,9 @@ const defaultOptions: BeflyOptions = {
     addons: {}
 };
 
-export async function loadBeflyConfig(): Promise<BeflyOptions> {
-    const nodeEnv = process.env.NODE_ENV || "development";
-    const envSuffix = nodeEnv === "production" ? "production" : "development";
+export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
+    const normalizedNodeEnv = typeof nodeEnv === "string" && nodeEnv.trim() ? nodeEnv.trim() : "development";
+    const envSuffix = normalizedNodeEnv === "production" ? "production" : "development";
 
     // 使用 importDefault 加载 configs 目录下的配置文件。
     // 合并顺序：defaultOptions ← befly.common.json ← befly.development/production.json
@@ -102,6 +102,10 @@ export async function loadBeflyConfig(): Promise<BeflyOptions> {
     const envConfig = await importDefault(join(configsDir, `befly.${envSuffix}.json`), {});
 
     const config = mergeAndConcat(defaultOptions, commonConfig, envConfig);
+
+    // 重要：nodeEnv 的来源改为 Befly.start(nodeEnv) 显式传参；避免 bundle/编译阶段被常量折叠。
+    // 同时确保运行时行为（例如 Bun.serve development 标记）与实际选择的配置文件一致。
+    (config as any).nodeEnv = normalizedNodeEnv;
 
     // 配置校验：redis.prefix 作为 key 前缀，由 RedisHelper 统一拼接 ":"。
     // 因此 prefix 本身不允许包含 ":"，否则会导致 key 结构出现空段或多段分隔（例如 "prefix::key"），
