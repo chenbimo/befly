@@ -31,17 +31,17 @@
 
         <template #footer>
             <div class="dialog-footer">
-                <t-space>
+                <TSpace>
                     <TButton theme="default" @click="$Method.onClose">取消</TButton>
                     <TButton theme="primary" :loading="$Data.submitting" @click="$Method.onSubmit">保存</TButton>
-                </t-space>
+                </TSpace>
             </div>
         </template>
     </TDialog>
 </template>
 
 <script setup lang="ts">
-import { Dialog as TDialog, Input as TInput, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, MessagePlugin } from "tdesign-vue-next";
+import { Dialog as TDialog, Input as TInput, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, Space as TSpace, MessagePlugin } from "tdesign-vue-next";
 import ILucideSearch from "~icons/lucide/search";
 import { $Http } from "@/plugins/http";
 
@@ -85,7 +85,8 @@ const $Method = {
             const apis = group && group.apis;
             const list = Array.isArray(apis) ? apis : [];
             for (const api of list) {
-                if (api && api.auth === 0 && typeof api.value === "string" && api.value) {
+                const isPublic = api && (api.auth === 0 || api.auth === "0" || api.auth === false);
+                if (isPublic && typeof api.value === "string" && api.value) {
                     merged.add(api.value);
                 }
             }

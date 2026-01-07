@@ -135,8 +135,3 @@ const $Method = {
 
 $Method.initData();
 </script>
-
-<style scoped lang="scss">
-.comp-role-edit {
-}
-</style>
