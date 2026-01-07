@@ -13,6 +13,24 @@ export function isPlainObject(value: unknown): value is Record<string, any> {
     return proto === Object.prototype || proto === null;
 }
 
+export type ValueTypeTag = "undefined" | "null" | "string" | "number" | "boolean" | "bigint" | "symbol" | "function" | "array" | "object";
+
+export function getTypeTag(value: unknown): ValueTypeTag {
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+    if (Array.isArray(value)) return "array";
+
+    const t = typeof value;
+    if (t === "string") return "string";
+    if (t === "number") return "number";
+    if (t === "boolean") return "boolean";
+    if (t === "bigint") return "bigint";
+    if (t === "symbol") return "symbol";
+    if (t === "function") return "function";
+
+    return "object";
+}
+
 const REGEXP_SPECIAL = /[\\^$.*+?()[\]{}|]/g;
 
 export function escapeRegExp(input: string): string {

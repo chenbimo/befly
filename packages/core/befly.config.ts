@@ -5,8 +5,11 @@
  */
 import type { BeflyOptions } from "./types/befly";
 
+import { join } from "node:path";
+
 import { compileDisableMenuGlobRules } from "./utils/disableMenusGlob";
-import { scanConfig } from "./utils/scanConfig";
+import { importDefault } from "./utils/importDefault";
+import { mergeAndConcat } from "./utils/mergeAndConcat";
 
 /** 默认配置 */
 const defaultOptions: BeflyOptions = {
@@ -90,7 +93,7 @@ const defaultOptions: BeflyOptions = {
 const beflyConfigCache: Map<string, Promise<BeflyOptions>> = new Map();
 
 export async function loadBeflyConfig(): Promise<BeflyOptions> {
-    const nodeEnv = process.env.NODE_ENV || defaultOptions.nodeEnv || "development";
+    const nodeEnv = process.env.NODE_ENV || "development";
     const envSuffix = nodeEnv === "production" ? "production" : "development";
 
     const cacheKey = nodeEnv;
@@ -100,15 +103,15 @@ export async function loadBeflyConfig(): Promise<BeflyOptions> {
     }
 
     const promise = (async () => {
-        // 使用 scanConfig 一次性加载并合并所有配置文件
+        // 使用 importDefault 加载 configs 目录下的配置文件。
         // 合并顺序：defaultOptions ← befly.common.json ← befly.development/production.json
-        const config = await scanConfig({
-            dirs: ["configs"],
-            files: ["befly.common", `befly.${envSuffix}`],
-            extensions: [".json"],
-            mode: "merge",
-            defaults: defaultOptions
-        });
+
+        const configsDir = join(process.cwd(), "configs");
+
+        const commonConfig = await importDefault(join(configsDir, "befly.common.json"), {});
+        const envConfig = await importDefault(join(configsDir, `befly.${envSuffix}.json`), {});
+
+        const config = mergeAndConcat(defaultOptions, commonConfig, envConfig);
 
         // 配置校验：redis.prefix 作为 key 前缀，由 RedisHelper 统一拼接 ":"。
         // 因此 prefix 本身不允许包含 ":"，否则会导致 key 结构出现空段或多段分隔（例如 "prefix::key"），
