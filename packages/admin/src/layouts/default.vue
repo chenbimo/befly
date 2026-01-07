@@ -74,7 +74,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { DialogPlugin } from "tdesign-vue-next";
 import { arrayToTree } from "@/utils/arrayToTree";
 

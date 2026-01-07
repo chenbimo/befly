@@ -19,7 +19,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import SystemOverview from "./components/systemOverview.vue";
 import ServiceStatus from "./components/serviceStatus.vue";
 import SystemResources from "./components/systemResources.vue";

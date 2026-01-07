@@ -63,7 +63,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from "vue-router";
 import { Form as TForm, FormItem as TFormItem, Input as TInput, Button as TButton, Checkbox as TCheckbox, InputAdornment as TInputAdornment, Select as TSelect, Option as TOption, MessagePlugin } from "tdesign-vue-next";
 import ILucideUser from "~icons/lucide/user";

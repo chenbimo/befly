@@ -34,7 +34,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import ILucideInfo from "~icons/lucide/info";
 import ILucideMenu from "~icons/lucide/menu";
 import ILucideWebhook from "~icons/lucide/webhook";

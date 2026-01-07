@@ -52,7 +52,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import ILucideActivity from "~icons/lucide/activity";
 import ILucideClock from "~icons/lucide/clock";
 import ILucideTrendingUp from "~icons/lucide/trending-up";

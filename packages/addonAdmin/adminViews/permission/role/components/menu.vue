@@ -40,7 +40,7 @@
     </TDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Dialog as TDialog, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, Input as TInput, MessagePlugin } from "tdesign-vue-next";
 import ILucideSearch from "~icons/lucide/search";
 import { $Http } from "@/plugins/http";

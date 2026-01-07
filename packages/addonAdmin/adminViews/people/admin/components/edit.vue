@@ -33,7 +33,7 @@
     </TDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import {
     //
     Dialog as TDialog,

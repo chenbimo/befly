@@ -49,7 +49,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, MessagePlugin } from "tdesign-vue-next";
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";

@@ -38,7 +38,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Button as TButton, MessagePlugin } from "tdesign-vue-next";
 import ILucideUser from "~icons/lucide/user";
 import ILucideMail from "~icons/lucide/mail";

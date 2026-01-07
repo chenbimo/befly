@@ -33,7 +33,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // 组件内部数据
 const operationLogs = $ref([
     { id: 1, userName: "管理员", action: "创建角色", module: "权限管理", ip: "192.168.1.100", status: "success", createdAt: Date.now() - 120000 },

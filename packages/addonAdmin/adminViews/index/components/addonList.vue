@@ -23,7 +23,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { $Http } from "@/plugins/http";
 
 // 组件内部数据

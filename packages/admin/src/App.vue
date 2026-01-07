@@ -6,7 +6,7 @@
     </ConfigProvider>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ConfigProvider } from "tdesign-vue-next";
 
 const globalConfig = {

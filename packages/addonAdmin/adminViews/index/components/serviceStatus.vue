@@ -34,7 +34,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import ILucideCheckCircle from "~icons/lucide/check-circle";
 import ILucideDatabase from "~icons/lucide/database";
 import ILucideZap from "~icons/lucide/zap";

@@ -38,7 +38,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Progress as TProgress } from "tdesign-vue-next";
 import ILucideActivity from "~icons/lucide/activity";
 import ILucideCpu from "~icons/lucide/cpu";

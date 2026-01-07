@@ -83,7 +83,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPagination, Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, Space as TSpace, MessagePlugin } from "tdesign-vue-next";
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import ILucideSend from "~icons/lucide/send";

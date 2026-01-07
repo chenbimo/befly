@@ -25,7 +25,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Tag as TTag } from "tdesign-vue-next";
 import ILucideBell from "~icons/lucide/bell";
 import ILucideInfo from "~icons/lucide/info";

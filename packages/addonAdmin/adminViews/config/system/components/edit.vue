@@ -44,7 +44,7 @@
     </TDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, InputNumber as TInputNumber, Select as TSelect, Option as TOption, RadioGroup as TRadioGroup, Radio as TRadio, Button as TButton, MessagePlugin } from "tdesign-vue-next";
 import { $Http } from "@/plugins/http";
 

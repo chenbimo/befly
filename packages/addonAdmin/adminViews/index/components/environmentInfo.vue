@@ -35,7 +35,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import ILucideServer from "~icons/lucide/server";
 import { $Http } from "@/plugins/http";
 

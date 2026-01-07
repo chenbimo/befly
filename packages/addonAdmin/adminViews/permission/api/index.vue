@@ -58,7 +58,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Button as TButton, Table as TTable, Tag as TTag, Input as TInput, MessagePlugin } from "tdesign-vue-next";
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import ILucideSearch from "~icons/lucide/search";

@@ -69,7 +69,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Button as TButton, Table as TTable, Tag as TTag, Dropdown as TDropdown, DropdownMenu as TDropdownMenu, DropdownItem as TDropdownItem, Pagination as TPagination, MessagePlugin, DialogPlugin } from "tdesign-vue-next";
 import ILucidePlus from "~icons/lucide/plus";
 import ILucideRotateCw from "~icons/lucide/rotate-cw";

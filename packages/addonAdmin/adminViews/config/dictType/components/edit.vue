@@ -17,7 +17,7 @@
     </TDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
 
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Textarea as TTextarea, InputNumber as TInputNumber, MessagePlugin } from "tdesign-vue-next";

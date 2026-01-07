@@ -2,7 +2,7 @@
     <RouterView />
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePage({
     meta: {
         title: "日志管理",

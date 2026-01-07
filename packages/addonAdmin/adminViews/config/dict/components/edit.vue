@@ -22,7 +22,7 @@
     </TDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
 
 import { Dialog as TDialog, Form as TForm, FormItem as TFormItem, Input as TInput, Select as TSelect, Option as TOption, Textarea as TTextarea, InputNumber as TInputNumber, MessagePlugin } from "tdesign-vue-next";
