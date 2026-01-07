@@ -138,7 +138,6 @@ export function createBeflyViteConfig(options = {}) {
             outDir: "dist",
             assetsDir: "assets",
             sourcemap: false,
-            minify: "esbuild",
             chunkSizeWarningLimit: 1000,
             commonjsOptions: {
                 include: [/node_modules/],
