@@ -75,7 +75,7 @@ export class Befly {
             this.context.config = this.config;
 
             // 给插件/Hook/sync 一个统一读取 env 的入口（只从 start 入参注入）
-            (this.context as any).env = runtimeEnv;
+            this.context.env = runtimeEnv;
 
             const { apis, tables, plugins, hooks, addons } = await scanSources();
 
