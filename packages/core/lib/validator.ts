@@ -41,7 +41,7 @@ export class Validator {
         // 检查必填字段
         for (const field of required) {
             const value = data[field];
-            if (value === undefined || value === null || value === "") {
+            if (value === undefined || value === null) {
                 const label = rules[field]?.name || field;
                 fieldErrors[field] = `${label}为必填项`;
             }

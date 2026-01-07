@@ -5,8 +5,6 @@ import type { Hook } from "../types/hook";
 import { XMLParser } from "fast-xml-parser";
 
 import { ErrorResponse } from "../utils/response";
-// 相对导入
-import { isEmpty, isPlainObject, pickFields } from "../utils/util";
 
 const xmlParser = new XMLParser();
 
@@ -14,7 +12,7 @@ const xmlParser = new XMLParser();
  * 请求参数解析钩子
  * - GET 请求：解析 URL 查询参数
  * - POST 请求：解析 JSON 或 XML 请求体
- * - 根据 API 定义的 fields 过滤字段
+ * - 仅负责解析与合并参数；字段过滤/映射/校验由 validator hook 处理
  * - rawBody: true 时跳过解析，由 handler 自行处理原始请求
  */
 const parserHook: Hook = {
@@ -35,11 +33,7 @@ const parserHook: Hook = {
         if (ctx.req.method === "GET") {
             const url = new URL(ctx.req.url);
             const params = Object.fromEntries(url.searchParams);
-            if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
-                ctx.body = pickFields(params, Object.keys(ctx.api.fields));
-            } else {
-                ctx.body = params;
-            }
+            ctx.body = params;
         } else if (ctx.req.method === "POST") {
             // POST 请求：解析请求体
             const contentType = ctx.req.headers.get("content-type") || "";
@@ -53,11 +47,7 @@ const parserHook: Hook = {
                     const body = (await ctx.req.json()) as Record<string, any>;
                     // 合并 URL 参数和请求体（请求体优先）
                     const merged = { ...queryParams, ...body };
-                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
-                        ctx.body = pickFields(merged, Object.keys(ctx.api.fields));
-                    } else {
-                        ctx.body = merged;
-                    }
+                    ctx.body = merged;
                 } else if (contentType.includes("application/xml") || contentType.includes("text/xml")) {
                     // XML 格式
                     const text = await ctx.req.text();
@@ -67,11 +57,7 @@ const parserHook: Hook = {
                     const body = rootKey && typeof parsed[rootKey] === "object" ? parsed[rootKey] : parsed;
                     // 合并 URL 参数和请求体（请求体优先）
                     const merged = { ...queryParams, ...body };
-                    if (isPlainObject(ctx.api.fields) && !isEmpty(ctx.api.fields)) {
-                        ctx.body = pickFields(merged, Object.keys(ctx.api.fields));
-                    } else {
-                        ctx.body = merged;
-                    }
+                    ctx.body = merged;
                 } else {
                     // 不支持的 Content-Type
                     ctx.response = ErrorResponse(

@@ -117,10 +117,11 @@ describe("Validator.validate - 必填字段", () => {
         expect(result.fieldErrors.name).toContain("必填项");
     });
 
-    test("字段值为空字符串 - 失败", () => {
+    test("字段值为空字符串 - 不算必填，但按规则失败", () => {
         const result = Validator.validate({ name: "" }, rules, ["name"]);
         expect(result.code).toBe(1);
-        expect(result.fieldErrors.name).toContain("必填项");
+        expect(result.fieldErrors.name).not.toContain("必填项");
+        expect(result.fieldErrors.name).toContain("长度不能少于");
     });
 
     test("字段值为 null - 失败", () => {
@@ -158,6 +159,15 @@ describe("Validator.validate - 必填字段", () => {
         const noLabelRules = { name: { type: "string", min: 2, max: 20 } };
         const result = Validator.validate({}, noLabelRules, ["name"]);
         expect(result.firstError).toContain("name");
+    });
+
+    test("必填 number 字段传 0 - 通过", () => {
+        const numberRules = {
+            agentId: { name: "上级ID", type: "number", min: 0, max: null }
+        };
+
+        const result = Validator.validate({ agentId: 0 }, numberRules, ["agentId"]);
+        expect(result.code).toBe(0);
     });
 });
 
