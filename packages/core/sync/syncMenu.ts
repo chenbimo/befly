@@ -68,7 +68,48 @@ function createDisableMenuMatcher(ctx: BeflyContext): (path: string) => boolean 
     };
 }
 
-function flattenMenusToDefMap(mergedMenus: MenuConfig[], isDisabledPath?: (path: string) => boolean): Map<string, MenuDef> {
+function filterMenusByDisableMenus(menus: MenuConfig[], isDisabledPath: (path: string) => boolean): MenuConfig[] {
+    const out: MenuConfig[] = [];
+
+    for (const menu of menus) {
+        if (menu === null || typeof menu !== "object") {
+            continue;
+        }
+
+        const path = typeof (menu as any).path === "string" ? String((menu as any).path).trim() : "";
+        if (path && isDisabledPath(path)) {
+            // 节点被禁用：整棵子树直接忽略
+            continue;
+        }
+
+        const children = (menu as any).children;
+        const nextChildren = Array.isArray(children) && children.length > 0 ? filterMenusByDisableMenus(children, isDisabledPath) : [];
+
+        // 只保留 syncMenu 需要的最小字段，避免引入扩展运算符/不必要的字段复制
+        const next: any = {};
+        if (typeof (menu as any).name === "string") {
+            next.name = (menu as any).name;
+        }
+        if (typeof (menu as any).path === "string") {
+            next.path = (menu as any).path;
+        }
+        if (typeof (menu as any).sort === "number") {
+            next.sort = (menu as any).sort;
+        }
+        if (typeof (menu as any).parentPath === "string") {
+            next.parentPath = (menu as any).parentPath;
+        }
+        if (nextChildren.length > 0) {
+            next.children = nextChildren;
+        }
+
+        out.push(next as MenuConfig);
+    }
+
+    return out;
+}
+
+function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
     // 读取配置菜单：扁平化为 path => { name, sort, parentPath }
     // - 以 path 为唯一键：后出现的覆盖先出现的（与旧逻辑“同 path 多次同步同一条记录”一致）
     // parentPath 规则：
@@ -77,9 +118,9 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[], isDisabledPath?: (path:
     // 3) 保底：若无法推导（极端情况），回退到 getParentPath(path)
     const menuDefMap = new Map<string, MenuDef>();
 
-    const stack: Array<{ menu: MenuConfig; parentPathFromTree: string; disabledFromAncestor: boolean }> = [];
+    const stack: Array<{ menu: MenuConfig; parentPathFromTree: string }> = [];
     for (const m of mergedMenus) {
-        stack.push({ menu: m, parentPathFromTree: "", disabledFromAncestor: false });
+        stack.push({ menu: m, parentPathFromTree: "" });
     }
 
     while (stack.length > 0) {
@@ -91,19 +132,12 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[], isDisabledPath?: (path:
 
         const path = typeof (menu as any).path === "string" ? (menu as any).path : "";
 
-        const disabledByRule = typeof isDisabledPath === "function" && typeof path === "string" && path ? isDisabledPath(path) : false;
-        const disabled = (item as any)?.disabledFromAncestor ? true : disabledByRule;
-
         const rawChildren = (menu as any).children;
         if (rawChildren && Array.isArray(rawChildren) && rawChildren.length > 0) {
             const nextParentPathFromTree = typeof path === "string" ? path : "";
             for (const child of rawChildren) {
-                stack.push({ menu: child, parentPathFromTree: nextParentPathFromTree, disabledFromAncestor: disabled });
+                stack.push({ menu: child, parentPathFromTree: nextParentPathFromTree });
             }
-        }
-
-        if (disabled) {
-            continue;
         }
 
         if (!path) {
@@ -151,7 +185,8 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
 
     const isDisabledPath = createDisableMenuMatcher(ctx);
 
-    const menuDefMap = flattenMenusToDefMap(mergedMenus, isDisabledPath);
+    const filteredMenus = filterMenusByDisableMenus(mergedMenus, isDisabledPath);
+    const menuDefMap = flattenMenusToDefMap(filteredMenus);
 
     const configPaths = new Set<string>();
     for (const p of menuDefMap.keys()) {
@@ -180,6 +215,11 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
                 continue;
             }
             if (typeof record?.id !== "number") {
+                continue;
+            }
+
+            // disableMenus 命中的记录会在后续强制删除；这里跳过可减少无意义告警
+            if (isDisabledPath(record.path)) {
                 continue;
             }
 
@@ -327,7 +367,7 @@ export const __test__ = {
         const mod = await import("../utils/loadMenuConfigs");
         return await mod.scanViewsDirToMenuConfigs(viewsDir, prefix, parentPath);
     },
-    flattenMenusToDefMap: (mergedMenus: MenuConfig[], isDisabledPath?: (path: string) => boolean) => {
-        return flattenMenusToDefMap(mergedMenus, isDisabledPath);
+    flattenMenusToDefMap: (mergedMenus: MenuConfig[]) => {
+        return flattenMenusToDefMap(mergedMenus);
     }
 };
