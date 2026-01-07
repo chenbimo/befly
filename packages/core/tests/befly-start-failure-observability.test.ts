@@ -66,7 +66,7 @@ describe("Befly.start - failure observability", () => {
 
             let thrown: any = null;
             try {
-                await app.start({ NODE_ENV: `test_start_fail_${runId}` });
+                await app.start({ NODE_ENV: "development" });
             } catch (error: any) {
                 thrown = error;
             }
