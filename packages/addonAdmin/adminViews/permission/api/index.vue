@@ -66,13 +66,6 @@ import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
-definePage({
-    meta: {
-        title: "接口列表",
-        order: 3
-    }
-});
-
 // 响应式数据
 const $Data = $ref({
     tableData: [],

@@ -82,13 +82,6 @@ import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
-definePage({
-    meta: {
-        title: "字典类型",
-        order: 1
-    }
-});
-
 const $Data = $ref({
     tableData: [],
     loading: false,

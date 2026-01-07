@@ -76,13 +76,6 @@ import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
-definePage({
-    meta: {
-        title: "操作日志",
-        order: 3
-    }
-});
-
 // 响应式数据
 const $Data = $ref({
     tableData: [],

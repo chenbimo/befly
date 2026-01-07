@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { clearRegexCache, getCompiledRegex, getRegex, getRegexCacheSize, matchRegex } from "../configs/presetRegexp";
 import { importDefault } from "../utils/importDefault";
-import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "../utils/loadMenuConfigs";
+import { cleanDirName, parseViewDirMetaJson } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
 import { getProcessRole, isPrimaryProcess } from "../utils/processInfo";
 import { camelCase, escapeRegExp, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
@@ -235,23 +235,27 @@ describe("utils - cleanDirName", () => {
     });
 });
 
-describe("utils - script setup meta extract", () => {
-    test("extractScriptSetupBlock should return first setup block", () => {
-        const vue = `<template></template>\n<script setup>const a = 1</script>\n<script setup>const b = 2</script>`;
-        const block = extractScriptSetupBlock(vue);
-        expect(block).toContain("const a = 1");
-        expect(block).not.toContain("const b = 2");
-    });
-
-    test("extractDefinePageMetaFromScriptSetup should return title and order", () => {
-        const ss = `definePage({ meta: { title: 'Hello', order: 12 } })`;
-        const meta = extractDefinePageMetaFromScriptSetup(ss);
+describe("utils - view meta json parse", () => {
+    test("parseViewDirMetaJson should return title and order", () => {
+        const content = JSON.stringify({ title: "Hello", order: 12 });
+        const meta = parseViewDirMetaJson(content);
         expect(meta).toEqual({ title: "Hello", order: 12 });
     });
 
-    test("missing title returns null", () => {
-        const ss = `definePage({ meta: { order: 1 } })`;
-        expect(extractDefinePageMetaFromScriptSetup(ss)).toBeNull();
+    test("order is optional", () => {
+        const content = JSON.stringify({ title: "Hello" });
+        const meta = parseViewDirMetaJson(content);
+        expect(meta).toEqual({ title: "Hello", order: undefined });
+    });
+
+    test("missing/invalid title returns null", () => {
+        expect(parseViewDirMetaJson(JSON.stringify({ order: 1 }))).toBeNull();
+        expect(parseViewDirMetaJson(JSON.stringify({ title: "" }))).toBeNull();
+        expect(parseViewDirMetaJson(JSON.stringify({ title: 123 }))).toBeNull();
+    });
+
+    test("invalid json returns null", () => {
+        expect(parseViewDirMetaJson("{" as any)).toBeNull();
     });
 });
 
@@ -333,7 +337,7 @@ describe("utils - loadMenuConfigs helpers", () => {
         expect(getParentPath("/")).toBe("");
     });
 
-    test("scanViewsDirToMenuConfigs should parse index.vue meta", async () => {
+    test("scanViewsDirToMenuConfigs should read meta.json", async () => {
         const tempRoot = join(import.meta.dir, "..", "..", "..", "temp", "fixtures", "viewsMenu");
         ensureEmptyDir(tempRoot);
 
@@ -343,8 +347,8 @@ describe("utils - loadMenuConfigs helpers", () => {
         const userDir = join(adminDir, "user");
         mkdirSync(userDir, { recursive: true });
 
-        await Bun.write(join(adminDir, "index.vue"), `<script setup>\ndefinePage({ meta: { title: 'Admin', order: 2 } })\n</script>`);
-        await Bun.write(join(userDir, "index.vue"), `<script setup>\ndefinePage({ meta: { title: 'User', order: 1 } })\n</script>`);
+        await Bun.write(join(adminDir, "meta.json"), JSON.stringify({ title: "Admin", order: 2 }));
+        await Bun.write(join(userDir, "meta.json"), JSON.stringify({ title: "User", order: 1 }));
 
         const { scanViewsDirToMenuConfigs } = await import("../utils/loadMenuConfigs");
         const menus = await scanViewsDirToMenuConfigs(tempRoot, "/app", "");

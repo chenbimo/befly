@@ -72,13 +72,6 @@ import { $Http } from "@/plugins/http";
 import { $Storage } from "@/plugins/storage";
 import { hashPassword } from "../../utils/hashPassword";
 
-definePage({
-    meta: {
-        title: "登录页",
-        order: 100
-    }
-});
-
 const router = useRouter();
 
 // 表单引用

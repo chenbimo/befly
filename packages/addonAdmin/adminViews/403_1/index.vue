@@ -16,13 +16,6 @@
 import { useRouter } from "vue-router";
 import { Button as TButton } from "tdesign-vue-next";
 
-definePage({
-    meta: {
-        title: "403",
-        order: 101
-    }
-});
-
 const router = useRouter();
 
 const $Method = {

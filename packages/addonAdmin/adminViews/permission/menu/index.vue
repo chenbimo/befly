@@ -47,13 +47,6 @@ import { $Http } from "@/plugins/http";
 import { arrayToTree } from "../../../utils/arrayToTree";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
-definePage({
-    meta: {
-        title: "菜单列表",
-        order: 2
-    }
-});
-
 // 响应式数据
 const $Data = $ref({
     tableData: [],
