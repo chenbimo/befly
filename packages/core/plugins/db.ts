@@ -19,7 +19,7 @@ const dbPlugin: Plugin = {
     enable: true,
     deps: ["logger", "redis"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
-        const env = befly.config ? (befly.config as any).nodeEnv : undefined;
+        const env = (befly.config as any)?.nodeEnv;
 
         if (!(befly as any).redis) {
             throw new Error("Redis 未初始化");
@@ -28,7 +28,7 @@ const dbPlugin: Plugin = {
         try {
             const sql = Connect.getSql();
 
-            const rawDbType = befly.config && befly.config.db ? befly.config.db.type : undefined;
+            const rawDbType = befly.config?.db?.type;
             const resolvedDbType = rawDbType === "postgres" ? "postgresql" : rawDbType;
             const dialect = getDialectByName(resolvedDbType === "postgresql" || resolvedDbType === "sqlite" ? resolvedDbType : "mysql");
 

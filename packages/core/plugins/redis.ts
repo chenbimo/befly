@@ -17,15 +17,15 @@ const redisPlugin: Plugin = {
     name: "redis",
     enable: true,
     deps: ["logger"],
-    async handler(context: BeflyContext): Promise<RedisHelper | Record<string, never>> {
-        const env = context.config ? (context.config as any).nodeEnv : undefined;
-        const redisConfig = context.config && context.config.redis ? context.config.redis : {};
+    async handler(befly: BeflyContext): Promise<RedisHelper | Record<string, never>> {
+        const env = (befly.config as any)?.nodeEnv;
+        const redisPrefix = befly.config?.redis?.prefix;
         try {
             // 启动期已建立 Redis 连接；这里仅校验连接存在
             Connect.getRedis();
 
             // 返回 RedisHelper 实例
-            return new RedisHelper(redisConfig.prefix);
+            return new RedisHelper(redisPrefix);
         } catch (error: any) {
             Logger.error({ env: env, err: error, msg: "Redis 初始化失败" });
             throw error;

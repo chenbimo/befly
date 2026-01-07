@@ -15,10 +15,10 @@ const loggerPlugin: Plugin = {
     name: "logger",
     enable: true,
     deps: [],
-    async handler(context: BeflyContext) {
+    async handler(befly: BeflyContext) {
         // 配置 Logger
-        if (context.config && context.config.logger) {
-            Logger.configure(context.config.logger);
+        if (befly.config && befly.config.logger) {
+            Logger.configure(befly.config.logger);
         }
         return Logger;
     }
