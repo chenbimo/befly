@@ -2,11 +2,12 @@ import type { MenuConfig } from "../types/sync";
 import type { AddonInfo } from "./scanAddons";
 
 import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 
 import { join } from "pathe";
 
 import { Logger } from "../lib/logger";
+import { importDefault } from "./importDefault";
 import { isDirentDirectory } from "./isDirentDirectory";
 
 type ViewDirMeta = {
@@ -22,26 +23,19 @@ export function cleanDirName(name: string): string {
     return String(name).replace(/_\d+$/, "");
 }
 
-export function parseViewDirMetaJson(content: string): ViewDirMeta | null {
-    let data: any;
-    try {
-        data = JSON.parse(content);
-    } catch {
+export function normalizeViewDirMeta(input: any): ViewDirMeta | null {
+    if (!input || typeof input !== "object") {
         return null;
     }
 
-    if (!data || typeof data !== "object") {
+    if (typeof input.title !== "string" || !input.title) {
         return null;
     }
 
-    if (typeof data.title !== "string" || !data.title) {
-        return null;
-    }
-
-    const order = typeof data.order === "number" ? data.order : undefined;
+    const order = typeof input.order === "number" && Number.isFinite(input.order) && Number.isInteger(input.order) ? input.order : undefined;
 
     return {
-        title: data.title,
+        title: input.title,
         order: order
     };
 }
@@ -63,19 +57,14 @@ export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string
         const metaJsonPath = join(dirPath, "meta.json");
 
         let meta: ViewDirMeta | null = null;
-        try {
-            if (!existsSync(metaJsonPath)) {
-                continue;
-            }
+        if (!existsSync(metaJsonPath)) {
+            continue;
+        }
 
-            const content = await readFile(metaJsonPath, "utf-8");
-            meta = parseViewDirMetaJson(content);
-            if (!meta?.title) {
-                Logger.warn({ path: metaJsonPath, msg: "meta.json 缺少有效的 title（以及可选 order:number），已跳过该目录菜单同步" });
-                continue;
-            }
-        } catch (error: any) {
-            Logger.warn({ err: error, path: metaJsonPath, msg: "读取 meta.json 失败" });
+        const metaRaw = await importDefault<any>(metaJsonPath, {});
+        meta = normalizeViewDirMeta(metaRaw);
+        if (!meta?.title) {
+            Logger.warn({ path: metaJsonPath, msg: "meta.json 缺少有效的 title（以及可选 order:number），已跳过该目录菜单同步" });
             continue;
         }
 
@@ -154,16 +143,11 @@ export async function loadMenuConfigs(addons: AddonInfo[]): Promise<MenuConfig[]
 
     const menusJsonPath = join(process.cwd(), "menus.json");
     if (existsSync(menusJsonPath)) {
-        try {
-            const content = await readFile(menusJsonPath, "utf-8");
-            const appMenus = JSON.parse(content);
-            if (Array.isArray(appMenus) && appMenus.length > 0) {
-                for (const menu of appMenus) {
-                    allMenus.push(menu);
-                }
+        const appMenus = await importDefault<any>(menusJsonPath, []);
+        if (Array.isArray(appMenus) && appMenus.length > 0) {
+            for (const menu of appMenus) {
+                allMenus.push(menu);
             }
-        } catch (error: any) {
-            Logger.warn({ err: error, msg: "读取项目 menus.json 失败" });
         }
     }
 

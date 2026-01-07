@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { clearRegexCache, getCompiledRegex, getRegex, getRegexCacheSize, matchRegex } from "../configs/presetRegexp";
 import { importDefault } from "../utils/importDefault";
-import { cleanDirName, parseViewDirMetaJson } from "../utils/loadMenuConfigs";
+import { cleanDirName, normalizeViewDirMeta } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
 import { getProcessRole, isPrimaryProcess } from "../utils/processInfo";
 import { camelCase, escapeRegExp, forOwn, getByPath, isEmpty, isPlainObject, keyBy, omit, setByPath, snakeCase } from "../utils/util";
@@ -235,27 +235,36 @@ describe("utils - cleanDirName", () => {
     });
 });
 
-describe("utils - view meta json parse", () => {
-    test("parseViewDirMetaJson should return title and order", () => {
-        const content = JSON.stringify({ title: "Hello", order: 12 });
-        const meta = parseViewDirMetaJson(content);
+describe("utils - view meta normalize", () => {
+    test("normalizeViewDirMeta should return title and order", () => {
+        const meta = normalizeViewDirMeta({ title: "Hello", order: 12 });
         expect(meta).toEqual({ title: "Hello", order: 12 });
     });
 
     test("order is optional", () => {
-        const content = JSON.stringify({ title: "Hello" });
-        const meta = parseViewDirMetaJson(content);
+        const meta = normalizeViewDirMeta({ title: "Hello" });
         expect(meta).toEqual({ title: "Hello", order: undefined });
     });
 
-    test("missing/invalid title returns null", () => {
-        expect(parseViewDirMetaJson(JSON.stringify({ order: 1 }))).toBeNull();
-        expect(parseViewDirMetaJson(JSON.stringify({ title: "" }))).toBeNull();
-        expect(parseViewDirMetaJson(JSON.stringify({ title: 123 }))).toBeNull();
+    test("order: non-integer / non-finite should be ignored", () => {
+        expect(normalizeViewDirMeta({ title: "Hello", order: 1.2 })).toEqual({ title: "Hello", order: undefined });
+        expect(normalizeViewDirMeta({ title: "Hello", order: Infinity })).toEqual({ title: "Hello", order: undefined });
+        expect(normalizeViewDirMeta({ title: "Hello", order: NaN })).toEqual({ title: "Hello", order: undefined });
+        expect(normalizeViewDirMeta({ title: "Hello", order: "1" })).toEqual({ title: "Hello", order: undefined });
     });
 
-    test("invalid json returns null", () => {
-        expect(parseViewDirMetaJson("{" as any)).toBeNull();
+    test("missing/invalid title returns null", () => {
+        expect(normalizeViewDirMeta({ order: 1 })).toBeNull();
+        expect(normalizeViewDirMeta({ title: "" })).toBeNull();
+        expect(normalizeViewDirMeta({ title: 123 })).toBeNull();
+    });
+
+    test("non-object returns null", () => {
+        expect(normalizeViewDirMeta(null)).toBeNull();
+        expect(normalizeViewDirMeta(undefined)).toBeNull();
+        expect(normalizeViewDirMeta(1 as any)).toBeNull();
+        expect(normalizeViewDirMeta("x" as any)).toBeNull();
+        expect(normalizeViewDirMeta([] as any)).toBeNull();
     });
 });
 
