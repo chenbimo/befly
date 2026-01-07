@@ -11,7 +11,64 @@ type MenuDef = {
     parentPath: string;
 };
 
-function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
+function createDisableMenuMatcher(ctx: BeflyContext): (path: string) => boolean {
+    const rawRules = (ctx.config as any)?.disableMenus;
+    const rules = Array.isArray(rawRules) ? rawRules : [];
+    const patterns: string[] = [];
+
+    for (const rule of rules) {
+        if (typeof rule !== "string") {
+            continue;
+        }
+        const trimmed = rule.trim();
+        if (!trimmed) {
+            continue;
+        }
+        patterns.push(trimmed);
+    }
+
+    if (patterns.length === 0) {
+        return () => false;
+    }
+
+    const globs = patterns.map((p) => new Bun.Glob(p));
+
+    return (path: string): boolean => {
+        if (typeof path !== "string") {
+            return false;
+        }
+
+        const trimmed = path.trim();
+        if (!trimmed) {
+            return false;
+        }
+
+        // Bun.Glob 在不同场景下可能以 "/a/b" 或 "a/b" 参与匹配；这里双候选兜底。
+        const candidates: string[] = [];
+        candidates.push(trimmed);
+        if (trimmed.startsWith("/")) {
+            candidates.push(trimmed.slice(1));
+        } else {
+            candidates.push(`/${trimmed}`);
+        }
+
+        for (const glob of globs) {
+            const match = (glob as any).match;
+            if (typeof match !== "function") {
+                throw new Error("syncMenu: 当前 Bun 版本不支持 Bun.Glob.match，无法按 disableMenus 做 glob 匹配");
+            }
+
+            for (const candidate of candidates) {
+                if (match.call(glob, candidate)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+}
+
+function flattenMenusToDefMap(mergedMenus: MenuConfig[], isDisabledPath?: (path: string) => boolean): Map<string, MenuDef> {
     // 读取配置菜单：扁平化为 path => { name, sort, parentPath }
     // - 以 path 为唯一键：后出现的覆盖先出现的（与旧逻辑“同 path 多次同步同一条记录”一致）
     // parentPath 规则：
@@ -20,9 +77,9 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
     // 3) 保底：若无法推导（极端情况），回退到 getParentPath(path)
     const menuDefMap = new Map<string, MenuDef>();
 
-    const stack: Array<{ menu: MenuConfig; parentPathFromTree: string }> = [];
+    const stack: Array<{ menu: MenuConfig; parentPathFromTree: string; disabledFromAncestor: boolean }> = [];
     for (const m of mergedMenus) {
-        stack.push({ menu: m, parentPathFromTree: "" });
+        stack.push({ menu: m, parentPathFromTree: "", disabledFromAncestor: false });
     }
 
     while (stack.length > 0) {
@@ -34,12 +91,19 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
 
         const path = typeof (menu as any).path === "string" ? (menu as any).path : "";
 
+        const disabledByRule = typeof isDisabledPath === "function" && typeof path === "string" && path ? isDisabledPath(path) : false;
+        const disabled = (item as any)?.disabledFromAncestor ? true : disabledByRule;
+
         const rawChildren = (menu as any).children;
         if (rawChildren && Array.isArray(rawChildren) && rawChildren.length > 0) {
             const nextParentPathFromTree = typeof path === "string" ? path : "";
             for (const child of rawChildren) {
-                stack.push({ menu: child, parentPathFromTree: nextParentPathFromTree });
+                stack.push({ menu: child, parentPathFromTree: nextParentPathFromTree, disabledFromAncestor: disabled });
             }
+        }
+
+        if (disabled) {
+            continue;
         }
 
         if (!path) {
@@ -85,7 +149,9 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
         return;
     }
 
-    const menuDefMap = flattenMenusToDefMap(mergedMenus);
+    const isDisabledPath = createDisableMenuMatcher(ctx);
+
+    const menuDefMap = flattenMenusToDefMap(mergedMenus, isDisabledPath);
 
     const configPaths = new Set<string>();
     for (const p of menuDefMap.keys()) {
@@ -96,7 +162,7 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
 
     // 2) 批量同步（事务内）：按 path diff 执行批量 insert/update/delete
     await ctx.db.trans(async (trans: any) => {
-        // 读取全部菜单（用于清理禁用菜单：不分 state）
+        // 读取全部菜单（用于清理 disableMenus 命中菜单：不分 state）
         const allExistingMenusAllState = await trans.getAll({
             table: tableName,
             fields: ["id", "name", "path", "parentPath", "sort", "state"]
@@ -212,7 +278,7 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
             await trans.insBatch(tableName, insList);
         }
 
-        // 3) 删除差集（DB - 配置，仅 state>=0） + 删除重复 path 的多余记录 + 删除禁用菜单（不分 state）
+        // 3) 删除差集（DB - 配置，仅 state>=0） + 删除重复 path 的多余记录 + 删除 disableMenus 命中菜单（不分 state）
         const delIdSet = new Set<number>();
 
         for (const record of existingList) {
@@ -232,6 +298,19 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
             }
         }
 
+        // 删除 disableMenus 命中的菜单：不分 state（包括 state=-1 的历史/禁用数据也一并清理）
+        for (const record of existingListAllState) {
+            if (typeof record?.path !== "string" || !record.path) {
+                continue;
+            }
+            if (!isDisabledPath(record.path)) {
+                continue;
+            }
+            if (typeof record?.id === "number" && record.id > 0) {
+                delIdSet.add(record.id);
+            }
+        }
+
         const delIds = Array.from(delIdSet);
 
         if (delIds.length > 0) {
@@ -248,7 +327,7 @@ export const __test__ = {
         const mod = await import("../utils/loadMenuConfigs");
         return await mod.scanViewsDirToMenuConfigs(viewsDir, prefix, parentPath);
     },
-    flattenMenusToDefMap: (mergedMenus: MenuConfig[]) => {
-        return flattenMenusToDefMap(mergedMenus);
+    flattenMenusToDefMap: (mergedMenus: MenuConfig[], isDisabledPath?: (path: string) => boolean) => {
+        return flattenMenusToDefMap(mergedMenus, isDisabledPath);
     }
 };
