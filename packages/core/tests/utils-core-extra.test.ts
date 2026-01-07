@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 import { clearRegexCache, getCompiledRegex, getRegex, getRegexCacheSize, matchRegex } from "../configs/presetRegexp";
-import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob";
 import { importDefault } from "../utils/importDefault";
 import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock } from "../utils/loadMenuConfigs";
 import { mergeAndConcat } from "../utils/mergeAndConcat";
@@ -224,22 +223,6 @@ describe("utils - regex cache", () => {
         expect(matchRegex("abc", "^abc$")).toBe(true);
         expect(matchRegex("abcd", "^abc$")).toBe(false);
         expect(getRegexCacheSize()).toBe(1);
-    });
-});
-
-describe("utils - disableMenusGlob", () => {
-    test("compile should validate input", () => {
-        expect(() => compileDisableMenuGlobRules("/a" as any)).toThrow();
-        expect(() => compileDisableMenuGlobRules([""])).toThrow();
-        expect(() => compileDisableMenuGlobRules([1 as any])).toThrow();
-    });
-
-    test("should match using Bun.Glob", () => {
-        const rules = compileDisableMenuGlobRules(["/admin/**", "/login$"]);
-        expect(isMenuPathDisabledByGlobRules("/admin/user", rules)).toBe(true);
-        expect(isMenuPathDisabledByGlobRules("/api/hello", rules)).toBe(false);
-        // "glob" 语义下 '/login$' 不是正则，仅检查它不会误匹配。
-        expect(isMenuPathDisabledByGlobRules("/login", rules)).toBe(false);
     });
 });
 

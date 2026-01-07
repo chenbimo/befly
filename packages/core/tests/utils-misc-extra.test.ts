@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { presetFields } from "../configs/presetFields";
 import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { setCorsOptions } from "../utils/cors";
-import { compileDisableMenuGlobRules } from "../utils/disableMenusGlob";
 import { isDirentDirectory } from "../utils/isDirentDirectory";
 import { processAtSymbol } from "../utils/processAtSymbol";
 import { genShortId, pickFields } from "../utils/util";
@@ -170,16 +169,5 @@ describe("utils - isDirentDirectory", () => {
 
         expect(isDirentDirectory(root, fake)).toBe(true);
         rmSync(root, { recursive: true, force: true });
-    });
-});
-
-describe("utils - disableMenusGlob cache", () => {
-    test("compileDisableMenuGlobRules should reuse Glob instances for same pattern", () => {
-        const a = compileDisableMenuGlobRules(["/admin/**"]);
-        const b = compileDisableMenuGlobRules(["/admin/**"]);
-
-        expect(a.length).toBe(1);
-        expect(b.length).toBe(1);
-        expect(a[0].glob).toBe(b[0].glob);
     });
 });

@@ -184,7 +184,7 @@ interface SyncApiStats {
 
 同 `syncApi`，通常由启动流程统一触发。
 
-如需手动调用，需要先对菜单配置做校验/过滤（例如 disableMenus）：
+如需手动调用，需要先对菜单配置做校验：
 
 ```typescript
 import { checkMenu } from "../checks/checkMenu.ts";
@@ -192,7 +192,7 @@ import { syncMenu } from "../sync/syncMenu.ts";
 import { scanSources } from "../utils/scanSources.ts";
 
 const sources = await scanSources();
-const checkedMenus = await checkMenu(sources.addons, { disableMenus: ctx.config.disableMenus || [] });
+const checkedMenus = await checkMenu(sources.addons);
 await syncMenu(ctx, checkedMenus);
 ```
 
@@ -346,7 +346,7 @@ import { checkMenu } from "./checks/checkMenu.ts";
 // 启动前/启动中手动触发同步
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）
 const sources = await scanSources();
-const checkedMenus = await checkMenu(sources.addons, { disableMenus: ctx.config.disableMenus || [] });
+const checkedMenus = await checkMenu(sources.addons);
 
 await syncTable(ctx, sources.tables);
 await syncApi(ctx, sources.apis as any);

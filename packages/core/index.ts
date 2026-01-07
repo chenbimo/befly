@@ -80,7 +80,7 @@ export class Befly {
             await checkTable(tables);
             await checkPlugin(plugins);
             await checkHook(hooks);
-            const checkedMenus = await checkMenu(addons, { disableMenus: this.config.disableMenus || [] });
+            const checkedMenus = await checkMenu(addons);
 
             // 1. 启动期建立基础连接（SQL + Redis）
             // 说明：连接职责收敛到启动期单点；插件只消费已连接实例（Connect.getSql/getRedis）。

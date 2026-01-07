@@ -7,7 +7,6 @@ import type { BeflyOptions } from "./types/befly";
 
 import { join } from "node:path";
 
-import { compileDisableMenuGlobRules } from "./utils/disableMenusGlob";
 import { importDefault } from "./utils/importDefault";
 import { mergeAndConcat } from "./utils/mergeAndConcat";
 
@@ -114,11 +113,6 @@ export async function loadBeflyConfig(): Promise<BeflyOptions> {
             throw new Error(`配置错误：redis.prefix 不允许包含 ':'（RedisHelper 会自动拼接分隔符 ':'），请改为不带冒号的前缀，例如 'befly_demo'，当前值=${redisPrefix}`);
         }
     }
-
-    // 预编译 disableMenus 的 Bun.Glob 规则：
-    // - 提前暴露配置错误（fail-fast）
-    // - 后续 checkMenu 会复用同一进程级缓存
-    compileDisableMenuGlobRules((config as any)?.disableMenus);
 
     return config as BeflyOptions;
 }

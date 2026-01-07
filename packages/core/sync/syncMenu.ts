@@ -2,7 +2,6 @@ import type { BeflyContext } from "../types/befly";
 import type { MenuConfig } from "../types/sync";
 
 import { Logger } from "../lib/logger";
-import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob";
 import { getParentPath } from "../utils/loadMenuConfigs";
 
 type MenuDef = {
@@ -86,41 +85,7 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
         return;
     }
 
-    // 防御性过滤：保证禁用菜单不会进入 DB（即使上游遗漏了 checkMenu 的过滤）
-    const disableRules = compileDisableMenuGlobRules(ctx.config?.disableMenus);
-    const filteredMergedMenus: MenuConfig[] =
-        disableRules.length === 0
-            ? mergedMenus
-            : (() => {
-                  const filterMenusByDisableRules = (menus: MenuConfig[]): MenuConfig[] => {
-                      const filtered: MenuConfig[] = [];
-
-                      for (const menu of menus) {
-                          const menuPath = typeof (menu as any)?.path === "string" ? String((menu as any).path).trim() : "";
-                          if (menuPath && isMenuPathDisabledByGlobRules(menuPath, disableRules)) {
-                              continue;
-                          }
-
-                          const children = Array.isArray((menu as any)?.children) ? ((menu as any).children as MenuConfig[]) : null;
-                          if (children && children.length > 0) {
-                              const nextChildren = filterMenusByDisableRules(children);
-                              if (nextChildren.length > 0) {
-                                  (menu as any).children = nextChildren;
-                              } else {
-                                  delete (menu as any).children;
-                              }
-                          }
-
-                          filtered.push(menu);
-                      }
-
-                      return filtered;
-                  };
-
-                  return filterMenusByDisableRules(mergedMenus);
-              })();
-
-    const menuDefMap = flattenMenusToDefMap(filteredMergedMenus);
+    const menuDefMap = flattenMenusToDefMap(mergedMenus);
 
     const configPaths = new Set<string>();
     for (const p of menuDefMap.keys()) {
@@ -249,22 +214,6 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
 
         // 3) 删除差集（DB - 配置，仅 state>=0） + 删除重复 path 的多余记录 + 删除禁用菜单（不分 state）
         const delIdSet = new Set<number>();
-
-        // 3.1) 清理禁用菜单：只要命中 disableMenus，就强制删除（避免 menu/list 之类接口还能查到）
-        if (disableRules.length > 0) {
-            for (const record of existingListAllState) {
-                const recordPath = typeof record?.path === "string" ? String(record.path).trim() : "";
-                if (!recordPath) {
-                    continue;
-                }
-
-                if (isMenuPathDisabledByGlobRules(recordPath, disableRules)) {
-                    if (typeof record?.id === "number" && record.id > 0) {
-                        delIdSet.add(record.id);
-                    }
-                }
-            }
-        }
 
         for (const record of existingList) {
             if (typeof record?.path !== "string" || !record.path) {

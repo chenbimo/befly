@@ -2,7 +2,6 @@ import type { MenuConfig } from "../types/sync";
 import type { AddonInfo } from "../utils/scanAddons";
 
 import { Logger } from "../lib/logger";
-import { compileDisableMenuGlobRules, isMenuPathDisabledByGlobRules } from "../utils/disableMenusGlob";
 import { loadMenuConfigs } from "../utils/loadMenuConfigs";
 
 function isValidMenuPath(path: string): { ok: boolean; reason: string } {
@@ -24,51 +23,13 @@ function isValidMenuPath(path: string): { ok: boolean; reason: string } {
     return { ok: true, reason: "" };
 }
 
-type CheckMenuOptions = {
-    disableMenus?: string[];
-};
-
-type DisableMenuRule = ReturnType<typeof compileDisableMenuGlobRules>[number];
-
-function filterMenusByDisableRules(mergedMenus: MenuConfig[], rules: DisableMenuRule[]): MenuConfig[] {
-    if (rules.length === 0) {
-        return mergedMenus;
-    }
-
-    const filtered: MenuConfig[] = [];
-
-    for (const menu of mergedMenus) {
-        const menuPath = typeof (menu as any)?.path === "string" ? String((menu as any).path).trim() : "";
-        if (menuPath && isMenuPathDisabledByGlobRules(menuPath, rules)) {
-            continue;
-        }
-
-        const children = Array.isArray((menu as any)?.children) ? ((menu as any).children as MenuConfig[]) : null;
-        if (children && children.length > 0) {
-            const nextChildren = filterMenusByDisableRules(children, rules);
-            if (nextChildren.length > 0) {
-                (menu as any).children = nextChildren;
-            } else {
-                delete (menu as any).children;
-            }
-        }
-
-        filtered.push(menu);
-    }
-
-    return filtered;
-}
-
-export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions = {}): Promise<MenuConfig[]> => {
+export const checkMenu = async (addons: AddonInfo[]): Promise<MenuConfig[]> => {
     let hasError = false;
 
     const mergedMenus = await loadMenuConfigs(addons);
 
-    const disableRules = compileDisableMenuGlobRules(options.disableMenus);
-    const filteredMenus = filterMenusByDisableRules(mergedMenus, disableRules);
-
     const stack: Array<{ menu: any; depth: number }> = [];
-    for (const m of filteredMenus) {
+    for (const m of mergedMenus) {
         stack.push({ menu: m, depth: 1 });
     }
 
@@ -164,5 +125,5 @@ export const checkMenu = async (addons: AddonInfo[], options: CheckMenuOptions =
         throw new Error("菜单结构检查失败");
     }
 
-    return filteredMenus;
+    return mergedMenus;
 };

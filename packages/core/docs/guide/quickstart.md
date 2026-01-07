@@ -235,7 +235,7 @@ import { scanSources } from "../utils/scanSources.ts";
 
 // ctx：BeflyContext（需已具备 ctx.db / ctx.redis / ctx.cache / ctx.config）
 const sources = await scanSources();
-const checkedMenus = await checkMenu(sources.addons, { disableMenus: ctx.config.disableMenus || [] });
+const checkedMenus = await checkMenu(sources.addons);
 
 await syncTable(ctx, sources.tables);
 await syncApi(ctx, sources.apis as any);
