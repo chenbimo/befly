@@ -82,4 +82,75 @@ describe("syncDev - dev role permissions", () => {
 
         expect(calls.rebuildRoleApiPermissionsCount).toBe(0);
     });
+
+    test("重启时应强制同步系统角色（admin/user/guest）", async () => {
+        const calls = {
+            updData: [] as any[],
+            insData: [] as any[]
+        };
+
+        const ctx = {
+            db: {
+                tableExists: async (table) => {
+                    return { data: table === "addon_admin_admin" || table === "addon_admin_role" || table === "addon_admin_menu" || table === "addon_admin_api" };
+                },
+                getAll: async (options) => {
+                    if (options?.table === "addon_admin_menu") {
+                        return { data: { lists: [{ path: "/dashboard", state: 0 }] } };
+                    }
+                    if (options?.table === "addon_admin_api") {
+                        return { data: { lists: [{ routePath: "/api/health", state: 0 }] } };
+                    }
+                    return { data: { lists: [] } };
+                },
+                getOne: async (options) => {
+                    const code = options?.where?.code;
+                    if (code === "dev") {
+                        return { data: { id: 1, code: "dev", name: "开发者角色", description: "old", menus: [], apis: [], sort: 0 } };
+                    }
+                    if (code === "admin") {
+                        return { data: { id: 2, code: "admin", name: "自定义管理员", description: "custom", menus: ["/custom"], apis: ["/api/custom"], sort: 99 } };
+                    }
+                    if (code === "user") {
+                        return { data: { id: 3, code: "user", name: "用户角色", description: "custom", menus: [], apis: ["/api/user"], sort: 1 } };
+                    }
+                    if (code === "guest") {
+                        return { data: { id: 4, code: "guest", name: "访客角色", description: "custom", menus: [], apis: ["/api/guest"], sort: 3 } };
+                    }
+                    if (options?.table === "addon_admin_admin") {
+                        return { data: { id: 10 } };
+                    }
+                    return { data: null };
+                },
+                insData: async (options) => {
+                    calls.insData.push(options);
+                    return { data: 100 };
+                },
+                updData: async (options) => {
+                    calls.updData.push(options);
+                    return { data: 1 };
+                }
+            },
+            cache: {
+                rebuildRoleApiPermissions: async () => {}
+            }
+        };
+
+        await syncDev(ctx as any, { devEmail: "dev@qq.com", devPassword: "dev-password" });
+
+        // 角色存在则强制更新（同步默认值）
+        const roleUpdates = calls.updData.filter((c) => c?.table === "addon_admin_role");
+        expect(roleUpdates.some((c) => c?.where?.code === "dev")).toBe(true);
+        expect(roleUpdates.some((c) => c?.where?.code === "admin")).toBe(true);
+        expect(roleUpdates.some((c) => c?.where?.code === "user")).toBe(true);
+        expect(roleUpdates.some((c) => c?.where?.code === "guest")).toBe(true);
+
+        // 同步后的默认值（admin/user/guest 的 apis 默认是空数组）
+        const adminUpd = roleUpdates.find((c) => c?.where?.code === "admin");
+        expect(adminUpd?.data?.apis).toEqual([]);
+        const userUpd = roleUpdates.find((c) => c?.where?.code === "user");
+        expect(userUpd?.data?.apis).toEqual([]);
+        const guestUpd = roleUpdates.find((c) => c?.where?.code === "guest");
+        expect(guestUpd?.data?.apis).toEqual([]);
+    });
 });

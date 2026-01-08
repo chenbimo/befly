@@ -35,6 +35,10 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         Logger.debug(`addon_admin_menu 表不存在`);
         return;
     }
+    if (!(await ctx.db.tableExists("addon_admin_api")).data) {
+        Logger.debug(`addon_admin_api 表不存在`);
+        return;
+    }
 
     const allMenus = await ctx.db.getAll({
         table: "addon_admin_menu",
@@ -43,47 +47,20 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         orderBy: ["id#ASC"]
     } as any);
 
-    const menuPaths = Array.from(new Set((allMenus.data.lists || []).map((m: any) => (typeof m?.path === "string" ? m.path.trim() : "")).filter((p: string) => p.length > 0)));
-
-    const existApi = await ctx.db.tableExists("addon_admin_api");
-    let apiPaths: string[] = [];
-    if (existApi.data) {
-        const allApis = await ctx.db.getAll({
-            table: "addon_admin_api",
-            fields: ["routePath"],
-            where: { state$gte: 0 },
-            orderBy: ["id#ASC"]
-        } as any);
-
-        apiPaths = Array.from(
-            new Set(
-                (allApis.data.lists || []).map((a: any) => {
-                    if (typeof a?.routePath !== "string") {
-                        throw new Error("syncDev: addon_admin_api.routePath 必须是字符串");
-                    }
-
-                    const routePath = a.routePath.trim();
-                    if (routePath.length === 0) {
-                        throw new Error("syncDev: addon_admin_api.routePath 不允许为空字符串");
-                    }
-
-                    if (!routePath.startsWith("/")) {
-                        throw new Error(`syncDev: addon_admin_api.routePath 必须是 pathname（以 / 开头），当前值=${routePath}`);
-                    }
-
-                    return routePath;
-                })
-            )
-        );
-    }
+    const allApis = await ctx.db.getAll({
+        table: "addon_admin_api",
+        fields: ["routePath"],
+        where: { state$gte: 0 },
+        orderBy: ["id#ASC"]
+    } as any);
 
     const roles = [
         {
             code: "dev",
             name: "开发者角色",
             description: "拥有所有菜单和接口权限的开发者角色",
-            menus: menuPaths,
-            apis: apiPaths,
+            menus: allMenus.data.lists.map((item) => item.path).filter((v) => v),
+            apis: allApis.data.lists.map((item) => item.routePath).filter((v) => v),
             sort: 0
         },
         {
@@ -120,30 +97,18 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         });
 
         if (existingRole.data) {
-            const nextMenus = roleConfig.menus;
-            const nextApis = roleConfig.apis;
-
-            const existingMenus = Array.isArray((existingRole.data as any).menus) ? (existingRole.data as any).menus : [];
-            const existingApis = Array.isArray((existingRole.data as any).apis) ? (existingRole.data as any).apis : [];
-
-            const menusChanged = existingMenus.length !== nextMenus.length || existingMenus.some((v: any, i: number) => v !== nextMenus[i]);
-            const apisChanged = existingApis.length !== nextApis.length || existingApis.some((v: any, i: number) => v !== nextApis[i]);
-
-            const hasChanges = (existingRole.data as any).name !== roleConfig.name || (existingRole.data as any).description !== roleConfig.description || menusChanged || apisChanged || (existingRole.data as any).sort !== roleConfig.sort;
-
-            if (hasChanges) {
-                await ctx.db.updData({
-                    table: "addon_admin_role",
-                    where: { code: roleConfig.code },
-                    data: {
-                        name: roleConfig.name,
-                        description: roleConfig.description,
-                        menus: roleConfig.menus,
-                        apis: roleConfig.apis,
-                        sort: roleConfig.sort
-                    }
-                });
-            }
+            // 角色存在则强制更新（不做差异判断）
+            await ctx.db.updData({
+                table: "addon_admin_role",
+                where: { code: roleConfig.code },
+                data: {
+                    name: roleConfig.name,
+                    description: roleConfig.description,
+                    menus: roleConfig.menus,
+                    apis: roleConfig.apis,
+                    sort: roleConfig.sort
+                }
+            });
             if (roleConfig.code === "dev") {
                 devRole = existingRole.data;
             }
