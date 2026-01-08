@@ -12,10 +12,10 @@
 
             <!-- 接口分组列表 -->
             <div class="api-container">
-                <div class="api-group" v-for="group in $Data.filteredApiData" :key="group.name">
-                    <div class="group-header">{{ group.title }}</div>
-                    <div class="api-checkbox-list">
-                        <TCheckboxGroup v-model="$Data.checkedApiPaths">
+                <TCheckboxGroup v-model="$Data.checkedApiPaths">
+                    <div class="api-group" v-for="group in $Data.filteredApiData" :key="group.name">
+                        <div class="group-header">{{ group.title }}</div>
+                        <div class="api-checkbox-list">
                             <TCheckbox v-for="api in group.apis" :key="api.value" :value="api.value">
                                 <div class="api-checkbox-label">
                                     <div class="api-label-main">
@@ -23,9 +23,9 @@
                                     </div>
                                 </div>
                             </TCheckbox>
-                        </TCheckboxGroup>
+                        </div>
                     </div>
-                </div>
+                </TCheckboxGroup>
             </div>
         </div>
 
@@ -114,32 +114,54 @@ const $Method = {
         try {
             const res = await $Http("/addon/admin/api/all");
 
-            // 将接口列表按 addonTitle 分组
+            // 将接口列表按 parentPath 分组展示（routePath 已迁移为 path）
             const apiMap = new Map();
 
-            res.data.lists.forEach((api) => {
-                const addonTitle = api.addonTitle || api.addonName || "项目接口";
-                const addonName = api.addonName || "app";
+            const lists = res && res.data && Array.isArray(res.data.lists) ? res.data.lists : [];
+            for (const api of lists) {
+                const apiPath = api && typeof api.path === "string" ? api.path : "";
+                if (!apiPath) {
+                    continue;
+                }
 
-                if (!apiMap.has(addonName)) {
-                    apiMap.set(addonName, {
-                        name: addonName,
-                        title: addonTitle,
+                const parentPath = api && typeof api.parentPath === "string" ? api.parentPath : "";
+                const groupKey = parentPath || "(未分组)";
+
+                if (!apiMap.has(groupKey)) {
+                    apiMap.set(groupKey, {
+                        name: groupKey,
+                        title: groupKey,
                         apis: []
                     });
                 }
 
-                apiMap.get(addonName).apis.push({
-                    value: api.routePath,
-                    name: api.name || "",
-                    path: api.routePath || "",
-                    label: `${api.name || ""} ${api.routePath ? `(${api.routePath})` : ""}`.trim(),
-                    description: api.description,
-                    auth: api.auth
+                apiMap.get(groupKey).apis.push({
+                    value: apiPath,
+                    name: (api && typeof api.name === "string" ? api.name : "") || apiPath,
+                    path: apiPath,
+                    label: `${(api && typeof api.name === "string" ? api.name : "") || ""} ${apiPath ? `(${apiPath})` : ""}`.trim(),
+                    description: api ? api.description : undefined,
+                    auth: api ? api.auth : undefined,
+                    parentPath: parentPath
                 });
+            }
+
+            const groups = Array.from(apiMap.values());
+            for (const group of groups) {
+                group.apis.sort((a, b) => {
+                    const ap = typeof a.path === "string" ? a.path : "";
+                    const bp = typeof b.path === "string" ? b.path : "";
+                    return ap.localeCompare(bp);
+                });
+            }
+
+            groups.sort((a, b) => {
+                const at = typeof a.title === "string" ? a.title : "";
+                const bt = typeof b.title === "string" ? b.title : "";
+                return at.localeCompare(bt);
             });
 
-            $Data.apiData = Array.from(apiMap.values());
+            $Data.apiData = groups;
         } catch (error) {
             MessagePlugin.error("加载接口失败");
         }
@@ -170,7 +192,12 @@ const $Method = {
         const searchLower = $Data.searchText.toLowerCase();
         $Data.filteredApiData = $Data.apiData
             .map((group) => {
-                const apis = group.apis.filter((api) => api.label.toLowerCase().includes(searchLower));
+                const apis = group.apis.filter((api) => {
+                    const label = api && typeof api.label === "string" ? api.label : "";
+                    const name = api && typeof api.name === "string" ? api.name : "";
+                    const path = api && typeof api.path === "string" ? api.path : "";
+                    return label.toLowerCase().includes(searchLower) || name.toLowerCase().includes(searchLower) || path.toLowerCase().includes(searchLower);
+                });
                 return {
                     name: group.name,
                     title: group.title,
@@ -219,6 +246,12 @@ $Method.initData();
         flex: 1;
         overflow-y: auto;
 
+        /* CheckboxGroup 默认可能是 inline 布局，容易被内容撑开；这里强制占满容器宽度 */
+        :deep(.t-checkbox-group) {
+            display: block;
+            width: 100%;
+        }
+
         .api-group {
             margin-bottom: 16px;
             border: 1px solid var(--border-color);
@@ -226,7 +259,22 @@ $Method.initData();
             overflow: hidden;
 
             .api-checkbox-list {
-                padding: 10px;
+                padding: 12px 16px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+
+                :deep(.t-checkbox) {
+                    margin: 0;
+                    flex: 0 0 calc(33.333% - 8px);
+                    min-width: 0;
+
+                    .t-checkbox__label {
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                }
             }
 
             &:last-child {

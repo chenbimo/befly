@@ -75,7 +75,7 @@ const $Data = $ref({
     columns: withDefaultColumns([
         { colKey: "name", title: "接口名称" },
         { colKey: "auth", title: "登录" },
-        { colKey: "routePath", title: "接口路径" },
+        { colKey: "path", title: "接口路径" },
         { colKey: "method", title: "请求方法" },
         { colKey: "addonName", title: "所属组件" }
     ]),
@@ -125,7 +125,7 @@ const $Method = {
             return;
         }
         const keyword = $Data.searchKeyword.toLowerCase();
-        $Data.tableData = $Data.allData.filter((item) => item.name?.toLowerCase().includes(keyword) || item.routePath?.toLowerCase().includes(keyword));
+        $Data.tableData = $Data.allData.filter((item) => item.name?.toLowerCase().includes(keyword) || item.path?.toLowerCase().includes(keyword));
     },
 
     // 高亮行变化
