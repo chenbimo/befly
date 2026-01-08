@@ -145,12 +145,15 @@ describe("syncDev - dev role permissions", () => {
         expect(roleUpdates.some((c) => c?.where?.code === "user")).toBe(true);
         expect(roleUpdates.some((c) => c?.where?.code === "guest")).toBe(true);
 
-        // 同步后的默认值（admin/user/guest 的 apis 默认是空数组）
+        // 重启同步系统角色时：仅更新元信息（name/description/sort），不应清空 DB 中已有的 menus/apis
         const adminUpd = roleUpdates.find((c) => c?.where?.code === "admin");
-        expect(adminUpd?.data?.apis).toEqual([]);
+        expect(adminUpd?.data?.menus).toBeUndefined();
+        expect(adminUpd?.data?.apis).toBeUndefined();
         const userUpd = roleUpdates.find((c) => c?.where?.code === "user");
-        expect(userUpd?.data?.apis).toEqual([]);
+        expect(userUpd?.data?.menus).toBeUndefined();
+        expect(userUpd?.data?.apis).toBeUndefined();
         const guestUpd = roleUpdates.find((c) => c?.where?.code === "guest");
-        expect(guestUpd?.data?.apis).toEqual([]);
+        expect(guestUpd?.data?.menus).toBeUndefined();
+        expect(guestUpd?.data?.apis).toBeUndefined();
     });
 });

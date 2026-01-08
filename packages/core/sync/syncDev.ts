@@ -13,8 +13,6 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         return;
     }
 
-    const devEmail = typeof config.devEmail === "string" && config.devEmail.length > 0 ? config.devEmail : "dev@qq.com";
-
     if (!ctx.db) {
         throw new Error("syncDev: ctx.db 未初始化（Db 插件未加载或注入失败）");
     }
@@ -54,49 +52,101 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         orderBy: ["id#ASC"]
     } as any);
 
+    const devRole = await ctx.db.getOne({
+        table: "addon_admin_role",
+        where: { code: "dev" }
+    });
+
+    const devRoleData = {
+        code: "dev",
+        name: "开发者角色",
+        description: "拥有所有菜单和接口权限的开发者角色",
+        menus: allMenus.data.lists.map((item) => item.path).filter((v) => v),
+        apis: allApis.data.lists.map((item) => item.path).filter((v) => v),
+        sort: 0
+    };
+
+    if (devRole.data) {
+        await ctx.db.updData({
+            table: "addon_admin_role",
+            where: { code: "dev" },
+            data: {
+                name: devRoleData.name,
+                description: devRoleData.description,
+                menus: devRoleData.menus,
+                apis: devRoleData.apis,
+                sort: devRoleData.sort
+            }
+        });
+    } else {
+        await ctx.db.insData({
+            table: "addon_admin_role",
+            data: devRoleData
+        });
+    }
+
+    const devAdminData = {
+        nickname: "开发者",
+        email: config.devEmail || "dev@qq.com",
+        username: "dev",
+        password: await Cipher.hashPassword(Cipher.sha256(config.devPassword + "befly")),
+        roleCode: "dev",
+        roleType: "admin"
+    };
+
+    const devAdmin = await ctx.db.getOne({
+        table: "addon_admin_admin",
+        where: { username: "dev" }
+    });
+
+    if (devAdmin.data) {
+        await ctx.db.updData({
+            table: "addon_admin_admin",
+            where: { username: "dev" },
+            data: {
+                nickname: devAdminData.nickname,
+                email: devAdminData.email,
+                username: devAdminData.username,
+                password: devAdminData.password,
+                roleCode: devAdminData.roleCode,
+                roleType: devAdminData.roleType
+            }
+        });
+    } else {
+        await ctx.db.insData({
+            table: "addon_admin_admin",
+            data: devAdminData
+        });
+    }
+
     const roles = [
-        {
-            code: "dev",
-            name: "开发者角色",
-            description: "拥有所有菜单和接口权限的开发者角色",
-            menus: allMenus.data.lists.map((item) => item.path).filter((v) => v),
-            apis: allApis.data.lists.map((item) => item.path).filter((v) => v),
-            sort: 0
-        },
         {
             code: "user",
             name: "用户角色",
             description: "普通用户角色",
-            menus: [],
-            apis: [],
             sort: 1
         },
         {
             code: "admin",
             name: "管理员角色",
             description: "管理员角色",
-            menus: [],
-            apis: [],
             sort: 2
         },
         {
             code: "guest",
             name: "访客角色",
             description: "访客角色",
-            menus: [],
-            apis: [],
             sort: 3
         }
     ];
 
-    let devRole = null;
     for (const roleConfig of roles) {
         const existingRole = await ctx.db.getOne({
             table: "addon_admin_role",
             where: { code: roleConfig.code }
         });
 
-        if (existingRole.data) {
+        if (existingRole.data?.id) {
             // 角色存在则强制更新（不做差异判断）
             await ctx.db.updData({
                 table: "addon_admin_role",
@@ -104,57 +154,19 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
                 data: {
                     name: roleConfig.name,
                     description: roleConfig.description,
-                    menus: roleConfig.menus,
-                    apis: roleConfig.apis,
                     sort: roleConfig.sort
                 }
             });
-            if (roleConfig.code === "dev") {
-                devRole = existingRole.data;
-            }
         } else {
-            const roleId = await ctx.db.insData({
+            await ctx.db.insData({
                 table: "addon_admin_role",
-                data: roleConfig
+                data: {
+                    code: roleConfig.code,
+                    name: roleConfig.name,
+                    description: roleConfig.description,
+                    sort: roleConfig.sort
+                }
             });
-            if (roleConfig.code === "dev") {
-                devRole = { id: roleId.data };
-            }
         }
-    }
-
-    if (!devRole) {
-        Logger.error("dev 角色不存在，无法创建开发者账号");
-        return;
-    }
-
-    const sha256Hashed = Cipher.sha256(config.devPassword + "befly");
-    const hashed = await Cipher.hashPassword(sha256Hashed);
-
-    const devData = {
-        nickname: "开发者",
-        email: devEmail,
-        username: "dev",
-        password: hashed,
-        roleCode: "dev",
-        roleType: "admin"
-    };
-
-    const existing = await ctx.db.getOne({
-        table: "addon_admin_admin",
-        where: { email: devEmail }
-    });
-
-    if (existing.data) {
-        await ctx.db.updData({
-            table: "addon_admin_admin",
-            where: { email: devEmail },
-            data: devData
-        });
-    } else {
-        await ctx.db.insData({
-            table: "addon_admin_admin",
-            data: devData
-        });
     }
 }
