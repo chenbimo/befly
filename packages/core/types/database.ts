@@ -126,8 +126,8 @@ export interface DbHelper {
 
     // ========== query ==========
     getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>>;
-    getOne<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem | null>>;
-    getDetail<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem | null>>;
+    getOne<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem>>;
+    getDetail<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem>>;
     getList<TItem = unknown>(options: QueryOptions): Promise<DbResult<DbPageResult<TItem>, ListSql>>;
     getAll<TItem = unknown>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<DbListResult<TItem>, ListSql>>;
 

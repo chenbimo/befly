@@ -11,7 +11,10 @@ export default {
                 where: { code: ctx.body.id }
             });
 
-            roleInfo = roleInfoResult.data;
+            const roleId = (roleInfoResult.data as any)?.id;
+            if (typeof roleId === "number") {
+                roleInfo = roleInfoResult.data;
+            }
         }
 
         return befly.tool.Yes("操作成功", {

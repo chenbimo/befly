@@ -9,7 +9,7 @@ export default {
 
         // 检查管理员是否存在
         const admin = await befly.db.getOne<{
-            id: number;
+            id?: number;
             username?: string;
             nickname?: string;
             roleCode?: string;
@@ -24,7 +24,7 @@ export default {
 
         // 检查用户名是否已被其他管理员使用
         if (username && username !== admin.data.username) {
-            const existingUsername = await befly.db.getOne<{ id: number }>({
+            const existingUsername = await befly.db.getOne<{ id?: number }>({
                 table: "addon_admin_admin",
                 where: { username, id: { $ne: id } }
             });
@@ -35,7 +35,7 @@ export default {
 
         // 检查昵称是否已被其他管理员使用
         if (nickname && nickname !== admin.data.nickname) {
-            const existingNickname = await befly.db.getOne<{ id: number }>({
+            const existingNickname = await befly.db.getOne<{ id?: number }>({
                 table: "addon_admin_admin",
                 where: { nickname, id: { $ne: id } }
             });
@@ -46,7 +46,7 @@ export default {
 
         // 检查角色是否存在
         if (roleCode && roleCode !== admin.data.roleCode) {
-            const role = await befly.db.getOne<{ id: number }>({
+            const role = await befly.db.getOne<{ id?: number }>({
                 table: "addon_admin_role",
                 where: { code: roleCode }
             });

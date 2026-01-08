@@ -12,7 +12,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 2. 查询角色信息获取菜单权限（使用 roleCode 而非 roleId）
-            const role = await befly.db.getOne<{ id: number; menus?: unknown }>({
+            const role = await befly.db.getOne<{ id?: number; menus?: unknown }>({
                 table: "addon_admin_role",
                 where: { code: ctx.user.roleCode }
             });

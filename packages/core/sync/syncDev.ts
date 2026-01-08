@@ -52,7 +52,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         orderBy: ["id#ASC"]
     } as any);
 
-    const devRole = await ctx.db.getOne<{ id: number }>({
+    const devRole = await ctx.db.getOne<{ id?: number }>({
         table: "addon_admin_role",
         where: { code: "dev" }
     });
@@ -66,7 +66,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         sort: 0
     };
 
-    if (devRole.data) {
+    if (typeof devRole.data.id === "number") {
         await ctx.db.updData({
             table: "addon_admin_role",
             where: { code: "dev" },
@@ -94,12 +94,12 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         roleType: "admin"
     };
 
-    const devAdmin = await ctx.db.getOne({
+    const devAdmin = await ctx.db.getOne<{ id?: number }>({
         table: "addon_admin_admin",
         where: { username: "dev" }
     });
 
-    if (devAdmin.data) {
+    if (typeof devAdmin.data.id === "number") {
         await ctx.db.updData({
             table: "addon_admin_admin",
             where: { username: "dev" },
@@ -141,7 +141,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
     ];
 
     for (const roleConfig of roles) {
-        const existingRole = await ctx.db.getOne<{ id: number }>({
+        const existingRole = await ctx.db.getOne<{ id?: number }>({
             table: "addon_admin_role",
             where: { code: roleConfig.code }
         });

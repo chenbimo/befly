@@ -284,6 +284,12 @@ export class DbHelper {
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换；联查时可带别名如 'order o'）
      * @param options.fields - 字段列表（联查时需带表别名，如 'o.id', 'u.username'）
      * @param options.joins - 多表联查选项
+     * @returns DbResult<TItem>
+     *
+     * 语义说明（重要）：
+     * - 本方法不再用 `null` 表示“未命中”。
+     * - 当查询未命中（或数据反序列化失败）时，`data` 将返回空对象 `{}`。
+     * - 因此业务侧应通过关键字段判断是否存在（例如 `if (!res.data?.id) { ... }`）。
      * @example
      * // 单表查询
      * getOne({ table: 'userProfile', fields: ['userId', 'userName'] })
@@ -295,7 +301,7 @@ export class DbHelper {
      *     where: { 'o.id': 1 }
      * })
      */
-    async getOne<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<TItem | null>> {
+    async getOne<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<TItem>> {
         const { table, fields, where, joins, tableQualifier } = await this.prepareQueryOptions(options);
         const hasJoins = Array.isArray(joins) && joins.length > 0;
 
@@ -315,7 +321,7 @@ export class DbHelper {
         const row = result?.[0] || null;
         if (!row) {
             return {
-                data: null,
+                data: {} as TItem,
                 sql: execRes.sql
             };
         }
@@ -326,7 +332,7 @@ export class DbHelper {
         const deserialized = DbUtils.deserializeArrayFields<TItem>(camelRow);
         if (!deserialized) {
             return {
-                data: null,
+                data: {} as TItem,
                 sql: execRes.sql
             };
         }
@@ -344,8 +350,10 @@ export class DbHelper {
      * 语义化别名：getDetail（与 getOne 一致）
      *
      * 说明：Befly 早期业务侧习惯用 getDetail 表达“查详情”；这里不引入新的查询逻辑，直接复用 getOne。
+     *
+     * 语义说明：与 getOne 完全一致，未命中时 `data` 返回 `{}`。
      */
-    async getDetail<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<TItem | null>> {
+    async getDetail<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<TItem>> {
         return await this.getOne<TItem>(options);
     }
 
@@ -892,28 +900,29 @@ export class DbHelper {
      * @param field - 字段名（支持小驼峰或下划线格式）
      */
     async getFieldValue<TValue = unknown>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>> {
-        const { field, ...queryOptions } = options;
+        const field = options.field;
 
         // 验证字段名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
             throw new Error(`无效的字段名: ${field}，只允许字母、数字和下划线`);
         }
 
-        const oneRes = await this.getOne({
-            ...queryOptions,
-            fields: [field]
-        });
+        const oneOptions: QueryOptions = {
+            table: options.table
+        };
+        if (options.where !== undefined) oneOptions.where = options.where;
+        if (options.joins !== undefined) oneOptions.joins = options.joins;
+        if (options.orderBy !== undefined) oneOptions.orderBy = options.orderBy;
+        if (options.page !== undefined) oneOptions.page = options.page;
+        if (options.limit !== undefined) oneOptions.limit = options.limit;
+        oneOptions.fields = [field];
 
-        const result = oneRes.data;
-        if (!result) {
-            return {
-                data: null,
-                sql: oneRes.sql
-            };
-        }
+        const oneRes = await this.getOne(oneOptions);
+
+        const result = oneRes.data as Record<string, unknown>;
 
         // 尝试直接访问字段（小驼峰）
-        if (field in result) {
+        if (Object.hasOwn(result, field)) {
             return {
                 data: result[field] as TValue,
                 sql: oneRes.sql
@@ -922,7 +931,7 @@ export class DbHelper {
 
         // 转换为小驼峰格式再尝试访问（支持用户传入下划线格式）
         const camelField = field.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-        if (camelField !== field && camelField in result) {
+        if (camelField !== field && Object.hasOwn(result, camelField)) {
             return {
                 data: result[camelField] as TValue,
                 sql: oneRes.sql
@@ -931,7 +940,7 @@ export class DbHelper {
 
         // 转换为下划线格式再尝试访问（支持用户传入小驼峰格式）
         const snakeField = field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
-        if (snakeField !== field && snakeField in result) {
+        if (snakeField !== field && Object.hasOwn(result, snakeField)) {
             return {
                 data: result[snakeField] as TValue,
                 sql: oneRes.sql

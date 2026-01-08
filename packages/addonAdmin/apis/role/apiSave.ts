@@ -17,7 +17,7 @@ export default {
         }
 
         // 查询角色是否存在
-        const role = await befly.db.getOne<{ id: number; code: string }>({
+        const role = await befly.db.getOne<{ id?: number; code: string }>({
             table: "addon_admin_role",
             where: { code: ctx.body.roleCode }
         });

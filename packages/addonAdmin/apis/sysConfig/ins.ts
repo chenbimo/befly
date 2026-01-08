@@ -6,12 +6,12 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 检查 code 是否已存在
-            const existing = await befly.db.getOne<{ id: number }>({
+            const existing = await befly.db.getOne<{ id?: number }>({
                 table: "addon_admin_sys_config",
                 where: { code: ctx.body.code }
             });
 
-            if (existing.data) {
+            if (existing.data?.id) {
                 return befly.tool.No("配置代码已存在");
             }
 

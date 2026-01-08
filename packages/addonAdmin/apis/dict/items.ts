@@ -6,7 +6,7 @@ export default {
     required: ["typeCode"],
     handler: async (befly, ctx) => {
         // 验证 typeCode 是否存在
-        const dictType = await befly.db.getOne<{ id: number }>({
+        const dictType = await befly.db.getOne<{ id?: number }>({
             table: "addon_admin_dict_type",
             where: { code: ctx.body.typeCode }
         });

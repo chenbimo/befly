@@ -6,7 +6,7 @@ export default {
     required: ["username", "password", "roleCode"],
     handler: async (befly, ctx) => {
         // 检查用户名是否已存在
-        const existingByUsername = await befly.db.getOne<{ id: number }>({
+        const existingByUsername = await befly.db.getOne<{ id?: number }>({
             table: "addon_admin_admin",
             where: { username: ctx.body.username }
         });
@@ -17,7 +17,7 @@ export default {
 
         // 检查昵称是否已存在
         if (ctx.body.nickname) {
-            const existingByNickname = await befly.db.getOne<{ id: number }>({
+            const existingByNickname = await befly.db.getOne<{ id?: number }>({
                 table: "addon_admin_admin",
                 where: { nickname: ctx.body.nickname }
             });
@@ -28,7 +28,7 @@ export default {
         }
 
         // 查询角色信息
-        const roleData = await befly.db.getOne<{ id: number }>({
+        const roleData = await befly.db.getOne<{ id?: number }>({
             table: "addon_admin_role",
             where: { code: ctx.body.roleCode }
         });

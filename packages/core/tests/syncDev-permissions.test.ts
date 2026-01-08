@@ -46,7 +46,7 @@ describe("syncDev - dev role permissions", () => {
                 },
                 getOne: async (_options) => {
                     // 让所有角色/管理员都走插入逻辑，便于断言插入数据
-                    return { data: null };
+                    return { data: {} };
                 },
                 insData: async (options) => {
                     calls.insData.push(options);
@@ -120,7 +120,7 @@ describe("syncDev - dev role permissions", () => {
                     if (options?.table === "addon_admin_admin") {
                         return { data: { id: 10 } };
                     }
-                    return { data: null };
+                    return { data: {} };
                 },
                 insData: async (options) => {
                     calls.insData.push(options);

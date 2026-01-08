@@ -15,7 +15,7 @@ export default {
         }
 
         // 检查是否有字典项引用此类型
-        const dictItems = await befly.db.getOne<{ id: number }>({
+        const dictItems = await befly.db.getOne<{ id?: number }>({
             table: "addon_admin_dict",
             where: {
                 typeCode: dictType.data.code
