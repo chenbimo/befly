@@ -47,7 +47,7 @@ export default {
         };
 
         // 根据登录类型构建查询条件
-        const whereCondition: Record<string, any> = {};
+        const whereCondition: Record<string, unknown> = {};
         if (ctx.body.loginType === "username") {
             whereCondition.username = ctx.body.account;
         } else if (ctx.body.loginType === "email") {
@@ -57,7 +57,15 @@ export default {
         }
 
         // 查询管理员
-        const admin = await befly.db.getOne({
+        const admin = await befly.db.getOne<{
+            id: number;
+            username: string;
+            nickname?: string;
+            password: string;
+            state?: number;
+            roleCode?: string;
+            roleType?: string;
+        }>({
             table: "addon_admin_admin",
             where: whereCondition
         });
@@ -81,7 +89,7 @@ export default {
                 await befly.db.insData({ table: "addon_admin_login_log", data: logData });
                 return befly.tool.No("账号或密码错误");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             befly.logger.error({ err: error, msg: "密码验证失败" });
             logData.failReason = "密码格式错误";
             await befly.db.insData({ table: "addon_admin_login_log", data: logData });

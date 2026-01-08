@@ -136,8 +136,8 @@ export interface DbHelper {
     getFieldValue<TValue = unknown>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>>;
 
     // ========== write ==========
-    insData(options: InsertOptions): Promise<DbResult<number>>;
-    insBatch(table: string, dataList: Record<string, unknown>[]): Promise<DbResult<number[]>>;
+    insData<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(options: Omit<InsertOptions, "data"> & { data: TInsert | TInsert[] }): Promise<DbResult<number>>;
+    insBatch<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(table: string, dataList: TInsert[]): Promise<DbResult<number[]>>;
 
     updData(options: UpdateOptions): Promise<DbResult<number>>;
     updBatch(table: string, dataList: Array<{ id: number; data: Record<string, unknown> }>): Promise<DbResult<number>>;

@@ -97,7 +97,7 @@ export class Validator {
         return {
             code: failed ? 1 : 0,
             failed: failed,
-            firstError: failed ? errors[0] : null,
+            firstError: failed ? (errors[0] ?? null) : null,
             errors: errors,
             errorFields: errorFields,
             fieldErrors: fieldErrors

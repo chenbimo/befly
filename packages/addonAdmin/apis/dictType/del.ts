@@ -5,7 +5,7 @@ export default {
     handler: async (befly, ctx) => {
         const { id } = ctx.body;
 
-        const dictType = await befly.db.getOne({
+        const dictType = await befly.db.getOne<{ code?: string }>({
             table: "addon_admin_dict_type",
             where: { id: id }
         });
@@ -15,7 +15,7 @@ export default {
         }
 
         // 检查是否有字典项引用此类型
-        const dictItems = await befly.db.getOne({
+        const dictItems = await befly.db.getOne<{ id: number }>({
             table: "addon_admin_dict",
             where: {
                 typeCode: dictType.data.code

@@ -102,7 +102,7 @@ export async function scanViewsDirToMenuConfigs(viewsDir: string, prefix: string
 export function getParentPath(path: string): string {
     // "/a/b" => "/a"
     // "/a" => ""
-    const parts = path.split("/").filter((p) => !!p);
+    const parts = path.split("/").filter((p) => Boolean(p));
     if (parts.length <= 1) {
         return "";
     }

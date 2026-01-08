@@ -1,7 +1,12 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "types": ["bun"]
+        "types": ["bun"],
+
+        "useUnknownInCatchVariables": true,
+        "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
+        "noPropertyAccessFromIndexSignature": true
     },
     "include": ["**/*.ts", "**/*.d.ts"],
     "exclude": ["node_modules", "data", "logs", "tests"]

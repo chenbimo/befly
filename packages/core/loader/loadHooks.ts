@@ -38,7 +38,7 @@ export async function loadHooks(hooks: ScanFileResult[]): Promise<Hook[]> {
         hooksMap.push({
             name: hookName,
             enable: true,
-            deps: hook.deps,
+            deps: Array.isArray(hook.deps) ? hook.deps : [],
             handler: hook.handler
         });
     }

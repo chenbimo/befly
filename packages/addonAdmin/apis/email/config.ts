@@ -14,7 +14,7 @@ export default {
             user: config.user,
             pass: config.pass,
             fromName: config.fromName,
-            configured: !!config.user
+            configured: Boolean(config.user)
         });
     }
 };

@@ -3,7 +3,7 @@
  * 提供数据库 CRUD 操作的封装
  */
 
-import type { WhereConditions, JoinOption } from "../types/common";
+import type { WhereConditions, JoinOption, SqlValue } from "../types/common";
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, DbPageResult, DbListResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database";
 import type { DbDialect } from "./dbDialect";
 
@@ -42,7 +42,7 @@ export class DbHelper {
     constructor(options: { redis: RedisCacheLike; sql?: any | null; dialect?: DbDialect }) {
         this.redis = options.redis;
         this.sql = options.sql || null;
-        this.isTransaction = !!options.sql;
+        this.isTransaction = Boolean(options.sql);
 
         // 默认使用 MySQL 方言（当前 core 的表结构/语法也主要基于 MySQL）
         this.dialect = options.dialect ? options.dialect : new MySqlDialect();
@@ -259,11 +259,12 @@ export class DbHelper {
      */
     async getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>> {
         const { table, where, joins, tableQualifier } = await this.prepareQueryOptions(options as QueryOptions);
+        const hasJoins = Array.isArray(joins) && joins.length > 0;
 
         const builder = this.createSqlBuilder()
             .selectRaw("COUNT(*) as count")
             .from(table)
-            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, !!joins));
+            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, hasJoins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -296,11 +297,12 @@ export class DbHelper {
      */
     async getOne<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<TItem | null>> {
         const { table, fields, where, joins, tableQualifier } = await this.prepareQueryOptions(options);
+        const hasJoins = Array.isArray(joins) && joins.length > 0;
 
         const builder = this.createSqlBuilder()
             .select(fields)
             .from(table)
-            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, !!joins));
+            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, hasJoins));
 
         // 添加 JOIN
         this.applyJoins(builder, joins);
@@ -330,7 +332,8 @@ export class DbHelper {
         }
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        const data = convertBigIntFields<TItem>([deserialized])[0];
+        const convertedList = convertBigIntFields<TItem>([deserialized]);
+        const data = convertedList[0] ?? deserialized;
         return {
             data: data,
             sql: execRes.sql
@@ -380,7 +383,7 @@ export class DbHelper {
         }
 
         // 构建查询
-        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, !!prepared.joins);
+        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, Array.isArray(prepared.joins) && prepared.joins.length > 0);
 
         // 查询总数
         const countBuilder = this.createSqlBuilder().selectRaw("COUNT(*) as total").from(prepared.table).where(whereFiltered);
@@ -468,9 +471,19 @@ export class DbHelper {
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
 
-        const prepared = await this.prepareQueryOptions({ ...options, page: 1, limit: 10 });
+        const prepareOptions: QueryOptions = {
+            table: options.table,
+            page: 1,
+            limit: 10
+        };
+        if (options.fields !== undefined) prepareOptions.fields = options.fields;
+        if (options.where !== undefined) prepareOptions.where = options.where;
+        if (options.joins !== undefined) prepareOptions.joins = options.joins;
+        if (options.orderBy !== undefined) prepareOptions.orderBy = options.orderBy;
 
-        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, !!prepared.joins);
+        const prepared = await this.prepareQueryOptions(prepareOptions);
+
+        const whereFiltered = DbUtils.addDefaultStateFilter(prepared.where, prepared.tableQualifier, Array.isArray(prepared.joins) && prepared.joins.length > 0);
 
         // 查询真实总数
         const countBuilder = this.createSqlBuilder().selectRaw("COUNT(*) as total").from(prepared.table).where(whereFiltered);
@@ -544,7 +557,7 @@ export class DbHelper {
      * 插入数据（自动生成 ID、时间戳、state）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async insData(options: InsertOptions): Promise<DbResult<number>> {
+    async insData<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(options: Omit<InsertOptions, "data"> & { data: TInsert | TInsert[] }): Promise<DbResult<number>> {
         const { table, data } = options;
 
         const snakeTable = snakeCase(table);
@@ -569,7 +582,7 @@ export class DbHelper {
 
         // 执行
         const execRes = await this.executeWithConn(sql, params);
-        const insertedId = processed.id || execRes.data?.lastInsertRowid || 0;
+        const insertedId = processed["id"] || execRes.data?.lastInsertRowid || 0;
         return {
             data: insertedId,
             sql: execRes.sql
@@ -582,7 +595,7 @@ export class DbHelper {
      * 自动生成系统字段并包装在事务中
      * @param table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async insBatch(table: string, dataList: Record<string, any>[]): Promise<DbResult<number[]>> {
+    async insBatch<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(table: string, dataList: TInsert[]): Promise<DbResult<number[]>> {
         // 空数组直接返回
         if (dataList.length === 0) {
             const sql: SqlInfo = { sql: "", params: [], duration: 0 };
@@ -610,7 +623,11 @@ export class DbHelper {
 
         // 处理所有数据（自动添加系统字段）
         const processedList = dataList.map((data, index) => {
-            return DbUtils.buildInsertRow({ data: data, id: ids[index], now: now });
+            const id = ids[index];
+            if (typeof id !== "number") {
+                throw new Error(`批量插入生成 ID 失败：ids[${index}] 不是 number (table: ${snakeTable})`);
+            }
+            return DbUtils.buildInsertRow({ data: data, id: id, now: now });
         });
 
         // 入口校验：保证进入 SqlBuilder 的批量数据结构一致且无 undefined

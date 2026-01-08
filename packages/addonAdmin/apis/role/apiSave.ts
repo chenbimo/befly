@@ -11,12 +11,13 @@ export default {
         let apiPaths: string[] = [];
         try {
             apiPaths = normalizePathnameListInput(ctx.body.apiPaths, "apiPaths", true);
-        } catch (error: any) {
-            return befly.tool.No(`参数不合法：${error?.message || "未知错误"}`);
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : "未知错误";
+            return befly.tool.No(`参数不合法：${msg}`);
         }
 
         // 查询角色是否存在
-        const role = await befly.db.getOne({
+        const role = await befly.db.getOne<{ id: number; code: string }>({
             table: "addon_admin_role",
             where: { code: ctx.body.roleCode }
         });

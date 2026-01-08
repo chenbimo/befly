@@ -126,7 +126,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             const base: Record<string, any> = {
                 source: source,
                 type: type,
-                sourceName: { core: "核心", addon: "组件", app: "项目" }[source],
+                sourceName: source === "core" ? "核心" : source === "addon" ? "组件" : "项目",
                 filePath: normalizedFile,
                 relativePath: relativePath,
                 fileName: fileName,
@@ -139,7 +139,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             };
 
             if (type === "table") {
-                base.content = content;
+                base["content"] = content;
                 results.push(base as ScanFileResult);
                 continue;
             }
@@ -148,16 +148,16 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
                 // - checkApi 会校验 auth 类型
                 // - permission hook 以 ctx.api.auth === false 判断公开接口
                 // DB 存储的 0/1 由 syncApi 负责转换写入。
-                base.auth = true;
-                base.rawBody = false;
-                base.method = "POST";
-                base.fields = {};
-                base.required = [];
+                base["auth"] = true;
+                base["rawBody"] = false;
+                base["method"] = "POST";
+                base["fields"] = {};
+                base["required"] = [];
             }
             if (type === "plugin" || type === "hook") {
-                base.deps = [];
-                base.name = "";
-                base.handler = null;
+                base["deps"] = [];
+                base["name"] = "";
+                base["handler"] = null;
             }
 
             forOwn(content, (value, key) => {
@@ -165,8 +165,8 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             });
 
             if (type === "api") {
-                base.routePrefix = source === "app" ? "/app" : `/addon/${addonName}`;
-                base.path = `/api${base.routePrefix}/${relativePath}`;
+                base["routePrefix"] = source === "app" ? "/app" : `/addon/${addonName}`;
+                base["path"] = `/api${base["routePrefix"]}/${relativePath}`;
             }
 
             results.push(base as ScanFileResult);

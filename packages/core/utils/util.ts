@@ -120,7 +120,7 @@ function upperFirst(s: string): string {
     if (s.length === 0) {
         return s;
     }
-    return s[0].toUpperCase() + s.slice(1);
+    return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 /**
@@ -133,9 +133,14 @@ export function camelCase(input: string): string {
         return "";
     }
 
-    const first = parts[0].toLowerCase();
+    const firstPart = parts[0];
+    if (!firstPart) {
+        return "";
+    }
+
+    const first = firstPart.toLowerCase();
     const rest = parts.slice(1).map((p) => upperFirst(p.toLowerCase()));
-    return [first, ...rest].join("");
+    return [first].concat(rest).join("");
 }
 
 function normalizeToWords(input: string): string {
@@ -252,6 +257,9 @@ export function setByPath(target: Record<string, any>, path: string, value: unkn
 
     for (let i = 0; i < parts.length; i++) {
         const key = parts[i];
+        if (!key) {
+            return;
+        }
 
         const isLast = i === parts.length - 1;
         if (isLast) {

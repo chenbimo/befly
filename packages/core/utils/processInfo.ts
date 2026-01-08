@@ -19,8 +19,8 @@ export interface ProcessRole {
 export function getProcessRole(env?: RuntimeEnv): ProcessRole {
     const runtimeEnv = env || ({} as RuntimeEnv);
 
-    const bunWorkerId = runtimeEnv.BUN_WORKER_ID;
-    const pm2InstanceId = runtimeEnv.PM2_INSTANCE_ID;
+    const bunWorkerId = runtimeEnv["BUN_WORKER_ID"];
+    const pm2InstanceId = runtimeEnv["PM2_INSTANCE_ID"];
 
     // Bun 集群模式
     if (bunWorkerId !== undefined) {

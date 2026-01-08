@@ -38,7 +38,7 @@ export function fieldClear<T = any>(data: T | T[], options: FieldClearOptions = 
             const value = obj[key];
 
             // 1. keepMap 优先
-            if (keepMap && Object.prototype.hasOwnProperty.call(keepMap, key)) {
+            if (keepMap && Object.hasOwn(keepMap, key)) {
                 if (Object.is(keepMap[key], value)) {
                     result[key] = value;
                     continue;

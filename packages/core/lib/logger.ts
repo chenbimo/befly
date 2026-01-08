@@ -592,8 +592,8 @@ function buildLogLine(level: LogLevelName, record: LoggerRecord): string {
         return `${safeJsonStringify(out)}\n`;
     }
 
-    if (base.msg === undefined) {
-        base.msg = "";
+    if (base["msg"] === undefined) {
+        base["msg"] = "";
     }
 
     return `${safeJsonStringify(base)}\n`;
@@ -604,7 +604,7 @@ function safeJsonStringify(obj: Record<string, any>): string {
         return JSON.stringify(obj);
     } catch {
         try {
-            return JSON.stringify({ level: obj.level, time: obj.time, pid: obj.pid, hostname: obj.hostname, msg: "[Unserializable log record]" });
+            return JSON.stringify({ level: obj["level"], time: obj["time"], pid: obj["pid"], hostname: obj["hostname"], msg: "[Unserializable log record]" });
         } catch {
             return '{"msg":"[Unserializable log record]"}';
         }
@@ -658,10 +658,10 @@ function metaToObject(): Record<string, any> | null {
     };
 
     // userId / roleCode 默认写入
-    obj.userId = meta.userId;
-    obj.roleCode = meta.roleCode;
-    obj.nickname = (meta as any).nickname;
-    obj.roleType = (meta as any).roleType;
+    obj["userId"] = meta.userId;
+    obj["roleCode"] = meta.roleCode;
+    obj["nickname"] = (meta as any).nickname;
+    obj["roleType"] = (meta as any).roleType;
 
     return obj;
 }

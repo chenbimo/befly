@@ -43,7 +43,7 @@ export async function loadPlugins(plugins: ScanFileResult[], context: BeflyConte
             pluginsMap.push({
                 name: pluginName,
                 enable: true,
-                deps: plugin.deps,
+                deps: Array.isArray(plugin.deps) ? plugin.deps : [],
                 handler: plugin.handler
             });
         } catch (error: any) {

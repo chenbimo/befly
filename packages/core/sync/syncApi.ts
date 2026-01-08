@@ -45,8 +45,16 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
     const dbLists = allDbApis.data.lists || [];
     const allDbApiMap = keyBy(dbLists, (item) => item.path);
 
-    const insData: SyncApiItem[] = [];
-    const updData: Array<SyncApiItem & { id: number }> = [];
+    type SyncApiDbWrite = {
+        name: string;
+        path: string;
+        parentPath: string;
+        addonName: string;
+        auth: 0 | 1;
+    };
+
+    const insData: SyncApiDbWrite[] = [];
+    const updData: Array<SyncApiDbWrite & { id: number }> = [];
     const delData: number[] = [];
 
     // 1) 先构建当前扫描到的 path 集合（用于删除差集）
@@ -61,7 +69,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
 
         // auth：运行时 API 定义使用 boolean；DB 字段使用 0/1。
         // 统一在 syncApi 写库前做归一化，避免类型不一致导致每次启动都触发更新。
-        const auth = api.auth === false || api.auth === 0 ? 0 : 1;
+        const auth: 0 | 1 = api.auth === false || api.auth === 0 ? 0 : 1;
         const parentPath = getApiParentPath(api.path);
 
         apiRouteKeys.add(api.path);
@@ -113,7 +121,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
                     };
                 })
             );
-        } catch (error: any) {
+        } catch (error: unknown) {
             Logger.error({ err: error, msg: "同步接口批量更新失败" });
         }
     }
@@ -132,7 +140,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
                     };
                 })
             );
-        } catch (error: any) {
+        } catch (error: unknown) {
             Logger.error({ err: error, msg: "同步接口批量新增失败" });
         }
     }
@@ -140,7 +148,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
     if (delData.length > 0) {
         try {
             await ctx.db.delForceBatch(tableName, delData);
-        } catch (error: any) {
+        } catch (error: unknown) {
             Logger.error({ err: error, msg: "同步接口批量删除失败" });
         }
     }

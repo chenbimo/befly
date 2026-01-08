@@ -6,7 +6,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 检查 code 是否已存在
-            const existing = await befly.db.getOne({
+            const existing = await befly.db.getOne<{ id: number }>({
                 table: "addon_admin_sys_config",
                 where: { code: ctx.body.code }
             });

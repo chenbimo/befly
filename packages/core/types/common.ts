@@ -6,12 +6,12 @@
 /**
  * SQL 值类型
  */
-export type SqlValue = string | number | boolean | null | Date | Record<string, any> | any[];
+export type SqlValue = string | number | boolean | null | Date | Record<string, unknown> | unknown[];
 
 /**
  * 通用键值对类型
  */
-export type KeyValue<T = any> = Record<string, T>;
+export type KeyValue<T = unknown> = Record<string, T>;
 
 // ============================================
 // SQL 查询相关类型
@@ -25,7 +25,7 @@ export type WhereOperator = "$eq" | "$ne" | "$not" | "$gt" | "$gte" | "$lt" | "$
 /**
  * WHERE 条件类型
  */
-export type WhereConditions = Record<string, any>;
+export type WhereConditions = Record<string, unknown>;
 
 /**
  * 排序方向
@@ -58,7 +58,7 @@ export type UpdateData = Record<string, SqlValue>;
 /**
  * 任意对象类型
  */
-export type AnyObject = Record<string, any>;
+export type AnyObject = Record<string, unknown>;
 
 // ============================================
 // Core 专用类型（不适合放在 shared 中的类型）
@@ -85,7 +85,7 @@ export interface ParsedFieldRule {
     type: "string" | "number" | "text" | "array_string" | "array_text";
     min: number | null;
     max: number | null;
-    default: any;
+    default: unknown;
     index: 0 | 1;
     regex: string | null;
 }
@@ -116,7 +116,7 @@ export interface JoinOption {
 /**
  * 工具函数返回类型
  */
-export interface ToolResponse<T = any> {
+export interface ToolResponse<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;
@@ -146,14 +146,14 @@ export interface BaseRecord {
 /**
  * 异步函数类型
  */
-export type AsyncFunction<T = any> = (...args: any[]) => Promise<T>;
+export type AsyncFunction<T = unknown> = (...args: unknown[]) => Promise<T>;
 
 /**
  * 同步函数类型
  */
-export type SyncFunction<T = any> = (...args: any[]) => T;
+export type SyncFunction<T = unknown> = (...args: unknown[]) => T;
 
 /**
  * 通用回调函数
  */
-export type Callback<T = any> = (error: Error | null, result?: T) => void;
+export type Callback<T = unknown> = (error: Error | null, result?: T) => void;

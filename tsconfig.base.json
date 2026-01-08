@@ -9,6 +9,11 @@
 
         "strict": true,
 
+        "useUnknownInCatchVariables": true,
+        "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
+        "noPropertyAccessFromIndexSignature": true,
+
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitOverride": true,
@@ -18,7 +23,7 @@
         "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
-        "allowImportingTsExtensions": true,
+        "allowImportingTsExtensions": false,
         "allowJs": false
     }
 }

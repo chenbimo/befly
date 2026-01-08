@@ -241,7 +241,7 @@ export class Cipher {
         const randomBytes = crypto.getRandomValues(new Uint8Array(bytes));
         let result = "";
         for (let i = 0; i < randomBytes.length; i++) {
-            result += randomBytes[i].toString(16).padStart(2, "0");
+            result += randomBytes[i]!.toString(16).padStart(2, "0");
         }
         return result.slice(0, length);
     }

@@ -12,6 +12,7 @@ const SqlBuilderError = {
     IDENT_EMPTY: "SQL 标识符不能为空",
 
     FIELD_EXPR_NOT_ALLOWED: (field: string) => `字段包含函数/表达式，请使用 selectRaw/whereRaw (field: ${field})`,
+    FIELD_INVALID: (field: string) => `字段格式非法，请使用简单字段名或安全引用，复杂表达式请使用 selectRaw/whereRaw (field: ${field})`,
 
     FROM_EMPTY: "FROM 表名不能为空",
     FROM_NEED_NON_EMPTY: (table: unknown) => `FROM 表名必须是非空字符串 (table: ${String(table)})`,
@@ -152,11 +153,21 @@ export class SqlBuilder {
         // 处理别名（AS关键字）
         if (field.toUpperCase().includes(" AS ")) {
             const parts = field.split(/\s+AS\s+/i);
-            const fieldPart = parts[0].trim();
-            const aliasPart = parts[1].trim();
+            if (parts.length !== 2) {
+                throw new Error(SqlBuilderError.FIELD_INVALID(field));
+            }
+
+            const fieldPart = parts[0];
+            const aliasPart = parts[1];
+            if (typeof fieldPart !== "string" || typeof aliasPart !== "string") {
+                throw new Error(SqlBuilderError.FIELD_INVALID(field));
+            }
+
+            const cleanFieldPart = fieldPart.trim();
+            const cleanAliasPart = aliasPart.trim();
             // alias 仅允许安全标识符或已被引用
-            SqlCheck.assertSafeAlias(aliasPart);
-            return `${this._escapeField(fieldPart)} AS ${aliasPart}`;
+            SqlCheck.assertSafeAlias(cleanAliasPart);
+            return `${this._escapeField(cleanFieldPart)} AS ${cleanAliasPart}`;
         }
 
         // 处理表名.字段名的情况（多表联查）
@@ -211,8 +222,14 @@ export class SqlBuilder {
             throw new Error(SqlBuilderError.TABLE_REF_TOO_MANY_PARTS(table));
         }
 
-        const namePart = parts[0].trim();
-        const aliasPart = parts.length === 2 ? parts[1].trim() : null;
+        const namePartRaw = parts[0];
+        if (typeof namePartRaw !== "string" || namePartRaw.trim() === "") {
+            throw new Error(SqlBuilderError.FROM_EMPTY);
+        }
+        const namePart = namePartRaw.trim();
+
+        const aliasPartRaw = parts.length === 2 ? parts[1] : null;
+        const aliasPart = typeof aliasPartRaw === "string" ? aliasPartRaw.trim() : null;
 
         const nameSegments = namePart.split(".");
         if (nameSegments.length > 2) {
@@ -221,8 +238,13 @@ export class SqlBuilder {
 
         let escapedName = "";
         if (nameSegments.length === 2) {
-            const schema = nameSegments[0].trim();
-            const tableName = nameSegments[1].trim();
+            const schemaRaw = nameSegments[0];
+            const tableNameRaw = nameSegments[1];
+            if (typeof schemaRaw !== "string" || typeof tableNameRaw !== "string") {
+                throw new Error(SqlBuilderError.TABLE_REF_SCHEMA_TOO_DEEP(table));
+            }
+            const schema = schemaRaw.trim();
+            const tableName = tableNameRaw.trim();
 
             const escapedSchema = this._isQuotedIdent(schema)
                 ? schema
@@ -246,7 +268,11 @@ export class SqlBuilder {
 
             escapedName = `${escapedSchema}.${escapedTableName}`;
         } else {
-            const tableName = nameSegments[0].trim();
+            const tableNameRaw = nameSegments[0];
+            if (typeof tableNameRaw !== "string") {
+                throw new Error(SqlBuilderError.FROM_EMPTY);
+            }
+            const tableName = tableNameRaw.trim();
 
             if (this._isQuotedIdent(tableName)) {
                 escapedName = tableName;
@@ -285,7 +311,7 @@ export class SqlBuilder {
             case "$not":
                 this._validateParam(value);
                 this._where.push(`${escapedField} != ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
                 break;
 
             case "$in":
@@ -316,37 +342,37 @@ export class SqlBuilder {
             case "$like":
                 this._validateParam(value);
                 this._where.push(`${escapedField} LIKE ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
                 break;
 
             case "$notLike":
                 this._validateParam(value);
                 this._where.push(`${escapedField} NOT LIKE ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
                 break;
 
             case "$gt":
                 this._validateParam(value);
                 this._where.push(`${escapedField} > ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
                 break;
 
             case "$gte":
                 this._validateParam(value);
                 this._where.push(`${escapedField} >= ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
                 break;
 
             case "$lt":
                 this._validateParam(value);
                 this._where.push(`${escapedField} < ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
                 break;
 
             case "$lte":
                 this._validateParam(value);
                 this._where.push(`${escapedField} <= ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
                 break;
 
             case "$between":
@@ -383,7 +409,7 @@ export class SqlBuilder {
                 // 等于条件
                 this._validateParam(value);
                 this._where.push(`${escapedField} = ?`);
-                this._params.push(value);
+                this._params.push(value as SqlValue);
         }
     }
 
@@ -442,7 +468,7 @@ export class SqlBuilder {
                     this._validateParam(value);
                     const escapedKey = this._escapeField(key);
                     this._where.push(`${escapedKey} = ?`);
-                    this._params.push(value);
+                    this._params.push(value as SqlValue);
                 }
             }
         });
@@ -596,7 +622,17 @@ export class SqlBuilder {
                 throw new Error(SqlBuilderError.ORDER_BY_ITEM_NEED_HASH(item));
             }
 
-            const [fieldName, direction] = item.split("#");
+            const parts = item.split("#");
+            if (parts.length !== 2) {
+                throw new Error(SqlBuilderError.ORDER_BY_ITEM_NEED_HASH(item));
+            }
+
+            const fieldName = parts[0];
+            const direction = parts[1];
+            if (typeof fieldName !== "string" || typeof direction !== "string") {
+                throw new Error(SqlBuilderError.ORDER_BY_ITEM_NEED_HASH(item));
+            }
+
             const cleanField = fieldName.trim();
             const cleanDir = direction.trim().toUpperCase() as OrderDirection;
 
@@ -735,7 +771,9 @@ export class SqlBuilder {
             for (let i = 0; i < data.length; i++) {
                 const row = data[i] as Record<string, SqlValue>;
                 for (const field of fields) {
-                    params.push(row[field]);
+                    const value = row[field];
+                    this._validateParam(value);
+                    params.push(value as SqlValue);
                 }
             }
 
@@ -753,7 +791,12 @@ export class SqlBuilder {
             const escapedFields = fields.map((field) => this._escapeField(field));
             const placeholders = fields.map(() => "?").join(", ");
             const sql = `INSERT INTO ${escapedTable} (${escapedFields.join(", ")}) VALUES (${placeholders})`;
-            const params = fields.map((field) => data[field]);
+            const params: SqlValue[] = [];
+            for (const field of fields) {
+                const value = data[field];
+                this._validateParam(value);
+                params.push(value as SqlValue);
+            }
 
             return { sql, params };
         }
@@ -900,7 +943,9 @@ export class SqlBuilder {
 
                 whenList.push("WHEN ? THEN ?");
                 args.push(row.id);
-                args.push(row.data[field]);
+                const value = row.data[field];
+                SqlCheck.assertNoUndefinedParam(value, "SQL 参数值");
+                args.push(value as SqlValue);
             }
 
             if (whenList.length === 0) {

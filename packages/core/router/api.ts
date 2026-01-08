@@ -49,11 +49,13 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
             requestId: requestId,
             corsHeaders: {
                 "X-Request-ID": requestId
-            },
-            api: apis.get(apiPath),
-            response: undefined,
-            result: undefined
+            }
         };
+
+        const api = apis.get(apiPath);
+        if (api) {
+            ctx.api = api;
+        }
 
         return withCtx(
             {
@@ -83,10 +85,10 @@ export function apiHandler(apis: Map<string, ApiRoute>, hooks: Hook[], context: 
                         };
 
                         if (ctx.body && Object.keys(ctx.body).length > 0) {
-                            logData.body = ctx.body;
+                            logData["body"] = ctx.body;
                         }
 
-                        logData.msg = "request";
+                        logData["msg"] = "request";
                         Logger.info(logData);
                     }
 

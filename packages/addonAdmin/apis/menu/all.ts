@@ -12,7 +12,7 @@ export default {
     handler: async (befly, ctx) => {
         try {
             // 2. 查询角色信息获取菜单权限（使用 roleCode 而非 roleId）
-            const role = await befly.db.getOne({
+            const role = await befly.db.getOne<{ id: number; menus?: unknown }>({
                 table: "addon_admin_role",
                 where: { code: ctx.user.roleCode }
             });
@@ -23,7 +23,7 @@ export default {
 
             // 3. 解析菜单路径列表（menu.path 数组，array_text）
             const rawMenuPaths = Array.isArray(role.data.menus) ? role.data.menus : [];
-            const menuPaths = rawMenuPaths.map((p: any) => (typeof p === "string" ? p.trim() : "")).filter((p: string) => p.length > 0);
+            const menuPaths = rawMenuPaths.map((p: unknown) => (typeof p === "string" ? p.trim() : "")).filter((p: string) => p.length > 0);
 
             if (menuPaths.length === 0) {
                 return befly.tool.Yes("菜单为空", { lists: [] });
@@ -46,11 +46,17 @@ export default {
 
             // 5. 根据角色权限过滤菜单（按 menu.path）
             const menuPathSet = new Set<string>(menuPaths);
-            const authorizedMenus = allMenus.filter((menu: any) => typeof menu?.path === "string" && menuPathSet.has(String(menu.path)));
+            const authorizedMenus = allMenus.filter((menu: unknown) => {
+                if (typeof menu !== "object" || menu === null) {
+                    return false;
+                }
+                const path = (menu as { path?: unknown }).path;
+                return typeof path === "string" && menuPathSet.has(path);
+            });
 
             // 6. 返回一维数组（由前端构建树形结构）
             return befly.tool.Yes("获取菜单成功", { lists: authorizedMenus });
-        } catch (error: any) {
+        } catch (error: unknown) {
             befly.logger.error({ err: error, msg: "获取用户菜单失败" });
             return befly.tool.No("获取菜单失败");
         }

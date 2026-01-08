@@ -12,7 +12,7 @@ export default {
 
         // 如果更新了 typeCode，验证其是否存在
         if (typeCode) {
-            const dictType = await befly.db.getOne({
+            const dictType = await befly.db.getOne<{ id: number }>({
                 table: "addon_admin_dict_type",
                 where: { code: typeCode }
             });
@@ -24,7 +24,7 @@ export default {
 
         // 如果更新了 typeCode 或 key，检查唯一性
         if (typeCode || key) {
-            const current = await befly.db.getOne({
+            const current = await befly.db.getOne<{ typeCode?: string; key?: string }>({
                 table: "addon_admin_dict",
                 where: { id: id }
             });
@@ -32,7 +32,7 @@ export default {
             const checkTypeCode = typeCode || current.data?.typeCode;
             const checkKey = key || current.data?.key;
 
-            const existing = await befly.db.getOne({
+            const existing = await befly.db.getOne<{ id: number }>({
                 table: "addon_admin_dict",
                 where: {
                     typeCode: checkTypeCode,
@@ -46,7 +46,7 @@ export default {
             }
         }
 
-        const updateData: Record<string, any> = {};
+        const updateData: Record<string, unknown> = {};
         if (typeCode !== undefined) updateData.typeCode = typeCode;
         if (key !== undefined) updateData.key = key;
         if (label !== undefined) updateData.label = label;

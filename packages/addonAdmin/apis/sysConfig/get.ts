@@ -5,7 +5,12 @@ export default {
         code: { name: "配置代码", type: "string", min: 1, max: 50 }
     },
     handler: async (befly, ctx) => {
-        const config = await befly.db.getOne({
+        const config = await befly.db.getOne<{
+            id: number;
+            code: string;
+            value: string;
+            valueType: string;
+        }>({
             table: "addon_admin_sys_config",
             where: { code: ctx.body.code }
         });

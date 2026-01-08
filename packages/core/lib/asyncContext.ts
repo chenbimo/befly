@@ -36,8 +36,8 @@ export function setCtxUser(userId: string | number | null | undefined, roleCode?
     const store = storage.getStore();
     if (!store) return;
 
-    store.userId = userId;
-    store.roleCode = roleCode;
-    store.nickname = nickname;
-    store.roleType = roleType;
+    store.userId = userId === undefined ? null : userId;
+    store.roleCode = roleCode === undefined ? null : roleCode;
+    store.nickname = nickname === undefined ? null : nickname;
+    store.roleType = roleType === undefined ? null : roleType;
 }

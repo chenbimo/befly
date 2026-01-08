@@ -26,20 +26,20 @@ const permissionHook: Hook = {
         }
 
         // 2. 用户未登录
-        if (!ctx.user || !ctx.user.id) {
+        if (!ctx.user || !(ctx.user as { id?: unknown }).id) {
             ctx.response = ErrorResponse(ctx, "未登录", 1, null, null, "auth");
             return;
         }
 
         // 3. 开发者权限（最高权限）
-        if (ctx.user.roleCode === "dev") {
+        if ((ctx.user as { roleCode?: unknown }).roleCode === "dev") {
             return;
         }
 
         // 4. 角色权限检查
         // apiPath 在 apiHandler 中已统一生成并写入 ctx.route
         const apiPath = ctx.route;
-        const roleCode = ctx.user.roleCode;
+        const roleCode = (ctx.user as { roleCode?: string | null }).roleCode;
 
         let hasPermission = false;
         if (roleCode && befly.redis) {
@@ -47,7 +47,7 @@ const permissionHook: Hook = {
                 // 极简方案：每个角色一个 Set，直接判断成员是否存在
                 const roleApisKey = CacheKeys.roleApis(roleCode);
                 hasPermission = await befly.redis.sismember(roleApisKey, apiPath);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 // Redis 异常：记录到 error 日志文件（不回传给客户端），并降级为拒绝访问
                 Logger.error({
                     event: "hook_permission_redis_error",

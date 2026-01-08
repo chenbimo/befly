@@ -7,7 +7,15 @@
     "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/logs/**", "temp/**", "**/*.d.ts"],
     "rules": {
         "no-console": "error",
-        "no-debugger": "error"
+        "no-debugger": "error",
+
+        "eqeqeq": "error",
+        "no-var": "error",
+        "no-eval": "error",
+        "no-throw-literal": "error",
+        "radix": "error",
+        "no-implicit-coercion": "error",
+        "prefer-object-has-own": "error"
     },
     "overrides": [
         {

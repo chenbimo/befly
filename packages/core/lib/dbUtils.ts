@@ -15,22 +15,50 @@ export class DbUtils {
         }
 
         const parts = trimmed.split(/\s+/).filter((p) => p.length > 0);
+        if (parts.length === 0) {
+            throw new Error("tableRef 不能为空");
+        }
         if (parts.length > 2) {
             throw new Error(`不支持的表引用格式（包含过多片段）。请使用最简形式：table 或 table alias 或 schema.table 或 schema.table alias (tableRef: ${trimmed})`);
         }
 
         const namePart = parts[0];
-        const aliasPart = parts.length === 2 ? parts[1] : null;
+        if (typeof namePart !== "string" || namePart.trim() === "") {
+            throw new Error(`tableRef 解析失败：缺少表名 (tableRef: ${trimmed})`);
+        }
+
+        let aliasPart: string | null = null;
+        if (parts.length === 2) {
+            const alias = parts[1];
+            if (typeof alias !== "string" || alias.trim() === "") {
+                throw new Error(`tableRef 解析失败：缺少 alias (tableRef: ${trimmed})`);
+            }
+            aliasPart = alias;
+        }
 
         const nameSegments = namePart.split(".");
         if (nameSegments.length > 2) {
             throw new Error(`不支持的表引用格式（schema 层级过深） (tableRef: ${trimmed})`);
         }
 
-        const schema = nameSegments.length === 2 ? nameSegments[0] : null;
-        const table = nameSegments.length === 2 ? nameSegments[1] : nameSegments[0];
+        if (nameSegments.length === 2) {
+            const schema = nameSegments[0];
+            const table = nameSegments[1];
+            if (typeof schema !== "string" || schema.trim() === "") {
+                throw new Error(`tableRef 解析失败：schema 为空 (tableRef: ${trimmed})`);
+            }
+            if (typeof table !== "string" || table.trim() === "") {
+                throw new Error(`tableRef 解析失败：table 为空 (tableRef: ${trimmed})`);
+            }
+            return { schema: schema, table: table, alias: aliasPart };
+        }
 
-        return { schema: schema, table: table, alias: aliasPart };
+        const table = nameSegments[0];
+        if (typeof table !== "string" || table.trim() === "") {
+            throw new Error(`tableRef 解析失败：table 为空 (tableRef: ${trimmed})`);
+        }
+
+        return { schema: null, table: table, alias: aliasPart };
     }
 
     /**
@@ -157,7 +185,17 @@ export class DbUtils {
                 return item;
             }
 
-            const [field, direction] = item.split("#");
+            const parts = item.split("#");
+            if (parts.length !== 2) {
+                return item;
+            }
+
+            const field = parts[0];
+            const direction = parts[1];
+            if (typeof field !== "string" || typeof direction !== "string") {
+                return item;
+            }
+
             return `${snakeCase(field.trim())}#${direction.trim()}`;
         });
     }
@@ -171,16 +209,33 @@ export class DbUtils {
         // 处理别名 AS
         if (field.toUpperCase().includes(" AS ")) {
             const parts = field.split(/\s+AS\s+/i);
-            const fieldPart = parts[0].trim();
-            const aliasPart = parts[1].trim();
-            return `${DbUtils.processJoinField(fieldPart)} AS ${aliasPart}`;
+            const fieldPart = parts[0];
+            const aliasPart = parts[1];
+            if (typeof fieldPart !== "string" || typeof aliasPart !== "string") {
+                return field;
+            }
+            return `${DbUtils.processJoinField(fieldPart.trim())} AS ${aliasPart.trim()}`;
         }
 
         // 处理表别名.字段名（JOIN 模式下，点号前面通常是别名，不应被 snakeCase 改写）
         if (field.includes(".")) {
             const parts = field.split(".");
-            const tableName = parts[0];
-            const fieldName = parts[1];
+            if (parts.length < 2) {
+                return snakeCase(field);
+            }
+
+            // 防御：避免 a..b / a. / .a 等输入
+            if (parts.some((p) => p.trim() === "")) {
+                return field;
+            }
+
+            const fieldName = parts[parts.length - 1];
+            const tableName = parts.slice(0, parts.length - 1).join(".");
+
+            if (typeof fieldName !== "string" || typeof tableName !== "string") {
+                return snakeCase(field);
+            }
+
             return `${tableName.trim()}.${snakeCase(fieldName)}`;
         }
 
@@ -202,8 +257,20 @@ export class DbUtils {
 
             if (fieldPart.includes(".")) {
                 const parts = fieldPart.split(".");
-                const tableName = parts[0];
-                const fieldName = parts[1];
+                if (parts.length < 2) {
+                    return `${snakeCase(fieldPart)}${operator}`;
+                }
+
+                // 防御：避免 a..b / a. / .a 等输入
+                if (parts.some((p) => p.trim() === "")) {
+                    return `${snakeCase(fieldPart)}${operator}`;
+                }
+
+                const fieldName = parts[parts.length - 1];
+                const tableName = parts.slice(0, parts.length - 1).join(".");
+                if (typeof fieldName !== "string" || typeof tableName !== "string") {
+                    return `${snakeCase(fieldPart)}${operator}`;
+                }
                 return `${tableName.trim()}.${snakeCase(fieldName)}${operator}`;
             }
 
@@ -213,8 +280,20 @@ export class DbUtils {
         // 处理表名.字段名
         if (key.includes(".")) {
             const parts = key.split(".");
-            const tableName = parts[0];
-            const fieldName = parts[1];
+            if (parts.length < 2) {
+                return snakeCase(key);
+            }
+
+            // 防御：避免 a..b / a. / .a 等输入
+            if (parts.some((p) => p.trim() === "")) {
+                return snakeCase(key);
+            }
+
+            const fieldName = parts[parts.length - 1];
+            const tableName = parts.slice(0, parts.length - 1).join(".");
+            if (typeof fieldName !== "string" || typeof tableName !== "string") {
+                return snakeCase(key);
+            }
             return `${tableName.trim()}.${snakeCase(fieldName)}`;
         }
 
@@ -257,7 +336,17 @@ export class DbUtils {
                 return item;
             }
 
-            const [field, direction] = item.split("#");
+            const parts = item.split("#");
+            if (parts.length !== 2) {
+                return item;
+            }
+
+            const field = parts[0];
+            const direction = parts[1];
+            if (typeof field !== "string" || typeof direction !== "string") {
+                return item;
+            }
+
             return `${DbUtils.processJoinField(field.trim())}#${direction.trim()}`;
         });
     }
@@ -422,10 +511,10 @@ export class DbUtils {
             result[key] = value;
         }
 
-        result.id = options.id;
-        result.created_at = options.now;
-        result.updated_at = options.now;
-        result.state = 1;
+        result["id"] = options.id;
+        result["created_at"] = options.now;
+        result["updated_at"] = options.now;
+        result["state"] = 1;
         return result;
     }
 
@@ -437,7 +526,7 @@ export class DbUtils {
         for (const [key, value] of Object.entries(userData)) {
             result[key] = value;
         }
-        result.updated_at = options.now;
+        result["updated_at"] = options.now;
         return result;
     }
 

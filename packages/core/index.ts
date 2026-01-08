@@ -67,7 +67,7 @@ export class Befly {
             const serverStartTime = Bun.nanoseconds();
 
             // 0. 加载配置
-            this.config = await loadBeflyConfig(env.NODE_ENV || "development");
+            this.config = await loadBeflyConfig(env["NODE_ENV"] || "development");
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取
             this.context.config = this.config;
@@ -78,7 +78,7 @@ export class Befly {
             const { apis, tables, plugins, hooks, addons } = await scanSources();
 
             // 让后续 syncMenu 能拿到 addon 的 views 路径等信息
-            this.context.addons = addons;
+            (this.context as any)["addons"] = addons;
 
             await checkApi(apis);
             await checkTable(tables);
@@ -113,7 +113,13 @@ export class Befly {
             await syncApi(this.context as BeflyContext, apis as any);
 
             await syncMenu(this.context as BeflyContext, checkedMenus);
-            await syncDev(this.context as BeflyContext, { devEmail: this.config.devEmail, devPassword: this.config.devPassword });
+            const devEmail = this.config.devEmail;
+            const devPassword = this.config.devPassword;
+            if (typeof devEmail === "string" && devEmail.length > 0 && typeof devPassword === "string" && devPassword.length > 0) {
+                await syncDev(this.context as BeflyContext, { devEmail: devEmail, devPassword: devPassword });
+            } else {
+                Logger.debug("跳过 syncDev：未配置 devEmail/devPassword");
+            }
 
             // 缓存同步：统一在所有同步完成后执行（cacheApis + cacheMenus + rebuildRoleApiPermissions）
             await syncCache(this.context as BeflyContext);
@@ -128,9 +134,12 @@ export class Befly {
             const apiFetch = apiHandler(this.apis, this.hooks, this.context as BeflyContext);
             const staticFetch = staticHandler(this.config!.cors);
 
+            const port = typeof this.config!.appPort === "number" ? this.config!.appPort : 3000;
+            const hostname = typeof this.config!.appHost === "string" && this.config!.appHost.length > 0 ? this.config!.appHost : "0.0.0.0";
+
             const server = Bun.serve({
-                port: this.config!.appPort,
-                hostname: this.config!.appHost,
+                port: port,
+                hostname: hostname,
                 // 开发模式下启用详细错误信息
                 development: this.config!.nodeEnv === "development",
                 // 空闲连接超时时间（秒），防止恶意连接占用资源
@@ -177,7 +186,7 @@ export class Befly {
             // 注意：作为库代码，这里不注册 SIGINT/SIGTERM 处理器，也不调用 process.exit。
             // 宿主应用应自行处理信号并决定退出策略（包括是否调用 server.stop / Connect.disconnect / Logger.flush）。
             return server;
-        } catch (error: any) {
+        } catch (error: unknown) {
             // 注意：这里不能直接 process.exit(1)
             // - Logger 是异步缓冲写入，exit 会导致日志来不及 flush（实际项目里表现为“完全没打印”）
             // - 作为库代码，也不应该强行终止宿主进程

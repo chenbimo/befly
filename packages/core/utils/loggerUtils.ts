@@ -75,7 +75,7 @@ function sanitizeErrorValue(err: Error, options: LogSanitizeOptions): Record<str
     };
 
     if (typeof err.stack === "string") {
-        out.stack = truncateString(err.stack, options.maxStringLen);
+        out["stack"] = truncateString(err.stack, options.maxStringLen);
     }
 
     return out;
@@ -186,8 +186,12 @@ function sanitizeAny(value: any, options: LogSanitizeOptions, state: { nodes: nu
     const limit = entries.length > options.sanitizeObjectKeys ? options.sanitizeObjectKeys : entries.length;
 
     for (let i = 0; i < limit; i++) {
-        const key = entries[i][0];
-        const child = entries[i][1];
+        const entry = entries[i];
+        if (!entry) {
+            continue;
+        }
+        const key = entry[0];
+        const child = entry[1];
 
         if (isSensitiveKey(key, options.sensitiveKeyMatcher)) {
             out[key] = "[MASKED]";

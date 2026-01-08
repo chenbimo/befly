@@ -19,7 +19,7 @@ import { Logger } from "../lib/logger";
 import { snakeCase } from "../utils/util";
 
 type SqlExecutor = {
-    unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
+    unsafe<T = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
 };
 
 type MySqlTableExistsRow = { count: number };
@@ -776,8 +776,14 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                 let max = null;
                 const m = /^(\w+)\s*\((\d+)\)/.exec(baseType);
                 if (m) {
-                    baseType = m[1];
-                    max = Number(m[2]);
+                    const base = m[1];
+                    const maxText = m[2];
+                    if (typeof base === "string") {
+                        baseType = base;
+                    }
+                    if (typeof maxText === "string") {
+                        max = Number(maxText);
+                    }
                 }
                 columns[row.name] = {
                     type: baseType.toLowerCase(),
@@ -816,8 +822,13 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
             const q = getSyncTableIndexesQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
             const result = await runtime.db.unsafe<MySqlIndexRow[]>(q.sql, q.params);
             for (const row of result.data) {
-                if (!indexes[row.INDEX_NAME]) indexes[row.INDEX_NAME] = [];
-                indexes[row.INDEX_NAME].push(row.COLUMN_NAME);
+                const indexName = row.INDEX_NAME;
+                const current = indexes[indexName];
+                if (Array.isArray(current)) {
+                    current.push(row.COLUMN_NAME);
+                } else {
+                    indexes[indexName] = [row.COLUMN_NAME];
+                }
             }
         } else if (runtime.dbDialect === "postgresql") {
             const q = getSyncTableIndexesQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
@@ -825,7 +836,8 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
             for (const row of result.data) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {
-                    const col = m[1].replace(/"/g, "").trim();
+                    const colPart = m[1];
+                    const col = typeof colPart === "string" ? colPart.replace(/"/g, "").trim() : "";
                     indexes[row.indexname] = [col];
                 }
             }
@@ -865,7 +877,8 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
             throw new Error("无法获取 MySQL 版本信息");
         }
         const version = r.data[0].version;
-        const majorVersion = parseInt(String(version).split(".")[0], 10);
+        const majorPart = String(version).split(".")[0] || "0";
+        const majorVersion = parseInt(majorPart, 10);
         if (!Number.isFinite(majorVersion) || majorVersion < DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR) {
             throw new Error(`此脚本仅支持 MySQL ${DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR}.0+，当前版本: ${version}`);
         }
@@ -879,7 +892,8 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
         }
         const versionText = r.data[0].version;
         const m = /PostgreSQL\s+(\d+)/i.exec(versionText);
-        const major = m ? parseInt(m[1], 10) : NaN;
+        const majorText = m ? m[1] : undefined;
+        const major = typeof majorText === "string" ? parseInt(majorText, 10) : NaN;
         if (!Number.isFinite(major) || major < DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR) {
             throw new Error(`此脚本要求 PostgreSQL >= ${DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR}，当前: ${versionText}`);
         }
@@ -892,9 +906,12 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
             throw new Error("无法获取 SQLite 版本信息");
         }
         const version = r.data[0].version;
-        const [maj, min, patch] = String(version)
+        const parts = String(version)
             .split(".")
             .map((v) => parseInt(v, 10) || 0);
+        const maj = parts[0] ?? 0;
+        const min = parts[1] ?? 0;
+        const patch = parts[2] ?? 0;
         const vnum = maj * 10000 + min * 100 + patch;
         if (!Number.isFinite(vnum) || vnum < DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION_NUM) {
             throw new Error(`此脚本要求 SQLite >= ${DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION}，当前: ${version}`);
@@ -935,7 +952,11 @@ function compareFieldDefinition(dbDialect: DbDialect, existingColumn: ColumnInfo
     }
 
     const typeMapping = getTypeMapping(dbDialect);
-    const expectedType = typeMapping[fieldDef.type].toLowerCase();
+    const mapped = typeMapping[fieldDef.type];
+    if (typeof mapped !== "string") {
+        throw new Error(`未知字段类型映射：dialect=${dbDialect} type=${String(fieldDef.type)}`);
+    }
+    const expectedType = mapped.toLowerCase();
     const currentType = existingColumn.type.toLowerCase();
 
     if (currentType !== expectedType) {
