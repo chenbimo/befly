@@ -14,8 +14,15 @@
         "default": 1,
         "detail": "0=免登录，1=需登录"
     },
-    "routePath": {
+    "path": {
         "name": "接口路径",
+        "type": "string",
+        "min": 1,
+        "max": 200,
+        "index": true
+    },
+    "parentPath": {
+        "name": "父级路径",
         "type": "string",
         "min": 1,
         "max": 200,

@@ -214,7 +214,7 @@ process.stdout.write(JSON.stringify({
         tables: result.tables.map((t) => ({ source: t.source, type: t.type, fileName: t.fileName, content: t.type === 'table' ? t.content : undefined, customKeys: t.customKeys, addonName: t.addonName, moduleName: t.moduleName })),
   plugins: result.plugins.map((p) => ({ source: p.source, fileName: p.fileName, addonName: p.addonName, moduleName: p.moduleName })),
   hooks: result.hooks.map((h) => ({ source: h.source, fileName: h.fileName })),
-  apis: result.apis.map((a) => ({ source: a.source, fileName: a.fileName, routePath: a.routePath, addonName: a.addonName, moduleName: a.moduleName }))
+    apis: result.apis.map((a) => ({ source: a.source, fileName: a.fileName, path: a.path, addonName: a.addonName, moduleName: a.moduleName }))
 }));
 `;
 
@@ -249,7 +249,7 @@ process.stdout.write(JSON.stringify({
             // api routePath formatting
             const loginApi = parsed.apis.find((a: any) => a.source === "app" && a.fileName === "login");
             expect(loginApi).toBeTruthy();
-            expect((loginApi as any).routePath).toBe("/api/app/user/login");
+            expect((loginApi as any).path).toBe("/api/app/user/login");
 
             // local addon scanning should work (tables/plugins/apis under addons/demo)
             const localAddonTable = parsed.tables.find((t: any) => t.source === "addon" && t.fileName === "local");

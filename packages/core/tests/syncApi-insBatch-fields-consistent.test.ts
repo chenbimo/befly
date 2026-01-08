@@ -36,8 +36,8 @@ describe("syncApi - insBatch rows consistency", () => {
         // 根因修复后：scanFiles 会确保 API 记录总是携带 addonName（app/core 为 ""）。
         // 因此这里模拟真实扫描结果：第二条的 addonName 应该是空字符串而非 undefined。
         const apis: any[] = [
-            { type: "api", name: "A", routePath: "/api/addon/admin/a", addonName: "admin", auth: 1 },
-            { name: "B", routePath: "/api/app/b", addonName: "" }
+            { type: "api", name: "A", path: "/api/addon/admin/a", addonName: "admin", auth: 1 },
+            { type: "api", name: "B", path: "/api/app/b", addonName: "", auth: 1 }
         ];
 
         await syncApi(ctx, apis as any);
@@ -53,6 +53,11 @@ describe("syncApi - insBatch rows consistency", () => {
         expect(typeof rows[0].addonName).toBe("string");
         expect(typeof rows[1].addonName).toBe("string");
         expect(rows[1].addonName).toBe("");
+
+        expect(typeof rows[0].path).toBe("string");
+        expect(typeof rows[1].path).toBe("string");
+        expect(typeof rows[0].parentPath).toBe("string");
+        expect(typeof rows[1].parentPath).toBe("string");
 
         expect(typeof rows[0].auth).toBe("number");
         expect(typeof rows[1].auth).toBe("number");

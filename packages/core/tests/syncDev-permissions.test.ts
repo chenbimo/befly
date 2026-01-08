@@ -35,8 +35,8 @@ describe("syncDev - dev role permissions", () => {
                         return {
                             data: {
                                 lists: [
-                                    { routePath: "/api/health", state: 0 },
-                                    { routePath: "/api/addon/addonAdmin/auth/login", state: 0 }
+                                    { path: "/api/health", state: 0 },
+                                    { path: "/api/addon/addonAdmin/auth/login", state: 0 }
                                 ]
                             }
                         };
@@ -99,7 +99,7 @@ describe("syncDev - dev role permissions", () => {
                         return { data: { lists: [{ path: "/dashboard", state: 0 }] } };
                     }
                     if (options?.table === "addon_admin_api") {
-                        return { data: { lists: [{ routePath: "/api/health", state: 0 }] } };
+                        return { data: { lists: [{ path: "/api/health", state: 0 }] } };
                     }
                     return { data: { lists: [] } };
                 },

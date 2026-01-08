@@ -18,31 +18,31 @@ export async function checkApi(apis: any[]): Promise<void> {
                 continue;
             }
 
-            // routePath / routePrefix 由 scanFiles 系统生成：必须是严格的 pathname
-            if (typeof api?.routePath !== "string" || api.routePath.trim() === "") {
-                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 属性必须是非空字符串（由系统生成）" }));
+            // path / routePrefix 由 scanFiles 系统生成：必须是严格的 pathname
+            if (typeof api?.path !== "string" || api.path.trim() === "") {
+                Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 path 属性必须是非空字符串（由系统生成）" }));
                 hasError = true;
             } else {
-                const routePath = api.routePath.trim();
+                const path = api.path.trim();
 
                 // 不允许出现 "POST/api/..." 等 method 前缀
-                if (/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/i.test(routePath)) {
-                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 不允许包含 method 前缀，应为 url.pathname（例如 /api/app/xxx）" }));
+                if (/^(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\b/i.test(path)) {
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 path 不允许包含 method 前缀，应为 url.pathname（例如 /api/app/xxx）" }));
                     hasError = true;
                 }
 
-                if (!routePath.startsWith("/api/")) {
-                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 必须以 /api/ 开头" }));
+                if (!path.startsWith("/api/")) {
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 path 必须以 /api/ 开头" }));
                     hasError = true;
                 }
 
-                if (routePath.includes(" ")) {
-                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 不允许包含空格" }));
+                if (path.includes(" ")) {
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 path 不允许包含空格" }));
                     hasError = true;
                 }
 
-                if (routePath.includes("/api//")) {
-                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 routePath 不允许出现 /api//（重复斜杠）" }));
+                if (path.includes("/api//")) {
+                    Logger.warn(Object.assign({}, omit(api, ["handler"]), { msg: "接口的 path 不允许出现 /api//（重复斜杠）" }));
                     hasError = true;
                 }
             }

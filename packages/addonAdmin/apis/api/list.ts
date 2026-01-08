@@ -11,7 +11,7 @@ export default {
             const result = await befly.db.getList({
                 table: "addon_admin_api",
                 where: {
-                    $or: ctx.body.keyword ? [{ name$like: `%${ctx.body.keyword}%` }, { routePath$like: `%${ctx.body.keyword}%` }] : undefined
+                    $or: ctx.body.keyword ? [{ name$like: `%${ctx.body.keyword}%` }, { path$like: `%${ctx.body.keyword}%` }] : undefined
                 },
                 orderBy: ["id#ASC"],
                 page: ctx.body.page,

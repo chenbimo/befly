@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { checkApi } from "../checks/checkApi.ts";
 
-describe("checkApi - routePath strict", () => {
-    test("合法 routePath 应通过", async () => {
+describe("checkApi - path strict", () => {
+    test("合法 path 应通过", async () => {
         let thrown: any = null;
 
         try {
@@ -13,7 +13,7 @@ describe("checkApi - routePath strict", () => {
                     handler: () => {
                         return null;
                     },
-                    routePath: "/api/hello",
+                    path: "/api/hello",
                     routePrefix: "/app"
                 }
             ]);
@@ -24,7 +24,7 @@ describe("checkApi - routePath strict", () => {
         expect(thrown).toBeNull();
     });
 
-    test("routePath 为空字符串应阻断启动", async () => {
+    test("path 为空字符串应阻断启动", async () => {
         let thrown: any = null;
 
         try {
@@ -32,7 +32,7 @@ describe("checkApi - routePath strict", () => {
                 {
                     name: "hello",
                     handler: () => null,
-                    routePath: "",
+                    path: "",
                     routePrefix: "/app"
                 }
             ]);
@@ -44,7 +44,7 @@ describe("checkApi - routePath strict", () => {
         expect(thrown.message).toBe("接口结构检查失败");
     });
 
-    test("routePath 非字符串应阻断启动", async () => {
+    test("path 非字符串应阻断启动", async () => {
         let thrown: any = null;
 
         try {
@@ -52,7 +52,7 @@ describe("checkApi - routePath strict", () => {
                 {
                     name: "hello",
                     handler: () => null,
-                    routePath: 123,
+                    path: 123,
                     routePrefix: "/app"
                 } as any
             ]);
@@ -64,7 +64,7 @@ describe("checkApi - routePath strict", () => {
         expect(thrown.message).toBe("接口结构检查失败");
     });
 
-    test("routePath 不允许 method 前缀（POST/api/...）", async () => {
+    test("path 不允许 method 前缀（POST/api/...）", async () => {
         let thrown: any = null;
 
         try {
@@ -72,7 +72,7 @@ describe("checkApi - routePath strict", () => {
                 {
                     name: "hello",
                     handler: () => null,
-                    routePath: "POST/api/hello",
+                    path: "POST/api/hello",
                     routePrefix: "/app"
                 }
             ]);
@@ -84,7 +84,7 @@ describe("checkApi - routePath strict", () => {
         expect(thrown.message).toBe("接口结构检查失败");
     });
 
-    test("routePath 不允许 method + 空格（POST /api/...）", async () => {
+    test("path 不允许 method + 空格（POST /api/...）", async () => {
         let thrown: any = null;
 
         try {
@@ -92,7 +92,7 @@ describe("checkApi - routePath strict", () => {
                 {
                     name: "hello",
                     handler: () => null,
-                    routePath: "POST /api/hello",
+                    path: "POST /api/hello",
                     routePrefix: "/app"
                 }
             ]);
@@ -104,7 +104,7 @@ describe("checkApi - routePath strict", () => {
         expect(thrown.message).toBe("接口结构检查失败");
     });
 
-    test("routePath 必须以 /api/ 开头", async () => {
+    test("path 必须以 /api/ 开头", async () => {
         let thrown: any = null;
 
         try {
@@ -112,7 +112,7 @@ describe("checkApi - routePath strict", () => {
                 {
                     name: "hello",
                     handler: () => null,
-                    routePath: "/app/hello",
+                    path: "/app/hello",
                     routePrefix: "/app"
                 }
             ]);
@@ -124,7 +124,7 @@ describe("checkApi - routePath strict", () => {
         expect(thrown.message).toBe("接口结构检查失败");
     });
 
-    test("routePath 不允许包含空格", async () => {
+    test("path 不允许包含空格", async () => {
         let thrown: any = null;
 
         try {
@@ -132,7 +132,7 @@ describe("checkApi - routePath strict", () => {
                 {
                     name: "hello",
                     handler: () => null,
-                    routePath: "/api/hello world",
+                    path: "/api/hello world",
                     routePrefix: "/app"
                 }
             ]);
@@ -144,7 +144,7 @@ describe("checkApi - routePath strict", () => {
         expect(thrown.message).toBe("接口结构检查失败");
     });
 
-    test("routePath 不允许出现 /api//（重复斜杠）", async () => {
+    test("path 不允许出现 /api//（重复斜杠）", async () => {
         let thrown: any = null;
 
         try {
@@ -152,7 +152,7 @@ describe("checkApi - routePath strict", () => {
                 {
                     name: "hello",
                     handler: () => null,
-                    routePath: "/api//hello",
+                    path: "/api//hello",
                     routePrefix: "/app"
                 }
             ]);

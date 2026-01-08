@@ -5,13 +5,13 @@ import { syncApi } from "../sync/syncApi.ts";
 describe("syncApi - delete obsolete records", () => {
     test("应删除不在配置中的接口记录", async () => {
         const existingRecords = [
-            { id: 1, routePath: "/api/app/testSyncKeep", name: "Keep", addonName: "", state: 0 },
-            { id: 2, routePath: "/api/app/testSyncRemove", name: "Remove", addonName: "", state: 0 }
+            { id: 1, path: "/api/app/testSyncKeep", parentPath: "/api/app/testSyncKeep", name: "Keep", addonName: "", state: 0 },
+            { id: 2, path: "/api/app/testSyncRemove", parentPath: "/api/app/testSyncRemove", name: "Remove", addonName: "", state: 0 }
         ];
 
         const existingByPath = new Map<string, any>();
         for (const record of existingRecords) {
-            existingByPath.set(record.routePath, record);
+            existingByPath.set(record.path, record);
         }
 
         const calls = {
@@ -44,6 +44,7 @@ describe("syncApi - delete obsolete records", () => {
 
         const apiItems = [
             {
+                type: "api",
                 source: "app",
                 sourceName: "项目",
                 filePath: "DUMMY",
@@ -51,7 +52,7 @@ describe("syncApi - delete obsolete records", () => {
                 fileName: "testSyncKeep",
                 moduleName: "app_testSyncKeep",
                 name: "Keep",
-                routePath: "/api/app/testSyncKeep",
+                path: "/api/app/testSyncKeep",
                 addonName: "",
                 fileBaseName: "testSyncKeep.ts",
                 fileDir: "DUMMY",
@@ -61,7 +62,7 @@ describe("syncApi - delete obsolete records", () => {
 
         await syncApi(ctx, apiItems);
 
-        expect(calls.getAllArgs?.fields).toEqual(["id", "routePath", "name", "addonName", "auth", "state"]);
+        expect(calls.getAllArgs?.fields).toEqual(["id", "path", "parentPath", "name", "addonName", "auth", "state"]);
 
         expect(calls.delForceBatch).toHaveLength(1);
         expect(calls.delForceBatch[0]).toEqual([2]);

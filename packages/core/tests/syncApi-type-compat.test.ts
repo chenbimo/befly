@@ -3,10 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { syncApi } from "../sync/syncApi.ts";
 
 describe("syncApi - type compatibility", () => {
-    test("缺少 type 时应视为 api；非 api type 应被跳过", async () => {
+    test("仅 type='api' 的条目参与同步；非 api type 应被跳过", async () => {
         const existingRecords = [
-            { id: 1, routePath: "/api/app/keep", name: "Keep", addonName: "", state: 0 },
-            { id: 2, routePath: "/api/app/skip", name: "Skip", addonName: "", state: 0 }
+            { id: 1, path: "/api/app/keep", parentPath: "/api/app/keep", name: "Keep", addonName: "", state: 0 },
+            { id: 2, path: "/api/app/skip", parentPath: "/api/app/skip", name: "Skip", addonName: "", state: 0 }
         ];
 
         const calls = {
@@ -38,8 +38,9 @@ describe("syncApi - type compatibility", () => {
         } as any;
 
         const apiItems = [
-            // 不带 type：应按 api 处理，保留 keep
+            // type='api'：应按 api 处理，保留 keep
             {
+                type: "api",
                 source: "app",
                 sourceName: "项目",
                 filePath: "DUMMY",
@@ -47,7 +48,7 @@ describe("syncApi - type compatibility", () => {
                 fileName: "keep",
                 moduleName: "app_keep",
                 name: "Keep",
-                routePath: "/api/app/keep",
+                path: "/api/app/keep",
                 addonName: "",
                 fileBaseName: "keep.ts",
                 fileDir: "DUMMY",
@@ -55,16 +56,16 @@ describe("syncApi - type compatibility", () => {
             },
             // 带非 api type：应被跳过，因此 DB 中的 skip 会被当作“配置不存在”而删除
             {
-                type: "menu",
+                type: "plugin",
                 name: "Skip",
-                routePath: "/api/app/skip",
+                path: "/api/app/skip",
                 addonName: ""
             }
         ] as any;
 
         await syncApi(ctx, apiItems);
 
-        expect(calls.getAllArgs?.fields).toEqual(["id", "routePath", "name", "addonName", "auth", "state"]);
+        expect(calls.getAllArgs?.fields).toEqual(["id", "path", "parentPath", "name", "addonName", "auth", "state"]);
 
         expect(calls.delForceBatch).toHaveLength(1);
         expect(calls.delForceBatch[0]).toEqual([2]);

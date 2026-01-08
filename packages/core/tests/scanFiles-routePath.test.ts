@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import { scanFiles } from "../utils/scanFiles.ts";
 
-describe("scanFiles - api routePath formatting", () => {
-    test("routePrefix 应为 /app 或 /addon/<name> 且 routePath 不应出现 /api//", async () => {
+describe("scanFiles - api path formatting", () => {
+    test("routePrefix 应为 /app 或 /addon/<name> 且 path 不应出现 /api//", async () => {
         const fixturesDir = fileURLToPath(new URL("./fixtures/scanFilesApis", import.meta.url));
         const addonApisDir = fileURLToPath(new URL("./fixtures/scanFilesAddon/node_modules/@befly-addon/demo/apis", import.meta.url));
 
@@ -16,7 +16,7 @@ describe("scanFiles - api routePath formatting", () => {
 
         for (const api of all) {
             expect(typeof api.routePrefix).toBe("string");
-            expect(typeof api.routePath).toBe("string");
+            expect(typeof api.path).toBe("string");
             expect(Array.isArray(api.customKeys)).toBe(true);
 
             if (api.source === "addon") {
@@ -27,16 +27,16 @@ describe("scanFiles - api routePath formatting", () => {
             } else {
                 expect(["/app"].includes(api.routePrefix)).toBe(true);
             }
-            expect(api.routePath.includes("/api//")).toBe(false);
+            expect(api.path.includes("/api//")).toBe(false);
         }
 
         const appB = (appApis as any[]).find((item) => item.relativePath === "sub/b");
         expect(appB.routePrefix).toBe("/app");
-        expect(appB.routePath).toBe("/api/app/sub/b");
+        expect(appB.path).toBe("/api/app/sub/b");
 
         const addonB = (addonApis as any[]).find((item) => item.relativePath === "sub/b");
         expect(addonB.addonName).toBe("demo");
         expect(addonB.routePrefix).toBe("/addon/demo");
-        expect(addonB.routePath).toBe("/api/addon/demo/sub/b");
+        expect(addonB.path).toBe("/api/addon/demo/sub/b");
     });
 });

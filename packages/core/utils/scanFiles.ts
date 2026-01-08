@@ -144,6 +144,10 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
                 continue;
             }
             if (type === "api") {
+                // 运行时 auth 必须是 boolean：
+                // - checkApi 会校验 auth 类型
+                // - permission hook 以 ctx.api.auth === false 判断公开接口
+                // DB 存储的 0/1 由 syncApi 负责转换写入。
                 base.auth = true;
                 base.rawBody = false;
                 base.method = "POST";
@@ -162,7 +166,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
 
             if (type === "api") {
                 base.routePrefix = source === "app" ? "/app" : `/addon/${addonName}`;
-                base.routePath = `/api${base.routePrefix}/${relativePath}`;
+                base.path = `/api${base.routePrefix}/${relativePath}`;
             }
 
             results.push(base as ScanFileResult);

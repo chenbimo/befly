@@ -49,7 +49,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
 
     const allApis = await ctx.db.getAll({
         table: "addon_admin_api",
-        fields: ["routePath"],
+        fields: ["path"],
         where: { state$gte: 0 },
         orderBy: ["id#ASC"]
     } as any);
@@ -60,7 +60,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
             name: "开发者角色",
             description: "拥有所有菜单和接口权限的开发者角色",
             menus: allMenus.data.lists.map((item) => item.path).filter((v) => v),
-            apis: allApis.data.lists.map((item) => item.routePath).filter((v) => v),
+            apis: allApis.data.lists.map((item) => item.path).filter((v) => v),
             sort: 0
         },
         {

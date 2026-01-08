@@ -4,6 +4,22 @@ import type { SyncApiItem } from "../types/sync";
 import { Logger } from "../lib/logger";
 import { keyBy } from "../utils/util";
 
+const getApiParentPath = (apiPath: string): string => {
+    const segments = apiPath
+        .split("/")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+    // segments 示例：
+    // - /api/addon/admin/sysConfig/list -> ["api","addon","admin","sysConfig","list"]
+    // - /api/app/test/hi -> ["api","app","test","hi"]
+    const seg2 = segments[1] || "";
+    const take = seg2 === "addon" ? 4 : 3;
+    const parentSegments = segments.slice(0, Math.min(take, segments.length));
+    if (parentSegments.length === 0) return "";
+    return `/${parentSegments.join("/")}`;
+};
+
 export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: SyncApiItem[]): Promise<void> {
     const tableName = "addon_admin_api";
 
@@ -22,55 +38,60 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
 
     const allDbApis = await ctx.db.getAll({
         table: tableName,
-        fields: ["id", "routePath", "name", "addonName", "auth", "state"],
+        fields: ["id", "path", "parentPath", "name", "addonName", "auth", "state"],
         where: { state$gte: 0 }
     } as any);
 
     const dbLists = allDbApis.data.lists || [];
-    const allDbApiMap = keyBy(dbLists, (item: any) => item.routePath);
+    const allDbApiMap = keyBy(dbLists, (item: any) => item.path);
 
     const insData: SyncApiItem[] = [];
-    const updData: Array<{ id: number; api: SyncApiItem }> = [];
+    const updData: Array<SyncApiItem & { id: number }> = [];
     const delData: number[] = [];
 
-    // 1) 先构建当前扫描到的 routePath 集合（用于删除差集）
+    // 1) 先构建当前扫描到的 path 集合（用于删除差集）
     const apiRouteKeys = new Set<string>();
 
-    // 2) 插入 / 更新（存在不一定更新：仅当 name/routePath/addonName/auth 任一不匹配时更新）
+    // 2) 插入 / 更新（存在不一定更新：仅当 name/path/addonName/auth 任一不匹配时更新）
     for (const api of apis) {
-        const apiType = api.type;
-        // 兼容：历史/测试构造的数据可能没有 type 字段；此时应按 API 处理。
-        // 因此仅当 type **显式存在** 且不为 "api" 时才跳过，避免误把真实 API 条目过滤掉。
-        if (apiType && apiType !== "api") {
+        // 仅当 type **显式存在** 且不为 "api" 时才跳过，避免误把真实 API 条目过滤掉。
+        if (api.type !== "api") {
             continue;
         }
 
-        const normalizedAuth = api.auth === 0 || api.auth === false ? 0 : 1;
+        // auth：运行时 API 定义使用 boolean；DB 字段使用 0/1。
+        // 统一在 syncApi 写库前做归一化，避免类型不一致导致每次启动都触发更新。
+        const auth = api.auth === false || api.auth === 0 ? 0 : 1;
+        const parentPath = getApiParentPath(api.path);
 
-        const normalizedApi: SyncApiItem = {
-            name: api.name,
-            routePath: api.routePath,
-            addonName: api.addonName,
-            auth: normalizedAuth
-        };
-
-        const routePath = normalizedApi.routePath;
-        apiRouteKeys.add(routePath);
-        const item = (allDbApiMap as any)[routePath];
+        apiRouteKeys.add(api.path);
+        const item = (allDbApiMap as any)[api.path];
         if (item) {
-            const dbAuth = item.auth === 0 || item.auth === false ? 0 : 1;
-            const shouldUpdate = normalizedApi.name !== item.name || normalizedApi.routePath !== item.routePath || normalizedApi.addonName !== item.addonName || normalizedAuth !== dbAuth;
+            const shouldUpdate = api.name !== item.name || api.path !== item.path || api.addonName !== item.addonName || parentPath !== item.parentPath || auth !== item.auth;
             if (shouldUpdate) {
-                updData.push({ id: item.id, api: normalizedApi });
+                updData.push({
+                    id: item.id,
+                    name: api.name,
+                    path: api.path,
+                    parentPath: parentPath,
+                    addonName: api.addonName,
+                    auth: auth
+                });
             }
         } else {
-            insData.push(normalizedApi);
+            insData.push({
+                name: api.name,
+                path: api.path,
+                parentPath: parentPath,
+                addonName: api.addonName,
+                auth: auth
+            });
         }
     }
 
     // 3) 删除：用差集（DB - 当前扫描）得到要删除的 id
     for (const record of dbLists) {
-        if (!apiRouteKeys.has(record.routePath)) {
+        if (!apiRouteKeys.has(record.path)) {
             delData.push(record.id);
         }
     }
@@ -79,14 +100,15 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
         try {
             await ctx.db.updBatch(
                 tableName,
-                updData.map((item) => {
+                updData.map((api) => {
                     return {
-                        id: item.id,
+                        id: api.id,
                         data: {
-                            name: item.api.name,
-                            routePath: item.api.routePath,
-                            addonName: item.api.addonName,
-                            auth: item.api.auth === 0 || item.api.auth === false ? 0 : 1
+                            name: api.name,
+                            path: api.path,
+                            parentPath: api.parentPath,
+                            addonName: api.addonName,
+                            auth: api.auth
                         }
                     };
                 })
@@ -103,9 +125,10 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
                 insData.map((api) => {
                     return {
                         name: api.name,
-                        routePath: api.routePath,
+                        path: api.path,
+                        parentPath: api.parentPath,
                         addonName: api.addonName,
-                        auth: api.auth === 0 || api.auth === false ? 0 : 1
+                        auth: api.auth
                     };
                 })
             );
