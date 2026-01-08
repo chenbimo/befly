@@ -38,21 +38,21 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         return;
     }
 
-    const allMenus = await ctx.db.getAll({
+    const allMenus = await ctx.db.getAll<{ path?: string | null }>({
         table: "addon_admin_menu",
         fields: ["path"],
         where: { state$gte: 0 },
         orderBy: ["id#ASC"]
     } as any);
 
-    const allApis = await ctx.db.getAll({
+    const allApis = await ctx.db.getAll<{ path?: string | null }>({
         table: "addon_admin_api",
         fields: ["path"],
         where: { state$gte: 0 },
         orderBy: ["id#ASC"]
     } as any);
 
-    const devRole = await ctx.db.getOne({
+    const devRole = await ctx.db.getOne<{ id: number }>({
         table: "addon_admin_role",
         where: { code: "dev" }
     });
@@ -141,7 +141,7 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
     ];
 
     for (const roleConfig of roles) {
-        const existingRole = await ctx.db.getOne({
+        const existingRole = await ctx.db.getOne<{ id: number }>({
             table: "addon_admin_role",
             where: { code: roleConfig.code }
         });

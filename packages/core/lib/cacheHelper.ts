@@ -8,7 +8,7 @@ import { Logger } from "./logger";
 
 type CacheHelperDb = {
     tableExists(table: string): Promise<{ data: boolean }>;
-    getAll(options: any): Promise<{ data: { lists: any[] } }>;
+    getAll<TItem = unknown>(options: unknown): Promise<{ data: { lists: TItem[] } }>;
 };
 
 type CacheHelperRedis = {
@@ -172,7 +172,7 @@ export class CacheHelper {
             }
 
             // 查询所有角色（仅取必要字段）
-            const roles = await this.db.getAll({
+            const roles = await this.db.getAll<{ code?: string | null; apis?: unknown }>({
                 table: "addon_admin_role",
                 fields: ["code", "apis"]
             });

@@ -36,14 +36,14 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
         return;
     }
 
-    const allDbApis = await ctx.db.getAll({
+    const allDbApis = await ctx.db.getAll<{ id: number; path: string; parentPath?: string | null; name?: string | null; addonName?: string | null; auth?: number | null; state?: number | null }>({
         table: tableName,
         fields: ["id", "path", "parentPath", "name", "addonName", "auth", "state"],
         where: { state$gte: 0 }
     } as any);
 
     const dbLists = allDbApis.data.lists || [];
-    const allDbApiMap = keyBy(dbLists, (item: any) => item.path);
+    const allDbApiMap = keyBy(dbLists, (item) => item.path);
 
     const insData: SyncApiItem[] = [];
     const updData: Array<SyncApiItem & { id: number }> = [];

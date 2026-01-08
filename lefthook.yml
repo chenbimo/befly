@@ -7,14 +7,14 @@ pre-commit:
         - name: Format files (oxfmt)
           priority: 1
           glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,json5,yml,yaml,toml,html,vue,mjml,hbs,handlebars,graphql,gql,md,mdx,css,scss,less}"
-          run: oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
+          run: bunx oxfmt -c ./.oxfmtrc.jsonc --no-error-on-unmatched-pattern {staged_files}
 
         # 2. Oxlint 代码检查（门禁）
         - name: lint
           priority: 2
           # 仅 lint 本次提交的代码文件；若没有匹配的 staged files，lefthook 会自动跳过该 job。
           glob: "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
-          run: oxlint {staged_files}
+          run: bunx oxlint {staged_files}
 
         # 3. TypeScript 语法检查 (core)
         - name: typecheck (core)

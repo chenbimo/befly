@@ -4,7 +4,7 @@
  */
 
 import type { WhereConditions, JoinOption } from "../types/common";
-import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, ListResult, AllResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database";
+import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, DbPageResult, DbListResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database";
 import type { DbDialect } from "./dbDialect";
 
 import { convertBigIntFields } from "../utils/convertBigIntFields";
@@ -158,7 +158,7 @@ export class DbHelper {
      * - DbHelper 不再负责打印 SQL 调试日志
      * - SQL 信息由调用方基于返回值中的 sql 自行输出
      */
-    private async executeWithConn(sqlStr: string, params?: any[]): Promise<DbResult<any>> {
+    private async executeWithConn<TResult = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<TResult>> {
         if (!this.sql) {
             throw new Error("数据库连接未初始化");
         }
@@ -171,7 +171,7 @@ export class DbHelper {
         // 记录开始时间
         const startTime = Date.now();
 
-        const safeParams = Array.isArray(params) ? params : [];
+        const safeParams: unknown[] = Array.isArray(params) ? params : [];
 
         try {
             // 使用 sql.unsafe 执行查询
@@ -217,8 +217,8 @@ export class DbHelper {
      * - 复用当前 DbHelper 持有的连接/事务
      * - 统一走 executeWithConn，保持参数校验与错误行为一致
      */
-    public async unsafe(sqlStr: string, params?: any[]): Promise<DbResult<any>> {
-        return await this.executeWithConn(sqlStr, params);
+    public async unsafe<TResult = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<TResult>> {
+        return await this.executeWithConn<TResult>(sqlStr, params);
     }
 
     /**
@@ -294,7 +294,7 @@ export class DbHelper {
      *     where: { 'o.id': 1 }
      * })
      */
-    async getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<T | null>> {
+    async getOne<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<TItem | null>> {
         const { table, fields, where, joins, tableQualifier } = await this.prepareQueryOptions(options);
 
         const builder = this.createSqlBuilder()
@@ -318,10 +318,10 @@ export class DbHelper {
             };
         }
 
-        const camelRow = keysToCamel<T>(row);
+        const camelRow = keysToCamel<TItem>(row);
 
         // 反序列化数组字段（JSON 字符串 → 数组）
-        const deserialized = DbUtils.deserializeArrayFields<T>(camelRow);
+        const deserialized = DbUtils.deserializeArrayFields<TItem>(camelRow);
         if (!deserialized) {
             return {
                 data: null,
@@ -330,11 +330,20 @@ export class DbHelper {
         }
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        const data = convertBigIntFields<T>([deserialized])[0];
+        const data = convertBigIntFields<TItem>([deserialized])[0];
         return {
             data: data,
             sql: execRes.sql
         };
+    }
+
+    /**
+     * 语义化别名：getDetail（与 getOne 一致）
+     *
+     * 说明：Befly 早期业务侧习惯用 getDetail 表达“查详情”；这里不引入新的查询逻辑，直接复用 getOne。
+     */
+    async getDetail<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<TItem | null>> {
+        return await this.getOne<TItem>(options);
     }
 
     /**
@@ -359,7 +368,7 @@ export class DbHelper {
      *     limit: 10
      * })
      */
-    async getList<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<ListResult<T>, ListSql>> {
+    async getList<TItem extends Record<string, unknown> = Record<string, unknown>>(options: QueryOptions): Promise<DbResult<DbPageResult<TItem>, ListSql>> {
         const prepared = await this.prepareQueryOptions(options);
 
         // 参数上限校验
@@ -416,15 +425,15 @@ export class DbHelper {
         const list = dataExecRes.data || [];
 
         // 字段名转换：下划线 → 小驼峰
-        const camelList = arrayKeysToCamel<T>(list);
+        const camelList = arrayKeysToCamel<TItem>(list);
 
         // 反序列化数组字段
-        const deserializedList = camelList.map((item) => DbUtils.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
+        const deserializedList = camelList.map((item) => DbUtils.deserializeArrayFields<TItem>(item)).filter((item): item is TItem => item !== null);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
         return {
             data: {
-                lists: convertBigIntFields<T>(deserializedList),
+                lists: convertBigIntFields<TItem>(deserializedList),
                 total: total,
                 page: prepared.page,
                 limit: prepared.limit,
@@ -454,7 +463,7 @@ export class DbHelper {
      *     where: { 'o.state': 1 }
      * })
      */
-    async getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<AllResult<T>, ListSql>> {
+    async getAll<TItem extends Record<string, unknown> = Record<string, unknown>>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<DbListResult<TItem>, ListSql>> {
         // 添加硬性上限保护，防止内存溢出
         const MAX_LIMIT = 10000;
         const WARNING_LIMIT = 1000;
@@ -511,13 +520,13 @@ export class DbHelper {
         }
 
         // 字段名转换：下划线 → 小驼峰
-        const camelResult = arrayKeysToCamel<T>(result);
+        const camelResult = arrayKeysToCamel<TItem>(result);
 
         // 反序列化数组字段
-        const deserializedList = camelResult.map((item) => DbUtils.deserializeArrayFields<T>(item)).filter((item): item is T => item !== null);
+        const deserializedList = camelResult.map((item) => DbUtils.deserializeArrayFields<TItem>(item)).filter((item): item is TItem => item !== null);
 
         // 转换 BIGINT 字段（id, pid 等）为数字类型
-        const lists = convertBigIntFields<T>(deserializedList);
+        const lists = convertBigIntFields<TItem>(deserializedList);
 
         return {
             data: {
@@ -656,7 +665,7 @@ export class DbHelper {
         };
     }
 
-    async updBatch(table: string, dataList: Array<{ id: number; data: Record<string, any> }>): Promise<DbResult<number>> {
+    async updBatch(table: string, dataList: Array<{ id: number; data: Record<string, unknown> }>): Promise<DbResult<number>> {
         if (dataList.length === 0) {
             const sql: SqlInfo = { sql: "", params: [], duration: 0 };
             return {
@@ -816,7 +825,7 @@ export class DbHelper {
      * 执行事务
      * 使用 Bun SQL 的 begin 方法开启事务
      */
-    async trans<T = any>(callback: TransactionCallback<T>): Promise<T> {
+    async trans<TResult = unknown>(callback: TransactionCallback<TResult, DbHelper>): Promise<TResult> {
         if (this.isTransaction) {
             // 已经在事务中，直接执行回调
             return await callback(this);
@@ -833,8 +842,8 @@ export class DbHelper {
     /**
      * 执行原始 SQL
      */
-    async query(sql: string, params?: any[]): Promise<DbResult<any>> {
-        return await this.executeWithConn(sql, params);
+    async query<TResult = unknown>(sql: string, params?: unknown[]): Promise<DbResult<TResult>> {
+        return await this.executeWithConn<TResult>(sql, params);
     }
 
     /**
@@ -865,7 +874,7 @@ export class DbHelper {
      * 查询单个字段值（带字段名验证）
      * @param field - 字段名（支持小驼峰或下划线格式）
      */
-    async getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<T | null>> {
+    async getFieldValue<TValue = unknown>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>> {
         const { field, ...queryOptions } = options;
 
         // 验证字段名格式（只允许字母、数字、下划线）
@@ -889,7 +898,7 @@ export class DbHelper {
         // 尝试直接访问字段（小驼峰）
         if (field in result) {
             return {
-                data: result[field],
+                data: result[field] as TValue,
                 sql: oneRes.sql
             };
         }
@@ -898,7 +907,7 @@ export class DbHelper {
         const camelField = field.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
         if (camelField !== field && camelField in result) {
             return {
-                data: result[camelField],
+                data: result[camelField] as TValue,
                 sql: oneRes.sql
             };
         }
@@ -907,7 +916,7 @@ export class DbHelper {
         const snakeField = field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
         if (snakeField !== field && snakeField in result) {
             return {
-                data: result[snakeField],
+                data: result[snakeField] as TValue,
                 sql: oneRes.sql
             };
         }

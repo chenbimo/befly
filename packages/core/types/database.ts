@@ -70,7 +70,7 @@ export interface DeleteOptions {
  */
 export interface SqlInfo {
     sql: string;
-    params: any[];
+    params: unknown[];
     duration: number;
 }
 
@@ -85,16 +85,16 @@ export interface ListSql {
 /**
  * 统一返回结构
  */
-export interface DbResult<T = any, SqlT = SqlInfo> {
-    data: T;
-    sql: SqlT;
-}
+export type DbResult<TData = unknown, TSql = SqlInfo> = {
+    data: TData;
+    sql: TSql;
+};
 
 /**
  * 分页结果
  */
-export interface ListResult<T = any> {
-    lists: T[];
+export interface DbPageResult<TItem = unknown> {
+    lists: TItem[];
     total: number;
     page: number;
     limit: number;
@@ -104,15 +104,15 @@ export interface ListResult<T = any> {
 /**
  * 不分页结果（带 total）
  */
-export interface AllResult<T = any> {
-    lists: T[];
+export interface DbListResult<TItem = unknown> {
+    lists: TItem[];
     total: number;
 }
 
 /**
  * 事务回调
  */
-export type TransactionCallback<T = any> = (db: any) => Promise<T>;
+export type TransactionCallback<TResult = unknown, TDb = unknown> = (db: TDb) => Promise<TResult>;
 
 /**
  * DbHelper 公开接口（类型层）。
@@ -126,20 +126,21 @@ export interface DbHelper {
 
     // ========== query ==========
     getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>>;
-    getOne<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<T | null>>;
-    getList<T extends Record<string, any> = Record<string, any>>(options: QueryOptions): Promise<DbResult<ListResult<T>, ListSql>>;
-    getAll<T extends Record<string, any> = Record<string, any>>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<AllResult<T>, ListSql>>;
+    getOne<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem | null>>;
+    getDetail<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem | null>>;
+    getList<TItem = unknown>(options: QueryOptions): Promise<DbResult<DbPageResult<TItem>, ListSql>>;
+    getAll<TItem = unknown>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<DbListResult<TItem>, ListSql>>;
 
     exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>>;
 
-    getFieldValue<T = any>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<T | null>>;
+    getFieldValue<TValue = unknown>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>>;
 
     // ========== write ==========
     insData(options: InsertOptions): Promise<DbResult<number>>;
-    insBatch(table: string, dataList: Record<string, any>[]): Promise<DbResult<number[]>>;
+    insBatch(table: string, dataList: Record<string, unknown>[]): Promise<DbResult<number[]>>;
 
     updData(options: UpdateOptions): Promise<DbResult<number>>;
-    updBatch(table: string, dataList: Array<{ id: number; data: Record<string, any> }>): Promise<DbResult<number>>;
+    updBatch(table: string, dataList: Array<{ id: number; data: Record<string, unknown> }>): Promise<DbResult<number>>;
 
     delData(options: DeleteOptions): Promise<DbResult<number>>;
     delForce(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
@@ -149,14 +150,14 @@ export interface DbHelper {
     disableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
 
     // ========== raw / transaction ==========
-    query(sql: string, params?: any[]): Promise<DbResult<any>>;
-    unsafe(sqlStr: string, params?: any[]): Promise<DbResult<any>>;
-    trans<T = any>(callback: TransactionCallback<T>): Promise<T>;
+    query<TResult = unknown>(sql: string, params?: unknown[]): Promise<DbResult<TResult>>;
+    unsafe<TResult = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<TResult>>;
+    trans<TResult = unknown>(callback: TransactionCallback<TResult, DbHelper>): Promise<TResult>;
 
     // ========== numeric helpers ==========
     increment(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
     decrement(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
 
     // 兜底：允许实现层新增方法而不阻断使用方（保持兼容）
-    [key: string]: any;
+    [key: string]: unknown;
 }
