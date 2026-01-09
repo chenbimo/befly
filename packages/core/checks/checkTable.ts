@@ -194,10 +194,12 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                         hasError = true;
                     }
                 } else if (fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string") {
-                    if (fieldMax !== undefined && (fieldMax === null || typeof fieldMax !== "number")) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `最大长度必须为数字，当前为 "${fieldMax}"`);
+                    // 约束：string/array_*_string 必须声明 max。
+                    // 说明：array_*_string 的 max 表示“单个元素字符串长度”，不是数组元素数量。
+                    if (fieldMax === undefined || fieldMax === null || typeof fieldMax !== "number") {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `必须设置 max 且类型为数字；其中 array_*_string 的 max 表示单个元素长度，当前为 "${fieldMax}"`);
                         hasError = true;
-                    } else if (fieldMax !== undefined && fieldMax > MAX_VARCHAR_LENGTH) {
+                    } else if (fieldMax > MAX_VARCHAR_LENGTH) {
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         hasError = true;
                     }
