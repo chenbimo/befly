@@ -139,14 +139,7 @@ const $Method = {
                     keyword: $Data.searchKeyword
                 },
                 {
-                    dropValues: [0, ""],
-                    dropKeyValue: {
-                        // key 配置优先于全局 dropValues；null/undefined 仍然强制移除
-                        page: [],
-                        limit: [],
-                        typeCode: [""],
-                        keyword: [""]
-                    }
+                    dropValues: [""],
                 }
             );
             $Data.tableData = res.data.lists || [];
