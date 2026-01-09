@@ -5,6 +5,7 @@
 import type { CacheHelper } from "./cache";
 import type { CipherStatic } from "./cipher";
 import type { KeyValue } from "./common";
+import type { RequestContext } from "./context";
 import type { DbHelper } from "./database";
 import type { Jwt } from "./jwt";
 import type { Logger, LoggerConfig } from "./logger";
@@ -202,6 +203,15 @@ export interface BeflyContext extends KeyValue {
     tool: {
         Yes: (msg: string, data?: any, other?: Record<string, any>) => { code: 0; msg: string; data: any };
         No: (msg: string, data?: any, other?: Record<string, any>) => { code: 1; msg: string; data: any };
+        Raw: (
+            ctx: RequestContext,
+            data: Record<string, any> | string,
+            options?: {
+                status?: number;
+                contentType?: string;
+                headers?: Record<string, string>;
+            }
+        ) => Response;
     };
 
     /** 加密解密 */

@@ -5,6 +5,20 @@
 import type { JoinOption, SqlValue, WhereConditions } from "./common";
 
 /**
+ * 表名到行类型的映射（项目侧可通过 declaration merging 扩展）。
+ *
+ * 用法（项目侧）：
+ * declare module "befly/types/database" {
+ *   interface DbRowMap {
+ *     user: { id: number; nickname?: string };
+ *   }
+ * }
+ */
+export interface DbRowMap {}
+
+export type DbTableName = keyof DbRowMap & string;
+
+/**
  * 数据库类型
  */
 export type DatabaseType = "mysql" | "postgres" | "sqlite";
@@ -125,14 +139,25 @@ export interface DbHelper {
     tableExists(tableName: string): Promise<DbResult<boolean>>;
 
     // ========== query ==========
+    getCount<TTable extends DbTableName>(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy" | "table"> & { table: TTable }): Promise<DbResult<number>>;
     getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>>;
+
+    getOne<TTable extends DbTableName>(options: Omit<QueryOptions, "table"> & { table: TTable }): Promise<DbResult<DbRowMap[TTable]>>;
     getOne<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem>>;
+
+    getDetail<TTable extends DbTableName>(options: Omit<QueryOptions, "table"> & { table: TTable }): Promise<DbResult<DbRowMap[TTable]>>;
     getDetail<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem>>;
+
+    getList<TTable extends DbTableName>(options: Omit<QueryOptions, "table"> & { table: TTable }): Promise<DbResult<DbPageResult<DbRowMap[TTable]>, ListSql>>;
     getList<TItem = unknown>(options: QueryOptions): Promise<DbResult<DbPageResult<TItem>, ListSql>>;
+
+    getAll<TTable extends DbTableName>(options: Omit<QueryOptions, "table" | "page" | "limit"> & { table: TTable }): Promise<DbResult<DbListResult<DbRowMap[TTable]>, ListSql>>;
     getAll<TItem = unknown>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<DbListResult<TItem>, ListSql>>;
 
+    exists<TTable extends DbTableName>(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit" | "table"> & { table: TTable }): Promise<DbResult<boolean>>;
     exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>>;
 
+    getFieldValue<TTable extends DbTableName, TField extends keyof DbRowMap[TTable] & string>(options: Omit<QueryOptions, "fields" | "table"> & { table: TTable; field: TField }): Promise<DbResult<DbRowMap[TTable][TField] | null>>;
     getFieldValue<TValue = unknown>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>>;
 
     // ========== write ==========
