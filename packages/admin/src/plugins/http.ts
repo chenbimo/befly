@@ -17,6 +17,9 @@ export type HttpCleanParamsOptions = {
 
 export type HttpClientOptions = AxiosRequestConfig & HttpCleanParamsOptions;
 
+export type HttpGetData = Record<string, unknown>;
+export type HttpPostData = Record<string, unknown> | FormData;
+
 function toAxiosRequestConfig(options: HttpClientOptions | undefined): AxiosRequestConfig | undefined {
     if (!options) {
         return undefined;
@@ -124,27 +127,23 @@ request.interceptors.request.use(
     }
 );
 
-async function httpGet<TData>(url: string, data?: Record<string, unknown>, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
+async function httpGet<TData>(url: string, data?: HttpGetData, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
     const axiosConfig = toAxiosRequestConfig(options);
-    if (data === undefined) {
-        return unwrapApiResponse<TData>(request.get<HttpApiResponse<TData>>(url, axiosConfig));
-    }
+    const inputData = data ?? {};
+    const cleanedData = maybeCleanRequestData(inputData, options);
 
-    const cleanedData = maybeCleanRequestData(data, options);
-    if (Object.keys(cleanedData).length === 0) {
-        return unwrapApiResponse<TData>(request.get<HttpApiResponse<TData>>(url, axiosConfig));
-    }
-
+    // 规则：GET 必须传 params；为空也传空对象
     const finalConfig = Object.assign({}, axiosConfig);
     (finalConfig as { params?: unknown }).params = cleanedData;
 
     return unwrapApiResponse<TData>(request.get<HttpApiResponse<TData>>(url, finalConfig));
 }
 
-async function httpPost<TData>(url: string, data?: Record<string, unknown> | FormData, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
+async function httpPost<TData>(url: string, data?: HttpPostData, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
     const axiosConfig = toAxiosRequestConfig(options);
     if (data === undefined) {
-        return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, undefined, axiosConfig));
+        // 规则：POST 必须传 body；为空也传空对象
+        return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, {}, axiosConfig));
     }
 
     if (data instanceof FormData) {
@@ -153,7 +152,8 @@ async function httpPost<TData>(url: string, data?: Record<string, unknown> | For
 
     const cleanedData = maybeCleanRequestData(data, options);
     if (Object.keys(cleanedData).length === 0) {
-        return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, undefined, axiosConfig));
+        // 规则：POST 必须传 body；清洗为空则传空对象
+        return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, {}, axiosConfig));
     }
 
     return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, cleanedData, axiosConfig));
@@ -163,11 +163,17 @@ async function httpPost<TData>(url: string, data?: Record<string, unknown> | For
  * 统一的 HTTP 请求对象（仅支持 GET 和 POST）
  * - 调用方式：$Http.get(url, data?, options?) / $Http.post(url, data?, options?)
  * - 重要行为：
- *   - 未传 data 时：不会自动发送 {}（GET 不注入 params，POST 不注入 body）
+ *   - 未传 data / 清洗为空时：仍会发送空对象（GET: params={}, POST: body={}）
+ *     - 原因：部分后端接口会基于“参数结构存在”触发默认逻辑/签名校验/中间件约束；
+ *       因此这里不做“省略空对象”的优化。
  *   - 传入 plain object 时：默认强制移除 null / undefined
  * - 可选参数清洗（第三参，且可与 axios config 混用）：
  *   - dropValues：全局丢弃值列表（仅对未配置 dropKeyValue 的 key 生效）
  *   - dropKeyValue：按 key 精确配置丢弃值列表（覆盖全局 dropValues）
+ *
+ *   例子：保留 page=0，但丢弃 keyword=""，并且其它字段应用全局 dropValues
+ *   - dropValues: [0, ""]
+ *   - dropKeyValue: { page: [], keyword: [""] }
  */
 export const $Http = {
     get: httpGet,

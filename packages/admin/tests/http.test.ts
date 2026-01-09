@@ -72,7 +72,7 @@ describe("$Http", () => {
         axiosDefault.create = originalCreate;
     });
 
-    test("post 未传 data 时不应默认发送 {}", async () => {
+    test("post 未传 data 时也要发送空对象 body", async () => {
         postCalls.length = 0;
 
         await $Http.post("/test/post-no-data");
@@ -81,10 +81,10 @@ describe("$Http", () => {
         const call = postCalls[0];
         expect(call).toBeTruthy();
         expect(call?.url).toBe("/test/post-no-data");
-        expect(call?.data).toBe(undefined);
+        expect(call?.data).toEqual({});
     });
 
-    test("get 未传 data 时不应注入空 params", async () => {
+    test("get 未传 data 时也要发送空对象 params", async () => {
         getCalls.length = 0;
 
         await $Http.get("/test/get-no-data");
@@ -93,10 +93,11 @@ describe("$Http", () => {
         const call = getCalls[0];
         expect(call).toBeTruthy();
         expect(call?.url).toBe("/test/get-no-data");
-        expect(call?.config).toBe(undefined);
+        const cfg = call?.config as undefined | { params?: unknown };
+        expect(cfg?.params).toEqual({});
     });
 
-    test("get data 清洗为空时不应注入 params", async () => {
+    test("get data 清洗为空时也要发送空对象 params", async () => {
         getCalls.length = 0;
 
         await $Http.get(
@@ -115,7 +116,7 @@ describe("$Http", () => {
         expect(call?.url).toBe("/test/get-empty-after-clean");
 
         const cfg = call?.config as undefined | { params?: unknown };
-        expect(cfg?.params).toBe(undefined);
+        expect(cfg?.params).toEqual({});
     });
 
     test("post 第三参 dropKeyValue 可覆盖 dropValues（page=0 必须保留）", async () => {
@@ -143,5 +144,82 @@ describe("$Http", () => {
         expect(call).toBeTruthy();
         expect(call?.url).toBe("/test/post-clean");
         expect(call?.data).toEqual({ page: 0 });
+    });
+
+    test("post 传 FormData 时应原样透传", async () => {
+        postCalls.length = 0;
+
+        const fd = new FormData();
+        fd.append("a", "1");
+
+        await $Http.post("/test/post-formdata", fd);
+
+        expect(postCalls.length).toBe(1);
+        const call = postCalls[0];
+        expect(call).toBeTruthy();
+        expect(call?.url).toBe("/test/post-formdata");
+        expect(call?.data).toBe(fd);
+    });
+
+    test("post 传 FormData + options(headers) 时应原样透传且 config 透传", async () => {
+        postCalls.length = 0;
+
+        const fd = new FormData();
+        fd.append("a", "1");
+
+        await $Http.post("/test/post-formdata-with-config", fd, {
+            headers: {
+                "X-Test": "1"
+            }
+        });
+
+        expect(postCalls.length).toBe(1);
+        const call = postCalls[0];
+        expect(call).toBeTruthy();
+        expect(call?.url).toBe("/test/post-formdata-with-config");
+        expect(call?.data).toBe(fd);
+        expect(call?.config).toEqual({
+            headers: {
+                "X-Test": "1"
+            }
+        });
+    });
+
+    test("get 未传 data/options 时也要发送空对象 params", async () => {
+        getCalls.length = 0;
+
+        await $Http.get("/test/get-no-data-no-options");
+
+        expect(getCalls.length).toBe(1);
+        const call = getCalls[0];
+        expect(call).toBeTruthy();
+        expect(call?.url).toBe("/test/get-no-data-no-options");
+
+        const cfg = call?.config as undefined | { params?: unknown };
+        expect(cfg?.params).toEqual({});
+    });
+
+    test("get 仅 dropKeyValue 清洗为空时也要发送空对象 params", async () => {
+        getCalls.length = 0;
+
+        await $Http.get(
+            "/test/get-empty-after-dropKeyValue",
+            {
+                keyword: ""
+            },
+            {
+                dropKeyValue: {
+                    keyword: [""]
+                }
+            }
+        );
+
+        expect(getCalls.length).toBe(1);
+        const call = getCalls[0];
+        expect(call).toBeTruthy();
+        expect(call?.url).toBe("/test/get-empty-after-dropKeyValue");
+
+        const cfg = call?.config as undefined | { params?: unknown };
+        expect(cfg?.params).toEqual({});
     });
 });
