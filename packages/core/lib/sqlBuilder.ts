@@ -429,7 +429,11 @@ export class SqlBuilder {
 
             if (key === "$and") {
                 if (Array.isArray(value)) {
-                    value.forEach((condition) => this._processWhereConditions(condition));
+                    value.forEach((condition) => {
+                        if (condition && typeof condition === "object" && !Array.isArray(condition)) {
+                            this._processWhereConditions(condition as WhereConditions);
+                        }
+                    });
                 }
             } else if (key === "$or") {
                 if (Array.isArray(value)) {
@@ -437,8 +441,11 @@ export class SqlBuilder {
                     const tempParams: SqlValue[] = [];
 
                     value.forEach((condition) => {
+                        if (!condition || typeof condition !== "object" || Array.isArray(condition)) {
+                            return;
+                        }
                         const tempBuilder = new SqlBuilder({ quoteIdent: this._quoteIdent });
-                        tempBuilder._processWhereConditions(condition);
+                        tempBuilder._processWhereConditions(condition as WhereConditions);
                         if (tempBuilder._where.length > 0) {
                             orConditions.push(`(${tempBuilder._where.join(" AND ")})`);
                             tempParams.push(...tempBuilder._params);
@@ -785,7 +792,8 @@ export class SqlBuilder {
             }
 
             for (const field of fields) {
-                this._validateParam((data as any)[field]);
+                const record = data as Record<string, unknown>;
+                this._validateParam(record[field]);
             }
 
             const escapedFields = fields.map((field) => this._escapeField(field));

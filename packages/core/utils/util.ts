@@ -4,7 +4,7 @@
  * - 仅在 packages/core 内部使用；core 对外不承诺这些路径导出。
  */
 
-export function isPlainObject(value: unknown): value is Record<string, any> {
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
     if (typeof value !== "object" || value === null) {
         return false;
     }
@@ -37,7 +37,7 @@ export function escapeRegExp(input: string): string {
     return String(input).replace(REGEXP_SPECIAL, "\\$&");
 }
 
-export function normalizePositiveInt(value: any, fallback: number, min: number, max: number): number {
+export function normalizePositiveInt(value: unknown, fallback: number, min: number, max: number): number {
     if (typeof value !== "number") return fallback;
     if (!Number.isFinite(value)) return fallback;
     const v = Math.floor(value);
@@ -89,7 +89,7 @@ export function isEmpty(value: unknown): boolean {
     return false;
 }
 
-export function forOwn(obj: unknown, iteratee: (value: any, key: string) => void): void {
+export function forOwn(obj: unknown, iteratee: (value: unknown, key: string) => void): void {
     if (typeof iteratee !== "function") {
         return;
     }
@@ -98,8 +98,9 @@ export function forOwn(obj: unknown, iteratee: (value: any, key: string) => void
         return;
     }
 
-    for (const key of Object.keys(obj)) {
-        iteratee((obj as any)[key], key);
+    const record = obj as Record<string, unknown>;
+    for (const key of Object.keys(record)) {
+        iteratee(record[key], key);
     }
 }
 
@@ -230,7 +231,7 @@ export function getByPath(obj: unknown, path: string): unknown {
     }
 
     const parts = path.split(".");
-    let cur: any = obj;
+    let cur: unknown = obj;
 
     for (const part of parts) {
         if (cur === null || cur === undefined) {
@@ -239,13 +240,14 @@ export function getByPath(obj: unknown, path: string): unknown {
         if (typeof cur !== "object") {
             return undefined;
         }
-        cur = (cur as any)[part];
+        const record = cur as Record<string, unknown>;
+        cur = record[part];
     }
 
     return cur;
 }
 
-export function setByPath(target: Record<string, any>, path: string, value: unknown): void {
+export function setByPath(target: Record<string, unknown>, path: string, value: unknown): void {
     const parts = path.split(".");
     // 避免无效 path（如 a..b）导致部分写入
     for (const part of parts) {
@@ -253,7 +255,7 @@ export function setByPath(target: Record<string, any>, path: string, value: unkn
             return;
         }
     }
-    let cur: Record<string, any> = target;
+    let cur: Record<string, unknown> = target;
 
     for (let i = 0; i < parts.length; i++) {
         const key = parts[i];
@@ -272,7 +274,7 @@ export function setByPath(target: Record<string, any>, path: string, value: unkn
             cur[key] = {};
         }
 
-        cur = cur[key] as Record<string, any>;
+        cur = cur[key] as Record<string, unknown>;
     }
 }
 
@@ -280,13 +282,13 @@ export function setByPath(target: Record<string, any>, path: string, value: unkn
  * 返回一个移除指定 key 的浅拷贝。
  * - 仅处理 plain object；其他类型返回空对象，避免日志场景抛错。
  */
-export function omit<T extends Record<string, any>>(obj: unknown, keys: string[]): Partial<T> {
+export function omit<T extends Record<string, unknown>>(obj: unknown, keys: string[]): Partial<T> {
     if (!isPlainObject(obj)) {
         return {} as Partial<T>;
     }
 
     const keySet = new Set<string>(Array.isArray(keys) ? keys : []);
-    const out: Record<string, any> = {};
+    const out: Record<string, unknown> = {};
 
     for (const [k, v] of Object.entries(obj)) {
         if (keySet.has(k)) {
@@ -301,30 +303,34 @@ export function omit<T extends Record<string, any>>(obj: unknown, keys: string[]
 /**
  * 挑选指定字段
  */
-export const pickFields = <T extends Record<string, any>>(obj: T, keys: string[]): Partial<T> => {
+export const pickFields = (obj: unknown, keys: readonly string[]): Record<string, unknown> => {
     if (!obj || (!isPlainObject(obj) && !Array.isArray(obj))) {
         return {};
     }
 
-    const result: any = {};
+    const record = obj as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+
     for (const key of keys) {
-        if (key in obj) {
-            result[key] = (obj as any)[key];
+        if (key in record) {
+            result[key] = record[key];
         }
     }
 
     return result;
 };
 
-export function keyBy<T>(items: T[], getKey: (item: T) => string): Record<string, T> {
-    const out: Record<string, T> = {};
+export function keyBy<T>(items: T[], getKey: (item: T) => string): Record<string, T>;
+export function keyBy(items: unknown, getKey: unknown): Record<string, unknown>;
+export function keyBy(items: unknown, getKey: unknown): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
 
     if (!Array.isArray(items) || typeof getKey !== "function") {
         return out;
     }
 
     for (const item of items) {
-        const key = getKey(item);
+        const key = (getKey as (item: unknown) => unknown)(item);
         if (typeof key !== "string" || key === "") {
             continue;
         }

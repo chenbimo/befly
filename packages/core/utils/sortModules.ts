@@ -33,13 +33,21 @@ export function sortModules<T extends { fileName: string; deps?: any }>(items: T
     const getName =
         options.getName ||
         ((item: T) => {
-            const moduleName = (item as any).moduleName;
+            const moduleName = (item as { moduleName?: unknown }).moduleName;
             if (typeof moduleName === "string" && moduleName.trim() !== "") {
                 return moduleName;
             }
             return camelCase(item.fileName);
         });
-    const getDeps = options.getDeps || ((item: T) => (item as any).deps);
+    const getDeps =
+        options.getDeps ||
+        ((item: T) => {
+            const deps = (item as { deps?: unknown }).deps;
+            if (!Array.isArray(deps)) {
+                return [];
+            }
+            return deps.filter((x): x is string => typeof x === "string");
+        });
 
     const result: T[] = [];
     const visited = new Set<string>();

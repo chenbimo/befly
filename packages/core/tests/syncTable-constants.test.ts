@@ -48,7 +48,7 @@ describe("SYSTEM_INDEX_FIELDS", () => {
 
 describe("CHANGE_TYPE_LABELS", () => {
     test('length 对应 "长度"', () => {
-        expect((syncTable.TestKit.CHANGE_TYPE_LABELS as any).length).toBe("长度");
+        expect(syncTable.TestKit.CHANGE_TYPE_LABELS["length"]).toBe("长度");
     });
 
     test('datatype 对应 "类型"', () => {

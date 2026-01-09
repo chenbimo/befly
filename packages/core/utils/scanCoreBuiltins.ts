@@ -1,4 +1,4 @@
-import type { ScanFileResult } from "./scanFiles";
+import type { ScanFileResult, ScanFileResultBase, ScanFileType } from "./scanFiles";
 
 import coreHookAuth from "../hooks/auth";
 import coreHookCors from "../hooks/cors";
@@ -17,14 +17,21 @@ import { isPlainObject } from "./util";
 
 type CoreBuiltinType = "hook" | "plugin";
 
-function toCoreBuiltinScanFileResult(type: CoreBuiltinType, item: any): ScanFileResult {
-    const name = item.name;
+type CoreBuiltinScanFileResult = ScanFileResultBase & {
+    type: Exclude<ScanFileType, "table">;
+} & Record<string, unknown>;
+
+function toCoreBuiltinScanFileResult(type: CoreBuiltinType, item: unknown): CoreBuiltinScanFileResult {
+    const record = (isPlainObject(item) ? item : {}) as Record<string, unknown>;
+    const name = typeof record["name"] === "string" ? String(record["name"]) : "";
 
     const customKeys = isPlainObject(item) ? Object.keys(item) : [];
+    const depsRaw = record["deps"];
+    const deps = Array.isArray(depsRaw) ? depsRaw.filter((x): x is string => typeof x === "string") : [];
 
-    return {
+    const out: CoreBuiltinScanFileResult = {
         source: "core",
-        type: type as any,
+        type: type,
         sourceName: "核心",
         filePath: `core:${type}:${name}`,
         relativePath: name,
@@ -35,18 +42,20 @@ function toCoreBuiltinScanFileResult(type: CoreBuiltinType, item: any): ScanFile
         fileDir: "(builtin)",
 
         name: name,
-        enable: item ? item.enable : undefined,
-        deps: Array.isArray(item && item.deps) ? item.deps : [],
-        handler: item ? item.handler : null,
+        enable: record["enable"],
+        deps: deps,
+        handler: record["handler"] ?? null,
 
         customKeys: customKeys
-    } as any;
+    };
+
+    return out;
 }
 
 export function scanCoreBuiltinPlugins(): ScanFileResult[] {
     const plugins: ScanFileResult[] = [];
 
-    const builtinPlugins = [
+    const builtinPlugins: unknown[] = [
         //
         corePluginLogger,
         corePluginRedis,
@@ -57,8 +66,8 @@ export function scanCoreBuiltinPlugins(): ScanFileResult[] {
         corePluginJwt,
         corePluginConfig
     ];
-    for (const plugin of builtinPlugins as any[]) {
-        plugins.push(toCoreBuiltinScanFileResult("plugin", plugin));
+    for (const plugin of builtinPlugins) {
+        plugins.push(toCoreBuiltinScanFileResult("plugin", plugin) as ScanFileResult);
     }
 
     return plugins;
@@ -67,7 +76,7 @@ export function scanCoreBuiltinPlugins(): ScanFileResult[] {
 export function scanCoreBuiltinHooks(): ScanFileResult[] {
     const hooks: ScanFileResult[] = [];
 
-    const builtinHooks = [
+    const builtinHooks: unknown[] = [
         //
         coreHookAuth,
         coreHookCors,
@@ -75,8 +84,8 @@ export function scanCoreBuiltinHooks(): ScanFileResult[] {
         coreHookValidator,
         coreHookPermission
     ];
-    for (const hook of builtinHooks as any[]) {
-        hooks.push(toCoreBuiltinScanFileResult("hook", hook));
+    for (const hook of builtinHooks) {
+        hooks.push(toCoreBuiltinScanFileResult("hook", hook) as ScanFileResult);
     }
 
     return hooks;

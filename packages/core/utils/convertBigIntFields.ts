@@ -8,14 +8,18 @@
  * 2. 所有以 'Id' 或 '_id' 结尾的字段会被自动转换
  * 3. 所有以 'At' 或 '_at' 结尾的字段会被自动转换（时间戳字段）
  */
-export function convertBigIntFields<T = any>(arr: Record<string, any>[], fields: string[] = ["id", "pid", "sort"]): T[] {
+export function convertBigIntFields<T extends Record<string, unknown> = Record<string, unknown>>(arr: T[], fields?: readonly string[]): T[];
+export function convertBigIntFields<T>(arr: T, fields?: readonly string[]): T;
+export function convertBigIntFields<T extends Record<string, unknown> = Record<string, unknown>>(arr: unknown, fields: readonly string[] = ["id", "pid", "sort"]): unknown {
     if (!arr || !Array.isArray(arr)) {
-        return arr as T[];
+        return arr;
     }
 
     return arr.map((item) => {
-        const converted: Record<string, any> = {};
-        for (const [key, value] of Object.entries(item)) {
+        const source = item as Record<string, unknown>;
+        const converted: Record<string, unknown> = {};
+
+        for (const [key, value] of Object.entries(source)) {
             converted[key] = value;
         }
 
@@ -25,9 +29,10 @@ export function convertBigIntFields<T = any>(arr: Record<string, any>[], fields:
             }
 
             const shouldConvert = fields.includes(key) || key.endsWith("Id") || key.endsWith("_id") || key.endsWith("At") || key.endsWith("_at");
+
             if (shouldConvert && typeof value === "string") {
                 const num = Number(value);
-                if (!isNaN(num)) {
+                if (!Number.isNaN(num)) {
                     converted[key] = num;
                 }
             }

@@ -13,15 +13,16 @@ import { sortModules } from "../utils/sortModules";
 export async function loadPlugins(plugins: ScanFileResult[], context: BeflyContext): Promise<Plugin[]> {
     const pluginsMap: Plugin[] = [];
 
-    const enabledPlugins = plugins.filter((item: any) => {
-        const moduleName = item?.moduleName;
+    const enabledPlugins = plugins.filter((item) => {
+        const moduleName = item.moduleName;
         if (typeof moduleName !== "string" || moduleName.trim() === "") {
             return false;
         }
 
         // enable=false 表示禁用（替代 disablePlugins 列表）。
         // enable 仅允许 boolean；缺失 enable 的默认值应在 checkPlugin 阶段被补全为 true。
-        if (item?.enable === false) {
+        const enable = Object.hasOwn(item, "enable") ? (item as { enable?: unknown }).enable : undefined;
+        if (enable === false) {
             return false;
         }
         return true;
@@ -33,20 +34,27 @@ export async function loadPlugins(plugins: ScanFileResult[], context: BeflyConte
     }
 
     for (const item of sortedPlugins) {
-        const pluginName = (item as any).moduleName as string;
-        const plugin = item as any as Plugin;
+        const pluginName = item.moduleName;
+        const depsRaw = Object.hasOwn(item, "deps") ? (item as { deps?: unknown }).deps : undefined;
+        const deps = Array.isArray(depsRaw) ? depsRaw.filter((x): x is string => typeof x === "string") : [];
+
+        const handlerRaw = Object.hasOwn(item, "handler") ? (item as { handler?: unknown }).handler : undefined;
+        if (typeof handlerRaw !== "function") {
+            throw new Error(`插件 '${pluginName}' handler 必须是函数`);
+        }
+        const handler = handlerRaw as Plugin["handler"];
 
         try {
-            const pluginInstance = typeof plugin.handler === "function" ? await plugin.handler(context) : {};
-            (context as any)[pluginName] = pluginInstance;
+            const pluginInstance = await handler(context);
+            (context as Record<string, unknown>)[pluginName] = pluginInstance;
 
             pluginsMap.push({
                 name: pluginName,
                 enable: true,
-                deps: Array.isArray(plugin.deps) ? plugin.deps : [],
-                handler: plugin.handler
+                deps: deps,
+                handler: handler
             });
-        } catch (error: any) {
+        } catch (error: unknown) {
             Logger.error({ err: error, plugin: pluginName, msg: "插件初始化失败" });
             throw error;
         }

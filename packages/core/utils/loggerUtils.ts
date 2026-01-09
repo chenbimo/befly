@@ -168,7 +168,7 @@ function sanitizeAny(value: any, options: LogSanitizeOptions, state: { nodes: nu
     state.nodes = state.nodes + 1;
 
     if (isArr) {
-        const arr = value as any[];
+        const arr = value as unknown[];
         const out: any[] = [];
 
         const limit = arr.length > options.maxArrayItems ? options.maxArrayItems : arr.length;

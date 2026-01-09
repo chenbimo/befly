@@ -4,20 +4,32 @@
  * 一旦有人把代码改回旧风格（把 unsafe() 当成直接返回数组），这里会立刻失败。
  */
 
-import type { DbResult, SqlInfo } from "../types/database.ts";
+import type { SqlInfo } from "../types/database.ts";
 
 import { describe, expect, test } from "bun:test";
 
 import { syncTable } from "../sync/syncTable.ts";
+import { toSqlParams } from "../utils/sqlParams.ts";
 
-type SqlExecutor = {
-    unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
-};
+type SqlExecutor = NonNullable<Parameters<typeof syncTable.TestKit.createRuntime>[1]>;
 
-function makeSqlInfo(options: { sql: string; params: unknown[] }): SqlInfo {
+class SqlInfoError extends Error {
+    public sqlInfo: SqlInfo;
+
+    public constructor(message: string, sqlInfo: SqlInfo) {
+        super(message);
+        this.sqlInfo = sqlInfo;
+    }
+}
+
+function hasSqlInfo(value: unknown): value is { sqlInfo: SqlInfo } {
+    return typeof value === "object" && value !== null && "sqlInfo" in value;
+}
+
+function makeSqlInfo(options: { sql: string; params: SqlValue[] }): SqlInfo {
     return {
         sql: options.sql,
-        params: options.params as any[],
+        params: options.params,
         duration: 0
     };
 }
@@ -27,7 +39,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
         const db: SqlExecutor = {
             unsafe: async (sqlStr: string, params?: unknown[]) => {
                 const sql = String(sqlStr);
-                const safeParams = Array.isArray(params) ? params : [];
+                const safeParams = toSqlParams(params);
 
                 // sqlite: table exists
                 if (sql.includes("sqlite_master")) {
@@ -85,30 +97,31 @@ describe("syncTable - SqlExecutor envelope contract", () => {
 
         const db: SqlExecutor = {
             unsafe: async (_sqlStr: string, _params?: unknown[]) => {
-                const err: any = new Error("boom");
-                err.sqlInfo = injectedSqlInfo;
-                throw err;
+                throw new SqlInfoError("boom", injectedSqlInfo);
             }
         };
 
         const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
 
-        let thrown: any = null;
+        let thrown: unknown = null;
         try {
             await syncTable.TestKit.tableExistsRuntime(runtime, "t_any");
-        } catch (e: any) {
+        } catch (e: unknown) {
             thrown = e;
         }
 
         expect(thrown).toBeTruthy();
-        expect(thrown.sqlInfo).toEqual(injectedSqlInfo);
+        expect(hasSqlInfo(thrown)).toBe(true);
+        if (hasSqlInfo(thrown)) {
+            expect(thrown.sqlInfo).toEqual(injectedSqlInfo);
+        }
     });
 
     test("mysql: getTableColumnsRuntime / getTableIndexesRuntime 必须读取 .data", async () => {
         const db: SqlExecutor = {
             unsafe: async (sqlStr: string, params?: unknown[]) => {
                 const sql = String(sqlStr);
-                const safeParams = Array.isArray(params) ? params : [];
+                const safeParams = toSqlParams(params);
 
                 if (sql.includes("information_schema") && sql.toLowerCase().includes("columns")) {
                     return {
@@ -165,7 +178,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
         const db: SqlExecutor = {
             unsafe: async (sqlStr: string, params?: unknown[]) => {
                 const sql = String(sqlStr);
-                const safeParams = Array.isArray(params) ? params : [];
+                const safeParams = toSqlParams(params);
 
                 // columns
                 if (sql.toLowerCase().includes("information_schema") && sql.toLowerCase().includes("columns")) {
@@ -225,7 +238,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
         const db: SqlExecutor = {
             unsafe: async (sqlStr: string, params?: unknown[]) => {
                 const sql = String(sqlStr);
-                const safeParams = Array.isArray(params) ? params : [];
+                const safeParams = toSqlParams(params);
 
                 if (sql === "SELECT VERSION() AS version") {
                     return {
@@ -251,7 +264,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
                     database: "test"
                 }
             }
-        } as any;
+        } satisfies Parameters<typeof syncTable>[0];
 
         await syncTable(ctx, []);
         expect(true).toBe(true);

@@ -97,13 +97,13 @@ describe("utils - camelCase/snakeCase", () => {
 describe("utils - omit", () => {
     test("should omit keys from plain object", () => {
         const obj = { a: 1, b: 2, c: 3 };
-        const result = omit(obj, ["b", "x"]) as any;
+        const result = omit(obj, ["b", "x"]);
         expect(result).toEqual({ a: 1, c: 3 });
     });
 
     test("non-plain object should return empty object", () => {
-        expect(omit(null, ["a"]) as any).toEqual({});
-        expect(omit([], ["a"]) as any).toEqual({});
+        expect(omit(null, ["a"])).toEqual({});
+        expect(omit([], ["a"])).toEqual({});
     });
 });
 
@@ -115,7 +115,7 @@ describe("utils - forOwn", () => {
     });
 
     test("should ignore non-plain objects", () => {
-        const out: any[] = [];
+        const out: Array<[string, unknown]> = [];
         forOwn([], (v, k) => out.push([k, v]));
         expect(out.length).toBe(0);
     });
@@ -139,12 +139,12 @@ describe("utils - keyBy", () => {
         ];
         const mapped = keyBy(items, (x) => x.id);
         expect(mapped.a.v).toBe(2);
-        expect((mapped as any)[""]).toBeUndefined();
+        expect(Object.hasOwn(mapped, "")).toBe(false);
     });
 
     test("invalid inputs", () => {
-        expect(keyBy(null as any, () => "a")).toEqual({});
-        expect(keyBy([] as any, null as any)).toEqual({});
+        expect(keyBy(null, () => "a")).toEqual({});
+        expect(keyBy([], null)).toEqual({});
     });
 });
 
@@ -164,17 +164,17 @@ describe("utils - getByPath/setByPath", () => {
 
     test("getByPath: returns undefined for missing or non-object traversal", () => {
         expect(getByPath({ a: 1 }, "a.b.c")).toBeUndefined();
-        expect(getByPath(1 as any, "a")).toBeUndefined();
+        expect(getByPath(1, "a")).toBeUndefined();
     });
 
     test("setByPath: should create nested objects", () => {
-        const obj: any = {};
+        const obj: Record<string, unknown> = {};
         setByPath(obj, "a.b.c", 1);
         expect(obj).toEqual({ a: { b: { c: 1 } } });
     });
 
     test("setByPath: empty segment should no-op", () => {
-        const obj: any = { a: 1 };
+        const obj: Record<string, unknown> = { a: 1 };
         setByPath(obj, "a..b", 2);
         expect(obj).toEqual({ a: 1 });
     });
@@ -256,9 +256,9 @@ describe("utils - view meta normalize", () => {
     test("non-object returns null", () => {
         expect(normalizeViewDirMeta(null)).toBeNull();
         expect(normalizeViewDirMeta(undefined)).toBeNull();
-        expect(normalizeViewDirMeta(1 as any)).toBeNull();
-        expect(normalizeViewDirMeta("x" as any)).toBeNull();
-        expect(normalizeViewDirMeta([] as any)).toBeNull();
+        expect(normalizeViewDirMeta(1)).toBeNull();
+        expect(normalizeViewDirMeta("x")).toBeNull();
+        expect(normalizeViewDirMeta([])).toBeNull();
     });
 });
 

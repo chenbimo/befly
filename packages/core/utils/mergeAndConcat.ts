@@ -1,8 +1,8 @@
 import { isPlainObject } from "./util";
 
-function cloneDeepLoose(value: any): any {
+function cloneDeepLoose(value: unknown): unknown {
     if (Array.isArray(value)) {
-        const arr: any[] = [];
+        const arr: unknown[] = [];
         for (const item of value) {
             arr.push(cloneDeepLoose(item));
         }
@@ -10,9 +10,10 @@ function cloneDeepLoose(value: any): any {
     }
 
     if (isPlainObject(value)) {
-        const out: Record<string, any> = {};
-        for (const key of Object.keys(value)) {
-            out[key] = cloneDeepLoose(value[key]);
+        const out: Record<string, unknown> = {};
+        const record = value as Record<string, unknown>;
+        for (const key of Object.keys(record)) {
+            out[key] = cloneDeepLoose(record[key]);
         }
         return out;
     }
@@ -20,47 +21,61 @@ function cloneDeepLoose(value: any): any {
     return value;
 }
 
-function mergeInto(target: any, source: any): any {
+function mergeInto(target: unknown, source: unknown): unknown {
     if (source === undefined) {
         return target;
     }
 
     if (Array.isArray(target) && Array.isArray(source)) {
-        for (const item of source) {
-            target.push(cloneDeepLoose(item));
+        const nextArr: unknown[] = [];
+        for (const item of target) {
+            nextArr.push(cloneDeepLoose(item));
         }
-        return target;
+        for (const item of source) {
+            nextArr.push(cloneDeepLoose(item));
+        }
+        return nextArr;
     }
 
     if (isPlainObject(target) && isPlainObject(source)) {
-        for (const key of Object.keys(source)) {
-            const srcVal = source[key];
+        const targetRecord = target as Record<string, unknown>;
+        const sourceRecord = source as Record<string, unknown>;
+
+        const out: Record<string, unknown> = {};
+
+        for (const key of Object.keys(targetRecord)) {
+            out[key] = cloneDeepLoose(targetRecord[key]);
+        }
+
+        for (const key of Object.keys(sourceRecord)) {
+            const srcVal = sourceRecord[key];
             if (srcVal === undefined) {
                 continue;
             }
 
-            const curVal = target[key];
+            const curVal = out[key];
 
             if (Array.isArray(curVal) && Array.isArray(srcVal)) {
-                const nextArr: any[] = [];
+                const nextArr: unknown[] = [];
                 for (const item of curVal) {
                     nextArr.push(cloneDeepLoose(item));
                 }
                 for (const item of srcVal) {
                     nextArr.push(cloneDeepLoose(item));
                 }
-                target[key] = nextArr;
+                out[key] = nextArr;
                 continue;
             }
 
             if (isPlainObject(curVal) && isPlainObject(srcVal)) {
-                target[key] = mergeInto(cloneDeepLoose(curVal), srcVal);
+                out[key] = mergeInto(cloneDeepLoose(curVal), srcVal);
                 continue;
             }
 
-            target[key] = cloneDeepLoose(srcVal);
+            out[key] = cloneDeepLoose(srcVal);
         }
-        return target;
+
+        return out;
     }
 
     return cloneDeepLoose(source);
@@ -72,8 +87,9 @@ function mergeInto(target: any, source: any): any {
  * - plain object 深合并
  * - array 与 array 合并为新数组（保持输入不被污染）
  */
-export function mergeAndConcat(...items: any[]): any {
-    let acc: any = {};
+export function mergeAndConcat<T>(...items: unknown[]): T;
+export function mergeAndConcat(...items: unknown[]): unknown {
+    let acc: unknown = {};
 
     for (const item of items) {
         if (item === undefined) {

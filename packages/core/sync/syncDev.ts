@@ -43,14 +43,14 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         fields: ["path"],
         where: { state$gte: 0 },
         orderBy: ["id#ASC"]
-    } as any);
+    });
 
     const allApis = await ctx.db.getAll<{ path?: string | null }>({
         table: "addon_admin_api",
         fields: ["path"],
         where: { state$gte: 0 },
         orderBy: ["id#ASC"]
-    } as any);
+    });
 
     const devRole = await ctx.db.getOne<{ id?: number }>({
         table: "addon_admin_role",
@@ -61,8 +61,8 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
         code: "dev",
         name: "开发者角色",
         description: "拥有所有菜单和接口权限的开发者角色",
-        menus: allMenus.data.lists.map((item) => item.path).filter((v) => v),
-        apis: allApis.data.lists.map((item) => item.path).filter((v) => v),
+        menus: allMenus.data.lists.map((item) => item.path).filter((v): v is string => typeof v === "string" && v.length > 0),
+        apis: allApis.data.lists.map((item) => item.path).filter((v): v is string => typeof v === "string" && v.length > 0),
         sort: 0
     };
 

@@ -2,6 +2,7 @@
  * syncTable 端到端行为测试（纯 mock，不连接真实数据库）
  */
 
+import type { JsonValue } from "../types/common.ts";
 import type { FieldDefinition } from "../types/validate.ts";
 import type { ScanFileResult } from "../utils/scanFiles.ts";
 import type { MockSqliteState } from "./_mocks/mockSqliteDb.ts";
@@ -12,8 +13,8 @@ import { CacheKeys } from "../lib/cacheKeys.ts";
 import { syncTable } from "../sync/syncTable.ts";
 import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
 
-function buildTableItem(options: { tableFileName: string; content: any }): ScanFileResult {
-    return {
+function buildTableItem(options: { tableFileName: string; content: Record<string, FieldDefinition> }): ScanFileResult {
+    const item = {
         source: "app",
         type: "table",
         sourceName: "项目",
@@ -25,10 +26,12 @@ function buildTableItem(options: { tableFileName: string; content: any }): ScanF
         fileBaseName: "",
         fileDir: "",
         content: options.content
-    } as any;
+    } satisfies ScanFileResult;
+
+    return item;
 }
 
-function fdString(options: { name: string; min: number; max: number; defaultValue: any; nullable: boolean }): FieldDefinition {
+function fdString(options: { name: string; min: number | null; max: number | null; defaultValue: JsonValue | null; nullable: boolean }): FieldDefinition {
     return {
         name: options.name,
         type: "string",
@@ -36,10 +39,10 @@ function fdString(options: { name: string; min: number; max: number; defaultValu
         max: options.max,
         default: options.defaultValue,
         nullable: options.nullable
-    } as any;
+    } satisfies FieldDefinition;
 }
 
-function fdNumber(options: { name: string; min: number; max: number; defaultValue: any; nullable: boolean }): FieldDefinition {
+function fdNumber(options: { name: string; min: number | null; max: number | null; defaultValue: JsonValue | null; nullable: boolean }): FieldDefinition {
     return {
         name: options.name,
         type: "number",
@@ -47,10 +50,10 @@ function fdNumber(options: { name: string; min: number; max: number; defaultValu
         max: options.max,
         default: options.defaultValue,
         nullable: options.nullable
-    } as any;
+    } satisfies FieldDefinition;
 }
 
-function fdText(options: { name: string; min: number; max: number; defaultValue: any; nullable: boolean }): FieldDefinition {
+function fdText(options: { name: string; min: number | null; max: number | null; defaultValue: JsonValue | null; nullable: boolean }): FieldDefinition {
     return {
         name: options.name,
         type: "text",
@@ -58,7 +61,7 @@ function fdText(options: { name: string; min: number; max: number; defaultValue:
         max: options.max,
         default: options.defaultValue,
         nullable: options.nullable
-    } as any;
+    } satisfies FieldDefinition;
 }
 
 describe("syncTable(ctx, items) - mock sqlite", () => {
@@ -82,7 +85,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
             config: {
                 db: { type: "sqlite", database: "" }
             }
-        } as any;
+        } satisfies Parameters<typeof syncTable>[0];
 
         const tableFileName = "test_sync_table_integration_user";
         const item = buildTableItem({
@@ -98,7 +101,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
 
         expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(tableFileName))).toBe(true);
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
         const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableFileName);
         expect(exists).toBe(true);
 
@@ -137,7 +140,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
             config: {
                 db: { type: "sqlite", database: "" }
             }
-        } as any;
+        } satisfies Parameters<typeof syncTable>[0];
 
         const tableFileName = "test_sync_table_integration_profile";
 
@@ -162,7 +165,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
 
         expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableFileName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
         const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableFileName);
         expect(columns.nickname).toBeDefined();
         expect(columns.bio).toBeDefined();
@@ -213,7 +216,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
             config: {
                 db: { type: "sqlite", database: "" }
             }
-        } as any;
+        } satisfies Parameters<typeof syncTable>[0];
 
         const item = buildTableItem({
             tableFileName: tableFileName,

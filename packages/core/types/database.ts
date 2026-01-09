@@ -84,7 +84,7 @@ export interface DeleteOptions {
  */
 export interface SqlInfo {
     sql: string;
-    params: unknown[];
+    params: SqlValue[];
     duration: number;
 }
 
@@ -99,7 +99,9 @@ export interface ListSql {
 /**
  * 统一返回结构
  */
-export type DbResult<TData = unknown, TSql = SqlInfo> = {
+export type DbUnknownRow = Record<string, SqlValue>;
+
+export type DbResult<TData = DbUnknownRow, TSql = SqlInfo> = {
     data: TData;
     sql: TSql;
 };
@@ -107,7 +109,7 @@ export type DbResult<TData = unknown, TSql = SqlInfo> = {
 /**
  * 分页结果
  */
-export interface DbPageResult<TItem = unknown> {
+export interface DbPageResult<TItem = DbUnknownRow> {
     lists: TItem[];
     total: number;
     page: number;
@@ -118,7 +120,7 @@ export interface DbPageResult<TItem = unknown> {
 /**
  * 不分页结果（带 total）
  */
-export interface DbListResult<TItem = unknown> {
+export interface DbListResult<TItem = DbUnknownRow> {
     lists: TItem[];
     total: number;
 }
@@ -126,7 +128,7 @@ export interface DbListResult<TItem = unknown> {
 /**
  * 事务回调
  */
-export type TransactionCallback<TResult = unknown, TDb = unknown> = (db: TDb) => Promise<TResult>;
+export type TransactionCallback<TResult = void, TDb = DbHelper> = (db: TDb) => Promise<TResult>;
 
 /**
  * DbHelper 公开接口（类型层）。
@@ -143,29 +145,29 @@ export interface DbHelper {
     getCount(options: Omit<QueryOptions, "fields" | "page" | "limit" | "orderBy">): Promise<DbResult<number>>;
 
     getOne<TTable extends DbTableName>(options: Omit<QueryOptions, "table"> & { table: TTable }): Promise<DbResult<DbRowMap[TTable]>>;
-    getOne<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem>>;
+    getOne<TItem = DbUnknownRow>(options: QueryOptions): Promise<DbResult<TItem>>;
 
     getDetail<TTable extends DbTableName>(options: Omit<QueryOptions, "table"> & { table: TTable }): Promise<DbResult<DbRowMap[TTable]>>;
-    getDetail<TItem = unknown>(options: QueryOptions): Promise<DbResult<TItem>>;
+    getDetail<TItem = DbUnknownRow>(options: QueryOptions): Promise<DbResult<TItem>>;
 
     getList<TTable extends DbTableName>(options: Omit<QueryOptions, "table"> & { table: TTable }): Promise<DbResult<DbPageResult<DbRowMap[TTable]>, ListSql>>;
-    getList<TItem = unknown>(options: QueryOptions): Promise<DbResult<DbPageResult<TItem>, ListSql>>;
+    getList<TItem = DbUnknownRow>(options: QueryOptions): Promise<DbResult<DbPageResult<TItem>, ListSql>>;
 
     getAll<TTable extends DbTableName>(options: Omit<QueryOptions, "table" | "page" | "limit"> & { table: TTable }): Promise<DbResult<DbListResult<DbRowMap[TTable]>, ListSql>>;
-    getAll<TItem = unknown>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<DbListResult<TItem>, ListSql>>;
+    getAll<TItem = DbUnknownRow>(options: Omit<QueryOptions, "page" | "limit">): Promise<DbResult<DbListResult<TItem>, ListSql>>;
 
     exists<TTable extends DbTableName>(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit" | "table"> & { table: TTable }): Promise<DbResult<boolean>>;
     exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>>;
 
     getFieldValue<TTable extends DbTableName, TField extends keyof DbRowMap[TTable] & string>(options: Omit<QueryOptions, "fields" | "table"> & { table: TTable; field: TField }): Promise<DbResult<DbRowMap[TTable][TField] | null>>;
-    getFieldValue<TValue = unknown>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>>;
+    getFieldValue<TValue = SqlValue>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>>;
 
     // ========== write ==========
     insData<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(options: Omit<InsertOptions, "data"> & { data: TInsert | TInsert[] }): Promise<DbResult<number>>;
     insBatch<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(table: string, dataList: TInsert[]): Promise<DbResult<number[]>>;
 
     updData(options: UpdateOptions): Promise<DbResult<number>>;
-    updBatch(table: string, dataList: Array<{ id: number; data: Record<string, unknown> }>): Promise<DbResult<number>>;
+    updBatch(table: string, dataList: Array<{ id: number; data: Record<string, SqlValue> }>): Promise<DbResult<number>>;
 
     delData(options: DeleteOptions): Promise<DbResult<number>>;
     delForce(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
@@ -175,14 +177,11 @@ export interface DbHelper {
     disableData(options: Omit<DeleteOptions, "hard">): Promise<DbResult<number>>;
 
     // ========== raw / transaction ==========
-    query<TResult = unknown>(sql: string, params?: unknown[]): Promise<DbResult<TResult>>;
-    unsafe<TResult = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<TResult>>;
-    trans<TResult = unknown>(callback: TransactionCallback<TResult, DbHelper>): Promise<TResult>;
+    query<TResult = DbUnknownRow[]>(sql: string, params?: SqlValue[]): Promise<DbResult<TResult>>;
+    unsafe<TResult = DbUnknownRow[]>(sqlStr: string, params?: SqlValue[]): Promise<DbResult<TResult>>;
+    trans<TResult = void>(callback: TransactionCallback<TResult, DbHelper>): Promise<TResult>;
 
     // ========== numeric helpers ==========
     increment(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
     decrement(table: string, field: string, where: WhereConditions, value?: number): Promise<DbResult<number>>;
-
-    // 兜底：允许实现层新增方法而不阻断使用方（保持兼容）
-    [key: string]: unknown;
 }

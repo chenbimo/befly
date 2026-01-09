@@ -2,7 +2,7 @@
  * 日志系统 - Bun 环境自定义实现（替换 pino / pino-roll）
  */
 
-import type { LoggerConfig } from "../types/logger";
+import type { LoggerConfig, LoggerRecord, LoggerSink } from "../types/logger";
 
 import { createWriteStream, existsSync, mkdirSync } from "node:fs";
 import { stat } from "node:fs/promises";
@@ -31,19 +31,7 @@ let sanitizeOptions = {
 
 type LogLevelName = "debug" | "info" | "warn" | "error";
 
-type LoggerRecord = {
-    msg?: string;
-    event?: string;
-    err?: unknown;
-    [key: string]: any;
-};
-
-type SinkLogger = {
-    info(record: unknown): any;
-    warn(record: unknown): any;
-    error(record: unknown): any;
-    debug(record: unknown): any;
-};
+type SinkLogger = LoggerSink;
 
 type StreamSink = {
     enqueue(line: string): void;
@@ -216,7 +204,7 @@ function createStreamSink(kind: StreamKind): StreamSink {
                 const ok = stream.write(chunk);
                 if (!ok) {
                     await new Promise<void>((resolve) => {
-                        (stream as any).once("drain", () => resolve());
+                        stream.once("drain", () => resolve());
                     });
                 }
                 return true;
@@ -279,7 +267,12 @@ class LogFileSink {
                     const ok = this.stream.write(chunk);
                     if (!ok) {
                         await new Promise<void>((resolve) => {
-                            (this.stream as any).once("drain", () => resolve());
+                            const stream = this.stream;
+                            if (!stream) {
+                                resolve();
+                                return;
+                            }
+                            stream.once("drain", () => resolve());
                         });
                     }
                     this.streamSizeBytes = this.streamSizeBytes + chunkBytes;
@@ -584,8 +577,8 @@ function buildLogLine(level: LogLevelName, record: LoggerRecord): string {
     // msg 允许保留 record.msg（若存在），否则补齐空字符串。
     if (record && isPlainObject(record)) {
         const out = Object.assign({}, record, base);
-        if ((record as any).msg !== undefined) {
-            out.msg = (record as any).msg;
+        if (record.msg !== undefined) {
+            out.msg = record.msg;
         } else if (out.msg === undefined) {
             out.msg = "";
         }
@@ -618,7 +611,8 @@ function createSinkLogger(options: { fileSink: LogFileSink; consoleSink: StreamS
     const write = (level: LogLevelName, record: unknown) => {
         if (level === "debug" && config.debug !== 1) return;
 
-        const sanitizedRecord = sanitizeLogObject(record as any, sanitizeOptions);
+        const input = isPlainObject(record) ? (record as Record<string, any>) : { value: record };
+        const sanitizedRecord = sanitizeLogObject(input, sanitizeOptions);
         const line = buildLogLine(level, sanitizedRecord);
         fileSink.enqueue(line);
         if (consoleSink) consoleSink.enqueue(line);
@@ -642,13 +636,13 @@ function createSinkLogger(options: { fileSink: LogFileSink; consoleSink: StreamS
 
 // 对象清洗/脱敏/截断逻辑已下沉到 utils/loggerUtils.ts（减少 logger.ts 复杂度）。
 
-function metaToObject(): Record<string, any> | null {
+function metaToObject(): LoggerRecord | null {
     const meta = getCtx();
     if (!meta) return null;
 
     const durationSinceNowMs = Date.now() - meta.now;
 
-    const obj: Record<string, any> = {
+    const obj: LoggerRecord = {
         requestId: meta.requestId,
         method: meta.method,
         route: meta.route,
@@ -660,16 +654,16 @@ function metaToObject(): Record<string, any> | null {
     // userId / roleCode 默认写入
     obj["userId"] = meta.userId;
     obj["roleCode"] = meta.roleCode;
-    obj["nickname"] = (meta as any).nickname;
-    obj["roleType"] = (meta as any).roleType;
+    obj["nickname"] = meta.nickname;
+    obj["roleType"] = meta.roleType;
 
     return obj;
 }
 
-function mergeMetaIntoObject(input: Record<string, any>, meta: Record<string, any>): Record<string, any> {
-    const merged: Record<string, any> = {};
-    for (const [key, value] of Object.entries(input)) {
-        merged[key] = value;
+function mergeMetaIntoObject(input: LoggerRecord, meta: LoggerRecord): LoggerRecord {
+    const merged: LoggerRecord = {};
+    for (const key of Object.keys(input)) {
+        merged[key] = input[key];
     }
 
     // 只补齐、不覆盖：允许把 undefined / null / 空字符串写入（由日志底层序列化决定是否展示）
@@ -726,37 +720,36 @@ class LoggerFacade {
         return sanitizeLogObject(record, sanitizeOptions);
     }
 
-    public info(input: unknown): any {
+    public info(input: unknown): void {
         const record0 = withRequestMetaRecord(toRecord(input));
         const record = this.maybeSanitizeForMock(record0);
-        return getSink("app").info(record);
+        getSink("app").info(record);
     }
 
-    public warn(input: unknown): any {
+    public warn(input: unknown): void {
         const record0 = withRequestMetaRecord(toRecord(input));
         const record = this.maybeSanitizeForMock(record0);
-        return getSink("app").warn(record);
+        getSink("app").warn(record);
     }
 
-    public error(input: unknown): any {
+    public error(input: unknown): void {
         const record0 = withRequestMetaRecord(toRecord(input));
         const record = this.maybeSanitizeForMock(record0);
-        const ret = getSink("app").error(record);
+        getSink("app").error(record);
 
         // 测试场景：启用 mock 时不做镜像，避免调用次数翻倍
-        if (mockInstance) return ret;
+        if (mockInstance) return;
 
         // error 专属文件：始终镜像一份
         getSink("error").error(record);
-        return ret;
     }
 
-    public debug(input: unknown): any {
+    public debug(input: unknown): void {
         // debug!=1 则完全不记录 debug 日志（包括文件与控制台）
         if (config.debug !== 1) return;
         const record0 = withRequestMetaRecord(toRecord(input));
         const record = this.maybeSanitizeForMock(record0);
-        return getSink("app").debug(record);
+        getSink("app").debug(record);
     }
 
     public async flush(): Promise<void> {

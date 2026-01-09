@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { setCorsOptions } from "../utils/cors";
-import { isDirentDirectory } from "../utils/isDirentDirectory";
+import { isDirentDirectory, type DirentLike } from "../utils/isDirentDirectory";
 import { genShortId, pickFields } from "../utils/util";
 
 function ensureEmptyDir(dir: string): void {
@@ -20,13 +20,13 @@ describe("utils - cors", () => {
             }
         });
 
-        const headers = setCorsOptions(req, { origin: "*" } as any);
+        const headers = setCorsOptions(req, { origin: "*" });
         expect(headers["Access-Control-Allow-Origin"]).toBe("https://example.com");
     });
 
     test("origin explicit should be used as-is", () => {
         const req = new Request("http://localhost/");
-        const headers = setCorsOptions(req, { origin: "https://fixed.com", maxAge: 10 } as any);
+        const headers = setCorsOptions(req, { origin: "https://fixed.com", maxAge: 10 });
         expect(headers["Access-Control-Allow-Origin"]).toBe("https://fixed.com");
         expect(headers["Access-Control-Max-Age"]).toBe("10");
     });
@@ -49,20 +49,20 @@ describe("utils - genShortId", () => {
 
 describe("utils - pickFields", () => {
     test("plain object", () => {
-        const obj: any = { a: 1, b: 2 };
-        expect(pickFields(obj, ["a", "x"]) as any).toEqual({ a: 1 });
+        const obj = { a: 1, b: 2 };
+        expect(pickFields(obj, ["a", "x"])).toEqual({ a: 1 });
     });
 
     test("array should also be supported", () => {
-        const arr: any = ["x", "y"];
-        const picked = pickFields(arr, ["0", "length"]) as any;
+        const arr = ["x", "y"];
+        const picked = pickFields(arr, ["0", "length"]);
         expect(picked["0"]).toBe("x");
-        expect(picked.length).toBe(2);
+        expect(picked["length"]).toBe(2);
     });
 
     test("invalid input returns empty object", () => {
-        expect(pickFields(null as any, ["a"]) as any).toEqual({});
-        expect(pickFields(1 as any, ["a"]) as any).toEqual({});
+        expect(pickFields(null, ["a"])).toEqual({});
+        expect(pickFields(1, ["a"])).toEqual({});
     });
 });
 
@@ -80,7 +80,17 @@ describe("utils - convertBigIntFields", () => {
             }
         ];
 
-        const out = convertBigIntFields<any>(input);
+        type Row = {
+            id: number | string;
+            pid: number | string;
+            sort: number | string;
+            userId: number | string;
+            createdAt: number | string;
+            other: string;
+            state: number | string;
+        };
+
+        const out = convertBigIntFields<Row>(input);
         expect(out[0].id).toBe(1);
         expect(out[0].pid).toBe(2);
         expect(out[0].sort).toBe(3);
@@ -93,12 +103,13 @@ describe("utils - convertBigIntFields", () => {
 
     test("should keep non-numeric strings", () => {
         const input = [{ id: "x" }];
-        const out = convertBigIntFields<any>(input);
+        const out = convertBigIntFields(input);
         expect(out[0].id).toBe("x");
     });
 
     test("non-array input should be returned as-is", () => {
-        expect(convertBigIntFields<any>(null as any) as any).toBeNull();
+        const out = convertBigIntFields(null);
+        expect(out).toBeNull();
     });
 });
 
@@ -118,8 +129,12 @@ describe("utils - isDirentDirectory", () => {
         expect(entryDir).toBeTruthy();
         expect(entryFile).toBeTruthy();
 
-        expect(isDirentDirectory(root, entryDir as any)).toBe(true);
-        expect(isDirentDirectory(root, entryFile as any)).toBe(false);
+        if (!entryDir || !entryFile) {
+            throw new Error("Dirent entries not found");
+        }
+
+        expect(isDirentDirectory(root, entryDir)).toBe(true);
+        expect(isDirentDirectory(root, entryFile)).toBe(false);
 
         rmSync(root, { recursive: true, force: true });
     });
@@ -130,14 +145,10 @@ describe("utils - isDirentDirectory", () => {
 
         mkdirSync(join(root, "real"), { recursive: true });
 
-        const fake: any = {
+        const fake: DirentLike = {
             name: "real",
-            isDirectory() {
-                return false;
-            },
-            isSymbolicLink() {
-                return true;
-            }
+            isDirectory: () => false,
+            isSymbolicLink: () => true
         };
 
         expect(isDirentDirectory(root, fake)).toBe(true);

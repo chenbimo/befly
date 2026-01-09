@@ -1,10 +1,13 @@
+import type { SqlValue } from "../../types/common.ts";
 import type { DbResult, SqlInfo } from "../../types/database.ts";
 
+import { toSqlParams } from "../../utils/sqlParams.ts";
+
 type SqlExecutor = {
-    unsafe<T = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
+    unsafe<T = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
 };
 
-export type MockColumn = { name: string; type: string; notnull: 0 | 1; dflt_value: any };
+export type MockColumn = { name: string; type: string; notnull: 0 | 1; dflt_value: string | number | null };
 
 export type MockSqliteState = {
     executedSql: string[];
@@ -30,7 +33,7 @@ function parseCreateTable(sql: string): { tableName: string; columnDefs: string 
     };
 }
 
-function parseAlterAddColumn(sql: string): { tableName: string; colName: string; colType: string; notnull: 0 | 1; dflt: any } | null {
+function parseAlterAddColumn(sql: string): { tableName: string; colName: string; colType: string; notnull: 0 | 1; dflt: string | number | null } | null {
     const m = /^ALTER\s+TABLE\s+(.+?)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(.+?)\s+(.*)$/i.exec(sql.trim());
     if (!m) return null;
 
@@ -42,7 +45,7 @@ function parseAlterAddColumn(sql: string): { tableName: string; colName: string;
     const colType = upper.includes("INTEGER") ? "INTEGER" : "TEXT";
     const notnull: 0 | 1 = upper.includes("NOT NULL") ? 1 : 0;
 
-    let dflt: any = null;
+    let dflt: string | number | null = null;
     const dfltMatch = /\bDEFAULT\s+(.+?)(\s|$)/i.exec(rest);
     if (dfltMatch) {
         const raw = dfltMatch[1].trim();
@@ -86,8 +89,8 @@ export function createMockSqliteDb(state: MockSqliteState): SqlExecutor {
             const sql = String(sqlStr);
             state.executedSql.push(sql);
 
-            const safeParams = Array.isArray(params) ? params : [];
-            const sqlInfo: SqlInfo = { sql: sql, params: safeParams as any[], duration: 0 };
+            const sqlParams: SqlValue[] = toSqlParams(params);
+            const sqlInfo: SqlInfo = { sql: sql, params: sqlParams, duration: 0 };
 
             const ok = <T>(data: T): DbResult<T, SqlInfo> => {
                 return { data: data, sql: sqlInfo };
@@ -161,7 +164,7 @@ export function createMockSqliteDb(state: MockSqliteState): SqlExecutor {
                     const colType = upper.includes("INTEGER") ? "INTEGER" : upper.includes("BIGINT") ? "INTEGER" : "TEXT";
                     const notnull: 0 | 1 = upper.includes("NOT NULL") || upper.includes("PRIMARY KEY") ? 1 : 0;
 
-                    let dflt: any = null;
+                    let dflt: string | number | null = null;
                     const dfltMatch = /\bDEFAULT\s+(.+?)(\s|$)/i.exec(rest);
                     if (dfltMatch) {
                         const raw = dfltMatch[1].trim();

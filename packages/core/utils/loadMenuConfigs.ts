@@ -15,19 +15,28 @@ type ViewDirMeta = {
     order?: number;
 };
 
-export function normalizeViewDirMeta(input: any): ViewDirMeta | null {
+export function normalizeViewDirMeta(input: unknown): ViewDirMeta | null {
     if (!input || typeof input !== "object") {
         return null;
     }
 
-    if (typeof input.title !== "string" || !input.title) {
+    const record = input as Record<string, unknown>;
+    const title = record["title"];
+    if (typeof title !== "string" || !title) {
         return null;
     }
 
-    const order = typeof input.order === "number" && Number.isFinite(input.order) && Number.isInteger(input.order) && input.order >= 0 ? input.order : undefined;
+    const orderRaw = record["order"];
+    const order = typeof orderRaw === "number" && Number.isFinite(orderRaw) && Number.isInteger(orderRaw) && orderRaw >= 0 ? orderRaw : undefined;
+
+    if (order === undefined) {
+        return {
+            title: title
+        };
+    }
 
     return {
-        title: input.title,
+        title: title,
         order: order
     };
 }

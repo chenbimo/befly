@@ -127,7 +127,7 @@ export class SqlCheck {
                 if (!(field in row)) {
                     throw new Error(`批量插入缺少字段 (table: ${options.table}, rowIndex: ${i}, field: ${field})`);
                 }
-                SqlCheck.assertNoUndefinedParam((row as any)[field], `批量插入字段值 (table: ${options.table}, rowIndex: ${i}, field: ${field})`);
+                SqlCheck.assertNoUndefinedParam(row[field], `批量插入字段值 (table: ${options.table}, rowIndex: ${i}, field: ${field})`);
             }
         }
 

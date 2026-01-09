@@ -26,20 +26,20 @@ const permissionHook: Hook = {
         }
 
         // 2. 用户未登录
-        if (!ctx.user || !(ctx.user as { id?: unknown }).id) {
+        if (typeof ctx.user.id !== "number") {
             ctx.response = ErrorResponse(ctx, "未登录", 1, null, null, "auth");
             return;
         }
 
         // 3. 开发者权限（最高权限）
-        if ((ctx.user as { roleCode?: unknown }).roleCode === "dev") {
+        if (ctx.user.roleCode === "dev") {
             return;
         }
 
         // 4. 角色权限检查
         // apiPath 在 apiHandler 中已统一生成并写入 ctx.route
         const apiPath = ctx.route;
-        const roleCode = (ctx.user as { roleCode?: string | null }).roleCode;
+        const roleCode = ctx.user.roleCode;
 
         let hasPermission = false;
         if (roleCode && befly.redis) {

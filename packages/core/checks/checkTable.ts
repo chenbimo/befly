@@ -7,16 +7,19 @@ import { Logger } from "../lib/logger";
  * 保留字段列表
  */
 const RESERVED_FIELDS = ["id", "created_at", "updated_at", "deleted_at", "state"] as const;
+const RESERVED_FIELD_SET = new Set<string>(RESERVED_FIELDS);
 
 /**
  * 允许的字段类型
  */
 const FIELD_TYPES = ["string", "number", "text", "array_string", "array_text", "array_number_string", "array_number_text"] as const;
+const FIELD_TYPE_SET = new Set<string>(FIELD_TYPES);
 
 /**
  * 允许的字段属性列表
  */
 const ALLOWED_FIELD_PROPERTIES = ["name", "type", "min", "max", "default", "detail", "index", "unique", "nullable", "unsigned", "regexp"] as const;
+const ALLOWED_FIELD_PROPERTY_SET = new Set<string>(ALLOWED_FIELD_PROPERTIES);
 
 /**
  * 小驼峰命名正则
@@ -73,7 +76,7 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                 }
 
                 // 检查是否使用了保留字段
-                if (RESERVED_FIELDS.includes(colKey as any)) {
+                if (RESERVED_FIELD_SET.has(colKey)) {
                     Logger.warn(`${tablePrefix}${fileName} 文件包含保留字段 ${colKey}，` + `不能在表定义中使用以下字段: ${RESERVED_FIELDS.join(", ")}`);
                     hasError = true;
                 }
@@ -83,7 +86,7 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
 
                 // 检查是否存在非法属性
                 const fieldKeys = Object.keys(field);
-                const illegalProps = fieldKeys.filter((key) => !ALLOWED_FIELD_PROPERTIES.includes(key as any));
+                const illegalProps = fieldKeys.filter((key) => !ALLOWED_FIELD_PROPERTY_SET.has(key));
                 if (illegalProps.length > 0) {
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 包含非法属性: ${illegalProps.join(", ")}，` + `允许的属性为: ${ALLOWED_FIELD_PROPERTIES.join(", ")}`);
                     hasError = true;
@@ -144,7 +147,7 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                 }
 
                 // 字段类型必须为string,number,text,array_string,array_text之一
-                if (!FIELD_TYPES.includes(fieldType as any)) {
+                if (!FIELD_TYPE_SET.has(fieldType)) {
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join("、")}之一`);
                     hasError = true;
                 }

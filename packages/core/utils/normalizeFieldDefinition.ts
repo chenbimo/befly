@@ -1,3 +1,4 @@
+import type { JsonValue } from "../types/common";
 import type { FieldDefinition } from "../types/validate";
 
 export type NormalizedFieldDefinition = {
@@ -6,7 +7,7 @@ export type NormalizedFieldDefinition = {
     detail: string;
     min: number | null;
     max: number | null;
-    default: any | null;
+    default: JsonValue | null;
     index: boolean;
     unique: boolean;
     nullable: boolean;

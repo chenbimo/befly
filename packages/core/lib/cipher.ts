@@ -191,10 +191,9 @@ export class Cipher {
      * const hash = await Cipher.hashPassword('123456', { cost: 12 });
      */
     static async hashPassword(password: string, options: PasswordHashOptions = {}): Promise<string> {
-        const finalOptions = {
-            algorithm: "bcrypt",
-            ...options
-        } as any;
+        // Bun 的类型定义要求 bcrypt 的 algorithm 必须是字面量 "bcrypt"。
+        // 这里强制锁定 bcrypt，且不允许 options.algorithm 覆盖。
+        const finalOptions: PasswordHashOptions & { algorithm: "bcrypt" } = Object.assign({}, options, { algorithm: "bcrypt" as const });
         return await Bun.password.hash(password, finalOptions);
     }
 

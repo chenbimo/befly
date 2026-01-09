@@ -2,7 +2,7 @@
  * 测试 Validator 对 array_number_string 和 array_number_text 类型的支持
  */
 
-import type { FieldDefinition } from "befly/types/validate";
+import type { FieldDefinition, TableDefinition } from "befly/types/validate";
 
 import { describe, expect, test } from "bun:test";
 
@@ -248,7 +248,7 @@ describe("Validator - array_number 类型验证", () => {
     // ==================== validate 方法测试 ====================
 
     test("validate: array_number_string 字段验证", () => {
-        const rules = {
+        const rules: TableDefinition = {
             tags: {
                 name: "标签ID",
                 type: "array_number_string",
@@ -259,20 +259,20 @@ describe("Validator - array_number 类型验证", () => {
             }
         };
 
-        const result1 = Validator.validate({ tags: [1, 2, 3] }, rules as any, ["tags"]);
+        const result1 = Validator.validate({ tags: [1, 2, 3] }, rules, ["tags"]);
         expect(result1.failed).toBe(false);
 
-        const result2 = Validator.validate({ tags: [] }, rules as any, ["tags"]);
+        const result2 = Validator.validate({ tags: [] }, rules, ["tags"]);
         expect(result2.failed).toBe(true);
         expect(result2.firstError).toBe("标签ID至少需要1个元素");
 
-        const result3 = Validator.validate({ tags: ["1", "2"] }, rules as any, ["tags"]);
+        const result3 = Validator.validate({ tags: ["1", "2"] }, rules, ["tags"]);
         expect(result3.failed).toBe(true);
         expect(result3.firstError).toBe("标签ID数组元素必须是数字");
     });
 
     test("validate: array_number_text 字段验证", () => {
-        const rules = {
+        const rules: TableDefinition = {
             ids: {
                 name: "关联ID",
                 type: "array_number_text",
@@ -283,16 +283,16 @@ describe("Validator - array_number 类型验证", () => {
             }
         };
 
-        const result1 = Validator.validate({ ids: [100, 200, 300] }, rules as any, []);
+        const result1 = Validator.validate({ ids: [100, 200, 300] }, rules, []);
         expect(result1.failed).toBe(false);
 
-        const result2 = Validator.validate({ ids: "not-array" }, rules as any, []);
+        const result2 = Validator.validate({ ids: "not-array" }, rules, []);
         expect(result2.failed).toBe(true);
         expect(result2.firstError).toBe("关联ID必须是数组");
     });
 
     test("validate: undefined 参数跳过验证", () => {
-        const rules = {
+        const rules: TableDefinition = {
             tags: {
                 name: "标签",
                 type: "array_number_string",
@@ -304,7 +304,7 @@ describe("Validator - array_number 类型验证", () => {
         };
 
         // undefined 且不是必填字段，应跳过验证
-        const result = Validator.validate({ other: "value" }, rules as any, []);
+        const result = Validator.validate({ other: "value" }, rules, []);
         expect(result.failed).toBe(false);
     });
 });

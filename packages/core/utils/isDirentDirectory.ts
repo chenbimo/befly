@@ -4,7 +4,9 @@ import { statSync } from "node:fs";
 
 import { join } from "pathe";
 
-export const isDirentDirectory = (parentDir: string, entry: Dirent): boolean => {
+export type DirentLike = Pick<Dirent, "name" | "isDirectory" | "isSymbolicLink">;
+
+export const isDirentDirectory = (parentDir: string, entry: DirentLike): boolean => {
     if (entry.isDirectory()) {
         return true;
     }

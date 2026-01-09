@@ -5,11 +5,14 @@
 
 import type { WhereConditions, JoinOption, SqlValue } from "../types/common";
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, DbPageResult, DbListResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database";
+import type { SqlRunResult } from "../utils/sqlResult";
 import type { DbDialect } from "./dbDialect";
 
 import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { fieldClear } from "../utils/fieldClear";
-import { arrayKeysToCamel, keysToCamel, snakeCase } from "../utils/util";
+import { toSqlParams } from "../utils/sqlParams";
+import { toNumberFromSql } from "../utils/sqlResult";
+import { arrayKeysToCamel, isPlainObject, keysToCamel, snakeCase } from "../utils/util";
 import { CacheKeys } from "./cacheKeys";
 import { MySqlDialect } from "./dbDialect";
 import { DbUtils } from "./dbUtils";
@@ -20,10 +23,37 @@ import { SqlCheck } from "./sqlCheck";
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 
 type RedisCacheLike = {
-    getObject<T = any>(key: string): Promise<T | null>;
-    setObject<T = any>(key: string, obj: T, ttl?: number | null): Promise<string | null>;
+    getObject<T = unknown>(key: string): Promise<T | null>;
+    setObject<T = unknown>(key: string, obj: T, ttl?: number | null): Promise<string | null>;
     genTimeID(): Promise<number>;
 };
+
+type SqlClientLike = {
+    unsafe<TResult = unknown>(sqlStr: string, params?: SqlValue[]): Promise<TResult>;
+};
+
+type SqlClientWithBeginLike = SqlClientLike & {
+    begin<TResult>(callback: (tx: SqlClientLike) => Promise<TResult>): Promise<TResult>;
+};
+
+function hasBegin(sql: SqlClientLike): sql is SqlClientWithBeginLike {
+    return typeof (sql as Partial<SqlClientWithBeginLike>).begin === "function";
+}
+
+class DbSqlError extends Error {
+    public originalError: unknown;
+    public params: SqlValue[];
+    public duration: number;
+    public sqlInfo: SqlInfo;
+
+    public constructor(message: string, options: { originalError: unknown; params: SqlValue[]; duration: number; sqlInfo: SqlInfo }) {
+        super(message);
+        this.originalError = options.originalError;
+        this.params = options.params;
+        this.duration = options.duration;
+        this.sqlInfo = options.sqlInfo;
+    }
+}
 
 /**
  * 数据库助手类
@@ -31,7 +61,7 @@ type RedisCacheLike = {
 export class DbHelper {
     private redis: RedisCacheLike;
     private dialect: DbDialect;
-    private sql: any = null;
+    private sql: SqlClientLike | null = null;
     private isTransaction: boolean = false;
 
     /**
@@ -39,7 +69,7 @@ export class DbHelper {
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(options: { redis: RedisCacheLike; sql?: any | null; dialect?: DbDialect }) {
+    constructor(options: { redis: RedisCacheLike; sql?: SqlClientLike | null; dialect?: DbDialect }) {
         this.redis = options.redis;
         this.sql = options.sql || null;
         this.isTransaction = Boolean(options.sql);
@@ -68,7 +98,7 @@ export class DbHelper {
 
         // 2. 缓存未命中，查询数据库
         const query = this.dialect.getTableColumnsQuery(table);
-        const execRes = await this.executeWithConn(query.sql, query.params);
+        const execRes = await this.executeSelect(query.sql, query.params);
         const result = execRes.data;
 
         if (!result || result.length === 0) {
@@ -152,13 +182,22 @@ export class DbHelper {
             }
         }
     }
+
+    private async executeSelect<TRow extends Record<string, unknown> = Record<string, unknown>>(sqlStr: string, params?: unknown[]): Promise<DbResult<TRow[]>> {
+        return await this.executeWithConn<TRow[]>(sqlStr, params);
+    }
+
+    private async executeRun(sqlStr: string, params?: unknown[]): Promise<DbResult<SqlRunResult>> {
+        return await this.executeWithConn<SqlRunResult>(sqlStr, params);
+    }
+
     /**
      * 执行 SQL（使用 sql.unsafe）
      *
      * - DbHelper 不再负责打印 SQL 调试日志
      * - SQL 信息由调用方基于返回值中的 sql 自行输出
      */
-    private async executeWithConn<TResult = any>(sqlStr: string, params?: unknown[]): Promise<DbResult<TResult>> {
+    private async executeWithConn<TResult = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<TResult>> {
         if (!this.sql) {
             throw new Error("数据库连接未初始化");
         }
@@ -171,11 +210,11 @@ export class DbHelper {
         // 记录开始时间
         const startTime = Date.now();
 
-        const safeParams: unknown[] = Array.isArray(params) ? params : [];
+        const safeParams: SqlValue[] = toSqlParams(params);
 
         try {
             // 使用 sql.unsafe 执行查询
-            let result;
+            let result: TResult;
             if (safeParams.length > 0) {
                 result = await this.sql.unsafe(sqlStr, safeParams);
             } else {
@@ -195,19 +234,21 @@ export class DbHelper {
                 data: result,
                 sql: sql
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             const duration = Date.now() - startTime;
 
-            const enhancedError: any = new Error(`SQL执行失败: ${error.message}`);
-            enhancedError.originalError = error;
-            enhancedError.params = safeParams;
-            enhancedError.duration = duration;
-            enhancedError.sqlInfo = {
-                sql: sqlStr,
+            const msg = error instanceof Error ? error.message : String(error);
+
+            throw new DbSqlError(`SQL执行失败: ${msg}`, {
+                originalError: error,
                 params: safeParams,
-                duration: duration
-            };
-            throw enhancedError;
+                duration: duration,
+                sqlInfo: {
+                    sql: sqlStr,
+                    params: safeParams,
+                    duration: duration
+                }
+            });
         }
     }
 
@@ -231,7 +272,7 @@ export class DbHelper {
         const snakeTableName = snakeCase(tableName);
 
         const query = this.dialect.tableExistsQuery(snakeTableName);
-        const execRes = await this.executeWithConn(query.sql, query.params);
+        const execRes = await this.executeSelect<{ count: number }>(query.sql, query.params);
         const exists = (execRes.data?.[0]?.count || 0) > 0;
 
         return {
@@ -270,7 +311,7 @@ export class DbHelper {
         this.applyJoins(builder, joins);
 
         const { sql, params } = builder.toSelectSql();
-        const execRes = await this.executeWithConn(sql, params);
+        const execRes = await this.executeSelect<{ count: number }>(sql, params);
         const count = execRes.data?.[0]?.count || 0;
 
         return {
@@ -314,7 +355,7 @@ export class DbHelper {
         this.applyJoins(builder, joins);
 
         const { sql, params } = builder.toSelectSql();
-        const execRes = await this.executeWithConn(sql, params);
+        const execRes = await this.executeSelect(sql, params);
         const result = execRes.data;
 
         // 字段名转换：下划线 → 小驼峰
@@ -400,7 +441,7 @@ export class DbHelper {
         this.applyJoins(countBuilder, prepared.joins);
 
         const { sql: countSql, params: countParams } = countBuilder.toSelectSql();
-        const countExecRes = await this.executeWithConn(countSql, countParams);
+        const countExecRes = await this.executeSelect<{ total: number }>(countSql, countParams);
         const total = countExecRes.data?.[0]?.total || 0;
 
         // 如果总数为 0，直接返回，不执行第二次查询
@@ -432,7 +473,7 @@ export class DbHelper {
         }
 
         const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
-        const dataExecRes = await this.executeWithConn(dataSql, dataParams);
+        const dataExecRes = await this.executeSelect(dataSql, dataParams);
         const list = dataExecRes.data || [];
 
         // 字段名转换：下划线 → 小驼峰
@@ -500,7 +541,7 @@ export class DbHelper {
         this.applyJoins(countBuilder, prepared.joins);
 
         const { sql: countSql, params: countParams } = countBuilder.toSelectSql();
-        const countExecRes = await this.executeWithConn(countSql, countParams);
+        const countExecRes = await this.executeSelect<{ total: number }>(countSql, countParams);
         const total = countExecRes.data?.[0]?.total || 0;
 
         // 如果总数为 0，直接返回
@@ -527,7 +568,7 @@ export class DbHelper {
         }
 
         const { sql: dataSql, params: dataParams } = dataBuilder.toSelectSql();
-        const dataExecRes = await this.executeWithConn(dataSql, dataParams);
+        const dataExecRes = await this.executeSelect(dataSql, dataParams);
         const result = dataExecRes.data || [];
 
         // 警告日志：返回数据超过警告阈值
@@ -582,15 +623,19 @@ export class DbHelper {
         const processed = DbUtils.buildInsertRow({ data: data, id: id, now: now });
 
         // 入口校验：保证进入 SqlBuilder 的数据无 undefined
-        SqlCheck.assertNoUndefinedInRecord(processed as any, `insData 插入数据 (table: ${snakeTable})`);
+        SqlCheck.assertNoUndefinedInRecord(processed, `insData 插入数据 (table: ${snakeTable})`);
 
         // 构建 SQL
         const builder = this.createSqlBuilder();
         const { sql, params } = builder.toInsertSql(snakeTable, processed);
 
         // 执行
-        const execRes = await this.executeWithConn(sql, params);
-        const insertedId = processed["id"] || execRes.data?.lastInsertRowid || 0;
+        const execRes = await this.executeRun(sql, params);
+
+        const processedId = processed["id"];
+        const processedIdNum = typeof processedId === "number" ? processedId : 0;
+        const lastInsertRowidNum = toNumberFromSql(execRes.data?.lastInsertRowid);
+        const insertedId = processedIdNum || lastInsertRowidNum || 0;
         return {
             data: insertedId,
             sql: execRes.sql
@@ -639,7 +684,7 @@ export class DbHelper {
         });
 
         // 入口校验：保证进入 SqlBuilder 的批量数据结构一致且无 undefined
-        const insertFields = SqlCheck.assertBatchInsertRowsConsistent(processedList as any, { table: snakeTable });
+        const insertFields = SqlCheck.assertBatchInsertRowsConsistent(processedList, { table: snakeTable });
 
         // 构建批量插入 SQL
         const builder = this.createSqlBuilder();
@@ -647,7 +692,7 @@ export class DbHelper {
 
         // 在事务中执行批量插入
         try {
-            const execRes = await this.executeWithConn(sql, params);
+            const execRes = await this.executeRun(sql, params);
             return {
                 data: ids,
                 sql: execRes.sql
@@ -682,8 +727,8 @@ export class DbHelper {
             ids: ids,
             quoteIdent: this.dialect.quoteIdent.bind(this.dialect)
         });
-        const execRes = await this.executeWithConn(query.sql, query.params);
-        const changes = execRes.data?.changes || 0;
+        const execRes = await this.executeRun(query.sql, query.params);
+        const changes = toNumberFromSql(execRes.data?.changes);
         return {
             data: changes,
             sql: execRes.sql
@@ -736,8 +781,8 @@ export class DbHelper {
             stateGtZero: true
         });
 
-        const execRes = await this.executeWithConn(query.sql, query.params);
-        const changes = execRes.data?.changes || 0;
+        const execRes = await this.executeRun(query.sql, query.params);
+        const changes = toNumberFromSql(execRes.data?.changes);
         return {
             data: changes,
             sql: execRes.sql
@@ -766,8 +811,8 @@ export class DbHelper {
         const { sql, params } = builder.toUpdateSql(snakeTable, processed);
 
         // 执行
-        const execRes = await this.executeWithConn(sql, params);
-        const changes = execRes.data?.changes || 0;
+        const execRes = await this.executeRun(sql, params);
+        const changes = toNumberFromSql(execRes.data?.changes);
         return {
             data: changes,
             sql: execRes.sql
@@ -806,8 +851,8 @@ export class DbHelper {
         const builder = this.createSqlBuilder().where(snakeWhere);
         const { sql, params } = builder.toDeleteSql(snakeTable);
 
-        const execRes = await this.executeWithConn(sql, params);
-        const changes = execRes.data?.changes || 0;
+        const execRes = await this.executeRun(sql, params);
+        const changes = toNumberFromSql(execRes.data?.changes);
         return {
             data: changes,
             sql: execRes.sql
@@ -856,9 +901,17 @@ export class DbHelper {
             return await callback(this);
         }
 
+        const sql = this.sql;
+        if (!sql) {
+            throw new Error("数据库连接未初始化");
+        }
+        if (!hasBegin(sql)) {
+            throw new Error("当前 SQL 客户端不支持事务 begin() 方法");
+        }
+
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
-        return await this.sql.begin(async (tx: any) => {
+        return await sql.begin(async (tx: SqlClientLike) => {
             const trans = new DbHelper({ redis: this.redis, sql: tx, dialect: this.dialect });
             return await callback(trans);
         });
@@ -876,7 +929,14 @@ export class DbHelper {
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>> {
-        const { table, where, tableQualifier } = await this.prepareQueryOptions({ ...options, page: 1, limit: 1 } as any);
+        const prepareOptions: QueryOptions = {
+            table: options.table,
+            page: 1,
+            limit: 1
+        };
+        if (options.where !== undefined) prepareOptions.where = options.where;
+        if (options.joins !== undefined) prepareOptions.joins = options.joins;
+        const { table, where, tableQualifier } = await this.prepareQueryOptions(prepareOptions);
 
         // 使用 COUNT(1) 性能更好
         const builder = this.createSqlBuilder()
@@ -886,7 +946,7 @@ export class DbHelper {
             .limit(1);
 
         const { sql, params } = builder.toSelectSql();
-        const execRes = await this.executeWithConn(sql, params);
+        const execRes = await this.executeSelect<{ cnt: number }>(sql, params);
         const exists = (execRes.data?.[0]?.cnt || 0) > 0;
 
         return {
@@ -917,9 +977,15 @@ export class DbHelper {
         if (options.limit !== undefined) oneOptions.limit = options.limit;
         oneOptions.fields = [field];
 
-        const oneRes = await this.getOne(oneOptions);
+        const oneRes = await this.getOne<Record<string, unknown>>(oneOptions);
 
-        const result = oneRes.data as Record<string, unknown>;
+        const result = oneRes.data;
+        if (!isPlainObject(result)) {
+            return {
+                data: null,
+                sql: oneRes.sql
+            };
+        }
 
         // 尝试直接访问字段（小驼峰）
         if (Object.hasOwn(result, field)) {
@@ -994,8 +1060,8 @@ export class DbHelper {
         const quotedField = this.dialect.quoteIdent(snakeField);
         const sql = whereClause ? `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ? WHERE ${whereClause}` : `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ?`;
 
-        const execRes = await this.executeWithConn(sql, [value, ...whereParams]);
-        const changes = execRes.data?.changes || 0;
+        const execRes = await this.executeRun(sql, [value, ...whereParams]);
+        const changes = toNumberFromSql(execRes.data?.changes);
         return {
             data: changes,
             sql: execRes.sql

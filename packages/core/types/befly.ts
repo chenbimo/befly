@@ -4,7 +4,7 @@
 
 import type { CacheHelper } from "./cache";
 import type { CipherStatic } from "./cipher";
-import type { KeyValue } from "./common";
+import type { JsonValue } from "./common";
 import type { RequestContext } from "./context";
 import type { DbHelper } from "./database";
 import type { Jwt } from "./jwt";
@@ -176,16 +176,16 @@ export interface BeflyOptions {
      * Addon 运行时配置
      * 按 addon 名称分组，如 addons.admin.email
      */
-    addons?: Record<string, Record<string, any>>;
+    addons?: Record<string, Record<string, JsonValue | undefined>>;
     /** 其他插件配置 */
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
  * Befly 应用上下文
  * 包含所有插件挂载的实例
  */
-export interface BeflyContext extends KeyValue {
+export interface BeflyContext {
     // ========== 核心插件 ==========
     /** 数据库助手 */
     db: DbHelper;
@@ -201,11 +201,11 @@ export interface BeflyContext extends KeyValue {
 
     /** 工具函数 */
     tool: {
-        Yes: (msg: string, data?: any, other?: Record<string, any>) => { code: 0; msg: string; data: any };
-        No: (msg: string, data?: any, other?: Record<string, any>) => { code: 1; msg: string; data: any };
+        Yes: <TData extends JsonValue = JsonValue, TOther extends Record<string, JsonValue | undefined> = Record<string, JsonValue | undefined>>(msg: string, data?: TData, other?: TOther) => { code: 0; msg: string; data: TData } & TOther;
+        No: <TData extends JsonValue = JsonValue, TOther extends Record<string, JsonValue | undefined> = Record<string, JsonValue | undefined>>(msg: string, data?: TData, other?: TOther) => { code: 1; msg: string; data: TData } & TOther;
         Raw: (
             ctx: RequestContext,
-            data: Record<string, any> | string,
+            data: JsonValue | string,
             options?: {
                 status?: number;
                 contentType?: string;
@@ -229,7 +229,7 @@ export interface BeflyContext extends KeyValue {
     // ========== 动态插件 ==========
     /** 组件插件：addon_{addonName}_{pluginName} */
     /** 项目插件：app_{pluginName} */
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**

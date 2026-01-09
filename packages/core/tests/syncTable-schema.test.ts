@@ -10,7 +10,7 @@ import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
 describe("tableExistsRuntime", () => {
     test("sql 执行器未初始化时抛出错误", async () => {
         try {
-            await syncTable.TestKit.tableExistsRuntime(syncTable.TestKit.createRuntime("sqlite", null as any, ""), "user");
+            await syncTable.TestKit.tableExistsRuntime(syncTable.TestKit.createRuntime("sqlite", null, ""), "user");
             expect(true).toBe(false);
         } catch (error: any) {
             expect(error.message).toBe("SQL 执行器未初始化");
@@ -28,7 +28,7 @@ describe("tableExistsRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
         const exist = await syncTable.TestKit.tableExistsRuntime(runtime, "test_sync_table_exists");
         expect(exist).toBe(true);
 
@@ -55,7 +55,7 @@ describe("getTableColumnsRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
         const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, "test_sync_table_columns");
 
         expect(columns.id).toBeDefined();
@@ -84,7 +84,7 @@ describe("getTableIndexesRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db as any, "");
+        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
         const indexes = await syncTable.TestKit.getTableIndexesRuntime(runtime, "test_sync_table_indexes");
 
         expect(indexes.idx_created_at).toBeDefined();

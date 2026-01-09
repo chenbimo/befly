@@ -9,6 +9,7 @@ import type { BeflyContext, BeflyOptions } from "./types/befly";
 import type { BeflyRuntimeEnv } from "./types/befly";
 import type { Hook } from "./types/hook";
 import type { Plugin } from "./types/plugin";
+import type { ScanFileResult } from "./utils/scanFiles";
 
 import { loadBeflyConfig } from "./befly.config";
 import { checkApi } from "./checks/checkApi";
@@ -78,7 +79,7 @@ export class Befly {
             const { apis, tables, plugins, hooks, addons } = await scanSources();
 
             // 让后续 syncMenu 能拿到 addon 的 views 路径等信息
-            (this.context as any)["addons"] = addons;
+            (this.context as Record<string, unknown>)["addons"] = addons;
 
             await checkApi(apis);
             await checkTable(tables);
@@ -94,23 +95,23 @@ export class Befly {
             });
 
             // 2. 加载插件
-            this.plugins = await loadPlugins(plugins as any, this.context as BeflyContext);
+            this.plugins = await loadPlugins(plugins as ScanFileResult[], this.context as BeflyContext);
 
             // 启动期依赖完整性检查：避免 sync 阶段出现 undefined 调用
             // 注意：这里不做兼容别名（例如 dbHelper=db），要求上下文必须注入标准字段。
-            if (!(this.context as any).redis) {
+            if (!this.context.redis) {
                 throw new Error("启动失败：ctx.redis 未初始化（Redis 插件未加载或注入失败）");
             }
-            if (!(this.context as any).db) {
+            if (!this.context.db) {
                 throw new Error("启动失败：ctx.db 未初始化（Db 插件未加载或注入失败）");
             }
-            if (!(this.context as any).cache) {
+            if (!this.context.cache) {
                 throw new Error("启动失败：ctx.cache 未初始化（cache 插件未加载或注入失败）");
             }
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             await syncTable(this.context as BeflyContext, tables);
-            await syncApi(this.context as BeflyContext, apis as any);
+            await syncApi(this.context as BeflyContext, apis);
 
             await syncMenu(this.context as BeflyContext, checkedMenus);
             const devEmail = this.config.devEmail;
@@ -125,10 +126,10 @@ export class Befly {
             await syncCache(this.context as BeflyContext);
 
             // 3. 加载钩子
-            this.hooks = await loadHooks(hooks as any);
+            this.hooks = await loadHooks(hooks as ScanFileResult[]);
 
             // 4. 加载所有 API
-            this.apis = await loadApis(apis as any);
+            this.apis = await loadApis(apis as ScanFileResult[]);
 
             // 6. 启动 HTTP服务器
             const apiFetch = apiHandler(this.apis, this.hooks, this.context as BeflyContext);

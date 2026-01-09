@@ -16,11 +16,11 @@ const cachePlugin: Plugin = {
     enable: true,
     deps: ["logger", "redis", "db"],
     async handler(befly: BeflyContext): Promise<CacheHelper> {
-        if (!(befly as any).db) {
+        if (!befly.db) {
             throw new Error("缓存初始化失败：ctx.db 未初始化（Db 插件未加载或注入失败）");
         }
 
-        if (!(befly as any).redis) {
+        if (!befly.redis) {
             throw new Error("缓存初始化失败：ctx.redis 未初始化（Redis 插件未加载或注入失败）");
         }
 

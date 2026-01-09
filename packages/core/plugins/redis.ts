@@ -18,7 +18,7 @@ const redisPlugin: Plugin = {
     enable: true,
     deps: ["logger"],
     async handler(befly: BeflyContext): Promise<RedisHelper | Record<string, never>> {
-        const env = (befly.config as any)?.nodeEnv;
+        const env = befly.config?.nodeEnv;
         const redisPrefix = befly.config?.redis?.prefix;
         try {
             // 启动期已建立 Redis 连接；这里仅校验连接存在
@@ -26,7 +26,7 @@ const redisPlugin: Plugin = {
 
             // 返回 RedisHelper 实例
             return new RedisHelper(redisPrefix);
-        } catch (error: any) {
+        } catch (error: unknown) {
             Logger.error({ env: env, err: error, msg: "Redis 初始化失败" });
             throw error;
         }

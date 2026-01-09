@@ -3,7 +3,7 @@
  */
 
 import type { BeflyContext } from "./befly";
-import type { KeyValue } from "./common";
+import type { JsonValue, KeyValue } from "./common";
 
 /**
  * 同步结果
@@ -30,7 +30,7 @@ export interface SyncOptions {
     /** 同步批次大小 */
     batchSize?: number;
     /** 其他选项 */
-    [key: string]: any;
+    [key: string]: JsonValue | undefined;
 }
 
 /**
@@ -67,7 +67,7 @@ export interface MenuConfig {
     sort?: number;
     parentPath?: string;
     children?: MenuConfig[];
-    [key: string]: any;
+    [key: string]: JsonValue | undefined;
 }
 
 export interface SyncApiItem {
@@ -78,7 +78,7 @@ export interface SyncApiItem {
     path: string;
     parentPath: string;
     addonName: string;
-    [key: string]: any;
+    [key: string]: JsonValue | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ export interface ColumnInfo {
     length: number | null;
     max: number | null;
     nullable: boolean;
-    defaultValue: any;
+    defaultValue: JsonValue;
     comment: string | null;
 }
 
@@ -99,8 +99,8 @@ export type IndexInfo = Record<string, string[]>;
 
 export interface FieldChange {
     type: string;
-    current: any;
-    expected: any;
+    current: JsonValue;
+    expected: JsonValue;
 }
 
 export interface TablePlan {

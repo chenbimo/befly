@@ -2,6 +2,8 @@
  * JWT 相关类型定义
  */
 
+import type { JsonValue } from "./common";
+
 /**
  * JWT Payload 类型
  */
@@ -19,7 +21,7 @@ export interface JwtPayload {
     /** 签发时间 */
     iat?: number;
     /** 其他字段 */
-    [key: string]: any;
+    [key: string]: JsonValue | undefined;
 }
 
 /**
@@ -29,7 +31,7 @@ export interface JwtHeader {
     alg?: string;
     typ?: string;
     kid?: string;
-    [key: string]: any;
+    [key: string]: JsonValue | undefined;
 }
 
 /**

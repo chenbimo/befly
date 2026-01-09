@@ -13,7 +13,9 @@ function ensureEmptyDir(dir: string): void {
 
 describe("utils - sortModules", () => {
     test("should topologically sort by deps", () => {
-        const items: any[] = [
+        type TestModule = { fileName: string; moduleName: string; deps: string[] };
+
+        const items: TestModule[] = [
             { fileName: "b", moduleName: "b", deps: ["a"] },
             { fileName: "a", moduleName: "a", deps: [] },
             { fileName: "c", moduleName: "c", deps: ["b"] }
@@ -21,17 +23,20 @@ describe("utils - sortModules", () => {
 
         const sorted = sortModules(items, { moduleLabel: "测试模块" });
         expect(sorted).not.toBe(false);
-        expect((sorted as any[]).map((x) => x.moduleName)).toEqual(["a", "b", "c"]);
+        if (sorted === false) {
+            throw new Error("Expected sorted result");
+        }
+        expect(sorted.map((x) => x.moduleName)).toEqual(["a", "b", "c"]);
     });
 
     test("missing dependency should return false", () => {
-        const items: any[] = [{ fileName: "a", moduleName: "a", deps: ["notFound"] }];
+        const items = [{ fileName: "a", moduleName: "a", deps: ["notFound"] }];
         const sorted = sortModules(items, { moduleLabel: "测试模块" });
         expect(sorted).toBe(false);
     });
 
     test("cycle dependency should return false", () => {
-        const items: any[] = [
+        const items = [
             { fileName: "a", moduleName: "a", deps: ["b"] },
             { fileName: "b", moduleName: "b", deps: ["a"] }
         ];
@@ -40,7 +45,7 @@ describe("utils - sortModules", () => {
     });
 
     test("duplicate module name should return false", () => {
-        const items: any[] = [
+        const items = [
             { fileName: "a", moduleName: "same", deps: [] },
             { fileName: "b", moduleName: "same", deps: [] }
         ];
@@ -50,7 +55,7 @@ describe("utils - sortModules", () => {
 
     test("stress: long chain deps should sort correctly", () => {
         const len = 120;
-        const items: any[] = [];
+        const items: Array<{ fileName: string; moduleName: string; deps: string[] }> = [];
         for (let i = 0; i < len; i++) {
             const name = `m${i}`;
             const dep = i === 0 ? [] : [`m${i - 1}`];
@@ -62,7 +67,10 @@ describe("utils - sortModules", () => {
 
         const sorted = sortModules(items, { moduleLabel: "测试模块" });
         expect(sorted).not.toBe(false);
-        expect((sorted as any[]).map((x) => x.moduleName)).toEqual(Array.from({ length: len }, (_, i) => `m${i}`));
+        if (sorted === false) {
+            throw new Error("Expected sorted result");
+        }
+        expect(sorted.map((x) => x.moduleName)).toEqual(Array.from({ length: len }, (_, i) => `m${i}`));
     });
 
     test("stress: multi-branch deps should keep partial order", () => {
@@ -72,7 +80,7 @@ describe("utils - sortModules", () => {
         // b   c
         //  \ /
         //   a
-        const items: any[] = [
+        const items: Array<{ fileName: string; moduleName: string; deps: string[] }> = [
             { fileName: "a", moduleName: "a", deps: ["b", "c"] },
             { fileName: "b", moduleName: "b", deps: ["d"] },
             { fileName: "c", moduleName: "c", deps: ["d"] },
@@ -81,7 +89,11 @@ describe("utils - sortModules", () => {
         const sorted = sortModules(items, { moduleLabel: "测试模块" });
         expect(sorted).not.toBe(false);
 
-        const order = (sorted as any[]).map((x) => x.moduleName);
+        if (sorted === false) {
+            throw new Error("Expected sorted result");
+        }
+
+        const order = sorted.map((x) => x.moduleName);
         const indexOf = (name: string) => order.indexOf(name);
 
         expect(indexOf("d")).toBeGreaterThanOrEqual(0);
@@ -135,26 +147,32 @@ describe("utils - scanCoreBuiltins", () => {
         const plugins = scanCoreBuiltinPlugins();
         expect(plugins.length).toBeGreaterThan(0);
 
-        const logger = plugins.find((p: any) => p.name === "logger");
+        const logger = plugins.find((p) => (p as Record<string, unknown>)["name"] === "logger");
         expect(logger).toBeTruthy();
-        expect((logger as any).source).toBe("core");
-        expect((logger as any).type).toBe("plugin");
-        expect((logger as any).moduleName).toBe("logger");
-        expect((logger as any).addonName).toBe("");
-        expect((logger as any).filePath).toBe("core:plugin:logger");
+        if (!logger) {
+            throw new Error("Expected logger plugin");
+        }
+        expect(logger.source).toBe("core");
+        expect(logger.type).toBe("plugin");
+        expect(logger.moduleName).toBe("logger");
+        expect(logger.addonName).toBe("");
+        expect(logger.filePath).toBe("core:plugin:logger");
     });
 
     test("scanCoreBuiltinHooks should include core hooks with stable shape", () => {
         const hooks = scanCoreBuiltinHooks();
         expect(hooks.length).toBeGreaterThan(0);
 
-        const auth = hooks.find((p: any) => p.name === "auth");
+        const auth = hooks.find((p) => (p as Record<string, unknown>)["name"] === "auth");
         expect(auth).toBeTruthy();
-        expect((auth as any).source).toBe("core");
-        expect((auth as any).type).toBe("hook");
-        expect((auth as any).moduleName).toBe("auth");
-        expect((auth as any).addonName).toBe("");
-        expect((auth as any).filePath).toBe("core:hook:auth");
+        if (!auth) {
+            throw new Error("Expected auth hook");
+        }
+        expect(auth.source).toBe("core");
+        expect(auth.type).toBe("hook");
+        expect(auth.moduleName).toBe("auth");
+        expect(auth.addonName).toBe("");
+        expect(auth.filePath).toBe("core:hook:auth");
     });
 });
 
@@ -228,52 +246,83 @@ process.stdout.write(JSON.stringify({
             expect(proc.exitCode).toBe(0);
 
             const text = proc.stdout.toString();
-            const parsed = JSON.parse(text);
+            type ParsedScanSources = {
+                addons: Array<{ name: string; sourceName: string; rootDir: string }>;
+                tables: Array<{
+                    source: string;
+                    type: string;
+                    fileName: string;
+                    content?: { name: string };
+                    customKeys?: unknown;
+                    addonName: string;
+                    moduleName: string;
+                }>;
+                plugins: Array<{ source: string; fileName: string; addonName: string; moduleName: string }>;
+                hooks: Array<{ source: string; fileName: string }>;
+                apis: Array<{ source: string; fileName: string; path: string; addonName: string; moduleName: string }>;
+            };
+
+            const parsed = JSON.parse(text) as ParsedScanSources;
 
             // addons: local should override node_modules
-            const demoAddon = parsed.addons.find((a: any) => a.name === "demo");
+            const demoAddon = parsed.addons.find((a) => a.name === "demo");
             expect(demoAddon).toBeTruthy();
-            expect((demoAddon as any).sourceName).toBe("项目");
-            expect(String((demoAddon as any).rootDir).replace(/\\/g, "/")).toContain("/addons/demo");
+            if (!demoAddon) {
+                throw new Error("Expected demo addon");
+            }
+            expect(demoAddon.sourceName).toBe("项目");
+            expect(String(demoAddon.rootDir).replace(/\\/g, "/")).toContain("/addons/demo");
 
             // app table
-            const appUserTable = parsed.tables.find((t: any) => t.source === "app" && t.fileName === "user");
+            const appUserTable = parsed.tables.find((t) => t.source === "app" && t.fileName === "user");
             expect(appUserTable).toBeTruthy();
-            expect((appUserTable as any).content.name).toBe("user");
-            expect(Array.isArray((appUserTable as any).customKeys)).toBe(true);
+            if (!appUserTable || !appUserTable.content) {
+                throw new Error("Expected app user table content");
+            }
+            expect(appUserTable.content.name).toBe("user");
+            expect(Array.isArray(appUserTable.customKeys)).toBe(true);
 
             // app plugin (and _skip filtered)
-            expect(parsed.plugins.some((p: any) => p.source === "app" && p.fileName === "hello")).toBe(true);
-            expect(parsed.plugins.some((p: any) => p.fileName === "_skip")).toBe(false);
+            expect(parsed.plugins.some((p) => p.source === "app" && p.fileName === "hello")).toBe(true);
+            expect(parsed.plugins.some((p) => p.fileName === "_skip")).toBe(false);
 
             // api routePath formatting
-            const loginApi = parsed.apis.find((a: any) => a.source === "app" && a.fileName === "login");
+            const loginApi = parsed.apis.find((a) => a.source === "app" && a.fileName === "login");
             expect(loginApi).toBeTruthy();
-            expect((loginApi as any).path).toBe("/api/app/user/login");
+            if (!loginApi) {
+                throw new Error("Expected login api");
+            }
+            expect(loginApi.path).toBe("/api/app/user/login");
 
             // local addon scanning should work (tables/plugins/apis under addons/demo)
-            const localAddonTable = parsed.tables.find((t: any) => t.source === "addon" && t.fileName === "local");
+            const localAddonTable = parsed.tables.find((t) => t.source === "addon" && t.fileName === "local");
             expect(localAddonTable).toBeTruthy();
-            expect(Array.isArray((localAddonTable as any).customKeys)).toBe(true);
+            if (!localAddonTable) {
+                throw new Error("Expected local addon table");
+            }
+            expect(Array.isArray(localAddonTable.customKeys)).toBe(true);
 
-            const localAddonPlugin = parsed.plugins.find((p: any) => p.source === "addon" && p.fileName === "localPlugin");
+            const localAddonPlugin = parsed.plugins.find((p) => p.source === "addon" && p.fileName === "localPlugin");
             expect(localAddonPlugin).toBeTruthy();
-            expect((localAddonPlugin as any).addonName).toBe("demo");
-            expect((localAddonPlugin as any).moduleName).toBe("addon_demo_localPlugin");
+            if (!localAddonPlugin) {
+                throw new Error("Expected local addon plugin");
+            }
+            expect(localAddonPlugin.addonName).toBe("demo");
+            expect(localAddonPlugin.moduleName).toBe("addon_demo_localPlugin");
 
             // 同名 demo：本地 addons/demo 覆盖 node_modules/@befly-addon/demo，因此 node_modules 的 demoPlugin/post/ping 不应出现
-            expect(parsed.plugins.some((p: any) => p.source === "addon" && p.fileName === "demoPlugin")).toBe(false);
-            expect(parsed.tables.some((t: any) => t.source === "addon" && t.fileName === "post")).toBe(false);
-            expect(parsed.apis.some((a: any) => a.source === "addon" && a.fileName === "ping")).toBe(false);
+            expect(parsed.plugins.some((p) => p.source === "addon" && p.fileName === "demoPlugin")).toBe(false);
+            expect(parsed.tables.some((t) => t.source === "addon" && t.fileName === "post")).toBe(false);
+            expect(parsed.apis.some((a) => a.source === "addon" && a.fileName === "ping")).toBe(false);
 
             // node_modules-only addon (remote) 应被扫描
-            expect(parsed.plugins.some((p: any) => p.source === "addon" && p.fileName === "remotePlugin")).toBe(true);
-            expect(parsed.tables.some((t: any) => t.source === "addon" && t.fileName === "remote")).toBe(true);
-            expect(parsed.apis.some((a: any) => a.source === "addon" && a.fileName === "pong")).toBe(true);
+            expect(parsed.plugins.some((p) => p.source === "addon" && p.fileName === "remotePlugin")).toBe(true);
+            expect(parsed.tables.some((t) => t.source === "addon" && t.fileName === "remote")).toBe(true);
+            expect(parsed.apis.some((a) => a.source === "addon" && a.fileName === "pong")).toBe(true);
 
             // core builtins should always exist
-            expect(parsed.plugins.some((p: any) => p.source === "core")).toBe(true);
-            expect(parsed.hooks.some((h: any) => h.source === "core")).toBe(true);
+            expect(parsed.plugins.some((p) => p.source === "core")).toBe(true);
+            expect(parsed.hooks.some((h) => h.source === "core")).toBe(true);
         } finally {
             rmSync(root, { recursive: true, force: true });
         }

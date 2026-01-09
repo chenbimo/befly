@@ -57,7 +57,7 @@ export function fieldClear<T = any>(data: T | T[], options: FieldClearOptions = 
     };
 
     if (isArray(data)) {
-        return (data as any[])
+        return (data as unknown[])
             .map((item) => (isObject(item) ? filterObj(item) : item))
             .filter((item) => {
                 if (isObject(item)) {

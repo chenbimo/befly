@@ -11,15 +11,16 @@ import { sortModules } from "../utils/sortModules";
 export async function loadHooks(hooks: ScanFileResult[]): Promise<Hook[]> {
     const hooksMap: Hook[] = [];
 
-    const enabledHooks = hooks.filter((item: any) => {
-        const moduleName = item?.moduleName;
+    const enabledHooks = hooks.filter((item) => {
+        const moduleName = item.moduleName;
         if (typeof moduleName !== "string" || moduleName.trim() === "") {
             return false;
         }
 
         // enable=false 表示禁用（替代 disableHooks 列表）。
         // enable 仅允许 boolean；缺失 enable 的默认值应在 checkHook 阶段被补全为 true。
-        if (item?.enable === false) {
+        const enable = Object.hasOwn(item, "enable") ? (item as { enable?: unknown }).enable : undefined;
+        if (enable === false) {
             return false;
         }
 
@@ -32,14 +33,21 @@ export async function loadHooks(hooks: ScanFileResult[]): Promise<Hook[]> {
     }
 
     for (const item of sortedHooks) {
-        const hookName = (item as any).moduleName as string;
-        const hook = item as any as Hook;
+        const hookName = item.moduleName;
+        const depsRaw = Object.hasOwn(item, "deps") ? (item as { deps?: unknown }).deps : undefined;
+        const deps = Array.isArray(depsRaw) ? depsRaw.filter((x): x is string => typeof x === "string") : [];
+
+        const handlerRaw = Object.hasOwn(item, "handler") ? (item as { handler?: unknown }).handler : undefined;
+        if (typeof handlerRaw !== "function") {
+            throw new Error(`Hook '${hookName}' handler 必须是函数`);
+        }
+        const handler = handlerRaw as Hook["handler"];
 
         hooksMap.push({
             name: hookName,
             enable: true,
-            deps: Array.isArray(hook.deps) ? hook.deps : [],
-            handler: hook.handler
+            deps: deps,
+            handler: handler
         });
     }
 

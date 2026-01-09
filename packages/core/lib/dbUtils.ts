@@ -315,7 +315,7 @@ export class DbUtils {
             const newKey = DbUtils.processJoinWhereKey(key);
 
             if (key === "$or" || key === "$and") {
-                result[newKey] = (value as any[]).map((item) => DbUtils.processJoinWhere(item));
+                result[newKey] = Array.isArray(value) ? value.map((item) => DbUtils.processJoinWhere(item)) : [];
             } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
                 result[newKey] = DbUtils.processJoinWhere(value);
             } else {
@@ -397,7 +397,7 @@ export class DbUtils {
         for (const [key, value] of Object.entries(where)) {
             // 保留 $or, $and 等逻辑操作符
             if (key === "$or" || key === "$and") {
-                result[key] = (value as any[]).map((item) => DbUtils.whereKeysToSnake(item));
+                result[key] = Array.isArray(value) ? value.map((item) => DbUtils.whereKeysToSnake(item)) : [];
                 continue;
             }
 

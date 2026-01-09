@@ -29,7 +29,7 @@ describe("tableRef normalize + escape", () => {
 describe("DbHelper.getList deserialize", () => {
     it("getList: 数组字段应被 DbUtils.deserializeArrayFields 反序列化", async () => {
         const sqlMock = {
-            unsafe: mock(async (sql: string, _params?: any[]) => {
+            unsafe: mock(async (sql: string, _params?: unknown[]) => {
                 if (sql.includes("COUNT(*) as total")) {
                     return [{ total: 1 }];
                 }
@@ -51,7 +51,7 @@ describe("DbHelper.getList deserialize", () => {
             genTimeID: mock(async () => 1)
         };
 
-        const dbHelper = new DbHelper({ redis: redisMock as any, sql: sqlMock as any, dialect: new MySqlDialect() });
+        const dbHelper = new DbHelper({ redis: redisMock, sql: sqlMock, dialect: new MySqlDialect() });
 
         const result = await dbHelper.getList<{ id: number; tags: string[] }>({
             table: "users",

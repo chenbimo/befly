@@ -3,8 +3,11 @@
  * 提供常用的工具函数
  */
 
+import type { JsonValue } from "../types/common";
 import type { RequestContext } from "../types/context";
 import type { Plugin } from "../types/plugin";
+
+type ToolExtra = Record<string, JsonValue | undefined>;
 
 /**
  * 成功响应
@@ -13,7 +16,7 @@ import type { Plugin } from "../types/plugin";
  * @param other - 其他字段（可选）
  * @returns 成功响应对象
  */
-export function Yes(msg: string, data: any = {}, other: Record<string, any> = {}) {
+export function Yes<TData extends JsonValue = JsonValue, TOther extends ToolExtra = ToolExtra>(msg: string, data: TData = {} as TData, other: TOther = {} as TOther): { code: 0; msg: string; data: TData } & TOther {
     return {
         code: 0,
         msg: msg,
@@ -29,7 +32,7 @@ export function Yes(msg: string, data: any = {}, other: Record<string, any> = {}
  * @param other - 其他字段（可选）
  * @returns 失败响应对象
  */
-export function No(msg: string, data: any = null, other: Record<string, any> = {}) {
+export function No<TData extends JsonValue = JsonValue, TOther extends ToolExtra = ToolExtra>(msg: string, data: TData = null as TData, other: TOther = {} as TOther): { code: 1; msg: string; data: TData } & TOther {
     return {
         code: 1,
         msg: msg,
@@ -79,7 +82,7 @@ interface ResponseOptions {
  *   headers: { 'X-Custom': 'value' }
  * });
  */
-export function Raw(ctx: RequestContext, data: Record<string, any> | string, options: ResponseOptions = {}): Response {
+export function Raw(ctx: RequestContext, data: JsonValue | string, options: ResponseOptions = {}): Response {
     const { status = 200, contentType, headers = {} } = options;
 
     // 自动判断 Content-Type
@@ -94,7 +97,7 @@ export function Raw(ctx: RequestContext, data: Record<string, any> | string, opt
             finalContentType = data.trim().startsWith("<") ? "application/xml" : "text/plain";
         }
     } else {
-        // 对象类型，JSON 序列化
+        // JSON 序列化（对象/数组/原始值均可）
         body = JSON.stringify(data);
         finalContentType = finalContentType || "application/json";
     }

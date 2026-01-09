@@ -7,7 +7,7 @@
  */
 
 import type { DbDialectName } from "../lib/dbDialect";
-import type { BeflyContext } from "../types/befly";
+import type { JsonValue } from "../types/common";
 import type { DbResult, SqlInfo } from "../types/database";
 import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/sync";
 import type { FieldDefinition } from "../types/validate";
@@ -23,6 +23,19 @@ type SqlExecutor = {
     unsafe<T = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>>;
 };
 
+type SyncTableContext = {
+    db: SqlExecutor;
+    redis: {
+        delBatch(keys: string[]): Promise<unknown>;
+    };
+    config: {
+        db?: {
+            type?: string;
+            database?: string;
+        };
+    };
+};
+
 type MySqlTableExistsRow = { count: number };
 type MySqlColumnInfoRow = {
     COLUMN_NAME: string;
@@ -30,7 +43,7 @@ type MySqlColumnInfoRow = {
     COLUMN_TYPE: string;
     CHARACTER_MAXIMUM_LENGTH: number | null;
     IS_NULLABLE: "YES" | "NO";
-    COLUMN_DEFAULT: any;
+    COLUMN_DEFAULT: unknown;
     COLUMN_COMMENT: string | null;
 };
 
@@ -40,7 +53,7 @@ type PgColumnInfoRow = {
     data_type: string;
     character_maximum_length: number | null;
     is_nullable: string;
-    column_default: any;
+    column_default: unknown;
 };
 type PgColumnCommentRow = {
     column_name: string;
@@ -61,7 +74,7 @@ type SqliteTableInfoRow = {
     name: string;
     type: string;
     notnull: number;
-    dflt_value: any;
+    dflt_value: unknown;
 };
 
 type SqliteIndexListRow = { name: string };
@@ -87,14 +100,14 @@ type DbDialect = DbDialectName;
  * 5) plan/apply（写变更：建表/改表/SQLite 重建）
  */
 
-type SyncTableFn = ((ctx: BeflyContext, items: ScanFileResult[]) => Promise<void>) & {
+type SyncTableFn = ((ctx: SyncTableContext, items: ScanFileResult[]) => Promise<void>) & {
     TestKit: typeof SYNC_TABLE_TEST_KIT;
 };
 
 /**
  * 数据库同步命令入口（函数模式）
  */
-export const syncTable = (async (ctx: BeflyContext, items: ScanFileResult[]): Promise<void> => {
+export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[]): Promise<void> => {
     try {
         // 记录处理过的表名（用于清理缓存）
         const processedTables: string[] = [];
@@ -182,10 +195,12 @@ export const syncTable = (async (ctx: BeflyContext, items: ScanFileResult[]): Pr
 
             const existsTable = await tableExistsRuntime(runtime, tableName);
 
+            const tableFields = tableDefinition as Record<string, FieldDefinition>;
+
             if (existsTable) {
-                await modifyTableRuntime(runtime, tableName, tableDefinition as any);
+                await modifyTableRuntime(runtime, tableName, tableFields);
             } else {
-                await createTable(runtime, tableName, tableDefinition as any);
+                await createTable(runtime, tableName, tableFields);
             }
 
             // 记录处理过的表名（用于清理缓存）
@@ -331,7 +346,7 @@ const SYNC_TABLE_TEST_KIT = {
     getTableColumnsRuntime: getTableColumnsRuntime,
     getTableIndexesRuntime: getTableIndexesRuntime,
 
-    createRuntime: (dbDialect: DbDialect, db: SqlExecutor, dbName: string = ""): SyncRuntime => {
+    createRuntime: (dbDialect: DbDialect, db: SqlExecutor | null, dbName: string = ""): SyncRuntimeForIO => {
         return {
             dbDialect: dbDialect,
             db: db,
@@ -384,25 +399,115 @@ function escapeComment(str: string): string {
     return String(str).replace(/"/g, '\\"');
 }
 
+function normalizeColumnDefaultValue(value: unknown): JsonValue {
+    if (value === null) return null;
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
+    if (Array.isArray(value)) {
+        const items: JsonValue[] = [];
+        for (const v of value) {
+            items.push(normalizeColumnDefaultValue(v));
+        }
+        return items;
+    }
+    return String(value);
+}
+
 // 注意：这里刻意不封装“logFieldChange/formatFieldList”之类的一次性工具函数，
 // 以减少抽象层级（按项目要求：能直写就直写）。
 
 /**
  * 为字段定义应用默认值
  */
-function applyFieldDefaults(fieldDef: any): void {
-    if (!fieldDef || typeof fieldDef !== "object") return;
+function isJsonValue(value: unknown): value is JsonValue {
+    if (value === null) return true;
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return true;
 
-    const normalized = normalizeFieldDefinition(fieldDef as FieldDefinition);
-    fieldDef.detail = normalized.detail;
-    fieldDef.min = normalized.min;
-    fieldDef.max = normalized.max;
-    fieldDef.default = normalized.default;
-    fieldDef.index = normalized.index;
-    fieldDef.unique = normalized.unique;
-    fieldDef.nullable = normalized.nullable;
-    fieldDef.unsigned = normalized.unsigned;
-    fieldDef.regexp = normalized.regexp;
+    if (Array.isArray(value)) {
+        return value.every((v) => isJsonValue(v));
+    }
+
+    if (typeof value === "object") {
+        for (const v of Object.values(value as Record<string, unknown>)) {
+            if (v === undefined) continue;
+            if (!isJsonValue(v)) return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+function applyFieldDefaults(fieldDef: unknown): void {
+    if (!fieldDef || typeof fieldDef !== "object") return;
+    const record = fieldDef as Record<string, unknown>;
+
+    const name = record["name"];
+    const type = record["type"];
+    if (typeof name !== "string" || typeof type !== "string") return;
+
+    const minRaw = record["min"];
+    const maxRaw = record["max"];
+    const defaultRaw = record["default"];
+    const detailRaw = record["detail"];
+    const indexRaw = record["index"];
+    const uniqueRaw = record["unique"];
+    const nullableRaw = record["nullable"];
+    const unsignedRaw = record["unsigned"];
+    const regexpRaw = record["regexp"];
+
+    const input: FieldDefinition = {
+        name: name,
+        type: type
+    };
+
+    if (typeof detailRaw === "string") {
+        input.detail = detailRaw;
+    }
+
+    if (typeof minRaw === "number" || minRaw === null) {
+        input.min = minRaw;
+    }
+
+    if (typeof maxRaw === "number" || maxRaw === null) {
+        input.max = maxRaw;
+    }
+
+    if (defaultRaw === null) {
+        input.default = null;
+    } else if (isJsonValue(defaultRaw)) {
+        input.default = defaultRaw;
+    }
+
+    if (typeof indexRaw === "boolean") {
+        input.index = indexRaw;
+    }
+
+    if (typeof uniqueRaw === "boolean") {
+        input.unique = uniqueRaw;
+    }
+
+    if (typeof nullableRaw === "boolean") {
+        input.nullable = nullableRaw;
+    }
+
+    if (typeof unsignedRaw === "boolean") {
+        input.unsigned = unsignedRaw;
+    }
+
+    if (typeof regexpRaw === "string" || regexpRaw === null) {
+        input.regexp = regexpRaw;
+    }
+
+    const normalized = normalizeFieldDefinition(input);
+    record["detail"] = normalized.detail;
+    record["min"] = normalized.min;
+    record["max"] = normalized.max;
+    record["default"] = normalized.default;
+    record["index"] = normalized.index;
+    record["unique"] = normalized.unique;
+    record["nullable"] = normalized.nullable;
+    record["unsigned"] = normalized.unsigned;
+    record["regexp"] = normalized.regexp;
 }
 
 /**
@@ -637,7 +742,7 @@ async function executeDDLSafely(db: SqlExecutor, stmt: string): Promise<boolean>
 /**
  * 判断是否为兼容的类型变更（宽化型变更，无数据丢失风险）
  */
-function isCompatibleTypeChange(currentType: string, newType: string): boolean {
+function isCompatibleTypeChange(currentType: string | null | undefined, newType: string | null | undefined): boolean {
     // 说明：该函数用于“自动同步”里的安全阈值判断。
     // - 允许：宽化型变更（不收缩、不改变语义大类），例如：
     //   - INT -> BIGINT（或 tinyint/smallint/mediumint -> 更宽的整型）
@@ -690,6 +795,12 @@ type SyncRuntime = {
     dbName: string;
 };
 
+type SyncRuntimeForIO = {
+    dbDialect: DbDialect;
+    db: SqlExecutor | null;
+    dbName: string;
+};
+
 /* ========================================================================== */
 /* runtime I/O（只读：读库/元信息查询）
  *
@@ -704,8 +815,9 @@ type SyncRuntime = {
 // 读：表是否存在
 // ---------------------------------------------------------------------------
 
-async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Promise<boolean> {
-    if (!runtime.db) throw new Error("SQL 执行器未初始化");
+async function tableExistsRuntime(runtime: SyncRuntimeForIO, tableName: string): Promise<boolean> {
+    const db = runtime.db;
+    if (!db) throw new Error("SQL 执行器未初始化");
     try {
         // 统一交由方言层构造 SQL；syncTable 仅决定“要查哪个 schema/db”。
         // - MySQL：传 runtime.dbName（information_schema.table_schema）
@@ -719,7 +831,7 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
         }
 
         const q = getDialectByName(runtime.dbDialect).tableExistsQuery(tableName, schema);
-        const res = await runtime.db.unsafe<MySqlTableExistsRow[] | PgTableExistsRow[]>(q.sql, q.params);
+        const res = await db.unsafe<MySqlTableExistsRow[] | PgTableExistsRow[]>(q.sql, q.params);
         return (res.data?.[0]?.count || 0) > 0;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
@@ -733,8 +845,11 @@ async function tableExistsRuntime(runtime: SyncRuntime, tableName: string): Prom
 // 读：列信息
 // ---------------------------------------------------------------------------
 
-async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
+async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
     const columns: { [key: string]: ColumnInfo } = {};
+
+    const db = runtime.db;
+    if (!db) throw new Error("SQL 执行器未初始化");
 
     try {
         // 方言差异说明：
@@ -743,9 +858,9 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
         // - SQLite：PRAGMA table_info 仅提供 type/notnull/default 等有限信息，无列注释。
         if (runtime.dbDialect === "mysql") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe<MySqlColumnInfoRow[]>(q.columns.sql, q.columns.params);
+            const result = await db.unsafe<MySqlColumnInfoRow[]>(q.columns.sql, q.columns.params);
             for (const row of result.data) {
-                const defaultValue = row.COLUMN_DEFAULT;
+                const defaultValue = normalizeColumnDefaultValue(row.COLUMN_DEFAULT);
 
                 columns[row.COLUMN_NAME] = {
                     type: row.DATA_TYPE,
@@ -759,8 +874,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
             }
         } else if (runtime.dbDialect === "postgresql") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe<PgColumnInfoRow[]>(q.columns.sql, q.columns.params);
-            const comments = q.comments ? (await runtime.db.unsafe<PgColumnCommentRow[]>(q.comments.sql, q.comments.params)).data : [];
+            const result = await db.unsafe<PgColumnInfoRow[]>(q.columns.sql, q.columns.params);
+            const comments = q.comments ? (await db.unsafe<PgColumnCommentRow[]>(q.comments.sql, q.comments.params)).data : [];
             const commentMap: { [key: string]: string } = {};
             for (const r of comments) commentMap[r.column_name] = r.column_comment;
 
@@ -771,13 +886,13 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                     length: row.character_maximum_length,
                     max: row.character_maximum_length,
                     nullable: String(row.is_nullable).toUpperCase() === "YES",
-                    defaultValue: row.column_default,
+                    defaultValue: normalizeColumnDefaultValue(row.column_default),
                     comment: commentMap[row.column_name] ?? null
                 };
             }
         } else if (runtime.dbDialect === "sqlite") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "sqlite", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe<SqliteTableInfoRow[]>(q.columns.sql, q.columns.params);
+            const result = await db.unsafe<SqliteTableInfoRow[]>(q.columns.sql, q.columns.params);
             for (const row of result.data) {
                 let baseType = String(row.type || "").toUpperCase();
                 let max = null;
@@ -798,7 +913,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
                     length: max,
                     max: max,
                     nullable: row.notnull === 0,
-                    defaultValue: row.dflt_value,
+                    defaultValue: normalizeColumnDefaultValue(row.dflt_value),
                     comment: null
                 };
             }
@@ -817,8 +932,11 @@ async function getTableColumnsRuntime(runtime: SyncRuntime, tableName: string): 
 // 读：索引信息（单列索引）
 // ---------------------------------------------------------------------------
 
-async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): Promise<IndexInfo> {
+async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: string): Promise<IndexInfo> {
     const indexes: IndexInfo = {};
+
+    const db = runtime.db;
+    if (!db) throw new Error("SQL 执行器未初始化");
 
     try {
         // 方言差异说明：
@@ -827,7 +945,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
         // - SQLite：PRAGMA index_list + index_info；同样仅收集单列索引，避免多列索引误判。
         if (runtime.dbDialect === "mysql") {
             const q = getSyncTableIndexesQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe<MySqlIndexRow[]>(q.sql, q.params);
+            const result = await db.unsafe<MySqlIndexRow[]>(q.sql, q.params);
             for (const row of result.data) {
                 const indexName = row.INDEX_NAME;
                 const current = indexes[indexName];
@@ -839,7 +957,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
             }
         } else if (runtime.dbDialect === "postgresql") {
             const q = getSyncTableIndexesQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
-            const result = await runtime.db.unsafe<PgIndexRow[]>(q.sql, q.params);
+            const result = await db.unsafe<PgIndexRow[]>(q.sql, q.params);
             for (const row of result.data) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {
@@ -850,10 +968,10 @@ async function getTableIndexesRuntime(runtime: SyncRuntime, tableName: string): 
             }
         } else if (runtime.dbDialect === "sqlite") {
             const quotedTable = quoteIdentifier("sqlite", tableName);
-            const list = await runtime.db.unsafe<SqliteIndexListRow[]>(`PRAGMA index_list(${quotedTable})`);
+            const list = await db.unsafe<SqliteIndexListRow[]>(`PRAGMA index_list(${quotedTable})`);
             for (const idx of list.data) {
                 const quotedIndex = quoteIdentifier("sqlite", idx.name);
-                const info = await runtime.db.unsafe<SqliteIndexInfoRow[]>(`PRAGMA index_info(${quotedIndex})`);
+                const info = await db.unsafe<SqliteIndexInfoRow[]>(`PRAGMA index_info(${quotedIndex})`);
                 const cols = info.data.map((r) => r.name);
                 if (cols.length === 1) indexes[idx.name] = cols;
             }
@@ -930,7 +1048,7 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
 /**
  * 比较字段定义变化
  */
-function compareFieldDefinition(dbDialect: DbDialect, existingColumn: ColumnInfo, fieldDef: FieldDefinition): FieldChange[] {
+function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Pick<ColumnInfo, "type" | "max" | "nullable" | "defaultValue" | "comment">, fieldDef: FieldDefinition): FieldChange[] {
     const changes: FieldChange[] = [];
 
     const normalized = normalizeFieldDefinition(fieldDef);

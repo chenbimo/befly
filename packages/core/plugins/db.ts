@@ -19,9 +19,9 @@ const dbPlugin: Plugin = {
     enable: true,
     deps: ["logger", "redis"],
     async handler(befly: BeflyContext): Promise<DbHelper> {
-        const env = (befly.config as any)?.nodeEnv;
+        const env = befly.config?.nodeEnv;
 
-        if (!(befly as any).redis) {
+        if (!befly.redis) {
             throw new Error("Redis 未初始化");
         }
 
@@ -36,7 +36,7 @@ const dbPlugin: Plugin = {
             const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: dialect });
 
             return dbManager;
-        } catch (error: any) {
+        } catch (error: unknown) {
             Logger.error({ env: env, err: error, msg: "数据库初始化失败" });
             throw error;
         }

@@ -3,17 +3,23 @@
  */
 
 import type { ApiRoute } from "./api";
+import type { JsonValue } from "./common";
+import type { JwtPayload } from "./jwt";
+
+export type RequestUser = Partial<JwtPayload>;
+
+export type RequestResult = Response | JsonValue;
 
 /**
  * 请求上下文接口
  */
-export interface RequestContext<TBody = Record<string, any>> {
+export interface RequestContext<TBody = Record<string, JsonValue>> {
     /** 请求方法 (GET/POST) */
     method: string;
     /** 请求体参数 */
     body: TBody;
     /** 用户信息 */
-    user: Record<string, any>;
+    user: RequestUser;
     /** 原始请求对象 */
     req: Request;
     /** 请求开始时间（毫秒） */
@@ -33,5 +39,5 @@ export interface RequestContext<TBody = Record<string, any>> {
     /** 响应对象（如果设置了此属性，将直接返回该响应） */
     response?: Response;
     /** 原始处理结果（未转换为 Response 对象前） */
-    result?: any;
+    result?: RequestResult;
 }

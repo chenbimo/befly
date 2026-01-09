@@ -9,6 +9,8 @@
  * - isCompatibleTypeChange
  */
 
+import type { FieldDefinition } from "../types/validate.ts";
+
 import { describe, test, expect } from "bun:test";
 
 import { syncTable } from "../sync/syncTable.ts";
@@ -105,8 +107,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 nullable: false,
                 unsigned: true
             }
-        };
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields as any);
+        } satisfies Record<string, FieldDefinition>;
+        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
         expect(defs.length).toBe(1);
         expect(defs[0]).toContain("`user_name`");
         expect(defs[0]).toContain("VARCHAR(50)");
@@ -126,8 +128,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 nullable: false,
                 unsigned: true
             }
-        };
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields as any);
+        } satisfies Record<string, FieldDefinition>;
+        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
         expect(defs[0]).toContain("`age`");
         expect(defs[0]).toContain("BIGINT UNSIGNED");
         expect(defs[0]).toContain("DEFAULT 0");
@@ -144,8 +146,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 nullable: false,
                 unsigned: true
             }
-        };
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields as any);
+        } satisfies Record<string, FieldDefinition>;
+        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
         expect(defs[0]).toContain("UNIQUE");
     });
 
@@ -160,8 +162,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 nullable: true,
                 unsigned: true
             }
-        };
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields as any);
+        } satisfies Record<string, FieldDefinition>;
+        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
         expect(defs[0]).toContain("NULL");
         expect(defs[0]).not.toContain("NOT NULL");
     });
@@ -177,8 +179,8 @@ describe("generateDDLClause (MySQL)", () => {
             unique: false,
             nullable: false,
             unsigned: true
-        };
-        const clause = syncTable.TestKit.generateDDLClause("mysql", "userName", fieldDef as any, true);
+        } satisfies FieldDefinition;
+        const clause = syncTable.TestKit.generateDDLClause("mysql", "userName", fieldDef, true);
         expect(clause).toContain("ADD COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(50)");
@@ -193,8 +195,8 @@ describe("generateDDLClause (MySQL)", () => {
             unique: false,
             nullable: false,
             unsigned: true
-        };
-        const clause = syncTable.TestKit.generateDDLClause("mysql", "userName", fieldDef as any, false);
+        } satisfies FieldDefinition;
+        const clause = syncTable.TestKit.generateDDLClause("mysql", "userName", fieldDef, false);
         expect(clause).toContain("MODIFY COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(100)");
@@ -239,7 +241,7 @@ describe("isCompatibleTypeChange", () => {
     });
 
     test("空值处理", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange(null as any, "text")).toBe(false);
-        expect(syncTable.TestKit.isCompatibleTypeChange("text", null as any)).toBe(false);
+        expect(syncTable.TestKit.isCompatibleTypeChange(null, "text")).toBe(false);
+        expect(syncTable.TestKit.isCompatibleTypeChange("text", null)).toBe(false);
     });
 });

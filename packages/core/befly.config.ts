@@ -102,16 +102,16 @@ export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
     const commonConfig = await importDefault(join(configsDir, "befly.common.json"), {});
     const envConfig = await importDefault(join(configsDir, `befly.${nodeEnv}.json`), {});
 
-    const config = mergeAndConcat(defaultOptions, commonConfig, envConfig);
+    const config = mergeAndConcat<BeflyOptions>(defaultOptions, commonConfig, envConfig);
 
     // 重要：nodeEnv 的来源只从 Befly.start(env) 的入参 env.NODE_ENV 传入，避免 process.env 在 bundle 阶段被常量折叠。
     // 同时确保运行时行为（例如 Bun.serve development 标记）与实际选择的配置文件一致。
-    (config as any).nodeEnv = nodeEnv;
+    config.nodeEnv = nodeEnv;
 
     // 配置校验：redis.prefix 作为 key 前缀，由 RedisHelper 统一拼接 ":"。
     // 因此 prefix 本身不允许包含 ":"，否则会导致 key 结构出现空段或多段分隔（例如 "prefix::key"），
     // 在 RedisInsight 等工具里可能显示 [NO NAME] 空分组，且容易造成 key 管理混乱。
-    const redisPrefix = (config as any)?.redis?.prefix;
+    const redisPrefix = config.redis?.prefix;
     if (typeof redisPrefix === "string") {
         const trimmedPrefix = redisPrefix.trim();
         if (trimmedPrefix.includes(":")) {
@@ -119,5 +119,5 @@ export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
         }
     }
 
-    return config as BeflyOptions;
+    return config;
 }

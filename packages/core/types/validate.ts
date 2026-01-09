@@ -2,6 +2,8 @@
  * 数据验证相关类型定义
  */
 
+import type { JsonValue } from "./common";
+
 /**
  * 字段类型
  */
@@ -29,7 +31,7 @@ export interface FieldDefinition {
      * 默认值。
      * - 缺省默认：null（表示字段未提供默认值）
      */
-    default?: any;
+    default?: JsonValue | null;
     /**
      * 字段描述。
      * - 缺省默认：""（空字符串）
@@ -83,7 +85,7 @@ export interface ValidateResult {
  * single(value, fieldDef) 的返回结构
  */
 export interface SingleResult {
-    value: any;
+    value: JsonValue | null;
     error: string | null;
 }
 
@@ -95,6 +97,15 @@ export interface SingleResult {
  * - `Validator.single(value, fieldDef)`
  */
 export interface ValidatorStatic {
-    validate(data: Record<string, any>, rules: TableDefinition, required?: string[]): ValidateResult;
-    single(value: any, fieldDef: FieldDefinition): SingleResult;
+    /**
+     * 推荐签名：正常业务使用。
+     */
+    validate(data: Record<string, JsonValue>, rules: TableDefinition, required?: string[]): ValidateResult;
+
+    /**
+     * 宽签名：用于边界输入（例如测试传入非法参数）——实现内部会做运行时校验。
+     */
+    validate(data: unknown, rules: unknown, required?: string[]): ValidateResult;
+
+    single(value: unknown, fieldDef: FieldDefinition): SingleResult;
 }

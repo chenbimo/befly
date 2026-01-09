@@ -4,6 +4,8 @@
  * 说明：这里的类型需要与 core/runtime 的 logger 实现保持一致（大量配置项以 0/1 表示开关）。
  */
 
+import type { JsonValue } from "./common";
+
 export type LoggerFlag = 0 | 1;
 
 /**
@@ -45,14 +47,32 @@ export interface LoggerConfig {
 
 export type LogLevelName = "debug" | "info" | "warn" | "error";
 
+/**
+ * LoggerRecord 允许出现的值类型。
+ * - JsonValue：可序列化数据
+ * - Error：允许直接传入错误对象（运行时会清洗成可序列化结构）
+ * - object：允许传入非 plain object（如 Date/Map/Set/自定义 class 实例），由运行时做安全预览/截断
+ */
+export type LoggerRecordValue = JsonValue | Error | object;
+
 export type LoggerRecord = {
     /** 文本消息（推荐直接放在 record 里） */
     msg?: string;
     /** 错误对象（会在运行时被清洗为可序列化结构） */
-    err?: unknown;
+    err?: Error | JsonValue;
     /** 其他自定义字段 */
-    [key: string]: unknown;
+    [key: string]: LoggerRecordValue | undefined;
 };
+
+/**
+ * Logger 的可替换 sink（用于测试 mock）。
+ */
+export interface LoggerSink {
+    info(record: LoggerRecord): void;
+    warn(record: LoggerRecord): void;
+    error(record: LoggerRecord): void;
+    debug(record: LoggerRecord): void;
+}
 
 /**
  * Logger 接口（类型层）。
@@ -66,16 +86,16 @@ export interface Logger {
      * - plain object（{}）会作为 record 写入
      * - 其他任何类型会被包装成对象后写入（例如 { msg: "..." } 或 { value: ... }）
      */
-    info(input: unknown): any;
+    info(input: unknown): void;
 
-    warn(input: unknown): any;
+    warn(input: unknown): void;
 
-    error(input: unknown): any;
+    error(input: unknown): void;
 
-    debug(input: unknown): any;
+    debug(input: unknown): void;
 
     configure(cfg: LoggerConfig): void;
-    setMock(mock: any | null): void;
+    setMock(mock: LoggerSink | null): void;
 
     /**
      * 将当前 buffer 尽快刷入 sink（不会关闭文件句柄）。

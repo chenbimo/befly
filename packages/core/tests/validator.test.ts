@@ -59,42 +59,42 @@ describe("Validator.validate - 返回结构", () => {
 
 describe("Validator.validate - 参数检查", () => {
     test("data 为 null", () => {
-        const result = Validator.validate(null as any, {});
+        const result = Validator.validate(null, {});
 
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("对象格式");
     });
 
     test("data 为 undefined", () => {
-        const result = Validator.validate(undefined as any, {});
+        const result = Validator.validate(undefined, {});
 
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("对象格式");
     });
 
     test("data 为数组", () => {
-        const result = Validator.validate([] as any, {});
+        const result = Validator.validate([], {});
 
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("对象格式");
     });
 
     test("data 为字符串", () => {
-        const result = Validator.validate("string" as any, {});
+        const result = Validator.validate("string", {});
 
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("对象格式");
     });
 
     test("rules 为 null", () => {
-        const result = Validator.validate({}, null as any);
+        const result = Validator.validate({}, null);
 
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("对象格式");
     });
 
     test("rules 为 undefined", () => {
-        const result = Validator.validate({}, undefined as any);
+        const result = Validator.validate({}, undefined);
 
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("对象格式");

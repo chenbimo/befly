@@ -3,7 +3,8 @@
  * 纯静态类设计，简洁易用
  */
 
-import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from "../types/validate";
+import type { JsonValue } from "../types/common";
+import type { FieldDefinition, ValidateResult, SingleResult } from "../types/validate";
 
 import { RegexAliases, getCompiledRegex } from "../configs/presetRegexp";
 import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
@@ -28,33 +29,36 @@ export class Validator {
     /**
      * 验证数据对象
      */
-    static validate(data: Record<string, any>, rules: TableDefinition, required: string[] = []): ValidateResult {
+    static validate(data: unknown, rules: unknown, required: string[] = []): ValidateResult {
         const fieldErrors: Record<string, string> = {};
 
         // 参数检查
-        if (!data || typeof data !== "object" || Array.isArray(data)) {
+        if (typeof data !== "object" || data === null || Array.isArray(data)) {
             return this.buildResult({ _error: "数据必须是对象格式" });
         }
-        if (!rules || typeof rules !== "object") {
+        if (typeof rules !== "object" || rules === null) {
             return this.buildResult({ _error: "验证规则必须是对象格式" });
         }
 
+        const dataRecord = data as Record<string, unknown>;
+        const rulesRecord = rules as Record<string, FieldDefinition>;
+
         // 检查必填字段
         for (const field of required) {
-            const value = data[field];
+            const value = dataRecord[field];
             if (value === undefined || value === null) {
-                const label = rules[field]?.name || field;
+                const label = rulesRecord[field]?.name || field;
                 fieldErrors[field] = `${label}为必填项`;
             }
         }
 
         // 验证有值的字段
-        for (const [field, rule] of Object.entries(rules)) {
+        for (const [field, rule] of Object.entries(rulesRecord)) {
             if (fieldErrors[field]) continue;
             // 字段值为 undefined 时跳过验证（除非是必填字段，但必填字段已在上面检查过）
-            if (data[field] === undefined && !required.includes(field)) continue;
+            if (dataRecord[field] === undefined && !required.includes(field)) continue;
 
-            const error = this.checkField(data[field], rule, field);
+            const error = this.checkField(dataRecord[field], rule, field);
             if (error) fieldErrors[field] = error;
         }
 
@@ -64,7 +68,7 @@ export class Validator {
     /**
      * 验证单个值（带类型转换）
      */
-    static single(value: any, fieldDef: FieldDefinition): SingleResult {
+    static single(value: unknown, fieldDef: FieldDefinition): SingleResult {
         const normalized = normalizeFieldDefinition(fieldDef);
         const type = normalized.type;
         const defaultValue = normalized.default;
@@ -86,7 +90,7 @@ export class Validator {
             return { value: null, error: error };
         }
 
-        return { value: converted.value, error: null };
+        return { value: converted.value as JsonValue, error: null };
     }
 
     // ========== 私有方法 ==========
@@ -108,7 +112,7 @@ export class Validator {
     }
 
     /** 验证单个字段 */
-    private static checkField(value: any, fieldDef: FieldDefinition, fieldName: string): string | null {
+    private static checkField(value: unknown, fieldDef: FieldDefinition, fieldName: string): string | null {
         const label = fieldDef.name || fieldName;
 
         const converted = this.convert(value, fieldDef.type);
@@ -121,7 +125,7 @@ export class Validator {
     }
 
     /** 类型转换 */
-    private static convert(value: any, type: string): { value: any; error: string | null } {
+    private static convert(value: unknown, type: string): { value: unknown; error: string | null } {
         switch (type.toLowerCase()) {
             case "number":
                 if (typeof value === "number") {
@@ -160,7 +164,7 @@ export class Validator {
     }
 
     /** 规则验证 */
-    private static checkRule(value: any, fieldDef: FieldDefinition): string | null {
+    private static checkRule(value: unknown, fieldDef: FieldDefinition): string | null {
         const normalized = normalizeFieldDefinition(fieldDef);
         const type = normalized.type;
         const min = normalized.min;
@@ -170,6 +174,7 @@ export class Validator {
 
         switch (type.toLowerCase()) {
             case "number":
+                if (typeof value !== "number") return "必须是数字";
                 if (min !== null && value < min) return `不能小于${min}`;
                 if (max !== null && max > 0 && value > max) return `不能大于${max}`;
                 if (regex && !this.testRegex(regex, String(value))) return "格式不正确";
@@ -177,6 +182,7 @@ export class Validator {
 
             case "string":
             case "text":
+                if (typeof value !== "string") return "必须是字符串";
                 if (min !== null && value.length < min) return `长度不能少于${min}个字符`;
                 if (max !== null && max > 0 && value.length > max) return `长度不能超过${max}个字符`;
                 if (regex && !this.testRegex(regex, value)) return "格式不正确";
@@ -186,6 +192,7 @@ export class Validator {
             case "array_text":
             case "array_number_string":
             case "array_number_text":
+                if (!Array.isArray(value)) return "必须是数组";
                 if (min !== null && value.length < min) return `至少需要${min}个元素`;
                 if (max !== null && max > 0 && value.length > max) return `最多只能有${max}个元素`;
                 if (regex) {
@@ -218,7 +225,7 @@ export class Validator {
     }
 
     /** 获取默认值 */
-    private static defaultFor(type: string, defaultValue: any): any {
+    private static defaultFor(type: string, defaultValue: JsonValue | null | undefined): JsonValue {
         // 如果字段定义了默认值，则使用字段默认值（优先级最高）
         if (defaultValue !== null && defaultValue !== undefined) {
             // 数组默认值

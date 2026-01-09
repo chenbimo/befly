@@ -4,14 +4,25 @@
  */
 
 /**
+ * JSON 可序列化值（用于对外类型的兜底数据类型）
+ */
+export type JsonPrimitive = string | number | boolean | null;
+
+export interface JsonObject {
+    [key: string]: JsonValue | undefined;
+}
+
+export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+
+/**
  * SQL 值类型
  */
-export type SqlValue = string | number | boolean | null | Date | Record<string, unknown> | unknown[];
+export type SqlValue = string | number | boolean | null | Date | JsonObject | JsonValue[];
 
 /**
  * 通用键值对类型
  */
-export type KeyValue<T = unknown> = Record<string, T>;
+export type KeyValue<T = JsonValue> = Record<string, T>;
 
 // ============================================
 // SQL 查询相关类型
@@ -25,7 +36,19 @@ export type WhereOperator = "$eq" | "$ne" | "$not" | "$gt" | "$gte" | "$lt" | "$
 /**
  * WHERE 条件类型
  */
-export type WhereConditions = Record<string, unknown>;
+export interface WhereOperatorObject {
+    [op: string]: SqlValue | SqlValue[] | undefined;
+}
+
+export type WhereFieldValue = SqlValue | SqlValue[] | WhereOperatorObject | WhereConditions;
+
+export type WhereEntryValue = WhereFieldValue | WhereConditions[];
+
+export interface WhereConditions {
+    $and?: WhereConditions[];
+    $or?: WhereConditions[];
+    [key: string]: WhereEntryValue | undefined;
+}
 
 /**
  * 排序方向
@@ -58,7 +81,7 @@ export type UpdateData = Record<string, SqlValue>;
 /**
  * 任意对象类型
  */
-export type AnyObject = Record<string, unknown>;
+export type AnyObject = JsonObject;
 
 // ============================================
 // Core 专用类型（不适合放在 shared 中的类型）
@@ -85,7 +108,7 @@ export interface ParsedFieldRule {
     type: "string" | "number" | "text" | "array_string" | "array_text";
     min: number | null;
     max: number | null;
-    default: unknown;
+    default: JsonValue | null;
     index: 0 | 1;
     regex: string | null;
 }
@@ -116,7 +139,7 @@ export interface JoinOption {
 /**
  * 工具函数返回类型
  */
-export interface ToolResponse<T = unknown> {
+export interface ToolResponse<T = JsonValue> {
     success: boolean;
     data?: T;
     error?: string;

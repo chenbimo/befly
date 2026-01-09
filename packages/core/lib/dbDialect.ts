@@ -118,7 +118,7 @@ export interface DbDialect {
     getTableColumnsQuery(table: string, schema?: string): SqlTextQuery;
 
     /** 从 getTableColumnsQuery 的结果中提取列名数组 */
-    getTableColumnsFromResult(result: any): string[];
+    getTableColumnsFromResult(result: Array<Record<string, unknown>>): string[];
 
     /** 检查表是否存在的查询 */
     tableExistsQuery(table: string, schema?: string): SqlTextQuery;
@@ -151,14 +151,10 @@ export class MySqlDialect implements DbDialect {
         return { sql: `SHOW COLUMNS FROM ${quotedTable}`, params: [] };
     }
 
-    getTableColumnsFromResult(result: any): string[] {
-        if (!Array.isArray(result)) {
-            return [];
-        }
-
+    getTableColumnsFromResult(result: Array<Record<string, unknown>>): string[] {
         const columnNames: string[] = [];
         for (const row of result) {
-            const name = row?.Field;
+            const name = row["Field"];
             if (typeof name === "string" && name.length > 0) {
                 columnNames.push(name);
             }
@@ -206,14 +202,10 @@ export class PostgresDialect implements DbDialect {
         return { sql: "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? ORDER BY ordinal_position", params: [table] };
     }
 
-    getTableColumnsFromResult(result: any): string[] {
-        if (!Array.isArray(result)) {
-            return [];
-        }
-
+    getTableColumnsFromResult(result: Array<Record<string, unknown>>): string[] {
         const columnNames: string[] = [];
         for (const row of result) {
-            const name = row?.column_name;
+            const name = row["column_name"];
             if (typeof name === "string" && name.length > 0) {
                 columnNames.push(name);
             }
@@ -260,14 +252,10 @@ export class SqliteDialect implements DbDialect {
         return { sql: `PRAGMA table_info(${quotedTable})`, params: [] };
     }
 
-    getTableColumnsFromResult(result: any): string[] {
-        if (!Array.isArray(result)) {
-            return [];
-        }
-
+    getTableColumnsFromResult(result: Array<Record<string, unknown>>): string[] {
         const columnNames: string[] = [];
         for (const row of result) {
-            const name = row?.name;
+            const name = row["name"];
             if (typeof name === "string" && name.length > 0) {
                 columnNames.push(name);
             }

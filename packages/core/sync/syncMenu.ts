@@ -12,7 +12,7 @@ type MenuDef = {
 };
 
 function createDisableMenuMatcher(ctx: BeflyContext): (path: string) => boolean {
-    const rawRules = (ctx.config as any)?.disableMenus;
+    const rawRules = ctx.config?.disableMenus;
     const rules = Array.isArray(rawRules) ? rawRules : [];
     const patterns: string[] = [];
 
@@ -53,13 +53,15 @@ function createDisableMenuMatcher(ctx: BeflyContext): (path: string) => boolean 
         }
 
         for (const glob of globs) {
-            const match = (glob as any).match;
+            const match = typeof glob === "object" && glob !== null && "match" in glob ? (glob as { match?: unknown }).match : undefined;
             if (typeof match !== "function") {
                 throw new Error("syncMenu: 当前 Bun 版本不支持 Bun.Glob.match，无法按 disableMenus 做 glob 匹配");
             }
 
+            const matchFn = match as (candidate: string) => boolean;
+
             for (const candidate of candidates) {
-                if (match.call(glob, candidate)) {
+                if (matchFn.call(glob, candidate)) {
                     return true;
                 }
             }
@@ -76,28 +78,28 @@ function filterMenusByDisableMenus(menus: MenuConfig[], isDisabledPath: (path: s
             continue;
         }
 
-        const path = typeof (menu as any).path === "string" ? String((menu as any).path).trim() : "";
+        const path = typeof menu.path === "string" ? String(menu.path).trim() : "";
         if (path && isDisabledPath(path)) {
             // 节点被禁用：整棵子树直接忽略
             continue;
         }
 
-        const children = (menu as any).children;
+        const children = menu.children;
         const nextChildren = Array.isArray(children) && children.length > 0 ? filterMenusByDisableMenus(children, isDisabledPath) : [];
 
         // 只保留 syncMenu 需要的最小字段，避免引入扩展运算符/不必要的字段复制
-        const next: any = {};
-        if (typeof (menu as any).name === "string") {
-            next.name = (menu as any).name;
+        const next: MenuConfig = {};
+        if (typeof menu.name === "string") {
+            next.name = menu.name;
         }
-        if (typeof (menu as any).path === "string") {
-            next.path = (menu as any).path;
+        if (typeof menu.path === "string") {
+            next.path = menu.path;
         }
-        if (typeof (menu as any).sort === "number") {
-            next.sort = (menu as any).sort;
+        if (typeof menu.sort === "number") {
+            next.sort = menu.sort;
         }
-        if (typeof (menu as any).parentPath === "string") {
-            next.parentPath = (menu as any).parentPath;
+        if (typeof menu.parentPath === "string") {
+            next.parentPath = menu.parentPath;
         }
         if (nextChildren.length > 0) {
             next.children = nextChildren;
@@ -130,9 +132,9 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
             continue;
         }
 
-        const path = typeof (menu as any).path === "string" ? (menu as any).path : "";
+        const path = typeof menu.path === "string" ? menu.path : "";
 
-        const rawChildren = (menu as any).children;
+        const rawChildren = menu.children;
         if (rawChildren && Array.isArray(rawChildren) && rawChildren.length > 0) {
             const nextParentPathFromTree = typeof path === "string" ? path : "";
             for (const child of rawChildren) {
@@ -144,15 +146,15 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
             continue;
         }
 
-        const name = typeof (menu as any).name === "string" ? (menu as any).name : "";
+        const name = typeof menu.name === "string" ? menu.name : "";
         if (!name) {
             continue;
         }
 
-        const sort = typeof (menu as any).sort === "number" ? (menu as any).sort : 999999;
+        const sort = typeof menu.sort === "number" ? menu.sort : 999999;
 
-        const hasExplicitParentPath = typeof (menu as any).parentPath === "string";
-        const parentPath = hasExplicitParentPath ? ((menu as any).parentPath as string) : typeof item?.parentPathFromTree === "string" ? item.parentPathFromTree : getParentPath(path);
+        const hasExplicitParentPath = typeof menu.parentPath === "string";
+        const parentPath = hasExplicitParentPath ? (menu.parentPath as string) : typeof item?.parentPathFromTree === "string" ? item.parentPathFromTree : getParentPath(path);
 
         menuDefMap.set(path, {
             path: path,
@@ -196,15 +198,15 @@ export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Pr
     const tableName = "addon_admin_menu";
 
     // 2) 批量同步（事务内）：按 path diff 执行批量 insert/update/delete
-    await ctx.db.trans(async (trans: any) => {
+    await ctx.db.trans(async (trans) => {
         // 读取全部菜单（用于清理 disableMenus 命中菜单：不分 state）
-        const allExistingMenusAllState = await trans.getAll({
+        const allExistingMenusAllState = await trans.getAll<{ id: number; name?: string | null; path?: string | null; parentPath?: string | null; sort?: number | null; state?: number | null }>({
             table: tableName,
             fields: ["id", "name", "path", "parentPath", "sort", "state"]
-        } as any);
+        });
 
         const existingListAllState = allExistingMenusAllState.data.lists || [];
-        const existingList = existingListAllState.filter((m: any) => typeof m?.state === "number" && m.state >= 0);
+        const existingList = existingListAllState.filter((m) => typeof m?.state === "number" && (m.state as number) >= 0);
 
         const existingMenuMap = new Map<string, any>();
         const duplicateIdSet = new Set<number>();

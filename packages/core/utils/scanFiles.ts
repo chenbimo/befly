@@ -33,11 +33,11 @@ export interface ScanFileResultBase {
 export type ScanFileResult =
     | (ScanFileResultBase & {
           type: "table";
-          content: any;
+          content: Record<string, unknown>;
       })
     | (ScanFileResultBase & {
           type: Exclude<ScanFileType, "table">;
-      } & Record<string, any>);
+      } & Record<string, unknown>);
 
 function parseAddonNameFromPath(normalizedPath: string): string | null {
     // 期望路径中包含：/node_modules/@befly-addon/<addonName>/...
@@ -123,7 +123,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
                 moduleName = `addon_${camelCase(addonName)}_${baseName}`;
             }
 
-            const base: Record<string, any> = {
+            const base: Record<string, unknown> = {
                 source: source,
                 type: type,
                 sourceName: source === "core" ? "核心" : source === "addon" ? "组件" : "项目",
@@ -139,7 +139,7 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
             };
 
             if (type === "table") {
-                base["content"] = content;
+                base["content"] = isPlainObject(content) ? (content as Record<string, unknown>) : {};
                 results.push(base as ScanFileResult);
                 continue;
             }
@@ -171,9 +171,11 @@ export async function scanFiles(dir: string, source: ScanFileSource, type: ScanF
 
             results.push(base as ScanFileResult);
         }
-    } catch (error: any) {
-        const wrappedError = new Error(`scanFiles failed: source=${source} type=${type} dir=${normalizedDir} pattern=${pattern}`);
-        (wrappedError as any).cause = error;
+    } catch (error: unknown) {
+        const wrappedError = new Error(`scanFiles failed: source=${source} type=${type} dir=${normalizedDir} pattern=${pattern}`) as Error & {
+            cause?: unknown;
+        };
+        wrappedError.cause = error;
         throw wrappedError;
     }
     return results;

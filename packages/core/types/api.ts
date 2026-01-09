@@ -3,8 +3,9 @@
  */
 
 import type { BeflyContext } from "./befly";
-import type { KeyValue } from "./common";
+import type { JsonValue, KeyValue } from "./common";
 import type { RequestContext } from "./context";
+import type { JwtPayload } from "./jwt";
 import type { TableDefinition } from "./validate";
 
 /**
@@ -21,7 +22,7 @@ export interface UserInfo {
     username?: string;
     email?: string;
     role?: string;
-    [key: string]: any;
+    [key: string]: JsonValue | undefined;
 }
 
 /**
@@ -37,7 +38,7 @@ export type AuthType = boolean | "admin" | "user" | string[];
 /**
  * API 处理器函数类型
  */
-export type ApiHandler<TBody = any, R = any> = (befly: BeflyContext, ctx: RequestContext<TBody>) => Promise<Response | R> | Response | R;
+export type ApiHandler<TBody = Record<string, JsonValue>, R = JsonValue> = (befly: BeflyContext, ctx: RequestContext<TBody>) => Promise<Response | R> | Response | R;
 
 /**
  * 字段规则定义
@@ -48,7 +49,7 @@ export type FieldRules = Record<string, string>;
 /**
  * API 配置选项
  */
-export interface ApiOptions<TBody = any, R = any> {
+export interface ApiOptions<TBody = Record<string, JsonValue>, R = JsonValue> {
     /** HTTP 方法 */
     method: HttpMethod;
     /** 是否需要认证（true/false/角色数组） */
@@ -64,7 +65,7 @@ export interface ApiOptions<TBody = any, R = any> {
 /**
  * API 路由配置
  */
-export interface ApiRoute<TBody = any, R = any> {
+export interface ApiRoute<TBody = Record<string, JsonValue>, R = JsonValue> {
     /** 接口名称（必填） */
     name: string;
 
@@ -119,7 +120,7 @@ export interface ApiBuilder {
     required(fields: string[]): this;
 
     /** 设置处理器 */
-    handler<TBody = any, R = any>(handler: ApiHandler<TBody, R>): this;
+    handler<TBody = Record<string, JsonValue>, R = JsonValue>(handler: ApiHandler<TBody, R>): this;
 
     /** 构建路由 */
     build(): ApiRoute;
@@ -130,13 +131,13 @@ export interface ApiBuilder {
  */
 export interface ApiResponse {
     /** 成功响应 */
-    success<T = any>(message: string, data?: T): Response;
+    success<T = JsonValue>(message: string, data?: T): Response;
 
     /** 失败响应 */
-    error(message: string, error?: any): Response;
+    error(message: string, error?: Error | JsonValue): Response;
 
     /** JSON 响应 */
-    json<T = any>(data: T, status?: number): Response;
+    json<T = JsonValue>(data: T, status?: number): Response;
 
     /** 文本响应 */
     text(text: string, status?: number): Response;
@@ -185,7 +186,7 @@ export interface TokenCheckData {
     /** 令牌是否有效 */
     valid: boolean;
     /** JWT 载荷（有效时返回） */
-    payload?: any;
+    payload?: JwtPayload;
     /** 过期时间（秒） */
     expiresIn?: number;
 }

@@ -1,5 +1,5 @@
 import type { BeflyContext } from "../types/befly";
-import type { SyncApiItem } from "../types/sync";
+import type { ScanFileResult } from "../utils/scanFiles";
 
 import { Logger } from "../lib/logger";
 import { keyBy } from "../utils/util";
@@ -20,7 +20,7 @@ const getApiParentPath = (apiPath: string): string => {
     return `/${parentSegments.join("/")}`;
 };
 
-export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: SyncApiItem[]): Promise<void> {
+export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: ScanFileResult[]): Promise<void> {
     const tableName = "addon_admin_api";
 
     if (!ctx.db) {
@@ -40,7 +40,7 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
         table: tableName,
         fields: ["id", "path", "parentPath", "name", "addonName", "auth", "state"],
         where: { state$gte: 0 }
-    } as any);
+    });
 
     const dbLists = allDbApis.data.lists || [];
     const allDbApiMap = keyBy(dbLists, (item) => item.path);
@@ -67,31 +67,47 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Syn
             continue;
         }
 
+        const record = api as Record<string, unknown>;
+        const path = record["path"];
+        const name = record["name"];
+        const addonNameRaw = record["addonName"];
+
+        if (typeof path !== "string" || path.trim() === "") {
+            continue;
+        }
+
+        if (typeof name !== "string" || name.trim() === "") {
+            continue;
+        }
+
+        const addonName = typeof addonNameRaw === "string" ? addonNameRaw : "";
+
         // auth：运行时 API 定义使用 boolean；DB 字段使用 0/1。
         // 统一在 syncApi 写库前做归一化，避免类型不一致导致每次启动都触发更新。
-        const auth: 0 | 1 = api.auth === false || api.auth === 0 ? 0 : 1;
-        const parentPath = getApiParentPath(api.path);
+        const authRaw = record["auth"];
+        const auth: 0 | 1 = authRaw === false || authRaw === 0 ? 0 : 1;
+        const parentPath = getApiParentPath(path);
 
-        apiRouteKeys.add(api.path);
-        const item = (allDbApiMap as any)[api.path];
+        apiRouteKeys.add(path);
+        const item = allDbApiMap[path];
         if (item) {
-            const shouldUpdate = api.name !== item.name || api.path !== item.path || api.addonName !== item.addonName || parentPath !== item.parentPath || auth !== item.auth;
+            const shouldUpdate = name !== item.name || path !== item.path || addonName !== item.addonName || parentPath !== item.parentPath || auth !== item.auth;
             if (shouldUpdate) {
                 updData.push({
                     id: item.id,
-                    name: api.name,
-                    path: api.path,
+                    name: name,
+                    path: path,
                     parentPath: parentPath,
-                    addonName: api.addonName,
+                    addonName: addonName,
                     auth: auth
                 });
             }
         } else {
             insData.push({
-                name: api.name,
-                path: api.path,
+                name: name,
+                path: path,
                 parentPath: parentPath,
-                addonName: api.addonName,
+                addonName: addonName,
                 auth: auth
             });
         }
