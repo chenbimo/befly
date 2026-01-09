@@ -2,11 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { presetFields } from "../configs/presetFields";
 import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { setCorsOptions } from "../utils/cors";
 import { isDirentDirectory } from "../utils/isDirentDirectory";
-import { processAtSymbol } from "../utils/processAtSymbol";
 import { genShortId, pickFields } from "../utils/util";
 
 function ensureEmptyDir(dir: string): void {
@@ -65,31 +63,6 @@ describe("utils - pickFields", () => {
     test("invalid input returns empty object", () => {
         expect(pickFields(null as any, ["a"]) as any).toEqual({});
         expect(pickFields(1 as any, ["a"]) as any).toEqual({});
-    });
-});
-
-describe("utils - processAtSymbol", () => {
-    test("should replace preset fields", () => {
-        const out = processAtSymbol({ page: "@page", limit: "@limit" } as any, "hello", "/api/hello");
-        // presetFields 的具体值不在此 hardcode，只验证替换发生且是 string
-        expect(out.page).toBe(presetFields["@page"]);
-        expect(out.limit).toBe(presetFields["@limit"]);
-    });
-
-    test("unknown preset should throw with hint", () => {
-        try {
-            processAtSymbol({ page: "@not_exist" } as any, "hello", "/api/hello");
-            expect.unreachable();
-        } catch (err: any) {
-            const message = String(err && err.message ? err.message : err);
-            expect(message).toContain("API [hello] (/api/hello)");
-            expect(message).toContain("字段 [page]");
-            expect(message).toContain('"@not_exist"');
-            expect(message).toContain("可用的预设字段有");
-            // 不 hardcode 完整列表，但关键项应出现（否则提示价值不大）
-            expect(message).toContain("@page");
-            expect(message).toContain("@limit");
-        }
     });
 });
 

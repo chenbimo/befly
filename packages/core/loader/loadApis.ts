@@ -8,7 +8,6 @@ import type { ApiRoute } from "../types/api";
 import type { ScanFileResult } from "../utils/scanFiles";
 
 import { Logger } from "../lib/logger";
-import { processAtSymbol } from "../utils/processAtSymbol";
 
 /**
  * 加载所有 API 路由
@@ -21,17 +20,12 @@ export async function loadApis(apis: ScanFileResult[]): Promise<Map<string, ApiR
     for (const api of apis) {
         // 兼容：scanFiles 的结果或测试构造数据可能缺少 type 字段；缺少时默认按 API 处理。
         // 仅在 type 显式存在且不等于 "api" 时跳过，避免错误过滤。
-        if (api.type !== "api") {
+        if (Object.hasOwn(api, "type") && api.type !== "api") {
             continue;
         }
 
         try {
-            const apiRoute = api as any;
-
-            // 处理字段定义，将 @ 引用替换为实际字段定义
-            apiRoute.fields = processAtSymbol(apiRoute.fields || {}, apiRoute.name, apiRoute.path);
-
-            apisMap.set(apiRoute.path, apiRoute as ApiRoute);
+            apisMap.set((api as any).path, api as any as ApiRoute);
         } catch (error: any) {
             Logger.error({ err: error, api: api.relativePath, file: api.filePath, msg: "接口加载失败" });
             throw error;
