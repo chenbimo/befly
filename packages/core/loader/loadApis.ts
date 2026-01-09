@@ -18,61 +18,46 @@ export async function loadApis(apis: ScanFileResult[]): Promise<Map<string, ApiR
     const apisMap = new Map<string, ApiRoute>();
 
     for (const api of apis) {
-        // 兼容：scanFiles 的结果或测试构造数据可能缺少 type 字段；缺少时默认按 API 处理。
-        // 仅在 type 显式存在且不等于 "api" 时跳过，避免错误过滤。
-        if (Object.hasOwn(api, "type") && api.type !== "api") {
-            continue;
-        }
-
         try {
+            // B 方案：信任启动期 checkApi 的结构校验，这里只负责把 scanFiles 的结果映射为运行时 ApiRoute。
+            // 仍然兼容测试构造数据：缺少 type 时默认按 api 处理；只有 type 显式存在且不为 api 才跳过。
+            if (Object.hasOwn(api, "type") && api.type !== "api") {
+                continue;
+            }
+
             const record = api as Record<string, unknown>;
 
-            const path = record["path"];
-            if (typeof path !== "string" || path.trim() === "") {
-                continue;
-            }
-
-            const name = record["name"];
-            if (typeof name !== "string" || name.trim() === "") {
-                continue;
-            }
-
-            const handler = record["handler"];
-            if (typeof handler !== "function") {
-                continue;
-            }
-
+            const path = record["path"] as string;
             const route: ApiRoute = {
-                name: name,
-                handler: handler as ApiRoute["handler"]
+                name: record["name"] as string,
+                handler: record["handler"] as ApiRoute["handler"],
+                route: path
             };
 
             const method = record["method"];
-            if (method === "GET" || method === "POST" || method === "GET,POST") {
-                route.method = method;
+            if (method !== undefined) {
+                route.method = method as NonNullable<ApiRoute["method"]>;
             }
 
             const auth = record["auth"];
-            if (typeof auth === "boolean") {
-                route.auth = auth;
+            if (auth !== undefined) {
+                route.auth = auth as NonNullable<ApiRoute["auth"]>;
             }
 
             const fields = record["fields"];
-            if (fields && typeof fields === "object") {
+            if (fields !== undefined) {
                 route.fields = fields as NonNullable<ApiRoute["fields"]>;
             }
 
             const required = record["required"];
-            if (Array.isArray(required) && required.every((v) => typeof v === "string")) {
-                route.required = required;
+            if (required !== undefined) {
+                route.required = required as NonNullable<ApiRoute["required"]>;
             }
 
             const rawBody = record["rawBody"];
-            if (typeof rawBody === "boolean") {
-                route.rawBody = rawBody;
+            if (rawBody !== undefined) {
+                route.rawBody = rawBody as NonNullable<ApiRoute["rawBody"]>;
             }
-
-            route.route = path;
 
             apisMap.set(path, route);
         } catch (error: unknown) {
