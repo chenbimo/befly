@@ -1,5 +1,3 @@
-import type { Component } from "vue";
-
 // 引入 TDesign 样式
 import "tdesign-vue-next/es/style/index.css";
 // 引入 addonAdmin 的 CSS 变量
