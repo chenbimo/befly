@@ -112,7 +112,7 @@ const $Method = {
     // 加载所有接口
     async apiApiAll() {
         try {
-            const res = await $Http("/addon/admin/api/all");
+            const res = await $Http.post("/addon/admin/api/all");
 
             // 将接口列表按 parentPath 分组展示（routePath 已迁移为 path）
             const apiMap = new Map();
@@ -172,7 +172,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http("/addon/admin/role/apis", {
+            const res = await $Http.post("/addon/admin/role/apis", {
                 roleCode: $Prop.rowData.code
             });
 
@@ -212,7 +212,7 @@ const $Method = {
         try {
             $Data.submitting = true;
 
-            const res = await $Http("/addon/admin/role/apiSave", {
+            const res = await $Http.post("/addon/admin/role/apiSave", {
                 roleCode: $Prop.rowData.code,
                 apiPaths: $Data.checkedApiPaths
             });

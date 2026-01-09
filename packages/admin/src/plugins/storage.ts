@@ -6,84 +6,71 @@
 // 获取命名空间
 const NAMESPACE = import.meta.env.VITE_STORAGE_NAMESPACE || "befly";
 
+type StorageOps = {
+    set: (key: string, value: unknown) => void;
+    get: {
+        (key: string): string | null;
+        (key: string, defaultValue: string | null): string | null;
+        <T>(key: string, defaultValue: T): T;
+    };
+    remove: (key: string) => void;
+    clear: () => void;
+    has: (key: string) => boolean;
+    keys: () => string[];
+};
+
 /**
  * 存储操作类
  */
 class StorageManager {
-    /**
-     * @param {string} namespace
-     */
-    constructor(namespace = NAMESPACE) {
+    private localStorage: Storage;
+    private sessionStorage: Storage;
+    private namespace: string;
+
+    public constructor(namespace: string = NAMESPACE) {
         this.localStorage = window.localStorage;
         this.sessionStorage = window.sessionStorage;
         this.namespace = namespace;
     }
 
-    /**
-     * 生成带命名空间的key
-     * @param {string} key
-     * @returns {string}
-     */
-    getKey(key) {
+    private getKey(key: string): string {
         return `${this.namespace}:${key}`;
     }
 
-    /**
-     * 创建存储操作方法
-     * @param {Storage} storage
-     */
-    createStorageOps(storage) {
+    private createStorageOps(storage: Storage): StorageOps {
         return {
-            /**
-             * 设置存储
-             * @param {string} key - 键名
-             * @param {any} value - 值（自动序列化）
-             * @returns {void}
-             */
-            set: (key, value) => {
+            set: (key: string, value: unknown) => {
                 try {
                     const fullKey = this.getKey(key);
                     const serializedValue = JSON.stringify(value);
                     storage.setItem(fullKey, serializedValue);
-                } catch {}
+                } catch {
+                    // ignore
+                }
             },
 
-            /**
-             * 获取存储
-             * @template T
-             * @param {string} key - 键名
-             * @param {T | null} [defaultValue=null] - 默认值
-             * @returns {T | null} 解析后的值
-             */
-            get: (key, defaultValue = null) => {
+            get: ((key: string, defaultValue?: unknown) => {
                 try {
                     const fullKey = this.getKey(key);
                     const value = storage.getItem(fullKey);
                     if (value === null) {
-                        return defaultValue;
+                        return defaultValue ?? null;
                     }
-                    return JSON.parse(value);
+                    return JSON.parse(value) as unknown;
                 } catch {
-                    return defaultValue;
+                    return defaultValue ?? null;
                 }
-            },
+            }) as StorageOps["get"],
 
-            /**
-             * 删除存储
-             * @param {string} key - 键名
-             * @returns {void}
-             */
-            remove: (key) => {
+            remove: (key: string) => {
                 try {
                     const fullKey = this.getKey(key);
                     storage.removeItem(fullKey);
-                } catch {}
+                } catch {
+                    // ignore
+                }
             },
 
-            /**
-             * 清空当前命名空间下的所有存储
-             * @returns {void}
-             */
             clear: () => {
                 try {
                     const keys = Object.keys(storage);
@@ -93,23 +80,16 @@ class StorageManager {
                             storage.removeItem(key);
                         }
                     });
-                } catch {}
+                } catch {
+                    // ignore
+                }
             },
 
-            /**
-             * 判断是否存在某个键
-             * @param {string} key - 键名
-             * @returns {boolean}
-             */
-            has: (key) => {
+            has: (key: string) => {
                 const fullKey = this.getKey(key);
                 return storage.getItem(fullKey) !== null;
             },
 
-            /**
-             * 获取所有键名
-             * @returns {string[]} 去除命名空间前缀的键名列表
-             */
             keys: () => {
                 const keys = Object.keys(storage);
                 const prefix = `${this.namespace}:`;
@@ -118,17 +98,11 @@ class StorageManager {
         };
     }
 
-    /**
-     * localStorage 操作方法
-     */
-    get local() {
+    public get local(): StorageOps {
         return this.createStorageOps(this.localStorage);
     }
 
-    /**
-     * sessionStorage 操作方法
-     */
-    get session() {
+    public get session(): StorageOps {
         return this.createStorageOps(this.sessionStorage);
     }
 }

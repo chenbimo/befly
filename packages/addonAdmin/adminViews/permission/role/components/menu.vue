@@ -92,7 +92,7 @@ const $Method = {
     // 加载菜单树（用于配置权限）
     async apiMenuAll() {
         try {
-            const res = await $Http("/addon/admin/menu/all");
+            const res = await $Http.post("/addon/admin/menu/all");
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
             const treeResult = arrayToTree(lists, "path", "parentPath", "children", "sort");
@@ -145,7 +145,7 @@ const $Method = {
         if (!$Prop.rowData.id) return;
 
         try {
-            const res = await $Http("/addon/admin/role/menus", {
+            const res = await $Http.post("/addon/admin/role/menus", {
                 roleCode: $Prop.rowData.code
             });
 
@@ -187,7 +187,7 @@ const $Method = {
         try {
             $Data.submitting = true;
 
-            const res = await $Http("/addon/admin/role/menuSave", {
+            const res = await $Http.post("/addon/admin/role/menuSave", {
                 roleCode: $Prop.rowData.code,
                 menuPaths: $Data.checkedMenuPaths
             });

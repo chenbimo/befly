@@ -2,16 +2,17 @@
  * 全局状态管理
  * 集中管理所有全局数据，避免分散到多个 store 文件
  */
+
 export const useGlobal = defineStore("global", () => {
     // ==================== 全局数据 ====================
-    const data = $ref({});
+    const data = reactive<Record<string, unknown>>({});
 
     // ==================== 全局方法 ====================
-    const method = {};
+    const method: Record<string, unknown> = {};
 
     // ==================== 返回 ====================
     return {
-        data,
-        method
+        data: data,
+        method: method
     };
 });

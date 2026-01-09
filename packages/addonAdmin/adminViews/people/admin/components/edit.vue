@@ -127,7 +127,7 @@ const $Method = {
 
     async apiRoleLists() {
         try {
-            const result = await $Http("/addon/admin/role/all");
+            const result = await $Http.post("/addon/admin/role/all");
             $Data.allRoleLists = result.data || [];
         } catch (error) {
             MessagePlugin.error("加载角色列表失败");
@@ -147,7 +147,7 @@ const $Method = {
                 formData.password = await hashPassword(formData.password);
             }
 
-            const result = await $Http($Prop.actionType === "upd" ? "/addon/admin/admin/upd" : "/addon/admin/admin/ins", formData);
+            const result = await $Http.post($Prop.actionType === "upd" ? "/addon/admin/admin/upd" : "/addon/admin/admin/ins", formData);
 
             MessagePlugin.success(result.msg);
             $Emit("success");

@@ -106,7 +106,7 @@ const $Method = {
     async apiLoginLogList() {
         $Data.loading = true;
         try {
-            const res = await $Http("/addon/admin/loginLog/list", {
+            const res = await $Http.post("/addon/admin/loginLog/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });

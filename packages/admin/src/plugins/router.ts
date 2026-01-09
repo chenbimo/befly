@@ -1,20 +1,21 @@
-import { $Storage } from "@/plugins/storage";
 import { Layouts } from "befly-vite";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "vue-router/auto-routes";
 
+import { $Storage } from "./storage";
+
 // 应用自定义布局系统（同时可选注入根路径重定向）
-const finalRoutes = Layouts(routes, $Config.homePath, (layoutName) => {
+const finalRoutes = Layouts(routes, $Config.homePath, (layoutName: string) => {
     if (layoutName === "default") {
-        return () => import("@/layouts/default.vue");
+        return () => import("../layouts/default.vue");
     }
 
-    return () => import(`@/layouts/${layoutName}.vue`);
+    return () => import(`../layouts/${layoutName}.vue`);
 });
 
 /**
  * 创建并导出路由实例
- * 可直接在 main.js 中使用 app.use($Router)
+ * 可直接在 main.ts 中使用 app.use($Router)
  */
 export const $Router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -32,7 +33,7 @@ $Router.beforeEach((to, _from, next) => {
     }
 
     // 公开路由放行
-    if (to.meta?.public === true) {
+    if (to.meta?.["public"] === true) {
         return next();
     }
 

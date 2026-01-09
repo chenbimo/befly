@@ -108,7 +108,7 @@ const $Method = {
             // 对密码进行 SHA-256 加密
             const hashedPassword = await hashPassword($Data.formData.password);
 
-            const res = await $Http("/addon/admin/auth/login", {
+            const res = await $Http.post("/addon/admin/auth/login", {
                 loginType: $Data.formData.loginType,
                 account: $Data.formData.account,
                 password: hashedPassword

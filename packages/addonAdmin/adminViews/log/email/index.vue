@@ -150,7 +150,7 @@ const $Method = {
     async apiEmailLogList() {
         $Data.loading = true;
         try {
-            const res = await $Http("/addon/admin/email/logList", {
+            const res = await $Http.post("/addon/admin/email/logList", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -189,7 +189,7 @@ const $Method = {
 
         $Data.sending = true;
         try {
-            const res = await $Http("/addon/admin/email/send", {
+            const res = await $Http.post("/addon/admin/email/send", {
                 to: $Data.sendForm.to,
                 subject: $Data.sendForm.subject,
                 content: $Data.sendForm.content,
@@ -214,7 +214,7 @@ const $Method = {
     // 验证配置
     async onVerify() {
         try {
-            const res = await $Http("/addon/admin/email/verify");
+            const res = await $Http.post("/addon/admin/email/verify");
             if (res.code === 0) {
                 MessagePlugin.success("邮件服务配置正常");
             } else {

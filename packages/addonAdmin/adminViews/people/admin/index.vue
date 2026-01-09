@@ -116,7 +116,7 @@ const $Method = {
     async apiAdminList() {
         $Data.loading = true;
         try {
-            const res = await $Http("/addon/admin/admin/list", {
+            const res = await $Http.post("/addon/admin/admin/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -163,7 +163,7 @@ const $Method = {
                 }
 
                 try {
-                    await $Http("/addon/admin/admin/del", { id: row.id });
+                    await $Http.post("/addon/admin/admin/del", { id: row.id });
                     MessagePlugin.success("删除成功");
                     destroy();
                     await $Method.apiAdminList();

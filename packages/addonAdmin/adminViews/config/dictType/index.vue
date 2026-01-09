@@ -129,7 +129,7 @@ const $Method = {
                 }
             );
 
-            const res = await $Http("/addon/admin/dictType/list", params);
+            const res = await $Http.post("/addon/admin/dictType/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
@@ -170,7 +170,7 @@ const $Method = {
                 }
 
                 try {
-                    await $Http("/addon/admin/dictType/del", { id: row.id });
+                    await $Http.post("/addon/admin/dictType/del", { id: row.id });
                     MessagePlugin.success("删除成功");
                     destroy();
                     await $Method.apiDictTypeList();

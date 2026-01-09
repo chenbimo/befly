@@ -147,7 +147,7 @@ const $Method = {
         $Data.submitting = true;
         try {
             const api = $Prop.actionType === "upd" ? "/addon/admin/sysConfig/upd" : "/addon/admin/sysConfig/ins";
-            const res = await $Http(api, $Data.formData);
+            const res = await $Http.post(api, $Data.formData);
 
             if (res.code === 0) {
                 MessagePlugin.success($Prop.actionType === "upd" ? "编辑成功" : "添加成功");

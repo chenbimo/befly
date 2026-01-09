@@ -135,7 +135,7 @@ const $Method = {
     // 获取用户菜单权限
     async fetchUserMenus() {
         try {
-            const { data } = await $Http("/addon/admin/menu/all");
+            const { data } = await $Http.post("/addon/admin/menu/all");
             const lists = Array.isArray(data?.lists) ? data.lists : [];
 
             const bizMenus = [];

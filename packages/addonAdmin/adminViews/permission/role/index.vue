@@ -147,7 +147,7 @@ const $Method = {
     async apiRoleList() {
         $Data.loading = true;
         try {
-            const res = await $Http("/addon/admin/role/list", {
+            const res = await $Http.post("/addon/admin/role/list", {
                 page: $Data.pagerConfig.currentPage,
                 limit: $Data.pagerConfig.limit
             });
@@ -194,7 +194,7 @@ const $Method = {
                 }
 
                 try {
-                    await $Http("/addon/admin/role/del", { id: row.id });
+                    await $Http.post("/addon/admin/role/del", { id: row.id });
                     MessagePlugin.success("删除成功");
                     destroy();
                     await $Method.apiRoleList();

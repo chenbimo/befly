@@ -1,6 +1,6 @@
-export function cleanParams<TData extends Record<string, unknown>>(data: TData, dropValues?: readonly unknown[], dropByKey?: Record<string, readonly unknown[]>): Partial<TData> {
+export function cleanParams<TData extends Record<string, unknown>>(data: TData, dropValues?: readonly unknown[], dropKeyValue?: Record<string, readonly unknown[]>): Partial<TData> {
     const globalDropValues = dropValues ?? [];
-    const perKeyDropValues = dropByKey ?? {};
+    const perKeyDropValues = dropKeyValue ?? {};
 
     const globalDropSet = new Set<unknown>(globalDropValues);
 

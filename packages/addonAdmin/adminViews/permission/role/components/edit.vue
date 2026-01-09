@@ -120,7 +120,7 @@ const $Method = {
 
             $Data.submitting = true;
             const formData = $Prop.actionType === "add" ? fieldClear($Data.formData, { omitKeys: ["id", "state"] }) : $Data.formData;
-            const res = await $Http($Prop.actionType === "upd" ? "/addon/admin/role/upd" : "/addon/admin/role/ins", formData);
+            const res = await $Http.post($Prop.actionType === "upd" ? "/addon/admin/role/upd" : "/addon/admin/role/ins", formData);
 
             MessagePlugin.success(res.msg);
             $Emit("success");

@@ -75,7 +75,7 @@ const $Method = {
                 params.id = props.rowData.id;
             }
 
-            const res = await $Http(apiUrl, params);
+            const res = await $Http.post(apiUrl, params);
             if (res.code === 0) {
                 MessagePlugin.success(props.actionType === "add" ? "添加成功" : "更新成功");
                 visible.value = false;

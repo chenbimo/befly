@@ -58,7 +58,7 @@ const $Method = {
     // 获取数据
     async fetchData() {
         try {
-            const { data } = await $Http("/addon/admin/admin/detail");
+            const { data } = await $Http.post("/addon/admin/admin/detail");
             Object.assign($Data.userInfo, data);
         } catch (error) {
             MessagePlugin.error("获取用户信息失败");
@@ -69,7 +69,7 @@ const $Method = {
     async handleRefreshCache() {
         try {
             $Data.refreshing = true;
-            const result = await $Http("/addon/admin/admin/cacheRefresh");
+            const result = await $Http.post("/addon/admin/admin/cacheRefresh");
 
             if (result.code === 0) {
                 const { apis, menus, roles } = result.data;

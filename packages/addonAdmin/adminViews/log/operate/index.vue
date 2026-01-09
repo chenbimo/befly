@@ -158,7 +158,7 @@ const $Method = {
                 }
             );
 
-            const res = await $Http("/addon/admin/operateLog/list", params);
+            const res = await $Http.post("/addon/admin/operateLog/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 

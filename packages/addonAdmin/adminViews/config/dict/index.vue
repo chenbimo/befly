@@ -122,7 +122,7 @@ const $Method = {
     },
     async apiDictTypeAll() {
         try {
-            const res = await $Http("/addon/admin/dictType/all");
+            const res = await $Http.post("/addon/admin/dictType/all");
             $Data.typeList = res.data.lists || [];
         } catch (error) {
             MessagePlugin.error("加载数据失败");
@@ -148,7 +148,7 @@ const $Method = {
                 }
             );
 
-            const res = await $Http("/addon/admin/dict/list", params);
+            const res = await $Http.post("/addon/admin/dict/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
@@ -189,7 +189,7 @@ const $Method = {
                 }
 
                 try {
-                    await $Http("/addon/admin/dict/del", { id: row.id });
+                    await $Http.post("/addon/admin/dict/del", { id: row.id });
                     MessagePlugin.success("删除成功");
                     destroy();
                     await $Method.apiDictList();

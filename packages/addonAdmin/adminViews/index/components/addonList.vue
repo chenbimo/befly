@@ -32,7 +32,7 @@ const addonList = $ref([]);
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http("/addon/admin/dashboard/addonList");
+        const { data } = await $Http.post("/addon/admin/dashboard/addonList");
         addonList.splice(0, addonList.length, ...data);
     } catch (error) {
         // 静默失败：不阻断页面展示

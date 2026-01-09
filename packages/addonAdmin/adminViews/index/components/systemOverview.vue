@@ -51,7 +51,7 @@ const permissionStats = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http("/addon/admin/dashboard/systemOverview");
+        const { data } = await $Http.post("/addon/admin/dashboard/systemOverview");
         Object.assign(permissionStats, data);
     } catch (error) {
         // 静默失败：不阻断页面展示

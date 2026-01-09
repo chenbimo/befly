@@ -1,0 +1,10 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "paths": {
+            "@/*": ["./src/*"]
+        },
+        "allowJs": true
+    },
+    "include": ["src/**/*.ts", "src/**/*.vue", "src/types/**/*.d.ts", "tests/**/*.ts"]
+}
