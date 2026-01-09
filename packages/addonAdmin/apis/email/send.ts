@@ -1,6 +1,9 @@
-import emailLogTable from "../../tables/emailLog.json";
+import type { ApiRoute } from "befly/types/api";
 
-export default {
+import emailLogTable from "../../tables/emailLog.json";
+import { getAddonAdminEmailPlugin } from "./_emailPlugin";
+
+const route: ApiRoute = {
     name: "发送邮件",
     fields: {
         to: emailLogTable.toEmail,
@@ -21,14 +24,15 @@ export default {
     },
     required: ["to", "subject", "content"],
     handler: async (befly, ctx) => {
-        if (!(befly as any).addon_admin_email) {
+        const emailPlugin = getAddonAdminEmailPlugin(befly);
+        if (!emailPlugin) {
             return befly.tool.No("邮件插件未加载，请检查配置");
         }
 
         const startTime = Date.now();
 
         // 发送邮件
-        const result = await (befly as any).addon_admin_email.send({
+        const result = await emailPlugin.send({
             to: ctx.body.to,
             subject: ctx.body.subject,
             html: ctx.body.isHtml ? ctx.body.content : undefined,
@@ -56,7 +60,7 @@ export default {
                     failReason: result.error || ""
                 }
             });
-        } catch (logError: any) {
+        } catch (logError: unknown) {
             befly.logger.error({ err: logError, msg: "记录邮件日志失败" });
         }
 
@@ -67,3 +71,5 @@ export default {
         return befly.tool.No(result.error || "发送失败");
     }
 };
+
+export default route;

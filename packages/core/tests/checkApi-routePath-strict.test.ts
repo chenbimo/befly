@@ -4,7 +4,7 @@ import { checkApi } from "../checks/checkApi.ts";
 
 describe("checkApi - path strict", () => {
     test("合法 path 应通过", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -13,19 +13,19 @@ describe("checkApi - path strict", () => {
                     handler: () => {
                         return null;
                     },
-                    path: "/api/hello",
+                    path: "/api/app/hello",
                     routePrefix: "/app"
                 }
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeNull();
     });
 
     test("path 为空字符串应阻断启动", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -36,8 +36,8 @@ describe("checkApi - path strict", () => {
                     routePrefix: "/app"
                 }
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeTruthy();
@@ -45,7 +45,7 @@ describe("checkApi - path strict", () => {
     });
 
     test("path 非字符串应阻断启动", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -56,8 +56,8 @@ describe("checkApi - path strict", () => {
                     routePrefix: "/app"
                 } as any
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeTruthy();
@@ -65,7 +65,7 @@ describe("checkApi - path strict", () => {
     });
 
     test("path 不允许 method 前缀（POST/api/...）", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -76,8 +76,8 @@ describe("checkApi - path strict", () => {
                     routePrefix: "/app"
                 }
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeTruthy();
@@ -85,7 +85,7 @@ describe("checkApi - path strict", () => {
     });
 
     test("path 不允许 method + 空格（POST /api/...）", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -96,8 +96,8 @@ describe("checkApi - path strict", () => {
                     routePrefix: "/app"
                 }
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeTruthy();
@@ -105,7 +105,7 @@ describe("checkApi - path strict", () => {
     });
 
     test("path 必须以 /api/ 开头", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -116,8 +116,8 @@ describe("checkApi - path strict", () => {
                     routePrefix: "/app"
                 }
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeTruthy();
@@ -125,7 +125,7 @@ describe("checkApi - path strict", () => {
     });
 
     test("path 不允许包含空格", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -136,8 +136,8 @@ describe("checkApi - path strict", () => {
                     routePrefix: "/app"
                 }
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeTruthy();
@@ -145,7 +145,7 @@ describe("checkApi - path strict", () => {
     });
 
     test("path 不允许出现 /api//（重复斜杠）", async () => {
-        let thrown: any = null;
+        let thrown: Error | null = null;
 
         try {
             await checkApi([
@@ -156,8 +156,8 @@ describe("checkApi - path strict", () => {
                     routePrefix: "/app"
                 }
             ]);
-        } catch (error: any) {
-            thrown = error;
+        } catch (error: unknown) {
+            thrown = error instanceof Error ? error : new Error(String(error));
         }
 
         expect(thrown).toBeTruthy();

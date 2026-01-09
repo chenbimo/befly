@@ -4,7 +4,7 @@
  */
 
 // 类型导入
-import type { ApiRoute } from "../types/api";
+import type { ApiRoute, HttpMethod } from "../types/api";
 import type { ScanFileResult } from "../utils/scanFiles";
 
 import { Logger } from "../lib/logger";
@@ -35,8 +35,12 @@ export async function loadApis(apis: ScanFileResult[]): Promise<Map<string, ApiR
             };
 
             const method = record["method"];
-            if (method !== undefined) {
-                route.method = method as NonNullable<ApiRoute["method"]>;
+            if (typeof method === "string") {
+                const upperMethod = method.toUpperCase();
+                const normalized = upperMethod === "POST,GET" ? "GET,POST" : upperMethod;
+                route.method = (["GET", "POST", "GET,POST"] as const).includes(normalized as HttpMethod) ? (normalized as HttpMethod) : "POST";
+            } else {
+                route.method = "POST";
             }
 
             const auth = record["auth"];

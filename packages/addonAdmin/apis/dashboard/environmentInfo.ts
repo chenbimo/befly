@@ -1,6 +1,8 @@
+import type { ApiRoute } from "befly/types/api";
+
 import os from "node:os";
 
-export default {
+const route: ApiRoute = {
     name: "获取运行环境信息",
     handler: async (befly) => {
         // 获取数据库版本
@@ -36,3 +38,5 @@ export default {
         });
     }
 };
+
+export default route;

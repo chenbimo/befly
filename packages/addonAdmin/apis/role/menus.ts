@@ -1,6 +1,8 @@
+import type { ApiRoute } from "befly/types/api";
+
 import adminRoleTable from "../../tables/role.json";
 
-export default {
+const route: ApiRoute = {
     name: "获取角色菜单权限",
     fields: {
         roleCode: adminRoleTable.code
@@ -22,3 +24,5 @@ export default {
         return befly.tool.Yes("操作成功", menuPaths);
     }
 };
+
+export default route;

@@ -12,7 +12,9 @@
  * - 缓存出现异常需要重建
  */
 
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "刷新全部缓存",
     handler: async (befly, _ctx) => {
         try {
@@ -101,3 +103,5 @@ export default {
         }
     }
 };
+
+export default route;

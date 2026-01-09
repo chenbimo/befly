@@ -1,6 +1,7 @@
+import type { DbJsonRow } from "../../utils/dbJsonRow";
 import type { ApiRoute } from "befly/types/api";
 
-export default {
+const route: ApiRoute = {
     name: "获取字典项列表",
     fields: {
         typeCode: { type: "string", label: "类型代码", required: true }
@@ -18,7 +19,7 @@ export default {
         }
 
         // 获取该类型下的所有字典项
-        const items = await befly.db.getAll({
+        const items = await befly.db.getAll<DbJsonRow>({
             table: "addon_admin_dict",
             where: { typeCode: ctx.body.typeCode },
             orderBy: ["sort#ASC", "id#ASC"]
@@ -26,4 +27,6 @@ export default {
 
         return befly.tool.Yes("获取成功", items.data);
     }
-} as unknown as ApiRoute;
+};
+
+export default route;

@@ -1,7 +1,9 @@
+import type { ApiRoute } from "befly/types/api";
+
 import adminRoleTable from "../../tables/role.json";
 import { normalizePathnameListInput } from "../../utils/normalizePathnameListInput";
 
-export default {
+const route: ApiRoute = {
     name: "创建角色",
     fields: adminRoleTable,
     handler: async (befly, ctx) => {
@@ -45,3 +47,5 @@ export default {
         return befly.tool.Yes("操作成功", { id: roleId.data });
     }
 };
+
+export default route;

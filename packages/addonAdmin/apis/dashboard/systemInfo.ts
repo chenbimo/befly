@@ -1,4 +1,6 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "获取系统信息",
     handler: async (befly) => {
         // 系统启动时间（从进程启动时间计算）
@@ -17,3 +19,5 @@ export default {
         });
     }
 };
+
+export default route;

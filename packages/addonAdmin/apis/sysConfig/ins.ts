@@ -2,7 +2,7 @@ import type { ApiRoute } from "befly/types/api";
 
 import sysConfigTable from "../../tables/sysConfig.json";
 
-export default {
+const route: ApiRoute = {
     name: "添加系统配置",
     fields: sysConfigTable,
     handler: async (befly, ctx) => {
@@ -37,4 +37,6 @@ export default {
             return befly.tool.No("操作失败");
         }
     }
-} as unknown as ApiRoute;
+};
+
+export default route;

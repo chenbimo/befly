@@ -1,7 +1,9 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "获取服务状态",
     handler: async (befly) => {
-        const services = [];
+        const services: Array<{ name: string; status: string; responseTime: string }> = [];
 
         // 数据库状态
         try {
@@ -73,3 +75,5 @@ export default {
         return befly.tool.Yes("获取成功", { services });
     }
 };
+
+export default route;

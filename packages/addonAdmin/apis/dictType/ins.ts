@@ -1,6 +1,8 @@
+import type { ApiRoute } from "befly/types/api";
+
 import dictTypeTable from "../../tables/dictType.json";
 
-export default {
+const route: ApiRoute = {
     name: "添加字典类型",
     fields: dictTypeTable,
     required: ["code", "name"],
@@ -28,3 +30,5 @@ export default {
         return befly.tool.Yes("添加成功", { id: typeId.data });
     }
 };
+
+export default route;

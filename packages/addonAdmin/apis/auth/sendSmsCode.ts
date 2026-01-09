@@ -1,6 +1,8 @@
+import type { ApiRoute } from "befly/types/api";
+
 import adminTable from "../../tables/admin.json";
 
-export default {
+const route: ApiRoute = {
     name: "发送短信验证码",
     auth: false,
     fields: {
@@ -28,3 +30,5 @@ export default {
         return befly.tool.Yes("验证码已发送", isDev ? { code } : null);
     }
 };
+
+export default route;

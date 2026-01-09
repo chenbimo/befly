@@ -1,4 +1,6 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "角色保存",
     fields: {
         roleCode: {
@@ -41,3 +43,5 @@ export default {
         }
     }
 };
+
+export default route;

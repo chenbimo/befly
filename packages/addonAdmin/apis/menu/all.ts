@@ -7,9 +7,10 @@
  * 4. 仅返回状态为启用的菜单
  */
 
+import type { DbJsonRow } from "../../utils/dbJsonRow";
 import type { ApiRoute } from "befly/types/api";
 
-export default {
+const route: ApiRoute = {
     name: "获取用户菜单",
     handler: async (befly, ctx) => {
         try {
@@ -32,11 +33,11 @@ export default {
             }
 
             // 4. 从缓存获取所有菜单
-            let allMenus = await befly.cache.getMenus();
+            let allMenus: unknown[] = await befly.cache.getMenus();
 
             // 如果缓存不存在，从数据库查询
             if (allMenus.length === 0) {
-                const result = await befly.db.getAll({
+                const result = await befly.db.getAll<DbJsonRow>({
                     table: "addon_admin_menu"
                 });
                 allMenus = result.data.lists;
@@ -48,13 +49,13 @@ export default {
 
             // 5. 根据角色权限过滤菜单（按 menu.path）
             const menuPathSet = new Set<string>(menuPaths);
-            const authorizedMenus = allMenus.filter((menu: unknown) => {
-                if (typeof menu !== "object" || menu === null) {
-                    return false;
-                }
-                const path = (menu as { path?: unknown }).path;
-                return typeof path === "string" && menuPathSet.has(path);
-            });
+            const authorizedMenus = allMenus
+                .filter((menu): menu is Record<string, unknown> => typeof menu === "object" && menu !== null)
+                .filter((menu) => {
+                    const path = menu["path"];
+                    return typeof path === "string" && menuPathSet.has(path);
+                })
+                .map((menu) => menu as DbJsonRow);
 
             // 6. 返回一维数组（由前端构建树形结构）
             return befly.tool.Yes("获取菜单成功", { lists: authorizedMenus });
@@ -63,4 +64,6 @@ export default {
             return befly.tool.No("获取菜单失败");
         }
     }
-} as unknown as ApiRoute;
+};
+
+export default route;

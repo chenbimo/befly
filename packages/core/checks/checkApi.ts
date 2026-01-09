@@ -67,9 +67,25 @@ export async function checkApi(apis: unknown[]): Promise<void> {
             }
 
             const routePrefix = record["routePrefix"];
-            if (typeof routePrefix !== "string" || routePrefix.trim() === "") {
+            const routePrefixTrimmed = typeof routePrefix === "string" ? routePrefix.trim() : "";
+            if (routePrefixTrimmed === "") {
                 Logger.warn(Object.assign({}, omit(record, ["handler"]), { msg: "接口的 routePrefix 属性必须是非空字符串（由系统生成）" }));
                 hasError = true;
+            } else {
+                if (!(routePrefixTrimmed === "/app" || routePrefixTrimmed.startsWith("/addon/"))) {
+                    Logger.warn(Object.assign({}, omit(record, ["handler"]), { msg: "接口的 routePrefix 必须是 /app 或 /addon/<name>（由系统生成）" }));
+                    hasError = true;
+                }
+
+                // 如果 path 存在，则必须与 routePrefix 保持一致：scanFiles 生成规则为 /api${routePrefix}/${relativePath}
+                if (typeof rawPath === "string" && rawPath.trim() !== "") {
+                    const path = rawPath.trim();
+                    const expectedPrefix = `/api${routePrefixTrimmed}/`;
+                    if (!path.startsWith(expectedPrefix)) {
+                        Logger.warn(Object.assign({}, omit(record, ["handler"]), { expectedPrefix: expectedPrefix, msg: "接口的 path 与 routePrefix 不一致：应以 /api${routePrefix}/ 开头（由系统生成）" }));
+                        hasError = true;
+                    }
+                }
             }
 
             const method = record["method"];

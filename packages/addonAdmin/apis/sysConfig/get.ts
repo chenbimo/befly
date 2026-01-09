@@ -1,6 +1,6 @@
 import type { ApiRoute } from "befly/types/api";
 
-export default {
+const route: ApiRoute = {
     name: "根据代码获取配置值",
     auth: false,
     fields: {
@@ -48,4 +48,6 @@ export default {
 
         return befly.tool.Yes("操作成功", { code: code, value: value });
     }
-} as unknown as ApiRoute;
+};
+
+export default route;

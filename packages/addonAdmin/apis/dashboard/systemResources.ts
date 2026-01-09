@@ -1,8 +1,10 @@
+import type { ApiRoute } from "befly/types/api";
+
 import fs from "node:fs";
 import os from "node:os";
 import { promisify } from "node:util";
 
-export default {
+const route: ApiRoute = {
     name: "获取系统资源",
     auth: true,
     fields: {},
@@ -112,3 +114,5 @@ export default {
         });
     }
 };
+
+export default route;

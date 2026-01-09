@@ -1,4 +1,6 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "获取性能指标",
     handler: async (befly) => {
         // 实际项目中，这些数据应该从监控系统或日志中获取
@@ -15,3 +17,5 @@ export default {
         });
     }
 };
+
+export default route;

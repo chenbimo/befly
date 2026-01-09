@@ -1,11 +1,16 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { getAddonAdminEmailPlugin } from "./_emailPlugin";
+
+const route: ApiRoute = {
     name: "获取邮件配置",
     handler: async (befly) => {
-        if (!(befly as any).addon_admin_email) {
+        const emailPlugin = getAddonAdminEmailPlugin(befly);
+        if (!emailPlugin) {
             return befly.tool.No("邮件插件未加载，请检查配置");
         }
 
-        const config = (befly as any).addon_admin_email.getConfig();
+        const config = emailPlugin.getConfig();
 
         return befly.tool.Yes("获取成功", {
             host: config.host,
@@ -18,3 +23,5 @@ export default {
         });
     }
 };
+
+export default route;

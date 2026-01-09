@@ -1,4 +1,6 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "获取配置状态",
     handler: async (befly) => {
         const status = {
@@ -34,3 +36,5 @@ export default {
         return befly.tool.Yes("获取成功", status);
     }
 };
+
+export default route;

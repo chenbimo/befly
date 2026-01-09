@@ -100,10 +100,11 @@ export class EmailHelper {
                 success: true,
                 messageId: info.messageId
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "发送失败";
             return {
                 success: false,
-                error: error.message || "发送失败"
+                error: message
             };
         }
     }

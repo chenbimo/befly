@@ -1,4 +1,6 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "获取权限统计",
     handler: async (befly) => {
         // 统计菜单数量
@@ -23,3 +25,5 @@ export default {
         });
     }
 };
+
+export default route;

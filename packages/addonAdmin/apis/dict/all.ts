@@ -1,7 +1,10 @@
-export default {
+import type { DbJsonRow } from "../../utils/dbJsonRow";
+import type { ApiRoute } from "befly/types/api";
+
+const route: ApiRoute = {
     name: "获取所有字典",
     handler: async (befly) => {
-        const result = await befly.db.getAll({
+        const result = await befly.db.getAll<DbJsonRow>({
             table: "addon_admin_dict",
             joins: [
                 {
@@ -27,3 +30,5 @@ export default {
         return befly.tool.Yes("获取成功", result.data);
     }
 };
+
+export default route;
