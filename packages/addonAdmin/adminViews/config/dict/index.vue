@@ -148,10 +148,7 @@ const $Method = {
                 }
             );
 
-            const res = await $Http(
-                "/addon/admin/dict/list",
-                params
-            );
+            const res = await $Http("/addon/admin/dict/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
