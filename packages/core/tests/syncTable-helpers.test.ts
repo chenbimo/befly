@@ -54,7 +54,7 @@ describe("applyFieldDefaults", () => {
         expect(fieldDef.default).toBe(null);
         expect(fieldDef.index).toBe(false);
         expect(fieldDef.unique).toBe(false);
-        expect(fieldDef.nullable).toBe(true);
+        expect(fieldDef.nullable).toBe(false);
         expect(fieldDef.unsigned).toBe(false);
         expect(fieldDef.regexp).toBe(null);
     });

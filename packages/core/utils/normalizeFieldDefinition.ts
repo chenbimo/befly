@@ -24,7 +24,7 @@ export function normalizeFieldDefinition(fieldDef: FieldDefinition): NormalizedF
         default: fieldDef.default ?? null,
         index: fieldDef.index ?? false,
         unique: fieldDef.unique ?? false,
-        nullable: fieldDef.nullable ?? true,
+        nullable: fieldDef.nullable ?? false,
         unsigned: fieldDef.unsigned ?? false,
         regexp: fieldDef.regexp ?? null
     };
