@@ -52,7 +52,13 @@ const environmentInfo = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http.post("/addon/admin/dashboard/environmentInfo");
+        const { data } = await $Http.post(
+            "/addon/admin/dashboard/environmentInfo",
+            {},
+            {
+                dropValues: [""]
+            }
+        );
         Object.assign(environmentInfo, data);
     } catch (error) {
         // 静默失败：不阻断页面展示

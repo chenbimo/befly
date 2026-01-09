@@ -72,7 +72,13 @@ const performanceMetrics = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http.post("/addon/admin/dashboard/performanceMetrics");
+        const { data } = await $Http.post(
+            "/addon/admin/dashboard/performanceMetrics",
+            {},
+            {
+                dropValues: [""]
+            }
+        );
         Object.assign(performanceMetrics, data);
     } catch (error) {
         // 静默失败：不阻断页面展示

@@ -58,7 +58,13 @@ const $Method = {
     // 获取数据
     async fetchData() {
         try {
-            const { data } = await $Http.post("/addon/admin/admin/detail");
+            const { data } = await $Http.post(
+                "/addon/admin/admin/detail",
+                {},
+                {
+                    dropValues: [""]
+                }
+            );
             Object.assign($Data.userInfo, data);
         } catch (error) {
             MessagePlugin.error("获取用户信息失败");

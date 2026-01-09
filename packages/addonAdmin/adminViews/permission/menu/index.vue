@@ -72,7 +72,13 @@ const $Method = {
     async apiMenuList() {
         $Data.loading = true;
         try {
-            const res = await $Http.post("/addon/admin/menu/all");
+            const res = await $Http.post(
+                "/addon/admin/menu/all",
+                {},
+                {
+                    dropValues: [""]
+                }
+            );
             const lists = Array.isArray(res?.data?.lists) ? res.data.lists : [];
 
             const treeResult = arrayToTree(lists, "path", "parentPath", "children", "sort");

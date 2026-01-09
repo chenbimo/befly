@@ -56,7 +56,13 @@ const systemResources = $ref({
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http.post("/addon/admin/dashboard/systemResources");
+        const { data } = await $Http.post(
+            "/addon/admin/dashboard/systemResources",
+            {},
+            {
+                dropValues: [""]
+            }
+        );
         Object.assign(systemResources, data);
     } catch (error) {
         // 静默失败：不阻断页面展示

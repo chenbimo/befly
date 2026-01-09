@@ -91,7 +91,6 @@ import ILucideChevronDown from "~icons/lucide/chevron-down";
 import EditDialog from "./components/edit.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { cleanParams } from "../../utils/cleanParams";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 // 响应式数据
@@ -145,21 +144,22 @@ const $Method = {
     async apiConfigList() {
         $Data.loading = true;
         try {
-            const params = cleanParams(
+            const res = await $Http.post(
+                "/addon/admin/sysConfig/list",
                 {
                     page: $Data.pagerConfig.currentPage,
                     limit: $Data.pagerConfig.limit,
                     group: $Data.filter.group
                 },
-                [0, ""],
                 {
-                    page: [],
-                    limit: [],
-                    group: [""]
+                    dropValues: [0, ""],
+                    dropKeyValue: {
+                        page: [],
+                        limit: [],
+                        group: [""]
+                    }
                 }
             );
-
-            const res = await $Http.post("/addon/admin/sysConfig/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
@@ -207,7 +207,9 @@ const $Method = {
                 }
 
                 try {
-                    await $Http.post("/addon/admin/sysConfig/del", { id: row.id });
+                    await $Http.post("/addon/admin/sysConfig/del", {
+                        id: row.id
+                    });
                     MessagePlugin.success("删除成功");
                     destroy();
                     await $Method.apiConfigList();

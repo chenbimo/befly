@@ -80,7 +80,6 @@ import ILucideChevronDown from "~icons/lucide/chevron-down";
 import EditDialog from "./components/edit.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { cleanParams } from "../../utils/cleanParams";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 const $Data = $ref({
@@ -115,21 +114,22 @@ const $Method = {
     async apiDictTypeList() {
         $Data.loading = true;
         try {
-            const params = cleanParams(
+            const res = await $Http.post(
+                "/addon/admin/dictType/list",
                 {
                     page: $Data.pagerConfig.currentPage,
                     limit: $Data.pagerConfig.limit,
                     keyword: $Data.searchKeyword
                 },
-                [0, ""],
                 {
-                    page: [],
-                    limit: [],
-                    keyword: [""]
+                    dropValues: [0, ""],
+                    dropKeyValue: {
+                        page: [],
+                        limit: [],
+                        keyword: [""]
+                    }
                 }
             );
-
-            const res = await $Http.post("/addon/admin/dictType/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
@@ -170,7 +170,9 @@ const $Method = {
                 }
 
                 try {
-                    await $Http.post("/addon/admin/dictType/del", { id: row.id });
+                    await $Http.post("/addon/admin/dictType/del", {
+                        id: row.id
+                    });
                     MessagePlugin.success("删除成功");
                     destroy();
                     await $Method.apiDictTypeList();

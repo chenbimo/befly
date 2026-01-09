@@ -150,10 +150,16 @@ const $Method = {
     async apiEmailLogList() {
         $Data.loading = true;
         try {
-            const res = await $Http.post("/addon/admin/email/logList", {
-                page: $Data.pagerConfig.currentPage,
-                limit: $Data.pagerConfig.limit
-            });
+            const res = await $Http.post(
+                "/addon/admin/email/logList",
+                {
+                    page: $Data.pagerConfig.currentPage,
+                    limit: $Data.pagerConfig.limit
+                },
+                {
+                    dropValues: [""]
+                }
+            );
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 

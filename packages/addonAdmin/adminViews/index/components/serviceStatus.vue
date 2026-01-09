@@ -52,7 +52,13 @@ const services = $ref([]);
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http.post("/addon/admin/dashboard/serviceStatus");
+        const { data } = await $Http.post(
+            "/addon/admin/dashboard/serviceStatus",
+            {},
+            {
+                dropValues: [""]
+            }
+        );
         services.splice(0, services.length, ...data.services);
     } catch (error) {
         // 静默失败：不阻断页面展示

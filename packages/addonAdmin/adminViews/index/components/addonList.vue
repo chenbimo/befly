@@ -32,7 +32,13 @@ const addonList = $ref([]);
 // 获取数据
 const fetchData = async () => {
     try {
-        const { data } = await $Http.post("/addon/admin/dashboard/addonList");
+        const { data } = await $Http.post(
+            "/addon/admin/dashboard/addonList",
+            {},
+            {
+                dropValues: [""]
+            }
+        );
         addonList.splice(0, addonList.length, ...data);
     } catch (error) {
         // 静默失败：不阻断页面展示
@@ -77,7 +83,7 @@ fetchData();
             transition: all 0.3s;
 
             &::after {
-                content: '';
+                content: "";
                 position: absolute;
                 top: -2px;
                 right: -2px;
@@ -86,6 +92,7 @@ fetchData();
                 border-radius: 50%;
                 background: var(--success-color);
                 box-shadow: 0 0 0 2px rgba(var(--success-color-rgb), 0.2);
+            }
         }
 
         .addon-icon {

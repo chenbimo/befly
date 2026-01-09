@@ -74,7 +74,6 @@ import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPaginat
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { cleanParams } from "../../utils/cleanParams";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 // 响应式数据
@@ -143,7 +142,8 @@ const $Method = {
     async apiOperateLogList() {
         $Data.loading = true;
         try {
-            const params = cleanParams(
+            const res = await $Http.post(
+                "/addon/admin/operateLog/list",
                 {
                     page: $Data.pagerConfig.currentPage,
                     limit: $Data.pagerConfig.limit,
@@ -151,14 +151,14 @@ const $Method = {
                     action: $Data.filter.action,
                     result: $Data.filter.result
                 },
-                [""],
                 {
-                    module: [""],
-                    action: [""]
+                    dropValues: [""],
+                    dropKeyValue: {
+                        module: [""],
+                        action: [""]
+                    }
                 }
             );
-
-            const res = await $Http.post("/addon/admin/operateLog/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 

@@ -127,7 +127,13 @@ const $Method = {
 
     async apiRoleLists() {
         try {
-            const result = await $Http.post("/addon/admin/role/all");
+            const result = await $Http.post(
+                "/addon/admin/role/all",
+                {},
+                {
+                    dropValues: [""]
+                }
+            );
             $Data.allRoleLists = result.data || [];
         } catch (error) {
             MessagePlugin.error("加载角色列表失败");

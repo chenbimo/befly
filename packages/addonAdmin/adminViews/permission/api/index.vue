@@ -93,7 +93,13 @@ const $Method = {
     async loadApiAll() {
         $Data.loading = true;
         try {
-            const res = await $Http.post("/addon/admin/api/all");
+            const res = await $Http.post(
+                "/addon/admin/api/all",
+                {},
+                {
+                    dropValues: [""]
+                }
+            );
             const list = res.data?.lists || [];
             $Data.allData = list;
             $Data.tableData = list;
