@@ -1,8 +1,10 @@
 // 类型导入
 import type { Hook } from "../types/hook";
+import type { FieldDefinition } from "../types/validate";
 
 // 相对导入
 import { Validator } from "../lib/validator";
+import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
 import { ErrorResponse } from "../utils/response";
 import { isPlainObject, snakeCase } from "../utils/util";
 
@@ -28,6 +30,7 @@ const validatorHook: Hook = {
             const nextBody: Record<string, any> = {};
 
             for (const [field, fieldDef] of Object.entries(ctx.api.fields)) {
+                const normalized = normalizeFieldDefinition(fieldDef as FieldDefinition);
                 let value = rawBody[field];
 
                 if (value === undefined) {
@@ -38,8 +41,8 @@ const validatorHook: Hook = {
                 }
 
                 // 字段未传值且定义了默认值时，应用默认值
-                if (value === undefined && (fieldDef as any)?.default !== undefined && (fieldDef as any)?.default !== null) {
-                    value = (fieldDef as any).default;
+                if (value === undefined && normalized.default !== null) {
+                    value = normalized.default;
                 }
 
                 if (value !== undefined) {

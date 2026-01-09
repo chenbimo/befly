@@ -4,10 +4,11 @@
         "target": "ES2022",
         "types": ["bun"],
         "strict": false,
+        "exactOptionalPropertyTypes": false,
         "noImplicitReturns": false,
         "noFallthroughCasesInSwitch": false,
         "noImplicitOverride": false
     },
-    "include": ["apis/**/*.ts", "libs/**/*.ts", "plugins/**/*.ts", "**/*.d.ts"],
+    "include": ["apis/**/*.ts", "libs/**/*.ts", "plugins/**/*.ts", "utils/**/*.ts", "**/*.d.ts"],
     "exclude": ["node_modules", "dist", "logs", "temp", "tests", "views", "adminViews", "appViews"]
 }

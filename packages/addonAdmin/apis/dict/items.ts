@@ -1,3 +1,5 @@
+import type { ApiRoute } from "befly/types/api";
+
 export default {
     name: "获取字典项列表",
     fields: {
@@ -24,4 +26,4 @@ export default {
 
         return befly.tool.Yes("获取成功", items.data);
     }
-};
+} as unknown as ApiRoute;

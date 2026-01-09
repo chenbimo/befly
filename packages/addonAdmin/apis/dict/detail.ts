@@ -1,6 +1,10 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "获取字典详情",
-    fields: { "@id": true },
+    fields: { id: fieldsScheme.id },
     required: ["id"],
     handler: async (befly, ctx) => {
         const dict = await befly.db.getOne({
@@ -34,3 +38,5 @@ export default {
         return befly.tool.Yes("获取成功", dict.data);
     }
 };
+
+export default route;

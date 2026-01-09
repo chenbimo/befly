@@ -1,3 +1,5 @@
+import type { ApiRoute } from "befly/types/api";
+
 import adminDictTable from "../../tables/dict.json";
 
 export default {
@@ -41,4 +43,4 @@ export default {
 
         return befly.tool.Yes("添加成功", { id: dictId.data });
     }
-};
+} as unknown as ApiRoute;

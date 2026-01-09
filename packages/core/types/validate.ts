@@ -15,24 +15,51 @@ export interface FieldDefinition {
     name: string;
     /** 字段类型 */
     type: FieldType | string;
-    /** 最小值/最小长度（null 表示不限制） */
-    min: number | null;
-    /** 最大值/最大长度（null 表示不限制） */
-    max: number | null;
-    /** 默认值（可为 null） */
-    default: any;
-    /** 字段描述 */
+    /**
+     * 最小值/最小长度。
+     * - 缺省默认：null（表示不限制）
+     */
+    min?: number | null;
+    /**
+     * 最大值/最大长度。
+     * - 缺省默认：null（表示不限制）
+     */
+    max?: number | null;
+    /**
+     * 默认值。
+     * - 缺省默认：null（表示字段未提供默认值）
+     */
+    default?: any;
+    /**
+     * 字段描述。
+     * - 缺省默认：""（空字符串）
+     */
     detail?: string;
-    /** 是否创建索引 */
+    /**
+     * 是否创建索引。
+     * - 缺省默认：false
+     */
     index?: boolean;
-    /** 是否唯一约束 */
+    /**
+     * 是否唯一约束。
+     * - 缺省默认：false
+     */
     unique?: boolean;
-    /** 是否可为 NULL */
+    /**
+     * 是否可为 NULL。
+     * - 缺省默认：true
+     */
     nullable?: boolean;
-    /** number 类型是否无符号（仅 MySQL 语义生效） */
+    /**
+     * number 类型是否无符号（仅 MySQL 语义生效）。
+     * - 缺省默认：false
+     */
     unsigned?: boolean;
-    /** 正则（或 @alias）；null 表示无约束 */
-    regexp: string | null;
+    /**
+     * 正则（或 @alias）。
+     * - 缺省默认：null（表示无约束）
+     */
+    regexp?: string | null;
 }
 
 /**

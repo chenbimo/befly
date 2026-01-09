@@ -1,3 +1,5 @@
+import type { ApiRoute } from "befly/types/api";
+
 export default {
     name: "根据代码获取配置值",
     auth: false,
@@ -6,10 +8,10 @@ export default {
     },
     handler: async (befly, ctx) => {
         const config = await befly.db.getOne<{
-            id: number;
-            code: string;
-            value: string;
-            valueType: string;
+            id?: number;
+            code?: string;
+            value?: string;
+            valueType?: string;
         }>({
             table: "addon_admin_sys_config",
             where: { code: ctx.body.code }
@@ -19,20 +21,31 @@ export default {
             return befly.tool.No("配置不存在");
         }
 
+        const valueType = config.data.valueType;
+        const rawValue = config.data.value;
+        if (typeof valueType !== "string" || typeof rawValue !== "string") {
+            return befly.tool.No("配置数据不完整");
+        }
+
+        const code = config.data.code;
+        if (typeof code !== "string") {
+            return befly.tool.No("配置数据不完整");
+        }
+
         // 根据类型转换值
-        let value = config.data.value;
-        if (config.data.valueType === "number") {
-            value = Number(config.data.value);
-        } else if (config.data.valueType === "boolean") {
-            value = config.data.value === "true" || config.data.value === "1";
-        } else if (config.data.valueType === "json") {
+        let value: unknown = rawValue;
+        if (valueType === "number") {
+            value = Number(rawValue);
+        } else if (valueType === "boolean") {
+            value = rawValue === "true" || rawValue === "1";
+        } else if (valueType === "json") {
             try {
-                value = JSON.parse(config.data.value);
+                value = JSON.parse(rawValue);
             } catch {
-                value = config.data.value;
+                value = rawValue;
             }
         }
 
-        return befly.tool.Yes("操作成功", { code: config.data.code, value: value });
+        return befly.tool.Yes("操作成功", { code: code, value: value });
     }
-};
+} as unknown as ApiRoute;

@@ -1,3 +1,5 @@
+import type { ApiRoute } from "befly/types/api";
+
 import adminRoleTable from "../../tables/role.json";
 import { normalizePathnameListInput } from "../../utils/normalizePathnameListInput";
 
@@ -17,12 +19,17 @@ export default {
         }
 
         // 查询角色是否存在
-        const role = await befly.db.getOne<{ id?: number; code: string }>({
+        const role = await befly.db.getOne<{ id?: number; code?: string }>({
             table: "addon_admin_role",
             where: { code: ctx.body.roleCode }
         });
 
         if (!role.data?.id) {
+            return befly.tool.No("角色不存在");
+        }
+
+        const roleCode = role.data.code;
+        if (typeof roleCode !== "string" || roleCode.length === 0) {
             return befly.tool.No("角色不存在");
         }
 
@@ -36,8 +43,8 @@ export default {
         });
 
         // 增量刷新 Redis 权限缓存
-        await befly.cache.refreshRoleApiPermissions(role.data.code, apiPaths);
+        await befly.cache.refreshRoleApiPermissions(roleCode, apiPaths);
 
         return befly.tool.Yes("操作成功");
     }
-};
+} as unknown as ApiRoute;

@@ -7,6 +7,8 @@
  * 4. 仅返回状态为启用的菜单
  */
 
+import type { ApiRoute } from "befly/types/api";
+
 export default {
     name: "获取用户菜单",
     handler: async (befly, ctx) => {
@@ -14,7 +16,7 @@ export default {
             // 2. 查询角色信息获取菜单权限（使用 roleCode 而非 roleId）
             const role = await befly.db.getOne<{ id?: number; menus?: unknown }>({
                 table: "addon_admin_role",
-                where: { code: ctx.user.roleCode }
+                where: { code: ctx.user["roleCode"] }
             });
 
             if (!role.data?.id) {
@@ -61,4 +63,4 @@ export default {
             return befly.tool.No("获取菜单失败");
         }
     }
-};
+} as unknown as ApiRoute;

@@ -1,12 +1,16 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "获取菜单列表",
     fields: {
-        page: "@page",
-        limit: "@limit",
-        keyword: "@keyword",
-        state: "@state"
+        page: fieldsScheme.page,
+        limit: fieldsScheme.limit,
+        keyword: fieldsScheme.keyword,
+        state: fieldsScheme.state
     },
-    handler: async (befly) => {
+    handler: async (befly, _ctx) => {
         try {
             const menus = await befly.db.getAll({
                 table: "addon_admin_menu"
@@ -19,3 +23,5 @@ export default {
         }
     }
 };
+
+export default route;

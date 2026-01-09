@@ -1,8 +1,13 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "删除系统配置",
     fields: {
-        id: "@id"
+        id: fieldsScheme.id
     },
+    required: ["id"],
     handler: async (befly, ctx) => {
         try {
             // 检查是否为系统配置
@@ -31,3 +36,5 @@ export default {
         }
     }
 };
+
+export default route;

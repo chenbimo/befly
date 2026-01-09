@@ -1,11 +1,13 @@
-import sysConfigTable from "../../tables/sysConfig.json";
+import type { ApiRoute } from "befly/types/api";
 
-export default {
+import sysConfigTable from "../../tables/sysConfig.json";
+import { fieldsScheme } from "../../utils/fieldsScheme";
+import { mergeTableFields } from "../../utils/mergeTableFields";
+
+const route: ApiRoute = {
     name: "更新系统配置",
-    fields: {
-        id: "@id",
-        ...sysConfigTable
-    },
+    fields: mergeTableFields(sysConfigTable, { id: fieldsScheme.id }),
+    required: ["id"],
     handler: async (befly, ctx) => {
         try {
             // 检查是否为系统配置
@@ -51,3 +53,5 @@ export default {
         }
     }
 };
+
+export default route;

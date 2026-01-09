@@ -3,9 +3,9 @@
  * 提供邮件发送功能，支持 SMTP 配置
  */
 
-import type { EmailConfig } from "../libs/emailHelper.ts";
+import type { EmailConfig } from "../libs/emailHelper";
 
-import { EmailHelper } from "../libs/emailHelper.ts";
+import { EmailHelper } from "../libs/emailHelper";
 
 /** 默认配置 */
 const defaultConfig: EmailConfig = {

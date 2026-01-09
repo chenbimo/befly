@@ -1,6 +1,8 @@
+import type { ApiRoute } from "befly/types/api";
+
 import adminTable from "../../tables/admin.json";
 
-export default {
+const route: ApiRoute = {
     name: "添加管理员",
     fields: adminTable,
     required: ["username", "password", "roleCode"],
@@ -56,3 +58,5 @@ export default {
         });
     }
 };
+
+export default route;

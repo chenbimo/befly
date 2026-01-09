@@ -1,10 +1,15 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import dictTable from "../../tables/dict.json";
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "获取字典列表",
     fields: {
-        page: "@page",
-        limit: "@limit",
-        typeCode: { type: "string", label: "类型代码" },
-        keyword: "@keyword"
+        page: fieldsScheme.page,
+        limit: fieldsScheme.limit,
+        typeCode: dictTable.typeCode,
+        keyword: fieldsScheme.keyword
     },
     handler: async (befly, ctx) => {
         const where: any = {};
@@ -43,3 +48,5 @@ export default {
         return befly.tool.Yes("获取成功", result.data);
     }
 };
+
+export default route;

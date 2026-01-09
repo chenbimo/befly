@@ -1,7 +1,11 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "删除管理员",
     fields: {
-        id: "@id"
+        id: fieldsScheme.id
     },
     required: ["id"],
     handler: async (befly, ctx) => {
@@ -29,3 +33,5 @@ export default {
         return befly.tool.Yes("删除成功");
     }
 };
+
+export default route;

@@ -30,10 +30,10 @@ export default {
                 });
 
                 await befly.redis.setObject("apis:all", apis.data.lists);
-                results.apis = { success: true, count: apis.data.lists.length };
+                results["apis"] = { success: true, count: apis.data.lists.length };
             } catch (error: any) {
                 befly.logger.error({ err: error, msg: "刷新接口缓存失败" });
-                results.apis = { success: false, error: error.message };
+                results["apis"] = { success: false, error: error.message };
             }
 
             // 2. 刷新菜单缓存
@@ -47,7 +47,7 @@ export default {
                 const parentCount = menus.data.lists.filter((m: any) => typeof m.parentPath !== "string" || m.parentPath.length === 0).length;
                 const childCount = menus.data.lists.filter((m: any) => typeof m.parentPath === "string" && m.parentPath.length > 0).length;
 
-                results.menus = {
+                results["menus"] = {
                     success: true,
                     count: menus.data.lists.length,
                     parentCount: parentCount,
@@ -55,7 +55,7 @@ export default {
                 };
             } catch (error: any) {
                 befly.logger.error({ err: error, msg: "刷新菜单缓存失败" });
-                results.menus = { success: false, error: error.message };
+                results["menus"] = { success: false, error: error.message };
             }
 
             // 3. 刷新角色权限缓存
@@ -72,23 +72,23 @@ export default {
                     }))
                 );
 
-                results.roles = { success: true, count: count };
+                results["roles"] = { success: true, count: count };
             } catch (error: any) {
                 befly.logger.error({ err: error, msg: "刷新角色缓存失败" });
-                results.roles = { success: false, error: error.message };
+                results["roles"] = { success: false, error: error.message };
             }
 
             // 4. 重建角色接口权限缓存（版本化 + 原子切换）
             try {
                 await befly.cache.rebuildRoleApiPermissions();
-                results.roleApiPermissions = { success: true };
+                results["roleApiPermissions"] = { success: true };
             } catch (error: any) {
                 befly.logger.error({ err: error, msg: "重建角色接口权限缓存失败" });
-                results.roleApiPermissions = { success: false, error: error.message };
+                results["roleApiPermissions"] = { success: false, error: error.message };
             }
 
             // 检查是否全部成功
-            const allSuccess = results.apis.success && results.menus.success && results.roles.success && results.roleApiPermissions.success;
+            const allSuccess = results["apis"].success && results["menus"].success && results["roles"].success && results["roleApiPermissions"].success;
 
             if (allSuccess) {
                 return befly.tool.Yes("全部缓存刷新成功", results);

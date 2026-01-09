@@ -1,8 +1,13 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "删除角色",
     fields: {
-        id: "@id"
+        id: fieldsScheme.id
     },
+    required: ["id"],
     handler: async (befly, ctx) => {
         try {
             // 检查是否有用户使用此角色（使用 getList 代替 getAll）
@@ -47,3 +52,5 @@ export default {
         }
     }
 };
+
+export default route;

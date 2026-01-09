@@ -6,6 +6,7 @@
 import type { TableDefinition, FieldDefinition, ValidateResult, SingleResult } from "../types/validate";
 
 import { RegexAliases, getCompiledRegex } from "../configs/presetRegexp";
+import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
 
 /**
  * 验证器类
@@ -64,7 +65,9 @@ export class Validator {
      * 验证单个值（带类型转换）
      */
     static single(value: any, fieldDef: FieldDefinition): SingleResult {
-        const { type, default: defaultValue } = fieldDef;
+        const normalized = normalizeFieldDefinition(fieldDef);
+        const type = normalized.type;
+        const defaultValue = normalized.default;
 
         // 处理空值
         if (value === undefined || value === null || value === "") {
@@ -158,7 +161,11 @@ export class Validator {
 
     /** 规则验证 */
     private static checkRule(value: any, fieldDef: FieldDefinition): string | null {
-        const { type, min, max, regexp } = fieldDef;
+        const normalized = normalizeFieldDefinition(fieldDef);
+        const type = normalized.type;
+        const min = normalized.min;
+        const max = normalized.max;
+        const regexp = normalized.regexp;
         const regex = this.resolveRegex(regexp);
 
         switch (type.toLowerCase()) {

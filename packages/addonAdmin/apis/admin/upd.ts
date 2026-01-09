@@ -1,11 +1,18 @@
-import adminTable from "../../tables/admin.json";
+import type { ApiRoute } from "befly/types/api";
 
-export default {
+import adminTable from "../../tables/admin.json";
+import { fieldsScheme } from "../../utils/fieldsScheme";
+import { mergeTableFields } from "../../utils/mergeTableFields";
+
+const route: ApiRoute = {
     name: "更新管理员",
-    fields: { id: "@id", ...adminTable },
+    fields: mergeTableFields(adminTable, { id: fieldsScheme.id }),
     required: ["id"],
     handler: async (befly, ctx) => {
-        const { id, username, nickname, roleCode, ...updateData } = ctx.body;
+        const id = ctx.body.id;
+        const username = ctx.body.username;
+        const nickname = ctx.body.nickname;
+        const roleCode = ctx.body.roleCode;
 
         // 检查管理员是否存在
         const admin = await befly.db.getOne<{
@@ -56,10 +63,19 @@ export default {
         }
 
         // 构建更新数据
-        const dataToUpdate: Record<string, unknown> = { ...updateData };
-        if (username) dataToUpdate.username = username;
-        if (nickname) dataToUpdate.nickname = nickname;
-        if (roleCode) dataToUpdate.roleCode = roleCode;
+        const dataToUpdate: Record<string, any> = {};
+
+        if (ctx.body.avatar !== undefined) dataToUpdate["avatar"] = ctx.body.avatar;
+        if (ctx.body.email !== undefined) dataToUpdate["email"] = ctx.body.email;
+        if (ctx.body.lastLoginIp !== undefined) dataToUpdate["lastLoginIp"] = ctx.body.lastLoginIp;
+        if (ctx.body.lastLoginTime !== undefined) dataToUpdate["lastLoginTime"] = ctx.body.lastLoginTime;
+        if (ctx.body.password !== undefined) dataToUpdate["password"] = ctx.body.password;
+        if (ctx.body.phone !== undefined) dataToUpdate["phone"] = ctx.body.phone;
+        if (ctx.body.roleType !== undefined) dataToUpdate["roleType"] = ctx.body.roleType;
+
+        if (username !== undefined) dataToUpdate["username"] = username;
+        if (nickname !== undefined) dataToUpdate["nickname"] = nickname;
+        if (roleCode !== undefined) dataToUpdate["roleCode"] = roleCode;
 
         // 更新管理员信息
         await befly.db.updData({
@@ -71,3 +87,5 @@ export default {
         return befly.tool.Yes("更新成功");
     }
 };
+
+export default route;

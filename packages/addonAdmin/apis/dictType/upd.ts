@@ -1,11 +1,12 @@
-import dictTypeTable from "../../tables/dictType.json";
+import type { ApiRoute } from "befly/types/api";
 
-export default {
+import dictTypeTable from "../../tables/dictType.json";
+import { fieldsScheme } from "../../utils/fieldsScheme";
+import { mergeTableFields } from "../../utils/mergeTableFields";
+
+const route: ApiRoute = {
     name: "更新字典类型",
-    fields: {
-        ...dictTypeTable,
-        "@id": true
-    },
+    fields: mergeTableFields(dictTypeTable, { id: fieldsScheme.id }),
     required: ["id"],
     handler: async (befly, ctx) => {
         const { id, code, name, description, sort } = ctx.body;
@@ -26,10 +27,10 @@ export default {
         }
 
         const updateData: Record<string, any> = {};
-        if (code !== undefined) updateData.code = code;
-        if (name !== undefined) updateData.name = name;
-        if (description !== undefined) updateData.description = description;
-        if (sort !== undefined) updateData.sort = sort;
+        if (code !== undefined) updateData["code"] = code;
+        if (name !== undefined) updateData["name"] = name;
+        if (description !== undefined) updateData["description"] = description;
+        if (sort !== undefined) updateData["sort"] = sort;
 
         await befly.db.updData({
             table: "addon_admin_dict_type",
@@ -40,3 +41,5 @@ export default {
         return befly.tool.Yes("更新成功");
     }
 };
+
+export default route;

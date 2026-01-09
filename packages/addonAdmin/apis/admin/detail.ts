@@ -1,7 +1,11 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "获取管理员信息",
     fields: {
-        id: "@id"
+        id: fieldsScheme.id
     },
     handler: async (befly, ctx) => {
         const adminData = await befly.db.getOne({
@@ -17,3 +21,5 @@ export default {
         return befly.tool.Yes("查询成功", adminData.data);
     }
 };
+
+export default route;

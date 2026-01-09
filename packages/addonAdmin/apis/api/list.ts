@@ -1,10 +1,14 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "获取接口列表",
     fields: {
-        page: "@page",
-        limit: "@limit",
-        keyword: "@keyword",
-        state: "@state"
+        page: fieldsScheme.page,
+        limit: fieldsScheme.limit,
+        keyword: fieldsScheme.keyword,
+        state: fieldsScheme.state
     },
     handler: async (befly, ctx) => {
         try {
@@ -25,3 +29,5 @@ export default {
         }
     }
 };
+
+export default route;

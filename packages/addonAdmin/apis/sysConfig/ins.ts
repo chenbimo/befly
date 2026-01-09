@@ -1,3 +1,5 @@
+import type { ApiRoute } from "befly/types/api";
+
 import sysConfigTable from "../../tables/sysConfig.json";
 
 export default {
@@ -35,4 +37,4 @@ export default {
             return befly.tool.No("操作失败");
         }
     }
-};
+} as unknown as ApiRoute;

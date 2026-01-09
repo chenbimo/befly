@@ -1,6 +1,10 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import { fieldsScheme } from "../../utils/fieldsScheme";
+
+const route: ApiRoute = {
     name: "删除字典",
-    fields: { "@id": true },
+    fields: { id: fieldsScheme.id },
     required: ["id"],
     handler: async (befly, ctx) => {
         await befly.db.delData({
@@ -11,3 +15,5 @@ export default {
         return befly.tool.Yes("删除成功");
     }
 };
+
+export default route;

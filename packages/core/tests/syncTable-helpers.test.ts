@@ -49,13 +49,13 @@ describe("applyFieldDefaults", () => {
         syncTable.TestKit.applyFieldDefaults(fieldDef);
 
         expect(fieldDef.detail).toBe("");
-        expect(fieldDef.min).toBe(0);
-        expect(fieldDef.max).toBe(100);
+        expect(fieldDef.min).toBe(null);
+        expect(fieldDef.max).toBe(null);
         expect(fieldDef.default).toBe(null);
         expect(fieldDef.index).toBe(false);
         expect(fieldDef.unique).toBe(false);
-        expect(fieldDef.nullable).toBe(false);
-        expect(fieldDef.unsigned).toBe(true);
+        expect(fieldDef.nullable).toBe(true);
+        expect(fieldDef.unsigned).toBe(false);
         expect(fieldDef.regexp).toBe(null);
     });
 

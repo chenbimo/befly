@@ -1,7 +1,11 @@
-export default {
+import type { ApiRoute } from "befly/types/api";
+
+import roleTable from "../../tables/role.json";
+
+const route: ApiRoute = {
     name: "获取用户角色",
     fields: {
-        id: "@id"
+        id: roleTable.code
     },
     handler: async (befly, ctx) => {
         let roleInfo = null;
@@ -11,7 +15,7 @@ export default {
                 where: { code: ctx.body.id }
             });
 
-            const roleId = (roleInfoResult.data as any)?.id;
+            const roleId = (roleInfoResult.data as { id?: number }).id;
             if (typeof roleId === "number") {
                 roleInfo = roleInfoResult.data;
             }
@@ -23,3 +27,5 @@ export default {
         });
     }
 };
+
+export default route;

@@ -52,5 +52,11 @@
         "nodemailer": "^7.0.12",
         "ua-parser-js": "^2.0.7"
     },
+    "devDependencies": {
+        "befly": "workspace:*"
+    },
+    "peerDependencies": {
+        "befly": "^3.14.0"
+    },
     "addonName": "管理后台"
 }

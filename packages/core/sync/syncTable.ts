@@ -16,6 +16,7 @@ import type { ScanFileResult } from "../utils/scanFiles";
 import { CacheKeys } from "../lib/cacheKeys";
 import { getDialectByName, getSyncTableColumnsInfoQuery, getSyncTableIndexesQuery } from "../lib/dbDialect";
 import { Logger } from "../lib/logger";
+import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
 import { snakeCase } from "../utils/util";
 
 type SqlExecutor = {
@@ -390,15 +391,18 @@ function escapeComment(str: string): string {
  * 为字段定义应用默认值
  */
 function applyFieldDefaults(fieldDef: any): void {
-    fieldDef.detail = fieldDef.detail ?? "";
-    fieldDef.min = fieldDef.min ?? 0;
-    fieldDef.max = fieldDef.max ?? (fieldDef.type === "number" ? Number.MAX_SAFE_INTEGER : 100);
-    fieldDef.default = fieldDef.default ?? null;
-    fieldDef.index = fieldDef.index ?? false;
-    fieldDef.unique = fieldDef.unique ?? false;
-    fieldDef.nullable = fieldDef.nullable ?? false;
-    fieldDef.unsigned = fieldDef.unsigned ?? true;
-    fieldDef.regexp = fieldDef.regexp ?? null;
+    if (!fieldDef || typeof fieldDef !== "object") return;
+
+    const normalized = normalizeFieldDefinition(fieldDef as FieldDefinition);
+    fieldDef.detail = normalized.detail;
+    fieldDef.min = normalized.min;
+    fieldDef.max = normalized.max;
+    fieldDef.default = normalized.default;
+    fieldDef.index = normalized.index;
+    fieldDef.unique = normalized.unique;
+    fieldDef.nullable = normalized.nullable;
+    fieldDef.unsigned = normalized.unsigned;
+    fieldDef.regexp = normalized.regexp;
 }
 
 /**
@@ -541,19 +545,20 @@ function buildBusinessColumnDefs(dbDialect: DbDialect, fields: Record<string, Fi
     const colDefs: string[] = [];
 
     for (const [fieldKey, fieldDef] of Object.entries(fields)) {
+        const normalized = normalizeFieldDefinition(fieldDef);
         const dbFieldName = snakeCase(fieldKey);
         const colQuoted = quoteIdentifier(dbDialect, dbFieldName);
 
-        const sqlType = getSqlType(dbDialect, fieldDef.type, fieldDef.max, fieldDef.unsigned);
+        const sqlType = getSqlType(dbDialect, normalized.type, normalized.max, normalized.unsigned);
 
-        const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
-        const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
+        const actualDefault = resolveDefaultValue(normalized.default, normalized.type);
+        const defaultSql = generateDefaultSql(actualDefault, normalized.type);
 
-        const uniqueSql = fieldDef.unique ? " UNIQUE" : "";
-        const nullableSql = fieldDef.nullable ? " NULL" : " NOT NULL";
+        const uniqueSql = normalized.unique ? " UNIQUE" : "";
+        const nullableSql = normalized.nullable ? " NULL" : " NOT NULL";
 
         if (dbDialect === "mysql") {
-            colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`);
+            colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`);
         } else {
             colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`);
         }
@@ -573,16 +578,18 @@ function generateDDLClause(dbDialect: DbDialect, fieldKey: string, fieldDef: Fie
     const dbFieldName = snakeCase(fieldKey);
     const colQuoted = quoteIdentifier(dbDialect, dbFieldName);
 
-    const sqlType = getSqlType(dbDialect, fieldDef.type, fieldDef.max, fieldDef.unsigned);
+    const normalized = normalizeFieldDefinition(fieldDef);
 
-    const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
-    const defaultSql = generateDefaultSql(actualDefault, fieldDef.type);
+    const sqlType = getSqlType(dbDialect, normalized.type, normalized.max, normalized.unsigned);
 
-    const uniqueSql = fieldDef.unique ? " UNIQUE" : "";
-    const nullableSql = fieldDef.nullable ? " NULL" : " NOT NULL";
+    const actualDefault = resolveDefaultValue(normalized.default, normalized.type);
+    const defaultSql = generateDefaultSql(actualDefault, normalized.type);
+
+    const uniqueSql = normalized.unique ? " UNIQUE" : "";
+    const nullableSql = normalized.nullable ? " NULL" : " NOT NULL";
 
     if (dbDialect === "mysql") {
-        return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(fieldDef.name)}"`;
+        return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`;
     }
     if (dbDialect === "postgresql") {
         if (isAdd) return `ADD COLUMN IF NOT EXISTS ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql}`;
@@ -926,35 +933,38 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
 function compareFieldDefinition(dbDialect: DbDialect, existingColumn: ColumnInfo, fieldDef: FieldDefinition): FieldChange[] {
     const changes: FieldChange[] = [];
 
+    const normalized = normalizeFieldDefinition(fieldDef);
+
     // SQLite 元信息能力较弱：
     // - 列注释：sqlite 无 information_schema 注释，PRAGMA table_info 也不提供 comment
     // - 字符串长度：sqlite 类型系统宽松，长度/类型信息不稳定（易产生误报）
     // 因此在 sqlite 下跳过 comment/length 的 diff，仅保留更可靠的对比项。
-    if (dbDialect !== "sqlite" && isStringOrArrayType(fieldDef.type)) {
-        if (existingColumn.max !== fieldDef.max) {
+    if (dbDialect !== "sqlite" && isStringOrArrayType(normalized.type)) {
+        const expectedMax = normalized.max;
+        if (expectedMax !== null && existingColumn.max !== expectedMax) {
             changes.push({
                 type: "length",
                 current: existingColumn.max,
-                expected: fieldDef.max
+                expected: expectedMax
             });
         }
     }
 
     if (dbDialect !== "sqlite") {
         const currentComment = existingColumn.comment || "";
-        if (currentComment !== fieldDef.name) {
+        if (currentComment !== normalized.name) {
             changes.push({
                 type: "comment",
                 current: currentComment,
-                expected: fieldDef.name
+                expected: normalized.name
             });
         }
     }
 
     const typeMapping = getTypeMapping(dbDialect);
-    const mapped = typeMapping[fieldDef.type];
+    const mapped = typeMapping[normalized.type];
     if (typeof mapped !== "string") {
-        throw new Error(`未知字段类型映射：dialect=${dbDialect} type=${String(fieldDef.type)}`);
+        throw new Error(`未知字段类型映射：dialect=${dbDialect} type=${String(normalized.type)}`);
     }
     const expectedType = mapped.toLowerCase();
     const currentType = existingColumn.type.toLowerCase();
@@ -967,7 +977,7 @@ function compareFieldDefinition(dbDialect: DbDialect, existingColumn: ColumnInfo
         });
     }
 
-    const expectedNullable = fieldDef.nullable;
+    const expectedNullable = normalized.nullable;
     if (existingColumn.nullable !== expectedNullable) {
         changes.push({
             type: "nullable",
@@ -976,7 +986,7 @@ function compareFieldDefinition(dbDialect: DbDialect, existingColumn: ColumnInfo
         });
     }
 
-    const expectedDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
+    const expectedDefault = resolveDefaultValue(normalized.default, normalized.type);
     if (String(existingColumn.defaultValue) !== String(expectedDefault)) {
         changes.push({
             type: "default",
@@ -1179,7 +1189,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
                     Logger.debug(`  ~ 修改 ${dbFieldName} ${changeLabel}: ${c.current} -> ${c.expected}`);
                 }
 
-                if (isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && fieldDef.max !== null) {
+                if (isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && typeof fieldDef.max === "number") {
                     if (existingColumns[dbFieldName].max! > fieldDef.max) {
                         Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max} 已被跳过（需手动处理）`);
                     }
@@ -1204,7 +1214,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
                 }
 
                 if (defaultChanged) {
-                    const actualDefault = resolveDefaultValue(fieldDef.default, fieldDef.type);
+                    const actualDefault = resolveDefaultValue(fieldDef.default ?? null, fieldDef.type);
 
                     let v: string | null = null;
                     if (actualDefault !== "null") {
@@ -1227,7 +1237,7 @@ async function modifyTableRuntime(runtime: SyncRuntime, tableName: string, field
 
                 if (!onlyDefaultChanged) {
                     let skipModify = false;
-                    if (hasLengthChange && isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && fieldDef.max !== null) {
+                    if (hasLengthChange && isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && typeof fieldDef.max === "number") {
                         const isShrink = existingColumns[dbFieldName].max! > fieldDef.max;
                         if (isShrink) skipModify = true;
                     }

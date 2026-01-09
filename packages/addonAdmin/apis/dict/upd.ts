@@ -1,11 +1,12 @@
-import adminDictTable from "../../tables/dict.json";
+import type { ApiRoute } from "befly/types/api";
 
-export default {
+import adminDictTable from "../../tables/dict.json";
+import { fieldsScheme } from "../../utils/fieldsScheme";
+import { mergeTableFields } from "../../utils/mergeTableFields";
+
+const route: ApiRoute = {
     name: "更新字典",
-    fields: {
-        ...adminDictTable,
-        "@id": true
-    },
+    fields: mergeTableFields(adminDictTable, { id: fieldsScheme.id }),
     required: ["id"],
     handler: async (befly, ctx) => {
         const { id, typeCode, key, label, sort, remark } = ctx.body;
@@ -46,12 +47,12 @@ export default {
             }
         }
 
-        const updateData: Record<string, unknown> = {};
-        if (typeCode !== undefined) updateData.typeCode = typeCode;
-        if (key !== undefined) updateData.key = key;
-        if (label !== undefined) updateData.label = label;
-        if (sort !== undefined) updateData.sort = sort;
-        if (remark !== undefined) updateData.remark = remark;
+        const updateData: Record<string, any> = {};
+        if (typeCode !== undefined) updateData["typeCode"] = typeCode;
+        if (key !== undefined) updateData["key"] = key;
+        if (label !== undefined) updateData["label"] = label;
+        if (sort !== undefined) updateData["sort"] = sort;
+        if (remark !== undefined) updateData["remark"] = remark;
 
         await befly.db.updData({
             table: "addon_admin_dict",
@@ -62,3 +63,5 @@ export default {
         return befly.tool.Yes("更新成功");
     }
 };
+
+export default route;

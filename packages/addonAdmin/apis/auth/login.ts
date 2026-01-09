@@ -1,8 +1,10 @@
+import type { ApiRoute } from "befly/types/api";
+
 import { UAParser } from "ua-parser-js";
 
 import adminTable from "../../tables/admin.json";
 
-export default {
+const route: ApiRoute = {
     name: "管理员登录",
     auth: false,
     fields: {
@@ -10,12 +12,17 @@ export default {
             name: "账号",
             type: "string",
             min: 3,
-            max: 100
+            max: 100,
+            default: null,
+            regexp: null
         },
         password: adminTable.password,
         loginType: {
             name: "登录类型",
             type: "string",
+            min: null,
+            max: null,
+            default: null,
             regexp: "^(username|email|phone)$"
         }
     },
@@ -49,19 +56,19 @@ export default {
         // 根据登录类型构建查询条件
         const whereCondition: Record<string, unknown> = {};
         if (ctx.body.loginType === "username") {
-            whereCondition.username = ctx.body.account;
+            whereCondition["username"] = ctx.body.account;
         } else if (ctx.body.loginType === "email") {
-            whereCondition.email = ctx.body.account;
+            whereCondition["email"] = ctx.body.account;
         } else if (ctx.body.loginType === "phone") {
-            whereCondition.phone = ctx.body.account;
+            whereCondition["phone"] = ctx.body.account;
         }
 
         // 查询管理员
         const admin = await befly.db.getOne<{
-            id: number;
-            username: string;
+            id?: number;
+            username?: string;
             nickname?: string;
-            password: string;
+            password?: string;
             state?: number;
             roleCode?: string;
             roleType?: string;
@@ -70,7 +77,7 @@ export default {
             where: whereCondition
         });
 
-        if (!admin.data?.id) {
+        if (!admin.data?.id || typeof admin.data.username !== "string" || typeof admin.data.password !== "string") {
             logData.failReason = "账号不存在";
             await befly.db.insData({ table: "addon_admin_login_log", data: logData });
             return befly.tool.No("账号或密码错误");
@@ -121,11 +128,20 @@ export default {
         );
 
         // 返回用户信息（不包含密码）
-        const { password: _, ...userWithoutPassword } = admin.data;
+        const userInfo = {
+            id: admin.data.id,
+            username: admin.data.username,
+            nickname: admin.data.nickname,
+            state: admin.data.state,
+            roleCode: admin.data.roleCode,
+            roleType: admin.data.roleType
+        };
 
         return befly.tool.Yes("登录成功", {
             token: token,
-            userInfo: userWithoutPassword
+            userInfo: userInfo
         });
     }
 };
+
+export default route;
