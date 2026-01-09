@@ -3,8 +3,57 @@
  * 支持命名空间隔离，统一管理 localStorage 和 sessionStorage
  */
 
+import { getViteEnvString } from "../utils/getViteEnvString";
+
 // 获取命名空间
-const NAMESPACE = import.meta.env.VITE_STORAGE_NAMESPACE || "befly";
+const NAMESPACE = getViteEnvString("VITE_STORAGE_NAMESPACE") || "befly";
+
+class MemoryStorage implements Storage {
+    private map: Map<string, string>;
+
+    public constructor() {
+        this.map = new Map<string, string>();
+    }
+
+    public get length(): number {
+        return this.map.size;
+    }
+
+    public clear(): void {
+        for (const key of this.map.keys()) {
+            delete (this as unknown as Record<string, unknown>)[key];
+        }
+        this.map.clear();
+    }
+
+    public getItem(key: string): string | null {
+        return this.map.get(key) ?? null;
+    }
+
+    public key(index: number): string | null {
+        const keys = Array.from(this.map.keys());
+        return keys[index] ?? null;
+    }
+
+    public removeItem(key: string): void {
+        this.map.delete(key);
+        delete (this as unknown as Record<string, unknown>)[key];
+    }
+
+    public setItem(key: string, value: string): void {
+        this.map.set(key, value);
+        (this as unknown as Record<string, unknown>)[key] = value;
+    }
+}
+
+function getBrowserStorage(kind: "localStorage" | "sessionStorage"): Storage {
+    const win = globalThis as unknown as { window?: { localStorage?: Storage; sessionStorage?: Storage } };
+    const storage = win.window?.[kind];
+    if (storage) {
+        return storage;
+    }
+    return new MemoryStorage();
+}
 
 type StorageOps = {
     set: (key: string, value: unknown) => void;
@@ -28,8 +77,8 @@ class StorageManager {
     private namespace: string;
 
     public constructor(namespace: string = NAMESPACE) {
-        this.localStorage = window.localStorage;
-        this.sessionStorage = window.sessionStorage;
+        this.localStorage = getBrowserStorage("localStorage");
+        this.sessionStorage = getBrowserStorage("sessionStorage");
         this.namespace = namespace;
     }
 

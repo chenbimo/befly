@@ -1,7 +1,7 @@
 import axios, { AxiosHeaders, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
-import { MessagePlugin } from "tdesign-vue-next";
 
 import { cleanParams } from "../utils/cleanParams";
+import { getViteEnvString } from "../utils/getViteEnvString";
 import { $Storage } from "./storage";
 
 export type HttpApiResponse<TData> = {
@@ -15,11 +15,7 @@ export type HttpCleanParamsOptions = {
     dropKeyValue?: Record<string, readonly unknown[]>;
 };
 
-export type HttpRequestConfig = AxiosRequestConfig & {
-    cleanParams?: boolean | HttpCleanParamsOptions;
-};
-
-export type HttpClientOptions = (HttpRequestConfig & HttpCleanParamsOptions) | HttpCleanParamsOptions;
+export type HttpClientOptions = AxiosRequestConfig & HttpCleanParamsOptions;
 
 function toAxiosRequestConfig(options: HttpClientOptions | undefined): AxiosRequestConfig | undefined {
     if (!options) {
@@ -27,7 +23,6 @@ function toAxiosRequestConfig(options: HttpClientOptions | undefined): AxiosRequ
     }
 
     const out = Object.assign({}, options) as Record<string, unknown>;
-    delete out["cleanParams"];
     delete out["dropValues"];
     delete out["dropKeyValue"];
 
@@ -45,40 +40,14 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
     return true;
 }
 
-function getCleanParamsOptions(options: HttpClientOptions | undefined): boolean | HttpCleanParamsOptions | undefined {
-    if (!options) {
-        return undefined;
-    }
-
-    // 兼容旧写法：{ cleanParams: true | { dropValues, dropKeyValue }, ...axiosConfig }
-    if ("cleanParams" in options) {
-        return options.cleanParams;
-    }
-
-    // 新写法：第三参直接传 { dropValues, dropKeyValue }
-    if ("dropValues" in options || "dropKeyValue" in options) {
-        return options as HttpCleanParamsOptions;
-    }
-
-    return undefined;
-}
-
-function maybeCleanRequestData(data: Record<string, unknown>, cleanOptions: boolean | HttpCleanParamsOptions | undefined): Record<string, unknown> {
-    if (!cleanOptions) {
-        return data;
-    }
-
+function maybeCleanRequestData(data: Record<string, unknown>, cleanOptions: HttpCleanParamsOptions | undefined): Record<string, unknown> {
     if (!isPlainRecord(data)) {
         return data;
     }
 
-    if (cleanOptions === true) {
-        return cleanParams(data, []);
-    }
-
-    const dropValues = cleanOptions.dropValues;
-    const dropKeyValue = cleanOptions.dropKeyValue;
-    return cleanParams(data, dropValues, dropKeyValue);
+    const dropValues = cleanOptions?.dropValues;
+    const dropKeyValue = cleanOptions?.dropKeyValue;
+    return cleanParams(data, dropValues ?? [], dropKeyValue);
 }
 
 class HttpError extends Error {
@@ -99,6 +68,16 @@ function isNormalizedHttpError(value: unknown): value is HttpError {
     return value instanceof HttpError;
 }
 
+async function showNetworkErrorToast(): Promise<void> {
+    // 在测试/非浏览器环境下，tdesign-vue-next 可能不可用；仅在需要展示提示时再加载。
+    try {
+        const mod = await import("tdesign-vue-next");
+        mod.MessagePlugin.error("网络连接失败");
+    } catch {
+        // ignore
+    }
+}
+
 async function unwrapApiResponse<TData>(promise: Promise<AxiosResponse<HttpApiResponse<TData>>>): Promise<HttpApiResponse<TData>> {
     try {
         const response = await promise;
@@ -115,14 +94,14 @@ async function unwrapApiResponse<TData>(promise: Promise<AxiosResponse<HttpApiRe
             throw error;
         }
 
-        MessagePlugin.error("网络连接失败");
+        await showNetworkErrorToast();
         throw new HttpError(-1, "网络连接失败", undefined, error);
     }
 }
 
 // 创建 axios 实例
 const request = axios.create({
-    baseURL: import.meta.env["VITE_API_BASE_URL"] || "",
+    baseURL: getViteEnvString("VITE_API_BASE_URL") || "",
     timeout: 10000,
     headers: {
         "Content-Type": "application/json"
@@ -147,9 +126,14 @@ request.interceptors.request.use(
 
 async function httpGet<TData>(url: string, data?: Record<string, unknown>, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
     const axiosConfig = toAxiosRequestConfig(options);
-    const inputData = data ?? {};
-    const cleanOptions = getCleanParamsOptions(options);
-    const cleanedData = maybeCleanRequestData(inputData, cleanOptions);
+    if (data === undefined) {
+        return unwrapApiResponse<TData>(request.get<HttpApiResponse<TData>>(url, axiosConfig));
+    }
+
+    const cleanedData = maybeCleanRequestData(data, options);
+    if (Object.keys(cleanedData).length === 0) {
+        return unwrapApiResponse<TData>(request.get<HttpApiResponse<TData>>(url, axiosConfig));
+    }
 
     const finalConfig = Object.assign({}, axiosConfig);
     (finalConfig as { params?: unknown }).params = cleanedData;
@@ -157,11 +141,20 @@ async function httpGet<TData>(url: string, data?: Record<string, unknown>, optio
     return unwrapApiResponse<TData>(request.get<HttpApiResponse<TData>>(url, finalConfig));
 }
 
-async function httpPost<TData>(url: string, data?: Record<string, unknown>, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
-    const cleanOptions = getCleanParamsOptions(options);
+async function httpPost<TData>(url: string, data?: Record<string, unknown> | FormData, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
     const axiosConfig = toAxiosRequestConfig(options);
-    const inputData = data ?? {};
-    const cleanedData = maybeCleanRequestData(inputData, cleanOptions);
+    if (data === undefined) {
+        return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, undefined, axiosConfig));
+    }
+
+    if (data instanceof FormData) {
+        return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, data, axiosConfig));
+    }
+
+    const cleanedData = maybeCleanRequestData(data, options);
+    if (Object.keys(cleanedData).length === 0) {
+        return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, undefined, axiosConfig));
+    }
 
     return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, cleanedData, axiosConfig));
 }
@@ -169,9 +162,12 @@ async function httpPost<TData>(url: string, data?: Record<string, unknown>, opti
 /**
  * 统一的 HTTP 请求对象（仅支持 GET 和 POST）
  * - 调用方式：$Http.get(url, data?, options?) / $Http.post(url, data?, options?)
- * - 可选参数清洗：
- *   - 旧写法：通过 config.cleanParams 开启
- *   - 新写法：第三参直接传 { dropValues, dropKeyValue }
+ * - 重要行为：
+ *   - 未传 data 时：不会自动发送 {}（GET 不注入 params，POST 不注入 body）
+ *   - 传入 plain object 时：默认强制移除 null / undefined
+ * - 可选参数清洗（第三参，且可与 axios config 混用）：
+ *   - dropValues：全局丢弃值列表（仅对未配置 dropKeyValue 的 key 生效）
+ *   - dropKeyValue：按 key 精确配置丢弃值列表（覆盖全局 dropValues）
  */
 export const $Http = {
     get: httpGet,
