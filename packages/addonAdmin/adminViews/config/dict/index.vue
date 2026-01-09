@@ -83,7 +83,6 @@ import ILucideChevronDown from "~icons/lucide/chevron-down";
 import EditDialog from "./components/edit.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { cleanParams } from "../../utils/cleanParams";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 const $Data = $ref({
@@ -131,24 +130,25 @@ const $Method = {
     async apiDictList() {
         $Data.loading = true;
         try {
-            const params = cleanParams(
+            const res = await $Http.post(
+                "/addon/admin/dict/list",
                 {
                     page: $Data.pagerConfig.currentPage,
                     limit: $Data.pagerConfig.limit,
                     typeCode: $Data.searchTypeCode,
                     keyword: $Data.searchKeyword
                 },
-                [0, ""],
                 {
-                    // key 配置优先于全局 dropValues；null/undefined 仍然强制移除
-                    page: [],
-                    limit: [],
-                    typeCode: [""],
-                    keyword: [""]
+                    dropValues: [0, ""],
+                    dropKeyValue: {
+                        // key 配置优先于全局 dropValues；null/undefined 仍然强制移除
+                        page: [],
+                        limit: [],
+                        typeCode: [""],
+                        keyword: [""]
+                    }
                 }
             );
-
-            const res = await $Http.post("/addon/admin/dict/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 

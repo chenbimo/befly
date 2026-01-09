@@ -4,7 +4,7 @@ import { MessagePlugin } from "tdesign-vue-next";
 import { cleanParams } from "../utils/cleanParams";
 import { $Storage } from "./storage";
 
-type ApiResponse<TData> = {
+export type HttpApiResponse<TData> = {
     code: number;
     msg?: string;
     data?: TData;
@@ -19,14 +19,23 @@ export type HttpRequestConfig = AxiosRequestConfig & {
     cleanParams?: boolean | HttpCleanParamsOptions;
 };
 
-function toAxiosRequestConfig(config: HttpRequestConfig | undefined): AxiosRequestConfig | undefined {
-    if (!config) {
+export type HttpClientOptions = (HttpRequestConfig & HttpCleanParamsOptions) | HttpCleanParamsOptions;
+
+function toAxiosRequestConfig(options: HttpClientOptions | undefined): AxiosRequestConfig | undefined {
+    if (!options) {
         return undefined;
     }
 
-    const out = Object.assign({}, config);
-    delete (out as { cleanParams?: unknown }).cleanParams;
-    return out;
+    const out = Object.assign({}, options) as Record<string, unknown>;
+    delete out["cleanParams"];
+    delete out["dropValues"];
+    delete out["dropKeyValue"];
+
+    if (Object.keys(out).length === 0) {
+        return undefined;
+    }
+
+    return out as AxiosRequestConfig;
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -36,9 +45,26 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
     return true;
 }
 
-function maybeCleanRequestData(data: unknown, config: HttpRequestConfig | undefined): unknown {
-    const cleanParamsConfig = config?.cleanParams;
-    if (!cleanParamsConfig) {
+function getCleanParamsOptions(options: HttpClientOptions | undefined): boolean | HttpCleanParamsOptions | undefined {
+    if (!options) {
+        return undefined;
+    }
+
+    // 兼容旧写法：{ cleanParams: true | { dropValues, dropKeyValue }, ...axiosConfig }
+    if ("cleanParams" in options) {
+        return options.cleanParams;
+    }
+
+    // 新写法：第三参直接传 { dropValues, dropKeyValue }
+    if ("dropValues" in options || "dropKeyValue" in options) {
+        return options as HttpCleanParamsOptions;
+    }
+
+    return undefined;
+}
+
+function maybeCleanRequestData(data: Record<string, unknown>, cleanOptions: boolean | HttpCleanParamsOptions | undefined): Record<string, unknown> {
+    if (!cleanOptions) {
         return data;
     }
 
@@ -46,21 +72,14 @@ function maybeCleanRequestData(data: unknown, config: HttpRequestConfig | undefi
         return data;
     }
 
-    if (cleanParamsConfig === true) {
+    if (cleanOptions === true) {
         return cleanParams(data, []);
     }
 
-    const dropValues = cleanParamsConfig.dropValues;
-    const dropKeyValue = cleanParamsConfig.dropKeyValue;
+    const dropValues = cleanOptions.dropValues;
+    const dropKeyValue = cleanOptions.dropKeyValue;
     return cleanParams(data, dropValues, dropKeyValue);
 }
-
-type NormalizedHttpError = {
-    code: number;
-    msg: string;
-    data?: unknown;
-    error?: unknown;
-};
 
 class HttpError extends Error {
     public code: number;
@@ -76,11 +95,11 @@ class HttpError extends Error {
     }
 }
 
-function isNormalizedHttpError(value: unknown): value is NormalizedHttpError {
+function isNormalizedHttpError(value: unknown): value is HttpError {
     return value instanceof HttpError;
 }
 
-async function unwrapApiResponse<TData>(promise: Promise<AxiosResponse<ApiResponse<TData>>>): Promise<ApiResponse<TData>> {
+async function unwrapApiResponse<TData>(promise: Promise<AxiosResponse<HttpApiResponse<TData>>>): Promise<HttpApiResponse<TData>> {
     try {
         const response = await promise;
         const res = response.data;
@@ -126,29 +145,33 @@ request.interceptors.request.use(
     }
 );
 
-async function httpGet<TData>(url: string, data?: Record<string, unknown>, config?: HttpRequestConfig): Promise<ApiResponse<TData>> {
-    const axiosConfig = toAxiosRequestConfig(config);
+async function httpGet<TData>(url: string, data?: Record<string, unknown>, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
+    const axiosConfig = toAxiosRequestConfig(options);
     const inputData = data ?? {};
-    const cleanedData = maybeCleanRequestData(inputData, config);
+    const cleanOptions = getCleanParamsOptions(options);
+    const cleanedData = maybeCleanRequestData(inputData, cleanOptions);
 
     const finalConfig = Object.assign({}, axiosConfig);
     (finalConfig as { params?: unknown }).params = cleanedData;
 
-    return unwrapApiResponse<TData>(request.get<ApiResponse<TData>>(url, finalConfig));
+    return unwrapApiResponse<TData>(request.get<HttpApiResponse<TData>>(url, finalConfig));
 }
 
-async function httpPost<TData>(url: string, data?: unknown, config?: HttpRequestConfig): Promise<ApiResponse<TData>> {
-    const axiosConfig = toAxiosRequestConfig(config);
+async function httpPost<TData>(url: string, data?: Record<string, unknown>, options?: HttpClientOptions): Promise<HttpApiResponse<TData>> {
+    const cleanOptions = getCleanParamsOptions(options);
+    const axiosConfig = toAxiosRequestConfig(options);
     const inputData = data ?? {};
-    const cleanedData = maybeCleanRequestData(inputData, config);
+    const cleanedData = maybeCleanRequestData(inputData, cleanOptions);
 
-    return unwrapApiResponse<TData>(request.post<ApiResponse<TData>>(url, cleanedData, axiosConfig));
+    return unwrapApiResponse<TData>(request.post<HttpApiResponse<TData>>(url, cleanedData, axiosConfig));
 }
 
 /**
  * 统一的 HTTP 请求对象（仅支持 GET 和 POST）
- * - 调用方式：$Http.get(url, data?, config?) / $Http.post(url, data?, config?)
- * - 可选参数清洗：通过 config.cleanParams 开启
+ * - 调用方式：$Http.get(url, data?, options?) / $Http.post(url, data?, options?)
+ * - 可选参数清洗：
+ *   - 旧写法：通过 config.cleanParams 开启
+ *   - 新写法：第三参直接传 { dropValues, dropKeyValue }
  */
 export const $Http = {
     get: httpGet,
