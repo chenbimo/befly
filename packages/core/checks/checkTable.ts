@@ -38,24 +38,6 @@ const FIELD_NAME_REGEX = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
 const MAX_VARCHAR_LENGTH = 65535;
 
 /**
- * 表定义风格约束：禁止写入与默认策略等价的冗余值。
- *
- * 说明：FieldDefinition 的约定是“只要求 name/type，其它缺省即默认值”。
- * 因此在 tables JSON 中显式写入 default:null / regexp:null 等，会造成噪音与重复维护。
- */
-const REDUNDANT_DEFAULT_VALUES: Readonly<Record<string, unknown>> = {
-    min: null,
-    max: null,
-    default: null,
-    regexp: null,
-    detail: "",
-    index: false,
-    unique: false,
-    unsigned: false,
-    nullable: true
-} as const;
-
-/**
  * 检查表定义文件
  * @throws 当检查失败时抛出异常
  */
@@ -98,14 +80,6 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
 
                 // 直接使用字段对象
                 const field = fieldDef as FieldDefinition;
-
-                // 风格校验：禁止冗余默认值（必须阻断启动，防止回潮）
-                for (const [k, v] of Object.entries(REDUNDANT_DEFAULT_VALUES)) {
-                    if (Object.hasOwn(field, k) && (field as any)[k] === v) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 显式写入了冗余默认值 ${k}=${JSON.stringify(v)}，` + `请删除该字段（缺省即默认值）`);
-                        hasError = true;
-                    }
-                }
 
                 // 检查是否存在非法属性
                 const fieldKeys = Object.keys(field);
