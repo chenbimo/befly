@@ -91,6 +91,7 @@ import ILucideChevronDown from "~icons/lucide/chevron-down";
 import EditDialog from "./components/edit.vue";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
+import { cleanParams } from "../../utils/cleanParams";
 import { withDefaultColumns } from "../../../utils/withDefaultColumns";
 
 // 响应式数据
@@ -144,10 +145,21 @@ const $Method = {
     async apiConfigList() {
         $Data.loading = true;
         try {
-            const res = await $Http("/addon/admin/sysConfig/list", {
-                page: $Data.pagerConfig.currentPage,
-                limit: $Data.pagerConfig.limit
-            });
+            const params = cleanParams(
+                {
+                    page: $Data.pagerConfig.currentPage,
+                    limit: $Data.pagerConfig.limit,
+                    group: $Data.filter.group
+                },
+                [0, ""],
+                {
+                    page: [],
+                    limit: [],
+                    group: [""]
+                }
+            );
+
+            const res = await $Http("/addon/admin/sysConfig/list", params);
             $Data.tableData = res.data.lists || [];
             $Data.pagerConfig.total = res.data.total || 0;
 
