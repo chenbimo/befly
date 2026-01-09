@@ -8,6 +8,7 @@ import type { FieldDefinition, ValidateResult, SingleResult } from "../types/val
 
 import { RegexAliases, getCompiledRegex } from "../configs/presetRegexp";
 import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
+import { isPlainObject } from "../utils/util";
 
 /**
  * 验证器类
@@ -33,30 +34,77 @@ export class Validator {
         const fieldErrors: Record<string, string> = {};
 
         // 参数检查
-        if (typeof data !== "object" || data === null || Array.isArray(data)) {
+        if (!isPlainObject(data)) {
             return this.buildResult({ _error: "数据必须是对象格式" });
         }
-        if (typeof rules !== "object" || rules === null) {
+        if (!isPlainObject(rules)) {
             return this.buildResult({ _error: "验证规则必须是对象格式" });
         }
 
-        const dataRecord = data as Record<string, unknown>;
-        const rulesRecord = rules as Record<string, FieldDefinition>;
+        const dataRecord = data;
+        const rulesRecord = rules;
 
         // 检查必填字段
         for (const field of required) {
             const value = dataRecord[field];
             if (value === undefined || value === null) {
-                const label = rulesRecord[field]?.name || field;
+                const rawRule = rulesRecord[field];
+                const label = isPlainObject(rawRule) && typeof rawRule["name"] === "string" ? rawRule["name"] : field;
                 fieldErrors[field] = `${label}为必填项`;
             }
         }
 
         // 验证有值的字段
-        for (const [field, rule] of Object.entries(rulesRecord)) {
+        for (const [field, rawRule] of Object.entries(rulesRecord)) {
             if (fieldErrors[field]) continue;
             // 字段值为 undefined 时跳过验证（除非是必填字段，但必填字段已在上面检查过）
             if (dataRecord[field] === undefined && !required.includes(field)) continue;
+
+            if (!isPlainObject(rawRule)) {
+                fieldErrors[field] = `${field}验证规则必须是对象格式`;
+                continue;
+            }
+
+            const ruleName = rawRule["name"];
+            const ruleType = rawRule["type"];
+            if (typeof ruleName !== "string" || typeof ruleType !== "string") {
+                fieldErrors[field] = `${field}验证规则无效`;
+                continue;
+            }
+
+            const rule: FieldDefinition = {
+                name: ruleName,
+                type: ruleType
+            };
+
+            const min = rawRule["min"];
+            if (typeof min === "number" || min === null) rule.min = min;
+
+            const max = rawRule["max"];
+            if (typeof max === "number" || max === null) rule.max = max;
+
+            const def = rawRule["default"];
+            if (def === null || typeof def === "string" || typeof def === "number" || typeof def === "boolean" || Array.isArray(def) || isPlainObject(def)) {
+                rule.default = def as JsonValue;
+            }
+
+            const detail = rawRule["detail"];
+            if (typeof detail === "string") rule.detail = detail;
+
+            const index = rawRule["index"];
+            if (typeof index === "boolean") rule.index = index;
+
+            const unique = rawRule["unique"];
+            if (typeof unique === "boolean") rule.unique = unique;
+
+            const nullable = rawRule["nullable"];
+            if (typeof nullable === "boolean") rule.nullable = nullable;
+
+            const unsigned = rawRule["unsigned"];
+            if (typeof unsigned === "boolean") rule.unsigned = unsigned;
+
+            const regexp = rawRule["regexp"];
+            if (typeof regexp === "string" || regexp === null) rule.regexp = regexp;
 
             const error = this.checkField(dataRecord[field], rule, field);
             if (error) fieldErrors[field] = error;
