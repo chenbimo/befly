@@ -139,7 +139,7 @@ const $Method = {
                     keyword: $Data.searchKeyword
                 },
                 {
-                    dropValues: [""],
+                    dropValues: [""]
                 }
             );
             $Data.tableData = res.data.lists || [];
