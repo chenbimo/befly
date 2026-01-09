@@ -1,6 +1,6 @@
 {
     "name": "befly-admin",
-    "version": "3.10.3",
+    "version": "3.10.4",
     "gitHead": "79270d11fb0ff1a5dafada0d12812f4335ef9f45",
     "private": false,
     "description": "Befly Admin - 基于 Vue3 + TDesign Vue Next 的后台管理系统",
@@ -28,7 +28,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@befly-addon/admin": "^1.6.2",
+        "@befly-addon/admin": "^1.6.3",
         "@iconify-json/lucide": "^1.2.83",
         "axios": "^1.13.2",
         "befly-vite": "^1.4.4",
