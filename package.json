@@ -9,8 +9,8 @@
         "packages/*"
     ],
     "scripts": {
-        "clean": "rimraf packages/core/dist",
-        "build": "bun run --cwd packages/core build",
+        "clean": "rimraf packages/core/dist packages/shared/dist",
+        "build": "bun run --cwd packages/core build && bun run --cwd packages/shared build",
         "test": "bun test",
         "test:core": "bun --filter 'befly' test",
         "test:bail": "bun test --bail",
