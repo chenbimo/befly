@@ -74,7 +74,7 @@ import { Button as TButton, Table as TTable, Tag as TTag, Pagination as TPaginat
 import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "../../../utils/withDefaultColumns";
+import { withDefaultColumns } from "befly-shared/utils/withDefaultColumns";
 
 // 响应式数据
 const $Data = $ref({

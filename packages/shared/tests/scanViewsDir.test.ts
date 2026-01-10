@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock, normalizeMenuPath, normalizeMenuTree } from "befly-shared/utils/scanViewsDir";
+import { cleanDirName, extractDefinePageMetaFromScriptSetup, extractScriptSetupBlock, normalizeMenuPath, normalizeMenuTree } from "../utils/scanViewsDir";
 
 describe("befly-shared/scanViewsDir - cleanDirName", () => {
     test("should remove numeric suffix like _1", () => {

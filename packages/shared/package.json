@@ -3,7 +3,7 @@
     "version": "1.4.1",
     "gitHead": "79270d11fb0ff1a5dafada0d12812f4335ef9f45",
     "private": false,
-    "description": "Befly 纯函数与纯常量共享包（不包含 Node/浏览器特定实现）",
+    "description": "Befly 前端/Vite 共享工具包（仅供 admin 与 Vite 工具使用，禁止接口端/服务端导入）",
     "license": "Apache-2.0",
     "author": "chensuiyi <bimostyle@qq.com>",
     "files": [

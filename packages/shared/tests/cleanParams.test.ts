@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { cleanParams } from "befly-shared/utils/cleanParams";
+import { cleanParams } from "../utils/cleanParams";
 
-describe("cleanParams", () => {
+describe("befly-shared/cleanParams", () => {
     test("默认强制移除 null/undefined", () => {
         const result = cleanParams({ a: null, b: undefined, c: 0, d: "" }, []);
         expect(Object.hasOwn(result, "a")).toBe(false);

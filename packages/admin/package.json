@@ -31,6 +31,7 @@
         "@befly-addon/admin": "^1.7.0",
         "@iconify-json/lucide": "^1.2.83",
         "axios": "^1.13.2",
+        "befly-shared": "workspace:*",
         "befly-vite": "^1.4.4",
         "pinia": "^3.0.4",
         "tdesign-vue-next": "^1.18.0",

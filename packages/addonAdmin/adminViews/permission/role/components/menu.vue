@@ -44,7 +44,7 @@
 import { Dialog as TDialog, CheckboxGroup as TCheckboxGroup, Checkbox as TCheckbox, Button as TButton, Input as TInput, MessagePlugin } from "tdesign-vue-next";
 import ILucideSearch from "~icons/lucide/search";
 import { $Http } from "@/plugins/http";
-import { arrayToTree } from "../../../../utils/arrayToTree";
+import { arrayToTree } from "befly-shared/utils/arrayToTree";
 
 const $Prop = defineProps({
     modelValue: {

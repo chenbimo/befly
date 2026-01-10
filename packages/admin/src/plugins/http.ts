@@ -1,7 +1,6 @@
 import axios, { AxiosHeaders, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
+import { cleanParams } from "befly-shared/utils/cleanParams";
 
-import { cleanParams } from "../utils/cleanParams";
-import { getViteEnvString } from "../utils/getViteEnvString";
 import { $Storage } from "./storage";
 
 export type HttpApiResponse<TData> = {
@@ -104,7 +103,7 @@ async function unwrapApiResponse<TData>(promise: Promise<AxiosResponse<HttpApiRe
 
 // 创建 axios 实例
 const request = axios.create({
-    baseURL: getViteEnvString("VITE_API_BASE_URL") || "",
+    baseURL: (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || "",
     timeout: 10000,
     headers: {
         "Content-Type": "application/json"

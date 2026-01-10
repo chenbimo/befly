@@ -3,10 +3,8 @@
  * 支持命名空间隔离，统一管理 localStorage 和 sessionStorage
  */
 
-import { getViteEnvString } from "../utils/getViteEnvString";
-
 // 获取命名空间
-const NAMESPACE = getViteEnvString("VITE_STORAGE_NAMESPACE") || "befly";
+const NAMESPACE = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_STORAGE_NAMESPACE || "befly";
 
 class MemoryStorage implements Storage {
     private map: Map<string, string>;

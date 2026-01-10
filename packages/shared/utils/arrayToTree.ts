@@ -1,4 +1,4 @@
-export type ArrayToTreeResult<T extends Record<string, any>> = {
+export type ArrayToTreeResult<T extends Record<string, unknown>> = {
     flat: Array<T>;
     tree: Array<T>;
     map: Map<string, T>;
@@ -12,7 +12,7 @@ export type ArrayToTreeResult<T extends Record<string, any>> = {
  * - 内部会 clone 一份节点对象，并写入 children: []
  * - 默认自带递归排序：按 sort 升序；sort 缺省/非法或 < 1 视为 999999；sort 相同按 id 自然序
  */
-export function arrayToTree<T extends Record<string, any>>(items: T[], id: string = "id", pid: string = "pid", children: string = "children", sort: string = "sort"): ArrayToTreeResult<T> {
+export function arrayToTree<T extends Record<string, unknown>>(items: Array<T>, id: string = "id", pid: string = "pid", children: string = "children", sort: string = "sort"): ArrayToTreeResult<T> {
     const idKey = typeof id === "string" && id.length > 0 ? id : "id";
     const pidKey = typeof pid === "string" && pid.length > 0 ? pid : "pid";
     const childrenKey = typeof children === "string" && children.length > 0 ? children : "children";
@@ -34,16 +34,18 @@ export function arrayToTree<T extends Record<string, any>>(items: T[], id: strin
     };
 
     for (const item of safeItems) {
-        const rawId = item ? (item as any)[idKey] : undefined;
-        const rawPid = item ? (item as any)[pidKey] : undefined;
+        const itemObj = typeof item === "object" && item !== null ? (item as Record<string, unknown>) : null;
+        const rawId = itemObj ? itemObj[idKey] : undefined;
+        const rawPid = itemObj ? itemObj[pidKey] : undefined;
 
         const normalizedId = normalizeKey(rawId);
         const normalizedPid = normalizeKey(rawPid);
 
         const nextNode = Object.assign({}, item) as T;
-        (nextNode as any)[idKey] = normalizedId;
-        (nextNode as any)[pidKey] = normalizedPid;
-        (nextNode as any)[childrenKey] = [];
+        const nextNodeObj = nextNode as Record<string, unknown>;
+        nextNodeObj[idKey] = normalizedId;
+        nextNodeObj[pidKey] = normalizedPid;
+        nextNodeObj[childrenKey] = [];
 
         flat.push(nextNode);
 
@@ -55,14 +57,19 @@ export function arrayToTree<T extends Record<string, any>>(items: T[], id: strin
     const tree: T[] = [];
 
     for (const node of flat) {
-        const selfId = normalizeKey(node ? (node as any)[idKey] : undefined);
-        const parentId = normalizeKey(node ? (node as any)[pidKey] : undefined);
+        const nodeObj = node as Record<string, unknown>;
+        const selfId = normalizeKey(nodeObj[idKey]);
+        const parentId = normalizeKey(nodeObj[pidKey]);
 
         if (parentId.length > 0 && parentId !== selfId) {
             const parent = map.get(parentId);
-            if (parent && Array.isArray((parent as any)[childrenKey])) {
-                (parent as any)[childrenKey].push(node);
-                continue;
+            if (parent) {
+                const parentObj = parent as Record<string, unknown>;
+                const childrenValue = parentObj[childrenKey];
+                if (Array.isArray(childrenValue)) {
+                    childrenValue.push(node);
+                    continue;
+                }
             }
         }
 
@@ -72,7 +79,8 @@ export function arrayToTree<T extends Record<string, any>>(items: T[], id: strin
     const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
     const getSortValue = (node: T): number => {
-        const raw = node ? (node as any)[sortKey] : undefined;
+        const nodeObj = node as Record<string, unknown>;
+        const raw = nodeObj[sortKey];
         if (typeof raw !== "number") {
             return 999999;
         }
@@ -93,8 +101,10 @@ export function arrayToTree<T extends Record<string, any>>(items: T[], id: strin
             return aSort - bSort;
         }
 
-        const aId = a ? (a as any)[idKey] : "";
-        const bId = b ? (b as any)[idKey] : "";
+        const aObj = a as Record<string, unknown>;
+        const bObj = b as Record<string, unknown>;
+        const aId = aObj[idKey];
+        const bId = bObj[idKey];
 
         return collator.compare(typeof aId === "string" ? aId : "", typeof bId === "string" ? bId : "");
     };
@@ -118,9 +128,10 @@ export function arrayToTree<T extends Record<string, any>>(items: T[], id: strin
             }
             seen.add(node);
 
-            const childNodes = (node as any)[childrenKey];
+            const nodeObj = node as Record<string, unknown>;
+            const childNodes = nodeObj[childrenKey];
             if (Array.isArray(childNodes) && childNodes.length > 0) {
-                sortTreeInPlace(childNodes, seen);
+                sortTreeInPlace(childNodes as Array<T>, seen);
             }
         }
     };

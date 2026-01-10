@@ -64,7 +64,7 @@ import ILucideRotateCw from "~icons/lucide/rotate-cw";
 import ILucideSearch from "~icons/lucide/search";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "../../../utils/withDefaultColumns";
+import { withDefaultColumns } from "befly-shared/utils/withDefaultColumns";
 
 // 响应式数据
 const $Data = $ref({

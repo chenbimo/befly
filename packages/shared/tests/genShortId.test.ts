@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { genShortId } from "befly-shared/utils/genShortId";
+import { genShortId } from "../utils/genShortId";
 
 describe("befly-shared/genShortId", () => {
     test("should generate a non-empty string", () => {

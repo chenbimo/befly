@@ -90,7 +90,7 @@ import ILucideSend from "~icons/lucide/send";
 import ILucideCheckCircle from "~icons/lucide/check-circle";
 import DetailPanel from "@/components/DetailPanel.vue";
 import { $Http } from "@/plugins/http";
-import { withDefaultColumns } from "../../../utils/withDefaultColumns";
+import { withDefaultColumns } from "befly-shared/utils/withDefaultColumns";
 
 const sendFormRef = $ref(null);
 
