@@ -24,11 +24,11 @@ export async function syncApi(ctx: Pick<BeflyContext, "db" | "cache">, apis: Sca
     const tableName = "addon_admin_api";
 
     if (!ctx.db) {
-        throw new Error("syncApi: ctx.db 未初始化（Db 插件未加载或注入失败）");
+        throw new Error("同步接口：ctx.db 未初始化");
     }
 
     if (!ctx.cache) {
-        throw new Error("syncApi: ctx.cache 未初始化（cache 插件未加载或注入失败）");
+        throw new Error("同步接口：ctx.cache 未初始化");
     }
 
     if (!(await ctx.db.tableExists(tableName)).data) {

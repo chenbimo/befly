@@ -55,7 +55,7 @@ function createDisableMenuMatcher(ctx: BeflyContext): (path: string) => boolean 
         for (const glob of globs) {
             const match = typeof glob === "object" && glob !== null && "match" in glob ? (glob as { match?: unknown }).match : undefined;
             if (typeof match !== "function") {
-                throw new Error("syncMenu: 当前 Bun 版本不支持 Bun.Glob.match，无法按 disableMenus 做 glob 匹配");
+                throw new Error("同步菜单：当前 Bun 版本不支持 Bun.Glob.match，无法按 disableMenus 做 glob 匹配");
             }
 
             const matchFn = match as (candidate: string) => boolean;
@@ -169,15 +169,15 @@ function flattenMenusToDefMap(mergedMenus: MenuConfig[]): Map<string, MenuDef> {
 
 export async function syncMenu(ctx: BeflyContext, mergedMenus: MenuConfig[]): Promise<void> {
     if (!ctx.db) {
-        throw new Error("syncMenu: ctx.db 未初始化（Db 插件未加载或注入失败）");
+        throw new Error("同步菜单：ctx.db 未初始化");
     }
 
     if (!ctx.cache) {
-        throw new Error("syncMenu: ctx.cache 未初始化（cache 插件未加载或注入失败）");
+        throw new Error("同步菜单：ctx.cache 未初始化");
     }
 
     if (!ctx.config) {
-        throw new Error("syncMenu: ctx.config 未初始化（config 插件未加载或注入失败）");
+        throw new Error("同步菜单：ctx.config 未初始化");
     }
 
     if (!(await ctx.db.tableExists("addon_admin_menu")).data) {

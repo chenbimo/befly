@@ -86,14 +86,14 @@ type DbDialect = DbDialectName;
 /* 对外导出面
  *
  * 约束：本文件仅导出一个函数：syncTable。
- * - 生产代码：通过 await 同步表： 执行同步。
+ * - 生产代码：通过 await syncTable(ctx, items) 执行同步。
  * - 测试：通过 syncTable.TestKit 访问纯函数/常量（不再导出零散函数）。
  */
 /* ========================================================================== */
 
 /**
  * 文件导航（推荐阅读顺序）
- * 1) 同步表： 入口（本段下方）
+ * 1) 同步表：入口（本段下方）
  * 2) 版本/常量/方言判断（DB_VERSION_REQUIREMENTS 等）
  * 3) 通用 DDL 工具（quote/type/default/ddl/index SQL）
  * 4) Runtime I/O（只读元信息：表/列/索引/版本）
@@ -117,17 +117,17 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
         }
 
         if (!ctx?.db) {
-            throw new Error("同步表： 缺少 ctx.db");
+            throw new Error("同步表：ctx.db 未初始化");
         }
         if (!ctx.redis) {
-            throw new Error("同步表： 缺少 ctx.redis");
+            throw new Error("同步表：ctx.redis 未初始化");
         }
         if (!ctx.config) {
-            throw new Error("同步表： 缺少 ctx.config");
+            throw new Error("同步表：ctx.config 未初始化");
         }
 
         if (!ctx.config.db?.dialect) {
-            throw new Error("同步表： 缺少 ctx.config.db.dialect");
+            throw new Error("同步表：ctx.config.db.dialect 缺失");
         }
 
         // DbDialect（按项目约定：正常启动时会先通过 checkConfig，因此这里直接使用配置值）
@@ -152,19 +152,18 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
             // 确定表名：
             // - addon 表：addon_{addonName}_{fileName}
             // - app/core 表：{fileName}
-            const baseTableName = snakeCase(item.fileName);
-
-            let tableName = baseTableName;
+            const sourceLabel = item.source === "addon" ? "插件" : item.source === "app" ? "项目" : "核心";
+            let tableName = snakeCase(item.fileName);
             if (item.source === "addon") {
                 if (!item.addonName || String(item.addonName).trim() === "") {
-                    throw new Error(`syncTable addon 表缺少 addonName: fileName=${String(item.fileName)}`);
+                    throw new Error(`同步表：addon 表缺少 addonName（来源=${sourceLabel}，表定义文件=${String(item.fileName)}）`);
                 }
-                tableName = `addon_${snakeCase(item.addonName)}_${baseTableName}`;
+                tableName = `addon_${snakeCase(item.addonName)}_${tableName}`;
             }
 
             const tableDefinition = item.content;
             if (!tableDefinition || typeof tableDefinition !== "object") {
-                throw new Error(`syncTable 表定义无效: table=${tableName}`);
+                throw new Error(`同步表：表定义无效（来源=${sourceLabel}，表=${tableName}，表定义文件=${String(item.fileName)}）`);
             }
 
             // 为字段属性设置默认值：表定义来自 JSON/扫描结果，字段可能缺省。
@@ -815,7 +814,7 @@ async function tableExistsRuntime(runtime: SyncRuntimeForIO, tableName: string):
         return (res.data?.[0]?.count || 0) > 0;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
-        const outErr: any = new Error(`runtime I/O 失败: op=tableExists table=${tableName} err=${errMsg}`);
+        const outErr: any = new Error(`同步表：读取元信息失败（操作=检查表是否存在，表=${tableName}，错误=${errMsg}）`);
         if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
         throw outErr;
     }
@@ -924,7 +923,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
         return columns;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
-        const outErr: any = new Error(`runtime I/O 失败: op=getTableColumns table=${tableName} err=${errMsg}`);
+        const outErr: any = new Error(`同步表：读取元信息失败（操作=读取列信息，表=${tableName}，错误=${errMsg}）`);
         if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
         throw outErr;
     }
@@ -991,7 +990,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: stri
         return indexes;
     } catch (error: any) {
         const errMsg = String(error?.message || error);
-        const outErr: any = new Error(`runtime I/O 失败: op=getTableIndexes table=${tableName} err=${errMsg}`);
+        const outErr: any = new Error(`同步表：读取元信息失败（操作=读取索引信息，表=${tableName}，错误=${errMsg}）`);
         if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
         throw outErr;
     }
@@ -1010,13 +1009,13 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
     if (dbDialect === "mysql") {
         const r = await db.unsafe<Array<{ version: string }>>("SELECT VERSION() AS version");
         if (!r.data || r.data.length === 0 || !r.data[0]?.version) {
-            throw new Error("无法获取 MySQL 版本信息");
+            throw new Error("同步表：无法获取 MySQL 版本信息");
         }
         const version = r.data[0].version;
         const majorPart = String(version).split(".")[0] || "0";
         const majorVersion = parseInt(majorPart, 10);
         if (!Number.isFinite(majorVersion) || majorVersion < DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR) {
-            throw new Error(`此脚本仅支持 MySQL ${DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR}.0+，当前版本: ${version}`);
+            throw new Error(`同步表：仅支持 MySQL ${DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR}.0+（当前版本：${version}）`);
         }
         return;
     }
@@ -1024,14 +1023,14 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
     if (dbDialect === "postgresql") {
         const r = await db.unsafe<Array<{ version: string }>>("SELECT version() AS version");
         if (!r.data || r.data.length === 0 || !r.data[0]?.version) {
-            throw new Error("无法获取 PostgreSQL 版本信息");
+            throw new Error("同步表：无法获取 PostgreSQL 版本信息");
         }
         const versionText = r.data[0].version;
         const m = /PostgreSQL\s+(\d+)/i.exec(versionText);
         const majorText = m ? m[1] : undefined;
         const major = typeof majorText === "string" ? parseInt(majorText, 10) : NaN;
         if (!Number.isFinite(major) || major < DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR) {
-            throw new Error(`此脚本要求 PostgreSQL >= ${DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR}，当前: ${versionText}`);
+            throw new Error(`同步表：要求 PostgreSQL >= ${DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR}（当前：${versionText}）`);
         }
         return;
     }
@@ -1039,7 +1038,7 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
     if (dbDialect === "sqlite") {
         const r = await db.unsafe<Array<{ version: string }>>("SELECT sqlite_version() AS version");
         if (!r.data || r.data.length === 0 || !r.data[0]?.version) {
-            throw new Error("无法获取 SQLite 版本信息");
+            throw new Error("同步表：无法获取 SQLite 版本信息");
         }
         const version = r.data[0].version;
         const parts = String(version)
@@ -1050,7 +1049,7 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
         const patch = parts[2] ?? 0;
         const vnum = maj * 10000 + min * 100 + patch;
         if (!Number.isFinite(vnum) || vnum < DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION_NUM) {
-            throw new Error(`此脚本要求 SQLite >= ${DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION}，当前: ${version}`);
+            throw new Error(`同步表：要求 SQLite >= ${DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION}（当前：${version}）`);
         }
         return;
     }
@@ -1093,7 +1092,7 @@ function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Pick<Colum
     const typeMapping = getTypeMapping(dbDialect);
     const mapped = typeMapping[normalized.type];
     if (typeof mapped !== "string") {
-        throw new Error(`未知字段类型映射：dialect=${dbDialect} type=${String(normalized.type)}`);
+        throw new Error(`同步表：未知字段类型映射（方言=${dbDialect}，类型=${String(normalized.type)}）`);
     }
     const expectedType = mapped.toLowerCase();
 
@@ -1156,7 +1155,7 @@ async function rebuildSqliteTable(runtime: SyncRuntime, tableName: string, field
     // - 只复制 targetCols 与 existingCols 的交集，避免因新增列/删除列导致 INSERT 失败。
     // - 不做额外的数据转换/回填：保持迁移路径尽量“纯结构同步”。
     if (runtime.dbDialect !== "sqlite") {
-        throw new Error(`rebuildSqliteTable 仅支持 sqlite 方言，当前: ${String(runtime.dbDialect)}`);
+        throw new Error(`同步表：SQLite 重建表仅支持 sqlite 方言（当前：${String(runtime.dbDialect)}）`);
     }
 
     const quotedSourceTable = quoteIdentifier("sqlite", tableName);

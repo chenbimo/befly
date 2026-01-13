@@ -60,6 +60,16 @@ export class Befly {
     /** 配置引用（延迟加载） */
     private config: BeflyOptions | null = null;
 
+    private assertStartContextReady(): void {
+        const missingCtxKeys: string[] = [];
+        if (!this.context.redis) missingCtxKeys.push("ctx.redis");
+        if (!this.context.db) missingCtxKeys.push("ctx.db");
+        if (!this.context.cache) missingCtxKeys.push("ctx.cache");
+        if (missingCtxKeys.length > 0) {
+            throw new Error(`启动失败：${missingCtxKeys.join("、")} 未初始化。请检查插件加载与注入顺序。`);
+        }
+    }
+
     /**
      * 启动完整的生命周期流程
      * @returns HTTP 服务器实例
@@ -103,15 +113,7 @@ export class Befly {
 
             // 启动期依赖完整性检查：避免 sync 阶段出现 undefined 调用
             // 注意：这里不做兼容别名（例如 dbHelper=db），要求上下文必须注入标准字段。
-            if (!this.context.redis) {
-                throw new Error("启动失败：ctx.redis 未初始化（Redis 插件未加载或注入失败）");
-            }
-            if (!this.context.db) {
-                throw new Error("启动失败：ctx.db 未初始化（Db 插件未加载或注入失败）");
-            }
-            if (!this.context.cache) {
-                throw new Error("启动失败：ctx.cache 未初始化（cache 插件未加载或注入失败）");
-            }
+            this.assertStartContextReady();
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
             await syncTable(this.context as BeflyContext, tables);

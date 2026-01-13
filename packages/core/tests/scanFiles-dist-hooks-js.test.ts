@@ -6,7 +6,7 @@ import { scanFiles } from "../utils/scanFiles.ts";
 
 test("scanFiles 扫描 core：moduleName=文件名；core 不支持 api", async () => {
     const hooksDir = join(import.meta.dir, "fixtures/scanFilesCore/hooks");
-    const hooks = await scanFiles(hooksDir, "core" as any, "hook", "*.ts");
+    const hooks = await scanFiles(hooksDir, "core", "hook", "*.ts");
     expect(Array.isArray(hooks)).toBe(true);
     expect(hooks.length).toBe(1);
 

@@ -14,11 +14,11 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
     }
 
     if (!ctx.db) {
-        throw new Error("syncDev: ctx.db 未初始化（Db 插件未加载或注入失败）");
+        throw new Error("同步开发：ctx.db 未初始化");
     }
 
     if (!ctx.cache) {
-        throw new Error("syncDev: ctx.cache 未初始化（cache 插件未加载或注入失败）");
+        throw new Error("同步开发：ctx.cache 未初始化");
     }
 
     if (!(await ctx.db.tableExists("addon_admin_admin")).data) {

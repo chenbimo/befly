@@ -2,7 +2,7 @@ import type { BeflyContext } from "../types/befly";
 
 export async function syncCache(ctx: Pick<BeflyContext, "cache">): Promise<void> {
     if (!ctx.cache) {
-        throw new Error("syncCache: ctx.cache 未初始化（cache 插件未加载或注入失败）");
+        throw new Error("同步缓存：ctx.cache 未初始化");
     }
 
     // 1) 缓存接口列表
