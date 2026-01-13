@@ -21,7 +21,7 @@ export type DbTableName = keyof DbRowMap & string;
 /**
  * 数据库类型
  */
-export type DatabaseType = "mysql" | "postgres" | "sqlite";
+export type DatabaseType = "mysql" | "postgresql" | "sqlite";
 
 /**
  * 查询选项

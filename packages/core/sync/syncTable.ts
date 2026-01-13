@@ -86,14 +86,14 @@ type DbDialect = DbDialectName;
 /* 对外导出面
  *
  * 约束：本文件仅导出一个函数：syncTable。
- * - 生产代码：通过 await syncTable(ctx, items) 执行同步。
+ * - 生产代码：通过 await 同步表： 执行同步。
  * - 测试：通过 syncTable.TestKit 访问纯函数/常量（不再导出零散函数）。
  */
 /* ========================================================================== */
 
 /**
  * 文件导航（推荐阅读顺序）
- * 1) syncTable(ctx, items) 入口（本段下方）
+ * 1) 同步表： 入口（本段下方）
  * 2) 版本/常量/方言判断（DB_VERSION_REQUIREMENTS 等）
  * 3) 通用 DDL 工具（quote/type/default/ddl/index SQL）
  * 4) Runtime I/O（只读元信息：表/列/索引/版本）
@@ -113,40 +113,23 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
         const processedTables: string[] = [];
 
         if (!Array.isArray(items)) {
-            throw new Error("syncTable(items) 参数必须是数组");
+            throw new Error("同步表：请传入多个表定义组成的数组");
         }
 
-        if (!ctx) {
-            throw new Error("syncTable(ctx, items) 缺少 ctx");
-        }
-        if (!ctx.db) {
-            throw new Error("syncTable(ctx, items) 缺少 ctx.db");
+        if (!ctx?.db) {
+            throw new Error("同步表： 缺少 ctx.db");
         }
         if (!ctx.redis) {
-            throw new Error("syncTable(ctx, items) 缺少 ctx.redis");
+            throw new Error("同步表： 缺少 ctx.redis");
         }
         if (!ctx.config) {
-            throw new Error("syncTable(ctx, items) 缺少 ctx.config");
+            throw new Error("同步表： 缺少 ctx.config");
         }
 
-        // DbDialect 归一化（允许值与映射关系）：
-        //
-        // | ctx.config.db.dialect 输入 | 归一化 dbDialect |
-        // |------------------------|------------------|
-        // | mysql / 其他 / 空值    | mysql            |
-        // | postgres / postgresql  | postgresql       |
-        // | sqlite                 | sqlite           |
-        //
-        // 约束：后续若新增方言，必须同步更新：
-        // - 这里的归一化
-        // - ensureDbVersion / runtime I/O / DDL 分支
-        const dbDialectText = String(ctx.config.db?.dialect || "mysql").toLowerCase();
-        let dbDialect: DbDialect = "mysql";
-        if (dbDialectText === "postgres" || dbDialectText === "postgresql") {
-            dbDialect = "postgresql";
-        } else if (dbDialectText === "sqlite") {
-            dbDialect = "sqlite";
-        }
+        // DbDialect（按项目约定：启动前必须先通过 checkConfig，因此这里不再做复杂归一化）
+        // - dialect 缺失时兜底 mysql（方案B：更防御，避免脚本/测试绕过 checkConfig 导致崩溃）
+        // - 允许值：mysql / postgresql / sqlite
+        const dbDialect: DbDialect = ctx.config.db?.dialect === "postgresql" || ctx.config.db?.dialect === "sqlite" ? (ctx.config.db.dialect as DbDialect) : "mysql";
 
         // 检查数据库版本（复用 ctx.db 的现有连接/事务）
         await ensureDbVersion(dbDialect, ctx.db);

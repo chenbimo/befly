@@ -29,8 +29,8 @@ const dbPlugin: Plugin = {
             const sql = Connect.getSql();
 
             const rawDbDialect = befly.config?.db?.dialect;
-            const resolvedDbDialect = rawDbDialect === "postgres" ? "postgresql" : rawDbDialect;
-            const dialect = getDialectByName(resolvedDbDialect === "postgresql" || resolvedDbDialect === "sqlite" ? resolvedDbDialect : "mysql");
+            const dialectName = rawDbDialect === "postgresql" || rawDbDialect === "sqlite" ? rawDbDialect : "mysql";
+            const dialect = getDialectByName(dialectName);
 
             // 创建数据库管理器实例
             const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: dialect });

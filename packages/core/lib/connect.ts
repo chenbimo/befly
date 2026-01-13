@@ -34,8 +34,7 @@ export class Connect {
         const config = dbConfig || {};
 
         // 构建数据库连接字符串
-        const rawDialect = config.dialect || "mysql";
-        const dialect = rawDialect === "postgres" ? "postgresql" : rawDialect;
+        const dialect = config.dialect || "mysql";
         const host = config.host || "127.0.0.1";
         const port = config.port || 3306;
         const user = encodeURIComponent(config.username || "root");
