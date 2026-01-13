@@ -8,9 +8,9 @@
 
 ## 运行环境
 
--   Bun >= 1.0
--   MySQL >= 8.0（或 PostgreSQL / SQLite）
--   Redis >= 6.0（可选，但推荐）
+- Bun >= 1.0
+- MySQL >= 8.0（或 PostgreSQL / SQLite）
+- Redis >= 6.0（可选，但推荐）
 
 ## 安装与启动
 
@@ -95,27 +95,27 @@ export default {
     auth: false,
     handler: async (_befly, _ctx) => {
         return { code: 0, msg: "Hello, Befly!", data: { ts: Date.now() } };
-    },
+    }
 } as ApiRoute;
 ```
 
 启动后访问：
 
--   `GET http://localhost:3000/api/app/user/hello`
+- `GET http://localhost:3000/api/app/user/hello`
 
 ## 路由规则（重要）
 
 Befly 会根据“来源 + 文件相对路径”生成 `routePath`：
 
--   项目 API：`apis/**/*.{ts,js}` → `/api/app/...`
--   Addon API：
-    -   `addons/<addonName>/apis/**/*.{ts,js}` → `/api/addon/<addonName>/...`
-    -   `node_modules/@befly-addon/<addonName>/apis/**/*.{ts,js}` → `/api/addon/<addonName>/...`
+- 项目 API：`apis/**/*.{ts,js}` → `/api/app/...`
+- Addon API：
+    - `addons/<addonName>/apis/**/*.{ts,js}` → `/api/addon/<addonName>/...`
+    - `node_modules/@befly-addon/<addonName>/apis/**/*.{ts,js}` → `/api/addon/<addonName>/...`
 
 并且：
 
--   系统内部用于存储/权限判断的 `routePath` **只看 `url.pathname`**（例如 `/api/app/user/login`）。
--   **禁止**把权限写成 `POST /api/...` 或 `POST/api/...`（那只是请求行展示，不参与存储）。
+- 系统内部用于存储/权限判断的 `routePath` **只看 `url.pathname`**（例如 `/api/app/user/login`）。
+- **禁止**把权限写成 `POST /api/...` 或 `POST/api/...`（那只是请求行展示，不参与存储）。
 
 ## TypeScript 类型导入（public types）
 
@@ -130,6 +130,6 @@ import type { BeflyContext } from "befly/types/befly";
 
 更多细节请看 `packages/core/docs/`：
 
--   `docs/guide/quickstart.md`
--   `docs/reference/sync.md`
--   `docs/plugins/plugin.md`
+- `docs/guide/quickstart.md`
+- `docs/reference/sync.md`
+- `docs/plugins/plugin.md`

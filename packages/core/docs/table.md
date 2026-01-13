@@ -1,0 +1,106 @@
+# 表定义（tables/\*.json）
+
+本页只描述表定义 JSON 的**结构与约束**，以及它与 API 字段校验的关系。
+
+## 表文件放哪里（扫描规则）
+
+表定义来自：
+
+-   项目：`<appDir>/tables/*.json`
+-   addon：`<addonRoot>/tables/*.json`
+
+固定过滤：
+
+-   忽略以下划线 `_` 开头的文件或目录
+
+## 表文件名规则
+
+文件名必须是小驼峰（lowerCamelCase），例如：
+
+-   ✅ `userTable.json`
+-   ✅ `testCustomers.json`
+-   ✅ `_common.json`（允许以下划线开头的特殊文件）
+-   ❌ `user_table.json`
+
+## 表 JSON 结构
+
+一个表文件内容是一个对象：
+
+-   key：字段名（建议小驼峰）
+-   value：字段定义对象（FieldDefinition）
+
+字段定义允许的属性：
+
+-   `name`（必填，中文标签）
+-   `type`（必填）
+-   `min` / `max`（可选，number 或 null）
+-   `default`（可选，JSON 值或 null）
+-   `detail`（可选，string）
+-   `index`（可选，boolean）
+-   `unique`（可选，boolean）
+-   `nullable`（可选，boolean）
+-   `unsigned`（可选，boolean，仅 number 有效，仅 MySQL 语义生效）
+-   `regexp`（可选，string 或 null）
+
+示例：
+
+```json
+{
+    "email": {
+        "name": "邮箱",
+        "type": "string",
+        "max": 200,
+        "nullable": false,
+        "unique": true
+    },
+    "age": {
+        "name": "年龄",
+        "type": "number",
+        "default": 0,
+        "nullable": false,
+        "unsigned": true
+    },
+    "bio": {
+        "name": "简介",
+        "type": "text",
+        "default": null
+    }
+}
+```
+
+## 字段类型与关键约束（强约束）
+
+允许的 `type`：
+
+-   `string`
+-   `number`
+-   `text`
+-   `array_string`
+-   `array_text`
+-   `array_number_string`
+-   `array_number_text`
+
+关键约束（违反会阻断启动）：
+
+-   保留字段不可出现在表定义中：`id`, `created_at`, `updated_at`, `deleted_at`, `state`
+-   `unique` 与 `index` 不能同时为 `true`
+-   `text` / `array_text` / `array_number_text`：
+    -   `min/max` 必须为 `null`
+    -   `default` 必须为 `null`
+    -   不支持 `index/unique`
+-   `string` / `array_string` / `array_number_string`：
+    -   必须设置 `max:number`
+    -   且 `max` 不能超过 65535
+    -   `array_*_string` 的 `max` 表示“单个元素字符串长度”，不是数组长度
+-   `number`：`default` 若存在，必须为 `number | null`
+
+## 表定义与 API fields 的关系
+
+在 API 文件中：
+
+-   `fields` 的结构与表定义一致（同样是 `TableDefinition`）
+-   你可以：
+    -   直接在 API 里内联写 fields
+    -   或者从表定义（JSON）生成/复用规则（项目侧自行组织）
+
+> 注意：本页只描述对外结构；表同步（syncTable）的行为请看 `database.md`/项目使用约定。
