@@ -36,6 +36,36 @@ function isJsonValue(value: unknown): boolean {
     return false;
 }
 
+function formatValuePreview(value: unknown): string {
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+
+    if (typeof value === "string") {
+        const s = value.length > 80 ? `${value.slice(0, 80)}...` : value;
+        return JSON.stringify(s);
+    }
+
+    if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+        return String(value);
+    }
+
+    if (typeof value === "function") {
+        return "[Function]";
+    }
+
+    try {
+        const s = JSON.stringify(value);
+        if (typeof s === "string") {
+            return s.length > 120 ? `${s.slice(0, 120)}...` : s;
+        }
+    } catch {
+        // ignore
+    }
+
+    const s = String(value);
+    return s.length > 120 ? `${s.slice(0, 120)}...` : s;
+}
+
 /**
  * 保留字段列表
  */
@@ -188,7 +218,7 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
 
                 // 约束：default 若存在，必须可 JSON 序列化（避免 syncTable 运行期再做防御判断）
                 if (field.default !== undefined && field.default !== null && !isJsonValue(field.default)) {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 default 类型错误，必须为可 JSON 序列化的值或 null`);
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 default 类型错误，必须为可 JSON 序列化的值或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
                     hasError = true;
                 }
 
@@ -260,10 +290,32 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         hasError = true;
                     }
+
+                    // default 规则（table 定义专用）：
+                    // - string：default 若存在且非 null，必须为 string
+                    // - array_*_string：default 若存在且非 null，必须为 string，且建议为 JSON 数组字符串（如 "[]"）
+                    if (fieldDefault !== undefined && fieldDefault !== null) {
+                        if (typeof fieldDefault !== "string") {
+                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值必须为字符串或 null` + `（typeof=${typeof fieldDefault}，value=${formatValuePreview(fieldDefault)}）`);
+                            hasError = true;
+                        } else if (fieldType !== "string") {
+                            // array_*_string：尝试解析为 JSON 数组，帮助尽早发现误填
+                            try {
+                                const parsed = JSON.parse(fieldDefault);
+                                if (!Array.isArray(parsed)) {
+                                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(fieldDefault)}）`);
+                                    hasError = true;
+                                }
+                            } catch {
+                                Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(fieldDefault)}）`);
+                                hasError = true;
+                            }
+                        }
+                    }
                 } else if (fieldType === "number") {
                     // number 类型：default 如果存在，必须为 null 或 number
                     if (fieldDefault !== undefined && fieldDefault !== null && typeof fieldDefault !== "number") {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 number 类型，` + `默认值必须为数字或 null，当前为 "${fieldDefault}"`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 number 类型，默认值必须为数字或 null` + `（typeof=${typeof fieldDefault}，value=${formatValuePreview(fieldDefault)}）`);
                         hasError = true;
                     }
                 }

@@ -159,7 +159,7 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
             // 为字段属性设置默认值：表定义来自 JSON/扫描结果，字段可能缺省。
             // 缺省会让 diff/DDL 生成出现 undefined vs null 等差异，导致错误的变更判断。
             for (const fieldDef of Object.values(tableFields)) {
-                applyFieldDefaults(fieldDef);
+                normalizeFieldDefinitionInPlace(fieldDef);
             }
 
             const existsTable = await tableExistsRuntime(runtime, tableName);
@@ -297,7 +297,7 @@ const SYNC_TABLE_TEST_KIT = {
     getTypeMapping: getTypeMapping,
     quoteIdentifier: quoteIdentifier,
     escapeComment: escapeComment,
-    applyFieldDefaults: applyFieldDefaults,
+    normalizeFieldDefinitionInPlace: normalizeFieldDefinitionInPlace,
     isStringOrArrayType: isStringOrArrayType,
     getSqlType: getSqlType,
     resolveDefaultValue: resolveDefaultValue,
@@ -383,9 +383,9 @@ function normalizeColumnDefaultValue(value: unknown): JsonValue {
 // 以减少抽象层级（按项目要求：能直写就直写）。
 
 /**
- * 为字段定义应用默认值
+ * 为字段定义应用默认值（就地归一化）
  */
-function applyFieldDefaults(fieldDef: FieldDefinition): void {
+function normalizeFieldDefinitionInPlace(fieldDef: FieldDefinition): void {
     const normalized = normalizeFieldDefinition(fieldDef);
     fieldDef.detail = normalized.detail;
     fieldDef.min = normalized.min;

@@ -4,7 +4,7 @@
  * 测试 helpers.ts 中的函数：
  * - quoteIdentifier
  * - escapeComment
- * - applyFieldDefaults
+ * - normalizeFieldDefinitionInPlace
  */
 
 // 类型导入
@@ -42,14 +42,14 @@ describe("escapeComment", () => {
     });
 });
 
-describe("applyFieldDefaults", () => {
+describe("normalizeFieldDefinitionInPlace", () => {
     test("为空字段定义应用默认值", () => {
         const fieldDef: FieldDefinition = {
             name: "用户名",
             type: "string"
         };
 
-        syncTable.TestKit.applyFieldDefaults(fieldDef);
+        syncTable.TestKit.normalizeFieldDefinitionInPlace(fieldDef);
 
         expect(fieldDef.detail).toBe("");
         expect(fieldDef.min).toBe(null);
@@ -72,7 +72,7 @@ describe("applyFieldDefaults", () => {
             nullable: true
         };
 
-        syncTable.TestKit.applyFieldDefaults(fieldDef);
+        syncTable.TestKit.normalizeFieldDefinitionInPlace(fieldDef);
 
         expect(fieldDef.max).toBe(200);
         expect(fieldDef.index).toBe(true);
@@ -91,7 +91,7 @@ describe("applyFieldDefaults", () => {
             unsigned: false
         };
 
-        syncTable.TestKit.applyFieldDefaults(fieldDef);
+        syncTable.TestKit.normalizeFieldDefinitionInPlace(fieldDef);
 
         expect(fieldDef.min).toBe(0);
         expect(fieldDef.max).toBe(0);

@@ -49,7 +49,7 @@ export interface FieldDefinition {
     unique?: boolean;
     /**
      * 是否可为 NULL。
-     * - 缺省默认：true
+     * - 缺省默认：false
      */
     nullable?: boolean;
     /**
