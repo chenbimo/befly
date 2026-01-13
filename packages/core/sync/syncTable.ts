@@ -82,6 +82,21 @@ type SqliteIndexInfoRow = { name: string };
 
 type DbDialect = DbDialectName;
 
+function createRuntimeForIO(dbDialect: DbDialect, db: SqlExecutor, dbName: string = ""): SyncRuntimeForIO {
+    return {
+        dbDialect: dbDialect,
+        db: db,
+        dbName: dbName
+    };
+}
+
+function buildRuntimeIoError(operation: string, tableName: string, error: unknown): Error & { sqlInfo?: SqlInfo } {
+    const errMsg = String((error as any)?.message || error);
+    const outErr: any = new Error(`同步表：读取元信息失败，操作=${operation}，表=${tableName}，错误=${errMsg}`);
+    if ((error as any)?.sqlInfo) outErr.sqlInfo = (error as any).sqlInfo;
+    return outErr;
+}
+
 /* ========================================================================== */
 /* 对外导出面
  *
@@ -313,13 +328,7 @@ const SYNC_TABLE_TEST_KIT = {
     getTableColumnsRuntime: getTableColumnsRuntime,
     getTableIndexesRuntime: getTableIndexesRuntime,
 
-    createRuntime: (dbDialect: DbDialect, db: SqlExecutor | null, dbName: string = ""): SyncRuntimeForIO => {
-        return {
-            dbDialect: dbDialect,
-            db: db,
-            dbName: dbName
-        };
-    }
+    createRuntime: createRuntimeForIO
 };
 
 // 测试能力挂载（避免导出零散函数，同时确保运行时存在）
@@ -665,7 +674,7 @@ function isCompatibleTypeChange(currentType: string | null | undefined, newType:
     return false;
 }
 
-type SyncRuntime = {
+type SyncRuntime = Readonly<{
     /**
      * 当前数据库方言（mysql/postgresql/sqlite），决定 SQL 片段与元信息查询方式。
      * 约束：必须与 ctx.config.db.dialect 一致（经归一化）。
@@ -681,13 +690,13 @@ type SyncRuntime = {
      * 约束：PG/SQLite 可以传空字符串；不要在非 MySQL 方言依赖该值。
      */
     dbName: string;
-};
+}>;
 
-type SyncRuntimeForIO = {
+type SyncRuntimeForIO = Readonly<{
     dbDialect: DbDialect;
-    db: SqlExecutor | null;
+    db: SqlExecutor;
     dbName: string;
-};
+}>;
 
 /* ========================================================================== */
 /* runtime I/O（只读：读库/元信息查询）
@@ -704,28 +713,18 @@ type SyncRuntimeForIO = {
 // ---------------------------------------------------------------------------
 
 async function tableExistsRuntime(runtime: SyncRuntimeForIO, tableName: string): Promise<boolean> {
-    const db = runtime.db;
-    if (!db) throw new Error("SQL 执行器未初始化");
     try {
         // 统一交由方言层构造 SQL；syncTable 仅决定“要查哪个 schema/db”。
         // - MySQL：传 runtime.dbName（information_schema.table_schema）
         // - PostgreSQL：固定 public（项目约定）
         // - SQLite：忽略 schema
-        let schema: string | undefined = undefined;
-        if (runtime.dbDialect === "mysql") {
-            schema = runtime.dbName;
-        } else if (runtime.dbDialect === "postgresql") {
-            schema = "public";
-        }
+        const schema: string | undefined = runtime.dbDialect === "mysql" ? runtime.dbName : runtime.dbDialect === "postgresql" ? "public" : undefined;
 
         const q = getDialectByName(runtime.dbDialect).tableExistsQuery(tableName, schema);
-        const res = await db.unsafe<MySqlTableExistsRow[] | PgTableExistsRow[]>(q.sql, q.params);
+        const res = await runtime.db.unsafe<MySqlTableExistsRow[] | PgTableExistsRow[]>(q.sql, q.params);
         return (res.data?.[0]?.count || 0) > 0;
     } catch (error: any) {
-        const errMsg = String(error?.message || error);
-        const outErr: any = new Error(`同步表：读取元信息失败（操作=检查表是否存在，表=${tableName}，错误=${errMsg}）`);
-        if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
-        throw outErr;
+        throw buildRuntimeIoError("检查表是否存在", tableName, error);
     }
 }
 
@@ -757,9 +756,6 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
 
     const columns: { [key: string]: ColumnInfo } = {};
 
-    const db = runtime.db;
-    if (!db) throw new Error("SQL 执行器未初始化");
-
     try {
         // 方言差异说明：
         // - MySQL：information_schema.columns 最完整，包含 COLUMN_TYPE 与 COLUMN_COMMENT。
@@ -767,7 +763,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
         // - SQLite：PRAGMA table_info 仅提供 type/notnull/default 等有限信息，无列注释。
         if (runtime.dbDialect === "mysql") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
-            const result = await db.unsafe<MySqlColumnInfoRow[]>(q.columns.sql, q.columns.params);
+            const result = await runtime.db.unsafe<MySqlColumnInfoRow[]>(q.columns.sql, q.columns.params);
             for (const row of result.data) {
                 const defaultValue = normalizeColumnDefaultValue(row.COLUMN_DEFAULT);
 
@@ -784,8 +780,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
             }
         } else if (runtime.dbDialect === "postgresql") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
-            const result = await db.unsafe<PgColumnInfoRow[]>(q.columns.sql, q.columns.params);
-            const comments = q.comments ? (await db.unsafe<PgColumnCommentRow[]>(q.comments.sql, q.comments.params)).data : [];
+            const result = await runtime.db.unsafe<PgColumnInfoRow[]>(q.columns.sql, q.columns.params);
+            const comments = q.comments ? (await runtime.db.unsafe<PgColumnCommentRow[]>(q.comments.sql, q.comments.params)).data : [];
             const commentMap: { [key: string]: string } = {};
             for (const r of comments) commentMap[r.column_name] = r.column_comment;
 
@@ -802,20 +798,14 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
             }
         } else if (runtime.dbDialect === "sqlite") {
             const q = getSyncTableColumnsInfoQuery({ dialect: "sqlite", table: tableName, dbName: runtime.dbName });
-            const result = await db.unsafe<SqliteTableInfoRow[]>(q.columns.sql, q.columns.params);
+            const result = await runtime.db.unsafe<SqliteTableInfoRow[]>(q.columns.sql, q.columns.params);
             for (const row of result.data) {
                 let baseType = String(row.type || "").toUpperCase();
                 let max = null;
                 const m = /^(\w+)\s*\((\d+)\)/.exec(baseType);
-                if (m) {
-                    const base = m[1];
-                    const maxText = m[2];
-                    if (typeof base === "string") {
-                        baseType = base;
-                    }
-                    if (typeof maxText === "string") {
-                        max = Number(maxText);
-                    }
+                if (m && m[1] && m[2]) {
+                    baseType = m[1];
+                    max = Number(m[2]);
                 }
                 columns[row.name] = {
                     type: String(baseType).toLowerCase(),
@@ -831,10 +821,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
 
         return columns;
     } catch (error: any) {
-        const errMsg = String(error?.message || error);
-        const outErr: any = new Error(`同步表：读取元信息失败（操作=读取列信息，表=${tableName}，错误=${errMsg}）`);
-        if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
-        throw outErr;
+        throw buildRuntimeIoError("读取列信息", tableName, error);
     }
 }
 
@@ -854,9 +841,6 @@ async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: stri
 
     const indexes: IndexInfo = {};
 
-    const db = runtime.db;
-    if (!db) throw new Error("SQL 执行器未初始化");
-
     try {
         // 方言差异说明：
         // - MySQL：information_schema.statistics 直接给出 index -> column 映射。
@@ -864,7 +848,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: stri
         // - SQLite：PRAGMA index_list + index_info；同样仅收集单列索引，避免多列索引误判。
         if (runtime.dbDialect === "mysql") {
             const q = getSyncTableIndexesQuery({ dialect: "mysql", table: tableName, dbName: runtime.dbName });
-            const result = await db.unsafe<MySqlIndexRow[]>(q.sql, q.params);
+            const result = await runtime.db.unsafe<MySqlIndexRow[]>(q.sql, q.params);
             for (const row of result.data) {
                 const indexName = row.INDEX_NAME;
                 const current = indexes[indexName];
@@ -876,7 +860,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: stri
             }
         } else if (runtime.dbDialect === "postgresql") {
             const q = getSyncTableIndexesQuery({ dialect: "postgresql", table: tableName, dbName: runtime.dbName });
-            const result = await db.unsafe<PgIndexRow[]>(q.sql, q.params);
+            const result = await runtime.db.unsafe<PgIndexRow[]>(q.sql, q.params);
             for (const row of result.data) {
                 const m = /\(([^)]+)\)/.exec(row.indexdef);
                 if (m) {
@@ -887,10 +871,10 @@ async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: stri
             }
         } else if (runtime.dbDialect === "sqlite") {
             const quotedTable = quoteIdentifier("sqlite", tableName);
-            const list = await db.unsafe<SqliteIndexListRow[]>(`PRAGMA index_list(${quotedTable})`);
+            const list = await runtime.db.unsafe<SqliteIndexListRow[]>(`PRAGMA index_list(${quotedTable})`);
             for (const idx of list.data) {
                 const quotedIndex = quoteIdentifier("sqlite", idx.name);
-                const info = await db.unsafe<SqliteIndexInfoRow[]>(`PRAGMA index_info(${quotedIndex})`);
+                const info = await runtime.db.unsafe<SqliteIndexInfoRow[]>(`PRAGMA index_info(${quotedIndex})`);
                 const cols = info.data.map((r) => r.name);
                 if (cols.length === 1) indexes[idx.name] = cols;
             }
@@ -898,10 +882,7 @@ async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: stri
 
         return indexes;
     } catch (error: any) {
-        const errMsg = String(error?.message || error);
-        const outErr: any = new Error(`同步表：读取元信息失败（操作=读取索引信息，表=${tableName}，错误=${errMsg}）`);
-        if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
-        throw outErr;
+        throw buildRuntimeIoError("读取索引信息", tableName, error);
     }
 }
 
@@ -913,8 +894,6 @@ async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: stri
  * 数据库版本检查（按方言）
  */
 async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<void> {
-    if (!db) throw new Error("SQL 执行器未初始化");
-
     if (dbDialect === "mysql") {
         const r = await db.unsafe<Array<{ version: string }>>("SELECT VERSION() AS version");
         if (!r.data || r.data.length === 0 || !r.data[0]?.version) {

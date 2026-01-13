@@ -12,7 +12,7 @@ import { checkTable } from "../checks/checkTable.ts";
 import { syncTable } from "../sync/syncTable.ts";
 import { toSqlParams } from "../utils/sqlParams.ts";
 
-type SqlExecutor = NonNullable<Parameters<typeof syncTable.TestKit.createRuntime>[1]>;
+type SqlExecutor = Parameters<typeof syncTable.TestKit.createRuntime>[1];
 
 class SqlInfoError extends Error {
     public sqlInfo: SqlInfo;

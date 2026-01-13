@@ -8,15 +8,6 @@ import { syncTable } from "../sync/syncTable.ts";
 import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
 
 describe("tableExistsRuntime", () => {
-    test("sql 执行器未初始化时抛出错误", async () => {
-        try {
-            await syncTable.TestKit.tableExistsRuntime(syncTable.TestKit.createRuntime("sqlite", null, ""), "user");
-            expect(true).toBe(false);
-        } catch (error: any) {
-            expect(error.message).toBe("SQL 执行器未初始化");
-        }
-    });
-
     test("mock sqlite：表存在返回 true；表不存在返回 false", async () => {
         const db = createMockSqliteDb({
             executedSql: [],
