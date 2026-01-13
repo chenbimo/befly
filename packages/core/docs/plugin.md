@@ -43,6 +43,28 @@ core 内置插件不从目录扫描，而是静态注册。
 
 > 不允许额外字段：多写任何 key 都会在启动检查阶段报错并阻断启动。
 
+### strict customKeys 白名单（启动期阻断）
+
+启动期会对“用户在 `export default { ... }` 里写出来的字段集合”做严格校验：
+
+-   只允许：`name`、`enable`、`deps`、`handler`
+-   出现任何其他字段（哪怕你觉得无害），都会阻断启动
+
+同时：
+
+-   `enable` 如果显式写出，必须是 `boolean`（不允许 `0/1`）
+-   `deps` 如果显式写出，必须是 `string[]`
+
+## core 内置插件的额外约束
+
+core 内置插件来自静态注册（不是扫描目录），并且有额外限制：
+
+-   必须显式写 `name`（string）
+-   `name` 必须与 `moduleName` 完全一致
+-   `name/moduleName` 必须满足：小写字母 + 下划线（例如 `logger`、`redis_cache`）
+
+（这保证 core 插件在 bundle/单文件场景下仍可被稳定识别与排序。）
+
 ## 基本示例
 
 `plugins/sms.ts`：
@@ -74,6 +96,11 @@ export default smsPlugin;
 运行时使用：
 
 -   `ctx["app_sms"].sendCode(...)`
+
+说明：插件 `handler(context)` 的返回值会被挂载到 `ctx[moduleName]` 上。
+
+-   如果返回 `null` 也是允许的，但你后续使用时需要自行判空。
+-   如果你返回的是对象，建议返回“可序列化或可测试”的纯函数/纯对象，避免把连接句柄散落到业务里。
 
 ## 禁用插件
 

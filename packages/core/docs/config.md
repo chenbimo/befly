@@ -108,6 +108,87 @@ await befly.start({ NODE_ENV: "development" });
 
 > 这类校验属于“对外契约”：你只要按规则写配置即可，不需要了解内部实现。
 
+## 开发者账号（devEmail / devPassword）
+
+这两个字段主要用于启动期的 `syncDev`（开发者账号初始化/同步）。
+
+-   `devEmail: string`
+-   `devPassword: string`
+
+说明：
+
+-   如果你不使用开发者账号相关能力，可以不配置。
+-   若你配置了它们，建议只在 `befly.development.json` 配置，避免生产环境误用。
+
+## JWT 配置（auth）
+
+`auth` 用于 JWT 校验（由内置 `jwt` 插件 + `auth` hook 组合工作）。
+
+-   `auth.secret?: string`
+-   `auth.expiresIn?: string | number`
+-   `auth.algorithm?: string`
+
+注意：当前启动期强校验 **不会** 校验 `auth` 的字段类型是否正确（属于运行时配置），建议你保持值类型与含义一致。
+
+## CORS 配置（cors）
+
+`cors` 由内置 `cors` hook 使用，用于设置跨域响应头，并在 `OPTIONS` 预检时直接返回 204。
+
+常用字段：
+
+-   `cors.origin?: string`
+-   `cors.methods?: string`
+-   `cors.allowedHeaders?: string`
+-   `cors.exposedHeaders?: string`
+-   `cors.maxAge?: number`
+-   `cors.credentials?: string`
+
+注意：当前 `cors` 的默认值由 core 内置 hook 内部提供；配置只是在运行时做浅合并覆盖。
+
+## 全局限流配置（rateLimit）
+
+`rateLimit` 由全局限流 hook 使用。
+
+常用字段：
+
+-   `rateLimit.enable?: number`（0/1）
+-   `rateLimit.defaultLimit?: number`
+-   `rateLimit.defaultWindow?: number`（秒）
+-   `rateLimit.key?: "ip" | "user" | "ip_user"`
+-   `rateLimit.skipRoutes?: string[]`
+-   `rateLimit.rules?: Array<{ route: string; limit: number; window: number; key?: "ip" | "user" | "ip_user" }>`
+
+说明：
+
+-   `rules` 优先于默认规则；`skipRoutes` 优先级最高。
+-   该配置目前不在 `checkConfig` 的强校验范围内。
+
+## Addon 配置（addons）
+
+`addons` 用于向 addon 注入运行时配置，结构为：
+
+-   `addons: Record<string, Record<string, JsonValue | undefined>>`
+
+示例：
+
+```json
+{
+    "addons": {
+        "admin": {
+            "enableRegister": true,
+            "title": "后台管理"
+        }
+    }
+}
+```
+
+## 数组合并的副作用：无法“覆盖清空”
+
+由于配置合并语义为 **array concat**（拼接），因此：
+
+-   你在 env 配置里写 `disableMenus: []` 并不会清空默认规则，而是把默认规则与空数组拼接。
+-   如果你需要移除 core 默认数组项，这属于“改框架默认行为”的范畴，需要在源码侧调整默认配置。
+
 ## Redis 配置（redis）
 
 字段来自 `RedisConfig`：

@@ -2,6 +2,31 @@
 
 本页描述 API 的**定义方式**、**路由路径生成规则**与**RequestContext 用法**。
 
+## 路由匹配规则（重要）
+
+### 只使用 url.pathname 做匹配
+
+当前实现中：
+
+-   路由表 `apisMap` 的 key 是 `scanFiles/loadApis` 生成的 `path`（例如 `/api/app/user/login`）
+-   请求命中判断 **只使用** `new URL(req.url).pathname`（例如 `/api/app/user/login`）
+-   **不会** 把 HTTP method 拼到 key 里（例如 `POST /api/...` 这种写法是错误的）
+
+因此：
+
+-   你不需要、也不应该在任何地方构造 `POST /api/...`、`POST/api/...` 这种 path
+-   `path` 必须是严格的 pathname（以 `/` 开头、无空格、以 `/api/` 开头）
+
+### method 字段的现状
+
+API 的 `method` 字段会被规范化为 `"GET" | "POST" | "GET,POST"` 并保存到 `ctx.api.method`。
+
+但目前 **路由分发不基于 method**（也就是说：请求是否能进入该 API handler，取决于 pathname 是否匹配）。
+
+如果你需要“强制只允许 GET/POST”：请在 handler 内自行判断：
+
+-   `if (ctx.method !== "POST") return befly.tool.No("Method Not Allowed");`
+
 ## 文件放哪里（扫描规则）
 
 API 只从以下目录扫描（支持 `.ts/.js`，但推荐使用 `.ts`）：
@@ -103,6 +128,18 @@ export default loginApi;
 -   `ctx.response`: 若你直接赋值为 Response，将被直接返回
 -   `ctx.result`: handler 的原始处理结果（Response 或 JSON）
 
+### Hook 如何短路请求
+
+在 `/api/*` 请求链路中，框架会先顺序执行所有 hook：
+
+-   `await hook.handler(befly, ctx)`
+-   如果某个 hook 设置了 `ctx.response`，将 **立即停止后续 hook 与 API handler**，直接返回该 `Response`
+
+因此：
+
+-   hook 中的“拦截/鉴权/校验”应通过 `ctx.response = ErrorResponse(ctx, ...)` 来短路
+-   hook 必须自行处理 `ctx.api` 可能为空的情况（例如接口不存在时）
+
 ## 返回值约定（Response / JSON）
 
 `handler` 可以返回：
@@ -117,3 +154,8 @@ export default loginApi;
 -   `befly.tool.Raw(ctx, data, options)` → 直接返回原始响应（自定义 status/contentType/headers）
 
 > 注意：不要使用 `console.*`，统一用 `befly.logger.*`。
+
+## 常见错误
+
+1. **把 method 拼进 path**：例如 `"POST /api/app/xxx"` / `"POST/api/app/xxx"`，这会被启动期检查视为非法 path。
+2. **误以为 method 参与路由**：当前实现不是；如果你想限制 method，请在 handler 里判断 `ctx.method`。

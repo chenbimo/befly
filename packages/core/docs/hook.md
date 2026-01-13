@@ -11,6 +11,18 @@
 
 因此：Hook 的职责通常是“在请求处理前/后修改 ctx、提前返回 Response、做校验与权限检查”。
 
+### 如何提前返回（短路）
+
+Hook 如果需要拦截请求，应设置：
+
+-   `ctx.response = new Response(...)`
+
+一旦 `ctx.response` 被设置：
+
+-   后续 hook 不再执行
+-   API handler 不再执行
+-   框架直接返回这个 Response
+
 ## 文件放哪里（扫描规则）
 
 Hook 扫描目录：
@@ -46,6 +58,26 @@ Hook 文件的 `export default` 只能包含：
 -   `deps?: string[]`（可省略，缺省补为 `[]`）
 -   `handler: (befly, ctx) => void | Promise<void>`（必填）
 -   `name?: string`（通常不需要写；core 内置 Hook 必须显式写且与 moduleName 一致）
+
+### strict customKeys 白名单（启动期阻断）
+
+启动期会对“用户在 `export default { ... }` 里写出来的字段集合”做严格校验：
+
+-   只允许：`name`、`enable`、`deps`、`handler`
+-   出现任何其他字段都会阻断启动
+
+并且：
+
+-   `enable` 如果显式写出，必须是 `boolean`（不允许 `0/1`）
+-   `deps` 如果显式写出，必须是 `string[]`
+
+## core 内置 Hook 的额外约束
+
+core 内置 hook 来自静态注册（不是扫描目录），并且有额外限制：
+
+-   必须显式写 `name`（string）
+-   `name` 必须与 `moduleName` 完全一致
+-   `name/moduleName` 必须满足：小写字母 + 下划线（例如 `auth`、`rate_limit`）
 
 ## 基本示例
 

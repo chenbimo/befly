@@ -6,12 +6,14 @@
 
 表定义来自：
 
--   项目：`<appDir>/tables/*.json`
--   addon：`<addonRoot>/tables/*.json`
+-   项目：`<appDir>/tables/*.json`（只扫描这一层，不递归子目录）
+-   addon：`<addonRoot>/tables/*.json`（只扫描这一层，不递归子目录）
 
 固定过滤：
 
--   忽略以下划线 `_` 开头的文件或目录
+-   忽略任何以下划线 `_` 开头的文件或目录（不可关闭、无例外）
+
+说明：即使 `checkTable` 对文件名做了规则校验，被 `_` 过滤掉的文件/目录根本不会进入校验与同步流程。
 
 ## 表文件名规则
 
@@ -19,8 +21,31 @@
 
 -   ✅ `userTable.json`
 -   ✅ `testCustomers.json`
--   ✅ `_common.json`（允许以下划线开头的特殊文件）
 -   ❌ `user_table.json`
+
+> 注意：文件名以 `_` 开头会被扫描阶段直接忽略，因此不会参与任何同步与校验。
+
+## 表名/列名映射（与数据库实际表结构的关系）
+
+### 表名如何生成
+
+同步表结构（`syncTable`）时，会把“文件名”映射为数据库表名：
+
+-   项目表 / core 表：`tableName = snakeCase(fileName)`
+-   addon 表：`tableName = "addon_" + snakeCase(addonName) + "_" + snakeCase(fileName)`
+
+示例：
+
+-   项目 `tables/userProfile.json` → 表 `user_profile`
+-   addon `admin` 的 `tables/role.json` → 表 `addon_admin_role`
+
+### 字段 key 如何生成列名
+
+表 JSON 里的字段 key 会被转为列名：
+
+-   `dbFieldName = snakeCase(colKey)`
+
+例如 `userId` → `user_id`。
 
 ## 表 JSON 结构
 
