@@ -152,10 +152,7 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
             // 确定表名：
             // - addon 表：addon_{addonName}_{fileName}
             // - app/core 表：{fileName}
-            let tableName = snakeCase(item.fileName);
-            if (item.source === "addon") {
-                tableName = `addon_${snakeCase(item.addonName)}_${tableName}`;
-            }
+            const tableName = item.source === "addon" ? `addon_${snakeCase(item.addonName)}_${snakeCase(item.fileName)}` : snakeCase(item.fileName);
 
             const tableFields = item.content as Record<string, FieldDefinition>;
 
