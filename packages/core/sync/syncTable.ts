@@ -149,11 +149,6 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
                 continue;
             }
 
-            if (item.source !== "app" && item.source !== "addon" && item.source !== "core") {
-                Logger.warn(`syncTable 跳过未知来源表定义: source=${String(item.source)} fileName=${String(item.fileName)}`);
-                continue;
-            }
-
             // 确定表名：
             // - addon 表：addon_{addonName}_{fileName}
             // - app/core 表：{fileName}
