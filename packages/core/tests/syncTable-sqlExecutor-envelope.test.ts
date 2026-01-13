@@ -8,6 +8,7 @@ import type { SqlInfo } from "../types/database.ts";
 
 import { describe, expect, test } from "bun:test";
 
+import { checkTable } from "../checks/checkTable.ts";
 import { syncTable } from "../sync/syncTable.ts";
 import { toSqlParams } from "../utils/sqlParams.ts";
 
@@ -266,6 +267,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             }
         } satisfies Parameters<typeof syncTable>[0];
 
+        await checkTable([]);
         await syncTable(ctx, []);
         expect(true).toBe(true);
     });

@@ -152,29 +152,20 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
             // 确定表名：
             // - addon 表：addon_{addonName}_{fileName}
             // - app/core 表：{fileName}
-            const sourceLabel = item.source === "addon" ? "插件" : item.source === "app" ? "项目" : "核心";
             let tableName = snakeCase(item.fileName);
             if (item.source === "addon") {
-                if (!item.addonName || String(item.addonName).trim() === "") {
-                    throw new Error(`同步表：addon 表缺少 addonName（来源=${sourceLabel}，表定义文件=${String(item.fileName)}）`);
-                }
                 tableName = `addon_${snakeCase(item.addonName)}_${tableName}`;
             }
 
-            const tableDefinition = item.content;
-            if (!tableDefinition || typeof tableDefinition !== "object") {
-                throw new Error(`同步表：表定义无效（来源=${sourceLabel}，表=${tableName}，表定义文件=${String(item.fileName)}）`);
-            }
+            const tableFields = item.content as Record<string, FieldDefinition>;
 
             // 为字段属性设置默认值：表定义来自 JSON/扫描结果，字段可能缺省。
             // 缺省会让 diff/DDL 生成出现 undefined vs null 等差异，导致错误的变更判断。
-            for (const fieldDef of Object.values(tableDefinition)) {
+            for (const fieldDef of Object.values(tableFields)) {
                 applyFieldDefaults(fieldDef);
             }
 
             const existsTable = await tableExistsRuntime(runtime, tableName);
-
-            const tableFields = tableDefinition as Record<string, FieldDefinition>;
 
             if (existsTable) {
                 await modifyTableRuntime(runtime, tableName, tableFields);

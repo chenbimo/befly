@@ -59,7 +59,22 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
 
         try {
             const fileName = item.fileName;
-            const table = item.content || {};
+
+            // 前置约束（供 syncTable 直接假设成立）：
+            // - addon 表必须有 addonName
+            // - 表定义必须是对象（非 null/数组）
+            if (item.source === "addon" && String(item.addonName).trim() === "") {
+                Logger.warn(`${tablePrefix}${fileName} addon 表缺少 addonName`);
+                hasError = true;
+                continue;
+            }
+
+            const table = item.content;
+            if (typeof table !== "object" || table === null || Array.isArray(table)) {
+                Logger.warn(`${tablePrefix}${fileName} 表定义无效：必须为对象`);
+                hasError = true;
+                continue;
+            }
             // 1) 文件名小驼峰校验
             if (!LOWER_CAMEL_CASE_REGEX.test(fileName)) {
                 Logger.warn(`${tablePrefix}${fileName} 文件名必须使用小驼峰命名（例如 testCustomers.json）`);

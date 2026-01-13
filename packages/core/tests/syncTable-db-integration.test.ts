@@ -10,18 +10,20 @@ import type { MockSqliteState } from "./_mocks/mockSqliteDb.ts";
 import { describe, expect, test } from "bun:test";
 
 import { CacheKeys } from "../lib/cacheKeys.ts";
+import { checkTable } from "../checks/checkTable.ts";
 import { syncTable } from "../sync/syncTable.ts";
+import { snakeCase } from "../utils/util.ts";
 import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
 
-function buildTableItem(options: { tableFileName: string; content: Record<string, FieldDefinition> }): ScanFileResult {
+function buildTableItem(options: { fileName: string; content: Record<string, FieldDefinition> }): ScanFileResult {
     const item = {
         source: "app",
         type: "table",
         sourceName: "项目",
         filePath: "",
-        relativePath: options.tableFileName,
-        fileName: options.tableFileName,
-        moduleName: `app_${options.tableFileName}`,
+        relativePath: options.fileName,
+        fileName: options.fileName,
+        moduleName: `app_${options.fileName}`,
         addonName: "",
         fileBaseName: "",
         fileDir: "",
@@ -87,9 +89,10 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
             }
         } satisfies Parameters<typeof syncTable>[0];
 
-        const tableFileName = "test_sync_table_integration_user";
+        const fileName = "testSyncTableIntegrationUser";
+        const tableName = snakeCase(fileName);
         const item = buildTableItem({
-            tableFileName: tableFileName,
+            fileName: fileName,
             content: {
                 email: fdString({ name: "邮箱", min: 0, max: 100, defaultValue: null, nullable: false }),
                 nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
@@ -97,15 +100,16 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
             }
         });
 
+        await checkTable([item]);
         await syncTable(ctx, [item]);
 
-        expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(tableFileName))).toBe(true);
+        expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(tableName))).toBe(true);
 
         const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
-        const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableFileName);
+        const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableName);
         expect(exists).toBe(true);
 
-        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableFileName);
+        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
 
         expect(columns.id).toBeDefined();
         expect(columns.created_at).toBeDefined();
@@ -117,7 +121,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
         expect(columns.age).toBeDefined();
 
         expect(redisCalls.length).toBe(1);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableName)]);
     });
 
     test("二次同步：新增字段应落库（ADD COLUMN），同时清理 columns 缓存", async () => {
@@ -142,47 +146,51 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
             }
         } satisfies Parameters<typeof syncTable>[0];
 
-        const tableFileName = "test_sync_table_integration_profile";
+        const fileName = "testSyncTableIntegrationProfile";
+        const tableName = snakeCase(fileName);
 
         const itemV1 = buildTableItem({
-            tableFileName: tableFileName,
+            fileName: fileName,
             content: {
                 nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true })
             }
         });
 
+        await checkTable([itemV1]);
         await syncTable(ctx, [itemV1]);
 
         const itemV2 = buildTableItem({
-            tableFileName: tableFileName,
+            fileName: fileName,
             content: {
                 nickname: fdString({ name: "昵称", min: 0, max: 50, defaultValue: "用户", nullable: true }),
-                bio: fdText({ name: "简介", min: 0, max: 200, defaultValue: null, nullable: true })
+                bio: fdText({ name: "简介", min: null, max: null, defaultValue: null, nullable: true })
             }
         });
 
+        await checkTable([itemV2]);
         await syncTable(ctx, [itemV2]);
 
-        expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableFileName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
+        expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
 
         const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
-        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableFileName);
+        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
         expect(columns.nickname).toBeDefined();
         expect(columns.bio).toBeDefined();
 
         // 两次同步，每次都会清一次缓存
         expect(redisCalls.length).toBe(2);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
-        expect(redisCalls[1].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableName)]);
+        expect(redisCalls[1].keys).toEqual([CacheKeys.tableColumns(tableName)]);
     });
 
     test("索引变更：仅删除单列索引；复合索引不会被误删", async () => {
-        const tableFileName = "test_sync_table_integration_indexes";
+        const fileName = "testSyncTableIntegrationIndexes";
+        const tableName = snakeCase(fileName);
 
         const state: MockSqliteState = {
             executedSql: [],
             tables: {
-                [tableFileName]: {
+                [tableName]: {
                     columns: {
                         id: { name: "id", type: "INTEGER", notnull: 1, dflt_value: null },
                         created_at: { name: "created_at", type: "INTEGER", notnull: 1, dflt_value: "0" },
@@ -219,13 +227,14 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
         } satisfies Parameters<typeof syncTable>[0];
 
         const item = buildTableItem({
-            tableFileName: tableFileName,
+            fileName: fileName,
             content: {
                 userId: fdNumber({ name: "用户ID", min: 0, max: 999999999, defaultValue: 0, nullable: false }),
                 userName: fdString({ name: "用户名", min: 0, max: 50, defaultValue: "", nullable: false })
             }
         });
 
+        await checkTable([item]);
         await syncTable(ctx, [item]);
 
         const dropUserName = state.executedSql.some((s) => s.includes("DROP INDEX") && s.includes("idx_user_name"));
@@ -235,6 +244,6 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
         expect(dropUserIdComposite).toBe(false);
 
         expect(redisCalls.length).toBe(1);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableFileName)]);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableName)]);
     });
 });
