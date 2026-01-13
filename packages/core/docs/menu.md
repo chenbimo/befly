@@ -13,32 +13,32 @@
 
 对每个 addon，会尝试寻找 admin views 目录（满足其一即可）：
 
--   `<addonRoot>/adminViews`
--   `<addonRoot>/views/admin`
+- `<addonRoot>/adminViews`
+- `<addonRoot>/views/admin`
 
 扫描规则（目录 → 菜单）：
 
--   只扫描目录（跳过文件）
--   跳过名为 `components` 的目录
--   目录下必须同时存在：
-    -   `meta.json`
-    -   `index.vue`
--   `meta.json` 必须包含：
-    -   `title: string`
-    -   可选：`order: number`（整数，>=0）
+- 只扫描目录（跳过文件）
+- 跳过名为 `components` 的目录
+- 目录下必须同时存在：
+    - `meta.json`
+    - `index.vue`
+- `meta.json` 必须包含：
+    - `title: string`
+    - 可选：`order: number`（整数，>=0）
 
 路径生成规则：
 
--   addon 菜单统一带前缀：`/<addonSource>/<addonName>`
-    -   addon 来自 node_modules：`addonSource="addon"` → `/addon/<addonName>`
-    -   addon 来自项目本地 addons：`addonSource="app"` → `/app/<addonName>`
--   子目录名会去掉尾部的 `_数字`（例如 `user_1` → `user`）
--   目录名为 `index` 时，表示“继承父级路径”
+- addon 菜单统一带前缀：`/<addonSource>/<addonName>`
+    - addon 来自 node_modules：`addonSource="addon"` → `/addon/<addonName>`
+    - addon 来自项目本地 addons：`addonSource="app"` → `/app/<addonName>`
+- 子目录名会去掉尾部的 `_数字`（例如 `user_1` → `user`）
+- 目录名为 `index` 时，表示“继承父级路径”
 
 树结构：
 
--   子目录形成 `children`
--   同级节点按 `order` 升序排序（缺省为很大值）
+- 子目录形成 `children`
+- 同级节点按 `order` 升序排序（缺省为很大值）
 
 ### 2) 项目 menus.json
 
@@ -50,11 +50,11 @@
 
 每个菜单节点遵循 `MenuConfig`（`befly/types/sync`）：
 
--   `path?: string`
--   `name?: string`
--   `sort?: number`
--   `parentPath?: string`（可选。你不写时会由树结构推导）
--   `children?: MenuConfig[]`
+- `path?: string`
+- `name?: string`
+- `sort?: number`
+- `parentPath?: string`（可选。你不写时会由树结构推导）
+- `children?: MenuConfig[]`
 
 最小示例：
 
@@ -81,25 +81,25 @@
 
 行为：
 
--   同步时会用 Bun.Glob 进行匹配
--   命中规则的菜单：
-    -   **不会写入数据库**
-    -   并且会在数据库中被**强制删除（不分 state，包括历史禁用数据）**
+- 同步时会用 Bun.Glob 进行匹配
+- 命中规则的菜单：
+    - **不会写入数据库**
+    - 并且会在数据库中被**强制删除（不分 state，包括历史禁用数据）**
 
 匹配兼容：`/a/b` 与 `a/b` 都会参与匹配（双候选兜底）。
 
 ### 匹配规则（对齐实现）
 
--   `disableMenus` 中：
-    -   非字符串会被忽略
-    -   会 `trim()`，空字符串会被忽略
-    -   每条规则会被编译为 `new Bun.Glob(pattern)`
--   对每个菜单 `path`：
-    -   会 `trim()`
-    -   同时构造两个候选值参与匹配：
-        -   `"/a/b"`
-        -   `"a/b"`
-    -   只要任一候选命中任一 pattern，就认为该 path 被禁用
+- `disableMenus` 中：
+    - 非字符串会被忽略
+    - 会 `trim()`，空字符串会被忽略
+    - 每条规则会被编译为 `new Bun.Glob(pattern)`
+- 对每个菜单 `path`：
+    - 会 `trim()`
+    - 同时构造两个候选值参与匹配：
+        - `"/a/b"`
+        - `"a/b"`
+    - 只要任一候选命中任一 pattern，就认为该 path 被禁用
 
 如果当前 Bun 版本不支持 `Bun.Glob.match`，菜单同步会直接抛错中断（因为无法可靠地做 glob 匹配）。
 
@@ -107,13 +107,13 @@
 
 disableMenus 的效果是“强删”：
 
--   不仅会让本次同步不插入该菜单
--   还会对数据库里 **所有 state 的历史记录** 执行物理删除（包含 `state=-1` 的历史/禁用数据）
+- 不仅会让本次同步不插入该菜单
+- 还会对数据库里 **所有 state 的历史记录** 执行物理删除（包含 `state=-1` 的历史/禁用数据）
 
 因此写规则时建议：
 
--   优先用“最小范围”的精确路径（例如 `/addon/admin/login`），确认没问题后再扩大到通配
--   尽量避免过宽的 `/**`（特别是 `/addon/**` 这种）
+- 优先用“最小范围”的精确路径（例如 `/addon/admin/login`），确认没问题后再扩大到通配
+- 尽量避免过宽的 `/**`（特别是 `/addon/**` 这种）
 
 示例：
 
@@ -135,8 +135,8 @@ disableMenus 的效果是“强删”：
 
 效果：
 
--   `/login` 菜单不会被写入
--   数据库中 path 为 `/login`（以及兼容候选 `login`）的记录会被物理删除
+- `/login` 菜单不会被写入
+- 数据库中 path 为 `/login`（以及兼容候选 `login`）的记录会被物理删除
 
 2. 禁用某个 addon 的全部菜单：
 
@@ -148,8 +148,8 @@ disableMenus 的效果是“强删”：
 
 效果：
 
--   所有以 `/addon/admin/` 开头的菜单都会被过滤
--   数据库中对应的历史菜单记录也会被物理删除（不分 state）
+- 所有以 `/addon/admin/` 开头的菜单都会被过滤
+- 数据库中对应的历史菜单记录也会被物理删除（不分 state）
 
 ## 同步前置条件
 

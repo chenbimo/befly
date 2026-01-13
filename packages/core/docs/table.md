@@ -6,12 +6,12 @@
 
 表定义来自：
 
--   项目：`<appDir>/tables/*.json`（只扫描这一层，不递归子目录）
--   addon：`<addonRoot>/tables/*.json`（只扫描这一层，不递归子目录）
+- 项目：`<appDir>/tables/*.json`（只扫描这一层，不递归子目录）
+- addon：`<addonRoot>/tables/*.json`（只扫描这一层，不递归子目录）
 
 固定过滤：
 
--   忽略任何以下划线 `_` 开头的文件或目录（不可关闭、无例外）
+- 忽略任何以下划线 `_` 开头的文件或目录（不可关闭、无例外）
 
 说明：即使 `checkTable` 对文件名做了规则校验，被 `_` 过滤掉的文件/目录根本不会进入校验与同步流程。
 
@@ -19,9 +19,9 @@
 
 文件名必须是小驼峰（lowerCamelCase），例如：
 
--   ✅ `userTable.json`
--   ✅ `testCustomers.json`
--   ❌ `user_table.json`
+- ✅ `userTable.json`
+- ✅ `testCustomers.json`
+- ❌ `user_table.json`
 
 > 注意：文件名以 `_` 开头会被扫描阶段直接忽略，因此不会参与任何同步与校验。
 
@@ -31,19 +31,19 @@
 
 同步表结构（`syncTable`）时，会把“文件名”映射为数据库表名：
 
--   项目表 / core 表：`tableName = snakeCase(fileName)`
--   addon 表：`tableName = "addon_" + snakeCase(addonName) + "_" + snakeCase(fileName)`
+- 项目表 / core 表：`tableName = snakeCase(fileName)`
+- addon 表：`tableName = "addon_" + snakeCase(addonName) + "_" + snakeCase(fileName)`
 
 示例：
 
--   项目 `tables/userProfile.json` → 表 `user_profile`
--   addon `admin` 的 `tables/role.json` → 表 `addon_admin_role`
+- 项目 `tables/userProfile.json` → 表 `user_profile`
+- addon `admin` 的 `tables/role.json` → 表 `addon_admin_role`
 
 ### 字段 key 如何生成列名
 
 表 JSON 里的字段 key 会被转为列名：
 
--   `dbFieldName = snakeCase(colKey)`
+- `dbFieldName = snakeCase(colKey)`
 
 例如 `userId` → `user_id`。
 
@@ -51,21 +51,21 @@
 
 一个表文件内容是一个对象：
 
--   key：字段名（建议小驼峰）
--   value：字段定义对象（FieldDefinition）
+- key：字段名（建议小驼峰）
+- value：字段定义对象（FieldDefinition）
 
 字段定义允许的属性：
 
--   `name`（必填，中文标签）
--   `type`（必填）
--   `min` / `max`（可选，number 或 null）
--   `default`（可选，JSON 值或 null）
--   `detail`（可选，string）
--   `index`（可选，boolean）
--   `unique`（可选，boolean）
--   `nullable`（可选，boolean）
--   `unsigned`（可选，boolean，仅 number 有效，仅 MySQL 语义生效）
--   `regexp`（可选，string 或 null）
+- `name`（必填，中文标签）
+- `type`（必填）
+- `min` / `max`（可选，number 或 null）
+- `default`（可选，JSON 值或 null）
+- `detail`（可选，string）
+- `index`（可选，boolean）
+- `unique`（可选，boolean）
+- `nullable`（可选，boolean）
+- `unsigned`（可选，boolean，仅 number 有效，仅 MySQL 语义生效）
+- `regexp`（可选，string 或 null）
 
 示例：
 
@@ -97,35 +97,35 @@
 
 允许的 `type`：
 
--   `string`
--   `number`
--   `text`
--   `array_string`
--   `array_text`
--   `array_number_string`
--   `array_number_text`
+- `string`
+- `number`
+- `text`
+- `array_string`
+- `array_text`
+- `array_number_string`
+- `array_number_text`
 
 关键约束（违反会阻断启动）：
 
--   保留字段不可出现在表定义中：`id`, `created_at`, `updated_at`, `deleted_at`, `state`
--   `unique` 与 `index` 不能同时为 `true`
--   `text` / `array_text` / `array_number_text`：
-    -   `min/max` 必须为 `null`
-    -   `default` 必须为 `null`
-    -   不支持 `index/unique`
--   `string` / `array_string` / `array_number_string`：
-    -   必须设置 `max:number`
-    -   且 `max` 不能超过 65535
-    -   `array_*_string` 的 `max` 表示“单个元素字符串长度”，不是数组长度
--   `number`：`default` 若存在，必须为 `number | null`
+- 保留字段不可出现在表定义中：`id`, `created_at`, `updated_at`, `deleted_at`, `state`
+- `unique` 与 `index` 不能同时为 `true`
+- `text` / `array_text` / `array_number_text`：
+    - `min/max` 必须为 `null`
+    - `default` 必须为 `null`
+    - 不支持 `index/unique`
+- `string` / `array_string` / `array_number_string`：
+    - 必须设置 `max:number`
+    - 且 `max` 不能超过 65535
+    - `array_*_string` 的 `max` 表示“单个元素字符串长度”，不是数组长度
+- `number`：`default` 若存在，必须为 `number | null`
 
 ## 表定义与 API fields 的关系
 
 在 API 文件中：
 
--   `fields` 的结构与表定义一致（同样是 `TableDefinition`）
--   你可以：
-    -   直接在 API 里内联写 fields
-    -   或者从表定义（JSON）生成/复用规则（项目侧自行组织）
+- `fields` 的结构与表定义一致（同样是 `TableDefinition`）
+- 你可以：
+    - 直接在 API 里内联写 fields
+    - 或者从表定义（JSON）生成/复用规则（项目侧自行组织）
 
 > 注意：本页只描述对外结构；表同步（syncTable）的行为请看 `database.md`/项目使用约定。

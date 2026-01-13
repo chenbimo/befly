@@ -6,13 +6,13 @@
 
 Redis 连接来自 `config.redis`（见 `config.md`）。
 
--   `redis.prefix` 会作为 key 前缀
--   **不要在 prefix 中写 `:`**（框架会自动拼接）
+- `redis.prefix` 会作为 key 前缀
+- **不要在 prefix 中写 `:`**（框架会自动拼接）
 
 实现约定（来自 `RedisHelper`）：
 
--   真实 key：`<prefix>:` + `key`
--   当 `redis.prefix` 为空时不加前缀
+- 真实 key：`<prefix>:` + `key`
+- 当 `redis.prefix` 为空时不加前缀
 
 > `checkConfig` 会强制校验：`redis.prefix` 不允许包含 `:`。
 
@@ -22,14 +22,14 @@ Redis 连接来自 `config.redis`（见 `config.md`）。
 
 例外（会抛异常）：
 
--   构造函数：如果 Redis 未连接（未完成 `Connect.connectRedis()`）会直接抛错
--   `ping()`：连接探测失败会抛错（用于 fail-fast）
--   `genTimeID()`：未做 try/catch 包裹，底层 Redis 异常会直接抛出（用于保证“生成 ID”这条关键链路不要悄悄失败）
+- 构造函数：如果 Redis 未连接（未完成 `Connect.connectRedis()`）会直接抛错
+- `ping()`：连接探测失败会抛错（用于 fail-fast）
+- `genTimeID()`：未做 try/catch 包裹，底层 Redis 异常会直接抛出（用于保证“生成 ID”这条关键链路不要悄悄失败）
 
 因此：
 
--   业务读取缓存时要把 `null/false/0/[]` 当成“缓存 miss/失败兜底”，而不是一定存在
--   在需要强保证 Redis 可用性的路径（例如启动检查）用 `ping()`
+- 业务读取缓存时要把 `null/false/0/[]` 当成“缓存 miss/失败兜底”，而不是一定存在
+- 在需要强保证 Redis 可用性的路径（例如启动检查）用 `ping()`
 
 ## 慢操作日志
 
@@ -39,43 +39,43 @@ Redis 连接来自 `config.redis`（见 `config.md`）。
 
 ### string
 
--   `setString(key, value, ttl?)`
--   `getString(key)`
+- `setString(key, value, ttl?)`
+- `getString(key)`
 
 ### object（自动 JSON 序列化）
 
--   `setObject(key, obj, ttl?)`
--   `getObject(key)`
--   `delObject(key)`
+- `setObject(key, obj, ttl?)`
+- `getObject(key)`
+- `delObject(key)`
 
 ### 基础 key 操作
 
--   `exists(key)`
--   `del(key)` / `delBatch(keys)`
--   `expire(key, seconds)` / `expireBatch(...)`
--   `ttl(key)` / `ttlBatch(keys)`
+- `exists(key)`
+- `del(key)` / `delBatch(keys)`
+- `expire(key, seconds)` / `expireBatch(...)`
+- `ttl(key)` / `ttlBatch(keys)`
 
 ### 计数
 
--   `incr(key)`
--   `incrWithExpire(key, seconds)`
+- `incr(key)`
+- `incrWithExpire(key, seconds)`
 
 ### set
 
--   `sadd(key, members)`
--   `sismember(key, member)`
--   `scard(key)`
--   `smembers(key)`
--   批量：`saddBatch` / `sismemberBatch`
+- `sadd(key, members)`
+- `sismember(key, member)`
+- `scard(key)`
+- `smembers(key)`
+- 批量：`saddBatch` / `sismemberBatch`
 
 ### 批量
 
--   `setBatch(items)` / `getBatch(keys)` / `existsBatch(keys)`
+- `setBatch(items)` / `getBatch(keys)` / `existsBatch(keys)`
 
 ### 其他
 
--   `ping()`
--   `genTimeID()`（用于生成趋势递增 id，常用于 DB 同步/批量写入）
+- `ping()`
+- `genTimeID()`（用于生成趋势递增 id，常用于 DB 同步/批量写入）
 
 ## 失败返回值速查表
 
@@ -124,7 +124,7 @@ const next = await ctx.redis.incrWithExpire("rate:ip:1.2.3.4", 60);
 
 ## 注意事项
 
--   统一用 `ctx.redis`，不要绕过 prefix 自己拼 key
--   避免 `console.*`，日志用 `ctx.logger.*`
+- 统一用 `ctx.redis`，不要绕过 prefix 自己拼 key
+- 避免 `console.*`，日志用 `ctx.logger.*`
 
 如果你希望“失败时仍然能看见错误原因”，应查看日志（`Redis xxx 错误`）。
