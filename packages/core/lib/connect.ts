@@ -34,7 +34,8 @@ export class Connect {
         const config = dbConfig || {};
 
         // 构建数据库连接字符串
-        const type = config.type || "mysql";
+        const rawDialect = config.dialect || "mysql";
+        const dialect = rawDialect === "postgres" ? "postgresql" : rawDialect;
         const host = config.host || "127.0.0.1";
         const port = config.port || 3306;
         const user = encodeURIComponent(config.username || "root");
@@ -42,18 +43,18 @@ export class Connect {
         const database = encodeURIComponent(config.database || "befly_demo");
 
         let finalUrl: string;
-        if (type === "sqlite") {
+        if (dialect === "sqlite") {
             finalUrl = database;
         } else {
             if (!host || !database) {
                 throw new Error("数据库配置不完整，请检查配置参数");
             }
-            finalUrl = `${type}://${user}:${password}@${host}:${port}/${database}`;
+            finalUrl = `${dialect}://${user}:${password}@${host}:${port}/${database}`;
         }
 
         let sql: SQL;
 
-        if (type === "sqlite") {
+        if (dialect === "sqlite") {
             sql = new SQL(finalUrl);
         } else {
             sql = new SQL({
@@ -68,10 +69,10 @@ export class Connect {
 
             const healthCheckPromise = (async () => {
                 let version = "";
-                if (type === "sqlite") {
+                if (dialect === "sqlite") {
                     const v = await sql`SELECT sqlite_version() AS version`;
                     version = v?.[0]?.version;
-                } else if (type === "postgresql" || type === "postgres") {
+                } else if (dialect === "postgresql") {
                     const v = await sql`SELECT version() AS version`;
                     version = v?.[0]?.version;
                 } else {

@@ -83,7 +83,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
                 }
             },
             config: {
-                db: { type: "sqlite", database: "" }
+                db: { dialect: "sqlite", database: "" }
             }
         } satisfies Parameters<typeof syncTable>[0];
 
@@ -138,7 +138,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
                 }
             },
             config: {
-                db: { type: "sqlite", database: "" }
+                db: { dialect: "sqlite", database: "" }
             }
         } satisfies Parameters<typeof syncTable>[0];
 
@@ -214,7 +214,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
                 }
             },
             config: {
-                db: { type: "sqlite", database: "" }
+                db: { dialect: "sqlite", database: "" }
             }
         } satisfies Parameters<typeof syncTable>[0];
 

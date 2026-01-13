@@ -30,7 +30,7 @@ type SyncTableContext = {
     };
     config: {
         db?: {
-            type?: string;
+            dialect?: string;
             database?: string;
         };
     };
@@ -131,7 +131,7 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
 
         // DbDialect 归一化（允许值与映射关系）：
         //
-        // | ctx.config.db.type 输入 | 归一化 dbDialect |
+        // | ctx.config.db.dialect 输入 | 归一化 dbDialect |
         // |------------------------|------------------|
         // | mysql / 其他 / 空值    | mysql            |
         // | postgres / postgresql  | postgresql       |
@@ -140,11 +140,11 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
         // 约束：后续若新增方言，必须同步更新：
         // - 这里的归一化
         // - ensureDbVersion / runtime I/O / DDL 分支
-        const dbType = String(ctx.config.db?.type || "mysql").toLowerCase();
+        const dbDialectText = String(ctx.config.db?.dialect || "mysql").toLowerCase();
         let dbDialect: DbDialect = "mysql";
-        if (dbType === "postgres" || dbType === "postgresql") {
+        if (dbDialectText === "postgres" || dbDialectText === "postgresql") {
             dbDialect = "postgresql";
-        } else if (dbType === "sqlite") {
+        } else if (dbDialectText === "sqlite") {
             dbDialect = "sqlite";
         }
 
@@ -780,7 +780,7 @@ function isCompatibleTypeChange(currentType: string | null | undefined, newType:
 type SyncRuntime = {
     /**
      * 当前数据库方言（mysql/postgresql/sqlite），决定 SQL 片段与元信息查询方式。
-     * 约束：必须与 ctx.config.db.type 一致（经归一化）。
+     * 约束：必须与 ctx.config.db.dialect 一致（经归一化）。
      */
     dbDialect: DbDialect;
     /**
@@ -846,6 +846,27 @@ async function tableExistsRuntime(runtime: SyncRuntimeForIO, tableName: string):
 // ---------------------------------------------------------------------------
 
 async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
+    // 返回的列数据示例
+    // [{
+    //   is_system: {
+    //     type: "bigint",
+    //     columnType: "bigint unsigned",
+    //     length: null,
+    //     max: null,
+    //     nullable: false,
+    //     defaultValue: "0",
+    //     comment: '',
+    // },
+    // description: {
+    //     type: "varchar",
+    //     columnType: "varchar(500)",
+    //     length: 500,
+    //     max: 500,
+    //     nullable: false,
+    //     defaultValue: "",
+    //     comment: '',
+    // }]
+
     const columns: { [key: string]: ColumnInfo } = {};
 
     const db = runtime.db;
@@ -863,8 +884,9 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
                 const defaultValue = normalizeColumnDefaultValue(row.COLUMN_DEFAULT);
 
                 columns[row.COLUMN_NAME] = {
-                    type: row.DATA_TYPE,
-                    columnType: row.COLUMN_TYPE,
+                    // 防御性：某些 driver/编码设置可能导致字符串字段不是 string（如 Buffer/number/null）。
+                    type: String(row.DATA_TYPE ?? ""),
+                    columnType: String(row.COLUMN_TYPE ?? ""),
                     length: row.CHARACTER_MAXIMUM_LENGTH,
                     max: row.CHARACTER_MAXIMUM_LENGTH,
                     nullable: row.IS_NULLABLE === "YES",
@@ -881,8 +903,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
 
             for (const row of result.data) {
                 columns[row.column_name] = {
-                    type: row.data_type,
-                    columnType: row.data_type,
+                    type: String(row.data_type ?? ""),
+                    columnType: String(row.data_type ?? ""),
                     length: row.character_maximum_length,
                     max: row.character_maximum_length,
                     nullable: String(row.is_nullable).toUpperCase() === "YES",
@@ -908,8 +930,8 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
                     }
                 }
                 columns[row.name] = {
-                    type: baseType.toLowerCase(),
-                    columnType: baseType.toLowerCase(),
+                    type: String(baseType).toLowerCase(),
+                    columnType: String(baseType).toLowerCase(),
                     length: max,
                     max: max,
                     nullable: row.notnull === 0,
@@ -933,6 +955,15 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
 // ---------------------------------------------------------------------------
 
 async function getTableIndexesRuntime(runtime: SyncRuntimeForIO, tableName: string): Promise<IndexInfo> {
+    //  索引返回示例
+    //  {
+    //     code: [ "code" ],
+    //     idx_created_at: [ "created_at" ],
+    //     idx_group: [ "group" ],
+    //     idx_state: [ "state" ],
+    //     idx_updated_at: [ "updated_at" ],
+    // }
+
     const indexes: IndexInfo = {};
 
     const db = runtime.db;
@@ -1048,7 +1079,7 @@ async function ensureDbVersion(dbDialect: DbDialect, db: SqlExecutor): Promise<v
 /**
  * 比较字段定义变化
  */
-function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Pick<ColumnInfo, "type" | "max" | "nullable" | "defaultValue" | "comment">, fieldDef: FieldDefinition): FieldChange[] {
+function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Pick<ColumnInfo, "type" | "columnType" | "max" | "nullable" | "defaultValue" | "comment">, fieldDef: FieldDefinition): FieldChange[] {
     const changes: FieldChange[] = [];
 
     const normalized = normalizeFieldDefinition(fieldDef);
@@ -1085,7 +1116,23 @@ function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Pick<Colum
         throw new Error(`未知字段类型映射：dialect=${dbDialect} type=${String(normalized.type)}`);
     }
     const expectedType = mapped.toLowerCase();
-    const currentType = existingColumn.type.toLowerCase();
+
+    // 防御性：理论上 ColumnInfo.type/columnType 都应为 string，但线上偶发出现 number/null/Buffer 等导致崩溃。
+    // 同时：columnType 可能包含长度/unsigned（如 varchar(255), bigint unsigned），这里归一化为“基础类型”再比较。
+    let rawType: string = "";
+    if (typeof existingColumn.type === "string" && existingColumn.type.trim() !== "") {
+        rawType = existingColumn.type;
+    } else if (typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== "") {
+        rawType = existingColumn.columnType;
+    } else {
+        rawType = String((existingColumn as any).type ?? "");
+    }
+
+    const currentType = rawType
+        .toLowerCase()
+        .replace(/\s*unsigned/gi, "")
+        .replace(/\([^)]*\)/g, "")
+        .trim();
 
     if (currentType !== expectedType) {
         changes.push({

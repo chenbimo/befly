@@ -4,14 +4,14 @@
 
 ## 目录
 
-- [环境准备](#环境准备)
-- [项目结构](#项目结构)
-- [第一个 API](#第一个-api)
-- [配置数据库](#配置数据库)
-- [定义表结构](#定义表结构)
-- [同步数据库](#同步数据库)
-- [启动服务](#启动服务)
-- [下一步](#下一步)
+-   [环境准备](#环境准备)
+-   [项目结构](#项目结构)
+-   [第一个 API](#第一个-api)
+-   [配置数据库](#配置数据库)
+-   [定义表结构](#定义表结构)
+-   [同步数据库](#同步数据库)
+-   [启动服务](#启动服务)
+-   [下一步](#下一步)
 
 ---
 
@@ -82,7 +82,7 @@ export default {
     auth: false, // 不需要登录
     fields: {
         email: { name: "邮箱", type: "string", min: 5, max: 100, regexp: "@email" },
-        password: { name: "密码", type: "string", min: 6, max: 100 }
+        password: { name: "密码", type: "string", min: 6, max: 100 },
     },
     required: ["email", "password"],
     handler: async (befly, ctx) => {
@@ -90,7 +90,7 @@ export default {
         const userRes = await befly.db.getOne({
             table: "user",
             fields: ["id", "email", "password", "nickname"],
-            where: { email: ctx.body.email }
+            where: { email: ctx.body.email },
         });
 
         const user = userRes.data;
@@ -109,7 +109,7 @@ export default {
         const token = befly.jwt.sign({ id: user.id });
 
         return befly.tool.Yes("登录成功", { token: token, user: { id: user.id, nickname: user.nickname } });
-    }
+    },
 } as ApiRoute;
 ```
 
@@ -136,7 +136,7 @@ export default {
 ```json
 {
     "db": {
-        "type": "mysql",
+        "dialect": "mysql",
         "host": "127.0.0.1",
         "port": 3306,
         "username": "root",

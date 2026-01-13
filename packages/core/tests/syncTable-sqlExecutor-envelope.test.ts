@@ -260,7 +260,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             },
             config: {
                 db: {
-                    type: "mysql",
+                    dialect: "mysql",
                     database: "test"
                 }
             }

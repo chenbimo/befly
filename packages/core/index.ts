@@ -13,6 +13,7 @@ import type { ScanFileResult } from "./utils/scanFiles";
 
 import { loadBeflyConfig } from "./befly.config";
 import { checkApi } from "./checks/checkApi";
+import { checkConfig } from "./checks/checkConfig";
 import { checkHook } from "./checks/checkHook";
 import { checkMenu } from "./checks/checkMenu";
 import { checkPlugin } from "./checks/checkPlugin";
@@ -69,6 +70,9 @@ export class Befly {
 
             // 0. 加载配置
             this.config = await loadBeflyConfig(env["NODE_ENV"] || "development");
+
+            // 配置强校验：阻断错误配置带病启动
+            await checkConfig(this.config);
 
             // 将配置注入到 ctx，供插件/Hook/sync 等按需读取
             this.context.config = this.config;
