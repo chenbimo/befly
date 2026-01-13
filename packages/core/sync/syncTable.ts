@@ -30,7 +30,7 @@ type SyncTableContext = {
     };
     config: {
         db?: {
-            dialect?: string;
+            dialect?: DbDialectName;
             database?: string;
         };
     };
@@ -126,10 +126,12 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
             throw new Error("同步表： 缺少 ctx.config");
         }
 
-        // DbDialect（按项目约定：启动前必须先通过 checkConfig，因此这里不再做复杂归一化）
-        // - dialect 缺失时兜底 mysql（方案B：更防御，避免脚本/测试绕过 checkConfig 导致崩溃）
-        // - 允许值：mysql / postgresql / sqlite
-        const dbDialect: DbDialect = ctx.config.db?.dialect === "postgresql" || ctx.config.db?.dialect === "sqlite" ? (ctx.config.db.dialect as DbDialect) : "mysql";
+        if (!ctx.config.db?.dialect) {
+            throw new Error("同步表： 缺少 ctx.config.db.dialect");
+        }
+
+        // DbDialect（按项目约定：正常启动时会先通过 checkConfig，因此这里直接使用配置值）
+        const dbDialect: DbDialect = ctx.config.db.dialect;
 
         // 检查数据库版本（复用 ctx.db 的现有连接/事务）
         await ensureDbVersion(dbDialect, ctx.db);
