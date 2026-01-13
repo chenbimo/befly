@@ -36,7 +36,7 @@ type SyncTableContext = {
     };
 };
 
-type MySqlTableExistsRow = { count: number };
+type TableExistsRow = { count: number };
 type MySqlColumnInfoRow = {
     COLUMN_NAME: string;
     DATA_TYPE: string;
@@ -47,7 +47,6 @@ type MySqlColumnInfoRow = {
     COLUMN_COMMENT: string | null;
 };
 
-type PgTableExistsRow = { count: number };
 type PgColumnInfoRow = {
     column_name: string;
     data_type: string;
@@ -721,7 +720,7 @@ async function tableExistsRuntime(runtime: SyncRuntimeForIO, tableName: string):
         const schema: string | undefined = runtime.dbDialect === "mysql" ? runtime.dbName : runtime.dbDialect === "postgresql" ? "public" : undefined;
 
         const q = getDialectByName(runtime.dbDialect).tableExistsQuery(tableName, schema);
-        const res = await runtime.db.unsafe<MySqlTableExistsRow[] | PgTableExistsRow[]>(q.sql, q.params);
+        const res = await runtime.db.unsafe<TableExistsRow[]>(q.sql, q.params);
         return (res.data?.[0]?.count || 0) > 0;
     } catch (error: any) {
         throw buildRuntimeIoError("检查表是否存在", tableName, error);
