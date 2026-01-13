@@ -9,8 +9,8 @@ import type { MockSqliteState } from "./_mocks/mockSqliteDb.ts";
 
 import { describe, expect, test } from "bun:test";
 
-import { CacheKeys } from "../lib/cacheKeys.ts";
 import { checkTable } from "../checks/checkTable.ts";
+import { CacheKeys } from "../lib/cacheKeys.ts";
 import { syncTable } from "../sync/syncTable.ts";
 import { snakeCase } from "../utils/util.ts";
 import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
