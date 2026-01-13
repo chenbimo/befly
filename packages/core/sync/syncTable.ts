@@ -774,7 +774,7 @@ async function getTableColumnsRuntime(runtime: SyncRuntimeForIO, tableName: stri
                     max: row.CHARACTER_MAXIMUM_LENGTH,
                     nullable: row.IS_NULLABLE === "YES",
                     defaultValue: defaultValue,
-                    comment: row.COLUMN_COMMENT
+                    comment: row.COLUMN_COMMENT === null ? null : String(row.COLUMN_COMMENT)
                 };
             }
         } else if (runtime.dbDialect === "postgresql") {
@@ -966,7 +966,8 @@ function compareFieldDefinition(dbDialect: DbDialect, existingColumn: Pick<Colum
     }
 
     if (dbDialect !== "sqlite") {
-        const currentComment = existingColumn.comment || "";
+        const currentComment = existingColumn.comment === null || existingColumn.comment === undefined ? "" : String(existingColumn.comment);
+
         if (currentComment !== normalized.name) {
             changes.push({
                 type: "comment",
