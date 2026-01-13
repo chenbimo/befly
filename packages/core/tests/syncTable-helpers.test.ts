@@ -7,6 +7,9 @@
  * - applyFieldDefaults
  */
 
+// 类型导入
+import type { FieldDefinition } from "../types/validate";
+
 import { describe, test, expect } from "bun:test";
 
 import { syncTable } from "../sync/syncTable.ts";
@@ -41,7 +44,7 @@ describe("escapeComment", () => {
 
 describe("applyFieldDefaults", () => {
     test("为空字段定义应用默认值", () => {
-        const fieldDef: any = {
+        const fieldDef: FieldDefinition = {
             name: "用户名",
             type: "string"
         };
@@ -60,7 +63,7 @@ describe("applyFieldDefaults", () => {
     });
 
     test("保留已有值", () => {
-        const fieldDef: any = {
+        const fieldDef: FieldDefinition = {
             name: "用户名",
             type: "string",
             max: 200,
@@ -78,7 +81,7 @@ describe("applyFieldDefaults", () => {
     });
 
     test("处理 0 和 false 值", () => {
-        const fieldDef: any = {
+        const fieldDef: FieldDefinition = {
             name: "排序",
             type: "number",
             min: 0,

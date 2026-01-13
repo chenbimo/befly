@@ -385,96 +385,17 @@ function normalizeColumnDefaultValue(value: unknown): JsonValue {
 /**
  * 为字段定义应用默认值
  */
-function isJsonValue(value: unknown): value is JsonValue {
-    if (value === null) return true;
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return true;
-
-    if (Array.isArray(value)) {
-        return value.every((v) => isJsonValue(v));
-    }
-
-    if (typeof value === "object") {
-        for (const v of Object.values(value as Record<string, unknown>)) {
-            if (v === undefined) continue;
-            if (!isJsonValue(v)) return false;
-        }
-        return true;
-    }
-
-    return false;
-}
-
-function applyFieldDefaults(fieldDef: unknown): void {
-    if (!fieldDef || typeof fieldDef !== "object") return;
-    const record = fieldDef as Record<string, unknown>;
-
-    const name = record["name"];
-    const type = record["type"];
-    if (typeof name !== "string" || typeof type !== "string") return;
-
-    const minRaw = record["min"];
-    const maxRaw = record["max"];
-    const defaultRaw = record["default"];
-    const detailRaw = record["detail"];
-    const indexRaw = record["index"];
-    const uniqueRaw = record["unique"];
-    const nullableRaw = record["nullable"];
-    const unsignedRaw = record["unsigned"];
-    const regexpRaw = record["regexp"];
-
-    const input: FieldDefinition = {
-        name: name,
-        type: type
-    };
-
-    if (typeof detailRaw === "string") {
-        input.detail = detailRaw;
-    }
-
-    if (typeof minRaw === "number" || minRaw === null) {
-        input.min = minRaw;
-    }
-
-    if (typeof maxRaw === "number" || maxRaw === null) {
-        input.max = maxRaw;
-    }
-
-    if (defaultRaw === null) {
-        input.default = null;
-    } else if (isJsonValue(defaultRaw)) {
-        input.default = defaultRaw;
-    }
-
-    if (typeof indexRaw === "boolean") {
-        input.index = indexRaw;
-    }
-
-    if (typeof uniqueRaw === "boolean") {
-        input.unique = uniqueRaw;
-    }
-
-    if (typeof nullableRaw === "boolean") {
-        input.nullable = nullableRaw;
-    }
-
-    if (typeof unsignedRaw === "boolean") {
-        input.unsigned = unsignedRaw;
-    }
-
-    if (typeof regexpRaw === "string" || regexpRaw === null) {
-        input.regexp = regexpRaw;
-    }
-
-    const normalized = normalizeFieldDefinition(input);
-    record["detail"] = normalized.detail;
-    record["min"] = normalized.min;
-    record["max"] = normalized.max;
-    record["default"] = normalized.default;
-    record["index"] = normalized.index;
-    record["unique"] = normalized.unique;
-    record["nullable"] = normalized.nullable;
-    record["unsigned"] = normalized.unsigned;
-    record["regexp"] = normalized.regexp;
+function applyFieldDefaults(fieldDef: FieldDefinition): void {
+    const normalized = normalizeFieldDefinition(fieldDef);
+    fieldDef.detail = normalized.detail;
+    fieldDef.min = normalized.min;
+    fieldDef.max = normalized.max;
+    fieldDef.default = normalized.default;
+    fieldDef.index = normalized.index;
+    fieldDef.unique = normalized.unique;
+    fieldDef.nullable = normalized.nullable;
+    fieldDef.unsigned = normalized.unsigned;
+    fieldDef.regexp = normalized.regexp;
 }
 
 /**

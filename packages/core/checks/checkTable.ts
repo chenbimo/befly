@@ -3,6 +3,39 @@ import type { ScanFileResult } from "../utils/scanFiles";
 
 import { Logger } from "../lib/logger";
 
+function isJsonPrimitive(value: unknown): value is string | number | boolean | null {
+    if (value === null) return true;
+    return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+    if (!value || typeof value !== "object") return false;
+    if (value instanceof Date) return false;
+    if (Array.isArray(value)) return false;
+    return true;
+}
+
+function isJsonValue(value: unknown): boolean {
+    if (isJsonPrimitive(value)) return true;
+
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            if (!isJsonValue(item)) return false;
+        }
+        return true;
+    }
+
+    if (isJsonObject(value)) {
+        for (const v of Object.values(value)) {
+            if (v === undefined) continue;
+            if (!isJsonValue(v)) return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * 保留字段列表
  */
@@ -150,6 +183,12 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                 }
                 if (field.regexp !== undefined && field.regexp !== null && typeof field.regexp !== "string") {
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 regexp 类型错误，必须为 null 或字符串`);
+                    hasError = true;
+                }
+
+                // 约束：default 若存在，必须可 JSON 序列化（避免 syncTable 运行期再做防御判断）
+                if (field.default !== undefined && field.default !== null && !isJsonValue(field.default)) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 default 类型错误，必须为可 JSON 序列化的值或 null`);
                     hasError = true;
                 }
 
