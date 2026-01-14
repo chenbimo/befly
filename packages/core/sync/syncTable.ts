@@ -15,7 +15,6 @@ import type { ScanFileResult } from "../utils/scanFiles";
 
 import { CacheKeys } from "../lib/cacheKeys";
 import { Logger } from "../lib/logger";
-import { MYSQL_STRING_CONSTRAINTS } from "../utils/mysqlStringConstraints";
 import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
 import { snakeCase } from "../utils/util";
 
@@ -203,9 +202,10 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
             const tableName = item.source === "addon" ? `addon_${snakeCase(item.addonName)}_${snakeCase(item.fileName)}` : snakeCase(item.fileName);
             const tableFields = item.content as Record<string, FieldDefinition>;
 
-            for (const [fieldKey, fieldDef] of Object.entries(tableFields)) {
+            // 约束：表结构合法性由 checkTable 统一保证。
+            // syncTable 只做同步执行（尽量避免重复校验逻辑）。
+            for (const fieldDef of Object.values(tableFields)) {
                 normalizeFieldDefinitionInPlace(fieldDef);
-                validateFieldDefinitionForMySql(tableName, fieldKey, fieldDef);
             }
 
             const existsTable = await tableExistsRuntime(runtime, tableName);
@@ -332,61 +332,13 @@ function isStringOrArrayType(fieldType: string): boolean {
     return fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string";
 }
 
-function isTextOrArrayTextType(fieldType: string): boolean {
-    return fieldType === "text" || fieldType === "array_text" || fieldType === "array_number_text";
-}
-
-function validateFieldDefinitionForMySql(tableName: string, fieldKey: string, fieldDef: FieldDefinition): void {
-    const fieldType = String(fieldDef.type || "");
-
-    if (isStringOrArrayType(fieldType)) {
-        const maxValue = (fieldDef as any).max;
-        if (typeof maxValue !== "number" || !Number.isFinite(maxValue) || !Number.isInteger(maxValue) || maxValue <= 0) {
-            throw new Error(`同步表：${tableName}.${fieldKey} 为 ${fieldType} 类型，必须设置 max 为正整数（当前 max=${String(maxValue)}）`);
-        }
-        if (maxValue > MYSQL_STRING_CONSTRAINTS.MAX_VARCHAR_LENGTH) {
-            throw new Error([`同步表：${tableName}.${fieldKey} 的 max=${maxValue} 超出 VARCHAR 上限（utf8mb4）`, `允许范围：1..${MYSQL_STRING_CONSTRAINTS.MAX_VARCHAR_LENGTH}`, "建议：改用 text/array_text 或降低 max"].join("\n"));
-        }
-
-        // 项目索引策略（更简单、更保守）：
-        // - index=true: 只允许 max<=500
-        // - unique=true: 只允许 max<=180
-        if (fieldDef.index === true && maxValue > 500) {
-            throw new Error(`同步表：${tableName}.${fieldKey} 设置了 index=true，但 max=${maxValue} 超出允许范围（要求 <= 500）`);
-        }
-        if (fieldDef.unique === true && maxValue > 180) {
-            throw new Error(`同步表：${tableName}.${fieldKey} 设置了 unique=true，但 max=${maxValue} 超出允许范围（要求 <= 180）`);
-        }
-
-        return;
-    }
-
-    if (isTextOrArrayTextType(fieldType)) {
-        if (fieldDef.max !== undefined && fieldDef.max !== null) {
-            throw new Error(`同步表：${tableName}.${fieldKey} 为 ${fieldType} 类型，max 必须为 null（当前 max=${String(fieldDef.max)}）`);
-        }
-        if (fieldDef.default !== undefined && fieldDef.default !== null) {
-            throw new Error(`同步表：${tableName}.${fieldKey} 为 ${fieldType} 类型，default 必须为 null（当前 default=${String(fieldDef.default)}）`);
-        }
-        if (fieldDef.index === true) {
-            throw new Error(`同步表：${tableName}.${fieldKey} 为 ${fieldType} 类型，不支持 index=true`);
-        }
-        if (fieldDef.unique === true) {
-            throw new Error(`同步表：${tableName}.${fieldKey} 为 ${fieldType} 类型，不支持 unique=true`);
-        }
-        return;
-    }
-}
-
 function getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
     const typeMapping = getTypeMapping();
 
     if (isStringOrArrayType(fieldType)) {
-        if (typeof fieldMax !== "number" || !Number.isFinite(fieldMax) || !Number.isInteger(fieldMax) || fieldMax <= 0) {
-            throw new Error(`同步表：${fieldType} 类型必须设置 max 为正整数（当前 max=${String(fieldMax)}）`);
-        }
-        if (fieldMax > MYSQL_STRING_CONSTRAINTS.MAX_VARCHAR_LENGTH) {
-            throw new Error(`同步表：${fieldType} 类型 max=${fieldMax} 超出 VARCHAR 上限（utf8mb4，允许范围 1..${MYSQL_STRING_CONSTRAINTS.MAX_VARCHAR_LENGTH}）`);
+        // 约束由 checkTable 统一保证；这里仅做最小断言，避免生成明显无效的 SQL。
+        if (typeof fieldMax !== "number") {
+            throw new Error(`同步表：内部错误：${fieldType} 类型缺失 max（应由 checkTable 阻断）`);
         }
         return `${typeMapping[fieldType]}(${fieldMax})`;
     }

@@ -83,6 +83,62 @@ describe("checkTable - smoke", () => {
         expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
+    test("string 类型缺失 max 时应阻断启动（抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testStringNoMax",
+                fileName: "testStringNoMax",
+                moduleName: "app_testStringNoMax",
+                addonName: "",
+                content: {
+                    title: { name: "标题", type: "string" }
+                }
+            } as any
+        ];
+
+        let thrownError: any = null;
+        try {
+            await checkTable(items);
+        } catch (error: any) {
+            thrownError = error;
+        }
+
+        expect(Boolean(thrownError)).toBe(true);
+        expect(String(thrownError?.message || "")).toContain("表结构检查失败");
+    });
+
+    test("string 类型 max 超出 VARCHAR 上限时应阻断启动（抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testStringMaxTooLarge",
+                fileName: "testStringMaxTooLarge",
+                moduleName: "app_testStringMaxTooLarge",
+                addonName: "",
+                content: {
+                    title: { name: "标题", type: "string", max: 20000 }
+                }
+            } as any
+        ];
+
+        let thrownError: any = null;
+        try {
+            await checkTable(items);
+        } catch (error: any) {
+            thrownError = error;
+        }
+
+        expect(Boolean(thrownError)).toBe(true);
+        expect(String(thrownError?.message || "")).toContain("表结构检查失败");
+    });
+
     test("index=true 的 string 字段 max>500 时应阻断启动（抛错）", async () => {
         const items: ScanFileResult[] = [
             {
