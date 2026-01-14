@@ -200,6 +200,15 @@ describe("isCompatibleTypeChange", () => {
         expect(SyncTable.isCompatibleTypeChange("varchar(100)", "mediumtext")).toBe(true);
     });
 
+    test("text family 之间互转是兼容变更", () => {
+        expect(SyncTable.isCompatibleTypeChange("text", "mediumtext")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("mediumtext", "text")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("longtext", "text")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("text", "longtext")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("tinytext", "text")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("text", "tinytext")).toBe(true);
+    });
+
     test("text -> varchar 不是兼容变更", () => {
         expect(SyncTable.isCompatibleTypeChange("text", "varchar(100)")).toBe(false);
     });

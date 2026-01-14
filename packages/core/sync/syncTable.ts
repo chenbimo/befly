@@ -428,6 +428,13 @@ export class SyncTable {
             .replace(/\([^)]*\)/g, "")
             .trim();
 
+        // TEXT 家族：允许互相转换（包含收缩），交由数据库自身约束（可能截断/报错）。
+        // 目的：兼容历史库里已有的 TEXT / MEDIUMTEXT / LONGTEXT 等差异。
+        const textFamily = ["tinytext", "text", "mediumtext", "longtext"];
+        if (textFamily.includes(cBase) && textFamily.includes(nBase)) {
+            return true;
+        }
+
         const intTypes = ["tinyint", "smallint", "mediumint", "int", "integer", "bigint"];
         const cIntIdx = intTypes.indexOf(cBase);
         const nIntIdx = intTypes.indexOf(nBase);
