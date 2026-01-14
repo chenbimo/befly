@@ -5,12 +5,11 @@
 
 import type { WhereConditions, JoinOption, SqlValue } from "../types/common";
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, DbPageResult, DbListResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database";
-import type { SqlRunResult } from "../utils/sqlResult";
+import type { SqlRunResult } from "../utils/sqlUtil";
 
 import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { fieldClear } from "../utils/fieldClear";
-import { toSqlParams } from "../utils/sqlParams";
-import { toNumberFromSql } from "../utils/sqlResult";
+import { toNumberFromSql, toSqlParams } from "../utils/sqlUtil";
 import { arrayKeysToCamel, isPlainObject, keysToCamel, snakeCase } from "../utils/util";
 import { CacheKeys } from "./cacheKeys";
 import { DbUtils } from "./dbUtils";

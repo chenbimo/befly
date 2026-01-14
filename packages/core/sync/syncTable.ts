@@ -7,7 +7,6 @@
  * - core 仅支持 MySQL 8.0+
  */
 
-import type { JsonValue } from "../types/common";
 import type { DbResult, SqlInfo } from "../types/database";
 import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/sync";
 import type { FieldDefinition } from "../types/validate";
@@ -16,6 +15,7 @@ import type { ScanFileResult } from "../utils/scanFiles";
 import { CacheKeys } from "../lib/cacheKeys";
 import { Logger } from "../lib/logger";
 import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
+import { escapeComment, normalizeColumnDefaultValue } from "../utils/sqlUtil";
 import { snakeCase } from "../utils/util";
 
 type SqlExecutor = {
@@ -206,7 +206,7 @@ export class SyncTable {
     }
 
     /* ---------------------------------------------------------------------- */
-    /* 类型映射 & SQL 语法工具（quote / comment / type mapping） */
+    /* 类型映射（field type -> mysql type） */
     /* ---------------------------------------------------------------------- */
 
     public static getTypeMapping(): Record<string, string> {
@@ -221,39 +221,9 @@ export class SyncTable {
         };
     }
 
-    public static quoteIdentifier(identifier: string): string {
-        if (typeof identifier !== "string") {
-            throw new Error(`quoteIdentifier 需要字符串类型标识符 (identifier: ${String(identifier)})`);
-        }
-
-        const trimmed = identifier.trim();
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
-            throw new Error(`无效的 SQL 标识符: ${trimmed}`);
-        }
-
-        return `\`${trimmed}\``;
-    }
-
-    public static escapeComment(str: string): string {
-        return String(str).replace(/"/g, '\\"');
-    }
-
     /* ---------------------------------------------------------------------- */
     /* 默认值 & 字段定义规范化（与 checkTable 的“合法性 gate”配合） */
     /* ---------------------------------------------------------------------- */
-
-    public static normalizeColumnDefaultValue(value: unknown): JsonValue {
-        if (value === null) return null;
-        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
-        if (Array.isArray(value)) {
-            const items: JsonValue[] = [];
-            for (const v of value) {
-                items.push(SyncTable.normalizeColumnDefaultValue(v));
-            }
-            return items;
-        }
-        return String(value);
-    }
 
     public static normalizeFieldDefinitionInPlace(fieldDef: FieldDefinition): void {
         const normalized = normalizeFieldDefinition(fieldDef);
@@ -270,6 +240,26 @@ export class SyncTable {
 
     public static isStringOrArrayType(fieldType: string): boolean {
         return fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string";
+    }
+
+    /**
+     * MySQL 标识符安全包裹：仅允许 [a-zA-Z_][a-zA-Z0-9_]*，并用反引号包裹。
+     *
+     * 说明：
+     * - 这是 syncTable 内部用于拼接 DDL 的安全阀
+     * - 若未来需要支持更复杂的标识符（如关键字/点号/反引号转义），应在此处统一扩展并补测试
+     */
+    public static quoteIdentifier(identifier: string): string {
+        if (typeof identifier !== "string") {
+            throw new Error(`quoteIdentifier 需要字符串类型标识符 (identifier: ${String(identifier)})`);
+        }
+
+        const trimmed = identifier.trim();
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+            throw new Error(`无效的 SQL 标识符: ${trimmed}`);
+        }
+
+        return `\`${trimmed}\``;
     }
 
     public static getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
@@ -359,7 +349,7 @@ export class SyncTable {
         if (!meta) return null;
 
         const colQuoted = SyncTable.quoteIdentifier(meta.name);
-        return `${colQuoted} ${meta.mysqlDdl} COMMENT "${SyncTable.escapeComment(meta.comment)}"`;
+        return `${colQuoted} ${meta.mysqlDdl} COMMENT "${escapeComment(meta.comment)}"`;
     }
 
     public static buildSystemColumnDefs(): string[] {
@@ -385,7 +375,7 @@ export class SyncTable {
             const uniqueSql = normalized.unique ? " UNIQUE" : "";
             const nullableSql = normalized.nullable ? " NULL" : " NOT NULL";
 
-            colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${SyncTable.escapeComment(normalized.name)}"`);
+            colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`);
         }
 
         return colDefs;
@@ -402,7 +392,7 @@ export class SyncTable {
         const uniqueSql = normalized.unique ? " UNIQUE" : "";
         const nullableSql = normalized.nullable ? " NULL" : " NOT NULL";
 
-        return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${SyncTable.escapeComment(normalized.name)}"`;
+        return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`;
     }
 
     /* ---------------------------------------------------------------------- */
@@ -577,7 +567,7 @@ export class SyncTable {
             ]);
 
             for (const row of result.data) {
-                const defaultValue = SyncTable.normalizeColumnDefaultValue(row.COLUMN_DEFAULT);
+                const defaultValue = normalizeColumnDefaultValue(row.COLUMN_DEFAULT);
 
                 columns[row.COLUMN_NAME] = {
                     type: String(row.DATA_TYPE ?? ""),

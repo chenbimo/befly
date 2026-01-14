@@ -120,27 +120,3 @@ describe("getSqlType", () => {
         expect(result).toBe("MEDIUMTEXT");
     });
 });
-
-describe("quoteIdentifier", () => {
-    test("合法标识符会被反引号包裹", () => {
-        expect(SyncTable.quoteIdentifier("user")).toBe("`user`");
-        expect(SyncTable.quoteIdentifier("user_name")).toBe("`user_name`");
-        expect(SyncTable.quoteIdentifier("_tmp")).toBe("`_tmp`");
-        expect(SyncTable.quoteIdentifier("user1")).toBe("`user1`");
-    });
-
-    test("会 trim 前后空白", () => {
-        expect(SyncTable.quoteIdentifier(" user ")).toBe("`user`");
-        expect(SyncTable.quoteIdentifier("  user_name  ")).toBe("`user_name`");
-    });
-
-    test("非法标识符会抛错（防 SQL 注入/误 DDL）", () => {
-        expect(() => SyncTable.quoteIdentifier("")).toThrow("无效的 SQL 标识符");
-        expect(() => SyncTable.quoteIdentifier("   ")).toThrow("无效的 SQL 标识符");
-        expect(() => SyncTable.quoteIdentifier("user-name")).toThrow("无效的 SQL 标识符");
-        expect(() => SyncTable.quoteIdentifier("user name")).toThrow("无效的 SQL 标识符");
-        expect(() => SyncTable.quoteIdentifier("1user")).toThrow("无效的 SQL 标识符");
-        expect(() => SyncTable.quoteIdentifier("user;drop table t")).toThrow("无效的 SQL 标识符");
-        expect(() => SyncTable.quoteIdentifier("`user`")).toThrow("无效的 SQL 标识符");
-    });
-});

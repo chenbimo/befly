@@ -11,7 +11,7 @@ import { describe, expect, test } from "bun:test";
 
 import { checkTable } from "../checks/checkTable.ts";
 import { SyncTable } from "../sync/syncTable.ts";
-import { toSqlParams } from "../utils/sqlParams.ts";
+import { toSqlParams } from "../utils/sqlUtil.ts";
 
 type SqlExecutor = Parameters<typeof SyncTable.tableExists>[0];
 
