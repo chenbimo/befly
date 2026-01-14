@@ -182,10 +182,8 @@ export const syncTable = (async (ctx: SyncTableContext, items: ScanFileResult[])
             throw new Error("同步表：ctx.config 未初始化");
         }
 
+        // 约束：database 相关配置完整性由 checkConfig 统一保证（syncTable 不做重复校验）。
         const databaseName = String(ctx.config.db?.database || "");
-        if (!databaseName) {
-            throw new Error("同步表：ctx.config.db.database 缺失");
-        }
 
         await ensureDbVersion(ctx.db);
 
