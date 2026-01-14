@@ -1,8 +1,10 @@
-import type { WhereConditions } from "../types/common";
+import type { SqlValue, WhereConditions } from "../types/common";
 
 import { fieldClear } from "../utils/fieldClear";
 import { keysToSnake, snakeCase } from "../utils/util";
 import { SqlCheck } from "./sqlCheck";
+
+type BuildInsertRowOptions = { idMode: "timeId"; data: Record<string, SqlValue>; id: number; now: number } | { idMode: "autoId"; data: Record<string, SqlValue>; now: number };
 
 export class DbUtils {
     static parseTableRef(tableRef: string): { schema: string | null; table: string; alias: string | null } {
@@ -514,7 +516,7 @@ export class DbUtils {
         return result;
     }
 
-    static buildInsertRow(options: { data: Record<string, any>; id: number; now: number }): Record<string, any> {
+    static buildInsertRow(options: BuildInsertRowOptions): Record<string, any> {
         const serializedData = DbUtils.cleanAndSnakeAndSerializeWriteData(options.data);
         const userData = DbUtils.stripSystemFieldsForWrite(serializedData, { allowState: false });
 
@@ -523,7 +525,14 @@ export class DbUtils {
             result[key] = value;
         }
 
-        result["id"] = options.id;
+        if (options.idMode === "timeId") {
+            if (!Number.isFinite(options.id) || options.id <= 0) {
+                throw new Error(`buildInsertRow(timeId) 失败：id 必须为 > 0 的有限 number (id: ${String(options.id)})`);
+            }
+            result["id"] = options.id;
+        }
+
+        // autoId 模式：不写入 id，交给 MySQL AUTO_INCREMENT 生成
         result["created_at"] = options.now;
         result["updated_at"] = options.now;
         result["state"] = 1;

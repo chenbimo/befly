@@ -32,8 +32,11 @@ const dbPlugin: Plugin = {
         try {
             const sql = Connect.getSql();
 
+            const idMode = befly.config?.db?.idMode;
+            const normalizedIdMode = idMode === "autoId" ? "autoId" : "timeId";
+
             // 创建数据库管理器实例
-            const dbManager = new DbHelper({ redis: befly.redis, dbName: dbName, sql: sql });
+            const dbManager = new DbHelper({ redis: befly.redis, dbName: dbName, sql: sql, idMode: normalizedIdMode });
 
             return dbManager;
         } catch (error: unknown) {

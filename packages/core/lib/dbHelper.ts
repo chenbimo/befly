@@ -30,6 +30,8 @@ type SqlClientWithBeginLike = SqlClientLike & {
     begin<TResult>(callback: (tx: SqlClientLike) => Promise<TResult>): Promise<TResult>;
 };
 
+type DbIdMode = "timeId" | "autoId";
+
 function quoteIdentMySql(identifier: string): string {
     if (typeof identifier !== "string") {
         throw new Error(`quoteIdentifier 需要字符串类型标识符 (identifier: ${String(identifier)})`);
@@ -70,13 +72,14 @@ export class DbHelper {
     private dbName: string;
     private sql: SqlClientLike | null = null;
     private isTransaction: boolean = false;
+    private idMode: DbIdMode;
 
     /**
      * 构造函数
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(options: { redis: RedisCacheLike; dbName: string; sql?: SqlClientLike | null }) {
+    constructor(options: { redis: RedisCacheLike; dbName: string; sql?: SqlClientLike | null; idMode?: DbIdMode }) {
         this.redis = options.redis;
 
         if (typeof options.dbName !== "string" || options.dbName.trim() === "") {
@@ -86,6 +89,9 @@ export class DbHelper {
 
         this.sql = options.sql || null;
         this.isTransaction = Boolean(options.sql);
+
+        // 默认保持历史行为：timeId
+        this.idMode = options.idMode === "autoId" ? "autoId" : "timeId";
     }
 
     private createSqlBuilder(): SqlBuilder {
@@ -607,21 +613,25 @@ export class DbHelper {
      * 插入数据（自动生成 ID、时间戳、state）
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
-    async insData<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(options: Omit<InsertOptions, "data"> & { data: TInsert | TInsert[] }): Promise<DbResult<number>> {
+    async insData<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(options: Omit<InsertOptions, "data"> & { data: TInsert }): Promise<DbResult<number>> {
         const { table, data } = options;
 
         const snakeTable = snakeCase(table);
 
         const now = Date.now();
 
-        let id: number;
-        try {
-            id = await this.redis.genTimeID();
-        } catch (error: any) {
-            throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table})`, { cause: error });
+        let processed: Record<string, any>;
+        if (this.idMode === "autoId") {
+            processed = DbUtils.buildInsertRow({ idMode: "autoId", data: data as any, now: now });
+        } else {
+            let id: number;
+            try {
+                id = await this.redis.genTimeID();
+            } catch (error: any) {
+                throw new Error(`生成 ID 失败，Redis 可能不可用 (table: ${table})`, { cause: error });
+            }
+            processed = DbUtils.buildInsertRow({ idMode: "timeId", data: data as any, id: id, now: now });
         }
-
-        const processed = DbUtils.buildInsertRow({ data: data, id: id, now: now });
 
         // 入口校验：保证进入 SqlBuilder 的数据无 undefined
         SqlCheck.assertNoUndefinedInRecord(processed, `insData 插入数据 (table: ${snakeTable})`);
@@ -636,7 +646,12 @@ export class DbHelper {
         const processedId = processed["id"];
         const processedIdNum = typeof processedId === "number" ? processedId : 0;
         const lastInsertRowidNum = toNumberFromSql(execRes.data?.lastInsertRowid);
-        const insertedId = processedIdNum || lastInsertRowidNum || 0;
+
+        // timeId：优先返回显式写入的 id；autoId：依赖 lastInsertRowid
+        const insertedId = this.idMode === "autoId" ? lastInsertRowidNum || 0 : processedIdNum || lastInsertRowidNum || 0;
+        if (this.idMode === "autoId" && insertedId <= 0) {
+            throw new Error(`插入失败：autoId 模式下无法获取 lastInsertRowid (table: ${table})`);
+        }
         return {
             data: insertedId,
             sql: execRes.sql
@@ -668,21 +683,31 @@ export class DbHelper {
         // 转换表名：小驼峰 → 下划线
         const snakeTable = snakeCase(table);
 
-        // 批量生成 ID（逐个获取）
-        const ids: number[] = [];
-        for (let i = 0; i < dataList.length; i++) {
-            ids.push(await this.redis.genTimeID());
-        }
         const now = Date.now();
 
         // 处理所有数据（自动添加系统字段）
-        const processedList = dataList.map((data, index) => {
-            const id = ids[index];
-            if (typeof id !== "number") {
-                throw new Error(`批量插入生成 ID 失败：ids[${index}] 不是 number (table: ${snakeTable})`);
+        let ids: number[] = [];
+
+        let processedList: Record<string, any>[];
+        if (this.idMode === "autoId") {
+            processedList = dataList.map((data) => {
+                return DbUtils.buildInsertRow({ idMode: "autoId", data: data as any, now: now });
+            });
+        } else {
+            // 批量生成 ID（逐个获取）
+            const nextIds: number[] = [];
+            for (let i = 0; i < dataList.length; i++) {
+                nextIds.push(await this.redis.genTimeID());
             }
-            return DbUtils.buildInsertRow({ data: data, id: id, now: now });
-        });
+            ids = nextIds;
+            processedList = dataList.map((data, index) => {
+                const id = nextIds[index];
+                if (typeof id !== "number") {
+                    throw new Error(`批量插入生成 ID 失败：ids[${index}] 不是 number (table: ${snakeTable})`);
+                }
+                return DbUtils.buildInsertRow({ idMode: "timeId", data: data as any, id: id, now: now });
+            });
+        }
 
         // 入口校验：保证进入 SqlBuilder 的批量数据结构一致且无 undefined
         const insertFields = SqlCheck.assertBatchInsertRowsConsistent(processedList, { table: snakeTable });
@@ -694,6 +719,26 @@ export class DbHelper {
         // 在事务中执行批量插入
         try {
             const execRes = await this.executeRun(sql, params);
+
+            if (this.idMode === "autoId") {
+                const firstId = toNumberFromSql(execRes.data?.lastInsertRowid);
+                if (firstId <= 0) {
+                    throw new Error(`批量插入失败：autoId 模式下无法获取 lastInsertRowid (table: ${table})`);
+                }
+
+                // 说明：这里假设 auto_increment_increment = 1（默认）。
+                // 如需支持非 1，请在此处增加查询 @@auto_increment_increment 并调整推导规则。
+                const outIds: number[] = [];
+                for (let i = 0; i < dataList.length; i++) {
+                    outIds.push(firstId + i);
+                }
+
+                return {
+                    data: outIds,
+                    sql: execRes.sql
+                };
+            }
+
             return {
                 data: ids,
                 sql: execRes.sql
@@ -913,7 +958,7 @@ export class DbHelper {
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
         return await sql.begin(async (tx: SqlClientLike) => {
-            const trans = new DbHelper({ redis: this.redis, dbName: this.dbName, sql: tx });
+            const trans = new DbHelper({ redis: this.redis, dbName: this.dbName, sql: tx, idMode: this.idMode });
             return await callback(trans);
         });
     }

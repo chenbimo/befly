@@ -35,6 +35,7 @@ const defaultOptions: BeflyOptions = {
 
     // ========== 数据库配置 ==========
     db: {
+        idMode: "timeId",
         host: "127.0.0.1",
         port: 3306,
         username: "root",
@@ -116,6 +117,11 @@ export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
         if (trimmedPrefix.includes(":")) {
             throw new Error(`配置错误：redis.prefix 不允许包含 ':'（RedisHelper 会自动拼接分隔符 ':'），请改为不带冒号的前缀，例如 'befly_demo'，当前值=${redisPrefix}`);
         }
+    }
+
+    const idMode = config.db?.idMode;
+    if (idMode !== undefined && idMode !== "timeId" && idMode !== "autoId") {
+        throw new Error(`配置错误：db.idMode 只能是 'timeId' 或 'autoId'，当前值=${String(idMode)}`);
     }
 
     return config;

@@ -50,7 +50,7 @@ export interface InsertOptions {
     /** 表名 */
     table: string;
     /** 插入数据 */
-    data: Record<string, SqlValue> | Record<string, SqlValue>[];
+    data: Record<string, SqlValue>;
     /** 是否返回插入 ID */
     returnId?: boolean;
 }
@@ -163,7 +163,7 @@ export interface DbHelper {
     getFieldValue<TValue = SqlValue>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>>;
 
     // ========== write ==========
-    insData<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(options: Omit<InsertOptions, "data"> & { data: TInsert | TInsert[] }): Promise<DbResult<number>>;
+    insData<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(options: Omit<InsertOptions, "data"> & { data: TInsert }): Promise<DbResult<number>>;
     insBatch<TInsert extends Record<string, SqlValue> = Record<string, SqlValue>>(table: string, dataList: TInsert[]): Promise<DbResult<number[]>>;
 
     updData(options: UpdateOptions): Promise<DbResult<number>>;

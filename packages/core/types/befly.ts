@@ -25,6 +25,14 @@ export type BeflyRuntimeEnv = Record<string, string | undefined>;
 export interface DatabaseConfig {
     /** 是否启用数据库 (0: 关闭, 1: 开启) @default 0 */
     enable?: number;
+    /**
+     * ID 生成策略
+     * - timeId: 使用 Redis.genTimeID() 生成并显式写入 id（当前默认行为）
+     * - autoId: 使用 MySQL AUTO_INCREMENT，由数据库生成 id（插入时不写入 id）
+     *
+     * @default 'timeId'
+     */
+    idMode?: "timeId" | "autoId";
     /** 数据库主机 @default '127.0.0.1' */
     host?: string;
     /** 数据库端口 @default 3306 */
