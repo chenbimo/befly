@@ -2,7 +2,6 @@ import type { FieldDefinition } from "../types/validate";
 import type { ScanFileResult } from "../utils/scanFiles";
 
 import { Logger } from "../lib/logger";
-import { MYSQL_STRING_CONSTRAINTS } from "../utils/mysqlStringConstraints";
 
 function isJsonPrimitive(value: unknown): value is string | number | boolean | null {
     if (value === null) return true;
@@ -99,7 +98,8 @@ const LOWER_CAMEL_CASE_REGEX = /^_?[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)*$/;
  */
 const FIELD_NAME_REGEX = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
 
-const MAX_VARCHAR_LENGTH = MYSQL_STRING_CONSTRAINTS.MAX_VARCHAR_LENGTH;
+// MySQL VARCHAR 最大长度（utf8mb4 下受行大小限制；本项目采用保守上限，用于表定义校验）
+const MAX_VARCHAR_LENGTH = 16383;
 // 项目索引策略（更简单、更保守）：
 // - index=true: 只允许 max<=500
 // - unique=true: 只允许 max<=180
