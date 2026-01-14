@@ -10,7 +10,6 @@ import type { MockMySqlState } from "./_mocks/mockMySqlDb.ts";
 import { describe, expect, test } from "bun:test";
 
 import { checkTable } from "../checks/checkTable.ts";
-import { CacheKeys } from "../lib/cacheKeys.ts";
 import { SyncTable } from "../sync/syncTable.ts";
 import { snakeCase } from "../utils/util.ts";
 import { createMockMySqlDb } from "./_mocks/mockMySqlDb.ts";
@@ -67,7 +66,7 @@ function fdText(options: { name: string; min: number | null; max: number | null;
 }
 
 describe("syncTable(ctx, items) - mock mysql", () => {
-    test("首次同步：应创建表并包含系统字段 + 业务字段，同时清理 columns 缓存", async () => {
+    test("首次同步：应创建表并包含系统字段 + 业务字段", async () => {
         const state: MockMySqlState = {
             executedSql: [],
             dbName: "test",
@@ -75,16 +74,8 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         };
 
         const db = createMockMySqlDb(state);
-
-        const redisCalls: Array<{ keys: string[] }> = [];
         const ctx = {
             db: db,
-            redis: {
-                delBatch: async (keys: string[]) => {
-                    redisCalls.push({ keys: keys });
-                    return keys.length;
-                }
-            },
             config: {
                 db: { database: "test" }
             }
@@ -119,12 +110,9 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         expect(columns.email).toBeDefined();
         expect(columns.nickname).toBeDefined();
         expect(columns.age).toBeDefined();
-
-        expect(redisCalls.length).toBe(1);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
     });
 
-    test("二次同步：新增字段应落库（ADD COLUMN），同时清理 columns 缓存", async () => {
+    test("二次同步：新增字段应落库（ADD COLUMN）", async () => {
         const state: MockMySqlState = {
             executedSql: [],
             dbName: "test",
@@ -132,16 +120,8 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         };
 
         const db = createMockMySqlDb(state);
-
-        const redisCalls: Array<{ keys: string[] }> = [];
         const ctx = {
             db: db,
-            redis: {
-                delBatch: async (keys: string[]) => {
-                    redisCalls.push({ keys: keys });
-                    return keys.length;
-                }
-            },
             config: {
                 db: { database: "test" }
             }
@@ -176,11 +156,6 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         const columns = await SyncTable.getTableColumns(db, "test", tableName);
         expect(columns.nickname).toBeDefined();
         expect(columns.bio).toBeDefined();
-
-        // 两次同步，每次都会清一次缓存
-        expect(redisCalls.length).toBe(2);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
-        expect(redisCalls[1].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
     });
 
     test("索引变更：仅删除单列索引；复合索引不会被误删", async () => {
@@ -268,16 +243,8 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         };
 
         const db = createMockMySqlDb(state);
-
-        const redisCalls: Array<{ keys: string[] }> = [];
         const ctx = {
             db: db,
-            redis: {
-                delBatch: async (keys: string[]) => {
-                    redisCalls.push({ keys: keys });
-                    return keys.length;
-                }
-            },
             config: {
                 db: { database: "test" }
             }
@@ -299,8 +266,5 @@ describe("syncTable(ctx, items) - mock mysql", () => {
 
         const dropUserIdComposite = state.executedSql.some((s) => s.includes("DROP INDEX") && s.includes("idx_user_id"));
         expect(dropUserIdComposite).toBe(false);
-
-        expect(redisCalls.length).toBe(1);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
     });
 });

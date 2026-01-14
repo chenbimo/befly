@@ -11,13 +11,10 @@ import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { fieldClear } from "../utils/fieldClear";
 import { toNumberFromSql, toSqlParams } from "../utils/sqlUtil";
 import { arrayKeysToCamel, isPlainObject, keysToCamel, snakeCase } from "../utils/util";
-import { CacheKeys } from "./cacheKeys";
 import { DbUtils } from "./dbUtils";
 import { Logger } from "./logger";
 import { SqlBuilder } from "./sqlBuilder";
 import { SqlCheck } from "./sqlCheck";
-
-const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
 
 type RedisCacheLike = {
     getObject<T = unknown>(key: string): Promise<T | null>;
@@ -96,20 +93,12 @@ export class DbHelper {
     }
 
     /**
-     * 获取表的所有字段名（Redis 缓存）
+     * 获取表的所有字段名
      * @param table - 表名（下划线格式）
      * @returns 字段名数组（下划线格式）
      */
     private async getTableColumns(table: string): Promise<string[]> {
-        // 1. 先查 Redis 缓存
-        const cacheKey = CacheKeys.tableColumns(this.dbName, table);
-        const columns = await this.redis.getObject<string[]>(cacheKey);
-
-        if (columns && columns.length > 0) {
-            return columns;
-        }
-
-        // 2. 缓存未命中，查询数据库
+        // 查询数据库
         const quotedTable = quoteIdentMySql(table);
         const execRes = await this.executeSelect(`SHOW COLUMNS FROM ${quotedTable}`, []);
         const result = execRes.data;
@@ -124,12 +113,6 @@ export class DbHelper {
             if (typeof name === "string" && name.length > 0) {
                 columnNames.push(name);
             }
-        }
-
-        // 3. 写入 Redis 缓存
-        const cacheRes = await this.redis.setObject(cacheKey, columnNames, TABLE_COLUMNS_CACHE_TTL_SECONDS);
-        if (cacheRes === null) {
-            Logger.warn({ table: table, cacheKey: cacheKey, msg: "表字段缓存写入 Redis 失败" });
         }
 
         return columnNames;

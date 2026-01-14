@@ -30,9 +30,4 @@ export class CacheKeys {
     static roleApis(roleCode: string): string {
         return `role:apis:${roleCode}`;
     }
-
-    /** 表结构缓存（按数据库隔离，避免同名表串库） */
-    static tableColumns(dbName: string, table: string): string {
-        return `table:columns:${dbName}:${table}`;
-    }
 }

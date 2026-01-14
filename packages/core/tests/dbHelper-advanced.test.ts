@@ -588,27 +588,6 @@ describe("DbHelper - 代码逻辑问题分析", () => {
         expect(result2.state$gt).toBeUndefined(); // 正确
     });
 
-    test("问题2：getTableColumns 缓存键没有区分数据库", () => {
-        // **问题描述**：
-        // 缓存键格式：table:columns:${table}
-        // 问题：如果连接多个数据库，不同数据库的同名表会共享缓存
-
-        // **建议修复**：
-        // 缓存键应包含数据库名：table:columns:${dbName}:${table}
-
-        const currentCacheKey = (table: string) => `table:columns:${table}`;
-
-        const betterCacheKey = (dbName: string, table: string) => `table:columns:${dbName}:${table}`;
-
-        // 问题示例
-        expect(currentCacheKey("user")).toBe("table:columns:user");
-        // db1.user 和 db2.user 会冲突
-
-        // 改进后
-        expect(betterCacheKey("db1", "user")).toBe("table:columns:db1:user");
-        expect(betterCacheKey("db2", "user")).toBe("table:columns:db2:user");
-    });
-
     test("问题3：convertBigIntFields 白名单硬编码", () => {
         // **问题描述**：
         // 白名单字段硬编码为 ['id', 'pid', 'sort']

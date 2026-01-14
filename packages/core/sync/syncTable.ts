@@ -12,7 +12,6 @@ import type { ColumnInfo, FieldChange, IndexInfo, TablePlan } from "../types/syn
 import type { FieldDefinition } from "../types/validate";
 import type { ScanFileResult } from "../utils/scanFiles";
 
-import { CacheKeys } from "../lib/cacheKeys";
 import { Logger } from "../lib/logger";
 import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
 import { escapeComment, normalizeColumnDefaultValue } from "../utils/sqlUtil";
@@ -24,9 +23,6 @@ type SqlExecutor = {
 
 type SyncTableContext = {
     db: SqlExecutor;
-    redis: {
-        delBatch(keys: string[]): Promise<unknown>;
-    };
     config: {
         db?: {
             database?: string;
@@ -126,15 +122,11 @@ export class SyncTable {
     public static SYSTEM_INDEX_FIELDS: ReadonlyArray<string> = ["created_at", "updated_at", "state"];
 
     private db: SqlExecutor;
-    private redis: { delBatch(keys: string[]): Promise<unknown> };
     private dbName: string;
 
     public constructor(ctx: SyncTableContext) {
         if (!ctx?.db) {
             throw new Error("同步表：ctx.db 未初始化");
-        }
-        if (!ctx.redis) {
-            throw new Error("同步表：ctx.redis 未初始化");
         }
         if (!ctx.config) {
             throw new Error("同步表：ctx.config 未初始化");
@@ -143,13 +135,10 @@ export class SyncTable {
         // 约束：database 相关配置完整性由 checkConfig 统一保证（syncTable 不做重复校验）。
         this.dbName = String(ctx.config.db?.database || "");
         this.db = ctx.db;
-        this.redis = ctx.redis;
     }
 
     public async run(items: ScanFileResult[]): Promise<void> {
         try {
-            const processedTables: string[] = [];
-
             if (!Array.isArray(items)) {
                 throw new Error("同步表：请传入多个表定义组成的数组");
             }
@@ -176,13 +165,6 @@ export class SyncTable {
                 } else {
                     await SyncTable.createTable(this.db, tableName, tableFields);
                 }
-
-                processedTables.push(tableName);
-            }
-
-            if (processedTables.length > 0) {
-                const cacheKeys = processedTables.map((tableName) => CacheKeys.tableColumns(this.dbName, tableName));
-                await this.redis.delBatch(cacheKeys);
             }
         } catch (error: any) {
             Logger.error({ err: error, msg: "数据库同步失败" });
