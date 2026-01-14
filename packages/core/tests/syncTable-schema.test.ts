@@ -5,12 +5,13 @@
 import { describe, expect, test } from "bun:test";
 
 import { syncTable } from "../sync/syncTable.ts";
-import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
+import { createMockMySqlDb } from "./_mocks/mockMySqlDb.ts";
 
 describe("tableExistsRuntime", () => {
-    test("mock sqlite：表存在返回 true；表不存在返回 false", async () => {
-        const db = createMockSqliteDb({
+    test("mock mysql：表存在返回 true；表不存在返回 false", async () => {
+        const db = createMockMySqlDb({
             executedSql: [],
+            dbName: "test",
             tables: {
                 test_sync_table_exists: {
                     columns: {},
@@ -19,7 +20,7 @@ describe("tableExistsRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
+        const runtime = syncTable.TestKit.createRuntime(db, "test");
         const exist = await syncTable.TestKit.tableExistsRuntime(runtime, "test_sync_table_exists");
         expect(exist).toBe(true);
 
@@ -29,24 +30,25 @@ describe("tableExistsRuntime", () => {
 });
 
 describe("getTableColumnsRuntime", () => {
-    test("mock sqlite：返回列信息结构（至少包含我们定义的列）", async () => {
-        const db = createMockSqliteDb({
+    test("mock mysql：返回列信息结构（至少包含我们定义的列）", async () => {
+        const db = createMockMySqlDb({
             executedSql: [],
+            dbName: "test",
             tables: {
                 test_sync_table_columns: {
                     columns: {
-                        id: { name: "id", type: "INTEGER", notnull: 1, dflt_value: null },
-                        user_name: { name: "user_name", type: "TEXT", notnull: 1, dflt_value: "''" },
-                        user_id: { name: "user_id", type: "INTEGER", notnull: 1, dflt_value: "0" },
-                        age: { name: "age", type: "INTEGER", notnull: 0, dflt_value: "0" },
-                        created_at: { name: "created_at", type: "INTEGER", notnull: 1, dflt_value: "0" }
+                        id: { name: "id", dataType: "bigint", columnType: "bigint", max: null, nullable: false, defaultValue: null, comment: "" },
+                        user_name: { name: "user_name", dataType: "varchar", columnType: "varchar(64)", max: 64, nullable: true, defaultValue: "", comment: "" },
+                        user_id: { name: "user_id", dataType: "bigint", columnType: "bigint", max: null, nullable: false, defaultValue: 0, comment: "" },
+                        age: { name: "age", dataType: "bigint", columnType: "bigint", max: null, nullable: true, defaultValue: 0, comment: "" },
+                        created_at: { name: "created_at", dataType: "bigint", columnType: "bigint", max: null, nullable: false, defaultValue: 0, comment: "" }
                     },
                     indexes: {}
                 }
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
+        const runtime = syncTable.TestKit.createRuntime(db, "test");
         const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, "test_sync_table_columns");
 
         expect(columns.id).toBeDefined();
@@ -55,14 +57,15 @@ describe("getTableColumnsRuntime", () => {
         expect(columns.age).toBeDefined();
         expect(columns.created_at).toBeDefined();
 
-        expect(columns.user_name.nullable).toBe(false);
+        expect(columns.user_name.nullable).toBe(true);
     });
 });
 
 describe("getTableIndexesRuntime", () => {
-    test("mock sqlite：返回索引信息结构（仅单列索引；复合索引会被忽略）", async () => {
-        const db = createMockSqliteDb({
+    test("mock mysql：返回索引信息结构（支持复合索引列顺序）", async () => {
+        const db = createMockMySqlDb({
             executedSql: [],
+            dbName: "test",
             tables: {
                 test_sync_table_indexes: {
                     columns: {},
@@ -75,7 +78,7 @@ describe("getTableIndexesRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
+        const runtime = syncTable.TestKit.createRuntime(db, "test");
         const indexes = await syncTable.TestKit.getTableIndexesRuntime(runtime, "test_sync_table_indexes");
 
         expect(indexes.idx_created_at).toBeDefined();
@@ -84,7 +87,6 @@ describe("getTableIndexesRuntime", () => {
         expect(indexes.idx_user_name).toBeDefined();
         expect(indexes.idx_user_name).toContain("user_name");
 
-        // sqlite 路径下为了避免多列索引误判，仅收集单列索引
-        expect(indexes.idx_composite).toBeUndefined();
+        expect(indexes.idx_composite).toEqual(["user_id", "created_at"]);
     });
 });

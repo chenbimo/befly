@@ -32,7 +32,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const lengthChange = changes.find((c) => c.type === "length");
 
             expect(lengthChange).toBeDefined();
@@ -56,7 +56,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const lengthChange = changes.find((c) => c.type === "length");
 
             expect(lengthChange).toBeUndefined();
@@ -80,7 +80,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const commentChange = changes.find((c) => c.type === "comment");
 
             expect(commentChange).toBeDefined();
@@ -104,7 +104,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const commentChange = changes.find((c) => c.type === "comment");
 
             expect(commentChange).toBeUndefined();
@@ -128,7 +128,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const typeChange = changes.find((c) => c.type === "datatype");
 
             expect(typeChange).toBeDefined();
@@ -152,7 +152,7 @@ describe("compareFieldDefinition", () => {
                 default: 0
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const typeChange = changes.find((c) => c.type === "datatype");
 
             expect(typeChange).toBeUndefined();
@@ -176,7 +176,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const nullableChange = changes.find((c) => c.type === "nullable");
 
             expect(nullableChange).toBeDefined();
@@ -202,7 +202,7 @@ describe("compareFieldDefinition", () => {
                 default: "new"
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const defaultChange = changes.find((c) => c.type === "default");
 
             expect(defaultChange).toBeDefined();
@@ -226,7 +226,7 @@ describe("compareFieldDefinition", () => {
                 default: null // null 会被解析为空字符串
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
             const defaultChange = changes.find((c) => c.type === "default");
 
             // null -> '' (空字符串)，与现有值相同，无变化
@@ -251,7 +251,7 @@ describe("compareFieldDefinition", () => {
                 default: "new"
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
 
             expect(changes.length).toBe(4); // length, comment, nullable, default
             expect(changes.some((c) => c.type === "length")).toBe(true);
@@ -276,7 +276,7 @@ describe("compareFieldDefinition", () => {
                 default: null
             } satisfies FieldDefinition;
 
-            const changes = syncTable.TestKit.compareFieldDefinition("mysql", existingColumn, fieldDef);
+            const changes = syncTable.TestKit.compareFieldDefinition(existingColumn, fieldDef);
 
             expect(changes.length).toBe(0);
         });

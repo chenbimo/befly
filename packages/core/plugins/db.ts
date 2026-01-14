@@ -7,7 +7,6 @@ import type { BeflyContext } from "../types/befly";
 import type { Plugin } from "../types/plugin";
 
 import { Connect } from "../lib/connect";
-import { getDialectByName } from "../lib/dbDialect";
 import { DbHelper } from "../lib/dbHelper";
 import { Logger } from "../lib/logger";
 
@@ -28,12 +27,8 @@ const dbPlugin: Plugin = {
         try {
             const sql = Connect.getSql();
 
-            const rawDbDialect = befly.config?.db?.dialect;
-            const dialectName = rawDbDialect === "postgresql" || rawDbDialect === "sqlite" ? rawDbDialect : "mysql";
-            const dialect = getDialectByName(dialectName);
-
             // 创建数据库管理器实例
-            const dbManager = new DbHelper({ redis: befly.redis, sql: sql, dialect: dialect });
+            const dbManager = new DbHelper({ redis: befly.redis, sql: sql });
 
             return dbManager;
         } catch (error: unknown) {

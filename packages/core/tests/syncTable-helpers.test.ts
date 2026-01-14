@@ -16,15 +16,15 @@ import { syncTable } from "../sync/syncTable.ts";
 
 describe("quoteIdentifier (MySQL)", () => {
     test("使用反引号包裹标识符", () => {
-        expect(syncTable.TestKit.quoteIdentifier("mysql", "user_table")).toBe("`user_table`");
+        expect(syncTable.TestKit.quoteIdentifier("user_table")).toBe("`user_table`");
     });
 
     test("处理普通表名", () => {
-        expect(syncTable.TestKit.quoteIdentifier("mysql", "admin")).toBe("`admin`");
+        expect(syncTable.TestKit.quoteIdentifier("admin")).toBe("`admin`");
     });
 
     test("处理带下划线的表名", () => {
-        expect(syncTable.TestKit.quoteIdentifier("mysql", "addon_admin_menu")).toBe("`addon_admin_menu`");
+        expect(syncTable.TestKit.quoteIdentifier("addon_admin_menu")).toBe("`addon_admin_menu`");
     });
 });
 

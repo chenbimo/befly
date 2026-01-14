@@ -1,6 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { MySqlDialect } from "../lib/dbDialect.ts";
 import { DbHelper } from "../lib/dbHelper.ts";
 
 function createRedisMock() {
@@ -45,7 +44,7 @@ describe("DbHelper - envelope contract", () => {
             })
         };
 
-        const db = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
+        const db = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
 
         const tableExistsRes = await db.tableExists("user");
         expect("data" in tableExistsRes).toBe(true);

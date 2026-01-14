@@ -5,7 +5,7 @@
 import type { JsonValue } from "../types/common.ts";
 import type { FieldDefinition } from "../types/validate.ts";
 import type { ScanFileResult } from "../utils/scanFiles.ts";
-import type { MockSqliteState } from "./_mocks/mockSqliteDb.ts";
+import type { MockMySqlState } from "./_mocks/mockMySqlDb.ts";
 
 import { describe, expect, test } from "bun:test";
 
@@ -13,7 +13,7 @@ import { checkTable } from "../checks/checkTable.ts";
 import { CacheKeys } from "../lib/cacheKeys.ts";
 import { syncTable } from "../sync/syncTable.ts";
 import { snakeCase } from "../utils/util.ts";
-import { createMockSqliteDb } from "./_mocks/mockSqliteDb.ts";
+import { createMockMySqlDb } from "./_mocks/mockMySqlDb.ts";
 
 function buildTableItem(options: { fileName: string; content: Record<string, FieldDefinition> }): ScanFileResult {
     const item = {
@@ -66,14 +66,15 @@ function fdText(options: { name: string; min: number | null; max: number | null;
     } satisfies FieldDefinition;
 }
 
-describe("syncTable(ctx, items) - mock sqlite", () => {
+describe("syncTable(ctx, items) - mock mysql", () => {
     test("首次同步：应创建表并包含系统字段 + 业务字段，同时清理 columns 缓存", async () => {
-        const state: MockSqliteState = {
+        const state: MockMySqlState = {
             executedSql: [],
+            dbName: "test",
             tables: {}
         };
 
-        const db = createMockSqliteDb(state);
+        const db = createMockMySqlDb(state);
 
         const redisCalls: Array<{ keys: string[] }> = [];
         const ctx = {
@@ -85,7 +86,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
                 }
             },
             config: {
-                db: { dialect: "sqlite", database: "" }
+                db: { database: "test" }
             }
         } satisfies Parameters<typeof syncTable>[0];
 
@@ -103,9 +104,9 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
         await checkTable([item]);
         await syncTable(ctx, [item]);
 
-        expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(tableName))).toBe(true);
+        expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(`\`${tableName}\``))).toBe(true);
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
+        const runtime = syncTable.TestKit.createRuntime(db, "test");
         const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableName);
         expect(exists).toBe(true);
 
@@ -125,12 +126,13 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
     });
 
     test("二次同步：新增字段应落库（ADD COLUMN），同时清理 columns 缓存", async () => {
-        const state: MockSqliteState = {
+        const state: MockMySqlState = {
             executedSql: [],
+            dbName: "test",
             tables: {}
         };
 
-        const db = createMockSqliteDb(state);
+        const db = createMockMySqlDb(state);
 
         const redisCalls: Array<{ keys: string[] }> = [];
         const ctx = {
@@ -142,7 +144,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
                 }
             },
             config: {
-                db: { dialect: "sqlite", database: "" }
+                db: { database: "test" }
             }
         } satisfies Parameters<typeof syncTable>[0];
 
@@ -172,7 +174,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
 
         expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
 
-        const runtime = syncTable.TestKit.createRuntime("sqlite", db, "");
+        const runtime = syncTable.TestKit.createRuntime(db, "test");
         const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
         expect(columns.nickname).toBeDefined();
         expect(columns.bio).toBeDefined();
@@ -187,18 +189,75 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
         const fileName = "testSyncTableIntegrationIndexes";
         const tableName = snakeCase(fileName);
 
-        const state: MockSqliteState = {
+        const state: MockMySqlState = {
             executedSql: [],
+            dbName: "test",
             tables: {
                 [tableName]: {
                     columns: {
-                        id: { name: "id", type: "INTEGER", notnull: 1, dflt_value: null },
-                        created_at: { name: "created_at", type: "INTEGER", notnull: 1, dflt_value: "0" },
-                        updated_at: { name: "updated_at", type: "INTEGER", notnull: 1, dflt_value: "0" },
-                        deleted_at: { name: "deleted_at", type: "INTEGER", notnull: 1, dflt_value: "0" },
-                        state: { name: "state", type: "INTEGER", notnull: 1, dflt_value: "1" },
-                        user_id: { name: "user_id", type: "INTEGER", notnull: 1, dflt_value: "0" },
-                        user_name: { name: "user_name", type: "TEXT", notnull: 1, dflt_value: "''" }
+                        id: {
+                            name: "id",
+                            dataType: "bigint",
+                            columnType: "bigint unsigned",
+                            max: null,
+                            nullable: false,
+                            defaultValue: null,
+                            comment: "主键ID"
+                        },
+                        created_at: {
+                            name: "created_at",
+                            dataType: "bigint",
+                            columnType: "bigint unsigned",
+                            max: null,
+                            nullable: false,
+                            defaultValue: 0,
+                            comment: "创建时间"
+                        },
+                        updated_at: {
+                            name: "updated_at",
+                            dataType: "bigint",
+                            columnType: "bigint unsigned",
+                            max: null,
+                            nullable: false,
+                            defaultValue: 0,
+                            comment: "更新时间"
+                        },
+                        deleted_at: {
+                            name: "deleted_at",
+                            dataType: "bigint",
+                            columnType: "bigint unsigned",
+                            max: null,
+                            nullable: false,
+                            defaultValue: 0,
+                            comment: "删除时间"
+                        },
+                        state: {
+                            name: "state",
+                            dataType: "bigint",
+                            columnType: "bigint unsigned",
+                            max: null,
+                            nullable: false,
+                            defaultValue: 1,
+                            comment: "状态字段"
+                        },
+                        user_id: {
+                            name: "user_id",
+                            dataType: "bigint",
+                            columnType: "bigint",
+                            max: null,
+                            nullable: false,
+                            defaultValue: 0,
+                            comment: "用户ID"
+                        },
+                        user_name: {
+                            name: "user_name",
+                            dataType: "varchar",
+                            columnType: "varchar(50)",
+                            max: 50,
+                            nullable: false,
+                            defaultValue: "",
+                            comment: "用户名"
+                        }
                     },
                     indexes: {
                         // 单列索引：应该能被识别并在 index=false 时被 drop
@@ -210,7 +269,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
             }
         };
 
-        const db = createMockSqliteDb(state);
+        const db = createMockMySqlDb(state);
 
         const redisCalls: Array<{ keys: string[] }> = [];
         const ctx = {
@@ -222,7 +281,7 @@ describe("syncTable(ctx, items) - mock sqlite", () => {
                 }
             },
             config: {
-                db: { dialect: "sqlite", database: "" }
+                db: { database: "test" }
             }
         } satisfies Parameters<typeof syncTable>[0];
 

@@ -1,6 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { MySqlDialect } from "../lib/dbDialect.ts";
 import { DbHelper } from "../lib/dbHelper.ts";
 
 describe("DbHelper.getOne/getDetail default object", () => {
@@ -29,7 +28,7 @@ describe("DbHelper.getOne/getDetail default object", () => {
             })
         };
 
-        const db = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
+        const db = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
 
         const res = await db.getOne<{ id?: number }>({ table: "user", where: { id: 999 }, fields: ["id"] });
 
@@ -55,7 +54,7 @@ describe("DbHelper.getOne/getDetail default object", () => {
             })
         };
 
-        const db = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
+        const db = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
 
         const res = await db.getDetail<{ id?: number }>({ table: "user", where: { id: 999 }, fields: ["id"] });
 

@@ -31,7 +31,7 @@ export interface CreateTableOptions {
  */
 export interface SqlHelperOptions {
     /** 数据库类型 */
-    type: "mysql" | "postgresql" | "sqlite";
+    type: "mysql";
     /** 表名前缀 */
     prefix?: string;
 }

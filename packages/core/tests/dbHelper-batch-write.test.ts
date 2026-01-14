@@ -1,6 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { MySqlDialect } from "../lib/dbDialect.ts";
 import { DbHelper } from "../lib/dbHelper.ts";
 
 function createRedisMock() {
@@ -17,7 +16,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 0 }))
         };
 
-        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
 
         const changes = await (dbHelper as any).delForceBatch("addon_admin_api", []);
 
@@ -30,7 +29,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 2 }))
         };
 
-        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
 
         const changes = await (dbHelper as any).delForceBatch("addon_admin_api", [1, 2]);
 
@@ -47,7 +46,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 0 }))
         };
 
-        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
 
         const changes = await (dbHelper as any).updBatch("addon_admin_api", []);
 
@@ -60,7 +59,7 @@ describe("DbHelper - batch write helpers", () => {
             unsafe: mock(() => Promise.resolve({ changes: 2 }))
         };
 
-        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock, dialect: new MySqlDialect() });
+        const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
 
         const changes = await (dbHelper as any).updBatch("addon_admin_api", [
             { id: 1, data: { name: "A", routePath: "/api/a", addonName: "x" } },

@@ -1,6 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { MySqlDialect } from "../lib/dbDialect.ts";
 import { DbHelper } from "../lib/dbHelper.ts";
 import { DbUtils } from "../lib/dbUtils.ts";
 import { SqlBuilder } from "../lib/sqlBuilder.ts";
@@ -51,7 +50,7 @@ describe("DbHelper.getList deserialize", () => {
             genTimeID: mock(async () => 1)
         };
 
-        const dbHelper = new DbHelper({ redis: redisMock, sql: sqlMock, dialect: new MySqlDialect() });
+        const dbHelper = new DbHelper({ redis: redisMock, sql: sqlMock });
 
         const result = await dbHelper.getList<{ id: number; tags: string[] }>({
             table: "users",

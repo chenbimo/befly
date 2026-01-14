@@ -1,9 +1,5 @@
 import type { BeflyOptions, DatabaseConfig, RedisConfig } from "../types/befly";
 
-type DbDialectInput = "mysql" | "postgresql" | "sqlite";
-
-const DB_DIALECT_SET = new Set<string>(["mysql", "postgresql", "sqlite"]);
-
 function isNonEmptyString(value: unknown): value is string {
     return typeof value === "string" && value.trim().length > 0;
 }
@@ -16,42 +12,12 @@ function isValidNonNegativeInt(value: unknown): value is number {
     return typeof value === "number" && Number.isFinite(value) && value >= 0 && Math.floor(value) === value;
 }
 
-function normalizeDbDialect(dialect: unknown): DbDialectInput {
-    const d = String(dialect || "")
-        .toLowerCase()
-        .trim();
-    if (d === "postgresql") return "postgresql";
-    if (d === "sqlite") return "sqlite";
-    if (d === "mysql") return "mysql";
-    return d as DbDialectInput;
-}
-
 function validateDbConfig(db: DatabaseConfig | undefined): void {
     if (!db) {
         throw new Error("配置错误：缺少 db 配置（config.db）");
     }
 
-    const dialect = normalizeDbDialect(db.dialect);
-    if (!DB_DIALECT_SET.has(dialect)) {
-        throw new Error(`配置错误：db.dialect 只允许 mysql/postgresql/sqlite，当前值=${String(db.dialect)}`);
-    }
-
-    // sqlite：database 表示文件路径或 ":memory:"；这里要求非空。
-    if (dialect === "sqlite") {
-        if (!isNonEmptyString(db.database)) {
-            throw new Error(`配置错误：db.dialect=sqlite 时必须设置 db.database（sqlite 文件路径或 :memory:），当前值=${String(db.database)}`);
-        }
-
-        if (db.poolMax !== undefined) {
-            if (typeof db.poolMax !== "number" || !Number.isFinite(db.poolMax) || db.poolMax <= 0) {
-                throw new Error(`配置错误：db.poolMax 必须为正数，当前值=${String(db.poolMax)}`);
-            }
-        }
-
-        return;
-    }
-
-    // mysql/postgresql：必须提供 host/port/username/password/database
+    // MySQL：必须提供 host/port/username/password/database
     if (!isNonEmptyString(db.host)) {
         throw new Error(`配置错误：db.host 必须为非空字符串，当前值=${String(db.host)}`);
     }

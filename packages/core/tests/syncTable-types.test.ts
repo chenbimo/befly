@@ -96,27 +96,51 @@ describe("generateDefaultSql", () => {
 
 describe("getSqlType", () => {
     test("string 类型带长度", () => {
-        const result = syncTable.TestKit.getSqlType("mysql", "string", 100);
+        const result = syncTable.TestKit.getSqlType("string", 100);
         expect(result).toBe("VARCHAR(100)");
     });
 
     test("array_string 类型带长度", () => {
-        const result = syncTable.TestKit.getSqlType("mysql", "array_string", 500);
+        const result = syncTable.TestKit.getSqlType("array_string", 500);
         expect(result).toBe("VARCHAR(500)");
     });
 
     test("number 类型无符号", () => {
-        const result = syncTable.TestKit.getSqlType("mysql", "number", null, true);
+        const result = syncTable.TestKit.getSqlType("number", null, true);
         expect(result).toBe("BIGINT UNSIGNED");
     });
 
     test("number 类型有符号", () => {
-        const result = syncTable.TestKit.getSqlType("mysql", "number", null, false);
+        const result = syncTable.TestKit.getSqlType("number", null, false);
         expect(result).toBe("BIGINT");
     });
 
     test("text 类型", () => {
-        const result = syncTable.TestKit.getSqlType("mysql", "text", null);
+        const result = syncTable.TestKit.getSqlType("text", null);
         expect(result).toBe("MEDIUMTEXT");
+    });
+});
+
+describe("quoteIdentifier", () => {
+    test("合法标识符会被反引号包裹", () => {
+        expect(syncTable.TestKit.quoteIdentifier("user")).toBe("`user`");
+        expect(syncTable.TestKit.quoteIdentifier("user_name")).toBe("`user_name`");
+        expect(syncTable.TestKit.quoteIdentifier("_tmp")).toBe("`_tmp`");
+        expect(syncTable.TestKit.quoteIdentifier("user1")).toBe("`user1`");
+    });
+
+    test("会 trim 前后空白", () => {
+        expect(syncTable.TestKit.quoteIdentifier(" user ")).toBe("`user`");
+        expect(syncTable.TestKit.quoteIdentifier("  user_name  ")).toBe("`user_name`");
+    });
+
+    test("非法标识符会抛错（防 SQL 注入/误 DDL）", () => {
+        expect(() => syncTable.TestKit.quoteIdentifier("")).toThrow("无效的 SQL 标识符");
+        expect(() => syncTable.TestKit.quoteIdentifier("   ")).toThrow("无效的 SQL 标识符");
+        expect(() => syncTable.TestKit.quoteIdentifier("user-name")).toThrow("无效的 SQL 标识符");
+        expect(() => syncTable.TestKit.quoteIdentifier("user name")).toThrow("无效的 SQL 标识符");
+        expect(() => syncTable.TestKit.quoteIdentifier("1user")).toThrow("无效的 SQL 标识符");
+        expect(() => syncTable.TestKit.quoteIdentifier("user;drop table t")).toThrow("无效的 SQL 标识符");
+        expect(() => syncTable.TestKit.quoteIdentifier("`user`")).toThrow("无效的 SQL 标识符");
     });
 });

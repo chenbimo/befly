@@ -18,14 +18,6 @@ describe("DB_VERSION_REQUIREMENTS", () => {
     test("MySQL 最低版本为 8", () => {
         expect(syncTable.TestKit.DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR).toBe(8);
     });
-
-    test("PostgreSQL 最低版本为 17", () => {
-        expect(syncTable.TestKit.DB_VERSION_REQUIREMENTS.POSTGRES_MIN_MAJOR).toBe(17);
-    });
-
-    test("SQLite 最低版本为 3.50.0", () => {
-        expect(syncTable.TestKit.DB_VERSION_REQUIREMENTS.SQLITE_MIN_VERSION).toBe("3.50.0");
-    });
 });
 
 describe("SYSTEM_INDEX_FIELDS", () => {
@@ -80,22 +72,22 @@ describe("MYSQL_TABLE_CONFIG", () => {
 
 describe("getTypeMapping (MySQL)", () => {
     test("number 映射为 BIGINT", () => {
-        expect(syncTable.TestKit.getTypeMapping("mysql").number).toBe("BIGINT");
+        expect(syncTable.TestKit.getTypeMapping().number).toBe("BIGINT");
     });
 
     test("string 映射为 VARCHAR", () => {
-        expect(syncTable.TestKit.getTypeMapping("mysql").string).toBe("VARCHAR");
+        expect(syncTable.TestKit.getTypeMapping().string).toBe("VARCHAR");
     });
 
     test("text 映射为 MEDIUMTEXT", () => {
-        expect(syncTable.TestKit.getTypeMapping("mysql").text).toBe("MEDIUMTEXT");
+        expect(syncTable.TestKit.getTypeMapping().text).toBe("MEDIUMTEXT");
     });
 
     test("array_string 映射为 VARCHAR", () => {
-        expect(syncTable.TestKit.getTypeMapping("mysql").array_string).toBe("VARCHAR");
+        expect(syncTable.TestKit.getTypeMapping().array_string).toBe("VARCHAR");
     });
 
     test("array_text 映射为 MEDIUMTEXT", () => {
-        expect(syncTable.TestKit.getTypeMapping("mysql").array_text).toBe("MEDIUMTEXT");
+        expect(syncTable.TestKit.getTypeMapping().array_text).toBe("MEDIUMTEXT");
     });
 });

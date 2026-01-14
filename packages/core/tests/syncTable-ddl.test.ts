@@ -17,7 +17,7 @@ import { syncTable } from "../sync/syncTable.ts";
 
 describe("buildIndexSQL (MySQL)", () => {
     test("创建索引 SQL", () => {
-        const sql = syncTable.TestKit.buildIndexSQL("mysql", "user", "idx_created_at", "created_at", "create");
+        const sql = syncTable.TestKit.buildIndexSQL("user", "idx_created_at", "created_at", "create");
         expect(sql).toContain("ALTER TABLE `user`");
         expect(sql).toContain("ADD INDEX `idx_created_at`");
         expect(sql).toContain("(`created_at`)");
@@ -26,7 +26,7 @@ describe("buildIndexSQL (MySQL)", () => {
     });
 
     test("删除索引 SQL", () => {
-        const sql = syncTable.TestKit.buildIndexSQL("mysql", "user", "idx_created_at", "created_at", "drop");
+        const sql = syncTable.TestKit.buildIndexSQL("user", "idx_created_at", "created_at", "drop");
         expect(sql).toContain("ALTER TABLE `user`");
         expect(sql).toContain("DROP INDEX `idx_created_at`");
     });
@@ -34,12 +34,12 @@ describe("buildIndexSQL (MySQL)", () => {
 
 describe("buildSystemColumnDefs (MySQL)", () => {
     test("返回 5 个系统字段定义", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("mysql");
+        const defs = syncTable.TestKit.buildSystemColumnDefs();
         expect(defs.length).toBe(5);
     });
 
     test("包含 id 主键", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("mysql");
+        const defs = syncTable.TestKit.buildSystemColumnDefs();
         const idDef = defs.find((d: string) => d.includes("`id`"));
         expect(idDef).toContain("PRIMARY KEY");
         expect(idDef).toContain("AUTO_INCREMENT");
@@ -47,7 +47,7 @@ describe("buildSystemColumnDefs (MySQL)", () => {
     });
 
     test("包含 created_at 字段", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("mysql");
+        const defs = syncTable.TestKit.buildSystemColumnDefs();
         const def = defs.find((d: string) => d.includes("`created_at`"));
         expect(def).toContain("BIGINT UNSIGNED");
         expect(def).toContain("NOT NULL");
@@ -55,41 +55,9 @@ describe("buildSystemColumnDefs (MySQL)", () => {
     });
 
     test("包含 state 字段", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("mysql");
+        const defs = syncTable.TestKit.buildSystemColumnDefs();
         const def = defs.find((d: string) => d.includes("`state`"));
         expect(def).toContain("BIGINT UNSIGNED");
-        expect(def).toContain("NOT NULL");
-        expect(def).toContain("DEFAULT 1");
-    });
-});
-
-describe("buildSystemColumnDefs (PostgreSQL)", () => {
-    test("返回 5 个系统字段定义", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
-        expect(defs.length).toBe(5);
-    });
-
-    test("包含 id 主键 identity", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
-        const idDef = defs.find((d: string) => d.includes('"id"'));
-        expect(idDef).toContain("BIGINT");
-        expect(idDef).toContain("PRIMARY KEY");
-        expect(idDef).toContain("GENERATED");
-        expect(idDef).toContain("IDENTITY");
-    });
-
-    test("包含 created_at BIGINT 默认值", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
-        const def = defs.find((d: string) => d.includes('"created_at"'));
-        expect(def).toContain("BIGINT");
-        expect(def).toContain("NOT NULL");
-        expect(def).toContain("DEFAULT 0");
-    });
-
-    test("包含 state BIGINT 默认值", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs("postgresql");
-        const def = defs.find((d: string) => d.includes('"state"'));
-        expect(def).toContain("BIGINT");
         expect(def).toContain("NOT NULL");
         expect(def).toContain("DEFAULT 1");
     });
@@ -108,7 +76,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
+        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
         expect(defs.length).toBe(1);
         expect(defs[0]).toContain("`user_name`");
         expect(defs[0]).toContain("VARCHAR(50)");
@@ -129,7 +97,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
+        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
         expect(defs[0]).toContain("`age`");
         expect(defs[0]).toContain("BIGINT UNSIGNED");
         expect(defs[0]).toContain("DEFAULT 0");
@@ -147,7 +115,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
+        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
         expect(defs[0]).toContain("UNIQUE");
     });
 
@@ -163,7 +131,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs("mysql", fields);
+        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
         expect(defs[0]).toContain("NULL");
         expect(defs[0]).not.toContain("NOT NULL");
     });
@@ -180,7 +148,7 @@ describe("generateDDLClause (MySQL)", () => {
             nullable: false,
             unsigned: true
         } satisfies FieldDefinition;
-        const clause = syncTable.TestKit.generateDDLClause("mysql", "userName", fieldDef, true);
+        const clause = syncTable.TestKit.generateDDLClause("userName", fieldDef, true);
         expect(clause).toContain("ADD COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(50)");
@@ -196,7 +164,7 @@ describe("generateDDLClause (MySQL)", () => {
             nullable: false,
             unsigned: true
         } satisfies FieldDefinition;
-        const clause = syncTable.TestKit.generateDDLClause("mysql", "userName", fieldDef, false);
+        const clause = syncTable.TestKit.generateDDLClause("userName", fieldDef, false);
         expect(clause).toContain("MODIFY COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(100)");
@@ -205,13 +173,11 @@ describe("generateDDLClause (MySQL)", () => {
 
 describe("isCompatibleTypeChange", () => {
     test("varchar -> text 是兼容变更", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("character varying", "text")).toBe(true);
         expect(syncTable.TestKit.isCompatibleTypeChange("varchar(100)", "text")).toBe(true);
         expect(syncTable.TestKit.isCompatibleTypeChange("varchar(100)", "mediumtext")).toBe(true);
     });
 
     test("text -> varchar 不是兼容变更", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("text", "character varying")).toBe(false);
         expect(syncTable.TestKit.isCompatibleTypeChange("text", "varchar(100)")).toBe(false);
     });
 
@@ -227,12 +193,6 @@ describe("isCompatibleTypeChange", () => {
     test("bigint -> int 不是兼容变更（收缩）", () => {
         expect(syncTable.TestKit.isCompatibleTypeChange("bigint", "int")).toBe(false);
         expect(syncTable.TestKit.isCompatibleTypeChange("int", "tinyint")).toBe(false);
-    });
-
-    test("PG integer -> bigint 是兼容变更", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("integer", "bigint")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("smallint", "integer")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("smallint", "bigint")).toBe(true);
     });
 
     test("相同类型不是变更", () => {

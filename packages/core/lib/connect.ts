@@ -22,6 +22,10 @@ export class Connect {
     private static redisConnectedAt: number | null = null;
     private static sqlPoolMax: number = 1;
 
+    // MySQL 版本信息（用于启动期校验与监控）
+    private static mysqlVersionText: string | null = null;
+    private static mysqlVersionMajor: number | null = null;
+
     // ========================================
     // SQL 连接管理
     // ========================================
@@ -33,52 +37,46 @@ export class Connect {
     static async connectSql(dbConfig: DatabaseConfig): Promise<SQL> {
         const config = dbConfig || {};
 
-        // 构建数据库连接字符串
-        const dialect = config.dialect || "mysql";
+        // 构建 MySQL 连接字符串
         const host = config.host || "127.0.0.1";
         const port = config.port || 3306;
         const user = encodeURIComponent(config.username || "root");
         const password = encodeURIComponent(config.password || "root");
         const database = encodeURIComponent(config.database || "befly_demo");
 
-        let finalUrl: string;
-        if (dialect === "sqlite") {
-            finalUrl = database;
-        } else {
-            if (!host || !database) {
-                throw new Error("数据库配置不完整，请检查配置参数");
-            }
-            finalUrl = `${dialect}://${user}:${password}@${host}:${port}/${database}`;
+        if (!host || !database) {
+            throw new Error("数据库配置不完整，请检查配置参数");
         }
 
-        let sql: SQL;
+        const finalUrl = `mysql://${user}:${password}@${host}:${port}/${database}`;
 
-        if (dialect === "sqlite") {
-            sql = new SQL(finalUrl);
-        } else {
-            sql = new SQL({
-                url: finalUrl,
-                max: config.poolMax ?? 1,
-                bigint: false
-            });
-        }
+        const sql = new SQL({
+            url: finalUrl,
+            max: config.poolMax ?? 1,
+            bigint: false
+        });
 
         try {
             const timeout = 30000;
 
             const healthCheckPromise = (async () => {
-                let version = "";
-                if (dialect === "sqlite") {
-                    const v = await sql`SELECT sqlite_version() AS version`;
-                    version = v?.[0]?.version;
-                } else if (dialect === "postgresql") {
-                    const v = await sql`SELECT version() AS version`;
-                    version = v?.[0]?.version;
-                } else {
-                    const v = await sql`SELECT VERSION() AS version`;
-                    version = v?.[0]?.version;
+                const v = await sql`SELECT VERSION() AS version`;
+                const versionText = typeof v?.[0]?.version === "string" ? v?.[0]?.version : String(v?.[0]?.version || "");
+
+                // 常见格式：8.0.36 / 8.0.36-xxx
+                const majorText = versionText.split(".")[0];
+                const major = Number(majorText);
+                if (!Number.isFinite(major)) {
+                    throw new Error(`无法解析 MySQL 版本信息: ${versionText}`);
                 }
-                return version;
+                if (major < 8) {
+                    throw new Error(`仅支持 MySQL 8.0+，当前版本：${versionText}`);
+                }
+
+                this.mysqlVersionText = versionText;
+                this.mysqlVersionMajor = major;
+
+                return versionText;
             })();
 
             const timeoutPromise = new Promise<never>((_, reject) => {
@@ -252,6 +250,8 @@ export class Connect {
             connectedAt: number | null;
             uptime: number | null;
             poolMax: number;
+            mysqlVersionText: string | null;
+            mysqlVersionMajor: number | null;
         };
         redis: {
             connected: boolean;
@@ -265,7 +265,9 @@ export class Connect {
                 connected: this.sqlClient !== null,
                 connectedAt: this.sqlConnectedAt,
                 uptime: this.sqlConnectedAt ? now - this.sqlConnectedAt : null,
-                poolMax: this.sqlPoolMax
+                poolMax: this.sqlPoolMax,
+                mysqlVersionText: this.mysqlVersionText,
+                mysqlVersionMajor: this.mysqlVersionMajor
             },
             redis: {
                 connected: this.redisClient !== null,
@@ -302,5 +304,7 @@ export class Connect {
         this.sqlConnectedAt = null;
         this.redisConnectedAt = null;
         this.sqlPoolMax = 1;
+        this.mysqlVersionText = null;
+        this.mysqlVersionMajor = null;
     }
 }

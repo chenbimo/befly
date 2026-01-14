@@ -6,7 +6,6 @@
 import type { WhereConditions, JoinOption, SqlValue } from "../types/common";
 import type { QueryOptions, InsertOptions, UpdateOptions, DeleteOptions, DbPageResult, DbListResult, TransactionCallback, DbResult, SqlInfo, ListSql } from "../types/database";
 import type { SqlRunResult } from "../utils/sqlResult";
-import type { DbDialect } from "./dbDialect";
 
 import { convertBigIntFields } from "../utils/convertBigIntFields";
 import { fieldClear } from "../utils/fieldClear";
@@ -14,7 +13,6 @@ import { toSqlParams } from "../utils/sqlParams";
 import { toNumberFromSql } from "../utils/sqlResult";
 import { arrayKeysToCamel, isPlainObject, keysToCamel, snakeCase } from "../utils/util";
 import { CacheKeys } from "./cacheKeys";
-import { MySqlDialect } from "./dbDialect";
 import { DbUtils } from "./dbUtils";
 import { Logger } from "./logger";
 import { SqlBuilder } from "./sqlBuilder";
@@ -35,6 +33,19 @@ type SqlClientLike = {
 type SqlClientWithBeginLike = SqlClientLike & {
     begin<TResult>(callback: (tx: SqlClientLike) => Promise<TResult>): Promise<TResult>;
 };
+
+function quoteIdentMySql(identifier: string): string {
+    if (typeof identifier !== "string") {
+        throw new Error(`quoteIdentifier 需要字符串类型标识符 (identifier: ${String(identifier)})`);
+    }
+
+    const trimmed = identifier.trim();
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+        throw new Error(`无效的 SQL 标识符: ${trimmed}`);
+    }
+
+    return `\`${trimmed}\``;
+}
 
 function hasBegin(sql: SqlClientLike): sql is SqlClientWithBeginLike {
     return typeof (sql as Partial<SqlClientWithBeginLike>).begin === "function";
@@ -60,7 +71,6 @@ class DbSqlError extends Error {
  */
 export class DbHelper {
     private redis: RedisCacheLike;
-    private dialect: DbDialect;
     private sql: SqlClientLike | null = null;
     private isTransaction: boolean = false;
 
@@ -69,17 +79,14 @@ export class DbHelper {
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(options: { redis: RedisCacheLike; sql?: SqlClientLike | null; dialect?: DbDialect }) {
+    constructor(options: { redis: RedisCacheLike; sql?: SqlClientLike | null }) {
         this.redis = options.redis;
         this.sql = options.sql || null;
         this.isTransaction = Boolean(options.sql);
-
-        // 默认使用 MySQL 方言（当前 core 的表结构/语法也主要基于 MySQL）
-        this.dialect = options.dialect ? options.dialect : new MySqlDialect();
     }
 
     private createSqlBuilder(): SqlBuilder {
-        return new SqlBuilder({ quoteIdent: this.dialect.quoteIdent.bind(this.dialect) });
+        return new SqlBuilder({ quoteIdent: quoteIdentMySql });
     }
 
     /**
@@ -97,15 +104,21 @@ export class DbHelper {
         }
 
         // 2. 缓存未命中，查询数据库
-        const query = this.dialect.getTableColumnsQuery(table);
-        const execRes = await this.executeSelect(query.sql, query.params);
+        const quotedTable = quoteIdentMySql(table);
+        const execRes = await this.executeSelect(`SHOW COLUMNS FROM ${quotedTable}`, []);
         const result = execRes.data;
 
         if (!result || result.length === 0) {
             throw new Error(`表 ${table} 不存在或没有字段`);
         }
 
-        const columnNames = this.dialect.getTableColumnsFromResult(result);
+        const columnNames: string[] = [];
+        for (const row of result) {
+            const name = (row as Record<string, unknown>)["Field"];
+            if (typeof name === "string" && name.length > 0) {
+                columnNames.push(name);
+            }
+        }
 
         // 3. 写入 Redis 缓存
         const cacheRes = await this.redis.setObject(cacheKey, columnNames, TABLE_COLUMNS_CACHE_TTL_SECONDS);
@@ -271,8 +284,7 @@ export class DbHelper {
         // 将表名转换为下划线格式
         const snakeTableName = snakeCase(tableName);
 
-        const query = this.dialect.tableExistsQuery(snakeTableName);
-        const execRes = await this.executeSelect<{ count: number }>(query.sql, query.params);
+        const execRes = await this.executeSelect<{ count: number }>("SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", [snakeTableName]);
         const exists = (execRes.data?.[0]?.count || 0) > 0;
 
         return {
@@ -725,7 +737,7 @@ export class DbHelper {
             table: snakeTable,
             idField: "id",
             ids: ids,
-            quoteIdent: this.dialect.quoteIdent.bind(this.dialect)
+            quoteIdent: quoteIdentMySql
         });
         const execRes = await this.executeRun(query.sql, query.params);
         const changes = toNumberFromSql(execRes.data?.changes);
@@ -774,7 +786,7 @@ export class DbHelper {
             idField: "id",
             rows: processedList,
             fields: fields,
-            quoteIdent: this.dialect.quoteIdent.bind(this.dialect),
+            quoteIdent: quoteIdentMySql,
             updatedAtField: "updated_at",
             updatedAtValue: now,
             stateField: "state",
@@ -912,7 +924,7 @@ export class DbHelper {
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
         return await sql.begin(async (tx: SqlClientLike) => {
-            const trans = new DbHelper({ redis: this.redis, sql: tx, dialect: this.dialect });
+            const trans = new DbHelper({ redis: this.redis, sql: tx });
             return await callback(trans);
         });
     }
@@ -1056,8 +1068,8 @@ export class DbHelper {
         const { sql: whereClause, params: whereParams } = builder.getWhereConditions();
 
         // 构建安全的 UPDATE SQL（表名和字段名使用反引号转义，已经是下划线格式）
-        const quotedTable = this.dialect.quoteIdent(snakeTable);
-        const quotedField = this.dialect.quoteIdent(snakeField);
+        const quotedTable = quoteIdentMySql(snakeTable);
+        const quotedField = quoteIdentMySql(snakeField);
         const sql = whereClause ? `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ? WHERE ${whereClause}` : `UPDATE ${quotedTable} SET ${quotedField} = ${quotedField} + ?`;
 
         const execRes = await this.executeRun(sql, [value, ...whereParams]);

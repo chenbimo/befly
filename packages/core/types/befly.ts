@@ -25,8 +25,6 @@ export type BeflyRuntimeEnv = Record<string, string | undefined>;
 export interface DatabaseConfig {
     /** 是否启用数据库 (0: 关闭, 1: 开启) @default 0 */
     enable?: number;
-    /** 数据库方言 ('mysql' | 'postgresql' | 'sqlite') @default 'sqlite' */
-    dialect?: "mysql" | "postgresql" | "sqlite";
     /** 数据库主机 @default '127.0.0.1' */
     host?: string;
     /** 数据库端口 @default 3306 */
