@@ -37,6 +37,8 @@ function makeSqlInfo(options: { sql: string; params: SqlValue[] }): SqlInfo {
 }
 
 describe("syncTable - SqlExecutor envelope contract", () => {
+    const defaultConfig = { strict: true };
+
     test("tableExistsRuntime / getTableColumnsRuntime / getTableIndexesRuntime 必须读取 .data（MySQL）", async () => {
         const db: SqlExecutor = {
             unsafe: async (sqlStr: string, params?: unknown[]) => {
@@ -159,7 +161,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             }
         } satisfies ConstructorParameters<typeof SyncTable>[0];
 
-        await checkTable([]);
+        await checkTable([], defaultConfig);
         await new SyncTable(ctx).run([]);
         expect(true).toBe(true);
     });
@@ -195,7 +197,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             }
         } satisfies ConstructorParameters<typeof SyncTable>[0];
 
-        await checkTable([]);
+        await checkTable([], defaultConfig);
 
         let thrown: unknown = null;
         try {

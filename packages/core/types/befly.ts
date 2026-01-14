@@ -155,6 +155,15 @@ export interface BeflyOptions {
     /** 时区 @default 'Asia/Shanghai' */
     tz?: string;
 
+    /**
+     * 是否启用严格启动校验
+     * - true: 启用字段名称正则（FIELD_NAME_REGEX）等严格校验（默认）
+     * - false: 跳过字段名称正则校验（用于历史表/特殊字符迁移等场景）
+     *
+     * @default true
+     */
+    strict?: boolean;
+
     // ========== 插件配置 ==========
     /** 日志插件配置 */
     logger?: LoggerConfig;

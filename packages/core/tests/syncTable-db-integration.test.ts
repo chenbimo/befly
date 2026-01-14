@@ -66,6 +66,8 @@ function fdText(options: { name: string; min: number | null; max: number | null;
 }
 
 describe("syncTable(ctx, items) - mock mysql", () => {
+    const defaultConfig = { strict: true };
+
     test("首次同步：应创建表并包含系统字段 + 业务字段", async () => {
         const state: MockMySqlState = {
             executedSql: [],
@@ -92,7 +94,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
             }
         });
 
-        await checkTable([item]);
+        await checkTable([item], defaultConfig);
         await new SyncTable(ctx).run([item]);
 
         expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(`\`${tableName}\``))).toBe(true);
@@ -137,7 +139,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
             }
         });
 
-        await checkTable([itemV1]);
+        await checkTable([itemV1], defaultConfig);
         await new SyncTable(ctx).run([itemV1]);
 
         const itemV2 = buildTableItem({
@@ -148,7 +150,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
             }
         });
 
-        await checkTable([itemV2]);
+        await checkTable([itemV2], defaultConfig);
         await new SyncTable(ctx).run([itemV2]);
 
         expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
@@ -258,7 +260,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
             }
         });
 
-        await checkTable([item]);
+        await checkTable([item], defaultConfig);
         await new SyncTable(ctx).run([item]);
 
         const dropUserName = state.executedSql.some((s) => s.includes("DROP INDEX") && s.includes("idx_user_name"));

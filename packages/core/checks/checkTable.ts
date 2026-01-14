@@ -1,3 +1,4 @@
+import type { BeflyOptions } from "../types/befly";
 import type { FieldDefinition } from "../types/validate";
 import type { ScanFileResult } from "../utils/scanFiles";
 
@@ -110,7 +111,7 @@ const MAX_INDEX_STRING_LENGTH_FOR_UNIQUE = 180;
  * 检查表定义文件
  * @throws 当检查失败时抛出异常
  */
-export async function checkTable(tables: ScanFileResult[]): Promise<void> {
+export async function checkTable(tables: ScanFileResult[], config: BeflyOptions): Promise<void> {
     // 收集所有表文件
     let hasError = false;
 
@@ -228,9 +229,11 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                 const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault } = field;
 
                 // 字段名称必须为中文、数字、字母、下划线、短横线、空格
-                if (!FIELD_NAME_REGEX.test(fieldName)) {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
-                    hasError = true;
+                if (config.strict) {
+                    if (!FIELD_NAME_REGEX.test(fieldName)) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
+                        hasError = true;
+                    }
                 }
 
                 // 字段类型必须为string,number,text,array_string,array_text之一

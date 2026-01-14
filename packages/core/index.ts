@@ -96,7 +96,7 @@ export class Befly {
             (this.context as Record<string, unknown>)["addons"] = addons;
 
             await checkApi(apis);
-            await checkTable(tables);
+            await checkTable(tables, this.config);
             await checkPlugin(plugins);
             await checkHook(hooks);
             const checkedMenus = await checkMenu(addons);

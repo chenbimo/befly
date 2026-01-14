@@ -6,6 +6,7 @@ import { checkTable } from "../checks/checkTable.ts";
 import { Logger } from "../lib/logger.ts";
 
 describe("checkTable - smoke", () => {
+    const defaultConfig = { strict: true };
     const getMsgFromArgs = (args: unknown[]): string => {
         const first = args[0];
 
@@ -51,8 +52,57 @@ describe("checkTable - smoke", () => {
             } as any
         ];
 
-        await checkTable(items);
+        await checkTable(items, defaultConfig);
         expect(true).toBe(true);
+    });
+
+    test("strict=false 时应跳过字段名称正则校验（不应抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testInvalidFieldName",
+                fileName: "testInvalidFieldName",
+                moduleName: "app_testInvalidFieldName",
+                addonName: "",
+                content: {
+                    title: { name: "标题@", type: "string", max: 32 }
+                }
+            } as any
+        ];
+
+        await checkTable(items, { strict: false });
+        expect(true).toBe(true);
+    });
+
+    test("strict=true 时字段名称非法应阻断启动（抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testInvalidFieldNameStrict",
+                fileName: "testInvalidFieldNameStrict",
+                moduleName: "app_testInvalidFieldNameStrict",
+                addonName: "",
+                content: {
+                    title: { name: "标题@", type: "string", max: 32 }
+                }
+            } as any
+        ];
+
+        let thrownError: any = null;
+        try {
+            await checkTable(items, { strict: true });
+        } catch (error: any) {
+            thrownError = error;
+        }
+
+        expect(Boolean(thrownError)).toBe(true);
+        expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
     test("unique 和 index 同时为 true 时应阻断启动（抛错）", async () => {
@@ -74,7 +124,7 @@ describe("checkTable - smoke", () => {
 
         let thrownError: any = null;
         try {
-            await checkTable(items);
+            await checkTable(items, defaultConfig);
         } catch (error: any) {
             thrownError = error;
         }
@@ -102,7 +152,7 @@ describe("checkTable - smoke", () => {
 
         let thrownError: any = null;
         try {
-            await checkTable(items);
+            await checkTable(items, defaultConfig);
         } catch (error: any) {
             thrownError = error;
         }
@@ -130,7 +180,7 @@ describe("checkTable - smoke", () => {
 
         let thrownError: any = null;
         try {
-            await checkTable(items);
+            await checkTable(items, defaultConfig);
         } catch (error: any) {
             thrownError = error;
         }
@@ -158,7 +208,7 @@ describe("checkTable - smoke", () => {
 
         let thrownError: any = null;
         try {
-            await checkTable(items);
+            await checkTable(items, defaultConfig);
         } catch (error: any) {
             thrownError = error;
         }
@@ -186,7 +236,7 @@ describe("checkTable - smoke", () => {
 
         let thrownError: any = null;
         try {
-            await checkTable(items);
+            await checkTable(items, defaultConfig);
         } catch (error: any) {
             thrownError = error;
         }
@@ -215,18 +265,21 @@ describe("checkTable - smoke", () => {
         Logger.setMock(mockLogger);
 
         try {
-            await checkTable([
-                {
-                    type: "table",
-                    source: "app",
-                    filePath: "DUMMY",
-                    relativePath: "TestCustomers",
-                    fileName: "TestCustomers",
-                    moduleName: "app_TestCustomers",
-                    addonName: "",
-                    content: {}
-                } as any
-            ]);
+            await checkTable(
+                [
+                    {
+                        type: "table",
+                        source: "app",
+                        filePath: "DUMMY",
+                        relativePath: "TestCustomers",
+                        fileName: "TestCustomers",
+                        moduleName: "app_TestCustomers",
+                        addonName: "",
+                        content: {}
+                    } as any
+                ],
+                defaultConfig
+            );
         } catch {
             // 触发 hasError 后会抛错：这里只验证日志前缀
         } finally {
@@ -259,19 +312,22 @@ describe("checkTable - smoke", () => {
         Logger.setMock(mockLogger);
 
         try {
-            await checkTable([
-                {
-                    type: "table",
-                    source: "app",
-                    sourceName: 123,
-                    filePath: "DUMMY",
-                    relativePath: "TestCustomers",
-                    fileName: "TestCustomers",
-                    moduleName: "app_TestCustomers",
-                    addonName: "",
-                    content: {}
-                } as any
-            ]);
+            await checkTable(
+                [
+                    {
+                        type: "table",
+                        source: "app",
+                        sourceName: 123,
+                        filePath: "DUMMY",
+                        relativePath: "TestCustomers",
+                        fileName: "TestCustomers",
+                        moduleName: "app_TestCustomers",
+                        addonName: "",
+                        content: {}
+                    } as any
+                ],
+                defaultConfig
+            );
         } catch {
             // 触发 hasError 后会抛错：这里只验证日志前缀
         } finally {

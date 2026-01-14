@@ -22,6 +22,9 @@ const defaultOptions: BeflyOptions = {
     bodyLimit: 1048576, // 1MB
     tz: "Asia/Shanghai",
 
+    // ========== 启动校验配置 ==========
+    strict: true,
+
     // ========== 日志配置 ==========
     logger: {
         debug: 1,
@@ -122,6 +125,16 @@ export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
     const idMode = config.db?.idMode;
     if (idMode !== undefined && idMode !== "timeId" && idMode !== "autoId") {
         throw new Error(`配置错误：db.idMode 只能是 'timeId' 或 'autoId'，当前值=${String(idMode)}`);
+    }
+
+    const strict = config.strict;
+    if (strict !== undefined && typeof strict !== "boolean") {
+        throw new Error(`配置错误：strict 必须为 boolean，当前值=${String(strict)}`);
+    }
+
+    const legacyCheckTable = (config as any).checkTable;
+    if (legacyCheckTable !== undefined) {
+        throw new Error(`配置错误：checkTable 配置已废弃，请使用根属性 strict（例如 { "strict": false }），当前值=${String(legacyCheckTable)}`);
     }
 
     return config;
