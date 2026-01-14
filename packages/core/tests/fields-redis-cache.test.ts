@@ -5,6 +5,7 @@
 import { CacheKeys } from "../lib/cacheKeys.ts";
 
 const TABLE_COLUMNS_CACHE_TTL_SECONDS = 3600;
+const DB_NAME = "test";
 
 console.log("\n========== Redis 缓存验证 ==========\n");
 
@@ -42,7 +43,7 @@ async function queryDatabase(table: string): Promise<string[]> {
 // 模拟 getTableColumns 方法
 async function getTableColumns(redis: MockRedis, table: string): Promise<string[]> {
     // 1. 先查 Redis 缓存
-    const cacheKey = CacheKeys.tableColumns(table);
+    const cacheKey = CacheKeys.tableColumns(DB_NAME, table);
     let columns = await redis.getObject<string[]>(cacheKey);
 
     if (columns && columns.length > 0) {

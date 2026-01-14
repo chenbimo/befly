@@ -37,18 +37,31 @@ export class Connect {
     static async connectSql(dbConfig: DatabaseConfig): Promise<SQL> {
         const config = dbConfig || {};
 
-        // 构建 MySQL 连接字符串
-        const host = config.host || "127.0.0.1";
-        const port = config.port || 3306;
-        const user = encodeURIComponent(config.username || "root");
-        const password = encodeURIComponent(config.password || "root");
-        const database = encodeURIComponent(config.database || "befly_demo");
+        // 构建 MySQL 连接字符串（不做隐式默认；缺失直接报错，避免连错库/错密码）
+        const host = typeof config.host === "string" ? config.host.trim() : "";
+        const port = typeof config.port === "number" ? config.port : NaN;
+        const username = typeof config.username === "string" ? config.username.trim() : "";
+        const password = config.password === undefined ? "" : typeof config.password === "string" ? config.password : "";
+        const database = typeof config.database === "string" ? config.database.trim() : "";
 
-        if (!host || !database) {
-            throw new Error("数据库配置不完整，请检查配置参数");
+        if (!host) {
+            throw new Error("数据库配置不完整：db.host 缺失");
+        }
+        if (!Number.isFinite(port) || port < 1 || port > 65535) {
+            throw new Error(`数据库配置不完整：db.port 非法（当前值：${String(config.port)}）`);
+        }
+        if (!username) {
+            throw new Error("数据库配置不完整：db.username 缺失");
+        }
+        if (!database) {
+            throw new Error("数据库配置不完整：db.database 缺失");
         }
 
-        const finalUrl = `mysql://${user}:${password}@${host}:${port}/${database}`;
+        const user = encodeURIComponent(username);
+        const pass = encodeURIComponent(password);
+        const db = encodeURIComponent(database);
+
+        const finalUrl = `mysql://${user}:${pass}@${host}:${port}/${db}`;
 
         const sql = new SQL({
             url: finalUrl,
@@ -147,10 +160,12 @@ export class Connect {
             const db = config.db || 0;
 
             let auth = "";
-            if (username && password) {
-                auth = `${username}:${password}@`;
-            } else if (password) {
-                auth = `:${password}@`;
+            const encodedUsername = username ? encodeURIComponent(username) : "";
+            const encodedPassword = password ? encodeURIComponent(password) : "";
+            if (encodedUsername && encodedPassword) {
+                auth = `${encodedUsername}:${encodedPassword}@`;
+            } else if (encodedPassword) {
+                auth = `:${encodedPassword}@`;
             }
 
             const url = `redis://${auth}${host}:${port}/${db}`;

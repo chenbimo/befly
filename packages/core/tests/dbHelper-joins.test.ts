@@ -49,9 +49,24 @@ describe("DbHelper JOIN - processJoinField", () => {
         expect(DbUtils.processJoinField("p.name AS productName")).toBe("p.name AS productName");
     });
 
-    test("函数字段保持原样", () => {
-        expect(DbUtils.processJoinField("COUNT(*)")).toBe("COUNT(*)");
-        expect(DbUtils.processJoinField("SUM(o.amount)")).toBe("SUM(o.amount)");
+    test("函数字段应被禁止（请使用 selectRaw）", () => {
+        let thrownError1: any = null;
+        try {
+            DbUtils.processJoinField("COUNT(*)");
+        } catch (error: any) {
+            thrownError1 = error;
+        }
+        expect(Boolean(thrownError1)).toBe(true);
+        expect(String(thrownError1?.message || "")).toContain("字段包含函数/表达式");
+
+        let thrownError2: any = null;
+        try {
+            DbUtils.processJoinField("SUM(o.amount)");
+        } catch (error: any) {
+            thrownError2 = error;
+        }
+        expect(Boolean(thrownError2)).toBe(true);
+        expect(String(thrownError2?.message || "")).toContain("字段包含函数/表达式");
     });
 
     test("星号保持原样", () => {

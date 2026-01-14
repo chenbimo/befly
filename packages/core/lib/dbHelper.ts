@@ -71,6 +71,7 @@ class DbSqlError extends Error {
  */
 export class DbHelper {
     private redis: RedisCacheLike;
+    private dbName: string;
     private sql: SqlClientLike | null = null;
     private isTransaction: boolean = false;
 
@@ -79,8 +80,14 @@ export class DbHelper {
      * @param redis - Redis 实例
      * @param sql - Bun SQL 客户端（可选，用于事务）
      */
-    constructor(options: { redis: RedisCacheLike; sql?: SqlClientLike | null }) {
+    constructor(options: { redis: RedisCacheLike; dbName: string; sql?: SqlClientLike | null }) {
         this.redis = options.redis;
+
+        if (typeof options.dbName !== "string" || options.dbName.trim() === "") {
+            throw new Error("DbHelper 初始化失败：dbName 必须为非空字符串");
+        }
+        this.dbName = options.dbName;
+
         this.sql = options.sql || null;
         this.isTransaction = Boolean(options.sql);
     }
@@ -96,7 +103,7 @@ export class DbHelper {
      */
     private async getTableColumns(table: string): Promise<string[]> {
         // 1. 先查 Redis 缓存
-        const cacheKey = CacheKeys.tableColumns(table);
+        const cacheKey = CacheKeys.tableColumns(this.dbName, table);
         const columns = await this.redis.getObject<string[]>(cacheKey);
 
         if (columns && columns.length > 0) {
@@ -924,7 +931,7 @@ export class DbHelper {
         // 使用 Bun SQL 的 begin 方法开启事务
         // begin 方法会自动处理 commit/rollback
         return await sql.begin(async (tx: SqlClientLike) => {
-            const trans = new DbHelper({ redis: this.redis, sql: tx });
+            const trans = new DbHelper({ redis: this.redis, dbName: this.dbName, sql: tx });
             return await callback(trans);
         });
     }
@@ -941,30 +948,32 @@ export class DbHelper {
      * @param options.table - 表名（支持小驼峰或下划线格式，会自动转换）
      */
     async exists(options: Omit<QueryOptions, "fields" | "orderBy" | "page" | "limit">): Promise<DbResult<boolean>> {
-        const prepareOptions: QueryOptions = {
-            table: options.table,
-            page: 1,
-            limit: 1
-        };
-        if (options.where !== undefined) prepareOptions.where = options.where;
-        if (options.joins !== undefined) prepareOptions.joins = options.joins;
-        const { table, where, tableQualifier } = await this.prepareQueryOptions(prepareOptions);
+        if (Array.isArray(options.joins) && options.joins.length > 0) {
+            throw new Error("exists 不支持 joins（请使用显式 query 或拆分查询）");
+        }
 
-        // 使用 COUNT(1) 性能更好
-        const builder = this.createSqlBuilder()
-            .selectRaw("COUNT(1) as cnt")
-            .from(table)
-            .where(DbUtils.addDefaultStateFilter(where, tableQualifier, false))
-            .limit(1);
+        const rawTable = typeof options.table === "string" ? options.table.trim() : "";
+        if (!rawTable) {
+            throw new Error("exists.table 不能为空");
+        }
+        if (rawTable.includes(" ")) {
+            throw new Error(`exists 不支持别名表写法（table: ${rawTable}）`);
+        }
+        if (rawTable.includes(".")) {
+            throw new Error(`exists 不支持 schema.table 写法（table: ${rawTable}）`);
+        }
 
+        const snakeTable = snakeCase(rawTable);
+        const cleanWhere = fieldClear(options.where || {}, { excludeValues: [null, undefined] });
+        const snakeWhere = DbUtils.whereKeysToSnake(cleanWhere);
+        const whereFiltered = DbUtils.addDefaultStateFilter(snakeWhere, snakeTable, false);
+
+        // 使用 COUNT(1) 实现：语义清晰、适配现有返回结构
+        const builder = this.createSqlBuilder().selectRaw("COUNT(1) as cnt").from(snakeTable).where(whereFiltered).limit(1);
         const { sql, params } = builder.toSelectSql();
         const execRes = await this.executeSelect<{ cnt: number }>(sql, params);
         const exists = (execRes.data?.[0]?.cnt || 0) > 0;
-
-        return {
-            data: exists,
-            sql: execRes.sql
-        };
+        return { data: exists, sql: execRes.sql };
     }
 
     /**
@@ -973,6 +982,22 @@ export class DbHelper {
      */
     async getFieldValue<TValue = unknown>(options: Omit<QueryOptions, "fields"> & { field: string }): Promise<DbResult<TValue | null>> {
         const field = options.field;
+
+        if (Array.isArray(options.joins) && options.joins.length > 0) {
+            throw new Error("getFieldValue 不支持 joins（请使用 getOne/getList 并自行取字段）");
+        }
+
+        const rawTable = typeof options.table === "string" ? options.table.trim() : "";
+        if (!rawTable) {
+            throw new Error("getFieldValue.table 不能为空");
+        }
+        if (rawTable.includes(" ")) {
+            throw new Error(`getFieldValue 不支持别名表写法（table: ${rawTable}）`);
+        }
+        if (rawTable.includes(".")) {
+            throw new Error(`getFieldValue 不支持 schema.table 写法（table: ${rawTable}）`);
+        }
+        // （其余逻辑保持不变）
 
         // 验证字段名格式（只允许字母、数字、下划线）
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {

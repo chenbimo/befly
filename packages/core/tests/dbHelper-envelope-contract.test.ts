@@ -2,6 +2,8 @@ import { describe, expect, it, mock } from "bun:test";
 
 import { DbHelper } from "../lib/dbHelper.ts";
 
+const DB_NAME = "test";
+
 function createRedisMock() {
     return {
         getObject: mock(async () => null),
@@ -44,7 +46,7 @@ describe("DbHelper - envelope contract", () => {
             })
         };
 
-        const db = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
+        const db = new DbHelper({ redis: createRedisMock() as any, dbName: DB_NAME, sql: sqlMock });
 
         const tableExistsRes = await db.tableExists("user");
         expect("data" in tableExistsRes).toBe(true);

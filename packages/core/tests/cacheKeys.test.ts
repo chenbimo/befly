@@ -26,8 +26,8 @@ describe("CacheKeys - Key 生成函数", () => {
     });
 
     test("tableColumns - 返回带表名的结构缓存键", () => {
-        expect(CacheKeys.tableColumns("user")).toBe("table:columns:user");
-        expect(CacheKeys.tableColumns("addon_admin_role")).toBe("table:columns:addon_admin_role");
+        expect(CacheKeys.tableColumns("test", "user")).toBe("table:columns:test:user");
+        expect(CacheKeys.tableColumns("test", "addon_admin_role")).toBe("table:columns:test:addon_admin_role");
     });
 
     test("roleInfo - 特殊字符处理", () => {
@@ -36,6 +36,6 @@ describe("CacheKeys - Key 生成函数", () => {
     });
 
     test("tableColumns - 空字符串", () => {
-        expect(CacheKeys.tableColumns("")).toBe("table:columns:");
+        expect(CacheKeys.tableColumns("", "")).toBe("table:columns::");
     });
 });

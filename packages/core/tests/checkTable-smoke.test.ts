@@ -83,6 +83,35 @@ describe("checkTable - smoke", () => {
         expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
+    test("index/unique=true 的 string 字段 max 过长时应阻断启动（抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testLongIndex",
+                fileName: "testLongIndex",
+                moduleName: "app_testLongIndex",
+                addonName: "",
+                content: {
+                    // utf8mb4 索引字段建议 <= 768，这里故意越界
+                    code: { name: "编码", type: "string", max: 2000, index: true }
+                }
+            } as any
+        ];
+
+        let thrownError: any = null;
+        try {
+            await checkTable(items);
+        } catch (error: any) {
+            thrownError = error;
+        }
+
+        expect(Boolean(thrownError)).toBe(true);
+        expect(String(thrownError?.message || "")).toContain("表结构检查失败");
+    });
+
     test("sourceName 缺失时：日志不应出现 undefined表（允许前缀为空）", async () => {
         const calls: Array<{ level: string; args: unknown[] }> = [];
         const mockLogger = {

@@ -122,7 +122,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         expect(columns.age).toBeDefined();
 
         expect(redisCalls.length).toBe(1);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableName)]);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
     });
 
     test("二次同步：新增字段应落库（ADD COLUMN），同时清理 columns 缓存", async () => {
@@ -181,8 +181,8 @@ describe("syncTable(ctx, items) - mock mysql", () => {
 
         // 两次同步，每次都会清一次缓存
         expect(redisCalls.length).toBe(2);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableName)]);
-        expect(redisCalls[1].keys).toEqual([CacheKeys.tableColumns(tableName)]);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
+        expect(redisCalls[1].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
     });
 
     test("索引变更：仅删除单列索引；复合索引不会被误删", async () => {
@@ -303,6 +303,6 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         expect(dropUserIdComposite).toBe(false);
 
         expect(redisCalls.length).toBe(1);
-        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns(tableName)]);
+        expect(redisCalls[0].keys).toEqual([CacheKeys.tableColumns("test", tableName)]);
     });
 });

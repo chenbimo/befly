@@ -8,6 +8,8 @@ import { test, expect, mock } from "bun:test";
 import { CacheKeys } from "../lib/cacheKeys.ts";
 import { DbHelper } from "../lib/dbHelper.ts";
 
+const DB_NAME = "test";
+
 function createRedisMock(options?: { getObject?: any; setObject?: any; del?: any; genTimeID?: any }) {
     const getObject = options?.getObject ? options.getObject : mock(async () => null);
     const setObject = options?.setObject ? options.setObject : mock(async () => true);
@@ -37,13 +39,13 @@ test("getTableColumns - 正常查询表字段", async () => {
         getObject: mock(async () => null) // 缓存未命中
     });
 
-    const dbHelper = new DbHelper({ redis: redisMock as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: redisMock as any, dbName: DB_NAME, sql: sqlMock });
 
     const columns = await (dbHelper as any).getTableColumns("users");
 
     expect(columns).toEqual(["id", "username", "email", "created_at"]);
     expect(sqlMock.unsafe).toHaveBeenCalledTimes(1);
-    expect(redisMock.getObject).toHaveBeenCalledWith(CacheKeys.tableColumns("users"));
+    expect(redisMock.getObject).toHaveBeenCalledWith(CacheKeys.tableColumns(DB_NAME, "users"));
     expect(redisMock.setObject).toHaveBeenCalled();
 });
 
@@ -59,12 +61,12 @@ test("getTableColumns - Redis 缓存命中", async () => {
         })
     };
 
-    const dbHelper = new DbHelper({ redis: redisMock as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: redisMock as any, dbName: DB_NAME, sql: sqlMock });
 
     const columns = await (dbHelper as any).getTableColumns("users");
 
     expect(columns).toEqual(cachedColumns);
-    expect(redisMock.getObject).toHaveBeenCalledWith(CacheKeys.tableColumns("users"));
+    expect(redisMock.getObject).toHaveBeenCalledWith(CacheKeys.tableColumns(DB_NAME, "users"));
     expect(sqlMock.unsafe).not.toHaveBeenCalled(); // SQL 不应该被调用
     expect(redisMock.setObject).not.toHaveBeenCalled(); // 不需要写缓存
 });
@@ -76,7 +78,7 @@ test("getTableColumns - 表不存在错误", async () => {
 
     const redisMock = createRedisMock();
 
-    const dbHelper = new DbHelper({ redis: redisMock as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: redisMock as any, dbName: DB_NAME, sql: sqlMock });
 
     try {
         await (dbHelper as any).getTableColumns("non_existent_table");
@@ -97,7 +99,7 @@ test("getTableColumns - SQL 语法使用反引号", async () => {
         })
     };
 
-    const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: createRedisMock() as any, dbName: DB_NAME, sql: sqlMock });
 
     await (dbHelper as any).getTableColumns("addon_admin_user");
 
@@ -113,7 +115,7 @@ test("getTableColumns - 表名特殊字符处理", async () => {
         unsafe: mock(async () => mockColumns)
     };
 
-    const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: createRedisMock() as any, dbName: DB_NAME, sql: sqlMock });
 
     // 测试下划线表名
     await (dbHelper as any).getTableColumns("addon_admin_user");
@@ -134,7 +136,7 @@ test("getTableColumns - 缓存键格式正确", async () => {
         getObject: mock(async () => null),
         setObject: mock(async (key: string, value: any, seconds: number) => {
             // 验证缓存键格式
-            expect(key).toBe(CacheKeys.tableColumns("test_table"));
+            expect(key).toBe(CacheKeys.tableColumns(DB_NAME, "test_table"));
             // 验证缓存值格式
             expect(Array.isArray(value)).toBe(true);
             // 验证过期时间
@@ -143,7 +145,7 @@ test("getTableColumns - 缓存键格式正确", async () => {
         })
     });
 
-    const dbHelper = new DbHelper({ redis: redisMock as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: redisMock as any, dbName: DB_NAME, sql: sqlMock });
 
     await (dbHelper as any).getTableColumns("test_table");
 
@@ -170,7 +172,7 @@ test("getTableColumns - 多次调用相同表（缓存效果）", async () => {
         })
     });
 
-    const dbHelper = new DbHelper({ redis: redisMock as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: redisMock as any, dbName: DB_NAME, sql: sqlMock });
 
     // 第一次调用 - 应该查询数据库
     const columns1 = await (dbHelper as any).getTableColumns("users");
@@ -200,7 +202,7 @@ test("getTableColumns - Redis 错误处理", async () => {
         })
     });
 
-    const dbHelper = new DbHelper({ redis: redisMock as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: redisMock as any, dbName: DB_NAME, sql: sqlMock });
 
     try {
         await (dbHelper as any).getTableColumns("users");
@@ -222,7 +224,7 @@ test("getTableColumns - 字段映射正确性", async () => {
         unsafe: mock(async () => mockColumns)
     };
 
-    const dbHelper = new DbHelper({ redis: createRedisMock() as any, sql: sqlMock });
+    const dbHelper = new DbHelper({ redis: createRedisMock() as any, dbName: DB_NAME, sql: sqlMock });
 
     const columns = await (dbHelper as any).getTableColumns("users");
 

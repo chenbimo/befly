@@ -4,6 +4,8 @@ import { DbHelper } from "../lib/dbHelper.ts";
 import { DbUtils } from "../lib/dbUtils.ts";
 import { SqlBuilder } from "../lib/sqlBuilder.ts";
 
+const DB_NAME = "test";
+
 describe("tableRef normalize + escape", () => {
     it("DbUtils.normalizeTableRef: 保留 alias，仅 snakeCase 表名", () => {
         expect(DbUtils.normalizeTableRef("UserProfile up")).toBe("user_profile up");
@@ -50,7 +52,7 @@ describe("DbHelper.getList deserialize", () => {
             genTimeID: mock(async () => 1)
         };
 
-        const dbHelper = new DbHelper({ redis: redisMock, sql: sqlMock });
+        const dbHelper = new DbHelper({ redis: redisMock, dbName: DB_NAME, sql: sqlMock });
 
         const result = await dbHelper.getList<{ id: number; tags: string[] }>({
             table: "users",

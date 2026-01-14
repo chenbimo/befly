@@ -20,6 +20,11 @@ const dbPlugin: Plugin = {
     async handler(befly: BeflyContext): Promise<DbHelper> {
         const env = befly.config?.nodeEnv;
 
+        const dbName = String(befly.config?.db?.database || "");
+        if (!dbName) {
+            throw new Error("数据库初始化失败：befly.config.db.database 缺失");
+        }
+
         if (!befly.redis) {
             throw new Error("Redis 未初始化");
         }
@@ -28,7 +33,7 @@ const dbPlugin: Plugin = {
             const sql = Connect.getSql();
 
             // 创建数据库管理器实例
-            const dbManager = new DbHelper({ redis: befly.redis, sql: sql });
+            const dbManager = new DbHelper({ redis: befly.redis, dbName: dbName, sql: sql });
 
             return dbManager;
         } catch (error: unknown) {

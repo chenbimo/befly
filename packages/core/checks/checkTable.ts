@@ -101,7 +101,15 @@ const FIELD_NAME_REGEX = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
 /**
  * VARCHAR 最大长度限制
  */
-const MAX_VARCHAR_LENGTH = 65535;
+// 注意：MySQL 的 VARCHAR(n) 这里的 n 是“字符数”，但受行大小与字符集字节数限制。
+// utf8mb4 最坏情况 4 bytes/char，因此可用上限可近似换算为 16383 chars。
+const MAX_VARCHAR_LENGTH = 16383;
+
+/**
+ * 索引字段（index/unique）最大长度限制（utf8mb4）
+ * InnoDB 单列索引 key length 上限默认 3072 bytes（MySQL 8），换算约 768 chars。
+ */
+const MAX_INDEXED_VARCHAR_LENGTH = 768;
 
 /**
  * 检查表定义文件
@@ -289,6 +297,12 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                     } else if (fieldMax > MAX_VARCHAR_LENGTH) {
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         hasError = true;
+                    } else {
+                        // 额外约束：索引/唯一字段必须更短，否则 MySQL 可能无法创建索引（当前实现不支持前缀索引）。
+                        if ((field.index === true || field.unique === true) && fieldMax > MAX_INDEXED_VARCHAR_LENGTH) {
+                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 ${field.unique === true ? "unique" : "index"}=true，` + `但 max=${fieldMax} 过长，建议 <= ${MAX_INDEXED_VARCHAR_LENGTH}（utf8mb4 索引长度限制）`);
+                            hasError = true;
+                        }
                     }
 
                     // default 规则（table 定义专用）：

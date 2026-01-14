@@ -107,6 +107,19 @@ describe("utils - convertBigIntFields", () => {
         expect(out[0].id).toBe("x");
     });
 
+    test("should throw when value exceeds Number.MAX_SAFE_INTEGER", () => {
+        const input = [{ id: "9007199254740993" }];
+        expect(() => convertBigIntFields(input)).toThrow();
+    });
+
+    test("single object input should also be converted", () => {
+        const input: Record<string, unknown> = { id: "1", userId: "2", other: "x" };
+        const out = convertBigIntFields(input) as Record<string, unknown>;
+        expect(out.id).toBe(1);
+        expect(out.userId).toBe(2);
+        expect(out.other).toBe("x");
+    });
+
     test("non-array input should be returned as-is", () => {
         const out = convertBigIntFields(null);
         expect(out).toBeNull();

@@ -2,6 +2,7 @@ import type { WhereConditions } from "../types/common";
 
 import { fieldClear } from "../utils/fieldClear";
 import { keysToSnake, snakeCase } from "../utils/util";
+import { SqlCheck } from "./sqlCheck";
 
 export class DbUtils {
     static parseTableRef(tableRef: string): { schema: string | null; table: string; alias: string | null } {
@@ -112,11 +113,7 @@ export class DbUtils {
         // 情况2：指定包含字段
         if (classified.type === "include") {
             return classified.fields.map((field) => {
-                // 保留函数和特殊字段
-                if (field.includes("(") || field.includes(" ")) {
-                    return field;
-                }
-                return snakeCase(field);
+                return DbUtils.processJoinField(field);
             });
         }
 
@@ -153,6 +150,12 @@ export class DbUtils {
         // 检测是否有空字符串或无效值
         if (fields.some((f) => !f || typeof f !== "string" || f.trim() === "")) {
             throw new Error("fields 不能包含空字符串或无效值");
+        }
+
+        // 统一禁止函数/表达式：复杂表达式请使用 selectRaw/whereRaw
+        for (const rawField of fields) {
+            const checkField = rawField.startsWith("!") ? rawField.substring(1) : rawField;
+            SqlCheck.assertNoExprField(checkField);
         }
 
         // 统计包含字段和排除字段
@@ -201,8 +204,11 @@ export class DbUtils {
     }
 
     static processJoinField(field: string): string {
-        // 跳过函数、星号、已处理的字段
-        if (field.includes("(") || field === "*" || field.startsWith("`")) {
+        // 统一禁止函数/表达式：复杂表达式请使用 SqlBuilder.selectRaw
+        SqlCheck.assertNoExprField(field);
+
+        // 跳过星号、已引用字段
+        if (field === "*" || field.startsWith("`")) {
             return field;
         }
 
@@ -248,6 +254,9 @@ export class DbUtils {
         if (key === "$or" || key === "$and") {
             return key;
         }
+
+        // 统一禁止函数/表达式：复杂表达式请使用 whereRaw
+        SqlCheck.assertNoExprField(key);
 
         // 处理带操作符的字段名（如 user.userId$gt）
         if (key.includes("$")) {
@@ -400,6 +409,9 @@ export class DbUtils {
                 result[key] = Array.isArray(value) ? value.map((item) => DbUtils.whereKeysToSnake(item)) : [];
                 continue;
             }
+
+            // 统一禁止函数/表达式：复杂表达式请使用 whereRaw
+            SqlCheck.assertNoExprField(key);
 
             // 处理带操作符的字段名（如 userId$gt）
             if (key.includes("$")) {
