@@ -13,7 +13,7 @@ import { checkTable } from "../checks/checkTable.ts";
 import { SyncTable } from "../sync/syncTable.ts";
 import { toSqlParams } from "../utils/sqlParams.ts";
 
-type SqlExecutor = Parameters<typeof SyncTable.tableExistsIO>[0];
+type SqlExecutor = Parameters<typeof SyncTable.tableExists>[0];
 
 class SqlInfoError extends Error {
     public sqlInfo: SqlInfo;
@@ -93,15 +93,15 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             }
         };
 
-        const exists = await SyncTable.tableExistsIO(db, "test", "any_table");
+        const exists = await SyncTable.tableExists(db, "test", "any_table");
         expect(exists).toBe(true);
 
-        const cols = await SyncTable.getTableColumnsIO(db, "test", "any_table");
+        const cols = await SyncTable.getTableColumns(db, "test", "any_table");
         expect(cols.id).toBeDefined();
         expect(cols.user_name).toBeDefined();
         expect(cols.user_name.nullable).toBe(true);
 
-        const idx = await SyncTable.getTableIndexesIO(db, "test", "any_table");
+        const idx = await SyncTable.getTableIndexes(db, "test", "any_table");
         expect(idx.idx_user_name).toEqual(["user_name", "id"]);
     });
 
@@ -116,7 +116,7 @@ describe("syncTable - SqlExecutor envelope contract", () => {
 
         let thrown: unknown = null;
         try {
-            await SyncTable.tableExistsIO(db, "test", "t_any");
+            await SyncTable.tableExists(db, "test", "t_any");
         } catch (e: unknown) {
             thrown = e;
         }

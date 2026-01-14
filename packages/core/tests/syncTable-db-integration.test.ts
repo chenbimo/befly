@@ -106,10 +106,10 @@ describe("syncTable(ctx, items) - mock mysql", () => {
 
         expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(`\`${tableName}\``))).toBe(true);
 
-        const exists = await SyncTable.tableExistsIO(db, "test", tableName);
+        const exists = await SyncTable.tableExists(db, "test", tableName);
         expect(exists).toBe(true);
 
-        const columns = await SyncTable.getTableColumnsIO(db, "test", tableName);
+        const columns = await SyncTable.getTableColumns(db, "test", tableName);
 
         expect(columns.id).toBeDefined();
         expect(columns.created_at).toBeDefined();
@@ -173,7 +173,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
 
         expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
 
-        const columns = await SyncTable.getTableColumnsIO(db, "test", tableName);
+        const columns = await SyncTable.getTableColumns(db, "test", tableName);
         expect(columns.nickname).toBeDefined();
         expect(columns.bio).toBeDefined();
 

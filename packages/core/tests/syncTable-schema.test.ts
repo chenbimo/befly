@@ -20,10 +20,10 @@ describe("tableExistsRuntime", () => {
             }
         });
 
-        const exist = await SyncTable.tableExistsIO(db, "test", "test_sync_table_exists");
+        const exist = await SyncTable.tableExists(db, "test", "test_sync_table_exists");
         expect(exist).toBe(true);
 
-        const notExist = await SyncTable.tableExistsIO(db, "test", "test_sync_table_not_exist_12345");
+        const notExist = await SyncTable.tableExists(db, "test", "test_sync_table_not_exist_12345");
         expect(notExist).toBe(false);
     });
 });
@@ -47,7 +47,7 @@ describe("getTableColumnsRuntime", () => {
             }
         });
 
-        const columns = await SyncTable.getTableColumnsIO(db, "test", "test_sync_table_columns");
+        const columns = await SyncTable.getTableColumns(db, "test", "test_sync_table_columns");
 
         expect(columns.id).toBeDefined();
         expect(columns.user_name).toBeDefined();
@@ -76,7 +76,7 @@ describe("getTableIndexesRuntime", () => {
             }
         });
 
-        const indexes = await SyncTable.getTableIndexesIO(db, "test", "test_sync_table_indexes");
+        const indexes = await SyncTable.getTableIndexes(db, "test", "test_sync_table_indexes");
 
         expect(indexes.idx_created_at).toBeDefined();
         expect(indexes.idx_created_at).toContain("created_at");

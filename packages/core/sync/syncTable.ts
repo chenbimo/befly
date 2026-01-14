@@ -170,7 +170,7 @@ export class SyncTable {
                     SyncTable.normalizeFieldDefinitionInPlace(fieldDef);
                 }
 
-                const existsTable = await SyncTable.tableExistsIO(this.db, this.dbName, tableName);
+                const existsTable = await SyncTable.tableExists(this.db, this.dbName, tableName);
                 if (existsTable) {
                     await SyncTable.modifyTable(this.db, this.dbName, tableName, tableFields);
                 } else {
@@ -545,10 +545,15 @@ export class SyncTable {
     }
 
     /* ---------------------------------------------------------------------- */
-    /* information_schema IO：读取表/列/索引元信息 */
+    /* information_schema 查询：读取表/列/索引元信息 */
     /* ---------------------------------------------------------------------- */
 
-    public static async tableExistsIO(db: SqlExecutor, dbName: string, tableName: string): Promise<boolean> {
+    /**
+     * 只读查询 information_schema.TABLES，用于判断表是否存在。
+     * - 该方法不会执行 DDL，不会修改数据库结构
+     * - 失败时会包装错误信息（含 tableName / operation）以便排查
+     */
+    public static async tableExists(db: SqlExecutor, dbName: string, tableName: string): Promise<boolean> {
         try {
             const res = await db.unsafe<TableExistsRow[]>("SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", [dbName, tableName]);
             return (res.data?.[0]?.count || 0) > 0;
@@ -557,7 +562,12 @@ export class SyncTable {
         }
     }
 
-    public static async getTableColumnsIO(db: SqlExecutor, dbName: string, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
+    /**
+     * 只读查询 information_schema.COLUMNS，读取列元信息。
+     * - 该方法不会执行 DDL，不会修改数据库结构
+     * - 返回结构用于与字段定义做对比（compareFieldDefinition）
+     */
+    public static async getTableColumns(db: SqlExecutor, dbName: string, tableName: string): Promise<{ [key: string]: ColumnInfo }> {
         const columns: { [key: string]: ColumnInfo } = {};
 
         try {
@@ -586,7 +596,12 @@ export class SyncTable {
         }
     }
 
-    public static async getTableIndexesIO(db: SqlExecutor, dbName: string, tableName: string): Promise<IndexInfo> {
+    /**
+     * 只读查询 information_schema.STATISTICS，读取（非主键）索引元信息。
+     * - 该方法不会执行 DDL，不会修改数据库结构
+     * - 仅返回 PRIMARY 之外的索引（PRIMARY 会被同步逻辑视为系统约束）
+     */
+    public static async getTableIndexes(db: SqlExecutor, dbName: string, tableName: string): Promise<IndexInfo> {
         const indexes: IndexInfo = {};
 
         try {
@@ -713,8 +728,8 @@ export class SyncTable {
     }
 
     public static async modifyTable(db: SqlExecutor, dbName: string, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan> {
-        const existingColumns = await SyncTable.getTableColumnsIO(db, dbName, tableName);
-        const existingIndexes = await SyncTable.getTableIndexesIO(db, dbName, tableName);
+        const existingColumns = await SyncTable.getTableColumns(db, dbName, tableName);
+        const existingIndexes = await SyncTable.getTableIndexes(db, dbName, tableName);
 
         let changed = false;
 
