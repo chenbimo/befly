@@ -17,6 +17,8 @@ import { SqlBuilder } from "./sqlBuilder";
 import { SqlCheck } from "./sqlCheck";
 
 type RedisCacheLike = {
+    getObject<T = unknown>(key: string): Promise<T | null>;
+    setObject<T = unknown>(key: string, obj: T, ttl?: number | null): Promise<string | null>;
     genTimeID(): Promise<number>;
 };
 
@@ -69,9 +71,6 @@ export class DbHelper {
     private sql: SqlClientLike | null = null;
     private isTransaction: boolean = false;
 
-    // 进程内去重：避免同一时间并发获取同一张表的 columns 时重复打 SHOW COLUMNS
-    private tableColumnsInFlight: Map<string, Promise<string[]>> = new Map();
-
     /**
      * 构造函数
      * @param redis - Redis 实例
@@ -99,38 +98,24 @@ export class DbHelper {
      * @returns 字段名数组（下划线格式）
      */
     private async getTableColumns(table: string): Promise<string[]> {
-        const existing = this.tableColumnsInFlight.get(table);
-        if (existing) {
-            return await existing;
+        // 查询数据库
+        const quotedTable = quoteIdentMySql(table);
+        const execRes = await this.executeSelect(`SHOW COLUMNS FROM ${quotedTable}`, []);
+        const result = execRes.data;
+
+        if (!result || result.length === 0) {
+            throw new Error(`表 ${table} 不存在或没有字段`);
         }
 
-        const inFlight = (async (): Promise<string[]> => {
-            const quotedTable = quoteIdentMySql(table);
-            const execRes = await this.executeSelect(`SHOW COLUMNS FROM ${quotedTable}`, []);
-            const result = execRes.data;
-
-            if (!result || result.length === 0) {
-                throw new Error(`表 ${table} 不存在或没有字段`);
+        const columnNames: string[] = [];
+        for (const row of result) {
+            const name = (row as Record<string, unknown>)["Field"];
+            if (typeof name === "string" && name.length > 0) {
+                columnNames.push(name);
             }
-
-            const columnNames: string[] = [];
-            for (const row of result) {
-                const name = (row as Record<string, unknown>)["Field"];
-                if (typeof name === "string" && name.length > 0) {
-                    columnNames.push(name);
-                }
-            }
-
-            return columnNames;
-        })();
-
-        this.tableColumnsInFlight.set(table, inFlight);
-
-        try {
-            return await inFlight;
-        } finally {
-            this.tableColumnsInFlight.delete(table);
         }
+
+        return columnNames;
     }
 
     /**
