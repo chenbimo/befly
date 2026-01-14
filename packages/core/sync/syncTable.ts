@@ -721,14 +721,7 @@ export class SyncTable {
                         Logger.debug(`  ~ 修改 ${dbFieldName} ${changeLabel}: ${c.current} -> ${c.expected}`);
                     }
 
-                    if (SyncTable.isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && typeof fieldDef.max === "number") {
-                        if (existingColumns[dbFieldName].max! > fieldDef.max) {
-                            Logger.warn(`[跳过危险变更] ${tableName}.${dbFieldName} 长度收缩 ${existingColumns[dbFieldName].max} -> ${fieldDef.max} 已被跳过（需手动处理）`);
-                        }
-                    }
-
                     const hasTypeChange = comparison.some((c) => c.type === "datatype");
-                    const hasLengthChange = comparison.some((c) => c.type === "length");
                     const onlyDefaultChanged = comparison.every((c) => c.type === "default");
                     const defaultChanged = comparison.some((c) => c.type === "default");
 
@@ -763,13 +756,7 @@ export class SyncTable {
                     }
 
                     if (!onlyDefaultChanged) {
-                        let skipModify = false;
-                        if (hasLengthChange && SyncTable.isStringOrArrayType(fieldDef.type) && existingColumns[dbFieldName].max && typeof fieldDef.max === "number") {
-                            const isShrink = existingColumns[dbFieldName].max! > fieldDef.max;
-                            if (isShrink) skipModify = true;
-                        }
-
-                        if (!skipModify) modifyClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
+                        modifyClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
                     }
                     changed = true;
                 }

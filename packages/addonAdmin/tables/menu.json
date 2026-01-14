@@ -10,7 +10,7 @@
         "name": "路由路径",
         "type": "string",
         "min": 1,
-        "max": 200,
+        "max": 150,
         "unique": true
     },
     "sort": {
