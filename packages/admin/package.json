@@ -29,7 +29,7 @@
     },
     "dependencies": {
         "@befly-addon/admin": "^1.7.1",
-        "@iconify-json/lucide": "^1.2.84",
+        "@iconify-json/lucide": "^1.2.85",
         "axios": "^1.13.2",
         "befly-shared": "workspace:*",
         "befly-vite": "^1.4.4",
