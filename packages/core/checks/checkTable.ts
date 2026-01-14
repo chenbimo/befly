@@ -226,25 +226,23 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                     hasError = true;
                 }
 
-                const { name: fieldName, type: fieldType, min: fieldMin, max: fieldMax, default: fieldDefault } = field;
-
                 // 字段名称必须为中文、数字、字母、下划线、短横线、空格
                 if (config.strict) {
-                    if (!FIELD_NAME_REGEX.test(fieldName)) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段名称 "${fieldName}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
+                    if (!FIELD_NAME_REGEX.test(field.name)) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段名称 "${field.name}" 格式错误，` + `必须为中文、数字、字母、下划线、短横线、空格`);
                         hasError = true;
                     }
                 }
 
                 // 字段类型必须为string,number,text,array_string,array_text之一
-                if (!FIELD_TYPE_SET.has(fieldType)) {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型 "${fieldType}" 格式错误，` + `必须为${FIELD_TYPES.join("、")}之一`);
+                if (!FIELD_TYPE_SET.has(field.type)) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型 "${field.type}" 格式错误，` + `必须为${FIELD_TYPES.join("、")}之一`);
                     hasError = true;
                 }
 
                 // unsigned 仅对 number 类型有效（且仅 MySQL 语义上生效）
-                if (fieldType !== "number" && field.unsigned !== undefined) {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型为 ${fieldType}，不允许设置 unsigned（仅 number 类型有效）`);
+                if (field.type !== "number" && field.unsigned !== undefined) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型为 ${field.type}，不允许设置 unsigned（仅 number 类型有效）`);
                     hasError = true;
                 }
 
@@ -255,54 +253,54 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                 }
 
                 // 约束：当最小值与最大值均为数字时，要求最小值 <= 最大值
-                if (fieldMin !== undefined && fieldMax !== undefined && fieldMin !== null && fieldMax !== null) {
-                    if (fieldMin > fieldMax) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最小值 "${fieldMin}" 不能大于最大值 "${fieldMax}"`);
+                if (field.min !== undefined && field.max !== undefined && field.min !== null && field.max !== null) {
+                    if (field.min > field.max) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最小值 "${field.min}" 不能大于最大值 "${field.max}"`);
                         hasError = true;
                     }
                 }
 
                 // 类型联动校验 + 默认值规则
-                if (fieldType === "text" || fieldType === "array_text" || fieldType === "array_number_text") {
+                if (field.type === "text" || field.type === "array_text" || field.type === "array_number_text") {
                     // text / array_text / array_number_text：min/max 必须为 null，默认值必须为 null，且不支持索引/唯一约束
-                    if (fieldMin !== undefined && fieldMin !== null) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${fieldType} 类型最小值应为 null，当前为 "${fieldMin}"`);
+                    if (field.min !== undefined && field.min !== null) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${field.type} 类型最小值应为 null，当前为 "${field.min}"`);
                         hasError = true;
                     }
-                    if (fieldMax !== undefined && fieldMax !== null) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${fieldType} 类型最大长度应为 null，当前为 "${fieldMax}"`);
+                    if (field.max !== undefined && field.max !== null) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${field.type} 类型最大长度应为 null，当前为 "${field.max}"`);
                         hasError = true;
                     }
-                    if (fieldDefault !== undefined && fieldDefault !== null) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值必须为 null，当前为 "${fieldDefault}"`);
+                    if (field.default !== undefined && field.default !== null) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值必须为 null，当前为 "${field.default}"`);
                         hasError = true;
                     }
 
                     if (field.index === true) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，不支持创建索引（index=true 无效）`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，不支持创建索引（index=true 无效）`);
                         hasError = true;
                     }
                     if (field.unique === true) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，不支持唯一约束（unique=true 无效）`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，不支持唯一约束（unique=true 无效）`);
                         hasError = true;
                     }
-                } else if (fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string") {
+                } else if (field.type === "string" || field.type === "array_string" || field.type === "array_number_string") {
                     // 约束：string/array_*_string 必须声明 max。
                     // 说明：array_*_string 的 max 表示“单个元素字符串长度”，不是数组元素数量。
-                    if (fieldMax === undefined || fieldMax === null || typeof fieldMax !== "number") {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，` + `必须设置 max 且类型为数字；其中 array_*_string 的 max 表示单个元素长度，当前为 "${fieldMax}"`);
+                    if (field.max === undefined || field.max === null || typeof field.max !== "number") {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，` + `必须设置 max 且类型为数字；其中 array_*_string 的 max 表示单个元素长度，当前为 "${field.max}"`);
                         hasError = true;
-                    } else if (fieldMax > MAX_VARCHAR_LENGTH) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
+                    } else if (field.max > MAX_VARCHAR_LENGTH) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${field.max} 越界，` + `${field.type} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         hasError = true;
                     } else {
-                        if (field.index === true && fieldMax > MAX_INDEX_STRING_LENGTH_FOR_INDEX) {
-                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 index=true，` + `但 max=${fieldMax} 超出允许范围（要求 <= ${MAX_INDEX_STRING_LENGTH_FOR_INDEX}）`);
+                        if (field.index === true && field.max > MAX_INDEX_STRING_LENGTH_FOR_INDEX) {
+                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 index=true，` + `但 max=${field.max} 超出允许范围（要求 <= ${MAX_INDEX_STRING_LENGTH_FOR_INDEX}）`);
                             hasError = true;
                         }
 
-                        if (field.unique === true && fieldMax > MAX_INDEX_STRING_LENGTH_FOR_UNIQUE) {
-                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 unique=true，` + `但 max=${fieldMax} 超出允许范围（要求 <= ${MAX_INDEX_STRING_LENGTH_FOR_UNIQUE}）`);
+                        if (field.unique === true && field.max > MAX_INDEX_STRING_LENGTH_FOR_UNIQUE) {
+                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 unique=true，` + `但 max=${field.max} 超出允许范围（要求 <= ${MAX_INDEX_STRING_LENGTH_FOR_UNIQUE}）`);
                             hasError = true;
                         }
                     }
@@ -310,28 +308,28 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                     // default 规则（table 定义专用）：
                     // - string：default 若存在且非 null，必须为 string
                     // - array_*_string：default 若存在且非 null，必须为 string，且建议为 JSON 数组字符串（如 "[]"）
-                    if (fieldDefault !== undefined && fieldDefault !== null) {
-                        if (typeof fieldDefault !== "string") {
-                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值必须为字符串或 null` + `（typeof=${typeof fieldDefault}，value=${formatValuePreview(fieldDefault)}）`);
+                    if (field.default !== undefined && field.default !== null) {
+                        if (typeof field.default !== "string") {
+                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值必须为字符串或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
                             hasError = true;
-                        } else if (fieldType !== "string") {
+                        } else if (field.type !== "string") {
                             // array_*_string：尝试解析为 JSON 数组，帮助尽早发现误填
                             try {
-                                const parsed = JSON.parse(fieldDefault);
+                                const parsed = JSON.parse(field.default);
                                 if (!Array.isArray(parsed)) {
-                                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(fieldDefault)}）`);
+                                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(field.default)}）`);
                                     hasError = true;
                                 }
                             } catch {
-                                Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${fieldType} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(fieldDefault)}）`);
+                                Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(field.default)}）`);
                                 hasError = true;
                             }
                         }
                     }
-                } else if (fieldType === "number") {
+                } else if (field.type === "number") {
                     // number 类型：default 如果存在，必须为 null 或 number
-                    if (fieldDefault !== undefined && fieldDefault !== null && typeof fieldDefault !== "number") {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 number 类型，默认值必须为数字或 null` + `（typeof=${typeof fieldDefault}，value=${formatValuePreview(fieldDefault)}）`);
+                    if (field.default !== undefined && field.default !== null && typeof field.default !== "number") {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 number 类型，默认值必须为数字或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
                         hasError = true;
                     }
                 }

@@ -147,10 +147,8 @@ export async function checkConfig(config: BeflyOptions): Promise<void> {
         }
     }
 
-    if (config.strict !== undefined) {
-        if (typeof config.strict !== "boolean") {
-            throw new Error(`配置错误：strict 必须为 boolean，当前值=${String(config.strict)}`);
-        }
+    if (typeof config.strict !== "boolean") {
+        throw new Error(`配置错误：strict 必须为 true 或 false，当前值=${String(config.strict)}`);
     }
 
     validateDbConfig(config.db);

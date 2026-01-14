@@ -5,6 +5,7 @@ describe("checkConfig", () => {
         await expect(
             checkConfig({
                 nodeEnv: "development",
+                strict: true,
                 appName: "t",
                 db: {
                     host: "",
