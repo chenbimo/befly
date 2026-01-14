@@ -10,13 +10,13 @@
 
 Befly 是专为 Bun 运行时设计的现代化 API 框架，提供：
 
--   ⚡ **原生 TypeScript 支持** - 完整的类型定义和智能提示
--   🚀 **高性能** - 基于 Bun 运行时，超快的启动和执行速度
--   🔌 **插件化架构** - 灵活的插件系统，轻松扩展功能
--   🗄️ **数据库（MySQL 8.0+）** - core 仅支持 MySQL 8.0 及以上
--   📝 **自动化表管理** - 基于 JSON 的表定义，自动同步数据库结构
--   🔐 **内置身份验证** - JWT 认证，角色权限管理
--   📊 **完整日志系统** - 结构化日志，敏感字段过滤
+- ⚡ **原生 TypeScript 支持** - 完整的类型定义和智能提示
+- 🚀 **高性能** - 基于 Bun 运行时，超快的启动和执行速度
+- 🔌 **插件化架构** - 灵活的插件系统，轻松扩展功能
+- 🗄️ **数据库（MySQL 8.0+）** - core 仅支持 MySQL 8.0 及以上
+- 📝 **自动化表管理** - 基于 JSON 的表定义，自动同步数据库结构
+- 🔐 **内置身份验证** - JWT 认证，角色权限管理
+- 📊 **完整日志系统** - 结构化日志，敏感字段过滤
 
 ## 📦 快速开始
 
@@ -61,10 +61,10 @@ export default {
         return {
             msg: "Hello, Befly!",
             data: {
-                timestamp: Date.now(),
-            },
+                timestamp: Date.now()
+            }
         };
-    },
+    }
 } as ApiRoute;
 ```
 
@@ -89,7 +89,7 @@ export default {
     name: "获取用户",
     auth: true,
     fields: {
-        id: "用户ID|number|1|999999|null|1|null",
+        id: "用户ID|number|1|999999|null|1|null"
     },
     required: ["id"],
     handler: async (befly: BeflyContext, ctx) => {
@@ -98,11 +98,11 @@ export default {
         // 类型安全的数据库查询
         const user = await befly.db.getOne<User>({
             table: "user",
-            where: { id },
+            where: { id }
         });
 
         return { msg: "查询成功", data: user };
-    },
+    }
 } as ApiRoute;
 ```
 
@@ -112,7 +112,7 @@ export default {
 // 查询单条
 const user = await befly.db.getOne<User>({
     table: "user",
-    where: { id: 1 },
+    where: { id: 1 }
 });
 
 // 分页列表
@@ -121,7 +121,7 @@ const result = await befly.db.getList<Product>({
     where: { category: "electronics" },
     page: 1,
     limit: 10,
-    orderBy: ["createdAt#DESC"],
+    orderBy: ["createdAt#DESC"]
 });
 
 // 插入数据
@@ -129,8 +129,8 @@ await befly.db.insData({
     table: "user",
     data: {
         username: "john",
-        email: "john@example.com",
-    },
+        email: "john@example.com"
+    }
 });
 
 // 更新数据
@@ -138,14 +138,14 @@ await befly.db.updData({
     table: "user",
     where: { id: 1 },
     data: {
-        nickname: "John Doe",
-    },
+        nickname: "John Doe"
+    }
 });
 
 // 删除数据
 await befly.db.delData({
     table: "user",
-    where: { id: 1 },
+    where: { id: 1 }
 });
 ```
 
@@ -183,17 +183,17 @@ DB_NAME=my_database
 
 完整文档请访问 [`/docs` 目录](./docs/)：
 
--   [快速开始](./docs/02-快速上手/01-10分钟体验.md)
--   [核心概念](./docs/03-核心概念/)
--   [API 开发](./docs/04-API开发/)
--   [数据库操作](./docs/05-数据库/)
--   [TypeScript 支持](./docs/10-TypeScript/01-TypeScript支持.md)
+- [快速开始](./docs/02-快速上手/01-10分钟体验.md)
+- [核心概念](./docs/03-核心概念/)
+- [API 开发](./docs/04-API开发/)
+- [数据库操作](./docs/05-数据库/)
+- [TypeScript 支持](./docs/10-TypeScript/01-TypeScript支持.md)
 
 ### 目录说明
 
--   **`packages/core`** - Befly 核心框架包（发布到 npm）
--   **`packages/tpl`** - API 项目模板示例
--   **`packages/admin`** - 后台管理系统（Vue3 + TDesign Vue Next + 自动导入）
+- **`packages/core`** - Befly 核心框架包（发布到 npm）
+- **`packages/tpl`** - API 项目模板示例
+- **`packages/admin`** - 后台管理系统（Vue3 + TDesign Vue Next + 自动导入）
 
 ## 🚀 快速启动
 
