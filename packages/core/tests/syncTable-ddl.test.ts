@@ -13,11 +13,11 @@ import type { FieldDefinition } from "../types/validate.ts";
 
 import { describe, test, expect } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.ts";
+import { SyncTable } from "../sync/syncTable.ts";
 
 describe("buildIndexSQL (MySQL)", () => {
     test("创建索引 SQL", () => {
-        const sql = syncTable.TestKit.buildIndexSQL("user", "idx_created_at", "created_at", "create");
+        const sql = SyncTable.buildIndexSQL("user", "idx_created_at", "created_at", "create");
         expect(sql).toContain("ALTER TABLE `user`");
         expect(sql).toContain("ADD INDEX `idx_created_at`");
         expect(sql).toContain("(`created_at`)");
@@ -26,7 +26,7 @@ describe("buildIndexSQL (MySQL)", () => {
     });
 
     test("删除索引 SQL", () => {
-        const sql = syncTable.TestKit.buildIndexSQL("user", "idx_created_at", "created_at", "drop");
+        const sql = SyncTable.buildIndexSQL("user", "idx_created_at", "created_at", "drop");
         expect(sql).toContain("ALTER TABLE `user`");
         expect(sql).toContain("DROP INDEX `idx_created_at`");
     });
@@ -34,12 +34,12 @@ describe("buildIndexSQL (MySQL)", () => {
 
 describe("buildSystemColumnDefs (MySQL)", () => {
     test("返回 5 个系统字段定义", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs();
+        const defs = SyncTable.buildSystemColumnDefs();
         expect(defs.length).toBe(5);
     });
 
     test("包含 id 主键", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs();
+        const defs = SyncTable.buildSystemColumnDefs();
         const idDef = defs.find((d: string) => d.includes("`id`"));
         expect(idDef).toContain("PRIMARY KEY");
         expect(idDef).toContain("AUTO_INCREMENT");
@@ -47,7 +47,7 @@ describe("buildSystemColumnDefs (MySQL)", () => {
     });
 
     test("包含 created_at 字段", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs();
+        const defs = SyncTable.buildSystemColumnDefs();
         const def = defs.find((d: string) => d.includes("`created_at`"));
         expect(def).toContain("BIGINT UNSIGNED");
         expect(def).toContain("NOT NULL");
@@ -55,7 +55,7 @@ describe("buildSystemColumnDefs (MySQL)", () => {
     });
 
     test("包含 state 字段", () => {
-        const defs = syncTable.TestKit.buildSystemColumnDefs();
+        const defs = SyncTable.buildSystemColumnDefs();
         const def = defs.find((d: string) => d.includes("`state`"));
         expect(def).toContain("BIGINT UNSIGNED");
         expect(def).toContain("NOT NULL");
@@ -76,7 +76,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
+        const defs = SyncTable.buildBusinessColumnDefs(fields);
         expect(defs.length).toBe(1);
         expect(defs[0]).toContain("`user_name`");
         expect(defs[0]).toContain("VARCHAR(50)");
@@ -97,7 +97,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
+        const defs = SyncTable.buildBusinessColumnDefs(fields);
         expect(defs[0]).toContain("`age`");
         expect(defs[0]).toContain("BIGINT UNSIGNED");
         expect(defs[0]).toContain("DEFAULT 0");
@@ -115,7 +115,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
+        const defs = SyncTable.buildBusinessColumnDefs(fields);
         expect(defs[0]).toContain("UNIQUE");
     });
 
@@ -131,7 +131,7 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
                 unsigned: true
             }
         } satisfies Record<string, FieldDefinition>;
-        const defs = syncTable.TestKit.buildBusinessColumnDefs(fields);
+        const defs = SyncTable.buildBusinessColumnDefs(fields);
         expect(defs[0]).toContain("NULL");
         expect(defs[0]).not.toContain("NOT NULL");
     });
@@ -148,7 +148,7 @@ describe("generateDDLClause (MySQL)", () => {
             nullable: false,
             unsigned: true
         } satisfies FieldDefinition;
-        const clause = syncTable.TestKit.generateDDLClause("userName", fieldDef, true);
+        const clause = SyncTable.generateDDLClause("userName", fieldDef, true);
         expect(clause).toContain("ADD COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(50)");
@@ -164,7 +164,7 @@ describe("generateDDLClause (MySQL)", () => {
             nullable: false,
             unsigned: true
         } satisfies FieldDefinition;
-        const clause = syncTable.TestKit.generateDDLClause("userName", fieldDef, false);
+        const clause = SyncTable.generateDDLClause("userName", fieldDef, false);
         expect(clause).toContain("MODIFY COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(100)");
@@ -173,35 +173,35 @@ describe("generateDDLClause (MySQL)", () => {
 
 describe("isCompatibleTypeChange", () => {
     test("varchar -> text 是兼容变更", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("varchar(100)", "text")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("varchar(100)", "mediumtext")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("varchar(100)", "text")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("varchar(100)", "mediumtext")).toBe(true);
     });
 
     test("text -> varchar 不是兼容变更", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("text", "varchar(100)")).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange("text", "varchar(100)")).toBe(false);
     });
 
     test("int -> bigint 是兼容变更", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("int", "bigint")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("int unsigned", "bigint unsigned")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("tinyint", "int")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("tinyint", "bigint")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("smallint", "int")).toBe(true);
-        expect(syncTable.TestKit.isCompatibleTypeChange("mediumint", "bigint")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("int", "bigint")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("int unsigned", "bigint unsigned")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("tinyint", "int")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("tinyint", "bigint")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("smallint", "int")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("mediumint", "bigint")).toBe(true);
     });
 
     test("bigint -> int 不是兼容变更（收缩）", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("bigint", "int")).toBe(false);
-        expect(syncTable.TestKit.isCompatibleTypeChange("int", "tinyint")).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange("bigint", "int")).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange("int", "tinyint")).toBe(false);
     });
 
     test("相同类型不是变更", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange("text", "text")).toBe(false);
-        expect(syncTable.TestKit.isCompatibleTypeChange("bigint", "bigint")).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange("text", "text")).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange("bigint", "bigint")).toBe(false);
     });
 
     test("空值处理", () => {
-        expect(syncTable.TestKit.isCompatibleTypeChange(null, "text")).toBe(false);
-        expect(syncTable.TestKit.isCompatibleTypeChange("text", null)).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange(null, "text")).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange("text", null)).toBe(false);
     });
 });

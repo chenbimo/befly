@@ -10,10 +10,10 @@ import type { SqlInfo } from "../types/database.ts";
 import { describe, expect, test } from "bun:test";
 
 import { checkTable } from "../checks/checkTable.ts";
-import { syncTable } from "../sync/syncTable.ts";
+import { SyncTable } from "../sync/syncTable.ts";
 import { toSqlParams } from "../utils/sqlParams.ts";
 
-type SqlExecutor = Parameters<typeof syncTable.TestKit.createRuntime>[0];
+type SqlExecutor = Parameters<typeof SyncTable.tableExistsIO>[0];
 
 class SqlInfoError extends Error {
     public sqlInfo: SqlInfo;
@@ -93,17 +93,15 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             }
         };
 
-        const runtime = syncTable.TestKit.createRuntime(db, "test");
-
-        const exists = await syncTable.TestKit.tableExistsRuntime(runtime, "any_table");
+        const exists = await SyncTable.tableExistsIO(db, "test", "any_table");
         expect(exists).toBe(true);
 
-        const cols = await syncTable.TestKit.getTableColumnsRuntime(runtime, "any_table");
+        const cols = await SyncTable.getTableColumnsIO(db, "test", "any_table");
         expect(cols.id).toBeDefined();
         expect(cols.user_name).toBeDefined();
         expect(cols.user_name.nullable).toBe(true);
 
-        const idx = await syncTable.TestKit.getTableIndexesRuntime(runtime, "any_table");
+        const idx = await SyncTable.getTableIndexesIO(db, "test", "any_table");
         expect(idx.idx_user_name).toEqual(["user_name", "id"]);
     });
 
@@ -116,11 +114,9 @@ describe("syncTable - SqlExecutor envelope contract", () => {
             }
         };
 
-        const runtime = syncTable.TestKit.createRuntime(db, "test");
-
         let thrown: unknown = null;
         try {
-            await syncTable.TestKit.tableExistsRuntime(runtime, "t_any");
+            await SyncTable.tableExistsIO(db, "test", "t_any");
         } catch (e: unknown) {
             thrown = e;
         }
@@ -161,10 +157,10 @@ describe("syncTable - SqlExecutor envelope contract", () => {
                     database: "test"
                 }
             }
-        } satisfies Parameters<typeof syncTable>[0];
+        } satisfies ConstructorParameters<typeof SyncTable>[0];
 
         await checkTable([]);
-        await syncTable(ctx, []);
+        await new SyncTable(ctx).run([]);
         expect(true).toBe(true);
     });
 
@@ -197,13 +193,13 @@ describe("syncTable - SqlExecutor envelope contract", () => {
                     database: "test"
                 }
             }
-        } satisfies Parameters<typeof syncTable>[0];
+        } satisfies ConstructorParameters<typeof SyncTable>[0];
 
         await checkTable([]);
 
         let thrown: unknown = null;
         try {
-            await syncTable(ctx, []);
+            await new SyncTable(ctx).run([]);
         } catch (e: unknown) {
             thrown = e;
         }

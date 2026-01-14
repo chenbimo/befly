@@ -1,25 +1,19 @@
 import { describe, expect, it } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.ts";
+import { SyncTable } from "../sync/syncTable.ts";
 
-describe("syncTable - TestKit 挂载", () => {
-    it("should expose TestKit as a stable object", () => {
-        expect(typeof syncTable).toBe("function");
-        expect(syncTable.TestKit).toBeDefined();
+describe("syncTable - SyncTable 静态工具", () => {
+    it("should expose helpers directly on class", () => {
+        expect(typeof SyncTable).toBe("function");
 
-        const descriptor = Object.getOwnPropertyDescriptor(syncTable, "TestKit");
-        expect(descriptor).toBeDefined();
-        expect(descriptor?.writable).toBe(false);
-        expect(descriptor?.configurable).toBe(false);
-        expect(descriptor?.enumerable).toBe(true);
+        const descriptor = Object.getOwnPropertyDescriptor(SyncTable, "TestKit");
+        expect(descriptor).toBeUndefined();
 
-        expect(typeof syncTable.TestKit.quoteIdentifier).toBe("function");
-        expect(typeof syncTable.TestKit.getTypeMapping).toBe("function");
+        expect(typeof SyncTable.quoteIdentifier).toBe("function");
+        expect(typeof SyncTable.getTypeMapping).toBe("function");
+        expect(typeof SyncTable.buildIndexSQL).toBe("function");
+        expect(typeof SyncTable.getSqlType).toBe("function");
 
-        expect(syncTable.TestKit.DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR).toBe(8);
-
-        const firstRef = syncTable.TestKit;
-        const secondRef = syncTable.TestKit;
-        expect(firstRef).toBe(secondRef);
+        expect(SyncTable.DB_VERSION_REQUIREMENTS.MYSQL_MIN_MAJOR).toBe(8);
     });
 });

@@ -34,7 +34,7 @@ import { syncApi } from "./sync/syncApi";
 import { syncCache } from "./sync/syncCache";
 import { syncDev } from "./sync/syncDev";
 import { syncMenu } from "./sync/syncMenu";
-import { syncTable } from "./sync/syncTable";
+import { SyncTable } from "./sync/syncTable";
 // 工具
 import { calcPerfTime } from "./utils/calcPerfTime";
 import { getProcessRole } from "./utils/processInfo";
@@ -116,7 +116,7 @@ export class Befly {
             this.assertStartContextReady();
 
             // 5. 自动同步 (仅主进程执行，避免集群模式下重复执行)
-            await syncTable(this.context as BeflyContext, tables);
+            await new SyncTable(this.context as BeflyContext).run(tables);
             await syncApi(this.context as BeflyContext, apis);
 
             await syncMenu(this.context as BeflyContext, checkedMenus);

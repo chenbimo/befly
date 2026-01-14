@@ -12,33 +12,33 @@ import type { FieldDefinition } from "../types/validate";
 
 import { describe, test, expect } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.ts";
+import { SyncTable } from "../sync/syncTable.ts";
 
 describe("quoteIdentifier (MySQL)", () => {
     test("使用反引号包裹标识符", () => {
-        expect(syncTable.TestKit.quoteIdentifier("user_table")).toBe("`user_table`");
+        expect(SyncTable.quoteIdentifier("user_table")).toBe("`user_table`");
     });
 
     test("处理普通表名", () => {
-        expect(syncTable.TestKit.quoteIdentifier("admin")).toBe("`admin`");
+        expect(SyncTable.quoteIdentifier("admin")).toBe("`admin`");
     });
 
     test("处理带下划线的表名", () => {
-        expect(syncTable.TestKit.quoteIdentifier("addon_admin_menu")).toBe("`addon_admin_menu`");
+        expect(SyncTable.quoteIdentifier("addon_admin_menu")).toBe("`addon_admin_menu`");
     });
 });
 
 describe("escapeComment", () => {
     test("普通注释不变", () => {
-        expect(syncTable.TestKit.escapeComment("用户名称")).toBe("用户名称");
+        expect(SyncTable.escapeComment("用户名称")).toBe("用户名称");
     });
 
     test("双引号被转义", () => {
-        expect(syncTable.TestKit.escapeComment('用户"昵称"')).toBe('用户\\"昵称\\"');
+        expect(SyncTable.escapeComment('用户"昵称"')).toBe('用户\\"昵称\\"');
     });
 
     test("空字符串", () => {
-        expect(syncTable.TestKit.escapeComment("")).toBe("");
+        expect(SyncTable.escapeComment("")).toBe("");
     });
 });
 
@@ -49,7 +49,7 @@ describe("normalizeFieldDefinitionInPlace", () => {
             type: "string"
         };
 
-        syncTable.TestKit.normalizeFieldDefinitionInPlace(fieldDef);
+        SyncTable.normalizeFieldDefinitionInPlace(fieldDef);
 
         expect(fieldDef.detail).toBe("");
         expect(fieldDef.min).toBe(null);
@@ -72,7 +72,7 @@ describe("normalizeFieldDefinitionInPlace", () => {
             nullable: true
         };
 
-        syncTable.TestKit.normalizeFieldDefinitionInPlace(fieldDef);
+        SyncTable.normalizeFieldDefinitionInPlace(fieldDef);
 
         expect(fieldDef.max).toBe(200);
         expect(fieldDef.index).toBe(true);
@@ -91,7 +91,7 @@ describe("normalizeFieldDefinitionInPlace", () => {
             unsigned: false
         };
 
-        syncTable.TestKit.normalizeFieldDefinitionInPlace(fieldDef);
+        SyncTable.normalizeFieldDefinitionInPlace(fieldDef);
 
         expect(fieldDef.min).toBe(0);
         expect(fieldDef.max).toBe(0);

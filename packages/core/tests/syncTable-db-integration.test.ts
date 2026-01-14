@@ -11,7 +11,7 @@ import { describe, expect, test } from "bun:test";
 
 import { checkTable } from "../checks/checkTable.ts";
 import { CacheKeys } from "../lib/cacheKeys.ts";
-import { syncTable } from "../sync/syncTable.ts";
+import { SyncTable } from "../sync/syncTable.ts";
 import { snakeCase } from "../utils/util.ts";
 import { createMockMySqlDb } from "./_mocks/mockMySqlDb.ts";
 
@@ -88,7 +88,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
             config: {
                 db: { database: "test" }
             }
-        } satisfies Parameters<typeof syncTable>[0];
+        } satisfies ConstructorParameters<typeof SyncTable>[0];
 
         const fileName = "testSyncTableIntegrationUser";
         const tableName = snakeCase(fileName);
@@ -102,15 +102,14 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         });
 
         await checkTable([item]);
-        await syncTable(ctx, [item]);
+        await new SyncTable(ctx).run([item]);
 
         expect(state.executedSql.some((s) => s.includes("CREATE TABLE") && s.includes(`\`${tableName}\``))).toBe(true);
 
-        const runtime = syncTable.TestKit.createRuntime(db, "test");
-        const exists = await syncTable.TestKit.tableExistsRuntime(runtime, tableName);
+        const exists = await SyncTable.tableExistsIO(db, "test", tableName);
         expect(exists).toBe(true);
 
-        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
+        const columns = await SyncTable.getTableColumnsIO(db, "test", tableName);
 
         expect(columns.id).toBeDefined();
         expect(columns.created_at).toBeDefined();
@@ -146,7 +145,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
             config: {
                 db: { database: "test" }
             }
-        } satisfies Parameters<typeof syncTable>[0];
+        } satisfies ConstructorParameters<typeof SyncTable>[0];
 
         const fileName = "testSyncTableIntegrationProfile";
         const tableName = snakeCase(fileName);
@@ -159,7 +158,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         });
 
         await checkTable([itemV1]);
-        await syncTable(ctx, [itemV1]);
+        await new SyncTable(ctx).run([itemV1]);
 
         const itemV2 = buildTableItem({
             fileName: fileName,
@@ -170,12 +169,11 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         });
 
         await checkTable([itemV2]);
-        await syncTable(ctx, [itemV2]);
+        await new SyncTable(ctx).run([itemV2]);
 
         expect(state.executedSql.some((s) => s.includes("ALTER TABLE") && s.includes(tableName) && s.includes("ADD COLUMN") && s.includes("bio"))).toBe(true);
 
-        const runtime = syncTable.TestKit.createRuntime(db, "test");
-        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, tableName);
+        const columns = await SyncTable.getTableColumnsIO(db, "test", tableName);
         expect(columns.nickname).toBeDefined();
         expect(columns.bio).toBeDefined();
 
@@ -283,7 +281,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
             config: {
                 db: { database: "test" }
             }
-        } satisfies Parameters<typeof syncTable>[0];
+        } satisfies ConstructorParameters<typeof SyncTable>[0];
 
         const item = buildTableItem({
             fileName: fileName,
@@ -294,7 +292,7 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         });
 
         await checkTable([item]);
-        await syncTable(ctx, [item]);
+        await new SyncTable(ctx).run([item]);
 
         const dropUserName = state.executedSql.some((s) => s.includes("DROP INDEX") && s.includes("idx_user_name"));
         expect(dropUserName).toBe(true);

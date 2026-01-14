@@ -4,7 +4,7 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { syncTable } from "../sync/syncTable.ts";
+import { SyncTable } from "../sync/syncTable.ts";
 import { createMockMySqlDb } from "./_mocks/mockMySqlDb.ts";
 
 describe("tableExistsRuntime", () => {
@@ -20,11 +20,10 @@ describe("tableExistsRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime(db, "test");
-        const exist = await syncTable.TestKit.tableExistsRuntime(runtime, "test_sync_table_exists");
+        const exist = await SyncTable.tableExistsIO(db, "test", "test_sync_table_exists");
         expect(exist).toBe(true);
 
-        const notExist = await syncTable.TestKit.tableExistsRuntime(runtime, "test_sync_table_not_exist_12345");
+        const notExist = await SyncTable.tableExistsIO(db, "test", "test_sync_table_not_exist_12345");
         expect(notExist).toBe(false);
     });
 });
@@ -48,8 +47,7 @@ describe("getTableColumnsRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime(db, "test");
-        const columns = await syncTable.TestKit.getTableColumnsRuntime(runtime, "test_sync_table_columns");
+        const columns = await SyncTable.getTableColumnsIO(db, "test", "test_sync_table_columns");
 
         expect(columns.id).toBeDefined();
         expect(columns.user_name).toBeDefined();
@@ -78,8 +76,7 @@ describe("getTableIndexesRuntime", () => {
             }
         });
 
-        const runtime = syncTable.TestKit.createRuntime(db, "test");
-        const indexes = await syncTable.TestKit.getTableIndexesRuntime(runtime, "test_sync_table_indexes");
+        const indexes = await SyncTable.getTableIndexesIO(db, "test", "test_sync_table_indexes");
 
         expect(indexes.idx_created_at).toBeDefined();
         expect(indexes.idx_created_at).toContain("created_at");
