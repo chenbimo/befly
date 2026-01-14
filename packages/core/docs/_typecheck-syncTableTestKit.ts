@@ -30,3 +30,10 @@ void syncTable.TestKit.buildSystemColumnDefs("mysql");
 void syncTable.TestKit.getSqlType("string", 100, false);
 // @ts-expect-error legacy first param must be rejected
 void syncTable.TestKit.getSqlType("mysql", "string", 100);
+
+// buildIndexSQL: 只能接收 (tableName, indexName, fieldName, action)
+void syncTable.TestKit.buildIndexSQL("user", "idx_title", "title", "create");
+// @ts-expect-error prefixLength is no longer allowed
+void syncTable.TestKit.buildIndexSQL("user", "idx_title", "title", "create", 768);
+// @ts-expect-error legacy extra param must be rejected
+void syncTable.TestKit.buildIndexSQL("mysql", "user", "idx_title", "title", "create");

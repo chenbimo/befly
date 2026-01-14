@@ -83,7 +83,7 @@ describe("checkTable - smoke", () => {
         expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
-    test("index/unique=true 的 string 字段 max 过长时应阻断启动（抛错）", async () => {
+    test("index=true 的 string 字段 max>500 时应阻断启动（抛错）", async () => {
         const items: ScanFileResult[] = [
             {
                 type: "table",
@@ -95,8 +95,35 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testLongIndex",
                 addonName: "",
                 content: {
-                    // utf8mb4 索引字段建议 <= 768，这里故意越界
-                    code: { name: "编码", type: "string", max: 2000, index: true }
+                    code: { name: "编码", type: "string", max: 501, index: true }
+                }
+            } as any
+        ];
+
+        let thrownError: any = null;
+        try {
+            await checkTable(items);
+        } catch (error: any) {
+            thrownError = error;
+        }
+
+        expect(Boolean(thrownError)).toBe(true);
+        expect(String(thrownError?.message || "")).toContain("表结构检查失败");
+    });
+
+    test("unique=true 的 string 字段 max>180 时应阻断启动（抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testLongUnique",
+                fileName: "testLongUnique",
+                moduleName: "app_testLongUnique",
+                addonName: "",
+                content: {
+                    code: { name: "编码", type: "string", max: 181, unique: true }
                 }
             } as any
         ];

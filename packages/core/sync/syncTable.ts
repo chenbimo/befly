@@ -15,6 +15,7 @@ import type { ScanFileResult } from "../utils/scanFiles";
 
 import { CacheKeys } from "../lib/cacheKeys";
 import { Logger } from "../lib/logger";
+import { MYSQL_STRING_CONSTRAINTS } from "../utils/mysqlStringConstraints";
 import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
 import { snakeCase } from "../utils/util";
 
@@ -113,16 +114,7 @@ const MYSQL_TABLE_CONFIG = {
     COLLATE: "utf8mb4_0900_ai_ci"
 } as const;
 
-/**
- * MySQL（utf8mb4）字段约束
- * - VARCHAR 的长度单位是“字符数”，但受行大小与字符集字节数限制
- * - utf8mb4 最坏情况 4 bytes/char，因此 65535 bytes 上限可近似换算为 16383 chars
- * - InnoDB 单列索引 key length 上限 3072 bytes（MySQL 8 默认），换算约 768 chars
- */
-const MYSQL_STRING_CONSTRAINTS = {
-    MAX_VARCHAR_LENGTH: 16383,
-    MAX_INDEXED_VARCHAR_LENGTH: 768
-} as const;
+// MySQL 字符串约束常量统一来源：../utils/mysqlStringConstraints
 
 type SystemFieldMeta = {
     name: "id" | "created_at" | "updated_at" | "deleted_at" | "state";
@@ -356,16 +348,14 @@ function validateFieldDefinitionForMySql(tableName: string, fieldKey: string, fi
             throw new Error([`同步表：${tableName}.${fieldKey} 的 max=${maxValue} 超出 VARCHAR 上限（utf8mb4）`, `允许范围：1..${MYSQL_STRING_CONSTRAINTS.MAX_VARCHAR_LENGTH}`, "建议：改用 text/array_text 或降低 max"].join("\n"));
         }
 
-        if (fieldDef.index === true || fieldDef.unique === true) {
-            if (maxValue > MYSQL_STRING_CONSTRAINTS.MAX_INDEXED_VARCHAR_LENGTH) {
-                throw new Error(
-                    [
-                        `同步表：${tableName}.${fieldKey} 设置了 ${fieldDef.unique === true ? "unique" : "index"}=true，但 max=${maxValue} 过长，可能导致索引创建失败（utf8mb4）`,
-                        `索引字段建议 max <= ${MYSQL_STRING_CONSTRAINTS.MAX_INDEXED_VARCHAR_LENGTH}`,
-                        "建议：降低 max 或移除 index/unique（当前实现不支持前缀索引）"
-                    ].join("\n")
-                );
-            }
+        // 项目索引策略（更简单、更保守）：
+        // - index=true: 只允许 max<=500
+        // - unique=true: 只允许 max<=180
+        if (fieldDef.index === true && maxValue > 500) {
+            throw new Error(`同步表：${tableName}.${fieldKey} 设置了 index=true，但 max=${maxValue} 超出允许范围（要求 <= 500）`);
+        }
+        if (fieldDef.unique === true && maxValue > 180) {
+            throw new Error(`同步表：${tableName}.${fieldKey} 设置了 unique=true，但 max=${maxValue} 超出允许范围（要求 <= 180）`);
         }
 
         return;
@@ -728,6 +718,21 @@ async function ensureDbVersion(db: SqlExecutor): Promise<void> {
 async function applyTablePlan(runtime: SyncRuntime, tableName: string, plan: TablePlan): Promise<void> {
     if (!plan || !plan.changed) return;
 
+    // 先 drop 再 alter：避免“增大 VARCHAR 长度”时被现有索引 key length 限制卡住
+    const dropIndexActions = plan.indexActions.filter((a) => a.action === "drop");
+    const createIndexActions = plan.indexActions.filter((a) => a.action === "create");
+
+    for (const act of dropIndexActions) {
+        const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
+        try {
+            await runtime.db.unsafe(stmt);
+            Logger.debug(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
+        } catch (error: any) {
+            Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: "删除索引失败" });
+            throw error;
+        }
+    }
+
     const clauses = [...plan.addClauses, ...plan.modifyClauses];
     if (clauses.length > 0) {
         const tableQuoted = quoteIdentifier(tableName);
@@ -741,17 +746,13 @@ async function applyTablePlan(runtime: SyncRuntime, tableName: string, plan: Tab
         await executeDDLSafely(runtime.db, stmt);
     }
 
-    for (const act of plan.indexActions) {
+    for (const act of createIndexActions) {
         const stmt = buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
         try {
             await runtime.db.unsafe(stmt);
-            if (act.action === "create") {
-                Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
-            } else {
-                Logger.debug(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
-            }
+            Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
         } catch (error: any) {
-            Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: `${act.action === "create" ? "创建" : "删除"}索引失败` });
+            Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: "创建索引失败" });
             throw error;
         }
     }

@@ -2,6 +2,7 @@ import type { FieldDefinition } from "../types/validate";
 import type { ScanFileResult } from "../utils/scanFiles";
 
 import { Logger } from "../lib/logger";
+import { MYSQL_STRING_CONSTRAINTS } from "../utils/mysqlStringConstraints";
 
 function isJsonPrimitive(value: unknown): value is string | number | boolean | null {
     if (value === null) return true;
@@ -98,18 +99,12 @@ const LOWER_CAMEL_CASE_REGEX = /^_?[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)*$/;
  */
 const FIELD_NAME_REGEX = /^[\u4e00-\u9fa5a-zA-Z0-9 _-]+$/;
 
-/**
- * VARCHAR 最大长度限制
- */
-// 注意：MySQL 的 VARCHAR(n) 这里的 n 是“字符数”，但受行大小与字符集字节数限制。
-// utf8mb4 最坏情况 4 bytes/char，因此可用上限可近似换算为 16383 chars。
-const MAX_VARCHAR_LENGTH = 16383;
-
-/**
- * 索引字段（index/unique）最大长度限制（utf8mb4）
- * InnoDB 单列索引 key length 上限默认 3072 bytes（MySQL 8），换算约 768 chars。
- */
-const MAX_INDEXED_VARCHAR_LENGTH = 768;
+const MAX_VARCHAR_LENGTH = MYSQL_STRING_CONSTRAINTS.MAX_VARCHAR_LENGTH;
+// 项目索引策略（更简单、更保守）：
+// - index=true: 只允许 max<=500
+// - unique=true: 只允许 max<=180
+const MAX_INDEX_STRING_LENGTH_FOR_INDEX = 500;
+const MAX_INDEX_STRING_LENGTH_FOR_UNIQUE = 180;
 
 /**
  * 检查表定义文件
@@ -298,9 +293,13 @@ export async function checkTable(tables: ScanFileResult[]): Promise<void> {
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${fieldMax} 越界，` + `${fieldType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         hasError = true;
                     } else {
-                        // 额外约束：索引/唯一字段必须更短，否则 MySQL 可能无法创建索引（当前实现不支持前缀索引）。
-                        if ((field.index === true || field.unique === true) && fieldMax > MAX_INDEXED_VARCHAR_LENGTH) {
-                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 ${field.unique === true ? "unique" : "index"}=true，` + `但 max=${fieldMax} 过长，建议 <= ${MAX_INDEXED_VARCHAR_LENGTH}（utf8mb4 索引长度限制）`);
+                        if (field.index === true && fieldMax > MAX_INDEX_STRING_LENGTH_FOR_INDEX) {
+                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 index=true，` + `但 max=${fieldMax} 超出允许范围（要求 <= ${MAX_INDEX_STRING_LENGTH_FOR_INDEX}）`);
+                            hasError = true;
+                        }
+
+                        if (field.unique === true && fieldMax > MAX_INDEX_STRING_LENGTH_FOR_UNIQUE) {
+                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 设置了 unique=true，` + `但 max=${fieldMax} 超出允许范围（要求 <= ${MAX_INDEX_STRING_LENGTH_FOR_UNIQUE}）`);
                             hasError = true;
                         }
                     }

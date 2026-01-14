@@ -116,8 +116,23 @@
 - `string` / `array_string` / `array_number_string`：
     - 必须设置 `max:number`
     - 且 `max` 不能超过 16383（utf8mb4 下 VARCHAR 的字符长度上限近似值）
-    - 当 `index=true` 或 `unique=true` 时，建议 `max <= 768`（utf8mb4 索引长度限制；当前实现不支持前缀索引）
+    - 当 `index=true` 时：要求 `max <= 500`
+    - 当 `unique=true` 时：要求 `max <= 180`
     - `array_*_string` 的 `max` 表示“单个元素字符串长度”，不是数组长度
+
+示例（索引字段：max 必须 <= 500）：
+
+```json
+{
+    "title": {
+        "name": "标题",
+        "type": "string",
+        "max": 200,
+        "index": true
+    }
+}
+```
+
 - `number`：`default` 若存在，必须为 `number | null`
 
 ## 表定义与 API fields 的关系
