@@ -21,8 +21,6 @@ const defaultOptions: BeflyOptions = {
     devPassword: "beflydev123456",
     bodyLimit: 1048576, // 1MB
     tz: "Asia/Shanghai",
-
-    // ========== 启动校验配置 ==========
     strict: true,
 
     // ========== 日志配置 ==========
