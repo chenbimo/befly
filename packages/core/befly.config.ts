@@ -82,7 +82,7 @@ const defaultOptions: BeflyOptions = {
     },
 
     // ========== 菜单禁用配置 ==========
-    disableMenus: ["**/404", "**/403", "**/500", "**/login"],
+    disableMenus: ["**/404", "**/403", "**/500", "/addon/admin/login"],
 
     // ========== Addon 配置 ==========
     addons: {}

@@ -80,6 +80,22 @@ describe("syncDev - dev role permissions", () => {
         expect(devRoleInsert.data.menus).toEqual(["/dashboard", "/permission/role"]);
         expect(devRoleInsert.data.apis).toEqual(["/api/health", "/api/addon/addonAdmin/auth/login"]);
 
+        // 断言系统角色首次插入时必须补齐 menus/apis，避免 MySQL NOT NULL 无默认值导致启动失败
+        const userRoleInsert = calls.insData.find((c) => c?.table === "addon_admin_role" && c?.data?.code === "user");
+        expect(userRoleInsert).toBeTruthy();
+        expect(userRoleInsert.data.menus).toEqual([]);
+        expect(userRoleInsert.data.apis).toEqual([]);
+
+        const adminRoleInsert = calls.insData.find((c) => c?.table === "addon_admin_role" && c?.data?.code === "admin");
+        expect(adminRoleInsert).toBeTruthy();
+        expect(adminRoleInsert.data.menus).toEqual([]);
+        expect(adminRoleInsert.data.apis).toEqual([]);
+
+        const guestRoleInsert = calls.insData.find((c) => c?.table === "addon_admin_role" && c?.data?.code === "guest");
+        expect(guestRoleInsert).toBeTruthy();
+        expect(guestRoleInsert.data.menus).toEqual([]);
+        expect(guestRoleInsert.data.apis).toEqual([]);
+
         expect(calls.rebuildRoleApiPermissionsCount).toBe(0);
     });
 

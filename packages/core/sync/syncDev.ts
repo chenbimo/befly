@@ -164,6 +164,8 @@ export async function syncDev(ctx: BeflyContext, config: SyncDevConfig = {}): Pr
                     code: roleConfig.code,
                     name: roleConfig.name,
                     description: roleConfig.description,
+                    menus: [],
+                    apis: [],
                     sort: roleConfig.sort
                 }
             });
