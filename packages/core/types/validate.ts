@@ -7,7 +7,7 @@ import type { JsonValue } from "./common";
 /**
  * 数据库字段类型
  */
-export type DbFieldType = "tinyint" | "smallint" | "mediumint" | "int" | "bigint" | "char" | "varchar" | "tinytext" | "text" | "mediumtext" | "longtext" | "datetime" | "json";
+export type DbFieldType = "tinyint" | "smallint" | "mediumint" | "int" | "bigint" | "decimal" | "char" | "varchar" | "tinytext" | "text" | "mediumtext" | "longtext" | "datetime" | "json";
 
 /**
  * 输入参数类型
@@ -44,6 +44,16 @@ export interface FieldDefinition {
      * - 缺省默认：""（空字符串）
      */
     detail?: string;
+    /**
+     * decimal 精度（总位数）。
+     * - 缺省默认：null
+     */
+    precision?: number | null;
+    /**
+     * decimal 小数位数。
+     * - 缺省默认：null
+     */
+    scale?: number | null;
     /**
      * 是否创建索引。
      * - 缺省默认：false

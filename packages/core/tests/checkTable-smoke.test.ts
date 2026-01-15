@@ -56,6 +56,150 @@ describe("checkTable - smoke", () => {
         expect(true).toBe(true);
     });
 
+    test("decimal 字段完整配置不应抛错", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testOrderPrice",
+                fileName: "testOrderPrice",
+                moduleName: "app_testOrderPrice",
+                addonName: "",
+                content: {
+                    amount: {
+                        name: "金额",
+                        type: "decimal",
+                        input: "number",
+                        precision: 12,
+                        scale: 2,
+                        default: 0,
+                        nullable: false,
+                        unsigned: true
+                    },
+                    discountRate: {
+                        name: "折扣率",
+                        type: "decimal",
+                        input: "number",
+                        precision: 5,
+                        scale: 4,
+                        default: null,
+                        nullable: true,
+                        unsigned: true
+                    }
+                }
+            } as any
+        ];
+
+        await checkTable(items, defaultConfig);
+        expect(true).toBe(true);
+    });
+
+    test("decimal precision/scale 上限配置不应抛错", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testDecimalMax",
+                fileName: "testDecimalMax",
+                moduleName: "app_testDecimalMax",
+                addonName: "",
+                content: {
+                    amount: {
+                        name: "金额",
+                        type: "decimal",
+                        input: "number",
+                        precision: 65,
+                        scale: 30,
+                        default: 0,
+                        nullable: false,
+                        unsigned: true
+                    }
+                }
+            } as any
+        ];
+
+        await checkTable(items, defaultConfig);
+        expect(true).toBe(true);
+    });
+
+    test("decimal precision/scale 非法时应阻断启动（抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testDecimalInvalid",
+                fileName: "testDecimalInvalid",
+                moduleName: "app_testDecimalInvalid",
+                addonName: "",
+                content: {
+                    amount: {
+                        name: "金额",
+                        type: "decimal",
+                        input: "number",
+                        precision: 0,
+                        scale: 2,
+                        default: 0,
+                        nullable: false,
+                        unsigned: true
+                    }
+                }
+            } as any
+        ];
+
+        let thrownError: any = null;
+        try {
+            await checkTable(items, defaultConfig);
+        } catch (error: any) {
+            thrownError = error;
+        }
+
+        expect(Boolean(thrownError)).toBe(true);
+        expect(String(thrownError?.message || "")).toContain("表结构检查失败");
+    });
+
+    test("decimal scale 大于 precision 时应阻断启动（抛错）", async () => {
+        const items: ScanFileResult[] = [
+            {
+                type: "table",
+                source: "app",
+                sourceName: "项目",
+                filePath: "DUMMY",
+                relativePath: "testDecimalScale",
+                fileName: "testDecimalScale",
+                moduleName: "app_testDecimalScale",
+                addonName: "",
+                content: {
+                    amount: {
+                        name: "金额",
+                        type: "decimal",
+                        input: "number",
+                        precision: 8,
+                        scale: 9,
+                        default: 0,
+                        nullable: false,
+                        unsigned: true
+                    }
+                }
+            } as any
+        ];
+
+        let thrownError: any = null;
+        try {
+            await checkTable(items, defaultConfig);
+        } catch (error: any) {
+            thrownError = error;
+        }
+
+        expect(Boolean(thrownError)).toBe(true);
+        expect(String(thrownError?.message || "")).toContain("表结构检查失败");
+    });
+
     test("strict=false 时应跳过字段名称正则校验（不应抛错）", async () => {
         const items: ScanFileResult[] = [
             {

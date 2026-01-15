@@ -115,6 +115,7 @@ export class SyncTable {
         mediumint: "MEDIUMINT",
         int: "INT",
         bigint: "BIGINT",
+        decimal: "DECIMAL",
         char: "CHAR",
         varchar: "VARCHAR",
         datetime: "DATETIME",
@@ -127,6 +128,7 @@ export class SyncTable {
 
     private static TEXT_FAMILY = new Set(["tinytext", "text", "mediumtext", "longtext"]);
     private static INT_TYPES = new Set(["tinyint", "smallint", "mediumint", "int", "bigint"]);
+    private static DECIMAL_TYPES = new Set(["decimal"]);
 
     private db: SqlExecutor;
     private dbName: string;
@@ -245,6 +247,8 @@ export class SyncTable {
         fieldDef.detail = normalized.detail;
         fieldDef.min = normalized.min;
         fieldDef.max = normalized.max;
+        fieldDef.precision = normalized.precision;
+        fieldDef.scale = normalized.scale;
         fieldDef.default = normalized.default;
         fieldDef.index = normalized.index;
         fieldDef.unique = normalized.unique;
@@ -277,7 +281,7 @@ export class SyncTable {
         return `\`${trimmed}\``;
     }
 
-    public static getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
+    public static getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false, precision: number | null = null, scale: number | null = null): string {
         const normalizedType = String(fieldType || "").toLowerCase();
         const typeMapping = SyncTable.TYPE_MAPPING;
 
@@ -287,6 +291,14 @@ export class SyncTable {
                 throw new Error(`同步表：内部错误：${normalizedType} 类型缺失 max（应由 checkTable 阻断）`);
             }
             return `${typeMapping[normalizedType]}(${fieldMax})`;
+        }
+
+        if (SyncTable.DECIMAL_TYPES.has(normalizedType)) {
+            if (typeof precision !== "number" || typeof scale !== "number") {
+                throw new Error(`同步表：内部错误：decimal 类型缺失 precision/scale（应由 checkTable 阻断）`);
+            }
+            const base = `${typeMapping[normalizedType]}(${precision},${scale})`;
+            return unsigned ? `${base} UNSIGNED` : base;
         }
 
         const baseType = typeMapping[normalizedType] || "TEXT";
@@ -308,6 +320,7 @@ export class SyncTable {
             case "mediumint":
             case "int":
             case "bigint":
+            case "decimal":
                 return 0;
             case "char":
             case "varchar":
@@ -332,7 +345,7 @@ export class SyncTable {
             return "";
         }
 
-        if (SyncTable.INT_TYPES.has(normalizedType) || SyncTable.isStringOrArrayType(normalizedType)) {
+        if (SyncTable.INT_TYPES.has(normalizedType) || SyncTable.DECIMAL_TYPES.has(normalizedType) || SyncTable.isStringOrArrayType(normalizedType)) {
             if (typeof actualDefault === "number" && !Number.isNaN(actualDefault)) {
                 return ` DEFAULT ${actualDefault}`;
             } else {
@@ -433,7 +446,7 @@ export class SyncTable {
         const dbFieldName = snakeCase(fieldKey);
         const colQuoted = SyncTable.quoteIdentifier(dbFieldName);
 
-        const sqlType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned);
+        const sqlType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned, normalized.precision, normalized.scale);
         const actualDefault = SyncTable.resolveDefaultValue(normalized.default, normalized.type);
         const defaultSql = SyncTable.generateDefaultSql(actualDefault, normalized.type);
         const uniqueSql = normalized.unique ? " UNIQUE" : "";
@@ -575,7 +588,7 @@ export class SyncTable {
         if (!typeChange) return;
 
         const currentType = String(typeChange.current || "").toLowerCase();
-        const expectedType = SyncTable.getSqlType(fieldDef.type, fieldDef.max ?? null, fieldDef.unsigned ?? false).toLowerCase();
+        const expectedType = SyncTable.getSqlType(fieldDef.type, fieldDef.max ?? null, fieldDef.unsigned ?? false, fieldDef.precision ?? null, fieldDef.scale ?? null).toLowerCase();
 
         const currentBase = currentType
             .replace(/\s*unsigned/gi, "")
@@ -762,7 +775,7 @@ export class SyncTable {
 
         const normalized = normalizeFieldDefinition(fieldDef);
 
-        const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned).toLowerCase().replace(/\s+/g, " ").trim();
+        const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned, normalized.precision, normalized.scale).toLowerCase().replace(/\s+/g, " ").trim();
 
         const currentType = (
             typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== ""

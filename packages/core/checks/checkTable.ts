@@ -76,7 +76,7 @@ const RESERVED_FIELD_SET = new Set<string>(RESERVED_FIELDS);
 /**
  * 允许的数据库字段类型
  */
-const FIELD_TYPES = ["tinyint", "smallint", "mediumint", "int", "bigint", "char", "varchar", "tinytext", "text", "mediumtext", "longtext", "datetime", "json"] as const;
+const FIELD_TYPES = ["tinyint", "smallint", "mediumint", "int", "bigint", "decimal", "char", "varchar", "tinytext", "text", "mediumtext", "longtext", "datetime", "json"] as const;
 const FIELD_TYPE_SET = new Set<string>(FIELD_TYPES);
 
 /**
@@ -102,6 +102,8 @@ function inferInputByType(dbType: string): string {
         case "int":
         case "bigint":
             return "integer";
+        case "decimal":
+            return "number";
         case "char":
         case "varchar":
         case "tinytext":
@@ -131,7 +133,7 @@ function normalizeTypeAndInput(type: string, input: string): { type: string; inp
 /**
  * 允许的字段属性列表
  */
-const ALLOWED_FIELD_PROPERTIES = ["name", "type", "input", "min", "max", "default", "detail", "index", "unique", "nullable", "unsigned"] as const;
+const ALLOWED_FIELD_PROPERTIES = ["name", "type", "input", "min", "max", "default", "detail", "precision", "scale", "index", "unique", "nullable", "unsigned"] as const;
 const ALLOWED_FIELD_PROPERTY_SET = new Set<string>(ALLOWED_FIELD_PROPERTIES);
 
 /**
@@ -253,6 +255,14 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 detail 类型错误，必须为字符串`);
                     hasError = true;
                 }
+                if (field.precision !== undefined && !(field.precision === null || typeof field.precision === "number")) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 precision 类型错误，必须为 null 或数字`);
+                    hasError = true;
+                }
+                if (field.scale !== undefined && !(field.scale === null || typeof field.scale === "number")) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 scale 类型错误，必须为 null 或数字`);
+                    hasError = true;
+                }
                 if (field.index !== undefined && typeof field.index !== "boolean") {
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 index 类型错误，必须为布尔值`);
                     hasError = true;
@@ -305,7 +315,9 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                 const isStringDbType = ["char", "varchar", "tinytext", "text", "mediumtext", "longtext"].includes(effectiveType);
                 const isTextDbType = ["tinytext", "text", "mediumtext", "longtext"].includes(effectiveType);
                 const isIntDbType = ["tinyint", "smallint", "mediumint", "int", "bigint"].includes(effectiveType);
+                const isDecimalDbType = effectiveType === "decimal";
                 const isJsonDbType = effectiveType === "json";
+                const isNumericDbType = isIntDbType || isDecimalDbType;
 
                 if (isRegexInput(normalizedInput) || isEnumInput(normalizedInput)) {
                     if (!isStringDbType) {
@@ -315,8 +327,12 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                 }
 
                 if (normalizedInput === "number" || normalizedInput === "integer") {
-                    if (!isIntDbType) {
+                    if (normalizedInput === "integer" && !isIntDbType) {
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input=${normalizedInput} 仅允许整数类字段（tinyint/smallint/mediumint/int/bigint）`);
+                        hasError = true;
+                    }
+                    if (normalizedInput === "number" && !isNumericDbType) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input=${normalizedInput} 仅允许数值类字段（tinyint/smallint/mediumint/int/bigint/decimal）`);
                         hasError = true;
                     }
                 }
@@ -336,8 +352,8 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                 }
 
                 // unsigned 仅对 number 类型有效（且仅 MySQL 语义上生效）
-                if (!isIntDbType && field.unsigned !== undefined) {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型为 ${effectiveType}，不允许设置 unsigned（仅整数类型有效）`);
+                if (!isNumericDbType && field.unsigned !== undefined) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型为 ${effectiveType}，不允许设置 unsigned（仅数值类型有效）`);
                     hasError = true;
                 }
 
@@ -400,6 +416,38 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
 
                     if (field.unsigned !== undefined) {
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 datetime 类型，不允许设置 unsigned`);
+                        hasError = true;
+                    }
+                } else if (isDecimalDbType) {
+                    // decimal：对应 MySQL DECIMAL(precision, scale)
+                    // - precision/scale 必须为数字
+                    // - precision: 1..65
+                    // - scale: 0..30 且 <= precision
+                    const precision = field.precision;
+                    const scale = field.scale;
+                    if (typeof precision !== "number") {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 decimal 类型，必须设置 precision（总位数）`);
+                        hasError = true;
+                    } else if (precision < 1 || precision > 65) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 decimal 类型，precision 必须在 1..65 范围内，当前为 ${precision}`);
+                        hasError = true;
+                    }
+
+                    if (typeof scale !== "number") {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 decimal 类型，必须设置 scale（小数位数）`);
+                        hasError = true;
+                    } else if (scale < 0 || scale > 30) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 decimal 类型，scale 必须在 0..30 范围内，当前为 ${scale}`);
+                        hasError = true;
+                    }
+
+                    if (typeof precision === "number" && typeof scale === "number" && scale > precision) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 decimal 类型，scale 不能大于 precision（precision=${precision}, scale=${scale}）`);
+                        hasError = true;
+                    }
+
+                    if (field.default !== undefined && field.default !== null && typeof field.default !== "number") {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 decimal 类型，默认值必须为数字或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
                         hasError = true;
                     }
                 } else if (effectiveType === "char" || effectiveType === "varchar") {

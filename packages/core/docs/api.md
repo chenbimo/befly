@@ -93,7 +93,8 @@ const loginApi: ApiRoute = {
         lastLoginAt: { name: "最后登录时间", type: "datetime", input: "string", nullable: true, default: null },
         roleIds: { name: "角色ID", type: "varchar", input: "array_number", max: 32, default: "[]", nullable: false },
         profile: { name: "用户信息", type: "json", input: "json", default: null, nullable: true },
-        scores: { name: "评分", type: "json", input: "json_number", default: null, nullable: true }
+        scores: { name: "评分", type: "json", input: "json_number", default: null, nullable: true },
+        balance: { name: "余额", type: "decimal", input: "number", precision: 12, scale: 2, default: 0, nullable: false }
     },
     required: ["email", "password"],
     handler: async (befly, ctx) => {
@@ -114,21 +115,49 @@ const loginApi: ApiRoute = {
 export default loginApi;
 ```
 
-`datetime` 校验失败示例：
+示例（业务 API 字段组合）：
 
-- 输入：`2026-01-16`
-- 错误：`最后登录时间格式不正确`
+```ts
+import type { ApiRoute } from "befly/types/api";
+
+const orderCreateApi: ApiRoute = {
+    name: "创建订单",
+    method: "POST",
+    auth: true,
+    fields: {
+        orderNo: { name: "订单号", type: "varchar", input: "string", max: 32, nullable: false },
+        buyerId: { name: "买家ID", type: "bigint", input: "integer", default: 0, nullable: false, unsigned: true },
+        amount: { name: "金额", type: "decimal", input: "number", precision: 12, scale: 2, default: 0, nullable: false, unsigned: true },
+        status: { name: "状态", type: "varchar", input: "pending|paid|cancel", max: 16, default: "pending", nullable: false },
+        tagIds: { name: "标签ID", type: "varchar", input: "array_number", max: 32, default: "[]", nullable: false },
+        ext: { name: "扩展信息", type: "json", input: "json", default: null, nullable: true }
+    },
+    required: ["orderNo", "buyerId", "amount"],
+    handler: async (befly, ctx) => {
+        const orderNo = ctx.body["orderNo"];
+        const buyerId = ctx.body["buyerId"];
+        const amount = ctx.body["amount"];
+
+        if (typeof orderNo !== "string" || typeof buyerId !== "number" || typeof amount !== "number") {
+            return befly.tool.No("参数错误", { ok: false });
+        }
+
+        return befly.tool.Yes("成功", { ok: true });
+    }
+};
+
+export default orderCreateApi;
+```
+
+`datetime` 示例：
+
+`2026-01-16 08:30:00`
 
 `array_number` 读写说明：
 
 - 请求体传入数组（例如 `roleIds: [1, 2]`）
 - 数据库存储为 JSON 字符串（例如 `"[1,2]"`）
 - 查询返回时自动反序列化为数组
-
-`array_number` 失败示例：
-
-- 输入：`roleIds: ["1", "2"]`
-- 错误：`角色ID数组元素必须是数字`
 
 `json` 校验说明：
 
@@ -139,11 +168,6 @@ export default loginApi;
 
 - JSON 结构中所有叶子值必须是 number
 - 若包含非数字（例如字符串）会被判定为格式错误
-
-`json_number` 失败示例：
-
-- 输入：`scores: { "math": 90, "english": "A" }`
-- 错误：`评分JSON值必须是数字`
 
 ## RequestContext（ctx）速查
 

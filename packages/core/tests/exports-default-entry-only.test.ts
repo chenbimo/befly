@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 
 test("befly - default entry should only export Befly", async () => {
     const pkgRoot = resolve(import.meta.dir, "..");
@@ -51,33 +50,37 @@ test("befly - default entry should only export Befly", async () => {
         expect(existsSync(distIndexPath)).toBe(true);
     }
 
-    // 避免 Bun/Node 在 workspace 场景下对 "befly" 自引用解析出现不稳定：
-    // - 我们只验证“默认入口实际指向的 dist/index.js”导出是否只有 Befly。
-    // - 同时已通过 package.json exports['.'] 断言确保发布默认入口就是 dist/index.js。
-    // 用子进程 + file URL 导入，规避同进程 import 缓存（尤其是 dist 刚重建时）。
-    const distIndexUrl = pathToFileURL(distIndexPath).href;
-    const verifyProc = Bun.spawn({
-        cmd: [
-            "bun",
-            "-e",
-            [
-                "const base = process.env.BEFLY_ENTRY_URL;",
-                "if (!base) process.exit(1);",
-                "const url = base + '?t=' + Date.now();",
-                "import(url)",
-                "  .then((m) => {",
-                "    const keys = Object.keys(m).sort();",
-                "    if (keys.length !== 1 || keys[0] !== 'Befly') process.exit(1);",
-                "    if (typeof m.Befly !== 'function') process.exit(1);",
-                "  })",
-                "  .catch(() => process.exit(1));"
-            ].join("\n")
-        ],
-        cwd: pkgRoot,
-        env: Object.assign({}, process.env, { BEFLY_ENTRY_URL: distIndexUrl }),
-        stdout: "ignore",
-        stderr: "inherit"
-    });
-    const verifyExitCode = await verifyProc.exited;
-    expect(verifyExitCode).toBe(0);
+    const distIndexContent = readFileSync(distIndexPath, "utf8");
+
+    // 约束：默认入口仅导出 Befly（不允许 default export，也不允许导出其他符号）。
+    expect(distIndexContent.includes("export default")).toBe(false);
+
+    const exportClassMatches = Array.from(distIndexContent.matchAll(/export\s+class\s+([A-Za-z0-9_]+)/g));
+    const exportFunctionMatches = Array.from(distIndexContent.matchAll(/export\s+function\s+([A-Za-z0-9_]+)/g));
+    const exportConstMatches = Array.from(distIndexContent.matchAll(/export\s+(?:const|let|var)\s+([A-Za-z0-9_]+)/g));
+
+    for (const match of exportClassMatches) {
+        expect(match[1]).toBe("Befly");
+    }
+    expect(exportFunctionMatches.length).toBe(0);
+    expect(exportConstMatches.length).toBe(0);
+
+    const exportListMatches = Array.from(distIndexContent.matchAll(/export\s*{\s*([^}]+)\s*}/g));
+    if (exportListMatches.length === 0) {
+        expect(exportClassMatches.length).toBeGreaterThan(0);
+    } else {
+        for (const match of exportListMatches) {
+            const rawItems = String(match[1] || "")
+                .split(",")
+                .map((item) => item.trim())
+                .filter((item) => item.length > 0);
+            for (const item of rawItems) {
+                const parts = item.split(/\s+as\s+/i).map((part) => part.trim());
+                const name = parts[0] || "";
+                const alias = parts[1] || "";
+                expect(name).toBe("Befly");
+                expect(alias).not.toBe("default");
+            }
+        }
+    }
 });

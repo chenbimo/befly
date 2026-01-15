@@ -62,6 +62,8 @@
 - `min` / `max`（可选，number 或 null）
 - `default`（可选，JSON 值或 null）
 - `detail`（可选，string）
+- `precision`（可选，number 或 null，decimal 总位数）
+- `scale`（可选，number 或 null，decimal 小数位数）
 - `index`（可选，boolean）
 - `unique`（可选，boolean）
 - `nullable`（可选，boolean）
@@ -96,6 +98,64 @@
 }
 ```
 
+示例（完整业务表）：
+
+```json
+{
+    "orderNo": {
+        "name": "订单号",
+        "type": "varchar",
+        "input": "string",
+        "max": 32,
+        "nullable": false,
+        "unique": true
+    },
+    "buyerId": {
+        "name": "买家ID",
+        "type": "bigint",
+        "input": "integer",
+        "default": 0,
+        "nullable": false,
+        "unsigned": true,
+        "index": true
+    },
+    "amount": {
+        "name": "订单金额",
+        "type": "decimal",
+        "input": "number",
+        "precision": 12,
+        "scale": 2,
+        "default": 0,
+        "nullable": false,
+        "unsigned": true
+    },
+    "currency": {
+        "name": "币种",
+        "type": "char",
+        "input": "string",
+        "max": 3,
+        "default": "CNY",
+        "nullable": false
+    },
+    "status": {
+        "name": "状态",
+        "type": "varchar",
+        "input": "pending|paid|cancel",
+        "max": 16,
+        "default": "pending",
+        "nullable": false,
+        "index": true
+    },
+    "createdAt": {
+        "name": "创建时间",
+        "type": "datetime",
+        "default": null,
+        "nullable": false,
+        "index": true
+    }
+}
+```
+
 ## 字段类型与关键约束（强约束）
 
 允许的 `type`（数据库类型）：
@@ -105,6 +165,7 @@
 - `mediumint`
 - `int`
 - `bigint`
+- `decimal`
 - `char`
 - `varchar`
 - `tinytext`
@@ -133,6 +194,7 @@
 | `type`                                  | 默认 `input` | 说明                                    |
 | --------------------------------------- | ------------ | --------------------------------------- |
 | `tinyint/smallint/mediumint/int/bigint` | `integer`    | 整数类，`unsigned` 可用                 |
+| `decimal`                               | `number`     | 需 `precision/scale`，支持 `unsigned`   |
 | `char/varchar`                          | `string`     | 需要 `max`，并受索引长度限制            |
 | `tinytext/text/mediumtext/longtext`     | `string`     | 文本类，`min/max/default` 必须为 `null` |
 | `datetime`                              | `string`     | 必须完整 `YYYY-MM-DD HH:mm:ss`          |
@@ -155,6 +217,13 @@
     - 当 `unique=true` 时：要求 `max <= 180`
     - 当 `input` 为 `array/array_number/array_integer` 时，`max` 表示“单个元素字符串长度”，不是数组长度
     - 当 `input=char` 时，`max` 必须为 1
+
+- `decimal`：
+    - 必须设置 `precision` 与 `scale`
+    - `precision` 取值范围：1..65
+    - `scale` 取值范围：0..30，且 `scale <= precision`
+    - `default` 若存在，必须为 `number | null`
+    - `unsigned` 可用（仅 MySQL 语义）
 
 示例（索引字段：max 必须 <= 500）：
 
@@ -183,6 +252,49 @@
     "age": {
         "name": "年龄",
         "type": "bigint",
+        "input": "number",
+        "default": 0,
+        "nullable": false,
+        "unsigned": true
+    }
+}
+```
+
+示例（decimal 精度/小数位）：
+
+```json
+{
+    "price": {
+        "name": "价格",
+        "type": "decimal",
+        "precision": 10,
+        "scale": 2,
+        "input": "number",
+        "default": 0,
+        "nullable": false
+    }
+}
+```
+
+示例（金额 + 比例型 decimal）：
+
+```json
+{
+    "amount": {
+        "name": "金额",
+        "type": "decimal",
+        "precision": 12,
+        "scale": 2,
+        "input": "number",
+        "default": 0,
+        "nullable": false,
+        "unsigned": true
+    },
+    "rate": {
+        "name": "税率",
+        "type": "decimal",
+        "precision": 5,
+        "scale": 4,
         "input": "number",
         "default": 0,
         "nullable": false,
@@ -276,6 +388,28 @@
 }
 ```
 
+示例（数组 + JSON 组合）：
+
+```json
+{
+    "tagIds": {
+        "name": "标签ID",
+        "type": "varchar",
+        "input": "array_number",
+        "max": 32,
+        "default": "[]",
+        "nullable": false
+    },
+    "ext": {
+        "name": "扩展信息",
+        "type": "json",
+        "input": "json",
+        "default": null,
+        "nullable": true
+    }
+}
+```
+
 示例（JSON input=json）：
 
 ```json
@@ -307,35 +441,6 @@
         "input": "json_integer",
         "default": null,
         "nullable": true
-    }
-}
-```
-
-失败示例（json_integer 出现非整数）：
-
-```json
-{
-    "points": {
-        "name": "积分",
-        "type": "json",
-        "input": "json_integer",
-        "default": null,
-        "nullable": true
-    }
-}
-```
-
-- 输入：`{ "a": 1, "b": 2.5 }`
-- 错误：`JSON值必须是整数`
-
-反例（varchar 缺少 max 会阻断启动）：
-
-```json
-{
-    "title": {
-        "name": "标题",
-        "type": "varchar",
-        "nullable": false
     }
 }
 ```

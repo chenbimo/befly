@@ -53,6 +53,22 @@ core 仅支持 **MySQL 8.0 及以上**。
 - `delForce` / `delForceBatch`（物理删除）
 - `enableData` / `disableData`（通过 state 控制）
 
+示例（写入 decimal / json / array）：
+
+```ts
+await ctx.db.insData({
+    table: "order",
+    data: {
+        orderNo: "NO202601160001",
+        buyerId: 123,
+        amount: 99.8,
+        status: "paid",
+        tagIds: [1, 2, 3],
+        ext: { channel: "wechat", remark: "首单优惠" }
+    }
+});
+```
+
 ### 事务
 
 - `trans(async (db) => { ... })`
@@ -97,6 +113,23 @@ JOIN 场景下支持：
 
 - `"alias.field"` 或 `"table.field"`（点号前缀不会被 snakeCase 改写）
 - 带操作符：`"o.userId$gt"`
+
+示例（组合条件 + 排序）：
+
+```ts
+const res = await ctx.db.getList({
+    table: "order o",
+    where: {
+        "o.buyerId": 123,
+        "o.amount$gte": 50,
+        "o.status$in": ["paid", "shipped"],
+        $or: [{ "o.channel": "wechat" }, { "o.channel": "alipay" }]
+    },
+    orderBy: ["createdAt#desc", "id#desc"],
+    page: 1,
+    limit: 20
+});
+```
 
 ## fields 字段选择（包含/排除）
 
@@ -190,6 +223,7 @@ JOIN 场景同理（把 `state` 条件写到主表或明确的别名上）：
 下表为核心映射（简化展示，具体以运行时为准）：
 
 - `tinyint/smallint/mediumint/int/bigint` → 对应的整数类型（`unsigned` 会生成 `UNSIGNED`）
+- `decimal` → `DECIMAL(precision, scale)`
 - `char` / `varchar` → `CHAR(max)` / `VARCHAR(max)`
 - `tinytext/text/mediumtext/longtext` → 对应的文本类型
 - `datetime` → `DATETIME`
@@ -198,11 +232,11 @@ JOIN 场景同理（把 `state` 条件写到主表或明确的别名上）：
 `input` 仅影响“输入校验”，不会影响 DDL 生成。
 当 `input` 为 `array/array_number/array_integer` 时，数据库字段仍为字符串类（通常使用 `varchar/mediumtext`），数组以 **JSON 字符串** 存储，读写由 `DbUtils` 负责序列化/反序列化。
 当 `type` 为 `datetime` 时，输入必须为完整 `YYYY-MM-DD HH:mm:ss` 字符串（严格到秒）。
+当 `type` 为 `decimal` 时，必须提供 `precision` 与 `scale`，并生成 `DECIMAL(precision, scale)`。
 
-示例（`datetime` 必须完整时间）：
+示例（`datetime` 完整时间格式）：
 
-- ✅ `2026-01-16 08:30:00`
-- ❌ `2026-01-16`（缺少时间部分）
+`2026-01-16 08:30:00`
 
 示例（`array_number` 落库为 JSON 字符串）：
 
@@ -226,6 +260,7 @@ JOIN 场景同理（把 `state` 条件写到主表或明确的别名上）：
 ### 默认值策略
 
 - 整数类型：未显式提供或为 null 时，默认值会被归一化为 `0`
+- `decimal`：未显式提供或为 null 时，默认值会被归一化为 `0`
 - `char/varchar`：默认值会被归一化为 `""`
 - `input` 为 `array/array_number/array_integer`：默认值会被归一化为字符串 `"[]"`
 - `tinytext/text/mediumtext/longtext/json/datetime`：默认值为 `null`（并且通常不会生成 SQL DEFAULT 子句）

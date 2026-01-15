@@ -158,6 +158,28 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
         expect(defs[0]).toContain("NULL");
         expect(defs[0]).not.toContain("NOT NULL");
     });
+
+    test("生成 decimal 类型字段", () => {
+        const fields = {
+            amount: {
+                name: "金额",
+                type: "decimal",
+                input: "number",
+                precision: 10,
+                scale: 2,
+                max: null,
+                default: 0,
+                unique: false,
+                nullable: false,
+                unsigned: true
+            }
+        } satisfies Record<string, FieldDefinition>;
+        const defs = SyncTable.buildBusinessColumnDefs(fields);
+        expect(defs[0]).toContain("`amount`");
+        expect(defs[0]).toContain("DECIMAL(10,2)");
+        expect(defs[0]).toContain("UNSIGNED");
+        expect(defs[0]).toContain("DEFAULT 0");
+    });
 });
 
 describe("generateDDLClause (MySQL)", () => {
@@ -193,6 +215,26 @@ describe("generateDDLClause (MySQL)", () => {
         expect(clause).toContain("MODIFY COLUMN");
         expect(clause).toContain("`user_name`");
         expect(clause).toContain("VARCHAR(100)");
+    });
+
+    test("生成 decimal 类型子句", () => {
+        const fieldDef = {
+            name: "金额",
+            type: "decimal",
+            input: "number",
+            precision: 12,
+            scale: 4,
+            max: null,
+            default: 0,
+            unique: false,
+            nullable: false,
+            unsigned: true
+        } satisfies FieldDefinition;
+        const clause = SyncTable.generateDDLClause("amount", fieldDef, true);
+        expect(clause).toContain("ADD COLUMN");
+        expect(clause).toContain("`amount`");
+        expect(clause).toContain("DECIMAL(12,4)");
+        expect(clause).toContain("UNSIGNED");
     });
 });
 
@@ -244,5 +286,10 @@ describe("isCompatibleTypeChange", () => {
     test("空值处理", () => {
         expect(SyncTable.isCompatibleTypeChange(null, "text")).toBe(false);
         expect(SyncTable.isCompatibleTypeChange("text", null)).toBe(false);
+    });
+
+    test("decimal 变更不是兼容变更", () => {
+        expect(SyncTable.isCompatibleTypeChange("decimal(10,2)", "decimal(12,2)")).toBe(false);
+        expect(SyncTable.isCompatibleTypeChange("decimal(10,2)", "bigint")).toBe(false);
     });
 });

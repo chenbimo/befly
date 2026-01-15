@@ -8,6 +8,8 @@ export type NormalizedFieldDefinition = {
     detail: string;
     min: number | null;
     max: number | null;
+    precision: number | null;
+    scale: number | null;
     default: JsonValue | null;
     index: boolean;
     unique: boolean;
@@ -23,6 +25,8 @@ function inferInputByType(dbType: string): string {
         case "int":
         case "bigint":
             return "integer";
+        case "decimal":
+            return "number";
         case "char":
         case "varchar":
         case "tinytext":
@@ -64,6 +68,8 @@ export function normalizeFieldDefinition(fieldDef: FieldDefinition): NormalizedF
         detail: fieldDef.detail ?? "",
         min: fieldDef.min ?? null,
         max: fieldDef.max ?? null,
+        precision: fieldDef.precision ?? null,
+        scale: fieldDef.scale ?? null,
         default: normalizedDefault,
         index: fieldDef.index ?? false,
         unique: fieldDef.unique ?? false,
