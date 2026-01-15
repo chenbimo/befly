@@ -7,7 +7,7 @@ describe("validator hook - snake_case fields", () => {
         const ctx: any = {
             api: {
                 fields: {
-                    agentId: { name: "上级ID", type: "number", min: 0, max: null }
+                    agentId: { name: "上级ID", type: "bigint", input: "number", min: 0, max: null }
                 },
                 required: ["agentId"]
             },
@@ -25,7 +25,7 @@ describe("validator hook - snake_case fields", () => {
         const ctx: any = {
             api: {
                 fields: {
-                    agentId: { name: "上级ID", type: "number", min: 0, max: null }
+                    agentId: { name: "上级ID", type: "bigint", input: "number", min: 0, max: null }
                 },
                 required: ["agentId"]
             },
@@ -43,7 +43,7 @@ describe("validator hook - snake_case fields", () => {
         const ctx: any = {
             api: {
                 fields: {
-                    name: { name: "名称", type: "string", min: 0, max: 20 }
+                    name: { name: "名称", type: "varchar", input: "string", min: 0, max: 20 }
                 },
                 required: ["name"]
             },

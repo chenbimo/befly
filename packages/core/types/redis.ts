@@ -65,9 +65,6 @@ export interface RedisHelper {
 
     // ===== misc =====
     ping(): Promise<string>;
-
-    // 兜底：允许实现层新增方法而不阻断使用方（保持兼容）
-    [key: string]: any;
 }
 
 /**

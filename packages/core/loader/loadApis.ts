@@ -20,8 +20,7 @@ export async function loadApis(apis: ScanFileResult[]): Promise<Map<string, ApiR
     for (const api of apis) {
         try {
             // B 方案：信任启动期 checkApi 的结构校验，这里只负责把 scanFiles 的结果映射为运行时 ApiRoute。
-            // 仍然兼容测试构造数据：缺少 type 时默认按 api 处理；只有 type 显式存在且不为 api 才跳过。
-            if (Object.hasOwn(api, "type") && api.type !== "api") {
+            if (api.type !== "api") {
                 continue;
             }
 

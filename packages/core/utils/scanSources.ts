@@ -28,7 +28,7 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     tables.push(...(await scanFiles(join(appDir, "tables"), "app", "table", "*.json")));
 
     for (const addon of addons) {
-        tables.push(...(await scanFiles(join(addon.fullPath, "tables"), "addon", "table", "*.json")));
+        tables.push(...(await scanFiles(join(addon.rootDir, "tables"), "addon", "table", "*.json")));
     }
 
     // 处理插件
@@ -38,7 +38,7 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     plugins.push(...(await scanFiles(join(appDir, "plugins"), "app", "plugin", "*.{ts,js}")));
 
     for (const addon of addons) {
-        plugins.push(...(await scanFiles(join(addon.fullPath, "plugins"), "addon", "plugin", "*.{ts,js}")));
+        plugins.push(...(await scanFiles(join(addon.rootDir, "plugins"), "addon", "plugin", "*.{ts,js}")));
     }
 
     // 处理钩子
@@ -48,7 +48,7 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     hooks.push(...(await scanFiles(join(appDir, "hooks"), "app", "hook", "*.{ts,js}")));
 
     for (const addon of addons) {
-        hooks.push(...(await scanFiles(join(addon.fullPath, "hooks"), "addon", "hook", "*.{ts,js}")));
+        hooks.push(...(await scanFiles(join(addon.rootDir, "hooks"), "addon", "hook", "*.{ts,js}")));
     }
 
     // 处理接口
@@ -56,7 +56,7 @@ export const scanSources = async (): Promise<ScanSourcesResult> => {
     apis.push(...(await scanFiles(join(appDir, "apis"), "app", "api", "**/*.{ts,js}")));
 
     for (const addon of addons) {
-        apis.push(...(await scanFiles(join(addon.fullPath, "apis"), "addon", "api", "**/*.{ts,js}")));
+        apis.push(...(await scanFiles(join(addon.rootDir, "apis"), "addon", "api", "**/*.{ts,js}")));
     }
 
     return {

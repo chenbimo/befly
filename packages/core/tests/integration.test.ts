@@ -66,9 +66,9 @@ describe("Integration - 数据验证 + SQL 构建", () => {
         };
 
         const rules = {
-            email: { name: "邮箱", type: "string", regexp: "@email" },
-            age: { name: "年龄", type: "number", min: 0, max: 150 },
-            username: { name: "用户名", type: "string", min: 2, max: 20 }
+            email: { name: "邮箱", type: "varchar", input: "@email" },
+            age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 },
+            username: { name: "用户名", type: "varchar", min: 2, max: 20 }
         };
 
         const validationResult = Validator.validate(userData, rules, ["email", "username"]);
@@ -93,9 +93,9 @@ describe("Integration - 数据验证 + SQL 构建", () => {
         };
 
         const rules = {
-            userName: { name: "用户名", type: "string", min: 2, max: 20 },
-            userEmail: { name: "邮箱", type: "string", regexp: "@email" },
-            userAge: { name: "年龄", type: "number", min: 0, max: 150 }
+            userName: { name: "用户名", type: "varchar", min: 2, max: 20 },
+            userEmail: { name: "邮箱", type: "varchar", input: "@email" },
+            userAge: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 }
         };
 
         const validationResult = Validator.validate(newUser, rules, ["userName", "userEmail"]);

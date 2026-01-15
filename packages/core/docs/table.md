@@ -57,15 +57,15 @@
 字段定义允许的属性：
 
 - `name`（必填，中文标签）
-- `type`（必填）
+- `type`（必填，数据库类型）
+- `input`（可选，输入校验类型/规则，默认由 type 推导）
 - `min` / `max`（可选，number 或 null）
 - `default`（可选，JSON 值或 null）
 - `detail`（可选，string）
 - `index`（可选，boolean）
 - `unique`（可选，boolean）
 - `nullable`（可选，boolean）
-- `unsigned`（可选，boolean，仅 number 有效，仅 MySQL 语义生效）
-- `regexp`（可选，string 或 null）
+- `unsigned`（可选，boolean，仅整数类型有效，仅 MySQL 语义生效）
 
 示例：
 
@@ -73,21 +73,24 @@
 {
     "email": {
         "name": "邮箱",
-        "type": "string",
+        "type": "varchar",
+        "input": "@email",
         "max": 200,
         "nullable": false,
         "unique": true
     },
     "age": {
         "name": "年龄",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "default": 0,
         "nullable": false,
         "unsigned": true
     },
     "bio": {
         "name": "简介",
-        "type": "text",
+        "type": "mediumtext",
+        "input": "string",
         "default": null
     }
 }
@@ -95,31 +98,51 @@
 
 ## 字段类型与关键约束（强约束）
 
-允许的 `type`：
+允许的 `type`（数据库类型）：
 
-- `string`
-- `number`
+- `tinyint`
+- `smallint`
+- `mediumint`
+- `int`
+- `bigint`
+- `char`
+- `varchar`
+- `tinytext`
 - `text`
+- `mediumtext`
+- `longtext`
 - `datetime`
-- `array_string`
-- `array_text`
-- `array_number_string`
-- `array_number_text`
+- `json`
+
+允许的 `input`（输入校验类型/规则）：
+
+- `number`
+- `integer`
+- `string`
+- `char`
+- `array`
+- `array_number`
+- `array_integer`
+- `json`
+- `json_number`
+- `json_integer`
+- 或正则/枚举字符串（例如 `@email`、`^[a-z]+$`、`男|女`）
 
 关键约束（违反会阻断启动）：
 
 - 保留字段不可出现在表定义中：`id`, `created_at`, `updated_at`, `deleted_at`, `state`
 - `unique` 与 `index` 不能同时为 `true`
-- `text` / `array_text` / `array_number_text`：
+- `tinytext` / `text` / `mediumtext` / `longtext` / `json`：
     - `min/max` 必须为 `null`
     - `default` 必须为 `null`
     - 不支持 `index/unique`
-- `string` / `array_string` / `array_number_string`：
+- `char` / `varchar`：
     - 必须设置 `max:number`
     - 且 `max` 不能超过 16383（utf8mb4 下 VARCHAR 的字符长度上限近似值）
     - 当 `index=true` 时：要求 `max <= 500`
     - 当 `unique=true` 时：要求 `max <= 180`
-    - `array_*_string` 的 `max` 表示“单个元素字符串长度”，不是数组长度
+    - 当 `input` 为 `array/array_number/array_integer` 时，`max` 表示“单个元素字符串长度”，不是数组长度
+    - 当 `input=char` 时，`max` 必须为 1
 
 示例（索引字段：max 必须 <= 500）：
 
@@ -127,18 +150,17 @@
 {
     "title": {
         "name": "标题",
-        "type": "string",
+        "type": "varchar",
         "max": 200,
         "index": true
     }
 }
 ```
 
-- `number`：`default` 若存在，必须为 `number | null`
+- `tinyint/smallint/mediumint/int/bigint`：`default` 若存在，必须为 `number | null`
 
 - `datetime`：对应 MySQL `DATETIME`（到秒，等价 `DATETIME(0)`）
-    - 输入值必须是字符串，允许两种格式：
-        - `YYYY-MM-DD`（会自动补齐为 `YYYY-MM-DD 00:00:00`）
+    - 输入值必须是字符串，且必须为完整格式：
         - `YYYY-MM-DD HH:mm:ss`
     - 会做“日期/时间合法性”校验（例如闰年、月份天数、时分秒范围），非法值会被判定为格式不正确
     - `min/max` 必须为 `null`
@@ -146,7 +168,7 @@
         - 说明：表定义的 `default` 是“表结构默认值”的概念；当前项目约定不在表定义里声明 datetime 的默认值。
         - 如需“默认当前时间”，请在业务写入时赋值（或通过触发器/SQL 脚本自行维护）。
     - 不允许设置 `unsigned`
-    - `nullable/index/unique/regexp` 仍可用
+    - `nullable/index/unique/input` 仍可用
 
 示例：
 

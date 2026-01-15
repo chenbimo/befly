@@ -1,5 +1,5 @@
 /**
- * 测试 Validator 对 array_number_string 和 array_number_text 类型的支持
+ * 测试 Validator 对 array_number 输入类型的支持
  */
 
 import type { FieldDefinition, TableDefinition } from "befly/types/validate";
@@ -11,14 +11,14 @@ import { Validator } from "../lib/validator.ts";
 describe("Validator - array_number 类型验证", () => {
     // ==================== 类型转换测试 ====================
 
-    test("array_number_string: 接受数字数组", () => {
+    test("array_number: 接受数字数组", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single([1, 2, 3], field);
@@ -26,14 +26,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result.value).toEqual([1, 2, 3]);
     });
 
-    test("array_number_string: 拒绝字符串数组", () => {
+    test("array_number: 拒绝字符串数组", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(["1", "2", "3"], field);
@@ -41,42 +41,42 @@ describe("Validator - array_number 类型验证", () => {
         expect(result.value).toBeNull();
     });
 
-    test("array_number_string: 拒绝混合类型数组", () => {
+    test("array_number: 拒绝混合类型数组", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single([1, "2", 3], field);
         expect(result.error).toBe("数组元素必须是数字");
     });
 
-    test("array_number_string: 拒绝非数组值", () => {
+    test("array_number: 拒绝非数组值", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single("123", field);
         expect(result.error).toBe("必须是数组");
     });
 
-    test("array_number_text: 接受数字数组", () => {
+    test("array_number: 接受数字数组", () => {
         const field: FieldDefinition = {
             name: "长数字数组",
-            type: "array_number_text",
+            type: "mediumtext",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single([100, 200, 300], field);
@@ -84,14 +84,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result.value).toEqual([100, 200, 300]);
     });
 
-    test("array_number_text: 拒绝 NaN 和 Infinity", () => {
+    test("array_number: 拒绝 NaN 和 Infinity", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_text",
+            type: "mediumtext",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single([1, NaN, 3], field);
@@ -103,14 +103,14 @@ describe("Validator - array_number 类型验证", () => {
 
     // ==================== 规则验证测试 ====================
 
-    test("array_number_string: min 规则验证", () => {
+    test("array_number: min 规则验证", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: 2,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single([1], field);
@@ -123,14 +123,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result3.error).toBeNull();
     });
 
-    test("array_number_string: max 规则验证", () => {
+    test("array_number: max 规则验证", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: 3,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single([1, 2, 3], field);
@@ -140,14 +140,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result2.error).toBe("最多只能有3个元素");
     });
 
-    test("array_number_text: min + max 规则验证", () => {
+    test("array_number: min + max 规则验证", () => {
         const field: FieldDefinition = {
             name: "长数字数组",
-            type: "array_number_text",
+            type: "mediumtext",
+            input: "array_number",
             min: 1,
             max: 5,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single([], field);
@@ -162,14 +162,14 @@ describe("Validator - array_number 类型验证", () => {
 
     // ==================== 默认值测试 ====================
 
-    test("array_number_string: 无 default 时返回空数组", () => {
+    test("array_number: 无 default 时返回空数组", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single(undefined, field);
@@ -185,14 +185,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result3.value).toEqual([]);
     });
 
-    test("array_number_string: 有 default 时返回自定义默认值", () => {
+    test("array_number: 有 default 时返回自定义默认值", () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: [10, 20, 30],
-            regexp: null
+            default: [10, 20, 30]
         };
 
         const result = Validator.single(undefined, field);
@@ -200,14 +200,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result.value).toEqual([10, 20, 30]);
     });
 
-    test('array_number_string: default 为字符串 "[]" 时返回空数组', () => {
+    test('array_number: default 为字符串 "[]" 时返回空数组', () => {
         const field: FieldDefinition = {
             name: "数字数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: "[]",
-            regexp: null
+            default: "[]"
         };
 
         const result = Validator.single(null, field);
@@ -215,14 +215,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result.value).toEqual([]);
     });
 
-    test("array_number_text: 无 default 时返回空数组", () => {
+    test("array_number: 无 default 时返回空数组", () => {
         const field: FieldDefinition = {
             name: "长数字数组",
-            type: "array_number_text",
+            type: "mediumtext",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(undefined, field);
@@ -230,14 +230,14 @@ describe("Validator - array_number 类型验证", () => {
         expect(result.value).toEqual([]);
     });
 
-    test("array_number_text: 有 default 时返回自定义默认值", () => {
+    test("array_number: 有 default 时返回自定义默认值", () => {
         const field: FieldDefinition = {
             name: "长数字数组",
-            type: "array_number_text",
+            type: "mediumtext",
+            input: "array_number",
             min: null,
             max: null,
-            default: [100, 200],
-            regexp: null
+            default: [100, 200]
         };
 
         const result = Validator.single(undefined, field);
@@ -247,15 +247,15 @@ describe("Validator - array_number 类型验证", () => {
 
     // ==================== validate 方法测试 ====================
 
-    test("validate: array_number_string 字段验证", () => {
+    test("validate: array_number 字段验证", () => {
         const rules: TableDefinition = {
             tags: {
                 name: "标签ID",
-                type: "array_number_string",
+                type: "varchar",
+                input: "array_number",
                 min: 1,
                 max: 10,
-                default: null,
-                regexp: null
+                default: null
             }
         };
 
@@ -271,15 +271,15 @@ describe("Validator - array_number 类型验证", () => {
         expect(result3.firstError).toBe("标签ID数组元素必须是数字");
     });
 
-    test("validate: array_number_text 字段验证", () => {
+    test("validate: array_number 字段验证", () => {
         const rules: TableDefinition = {
             ids: {
                 name: "关联ID",
-                type: "array_number_text",
+                type: "mediumtext",
+                input: "array_number",
                 min: null,
                 max: null,
-                default: null,
-                regexp: null
+                default: null
             }
         };
 
@@ -295,11 +295,11 @@ describe("Validator - array_number 类型验证", () => {
         const rules: TableDefinition = {
             tags: {
                 name: "标签",
-                type: "array_number_string",
+                type: "varchar",
+                input: "array_number",
                 min: 1,
                 max: null,
-                default: null,
-                regexp: null
+                default: null
             }
         };
 

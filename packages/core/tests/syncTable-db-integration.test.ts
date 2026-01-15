@@ -35,7 +35,8 @@ function buildTableItem(options: { fileName: string; content: Record<string, Fie
 function fdString(options: { name: string; min: number | null; max: number | null; defaultValue: JsonValue | null; nullable: boolean }): FieldDefinition {
     return {
         name: options.name,
-        type: "string",
+        type: "varchar",
+        input: "string",
         min: options.min,
         max: options.max,
         default: options.defaultValue,
@@ -46,7 +47,8 @@ function fdString(options: { name: string; min: number | null; max: number | nul
 function fdNumber(options: { name: string; min: number | null; max: number | null; defaultValue: JsonValue | null; nullable: boolean }): FieldDefinition {
     return {
         name: options.name,
-        type: "number",
+        type: "bigint",
+        input: "number",
         min: options.min,
         max: options.max,
         default: options.defaultValue,
@@ -58,6 +60,7 @@ function fdText(options: { name: string; min: number | null; max: number | null;
     return {
         name: options.name,
         type: "text",
+        input: "string",
         min: options.min,
         max: options.max,
         default: options.defaultValue,
@@ -112,6 +115,43 @@ describe("syncTable(ctx, items) - mock mysql", () => {
         expect(columns.email).toBeDefined();
         expect(columns.nickname).toBeDefined();
         expect(columns.age).toBeDefined();
+
+        expect(columns.email.columnType).toContain("varchar(100)");
+        expect(columns.nickname.columnType).toContain("varchar(50)");
+    });
+
+    test("varchar 缺失 max 应被拒绝", async () => {
+        const state: MockMySqlState = {
+            executedSql: [],
+            dbName: "test",
+            tables: {}
+        };
+
+        const db = createMockMySqlDb(state);
+        const ctx = {
+            db: db,
+            config: {
+                db: { database: "test" }
+            }
+        } satisfies ConstructorParameters<typeof SyncTable>[0];
+
+        const fileName = "testSyncTableIntegrationMissingMax";
+        const item = buildTableItem({
+            fileName: fileName,
+            content: {
+                title: {
+                    name: "标题",
+                    type: "varchar",
+                    input: "string",
+                    min: 0,
+                    max: null,
+                    default: null,
+                    nullable: false
+                } satisfies FieldDefinition
+            }
+        });
+
+        await expect(checkTable([item], defaultConfig)).rejects.toThrow();
     });
 
     test("二次同步：新增字段应落库（ADD COLUMN）", async () => {

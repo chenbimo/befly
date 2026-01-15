@@ -148,12 +148,12 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableName = buildTableName("create_table");
 
         const fields: Record<string, FieldDefinition> = {
-            name: { name: "名称", type: "string", max: 50, default: null, unique: false, nullable: false, unsigned: false, index: true },
-            age: { name: "年龄", type: "number", max: null, default: 0, unique: false, nullable: false, unsigned: true, index: false },
-            bio: { name: "简介", type: "text", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false },
-            tags: { name: "标签", type: "array_string", max: 30, default: null, unique: false, nullable: false, unsigned: false, index: false },
-            notes: { name: "备注", type: "array_text", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false },
-            eventAt: { name: "事件时间", type: "datetime", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
+            name: { name: "名称", type: "varchar", input: "string", max: 50, default: null, unique: false, nullable: false, unsigned: false, index: true },
+            age: { name: "年龄", type: "bigint", input: "number", max: null, default: 0, unique: false, nullable: false, unsigned: true, index: false },
+            bio: { name: "简介", type: "mediumtext", input: "string", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false },
+            tags: { name: "标签", type: "varchar", input: "array", max: 30, default: null, unique: false, nullable: false, unsigned: false, index: false },
+            notes: { name: "备注", type: "mediumtext", input: "array", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false },
+            eventAt: { name: "事件时间", type: "datetime", input: "string", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
         };
 
         try {
@@ -218,16 +218,16 @@ describe("syncTable - mysql (real) - befly_test", () => {
 
         const tableName = buildTableName("modify_table");
         const initialFields: Record<string, FieldDefinition> = {
-            name: { name: "名称", type: "string", max: 20, default: null, unique: false, nullable: false, unsigned: false, index: true },
-            age: { name: "年龄", type: "number", max: null, default: 0, unique: false, nullable: false, unsigned: true, index: false },
-            note: { name: "备注", type: "text", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
+            name: { name: "名称", type: "varchar", input: "string", max: 20, default: null, unique: false, nullable: false, unsigned: false, index: true },
+            age: { name: "年龄", type: "bigint", input: "number", max: null, default: 0, unique: false, nullable: false, unsigned: true, index: false },
+            note: { name: "备注", type: "mediumtext", input: "string", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
         };
 
         const updatedFields: Record<string, FieldDefinition> = {
-            name: { name: "名称", type: "string", max: 100, default: null, unique: false, nullable: false, unsigned: false, index: false },
-            age: { name: "年龄", type: "number", max: null, default: 1, unique: false, nullable: true, unsigned: true, index: false },
-            note: { name: "备注", type: "text", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false },
-            status: { name: "状态", type: "string", max: 10, default: "ok", unique: false, nullable: false, unsigned: false, index: true }
+            name: { name: "名称", type: "varchar", input: "string", max: 100, default: null, unique: false, nullable: false, unsigned: false, index: false },
+            age: { name: "年龄", type: "bigint", input: "number", max: null, default: 1, unique: false, nullable: true, unsigned: true, index: false },
+            note: { name: "备注", type: "mediumtext", input: "string", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false },
+            status: { name: "状态", type: "varchar", input: "string", max: 10, default: "ok", unique: false, nullable: false, unsigned: false, index: true }
         };
 
         try {
@@ -278,7 +278,7 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableQuoted = SyncTable.quoteIdentifier(tableName);
 
         const fields: Record<string, FieldDefinition> = {
-            count: { name: "数量", type: "number", max: null, default: 0, unique: false, nullable: false, unsigned: false, index: false }
+            count: { name: "数量", type: "bigint", input: "number", max: null, default: 0, unique: false, nullable: false, unsigned: false, index: false }
         };
 
         try {
@@ -311,7 +311,8 @@ describe("syncTable - mysql (real) - befly_test", () => {
 
         const fieldDef: FieldDefinition = {
             name: "事件时间",
-            type: "number",
+            type: "bigint",
+            input: "number",
             max: null,
             default: 0,
             unique: false,
@@ -335,8 +336,8 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableName = buildTableName("array_number");
 
         const fields: Record<string, FieldDefinition> = {
-            nums: { name: "数值数组", type: "array_number_string", max: 12, default: null, unique: false, nullable: false, unsigned: false, index: false },
-            numsText: { name: "数值数组长文", type: "array_number_text", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
+            nums: { name: "数值数组", type: "varchar", input: "array_number", max: 12, default: null, unique: false, nullable: false, unsigned: false, index: false },
+            numsText: { name: "数值数组长文", type: "mediumtext", input: "array_number", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
         };
 
         try {
@@ -374,11 +375,11 @@ describe("syncTable - mysql (real) - befly_test", () => {
 
         const tableName = buildTableName("default_change");
         const initialFields: Record<string, FieldDefinition> = {
-            status: { name: "状态", type: "string", max: 10, default: null, unique: false, nullable: false, unsigned: false, index: false }
+            status: { name: "状态", type: "varchar", input: "string", max: 10, default: null, unique: false, nullable: false, unsigned: false, index: false }
         };
 
         const updatedFields: Record<string, FieldDefinition> = {
-            status: { name: "状态", type: "string", max: 10, default: "ok", unique: false, nullable: false, unsigned: false, index: false }
+            status: { name: "状态", type: "varchar", input: "string", max: 10, default: "ok", unique: false, nullable: false, unsigned: false, index: false }
         };
 
         try {
@@ -405,11 +406,11 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableName = buildTableName("nullable_change");
 
         const initialFields: Record<string, FieldDefinition> = {
-            title: { name: "标题", type: "string", max: 40, default: null, unique: false, nullable: true, unsigned: false, index: false }
+            title: { name: "标题", type: "varchar", input: "string", max: 40, default: null, unique: false, nullable: true, unsigned: false, index: false }
         };
 
         const updatedFields: Record<string, FieldDefinition> = {
-            title: { name: "标题", type: "string", max: 40, default: null, unique: false, nullable: false, unsigned: false, index: false }
+            title: { name: "标题", type: "varchar", input: "string", max: 40, default: null, unique: false, nullable: false, unsigned: false, index: false }
         };
 
         try {
@@ -436,11 +437,11 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableName = buildTableName("index_add");
 
         const initialFields: Record<string, FieldDefinition> = {
-            title: { name: "标题", type: "string", max: 30, default: null, unique: false, nullable: false, unsigned: false, index: false }
+            title: { name: "标题", type: "varchar", input: "string", max: 30, default: null, unique: false, nullable: false, unsigned: false, index: false }
         };
 
         const updatedFields: Record<string, FieldDefinition> = {
-            title: { name: "标题", type: "string", max: 30, default: null, unique: false, nullable: false, unsigned: false, index: true }
+            title: { name: "标题", type: "varchar", input: "string", max: 30, default: null, unique: false, nullable: false, unsigned: false, index: true }
         };
 
         try {
@@ -476,11 +477,11 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableName = buildTableName("index_drop");
 
         const initialFields: Record<string, FieldDefinition> = {
-            code: { name: "编号", type: "string", max: 40, default: null, unique: false, nullable: false, unsigned: false, index: true }
+            code: { name: "编号", type: "varchar", input: "string", max: 40, default: null, unique: false, nullable: false, unsigned: false, index: true }
         };
 
         const updatedFields: Record<string, FieldDefinition> = {
-            code: { name: "编号", type: "string", max: 40, default: null, unique: false, nullable: false, unsigned: false, index: false }
+            code: { name: "编号", type: "varchar", input: "string", max: 40, default: null, unique: false, nullable: false, unsigned: false, index: false }
         };
 
         try {
@@ -517,7 +518,7 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableQuoted = SyncTable.quoteIdentifier(tableName);
 
         const fields: Record<string, FieldDefinition> = {
-            content: { name: "内容", type: "text", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
+            content: { name: "内容", type: "mediumtext", input: "string", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
         };
 
         try {
@@ -546,7 +547,7 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableQuoted = SyncTable.quoteIdentifier(tableName);
 
         const fields: Record<string, FieldDefinition> = {
-            content: { name: "内容", type: "text", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
+            content: { name: "内容", type: "mediumtext", input: "string", max: null, default: null, unique: false, nullable: true, unsigned: false, index: false }
         };
 
         try {
@@ -575,7 +576,7 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableQuoted = SyncTable.quoteIdentifier(tableName);
 
         const fields: Record<string, FieldDefinition> = {
-            code: { name: "编码", type: "string", max: 8, default: null, unique: false, nullable: false, unsigned: false, index: false }
+            code: { name: "编码", type: "varchar", input: "string", max: 8, default: null, unique: false, nullable: false, unsigned: false, index: false }
         };
 
         try {
@@ -604,7 +605,7 @@ describe("syncTable - mysql (real) - befly_test", () => {
         const tableQuoted = SyncTable.quoteIdentifier(tableName);
 
         const fields: Record<string, FieldDefinition> = {
-            code: { name: "编码", type: "string", max: 6, default: null, unique: false, nullable: false, unsigned: false, index: false }
+            code: { name: "编码", type: "varchar", input: "string", max: 6, default: null, unique: false, nullable: false, unsigned: false, index: false }
         };
 
         try {

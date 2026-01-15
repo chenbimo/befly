@@ -52,12 +52,12 @@ describe("MYSQL_TABLE_CONFIG", () => {
 });
 
 describe("getSqlType (MySQL)", () => {
-    test("number 映射为 BIGINT", () => {
-        expect(SyncTable.getSqlType("number", null)).toBe("BIGINT");
+    test("bigint 映射为 BIGINT", () => {
+        expect(SyncTable.getSqlType("bigint", null)).toBe("BIGINT");
     });
 
-    test("string 映射为 VARCHAR", () => {
-        expect(SyncTable.getSqlType("string", 100)).toBe("VARCHAR(100)");
+    test("varchar 映射为 VARCHAR", () => {
+        expect(SyncTable.getSqlType("varchar", 100)).toBe("VARCHAR(100)");
     });
 
     test("datetime 映射为 DATETIME", () => {
@@ -68,11 +68,7 @@ describe("getSqlType (MySQL)", () => {
         expect(SyncTable.getSqlType("text", null)).toBe("MEDIUMTEXT");
     });
 
-    test("array_string 映射为 VARCHAR", () => {
-        expect(SyncTable.getSqlType("array_string", 50)).toBe("VARCHAR(50)");
-    });
-
-    test("array_text 映射为 MEDIUMTEXT", () => {
-        expect(SyncTable.getSqlType("array_text", null)).toBe("MEDIUMTEXT");
+    test("json 映射为 JSON", () => {
+        expect(SyncTable.getSqlType("json", null)).toBe("JSON");
     });
 });

@@ -88,32 +88,6 @@ export type AnyObject = JsonObject;
 // ============================================
 
 /**
- * 字段规则字符串（已废弃，保留用于兼容）
- * 格式: "字段名|类型|最小值|最大值|默认值|是否索引|正则约束"
- *
- * @deprecated 请使用 FieldDefinition 对象格式
- * @example
- * "用户名|string|2|50|null|1|^[a-zA-Z0-9_]+$"
- * "年龄|number|0|150|18|0|null"
- */
-export type FieldRule = string;
-
-/**
- * 解析后的字段规则（已废弃，保留用于兼容）
- *
- * @deprecated 请使用 FieldDefinition 对象格式
- */
-export interface ParsedFieldRule {
-    name: string;
-    type: "string" | "number" | "text" | "array_string" | "array_text";
-    min: number | null;
-    max: number | null;
-    default: JsonValue | null;
-    index: 0 | 1;
-    regex: string | null;
-}
-
-/**
  * 比较运算符
  */
 export type ComparisonOperator = "=" | ">" | "<" | ">=" | "<=" | "!=" | "<>" | "LIKE" | "IN" | "NOT IN" | "IS NULL" | "IS NOT NULL";

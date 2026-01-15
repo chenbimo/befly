@@ -1,47 +1,48 @@
 {
     "adminId": {
         "name": "管理员ID",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "index": true
     },
     "username": {
         "name": "用户名",
-        "type": "string",
+        "type": "varchar",
         "min": 1,
         "max": 50
     },
     "nickname": {
         "name": "昵称",
-        "type": "string",
+        "type": "varchar",
         "max": 50
     },
     "ip": {
         "name": "操作IP",
-        "type": "string",
+        "type": "varchar",
         "max": 50,
         "index": true
     },
     "module": {
         "name": "操作模块",
-        "type": "string",
+        "type": "varchar",
         "max": 50,
         "index": true
     },
     "action": {
         "name": "操作类型",
-        "type": "string",
+        "type": "varchar",
         "max": 50,
         "index": true
     },
     "method": {
         "name": "请求方法",
-        "type": "string",
+        "type": "varchar",
         "max": 10
     },
     "path": {
         "name": "请求路径",
-        "type": "string",
+        "type": "varchar",
         "max": 200
     },
     "params": {
@@ -50,7 +51,8 @@
     },
     "result": {
         "name": "操作结果",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 1,
         "default": 1,
@@ -62,18 +64,20 @@
     },
     "duration": {
         "name": "耗时毫秒",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0
     },
     "operateTime": {
         "name": "操作时间",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "index": true
     },
     "remark": {
         "name": "备注",
-        "type": "string",
+        "type": "varchar",
         "max": 500
     }
 }

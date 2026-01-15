@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 
 import { join, resolve } from "pathe";
 
-import { appAddonsDir, appDir } from "../paths";
+import { appDir } from "../paths";
 import { isDirentDirectory } from "./isDirentDirectory";
 import { camelCase } from "./util";
 
@@ -23,9 +23,6 @@ export interface AddonInfo {
 
     /** addon 根目录绝对路径 */
     rootDir: string;
-
-    /** 兼容字段：历史上使用 fullPath 表示 rootDir */
-    fullPath: string;
 }
 
 /** 扫描 node_modules/@befly-addon + 项目 addons/（项目优先级更高） */
@@ -54,8 +51,7 @@ export const scanAddons = (): AddonInfo[] => {
                 sourceName: sourceName,
                 name: entry.name,
                 camelName: camelCase(entry.name),
-                rootDir: rootDir,
-                fullPath: rootDir
+                rootDir: rootDir
             };
 
             addonMap.set(entry.name, info);
@@ -64,9 +60,6 @@ export const scanAddons = (): AddonInfo[] => {
 
     // node_modules 中的 @befly-addon
     scanBaseDir(join(appDir, "node_modules", "@befly-addon"), "addon", "组件");
-
-    // 项目本地 addons（同名覆盖 node_modules）
-    scanBaseDir(appAddonsDir, "app", "项目");
 
     return Array.from(addonMap.values());
 };

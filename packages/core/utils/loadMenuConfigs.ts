@@ -122,8 +122,8 @@ export async function loadMenuConfigs(addons: AddonInfo[]): Promise<MenuConfig[]
     const allMenus: MenuConfig[] = [];
 
     for (const addon of addons) {
-        const adminViewsDirByTopLevel = join(addon.fullPath, "adminViews");
-        const adminViewsDirByViews = join(addon.fullPath, "views", "admin");
+        const adminViewsDirByTopLevel = join(addon.rootDir, "adminViews");
+        const adminViewsDirByViews = join(addon.rootDir, "views", "admin");
         const adminViewsDir = existsSync(adminViewsDirByTopLevel) ? adminViewsDirByTopLevel : existsSync(adminViewsDirByViews) ? adminViewsDirByViews : null;
         if (!adminViewsDir) {
             continue;

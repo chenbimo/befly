@@ -14,11 +14,11 @@ describe("Validator - 默认值处理逻辑", () => {
     test("number: 无 default 时返回 0", () => {
         const field: FieldDefinition = {
             name: "数字",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(undefined, field);
@@ -29,11 +29,11 @@ describe("Validator - 默认值处理逻辑", () => {
     test("number: 有 default 时返回自定义值", () => {
         const field: FieldDefinition = {
             name: "数字",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: null,
             max: null,
-            default: 100,
-            regexp: null
+            default: 100
         };
 
         const result = Validator.single(undefined, field);
@@ -44,11 +44,11 @@ describe("Validator - 默认值处理逻辑", () => {
     test("number: default 为字符串时自动转换", () => {
         const field: FieldDefinition = {
             name: "数字",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: null,
             max: null,
-            default: "999",
-            regexp: null
+            default: "999"
         };
 
         const result = Validator.single(null, field);
@@ -59,11 +59,11 @@ describe("Validator - 默认值处理逻辑", () => {
     test("number: default 为无效字符串时返回 0", () => {
         const field: FieldDefinition = {
             name: "数字",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: null,
             max: null,
-            default: "invalid",
-            regexp: null
+            default: "invalid"
         };
 
         const result = Validator.single(undefined, field);
@@ -76,11 +76,10 @@ describe("Validator - 默认值处理逻辑", () => {
     test("string: 无 default 时返回空字符串", () => {
         const field: FieldDefinition = {
             name: "字符串",
-            type: "string",
+            type: "varchar",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(undefined, field);
@@ -91,11 +90,10 @@ describe("Validator - 默认值处理逻辑", () => {
     test("string: 有 default 时返回自定义值", () => {
         const field: FieldDefinition = {
             name: "字符串",
-            type: "string",
+            type: "varchar",
             min: null,
             max: null,
-            default: "admin",
-            regexp: null
+            default: "admin"
         };
 
         const result = Validator.single(undefined, field);
@@ -111,8 +109,7 @@ describe("Validator - 默认值处理逻辑", () => {
             type: "text",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(undefined, field);
@@ -126,8 +123,7 @@ describe("Validator - 默认值处理逻辑", () => {
             type: "text",
             min: null,
             max: null,
-            default: "这是长文本内容",
-            regexp: null
+            default: "这是长文本内容"
         };
 
         const result = Validator.single(null, field);
@@ -135,16 +131,16 @@ describe("Validator - 默认值处理逻辑", () => {
         expect(result.value).toBe("这是长文本内容");
     });
 
-    // ==================== array_string 类型默认值 ====================
+    // ==================== array 类型默认值 ====================
 
-    test("array_string: 无 default 时返回空数组", () => {
+    test("array: 无 default 时返回空数组", () => {
         const field: FieldDefinition = {
             name: "字符串数组",
-            type: "array_string",
+            type: "varchar",
+            input: "array",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(undefined, field);
@@ -152,14 +148,14 @@ describe("Validator - 默认值处理逻辑", () => {
         expect(result.value).toEqual([]);
     });
 
-    test("array_string: 有 default 时返回自定义数组", () => {
+    test("array: 有 default 时返回自定义数组", () => {
         const field: FieldDefinition = {
             name: "字符串数组",
-            type: "array_string",
+            type: "varchar",
+            input: "array",
             min: null,
             max: null,
-            default: ["a", "b", "c"],
-            regexp: null
+            default: ["a", "b", "c"]
         };
 
         const result = Validator.single(undefined, field);
@@ -167,14 +163,14 @@ describe("Validator - 默认值处理逻辑", () => {
         expect(result.value).toEqual(["a", "b", "c"]);
     });
 
-    test('array_string: default 为字符串 "[]" 时返回空数组', () => {
+    test('array: default 为字符串 "[]" 时返回空数组', () => {
         const field: FieldDefinition = {
             name: "字符串数组",
-            type: "array_string",
+            type: "varchar",
+            input: "array",
             min: null,
             max: null,
-            default: "[]",
-            regexp: null
+            default: "[]"
         };
 
         const result = Validator.single(null, field);
@@ -182,14 +178,14 @@ describe("Validator - 默认值处理逻辑", () => {
         expect(result.value).toEqual([]);
     });
 
-    test("array_string: default 为 JSON 字符串时解析为数组", () => {
+    test("array: default 为 JSON 字符串时解析为数组", () => {
         const field: FieldDefinition = {
             name: "字符串数组",
-            type: "array_string",
+            type: "varchar",
+            input: "array",
             min: null,
             max: null,
-            default: '["x", "y", "z"]',
-            regexp: null
+            default: '["x", "y", "z"]'
         };
 
         const result = Validator.single(undefined, field);
@@ -197,14 +193,14 @@ describe("Validator - 默认值处理逻辑", () => {
         expect(result.value).toEqual(["x", "y", "z"]);
     });
 
-    test("array_string: default 为无效 JSON 时返回空数组", () => {
+    test("array: default 为无效 JSON 时返回空数组", () => {
         const field: FieldDefinition = {
             name: "字符串数组",
-            type: "array_string",
+            type: "varchar",
+            input: "array",
             min: null,
             max: null,
-            default: "invalid-json",
-            regexp: null
+            default: "invalid-json"
         };
 
         const result = Validator.single(null, field);
@@ -212,16 +208,16 @@ describe("Validator - 默认值处理逻辑", () => {
         expect(result.value).toEqual([]);
     });
 
-    // ==================== array_text 类型默认值 ====================
+    // ==================== array 类型（mediumtext）默认值 ====================
 
-    test("array_text: 无 default 时返回空数组", () => {
+    test("array: 无 default 时返回空数组", () => {
         const field: FieldDefinition = {
             name: "文本数组",
-            type: "array_text",
+            type: "mediumtext",
+            input: "array",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(undefined, field);
@@ -229,14 +225,14 @@ describe("Validator - 默认值处理逻辑", () => {
         expect(result.value).toEqual([]);
     });
 
-    test("array_text: 有 default 时返回自定义数组", () => {
+    test("array: 有 default 时返回自定义数组", () => {
         const field: FieldDefinition = {
             name: "文本数组",
-            type: "array_text",
+            type: "mediumtext",
+            input: "array",
             min: null,
             max: null,
-            default: ["长文本1", "长文本2"],
-            regexp: null
+            default: ["长文本1", "长文本2"]
         };
 
         const result = Validator.single(null, field);
@@ -249,11 +245,10 @@ describe("Validator - 默认值处理逻辑", () => {
     test("undefined 应使用默认值", () => {
         const field: FieldDefinition = {
             name: "测试",
-            type: "string",
+            type: "varchar",
             min: null,
             max: null,
-            default: "test",
-            regexp: null
+            default: "test"
         };
 
         const result = Validator.single(undefined, field);
@@ -264,11 +259,11 @@ describe("Validator - 默认值处理逻辑", () => {
     test("null 应使用默认值", () => {
         const field: FieldDefinition = {
             name: "测试",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: null,
             max: null,
-            default: 999,
-            regexp: null
+            default: 999
         };
 
         const result = Validator.single(null, field);
@@ -279,11 +274,10 @@ describe("Validator - 默认值处理逻辑", () => {
     test("空字符串应使用默认值", () => {
         const field: FieldDefinition = {
             name: "测试",
-            type: "string",
+            type: "varchar",
             min: null,
             max: null,
-            default: "fallback",
-            regexp: null
+            default: "fallback"
         };
 
         const result = Validator.single("", field);
@@ -296,20 +290,20 @@ describe("Validator - 默认值处理逻辑", () => {
     test("字段 default 应覆盖类型默认值（number）", () => {
         const fieldWithDefault: FieldDefinition = {
             name: "数字",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: null,
             max: null,
-            default: 888,
-            regexp: null
+            default: 888
         };
 
         const fieldWithoutDefault: FieldDefinition = {
             name: "数字",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single(undefined, fieldWithDefault);
@@ -322,20 +316,18 @@ describe("Validator - 默认值处理逻辑", () => {
     test("字段 default 应覆盖类型默认值（string）", () => {
         const fieldWithDefault: FieldDefinition = {
             name: "字符串",
-            type: "string",
+            type: "varchar",
             min: null,
             max: null,
-            default: "custom",
-            regexp: null
+            default: "custom"
         };
 
         const fieldWithoutDefault: FieldDefinition = {
             name: "字符串",
-            type: "string",
+            type: "varchar",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single(undefined, fieldWithDefault);
@@ -348,20 +340,20 @@ describe("Validator - 默认值处理逻辑", () => {
     test("字段 default 应覆盖类型默认值（array）", () => {
         const fieldWithDefault: FieldDefinition = {
             name: "数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: [1, 2, 3],
-            regexp: null
+            default: [1, 2, 3]
         };
 
         const fieldWithoutDefault: FieldDefinition = {
             name: "数组",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result1 = Validator.single(undefined, fieldWithDefault);

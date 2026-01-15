@@ -1,37 +1,40 @@
 ﻿{
     "name": {
         "name": "角色名称",
-        "type": "string",
+        "type": "varchar",
         "min": 2,
         "max": 50,
         "index": true
     },
     "code": {
         "name": "角色编码",
-        "type": "string",
+        "type": "varchar",
+        "input": "@alphanumericDash_",
         "min": 2,
         "max": 50,
-        "index": true,
-        "regexp": "@alphanumericDash_"
+        "index": true
     },
     "description": {
         "name": "角色描述",
-        "type": "string",
+        "type": "varchar",
         "max": 200
     },
     "menus": {
         "name": "菜单权限",
-        "type": "array_text",
+        "type": "mediumtext",
+        "input": "array",
         "detail": "菜单路径数组（menu.path），如 [\"/permission/role\",\"/dashboard\"]"
     },
     "apis": {
         "name": "接口权限",
-        "type": "array_text",
+        "type": "mediumtext",
+        "input": "array",
         "detail": "接口路径数组（url.pathname），如 [\"/api/addon/addonAdmin/auth/login\"]"
     },
     "sort": {
         "name": "排序",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 9999,
         "default": 0

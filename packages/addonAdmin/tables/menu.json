@@ -1,28 +1,29 @@
 ﻿{
     "name": {
         "name": "菜单名称",
-        "type": "string",
+        "type": "varchar",
         "min": 2,
         "max": 50,
         "index": true
     },
     "path": {
         "name": "路由路径",
-        "type": "string",
+        "type": "varchar",
         "min": 1,
         "max": 150,
         "unique": true
     },
     "sort": {
         "name": "排序",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 9999,
         "default": 0
     },
     "parentPath": {
         "name": "父级路径",
-        "type": "string",
+        "type": "varchar",
         "max": 200,
         "default": "",
         "index": true

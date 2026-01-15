@@ -1,36 +1,37 @@
 ﻿{
     "typeCode": {
         "name": "字典类型代码",
-        "type": "string",
+        "type": "varchar",
+        "input": "@alphanumeric_",
         "min": 2,
         "max": 50,
-        "index": true,
-        "regexp": "@alphanumeric_"
+        "index": true
     },
     "key": {
         "name": "字典键",
-        "type": "string",
+        "type": "varchar",
+        "input": "@alphanumeric_",
         "min": 1,
         "max": 50,
-        "index": true,
-        "regexp": "@alphanumeric_"
+        "index": true
     },
     "label": {
         "name": "字典标签",
-        "type": "string",
+        "type": "varchar",
         "min": 1,
         "max": 100
     },
     "sort": {
         "name": "排序",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 9999,
         "default": 0
     },
     "remark": {
         "name": "备注",
-        "type": "string",
+        "type": "varchar",
         "max": 200
     }
 }

@@ -1,26 +1,27 @@
 {
     "code": {
         "name": "类型代码",
-        "type": "string",
+        "type": "varchar",
+        "input": "@alphanumeric_",
         "min": 2,
         "max": 50,
-        "unique": true,
-        "regexp": "@alphanumeric_"
+        "unique": true
     },
     "name": {
         "name": "类型名称",
-        "type": "string",
+        "type": "varchar",
         "min": 2,
         "max": 50
     },
     "description": {
         "name": "描述",
-        "type": "string",
+        "type": "varchar",
         "max": 200
     },
     "sort": {
         "name": "排序",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 9999,
         "default": 0

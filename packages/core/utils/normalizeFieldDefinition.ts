@@ -4,6 +4,7 @@ import type { FieldDefinition } from "../types/validate";
 export type NormalizedFieldDefinition = {
     name: string;
     type: string;
+    input: string;
     detail: string;
     min: number | null;
     max: number | null;
@@ -12,21 +13,61 @@ export type NormalizedFieldDefinition = {
     unique: boolean;
     nullable: boolean;
     unsigned: boolean;
-    regexp: string | null;
 };
 
+function inferInputByType(dbType: string): string {
+    switch (dbType.toLowerCase()) {
+        case "tinyint":
+        case "smallint":
+        case "mediumint":
+        case "int":
+        case "bigint":
+            return "integer";
+        case "char":
+        case "varchar":
+        case "tinytext":
+        case "text":
+        case "mediumtext":
+        case "longtext":
+            return "string";
+        case "datetime":
+            return "string";
+        case "json":
+            return "json";
+        default:
+            return "string";
+    }
+}
+
+function normalizeTypeAndInput(fieldDef: FieldDefinition): { type: string; input: string } {
+    const rawType = String(fieldDef.type ?? "").trim();
+    const rawInput = typeof fieldDef.input === "string" ? fieldDef.input.trim() : "";
+
+    const inferredInput = rawInput || inferInputByType(rawType);
+    return { type: rawType, input: inferredInput };
+}
+
 export function normalizeFieldDefinition(fieldDef: FieldDefinition): NormalizedFieldDefinition {
+    const typeAndInput = normalizeTypeAndInput(fieldDef);
+    let normalizedDefault = fieldDef.default ?? null;
+
+    if (normalizedDefault === null) {
+        if (typeAndInput.input === "array" || typeAndInput.input === "array_number" || typeAndInput.input === "array_integer") {
+            normalizedDefault = "[]";
+        }
+    }
+
     return {
         name: fieldDef.name,
-        type: fieldDef.type,
+        type: typeAndInput.type,
+        input: typeAndInput.input,
         detail: fieldDef.detail ?? "",
         min: fieldDef.min ?? null,
         max: fieldDef.max ?? null,
-        default: fieldDef.default ?? null,
+        default: normalizedDefault,
         index: fieldDef.index ?? false,
         unique: fieldDef.unique ?? false,
         nullable: fieldDef.nullable ?? false,
-        unsigned: fieldDef.unsigned ?? false,
-        regexp: fieldDef.regexp ?? null
+        unsigned: fieldDef.unsigned ?? false
     };
 }

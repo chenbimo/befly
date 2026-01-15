@@ -2,10 +2,8 @@
  * 验证所有数组类型的序列化/反序列化支持
  *
  * 测试类型：
- * - array_string
- * - array_text
- * - array_number_string
- * - array_number_text
+ * - array
+ * - array_number
  */
 
 import { describe, expect, test } from "bun:test";
@@ -50,9 +48,9 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         return deserialized as T;
     };
 
-    // ==================== array_string 类型 ====================
+    // ==================== array 类型 ====================
 
-    test("array_string: 字符串数组序列化和反序列化", () => {
+    test("array: 字符串数组序列化和反序列化", () => {
         const data = {
             tags: ["tag1", "tag2", "tag3"]
         };
@@ -64,7 +62,7 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.tags).toEqual(["tag1", "tag2", "tag3"]);
     });
 
-    test("array_string: 空数组", () => {
+    test("array: 空数组", () => {
         const data = {
             tags: []
         };
@@ -76,9 +74,9 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.tags).toEqual([]);
     });
 
-    // ==================== array_text 类型 ====================
+    // ==================== array 长文本 类型 ====================
 
-    test("array_text: 长文本数组序列化和反序列化", () => {
+    test("array: 长文本数组序列化和反序列化", () => {
         const data = {
             descriptions: ["这是一段很长的文本描述" + "x".repeat(500), "另一段很长的描述" + "y".repeat(500)]
         };
@@ -91,7 +89,7 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.descriptions).toEqual(data.descriptions);
     });
 
-    test("array_text: 包含特殊字符的文本数组", () => {
+    test("array: 包含特殊字符的文本数组", () => {
         const data = {
             contents: ['Text with "quotes"', "Text with 'apostrophes'", "Text with\nnewlines", "Text with\ttabs"]
         };
@@ -101,9 +99,9 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.contents).toEqual(data.contents);
     });
 
-    // ==================== array_number_string 类型 ====================
+    // ==================== array_number 类型 ====================
 
-    test("array_number_string: 数字数组序列化和反序列化", () => {
+    test("array_number: 数字数组序列化和反序列化", () => {
         const data = {
             menuIds: [1, 2, 3, 4, 5],
             apiIds: [10, 20, 30, 40, 50]
@@ -118,7 +116,7 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.apiIds).toEqual([10, 20, 30, 40, 50]);
     });
 
-    test("array_number_string: 大数字数组", () => {
+    test("array_number: 大数字数组", () => {
         const data = {
             ids: [999999999999, 888888888888, 777777777777]
         };
@@ -128,7 +126,7 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.ids).toEqual(data.ids);
     });
 
-    test("array_number_string: 负数和小数", () => {
+    test("array_number: 负数和小数", () => {
         const data = {
             numbers: [-1, -2.5, 0, 3.14, 100]
         };
@@ -138,9 +136,9 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.numbers).toEqual(data.numbers);
     });
 
-    // ==================== array_number_text 类型 ====================
+    // ==================== array_number 长文本 类型 ====================
 
-    test("array_number_text: 长数字数组序列化和反序列化", () => {
+    test("array_number: 长数字数组序列化和反序列化", () => {
         const data = {
             historyIds: Array.from({ length: 500 }, (_, i) => i + 1)
         };
@@ -154,7 +152,7 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         expect(deserialized.historyIds.length).toBe(500);
     });
 
-    test("array_number_text: 时间戳数组", () => {
+    test("array_number: 时间戳数组", () => {
         const data = {
             timestamps: [1702540800000, 1702627200000, 1702713600000]
         };
@@ -168,13 +166,13 @@ describe("所有数组类型的序列化/反序列化支持", () => {
 
     test("混合场景: 所有数组类型同时存在", () => {
         const data = {
-            // array_string
+            // array
             tags: ["tag1", "tag2"],
-            // array_text
+            // array
             descriptions: ["Long text 1", "Long text 2"],
-            // array_number_string
+            // array_number
             menuIds: [1, 2, 3],
-            // array_number_text
+            // array_number
             historyIds: Array.from({ length: 100 }, (_, i) => i),
             // 非数组字段
             name: "test",
@@ -252,8 +250,8 @@ describe("所有数组类型的序列化/反序列化支持", () => {
             id: 1,
             name: "管理员",
             code: "admin",
-            menus: ["/dashboard", "/permission/role"], // array_text
-            apis: ["/api/login", "/api/user/list"] // array_text
+            menus: ["/dashboard", "/permission/role"], // array
+            apis: ["/api/login", "/api/user/list"] // array
         };
 
         // 模拟写入数据库
@@ -275,9 +273,9 @@ describe("所有数组类型的序列化/反序列化支持", () => {
         const articleData = {
             id: 1,
             title: "测试文章",
-            tags: ["JavaScript", "TypeScript", "Bun"], // array_string
-            categoryIds: [1, 3, 5], // array_number_string
-            relatedIds: Array.from({ length: 20 }, (_, i) => i + 100) // array_number_text
+            tags: ["JavaScript", "TypeScript", "Bun"], // array
+            categoryIds: [1, 3, 5], // array_number
+            relatedIds: Array.from({ length: 20 }, (_, i) => i + 100) // array_number
         };
 
         const serialized = serializeArrayFields(articleData);

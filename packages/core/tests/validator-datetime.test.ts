@@ -9,19 +9,18 @@ import { describe, expect, test } from "bun:test";
 import { Validator } from "../lib/validator.ts";
 
 describe("Validator - datetime 类型验证", () => {
-    test("single: 接受 YYYY-MM-DD（自动补 00:00:00）", () => {
+    test("single: 拒绝 YYYY-MM-DD（必须包含时间）", () => {
         const field: FieldDefinition = {
             name: "创建时间",
             type: "datetime",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single("2026-01-15", field);
-        expect(result.error).toBeNull();
-        expect(result.value).toBe("2026-01-15 00:00:00");
+        expect(result.error).toBe("格式不正确");
+        expect(result.value).toBeNull();
     });
 
     test("single: 接受 YYYY-MM-DD HH:mm:ss 格式字符串", () => {
@@ -30,8 +29,7 @@ describe("Validator - datetime 类型验证", () => {
             type: "datetime",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single("2026-01-15 12:34:56", field);
@@ -45,8 +43,7 @@ describe("Validator - datetime 类型验证", () => {
             type: "datetime",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single("2026-1-15 12:34:56", field);
@@ -60,8 +57,7 @@ describe("Validator - datetime 类型验证", () => {
             type: "datetime",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single("2026-02-30 12:34:56", field);
@@ -75,8 +71,7 @@ describe("Validator - datetime 类型验证", () => {
             type: "datetime",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single("2026-01-15 24:00:00", field);
@@ -90,8 +85,7 @@ describe("Validator - datetime 类型验证", () => {
             type: "datetime",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const result = Validator.single(123, field);
@@ -105,8 +99,7 @@ describe("Validator - datetime 类型验证", () => {
             type: "datetime",
             min: null,
             max: null,
-            default: null,
-            regexp: null
+            default: null
         };
 
         const r1 = Validator.single(undefined, field);
@@ -129,8 +122,7 @@ describe("Validator - datetime 类型验证", () => {
                 type: "datetime",
                 min: null,
                 max: null,
-                default: null,
-                regexp: null
+                default: null
             }
         };
 
@@ -147,8 +139,7 @@ describe("Validator - datetime 类型验证", () => {
                 type: "datetime",
                 min: null,
                 max: null,
-                default: null,
-                regexp: null
+                default: null
             }
         };
 

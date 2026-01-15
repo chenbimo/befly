@@ -1,17 +1,17 @@
 {
     "name": {
         "name": "配置名称",
-        "type": "string",
+        "type": "varchar",
         "min": 2,
         "max": 50
     },
     "code": {
         "name": "配置代码",
-        "type": "string",
+        "type": "varchar",
+        "input": "@alphanumeric_",
         "min": 2,
         "max": 100,
-        "unique": true,
-        "regexp": "@alphanumeric_"
+        "unique": true
     },
     "value": {
         "name": "配置值",
@@ -19,27 +19,30 @@
     },
     "valueType": {
         "name": "值类型",
-        "type": "string",
+        "type": "varchar",
+        "input": "string|number|boolean|json",
         "max": 20,
         "default": "string",
         "detail": "string number boolean json"
     },
     "group": {
         "name": "配置分组",
-        "type": "string",
+        "type": "varchar",
         "max": 50,
         "index": true
     },
     "sort": {
         "name": "排序",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 9999,
         "default": 0
     },
     "isSystem": {
         "name": "是否系统配置",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 1,
         "default": 0,
@@ -47,7 +50,7 @@
     },
     "description": {
         "name": "描述说明",
-        "type": "string",
+        "type": "varchar",
         "max": 500
     }
 }

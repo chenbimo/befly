@@ -5,9 +5,14 @@
 import type { JsonValue } from "./common";
 
 /**
- * 字段类型
+ * 数据库字段类型
  */
-export type FieldType = "string" | "number" | "text" | "datetime" | "array_string" | "array_text" | "array_number_string" | "array_number_text";
+export type DbFieldType = "tinyint" | "smallint" | "mediumint" | "int" | "bigint" | "char" | "varchar" | "tinytext" | "text" | "mediumtext" | "longtext" | "datetime" | "json";
+
+/**
+ * 输入参数类型
+ */
+export type InputType = "number" | "integer" | "string" | "char" | "array" | "array_number" | "array_integer" | "json" | "json_number" | "json_integer";
 
 /**
  * 字段定义（表字段 JSON 结构）
@@ -16,7 +21,9 @@ export interface FieldDefinition {
     /** 字段标签（中文名） */
     name: string;
     /** 字段类型 */
-    type: FieldType | string;
+    type: DbFieldType | string;
+    /** 输入类型（校验用） */
+    input?: InputType | string;
     /**
      * 最小值/最小长度。
      * - 缺省默认：null（表示不限制）
@@ -57,11 +64,6 @@ export interface FieldDefinition {
      * - 缺省默认：false
      */
     unsigned?: boolean;
-    /**
-     * 正则（或 @alias）。
-     * - 缺省默认：null（表示无约束）
-     */
-    regexp?: string | null;
 }
 
 /**

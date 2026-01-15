@@ -1,5 +1,5 @@
 /**
- * API 集成测试 - 验证 array_number_string 类型在完整数据流中的表现
+ * API 集成测试 - 验证 array_number 输入在完整数据流中的表现
  *
  * 测试流程：请求验证 → 数据库存储 → 查询返回
  */
@@ -10,40 +10,38 @@ import { describe, expect, test } from "bun:test";
 
 import { Validator } from "../lib/validator.ts";
 
-describe("API 集成测试 - array_number_string 数据流", () => {
+describe("API 集成测试 - array_number 数据流", () => {
     // 模拟角色表定义
     const roleTable: TableDefinition = {
         name: {
             name: "角色名称",
-            type: "string",
+            type: "varchar",
             min: 2,
             max: 50,
-            default: null,
-            regexp: null
+            default: null
         },
         code: {
             name: "角色编码",
-            type: "string",
+            type: "varchar",
             min: 2,
             max: 50,
-            default: null,
-            regexp: null
+            default: null
         },
         menus: {
             name: "菜单权限",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: 2000,
-            default: null,
-            regexp: null
+            default: null
         },
         apis: {
             name: "接口权限",
-            type: "array_number_string",
+            type: "varchar",
+            input: "array_number",
             min: null,
             max: 3000,
-            default: null,
-            regexp: null
+            default: null
         }
     };
 
@@ -111,16 +109,16 @@ describe("API 集成测试 - array_number_string 数据流", () => {
     });
 
     test("请求验证: max 元素数量限制生效", () => {
-        // 注意：max 参数对 array_number_string 是限制数组长度，不是字符串长度
+        // 注意：max 参数对 array_number 是限制数组长度，不是字符串长度
         const roleTableWithMax: TableDefinition = {
             ...roleTable,
             menus: {
                 name: "菜单权限",
-                type: "array_number_string",
+                type: "varchar",
+                input: "array_number",
                 min: null,
                 max: 10, // 最多 10 个元素
-                default: null,
-                regexp: null
+                default: null
             }
         };
 

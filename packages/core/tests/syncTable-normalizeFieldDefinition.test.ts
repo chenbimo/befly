@@ -16,7 +16,7 @@ describe("normalizeFieldDefinitionInPlace", () => {
     test("为空字段定义应用默认值", () => {
         const fieldDef: FieldDefinition = {
             name: "用户名",
-            type: "string"
+            type: "varchar"
         };
 
         SyncTable.normalizeFieldDefinitionInPlace(fieldDef);
@@ -29,13 +29,13 @@ describe("normalizeFieldDefinitionInPlace", () => {
         expect(fieldDef.unique).toBe(false);
         expect(fieldDef.nullable).toBe(false);
         expect(fieldDef.unsigned).toBe(false);
-        expect(fieldDef.regexp).toBe(null);
+        expect(fieldDef.input).toBe("string");
     });
 
     test("保留已有值", () => {
         const fieldDef: FieldDefinition = {
             name: "用户名",
-            type: "string",
+            type: "varchar",
             max: 200,
             index: true,
             unique: true,
@@ -53,7 +53,8 @@ describe("normalizeFieldDefinitionInPlace", () => {
     test("处理 0 和 false 值", () => {
         const fieldDef: FieldDefinition = {
             name: "排序",
-            type: "number",
+            type: "bigint",
+            input: "number",
             min: 0,
             max: 0,
             default: 0,

@@ -87,7 +87,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
         const fields = {
             userName: {
                 name: "用户名",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 50,
                 default: null,
                 unique: false,
@@ -108,7 +109,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
         const fields = {
             age: {
                 name: "年龄",
-                type: "number",
+                type: "bigint",
+                input: "number",
                 max: null,
                 default: 0,
                 unique: false,
@@ -126,7 +128,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
         const fields = {
             email: {
                 name: "邮箱",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 default: null,
                 unique: true,
@@ -142,7 +145,8 @@ describe("buildBusinessColumnDefs (MySQL)", () => {
         const fields = {
             remark: {
                 name: "备注",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 200,
                 default: null,
                 unique: false,
@@ -160,7 +164,8 @@ describe("generateDDLClause (MySQL)", () => {
     test("生成 ADD COLUMN 子句", () => {
         const fieldDef = {
             name: "用户名",
-            type: "string",
+            type: "varchar",
+            input: "string",
             max: 50,
             default: null,
             unique: false,
@@ -176,7 +181,8 @@ describe("generateDDLClause (MySQL)", () => {
     test("生成 MODIFY COLUMN 子句", () => {
         const fieldDef = {
             name: "用户名",
-            type: "string",
+            type: "varchar",
+            input: "string",
             max: 100,
             default: null,
             unique: false,

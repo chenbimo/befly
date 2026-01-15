@@ -189,18 +189,21 @@ JOIN 场景同理（把 `state` 条件写到主表或明确的别名上）：
 
 下表为核心映射（简化展示，具体以运行时为准）：
 
-- `number` → `BIGINT`（unsigned 时为 `BIGINT UNSIGNED`）
-- `string` / `array_string` / `array_number_string` → `VARCHAR(max)`
-- `text` / `array_text` / `array_number_text` → `MEDIUMTEXT`
+- `tinyint/smallint/mediumint/int/bigint` → 对应的整数类型（`unsigned` 会生成 `UNSIGNED`）
+- `char` / `varchar` → `CHAR(max)` / `VARCHAR(max)`
+- `tinytext/text/mediumtext/longtext` → 对应的文本类型
+- `datetime` → `DATETIME`
+- `json` → `JSON`
 
-数组类型在 DB 中以 **JSON 字符串** 存储，读写由 `DbUtils` 负责序列化/反序列化。
+`input` 仅影响“输入校验”，不会影响 DDL 生成。
+当 `input` 为 `array/array_number/array_integer` 时，数据库字段仍为字符串类（通常使用 `varchar/mediumtext`），数组以 **JSON 字符串** 存储，读写由 `DbUtils` 负责序列化/反序列化。
 
 ### 默认值策略
 
-- `number`：未显式提供或为 null 时，默认值会被归一化为 `0`
-- `string`：默认值会被归一化为 `""`
-- `array_*`：默认值会被归一化为字符串 `"[]"`
-- `text/array_text/array_number_text`：默认值为 `null`（并且通常不会生成 SQL DEFAULT 子句）
+- 整数类型：未显式提供或为 null 时，默认值会被归一化为 `0`
+- `char/varchar`：默认值会被归一化为 `""`
+- `input` 为 `array/array_number/array_integer`：默认值会被归一化为字符串 `"[]"`
+- `tinytext/text/mediumtext/longtext/json/datetime`：默认值为 `null`（并且通常不会生成 SQL DEFAULT 子句）
 
 ### index / unique 的落地
 

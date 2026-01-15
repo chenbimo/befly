@@ -12,7 +12,7 @@ import { Validator } from "../lib/validator";
 describe("Validator.validate - 返回结构", () => {
     test("验证通过时返回正确结构", () => {
         const data = { name: "test" };
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 10 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 10 } };
 
         const result = Validator.validate(data, rules);
 
@@ -26,7 +26,7 @@ describe("Validator.validate - 返回结构", () => {
 
     test("验证失败时返回正确结构", () => {
         const data = { name: "a" };
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 10 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 10 } };
 
         const result = Validator.validate(data, rules);
 
@@ -41,8 +41,8 @@ describe("Validator.validate - 返回结构", () => {
     test("多字段错误时返回所有错误", () => {
         const data = { name: "a", age: 200 };
         const rules = {
-            name: { name: "名称", type: "string", min: 2, max: 10 },
-            age: { name: "年龄", type: "number", min: 0, max: 150 }
+            name: { name: "名称", type: "varchar", min: 2, max: 10 },
+            age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 }
         };
 
         const result = Validator.validate(data, rules);
@@ -104,7 +104,7 @@ describe("Validator.validate - 参数检查", () => {
 // ========== 必填字段测试 ==========
 
 describe("Validator.validate - 必填字段", () => {
-    const rules = { name: { name: "名称", type: "string", min: 2, max: 20 } };
+    const rules = { name: { name: "名称", type: "varchar", min: 2, max: 20 } };
 
     test("字段存在且有值 - 通过", () => {
         const result = Validator.validate({ name: "test" }, rules, ["name"]);
@@ -138,8 +138,8 @@ describe("Validator.validate - 必填字段", () => {
 
     test("多个必填字段全部缺失", () => {
         const multiRules = {
-            name: { name: "名称", type: "string", min: 2, max: 20 },
-            email: { name: "邮箱", type: "string", regexp: "@email" }
+            name: { name: "名称", type: "varchar", min: 2, max: 20 },
+            email: { name: "邮箱", type: "varchar", input: "@email" }
         };
 
         const result = Validator.validate({}, multiRules, ["name", "email"]);
@@ -156,14 +156,14 @@ describe("Validator.validate - 必填字段", () => {
     });
 
     test("必填字段无标签时使用字段名", () => {
-        const noLabelRules = { name: { type: "string", min: 2, max: 20 } };
+        const noLabelRules = { name: { type: "varchar", min: 2, max: 20 } };
         const result = Validator.validate({}, noLabelRules, ["name"]);
         expect(result.firstError).toContain("name");
     });
 
     test("必填 number 字段传 0 - 通过", () => {
         const numberRules = {
-            agentId: { name: "上级ID", type: "number", min: 0, max: null }
+            agentId: { name: "上级ID", type: "bigint", input: "number", min: 0, max: null }
         };
 
         const result = Validator.validate({ agentId: 0 }, numberRules, ["agentId"]);
@@ -175,52 +175,52 @@ describe("Validator.validate - 必填字段", () => {
 
 describe("Validator.validate - string 类型", () => {
     test("有效字符串 - 通过", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 10 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 10 } };
         const result = Validator.validate({ name: "test" }, rules);
         expect(result.code).toBe(0);
     });
 
     test("非字符串类型 - 失败", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 10 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 10 } };
         const result = Validator.validate({ name: 123 }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("字符串");
     });
 
     test("长度小于 min - 失败", () => {
-        const rules = { name: { name: "名称", type: "string", min: 5, max: 20 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 5, max: 20 } };
         const result = Validator.validate({ name: "abc" }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("5");
     });
 
     test("长度等于 min - 通过", () => {
-        const rules = { name: { name: "名称", type: "string", min: 3, max: 20 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 3, max: 20 } };
         const result = Validator.validate({ name: "abc" }, rules);
         expect(result.code).toBe(0);
     });
 
     test("长度大于 max - 失败", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 5 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 5 } };
         const result = Validator.validate({ name: "abcdefg" }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("5");
     });
 
     test("长度等于 max - 通过", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 5 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 5 } };
         const result = Validator.validate({ name: "abcde" }, rules);
         expect(result.code).toBe(0);
     });
 
     test("中文字符按字符数计算", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 5 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 5 } };
         const result = Validator.validate({ name: "你好世界" }, rules); // 4 个字符
         expect(result.code).toBe(0);
     });
 
     test("max 为 0 时不检查最大长度", () => {
-        const rules = { name: { name: "名称", type: "string", min: 0, max: 0 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 0, max: 0 } };
         const result = Validator.validate({ name: "a".repeat(1000) }, rules);
         expect(result.code).toBe(0);
     });
@@ -246,164 +246,147 @@ describe("Validator.validate - text 类型", () => {
 
 describe("Validator.validate - number 类型", () => {
     test("有效数字 - 通过", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 0, max: 150 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 } };
         const result = Validator.validate({ age: 25 }, rules);
         expect(result.code).toBe(0);
     });
 
     test("字符串数字自动转换 - 通过", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 0, max: 150 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 } };
         const result = Validator.validate({ age: "25" }, rules);
         expect(result.code).toBe(0);
     });
 
     test("非数字字符串 - 失败", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 0, max: 150 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 } };
         const result = Validator.validate({ age: "abc" }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("数字");
     });
 
     test("NaN - 失败", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 0, max: 150 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 } };
         const result = Validator.validate({ age: NaN }, rules);
         expect(result.code).toBe(1);
     });
 
     test("Infinity - 失败", () => {
-        const rules = { value: { name: "值", type: "number", min: 0, max: 100 } };
+        const rules = { value: { name: "值", type: "bigint", input: "number", min: 0, max: 100 } };
         const result = Validator.validate({ value: Infinity }, rules);
         expect(result.code).toBe(1);
     });
 
     test("-Infinity - 失败", () => {
-        const rules = { value: { name: "值", type: "number", min: 0, max: 100 } };
+        const rules = { value: { name: "值", type: "bigint", input: "number", min: 0, max: 100 } };
         const result = Validator.validate({ value: -Infinity }, rules);
         expect(result.code).toBe(1);
     });
 
     test("0 是有效值", () => {
-        const rules = { count: { name: "计数", type: "number", min: 0, max: 100 } };
+        const rules = { count: { name: "计数", type: "bigint", input: "number", min: 0, max: 100 } };
         const result = Validator.validate({ count: 0 }, rules);
         expect(result.code).toBe(0);
     });
 
     test("负数范围验证", () => {
-        const rules = { temp: { name: "温度", type: "number", min: -50, max: 50 } };
+        const rules = { temp: { name: "温度", type: "bigint", input: "number", min: -50, max: 50 } };
         const result = Validator.validate({ temp: -30 }, rules);
         expect(result.code).toBe(0);
     });
 
     test("小于 min - 失败", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 18, max: 100 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 18, max: 100 } };
         const result = Validator.validate({ age: 10 }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("18");
     });
 
     test("等于 min - 通过", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 18, max: 100 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 18, max: 100 } };
         const result = Validator.validate({ age: 18 }, rules);
         expect(result.code).toBe(0);
     });
 
     test("大于 max - 失败", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 0, max: 100 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 100 } };
         const result = Validator.validate({ age: 150 }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("100");
     });
 
     test("等于 max - 通过", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 0, max: 100 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 100 } };
         const result = Validator.validate({ age: 100 }, rules);
         expect(result.code).toBe(0);
     });
 
     test("浮点数", () => {
-        const rules = { price: { name: "价格", type: "number", min: 0, max: 1000 } };
+        const rules = { price: { name: "价格", type: "bigint", input: "number", min: 0, max: 1000 } };
         const result = Validator.validate({ price: 99.99 }, rules);
         expect(result.code).toBe(0);
     });
 
     test("max 为 0 时不检查最大值", () => {
-        const rules = { value: { name: "值", type: "number", min: 0, max: 0 } };
+        const rules = { value: { name: "值", type: "bigint", input: "number", min: 0, max: 0 } };
         const result = Validator.validate({ value: 999999 }, rules);
         expect(result.code).toBe(0);
     });
 });
 
-// ========== array_string 类型测试 ==========
+// ========== array 类型测试 ==========
 
-describe("Validator.validate - array_string 类型", () => {
+describe("Validator.validate - array 类型", () => {
     test("有效数组 - 通过", () => {
-        const rules = { tags: { name: "标签", type: "array_string", min: 1, max: 5 } };
+        const rules = { tags: { name: "标签", type: "varchar", input: "array", min: 1, max: 5 } };
         const result = Validator.validate({ tags: ["a", "b", "c"] }, rules);
         expect(result.code).toBe(0);
     });
 
     test("非数组类型 - 失败", () => {
-        const rules = { tags: { name: "标签", type: "array_string", min: 1, max: 5 } };
+        const rules = { tags: { name: "标签", type: "varchar", input: "array", min: 1, max: 5 } };
         const result = Validator.validate({ tags: "not array" }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("数组");
     });
 
     test("元素数量小于 min - 失败", () => {
-        const rules = { tags: { name: "标签", type: "array_string", min: 3, max: 10 } };
+        const rules = { tags: { name: "标签", type: "varchar", input: "array", min: 3, max: 10 } };
         const result = Validator.validate({ tags: ["a", "b"] }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("3");
     });
 
     test("元素数量等于 min - 通过", () => {
-        const rules = { tags: { name: "标签", type: "array_string", min: 2, max: 10 } };
+        const rules = { tags: { name: "标签", type: "varchar", input: "array", min: 2, max: 10 } };
         const result = Validator.validate({ tags: ["a", "b"] }, rules);
         expect(result.code).toBe(0);
     });
 
     test("元素数量大于 max - 失败", () => {
-        const rules = { tags: { name: "标签", type: "array_string", min: 1, max: 3 } };
+        const rules = { tags: { name: "标签", type: "varchar", input: "array", min: 1, max: 3 } };
         const result = Validator.validate({ tags: ["a", "b", "c", "d", "e"] }, rules);
         expect(result.code).toBe(1);
         expect(result.firstError).toContain("3");
     });
 
     test("元素数量等于 max - 通过", () => {
-        const rules = { tags: { name: "标签", type: "array_string", min: 1, max: 3 } };
+        const rules = { tags: { name: "标签", type: "varchar", input: "array", min: 1, max: 3 } };
         const result = Validator.validate({ tags: ["a", "b", "c"] }, rules);
         expect(result.code).toBe(0);
     });
 
     test("空数组", () => {
-        const rules = { tags: { name: "标签", type: "array_string", min: 0, max: 10 } };
+        const rules = { tags: { name: "标签", type: "varchar", input: "array", min: 0, max: 10 } };
         const result = Validator.validate({ tags: [] }, rules);
         expect(result.code).toBe(0);
     });
-
-    test("数组元素正则验证 - 全部通过", () => {
-        const rules = {
-            emails: { name: "邮箱列表", type: "array_string", min: 1, max: 10, regexp: "@email" }
-        };
-        const result = Validator.validate({ emails: ["a@test.com", "b@test.com"] }, rules);
-        expect(result.code).toBe(0);
-    });
-
-    test("数组元素正则验证 - 部分失败", () => {
-        const rules = {
-            emails: { name: "邮箱列表", type: "array_string", min: 1, max: 10, regexp: "@email" }
-        };
-        const result = Validator.validate({ emails: ["a@test.com", "invalid"] }, rules);
-        expect(result.code).toBe(1);
-        expect(result.firstError).toContain("格式");
-    });
 });
 
-// ========== array_text 类型测试 ==========
+// ========== array 类型（mediumtext）测试 ==========
 
-describe("Validator.validate - array_text 类型", () => {
-    test("array_text 与 array_string 行为一致", () => {
-        const rules = { items: { name: "条目", type: "array_text", min: 1, max: 5 } };
+describe("Validator.validate - array 类型（mediumtext）", () => {
+    test("mediumtext + array 与 array 行为一致", () => {
+        const rules = { items: { name: "条目", type: "mediumtext", input: "array", min: 1, max: 5 } };
         const result = Validator.validate({ items: ["item1", "item2"] }, rules);
         expect(result.code).toBe(0);
     });
@@ -416,7 +399,7 @@ describe("Validator.validate - 正则别名", () => {
         const validEmails = ["test@example.com", "user.name@domain.co.uk", "admin+tag@site.org", "test123@test.cn"];
 
         validEmails.forEach((email) => {
-            const rules = { email: { name: "邮箱", type: "string", regexp: "@email" } };
+            const rules = { email: { name: "邮箱", type: "varchar", input: "@email" } };
             const result = Validator.validate({ email: email }, rules);
             expect(result.code).toBe(0);
         });
@@ -426,7 +409,7 @@ describe("Validator.validate - 正则别名", () => {
         const invalidEmails = ["plaintext", "@example.com", "user@", "user @domain.com"];
 
         invalidEmails.forEach((email) => {
-            const rules = { email: { name: "邮箱", type: "string", regexp: "@email" } };
+            const rules = { email: { name: "邮箱", type: "varchar", input: "@email" } };
             const result = Validator.validate({ email: email }, rules);
             expect(result.code).toBe(1);
         });
@@ -436,7 +419,7 @@ describe("Validator.validate - 正则别名", () => {
         const validPhones = ["13800138000", "15012345678", "18888888888", "19912345678"];
 
         validPhones.forEach((phone) => {
-            const rules = { phone: { name: "手机号", type: "string", regexp: "@phone" } };
+            const rules = { phone: { name: "手机号", type: "varchar", input: "@phone" } };
             const result = Validator.validate({ phone: phone }, rules);
             expect(result.code).toBe(0);
         });
@@ -451,7 +434,7 @@ describe("Validator.validate - 正则别名", () => {
         ];
 
         invalidPhones.forEach((phone) => {
-            const rules = { phone: { name: "手机号", type: "string", regexp: "@phone" } };
+            const rules = { phone: { name: "手机号", type: "varchar", input: "@phone" } };
             const result = Validator.validate({ phone: phone }, rules);
             expect(result.code).toBe(1);
         });
@@ -460,24 +443,34 @@ describe("Validator.validate - 正则别名", () => {
 
 describe("Validator.validate - 自定义正则", () => {
     test("纯数字", () => {
-        const rules = { code: { name: "验证码", type: "string", regexp: "^\\d+$" } };
+        const rules = { code: { name: "验证码", type: "varchar", input: "^\\d+$" } };
 
         expect(Validator.validate({ code: "123456" }, rules).code).toBe(0);
         expect(Validator.validate({ code: "12a34" }, rules).code).toBe(1);
     });
 
     test("字母数字组合", () => {
-        const rules = { username: { name: "用户名", type: "string", regexp: "^[a-zA-Z0-9]+$" } };
+        const rules = { username: { name: "用户名", type: "varchar", input: "^[a-zA-Z0-9]+$" } };
 
         expect(Validator.validate({ username: "user123" }, rules).code).toBe(0);
         expect(Validator.validate({ username: "user@123" }, rules).code).toBe(1);
     });
 
     test("无效正则不抛出异常", () => {
-        const rules = { value: { name: "值", type: "string", regexp: "[invalid(" } };
+        const rules = { value: { name: "值", type: "varchar", input: "[invalid(" } };
         const result = Validator.validate({ value: "test" }, rules);
         // 无效正则应该导致验证失败，但不应抛出异常
         expect(result.code).toBe(1);
+    });
+});
+
+describe("Validator.validate - 枚举输入", () => {
+    test("枚举值校验", () => {
+        const rules = { gender: { name: "性别", type: "varchar", input: "男|女" } };
+
+        expect(Validator.validate({ gender: "男" }, rules).code).toBe(0);
+        expect(Validator.validate({ gender: "女" }, rules).code).toBe(0);
+        expect(Validator.validate({ gender: "未知" }, rules).code).toBe(1);
     });
 });
 
@@ -486,8 +479,8 @@ describe("Validator.validate - 自定义正则", () => {
 describe("Validator.validate - 非必填字段", () => {
     test("非必填字段不存在时不验证", () => {
         const rules = {
-            name: { name: "名称", type: "string", min: 2, max: 20 },
-            age: { name: "年龄", type: "number", min: 0, max: 150 }
+            name: { name: "名称", type: "varchar", min: 2, max: 20 },
+            age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 }
         };
 
         // 只提供 name，不提供 age（age 不在 required 中）
@@ -498,8 +491,8 @@ describe("Validator.validate - 非必填字段", () => {
 
     test("非必填字段存在时会验证", () => {
         const rules = {
-            name: { name: "名称", type: "string", min: 2, max: 20 },
-            age: { name: "年龄", type: "number", min: 0, max: 150 }
+            name: { name: "名称", type: "varchar", min: 2, max: 20 },
+            age: { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 }
         };
 
         // 提供了 age 但值无效
@@ -514,7 +507,7 @@ describe("Validator.validate - 非必填字段", () => {
 
 describe("Validator.single - 单值验证", () => {
     test("有效值返回转换后的值", () => {
-        const fieldDef = { name: "年龄", type: "number", min: 0, max: 150 };
+        const fieldDef = { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 };
         const result = Validator.single(25, fieldDef);
 
         expect(result.error).toBeNull();
@@ -522,7 +515,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("字符串数字自动转换", () => {
-        const fieldDef = { name: "年龄", type: "number", min: 0, max: 150 };
+        const fieldDef = { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 };
         const result = Validator.single("30", fieldDef);
 
         expect(result.error).toBeNull();
@@ -530,7 +523,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("无效值返回错误", () => {
-        const fieldDef = { name: "年龄", type: "number", min: 0, max: 150 };
+        const fieldDef = { name: "年龄", type: "bigint", input: "number", min: 0, max: 150 };
         const result = Validator.single("abc", fieldDef);
 
         expect(result.error).toBeDefined();
@@ -538,7 +531,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("空值返回默认值 - number", () => {
-        const fieldDef = { name: "计数", type: "number", default: null };
+        const fieldDef = { name: "计数", type: "bigint", input: "number", default: null };
         const result = Validator.single(null, fieldDef);
 
         expect(result.error).toBeNull();
@@ -546,15 +539,15 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("空值返回默认值 - string", () => {
-        const fieldDef = { name: "名称", type: "string", default: null };
+        const fieldDef = { name: "名称", type: "varchar", default: null };
         const result = Validator.single(undefined, fieldDef);
 
         expect(result.error).toBeNull();
         expect(result.value).toBe(""); // string 类型默认值
     });
 
-    test("空值返回默认值 - array_string", () => {
-        const fieldDef = { name: "标签", type: "array_string", default: null };
+    test("空值返回默认值 - array", () => {
+        const fieldDef = { name: "标签", type: "varchar", input: "array", default: null };
         const result = Validator.single("", fieldDef);
 
         expect(result.error).toBeNull();
@@ -562,7 +555,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("使用自定义默认值", () => {
-        const fieldDef = { name: "状态", type: "number", default: 1 };
+        const fieldDef = { name: "状态", type: "bigint", input: "number", default: 1 };
         const result = Validator.single(null, fieldDef);
 
         expect(result.error).toBeNull();
@@ -570,7 +563,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("字符串数字默认值转换", () => {
-        const fieldDef = { name: "计数", type: "number", default: "100" };
+        const fieldDef = { name: "计数", type: "bigint", input: "number", default: "100" };
         const result = Validator.single(null, fieldDef);
 
         expect(result.error).toBeNull();
@@ -578,7 +571,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("数组默认值解析", () => {
-        const fieldDef = { name: "标签", type: "array_string", default: '["a","b"]' };
+        const fieldDef = { name: "标签", type: "varchar", input: "array", default: '["a","b"]' };
         const result = Validator.single(null, fieldDef);
 
         expect(result.error).toBeNull();
@@ -586,7 +579,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("空数组默认值", () => {
-        const fieldDef = { name: "标签", type: "array_string", default: "[]" };
+        const fieldDef = { name: "标签", type: "varchar", input: "array", default: "[]" };
         const result = Validator.single(null, fieldDef);
 
         expect(result.error).toBeNull();
@@ -594,7 +587,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("规则验证失败", () => {
-        const fieldDef = { name: "年龄", type: "number", min: 18, max: 100 };
+        const fieldDef = { name: "年龄", type: "bigint", input: "number", min: 18, max: 100 };
         const result = Validator.single(10, fieldDef);
 
         expect(result.error).toBeDefined();
@@ -602,7 +595,7 @@ describe("Validator.single - 单值验证", () => {
     });
 
     test("正则验证失败", () => {
-        const fieldDef = { name: "邮箱", type: "string", regexp: "@email" };
+        const fieldDef = { name: "邮箱", type: "varchar", input: "@email" };
         const result = Validator.single("invalid", fieldDef);
 
         expect(result.error).toBeDefined();
@@ -614,21 +607,21 @@ describe("Validator.single - 单值验证", () => {
 
 describe("Validator - 错误消息格式", () => {
     test("错误消息包含字段标签", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 18, max: 100 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 18, max: 100 } };
         const result = Validator.validate({ age: 10 }, rules);
 
         expect(result.firstError).toContain("年龄");
     });
 
     test("必填错误消息格式", () => {
-        const rules = { name: { name: "姓名", type: "string", min: 2, max: 20 } };
+        const rules = { name: { name: "姓名", type: "varchar", min: 2, max: 20 } };
         const result = Validator.validate({}, rules, ["name"]);
 
         expect(result.firstError).toBe("姓名为必填项");
     });
 
     test("长度错误消息格式", () => {
-        const rules = { name: { name: "姓名", type: "string", min: 5, max: 20 } };
+        const rules = { name: { name: "姓名", type: "varchar", min: 5, max: 20 } };
         const result = Validator.validate({ name: "abc" }, rules);
 
         expect(result.firstError).toContain("姓名");
@@ -636,7 +629,7 @@ describe("Validator - 错误消息格式", () => {
     });
 
     test("数值范围错误消息格式", () => {
-        const rules = { age: { name: "年龄", type: "number", min: 18, max: 100 } };
+        const rules = { age: { name: "年龄", type: "bigint", input: "number", min: 18, max: 100 } };
         const result = Validator.validate({ age: 10 }, rules);
 
         expect(result.firstError).toContain("年龄");
@@ -653,13 +646,13 @@ describe("Validator - 边界条件", () => {
     });
 
     test("空 required 数组", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 20 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 20 } };
         const result = Validator.validate({ name: "test" }, rules, []);
         expect(result.code).toBe(0);
     });
 
     test("required 中的字段不在 rules 中", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 20 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 20 } };
         const result = Validator.validate({}, rules, ["unknown"]);
 
         // 应该报错，显示 unknown 为必填项
@@ -668,7 +661,7 @@ describe("Validator - 边界条件", () => {
     });
 
     test("data 中的字段不在 rules 中", () => {
-        const rules = { name: { name: "名称", type: "string", min: 2, max: 20 } };
+        const rules = { name: { name: "名称", type: "varchar", min: 2, max: 20 } };
         const result = Validator.validate({ name: "test", extra: "ignored" }, rules);
 
         // extra 字段应该被忽略
@@ -676,14 +669,8 @@ describe("Validator - 边界条件", () => {
     });
 
     test("min/max 为 null 时不检查", () => {
-        const rules = { value: { name: "值", type: "string", min: null, max: null } };
+        const rules = { value: { name: "值", type: "varchar", min: null, max: null } };
         const result = Validator.validate({ value: "any length string here" }, rules);
-        expect(result.code).toBe(0);
-    });
-
-    test("regexp 为 null 时不检查正则", () => {
-        const rules = { value: { name: "值", type: "string", min: 0, max: 100, regexp: null } };
-        const result = Validator.validate({ value: "anything" }, rules);
         expect(result.code).toBe(0);
     });
 });

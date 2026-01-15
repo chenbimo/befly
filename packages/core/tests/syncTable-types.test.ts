@@ -13,50 +13,54 @@ import { describe, test, expect } from "bun:test";
 import { SyncTable } from "../sync/syncTable.ts";
 
 describe("isStringOrArrayType", () => {
-    test("string 类型返回 true", () => {
-        expect(SyncTable.isStringOrArrayType("string")).toBe(true);
+    test("char 类型返回 true", () => {
+        expect(SyncTable.isStringOrArrayType("char")).toBe(true);
     });
 
-    test("array_string 类型返回 true", () => {
-        expect(SyncTable.isStringOrArrayType("array_string")).toBe(true);
+    test("varchar 类型返回 true", () => {
+        expect(SyncTable.isStringOrArrayType("varchar")).toBe(true);
     });
 
-    test("number 类型返回 false", () => {
-        expect(SyncTable.isStringOrArrayType("number")).toBe(false);
+    test("bigint 类型返回 false", () => {
+        expect(SyncTable.isStringOrArrayType("bigint")).toBe(false);
     });
 
-    test("text 类型返回 false", () => {
-        expect(SyncTable.isStringOrArrayType("text")).toBe(false);
+    test("mediumtext 类型返回 false", () => {
+        expect(SyncTable.isStringOrArrayType("mediumtext")).toBe(false);
     });
 
-    test("array_text 类型返回 false", () => {
-        expect(SyncTable.isStringOrArrayType("array_text")).toBe(false);
+    test("json 类型返回 false", () => {
+        expect(SyncTable.isStringOrArrayType("json")).toBe(false);
     });
 });
 
 describe("resolveDefaultValue", () => {
-    test("null 值 + string 类型 => 空字符串", () => {
-        expect(SyncTable.resolveDefaultValue(null, "string")).toBe("");
+    test("null 值 + varchar 类型 => 空字符串", () => {
+        expect(SyncTable.resolveDefaultValue(null, "varchar")).toBe("");
     });
 
-    test("null 值 + number 类型 => 0", () => {
-        expect(SyncTable.resolveDefaultValue(null, "number")).toBe(0);
+    test("null 值 + tinyint 类型 => 0", () => {
+        expect(SyncTable.resolveDefaultValue(null, "tinyint")).toBe(0);
     });
 
-    test('"null" 字符串 + number 类型 => 0', () => {
-        expect(SyncTable.resolveDefaultValue("null", "number")).toBe(0);
+    test("null 值 + bigint 类型 => 0", () => {
+        expect(SyncTable.resolveDefaultValue(null, "bigint")).toBe(0);
     });
 
-    test('null 值 + array_string 类型 => "[]"', () => {
-        expect(SyncTable.resolveDefaultValue(null, "array_string")).toBe("[]");
+    test('"null" 字符串 + bigint 类型 => 0', () => {
+        expect(SyncTable.resolveDefaultValue("null", "bigint")).toBe(0);
     });
 
     test('null 值 + text 类型 => "null"', () => {
         expect(SyncTable.resolveDefaultValue(null, "text")).toBe("null");
     });
 
-    test('null 值 + array_text 类型 => "null"（TEXT 不支持默认值）', () => {
-        expect(SyncTable.resolveDefaultValue(null, "array_text")).toBe("null");
+    test('null 值 + tinytext 类型 => "null"', () => {
+        expect(SyncTable.resolveDefaultValue(null, "tinytext")).toBe("null");
+    });
+
+    test('null 值 + longtext 类型 => "null"', () => {
+        expect(SyncTable.resolveDefaultValue(null, "longtext")).toBe("null");
     });
 
     test('null 值 + datetime 类型 => "null"（DATETIME 默认不生成 DEFAULT）', () => {
@@ -64,33 +68,41 @@ describe("resolveDefaultValue", () => {
     });
 
     test("有实际值时直接返回", () => {
-        expect(SyncTable.resolveDefaultValue("admin", "string")).toBe("admin");
-        expect(SyncTable.resolveDefaultValue(100, "number")).toBe(100);
-        expect(SyncTable.resolveDefaultValue(0, "number")).toBe(0);
+        expect(SyncTable.resolveDefaultValue("admin", "varchar")).toBe("admin");
+        expect(SyncTable.resolveDefaultValue(100, "bigint")).toBe(100);
+        expect(SyncTable.resolveDefaultValue(0, "bigint")).toBe(0);
     });
 });
 
 describe("generateDefaultSql", () => {
-    test("number 类型生成数字默认值", () => {
-        expect(SyncTable.generateDefaultSql(0, "number")).toBe(" DEFAULT 0");
-        expect(SyncTable.generateDefaultSql(100, "number")).toBe(" DEFAULT 100");
+    test("bigint 类型生成数字默认值", () => {
+        expect(SyncTable.generateDefaultSql(0, "bigint")).toBe(" DEFAULT 0");
+        expect(SyncTable.generateDefaultSql(100, "bigint")).toBe(" DEFAULT 100");
     });
 
-    test("string 类型生成带引号默认值", () => {
-        expect(SyncTable.generateDefaultSql("admin", "string")).toBe(" DEFAULT 'admin'");
-        expect(SyncTable.generateDefaultSql("", "string")).toBe(" DEFAULT ''");
+    test("tinyint 类型生成数字默认值", () => {
+        expect(SyncTable.generateDefaultSql(1, "tinyint")).toBe(" DEFAULT 1");
+    });
+
+    test("varchar 类型生成带引号默认值", () => {
+        expect(SyncTable.generateDefaultSql("admin", "varchar")).toBe(" DEFAULT 'admin'");
+        expect(SyncTable.generateDefaultSql("", "varchar")).toBe(" DEFAULT ''");
+    });
+
+    test("varchar 类型生成带引号默认值", () => {
+        expect(SyncTable.generateDefaultSql("ok", "varchar")).toBe(" DEFAULT 'ok'");
     });
 
     test("text 类型不生成默认值", () => {
         expect(SyncTable.generateDefaultSql("null", "text")).toBe("");
     });
 
-    test("array_string 类型生成 JSON 数组默认值", () => {
-        expect(SyncTable.generateDefaultSql("[]", "array_string")).toBe(" DEFAULT '[]'");
+    test("tinytext 类型不生成默认值", () => {
+        expect(SyncTable.generateDefaultSql("null", "tinytext")).toBe("");
     });
 
-    test("array_text 类型不生成默认值（MySQL TEXT 不支持）", () => {
-        expect(SyncTable.generateDefaultSql("[]", "array_text")).toBe("");
+    test("longtext 类型不生成默认值", () => {
+        expect(SyncTable.generateDefaultSql("null", "longtext")).toBe("");
     });
 
     test("datetime 类型默认值为 null 时不生成 DEFAULT", () => {
@@ -102,29 +114,24 @@ describe("generateDefaultSql", () => {
     });
 
     test("单引号被正确转义", () => {
-        expect(SyncTable.generateDefaultSql("it's", "string")).toBe(" DEFAULT 'it''s'");
+        expect(SyncTable.generateDefaultSql("it's", "varchar")).toBe(" DEFAULT 'it''s'");
     });
 });
 
 describe("getSqlType", () => {
-    test("string 类型带长度", () => {
-        const result = SyncTable.getSqlType("string", 100);
-        expect(result).toBe("VARCHAR(100)");
+    test("char 类型带长度", () => {
+        const result = SyncTable.getSqlType("char", 16);
+        expect(result).toBe("CHAR(16)");
     });
 
-    test("array_string 类型带长度", () => {
-        const result = SyncTable.getSqlType("array_string", 500);
-        expect(result).toBe("VARCHAR(500)");
+    test("varchar 类型带长度", () => {
+        const result = SyncTable.getSqlType("varchar", 200);
+        expect(result).toBe("VARCHAR(200)");
     });
 
-    test("number 类型无符号", () => {
-        const result = SyncTable.getSqlType("number", null, true);
-        expect(result).toBe("BIGINT UNSIGNED");
-    });
-
-    test("number 类型有符号", () => {
-        const result = SyncTable.getSqlType("number", null, false);
-        expect(result).toBe("BIGINT");
+    test("tinyint 类型无符号", () => {
+        const result = SyncTable.getSqlType("tinyint", null, true);
+        expect(result).toBe("TINYINT UNSIGNED");
     });
 
     test("text 类型", () => {
@@ -132,8 +139,23 @@ describe("getSqlType", () => {
         expect(result).toBe("MEDIUMTEXT");
     });
 
+    test("tinytext 类型", () => {
+        const result = SyncTable.getSqlType("tinytext", null);
+        expect(result).toBe("TINYTEXT");
+    });
+
+    test("longtext 类型", () => {
+        const result = SyncTable.getSqlType("longtext", null);
+        expect(result).toBe("LONGTEXT");
+    });
+
     test("datetime 类型", () => {
         const result = SyncTable.getSqlType("datetime", null);
         expect(result).toBe("DATETIME");
+    });
+
+    test("json 类型", () => {
+        const result = SyncTable.getSqlType("json", null);
+        expect(result).toBe("JSON");
     });
 });

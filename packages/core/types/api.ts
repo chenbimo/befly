@@ -41,12 +41,6 @@ export type AuthType = boolean | "admin" | "user" | string[];
 export type ApiHandler<TBody = Record<string, JsonValue>, R = JsonValue> = (befly: BeflyContext, ctx: RequestContext<TBody>) => Promise<Response | R> | Response | R;
 
 /**
- * 字段规则定义
- * 键为字段名，值为字段规则字符串
- */
-export type FieldRules = Record<string, string>;
-
-/**
  * API 配置选项
  */
 export interface ApiOptions<TBody = Record<string, JsonValue>, R = JsonValue> {
@@ -54,8 +48,8 @@ export interface ApiOptions<TBody = Record<string, JsonValue>, R = JsonValue> {
     method: HttpMethod;
     /** 是否需要认证（true/false/角色数组） */
     auth?: boolean | string[];
-    /** 字段规则 */
-    fields?: FieldRules;
+    /** 字段定义（验证规则） */
+    fields?: TableDefinition;
     /** 必填字段 */
     required?: string[];
     /** 处理函数 */

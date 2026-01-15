@@ -26,7 +26,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "用户名",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: false,
                 default: null
@@ -50,7 +51,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "用户名",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: false,
                 default: null
@@ -74,7 +76,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "数量",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: false,
                 default: null
@@ -98,7 +101,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "数量",
-                type: "number",
+                type: "bigint",
+                input: "number",
                 max: null,
                 nullable: false,
                 default: 0
@@ -122,7 +126,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "用户名",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: true,
                 default: null
@@ -148,7 +153,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "用户名",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: false,
                 default: "new"
@@ -172,7 +178,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "用户名",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: false,
                 default: null // null 会被解析为空字符串
@@ -197,7 +204,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "新注释",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: true,
                 default: "new"
@@ -221,7 +229,8 @@ describe("compareFieldDefinition", () => {
             } satisfies ExistingColumn;
             const fieldDef = {
                 name: "用户名",
-                type: "string",
+                type: "varchar",
+                input: "string",
                 max: 100,
                 nullable: false,
                 default: null

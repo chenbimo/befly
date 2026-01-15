@@ -388,9 +388,9 @@ describe("smoke - mysql (real) - befly_test", () => {
 
             await sql.unsafe(`INSERT INTO ${tableQuoted} (${nameQuoted}) VALUES ('abc')`);
 
-            // 目标：按 befly 的 string 映射（VARCHAR(max)）同步为 varchar
+            // 目标：按 varchar 同步为 varchar
             await SyncTable.modifyTable(db, "befly_test", tableName, {
-                name: { name: "名称", type: "string", min: 0, max: 10, default: null, nullable: false, index: false, unique: false }
+                name: { name: "名称", type: "varchar", input: "string", min: 0, max: 10, default: null, nullable: false, index: false, unique: false }
             });
 
             const colRes = await db.unsafe<Array<{ dataType: string; columnType: string }>>("SELECT DATA_TYPE AS dataType, COLUMN_TYPE AS columnType FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND COLUMN_NAME = 'name'", [tableName]);

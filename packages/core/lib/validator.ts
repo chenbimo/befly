@@ -10,6 +10,65 @@ import { RegexAliases, getCompiledRegex } from "../configs/presetRegexp";
 import { normalizeFieldDefinition } from "../utils/normalizeFieldDefinition";
 import { isPlainObject } from "../utils/util";
 
+const INPUT_TYPE_SET = new Set(["number", "integer", "string", "char", "array", "array_number", "array_integer", "json", "json_number", "json_integer"]);
+
+function isRegexInput(input: string): boolean {
+    if (input.startsWith("@")) return true;
+    return /[\\^$.*+?()[\]{}]/.test(input);
+}
+
+function isEnumInput(input: string): boolean {
+    return input.includes("|") && !isRegexInput(input);
+}
+
+function isJsonPrimitive(value: unknown): value is string | number | boolean | null {
+    if (value === null) return true;
+    return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+    if (!value || typeof value !== "object") return false;
+    if (value instanceof Date) return false;
+    if (Array.isArray(value)) return false;
+    return true;
+}
+
+function isJsonStructure(value: unknown): boolean {
+    return Array.isArray(value) || isJsonObject(value);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === "number" && Number.isFinite(value);
+}
+
+function isIntegerNumber(value: unknown): value is number {
+    return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value);
+}
+
+function checkJsonLeaves(value: unknown, rule: "number" | "integer"): boolean {
+    if (isJsonPrimitive(value)) {
+        if (rule === "number") return isFiniteNumber(value);
+        return isIntegerNumber(value);
+    }
+
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            if (!checkJsonLeaves(item, rule)) return false;
+        }
+        return true;
+    }
+
+    if (isJsonObject(value)) {
+        for (const v of Object.values(value)) {
+            if (v === undefined) continue;
+            if (!checkJsonLeaves(v, rule)) return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * 验证器类
  *
@@ -77,6 +136,9 @@ export class Validator {
                 type: ruleType
             };
 
+            const input = rawRule["input"];
+            if (typeof input === "string") rule.input = input;
+
             const min = rawRule["min"];
             if (typeof min === "number" || min === null) rule.min = min;
 
@@ -103,9 +165,6 @@ export class Validator {
             const unsigned = rawRule["unsigned"];
             if (typeof unsigned === "boolean") rule.unsigned = unsigned;
 
-            const regexp = rawRule["regexp"];
-            if (typeof regexp === "string" || regexp === null) rule.regexp = regexp;
-
             const error = this.checkField(dataRecord[field], rule, field);
             if (error) fieldErrors[field] = error;
         }
@@ -119,15 +178,16 @@ export class Validator {
     static single(value: unknown, fieldDef: FieldDefinition): SingleResult {
         const normalized = normalizeFieldDefinition(fieldDef);
         const type = normalized.type;
+        const input = normalized.input;
         const defaultValue = normalized.default;
 
         // 处理空值
         if (value === undefined || value === null || value === "") {
-            return { value: this.defaultFor(type, defaultValue), error: null };
+            return { value: this.defaultFor(type, input, defaultValue), error: null };
         }
 
         // 类型转换
-        const converted = this.convert(value, type);
+        const converted = this.convert(value, input, type);
         if (converted.error) {
             return { value: null, error: converted.error };
         }
@@ -163,7 +223,8 @@ export class Validator {
     private static checkField(value: unknown, fieldDef: FieldDefinition, fieldName: string): string | null {
         const label = fieldDef.name || fieldName;
 
-        const converted = this.convert(value, fieldDef.type);
+        const normalized = normalizeFieldDefinition(fieldDef);
+        const converted = this.convert(value, normalized.input, normalized.type);
         if (converted.error) {
             return `${label}${converted.error}`;
         }
@@ -173,55 +234,94 @@ export class Validator {
     }
 
     /** 类型转换 */
-    private static convert(value: unknown, type: string): { value: unknown; error: string | null } {
-        switch (type.toLowerCase()) {
-            case "number":
-                if (typeof value === "number") {
-                    return Number.isNaN(value) || !isFinite(value) ? { value: null, error: "必须是有效数字" } : { value: value, error: null };
-                }
+    private static convert(value: unknown, input: string, dbType: string): { value: unknown; error: string | null } {
+        const normalizedInput = String(input || "").toLowerCase();
+
+        if (!INPUT_TYPE_SET.has(normalizedInput) && isRegexInput(normalizedInput)) {
+            return typeof value === "string" ? { value: value, error: null } : { value: null, error: "必须是字符串" };
+        }
+
+        if (!INPUT_TYPE_SET.has(normalizedInput) && isEnumInput(normalizedInput)) {
+            return typeof value === "string" ? { value: value, error: null } : { value: null, error: "必须是字符串" };
+        }
+
+        switch (normalizedInput) {
+            case "number": {
+                if (isFiniteNumber(value)) return { value: value, error: null };
                 if (typeof value === "string") {
                     const num = Number(value);
-                    return Number.isNaN(num) || !isFinite(num) ? { value: null, error: "必须是数字" } : { value: num, error: null };
+                    return Number.isFinite(num) ? { value: num, error: null } : { value: null, error: "必须是数字" };
                 }
                 return { value: null, error: "必须是数字" };
+            }
 
-            case "string":
-            case "text":
-                return typeof value === "string" ? { value: value, error: null } : { value: null, error: "必须是字符串" };
+            case "integer": {
+                if (isIntegerNumber(value)) return { value: value, error: null };
+                if (typeof value === "string") {
+                    const num = Number(value);
+                    return Number.isFinite(num) && Number.isInteger(num) ? { value: num, error: null } : { value: null, error: "必须是整数" };
+                }
+                return { value: null, error: "必须是整数" };
+            }
 
-            case "datetime":
-                if (typeof value !== "string") {
+            case "string": {
+                if (typeof value === "string") {
+                    if (String(dbType || "").toLowerCase() === "datetime") {
+                        const trimmed = value.trim();
+                        return { value: trimmed, error: null };
+                    }
+                    return { value: value, error: null };
+                }
+                if (String(dbType || "").toLowerCase() === "datetime") {
                     return { value: null, error: "必须是时间字符串" };
                 }
+                return { value: null, error: "必须是字符串" };
+            }
 
-                // 允许 date-only：YYYY-MM-DD -> YYYY-MM-DD 00:00:00
-                // 说明：只做“补零”，不做时区相关转换。
-                const trimmed = value.trim();
-                if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-                    return { value: `${trimmed} 00:00:00`, error: null };
-                }
+            case "char":
+                if (typeof value !== "string") return { value: null, error: "必须是字符串" };
+                return value.length === 1 ? { value: value, error: null } : { value: null, error: "必须是单字符" };
 
-                return { value: trimmed, error: null };
-
-            case "array_string":
-            case "array_text":
+            case "array":
                 return Array.isArray(value) ? { value: value, error: null } : { value: null, error: "必须是数组" };
 
-            case "array_number_string":
-            case "array_number_text":
-                if (!Array.isArray(value)) {
-                    return { value: null, error: "必须是数组" };
-                }
-                // 验证数组元素必须是数字
+            case "array_number": {
+                if (!Array.isArray(value)) return { value: null, error: "必须是数组" };
                 for (const item of value) {
-                    if (typeof item !== "number" || !isFinite(item)) {
-                        return { value: null, error: "数组元素必须是数字" };
-                    }
+                    if (!isFiniteNumber(item)) return { value: null, error: "数组元素必须是数字" };
                 }
+                return { value: value, error: null };
+            }
+
+            case "array_integer": {
+                if (!Array.isArray(value)) return { value: null, error: "必须是数组" };
+                for (const item of value) {
+                    if (!isIntegerNumber(item)) return { value: null, error: "数组元素必须是整数" };
+                }
+                return { value: value, error: null };
+            }
+
+            case "json":
+                if (!isJsonStructure(value)) return { value: null, error: "必须是JSON对象或数组" };
                 return { value: value, error: null };
 
-            default:
+            case "json_number":
+                if (!isJsonStructure(value)) return { value: null, error: "必须是JSON对象或数组" };
+                return checkJsonLeaves(value, "number") ? { value: value, error: null } : { value: null, error: "JSON值必须是数字" };
+
+            case "json_integer":
+                if (!isJsonStructure(value)) return { value: null, error: "必须是JSON对象或数组" };
+                return checkJsonLeaves(value, "integer") ? { value: value, error: null } : { value: null, error: "JSON值必须是整数" };
+
+            default: {
+                // 兜底：若 dbType 为 datetime，仍需字符串，且支持 YYYY-MM-DD 补零
+                if (String(dbType || "").toLowerCase() === "datetime") {
+                    if (typeof value !== "string") return { value: null, error: "必须是时间字符串" };
+                    const trimmed = value.trim();
+                    return { value: trimmed, error: null };
+                }
                 return { value: value, error: null };
+            }
         }
     }
 
@@ -229,89 +329,83 @@ export class Validator {
     private static checkRule(value: unknown, fieldDef: FieldDefinition): string | null {
         const normalized = normalizeFieldDefinition(fieldDef);
         const type = normalized.type;
+        const input = normalized.input;
         const min = normalized.min;
         const max = normalized.max;
-        const regexp = normalized.regexp;
-        const regex = this.resolveRegex(regexp);
 
-        switch (type.toLowerCase()) {
-            case "number":
-                if (typeof value !== "number") return "必须是数字";
-                if (min !== null && value < min) return `不能小于${min}`;
-                if (max !== null && max > 0 && value > max) return `不能大于${max}`;
-                if (regex && !this.testRegex(regex, String(value))) return "格式不正确";
-                break;
+        const normalizedInput = String(input || "").toLowerCase();
+        const isRegex = !INPUT_TYPE_SET.has(normalizedInput) && isRegexInput(normalizedInput);
+        const isEnum = !INPUT_TYPE_SET.has(normalizedInput) && isEnumInput(normalizedInput);
 
-            case "string":
-            case "text":
-                if (typeof value !== "string") return "必须是字符串";
-                if (min !== null && value.length < min) return `长度不能少于${min}个字符`;
-                if (max !== null && max > 0 && value.length > max) return `长度不能超过${max}个字符`;
-                if (regex && !this.testRegex(regex, value)) return "格式不正确";
-                break;
+        if (normalizedInput === "number" || normalizedInput === "integer") {
+            if (typeof value !== "number") return normalizedInput === "integer" ? "必须是整数" : "必须是数字";
+            if (min !== null && value < min) return `不能小于${min}`;
+            if (max !== null && max > 0 && value > max) return `不能大于${max}`;
+        } else if (normalizedInput === "string" || normalizedInput === "char" || isRegex || isEnum) {
+            if (typeof value !== "string") return "必须是字符串";
+            if (normalizedInput === "char" && value.length !== 1) return "必须是单字符";
+            if (min !== null && value.length < min) return `长度不能少于${min}个字符`;
+            if (max !== null && max > 0 && value.length > max) return `长度不能超过${max}个字符`;
 
-            case "datetime": {
-                if (typeof value !== "string") return "必须是时间字符串";
-
-                // 约束：到秒的 datetime 字符串（YYYY-MM-DD HH:mm:ss）
-                // 说明：这里只做格式校验，不在 validator 中做“日期合法性”（如 2026-02-30）推断，避免引入时区/解析差异。
-                if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) return "格式不正确";
-
-                // 进一步校验日期/时间字段合法性（不依赖 Date 解析，避免时区与实现差异）
-                const [datePart, timePart] = value.split(" ");
-                if (typeof datePart !== "string" || typeof timePart !== "string") return "格式不正确";
-
-                const [yStr, mStr, dStr] = datePart.split("-");
-                const [hhStr, mmStr, ssStr] = timePart.split(":");
-
-                const year = Number(yStr);
-                const month = Number(mStr);
-                const day = Number(dStr);
-                const hh = Number(hhStr);
-                const mm = Number(mmStr);
-                const ss = Number(ssStr);
-
-                if (!Number.isInteger(year) || year < 1000 || year > 9999) return "格式不正确";
-                if (!Number.isInteger(month) || month < 1 || month > 12) return "格式不正确";
-                if (!Number.isInteger(day) || day < 1) return "格式不正确";
-                if (!Number.isInteger(hh) || hh < 0 || hh > 23) return "格式不正确";
-                if (!Number.isInteger(mm) || mm < 0 || mm > 59) return "格式不正确";
-                if (!Number.isInteger(ss) || ss < 0 || ss > 59) return "格式不正确";
-
-                const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-                const daysInMonth = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-                const maxDay = daysInMonth[month - 1] ?? 0;
-                if (day > maxDay) return "格式不正确";
-
-                if (regex && !this.testRegex(regex, value)) return "格式不正确";
-                break;
+            if (isRegex) {
+                const regex = this.resolveRegex(normalizedInput);
+                if (!this.testRegex(regex, value)) return "格式不正确";
             }
 
-            case "array_string":
-            case "array_text":
-            case "array_number_string":
-            case "array_number_text":
-                if (!Array.isArray(value)) return "必须是数组";
-                if (min !== null && value.length < min) return `至少需要${min}个元素`;
-                if (max !== null && max > 0 && value.length > max) return `最多只能有${max}个元素`;
-                if (regex) {
-                    for (const item of value) {
-                        if (!this.testRegex(regex, String(item))) return "元素格式不正确";
-                    }
-                }
-                break;
+            if (isEnum) {
+                const enums = normalizedInput
+                    .split("|")
+                    .map((item) => item.trim())
+                    .filter((item) => item !== "");
+                if (!enums.includes(value)) return "值不在枚举范围内";
+            }
+        } else if (normalizedInput === "array" || normalizedInput === "array_number" || normalizedInput === "array_integer") {
+            if (!Array.isArray(value)) return "必须是数组";
+            if (min !== null && value.length < min) return `至少需要${min}个元素`;
+            if (max !== null && max > 0 && value.length > max) return `最多只能有${max}个元素`;
+        } else if (normalizedInput === "json" || normalizedInput === "json_number" || normalizedInput === "json_integer") {
+            if (!isJsonStructure(value)) return "必须是JSON对象或数组";
+        }
+
+        if (String(type || "").toLowerCase() === "datetime") {
+            if (typeof value !== "string") return "必须是时间字符串";
+            if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) return "格式不正确";
+
+            const [datePart, timePart] = value.split(" ");
+            if (typeof datePart !== "string" || typeof timePart !== "string") return "格式不正确";
+
+            const [yStr, mStr, dStr] = datePart.split("-");
+            const [hhStr, mmStr, ssStr] = timePart.split(":");
+
+            const year = Number(yStr);
+            const month = Number(mStr);
+            const day = Number(dStr);
+            const hh = Number(hhStr);
+            const mm = Number(mmStr);
+            const ss = Number(ssStr);
+
+            if (!Number.isInteger(year) || year < 1000 || year > 9999) return "格式不正确";
+            if (!Number.isInteger(month) || month < 1 || month > 12) return "格式不正确";
+            if (!Number.isInteger(day) || day < 1) return "格式不正确";
+            if (!Number.isInteger(hh) || hh < 0 || hh > 23) return "格式不正确";
+            if (!Number.isInteger(mm) || mm < 0 || mm > 59) return "格式不正确";
+            if (!Number.isInteger(ss) || ss < 0 || ss > 59) return "格式不正确";
+
+            const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+            const daysInMonth = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            const maxDay = daysInMonth[month - 1] ?? 0;
+            if (day > maxDay) return "格式不正确";
         }
         return null;
     }
 
     /** 解析正则别名 */
-    private static resolveRegex(regexp: string | null): string | null {
-        if (!regexp) return null;
-        if (regexp.startsWith("@")) {
-            const key = regexp.substring(1) as keyof typeof RegexAliases;
-            return RegexAliases[key] || regexp;
+    private static resolveRegex(pattern: string): string {
+        if (pattern.startsWith("@")) {
+            const key = pattern.substring(1) as keyof typeof RegexAliases;
+            return RegexAliases[key] || pattern;
         }
-        return regexp;
+        return pattern;
     }
 
     /** 测试正则 */
@@ -324,11 +418,11 @@ export class Validator {
     }
 
     /** 获取默认值 */
-    private static defaultFor(type: string, defaultValue: JsonValue | null | undefined): JsonValue {
+    private static defaultFor(type: string, input: string, defaultValue: JsonValue | null | undefined): JsonValue {
         // 如果字段定义了默认值，则使用字段默认值（优先级最高）
         if (defaultValue !== null && defaultValue !== undefined) {
             // 数组默认值
-            if ((type === "array_string" || type === "array_text" || type === "array_number_string" || type === "array_number_text") && typeof defaultValue === "string") {
+            if ((input === "array" || input === "array_number" || input === "array_integer") && typeof defaultValue === "string") {
                 if (defaultValue === "[]") return [];
                 try {
                     const parsed = JSON.parse(defaultValue);
@@ -338,7 +432,7 @@ export class Validator {
                 }
             }
             // 数字默认值
-            if (type === "number" && typeof defaultValue === "string") {
+            if ((input === "number" || input === "integer") && typeof defaultValue === "string") {
                 const num = Number(defaultValue);
                 return isNaN(num) ? 0 : num;
             }
@@ -346,15 +440,23 @@ export class Validator {
         }
 
         // 类型默认值（字段未定义 default 时使用）
-        switch (type.toLowerCase()) {
+        const normalizedType = String(type || "").toLowerCase();
+        if (normalizedType === "datetime" || normalizedType === "json") {
+            return null;
+        }
+
+        const normalizedInput = String(input || "").toLowerCase();
+        if (normalizedInput === "json" || normalizedInput === "json_number" || normalizedInput === "json_integer") {
+            return null;
+        }
+
+        switch (String(input || "").toLowerCase()) {
             case "number":
+            case "integer":
                 return 0;
-            case "datetime":
-                return null;
-            case "array_string":
-            case "array_text":
-            case "array_number_string":
-            case "array_number_text":
+            case "array":
+            case "array_number":
+            case "array_integer":
                 return [];
             default:
                 return "";

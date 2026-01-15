@@ -110,18 +110,23 @@ export class SyncTable {
     public static SYSTEM_INDEX_FIELDS: ReadonlyArray<string> = ["created_at", "updated_at", "state"];
 
     private static TYPE_MAPPING: Record<string, string> = {
-        number: "BIGINT",
-        string: "VARCHAR",
+        tinyint: "TINYINT",
+        smallint: "SMALLINT",
+        mediumint: "MEDIUMINT",
+        int: "INT",
+        bigint: "BIGINT",
+        char: "CHAR",
+        varchar: "VARCHAR",
         datetime: "DATETIME",
+        tinytext: "TINYTEXT",
         text: "MEDIUMTEXT",
-        array_string: "VARCHAR",
-        array_text: "MEDIUMTEXT",
-        array_number_string: "VARCHAR",
-        array_number_text: "MEDIUMTEXT"
+        mediumtext: "MEDIUMTEXT",
+        longtext: "LONGTEXT",
+        json: "JSON"
     };
 
     private static TEXT_FAMILY = new Set(["tinytext", "text", "mediumtext", "longtext"]);
-    private static INT_TYPES = new Set(["tinyint", "smallint", "mediumint", "int", "integer", "bigint"]);
+    private static INT_TYPES = new Set(["tinyint", "smallint", "mediumint", "int", "bigint"]);
 
     private db: SqlExecutor;
     private dbName: string;
@@ -245,11 +250,11 @@ export class SyncTable {
         fieldDef.unique = normalized.unique;
         fieldDef.nullable = normalized.nullable;
         fieldDef.unsigned = normalized.unsigned;
-        fieldDef.regexp = normalized.regexp;
+        fieldDef.input = normalized.input;
     }
 
     public static isStringOrArrayType(fieldType: string): boolean {
-        return fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string";
+        return fieldType === "char" || fieldType === "varchar";
     }
 
     /**
@@ -273,42 +278,48 @@ export class SyncTable {
     }
 
     public static getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
+        const normalizedType = String(fieldType || "").toLowerCase();
         const typeMapping = SyncTable.TYPE_MAPPING;
 
-        if (SyncTable.isStringOrArrayType(fieldType)) {
+        if (SyncTable.isStringOrArrayType(normalizedType)) {
             // 约束由 checkTable 统一保证；这里仅做最小断言，避免生成明显无效的 SQL。
             if (typeof fieldMax !== "number") {
-                throw new Error(`同步表：内部错误：${fieldType} 类型缺失 max（应由 checkTable 阻断）`);
+                throw new Error(`同步表：内部错误：${normalizedType} 类型缺失 max（应由 checkTable 阻断）`);
             }
-            return `${typeMapping[fieldType]}(${fieldMax})`;
+            return `${typeMapping[normalizedType]}(${fieldMax})`;
         }
 
-        const baseType = typeMapping[fieldType] || "TEXT";
-        if (fieldType === "number" && unsigned) {
+        const baseType = typeMapping[normalizedType] || "TEXT";
+        if (SyncTable.INT_TYPES.has(normalizedType) && unsigned) {
             return `${baseType} UNSIGNED`;
         }
         return baseType;
     }
 
     public static resolveDefaultValue(fieldDefault: any, fieldType: string): any {
+        const normalizedType = String(fieldType || "").toLowerCase();
         if (fieldDefault !== null && fieldDefault !== "null") {
             return fieldDefault;
         }
 
-        switch (fieldType) {
-            case "number":
+        switch (normalizedType) {
+            case "tinyint":
+            case "smallint":
+            case "mediumint":
+            case "int":
+            case "bigint":
                 return 0;
-            case "string":
+            case "char":
+            case "varchar":
                 return "";
             case "datetime":
                 // datetime 默认不生成 DEFAULT；用 "null" 作为 sentinel（与 TEXT 类似）
                 return "null";
-            case "array_string":
-            case "array_number_string":
-                return "[]";
+            case "tinytext":
             case "text":
-            case "array_text":
-            case "array_number_text":
+            case "mediumtext":
+            case "longtext":
+            case "json":
                 return "null";
             default:
                 return fieldDefault;
@@ -316,11 +327,12 @@ export class SyncTable {
     }
 
     public static generateDefaultSql(actualDefault: any, fieldType: string): string {
-        if (fieldType === "text" || fieldType === "array_text" || actualDefault === "null") {
+        const normalizedType = String(fieldType || "").toLowerCase();
+        if (SyncTable.TEXT_FAMILY.has(normalizedType) || normalizedType === "json" || actualDefault === "null") {
             return "";
         }
 
-        if (fieldType === "number" || fieldType === "string" || fieldType === "array_string" || fieldType === "array_number_string") {
+        if (SyncTable.INT_TYPES.has(normalizedType) || SyncTable.isStringOrArrayType(normalizedType)) {
             if (typeof actualDefault === "number" && !Number.isNaN(actualDefault)) {
                 return ` DEFAULT ${actualDefault}`;
             } else {
@@ -329,7 +341,7 @@ export class SyncTable {
             }
         }
 
-        if (fieldType === "datetime") {
+        if (normalizedType === "datetime") {
             // datetime：默认值仅支持字符串（到秒）或 CURRENT_TIMESTAMP 表达式。
             // 注意：checkTable 默认要求 default 为 null；这里仍做 DDL 生成兜底，便于测试/内部调用。
             if (typeof actualDefault === "string") {
@@ -720,7 +732,7 @@ export class SyncTable {
         }
 
         if (SyncTable.INT_TYPES.has(cBase) && SyncTable.INT_TYPES.has(nBase)) {
-            const order = ["tinyint", "smallint", "mediumint", "int", "integer", "bigint"];
+            const order = ["tinyint", "smallint", "mediumint", "int", "bigint"];
             const cIntIdx = order.indexOf(cBase);
             const nIntIdx = order.indexOf(nBase);
             if (nIntIdx > cIntIdx) return true;

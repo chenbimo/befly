@@ -1,30 +1,31 @@
 {
     "adminId": {
         "name": "发送人ID",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "index": true
     },
     "username": {
         "name": "发送人账号",
-        "type": "string",
+        "type": "varchar",
         "max": 100
     },
     "nickname": {
         "name": "发送人昵称",
-        "type": "string",
+        "type": "varchar",
         "max": 100
     },
     "toEmail": {
         "name": "收件人邮箱",
-        "type": "string",
+        "type": "varchar",
+        "input": "@email",
         "min": 5,
-        "max": 200,
-        "regexp": "@email"
+        "max": 200
     },
     "subject": {
         "name": "邮件主题",
-        "type": "string",
+        "type": "varchar",
         "min": 1,
         "max": 200
     },
@@ -34,33 +35,35 @@
     },
     "ccEmail": {
         "name": "抄送邮箱",
-        "type": "string",
+        "type": "varchar",
         "max": 500
     },
     "bccEmail": {
         "name": "密送邮箱",
-        "type": "string",
+        "type": "varchar",
         "max": 500
     },
     "sendTime": {
         "name": "发送时间",
-        "type": "number"
+        "type": "bigint",
+        "input": "number"
     },
     "sendResult": {
         "name": "发送结果",
-        "type": "number",
+        "type": "bigint",
+        "input": "number",
         "min": 0,
         "max": 1,
         "default": 0
     },
     "messageId": {
         "name": "消息ID",
-        "type": "string",
+        "type": "varchar",
         "max": 200
     },
     "failReason": {
         "name": "失败原因",
-        "type": "string",
+        "type": "varchar",
         "max": 500
     }
 }

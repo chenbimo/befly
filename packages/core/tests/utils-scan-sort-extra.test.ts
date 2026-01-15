@@ -109,7 +109,7 @@ describe("utils - sortModules", () => {
 });
 
 describe("utils - scanFiles (windows paths)", () => {
-    test("should parse addonName/moduleName for node_modules and local addons on Windows", async () => {
+    test("should parse addonName/moduleName for node_modules addons on Windows", async () => {
         const root = join(import.meta.dir, "..", "temp", "fixtures", "scanFilesWindows");
         ensureEmptyDir(root);
 
@@ -118,11 +118,6 @@ describe("utils - scanFiles (windows paths)", () => {
         mkdirSync(nmPluginDir, { recursive: true });
         writeFileSync(join(nmPluginDir, "demoPlugin.ts"), 'export default { name: "demoPlugin", deps: [], handler: null }\n', { encoding: "utf8" });
 
-        // local addon: addons/demo
-        const localPluginDir = join(root, "addons", "demo", "plugins");
-        mkdirSync(localPluginDir, { recursive: true });
-        writeFileSync(join(localPluginDir, "localPlugin.ts"), 'export default { name: "localPlugin", deps: [], handler: null }\n', { encoding: "utf8" });
-
         try {
             const nmResults = await scanFiles(nmPluginDir, "addon", "plugin", "**/*.ts");
             expect(nmResults.length).toBe(1);
@@ -130,12 +125,6 @@ describe("utils - scanFiles (windows paths)", () => {
             expect(nmResults[0]?.moduleName).toBe("addon_demo_demoPlugin");
             // 盘符/绝对路径：Windows 上通常是 D:\ 或 D:/，scanFiles 内部 normalize 后应稳定
             expect(String(nmResults[0]?.filePath)).toMatch(/^[A-Za-z]:[\\/]/);
-
-            const localResults = await scanFiles(localPluginDir, "addon", "plugin", "**/*.ts");
-            expect(localResults.length).toBe(1);
-            expect(localResults[0]?.addonName).toBe("demo");
-            expect(localResults[0]?.moduleName).toBe("addon_demo_localPlugin");
-            expect(String(localResults[0]?.filePath)).toMatch(/^[A-Za-z]:[\\/]/);
         } finally {
             rmSync(root, { recursive: true, force: true });
         }
@@ -177,7 +166,7 @@ describe("utils - scanCoreBuiltins", () => {
 });
 
 describe("utils - scanSources (fixture)", () => {
-    test("should scan app + node_modules addon + local addons", async () => {
+    test("should scan app + node_modules addons", async () => {
         const root = join(import.meta.dir, "..", "temp", "fixtures", "scanSources");
         ensureEmptyDir(root);
 
@@ -210,14 +199,6 @@ describe("utils - scanSources (fixture)", () => {
         writeFileSync(join(nmRemoteRoot, "tables", "remote.json"), JSON.stringify({ name: "remote" }), { encoding: "utf8" });
         writeFileSync(join(nmRemoteRoot, "plugins", "remotePlugin.ts"), 'export default { name: "remotePlugin", deps: [], handler: null };\n', { encoding: "utf8" });
         writeFileSync(join(nmRemoteRoot, "apis", "pong.ts"), 'export default { name: "pong" };\n', { encoding: "utf8" });
-
-        // local addon: addons/demo (should override node_modules metadata)
-        const localAddonRoot = join(root, "addons", "demo");
-        mkdirSync(join(localAddonRoot, "plugins"), { recursive: true });
-        mkdirSync(join(localAddonRoot, "tables"), { recursive: true });
-        mkdirSync(join(localAddonRoot, "apis"), { recursive: true });
-        writeFileSync(join(localAddonRoot, "tables", "local.json"), JSON.stringify({ name: "local" }), { encoding: "utf8" });
-        writeFileSync(join(localAddonRoot, "plugins", "localPlugin.ts"), 'export default { name: "localPlugin", deps: [], handler: null };\n', { encoding: "utf8" });
 
         try {
             // 注意：paths.ts 的 appDir=process.cwd() 很容易在其他测试里提前被缓存。
@@ -264,14 +245,13 @@ process.stdout.write(JSON.stringify({
 
             const parsed = JSON.parse(text) as ParsedScanSources;
 
-            // addons: local should override node_modules
             const demoAddon = parsed.addons.find((a) => a.name === "demo");
             expect(demoAddon).toBeTruthy();
             if (!demoAddon) {
                 throw new Error("Expected demo addon");
             }
-            expect(demoAddon.sourceName).toBe("项目");
-            expect(String(demoAddon.rootDir).replace(/\\/g, "/")).toContain("/addons/demo");
+            expect(demoAddon.sourceName).toBe("组件");
+            expect(String(demoAddon.rootDir).replace(/\\/g, "/")).toContain("/node_modules/@befly-addon/demo");
 
             // app table
             const appUserTable = parsed.tables.find((t) => t.source === "app" && t.fileName === "user");
@@ -294,26 +274,9 @@ process.stdout.write(JSON.stringify({
             }
             expect(loginApi.path).toBe("/api/app/user/login");
 
-            // local addon scanning should work (tables/plugins/apis under addons/demo)
-            const localAddonTable = parsed.tables.find((t) => t.source === "addon" && t.fileName === "local");
-            expect(localAddonTable).toBeTruthy();
-            if (!localAddonTable) {
-                throw new Error("Expected local addon table");
-            }
-            expect(Array.isArray(localAddonTable.customKeys)).toBe(true);
-
-            const localAddonPlugin = parsed.plugins.find((p) => p.source === "addon" && p.fileName === "localPlugin");
-            expect(localAddonPlugin).toBeTruthy();
-            if (!localAddonPlugin) {
-                throw new Error("Expected local addon plugin");
-            }
-            expect(localAddonPlugin.addonName).toBe("demo");
-            expect(localAddonPlugin.moduleName).toBe("addon_demo_localPlugin");
-
-            // 同名 demo：本地 addons/demo 覆盖 node_modules/@befly-addon/demo，因此 node_modules 的 demoPlugin/post/ping 不应出现
-            expect(parsed.plugins.some((p) => p.source === "addon" && p.fileName === "demoPlugin")).toBe(false);
-            expect(parsed.tables.some((t) => t.source === "addon" && t.fileName === "post")).toBe(false);
-            expect(parsed.apis.some((a) => a.source === "addon" && a.fileName === "ping")).toBe(false);
+            expect(parsed.plugins.some((p) => p.source === "addon" && p.fileName === "demoPlugin")).toBe(true);
+            expect(parsed.tables.some((t) => t.source === "addon" && t.fileName === "post")).toBe(true);
+            expect(parsed.apis.some((a) => a.source === "addon" && a.fileName === "ping")).toBe(true);
 
             // node_modules-only addon (remote) 应被扫描
             expect(parsed.plugins.some((p) => p.source === "addon" && p.fileName === "remotePlugin")).toBe(true);

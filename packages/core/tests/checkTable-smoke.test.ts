@@ -47,7 +47,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testCustomers",
                 addonName: "",
                 content: {
-                    customerName: { name: "客户名", type: "string", max: 32 }
+                    customerName: { name: "客户名", type: "varchar", max: 32 }
                 }
             } as any
         ];
@@ -68,7 +68,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testInvalidFieldName",
                 addonName: "",
                 content: {
-                    title: { name: "标题@", type: "string", max: 32 }
+                    title: { name: "标题@", type: "varchar", max: 32 }
                 }
             } as any
         ];
@@ -89,7 +89,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testInvalidFieldNameStrict",
                 addonName: "",
                 content: {
-                    title: { name: "标题@", type: "string", max: 32 }
+                    title: { name: "标题@", type: "varchar", max: 32 }
                 }
             } as any
         ];
@@ -117,7 +117,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testMenu",
                 addonName: "",
                 content: {
-                    path: { name: "路径", type: "string", max: 128, unique: true, index: true }
+                    path: { name: "路径", type: "varchar", max: 128, unique: true, index: true }
                 }
             } as any
         ];
@@ -133,7 +133,7 @@ describe("checkTable - smoke", () => {
         expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
-    test("string 类型缺失 max 时应阻断启动（抛错）", async () => {
+    test("varchar 类型缺失 max 时应阻断启动（抛错）", async () => {
         const items: ScanFileResult[] = [
             {
                 type: "table",
@@ -145,7 +145,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testStringNoMax",
                 addonName: "",
                 content: {
-                    title: { name: "标题", type: "string" }
+                    title: { name: "标题", type: "varchar" }
                 }
             } as any
         ];
@@ -161,7 +161,7 @@ describe("checkTable - smoke", () => {
         expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
-    test("string 类型 max 超出 VARCHAR 上限时应阻断启动（抛错）", async () => {
+    test("varchar 类型 max 超出 VARCHAR 上限时应阻断启动（抛错）", async () => {
         const items: ScanFileResult[] = [
             {
                 type: "table",
@@ -173,7 +173,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testStringMaxTooLarge",
                 addonName: "",
                 content: {
-                    title: { name: "标题", type: "string", max: 20000 }
+                    title: { name: "标题", type: "varchar", max: 20000 }
                 }
             } as any
         ];
@@ -189,7 +189,7 @@ describe("checkTable - smoke", () => {
         expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
-    test("index=true 的 string 字段 max>500 时应阻断启动（抛错）", async () => {
+    test("index=true 的 varchar 字段 max>500 时应阻断启动（抛错）", async () => {
         const items: ScanFileResult[] = [
             {
                 type: "table",
@@ -201,7 +201,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testLongIndex",
                 addonName: "",
                 content: {
-                    code: { name: "编码", type: "string", max: 501, index: true }
+                    code: { name: "编码", type: "varchar", max: 501, index: true }
                 }
             } as any
         ];
@@ -217,7 +217,7 @@ describe("checkTable - smoke", () => {
         expect(String(thrownError?.message || "")).toContain("表结构检查失败");
     });
 
-    test("unique=true 的 string 字段 max>180 时应阻断启动（抛错）", async () => {
+    test("unique=true 的 varchar 字段 max>180 时应阻断启动（抛错）", async () => {
         const items: ScanFileResult[] = [
             {
                 type: "table",
@@ -229,7 +229,7 @@ describe("checkTable - smoke", () => {
                 moduleName: "app_testLongUnique",
                 addonName: "",
                 content: {
-                    code: { name: "编码", type: "string", max: 181, unique: true }
+                    code: { name: "编码", type: "varchar", max: 181, unique: true }
                 }
             } as any
         ];

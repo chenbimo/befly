@@ -101,8 +101,8 @@ describe("syncTable - logging summary", () => {
                 moduleName: `app_${fileName}`,
                 addonName: "",
                 content: {
-                    nickname: { name: "昵称", type: "string", min: 0, max: 100, default: null, nullable: false, index: true, unique: false } satisfies FieldDefinition,
-                    bio: { name: "简介", type: "text", min: null, max: null, default: null, nullable: true, index: false, unique: false } satisfies FieldDefinition
+                    nickname: { name: "昵称", type: "varchar", input: "string", min: 0, max: 100, default: null, nullable: false, index: true, unique: false } satisfies FieldDefinition,
+                    bio: { name: "简介", type: "text", input: "string", min: null, max: null, default: null, nullable: true, index: false, unique: false } satisfies FieldDefinition
                 }
             } as any;
 

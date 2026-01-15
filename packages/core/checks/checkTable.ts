@@ -74,15 +74,64 @@ const RESERVED_FIELDS = ["id", "created_at", "updated_at", "deleted_at", "state"
 const RESERVED_FIELD_SET = new Set<string>(RESERVED_FIELDS);
 
 /**
- * 允许的字段类型
+ * 允许的数据库字段类型
  */
-const FIELD_TYPES = ["string", "number", "text", "datetime", "array_string", "array_text", "array_number_string", "array_number_text"] as const;
+const FIELD_TYPES = ["tinyint", "smallint", "mediumint", "int", "bigint", "char", "varchar", "tinytext", "text", "mediumtext", "longtext", "datetime", "json"] as const;
 const FIELD_TYPE_SET = new Set<string>(FIELD_TYPES);
+
+/**
+ * 允许的输入类型
+ */
+const INPUT_TYPES = ["number", "integer", "string", "char", "array", "array_number", "array_integer", "json", "json_number", "json_integer"] as const;
+const INPUT_TYPE_SET = new Set<string>(INPUT_TYPES);
+
+function isRegexInput(input: string): boolean {
+    if (input.startsWith("@")) return true;
+    return /[\\^$.*+?()[\]{}]/.test(input);
+}
+
+function isEnumInput(input: string): boolean {
+    return input.includes("|") && !isRegexInput(input);
+}
+
+function inferInputByType(dbType: string): string {
+    switch (dbType.toLowerCase()) {
+        case "tinyint":
+        case "smallint":
+        case "mediumint":
+        case "int":
+        case "bigint":
+            return "integer";
+        case "char":
+        case "varchar":
+        case "tinytext":
+        case "text":
+        case "mediumtext":
+        case "longtext":
+            return "string";
+        case "datetime":
+            return "string";
+        case "json":
+            return "json";
+        default:
+            return "string";
+    }
+}
+
+function normalizeTypeAndInput(type: string, input: string): { type: string; input: string } {
+    const rawType = String(type || "").trim();
+    const rawInput = String(input || "").trim();
+
+    return {
+        type: rawType,
+        input: rawInput || inferInputByType(rawType)
+    };
+}
 
 /**
  * 允许的字段属性列表
  */
-const ALLOWED_FIELD_PROPERTIES = ["name", "type", "min", "max", "default", "detail", "index", "unique", "nullable", "unsigned", "regexp"] as const;
+const ALLOWED_FIELD_PROPERTIES = ["name", "type", "input", "min", "max", "default", "detail", "index", "unique", "nullable", "unsigned"] as const;
 const ALLOWED_FIELD_PROPERTY_SET = new Set<string>(ALLOWED_FIELD_PROPERTIES);
 
 /**
@@ -186,6 +235,11 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                     continue;
                 }
 
+                if (field.input !== undefined && typeof field.input !== "string") {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input 类型错误，必须为字符串`);
+                    hasError = true;
+                }
+
                 // 检查可选字段的类型
                 if (field.min !== undefined && !(field.min === null || typeof field.min === "number")) {
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 min 类型错误，必须为 null 或数字`);
@@ -215,10 +269,9 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 unsigned 类型错误，必须为布尔值`);
                     hasError = true;
                 }
-                if (field.regexp !== undefined && field.regexp !== null && typeof field.regexp !== "string") {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 regexp 类型错误，必须为 null 或字符串`);
-                    hasError = true;
-                }
+                const normalizedTypeInput = normalizeTypeAndInput(field.type, field.input || "");
+                const effectiveType = normalizedTypeInput.type;
+                const effectiveInput = normalizedTypeInput.input;
 
                 // 约束：default 若存在，必须可 JSON 序列化（避免 syncTable 运行期再做防御判断）
                 if (field.default !== undefined && field.default !== null && !isJsonValue(field.default)) {
@@ -235,14 +288,56 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                 }
 
                 // 字段类型必须为 FIELD_TYPES 之一
-                if (!FIELD_TYPE_SET.has(field.type)) {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型 "${field.type}" 格式错误，` + `必须为${FIELD_TYPES.join("、")}之一`);
+                if (!FIELD_TYPE_SET.has(effectiveType)) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型 "${effectiveType}" 格式错误，` + `必须为${FIELD_TYPES.join("、")}之一`);
                     hasError = true;
                 }
 
+                const normalizedInput = effectiveInput.trim();
+                if (normalizedInput === "") {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input 无法推导`);
+                    hasError = true;
+                } else if (!INPUT_TYPE_SET.has(normalizedInput) && !isRegexInput(normalizedInput) && !isEnumInput(normalizedInput)) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input "${normalizedInput}" 不合法，` + `必须为${INPUT_TYPES.join("、")}之一，或正则/枚举`);
+                    hasError = true;
+                }
+
+                const isStringDbType = ["char", "varchar", "tinytext", "text", "mediumtext", "longtext"].includes(effectiveType);
+                const isTextDbType = ["tinytext", "text", "mediumtext", "longtext"].includes(effectiveType);
+                const isIntDbType = ["tinyint", "smallint", "mediumint", "int", "bigint"].includes(effectiveType);
+                const isJsonDbType = effectiveType === "json";
+
+                if (isRegexInput(normalizedInput) || isEnumInput(normalizedInput)) {
+                    if (!isStringDbType) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input 使用正则/枚举，仅允许字符串类字段（char/varchar/text）`);
+                        hasError = true;
+                    }
+                }
+
+                if (normalizedInput === "number" || normalizedInput === "integer") {
+                    if (!isIntDbType) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input=${normalizedInput} 仅允许整数类字段（tinyint/smallint/mediumint/int/bigint）`);
+                        hasError = true;
+                    }
+                }
+
+                if (normalizedInput === "array" || normalizedInput === "array_number" || normalizedInput === "array_integer") {
+                    if (!isStringDbType) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input=${normalizedInput} 仅允许字符串类字段（char/varchar/text）`);
+                        hasError = true;
+                    }
+                }
+
+                if (normalizedInput === "json" || normalizedInput === "json_number" || normalizedInput === "json_integer") {
+                    if (!(isJsonDbType || isTextDbType)) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段 input=${normalizedInput} 仅允许 json 或 text 类字段`);
+                        hasError = true;
+                    }
+                }
+
                 // unsigned 仅对 number 类型有效（且仅 MySQL 语义上生效）
-                if (field.type !== "number" && field.unsigned !== undefined) {
-                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型为 ${field.type}，不允许设置 unsigned（仅 number 类型有效）`);
+                if (!isIntDbType && field.unsigned !== undefined) {
+                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型为 ${effectiveType}，不允许设置 unsigned（仅整数类型有效）`);
                     hasError = true;
                 }
 
@@ -261,30 +356,30 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                 }
 
                 // 类型联动校验 + 默认值规则
-                if (field.type === "text" || field.type === "array_text" || field.type === "array_number_text") {
-                    // text / array_text / array_number_text：min/max 必须为 null，默认值必须为 null，且不支持索引/唯一约束
+                if (isTextDbType || isJsonDbType) {
+                    // text/json：min/max 必须为 null，默认值必须为 null，且不支持索引/唯一约束
                     if (field.min !== undefined && field.min !== null) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${field.type} 类型最小值应为 null，当前为 "${field.min}"`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${effectiveType} 类型最小值应为 null，当前为 "${field.min}"`);
                         hasError = true;
                     }
                     if (field.max !== undefined && field.max !== null) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${field.type} 类型最大长度应为 null，当前为 "${field.max}"`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 的 ${effectiveType} 类型最大长度应为 null，当前为 "${field.max}"`);
                         hasError = true;
                     }
                     if (field.default !== undefined && field.default !== null) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值必须为 null，当前为 "${field.default}"`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${effectiveType} 类型，默认值必须为 null，当前为 "${field.default}"`);
                         hasError = true;
                     }
 
                     if (field.index === true) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，不支持创建索引（index=true 无效）`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${effectiveType} 类型，不支持创建索引（index=true 无效）`);
                         hasError = true;
                     }
                     if (field.unique === true) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，不支持唯一约束（unique=true 无效）`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${effectiveType} 类型，不支持唯一约束（unique=true 无效）`);
                         hasError = true;
                     }
-                } else if (field.type === "datetime") {
+                } else if (effectiveType === "datetime") {
                     // datetime：对应 MySQL DATETIME（到秒）
                     // - min/max 必须为 null
                     // - default 必须为 null（避免把 DDL 表达式当作运行期默认值）
@@ -307,14 +402,14 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 datetime 类型，不允许设置 unsigned`);
                         hasError = true;
                     }
-                } else if (field.type === "string" || field.type === "array_string" || field.type === "array_number_string") {
-                    // 约束：string/array_*_string 必须声明 max。
-                    // 说明：array_*_string 的 max 表示“单个元素字符串长度”，不是数组元素数量。
+                } else if (effectiveType === "char" || effectiveType === "varchar") {
+                    // 约束：char/varchar 必须声明 max。
+                    // 说明：当 input 为 array/array_number/array_integer 时，max 表示单个元素长度。
                     if (field.max === undefined || field.max === null || typeof field.max !== "number") {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，` + `必须设置 max 且类型为数字；其中 array_*_string 的 max 表示单个元素长度，当前为 "${field.max}"`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${effectiveType} 类型，` + `必须设置 max 且类型为数字，当前为 "${field.max}"`);
                         hasError = true;
                     } else if (field.max > MAX_VARCHAR_LENGTH) {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${field.max} 越界，` + `${field.type} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 最大长度 ${field.max} 越界，` + `${effectiveType} 类型长度必须在 1..${MAX_VARCHAR_LENGTH} 范围内`);
                         hasError = true;
                     } else {
                         if (field.index === true && field.max > MAX_INDEX_STRING_LENGTH_FOR_INDEX) {
@@ -328,31 +423,21 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                         }
                     }
 
-                    // default 规则（table 定义专用）：
-                    // - string：default 若存在且非 null，必须为 string
-                    // - array_*_string：default 若存在且非 null，必须为 string，且建议为 JSON 数组字符串（如 "[]"）
-                    if (field.default !== undefined && field.default !== null) {
-                        if (typeof field.default !== "string") {
-                            Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值必须为字符串或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
-                            hasError = true;
-                        } else if (field.type !== "string") {
-                            // array_*_string：尝试解析为 JSON 数组，帮助尽早发现误填
-                            try {
-                                const parsed = JSON.parse(field.default);
-                                if (!Array.isArray(parsed)) {
-                                    Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(field.default)}）`);
-                                    hasError = true;
-                                }
-                            } catch {
-                                Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，默认值应为 JSON 数组字符串（例如 "[]"）` + `（value=${formatValuePreview(field.default)}）`);
-                                hasError = true;
-                            }
-                        }
+                    // input=char 时，max 必须为 1
+                    if (normalizedInput === "char" && typeof field.max === "number" && field.max > 1) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} input=char 时 max 必须为 1，当前为 ${field.max}`);
+                        hasError = true;
                     }
-                } else if (field.type === "number") {
-                    // number 类型：default 如果存在，必须为 null 或 number
+
+                    // default 规则：默认值必须为 string 或 null
+                    if (field.default !== undefined && field.default !== null && typeof field.default !== "string") {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${effectiveType} 类型，默认值必须为字符串或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
+                        hasError = true;
+                    }
+                } else if (isIntDbType) {
+                    // 整数类型：default 如果存在，必须为 null 或 number
                     if (field.default !== undefined && field.default !== null && typeof field.default !== "number") {
-                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 number 类型，默认值必须为数字或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${effectiveType} 类型，默认值必须为数字或 null` + `（typeof=${typeof field.default}，value=${formatValuePreview(field.default)}）`);
                         hasError = true;
                     }
                 }
