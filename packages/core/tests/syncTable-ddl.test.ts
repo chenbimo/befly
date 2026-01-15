@@ -207,6 +207,8 @@ describe("isCompatibleTypeChange", () => {
         expect(SyncTable.isCompatibleTypeChange("text", "longtext")).toBe(true);
         expect(SyncTable.isCompatibleTypeChange("tinytext", "text")).toBe(true);
         expect(SyncTable.isCompatibleTypeChange("text", "tinytext")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("tinytext", "longtext")).toBe(true);
+        expect(SyncTable.isCompatibleTypeChange("longtext", "tinytext")).toBe(true);
     });
 
     test("text -> varchar 不是兼容变更", () => {

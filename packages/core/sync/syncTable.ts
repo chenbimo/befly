@@ -630,7 +630,6 @@ export class SyncTable {
             const stmt = SyncTable.buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
             try {
                 await db.unsafe(stmt);
-                Logger.debug(`[索引变化] 删除索引 ${tableName}.${act.indexName} (${act.fieldName})`);
             } catch (error: any) {
                 Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: "删除索引失败" });
                 throw error;
@@ -654,7 +653,6 @@ export class SyncTable {
             const stmt = SyncTable.buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
             try {
                 await db.unsafe(stmt);
-                Logger.debug(`[索引变化] 新建索引 ${tableName}.${act.indexName} (${act.fieldName})`);
             } catch (error: any) {
                 Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: "创建索引失败" });
                 throw error;
@@ -675,6 +673,8 @@ export class SyncTable {
         const createSQL = `CREATE TABLE ${tableQuoted} (\n            ${cols}\n        ) ENGINE=${ENGINE} DEFAULT CHARSET=${CHARSET} COLLATE=${COLLATE}`;
 
         await db.unsafe(createSQL);
+
+        Logger.debug(`[表 ${tableName}] + 创建表（系统字段 + 业务字段）`);
 
         const indexTasks: Array<Promise<unknown>> = [];
         const existingIndexes: Record<string, string[]> = {};
@@ -717,16 +717,20 @@ export class SyncTable {
         const defaultClauses: string[] = [];
         const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [];
 
+        // 汇总输出（默认仅打印汇总，避免逐条日志刷屏）
+        const addedBusinessFields: string[] = [];
+        const addedSystemFields: string[] = [];
+        const modifiedFields: string[] = [];
+        const defaultOnlyChangedFields: string[] = [];
+        const compatibleTypeChanges: string[] = [];
+
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             const dbFieldName = snakeCase(fieldKey);
 
             if (existingColumns[dbFieldName]) {
                 const comparison = SyncTable.compareFieldDefinition(existingColumns[dbFieldName], fieldDef);
                 if (comparison.length > 0) {
-                    for (const c of comparison) {
-                        const changeLabel = SyncTable.CHANGE_TYPE_LABELS[c.type as keyof typeof SyncTable.CHANGE_TYPE_LABELS] || "未知";
-                        Logger.debug(`  ~ 修改 ${dbFieldName} ${changeLabel}: ${c.current} -> ${c.expected}`);
-                    }
+                    modifiedFields.push(dbFieldName);
 
                     const hasTypeChange = comparison.some((c) => c.type === "datatype");
                     const onlyDefaultChanged = comparison.every((c) => c.type === "default");
@@ -742,7 +746,7 @@ export class SyncTable {
                             const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange?.current}`, `目标类型: ${typeChange?.expected}`, "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），其他类型变更需要手动处理"].join("\n");
                             throw new Error(errorMsg);
                         }
-                        Logger.debug(`[兼容类型变更] ${tableName}.${dbFieldName} ${currentType} -> ${expectedType}`);
+                        compatibleTypeChanges.push(`${dbFieldName}: ${currentType} -> ${expectedType}`);
                     }
 
                     if (defaultChanged) {
@@ -758,6 +762,7 @@ export class SyncTable {
                             if (fieldDef.type !== "text") {
                                 const colQuoted = SyncTable.quoteIdentifier(dbFieldName);
                                 defaultClauses.push(`ALTER COLUMN ${colQuoted} SET DEFAULT ${v}`);
+                                defaultOnlyChangedFields.push(dbFieldName);
                             }
                         }
                     }
@@ -768,6 +773,7 @@ export class SyncTable {
                     changed = true;
                 }
             } else {
+                addedBusinessFields.push(dbFieldName);
                 addClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, true));
                 changed = true;
             }
@@ -778,7 +784,7 @@ export class SyncTable {
             if (!existingColumns[sysFieldName]) {
                 const colDef = SyncTable.getSystemColumnDef(sysFieldName);
                 if (colDef) {
-                    Logger.debug(`  + 新增系统字段 ${sysFieldName}`);
+                    addedSystemFields.push(sysFieldName);
                     addClauses.push(`ADD COLUMN ${colDef}`);
                     changed = true;
                 }
@@ -818,6 +824,52 @@ export class SyncTable {
         };
 
         if (plan.changed) {
+            // 在执行 DDL 前输出“单条汇总日志”（每张表最多一条），避免刷屏且仍保证表名明确。
+            const summaryParts: string[] = [];
+            summaryParts.push(`[表 ${tableName}] 变更汇总`);
+            summaryParts.push(`新增字段=${addedBusinessFields.length}`);
+            summaryParts.push(`新增系统字段=${addedSystemFields.length}`);
+            summaryParts.push(`修改字段=${modifiedFields.length}`);
+            summaryParts.push(`默认值更新=${defaultOnlyChangedFields.length}`);
+            summaryParts.push(`索引变更=${indexActions.length}`);
+
+            const detailParts: string[] = [];
+            if (addedBusinessFields.length > 0) {
+                detailParts.push(`新增字段:${addedBusinessFields.join(",")}`);
+            }
+            if (addedSystemFields.length > 0) {
+                detailParts.push(`新增系统字段:${addedSystemFields.join(",")}`);
+            }
+            if (modifiedFields.length > 0) {
+                detailParts.push(`修改字段:${modifiedFields.join(",")}`);
+            }
+            if (defaultOnlyChangedFields.length > 0) {
+                detailParts.push(`默认值更新:${defaultOnlyChangedFields.join(",")}`);
+            }
+            if (compatibleTypeChanges.length > 0) {
+                detailParts.push(`兼容类型变更:${compatibleTypeChanges.join(";")}`);
+            }
+            if (indexActions.length > 0) {
+                const createIndexSummaries: string[] = [];
+                const dropIndexSummaries: string[] = [];
+                for (const a of indexActions) {
+                    const item = `${a.indexName}(${a.fieldName})`;
+                    if (a.action === "create") {
+                        createIndexSummaries.push(`+${item}`);
+                    } else {
+                        dropIndexSummaries.push(`-${item}`);
+                    }
+                }
+
+                const indexPart: string[] = [];
+                if (dropIndexSummaries.length > 0) indexPart.push(dropIndexSummaries.join(","));
+                if (createIndexSummaries.length > 0) indexPart.push(createIndexSummaries.join(","));
+                detailParts.push(`索引:${indexPart.join(",")}`);
+            }
+
+            const msg = detailParts.length > 0 ? `${summaryParts.join("，")}；${detailParts.join("，")}` : summaryParts.join("，");
+            Logger.debug(msg);
+
             await SyncTable.applyTablePlan(db, tableName, plan);
         }
 
