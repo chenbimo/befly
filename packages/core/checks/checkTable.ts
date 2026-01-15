@@ -307,7 +307,6 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 datetime 类型，不允许设置 unsigned`);
                         hasError = true;
                     }
-
                 } else if (field.type === "string" || field.type === "array_string" || field.type === "array_number_string") {
                     // 约束：string/array_*_string 必须声明 max。
                     // 说明：array_*_string 的 max 表示“单个元素字符串长度”，不是数组元素数量。

@@ -9,7 +9,6 @@ import type { JsonValue } from "./common";
  */
 export type FieldType = "string" | "number" | "text" | "datetime" | "array_string" | "array_text" | "array_number_string" | "array_number_text";
 
-
 /**
  * 字段定义（表字段 JSON 结构）
  */
