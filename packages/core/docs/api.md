@@ -74,7 +74,7 @@ API 只从以下目录扫描（支持 `.ts/.js`，但推荐使用 `.ts`）：
 
 - `method?: "GET" | "POST" | "GET,POST"`
 - `auth?: boolean`
-- `fields?: TableDefinition`（字段规则）
+- `fields?: TableDefinition`（字段规则；`type` 使用数据库类型，`input` 控制输入校验）
 - `required?: string[]`
 - `rawBody?: boolean`
 
@@ -88,8 +88,12 @@ const loginApi: ApiRoute = {
     method: "POST",
     auth: false,
     fields: {
-        email: { name: "邮箱", type: "string", max: 200, nullable: false },
-        password: { name: "密码", type: "string", max: 200, nullable: false }
+        email: { name: "邮箱", type: "varchar", input: "string", max: 200, nullable: false },
+        password: { name: "密码", type: "varchar", input: "string", max: 200, nullable: false },
+        lastLoginAt: { name: "最后登录时间", type: "datetime", input: "string", nullable: true, default: null },
+        roleIds: { name: "角色ID", type: "varchar", input: "array_number", max: 32, default: "[]", nullable: false },
+        profile: { name: "用户信息", type: "json", input: "json", default: null, nullable: true },
+        scores: { name: "评分", type: "json", input: "json_number", default: null, nullable: true }
     },
     required: ["email", "password"],
     handler: async (befly, ctx) => {
@@ -109,6 +113,37 @@ const loginApi: ApiRoute = {
 
 export default loginApi;
 ```
+
+`datetime` 校验失败示例：
+
+- 输入：`2026-01-16`
+- 错误：`最后登录时间格式不正确`
+
+`array_number` 读写说明：
+
+- 请求体传入数组（例如 `roleIds: [1, 2]`）
+- 数据库存储为 JSON 字符串（例如 `"[1,2]"`）
+- 查询返回时自动反序列化为数组
+
+`array_number` 失败示例：
+
+- 输入：`roleIds: ["1", "2"]`
+- 错误：`角色ID数组元素必须是数字`
+
+`json` 校验说明：
+
+- 仅允许对象或数组（例如 `{ "nickname": "Tom" }` 或 `[1, 2]`）
+- 非对象/数组会被判定为格式错误
+
+`json_number` 校验说明：
+
+- JSON 结构中所有叶子值必须是 number
+- 若包含非数字（例如字符串）会被判定为格式错误
+
+`json_number` 失败示例：
+
+- 输入：`scores: { "math": 90, "english": "A" }`
+- 错误：`评分JSON值必须是数字`
 
 ## RequestContext（ctx）速查
 

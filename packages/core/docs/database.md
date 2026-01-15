@@ -197,6 +197,31 @@ JOIN 场景同理（把 `state` 条件写到主表或明确的别名上）：
 
 `input` 仅影响“输入校验”，不会影响 DDL 生成。
 当 `input` 为 `array/array_number/array_integer` 时，数据库字段仍为字符串类（通常使用 `varchar/mediumtext`），数组以 **JSON 字符串** 存储，读写由 `DbUtils` 负责序列化/反序列化。
+当 `type` 为 `datetime` 时，输入必须为完整 `YYYY-MM-DD HH:mm:ss` 字符串（严格到秒）。
+
+示例（`datetime` 必须完整时间）：
+
+- ✅ `2026-01-16 08:30:00`
+- ❌ `2026-01-16`（缺少时间部分）
+
+示例（`array_number` 落库为 JSON 字符串）：
+
+```json
+{
+    "roleIds": {
+        "name": "角色ID",
+        "type": "varchar",
+        "input": "array_number",
+        "max": 32,
+        "default": "[]",
+        "nullable": false
+    }
+}
+```
+
+- 写入 `[1, 2, 3]` → 实际存储为字符串 `"[1,2,3]"`
+- 读取时会自动反序列化为数组
+- `max` 表示单个元素的字符串长度上限（不是数组长度）
 
 ### 默认值策略
 
@@ -204,6 +229,14 @@ JOIN 场景同理（把 `state` 条件写到主表或明确的别名上）：
 - `char/varchar`：默认值会被归一化为 `""`
 - `input` 为 `array/array_number/array_integer`：默认值会被归一化为字符串 `"[]"`
 - `tinytext/text/mediumtext/longtext/json/datetime`：默认值为 `null`（并且通常不会生成 SQL DEFAULT 子句）
+- `json` 字段应使用 `null` 作为默认值；`default` 不建议填写非 null（会被归一化为 null）
+- `json` 字段不会生成 SQL DEFAULT 子句（MySQL 层面保持默认 null）
+
+### json 字段常见使用场景
+
+- 用户 profile / 偏好设置（结构化小对象）
+- 可扩展的 metadata（业务自定义扩展字段）
+- 中间态数据（不需要拆表的临时结构）
 
 ### index / unique 的落地
 

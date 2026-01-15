@@ -128,6 +128,18 @@
 - `json_integer`
 - 或正则/枚举字符串（例如 `@email`、`^[a-z]+$`、`男|女`）
 
+### 字段类型速查表（默认 input 推导）
+
+| `type`                                  | 默认 `input` | 说明                                    |
+| --------------------------------------- | ------------ | --------------------------------------- |
+| `tinyint/smallint/mediumint/int/bigint` | `integer`    | 整数类，`unsigned` 可用                 |
+| `char/varchar`                          | `string`     | 需要 `max`，并受索引长度限制            |
+| `tinytext/text/mediumtext/longtext`     | `string`     | 文本类，`min/max/default` 必须为 `null` |
+| `datetime`                              | `string`     | 必须完整 `YYYY-MM-DD HH:mm:ss`          |
+| `json`                                  | `json`       | 结构必须是对象或数组                    |
+
+> 说明：显式提供 `input` 会覆盖默认推导；`input` 只影响校验，不影响 DDL。
+
 关键约束（违反会阻断启动）：
 
 - 保留字段不可出现在表定义中：`id`, `created_at`, `updated_at`, `deleted_at`, `state`
@@ -157,12 +169,56 @@
 }
 ```
 
+示例（input 规则对比）：
+
+```json
+{
+    "email": {
+        "name": "邮箱",
+        "type": "varchar",
+        "input": "@email",
+        "max": 200,
+        "nullable": false
+    },
+    "age": {
+        "name": "年龄",
+        "type": "bigint",
+        "input": "number",
+        "default": 0,
+        "nullable": false,
+        "unsigned": true
+    }
+}
+```
+
+示例（正则/枚举 input）：
+
+```json
+{
+    "phone": {
+        "name": "手机号",
+        "type": "varchar",
+        "input": "@phone",
+        "max": 20,
+        "nullable": false
+    },
+    "gender": {
+        "name": "性别",
+        "type": "varchar",
+        "input": "男|女",
+        "max": 2,
+        "nullable": false
+    }
+}
+```
+
 - `tinyint/smallint/mediumint/int/bigint`：`default` 若存在，必须为 `number | null`
 
 - `datetime`：对应 MySQL `DATETIME`（到秒，等价 `DATETIME(0)`）
     - 输入值必须是字符串，且必须为完整格式：
         - `YYYY-MM-DD HH:mm:ss`
     - 会做“日期/时间合法性”校验（例如闰年、月份天数、时分秒范围），非法值会被判定为格式不正确
+    - 空字符串会被视为“缺失值”（等同未传）
     - `min/max` 必须为 `null`
     - `default` 必须为 `null`
         - 说明：表定义的 `default` 是“表结构默认值”的概念；当前项目约定不在表定义里声明 datetime 的默认值。
@@ -189,6 +245,102 @@
     }
 }
 ```
+
+示例（数组输入字段落库）：
+
+```json
+{
+    "tagIds": {
+        "name": "标签ID",
+        "type": "varchar",
+        "input": "array_number",
+        "max": 32,
+        "default": "[]",
+        "nullable": false
+    }
+}
+```
+
+示例（字符串数组 input=array）：
+
+```json
+{
+    "tags": {
+        "name": "标签",
+        "type": "varchar",
+        "input": "array",
+        "max": 50,
+        "default": "[]",
+        "nullable": false
+    }
+}
+```
+
+示例（JSON input=json）：
+
+```json
+{
+    "profile": {
+        "name": "用户信息",
+        "type": "json",
+        "input": "json",
+        "default": null,
+        "nullable": true
+    }
+}
+```
+
+示例（JSON 数值校验）：
+
+```json
+{
+    "scores": {
+        "name": "评分",
+        "type": "json",
+        "input": "json_number",
+        "default": null,
+        "nullable": true
+    },
+    "points": {
+        "name": "积分",
+        "type": "json",
+        "input": "json_integer",
+        "default": null,
+        "nullable": true
+    }
+}
+```
+
+失败示例（json_integer 出现非整数）：
+
+```json
+{
+    "points": {
+        "name": "积分",
+        "type": "json",
+        "input": "json_integer",
+        "default": null,
+        "nullable": true
+    }
+}
+```
+
+- 输入：`{ "a": 1, "b": 2.5 }`
+- 错误：`JSON值必须是整数`
+
+反例（varchar 缺少 max 会阻断启动）：
+
+```json
+{
+    "title": {
+        "name": "标题",
+        "type": "varchar",
+        "nullable": false
+    }
+}
+```
+
+提示：`type` 与 `input` 不匹配会导致校验语义偏离预期（例如 `type=json` 但 `input=string`），请保持一致。
 
 > 注意：`syncTable` 不会自动执行 `DATETIME` 与 `BIGINT` 的互转（这属于“时间表示法迁移”，需要配套数据搬迁脚本手工处理）。
 
