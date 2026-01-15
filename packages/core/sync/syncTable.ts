@@ -408,6 +408,10 @@ export class SyncTable {
 
         sql = sql.replace(/\bALGORITHM\s*=\s*(INPLACE|INSTANT|COPY)\b\s*,?\s*/gi, "").replace(/\bLOCK\s*=\s*(NONE|SHARED|EXCLUSIVE)\b\s*,?\s*/gi, "");
 
+        // 移除 ALGORITHM/LOCK 后可能出现：`ALTER TABLE t , ADD ...` 这种语法（表名后多了一个逗号）
+        // 这里做一次专门清理，确保 fallback candidates 是合法 SQL。
+        sql = sql.replace(/^\s*(ALTER\s+TABLE\s+(?:`[^`]+`|[a-zA-Z_][a-zA-Z0-9_]*))\s*,\s*/i, "$1 ");
+
         sql = sql
             .replace(/,\s*,/g, ", ")
             .replace(/,\s*$/g, "")
@@ -721,13 +725,15 @@ export class SyncTable {
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
             const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${clauses.join(", ")}`;
+            // MySQL 8 对 ALGORITHM=INSTANT 不允许同时指定 LOCK=NONE/SHARED/EXCLUSIVE
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, ${clauses.join(", ")}`;
             await SyncTable.executeDDLSafely(db, stmt);
         }
 
         if (plan.defaultClauses.length > 0) {
             const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, LOCK=NONE, ${plan.defaultClauses.join(", ")}`;
+            // MySQL 8 对 ALGORITHM=INSTANT 不允许同时指定 LOCK=NONE/SHARED/EXCLUSIVE
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, ${plan.defaultClauses.join(", ")}`;
             await SyncTable.executeDDLSafely(db, stmt);
         }
 
