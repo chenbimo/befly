@@ -514,6 +514,12 @@ export class SyncTable {
             return true;
         }
 
+        // 明确阻止：DATETIME <-> BIGINT
+        // 说明：这类变更通常代表“时间表示法迁移”（字符串/时间列 vs 时间戳整数），需要数据搬迁脚本配合，不能由同步直接自动处理。
+        if ((cBase === "datetime" && nBase === "bigint") || (cBase === "bigint" && nBase === "datetime")) {
+            return false;
+        }
+
         return false;
     }
 
@@ -816,7 +822,12 @@ export class SyncTable {
                         const expectedType = typeMapping[fieldDef.type]?.toLowerCase() || "";
 
                         if (!SyncTable.isCompatibleTypeChange(currentType, expectedType)) {
-                            const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange?.current}`, `目标类型: ${typeChange?.expected}`, "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；其他类型变更需要手动处理"].join("\n");
+                            const errorMsg = [
+                                `禁止字段类型变更: ${tableName}.${dbFieldName}`,
+                                `当前类型: ${typeChange?.current}`,
+                                `目标类型: ${typeChange?.expected}`,
+                                "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；DATETIME 与 BIGINT 不允许互转（需要手动迁移数据）"
+                            ].join("\n");
                             throw new Error(errorMsg);
                         }
 

@@ -190,7 +190,18 @@ export class Validator {
                 return typeof value === "string" ? { value: value, error: null } : { value: null, error: "必须是字符串" };
 
             case "datetime":
-                return typeof value === "string" ? { value: value, error: null } : { value: null, error: "必须是时间字符串" };
+                if (typeof value !== "string") {
+                    return { value: null, error: "必须是时间字符串" };
+                }
+
+                // 允许 date-only：YYYY-MM-DD -> YYYY-MM-DD 00:00:00
+                // 说明：只做“补零”，不做时区相关转换。
+                const trimmed = value.trim();
+                if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+                    return { value: `${trimmed} 00:00:00`, error: null };
+                }
+
+                return { value: trimmed, error: null };
 
             case "array_string":
             case "array_text":
@@ -245,6 +256,33 @@ export class Validator {
                 // 约束：到秒的 datetime 字符串（YYYY-MM-DD HH:mm:ss）
                 // 说明：这里只做格式校验，不在 validator 中做“日期合法性”（如 2026-02-30）推断，避免引入时区/解析差异。
                 if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) return "格式不正确";
+
+                // 进一步校验日期/时间字段合法性（不依赖 Date 解析，避免时区与实现差异）
+                const [datePart, timePart] = value.split(" ");
+                if (typeof datePart !== "string" || typeof timePart !== "string") return "格式不正确";
+
+                const [yStr, mStr, dStr] = datePart.split("-");
+                const [hhStr, mmStr, ssStr] = timePart.split(":");
+
+                const year = Number(yStr);
+                const month = Number(mStr);
+                const day = Number(dStr);
+                const hh = Number(hhStr);
+                const mm = Number(mmStr);
+                const ss = Number(ssStr);
+
+                if (!Number.isInteger(year) || year < 1000 || year > 9999) return "格式不正确";
+                if (!Number.isInteger(month) || month < 1 || month > 12) return "格式不正确";
+                if (!Number.isInteger(day) || day < 1) return "格式不正确";
+                if (!Number.isInteger(hh) || hh < 0 || hh > 23) return "格式不正确";
+                if (!Number.isInteger(mm) || mm < 0 || mm > 59) return "格式不正确";
+                if (!Number.isInteger(ss) || ss < 0 || ss > 59) return "格式不正确";
+
+                const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+                const daysInMonth = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+                const maxDay = daysInMonth[month - 1] ?? 0;
+                if (day > maxDay) return "格式不正确";
+
                 if (regex && !this.testRegex(regex, value)) return "格式不正确";
                 break;
             }
