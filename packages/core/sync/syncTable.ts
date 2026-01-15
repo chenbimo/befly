@@ -109,6 +109,9 @@ export class SyncTable {
 
     public static SYSTEM_INDEX_FIELDS: ReadonlyArray<string> = ["created_at", "updated_at", "state"];
 
+    private static TEXT_FAMILY = new Set(["tinytext", "text", "mediumtext", "longtext"]);
+    private static INT_TYPES = new Set(["tinyint", "smallint", "mediumint", "int", "integer", "bigint"]);
+
     private db: SqlExecutor;
     private dbName: string;
 
@@ -226,7 +229,11 @@ export class SyncTable {
             number: "BIGINT",
             string: "VARCHAR",
             datetime: "DATETIME",
-            text: "MEDIUMTEXT"
+            text: "MEDIUMTEXT",
+            array_string: "VARCHAR",
+            array_text: "MEDIUMTEXT",
+            array_number_string: "VARCHAR",
+            array_number_text: "MEDIUMTEXT"
         };
     }
 
@@ -279,9 +286,7 @@ export class SyncTable {
             if (typeof fieldMax !== "number") {
                 throw new Error(`同步表：内部错误：${fieldType} 类型缺失 max（应由 checkTable 阻断）`);
             }
-            const arrayBase = fieldType === "array_text" || fieldType === "array_number_text" ? "MEDIUMTEXT" : "VARCHAR";
-            const base = typeMapping[fieldType] || arrayBase;
-            return `${base}(${fieldMax})`;
+            return `${typeMapping[fieldType]}(${fieldMax})`;
         }
 
         const baseType = typeMapping[fieldType] || "TEXT";
@@ -397,38 +402,44 @@ export class SyncTable {
         return SyncTable.SYSTEM_FIELDS.filter((f) => f.name !== "id").map((f) => f.name) as string[];
     }
 
+    private static async runIndexBatch(db: SqlExecutor, tableName: string, clauses: string[], errorMsg: string): Promise<void> {
+        if (clauses.length === 0) return;
+        const tableQuoted = SyncTable.quoteIdentifier(tableName);
+        const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${clauses.join(", ")}`;
+        try {
+            await SyncTable.executeDDLSafely(db, stmt);
+        } catch (error: any) {
+            Logger.error({ err: error, table: tableName, msg: errorMsg });
+            throw error;
+        }
+    }
+
     public static buildBusinessColumnDefs(fields: Record<string, FieldDefinition>): string[] {
         const colDefs: string[] = [];
 
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
-            const normalized = normalizeFieldDefinition(fieldDef);
-            const dbFieldName = snakeCase(fieldKey);
-            const colQuoted = SyncTable.quoteIdentifier(dbFieldName);
-
-            const sqlType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned);
-            const actualDefault = SyncTable.resolveDefaultValue(normalized.default, normalized.type);
-            const defaultSql = SyncTable.generateDefaultSql(actualDefault, normalized.type);
-            const uniqueSql = normalized.unique ? " UNIQUE" : "";
-            const nullableSql = normalized.nullable ? " NULL" : " NOT NULL";
-
-            colDefs.push(`${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`);
+            colDefs.push(SyncTable.buildColumnSql(fieldKey, fieldDef));
         }
 
         return colDefs;
     }
 
-    public static generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string {
+    private static buildColumnSql(fieldKey: string, fieldDef: FieldDefinition): string {
+        const normalized = normalizeFieldDefinition(fieldDef);
         const dbFieldName = snakeCase(fieldKey);
         const colQuoted = SyncTable.quoteIdentifier(dbFieldName);
 
-        const normalized = normalizeFieldDefinition(fieldDef);
         const sqlType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned);
         const actualDefault = SyncTable.resolveDefaultValue(normalized.default, normalized.type);
         const defaultSql = SyncTable.generateDefaultSql(actualDefault, normalized.type);
         const uniqueSql = normalized.unique ? " UNIQUE" : "";
         const nullableSql = normalized.nullable ? " NULL" : " NOT NULL";
 
-        return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`;
+        return `${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`;
+    }
+
+    public static generateDDLClause(fieldKey: string, fieldDef: FieldDefinition, isAdd: boolean = false): string {
+        return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${SyncTable.buildColumnSql(fieldKey, fieldDef)}`;
     }
 
     private static buildTablePlan(options: { tableName: string; fields: Record<string, FieldDefinition>; existingColumns: { [key: string]: ColumnInfo }; existingIndexes: IndexInfo }): {
@@ -466,15 +477,15 @@ export class SyncTable {
                             .replace(/\([^)]*\)/g, "")
                             .trim();
 
-                        if (currentBase !== expectedBase && !SyncTable.isCompatibleTypeChange(currentType, expectedType)) {
-                            const errorMsg = [
-                                `禁止字段类型变更: ${options.tableName}.${dbFieldName}`,
-                                `当前类型: ${typeChange?.current}`,
-                                `目标类型: ${typeChange?.expected}`,
-                                "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；DATETIME 与 BIGINT 不允许互转（需要手动迁移数据）"
-                            ].join("\n");
-                            throw new Error(errorMsg);
-                        }
+                        if (currentBase !== expectedBase && !SyncTable.isCompatibleTypeChange(currentType, expectedType))
+                            throw new Error(
+                                [
+                                    `禁止字段类型变更: ${options.tableName}.${dbFieldName}`,
+                                    `当前类型: ${typeChange?.current}`,
+                                    `目标类型: ${typeChange?.expected}`,
+                                    "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；DATETIME 与 BIGINT 不允许互转（需要手动迁移数据）"
+                                ].join("\n")
+                            );
                     }
 
                     // 简化实现：无论变更类型（含仅默认值变更），统一走 MODIFY COLUMN。
@@ -669,16 +680,15 @@ export class SyncTable {
 
         // TEXT 家族：允许互相转换（包含收缩），交由数据库自身约束（可能截断/报错）。
         // 目的：兼容历史库里已有的 TEXT / MEDIUMTEXT / LONGTEXT 等差异。
-        const textFamily = ["tinytext", "text", "mediumtext", "longtext"];
-        if (textFamily.includes(cBase) && textFamily.includes(nBase)) {
+        if (SyncTable.TEXT_FAMILY.has(cBase) && SyncTable.TEXT_FAMILY.has(nBase)) {
             return true;
         }
 
-        const intTypes = ["tinyint", "smallint", "mediumint", "int", "integer", "bigint"];
-        const cIntIdx = intTypes.indexOf(cBase);
-        const nIntIdx = intTypes.indexOf(nBase);
-        if (cIntIdx !== -1 && nIntIdx !== -1 && nIntIdx > cIntIdx) {
-            return true;
+        if (SyncTable.INT_TYPES.has(cBase) && SyncTable.INT_TYPES.has(nBase)) {
+            const order = ["tinyint", "smallint", "mediumint", "int", "integer", "bigint"];
+            const cIntIdx = order.indexOf(cBase);
+            const nIntIdx = order.indexOf(nBase);
+            if (nIntIdx > cIntIdx) return true;
         }
 
         if (cBase === "varchar" && (nBase === "text" || nBase === "mediumtext" || nBase === "longtext")) return true;
@@ -856,19 +866,8 @@ export class SyncTable {
         const createIndexActions = plan.indexActions.filter((a) => a.action === "create");
 
         if (dropIndexActions.length > 0) {
-            const dropClauses: string[] = [];
-            for (const act of dropIndexActions) {
-                dropClauses.push(SyncTable.buildIndexClause(act.indexName, act.fieldName, "drop"));
-            }
-
-            const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${dropClauses.join(", ")}`;
-            try {
-                await SyncTable.executeDDLSafely(db, stmt);
-            } catch (error: any) {
-                Logger.error({ err: error, table: tableName, msg: "批量删除索引失败" });
-                throw error;
-            }
+            const dropClauses = dropIndexActions.map((act) => SyncTable.buildIndexClause(act.indexName, act.fieldName, "drop"));
+            await SyncTable.runIndexBatch(db, tableName, dropClauses, "批量删除索引失败");
         }
 
         if (plan.alterClauses.length > 0) {
@@ -880,19 +879,8 @@ export class SyncTable {
         }
 
         if (createIndexActions.length > 0) {
-            const createClauses: string[] = [];
-            for (const act of createIndexActions) {
-                createClauses.push(SyncTable.buildIndexClause(act.indexName, act.fieldName, "create"));
-            }
-
-            const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${createClauses.join(", ")}`;
-            try {
-                await SyncTable.executeDDLSafely(db, stmt);
-            } catch (error: any) {
-                Logger.error({ err: error, table: tableName, msg: "批量创建索引失败" });
-                throw error;
-            }
+            const createClauses = createIndexActions.map((act) => SyncTable.buildIndexClause(act.indexName, act.fieldName, "create"));
+            await SyncTable.runIndexBatch(db, tableName, createClauses, "批量创建索引失败");
         }
     }
 
@@ -927,10 +915,7 @@ export class SyncTable {
             }
         }
 
-        if (indexClauses.length > 0) {
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${indexClauses.join(", ")}`;
-            await SyncTable.executeDDLSafely(db, stmt);
-        }
+        await SyncTable.runIndexBatch(db, tableName, indexClauses, "批量创建索引失败");
     }
 
     public static async modifyTable(db: SqlExecutor, dbName: string, tableName: string, fields: Record<string, FieldDefinition>): Promise<TablePlan> {
