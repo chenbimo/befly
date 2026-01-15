@@ -15,7 +15,7 @@ import { SyncTable } from "../sync/syncTable.ts";
 type ExistingColumn = Pick<ColumnInfo, "type" | "max" | "nullable" | "defaultValue" | "comment">;
 
 describe("compareFieldDefinition", () => {
-    describe("长度变化检测", () => {
+    describe("类型变化检测（包含长度变化）", () => {
         test("string 类型长度变化被检测到", () => {
             const existingColumn = {
                 type: "varchar",
@@ -33,11 +33,11 @@ describe("compareFieldDefinition", () => {
             } satisfies FieldDefinition;
 
             const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
-            const lengthChange = changes.find((c) => c.type === "length");
+            const typeChange = changes.find((c) => c.type === "datatype");
 
-            expect(lengthChange).toBeDefined();
-            expect(lengthChange.current).toBe(50);
-            expect(lengthChange.expected).toBe(100);
+            expect(typeChange).toBeDefined();
+            expect(typeChange.current).toBe("varchar(50)");
+            expect(typeChange.expected).toBe("varchar(100)");
         });
 
         test("长度相同无变化", () => {
@@ -57,9 +57,9 @@ describe("compareFieldDefinition", () => {
             } satisfies FieldDefinition;
 
             const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
-            const lengthChange = changes.find((c) => c.type === "length");
+            const typeChange = changes.find((c) => c.type === "datatype");
 
-            expect(lengthChange).toBeUndefined();
+            expect(typeChange).toBeUndefined();
         });
     });
 
@@ -85,7 +85,7 @@ describe("compareFieldDefinition", () => {
 
             expect(typeChange).toBeDefined();
             expect(typeChange.current).toBe("bigint");
-            expect(typeChange.expected).toBe("varchar");
+            expect(typeChange.expected).toBe("varchar(100)");
         });
 
         test("类型相同无变化", () => {
@@ -205,8 +205,8 @@ describe("compareFieldDefinition", () => {
 
             const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
 
-            expect(changes.length).toBe(3); // length, nullable, default
-            expect(changes.some((c) => c.type === "length")).toBe(true);
+            expect(changes.length).toBe(3); // datatype, nullable, default
+            expect(changes.some((c) => c.type === "datatype")).toBe(true);
             expect(changes.some((c) => c.type === "nullable")).toBe(true);
             expect(changes.some((c) => c.type === "default")).toBe(true);
         });

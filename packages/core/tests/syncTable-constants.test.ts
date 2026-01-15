@@ -5,7 +5,6 @@
  * - DB_VERSION_REQUIREMENTS
  * - SYSTEM_INDEX_FIELDS
  * - SYSTEM_INDEX_FIELDS
- * - CHANGE_TYPE_LABELS
  * - MYSQL_TABLE_CONFIG
  * - typeMapping
  */
@@ -35,24 +34,6 @@ describe("SYSTEM_INDEX_FIELDS", () => {
 
     test("共 3 个系统索引字段", () => {
         expect(SyncTable.SYSTEM_INDEX_FIELDS.length).toBe(3);
-    });
-});
-
-describe("CHANGE_TYPE_LABELS", () => {
-    test('length 对应 "长度"', () => {
-        expect(SyncTable.CHANGE_TYPE_LABELS["length"]).toBe("长度");
-    });
-
-    test('datatype 对应 "类型"', () => {
-        expect(SyncTable.CHANGE_TYPE_LABELS.datatype).toBe("类型");
-    });
-
-    test('comment 对应 "注释"', () => {
-        expect(SyncTable.CHANGE_TYPE_LABELS.comment).toBe("注释");
-    });
-
-    test('default 对应 "默认值"', () => {
-        expect(SyncTable.CHANGE_TYPE_LABELS.default).toBe("默认值");
     });
 });
 

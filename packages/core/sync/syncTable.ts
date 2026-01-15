@@ -66,18 +66,6 @@ export class SyncTable {
     } as const;
 
     /**
-     * 字段变更类型的中文标签映射
-     */
-    public static CHANGE_TYPE_LABELS = {
-        length: "长度",
-        datatype: "类型",
-        comment: "注释",
-        default: "默认值",
-        nullable: "可空约束",
-        unique: "唯一约束"
-    } as const;
-
-    /**
      * MySQL 表配置
      */
     public static MYSQL_TABLE_CONFIG = {
@@ -445,8 +433,17 @@ export class SyncTable {
         return `${isAdd ? "ADD COLUMN" : "MODIFY COLUMN"} ${colQuoted} ${sqlType}${uniqueSql}${nullableSql}${defaultSql} COMMENT "${escapeComment(normalized.name)}"`;
     }
 
-    private static buildAlterClauses(options: { tableName: string; fields: Record<string, FieldDefinition>; existingColumns: { [key: string]: ColumnInfo }; systemFieldNames: string[]; addedBusinessFields: string[]; addedSystemFields: string[]; modifiedFields: string[] }): string[] {
+    private static buildTablePlan(options: { tableName: string; fields: Record<string, FieldDefinition>; existingColumns: { [key: string]: ColumnInfo }; existingIndexes: IndexInfo }): {
+        plan: TablePlan;
+        summary: { addedBusiness: number; addedSystem: number; modified: number; indexChanges: number };
+    } {
+        const systemFieldNames = SyncTable.getSystemFieldNames();
         const alterClauses: string[] = [];
+        const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [];
+
+        let addedBusiness = 0;
+        let addedSystem = 0;
+        let modified = 0;
 
         for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
             const dbFieldName = snakeCase(fieldKey);
@@ -454,16 +451,24 @@ export class SyncTable {
             if (options.existingColumns[dbFieldName]) {
                 const comparison = SyncTable.compareFieldDefinition(options.existingColumns[dbFieldName], fieldDef);
                 if (comparison.length > 0) {
-                    options.modifiedFields.push(dbFieldName);
+                    modified = modified + 1;
 
                     const hasTypeChange = comparison.some((c) => c.type === "datatype");
                     if (hasTypeChange) {
                         const typeChange = comparison.find((c) => c.type === "datatype");
                         const currentType = String(typeChange?.current || "").toLowerCase();
-                        const typeMapping = SyncTable.getTypeMapping();
-                        const expectedType = typeMapping[fieldDef.type]?.toLowerCase() || "";
+                        const expectedType = SyncTable.getSqlType(fieldDef.type, fieldDef.max ?? null, fieldDef.unsigned ?? false).toLowerCase();
 
-                        if (!SyncTable.isCompatibleTypeChange(currentType, expectedType)) {
+                        const currentBase = currentType
+                            .replace(/\s*unsigned/gi, "")
+                            .replace(/\([^)]*\)/g, "")
+                            .trim();
+                        const expectedBase = expectedType
+                            .replace(/\s*unsigned/gi, "")
+                            .replace(/\([^)]*\)/g, "")
+                            .trim();
+
+                        if (currentBase !== expectedBase && !SyncTable.isCompatibleTypeChange(currentType, expectedType)) {
                             const errorMsg = [
                                 `禁止字段类型变更: ${options.tableName}.${dbFieldName}`,
                                 `当前类型: ${typeChange?.current}`,
@@ -478,30 +483,24 @@ export class SyncTable {
                     alterClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
                 }
             } else {
-                options.addedBusinessFields.push(dbFieldName);
+                addedBusiness = addedBusiness + 1;
                 alterClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, true));
             }
         }
 
-        for (const sysFieldName of options.systemFieldNames) {
+        for (const sysFieldName of systemFieldNames) {
             if (!options.existingColumns[sysFieldName]) {
                 const colDef = SyncTable.getSystemColumnDef(sysFieldName);
                 if (colDef) {
-                    options.addedSystemFields.push(sysFieldName);
+                    addedSystem = addedSystem + 1;
                     alterClauses.push(`ADD COLUMN ${colDef}`);
                 }
             }
         }
 
-        return alterClauses;
-    }
-
-    private static buildIndexActions(options: { fields: Record<string, FieldDefinition>; existingColumns: { [key: string]: ColumnInfo }; existingIndexes: IndexInfo; systemFieldNames: string[] }): Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> {
-        const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [];
         const desiredIndexes: Array<{ indexName: string; fieldName: string }> = [];
-
         for (const sysField of SyncTable.SYSTEM_INDEX_FIELDS) {
-            const fieldWillExist = options.existingColumns[sysField] || options.systemFieldNames.includes(sysField);
+            const fieldWillExist = options.existingColumns[sysField] || systemFieldNames.includes(sysField);
             if (fieldWillExist) {
                 desiredIndexes.push({ indexName: `idx_${sysField}`, fieldName: sysField });
             }
@@ -526,23 +525,26 @@ export class SyncTable {
             }
         }
 
-        return indexActions;
+        const plan: TablePlan = {
+            changed: alterClauses.length > 0 || indexActions.length > 0,
+            alterClauses: alterClauses,
+            indexActions: indexActions
+        };
+
+        return {
+            plan: plan,
+            summary: {
+                addedBusiness: addedBusiness,
+                addedSystem: addedSystem,
+                modified: modified,
+                indexChanges: indexActions.length
+            }
+        };
     }
 
     /* ---------------------------------------------------------------------- */
     /* DDL 执行（失败时降级 algorithm/lock） */
     /* ---------------------------------------------------------------------- */
-
-    private static buildDdlTraceId(stmt: string): string {
-        // FNV-1a 32-bit（稳定、快速；用于日志关联而非安全用途）
-        const s = String(stmt);
-        let hash = 0x811c9dc5;
-        for (let i = 0; i < s.length; i++) {
-            hash ^= s.charCodeAt(i);
-            hash = Math.imul(hash, 0x01000193) >>> 0;
-        }
-        return hash.toString(16).padStart(8, "0");
-    }
 
     private static truncateForLog(input: string, maxLen: number): string {
         const s = String(input);
@@ -620,32 +622,25 @@ export class SyncTable {
     }
 
     public static async executeDDLSafely(db: SqlExecutor, stmt: string): Promise<boolean> {
-        const traceId = SyncTable.buildDdlTraceId(stmt);
-        const originalStartedAt = Date.now();
         try {
             await db.unsafe(stmt);
             return true;
         } catch (error: any) {
-            const originalCostMs = Date.now() - originalStartedAt;
             const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
-            const failureSummaries: Array<{ reason: string; stmt: string; message: string; costMs: number }> = [];
+            const failureSummaries: string[] = [];
             let lastAttemptedError: unknown = error;
             for (const candidate of candidates) {
-                const candidateStartedAt = Date.now();
                 try {
                     await db.unsafe(candidate.stmt);
-                    const costMs = Date.now() - candidateStartedAt;
 
                     // 仅在确实发生降级且成功时记录一条 debug，便于排查线上 DDL 算法/锁不兼容问题。
                     // 注意：不带“[表 xxx]”前缀，避免破坏“每表仅一条汇总日志”的约束测试。
-                    const sqlForLog = SyncTable.truncateForLog(candidate.stmt, 800);
-                    Logger.debug(`[DDL降级#${traceId}] ${candidate.reason}（已成功，cost=${costMs}ms） SQL=${sqlForLog}`);
+                    Logger.debug(`[DDL降级] ${candidate.reason}（已成功）`);
                     return true;
                 } catch (candidateError: any) {
-                    const costMs = Date.now() - candidateStartedAt;
                     lastAttemptedError = candidateError;
                     const errMsg = String(candidateError?.message || candidateError);
-                    failureSummaries.push({ reason: candidate.reason, stmt: candidate.stmt, message: errMsg, costMs: costMs });
+                    failureSummaries.push(`${candidate.reason}: ${errMsg}`);
                     // continue
                 }
             }
@@ -653,44 +648,9 @@ export class SyncTable {
             // 降级也失败时：抛出“更可诊断”的错误信息（包含降级链路与原始 SQL）。
             // 注意：这里不打印日志，只扩充错误 message，避免污染“每表仅一条汇总日志”的约束。
             const originalMsg = String(error?.message || error);
-
-            const msgParts: string[] = [];
-            msgParts.push(`SQL执行失败（已尝试降级，traceId=${traceId}）`);
-            msgParts.push("");
-            msgParts.push("已尝试降级链路:");
-            if (candidates.length === 0) {
-                msgParts.push("- (无)");
-            } else {
-                for (const c of candidates) {
-                    msgParts.push(`- ${c.reason}`);
-                }
-            }
-
-            msgParts.push("");
-            msgParts.push("原始SQL:");
-            msgParts.push(SyncTable.truncateForLog(String(stmt), 4000));
-            if (typeof originalCostMs === "number" && originalCostMs > 0) {
-                msgParts.push(`原始SQL耗时: ${originalCostMs}ms`);
-            }
-
-            msgParts.push("");
-            msgParts.push("首次错误:");
-            msgParts.push(originalMsg);
-
-            if (failureSummaries.length > 0) {
-                msgParts.push("");
-                msgParts.push("降级失败明细:");
-                for (const s of failureSummaries) {
-                    msgParts.push(`- ${s.reason}`);
-                    msgParts.push(`  - 候选SQL: ${SyncTable.truncateForLog(s.stmt, 2000)}`);
-                    msgParts.push(`  - 错误: ${s.message}`);
-                    if (typeof s.costMs === "number" && s.costMs > 0) {
-                        msgParts.push(`  - 耗时: ${s.costMs}ms`);
-                    }
-                }
-            }
-
-            const outErr: any = new Error(msgParts.join("\n"));
+            const sqlLine = SyncTable.truncateForLog(String(stmt), 2000);
+            const downgradeLine = failureSummaries.length > 0 ? failureSummaries.join(" | ") : "(无)";
+            const outErr: any = new Error(`SQL执行失败: ${originalMsg}\nSQL: ${sqlLine}\n降级: ${downgradeLine}`);
             // 尽量透传 sqlInfo，便于上层记录具体 SQL（如有）。
             if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
             if (!outErr.sqlInfo && (lastAttemptedError as any)?.sqlInfo) outErr.sqlInfo = (lastAttemptedError as any).sqlInfo;
@@ -757,38 +717,23 @@ export class SyncTable {
 
         const normalized = normalizeFieldDefinition(fieldDef);
 
-        if (SyncTable.isStringOrArrayType(normalized.type)) {
-            const expectedMax = normalized.max;
-            if (expectedMax !== null && existingColumn.max !== expectedMax) {
-                changes.push({
-                    type: "length",
-                    current: existingColumn.max,
-                    expected: expectedMax
-                });
-            }
-        }
-
-        const typeMapping = SyncTable.getTypeMapping();
-        const mapped = typeMapping[normalized.type];
-        if (typeof mapped !== "string") {
-            throw new Error(`同步表：未知字段类型映射（类型=${String(normalized.type)}）`);
-        }
-        const expectedType = mapped.toLowerCase();
+        const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned).toLowerCase().replace(/\s+/g, " ").trim();
 
         let rawType: string = "";
-        if (typeof existingColumn.type === "string" && existingColumn.type.trim() !== "") {
-            rawType = existingColumn.type;
-        } else if (typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== "") {
+        if (typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== "") {
             rawType = existingColumn.columnType;
+        } else if (typeof existingColumn.type === "string" && existingColumn.type.trim() !== "") {
+            const base = existingColumn.type.trim();
+            if (SyncTable.isStringOrArrayType(normalized.type) && typeof existingColumn.max === "number") {
+                rawType = `${base}(${existingColumn.max})`;
+            } else {
+                rawType = base;
+            }
         } else {
             rawType = String((existingColumn as any).type ?? "");
         }
 
-        const currentType = rawType
-            .toLowerCase()
-            .replace(/\s*unsigned/gi, "")
-            .replace(/\([^)]*\)/g, "")
-            .trim();
+        const currentType = rawType.toLowerCase().replace(/\s+/g, " ").trim();
 
         if (currentType !== expectedType) {
             changes.push({
@@ -1004,81 +949,16 @@ export class SyncTable {
         const existingColumns = await SyncTable.getTableColumns(db, dbName, tableName);
         const existingIndexes = await SyncTable.getTableIndexes(db, dbName, tableName);
 
-        const alterClauses: string[] = [];
-        let indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [];
-
-        // 汇总输出（默认仅打印汇总，避免逐条日志刷屏）
-        const addedBusinessFields: string[] = [];
-        const addedSystemFields: string[] = [];
-        const modifiedFields: string[] = [];
-
-        const systemFieldNames = SyncTable.getSystemFieldNames();
-
-        alterClauses.push(
-            ...SyncTable.buildAlterClauses({
-                tableName: tableName,
-                fields: fields,
-                existingColumns: existingColumns,
-                systemFieldNames: systemFieldNames,
-                addedBusinessFields: addedBusinessFields,
-                addedSystemFields: addedSystemFields,
-                modifiedFields: modifiedFields
-            })
-        );
-
-        indexActions = SyncTable.buildIndexActions({
+        const { plan, summary } = SyncTable.buildTablePlan({
+            tableName: tableName,
             fields: fields,
             existingColumns: existingColumns,
-            existingIndexes: existingIndexes,
-            systemFieldNames: systemFieldNames
+            existingIndexes: existingIndexes
         });
-
-        const changed = alterClauses.length > 0 || indexActions.length > 0;
-
-        const plan: TablePlan = {
-            changed: changed,
-            alterClauses: alterClauses,
-            indexActions: indexActions
-        };
 
         if (plan.changed) {
             // 在执行 DDL 前输出“单条汇总日志”（每张表最多一条），避免刷屏且仍保证表名明确。
-            const summaryParts: string[] = [];
-            summaryParts.push(`[表 ${tableName}] 变更汇总`);
-            summaryParts.push(`新增字段=${addedBusinessFields.length}`);
-            summaryParts.push(`新增系统字段=${addedSystemFields.length}`);
-            summaryParts.push(`修改字段=${modifiedFields.length}`);
-            summaryParts.push(`索引变更=${indexActions.length}`);
-
-            const detailParts: string[] = [];
-            if (addedBusinessFields.length > 0) {
-                detailParts.push(`新增字段:${addedBusinessFields.join(",")}`);
-            }
-            if (addedSystemFields.length > 0) {
-                detailParts.push(`新增系统字段:${addedSystemFields.join(",")}`);
-            }
-            if (modifiedFields.length > 0) {
-                detailParts.push(`修改字段:${modifiedFields.join(",")}`);
-            }
-            if (indexActions.length > 0) {
-                const createIndexSummaries: string[] = [];
-                const dropIndexSummaries: string[] = [];
-                for (const a of indexActions) {
-                    const item = `${a.indexName}(${a.fieldName})`;
-                    if (a.action === "create") {
-                        createIndexSummaries.push(`+${item}`);
-                    } else {
-                        dropIndexSummaries.push(`-${item}`);
-                    }
-                }
-
-                const indexPart: string[] = [];
-                if (dropIndexSummaries.length > 0) indexPart.push(dropIndexSummaries.join(","));
-                if (createIndexSummaries.length > 0) indexPart.push(createIndexSummaries.join(","));
-                detailParts.push(`索引:${indexPart.join(",")}`);
-            }
-
-            const msg = detailParts.length > 0 ? `${summaryParts.join("，")}；${detailParts.join("，")}` : summaryParts.join("，");
+            const msg = `[表 ${tableName}] 变更汇总，新增字段=${summary.addedBusiness}，新增系统字段=${summary.addedSystem}，修改字段=${summary.modified}，索引变更=${summary.indexChanges}`;
             Logger.debug(msg);
 
             await SyncTable.applyTablePlan(db, tableName, plan);

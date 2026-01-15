@@ -22,6 +22,14 @@ describe("syncTable - logging summary", () => {
             if (typeof record.msg === "string") {
                 return record.msg;
             }
+            if (typeof record.value === "string") {
+                return record.value;
+            }
+            try {
+                return JSON.stringify(record);
+            } catch {
+                return String(record);
+            }
         }
 
         return String(first);
