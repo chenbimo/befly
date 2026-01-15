@@ -372,9 +372,34 @@ export class SyncTable {
         return "";
     }
 
-    private static normalizeDefaultForCompare(value: unknown): string {
+    private static normalizeDefaultForCompare(value: unknown, fieldType: string): string {
         if (value === null || value === undefined) return "null";
-        return String(value);
+
+        const normalizedType = String(fieldType || "").toLowerCase();
+        const raw = String(value).trim();
+
+        if (SyncTable.INT_TYPES.has(normalizedType) || SyncTable.DECIMAL_TYPES.has(normalizedType)) {
+            if (/^[+-]?\d+(?:\.\d+)?$/.test(raw)) {
+                let sign = "";
+                let body = raw;
+                if (body.startsWith("+") || body.startsWith("-")) {
+                    sign = body.startsWith("-") ? "-" : "";
+                    body = body.slice(1);
+                }
+
+                const parts = body.split(".");
+                const intPart = parts[0] || "0";
+                const fracPart = parts[1] || "";
+                const normalizedInt = intPart.replace(/^0+(\d)/, "$1");
+                const normalizedFrac = fracPart.replace(/0+$/g, "");
+                const mergedInt = normalizedInt === "" ? "0" : normalizedInt;
+                const merged = normalizedFrac.length > 0 ? `${mergedInt}.${normalizedFrac}` : mergedInt;
+                const normalized = sign === "-" && merged !== "0" ? `-${merged}` : merged;
+                return normalized;
+            }
+        }
+
+        return raw;
     }
 
     /* ---------------------------------------------------------------------- */
@@ -462,6 +487,7 @@ export class SyncTable {
     private static buildTablePlan(options: { tableName: string; fields: Record<string, FieldDefinition>; existingColumns: { [key: string]: ColumnInfo }; existingIndexes: IndexInfo }): {
         plan: TablePlan;
         summary: { addedBusiness: number; addedSystem: number; modified: number; indexChanges: number };
+        details: { fieldChanges: Array<{ fieldKey: string; dbFieldName: string; changes: FieldChange[] }> };
     } {
         const systemFieldNames = SyncTable.getSystemFieldNames();
         const fieldPlan = SyncTable.buildFieldPlan({
@@ -499,6 +525,9 @@ export class SyncTable {
                 addedSystem: addedSystem,
                 modified: modified,
                 indexChanges: indexActions.length
+            },
+            details: {
+                fieldChanges: fieldPlan.changeDetails
             }
         };
     }
@@ -507,10 +536,12 @@ export class SyncTable {
         alterClauses: string[];
         addedBusiness: number;
         modified: number;
+        changeDetails: Array<{ fieldKey: string; dbFieldName: string; changes: FieldChange[] }>;
     } {
         const alterClauses: string[] = [];
         let addedBusiness = 0;
         let modified = 0;
+        const changeDetails: Array<{ fieldKey: string; dbFieldName: string; changes: FieldChange[] }> = [];
 
         for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
             const dbFieldName = snakeCase(fieldKey);
@@ -519,6 +550,7 @@ export class SyncTable {
                 const comparison = SyncTable.compareFieldDefinition(options.existingColumns[dbFieldName], fieldDef);
                 if (comparison.length > 0) {
                     modified = modified + 1;
+                    changeDetails.push({ fieldKey: fieldKey, dbFieldName: dbFieldName, changes: comparison });
                     SyncTable.assertCompatibleTypeChange(options.tableName, dbFieldName, comparison, fieldDef);
                     // 简化实现：无论变更类型（含仅默认值变更），统一走 MODIFY COLUMN。
                     alterClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
@@ -529,7 +561,7 @@ export class SyncTable {
             }
         }
 
-        return { alterClauses: alterClauses, addedBusiness: addedBusiness, modified: modified };
+        return { alterClauses: alterClauses, addedBusiness: addedBusiness, modified: modified, changeDetails: changeDetails };
     }
 
     private static buildSystemFieldPlan(options: { systemFieldNames: string[]; existingColumns: { [key: string]: ColumnInfo } }): {
@@ -775,7 +807,10 @@ export class SyncTable {
 
         const normalized = normalizeFieldDefinition(fieldDef);
 
-        const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned, normalized.precision, normalized.scale).toLowerCase().replace(/\s+/g, " ").trim();
+        const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned, normalized.precision, normalized.scale)
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
 
         const currentType = (
             typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== ""
@@ -790,10 +825,19 @@ export class SyncTable {
             .replace(/\s+/g, " ")
             .trim();
 
-        if (currentType !== expectedType) {
+        const currentBase = currentType
+            .replace(/\s*unsigned/gi, "")
+            .replace(/\([^)]*\)/g, "")
+            .trim();
+
+        const normalizedCurrentType = SyncTable.INT_TYPES.has(currentBase)
+            ? currentType.replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim()
+            : currentType;
+
+        if (normalizedCurrentType !== expectedType) {
             changes.push({
                 type: "datatype",
-                current: currentType,
+                current: normalizedCurrentType,
                 expected: expectedType
             });
         }
@@ -808,7 +852,9 @@ export class SyncTable {
         }
 
         const expectedDefault = SyncTable.resolveDefaultValue(normalized.default, normalized.type);
-        if (SyncTable.normalizeDefaultForCompare(existingColumn.defaultValue) !== SyncTable.normalizeDefaultForCompare(expectedDefault)) {
+        const currentDefaultNormalized = SyncTable.normalizeDefaultForCompare(existingColumn.defaultValue, normalized.type);
+        const expectedDefaultNormalized = SyncTable.normalizeDefaultForCompare(expectedDefault, normalized.type);
+        if (currentDefaultNormalized !== expectedDefaultNormalized) {
             changes.push({
                 type: "default",
                 current: existingColumn.defaultValue,
@@ -978,7 +1024,7 @@ export class SyncTable {
         const existingColumns = await SyncTable.getTableColumns(db, dbName, tableName);
         const existingIndexes = await SyncTable.getTableIndexes(db, dbName, tableName);
 
-        const { plan, summary } = SyncTable.buildTablePlan({
+        const { plan, summary, details } = SyncTable.buildTablePlan({
             tableName: tableName,
             fields: fields,
             existingColumns: existingColumns,
@@ -988,7 +1034,7 @@ export class SyncTable {
         if (plan.changed) {
             // 在执行 DDL 前输出“单条汇总日志”（每张表最多一条），避免刷屏且仍保证表名明确。
             const msg = `[表 ${tableName}] 变更汇总，新增字段=${summary.addedBusiness}，新增系统字段=${summary.addedSystem}，修改字段=${summary.modified}，索引变更=${summary.indexChanges}`;
-            Logger.debug(msg);
+            Logger.debug({ msg: msg, details: details.fieldChanges });
 
             await SyncTable.applyTablePlan(db, tableName, plan);
         }
