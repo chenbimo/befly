@@ -487,6 +487,14 @@ export class SyncTable {
 
         if (cBase === "varchar" && (nBase === "text" || nBase === "mediumtext" || nBase === "longtext")) return true;
 
+        // CHAR <-> VARCHAR：允许互转。
+        // 说明：
+        // - 该变更通常属于“等价/轻微变更”（尤其是相同长度时），但仍可能受字符集/排序规则/长度等影响。
+        // - 是否会截断、是否会填充空格等，交由 MySQL 自身规则处理（可能成功，也可能失败）。
+        if ((cBase === "char" && nBase === "varchar") || (cBase === "varchar" && nBase === "char")) {
+            return true;
+        }
+
         return false;
     }
 
@@ -789,10 +797,25 @@ export class SyncTable {
                         const expectedType = typeMapping[fieldDef.type]?.toLowerCase() || "";
 
                         if (!SyncTable.isCompatibleTypeChange(currentType, expectedType)) {
-                            const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange?.current}`, `目标类型: ${typeChange?.expected}`, "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），其他类型变更需要手动处理"].join("\n");
+                            const errorMsg = [
+                                `禁止字段类型变更: ${tableName}.${dbFieldName}`,
+                                `当前类型: ${typeChange?.current}`,
+                                `目标类型: ${typeChange?.expected}`,
+                                "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；其他类型变更需要手动处理"
+                            ].join("\n");
                             throw new Error(errorMsg);
                         }
-                        compatibleTypeChanges.push(`${dbFieldName}: ${currentType} -> ${expectedType}`);
+
+                        let compatLabel: string = "";
+                        if ((currentType === "char" && expectedType === "varchar") || (currentType === "varchar" && expectedType === "char")) {
+                            compatLabel = "char/varchar互转";
+                        }
+
+                        if (compatLabel) {
+                            compatibleTypeChanges.push(`${dbFieldName}: ${currentType} -> ${expectedType} (${compatLabel})`);
+                        } else {
+                            compatibleTypeChanges.push(`${dbFieldName}: ${currentType} -> ${expectedType}`);
+                        }
                     }
 
                     if (defaultChanged) {

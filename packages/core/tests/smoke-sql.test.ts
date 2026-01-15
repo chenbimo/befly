@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { SQL } from "bun";
 
 import { SqlBuilder } from "../lib/sqlBuilder.ts";
+import { getDefaultDbConfig } from "./__testDbConfig.ts";
 import { SyncTable } from "../sync/syncTable.ts";
 
 function toSqlParams(params?: unknown[]): SqlValue[] {
@@ -23,8 +24,7 @@ function toSqlParams(params?: unknown[]): SqlValue[] {
             continue;
         }
 
-        const t = typeof p;
-        if (t === "string" || t === "number" || t === "boolean") {
+        if (typeof p === "string" || typeof p === "number" || typeof p === "boolean") {
             out.push(p);
             continue;
         }
@@ -35,7 +35,7 @@ function toSqlParams(params?: unknown[]): SqlValue[] {
         }
 
         // 兜底：允许 JSON 对象/数组（用于 smoke 的最小适配器）
-        if (t === "object") {
+        if (typeof p === "object") {
             out.push(p as unknown as SqlValue);
             continue;
         }
@@ -44,24 +44,6 @@ function toSqlParams(params?: unknown[]): SqlValue[] {
     }
 
     return out;
-}
-
-function readRealMySqlSmokeEnv(): { host: string; port: number; username: string; password: string } | null {
-    const enabled = typeof process.env.BEFLY_TEST_REAL_MYSQL === "string" ? process.env.BEFLY_TEST_REAL_MYSQL.trim() : "";
-    if (enabled !== "1") return null;
-
-    const host = typeof process.env.BEFLY_TEST_DB_HOST === "string" ? process.env.BEFLY_TEST_DB_HOST.trim() : "";
-    const portText = typeof process.env.BEFLY_TEST_DB_PORT === "string" ? process.env.BEFLY_TEST_DB_PORT.trim() : "";
-    const username = typeof process.env.BEFLY_TEST_DB_USERNAME === "string" ? process.env.BEFLY_TEST_DB_USERNAME.trim() : "";
-    const password = typeof process.env.BEFLY_TEST_DB_PASSWORD === "string" ? process.env.BEFLY_TEST_DB_PASSWORD : "";
-
-    const port = Number(portText);
-
-    if (!host) return null;
-    if (!Number.isFinite(port) || port < 1 || port > 65535) return null;
-    if (!username) return null;
-
-    return { host: host, port: port, username: username, password: password };
 }
 
 function buildMySqlUrl(options: { host: string; port: number; username: string; password: string; database: string }): string {
@@ -94,18 +76,25 @@ describe("smoke - sql", () => {
 });
 
 describe("smoke - mysql (real) - befly_test", () => {
-    const env = readRealMySqlSmokeEnv();
-
-    if (!env) {
-        test.skip("跳过：未启用真实 MySQL smoke（设置 BEFLY_TEST_REAL_MYSQL=1，并配置 BEFLY_TEST_DB_HOST/PORT/USERNAME/PASSWORD）", () => {
-            // noop
-        });
-        return;
-    }
+    let host: string = "";
+    let port: number = 0;
+    let username: string = "";
+    let password: string = "";
 
     // 清理兜底：测试启动时扫描并清理残留表（仅 befly_test 库）
     beforeAll(async () => {
-        const url = buildMySqlUrl({ host: env.host, port: env.port, username: env.username, password: env.password, database: "befly_test" });
+        const dbConfig = await getDefaultDbConfig();
+
+        host = String(dbConfig.host || "");
+        port = Number(dbConfig.port || 0);
+        username = String(dbConfig.username || "");
+        password = String(dbConfig.password || "");
+
+        if (!host || !Number.isFinite(port) || port < 1 || port > 65535 || !username) {
+            throw new Error(`smoke - mysql (real) - befly_test: 默认 DB 配置不完整，host=${host}, port=${String(dbConfig.port)}, username=${username}`);
+        }
+
+        const url = buildMySqlUrl({ host: host, port: port, username: username, password: password, database: "befly_test" });
         const sql = new SQL({ url: url, max: 1, bigint: false });
 
         try {
@@ -133,7 +122,7 @@ describe("smoke - mysql (real) - befly_test", () => {
     });
 
     test("executeDDLSafely: 在真实 MySQL 中可在线优先，必要时可降级（固定 befly_test 库）", async () => {
-        const url = buildMySqlUrl({ host: env.host, port: env.port, username: env.username, password: env.password, database: "befly_test" });
+        const url = buildMySqlUrl({ host: host, port: port, username: username, password: password, database: "befly_test" });
         const sql = new SQL({ url: url, max: 1, bigint: false });
 
         const tableName = `befly_smoke_${Date.now().toString(36)}`;
@@ -179,6 +168,95 @@ describe("smoke - mysql (real) - befly_test", () => {
 
             const c = Number(indexCountRes.data?.[0]?.c || 0);
             expect(c).toBeGreaterThan(0);
+        } finally {
+            try {
+                await sql.unsafe(`DROP TABLE IF EXISTS ${tableQuoted}`);
+            } catch {
+                // noop
+            }
+
+            try {
+                await sql.close();
+            } catch {
+                // noop
+            }
+        }
+    });
+
+    test("modifyTable: 允许 CHAR -> VARCHAR 互转（固定 befly_test 库）", async () => {
+        const url = buildMySqlUrl({ host: host, port: port, username: username, password: password, database: "befly_test" });
+        const sql = new SQL({ url: url, max: 1, bigint: false });
+
+        const tableName = `befly_smoke_${Date.now().toString(36)}_char_varchar`;
+        const tableQuoted = SyncTable.quoteIdentifier(tableName);
+        const idQuoted = SyncTable.quoteIdentifier("id");
+        const createdAtQuoted = SyncTable.quoteIdentifier("created_at");
+        const updatedAtQuoted = SyncTable.quoteIdentifier("updated_at");
+        const deletedAtQuoted = SyncTable.quoteIdentifier("deleted_at");
+        const stateQuoted = SyncTable.quoteIdentifier("state");
+        const nameQuoted = SyncTable.quoteIdentifier("name");
+
+        const db = {
+            unsafe: async <T = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>> => {
+                const start = Date.now();
+                const p = toSqlParams(params);
+
+                let data: unknown;
+                if (p.length > 0) {
+                    data = await sql.unsafe(sqlStr, p);
+                } else {
+                    data = await sql.unsafe(sqlStr);
+                }
+
+                return {
+                    data: data as T,
+                    sql: {
+                        sql: sqlStr,
+                        params: p,
+                        duration: Date.now() - start
+                    }
+                };
+            }
+        };
+
+        try {
+            // 连接探活
+            await sql.unsafe("SELECT 1 AS ok");
+
+            // 构造一个“历史库”场景：name 使用 CHAR(10)
+            await sql.unsafe(`DROP TABLE IF EXISTS ${tableQuoted}`);
+            await sql.unsafe(
+                `CREATE TABLE ${tableQuoted} (
+                    ${idQuoted} BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+                    ${createdAtQuoted} BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                    ${updatedAtQuoted} BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                    ${deletedAtQuoted} BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                    ${stateQuoted} BIGINT UNSIGNED NOT NULL DEFAULT 1,
+                    ${nameQuoted} CHAR(10) NOT NULL DEFAULT '' COMMENT '名称'
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`
+            );
+
+            await sql.unsafe(`INSERT INTO ${tableQuoted} (${nameQuoted}) VALUES ('abc')`);
+
+            // 目标：按 befly 的 string 映射（VARCHAR(max)）同步为 varchar
+            await SyncTable.modifyTable(db, "befly_test", tableName, {
+                name: { name: "名称", type: "string", min: 0, max: 10, default: null, nullable: false, index: false, unique: false }
+            });
+
+            const colRes = await db.unsafe<Array<{ dataType: string; columnType: string }>>(
+                "SELECT DATA_TYPE AS dataType, COLUMN_TYPE AS columnType FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND COLUMN_NAME = 'name'",
+                [tableName]
+            );
+
+            const dataType = String(colRes.data?.[0]?.dataType || "").toLowerCase();
+            const columnType = String(colRes.data?.[0]?.columnType || "").toLowerCase();
+
+            expect(dataType).toBe("varchar");
+            expect(columnType).toContain("varchar(10)");
+
+            const rows = await sql.unsafe(`SELECT ${nameQuoted} AS v FROM ${tableQuoted} LIMIT 1`);
+            const v = String((rows as any)?.[0]?.v ?? "");
+            expect(v).toBe("abc");
         } finally {
             try {
                 await sql.unsafe(`DROP TABLE IF EXISTS ${tableQuoted}`);
