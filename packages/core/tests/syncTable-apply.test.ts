@@ -63,54 +63,6 @@ describe("compareFieldDefinition", () => {
         });
     });
 
-    describe("注释变化检测", () => {
-        test("注释变化被检测到", () => {
-            const existingColumn = {
-                type: "varchar",
-                max: 100,
-                nullable: false,
-                defaultValue: "",
-                comment: "旧注释"
-            } satisfies ExistingColumn;
-            const fieldDef = {
-                name: "新注释",
-                type: "string",
-                max: 100,
-                nullable: false,
-                default: null
-            } satisfies FieldDefinition;
-
-            const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
-            const commentChange = changes.find((c) => c.type === "comment");
-
-            expect(commentChange).toBeDefined();
-            expect(commentChange.current).toBe("旧注释");
-            expect(commentChange.expected).toBe("新注释");
-        });
-
-        test("注释相同无变化", () => {
-            const existingColumn = {
-                type: "varchar",
-                max: 100,
-                nullable: false,
-                defaultValue: "",
-                comment: "用户名"
-            } satisfies ExistingColumn;
-            const fieldDef = {
-                name: "用户名",
-                type: "string",
-                max: 100,
-                nullable: false,
-                default: null
-            } satisfies FieldDefinition;
-
-            const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
-            const commentChange = changes.find((c) => c.type === "comment");
-
-            expect(commentChange).toBeUndefined();
-        });
-    });
-
     describe("数据类型变化检测", () => {
         test("类型变化被检测到", () => {
             const existingColumn = {
@@ -253,9 +205,8 @@ describe("compareFieldDefinition", () => {
 
             const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
 
-            expect(changes.length).toBe(4); // length, comment, nullable, default
+            expect(changes.length).toBe(3); // length, nullable, default
             expect(changes.some((c) => c.type === "length")).toBe(true);
-            expect(changes.some((c) => c.type === "comment")).toBe(true);
             expect(changes.some((c) => c.type === "nullable")).toBe(true);
             expect(changes.some((c) => c.type === "default")).toBe(true);
         });

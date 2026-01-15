@@ -105,8 +105,7 @@ export interface FieldChange {
 
 export interface TablePlan {
     changed: boolean;
-    addClauses: string[];
-    modifyClauses: string[];
+    alterClauses: string[];
     indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }>;
     commentActions?: string[];
 }

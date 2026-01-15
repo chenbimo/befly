@@ -174,8 +174,7 @@ describe("applyTablePlan - batch indexes", () => {
 
         const plan: TablePlan = {
             changed: true,
-            addClauses: [],
-            modifyClauses: [],
+            alterClauses: [],
             indexActions: [
                 { action: "create", indexName: "idx_created_at", fieldName: "created_at" },
                 { action: "create", indexName: "idx_user_name", fieldName: "user_name" }
