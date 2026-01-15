@@ -431,6 +431,12 @@ export class SyncTable {
                 stmt: original.replace(/\bALGORITHM\s*=\s*INSTANT\b/gi, "ALGORITHM=INPLACE"),
                 reason: "ALGORITHM=INSTANT → INPLACE"
             });
+
+            // 1.1) INSTANT -> COPY（有些操作不支持 INSTANT/INPLACE，但 COPY 可执行）
+            attempted.push({
+                stmt: original.replace(/\bALGORITHM\s*=\s*INSTANT\b/gi, "ALGORITHM=COPY"),
+                reason: "ALGORITHM=INSTANT → COPY"
+            });
         }
 
         // 2) 去掉 ALGORITHM/LOCK：让 MySQL 自行选择（可能 COPY）
