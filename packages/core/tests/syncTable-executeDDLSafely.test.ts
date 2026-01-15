@@ -45,12 +45,16 @@ describe("executeDDLSafely", () => {
         const stmt = "ALTER TABLE `t` ALGORITHM=INPLACE, LOCK=NONE, ADD INDEX `idx_a` (`a`)";
         const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
 
-        expect(candidates.length).toBe(1);
-        expect(candidates[0]?.stmt.includes("ALGORITHM=")).toBe(false);
-        expect(candidates[0]?.stmt.includes("LOCK=")).toBe(false);
+        expect(candidates.length).toBe(2);
+
+        expect(candidates[0]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
+        expect(candidates[0]?.stmt.includes("LOCK=NONE")).toBe(true);
+
+        expect(candidates[1]?.stmt.includes("ALGORITHM=")).toBe(false);
+        expect(candidates[1]?.stmt.includes("LOCK=")).toBe(false);
     });
 
-    test("当 INPLACE 不支持时，自动去掉 ALGORITHM/LOCK 降级重试", async () => {
+    test("当 INPLACE 不支持时，先降级 COPY，再不行则去掉 ALGORITHM/LOCK", async () => {
         const calls: string[] = [];
 
         const db: SqlExecutor = {
@@ -62,6 +66,10 @@ describe("executeDDLSafely", () => {
                     throw new Error("SQL执行失败: ALGORITHM=INPLACE is not supported for this operation. Try ALGORITHM=COPY.");
                 }
 
+                if (sql.includes("ALGORITHM=COPY")) {
+                    throw new Error("SQL执行失败: ALGORITHM=COPY is not supported for this operation.");
+                }
+
                 return okResult<T>([] as unknown as T);
             }
         };
@@ -70,12 +78,13 @@ describe("executeDDLSafely", () => {
         const ok = await SyncTable.executeDDLSafely(db, stmt);
 
         expect(ok).toBe(true);
-        expect(calls.length).toBe(2);
+        expect(calls.length).toBe(3);
         expect(calls[0]?.includes("ALGORITHM=INPLACE")).toBe(true);
-        expect(calls[1]?.includes("ALGORITHM=")).toBe(false);
-        expect(calls[1]?.includes("LOCK=")).toBe(false);
-        expect(calls[1]?.includes("ADD INDEX")).toBe(true);
-        expect(calls[1]?.includes("idx_a")).toBe(true);
+        expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[2]?.includes("ALGORITHM=")).toBe(false);
+        expect(calls[2]?.includes("LOCK=")).toBe(false);
+        expect(calls[2]?.includes("ADD INDEX")).toBe(true);
+        expect(calls[2]?.includes("idx_a")).toBe(true);
     });
 
     test("INSTANT 失败时按顺序降级：INPLACE -> COPY -> strip", async () => {
@@ -177,14 +186,14 @@ describe("applyTablePlan - batch indexes", () => {
         await SyncTable.applyTablePlan(db, "t", plan);
 
         // 1 次批量语句 + 1 次降级重试
-        expect(calls.length).toBe(2);
+        expect(calls.length).toBe(2); // 1 次批量语句 + 1 次降级重试（INPLACE -> COPY）
         expect(calls[0]?.includes("ALTER TABLE `t`")).toBe(true);
         expect(calls[0]?.includes("ALGORITHM=INPLACE")).toBe(true);
         expect(calls[0]?.includes("ADD INDEX `idx_created_at` (`created_at`)")).toBe(true);
         expect(calls[0]?.includes("ADD INDEX `idx_user_name` (`user_name`)")).toBe(true);
 
-        expect(calls[1]?.includes("ALGORITHM=")).toBe(false);
-        expect(calls[1]?.includes("LOCK=")).toBe(false);
+        expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[1]?.includes("LOCK=NONE")).toBe(true);
         expect(calls[1]?.includes("ADD INDEX `idx_created_at` (`created_at`)")).toBe(true);
         expect(calls[1]?.includes("ADD INDEX `idx_user_name` (`user_name`)")).toBe(true);
     });

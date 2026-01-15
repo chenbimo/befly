@@ -183,6 +183,160 @@ describe("smoke - mysql (real) - befly_test", () => {
         }
     });
 
+    test("executeDDLSafely: INPLACE 不支持时应可降级并完成需要 COPY 的变更（ADD COLUMN ... FIRST）", async () => {
+        const url = buildMySqlUrl({ host: host, port: port, username: username, password: password, database: "befly_test" });
+        const sql = new SQL({ url: url, max: 1, bigint: false });
+
+        const tableName = `befly_smoke_${Date.now().toString(36)}_copy`;
+        const tableQuoted = SyncTable.quoteIdentifier(tableName);
+        const aQuoted = SyncTable.quoteIdentifier("a");
+        const bQuoted = SyncTable.quoteIdentifier("b");
+
+        const db = {
+            unsafe: async <T = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>> => {
+                const start = Date.now();
+                const p = toSqlParams(params);
+
+                let data: unknown;
+                if (p.length > 0) {
+                    data = await sql.unsafe(sqlStr, p);
+                } else {
+                    data = await sql.unsafe(sqlStr);
+                }
+
+                return {
+                    data: data as T,
+                    sql: {
+                        sql: sqlStr,
+                        params: p,
+                        duration: Date.now() - start
+                    }
+                };
+            }
+        };
+
+        try {
+            await sql.unsafe("SELECT 1 AS ok");
+
+            await sql.unsafe(`DROP TABLE IF EXISTS ${tableQuoted}`);
+            await sql.unsafe(`CREATE TABLE ${tableQuoted} (${aQuoted} BIGINT NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`);
+
+            // 关键：把列插入到 FIRST。该类操作通常不支持 INPLACE（需要 COPY / rebuild）。
+            // 这里刻意指定 ALGORITHM=INPLACE 来触发“INPLACE 不支持”的路径，验证 executeDDLSafely 能自动降级并最终成功。
+            const ok = await SyncTable.executeDDLSafely(db, `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, ADD COLUMN ${bQuoted} BIGINT NOT NULL DEFAULT 0 FIRST`);
+            expect(ok).toBe(true);
+
+            const rows = await db.unsafe<Array<{ name: string; pos: number }>>(
+                "SELECT COLUMN_NAME AS name, ORDINAL_POSITION AS pos FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='befly_test' AND TABLE_NAME=? ORDER BY ORDINAL_POSITION",
+                [tableName]
+            );
+
+            const firstName = String(rows.data?.[0]?.name || "").toLowerCase();
+            const firstPos = Number(rows.data?.[0]?.pos || 0);
+            const secondName = String(rows.data?.[1]?.name || "").toLowerCase();
+
+            expect(firstPos).toBe(1);
+            expect(firstName).toBe("b");
+            expect(secondName).toBe("a");
+        } finally {
+            try {
+                await sql.unsafe(`DROP TABLE IF EXISTS ${tableQuoted}`);
+            } catch {
+                // noop
+            }
+
+            try {
+                await sql.close();
+            } catch {
+                // noop
+            }
+        }
+    });
+
+    test("executeDDLSafely: COPY 也失败时仍应能 strip 并在真实 MySQL 中成功执行（模拟 COPY 不支持）", async () => {
+        const url = buildMySqlUrl({ host: host, port: port, username: username, password: password, database: "befly_test" });
+        const sql = new SQL({ url: url, max: 1, bigint: false });
+
+        const tableName = `befly_smoke_${Date.now().toString(36)}_strip`;
+        const tableQuoted = SyncTable.quoteIdentifier(tableName);
+        const colQuoted = SyncTable.quoteIdentifier("a");
+        const idxQuoted = SyncTable.quoteIdentifier("idx_a");
+
+        const calls: string[] = [];
+
+        const db = {
+            unsafe: async <T = unknown>(sqlStr: string, params?: unknown[]): Promise<DbResult<T, SqlInfo>> => {
+                const sqlText = String(sqlStr);
+                calls.push(sqlText);
+
+                // 目的：确保会走到最后的 strip candidate，同时最终 SQL 仍在真实 MySQL 上执行。
+                // 说明：这里是 smoke（真实 DB）测试，因此我们只“模拟”算法/锁不支持，让最后一次（无 ALGORITHM/LOCK）真正落库。
+                if (sqlText.includes("ALGORITHM=INPLACE")) {
+                    throw new Error("SQL执行失败: ALGORITHM=INPLACE is not supported for this operation. Try ALGORITHM=COPY.");
+                }
+                if (sqlText.includes("ALGORITHM=COPY")) {
+                    throw new Error("SQL执行失败: ALGORITHM=COPY is not supported for this operation.");
+                }
+
+                const start = Date.now();
+                const p = toSqlParams(params);
+
+                let data: unknown;
+                if (p.length > 0) {
+                    data = await sql.unsafe(sqlText, p);
+                } else {
+                    data = await sql.unsafe(sqlText);
+                }
+
+                return {
+                    data: data as T,
+                    sql: {
+                        sql: sqlText,
+                        params: p,
+                        duration: Date.now() - start
+                    }
+                };
+            }
+        };
+
+        try {
+            await sql.unsafe("SELECT 1 AS ok");
+
+            await sql.unsafe(`DROP TABLE IF EXISTS ${tableQuoted}`);
+            await sql.unsafe(`CREATE TABLE ${tableQuoted} (${colQuoted} BIGINT NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`);
+
+            const ok = await SyncTable.executeDDLSafely(db, `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ADD INDEX ${idxQuoted} (${colQuoted})`);
+            expect(ok).toBe(true);
+
+            // 断言：确实经历了 INPLACE -> COPY -> strip
+            expect(calls.length).toBe(3);
+            expect(calls[0]?.includes("ALGORITHM=INPLACE")).toBe(true);
+            expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
+            expect(calls[2]?.includes("ALGORITHM=")).toBe(false);
+            expect(calls[2]?.includes("LOCK=")).toBe(false);
+            expect(calls[2]?.includes("ADD INDEX")).toBe(true);
+
+            const indexCountRes = await sql.unsafe<Array<{ c: number }>>(
+                "SELECT COUNT(*) AS c FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND INDEX_NAME = 'idx_a'",
+                [tableName]
+            );
+            const c = Number(indexCountRes?.[0]?.c || 0);
+            expect(c).toBeGreaterThan(0);
+        } finally {
+            try {
+                await sql.unsafe(`DROP TABLE IF EXISTS ${tableQuoted}`);
+            } catch {
+                // noop
+            }
+
+            try {
+                await sql.close();
+            } catch {
+                // noop
+            }
+        }
+    });
+
     test("modifyTable: 允许 CHAR -> VARCHAR 互转（固定 befly_test 库）", async () => {
         const url = buildMySqlUrl({ host: host, port: port, username: username, password: password, database: "befly_test" });
         const sql = new SQL({ url: url, max: 1, bigint: false });

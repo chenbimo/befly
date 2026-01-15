@@ -160,14 +160,56 @@ export class SyncTable {
                 }
 
                 const existsTable = await SyncTable.tableExists(this.db, this.dbName, tableName);
-                if (existsTable) {
-                    await SyncTable.modifyTable(this.db, this.dbName, tableName, tableFields);
-                } else {
-                    await SyncTable.createTable(this.db, tableName, tableFields);
+                try {
+                    if (existsTable) {
+                        await SyncTable.modifyTable(this.db, this.dbName, tableName, tableFields);
+                    } else {
+                        await SyncTable.createTable(this.db, tableName, tableFields);
+                    }
+                } catch (error: any) {
+                    const errMsg = String(error?.message || error);
+                    const sqlInfo = (error as any)?.sqlInfo as SqlInfo | undefined;
+
+                    // 失败时输出更“可定位”的上下文信息：
+                    // - 具体表名/来源/操作（create/modify）
+                    // - error.message（包含 executeDDLSafely 的原始 SQL/降级链路/明细）
+                    // - sqlInfo（若底层 driver 提供）
+                    // 注意：这里仍是“一次 Logger.error 调用”，不会影响“每表仅一条变更汇总日志”的约束。
+                    Logger.error({
+                        msg: "数据库同步失败（表级）",
+                        dbName: this.dbName,
+                        table: tableName,
+                        operation: existsTable ? "modifyTable" : "createTable",
+                        source: item.source,
+                        sourceName: item.sourceName,
+                        addonName: item.addonName,
+                        fileName: item.fileName,
+                        filePath: item.filePath,
+                        errorMessage: errMsg,
+                        sqlInfo: sqlInfo ? { sql: sqlInfo.sql, params: sqlInfo.params, duration: sqlInfo.duration } : null,
+                        err: error
+                    });
+
+                    (error as any).__syncTableLogged = true;
+                    throw error;
                 }
             }
         } catch (error: any) {
-            Logger.error({ err: error, msg: "数据库同步失败" });
+            // 若已在表级 catch 打印过更详细上下文，则这里避免重复打印。
+            if ((error as any)?.__syncTableLogged === true) {
+                throw error;
+            }
+
+            const errMsg = String(error?.message || error);
+            const sqlInfo = (error as any)?.sqlInfo as SqlInfo | undefined;
+
+            Logger.error({
+                msg: "数据库同步失败",
+                dbName: this.dbName,
+                errorMessage: errMsg,
+                sqlInfo: sqlInfo ? { sql: sqlInfo.sql, params: sqlInfo.params, duration: sqlInfo.duration } : null,
+                err: error
+            });
             throw error;
         }
     }
@@ -403,6 +445,30 @@ export class SyncTable {
     /* DDL 执行（失败时降级 algorithm/lock） */
     /* ---------------------------------------------------------------------- */
 
+    private static buildDdlTraceId(stmt: string): string {
+        // FNV-1a 32-bit（稳定、快速；用于日志关联而非安全用途）
+        const s = String(stmt);
+        let hash = 0x811c9dc5;
+        for (let i = 0; i < s.length; i++) {
+            hash ^= s.charCodeAt(i);
+            hash = Math.imul(hash, 0x01000193) >>> 0;
+        }
+        return hash.toString(16).padStart(8, "0");
+    }
+
+    private static truncateForLog(input: string, maxLen: number): string {
+        const s = String(input);
+        if (maxLen <= 0) return "";
+        if (s.length <= maxLen) return s;
+
+        // 头尾截断：方便复现时仍保留关键信息，同时避免消息过大。
+        const headLen = Math.max(0, Math.floor(maxLen * 0.6));
+        const tailLen = Math.max(0, maxLen - headLen);
+        const head = s.slice(0, headLen);
+        const tail = s.slice(Math.max(0, s.length - tailLen));
+        return `${head} …(truncated, total=${s.length})… ${tail}`;
+    }
+
     public static stripAlgorithmAndLock(stmt: string): string {
         let sql = String(stmt);
 
@@ -439,6 +505,14 @@ export class SyncTable {
             });
         }
 
+        // 1.2) INPLACE -> COPY（有些操作不支持 INPLACE，但 COPY 可执行）
+        if (/\bALGORITHM\s*=\s*INPLACE\b/i.test(original)) {
+            attempted.push({
+                stmt: original.replace(/\bALGORITHM\s*=\s*INPLACE\b/gi, "ALGORITHM=COPY"),
+                reason: "ALGORITHM=INPLACE → COPY"
+            });
+        }
+
         // 2) 去掉 ALGORITHM/LOCK：让 MySQL 自行选择（可能 COPY）
         const stripped = SyncTable.stripAlgorithmAndLock(original);
         if (stripped !== original) {
@@ -458,25 +532,82 @@ export class SyncTable {
     }
 
     public static async executeDDLSafely(db: SqlExecutor, stmt: string): Promise<boolean> {
+        const traceId = SyncTable.buildDdlTraceId(stmt);
+        const originalStartedAt = Date.now();
         try {
             await db.unsafe(stmt);
             return true;
         } catch (error: any) {
+            const originalCostMs = Date.now() - originalStartedAt;
             const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
+            const failureSummaries: Array<{ reason: string; stmt: string; message: string; costMs: number }> = [];
+            let lastAttemptedError: unknown = error;
             for (const candidate of candidates) {
+                const candidateStartedAt = Date.now();
                 try {
                     await db.unsafe(candidate.stmt);
+                    const costMs = Date.now() - candidateStartedAt;
 
                     // 仅在确实发生降级且成功时记录一条 debug，便于排查线上 DDL 算法/锁不兼容问题。
                     // 注意：不带“[表 xxx]”前缀，避免破坏“每表仅一条汇总日志”的约束测试。
-                    Logger.debug(`[DDL降级] ${candidate.reason}（已成功）`);
+                    const sqlForLog = SyncTable.truncateForLog(candidate.stmt, 800);
+                    Logger.debug(`[DDL降级#${traceId}] ${candidate.reason}（已成功，cost=${costMs}ms） SQL=${sqlForLog}`);
                     return true;
-                } catch {
+                } catch (candidateError: any) {
+                    const costMs = Date.now() - candidateStartedAt;
+                    lastAttemptedError = candidateError;
+                    const errMsg = String(candidateError?.message || candidateError);
+                    failureSummaries.push({ reason: candidate.reason, stmt: candidate.stmt, message: errMsg, costMs: costMs });
                     // continue
                 }
             }
 
-            throw error;
+            // 降级也失败时：抛出“更可诊断”的错误信息（包含降级链路与原始 SQL）。
+            // 注意：这里不打印日志，只扩充错误 message，避免污染“每表仅一条汇总日志”的约束。
+            const originalMsg = String(error?.message || error);
+
+            const msgParts: string[] = [];
+            msgParts.push(`SQL执行失败（已尝试降级，traceId=${traceId}）`);
+            msgParts.push("");
+            msgParts.push("已尝试降级链路:");
+            if (candidates.length === 0) {
+                msgParts.push("- (无)");
+            } else {
+                for (const c of candidates) {
+                    msgParts.push(`- ${c.reason}`);
+                }
+            }
+
+            msgParts.push("");
+            msgParts.push("原始SQL:");
+            msgParts.push(SyncTable.truncateForLog(String(stmt), 4000));
+            if (typeof originalCostMs === "number" && originalCostMs > 0) {
+                msgParts.push(`原始SQL耗时: ${originalCostMs}ms`);
+            }
+
+            msgParts.push("");
+            msgParts.push("首次错误:");
+            msgParts.push(originalMsg);
+
+            if (failureSummaries.length > 0) {
+                msgParts.push("");
+                msgParts.push("降级失败明细:");
+                for (const s of failureSummaries) {
+                    msgParts.push(`- ${s.reason}`);
+                    msgParts.push(`  - 候选SQL: ${SyncTable.truncateForLog(s.stmt, 2000)}`);
+                    msgParts.push(`  - 错误: ${s.message}`);
+                    if (typeof s.costMs === "number" && s.costMs > 0) {
+                        msgParts.push(`  - 耗时: ${s.costMs}ms`);
+                    }
+                }
+            }
+
+            const outErr: any = new Error(msgParts.join("\n"));
+            // 尽量透传 sqlInfo，便于上层记录具体 SQL（如有）。
+            if (error?.sqlInfo) outErr.sqlInfo = error.sqlInfo;
+            if (!outErr.sqlInfo && (lastAttemptedError as any)?.sqlInfo) outErr.sqlInfo = (lastAttemptedError as any).sqlInfo;
+
+            throw outErr;
         }
     }
 
@@ -731,15 +862,16 @@ export class SyncTable {
         const clauses = [...plan.addClauses, ...plan.modifyClauses];
         if (clauses.length > 0) {
             const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            // MySQL 8 对 ALGORITHM=INSTANT 不允许同时指定 LOCK=NONE/SHARED/EXCLUSIVE
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, ${clauses.join(", ")}`;
+            // 兼容性优先：INSTANT 在 MySQL 8 里并非所有 ALTER 都支持（即使版本满足 8.0+）。
+            // 这里默认用 INPLACE + LOCK=NONE（尽量在线），失败时再走 executeDDLSafely 的降级链路（COPY / strip）。
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${clauses.join(", ")}`;
             await SyncTable.executeDDLSafely(db, stmt);
         }
 
         if (plan.defaultClauses.length > 0) {
             const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            // MySQL 8 对 ALGORITHM=INSTANT 不允许同时指定 LOCK=NONE/SHARED/EXCLUSIVE
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INSTANT, ${plan.defaultClauses.join(", ")}`;
+            // 同上：默认 INPLACE + LOCK=NONE，失败再降级。
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${plan.defaultClauses.join(", ")}`;
             await SyncTable.executeDDLSafely(db, stmt);
         }
 
