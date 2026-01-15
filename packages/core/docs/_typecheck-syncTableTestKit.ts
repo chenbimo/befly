@@ -28,8 +28,3 @@ void SyncTable.buildSystemColumnDefs();
 void SyncTable.getSqlType("string", 100, false);
 // @ts-expect-error wrong types
 void SyncTable.getSqlType("string", "100");
-
-// buildIndexSQL
-void SyncTable.buildIndexSQL("user", "idx_title", "title", "create");
-// @ts-expect-error wrong action
-void SyncTable.buildIndexSQL("user", "idx_title", "title", "legacy");

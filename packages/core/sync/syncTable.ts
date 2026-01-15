@@ -368,13 +368,6 @@ export class SyncTable {
         return `DROP INDEX ${indexQuoted}`;
     }
 
-    public static buildIndexSQL(tableName: string, indexName: string, fieldName: string, action: "create" | "drop"): string {
-        const tableQuoted = SyncTable.quoteIdentifier(tableName);
-
-        const clause = SyncTable.buildIndexClause(indexName, fieldName, action);
-        return `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${clause}`;
-    }
-
     public static getSystemColumnDef(fieldName: string): string | null {
         let meta: SystemFieldMeta | null = null;
         for (const f of SyncTable.SYSTEM_FIELDS) {
@@ -448,7 +441,6 @@ export class SyncTable {
     } {
         const systemFieldNames = SyncTable.getSystemFieldNames();
         const alterClauses: string[] = [];
-        const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [];
 
         let addedBusiness = 0;
         let addedSystem = 0;
@@ -521,22 +513,14 @@ export class SyncTable {
             }
         }
 
-        for (const [indexName, fieldName] of Object.entries(desiredIndexMap)) {
-            if (!options.existingIndexes[indexName]) {
-                indexActions.push({ action: "create", indexName: indexName, fieldName: fieldName });
-            }
-        }
-
-        for (const [indexName, columns] of Object.entries(options.existingIndexes)) {
-            if (desiredIndexMap[indexName]) continue;
-            if (!indexName.startsWith("idx_")) continue;
-            if (Array.isArray(columns) && columns.length === 1) {
-                const fieldName = columns[0] as string;
-                if (!SyncTable.SYSTEM_INDEX_FIELDS.includes(fieldName)) {
-                    indexActions.push({ action: "drop", indexName: indexName, fieldName: fieldName });
-                }
-            }
-        }
+        const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [
+            ...Object.entries(desiredIndexMap)
+                .filter(([indexName]) => !options.existingIndexes[indexName])
+                .map(([indexName, fieldName]) => ({ action: "create" as const, indexName: indexName, fieldName: fieldName })),
+            ...Object.entries(options.existingIndexes)
+                .filter(([indexName, columns]) => !desiredIndexMap[indexName] && indexName.startsWith("idx_") && Array.isArray(columns) && columns.length === 1 && !SyncTable.SYSTEM_INDEX_FIELDS.includes(columns[0] as string))
+                .map(([indexName, columns]) => ({ action: "drop" as const, indexName: indexName, fieldName: (columns as string[])[0] as string }))
+        ];
 
         const plan: TablePlan = {
             changed: alterClauses.length > 0 || indexActions.length > 0,
@@ -717,21 +701,18 @@ export class SyncTable {
 
         const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned).toLowerCase().replace(/\s+/g, " ").trim();
 
-        let rawType: string = "";
-        if (typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== "") {
-            rawType = existingColumn.columnType;
-        } else if (typeof existingColumn.type === "string" && existingColumn.type.trim() !== "") {
-            const base = existingColumn.type.trim();
-            if (SyncTable.isStringOrArrayType(normalized.type) && typeof existingColumn.max === "number") {
-                rawType = `${base}(${existingColumn.max})`;
-            } else {
-                rawType = base;
-            }
-        } else {
-            rawType = String((existingColumn as any).type ?? "");
-        }
-
-        const currentType = rawType.toLowerCase().replace(/\s+/g, " ").trim();
+        const currentType = (
+            typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== ""
+                ? existingColumn.columnType
+                : typeof existingColumn.type === "string" && existingColumn.type.trim() !== ""
+                  ? SyncTable.isStringOrArrayType(normalized.type) && typeof existingColumn.max === "number"
+                      ? `${existingColumn.type.trim()}(${existingColumn.max})`
+                      : existingColumn.type.trim()
+                  : String((existingColumn as any).type ?? "")
+        )
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
 
         if (currentType !== expectedType) {
             changes.push({
@@ -861,26 +842,26 @@ export class SyncTable {
     public static async applyTablePlan(db: SqlExecutor, tableName: string, plan: TablePlan): Promise<void> {
         if (!plan || !plan.changed) return;
 
-        // 先 drop 再 alter：避免“增大 VARCHAR 长度”时被现有索引 key length 限制卡住
-        const dropIndexActions = plan.indexActions.filter((a) => a.action === "drop");
-        const createIndexActions = plan.indexActions.filter((a) => a.action === "create");
+        // 先 drop 再 alter 再 create：避免“增大 VARCHAR 长度”时被现有索引 key length 限制卡住
+        const batches = [
+            { action: "drop" as const, errorMsg: "批量删除索引失败" },
+            { action: "create" as const, errorMsg: "批量创建索引失败" }
+        ];
 
-        if (dropIndexActions.length > 0) {
-            const dropClauses = dropIndexActions.map((act) => SyncTable.buildIndexClause(act.indexName, act.fieldName, "drop"));
-            await SyncTable.runIndexBatch(db, tableName, dropClauses, "批量删除索引失败");
-        }
+        for (const batch of batches) {
+            const actions = plan.indexActions.filter((a) => a.action === batch.action);
+            if (actions.length > 0) {
+                const clauses = actions.map((act) => SyncTable.buildIndexClause(act.indexName, act.fieldName, batch.action));
+                await SyncTable.runIndexBatch(db, tableName, clauses, batch.errorMsg);
+            }
 
-        if (plan.alterClauses.length > 0) {
-            const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            // 兼容性优先：INSTANT 在 MySQL 8 里并非所有 ALTER 都支持（即使版本满足 8.0+）。
-            // 这里默认用 INPLACE + LOCK=NONE（尽量在线），失败时再走 executeDDLSafely 的降级链路（COPY / strip）。
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${plan.alterClauses.join(", ")}`;
-            await SyncTable.executeDDLSafely(db, stmt);
-        }
-
-        if (createIndexActions.length > 0) {
-            const createClauses = createIndexActions.map((act) => SyncTable.buildIndexClause(act.indexName, act.fieldName, "create"));
-            await SyncTable.runIndexBatch(db, tableName, createClauses, "批量创建索引失败");
+            if (batch.action === "drop" && plan.alterClauses.length > 0) {
+                const tableQuoted = SyncTable.quoteIdentifier(tableName);
+                // 兼容性优先：INSTANT 在 MySQL 8 里并非所有 ALTER 都支持（即使版本满足 8.0+）。
+                // 这里默认用 INPLACE + LOCK=NONE（尽量在线），失败时再走 executeDDLSafely 的降级链路（COPY / strip）。
+                const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${plan.alterClauses.join(", ")}`;
+                await SyncTable.executeDDLSafely(db, stmt);
+            }
         }
     }
 

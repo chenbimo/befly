@@ -14,7 +14,7 @@ describe("syncTable - SyncTable 静态工具", () => {
         expect(syncTableStatics["escapeComment"]).toBeUndefined();
         expect(typeof SyncTable.getTypeMapping).toBe("function");
         expect(typeof SyncTable.quoteIdentifier).toBe("function");
-        expect(typeof SyncTable.buildIndexSQL).toBe("function");
+        expect(typeof SyncTable.buildIndexClause).toBe("function");
         expect(typeof SyncTable.getSqlType).toBe("function");
 
         expect(typeof escapeComment).toBe("function");

@@ -38,20 +38,16 @@ describe("quoteIdentifier (MySQL)", () => {
     });
 });
 
-describe("buildIndexSQL (MySQL)", () => {
-    test("创建索引 SQL", () => {
-        const sql = SyncTable.buildIndexSQL("user", "idx_created_at", "created_at", "create");
-        expect(sql).toContain("ALTER TABLE `user`");
-        expect(sql).toContain("ADD INDEX `idx_created_at`");
-        expect(sql).toContain("(`created_at`)");
-        expect(sql).toContain("ALGORITHM=INPLACE");
-        expect(sql).toContain("LOCK=NONE");
+describe("buildIndexClause (MySQL)", () => {
+    test("创建索引子句", () => {
+        const clause = SyncTable.buildIndexClause("idx_created_at", "created_at", "create");
+        expect(clause).toContain("ADD INDEX `idx_created_at`");
+        expect(clause).toContain("(`created_at`)");
     });
 
-    test("删除索引 SQL", () => {
-        const sql = SyncTable.buildIndexSQL("user", "idx_created_at", "created_at", "drop");
-        expect(sql).toContain("ALTER TABLE `user`");
-        expect(sql).toContain("DROP INDEX `idx_created_at`");
+    test("删除索引子句", () => {
+        const clause = SyncTable.buildIndexClause("idx_created_at", "created_at", "drop");
+        expect(clause).toContain("DROP INDEX `idx_created_at`");
     });
 });
 
