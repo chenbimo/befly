@@ -109,6 +109,17 @@ export class SyncTable {
 
     public static SYSTEM_INDEX_FIELDS: ReadonlyArray<string> = ["created_at", "updated_at", "state"];
 
+    private static TYPE_MAPPING: Record<string, string> = {
+        number: "BIGINT",
+        string: "VARCHAR",
+        datetime: "DATETIME",
+        text: "MEDIUMTEXT",
+        array_string: "VARCHAR",
+        array_text: "MEDIUMTEXT",
+        array_number_string: "VARCHAR",
+        array_number_text: "MEDIUMTEXT"
+    };
+
     private static TEXT_FAMILY = new Set(["tinytext", "text", "mediumtext", "longtext"]);
     private static INT_TYPES = new Set(["tinyint", "smallint", "mediumint", "int", "integer", "bigint"]);
 
@@ -221,23 +232,6 @@ export class SyncTable {
     }
 
     /* ---------------------------------------------------------------------- */
-    /* 类型映射（field type -> mysql type） */
-    /* ---------------------------------------------------------------------- */
-
-    public static getTypeMapping(): Record<string, string> {
-        return {
-            number: "BIGINT",
-            string: "VARCHAR",
-            datetime: "DATETIME",
-            text: "MEDIUMTEXT",
-            array_string: "VARCHAR",
-            array_text: "MEDIUMTEXT",
-            array_number_string: "VARCHAR",
-            array_number_text: "MEDIUMTEXT"
-        };
-    }
-
-    /* ---------------------------------------------------------------------- */
     /* 默认值 & 字段定义规范化（与 checkTable 的“合法性 gate”配合） */
     /* ---------------------------------------------------------------------- */
 
@@ -279,7 +273,7 @@ export class SyncTable {
     }
 
     public static getSqlType(fieldType: string, fieldMax: number | null, unsigned: boolean = false): string {
-        const typeMapping = SyncTable.getTypeMapping();
+        const typeMapping = SyncTable.TYPE_MAPPING;
 
         if (SyncTable.isStringOrArrayType(fieldType)) {
             // 约束由 checkTable 统一保证；这里仅做最小断言，避免生成明显无效的 SQL。
@@ -351,6 +345,11 @@ export class SyncTable {
         }
 
         return "";
+    }
+
+    private static normalizeDefaultForCompare(value: unknown): string {
+        if (value === null || value === undefined) return "null";
+        return String(value);
     }
 
     /* ---------------------------------------------------------------------- */
@@ -440,87 +439,27 @@ export class SyncTable {
         summary: { addedBusiness: number; addedSystem: number; modified: number; indexChanges: number };
     } {
         const systemFieldNames = SyncTable.getSystemFieldNames();
-        const alterClauses: string[] = [];
+        const fieldPlan = SyncTable.buildFieldPlan({
+            tableName: options.tableName,
+            fields: options.fields,
+            existingColumns: options.existingColumns
+        });
+        const systemPlan = SyncTable.buildSystemFieldPlan({
+            systemFieldNames: systemFieldNames,
+            existingColumns: options.existingColumns
+        });
+        const indexPlan = SyncTable.buildIndexPlan({
+            fields: options.fields,
+            existingColumns: options.existingColumns,
+            existingIndexes: options.existingIndexes,
+            systemFieldNames: systemFieldNames
+        });
 
-        let addedBusiness = 0;
-        let addedSystem = 0;
-        let modified = 0;
-
-        for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
-            const dbFieldName = snakeCase(fieldKey);
-
-            if (options.existingColumns[dbFieldName]) {
-                const comparison = SyncTable.compareFieldDefinition(options.existingColumns[dbFieldName], fieldDef);
-                if (comparison.length > 0) {
-                    modified = modified + 1;
-
-                    const hasTypeChange = comparison.some((c) => c.type === "datatype");
-                    if (hasTypeChange) {
-                        const typeChange = comparison.find((c) => c.type === "datatype");
-                        const currentType = String(typeChange?.current || "").toLowerCase();
-                        const expectedType = SyncTable.getSqlType(fieldDef.type, fieldDef.max ?? null, fieldDef.unsigned ?? false).toLowerCase();
-
-                        const currentBase = currentType
-                            .replace(/\s*unsigned/gi, "")
-                            .replace(/\([^)]*\)/g, "")
-                            .trim();
-                        const expectedBase = expectedType
-                            .replace(/\s*unsigned/gi, "")
-                            .replace(/\([^)]*\)/g, "")
-                            .trim();
-
-                        if (currentBase !== expectedBase && !SyncTable.isCompatibleTypeChange(currentType, expectedType))
-                            throw new Error(
-                                [
-                                    `禁止字段类型变更: ${options.tableName}.${dbFieldName}`,
-                                    `当前类型: ${typeChange?.current}`,
-                                    `目标类型: ${typeChange?.expected}`,
-                                    "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；DATETIME 与 BIGINT 不允许互转（需要手动迁移数据）"
-                                ].join("\n")
-                            );
-                    }
-
-                    // 简化实现：无论变更类型（含仅默认值变更），统一走 MODIFY COLUMN。
-                    alterClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
-                }
-            } else {
-                addedBusiness = addedBusiness + 1;
-                alterClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, true));
-            }
-        }
-
-        for (const sysFieldName of systemFieldNames) {
-            if (!options.existingColumns[sysFieldName]) {
-                const colDef = SyncTable.getSystemColumnDef(sysFieldName);
-                if (colDef) {
-                    addedSystem = addedSystem + 1;
-                    alterClauses.push(`ADD COLUMN ${colDef}`);
-                }
-            }
-        }
-
-        const desiredIndexMap: Record<string, string> = {};
-        for (const sysField of SyncTable.SYSTEM_INDEX_FIELDS) {
-            const fieldWillExist = options.existingColumns[sysField] || systemFieldNames.includes(sysField);
-            if (fieldWillExist) {
-                desiredIndexMap[`idx_${sysField}`] = sysField;
-            }
-        }
-        for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
-            const dbFieldName = snakeCase(fieldKey);
-            if (fieldDef.index && !fieldDef.unique) {
-                desiredIndexMap[`idx_${dbFieldName}`] = dbFieldName;
-            }
-        }
-
-        const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [
-            ...Object.entries(desiredIndexMap)
-                .filter(([indexName]) => !options.existingIndexes[indexName])
-                .map(([indexName, fieldName]) => ({ action: "create" as const, indexName: indexName, fieldName: fieldName })),
-            ...Object.entries(options.existingIndexes)
-                .filter(([indexName, columns]) => !desiredIndexMap[indexName] && indexName.startsWith("idx_") && Array.isArray(columns) && columns.length === 1 && !SyncTable.SYSTEM_INDEX_FIELDS.includes(columns[0] as string))
-                .map(([indexName, columns]) => ({ action: "drop" as const, indexName: indexName, fieldName: (columns as string[])[0] as string }))
-        ];
+        const alterClauses: string[] = [...fieldPlan.alterClauses, ...systemPlan.alterClauses];
+        const indexActions = indexPlan.indexActions;
+        const addedBusiness = fieldPlan.addedBusiness;
+        const modified = fieldPlan.modified;
+        const addedSystem = systemPlan.addedSystem;
 
         const plan: TablePlan = {
             changed: alterClauses.length > 0 || indexActions.length > 0,
@@ -537,6 +476,106 @@ export class SyncTable {
                 indexChanges: indexActions.length
             }
         };
+    }
+
+    private static buildFieldPlan(options: { tableName: string; fields: Record<string, FieldDefinition>; existingColumns: { [key: string]: ColumnInfo } }): {
+        alterClauses: string[];
+        addedBusiness: number;
+        modified: number;
+    } {
+        const alterClauses: string[] = [];
+        let addedBusiness = 0;
+        let modified = 0;
+
+        for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
+            const dbFieldName = snakeCase(fieldKey);
+
+            if (options.existingColumns[dbFieldName]) {
+                const comparison = SyncTable.compareFieldDefinition(options.existingColumns[dbFieldName], fieldDef);
+                if (comparison.length > 0) {
+                    modified = modified + 1;
+                    SyncTable.assertCompatibleTypeChange(options.tableName, dbFieldName, comparison, fieldDef);
+                    // 简化实现：无论变更类型（含仅默认值变更），统一走 MODIFY COLUMN。
+                    alterClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
+                }
+            } else {
+                addedBusiness = addedBusiness + 1;
+                alterClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, true));
+            }
+        }
+
+        return { alterClauses: alterClauses, addedBusiness: addedBusiness, modified: modified };
+    }
+
+    private static buildSystemFieldPlan(options: { systemFieldNames: string[]; existingColumns: { [key: string]: ColumnInfo } }): {
+        alterClauses: string[];
+        addedSystem: number;
+    } {
+        const alterClauses: string[] = [];
+        let addedSystem = 0;
+
+        for (const sysFieldName of options.systemFieldNames) {
+            if (!options.existingColumns[sysFieldName]) {
+                const colDef = SyncTable.getSystemColumnDef(sysFieldName);
+                if (colDef) {
+                    addedSystem = addedSystem + 1;
+                    alterClauses.push(`ADD COLUMN ${colDef}`);
+                }
+            }
+        }
+
+        return { alterClauses: alterClauses, addedSystem: addedSystem };
+    }
+
+    private static buildIndexPlan(options: { fields: Record<string, FieldDefinition>; existingColumns: { [key: string]: ColumnInfo }; existingIndexes: IndexInfo; systemFieldNames: string[] }): {
+        indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }>;
+    } {
+        const desiredIndexMap: Record<string, string> = {};
+
+        for (const sysField of SyncTable.SYSTEM_INDEX_FIELDS) {
+            const fieldWillExist = options.existingColumns[sysField] || options.systemFieldNames.includes(sysField);
+            if (fieldWillExist) {
+                desiredIndexMap[`idx_${sysField}`] = sysField;
+            }
+        }
+
+        for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
+            const dbFieldName = snakeCase(fieldKey);
+            if (fieldDef.index && !fieldDef.unique) {
+                desiredIndexMap[`idx_${dbFieldName}`] = dbFieldName;
+            }
+        }
+
+        const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [
+            ...Object.entries(desiredIndexMap)
+                .filter(([indexName]) => !options.existingIndexes[indexName])
+                .map(([indexName, fieldName]) => ({ action: "create" as const, indexName: indexName, fieldName: fieldName })),
+            ...Object.entries(options.existingIndexes)
+                .filter(([indexName, columns]) => !desiredIndexMap[indexName] && indexName.startsWith("idx_") && Array.isArray(columns) && columns.length === 1 && !SyncTable.SYSTEM_INDEX_FIELDS.includes(columns[0] as string))
+                .map(([indexName, columns]) => ({ action: "drop" as const, indexName: indexName, fieldName: (columns as string[])[0] as string }))
+        ];
+
+        return { indexActions: indexActions };
+    }
+
+    private static assertCompatibleTypeChange(tableName: string, dbFieldName: string, comparison: FieldChange[], fieldDef: FieldDefinition): void {
+        const typeChange = comparison.find((c) => c.type === "datatype");
+        if (!typeChange) return;
+
+        const currentType = String(typeChange.current || "").toLowerCase();
+        const expectedType = SyncTable.getSqlType(fieldDef.type, fieldDef.max ?? null, fieldDef.unsigned ?? false).toLowerCase();
+
+        const currentBase = currentType
+            .replace(/\s*unsigned/gi, "")
+            .replace(/\([^)]*\)/g, "")
+            .trim();
+        const expectedBase = expectedType
+            .replace(/\s*unsigned/gi, "")
+            .replace(/\([^)]*\)/g, "")
+            .trim();
+
+        if (currentBase !== expectedBase && !SyncTable.isCompatibleTypeChange(currentType, expectedType))
+            throw new Error([`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange.current}`, `目标类型: ${typeChange.expected}`, "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；DATETIME 与 BIGINT 不允许互转（需要手动迁移数据）"].join("\n"));
     }
 
     /* ---------------------------------------------------------------------- */
@@ -732,7 +771,7 @@ export class SyncTable {
         }
 
         const expectedDefault = SyncTable.resolveDefaultValue(normalized.default, normalized.type);
-        if (String(existingColumn.defaultValue) !== String(expectedDefault)) {
+        if (SyncTable.normalizeDefaultForCompare(existingColumn.defaultValue) !== SyncTable.normalizeDefaultForCompare(expectedDefault)) {
             changes.push({
                 type: "default",
                 current: existingColumn.defaultValue,
@@ -843,26 +882,25 @@ export class SyncTable {
         if (!plan || !plan.changed) return;
 
         // 先 drop 再 alter 再 create：避免“增大 VARCHAR 长度”时被现有索引 key length 限制卡住
-        const batches = [
-            { action: "drop" as const, errorMsg: "批量删除索引失败" },
-            { action: "create" as const, errorMsg: "批量创建索引失败" }
-        ];
+        await SyncTable.applyIndexPlan(db, tableName, plan.indexActions, "drop");
 
-        for (const batch of batches) {
-            const actions = plan.indexActions.filter((a) => a.action === batch.action);
-            if (actions.length > 0) {
-                const clauses = actions.map((act) => SyncTable.buildIndexClause(act.indexName, act.fieldName, batch.action));
-                await SyncTable.runIndexBatch(db, tableName, clauses, batch.errorMsg);
-            }
-
-            if (batch.action === "drop" && plan.alterClauses.length > 0) {
-                const tableQuoted = SyncTable.quoteIdentifier(tableName);
-                // 兼容性优先：INSTANT 在 MySQL 8 里并非所有 ALTER 都支持（即使版本满足 8.0+）。
-                // 这里默认用 INPLACE + LOCK=NONE（尽量在线），失败时再走 executeDDLSafely 的降级链路（COPY / strip）。
-                const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${plan.alterClauses.join(", ")}`;
-                await SyncTable.executeDDLSafely(db, stmt);
-            }
+        if (plan.alterClauses.length > 0) {
+            const tableQuoted = SyncTable.quoteIdentifier(tableName);
+            // 兼容性优先：INSTANT 在 MySQL 8 里并非所有 ALTER 都支持（即使版本满足 8.0+）。
+            // 这里默认用 INPLACE + LOCK=NONE（尽量在线），失败时再走 executeDDLSafely 的降级链路（COPY / strip）。
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${plan.alterClauses.join(", ")}`;
+            await SyncTable.executeDDLSafely(db, stmt);
         }
+
+        await SyncTable.applyIndexPlan(db, tableName, plan.indexActions, "create");
+    }
+
+    private static async applyIndexPlan(db: SqlExecutor, tableName: string, actions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }>, action: "create" | "drop"): Promise<void> {
+        const filtered = actions.filter((a) => a.action === action);
+        if (filtered.length === 0) return;
+        const clauses = filtered.map((act) => SyncTable.buildIndexClause(act.indexName, act.fieldName, action));
+        const errorMsg = action === "drop" ? "批量删除索引失败" : "批量创建索引失败";
+        await SyncTable.runIndexBatch(db, tableName, clauses, errorMsg);
     }
 
     /* ---------------------------------------------------------------------- */

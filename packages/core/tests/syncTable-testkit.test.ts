@@ -12,7 +12,6 @@ describe("syncTable - SyncTable 静态工具", () => {
 
         const syncTableStatics = SyncTable as unknown as Record<string, unknown>;
         expect(syncTableStatics["escapeComment"]).toBeUndefined();
-        expect(typeof SyncTable.getTypeMapping).toBe("function");
         expect(typeof SyncTable.quoteIdentifier).toBe("function");
         expect(typeof SyncTable.buildIndexClause).toBe("function");
         expect(typeof SyncTable.getSqlType).toBe("function");
