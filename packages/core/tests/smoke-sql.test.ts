@@ -6,8 +6,8 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { SQL } from "bun";
 
 import { SqlBuilder } from "../lib/sqlBuilder.ts";
-import { getDefaultDbConfig } from "./__testDbConfig.ts";
 import { SyncTable } from "../sync/syncTable.ts";
+import { getDefaultDbConfig } from "./__testDbConfig.ts";
 
 function toSqlParams(params?: unknown[]): SqlValue[] {
     if (!Array.isArray(params)) return [];
@@ -243,10 +243,7 @@ describe("smoke - mysql (real) - befly_test", () => {
                 name: { name: "名称", type: "string", min: 0, max: 10, default: null, nullable: false, index: false, unique: false }
             });
 
-            const colRes = await db.unsafe<Array<{ dataType: string; columnType: string }>>(
-                "SELECT DATA_TYPE AS dataType, COLUMN_TYPE AS columnType FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND COLUMN_NAME = 'name'",
-                [tableName]
-            );
+            const colRes = await db.unsafe<Array<{ dataType: string; columnType: string }>>("SELECT DATA_TYPE AS dataType, COLUMN_TYPE AS columnType FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND COLUMN_NAME = 'name'", [tableName]);
 
             const dataType = String(colRes.data?.[0]?.dataType || "").toLowerCase();
             const columnType = String(colRes.data?.[0]?.columnType || "").toLowerCase();

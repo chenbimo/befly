@@ -797,12 +797,7 @@ export class SyncTable {
                         const expectedType = typeMapping[fieldDef.type]?.toLowerCase() || "";
 
                         if (!SyncTable.isCompatibleTypeChange(currentType, expectedType)) {
-                            const errorMsg = [
-                                `禁止字段类型变更: ${tableName}.${dbFieldName}`,
-                                `当前类型: ${typeChange?.current}`,
-                                `目标类型: ${typeChange?.expected}`,
-                                "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；其他类型变更需要手动处理"
-                            ].join("\n");
+                            const errorMsg = [`禁止字段类型变更: ${tableName}.${dbFieldName}`, `当前类型: ${typeChange?.current}`, `目标类型: ${typeChange?.expected}`, "说明: 仅允许宽化型变更（如 INT->BIGINT, VARCHAR->TEXT），以及 CHAR/VARCHAR 互转；其他类型变更需要手动处理"].join("\n");
                             throw new Error(errorMsg);
                         }
 
