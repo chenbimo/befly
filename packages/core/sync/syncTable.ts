@@ -619,10 +619,22 @@ export class SyncTable {
 
         // 1) COPY（保持 LOCK 原样）
         if (/\bALGORITHM\s*=\s*(INPLACE|INSTANT)\b/i.test(original)) {
+            const copyBase = original.replace(/\bALGORITHM\s*=\s*(INPLACE|INSTANT)\b/gi, "ALGORITHM=COPY");
             attempted.push({
-                stmt: original.replace(/\bALGORITHM\s*=\s*(INPLACE|INSTANT)\b/gi, "ALGORITHM=COPY"),
+                stmt: copyBase,
                 reason: "ALGORITHM → COPY"
             });
+
+            if (/\bLOCK\s*=\s*NONE\b/i.test(copyBase)) {
+                attempted.push({
+                    stmt: copyBase.replace(/\bLOCK\s*=\s*NONE\b/gi, "LOCK=SHARED"),
+                    reason: "ALGORITHM → COPY, LOCK=SHARED"
+                });
+                attempted.push({
+                    stmt: copyBase.replace(/\bLOCK\s*=\s*NONE\b/gi, "LOCK=EXCLUSIVE"),
+                    reason: "ALGORITHM → COPY, LOCK=EXCLUSIVE"
+                });
+            }
         }
 
         // 2) 去掉 ALGORITHM/LOCK：让 MySQL 自行选择（可能 COPY）

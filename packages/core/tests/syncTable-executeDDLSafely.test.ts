@@ -23,31 +23,45 @@ function okResult<T>(data: T): DbResult<T, SqlInfo> {
 }
 
 describe("executeDDLSafely", () => {
-    test("buildDdlFallbackCandidates: INSTANT 应生成 COPY + strip 两个候选（去重、保持顺序）", () => {
+    test("buildDdlFallbackCandidates: INSTANT 应生成 COPY/LOCK 变体 + strip（去重、保持顺序）", () => {
         const stmt = "ALTER TABLE `t` ALGORITHM=INSTANT, LOCK=NONE, ADD COLUMN `a` BIGINT NOT NULL DEFAULT 0";
         const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
 
-        expect(candidates.length).toBe(2);
+        expect(candidates.length).toBe(4);
         expect(candidates[0]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
         expect(candidates[0]?.stmt.includes("LOCK=NONE")).toBe(true);
         expect(candidates[0]?.reason).toContain("COPY");
 
-        expect(candidates[1]?.stmt.includes("ALGORITHM=")).toBe(false);
-        expect(candidates[1]?.stmt.includes("LOCK=")).toBe(false);
-        expect(candidates[1]?.reason).toContain("移除");
+        expect(candidates[1]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
+        expect(candidates[1]?.stmt.includes("LOCK=SHARED")).toBe(true);
+        expect(candidates[1]?.reason).toContain("SHARED");
+
+        expect(candidates[2]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
+        expect(candidates[2]?.stmt.includes("LOCK=EXCLUSIVE")).toBe(true);
+        expect(candidates[2]?.reason).toContain("EXCLUSIVE");
+
+        expect(candidates[3]?.stmt.includes("ALGORITHM=")).toBe(false);
+        expect(candidates[3]?.stmt.includes("LOCK=")).toBe(false);
+        expect(candidates[3]?.reason).toContain("移除");
     });
 
-    test("buildDdlFallbackCandidates: 仅 INPLACE 时应生成 COPY + strip", () => {
+    test("buildDdlFallbackCandidates: 仅 INPLACE 时应生成 COPY/LOCK 变体 + strip", () => {
         const stmt = "ALTER TABLE `t` ALGORITHM=INPLACE, LOCK=NONE, ADD INDEX `idx_a` (`a`)";
         const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
 
-        expect(candidates.length).toBe(2);
+        expect(candidates.length).toBe(4);
 
         expect(candidates[0]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
         expect(candidates[0]?.stmt.includes("LOCK=NONE")).toBe(true);
 
-        expect(candidates[1]?.stmt.includes("ALGORITHM=")).toBe(false);
-        expect(candidates[1]?.stmt.includes("LOCK=")).toBe(false);
+        expect(candidates[1]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
+        expect(candidates[1]?.stmt.includes("LOCK=SHARED")).toBe(true);
+
+        expect(candidates[2]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
+        expect(candidates[2]?.stmt.includes("LOCK=EXCLUSIVE")).toBe(true);
+
+        expect(candidates[3]?.stmt.includes("ALGORITHM=")).toBe(false);
+        expect(candidates[3]?.stmt.includes("LOCK=")).toBe(false);
     });
 
     test("当 INPLACE 不支持时，先降级 COPY，再不行则去掉 ALGORITHM/LOCK", async () => {
@@ -74,13 +88,15 @@ describe("executeDDLSafely", () => {
         const ok = await SyncTable.executeDDLSafely(db, stmt);
 
         expect(ok).toBe(true);
-        expect(calls.length).toBe(3);
+        expect(calls.length).toBe(5);
         expect(calls[0]?.includes("ALGORITHM=INPLACE")).toBe(true);
         expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
-        expect(calls[2]?.includes("ALGORITHM=")).toBe(false);
-        expect(calls[2]?.includes("LOCK=")).toBe(false);
-        expect(calls[2]?.includes("ADD INDEX")).toBe(true);
-        expect(calls[2]?.includes("idx_a")).toBe(true);
+        expect(calls[2]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[3]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[4]?.includes("ALGORITHM=")).toBe(false);
+        expect(calls[4]?.includes("LOCK=")).toBe(false);
+        expect(calls[4]?.includes("ADD INDEX")).toBe(true);
+        expect(calls[4]?.includes("idx_a")).toBe(true);
     });
 
     test("INSTANT 失败时按顺序降级：COPY -> strip", async () => {
@@ -107,11 +123,13 @@ describe("executeDDLSafely", () => {
         const ok = await SyncTable.executeDDLSafely(db, stmt);
 
         expect(ok).toBe(true);
-        expect(calls.length).toBe(3);
+        expect(calls.length).toBe(5);
         expect(calls[0]?.includes("ALGORITHM=INSTANT")).toBe(true);
         expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
-        expect(calls[2]?.includes("ALGORITHM=")).toBe(false);
-        expect(calls[2]?.includes("LOCK=")).toBe(false);
+        expect(calls[2]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[3]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[4]?.includes("ALGORITHM=")).toBe(false);
+        expect(calls[4]?.includes("LOCK=")).toBe(false);
     });
 
     test("INSTANT/INPLACE 不支持但 COPY 可用时，应在 COPY 成功后停止", async () => {

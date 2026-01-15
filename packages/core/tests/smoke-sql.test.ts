@@ -305,13 +305,15 @@ describe("smoke - mysql (real) - befly_test", () => {
             const ok = await SyncTable.executeDDLSafely(db, `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ADD INDEX ${idxQuoted} (${colQuoted})`);
             expect(ok).toBe(true);
 
-            // 断言：确实经历了 INPLACE -> COPY -> strip
-            expect(calls.length).toBe(3);
+            // 断言：确实经历了 INPLACE -> COPY(含锁变体) -> strip
+            expect(calls.length).toBe(5);
             expect(calls[0]?.includes("ALGORITHM=INPLACE")).toBe(true);
             expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
-            expect(calls[2]?.includes("ALGORITHM=")).toBe(false);
-            expect(calls[2]?.includes("LOCK=")).toBe(false);
-            expect(calls[2]?.includes("ADD INDEX")).toBe(true);
+            expect(calls[2]?.includes("ALGORITHM=COPY")).toBe(true);
+            expect(calls[3]?.includes("ALGORITHM=COPY")).toBe(true);
+            expect(calls[4]?.includes("ALGORITHM=")).toBe(false);
+            expect(calls[4]?.includes("LOCK=")).toBe(false);
+            expect(calls[4]?.includes("ADD INDEX")).toBe(true);
 
             const indexCountRes = await sql.unsafe<Array<{ c: number }>>("SELECT COUNT(*) AS c FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND INDEX_NAME = 'idx_a'", [tableName]);
             const c = Number(indexCountRes?.[0]?.c || 0);
