@@ -868,13 +868,6 @@ export class SyncTable {
             await SyncTable.executeDDLSafely(db, stmt);
         }
 
-        if (plan.defaultClauses.length > 0) {
-            const tableQuoted = SyncTable.quoteIdentifier(tableName);
-            // 同上：默认 INPLACE + LOCK=NONE，失败再降级。
-            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${plan.defaultClauses.join(", ")}`;
-            await SyncTable.executeDDLSafely(db, stmt);
-        }
-
         if (createIndexActions.length > 0) {
             const createClauses: string[] = [];
             for (const act of createIndexActions) {
@@ -937,14 +930,12 @@ export class SyncTable {
 
         const addClauses: string[] = [];
         const modifyClauses: string[] = [];
-        const defaultClauses: string[] = [];
         const indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }> = [];
 
         // 汇总输出（默认仅打印汇总，避免逐条日志刷屏）
         const addedBusinessFields: string[] = [];
         const addedSystemFields: string[] = [];
         const modifiedFields: string[] = [];
-        const defaultOnlyChangedFields: string[] = [];
         const compatibleTypeChanges: string[] = [];
 
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
@@ -956,8 +947,6 @@ export class SyncTable {
                     modifiedFields.push(dbFieldName);
 
                     const hasTypeChange = comparison.some((c) => c.type === "datatype");
-                    const onlyDefaultChanged = comparison.every((c) => c.type === "default");
-                    const defaultChanged = comparison.some((c) => c.type === "default");
 
                     if (hasTypeChange) {
                         const typeChange = comparison.find((c) => c.type === "datatype");
@@ -987,27 +976,8 @@ export class SyncTable {
                         }
                     }
 
-                    if (defaultChanged) {
-                        const actualDefault = SyncTable.resolveDefaultValue(fieldDef.default ?? null, fieldDef.type);
-
-                        let v: string | null = null;
-                        if (actualDefault !== "null") {
-                            const defaultSql = SyncTable.generateDefaultSql(actualDefault, fieldDef.type);
-                            v = defaultSql.trim().replace(/^DEFAULT\s+/, "");
-                        }
-
-                        if (v !== null && v !== "" && onlyDefaultChanged) {
-                            if (fieldDef.type !== "text") {
-                                const colQuoted = SyncTable.quoteIdentifier(dbFieldName);
-                                defaultClauses.push(`ALTER COLUMN ${colQuoted} SET DEFAULT ${v}`);
-                                defaultOnlyChangedFields.push(dbFieldName);
-                            }
-                        }
-                    }
-
-                    if (!onlyDefaultChanged) {
-                        modifyClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
-                    }
+                    // 简化实现：无论变更类型（含仅默认值变更），统一走 MODIFY COLUMN。
+                    modifyClauses.push(SyncTable.generateDDLClause(fieldKey, fieldDef, false));
                     changed = true;
                 }
             } else {
@@ -1051,13 +1021,12 @@ export class SyncTable {
             }
         }
 
-        changed = addClauses.length > 0 || modifyClauses.length > 0 || defaultClauses.length > 0 || indexActions.length > 0;
+        changed = addClauses.length > 0 || modifyClauses.length > 0 || indexActions.length > 0;
 
         const plan: TablePlan = {
             changed: changed,
             addClauses: addClauses,
             modifyClauses: modifyClauses,
-            defaultClauses: defaultClauses,
             indexActions: indexActions
         };
 
@@ -1068,7 +1037,6 @@ export class SyncTable {
             summaryParts.push(`新增字段=${addedBusinessFields.length}`);
             summaryParts.push(`新增系统字段=${addedSystemFields.length}`);
             summaryParts.push(`修改字段=${modifiedFields.length}`);
-            summaryParts.push(`默认值更新=${defaultOnlyChangedFields.length}`);
             summaryParts.push(`索引变更=${indexActions.length}`);
 
             const detailParts: string[] = [];
@@ -1080,9 +1048,6 @@ export class SyncTable {
             }
             if (modifiedFields.length > 0) {
                 detailParts.push(`修改字段:${modifiedFields.join(",")}`);
-            }
-            if (defaultOnlyChangedFields.length > 0) {
-                detailParts.push(`默认值更新:${defaultOnlyChangedFields.join(",")}`);
             }
             if (compatibleTypeChanges.length > 0) {
                 detailParts.push(`兼容类型变更:${compatibleTypeChanges.join(";")}`);

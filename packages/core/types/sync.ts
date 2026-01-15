@@ -107,7 +107,6 @@ export interface TablePlan {
     changed: boolean;
     addClauses: string[];
     modifyClauses: string[];
-    defaultClauses: string[];
     indexActions: Array<{ action: "create" | "drop"; indexName: string; fieldName: string }>;
     commentActions?: string[];
 }

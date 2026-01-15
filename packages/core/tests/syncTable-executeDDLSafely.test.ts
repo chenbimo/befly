@@ -176,7 +176,6 @@ describe("applyTablePlan - batch indexes", () => {
             changed: true,
             addClauses: [],
             modifyClauses: [],
-            defaultClauses: [],
             indexActions: [
                 { action: "create", indexName: "idx_created_at", fieldName: "created_at" },
                 { action: "create", indexName: "idx_user_name", fieldName: "user_name" }
