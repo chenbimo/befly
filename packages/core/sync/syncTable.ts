@@ -226,11 +226,7 @@ export class SyncTable {
             number: "BIGINT",
             string: "VARCHAR",
             datetime: "DATETIME",
-            text: "MEDIUMTEXT",
-            array_string: "VARCHAR",
-            array_text: "MEDIUMTEXT",
-            array_number_string: "VARCHAR",
-            array_number_text: "MEDIUMTEXT"
+            text: "MEDIUMTEXT"
         };
     }
 
@@ -283,7 +279,9 @@ export class SyncTable {
             if (typeof fieldMax !== "number") {
                 throw new Error(`同步表：内部错误：${fieldType} 类型缺失 max（应由 checkTable 阻断）`);
             }
-            return `${typeMapping[fieldType]}(${fieldMax})`;
+            const arrayBase = fieldType === "array_text" || fieldType === "array_number_text" ? "MEDIUMTEXT" : "VARCHAR";
+            const base = typeMapping[fieldType] || arrayBase;
+            return `${base}(${fieldMax})`;
         }
 
         const baseType = typeMapping[fieldType] || "TEXT";
@@ -498,30 +496,34 @@ export class SyncTable {
             }
         }
 
-        const desiredIndexes: Array<{ indexName: string; fieldName: string }> = [];
+        const desiredIndexMap: Record<string, string> = {};
         for (const sysField of SyncTable.SYSTEM_INDEX_FIELDS) {
             const fieldWillExist = options.existingColumns[sysField] || systemFieldNames.includes(sysField);
             if (fieldWillExist) {
-                desiredIndexes.push({ indexName: `idx_${sysField}`, fieldName: sysField });
+                desiredIndexMap[`idx_${sysField}`] = sysField;
             }
         }
         for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
             const dbFieldName = snakeCase(fieldKey);
             if (fieldDef.index && !fieldDef.unique) {
-                desiredIndexes.push({ indexName: `idx_${dbFieldName}`, fieldName: dbFieldName });
+                desiredIndexMap[`idx_${dbFieldName}`] = dbFieldName;
             }
         }
 
-        for (const item of desiredIndexes) {
-            if (!options.existingIndexes[item.indexName]) {
-                indexActions.push({ action: "create", indexName: item.indexName, fieldName: item.fieldName });
+        for (const [indexName, fieldName] of Object.entries(desiredIndexMap)) {
+            if (!options.existingIndexes[indexName]) {
+                indexActions.push({ action: "create", indexName: indexName, fieldName: fieldName });
             }
         }
-        for (const [fieldKey, fieldDef] of Object.entries(options.fields)) {
-            const dbFieldName = snakeCase(fieldKey);
-            const indexName = `idx_${dbFieldName}`;
-            if (!fieldDef.index && options.existingIndexes[indexName] && options.existingIndexes[indexName].length === 1) {
-                indexActions.push({ action: "drop", indexName: indexName, fieldName: dbFieldName });
+
+        for (const [indexName, columns] of Object.entries(options.existingIndexes)) {
+            if (desiredIndexMap[indexName]) continue;
+            if (!indexName.startsWith("idx_")) continue;
+            if (Array.isArray(columns) && columns.length === 1) {
+                const fieldName = columns[0] as string;
+                if (!SyncTable.SYSTEM_INDEX_FIELDS.includes(fieldName)) {
+                    indexActions.push({ action: "drop", indexName: indexName, fieldName: fieldName });
+                }
             }
         }
 
@@ -581,25 +583,11 @@ export class SyncTable {
         const original = String(stmt);
         const attempted: Array<{ stmt: string; reason: string }> = [];
 
-        // 1) INSTANT -> INPLACE（尽可能在线）
-        if (/\bALGORITHM\s*=\s*INSTANT\b/i.test(original)) {
+        // 1) COPY（保持 LOCK 原样）
+        if (/\bALGORITHM\s*=\s*(INPLACE|INSTANT)\b/i.test(original)) {
             attempted.push({
-                stmt: original.replace(/\bALGORITHM\s*=\s*INSTANT\b/gi, "ALGORITHM=INPLACE"),
-                reason: "ALGORITHM=INSTANT → INPLACE"
-            });
-
-            // 1.1) INSTANT -> COPY（有些操作不支持 INSTANT/INPLACE，但 COPY 可执行）
-            attempted.push({
-                stmt: original.replace(/\bALGORITHM\s*=\s*INSTANT\b/gi, "ALGORITHM=COPY"),
-                reason: "ALGORITHM=INSTANT → COPY"
-            });
-        }
-
-        // 1.2) INPLACE -> COPY（有些操作不支持 INPLACE，但 COPY 可执行）
-        if (/\bALGORITHM\s*=\s*INPLACE\b/i.test(original)) {
-            attempted.push({
-                stmt: original.replace(/\bALGORITHM\s*=\s*INPLACE\b/gi, "ALGORITHM=COPY"),
-                reason: "ALGORITHM=INPLACE → COPY"
+                stmt: original.replace(/\bALGORITHM\s*=\s*(INPLACE|INSTANT)\b/gi, "ALGORITHM=COPY"),
+                reason: "ALGORITHM → COPY"
             });
         }
 

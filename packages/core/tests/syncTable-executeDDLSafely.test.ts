@@ -23,25 +23,21 @@ function okResult<T>(data: T): DbResult<T, SqlInfo> {
 }
 
 describe("executeDDLSafely", () => {
-    test("buildDdlFallbackCandidates: INSTANT 应生成 INPLACE + COPY + strip 三个候选（去重、保持顺序）", () => {
+    test("buildDdlFallbackCandidates: INSTANT 应生成 COPY + strip 两个候选（去重、保持顺序）", () => {
         const stmt = "ALTER TABLE `t` ALGORITHM=INSTANT, LOCK=NONE, ADD COLUMN `a` BIGINT NOT NULL DEFAULT 0";
         const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
 
-        expect(candidates.length).toBe(3);
-        expect(candidates[0]?.stmt.includes("ALGORITHM=INPLACE")).toBe(true);
+        expect(candidates.length).toBe(2);
+        expect(candidates[0]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
         expect(candidates[0]?.stmt.includes("LOCK=NONE")).toBe(true);
-        expect(candidates[0]?.reason).toContain("INSTANT");
+        expect(candidates[0]?.reason).toContain("COPY");
 
-        expect(candidates[1]?.stmt.includes("ALGORITHM=COPY")).toBe(true);
-        expect(candidates[1]?.stmt.includes("LOCK=NONE")).toBe(true);
-        expect(candidates[1]?.reason).toContain("INSTANT");
-
-        expect(candidates[2]?.stmt.includes("ALGORITHM=")).toBe(false);
-        expect(candidates[2]?.stmt.includes("LOCK=")).toBe(false);
-        expect(candidates[2]?.reason).toContain("移除");
+        expect(candidates[1]?.stmt.includes("ALGORITHM=")).toBe(false);
+        expect(candidates[1]?.stmt.includes("LOCK=")).toBe(false);
+        expect(candidates[1]?.reason).toContain("移除");
     });
 
-    test("buildDdlFallbackCandidates: 仅 INPLACE 时只应生成 strip 候选", () => {
+    test("buildDdlFallbackCandidates: 仅 INPLACE 时应生成 COPY + strip", () => {
         const stmt = "ALTER TABLE `t` ALGORITHM=INPLACE, LOCK=NONE, ADD INDEX `idx_a` (`a`)";
         const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
 
@@ -87,7 +83,7 @@ describe("executeDDLSafely", () => {
         expect(calls[2]?.includes("idx_a")).toBe(true);
     });
 
-    test("INSTANT 失败时按顺序降级：INPLACE -> COPY -> strip", async () => {
+    test("INSTANT 失败时按顺序降级：COPY -> strip", async () => {
         const calls: string[] = [];
 
         const db: SqlExecutor = {
@@ -97,10 +93,6 @@ describe("executeDDLSafely", () => {
 
                 if (sql.includes("ALGORITHM=INSTANT")) {
                     throw new Error("SQL执行失败: ALGORITHM=INSTANT is not supported for this operation.");
-                }
-
-                if (sql.includes("ALGORITHM=INPLACE")) {
-                    throw new Error("SQL执行失败: ALGORITHM=INPLACE is not supported for this operation. Try ALGORITHM=COPY.");
                 }
 
                 if (sql.includes("ALGORITHM=COPY")) {
@@ -115,12 +107,11 @@ describe("executeDDLSafely", () => {
         const ok = await SyncTable.executeDDLSafely(db, stmt);
 
         expect(ok).toBe(true);
-        expect(calls.length).toBe(4);
+        expect(calls.length).toBe(3);
         expect(calls[0]?.includes("ALGORITHM=INSTANT")).toBe(true);
-        expect(calls[1]?.includes("ALGORITHM=INPLACE")).toBe(true);
-        expect(calls[2]?.includes("ALGORITHM=COPY")).toBe(true);
-        expect(calls[3]?.includes("ALGORITHM=")).toBe(false);
-        expect(calls[3]?.includes("LOCK=")).toBe(false);
+        expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[2]?.includes("ALGORITHM=")).toBe(false);
+        expect(calls[2]?.includes("LOCK=")).toBe(false);
     });
 
     test("INSTANT/INPLACE 不支持但 COPY 可用时，应在 COPY 成功后停止", async () => {
@@ -148,10 +139,9 @@ describe("executeDDLSafely", () => {
         const ok = await SyncTable.executeDDLSafely(db, stmt);
 
         expect(ok).toBe(true);
-        expect(calls.length).toBe(3);
+        expect(calls.length).toBe(2);
         expect(calls[0]?.includes("ALGORITHM=INSTANT")).toBe(true);
-        expect(calls[1]?.includes("ALGORITHM=INPLACE")).toBe(true);
-        expect(calls[2]?.includes("ALGORITHM=COPY")).toBe(true);
+        expect(calls[1]?.includes("ALGORITHM=COPY")).toBe(true);
     });
 });
 

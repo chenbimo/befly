@@ -67,12 +67,4 @@ describe("getTypeMapping (MySQL)", () => {
     test("text 映射为 MEDIUMTEXT", () => {
         expect(SyncTable.getTypeMapping().text).toBe("MEDIUMTEXT");
     });
-
-    test("array_string 映射为 VARCHAR", () => {
-        expect(SyncTable.getTypeMapping().array_string).toBe("VARCHAR");
-    });
-
-    test("array_text 映射为 MEDIUMTEXT", () => {
-        expect(SyncTable.getTypeMapping().array_text).toBe("MEDIUMTEXT");
-    });
 });
