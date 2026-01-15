@@ -100,6 +100,7 @@
 - `string`
 - `number`
 - `text`
+- `datetime`
 - `array_string`
 - `array_text`
 - `array_number_string`
@@ -134,6 +135,40 @@
 ```
 
 - `number`：`default` 若存在，必须为 `number | null`
+
+- `datetime`：对应 MySQL `DATETIME`（到秒，等价 `DATETIME(0)`）
+    - 输入值必须是字符串，允许两种格式：
+        - `YYYY-MM-DD`（会自动补齐为 `YYYY-MM-DD 00:00:00`）
+        - `YYYY-MM-DD HH:mm:ss`
+    - 会做“日期/时间合法性”校验（例如闰年、月份天数、时分秒范围），非法值会被判定为格式不正确
+    - `min/max` 必须为 `null`
+    - `default` 必须为 `null`
+        - 说明：表定义的 `default` 是“表结构默认值”的概念；当前项目约定不在表定义里声明 datetime 的默认值。
+        - 如需“默认当前时间”，请在业务写入时赋值（或通过触发器/SQL 脚本自行维护）。
+    - 不允许设置 `unsigned`
+    - `nullable/index/unique/regexp` 仍可用
+
+示例：
+
+```json
+{
+    "createdAt": {
+        "name": "创建时间",
+        "type": "datetime",
+        "nullable": false,
+        "index": true,
+        "default": null
+    },
+    "expiresAt": {
+        "name": "过期时间",
+        "type": "datetime",
+        "nullable": true,
+        "default": null
+    }
+}
+```
+
+> 注意：`syncTable` 不会自动执行 `DATETIME` 与 `BIGINT` 的互转（这属于“时间表示法迁移”，需要配套数据搬迁脚本手工处理）。
 
 ## 表定义与 API fields 的关系
 
