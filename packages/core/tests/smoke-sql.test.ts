@@ -226,10 +226,7 @@ describe("smoke - mysql (real) - befly_test", () => {
             const ok = await SyncTable.executeDDLSafely(db, `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, ADD COLUMN ${bQuoted} BIGINT NOT NULL DEFAULT 0 FIRST`);
             expect(ok).toBe(true);
 
-            const rows = await db.unsafe<Array<{ name: string; pos: number }>>(
-                "SELECT COLUMN_NAME AS name, ORDINAL_POSITION AS pos FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='befly_test' AND TABLE_NAME=? ORDER BY ORDINAL_POSITION",
-                [tableName]
-            );
+            const rows = await db.unsafe<Array<{ name: string; pos: number }>>("SELECT COLUMN_NAME AS name, ORDINAL_POSITION AS pos FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='befly_test' AND TABLE_NAME=? ORDER BY ORDINAL_POSITION", [tableName]);
 
             const firstName = String(rows.data?.[0]?.name || "").toLowerCase();
             const firstPos = Number(rows.data?.[0]?.pos || 0);
@@ -316,10 +313,7 @@ describe("smoke - mysql (real) - befly_test", () => {
             expect(calls[2]?.includes("LOCK=")).toBe(false);
             expect(calls[2]?.includes("ADD INDEX")).toBe(true);
 
-            const indexCountRes = await sql.unsafe<Array<{ c: number }>>(
-                "SELECT COUNT(*) AS c FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND INDEX_NAME = 'idx_a'",
-                [tableName]
-            );
+            const indexCountRes = await sql.unsafe<Array<{ c: number }>>("SELECT COUNT(*) AS c FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = 'befly_test' AND TABLE_NAME = ? AND INDEX_NAME = 'idx_a'", [tableName]);
             const c = Number(indexCountRes?.[0]?.c || 0);
             expect(c).toBeGreaterThan(0);
         } finally {
