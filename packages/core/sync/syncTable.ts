@@ -305,19 +305,22 @@ export class SyncTable {
     /* DDL 片段生成（列/索引/ALTER clause） */
     /* ---------------------------------------------------------------------- */
 
-    public static buildIndexSQL(tableName: string, indexName: string, fieldName: string, action: "create" | "drop"): string {
-        const tableQuoted = SyncTable.quoteIdentifier(tableName);
+    public static buildIndexClause(indexName: string, fieldName: string, action: "create" | "drop"): string {
         const indexQuoted = SyncTable.quoteIdentifier(indexName);
-        const fieldQuoted = SyncTable.quoteIdentifier(fieldName);
 
-        const parts: string[] = [];
         if (action === "create") {
-            parts.push(`ADD INDEX ${indexQuoted} (${fieldQuoted})`);
-        } else {
-            parts.push(`DROP INDEX ${indexQuoted}`);
+            const fieldQuoted = SyncTable.quoteIdentifier(fieldName);
+            return `ADD INDEX ${indexQuoted} (${fieldQuoted})`;
         }
 
-        return `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${parts.join(", ")}`;
+        return `DROP INDEX ${indexQuoted}`;
+    }
+
+    public static buildIndexSQL(tableName: string, indexName: string, fieldName: string, action: "create" | "drop"): string {
+        const tableQuoted = SyncTable.quoteIdentifier(tableName);
+
+        const clause = SyncTable.buildIndexClause(indexName, fieldName, action);
+        return `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${clause}`;
     }
 
     public static getSystemColumnDef(fieldName: string): string | null {
@@ -381,26 +384,66 @@ export class SyncTable {
     /* DDL 执行（失败时降级 algorithm/lock） */
     /* ---------------------------------------------------------------------- */
 
+    public static stripAlgorithmAndLock(stmt: string): string {
+        let sql = String(stmt);
+
+        sql = sql.replace(/\bALGORITHM\s*=\s*(INPLACE|INSTANT|COPY)\b\s*,?\s*/gi, "").replace(/\bLOCK\s*=\s*(NONE|SHARED|EXCLUSIVE)\b\s*,?\s*/gi, "");
+
+        sql = sql
+            .replace(/,\s*,/g, ", ")
+            .replace(/,\s*$/g, "")
+            .replace(/\s{2,}/g, " ")
+            .trim();
+
+        return sql;
+    }
+
+    public static buildDdlFallbackCandidates(stmt: string): Array<{ stmt: string; reason: string }> {
+        const original = String(stmt);
+        const attempted: Array<{ stmt: string; reason: string }> = [];
+
+        // 1) INSTANT -> INPLACE（尽可能在线）
+        if (/\bALGORITHM\s*=\s*INSTANT\b/i.test(original)) {
+            attempted.push({
+                stmt: original.replace(/\bALGORITHM\s*=\s*INSTANT\b/gi, "ALGORITHM=INPLACE"),
+                reason: "ALGORITHM=INSTANT → INPLACE"
+            });
+        }
+
+        // 2) 去掉 ALGORITHM/LOCK：让 MySQL 自行选择（可能 COPY）
+        const stripped = SyncTable.stripAlgorithmAndLock(original);
+        if (stripped !== original) {
+            attempted.push({ stmt: stripped, reason: "移除 ALGORITHM/LOCK" });
+        }
+
+        // 去重（保持顺序）
+        const out: Array<{ stmt: string; reason: string }> = [];
+        for (const item of attempted) {
+            if (!item.stmt || item.stmt.trim() === "") continue;
+            if (item.stmt === original) continue;
+            if (out.some((x) => x.stmt === item.stmt)) continue;
+            out.push(item);
+        }
+
+        return out;
+    }
+
     public static async executeDDLSafely(db: SqlExecutor, stmt: string): Promise<boolean> {
         try {
             await db.unsafe(stmt);
             return true;
         } catch (error: any) {
-            if (stmt.includes("ALGORITHM=INSTANT")) {
-                const inplaceSql = stmt.replace(/ALGORITHM=INSTANT/g, "ALGORITHM=INPLACE");
+            const candidates = SyncTable.buildDdlFallbackCandidates(stmt);
+            for (const candidate of candidates) {
                 try {
-                    await db.unsafe(inplaceSql);
+                    await db.unsafe(candidate.stmt);
+
+                    // 仅在确实发生降级且成功时记录一条 debug，便于排查线上 DDL 算法/锁不兼容问题。
+                    // 注意：不带“[表 xxx]”前缀，避免破坏“每表仅一条汇总日志”的约束测试。
+                    Logger.debug(`[DDL降级] ${candidate.reason}（已成功）`);
                     return true;
                 } catch {
-                    let traditionSql = stmt;
-                    traditionSql = traditionSql.replace(/\bALGORITHM\s*=\s*(INPLACE|INSTANT)\b\s*,?\s*/g, "").replace(/\bLOCK\s*=\s*(NONE|SHARED|EXCLUSIVE)\b\s*,?\s*/g, "");
-                    traditionSql = traditionSql
-                        .replace(/,\s*,/g, ", ")
-                        .replace(/,\s*$/g, "")
-                        .replace(/\s{2,}/g, " ")
-                        .trim();
-                    await db.unsafe(traditionSql);
-                    return true;
+                    // continue
                 }
             }
 
@@ -626,12 +669,18 @@ export class SyncTable {
         const dropIndexActions = plan.indexActions.filter((a) => a.action === "drop");
         const createIndexActions = plan.indexActions.filter((a) => a.action === "create");
 
-        for (const act of dropIndexActions) {
-            const stmt = SyncTable.buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
+        if (dropIndexActions.length > 0) {
+            const dropClauses: string[] = [];
+            for (const act of dropIndexActions) {
+                dropClauses.push(SyncTable.buildIndexClause(act.indexName, act.fieldName, "drop"));
+            }
+
+            const tableQuoted = SyncTable.quoteIdentifier(tableName);
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${dropClauses.join(", ")}`;
             try {
-                await db.unsafe(stmt);
+                await SyncTable.executeDDLSafely(db, stmt);
             } catch (error: any) {
-                Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: "删除索引失败" });
+                Logger.error({ err: error, table: tableName, msg: "批量删除索引失败" });
                 throw error;
             }
         }
@@ -649,12 +698,18 @@ export class SyncTable {
             await SyncTable.executeDDLSafely(db, stmt);
         }
 
-        for (const act of createIndexActions) {
-            const stmt = SyncTable.buildIndexSQL(tableName, act.indexName, act.fieldName, act.action);
+        if (createIndexActions.length > 0) {
+            const createClauses: string[] = [];
+            for (const act of createIndexActions) {
+                createClauses.push(SyncTable.buildIndexClause(act.indexName, act.fieldName, "create"));
+            }
+
+            const tableQuoted = SyncTable.quoteIdentifier(tableName);
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${createClauses.join(", ")}`;
             try {
-                await db.unsafe(stmt);
+                await SyncTable.executeDDLSafely(db, stmt);
             } catch (error: any) {
-                Logger.error({ err: error, table: tableName, index: act.indexName, field: act.fieldName, msg: "创建索引失败" });
+                Logger.error({ err: error, table: tableName, msg: "批量创建索引失败" });
                 throw error;
             }
         }
@@ -676,33 +731,24 @@ export class SyncTable {
 
         Logger.debug(`[表 ${tableName}] + 创建表（系统字段 + 业务字段）`);
 
-        const indexTasks: Array<Promise<unknown>> = [];
-        const existingIndexes: Record<string, string[]> = {};
+        const indexClauses: string[] = [];
 
         for (const sysField of systemIndexFields) {
             const indexName = `idx_${sysField}`;
-            if (existingIndexes[indexName]) {
-                continue;
-            }
-            const stmt = SyncTable.buildIndexSQL(tableName, indexName, sysField, "create");
-            indexTasks.push(db.unsafe(stmt));
+            indexClauses.push(SyncTable.buildIndexClause(indexName, sysField, "create"));
         }
 
         for (const [fieldKey, fieldDef] of Object.entries(fields)) {
             const dbFieldName = snakeCase(fieldKey);
-
             if (fieldDef.index === true && fieldDef.unique !== true) {
                 const indexName = `idx_${dbFieldName}`;
-                if (existingIndexes[indexName]) {
-                    continue;
-                }
-                const stmt = SyncTable.buildIndexSQL(tableName, indexName, dbFieldName, "create");
-                indexTasks.push(db.unsafe(stmt));
+                indexClauses.push(SyncTable.buildIndexClause(indexName, dbFieldName, "create"));
             }
         }
 
-        if (indexTasks.length > 0) {
-            await Promise.all(indexTasks);
+        if (indexClauses.length > 0) {
+            const stmt = `ALTER TABLE ${tableQuoted} ALGORITHM=INPLACE, LOCK=NONE, ${indexClauses.join(", ")}`;
+            await SyncTable.executeDDLSafely(db, stmt);
         }
     }
 
