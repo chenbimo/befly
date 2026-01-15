@@ -95,7 +95,7 @@ export async function loadBeflyConfig(nodeEnv?: string): Promise<BeflyOptions> {
         throw new Error(`配置错误：NODE_ENV 只能是 'development' 或 'production'，当前值=${String(nodeEnv)}`);
     }
 
-    // 使用 importDefault 加载 configs 目录下的配置文件。22
+    // 使用 importDefault 加载 configs 目录下的配置文件。222
     // 合并顺序：defaultOptions ← befly.common.json ← befly.development/production.json
 
     const configsDir = join(process.cwd(), "configs");
