@@ -59,6 +59,10 @@ describe("resolveDefaultValue", () => {
         expect(SyncTable.resolveDefaultValue(null, "array_text")).toBe("null");
     });
 
+    test('null 值 + datetime 类型 => "null"（DATETIME 默认不生成 DEFAULT）', () => {
+        expect(SyncTable.resolveDefaultValue(null, "datetime")).toBe("null");
+    });
+
     test("有实际值时直接返回", () => {
         expect(SyncTable.resolveDefaultValue("admin", "string")).toBe("admin");
         expect(SyncTable.resolveDefaultValue(100, "number")).toBe(100);
@@ -87,6 +91,14 @@ describe("generateDefaultSql", () => {
 
     test("array_text 类型不生成默认值（MySQL TEXT 不支持）", () => {
         expect(SyncTable.generateDefaultSql("[]", "array_text")).toBe("");
+    });
+
+    test("datetime 类型默认值为 null 时不生成 DEFAULT", () => {
+        expect(SyncTable.generateDefaultSql("null", "datetime")).toBe("");
+    });
+
+    test("datetime 类型生成带引号默认值", () => {
+        expect(SyncTable.generateDefaultSql("2026-01-15 12:34:56", "datetime")).toBe(" DEFAULT '2026-01-15 12:34:56'");
     });
 
     test("单引号被正确转义", () => {
@@ -118,5 +130,10 @@ describe("getSqlType", () => {
     test("text 类型", () => {
         const result = SyncTable.getSqlType("text", null);
         expect(result).toBe("MEDIUMTEXT");
+    });
+
+    test("datetime 类型", () => {
+        const result = SyncTable.getSqlType("datetime", null);
+        expect(result).toBe("DATETIME");
     });
 });

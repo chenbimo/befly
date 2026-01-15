@@ -7,7 +7,8 @@ import type { JsonValue } from "./common";
 /**
  * 字段类型
  */
-export type FieldType = "string" | "number" | "text" | "array_string" | "array_text" | "array_number_string" | "array_number_text";
+export type FieldType = "string" | "number" | "text" | "datetime" | "array_string" | "array_text" | "array_number_string" | "array_number_text";
+
 
 /**
  * 字段定义（表字段 JSON 结构）

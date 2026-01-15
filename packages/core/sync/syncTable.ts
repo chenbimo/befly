@@ -195,6 +195,7 @@ export class SyncTable {
         return {
             number: "BIGINT",
             string: "VARCHAR",
+            datetime: "DATETIME",
             text: "MEDIUMTEXT",
             array_string: "VARCHAR",
             array_text: "MEDIUMTEXT",
@@ -272,6 +273,9 @@ export class SyncTable {
                 return 0;
             case "string":
                 return "";
+            case "datetime":
+                // datetime 默认不生成 DEFAULT；用 "null" 作为 sentinel（与 TEXT 类似）
+                return "null";
             case "array_string":
             case "array_number_string":
                 return "[]";
@@ -296,6 +300,21 @@ export class SyncTable {
                 const escaped = String(actualDefault).replace(/'/g, "''");
                 return ` DEFAULT '${escaped}'`;
             }
+        }
+
+        if (fieldType === "datetime") {
+            // datetime：默认值仅支持字符串（到秒）或 CURRENT_TIMESTAMP 表达式。
+            // 注意：checkTable 默认要求 default 为 null；这里仍做 DDL 生成兜底，便于测试/内部调用。
+            if (typeof actualDefault === "string") {
+                const trimmed = actualDefault.trim();
+                if (/^current_timestamp(\(\s*\d+\s*\)|\(\s*\))?$/i.test(trimmed)) {
+                    const normalized = trimmed.toUpperCase().replace(/\(\s*\)/g, "");
+                    return ` DEFAULT ${normalized}`;
+                }
+                const escaped = trimmed.replace(/'/g, "''");
+                return ` DEFAULT '${escaped}'`;
+            }
+            return "";
         }
 
         return "";

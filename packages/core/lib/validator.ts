@@ -189,6 +189,9 @@ export class Validator {
             case "text":
                 return typeof value === "string" ? { value: value, error: null } : { value: null, error: "必须是字符串" };
 
+            case "datetime":
+                return typeof value === "string" ? { value: value, error: null } : { value: null, error: "必须是时间字符串" };
+
             case "array_string":
             case "array_text":
                 return Array.isArray(value) ? { value: value, error: null } : { value: null, error: "必须是数组" };
@@ -235,6 +238,16 @@ export class Validator {
                 if (max !== null && max > 0 && value.length > max) return `长度不能超过${max}个字符`;
                 if (regex && !this.testRegex(regex, value)) return "格式不正确";
                 break;
+
+            case "datetime": {
+                if (typeof value !== "string") return "必须是时间字符串";
+
+                // 约束：到秒的 datetime 字符串（YYYY-MM-DD HH:mm:ss）
+                // 说明：这里只做格式校验，不在 validator 中做“日期合法性”（如 2026-02-30）推断，避免引入时区/解析差异。
+                if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) return "格式不正确";
+                if (regex && !this.testRegex(regex, value)) return "格式不正确";
+                break;
+            }
 
             case "array_string":
             case "array_text":
@@ -298,6 +311,8 @@ export class Validator {
         switch (type.toLowerCase()) {
             case "number":
                 return 0;
+            case "datetime":
+                return null;
             case "array_string":
             case "array_text":
             case "array_number_string":

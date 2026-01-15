@@ -76,7 +76,7 @@ const RESERVED_FIELD_SET = new Set<string>(RESERVED_FIELDS);
 /**
  * 允许的字段类型
  */
-const FIELD_TYPES = ["string", "number", "text", "array_string", "array_text", "array_number_string", "array_number_text"] as const;
+const FIELD_TYPES = ["string", "number", "text", "datetime", "array_string", "array_text", "array_number_string", "array_number_text"] as const;
 const FIELD_TYPE_SET = new Set<string>(FIELD_TYPES);
 
 /**
@@ -234,7 +234,7 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                     }
                 }
 
-                // 字段类型必须为string,number,text,array_string,array_text之一
+                // 字段类型必须为 FIELD_TYPES 之一
                 if (!FIELD_TYPE_SET.has(field.type)) {
                     Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 字段类型 "${field.type}" 格式错误，` + `必须为${FIELD_TYPES.join("、")}之一`);
                     hasError = true;
@@ -284,6 +284,30 @@ export async function checkTable(tables: ScanFileResult[], config: BeflyOptions)
                         Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 ${field.type} 类型，不支持唯一约束（unique=true 无效）`);
                         hasError = true;
                     }
+                } else if (field.type === "datetime") {
+                    // datetime：对应 MySQL DATETIME（到秒）
+                    // - min/max 必须为 null
+                    // - default 必须为 null（避免把 DDL 表达式当作运行期默认值）
+                    // - 不允许 unsigned
+                    if (field.min !== undefined && field.min !== null) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 datetime 类型，min 必须为 null，当前为 "${field.min}"`);
+                        hasError = true;
+                    }
+                    if (field.max !== undefined && field.max !== null) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 datetime 类型，max 必须为 null，当前为 "${field.max}"`);
+                        hasError = true;
+                    }
+
+                    if (field.default !== undefined && field.default !== null) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 datetime 类型，默认值必须为 null（如需当前时间，请在业务写入时赋值）。当前为 ${formatValuePreview(field.default)}`);
+                        hasError = true;
+                    }
+
+                    if (field.unsigned !== undefined) {
+                        Logger.warn(`${tablePrefix}${fileName} 文件 ${colKey} 为 datetime 类型，不允许设置 unsigned`);
+                        hasError = true;
+                    }
+
                 } else if (field.type === "string" || field.type === "array_string" || field.type === "array_number_string") {
                     // 约束：string/array_*_string 必须声明 max。
                     // 说明：array_*_string 的 max 表示“单个元素字符串长度”，不是数组元素数量。

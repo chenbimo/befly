@@ -79,6 +79,10 @@ describe("getTypeMapping (MySQL)", () => {
         expect(SyncTable.getTypeMapping().string).toBe("VARCHAR");
     });
 
+    test("datetime 映射为 DATETIME", () => {
+        expect(SyncTable.getTypeMapping().datetime).toBe("DATETIME");
+    });
+
     test("text 映射为 MEDIUMTEXT", () => {
         expect(SyncTable.getTypeMapping().text).toBe("MEDIUMTEXT");
     });
