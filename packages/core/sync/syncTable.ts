@@ -807,10 +807,7 @@ export class SyncTable {
 
         const normalized = normalizeFieldDefinition(fieldDef);
 
-        const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned, normalized.precision, normalized.scale)
-            .toLowerCase()
-            .replace(/\s+/g, " ")
-            .trim();
+        const expectedType = SyncTable.getSqlType(normalized.type, normalized.max, normalized.unsigned, normalized.precision, normalized.scale).toLowerCase().replace(/\s+/g, " ").trim();
 
         const currentType = (
             typeof existingColumn.columnType === "string" && existingColumn.columnType.trim() !== ""
@@ -831,7 +828,10 @@ export class SyncTable {
             .trim();
 
         const normalizedCurrentType = SyncTable.INT_TYPES.has(currentBase)
-            ? currentType.replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim()
+            ? currentType
+                  .replace(/\([^)]*\)/g, "")
+                  .replace(/\s+/g, " ")
+                  .trim()
             : currentType;
 
         if (normalizedCurrentType !== expectedType) {
@@ -1034,7 +1034,15 @@ export class SyncTable {
         if (plan.changed) {
             // 在执行 DDL 前输出“单条汇总日志”（每张表最多一条），避免刷屏且仍保证表名明确。
             const msg = `[表 ${tableName}] 变更汇总，新增字段=${summary.addedBusiness}，新增系统字段=${summary.addedSystem}，修改字段=${summary.modified}，索引变更=${summary.indexChanges}`;
-            Logger.debug({ msg: msg, details: details.fieldChanges });
+            const detailLines = details.fieldChanges.flatMap((item) =>
+                item.changes.map((change) => {
+                    const current = String(change.current ?? "");
+                    const expected = String(change.expected ?? "");
+                    return `- ${item.dbFieldName}.${change.type}: ${current} -> ${expected}`;
+                })
+            );
+            const detailText = detailLines.length > 0 ? `\n${detailLines.join("\n")}` : "";
+            Logger.debug(`${msg}${detailText}`);
 
             await SyncTable.applyTablePlan(db, tableName, plan);
         }

@@ -12,7 +12,7 @@ import { describe, test, expect } from "bun:test";
 
 import { SyncTable } from "../sync/syncTable.ts";
 
-type ExistingColumn = Pick<ColumnInfo, "type" | "max" | "nullable" | "defaultValue" | "comment">;
+type ExistingColumn = Pick<ColumnInfo, "type" | "max" | "nullable" | "defaultValue" | "comment"> & { columnType?: string };
 
 describe("compareFieldDefinition", () => {
     describe("类型变化检测（包含长度变化）", () => {
@@ -190,6 +190,56 @@ describe("compareFieldDefinition", () => {
 
             // null -> '' (空字符串)，与现有值相同，无变化
             expect(defaultChange).toBeUndefined();
+        });
+    });
+
+    describe("decimal / datetime 比较", () => {
+        test("decimal 默认值等价时不应变化", () => {
+            const existingColumn = {
+                type: "decimal",
+                columnType: "decimal(10,2)",
+                max: null,
+                nullable: false,
+                defaultValue: "0.00",
+                comment: "金额"
+            } satisfies ExistingColumn;
+            const fieldDef = {
+                name: "金额",
+                type: "decimal",
+                input: "number",
+                precision: 10,
+                scale: 2,
+                max: null,
+                nullable: false,
+                default: 0
+            } satisfies FieldDefinition;
+
+            const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
+
+            expect(changes.length).toBe(0);
+        });
+
+        test("datetime 默认值为空时不应变化", () => {
+            const existingColumn = {
+                type: "datetime",
+                columnType: "datetime",
+                max: null,
+                nullable: false,
+                defaultValue: null,
+                comment: "创建时间"
+            } satisfies ExistingColumn;
+            const fieldDef = {
+                name: "创建时间",
+                type: "datetime",
+                input: "string",
+                max: null,
+                nullable: false,
+                default: null
+            } satisfies FieldDefinition;
+
+            const changes = SyncTable.compareFieldDefinition(existingColumn, fieldDef);
+
+            expect(changes.length).toBe(0);
         });
     });
 
